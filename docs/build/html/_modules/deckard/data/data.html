@@ -1,0 +1,1458 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>deckard.data.data &mdash; deckard .91 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8f098830"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            deckard
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">deckard</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">deckard.data.data</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for deckard.data.data</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Imports</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">DictConfig</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Scikit-learn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">fetch_openml</span><span class="p">,</span>
+    <span class="n">make_classification</span><span class="p">,</span>
+    <span class="n">make_regression</span><span class="p">,</span>
+    <span class="n">load_digits</span><span class="p">,</span>
+    <span class="n">load_diabetes</span><span class="p">,</span>
+    <span class="n">load_iris</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_selection</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">mutual_info_classif</span><span class="p">,</span>
+    <span class="n">mutual_info_regression</span><span class="p">,</span>
+    <span class="n">f_classif</span><span class="p">,</span>
+    <span class="n">f_regression</span><span class="p">,</span>
+    <span class="n">r_regression</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_column_selector</span><span class="p">,</span> <span class="n">ColumnTransformer</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.sparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">csr_matrix</span>
+
+<span class="c1"># deckard</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigBase</span><span class="p">,</span> <span class="n">data_supported_filetypes</span><span class="p">,</span> <span class="n">load_class</span>
+
+<span class="c1"># Setup logger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_discover_lifelines_dataset_loaders</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Discover lifelines dataset loader functions when lifelines is installed.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">lifelines_datasets</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;lifelines.datasets&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="n">dataset_map</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">lifelines_datasets</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">attr</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;load_&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">loader</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">lifelines_datasets</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">loader</span><span class="p">):</span>
+            <span class="n">dataset_name</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;load_&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">dataset_map</span><span class="p">[</span><span class="n">dataset_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">loader</span>
+    <span class="k">return</span> <span class="n">dataset_map</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_lifelines_dataset_loaders</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_discover_lifelines_dataset_loaders</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="DataConfig">
+<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataConfig</span><span class="p">(</span><span class="n">ConfigBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuration and utility class for loading, preprocessing, and splitting datasets for machine learning tasks.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    -------</span>
+<span class="sd">    dataset_name : str</span>
+<span class="sd">        Name of the dataset to load or path to a data file.</span>
+<span class="sd">    data_params : dict</span>
+<span class="sd">        Additional parameters for data loading or generation.</span>
+<span class="sd">    test_size : float</span>
+<span class="sd">        Proportion of the dataset to include in the test split (between 0 and 1).</span>
+<span class="sd">    train_size : float</span>
+<span class="sd">        Proportion or count of samples to include in the training split.</span>
+<span class="sd">    random_state : int</span>
+<span class="sd">        Seed for random number generation to ensure reproducibility.</span>
+<span class="sd">    stratify : Union[None, str, bool]</span>
+<span class="sd">        Specifies stratification for sampling; can be None, True (use target), or a column name.</span>
+<span class="sd">    classifier: bool</span>
+<span class="sd">        Whether the task is classification (True) or regression (False).</span>
+<span class="sd">    drop: list</span>
+<span class="sd">        List of columns to drop from the dataset.</span>
+<span class="sd">    target: Union[str, None]</span>
+<span class="sd">        Name of the target column in the dataset (if applicable).</span>
+<span class="sd">    keep: list</span>
+<span class="sd">        List of columns to keep in the dataset.</span>
+<span class="sd">    plugins : list</span>
+<span class="sd">        Optional data plugin specifications executed during load/sample/score hooks.</span>
+<span class="sd">    _X : pd.DataFrame</span>
+<span class="sd">        Loaded feature matrix.</span>
+<span class="sd">    _y : pd.Series</span>
+<span class="sd">        Loaded target vector.</span>
+<span class="sd">    data_load_time : float</span>
+<span class="sd">        Time taken to load the data.</span>
+<span class="sd">    data_sample_time : float</span>
+<span class="sd">        Time taken to sample/split the data.</span>
+<span class="sd">    train_n : int</span>
+<span class="sd">        Number of training samples.</span>
+<span class="sd">    test_n : int</span>
+<span class="sd">        Number of testing samples.</span>
+<span class="sd">    alias: str</span>
+<span class="sd">        Optional alias for the dataset configuration.</span>
+<span class="sd">    train_indices : list</span>
+<span class="sd">        Indices for training samples.</span>
+<span class="sd">    test_indices : list</span>
+<span class="sd">        Indices for testing samples.</span>
+<span class="sd">    X_train : pd.DataFrame</span>
+<span class="sd">        Training feature matrix.</span>
+<span class="sd">    y_train : pd.Series</span>
+<span class="sd">        Training target vector.</span>
+<span class="sd">    X_test : pd.DataFrame</span>
+<span class="sd">        Testing feature matrix.</span>
+<span class="sd">    y_test : pd.Series</span>
+<span class="sd">        Testing target vector.</span>
+<span class="sd">    score_dict : dict</span>
+<span class="sd">        Dictionary to store scores or metrics.</span>
+<span class="sd">    _target_ : str</span>
+<span class="sd">        Internal identifier for the class.</span>
+
+<span class="sd">    Methods</span>
+<span class="sd">    -------</span>
+<span class="sd">    __post_init__()</span>
+<span class="sd">        Post-initialization method to validate parameters and initialize internal attributes.</span>
+<span class="sd">    __hash__()</span>
+<span class="sd">        Computes a hash value for the instance based on non-private attributes.</span>
+<span class="sd">    _load_adult_income_data()</span>
+<span class="sd">        Loads and preprocesses the Adult Income dataset from OpenML.</span>
+<span class="sd">    _load_generic_sklearn(loader_func, **loader_params)</span>
+<span class="sd">        Loads a dataset using a generic scikit-learn loader function.</span>
+<span class="sd">    _load_generic_openml(dataset_name, version=1, **loader_params)</span>
+<span class="sd">        Loads a dataset from OpenML using the specified dataset name and version.</span>
+<span class="sd">    _make_classification_data()</span>
+<span class="sd">        Generates a synthetic classification dataset.</span>
+<span class="sd">    _make_regression_data()</span>
+<span class="sd">        Generates a synthetic regression dataset.</span>
+<span class="sd">    _sample()</span>
+<span class="sd">        Splits the loaded dataset into training and testing sets, optionally using stratification.</span>
+<span class="sd">    _load_data()</span>
+<span class="sd">        Loads the dataset based on the specified name or file type.</span>
+<span class="sd">    __call__(filepath=None)</span>
+<span class="sd">        Loads and samples the dataset, splits it into training and testing sets, and returns the corresponding features and labels.</span>
+<span class="sd">    save(filepath)</span>
+<span class="sd">        Saves the current state of the DataConfig instance to a file.</span>
+<span class="sd">    load(filepath)</span>
+<span class="sd">        Loads the state of the DataConfig instance from a file.</span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        For invalid parameter values or missing data.</span>
+<span class="sd">    NotImplementedError</span>
+<span class="sd">        For unsupported datasets or file types.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; config = DataConfig(dataset_name=&quot;adult&quot;, **kwargs)</span>
+<span class="sd">    &gt;&gt;&gt; config()</span>
+<span class="sd">    &gt;&gt;&gt; X_train = config.X_train</span>
+<span class="sd">    &gt;&gt;&gt; y_train = config.y_train</span>
+<span class="sd">    &gt;&gt;&gt; X_test = config.X_test</span>
+<span class="sd">    &gt;&gt;&gt; y_test = config.y_test</span>
+<span class="sd">    &gt;&gt;&gt; score_dict = config.score_dict</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Configuration fields</span>
+    <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;adult&quot;</span>
+    <span class="n">data_params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">test_size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">train_size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">random_state</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span>
+    <span class="n">stratify</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">classifier</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">drop</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">keep</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">plugins</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">alias</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># Runtime state fields</span>
+    <span class="n">score_dict</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">data_load_time</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">data_sample_time</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_X</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_y</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">train_indices</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">test_indices</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">X_train</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">y_train</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">X_test</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">y_test</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">train_n</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">test_n</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_plugin_objects</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Post-initialization method for setting up data-related attributes.</span>
+
+<span class="sd">        Validates that `test_size` is between 0 and 1, then initializes training size and internal attributes</span>
+<span class="sd">        for data loading, sampling, parameters, and train/test splits.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If `test_size` is not between 0 and 1.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">test_size</span> <span class="o">=</span> <span class="mf">0.2</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">train_size</span> <span class="o">=</span> <span class="mf">0.8</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_size</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_size</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;test_size must be between 0 and 1&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">train_size</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_size</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">train_size</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;test_size must be a float or int&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_params</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_params</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drop</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;drop&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keep</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;keep&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">&quot;data_load_time&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;data_sample_time&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;_X&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;_y&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;train_indices&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;test_indices&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;X_train&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;y_train&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;X_test&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;y_test&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;train_n&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;test_n&quot;</span><span class="p">,</span>
+        <span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;score_dict&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_target_&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="o">=</span> <span class="s2">&quot;deckard.data.DataConfig&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_params</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_params</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="DataConfig.__post_init__">
+<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig.__post_init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_init</span><span class="p">()</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">X</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convenience alias for the loaded feature matrix.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">y</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convenience alias for the loaded target vector.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_instantiate_plugin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin_spec</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plugin_spec</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">plugin_spec</span><span class="p">)</span>
+            <span class="n">class_path</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;_target_&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">class_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Plugin dict must include &#39;name&#39; or &#39;_target_&#39;&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">load_class</span><span class="p">(</span><span class="n">class_path</span><span class="p">,</span> <span class="o">**</span><span class="n">spec</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plugin_spec</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">load_class</span><span class="p">(</span><span class="n">plugin_spec</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plugin_spec</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">plugin_spec</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">plugin_spec</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_plugins</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_plugin_objects&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plugin_objects</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">plugin_specs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plugin_specs</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;plugins must be a list, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">plugin_specs</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_plugin_objects</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_instantiate_plugin</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">plugin_specs</span>
+            <span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plugin_objects</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_plugin_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hook_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">hook_outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">plugin</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_plugins</span><span class="p">():</span>
+            <span class="n">hook</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">hook_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">hook</span><span class="p">):</span>
+                <span class="n">hook_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">hook_outputs</span>
+
+<div class="viewcode-block" id="DataConfig.__hash__">
+<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig.__hash__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="DataConfig._load_adult_income_data">
+<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig._load_adult_income_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_adult_income_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads and preprocesses the Adult Income dataset from OpenML.</span>
+
+<span class="sd">        Steps performed:</span>
+<span class="sd">            - Fetches the dataset using the specified name and version.</span>
+<span class="sd">            - Separates features (X) and target variable (y).</span>
+<span class="sd">            - Converts the target variable &#39;class&#39; to binary integers (0 for &#39;&lt;=50K&#39;, 1 for &#39;&gt;50K&#39;).</span>
+<span class="sd">            - Encodes the &#39;sex&#39; column as binary (0 for Male, 1 for Female).</span>
+<span class="sd">            - Converts relevant columns to appropriate numeric types.</span>
+<span class="sd">            - Converts categorical columns to category dtype.</span>
+<span class="sd">            - Applies one-hot encoding to categorical features, dropping the first category.</span>
+<span class="sd">            - Records the time taken to load and preprocess the data.</span>
+<span class="sd">            - Stores processed features and target in instance variables.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : DataConfig</span>
+<span class="sd">            The instance with loaded and preprocessed data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="n">adult</span> <span class="o">=</span> <span class="n">fetch_openml</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">as_frame</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">adult</span><span class="o">.</span><span class="n">frame</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s2">&quot;class&quot;</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;class&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">rename_categories</span><span class="p">({</span><span class="s2">&quot;&lt;=50K&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;&gt;50K&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="c1"># Replace Male/Female with 1/0</span>
+        <span class="n">sex</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;sex&quot;</span><span class="p">)</span>
+        <span class="c1"># Convert appropriate columns to categorical or numeric types</span>
+        <span class="n">X</span><span class="p">[</span><span class="s2">&quot;age&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="s2">&quot;age&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">X</span><span class="p">[</span><span class="s2">&quot;education-num&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="s2">&quot;education-num&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">X</span><span class="p">[</span><span class="s2">&quot;hours-per-week&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="s2">&quot;hours-per-week&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">X</span><span class="p">[</span><span class="s2">&quot;capital-gain&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="s2">&quot;capital-gain&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">X</span><span class="p">[</span><span class="s2">&quot;capital-loss&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="s2">&quot;capital-loss&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">X</span><span class="p">[</span><span class="s2">&quot;race&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="s2">&quot;race&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">)</span>
+        <span class="n">X</span><span class="p">[</span><span class="s2">&quot;native-country&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="s2">&quot;native-country&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">drop_first</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">X</span><span class="p">[</span><span class="s2">&quot;sex&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sex</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">rename_categories</span><span class="p">({</span><span class="s2">&quot;Male&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Female&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+        <span class="c1"># Convert categorical variables to numeric using one-hot encoding</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_X</span> <span class="o">=</span> <span class="n">X</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">,</span>
+            <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Expected DataFrame got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Expected Series got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="DataConfig._make_classification_data">
+<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig._make_classification_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_make_classification_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+        <span class="n">n_features</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+        <span class="n">n_informative</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">n_redundant</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+        <span class="n">n_clusters_per_class</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates a synthetic classification dataset and stores it as instance attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n_samples : int, optional</span>
+<span class="sd">            Number of samples to generate. Default is 1000.</span>
+<span class="sd">        n_features : int, optional</span>
+<span class="sd">            Total number of features. Default is 20.</span>
+<span class="sd">        n_informative : int, optional</span>
+<span class="sd">            Number of informative features. Default is 10.</span>
+<span class="sd">        n_redundant : int, optional</span>
+<span class="sd">            Number of redundant features. Default is 5.</span>
+<span class="sd">        n_clusters_per_class : int, optional</span>
+<span class="sd">            Number of clusters per class. Default is 2.</span>
+<span class="sd">        random_state : int, optional</span>
+<span class="sd">            Seed for random number generation. Default is 42.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : DataConfig</span>
+<span class="sd">            The instance with loaded data and timing information.</span>
+
+<span class="sd">        Side Effects</span>
+<span class="sd">        ------------</span>
+<span class="sd">        Sets self._X (pd.DataFrame): Feature matrix.</span>
+<span class="sd">        Sets self._y (pd.Series): Target vector.</span>
+<span class="sd">        Sets self.data_load_time (float): Time taken to generate the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">make_classification</span><span class="p">(</span>
+            <span class="n">n_samples</span><span class="o">=</span><span class="n">n_samples</span><span class="p">,</span>
+            <span class="n">n_features</span><span class="o">=</span><span class="n">n_features</span><span class="p">,</span>
+            <span class="n">n_informative</span><span class="o">=</span><span class="n">n_informative</span><span class="p">,</span>
+            <span class="n">n_redundant</span><span class="o">=</span><span class="n">n_redundant</span><span class="p">,</span>
+            <span class="n">n_clusters_per_class</span><span class="o">=</span><span class="n">n_clusters_per_class</span><span class="p">,</span>
+            <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_X</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;feature_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="DataConfig._make_regression_data">
+<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig._make_regression_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_make_regression_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+        <span class="n">n_features</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+        <span class="n">n_informative</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">noise</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates synthetic regression data using scikit-learn&#39;s make_regression function and stores it as pandas DataFrame and Series.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n_samples : int, optional</span>
+<span class="sd">            Number of samples to generate. Default is 1000.</span>
+<span class="sd">        n_features : int, optional</span>
+<span class="sd">            Total number of features. Default is 20.</span>
+<span class="sd">        n_informative : int, optional</span>
+<span class="sd">            Number of informative features. Default is 10.</span>
+<span class="sd">        noise : float, optional</span>
+<span class="sd">            Standard deviation of the gaussian noise applied to the output. Default is 0.1.</span>
+<span class="sd">        random_state : int, optional</span>
+<span class="sd">            Seed for the random number generator. Default is 42.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : DataConfig</span>
+<span class="sd">            The instance with generated data stored in self._X (DataFrame), self._y (Series), and self.data_load_time (float).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">make_regression</span><span class="p">(</span>
+            <span class="n">n_samples</span><span class="o">=</span><span class="n">n_samples</span><span class="p">,</span>
+            <span class="n">n_features</span><span class="o">=</span><span class="n">n_features</span><span class="p">,</span>
+            <span class="n">n_informative</span><span class="o">=</span><span class="n">n_informative</span><span class="p">,</span>
+            <span class="n">noise</span><span class="o">=</span><span class="n">noise</span><span class="p">,</span>
+            <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_X</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;feature_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="DataConfig._sample">
+<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig._sample">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sample</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Samples training and testing indices from the loaded dataset, optionally using stratification.</span>
+
+<span class="sd">        Calculates the number of samples for training and testing based on ``train_size`` and ``test_size``.</span>
+<span class="sd">        Supports stratified sampling using the target variable or a specified column.</span>
+<span class="sd">        Splits the data into training and testing sets, records the sampling time, and stores the resulting indices.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If data is not loaded, or if the specified stratify column is not found, or if ``stratify`` is invalid.</span>
+
+<span class="sd">        Side Effects</span>
+<span class="sd">        ------------</span>
+<span class="sd">        Sets ``self.train_indices``, ``self.test_indices``, and ``self.data_sample_time``.</span>
+<span class="sd">        Logs the time taken for sampling.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_plugin_hook</span><span class="p">(</span><span class="s2">&quot;before_sample&quot;</span><span class="p">)</span>
+        <span class="n">stratify_col</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Data not loaded. Cannot sample.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stratify</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stratify</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">stratify_col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stratify</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stratify</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                    <span class="n">stratify_col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">stratify</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Stratify column </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stratify</span><span class="si">}</span><span class="s2"> not found in data columns&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">stratify</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="n">stratify_col</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;stratify must be None, True, or a column name&quot;</span><span class="p">)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">))</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">train_idx</span><span class="p">,</span> <span class="n">test_idx</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+                <span class="n">indices</span><span class="p">,</span>
+                <span class="n">train_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_size</span><span class="p">,</span>
+                <span class="n">test_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">test_size</span><span class="p">,</span>
+                <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">,</span>
+                <span class="n">stratify</span><span class="o">=</span><span class="n">stratify_col</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stratify</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Error during train/test split with train_size=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">train_size</span><span class="si">}</span><span class="s2">, test_size=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">test_size</span><span class="si">}</span><span class="s2">, random_state=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="si">}</span><span class="s2">, stratify=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stratify</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2"> &quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_sample_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data sampled in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_sample_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_indices</span> <span class="o">=</span> <span class="n">train_idx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_indices</span> <span class="o">=</span> <span class="n">test_idx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">train_indices</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">train_indices</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">test_indices</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">test_indices</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_test</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">),</span>
+        <span class="p">),</span> <span class="s2">&quot;X_train must be a DataFrame&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">),</span> <span class="s2">&quot;y_train must be a Series&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">X_test</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">),</span>
+        <span class="p">),</span> <span class="s2">&quot;X_test must be a DataFrame&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_test</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">),</span> <span class="s2">&quot;y_test must be a Series&quot;</span>
+        <span class="k">assert</span> <span class="p">(</span>
+            <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;train_indices&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">),</span> <span class="s2">&quot;Train indices must be set after sampling&quot;</span>
+        <span class="k">assert</span> <span class="p">(</span>
+            <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;test_indices&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">),</span> <span class="s2">&quot;Test indices must be set after sampling&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">),</span>
+        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;X_train must be a DataFrame or Series, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">,</span>
+            <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
+        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;y_train must be a Series, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">X_test</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">),</span>
+        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;X_test must be a DataFrame or Series, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_test</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">y_test</span><span class="p">,</span>
+            <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
+        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;y_test must be a Series, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_test</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_plugin_hook</span><span class="p">(</span><span class="s2">&quot;after_sample&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DataConfig._load_generic_sklearn">
+<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig._load_generic_sklearn">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_generic_sklearn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loader_func</span><span class="p">,</span> <span class="o">**</span><span class="n">loader_params</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads a dataset using a generic scikit-learn loader function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        loader_func : callable</span>
+<span class="sd">            A scikit-learn dataset loader function that returns a Bunch object with &#39;data&#39; and &#39;target&#39; attributes.</span>
+<span class="sd">        loader_params : dict</span>
+<span class="sd">            Additional parameters to pass to the loader function.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : DataConfig</span>
+<span class="sd">            The instance with loaded data and timing information.</span>
+
+<span class="sd">        Side Effects</span>
+<span class="sd">        ------------</span>
+<span class="sd">        Sets ``self._X``, ``self._y``, and ``self.data_load_time`` with loaded data and timing information.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">loader_func</span><span class="p">(</span><span class="o">**</span><span class="n">loader_params</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">target</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_X</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="DataConfig._load_generic_openml">
+<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig._load_generic_openml">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_generic_openml</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">loader_params</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads a dataset from OpenML using the specified dataset name and version.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dataset_name : str</span>
+<span class="sd">            The name of the dataset to load from OpenML.</span>
+<span class="sd">        version : int, optional</span>
+<span class="sd">            The version of the dataset to load. Default is 1.</span>
+<span class="sd">        loader_params : dict</span>
+<span class="sd">            Additional parameters to pass to the fetch_openml function.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : DataConfig</span>
+<span class="sd">            The instance with loaded data and timing information.</span>
+
+<span class="sd">        Side Effects</span>
+<span class="sd">        ------------</span>
+<span class="sd">        Sets ``self._X``, ``self._y``, and ``self.data_load_time`` with loaded data and timing information.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">fetch_openml</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
+            <span class="n">as_frame</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">loader_params</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">target</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_X</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_lifelines_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">loader_params</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load a lifelines dataset into DataConfig feature/target fields.&quot;&quot;&quot;</span>
+        <span class="n">lifelines_datasets</span> <span class="o">=</span> <span class="n">_lifelines_dataset_loaders</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">lifelines_datasets</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">&quot;Lifelines datasets require optional dependency deckard[lifelines]&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">dataset_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">lifelines_datasets</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Lifelines dataset </span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2"> not found. Supported: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">lifelines_datasets</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="n">loader</span> <span class="o">=</span> <span class="n">lifelines_datasets</span><span class="p">[</span><span class="n">dataset_name</span><span class="p">]</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">loader</span><span class="p">(</span><span class="o">**</span><span class="n">loader_params</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">dataset</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+        <span class="n">candidate_target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span>
+        <span class="k">if</span> <span class="n">candidate_target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="s2">&quot;event&quot;</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;status_group&quot;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                    <span class="n">candidate_target</span> <span class="o">=</span> <span class="n">candidate</span>
+                    <span class="k">break</span>
+        <span class="k">if</span> <span class="n">candidate_target</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">candidate_target</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="c1"># Fall back to a zero target when no event column is present.</span>
+            <span class="n">candidate_target</span> <span class="o">=</span> <span class="s2">&quot;event&quot;</span>
+            <span class="n">dataset</span><span class="p">[</span><span class="n">candidate_target</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">y</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">candidate_target</span><span class="p">)</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_X</span> <span class="o">=</span> <span class="n">dataset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+<div class="viewcode-block" id="DataConfig._load_data">
+<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig._load_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads dataset based on the provided dataset name or file type.</span>
+
+<span class="sd">        Supported datasets</span>
+<span class="sd">        ------------------</span>
+<span class="sd">        - &quot;adult&quot;</span>
+<span class="sd">        - &quot;make_classification&quot;</span>
+<span class="sd">        - &quot;make_regression&quot;</span>
+<span class="sd">        - &quot;diabetes&quot;</span>
+<span class="sd">        - &quot;digits&quot;</span>
+<span class="sd">        - &quot;iris&quot;</span>
+
+<span class="sd">        Supported file types</span>
+<span class="sd">        --------------------</span>
+<span class="sd">        - &quot;.csv&quot; (must contain a &#39;target&#39; column)</span>
+
+<span class="sd">        For built-in datasets, calls the corresponding loader method.</span>
+<span class="sd">        For CSV files, reads the file and splits features and target.</span>
+<span class="sd">        Raises NotImplementedError for unsupported datasets or file types.</span>
+<span class="sd">        Updates ``self._X``, ``self._y``, and ``self.data_load_time`` with loaded data and timing information.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        NotImplementedError</span>
+<span class="sd">            If the dataset or file type is not supported.</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If a CSV file does not contain a &#39;target&#39; column.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;data_load_time&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_plugin_hook</span><span class="p">(</span><span class="s2">&quot;before_load_data&quot;</span><span class="p">)</span>
+        <span class="n">supported_datasets</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;adult&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_adult_income_data</span><span class="p">,</span>
+            <span class="s2">&quot;make_classification&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_classification_data</span><span class="p">,</span>
+            <span class="s2">&quot;make_regression&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_regression_data</span><span class="p">,</span>
+            <span class="s2">&quot;diabetes&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="o">**</span><span class="n">params</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_generic_sklearn</span><span class="p">(</span>
+                <span class="n">load_diabetes</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">params</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;digits&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="o">**</span><span class="n">params</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_generic_sklearn</span><span class="p">(</span>
+                <span class="n">load_digits</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">params</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;iris&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="o">**</span><span class="n">params</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_generic_sklearn</span><span class="p">(</span><span class="n">load_iris</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">dataset_name</span> <span class="ow">in</span> <span class="n">_lifelines_dataset_loaders</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">supported_datasets</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;lifelines_</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="k">lambda</span> <span class="n">_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_lifelines_dataset</span><span class="p">(</span>
+                    <span class="n">_name</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">params</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">supported_datasets</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;lifelines.</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="k">lambda</span> <span class="n">_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_lifelines_dataset</span><span class="p">(</span>
+                    <span class="n">_name</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">params</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">dataset_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">supported_datasets</span><span class="p">:</span>
+                <span class="n">supported_datasets</span><span class="p">[</span><span class="n">dataset_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_lifelines_dataset</span><span class="p">(</span>
+                        <span class="n">_name</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">params</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+        <span class="n">filetype</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">)</span><span class="o">.</span><span class="n">suffix</span>
+        <span class="n">supported_filetypes</span> <span class="o">=</span> <span class="n">data_supported_filetypes</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">filetype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">supported_filetypes</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">supported_datasets</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Currently only </span><span class="si">{</span><span class="n">supported_filetypes</span><span class="si">}</span><span class="s2"> filetypes are supported for loading data. Cannot load </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span> <span class="ow">in</span> <span class="n">supported_datasets</span><span class="p">:</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+            <span class="n">supported_datasets</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">](</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">data_params</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="o">==</span> <span class="s2">&quot;.openml&quot;</span><span class="p">:</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+            <span class="n">dataset_base_name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_generic_openml</span><span class="p">(</span>
+                <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_base_name</span><span class="p">,</span>
+                <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">data_params</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">filetype</span> <span class="ow">in</span> <span class="n">supported_filetypes</span><span class="p">:</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_from_csv</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">data_params</span><span class="p">)</span>
+            <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Dataset </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2"> not implemented&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">),</span>
+        <span class="p">),</span> <span class="s2">&quot;_X must be a DataFrame after loading data&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">),</span> <span class="s2">&quot;_y must be a Series after loading data&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_plugin_hook</span><span class="p">(</span><span class="s2">&quot;after_load_data&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Data loaded from </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_from_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;CSV file must contain a &#39;target&#39; column or specify the target column name in the &#39;target&#39; attribute&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keep</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">keep</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keep</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">keep</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">for</span> <span class="n">del_col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keep</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Cannot specify both keep and drop columns&quot;</span>
+            <span class="k">if</span> <span class="n">del_col</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">del_col</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_X</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_y</span> <span class="o">=</span> <span class="n">y</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_score</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes feature importance scores based on the type of task (classification or regression).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        classifier : bool, optional</span>
+<span class="sd">            If True, computes classification feature scores; otherwise, computes regression feature scores. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            A dictionary containing feature importance scores.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_plugin_hook</span><span class="p">(</span><span class="s2">&quot;before_score&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)):</span>
+                <span class="n">result_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classification_feature_scores</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">result_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;class_counts&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_class_counts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">)}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)):</span>
+                <span class="n">result_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regression_feature_scores</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">y_train_cdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_empirical_cdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                <span class="n">y_test_cdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_empirical_cdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_test</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                <span class="n">result_dict</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;y_train_cdf&quot;</span><span class="p">:</span> <span class="n">y_train_cdf</span><span class="p">,</span>
+                    <span class="s2">&quot;y_test_cdf&quot;</span><span class="p">:</span> <span class="n">y_test_cdf</span><span class="p">,</span>
+                <span class="p">}</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)):</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="o">.</span><span class="n">columns</span>
+            <span class="n">result_dict</span><span class="p">[</span><span class="s2">&quot;column_names&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+
+        <span class="n">plugin_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_plugin_hook</span><span class="p">(</span><span class="s2">&quot;after_score&quot;</span><span class="p">,</span> <span class="n">scores</span><span class="o">=</span><span class="n">result_dict</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">plugin_score</span> <span class="ow">in</span> <span class="n">plugin_scores</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plugin_score</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">result_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">plugin_score</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result_dict</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_class_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+            <span class="n">class_dict</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">class_dict</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+        <span class="n">class_counts</span> <span class="o">=</span> <span class="n">class_dict</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">class_counts</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_classification_feature_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes feature importance scores for classification tasks using various statistical methods.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            A dictionary containing feature importance scores from different methods:</span>
+<span class="sd">            - &#39;mutual_info_classif&#39;: Mutual information scores.</span>
+<span class="sd">            - &#39;chi2&#39;: Chi-squared scores.</span>
+<span class="sd">            - &#39;f_classif&#39;: ANOVA F-value scores.</span>
+<span class="sd">            - &#39;class_counts&#39;: Counts of each class in the training target.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">scores</span><span class="p">[</span><span class="s2">&quot;mutual_info_classif&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mutual_info_classif</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">,</span>
+                    <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">,</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Mutual information could not be computed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">. Skipping mutual_info_classif scoring.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">scores</span><span class="p">[</span><span class="s2">&quot;f_classif&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_classif</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;ANOVA F-value could not be computed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">. Skipping f_classif scoring.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Only one class present in y_train; skipping classification feature scoring.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="c1"># Class counts</span>
+        <span class="n">scores</span><span class="p">[</span><span class="s2">&quot;class_counts&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_class_counts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">score</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">scores</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Classification feature score - </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">scores</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_empirical_cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes the empirical cumulative distribution function (CDF) for a given pandas Series.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : pd.Series</span>
+<span class="sd">            The input data for which to compute the empirical CDF.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.Series</span>
+<span class="sd">            A pandas Series representing the empirical CDF values corresponding to the input data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sorted_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">sort_values</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">cdf_values</span> <span class="o">=</span> <span class="p">(</span><span class="n">sorted_data</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;first&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_data</span><span class="p">))</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">cdf_series</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">cdf_values</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">sorted_data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cdf_series</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_regression_feature_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes feature importance scores for regression tasks using various statistical methods.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            A dictionary containing feature importance scores from different methods:</span>
+<span class="sd">            - &#39;mutual_info_regression&#39;: Mutual information scores.</span>
+<span class="sd">            - &#39;f_regression&#39;: F-value scores.</span>
+<span class="sd">            - &#39;r_regression&#39;: Pearson correlation coefficients.</span>
+<span class="sd">            - &#39;y_train_cdf&#39;: Empirical CDF of the training target.</span>
+<span class="sd">            - &#39;y_test_cdf&#39;: Empirical CDF of the testing target.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">scores</span><span class="p">[</span><span class="s2">&quot;mutual_info_regression&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mutual_info_regression</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">,</span>
+            <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">scores</span><span class="p">[</span><span class="s2">&quot;f_regression&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_regression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">scores</span><span class="p">[</span><span class="s2">&quot;r_regression&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">r_regression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">scores</span><span class="p">[</span><span class="s2">&quot;y_train_cdf&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_empirical_cdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">scores</span><span class="p">[</span><span class="s2">&quot;y_test_cdf&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_empirical_cdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_test</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">scores</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_data_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_file</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles loading/saving behavior for data_file.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tuple[DataConfig, bool]</span>
+<span class="sd">            (possibly loaded config instance, save_flag)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">data_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">data_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading existing DataConfig from </span><span class="si">{</span><span class="n">data_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">data_file</span><span class="p">),</span> <span class="kc">False</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Creating directory for DataConfig at </span><span class="si">{</span><span class="n">data_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">data_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No data_file provided, data will not be saved&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="DataConfig.__call__">
+<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig.__call__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_file</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">score_file</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data_file : Union[str, None]</span>
+<span class="sd">            Path to save loaded data as CSV. If None, data is not saved.</span>
+<span class="sd">        score_file : Union[str, None]</span>
+<span class="sd">            Path to save scores as CSV. If None, scores are not saved.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict:</span>
+<span class="sd">            A dictionary containing:</span>
+<span class="sd">            - &#39;data_load_time&#39;: Time taken to load the data.</span>
+<span class="sd">            - &#39;data_sample_time&#39;: Time taken to sample/split the data.</span>
+<span class="sd">            - Additional times/scores can be added in the future.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        AssertionError</span>
+<span class="sd">            If train or test indices are not set after sampling.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">save_flag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_data_file</span><span class="p">(</span><span class="n">data_file</span><span class="o">=</span><span class="n">data_file</span><span class="p">)</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_or_initialize_scores</span><span class="p">(</span><span class="n">score_file</span><span class="p">)</span>
+        <span class="c1"># Load data if not already loaded</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;data_load_time&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_data</span><span class="p">()</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data loaded in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
+        <span class="n">time_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;data_load_time&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span><span class="p">}</span>
+        <span class="c1"># Sample data if not already sampled</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;data_sample_time&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_sample_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Sample data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sample</span><span class="p">()</span>
+        <span class="n">time_dict</span><span class="p">[</span><span class="s2">&quot;data_sample_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_sample_time</span><span class="p">,)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Train set size: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">)</span><span class="si">}</span><span class="s2">, Test set size: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_test</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">data_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score</span><span class="p">()</span>
+        <span class="n">all_scores</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">scores</span><span class="p">,</span> <span class="o">**</span><span class="n">data_scores</span><span class="p">,</span> <span class="o">**</span><span class="n">time_dict</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="n">all_scores</span>
+        <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;score_dict&quot;</span><span class="p">),</span> <span class="s2">&quot;score_dict must be set&quot;</span>
+
+        <span class="k">if</span> <span class="n">score_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">score_file</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_scores</span><span class="p">(</span><span class="n">all_scores</span><span class="p">,</span> <span class="n">score_file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">save_flag</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DataPipelineConfig">
+<a class="viewcode-back" href="../../../data.html#deckard.data.DataPipelineConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataPipelineConfig</span><span class="p">(</span><span class="n">DataConfig</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initializes a data pipeline configuration and fits it to the data in the call() method.&quot;&quot;&quot;</span>
+
+    <span class="n">pipeline</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_init</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="p">,</span>
+            <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">),</span>
+        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;pipeline must be a dictionary, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">&quot;pipeline_fit_n&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pipeline_transform_n&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pipeline_fit_time&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pipeline_transform_time&quot;</span><span class="p">,</span>
+        <span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># Validate the pipeline configuration</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">v</span><span class="p">,</span>
+                <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">),</span>
+            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Each step in pipeline must be a dictionary, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2"> for step </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">assert</span> <span class="p">(</span>
+                <span class="s2">&quot;name&quot;</span> <span class="ow">in</span> <span class="n">v</span>
+            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Each step in pipeline must have a &#39;name&#39; key, missing in step </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;classifier&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;regressor&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid pipeline configuration: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">X_pipeline_steps</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">y_pipeline_steps</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">dtypes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">step_name</span><span class="p">,</span> <span class="n">step_config</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">step_class</span> <span class="o">=</span> <span class="n">step_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">,</span>
+                <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Step </span><span class="si">{</span><span class="n">step_name</span><span class="si">}</span><span class="s2"> missing &#39;name&#39; key&quot;</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">fit_y</span> <span class="o">=</span> <span class="n">step_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fit_y&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="n">fit_Xy</span> <span class="o">=</span> <span class="n">step_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fit_xy&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fit_Xy</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;fit_xy pipeline steps are no longer supported.&quot;</span><span class="p">)</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">step_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dtype&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">step_config_without_name</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">step_config</span><span class="p">}</span>
+            <span class="k">del</span> <span class="n">step_config_without_name</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">&quot;fit_y&quot;</span> <span class="ow">in</span> <span class="n">step_config_without_name</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">step_config_without_name</span><span class="p">[</span><span class="s2">&quot;fit_y&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">&quot;fit_xy&quot;</span> <span class="ow">in</span> <span class="n">step_config_without_name</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">step_config_without_name</span><span class="p">[</span><span class="s2">&quot;fit_xy&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">&quot;dtype&quot;</span> <span class="ow">in</span> <span class="n">step_config</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">step_config_without_name</span><span class="p">[</span><span class="s2">&quot;dtype&quot;</span><span class="p">]</span>
+            <span class="n">step_instance</span> <span class="o">=</span> <span class="n">load_class</span><span class="p">(</span><span class="n">step_class</span><span class="p">,</span> <span class="o">**</span><span class="n">step_config_without_name</span><span class="p">)</span>
+            <span class="n">dtypes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fit_y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">X_pipeline_steps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">step_name</span><span class="p">,</span> <span class="n">step_instance</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">y_pipeline_steps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">step_name</span><span class="p">,</span> <span class="n">step_instance</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">dtypes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dtypes</span><span class="p">):</span>
+
+            <span class="n">string_dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;object&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="s2">&quot;category&quot;</span><span class="p">}</span>
+            <span class="n">num_dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;num&quot;</span><span class="p">,</span> <span class="s2">&quot;numeric&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">}</span>
+
+            <span class="n">transformers</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">transformer</span><span class="p">),</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">X_pipeline_steps</span><span class="p">,</span> <span class="n">dtypes</span><span class="p">):</span>
+
+                <span class="k">if</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">num_dtypes</span><span class="p">:</span>
+                    <span class="n">selector</span> <span class="o">=</span> <span class="n">make_column_selector</span><span class="p">(</span><span class="n">dtype_include</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">number</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">string_dtypes</span><span class="p">:</span>
+                    <span class="n">selector</span> <span class="o">=</span> <span class="n">make_column_selector</span><span class="p">(</span>
+                        <span class="n">dtype_include</span><span class="o">=</span><span class="nb">object</span><span class="p">,</span>
+                    <span class="p">)</span>  <span class="c1"># or &quot;string&quot; depending on your data</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">continue</span>  <span class="c1"># skip unknown dtype</span>
+
+                <span class="n">transformers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">transformer</span><span class="p">,</span> <span class="n">selector</span><span class="p">))</span>
+
+            <span class="n">X_pipeline</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+                <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+                    <span class="p">(</span>
+                        <span class="s2">&quot;preprocess&quot;</span><span class="p">,</span>
+                        <span class="n">ColumnTransformer</span><span class="p">(</span>
+                            <span class="n">transformers</span><span class="o">=</span><span class="n">transformers</span><span class="p">,</span>
+                            <span class="n">remainder</span><span class="o">=</span><span class="s2">&quot;passthrough&quot;</span><span class="p">,</span>
+                            <span class="n">verbose_feature_names_out</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">X_pipeline</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="n">X_pipeline_steps</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_pipeline_steps</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">y_pipeline</span> <span class="o">=</span> <span class="n">y_pipeline_steps</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y_pipeline</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">X_pipeline</span><span class="p">,</span> <span class="n">y_pipeline</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fit_transform_X</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X_train</span><span class="p">,</span>
+        <span class="n">X_test</span><span class="p">,</span>
+        <span class="n">y_train</span><span class="p">,</span>
+        <span class="n">y_test</span><span class="p">,</span>
+        <span class="n">pipeline</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fits the data pipeline to the data and returns the transformed data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : DataConfig</span>
+<span class="sd">            The data configuration object containing the training and testing data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            The transformed training and testing data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_feature_names</span><span class="p">(</span><span class="n">input_cols</span><span class="p">,</span> <span class="n">transformed_X</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">pipeline</span><span class="o">.</span><span class="n">get_feature_names_out</span><span class="p">(</span><span class="n">input_cols</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="n">n_features</span> <span class="o">=</span> <span class="n">transformed_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_cols</span><span class="p">)</span> <span class="o">==</span> <span class="n">n_features</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">input_cols</span><span class="p">)</span>
+                <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;feature_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_features</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;pipeline_fit_time&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_fit_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Fitting data pipeline to training data&quot;</span><span class="p">)</span>
+            <span class="c1"># Fit and transform the training data</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+            <span class="n">pipeline</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+            <span class="n">before_shape</span> <span class="o">=</span> <span class="n">X_train</span><span class="o">.</span><span class="n">shape</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+                <span class="n">train_cols</span> <span class="o">=</span> <span class="n">X_train</span><span class="o">.</span><span class="n">columns</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+                <span class="n">train_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">X_train</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">train_cols</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;feature_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+            <span class="n">X_train</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+            <span class="c1"># If csr_matrix, convert to dense</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">csr_matrix</span><span class="p">):</span>
+                <span class="n">X_train</span> <span class="o">=</span> <span class="n">X_train</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+            <span class="n">train_cols</span> <span class="o">=</span> <span class="n">_resolve_feature_names</span><span class="p">(</span><span class="n">train_cols</span><span class="p">,</span> <span class="n">X_train</span><span class="p">)</span>
+            <span class="n">X_train</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">train_cols</span><span class="p">)</span>
+            <span class="n">after_shape</span> <span class="o">=</span> <span class="n">X_train</span><span class="o">.</span><span class="n">shape</span>
+            <span class="k">assert</span> <span class="p">(</span>
+                <span class="n">before_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">after_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Number of samples changed during fit_transform from </span><span class="si">{</span><span class="n">before_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">after_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_fit_time</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_fit_n</span> <span class="o">=</span> <span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;pipeline_transform_time&quot;</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_transform_time</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="c1"># Record transform time</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+            <span class="c1"># Transform the testing data</span>
+            <span class="n">before_shape</span> <span class="o">=</span> <span class="n">X_test</span><span class="o">.</span><span class="n">shape</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+                <span class="n">test_cols</span> <span class="o">=</span> <span class="n">X_test</span><span class="o">.</span><span class="n">columns</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+                <span class="n">test_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">X_test</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">test_cols</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;feature_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+            <span class="n">X_test</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">csr_matrix</span><span class="p">):</span>
+                <span class="n">X_test</span> <span class="o">=</span> <span class="n">X_test</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+            <span class="n">test_cols</span> <span class="o">=</span> <span class="n">_resolve_feature_names</span><span class="p">(</span><span class="n">test_cols</span><span class="p">,</span> <span class="n">X_test</span><span class="p">)</span>
+            <span class="c1"># Ensure transformed data is a DataFrame with correct columns</span>
+            <span class="n">X_test</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">test_cols</span><span class="p">)</span>
+            <span class="n">after_shape</span> <span class="o">=</span> <span class="n">X_test</span><span class="o">.</span><span class="n">shape</span>
+            <span class="k">assert</span> <span class="p">(</span>
+                <span class="n">before_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">after_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Number of samples changed during transform from </span><span class="si">{</span><span class="n">before_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">after_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_transform_time</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_transform_n</span> <span class="o">=</span> <span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fit_transform_y</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X_train</span><span class="p">,</span>
+        <span class="n">X_test</span><span class="p">,</span>
+        <span class="n">y_train</span><span class="p">,</span>
+        <span class="n">y_test</span><span class="p">,</span>
+        <span class="n">pipeline</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fits the data pipeline to y_train and transforms y_train/y_test.&quot;&quot;&quot;</span>
+
+        <span class="c1"># Normalize y to 2D for sklearn transformers</span>
+        <span class="n">y_train_2d</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">y_train</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">y_train</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">y_test_2d</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">y_test</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">y_test</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;pipeline_y_fit_time&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_y_fit_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Fitting data pipeline to training target&quot;</span><span class="p">)</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">stage</span> <span class="ow">in</span> <span class="n">pipeline</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running data pipeline stage: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">stage</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">y_train_2d</span><span class="p">)</span>
+                <span class="n">y_train_t</span> <span class="o">=</span> <span class="n">stage</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">y_train_2d</span><span class="p">)</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+
+            <span class="n">before_shape</span> <span class="o">=</span> <span class="n">y_train_2d</span><span class="o">.</span><span class="n">shape</span>
+            <span class="n">y_train_t</span> <span class="o">=</span> <span class="n">stage</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">y_train_2d</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y_train_t</span><span class="p">,</span> <span class="n">csr_matrix</span><span class="p">):</span>
+                <span class="n">y_train_t</span> <span class="o">=</span> <span class="n">y_train_t</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+                <span class="n">y_train_t</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">y_train_t</span><span class="p">)</span>
+                <span class="n">after_shape</span> <span class="o">=</span> <span class="n">y_train_t</span><span class="o">.</span><span class="n">shape</span>
+
+                <span class="k">assert</span> <span class="p">(</span>
+                    <span class="n">before_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">after_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Number of samples changed during y fit_transform from </span><span class="si">{</span><span class="n">before_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">after_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_y_fit_time</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_y_fit_n</span> <span class="o">=</span> <span class="n">y_train_t</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">y_train</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">y_train_t</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;pipeline_y_transform_time&quot;</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_y_transform_time</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+
+            <span class="n">before_shape</span> <span class="o">=</span> <span class="n">y_test_2d</span><span class="o">.</span><span class="n">shape</span>
+            <span class="n">y_test_t</span> <span class="o">=</span> <span class="n">stage</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">y_test_2d</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y_test_t</span><span class="p">,</span> <span class="n">csr_matrix</span><span class="p">):</span>
+                <span class="n">y_test_t</span> <span class="o">=</span> <span class="n">y_test_t</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+                <span class="n">y_test_t</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">y_test_t</span><span class="p">)</span>
+                <span class="n">after_shape</span> <span class="o">=</span> <span class="n">y_test_t</span><span class="o">.</span><span class="n">shape</span>
+
+                <span class="k">assert</span> <span class="p">(</span>
+                    <span class="n">before_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">after_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Number of samples changed during y transform from </span><span class="si">{</span><span class="n">before_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">after_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+
+            <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_y_transform_time</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_y_transform_n</span> <span class="o">=</span> <span class="n">y_test_t</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">y_test</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">y_test_t</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_file</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">score_file</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data_file : Union[str, None]</span>
+<span class="sd">            Path to save loaded data as CSV. If None, data is not saved.</span>
+<span class="sd">        score_file : Union[str, None]</span>
+<span class="sd">            Path to save scores as CSV. If None, scores are not saved.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict:</span>
+<span class="sd">            A dictionary containing:</span>
+<span class="sd">            - &#39;data_load_time&#39;: Time taken to load the data.</span>
+<span class="sd">            - &#39;data_sample_time&#39;: Time taken to sample/split the data.</span>
+<span class="sd">            - Additional times/scores can be added in the future.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        AssertionError</span>
+<span class="sd">            If train or test indices are not set after sampling.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">save_flag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_data_file</span><span class="p">(</span><span class="n">data_file</span><span class="o">=</span><span class="n">data_file</span><span class="p">)</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_or_initialize_scores</span><span class="p">(</span><span class="n">score_file</span><span class="p">)</span>
+        <span class="c1"># Load data if not already loaded</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;data_load_time&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_data</span><span class="p">()</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data loaded in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
+        <span class="n">time_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;data_load_time&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span><span class="p">}</span>
+        <span class="n">X_pipeline</span><span class="p">,</span> <span class="n">y_pipeline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_pipeline</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;data_sample_time&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_sample_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sample</span><span class="p">()</span>
+        <span class="n">time_dict</span><span class="p">[</span><span class="s2">&quot;data_sample_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_sample_time</span><span class="p">,)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Train set size: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">)</span><span class="si">}</span><span class="s2">, Test set size: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_test</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Fit X pipeline</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_transform_X</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">X_test</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">y_test</span><span class="p">,</span>
+            <span class="n">X_pipeline</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Fit y pipeline</span>
+        <span class="k">if</span> <span class="n">y_pipeline</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_test</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fit_transform_y</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">X_test</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">y_train</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">y_test</span><span class="p">,</span>
+                    <span class="n">y_pipeline</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">time_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;data_load_time&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_load_time</span><span class="p">,</span>
+            <span class="s2">&quot;data_sample_time&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_sample_time</span><span class="p">,</span>
+            <span class="s2">&quot;pipeline_fit_time&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_fit_time</span><span class="p">,</span>
+            <span class="s2">&quot;pipeline_fit_n&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_fit_n</span><span class="p">,</span>
+            <span class="s2">&quot;pipeline_transform_time&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_transform_time</span><span class="p">,</span>
+            <span class="s2">&quot;pipeline_transform_n&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline_transform_n</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">time_dict</span><span class="p">)</span>
+        <span class="n">data_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score</span><span class="p">()</span>
+        <span class="n">all_scores</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">scores</span><span class="p">,</span> <span class="o">**</span><span class="n">data_scores</span><span class="p">,</span> <span class="o">**</span><span class="n">time_dict</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="n">all_scores</span>
+        <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;score_dict&quot;</span><span class="p">),</span> <span class="s2">&quot;score_dict must be set&quot;</span>
+
+        <span class="k">if</span> <span class="n">score_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">score_file</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_scores</span><span class="p">(</span><span class="n">all_scores</span><span class="p">,</span> <span class="n">score_file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">save_flag</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, simplymathematics.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

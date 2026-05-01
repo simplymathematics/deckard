@@ -7,7 +7,6 @@ estimators using the Adversarial Robustness Toolbox (ART).
 
 .. automodule:: deckard.attack
    :members:
-   :undoc-members:
    :show-inheritance:
 
 Overview

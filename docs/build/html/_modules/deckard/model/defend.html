@@ -1,0 +1,523 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>deckard.model.defend &mdash; deckard .91 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8f098830"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            deckard
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">deckard</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">deckard.model.defend</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for deckard.model.defend</h1><div class="highlight"><pre>
+<span></span><span class="c1"># A BaseConfig class for Configuration of Models using adversarial-robustness-toolbox (ART)</span>
+<span class="c1"># https://adversarial-robustness-toolbox.readthedocs.io/en/latest</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseEstimator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.utils.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_is_fitted</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotFittedError</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">art.estimators.classification.scikitlearn</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ScikitlearnAdaBoostClassifier</span><span class="p">,</span>
+    <span class="n">ScikitlearnBaggingClassifier</span><span class="p">,</span>
+    <span class="n">ScikitlearnClassifier</span><span class="p">,</span>
+    <span class="n">ScikitlearnDecisionTreeClassifier</span><span class="p">,</span>
+    <span class="n">ScikitlearnExtraTreesClassifier</span><span class="p">,</span>
+    <span class="n">ScikitlearnGradientBoostingClassifier</span><span class="p">,</span>
+    <span class="n">ScikitlearnLogisticRegression</span><span class="p">,</span>
+    <span class="n">ScikitlearnRandomForestClassifier</span><span class="p">,</span>
+    <span class="n">ScikitlearnSVC</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">art.estimators.regression.scikitlearn</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ScikitlearnDecisionTreeRegressor</span><span class="p">,</span>
+    <span class="n">ScikitlearnRegressor</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigBase</span><span class="p">,</span> <span class="n">resolve_class</span>
+
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">UserWarning</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">classifier_dict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;SVC&quot;</span><span class="p">:</span> <span class="n">ScikitlearnSVC</span><span class="p">,</span>
+    <span class="s2">&quot;LogisticRegression&quot;</span><span class="p">:</span> <span class="n">ScikitlearnLogisticRegression</span><span class="p">,</span>
+    <span class="s2">&quot;RandomForestClassifier&quot;</span><span class="p">:</span> <span class="n">ScikitlearnRandomForestClassifier</span><span class="p">,</span>
+    <span class="s2">&quot;GradientBoostingClassifier&quot;</span><span class="p">:</span> <span class="n">ScikitlearnGradientBoostingClassifier</span><span class="p">,</span>
+    <span class="s2">&quot;ExtraTreesClassifier&quot;</span><span class="p">:</span> <span class="n">ScikitlearnExtraTreesClassifier</span><span class="p">,</span>
+    <span class="s2">&quot;AdaBoostClassifier&quot;</span><span class="p">:</span> <span class="n">ScikitlearnAdaBoostClassifier</span><span class="p">,</span>
+    <span class="s2">&quot;BaggingClassifier&quot;</span><span class="p">:</span> <span class="n">ScikitlearnBaggingClassifier</span><span class="p">,</span>
+    <span class="s2">&quot;DecisionTreeClassifier&quot;</span><span class="p">:</span> <span class="n">ScikitlearnDecisionTreeClassifier</span><span class="p">,</span>
+    <span class="s2">&quot;sklearn-classifier&quot;</span><span class="p">:</span> <span class="n">ScikitlearnClassifier</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">regressor_dict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;DecisionTreeRegressor&quot;</span><span class="p">:</span> <span class="n">ScikitlearnDecisionTreeRegressor</span><span class="p">,</span>
+    <span class="s2">&quot;sklearn-regressor&quot;</span><span class="p">:</span> <span class="n">ScikitlearnRegressor</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">sklearn_dict</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">classifier_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">regressor_dict</span><span class="p">}</span>
+<span class="n">sklearn_models</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sklearn_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+<span class="n">supported_defense_types</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;detector&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;preprocessor&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;postprocessor&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;trainer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;regularizer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;transformer&quot;</span><span class="p">,</span>
+    <span class="kc">None</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_DefenseBehaviorMixin</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reusable defense workflow behavior mixed into concrete config dataclasses.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Declared for static analyzers; concrete dataclass provides these fields.</span>
+    <span class="n">model_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">classifier</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">model_params</span><span class="p">:</span> <span class="nb">dict</span>
+    <span class="n">probability</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">alias</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">defense_name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">defense_params</span><span class="p">:</span> <span class="nb">dict</span>
+    <span class="n">_model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BaseEstimator</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">score_dict</span><span class="p">:</span> <span class="nb">dict</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">_model_config</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ModelConfig</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_model_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelConfig</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_model_config&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_config</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(</span>
+                <span class="n">model_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_type</span><span class="p">,</span>
+                <span class="n">classifier</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">classifier</span><span class="p">,</span>
+                <span class="n">model_params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_params</span><span class="p">,</span>
+                <span class="n">probability</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">probability</span><span class="p">,</span>
+                <span class="n">alias</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alias</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_config</span><span class="o">.</span><span class="n">defense</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_config</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="s2">&quot;null&quot;</span><span class="p">,</span> <span class="s2">&quot;Null&quot;</span><span class="p">,</span> <span class="s2">&quot;NULL&quot;</span><span class="p">]:</span>
+            <span class="n">model_cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_model_config</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">classifier</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_params</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">model_params</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">_model</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_model&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;score_dict&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_target_&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="o">=</span> <span class="s2">&quot;deckard.DefenseConfig&quot;</span>
+
+        <span class="c1"># Initialize times, scores, and defended model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">defense_training_time</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">defense_application_time</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">defense_prediction_time</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">defense_scoring_time</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_apply_fit</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Whether to apply fit during defense application</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseEstimator</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the model&#39;s estimator.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        BaseEstimator</span>
+<span class="sd">            The model&#39;s estimator.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model is not fitted yet.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">estimator</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BaseEstimator</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseEstimator</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply this defense to a pre-fitted estimator.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">estimator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;estimator must be provided before applying defense&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">estimator</span>
+        <span class="n">model_cfg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_model_config&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">model_cfg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model_cfg</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">estimator</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_defense</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_defense</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseEstimator</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply the specified defense to the model&#39;s estimator.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        BaseEstimator</span>
+<span class="sd">            The estimator wrapped with the specified defense.</span>
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the model is not fitted before applying the defense.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;ModelConfig must have a fitted estimator before applying defense&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span>
+                <span class="n">BaseEstimator</span><span class="p">,</span>
+            <span class="p">),</span> <span class="s2">&quot;ModelConfig&#39;s _model must be a scikit-learn BaseEstimator&quot;</span>
+
+        <span class="c1"># Dynamically import the defense class with defense_params as kwargs</span>
+        <span class="n">defense_type</span><span class="p">,</span> <span class="n">defense_subtype</span><span class="p">,</span> <span class="n">defense_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_defense_name</span><span class="p">()</span>
+        <span class="n">art_class</span><span class="p">,</span> <span class="n">init_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_art_class</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">check_is_fitted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">NotFittedError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;ModelConfig must have a fitted estimator before applying defense&quot;</span><span class="p">,</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="n">defense</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">defended_estimator</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">match</span> <span class="n">defense_type</span><span class="p">:</span>  <span class="c1"># Note: only one defense can be applied at a time</span>
+            <span class="k">case</span> <span class="s2">&quot;preprocessor&quot;</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">defense_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span><span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="ow">or</span> <span class="p">{}))</span>
+                <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">art_class</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_model</span><span class="p">(),</span>
+                    <span class="n">preprocessor</span><span class="o">=</span><span class="n">defense</span><span class="p">,</span>
+                    <span class="n">preprocessing_defences</span><span class="o">=</span><span class="p">[</span><span class="n">defense</span><span class="p">],</span>
+                    <span class="o">**</span><span class="n">init_params</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="s2">&quot;postprocessor&quot;</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">defense_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span><span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="ow">or</span> <span class="p">{}))</span>
+                <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">art_class</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_model</span><span class="p">(),</span>
+                    <span class="n">postprocessing_defences</span><span class="o">=</span><span class="p">[</span><span class="n">defense</span><span class="p">],</span>
+                    <span class="o">**</span><span class="n">init_params</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="s2">&quot;detector&quot;</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">defense_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">match</span> <span class="n">defense_subtype</span><span class="p">:</span>
+                    <span class="k">case</span> <span class="s2">&quot;evasion&quot;</span><span class="p">:</span>
+                        <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span><span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="ow">or</span> <span class="p">{}))</span>
+                        <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">defense</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_model</span><span class="p">(),</span> <span class="o">**</span><span class="n">init_params</span><span class="p">)</span>
+                    <span class="k">case</span> <span class="s2">&quot;poison&quot;</span><span class="p">:</span>
+                        <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span><span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="ow">or</span> <span class="p">{}))</span>
+                        <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">defense</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_model</span><span class="p">(),</span> <span class="o">**</span><span class="n">init_params</span><span class="p">)</span>
+                    <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Detector subtype &#39;</span><span class="si">{</span><span class="n">defense_subtype</span><span class="si">}</span><span class="s2">&#39; is not implemented yet.&quot;</span><span class="p">,</span>
+                        <span class="p">)</span>
+                <span class="c1"># Overwrite the _score method to handle each</span>
+            <span class="k">case</span> <span class="s2">&quot;trainer&quot;</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">defense_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span><span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="ow">or</span> <span class="p">{}))</span>
+                <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">defense</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="o">**</span><span class="n">init_params</span><span class="p">)</span>
+            <span class="k">case</span> <span class="s2">&quot;transformer&quot;</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">defense_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span><span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="ow">or</span> <span class="p">{}))</span>
+                <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">defense</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span>
+                    <span class="n">input_transformations</span><span class="o">=</span><span class="p">[</span><span class="n">defense</span><span class="p">],</span>
+                    <span class="o">**</span><span class="n">init_params</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="s2">&quot;regularizer&quot;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                    <span class="s2">&quot;Regularizer defenses are not implemented yet.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">defense</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">defense_params</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span><span class="p">,</span> <span class="o">**</span><span class="n">init_params</span><span class="p">}</span>
+                <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">art_class</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_model</span><span class="p">(),</span>
+                    <span class="o">**</span><span class="n">defense_params</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">_</span><span class="s2">&quot;:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Defense type &#39;</span><span class="si">{</span><span class="n">defense_type</span><span class="si">}</span><span class="s2">&#39; is not implemented yet.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">defended_estimator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Defense application did not produce an estimator&quot;</span><span class="p">)</span>
+        <span class="c1"># Some defences can optionally be applied during training or prediction</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_apply_fit</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">defense</span><span class="p">,</span> <span class="s2">&quot;_apply_fit&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">defense_application_time</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span>
+        <span class="n">model_cfg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_model_config&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">model_cfg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model_cfg</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">defended_estimator</span>
+        <span class="k">return</span> <span class="n">defended_estimator</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse_defense_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">module_name</span><span class="p">,</span> <span class="n">class_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">module_name</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">class_name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">module_name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">class_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">defense_type</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">defense_type</span> <span class="o">=</span> <span class="n">module_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># e.g., &#39;preprocessor&#39;</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Could not parse defense type from defense name </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">module_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">module_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">))</span> <span class="o">&gt;=</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">defense_subtype</span> <span class="o">=</span> <span class="n">module_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">3</span><span class="p">]</span>  <span class="c1"># e.g., &#39;FeatureSqueezing&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">defense_subtype</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">defense_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="n">defense_class</span> <span class="o">=</span> <span class="n">resolve_class</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_name</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Could not import defense class </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">defense_class</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">assert</span> <span class="p">(</span>
+            <span class="n">defense_type</span> <span class="ow">in</span> <span class="n">supported_defense_types</span>
+        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Unsupported defense type: </span><span class="si">{</span><span class="n">defense_type</span><span class="si">}</span><span class="s2">. Supported types are: </span><span class="si">{</span><span class="n">supported_defense_types</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">return</span> <span class="n">defense_type</span><span class="p">,</span> <span class="n">defense_subtype</span><span class="p">,</span> <span class="n">defense_class</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_art_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_type</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="s2">&quot;null&quot;</span><span class="p">,</span> <span class="s2">&quot;Null&quot;</span><span class="p">,</span> <span class="s2">&quot;NULL&quot;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;model_type must be set before creating an ART defense estimator&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">art_class</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">classifier_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model_type</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span>
+            <span class="k">else</span> <span class="n">regressor_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model_type</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">art_class</span> <span class="ow">in</span> <span class="n">sklearn_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">init_params</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">init_params</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;input_shape&quot;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
+                <span class="s2">&quot;nb_classes&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">y_train</span><span class="p">))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">return</span> <span class="n">art_class</span><span class="p">,</span> <span class="n">init_params</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">DataConfig</span><span class="p">,</span>
+        <span class="n">model_file</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">test_predictions_file</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">train_predictions_file</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">score_file</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Executes the model workflow: training, prediction, scoring, and model persistence.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : DataConfig</span>
+<span class="sd">            An instance of DataConfig containing training and test data.</span>
+<span class="sd">        model_file : str or None, optional</span>
+<span class="sd">            Path to save or load the model. If provided, the model will be loaded from or saved to this path.</span>
+<span class="sd">        test_predictions_file : str or None, optional</span>
+<span class="sd">            Path to save the predictions. If provided, the predictions will be saved to this path.</span>
+<span class="sd">        score_file : str or None, optional</span>
+<span class="sd">            Path to load existing scores. If provided, scores will be loaded from this path.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Dictionary containing scores and timing information for training, prediction, and scoring.</span>
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If prediction is requested without a trained or loaded model.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Ensure data is loaded</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">X_train</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">data</span><span class="o">.</span><span class="n">y_train</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Data not loaded. Please load data before calling the model.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">model_cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_model_config</span><span class="p">()</span>
+        <span class="n">model_cfg</span><span class="o">.</span><span class="n">defense</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">model_cfg</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span>
+        <span class="n">model_cfg</span><span class="o">.</span><span class="n">probability</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">probability</span>
+        <span class="n">model_cfg</span><span class="o">.</span><span class="n">model_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_params</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model_cfg</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span>
+
+        <span class="c1"># Load the score_file if provided</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">_load_score_file</span><span class="p">(</span><span class="n">score_file</span><span class="p">)</span>
+
+        <span class="c1"># Load predictions from filepaths and update times</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">_load_all_predictions</span><span class="p">(</span>
+            <span class="n">train_predictions_file</span><span class="p">,</span>
+            <span class="n">test_predictions_file</span><span class="p">,</span>
+            <span class="n">times</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Train the model if training data is provided and model is not already trained</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">_load_or_train_model</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">model_file</span><span class="p">,</span> <span class="n">times</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">_model</span>
+        <span class="n">model_cfg</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_to</span><span class="p">(</span><span class="n">model_cfg</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">_model</span>
+
+        <span class="n">model_cfg</span><span class="o">.</span><span class="n">_evaluate_and_score</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">times</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">score_dict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_predictions</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">training_predictions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">predictions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_time</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">training_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prediction_time</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">prediction_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_score_time</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">training_score_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prediction_score_time</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">prediction_score_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_n</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">training_n</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prediction_n</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">prediction_n</span>
+
+        <span class="k">if</span> <span class="n">train_predictions_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model_cfg</span><span class="o">.</span><span class="n">save_data</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">training_predictions</span><span class="p">,</span>
+                <span class="n">train_predictions_file</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">test_predictions_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model_cfg</span><span class="o">.</span><span class="n">save_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">predictions</span><span class="p">,</span> <span class="n">test_predictions_file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">score_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model_cfg</span><span class="o">.</span><span class="n">save_scores</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">,</span> <span class="n">score_file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span>
+
+
+<div class="viewcode-block" id="DefenseConfig">
+<a class="viewcode-back" href="../../../model.html#deckard.model.DefenseConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DefenseConfig</span><span class="p">(</span><span class="n">_DefenseBehaviorMixin</span><span class="p">,</span> <span class="n">ConfigBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Concrete defense config dataclass that uses shared defense behavior mixin.&quot;&quot;&quot;</span>
+
+    <span class="n">model_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">classifier</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">model_params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Parameters for the model.&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">probability</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">clip_values</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Tuple of the form (min, max) to clip input features.&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">defense_name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Name of the defense to apply.&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">defense_params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Parameters for the defense.&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">alias</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">_model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BaseEstimator</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">score_dict</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_model_config</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ModelConfig</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, simplymathematics.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

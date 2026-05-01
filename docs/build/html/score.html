@@ -1,0 +1,266 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Score &mdash; deckard .91 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8f098830"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Utils" href="utils.html" />
+    <link rel="prev" title="plot" href="plot.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            deckard
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file.html">File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="attack.html">Attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html">plot</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Score</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultClassifierDict"><code class="docutils literal notranslate"><span class="pre">DefaultClassifierDict</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.score.DefaultClassifierDict.scorers"><code class="docutils literal notranslate"><span class="pre">DefaultClassifierDict.scorers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.score.DefaultClassifierDict.Usage"><code class="docutils literal notranslate"><span class="pre">DefaultClassifierDict.Usage</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultRegressorDict"><code class="docutils literal notranslate"><span class="pre">DefaultRegressorDict</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.score.DefaultRegressorDict.scorers"><code class="docutils literal notranslate"><span class="pre">DefaultRegressorDict.scorers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.score.DefaultRegressorDict.Usage"><code class="docutils literal notranslate"><span class="pre">DefaultRegressorDict.Usage</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.ScorerConfig"><code class="docutils literal notranslate"><span class="pre">ScorerConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.ScorerDictConfig"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.score.ScorerDictConfig.get_callables"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig.get_callables()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">deckard</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">deckard</a></li>
+      <li class="breadcrumb-item active">Score</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/score.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="score">
+<h1>Score<a class="headerlink" href="#score" title="Link to this heading"></a></h1>
+<p>The <a class="reference internal" href="#module-deckard.score" title="deckard.score"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.score</span></code></a> module defines scorer configuration objects used by
+model, attack, and experiment pipelines.</p>
+<p id="module-deckard.score">Scoring configuration primitives for Deckard models and attacks.</p>
+<p>This module provides small wrappers around callable metrics and the default
+classifier/regressor scorer collections used throughout the experiment and model
+pipelines.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.DefaultClassifierDict">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultClassifierDict</span></span><a class="reference internal" href="_modules/deckard/score.html#DefaultClassifierDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultClassifierDict" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Provides a default dictionary of scoring metrics for classification tasks.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.score.DefaultClassifierDict.scorers">
+<span class="sig-name descname"><span class="pre">scorers</span></span><a class="headerlink" href="#deckard.score.DefaultClassifierDict.scorers" title="Link to this definition"></a></dt>
+<dd><p>A configuration object containing common classification scorers:
+- “accuracy”: Uses <cite>accuracy_score</cite> to measure overall accuracy.
+- “precision”: Uses <cite>precision_score</cite> with weighted averaging and zero_division=0.
+- “recall”: Uses <cite>recall_score</cite> with weighted averaging and zero_division=0.
+- “f1”: Uses <cite>f1_score</cite> with weighted averaging and zero_division=0.
+- “roc_auc”: Uses <cite>roc_auc_score</cite> with weighted averaging and multi-class ‘ovr’.
+- “log_loss”: Uses <cite>log_loss</cite> with optional label specification.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.ScorerDictConfig">ScorerDictConfig</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.score.DefaultClassifierDict.Usage">
+<span class="sig-name descname"><span class="pre">Usage</span></span><a class="headerlink" href="#deckard.score.DefaultClassifierDict.Usage" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-----</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">This</span> <span class="pre">class</span> <span class="pre">is</span> <span class="pre">intended</span> <span class="pre">to</span> <span class="pre">provide</span> <span class="pre">a</span> <span class="pre">standardized</span> <span class="pre">set</span> <span class="pre">of</span> <span class="pre">scorers</span> <span class="pre">for</span> <span class="pre">evaluating</span> <span class="pre">classification</span> <span class="pre">models.</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">Each</span> <span class="pre">scorer</span> <span class="pre">is</span> <span class="pre">configurable</span> <span class="pre">via</span> <span class="pre">its</span> <span class="pre">associated</span> <span class="pre">`ScorerConfig`.</span></span></dt>
+<dd></dd></dl>
+
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">scorers</span> <span class="o">=</span> <span class="n">DefaultClassifierDict</span><span class="o">.</span><span class="n">scorers</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">scorers</span><span class="p">[</span><span class="s2">&quot;accuracy&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">score_function</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.DefaultRegressorDict">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultRegressorDict</span></span><a class="reference internal" href="_modules/deckard/score.html#DefaultRegressorDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultRegressorDict" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Provides a default dictionary of regression scorers for model evaluation.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.score.DefaultRegressorDict.scorers">
+<span class="sig-name descname"><span class="pre">scorers</span></span><a class="headerlink" href="#deckard.score.DefaultRegressorDict.scorers" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>A configuration object containing standard regression metrics:</dt><dd><ul class="simple">
+<li><p>“mse”: Mean Squared Error (lower is better)</p></li>
+<li><p>“mae”: Mean Absolute Error (lower is better)</p></li>
+<li><p>“r2”: R^2 Score (higher is better)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.ScorerDictConfig">ScorerDictConfig</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.score.DefaultRegressorDict.Usage">
+<span class="sig-name descname"><span class="pre">Usage</span></span><a class="headerlink" href="#deckard.score.DefaultRegressorDict.Usage" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-----</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">Used</span> <span class="pre">to</span> <span class="pre">supply</span> <span class="pre">common</span> <span class="pre">regression</span> <span class="pre">metrics</span> <span class="pre">for</span> <span class="pre">scoring</span> <span class="pre">models</span> <span class="pre">in</span> <span class="pre">Deckard.</span></span></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.ScorerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">ScorerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">greater_is_better=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">needs_proba=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score.html#ScorerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.ScorerConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Wrap a metric callable together with its runtime parameters.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ScorerConfig</span></code> is the atomic scoring unit used by <code class="docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code>.
+It stores the metric name, the callable itself, and any static keyword
+arguments that should be supplied on every invocation.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.ScorerDictConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">ScorerDictConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scorers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score.html#ScorerDictConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.ScorerDictConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
+<p>Container of named <code class="docutils literal notranslate"><span class="pre">ScorerConfig</span></code> instances.</p>
+<p>The object behaves like a small registry for metrics and is the public score
+configuration type accepted by experiments, models, and attacks.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.score.ScorerDictConfig.get_callables">
+<span class="sig-name descname"><span class="pre">get_callables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score.html#ScorerDictConfig.get_callables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.ScorerDictConfig.get_callables" title="Link to this definition"></a></dt>
+<dd><p>Return the configured scorer callables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mapping from metric names to <code class="docutils literal notranslate"><span class="pre">ScorerConfig</span></code> objects.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="plot.html" class="btn btn-neutral float-left" title="plot" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="utils.html" class="btn btn-neutral float-right" title="Utils" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, simplymathematics.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

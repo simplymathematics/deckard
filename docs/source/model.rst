@@ -8,7 +8,6 @@ and integration with the :mod:`deckard.data` module.
 
 .. automodule:: deckard.model
    :members:
-   :undoc-members:
    :show-inheritance:
 
 Overview

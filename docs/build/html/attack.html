@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Attack &mdash; deckard .91 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Main Components" href="utils.html" />
+    <link rel="next" title="plot" href="plot.html" />
     <link rel="prev" title="Model" href="model.html" /> 
 </head>
 
@@ -45,9 +45,48 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file.html">File</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html">Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Attack</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig"><code class="docutils literal notranslate"><span class="pre">AttackConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.attack_type"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.attack_params"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.attack_size"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.targeted_attribute"><code class="docutils literal notranslate"><span class="pre">AttackConfig.targeted_attribute</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.alias"><code class="docutils literal notranslate"><span class="pre">AttackConfig.alias</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.attack_time"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack_time</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.attack_prediction_time"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack_prediction_time</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.attack_score_time"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack_score_time</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.attack"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.attack_predictions"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack_predictions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.predictions"><code class="docutils literal notranslate"><span class="pre">AttackConfig.predictions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.labels"><code class="docutils literal notranslate"><span class="pre">AttackConfig.labels</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.target_index"><code class="docutils literal notranslate"><span class="pre">AttackConfig.target_index</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig._attack_type"><code class="docutils literal notranslate"><span class="pre">AttackConfig._attack_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig._attack_subtype"><code class="docutils literal notranslate"><span class="pre">AttackConfig._attack_subtype</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.score_dict"><code class="docutils literal notranslate"><span class="pre">AttackConfig.score_dict</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig._target_"><code class="docutils literal notranslate"><span class="pre">AttackConfig._target_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.__hash__"><code class="docutils literal notranslate"><span class="pre">AttackConfig.__hash__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.__post_init__"><code class="docutils literal notranslate"><span class="pre">AttackConfig.__post_init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig.__call__"><code class="docutils literal notranslate"><span class="pre">AttackConfig.__call__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig._get_benign_preds"><code class="docutils literal notranslate"><span class="pre">AttackConfig._get_benign_preds()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig._get_feature_vector_preds"><code class="docutils literal notranslate"><span class="pre">AttackConfig._get_feature_vector_preds()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig._score_attack"><code class="docutils literal notranslate"><span class="pre">AttackConfig._score_attack()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig._evade"><code class="docutils literal notranslate"><span class="pre">AttackConfig._evade()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig._infer_attribute"><code class="docutils literal notranslate"><span class="pre">AttackConfig._infer_attribute()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig._infer_membership"><code class="docutils literal notranslate"><span class="pre">AttackConfig._infer_membership()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig._poison"><code class="docutils literal notranslate"><span class="pre">AttackConfig._poison()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig._extract"><code class="docutils literal notranslate"><span class="pre">AttackConfig._extract()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig._save"><code class="docutils literal notranslate"><span class="pre">AttackConfig._save()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.SensitiveFeaturesWrapper"><code class="docutils literal notranslate"><span class="pre">SensitiveFeaturesWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.SensitiveFeaturesWrapper.get_params"><code class="docutils literal notranslate"><span class="pre">SensitiveFeaturesWrapper.get_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.attack.SensitiveFeaturesWrapper.set_params"><code class="docutils literal notranslate"><span class="pre">SensitiveFeaturesWrapper.set_params()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#supported-attacks">Supported Attacks</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
@@ -66,10 +105,10 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html">Main Components</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#features">Features</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#dependencies">Dependencies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html">plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html">Score</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
 </ul>
 </li>
 </ul>
@@ -101,9 +140,340 @@
              
   <section id="attack">
 <h1>Attack<a class="headerlink" href="#attack" title="Link to this heading"></a></h1>
-<p>The <code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.attack</span></code> module contains the <code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code> dataclass and helper
+<p>The <a class="reference internal" href="#module-deckard.attack" title="deckard.attack"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.attack</span></code></a> module contains the <code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code> dataclass and helper
 functions for running evasion and inference attacks against scikit-learn
 estimators using the Adversarial Robustness Toolbox (ART).</p>
+<p id="module-deckard.attack">Public attack configuration exports.</p>
+<p>This subpackage exposes the attack-side configuration objects used by
+<code class="docutils literal notranslate"><span class="pre">ExperimentConfig</span></code> and direct Python callers.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.attack.</span></span><span class="sig-name descname"><span class="pre">AttackConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_type='art.attacks.evasion.HopSkipJump'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_size=1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targeted_attribute=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_index=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_subtype=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
+<p>Configuration and execution class for adversarial attacks on machine learning models.
+This class provides a unified interface for configuring, executing, and scoring various types of adversarial attacks,
+including evasion, poisoning, extraction, and inference attacks. It supports integration with scikit-learn models
+and the Adversarial Robustness Toolbox (ART), and provides detailed logging and timing for attack operations.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.attack_type">
+<span class="sig-name descname"><span class="pre">attack_type</span></span><a class="headerlink" href="#deckard.attack.AttackConfig.attack_type" title="Link to this definition"></a></dt>
+<dd><p>Fully qualified ART attack class path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.attack_params">
+<span class="sig-name descname"><span class="pre">attack_params</span></span><a class="headerlink" href="#deckard.attack.AttackConfig.attack_params" title="Link to this definition"></a></dt>
+<dd><p>Parameters passed to the ART attack initializer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.attack_size">
+<span class="sig-name descname"><span class="pre">attack_size</span></span><a class="headerlink" href="#deckard.attack.AttackConfig.attack_size" title="Link to this definition"></a></dt>
+<dd><p>Number of samples to include in attack evaluation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.targeted_attribute">
+<span class="sig-name descname"><span class="pre">targeted_attribute</span></span><a class="headerlink" href="#deckard.attack.AttackConfig.targeted_attribute" title="Link to this definition"></a></dt>
+<dd><p>Feature name for attribute inference attacks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.alias">
+<span class="sig-name descname"><span class="pre">alias</span></span><a class="headerlink" href="#deckard.attack.AttackConfig.alias" title="Link to this definition"></a></dt>
+<dd><p>Optional alias for this attack configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.attack_time">
+<span class="sig-name descname"><span class="pre">attack_time</span></span><a class="headerlink" href="#deckard.attack.AttackConfig.attack_time" title="Link to this definition"></a></dt>
+<dd><p>Time taken to execute the attack.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.attack_prediction_time">
+<span class="sig-name descname"><span class="pre">attack_prediction_time</span></span><a class="headerlink" href="#deckard.attack.AttackConfig.attack_prediction_time" title="Link to this definition"></a></dt>
+<dd><p>Time taken for adversarial prediction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.attack_score_time">
+<span class="sig-name descname"><span class="pre">attack_score_time</span></span><a class="headerlink" href="#deckard.attack.AttackConfig.attack_score_time" title="Link to this definition"></a></dt>
+<dd><p>Time taken to score the attack.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.attack">
+<span class="sig-name descname"><span class="pre">attack</span></span><a class="headerlink" href="#deckard.attack.AttackConfig.attack" title="Link to this definition"></a></dt>
+<dd><p>Stores the result of the attack.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>object, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.attack_predictions">
+<span class="sig-name descname"><span class="pre">attack_predictions</span></span><a class="headerlink" href="#deckard.attack.AttackConfig.attack_predictions" title="Link to this definition"></a></dt>
+<dd><p>Stores the predictions made by the attack.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.predictions">
+<span class="sig-name descname"><span class="pre">predictions</span></span><a class="headerlink" href="#deckard.attack.AttackConfig.predictions" title="Link to this definition"></a></dt>
+<dd><p>Predicted labels or scores produced by the attack routine.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>object, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.labels">
+<span class="sig-name descname"><span class="pre">labels</span></span><a class="headerlink" href="#deckard.attack.AttackConfig.labels" title="Link to this definition"></a></dt>
+<dd><p>Labels aligned with <code class="docutils literal notranslate"><span class="pre">predictions</span></code> for scoring.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>object, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.target_index">
+<span class="sig-name descname"><span class="pre">target_index</span></span><a class="headerlink" href="#deckard.attack.AttackConfig.target_index" title="Link to this definition"></a></dt>
+<dd><p>Cached column index for <code class="docutils literal notranslate"><span class="pre">targeted_attribute</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig._attack_type">
+<span class="sig-name descname"><span class="pre">_attack_type</span></span><a class="headerlink" href="#deckard.attack.AttackConfig._attack_type" title="Link to this definition"></a></dt>
+<dd><p>Parsed attack family (e.g., evasion, inference).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig._attack_subtype">
+<span class="sig-name descname"><span class="pre">_attack_subtype</span></span><a class="headerlink" href="#deckard.attack.AttackConfig._attack_subtype" title="Link to this definition"></a></dt>
+<dd><p>Parsed attack subtype.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.score_dict">
+<span class="sig-name descname"><span class="pre">score_dict</span></span><a class="headerlink" href="#deckard.attack.AttackConfig.score_dict" title="Link to this definition"></a></dt>
+<dd><p>Stores the computed scores and metrics for the attack.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig._target_">
+<span class="sig-name descname"><span class="pre">_target_</span></span><a class="headerlink" href="#deckard.attack.AttackConfig._target_" title="Link to this definition"></a></dt>
+<dd><p>Internal target identifier used by config tooling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig.__hash__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig.__hash__" title="Link to this definition"></a></dt>
+<dd><p>Computes a hash value for the object based on its non-private attributes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.__post_init__">
+<span class="sig-name descname"><span class="pre">__post_init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig.__post_init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig.__post_init__" title="Link to this definition"></a></dt>
+<dd><p>Initializes post-construction attributes and sets defaults.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">\*\*kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig.__call__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig._get_benign_preds">
+<span class="sig-name descname"><span class="pre">_get_benign_preds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">art_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig._get_benign_preds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig._get_benign_preds" title="Link to this definition"></a></dt>
+<dd><p>Generates benign predictions and corresponding labels for a subset of data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig._get_feature_vector_preds">
+<span class="sig-name descname"><span class="pre">_get_feature_vector_preds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targeted_attribute</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig._get_feature_vector_preds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig._get_feature_vector_preds" title="Link to this definition"></a></dt>
+<dd><p>Extracts a subset of feature vectors, labels, and attributes from the provided data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig._score_attack">
+<span class="sig-name descname"><span class="pre">_score_attack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ben_pred_labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adv_pred_labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_test_numeric</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig._score_attack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig._score_attack" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig._evade">
+<span class="sig-name descname"><span class="pre">_evade</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">art_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig._evade"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig._evade" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig._infer_attribute">
+<span class="sig-name descname"><span class="pre">_infer_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">art_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targeted_attribute</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig._infer_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig._infer_attribute" title="Link to this definition"></a></dt>
+<dd><p>Performs an attribute inference attack on a dataset using a specified attack model and model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig._infer_membership">
+<span class="sig-name descname"><span class="pre">_infer_membership</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">art_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig._infer_membership"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig._infer_membership" title="Link to this definition"></a></dt>
+<dd><p>Performs membership inference attack on the given dataset using the specified attack and model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig._poison">
+<span class="sig-name descname"><span class="pre">_poison</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig._poison"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig._poison" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig._extract">
+<span class="sig-name descname"><span class="pre">_extract</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig._extract"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig._extract" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.attack.AttackConfig._save">
+<span class="sig-name descname"><span class="pre">_save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig._save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig._save" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the attack type, subtype, or model type is unsupported, or if the model is not fitted.</p></li>
+<li><p><strong>NotImplementedError</strong> – If the attack type or subtype is not implemented.</p></li>
+<li><p><strong>AssertionError</strong> – If the output scores or timing variables are not of the expected types.</p></li>
+<li><p><strong>TypeError</strong> – If the attack model’s fit method does not accept the expected arguments.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">AttackConfig</span><span class="p">(</span><span class="n">attack_type</span><span class="o">=</span><span class="s2">&quot;art.attacks.evasion.FastGradientMethod&quot;</span><span class="p">,</span> <span class="n">attack_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;eps&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">config</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.attack.SensitiveFeaturesWrapper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.attack.</span></span><span class="sig-name descname"><span class="pre">SensitiveFeaturesWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">estimator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensitive_features</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#SensitiveFeaturesWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.SensitiveFeaturesWrapper" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEstimator</span></code></p>
+<p>Wraps an estimator that requires <cite>sensitive_features</cite> in predict.</p>
+<p>At predict time the stored sensitive features are sliced to match the
+number of rows in <code class="docutils literal notranslate"><span class="pre">X</span></code>, so adversarial examples (same n rows, different
+feature values) continue to work correctly.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.attack.SensitiveFeaturesWrapper.get_params">
+<span class="sig-name descname"><span class="pre">get_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">deep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#SensitiveFeaturesWrapper.get_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.SensitiveFeaturesWrapper.get_params" title="Link to this definition"></a></dt>
+<dd><p>Get parameters for this estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>deep</strong> (<em>bool</em><em>, </em><em>default=True</em>) – If True, will return the parameters for this estimator and
+contained subobjects that are estimators.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>params</strong> – Parameter names mapped to their values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.attack.SensitiveFeaturesWrapper.set_params">
+<span class="sig-name descname"><span class="pre">set_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#SensitiveFeaturesWrapper.set_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.SensitiveFeaturesWrapper.set_params" title="Link to this definition"></a></dt>
+<dd><p>Set the parameters of this estimator.</p>
+<p>The method works on simple estimators as well as on nested objects
+(such as <code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code>). The latter have
+parameters of the form <code class="docutils literal notranslate"><span class="pre">&lt;component&gt;__&lt;parameter&gt;</span></code> so that it’s
+possible to update each component of a nested object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>**params</strong> (<em>dict</em>) – Estimator parameters.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>self</strong> – Estimator instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>estimator instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
 <p><code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code> provides a configurable interface for setting up and executing
@@ -149,20 +519,20 @@ python -m deckard.attack –attack_config_file blackbox_evasion –attack_size 5
 <p>You can also use the API programmatically:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_attack_config</span><span class="p">,</span> <span class="n">AttackConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_data_config</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_and_evaluate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_model_config</span>
 
 <span class="c1"># initialize/load data</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">initialize_data_config</span><span class="p">()</span>
-<span class="n">data</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;path/to/data.csv&quot;</span><span class="p">)</span>
+<span class="n">data_scores</span> <span class="o">=</span> <span class="n">data</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;path/to/data.csv&quot;</span><span class="p">)</span>
 
 <span class="c1"># train a model (example)</span>
-<span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">train_and_evaluate</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">score</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-
+<span class="n">model</span> <span class="o">=</span> <span class="n">initialize_model_config</span><span class="p">()</span>
+<span class="n">benign_scores</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">model_filepath</span><span class="o">=</span><span class="s2">&quot;models/rf.pkl&quot;</span><span class="p">,</span> <span class="n">score_file</span><span class="o">=</span><span class="s2">&quot;model_scores.json&quot;</span><span class="p">)</span>
 <span class="c1"># create an attack config (uses defaults or overrides)</span>
 <span class="n">attack_cfg</span> <span class="o">=</span> <span class="n">initialize_attack_config</span><span class="p">()</span>  <span class="c1"># or AttackConfig(attack_name=&quot;art.attacks.evasion.HopSkipJump&quot;, attack_size=50)</span>
 
 <span class="c1"># run the attack against the trained model</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">attack_cfg</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+<span class="n">benign_and_adversarial_scores</span> <span class="o">=</span> <span class="n">attack_cfg</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -212,6 +582,8 @@ using Python’s built-in <cite>logging</cite> module.</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="data.html"><span class="doc">Data</span></a></p></li>
 <li><p><a class="reference internal" href="model.html"><span class="doc">Model</span></a></p></li>
+<li><p><a class="reference internal" href="experiment.html"><span class="doc">Experiment</span></a></p></li>
+<li><p><a class="reference internal" href="utils.html"><span class="doc">Utils</span></a></p></li>
 </ul>
 </section>
 </section>
@@ -222,7 +594,7 @@ using Python’s built-in <cite>logging</cite> module.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="model.html" class="btn btn-neutral float-left" title="Model" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="utils.html" class="btn btn-neutral float-right" title="Main Components" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="plot.html" class="btn btn-neutral float-right" title="plot" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

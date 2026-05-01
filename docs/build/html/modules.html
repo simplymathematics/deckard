@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>deckard &mdash; deckard .91 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Data" href="data.html" />
+    <link rel="next" title="Experiment" href="experiment.html" />
     <link rel="prev" title="deckard documentation" href="index.html" /> 
 </head>
 
@@ -45,13 +45,15 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">deckard</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file.html">File</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html">Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html">Attack</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html">Main Components</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#features">Features</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#dependencies">Dependencies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html">plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html">Score</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
 </ul>
 </li>
 </ul>
@@ -85,119 +87,83 @@
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiment</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="experiment.html#deckard.experiment.DataConfigResolutionMixin"><code class="docutils literal notranslate"><span class="pre">DataConfigResolutionMixin</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="experiment.html#deckard.experiment.ExperimentConfig"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="experiment.html#deckard.experiment.SurvivalExperimentConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="file.html">File</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="file.html#deckard.file.FileConfig"><code class="docutils literal notranslate"><span class="pre">FileConfig</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="data.html">Data</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.DataConfig"><code class="docutils literal notranslate"><span class="pre">DataConfig</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig.dataset_name"><code class="docutils literal notranslate"><span class="pre">DataConfig.dataset_name</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig.data_params"><code class="docutils literal notranslate"><span class="pre">DataConfig.data_params</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig.test_size"><code class="docutils literal notranslate"><span class="pre">DataConfig.test_size</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig.random_state"><code class="docutils literal notranslate"><span class="pre">DataConfig.random_state</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig.stratify"><code class="docutils literal notranslate"><span class="pre">DataConfig.stratify</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._X"><code class="docutils literal notranslate"><span class="pre">DataConfig._X</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._y"><code class="docutils literal notranslate"><span class="pre">DataConfig._y</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._data_load_time"><code class="docutils literal notranslate"><span class="pre">DataConfig._data_load_time</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._data_sample_time"><code class="docutils literal notranslate"><span class="pre">DataConfig._data_sample_time</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._train_indices"><code class="docutils literal notranslate"><span class="pre">DataConfig._train_indices</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._test_indices"><code class="docutils literal notranslate"><span class="pre">DataConfig._test_indices</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._X_train"><code class="docutils literal notranslate"><span class="pre">DataConfig._X_train</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._y_train"><code class="docutils literal notranslate"><span class="pre">DataConfig._y_train</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._X_test"><code class="docutils literal notranslate"><span class="pre">DataConfig._X_test</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._y_test"><code class="docutils literal notranslate"><span class="pre">DataConfig._y_test</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig.score_dict"><code class="docutils literal notranslate"><span class="pre">DataConfig.score_dict</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._target_"><code class="docutils literal notranslate"><span class="pre">DataConfig._target_</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig.__post_init__"><code class="docutils literal notranslate"><span class="pre">DataConfig.__post_init__()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig.__hash__"><code class="docutils literal notranslate"><span class="pre">DataConfig.__hash__()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._load_adult_income_data"><code class="docutils literal notranslate"><span class="pre">DataConfig._load_adult_income_data()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._load_diabetes_data"><code class="docutils literal notranslate"><span class="pre">DataConfig._load_diabetes_data()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._load_digits_data"><code class="docutils literal notranslate"><span class="pre">DataConfig._load_digits_data()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._make_classification_data"><code class="docutils literal notranslate"><span class="pre">DataConfig._make_classification_data()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._make_regression_data"><code class="docutils literal notranslate"><span class="pre">DataConfig._make_regression_data()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._sample"><code class="docutils literal notranslate"><span class="pre">DataConfig._sample()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig._load_data"><code class="docutils literal notranslate"><span class="pre">DataConfig._load_data()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig.__call__"><code class="docutils literal notranslate"><span class="pre">DataConfig.__call__()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig.save"><code class="docutils literal notranslate"><span class="pre">DataConfig.save()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#deckard.data.DataConfig.load"><code class="docutils literal notranslate"><span class="pre">DataConfig.load()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#id0"><code class="docutils literal notranslate"><span class="pre">DataConfig.data_params</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#id3"><code class="docutils literal notranslate"><span class="pre">DataConfig.dataset_name</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#id4"><code class="docutils literal notranslate"><span class="pre">DataConfig.random_state</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#id5"><code class="docutils literal notranslate"><span class="pre">DataConfig.stratify</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#id6"><code class="docutils literal notranslate"><span class="pre">DataConfig.test_size</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.data_main"><code class="docutils literal notranslate"><span class="pre">data_main()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.initialize_data_config"><code class="docutils literal notranslate"><span class="pre">initialize_data_config()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.DataConfig"><code class="docutils literal notranslate"><span class="pre">DataConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.DataPipelineConfig"><code class="docutils literal notranslate"><span class="pre">DataPipelineConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.FairnessDataConfig"><code class="docutils literal notranslate"><span class="pre">FairnessDataConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.PytorchCustomDataConfig"><code class="docutils literal notranslate"><span class="pre">PytorchCustomDataConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.PytorchDataConfig"><code class="docutils literal notranslate"><span class="pre">PytorchDataConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#overview">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#usage">Usage</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="data.html#command-line-example">Command-line example</a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#programmatic-usage">Programmatic usage</a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#custom-configuration">Custom configuration</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#internals">Internals</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="data.html#timing-and-logging">Timing and logging</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#troubleshooting">Troubleshooting</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="data.html#see-also">See also</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="model.html">Model</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.ModelConfig"><code class="docutils literal notranslate"><span class="pre">ModelConfig</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="model.html#deckard.model.ModelConfig.classifier"><code class="docutils literal notranslate"><span class="pre">ModelConfig.classifier</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="model.html#deckard.model.ModelConfig.model_params"><code class="docutils literal notranslate"><span class="pre">ModelConfig.model_params</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="model.html#deckard.model.ModelConfig.model_type"><code class="docutils literal notranslate"><span class="pre">ModelConfig.model_type</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="model.html#deckard.model.ModelConfig.probability"><code class="docutils literal notranslate"><span class="pre">ModelConfig.probability</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="model.html#deckard.model.ModelConfig.save"><code class="docutils literal notranslate"><span class="pre">ModelConfig.save()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.initialize_model_config"><code class="docutils literal notranslate"><span class="pre">initialize_model_config()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.model_main"><code class="docutils literal notranslate"><span class="pre">model_main()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="model.html#overview">Overview</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="model.html#supported-frameworks">Supported frameworks</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="model.html#usage">Usage</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="model.html#command-line-example">Command-line example</a></li>
-<li class="toctree-l3"><a class="reference internal" href="model.html#programmatic-example">Programmatic example</a></li>
-<li class="toctree-l3"><a class="reference internal" href="model.html#custom-configuration">Custom configuration</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="model.html#internals">Internals</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="model.html#timing-and-logging">Timing and logging</a></li>
-<li class="toctree-l3"><a class="reference internal" href="model.html#scoring">Scoring</a></li>
-<li class="toctree-l3"><a class="reference internal" href="model.html#persistence">Persistence</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="model.html#troubleshooting">Troubleshooting</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="model.html#see-also">See also</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.DefenseConfig"><code class="docutils literal notranslate"><span class="pre">DefenseConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.FairnessDefenseConfig"><code class="docutils literal notranslate"><span class="pre">FairnessDefenseConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.FairnessModelConfig"><code class="docutils literal notranslate"><span class="pre">FairnessModelConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.ModelConfig"><code class="docutils literal notranslate"><span class="pre">ModelConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.PytorchModelConfig"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="attack.html">Attack</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="attack.html#deckard.attack.AttackConfig"><code class="docutils literal notranslate"><span class="pre">AttackConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="attack.html#deckard.attack.SensitiveFeaturesWrapper"><code class="docutils literal notranslate"><span class="pre">SensitiveFeaturesWrapper</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html#supported-attacks">Supported Attacks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="attack.html#usage">Usage</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="attack.html#command-line-example">Command-line example</a></li>
-<li class="toctree-l3"><a class="reference internal" href="attack.html#programmatic-example">Programmatic example:</a></li>
-<li class="toctree-l3"><a class="reference internal" href="attack.html#custom-configuration">Custom Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="attack.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="attack.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="attack.html#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="attack.html#internals">Internals</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="attack.html#timing-and-logging">Timing and logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">plot</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="plot.html#plotting-apis">Plotting APIs</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="attack.html#troubleshooting">Troubleshooting</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="attack.html#see-also">See also</a></li>
+<li class="toctree-l1"><a class="reference internal" href="score.html">Score</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultClassifierDict"><code class="docutils literal notranslate"><span class="pre">DefaultClassifierDict</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultRegressorDict"><code class="docutils literal notranslate"><span class="pre">DefaultRegressorDict</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.ScorerConfig"><code class="docutils literal notranslate"><span class="pre">ScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.ScorerDictConfig"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.ConfigBase"><code class="docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.create_parser_from_function"><code class="docutils literal notranslate"><span class="pre">create_parser_from_function()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.hash_conf_values"><code class="docutils literal notranslate"><span class="pre">hash_conf_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.import_class_from_file"><code class="docutils literal notranslate"><span class="pre">import_class_from_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.load_class"><code class="docutils literal notranslate"><span class="pre">load_class()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.load_data"><code class="docutils literal notranslate"><span class="pre">load_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.normalize_for_hash"><code class="docutils literal notranslate"><span class="pre">normalize_for_hash()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.resolve_class"><code class="docutils literal notranslate"><span class="pre">resolve_class()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.save_data"><code class="docutils literal notranslate"><span class="pre">save_data()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">Main Components</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html#features">Features</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html#dependencies">Dependencies</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html#usage">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="layers.html">Layers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.SUPPORTED_LAYERS"><code class="docutils literal notranslate"><span class="pre">SUPPORTED_LAYERS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.compile_results_main"><code class="docutils literal notranslate"><span class="pre">compile_results_main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.layer_dict"><code class="docutils literal notranslate"><span class="pre">layer_dict</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.optimize_main"><code class="docutils literal notranslate"><span class="pre">optimize_main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.plot_main"><code class="docutils literal notranslate"><span class="pre">plot_main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.progress_bar_main"><code class="docutils literal notranslate"><span class="pre">progress_bar_main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.survival_main"><code class="docutils literal notranslate"><span class="pre">survival_main()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </div>
 </section>
@@ -207,7 +173,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="index.html" class="btn btn-neutral float-left" title="deckard documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="data.html" class="btn btn-neutral float-right" title="Data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="experiment.html" class="btn btn-neutral float-right" title="Experiment" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

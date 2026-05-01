@@ -1,0 +1,546 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>deckard.layers.plot &mdash; deckard .91 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8f098830"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            deckard
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">deckard</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">deckard.layers.plot</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for deckard.layers.plot</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">OmegaConf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydra._internal.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_args_parser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydra.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">instantiate</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="n">PLOT_MAIN_DEFAULTS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;experiment_config&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;data_file&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;backend&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;plot_type&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;plots&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;plots_file&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;plot_file&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;plot_folder&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;features&quot;</span><span class="p">:</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;hue&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;style&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;xlabel&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ylabel&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;xscale&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;yscale&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;legend_title&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;plot_params_file&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;kwargs_file&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;rc_config_file&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_experiment_config</span><span class="p">(</span><span class="n">experiment_config</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="n">cfg_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">experiment_config</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">cfg_path</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span> <span class="sa">f</span><span class="s2">&quot;Experiment config file not found: </span><span class="si">{</span><span class="n">cfg_path</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="n">raw_cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cfg_path</span><span class="p">),</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Experiment config must resolve to a dictionary: </span><span class="si">{</span><span class="n">cfg_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">raw_cfg</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_plots_arg</span><span class="p">(</span><span class="n">plots</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plots</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">plots</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">plots</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_yellowbrick_plots</span><span class="p">(</span><span class="n">plots</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plots</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">plots</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;all&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plots</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">normalized</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">plots</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">normalized</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">normalized</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;all&quot;</span>
+        <span class="k">return</span> <span class="n">normalized</span>
+    <span class="k">return</span> <span class="n">_parse_plots_arg</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">plots</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_yaml</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="n">yaml_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">yaml_path</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span> <span class="sa">f</span><span class="s2">&quot;YAML file not found: </span><span class="si">{</span><span class="n">yaml_path</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">loaded</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">yaml_path</span><span class="p">),</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loaded</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_instantiate_experiment_cfg</span><span class="p">(</span><span class="n">exp_cfg</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">exp_cfg</span><span class="p">)</span>
+    <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;_target_&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_target_&quot;</span><span class="p">,</span> <span class="s2">&quot;deckard.ExperimentConfig&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">instantiate</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cfg_to_dict</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">cfg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">):</span>
+        <span class="n">resolved</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">resolved</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resolved</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cfg</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">resolved</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">cfg</span><span class="p">),</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">resolved</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resolved</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_plot_args_from_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve plot settings from Hydra cfg using `plot` block first, top-level as fallback.&quot;&quot;&quot;</span>
+    <span class="n">cfg_dict</span> <span class="o">=</span> <span class="n">_cfg_to_dict</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">plot_block</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">cfg_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="p">)</span>
+
+    <span class="n">resolved</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">PLOT_MAIN_DEFAULTS</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">PLOT_MAIN_DEFAULTS</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">plot_block</span> <span class="ow">and</span> <span class="n">plot_block</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">resolved</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">plot_block</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">cfg_dict</span> <span class="ow">and</span> <span class="n">cfg_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">resolved</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">cfg_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">resolved</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_extract_experiment_cfg_from_hydra_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return experiment-like config from Hydra cfg for Yellowbrick backend inference.&quot;&quot;&quot;</span>
+    <span class="n">cfg_dict</span> <span class="o">=</span> <span class="n">_cfg_to_dict</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cfg_dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="c1"># If cfg contains a dedicated plot block with experiment inputs, prefer it.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">plot_block</span> <span class="o">=</span> <span class="n">cfg_dict</span><span class="p">[</span><span class="s2">&quot;plot&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plot_block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;experiment&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">plot_block</span><span class="p">[</span><span class="s2">&quot;experiment&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Common optimize/default Hydra config shape: experiment fields are top-level.</span>
+    <span class="k">if</span> <span class="s2">&quot;data&quot;</span> <span class="ow">in</span> <span class="n">cfg_dict</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;model&quot;</span> <span class="ow">in</span> <span class="n">cfg_dict</span> <span class="ow">or</span> <span class="s2">&quot;files&quot;</span> <span class="ow">in</span> <span class="n">cfg_dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cfg_dict</span>
+
+    <span class="c1"># Alternate shape where experiment is nested explicitly.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;experiment&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cfg_dict</span><span class="p">[</span><span class="s2">&quot;experiment&quot;</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_experiment_config_path</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">cfg_dict</span> <span class="o">=</span> <span class="n">_cfg_to_dict</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">plot_block</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">cfg_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plot_block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;experiment_config&quot;</span><span class="p">),</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">plot_block</span><span class="p">[</span><span class="s2">&quot;experiment_config&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;experiment_config&quot;</span><span class="p">),</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cfg_dict</span><span class="p">[</span><span class="s2">&quot;experiment_config&quot;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_data_file</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">cfg_dict</span> <span class="o">=</span> <span class="n">_cfg_to_dict</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">plot_block</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">cfg_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plot_block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data_file&quot;</span><span class="p">),</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">plot_block</span><span class="p">[</span><span class="s2">&quot;data_file&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data_file&quot;</span><span class="p">),</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cfg_dict</span><span class="p">[</span><span class="s2">&quot;data_file&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;compile_results&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">cfg_dict</span><span class="p">[</span><span class="s2">&quot;compile_results&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;output_file&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">candidate</span>
+    <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_extract_backend</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">data_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">experiment_cfg</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">experiment_config</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">cfg_dict</span> <span class="o">=</span> <span class="n">_cfg_to_dict</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">plot_block</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">cfg_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="p">)</span>
+    <span class="n">backend</span> <span class="o">=</span> <span class="n">plot_block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;backend&quot;</span><span class="p">,</span> <span class="n">cfg_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;backend&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">backend</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="s2">&quot;yellowbrick&quot;</span><span class="p">,</span> <span class="s2">&quot;seaborn&quot;</span><span class="p">}:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;backend must be one of: auto, yellowbrick, seaborn&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">data_file</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;seaborn&quot;</span>
+        <span class="k">if</span> <span class="n">experiment_config</span> <span class="ow">or</span> <span class="n">experiment_cfg</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;yellowbrick&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Could not infer backend: provide plot.data_file or plot.experiment_config/experiment cfg&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">backend</span>
+
+
+<div class="viewcode-block" id="plot_main">
+<a class="viewcode-back" href="../../../layers.html#deckard.layers.plot_main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute plotting from either experiment config (Yellowbrick) or tabular results (Seaborn).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    experiment_config:</span>
+<span class="sd">            Path to an experiment YAML file used by Yellowbrick mode.</span>
+<span class="sd">    data_file:</span>
+<span class="sd">            Path to an aggregated data file (CSV/Parquet/etc.) used by Seaborn mode.</span>
+<span class="sd">    backend:</span>
+<span class="sd">            `auto`, `yellowbrick`, or `seaborn`.</span>
+<span class="sd">    plot_type:</span>
+<span class="sd">            Plot type for single-plot mode.</span>
+<span class="sd">    plots:</span>
+<span class="sd">            Comma-separated plot types for multi-plot mode.</span>
+<span class="sd">    plots_file:</span>
+<span class="sd">            YAML file containing a list of Seaborn plot configurations under `plots` or as a top-level list.</span>
+<span class="sd">    plot_file:</span>
+<span class="sd">            Output path for single-plot mode or optional combined figure in Seaborn list mode.</span>
+<span class="sd">    plot_folder:</span>
+<span class="sd">            Output directory for Yellowbrick multi-plot mode.</span>
+<span class="sd">    features:</span>
+<span class="sd">            Feature selection for Yellowbrick plot config.</span>
+<span class="sd">    classes:</span>
+<span class="sd">            Class selection for Yellowbrick plot config.</span>
+<span class="sd">    x, y, hue, style:</span>
+<span class="sd">            Seaborn axis/channel columns for single-plot mode.</span>
+<span class="sd">    title:</span>
+<span class="sd">            Optional custom plot title.</span>
+<span class="sd">    xlabel, ylabel, xscale, yscale, legend_title:</span>
+<span class="sd">            Optional Seaborn axis/legend formatting.</span>
+<span class="sd">    plot_params_file:</span>
+<span class="sd">            Optional YAML file containing Yellowbrick `plot_params`.</span>
+<span class="sd">    kwargs_file:</span>
+<span class="sd">            Optional YAML file containing Seaborn `kwargs`.</span>
+<span class="sd">    rc_config_file:</span>
+<span class="sd">            Optional YAML file containing matplotlib rcParams for Seaborn.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">extracted_experiment_cfg</span> <span class="o">=</span> <span class="n">_extract_experiment_cfg_from_hydra_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">resolved</span> <span class="o">=</span> <span class="n">_resolve_plot_args_from_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+    <span class="n">experiment_config</span> <span class="o">=</span> <span class="n">_resolve_experiment_config_path</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">data_file</span> <span class="o">=</span> <span class="n">_resolve_data_file</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">backend</span> <span class="o">=</span> <span class="n">_extract_backend</span><span class="p">(</span>
+        <span class="n">cfg</span><span class="p">,</span>
+        <span class="n">data_file</span><span class="o">=</span><span class="n">data_file</span><span class="p">,</span>
+        <span class="n">experiment_cfg</span><span class="o">=</span><span class="n">extracted_experiment_cfg</span><span class="p">,</span>
+        <span class="n">experiment_config</span><span class="o">=</span><span class="n">experiment_config</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">plot_type</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;plot_type&quot;</span><span class="p">]</span>
+    <span class="n">plots</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;plots&quot;</span><span class="p">]</span>
+    <span class="n">plots_file</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;plots_file&quot;</span><span class="p">]</span>
+    <span class="n">plot_file</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;plot_file&quot;</span><span class="p">]</span>
+    <span class="n">plot_folder</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;plot_folder&quot;</span><span class="p">]</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;features&quot;</span><span class="p">]</span>
+    <span class="n">classes</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;classes&quot;</span><span class="p">]</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span>
+    <span class="n">hue</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;hue&quot;</span><span class="p">]</span>
+    <span class="n">style</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;style&quot;</span><span class="p">]</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">]</span>
+    <span class="n">xlabel</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;xlabel&quot;</span><span class="p">]</span>
+    <span class="n">ylabel</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;ylabel&quot;</span><span class="p">]</span>
+    <span class="n">xscale</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;xscale&quot;</span><span class="p">]</span>
+    <span class="n">yscale</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;yscale&quot;</span><span class="p">]</span>
+    <span class="n">legend_title</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;legend_title&quot;</span><span class="p">]</span>
+    <span class="n">plot_params_file</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;plot_params_file&quot;</span><span class="p">]</span>
+    <span class="n">kwargs_file</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;kwargs_file&quot;</span><span class="p">]</span>
+    <span class="n">rc_config_file</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;rc_config_file&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;yellowbrick&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">experiment_config</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">extracted_experiment_cfg</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;yellowbrick backend requires plot.experiment_config or a Hydra experiment cfg&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+    <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;seaborn&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">data_file</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;seaborn backend requires plot.data_file&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">plot_type</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">plots</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">plots_file</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;yellowbrick&quot;</span><span class="p">:</span>
+            <span class="n">plots</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Provide one of plot.plot_type, plot.plots, or plot.plots_file.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="n">plot_type</span><span class="p">,</span> <span class="n">plots</span><span class="p">,</span> <span class="n">plots_file</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Provide only one of plot.plot_type, plot.plots, or plot.plots_file.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;yellowbrick&quot;</span> <span class="ow">and</span> <span class="n">plots_file</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;plot.plots_file is only supported for seaborn backend.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;yellowbrick&quot;</span><span class="p">:</span>
+        <span class="n">exp_cfg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">extracted_experiment_cfg</span>
+            <span class="k">if</span> <span class="n">extracted_experiment_cfg</span>
+            <span class="k">else</span> <span class="n">_load_experiment_config</span><span class="p">(</span><span class="n">experiment_config</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">exp_obj</span> <span class="o">=</span> <span class="n">_instantiate_experiment_cfg</span><span class="p">(</span><span class="n">exp_cfg</span><span class="p">)</span>
+
+        <span class="n">plot_params</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">plot_params_file</span><span class="p">:</span>
+            <span class="n">loaded</span> <span class="o">=</span> <span class="n">_load_yaml</span><span class="p">(</span><span class="n">plot_params_file</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loaded</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;plot_params_file must contain a dictionary.&quot;</span><span class="p">)</span>
+            <span class="n">plot_params</span> <span class="o">=</span> <span class="n">loaded</span>
+
+        <span class="c1"># Import lazily so this layer can be listed even when optional plotting deps are missing.</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">..plot.yellowbrick_plots</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">YellowbrickConfigList</span><span class="p">,</span>
+            <span class="n">YellowbrickPlotConfig</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">plot_type</span><span class="p">:</span>
+            <span class="n">default_folder</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">plot_folder</span><span class="p">)</span> <span class="k">if</span> <span class="n">plot_folder</span> <span class="k">else</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span>
+            <span class="n">output_path</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">Path</span><span class="p">(</span><span class="n">plot_file</span><span class="p">)</span> <span class="k">if</span> <span class="n">plot_file</span> <span class="k">else</span> <span class="n">default_folder</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">plot_type</span><span class="si">}</span><span class="s2">.png&quot;</span>
+            <span class="p">)</span>
+            <span class="n">output_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="n">single_title</span> <span class="o">=</span> <span class="n">title</span> <span class="k">if</span> <span class="n">title</span> <span class="k">else</span> <span class="n">plot_type</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
+            <span class="n">cfg</span> <span class="o">=</span> <span class="n">YellowbrickPlotConfig</span><span class="p">(</span>
+                <span class="n">experiment</span><span class="o">=</span><span class="n">exp_obj</span><span class="p">,</span>
+                <span class="n">plot_type</span><span class="o">=</span><span class="n">plot_type</span><span class="p">,</span>
+                <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span>
+                <span class="n">classes</span><span class="o">=</span><span class="n">classes</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="n">single_title</span><span class="p">,</span>
+                <span class="n">save_path</span><span class="o">=</span><span class="n">output_path</span><span class="o">.</span><span class="n">as_posix</span><span class="p">(),</span>
+                <span class="n">plot_params</span><span class="o">=</span><span class="n">plot_params</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">()</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">&quot;backend&quot;</span><span class="p">:</span> <span class="s2">&quot;yellowbrick&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="s2">&quot;single&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;plot_type&quot;</span><span class="p">:</span> <span class="n">plot_type</span><span class="p">,</span>
+                <span class="s2">&quot;plot_file&quot;</span><span class="p">:</span> <span class="n">output_path</span><span class="o">.</span><span class="n">as_posix</span><span class="p">(),</span>
+                <span class="s2">&quot;scores&quot;</span><span class="p">:</span> <span class="n">scores</span><span class="p">,</span>
+            <span class="p">}</span>
+
+        <span class="n">plot_list</span> <span class="o">=</span> <span class="n">_normalize_yellowbrick_plots</span><span class="p">(</span><span class="n">plots</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plot_list</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">plot_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;--plots must contain at least one plot type for yellowbrick backend.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">output_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">plot_folder</span><span class="p">)</span> <span class="k">if</span> <span class="n">plot_folder</span> <span class="k">else</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span>
+        <span class="n">output_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="n">YellowbrickConfigList</span><span class="p">(</span>
+            <span class="n">experiment</span><span class="o">=</span><span class="n">exp_obj</span><span class="p">,</span>
+            <span class="n">plots</span><span class="o">=</span><span class="n">plot_list</span><span class="p">,</span>
+            <span class="n">plot_folder</span><span class="o">=</span><span class="n">output_dir</span><span class="o">.</span><span class="n">as_posix</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;backend&quot;</span><span class="p">:</span> <span class="s2">&quot;yellowbrick&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="s2">&quot;multi&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;plots&quot;</span><span class="p">:</span> <span class="n">plot_list</span><span class="p">,</span>
+            <span class="s2">&quot;plot_folder&quot;</span><span class="p">:</span> <span class="n">output_dir</span><span class="o">.</span><span class="n">as_posix</span><span class="p">(),</span>
+            <span class="s2">&quot;scores&quot;</span><span class="p">:</span> <span class="n">scores</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="c1"># Seaborn backend: designed for aggregated/tabular outputs from many experiments.</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..plot.seaborn_plots</span><span class="w"> </span><span class="kn">import</span> <span class="n">SeabornPlotConfig</span><span class="p">,</span> <span class="n">SeabornPlotConfigList</span>
+
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">kwargs_file</span><span class="p">:</span>
+        <span class="n">loaded</span> <span class="o">=</span> <span class="n">_load_yaml</span><span class="p">(</span><span class="n">kwargs_file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loaded</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;kwargs_file must contain a dictionary.&quot;</span><span class="p">)</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="n">loaded</span>
+
+    <span class="n">rc_config</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">rc_config_file</span><span class="p">:</span>
+        <span class="n">loaded</span> <span class="o">=</span> <span class="n">_load_yaml</span><span class="p">(</span><span class="n">rc_config_file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loaded</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;rc_config_file must contain a dictionary.&quot;</span><span class="p">)</span>
+        <span class="n">rc_config</span> <span class="o">=</span> <span class="n">loaded</span>
+
+    <span class="k">if</span> <span class="n">plot_type</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">y</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;seaborn single-plot mode requires plot.x and plot.y&quot;</span><span class="p">)</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="n">SeabornPlotConfig</span><span class="p">(</span>
+            <span class="n">data_file</span><span class="o">=</span><span class="n">data_file</span><span class="p">,</span>
+            <span class="n">plot_type</span><span class="o">=</span><span class="n">plot_type</span><span class="p">,</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>
+            <span class="n">hue</span><span class="o">=</span><span class="n">hue</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">style</span><span class="o">=</span><span class="n">style</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">title</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">xlabel</span><span class="o">=</span><span class="n">xlabel</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">ylabel</span><span class="o">=</span><span class="n">ylabel</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">xscale</span><span class="o">=</span><span class="n">xscale</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">yscale</span><span class="o">=</span><span class="n">yscale</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">legend_title</span><span class="o">=</span><span class="n">legend_title</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="n">rc_config</span><span class="o">=</span><span class="n">rc_config</span><span class="p">,</span>
+            <span class="n">plot_file</span><span class="o">=</span><span class="n">plot_file</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">cfg</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;backend&quot;</span><span class="p">:</span> <span class="s2">&quot;seaborn&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="s2">&quot;single&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;plot_type&quot;</span><span class="p">:</span> <span class="n">plot_type</span><span class="p">,</span>
+            <span class="s2">&quot;plot_file&quot;</span><span class="p">:</span> <span class="n">plot_file</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">plots_file</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;seaborn multi-plot mode requires plot.plots_file&quot;</span><span class="p">)</span>
+
+    <span class="n">loaded</span> <span class="o">=</span> <span class="n">_load_yaml</span><span class="p">(</span><span class="n">plots_file</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loaded</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;plots&quot;</span> <span class="ow">in</span> <span class="n">loaded</span><span class="p">:</span>
+        <span class="n">plot_specs</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s2">&quot;plots&quot;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loaded</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">plot_specs</span> <span class="o">=</span> <span class="n">loaded</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;plots_file must contain a list or a dict with key &#39;plots&#39;.&quot;</span><span class="p">)</span>
+
+    <span class="n">plot_cfgs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">plot_specs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Each item in plots_file must be a dictionary.&quot;</span><span class="p">)</span>
+        <span class="n">merged</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">merged</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;data_file&quot;</span><span class="p">,</span> <span class="n">data_file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;kwargs&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">merged</span> <span class="ow">and</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">merged</span><span class="p">[</span><span class="s2">&quot;kwargs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="k">if</span> <span class="s2">&quot;rc_config&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">merged</span> <span class="ow">and</span> <span class="n">rc_config</span><span class="p">:</span>
+            <span class="n">merged</span><span class="p">[</span><span class="s2">&quot;rc_config&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rc_config</span>
+        <span class="n">plot_cfgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SeabornPlotConfig</span><span class="p">(</span><span class="o">**</span><span class="n">merged</span><span class="p">))</span>
+
+    <span class="n">list_cfg</span> <span class="o">=</span> <span class="n">SeabornPlotConfigList</span><span class="p">(</span><span class="n">plots</span><span class="o">=</span><span class="n">plot_cfgs</span><span class="p">,</span> <span class="n">data_file</span><span class="o">=</span><span class="n">data_file</span><span class="p">)</span>
+    <span class="c1"># SeabornPlotConfigList.__call__ checks `self.file`; set explicitly for stability.</span>
+    <span class="n">list_cfg</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="n">plot_file</span> <span class="ow">or</span> <span class="kc">None</span>
+    <span class="n">list_cfg</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;backend&quot;</span><span class="p">:</span> <span class="s2">&quot;seaborn&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="s2">&quot;multi&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;plots_file&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">plots_file</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()),</span>
+        <span class="s2">&quot;plot_file&quot;</span><span class="p">:</span> <span class="n">plot_file</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">&quot;num_plots&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">plot_cfgs</span><span class="p">),</span>
+    <span class="p">}</span></div>
+
+
+
+<span class="n">hydra_parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+    <span class="n">parents</span><span class="o">=</span><span class="p">[</span><span class="n">get_args_parser</span><span class="p">()],</span>
+    <span class="n">add_help</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">usage</span><span class="o">=</span><span class="s2">&quot;deckard plot --config-dir=conf --config-name=default.yaml plot.plot_type=pairplot&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">plot_parser</span> <span class="o">=</span> <span class="n">hydra_parser</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span>
+        <span class="s2">&quot;Run this layer via deckard entrypoint with Hydra, e.g. `deckard plot ...`&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, simplymathematics.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

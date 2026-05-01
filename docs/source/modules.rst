@@ -2,12 +2,16 @@ deckard
 =======
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
    :caption: Contents:
 
+   experiment
+   file
    data
    model
    attack
    plot
+   score
    utils
+   layers
    

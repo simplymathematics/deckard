@@ -8,7 +8,6 @@ It supports both real and synthetic datasets, as well as YAML/Hydra-based config
 
 .. automodule:: deckard.data
    :members:
-   :undoc-members:
    :show-inheritance:
 
 Overview

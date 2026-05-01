@@ -6,9 +6,9 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Main Components &mdash; deckard .91 documentation</title>
+  <title>Utils &mdash; deckard .91 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
@@ -19,7 +19,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Attack" href="attack.html" /> 
+    <link rel="next" title="Layers" href="layers.html" />
+    <link rel="prev" title="Score" href="score.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -44,13 +45,46 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file.html">File</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html">Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html">Attack</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Main Components</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#features">Features</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html">plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html">Score</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.ConfigBase"><code class="docutils literal notranslate"><span class="pre">ConfigBase</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.HASH_EXCLUDE_FIELDS"><code class="docutils literal notranslate"><span class="pre">ConfigBase.HASH_EXCLUDE_FIELDS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.HASH_EXCLUDE_SUFFIXES"><code class="docutils literal notranslate"><span class="pre">ConfigBase.HASH_EXCLUDE_SUFFIXES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.execute_without_mercy"><code class="docutils literal notranslate"><span class="pre">ConfigBase.execute_without_mercy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.from_dict"><code class="docutils literal notranslate"><span class="pre">ConfigBase.from_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.from_yaml"><code class="docutils literal notranslate"><span class="pre">ConfigBase.from_yaml()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.get_call_params"><code class="docutils literal notranslate"><span class="pre">ConfigBase.get_call_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.load"><code class="docutils literal notranslate"><span class="pre">ConfigBase.load()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.load_data"><code class="docutils literal notranslate"><span class="pre">ConfigBase.load_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.load_object"><code class="docutils literal notranslate"><span class="pre">ConfigBase.load_object()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.load_scores"><code class="docutils literal notranslate"><span class="pre">ConfigBase.load_scores()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.read_or_initialize_scores"><code class="docutils literal notranslate"><span class="pre">ConfigBase.read_or_initialize_scores()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.save"><code class="docutils literal notranslate"><span class="pre">ConfigBase.save()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.save_data"><code class="docutils literal notranslate"><span class="pre">ConfigBase.save_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.save_object"><code class="docutils literal notranslate"><span class="pre">ConfigBase.save_object()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.save_scores"><code class="docutils literal notranslate"><span class="pre">ConfigBase.save_scores()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.score_dict"><code class="docutils literal notranslate"><span class="pre">ConfigBase.score_dict</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.to_dict"><code class="docutils literal notranslate"><span class="pre">ConfigBase.to_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.to_yaml"><code class="docutils literal notranslate"><span class="pre">ConfigBase.to_yaml()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.create_parser_from_function"><code class="docutils literal notranslate"><span class="pre">create_parser_from_function()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.hash_conf_values"><code class="docutils literal notranslate"><span class="pre">hash_conf_values()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.import_class_from_file"><code class="docutils literal notranslate"><span class="pre">import_class_from_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.load_class"><code class="docutils literal notranslate"><span class="pre">load_class()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.load_data"><code class="docutils literal notranslate"><span class="pre">load_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.normalize_for_hash"><code class="docutils literal notranslate"><span class="pre">normalize_for_hash()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.resolve_class"><code class="docutils literal notranslate"><span class="pre">resolve_class()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.save_data"><code class="docutils literal notranslate"><span class="pre">save_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
 </ul>
 </li>
 </ul>
@@ -70,7 +104,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="modules.html">deckard</a></li>
-      <li class="breadcrumb-item active">Main Components</li>
+      <li class="breadcrumb-item active">Utils</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/utils.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -80,52 +114,366 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <p>“””
-utils.py
-=========</p>
-<p>This module provides utility functions and classes for configuration management, data serialization, and command-line argument parsing in the Deckard project.</p>
-<section id="main-components">
-<h1>Main Components<a class="headerlink" href="#main-components" title="Link to this heading"></a></h1>
-<ul class="simple">
-<li><p><strong>ConfigBase</strong>: An abstract base class for configuration objects, supporting serialization, deserialization, and data I/O operations with pandas and pickle. It includes methods for saving/loading scores and data in various formats (CSV, JSON, Excel, Parquet, Pickle, HTML), as well as saving/loading the configuration object itself.</p></li>
-<li><p><strong>initialize_config</strong>: A function to initialize and compose Hydra configurations, supporting parameter overrides and dynamic target assignment.</p></li>
-<li><p><strong>create_parser_from_function</strong>: A utility to generate an <cite>argparse.ArgumentParser</cite> from a function’s signature, automatically mapping parameters to command-line arguments.</p></li>
+  <section id="utils">
+<h1>Utils<a class="headerlink" href="#utils" title="Link to this heading"></a></h1>
+<p>The <a class="reference internal" href="#module-deckard.utils" title="deckard.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.utils</span></code></a> module contains shared utilities used across the
+public API, including stable config hashing, serialization helpers, dynamic
+class loading, and parser generation helpers.</p>
+<p id="module-deckard.utils">Shared utility layer for Deckard’s public Python API.</p>
+<p>This module contains the base configuration protocol used across the project,
+stable hashing helpers for config identity, file IO helpers, and utility
+functions for dynamically resolving and instantiating classes.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">ConfigBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for Deckard configuration objects.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ConfigBase</span></code> provides a common lifecycle for config dataclasses: argument
+hydration, post-init hooks, stable hashing based on configuration state, and
+serialization helpers used throughout Deckard.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.HASH_EXCLUDE_FIELDS">
+<span class="sig-name descname"><span class="pre">HASH_EXCLUDE_FIELDS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'X',</span> <span class="pre">'X_test',</span> <span class="pre">'X_train',</span> <span class="pre">'adv_predictions',</span> <span class="pre">'adv_probabilities',</span> <span class="pre">'args',</span> <span class="pre">'attack_predictions',</span> <span class="pre">'attack_probabilities',</span> <span class="pre">'labels',</span> <span class="pre">'predictions',</span> <span class="pre">'probabilities',</span> <span class="pre">'score_dict',</span> <span class="pre">'y',</span> <span class="pre">'y_test',</span> <span class="pre">'y_train'}</span></em><a class="headerlink" href="#deckard.utils.ConfigBase.HASH_EXCLUDE_FIELDS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.HASH_EXCLUDE_SUFFIXES">
+<span class="sig-name descname"><span class="pre">HASH_EXCLUDE_SUFFIXES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('_time',</span> <span class="pre">'_predictions',</span> <span class="pre">'_probabilities')</span></em><a class="headerlink" href="#deckard.utils.ConfigBase.HASH_EXCLUDE_SUFFIXES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.execute_without_mercy">
+<span class="sig-name descname"><span class="pre">execute_without_mercy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.execute_without_mercy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.execute_without_mercy" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.from_dict">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.from_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.from_dict" title="Link to this definition"></a></dt>
+<dd><p>Creates an instance of the class from a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>dict</em>) – The dictionary containing the configuration.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An instance of the class initialized with the configuration from the dictionary.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase">ConfigBase</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.from_yaml">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_yaml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.from_yaml"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.from_yaml" title="Link to this definition"></a></dt>
+<dd><p>Creates an instance of the class from a YAML configuration file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – The path to the YAML configuration file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An instance of the class initialized with the configuration from the YAML file.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase">ConfigBase</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.get_call_params">
+<span class="sig-name descname"><span class="pre">get_call_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.get_call_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.get_call_params" title="Link to this definition"></a></dt>
+<dd><p>Retrieves the parameters required to call the __call__ method of the instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary containing parameter names and their corresponding values.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.load" title="Link to this definition"></a></dt>
+<dd><p>Loads an instance of the class from a file using pickle.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – The path to the file from which the instance will be loaded.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The loaded instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase">ConfigBase</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.load_data">
+<span class="sig-name descname"><span class="pre">load_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.load_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.load_data" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.load_object">
+<span class="sig-name descname"><span class="pre">load_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.load_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.load_object" title="Link to this definition"></a></dt>
+<dd><p>Loads a Serializable object from a file using pickle.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – The path to the file from which the object will be loaded.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The loaded object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.load_scores">
+<span class="sig-name descname"><span class="pre">load_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.load_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.load_scores" title="Link to this definition"></a></dt>
+<dd><p>Loads scores from a CSV, JSON, or Excel file into a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – Path to the scores file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary containing the loaded scores.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the file extension is not supported. Supported types are .csv, .json, and .xlsx.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.read_or_initialize_scores">
+<span class="sig-name descname"><span class="pre">read_or_initialize_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.read_or_initialize_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.read_or_initialize_scores" title="Link to this definition"></a></dt>
+<dd><p>Return merged scores from disk and memory, or initialize output location.</p>
+<p>This is the canonical entrypoint for score-file reads in ConfigBase.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.save" title="Link to this definition"></a></dt>
+<dd><p>Saves the current instance to a file using pickle.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – The path to the file where the instance will be saved.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.save_data">
+<span class="sig-name descname"><span class="pre">save_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.save_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.save_data" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.save_object">
+<span class="sig-name descname"><span class="pre">save_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.save_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.save_object" title="Link to this definition"></a></dt>
+<dd><p>Saves a Serializable object to a file using pickle.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>) – The object to save.</p></li>
+<li><p><strong>filepath</strong> (<em>str</em>) – The path to the file where the object will be saved.</p></li>
 </ul>
-</section>
-<section id="features">
-<h1>Features<a class="headerlink" href="#features" title="Link to this heading"></a></h1>
-<ul class="simple">
-<li><p>Flexible configuration loading and instantiation using Hydra.</p></li>
-<li><p>Abstract configuration base class with hashing, serialization, and file I/O support.</p></li>
-<li><p>Automated command-line parser generation from function signatures.</p></li>
-<li><p>Logging for all major operations to aid debugging and traceability.</p></li>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the file extension is not supported. Supported types are .pkl and .pickle.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.save_scores">
+<span class="sig-name descname"><span class="pre">save_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.save_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.save_scores" title="Link to this definition"></a></dt>
+<dd><p>Saves the scores dictionary to a CSV file if a filepath is provided.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scores</strong> (<em>dict</em>) – Dictionary containing score metrics to be saved.</p></li>
+<li><p><strong>filepath</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>None</em><em>]</em><em>, </em><em>optional</em>) – Path to save the scores as a CSV file. If None, scores are not saved.</p></li>
 </ul>
-</section>
-<section id="dependencies">
-<h1>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading"></a></h1>
-<ul class="simple">
-<li><p><cite>logging</cite></p></li>
-<li><p><cite>argparse</cite></p></li>
-<li><p><cite>inspect</cite></p></li>
-<li><p><cite>pathlib</cite></p></li>
-<li><p><cite>hashlib</cite></p></li>
-<li><p><cite>dataclasses</cite></p></li>
-<li><p><cite>pandas</cite></p></li>
-<li><p><cite>pickle</cite></p></li>
-<li><p><cite>hydra</cite></p></li>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the file extension is not supported. Supported types are .csv, .json, and .xlsx.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.score_dict">
+<span class="sig-name descname"><span class="pre">score_dict</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></em><a class="headerlink" href="#deckard.utils.ConfigBase.score_dict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">for_hash</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.to_dict" title="Link to this definition"></a></dt>
+<dd><p>Converts the current instance to a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary representation of the instance.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.to_yaml">
+<span class="sig-name descname"><span class="pre">to_yaml</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.to_yaml"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.to_yaml" title="Link to this definition"></a></dt>
+<dd><p>Converts the current instance to a YAML string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A YAML representation of the instance.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.create_parser_from_function">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">create_parser_from_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parser</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#create_parser_from_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.create_parser_from_function" title="Link to this definition"></a></dt>
+<dd><p>Creates an argparse.ArgumentParser from a function’s signature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>func</strong> (<em>callable</em>) – The function to create the parser from.</p></li>
+<li><p><strong>parser</strong> (<em>argparse.ArgumentParser</em><em>, </em><em>optional</em>) – An existing parser to add arguments to. If None, a new parser is created.</p></li>
+<li><p><strong>exclude</strong> (<em>list</em><em>, </em><em>optional</em>) – List of parameter names to exclude from the parser.</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments to pass to the ArgumentParser constructor if a new parser is created.</p></li>
 </ul>
-</section>
-<section id="usage">
-<h1>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h1>
-<p>Import the module and use the provided utilities for configuration management, data handling, and command-line interface generation in your Deckard workflows.</p>
-<p>“””</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If func is not callable or if parser is not an instance of argparse.ArgumentParser.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The updated parser with arguments corresponding to the function’s signature.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>argparse.ArgumentParser</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.hash_conf_values">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">hash_conf_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_root_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#hash_conf_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.hash_conf_values" title="Link to this definition"></a></dt>
+<dd><p>Return stable MD5 hash for one or more config-like values.</p>
+<p>Supports the same patterns as the <cite>${hash:…}</cite> resolver:
+- no values: hash <cite>_root_</cite>
+- one value: hash normalized value
+- many values: hash normalized list of values in order</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.import_class_from_file">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">import_class_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instantiate_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#import_class_from_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.import_class_from_file" title="Link to this definition"></a></dt>
+<dd><p>Import a class from a Python file path and optionally instantiate it.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.load_class">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">load_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#load_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.load_class" title="Link to this definition"></a></dt>
+<dd><p>Instantiate a class from a class object, dotted import path, or file path.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.load_data">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">load_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#load_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.load_data" title="Link to this definition"></a></dt>
+<dd><p>Loads data from a CSV, JSON, Excel, Parquet, Pickle, NPZ, or HTML file into a pandas DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filepath</strong> (<em>str</em>) – Path to the data file.</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments to pass to the pandas read function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame containing the loaded data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>FileNotFoundError</strong> – If the specified file does not exist.</p></li>
+<li><p><strong>ValueError</strong> – If the file extension is not supported. Supported types are .csv, .json, .</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.normalize_for_hash">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">normalize_for_hash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#normalize_for_hash"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.normalize_for_hash" title="Link to this definition"></a></dt>
+<dd><p>Normalize values for stable hashing.</p>
+<p>Mirrors resolver behavior:
+- Optional key-path lookup when <cite>value</cite> is a string and <cite>root</cite> is provided.
+- OmegaConf nodes resolved to plain Python containers.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.resolve_class">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">resolve_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#resolve_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.resolve_class" title="Link to this definition"></a></dt>
+<dd><p>Resolve a class path into a class object without instantiating it.</p>
+<p>Supports dotted module paths (Hydra-style) and <code class="docutils literal notranslate"><span class="pre">file.py:ClassName</span></code> paths.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.save_data">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">save_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#save_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.save_data" title="Link to this definition"></a></dt>
+<dd><p>Persist tabular data to one of Deckard’s supported file formats.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="attack.html" class="btn btn-neutral float-left" title="Attack" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="score.html" class="btn btn-neutral float-left" title="Score" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="layers.html" class="btn btn-neutral float-right" title="Layers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
