@@ -860,8 +860,10 @@ def _resolve_survival_runtime_models(model, model_config, attack):
             )
         elif isinstance(model, dict):
             survival_model = _normalize_survival_model_name(
-                model.get("survival_model") or model.get("alias") or "weibull",
+                model.get("survival_model") or model.get("alias") or None
             )
+            if survival_model is None:
+                raise ValueError("Survival model must be")
         else:
             survival_model = _normalize_survival_model_name(model)
 
@@ -918,7 +920,6 @@ def _infer_attack_kind_from_label(label: Optional[str]) -> Optional[str]:
         return "attribute"
     else:
         return "evasion"
-    return None
 
 
 def _candidate_attack_metrics_for_kind(attack_kind: Optional[str]) -> list[str]:
