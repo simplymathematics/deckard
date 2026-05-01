@@ -16,7 +16,8 @@ defaults:
   - files: default
   - plot: default
   - override hydra/sweeper: optuna
-  - override hydra/sweeper/sampler: random
+  - override hydra/sweeper/sampler: grid
+  - override hydra/launcher: joblib
 
 experiment_name: ${hash:${data},${model},${defense},${attack}}
 directions:
@@ -40,8 +41,14 @@ hydra:
     direction: ${directions}
     max_failure_rate: 1.0
     sampler:
-      _target_: optuna.samplers.RandomSampler
-      seed: 42
+      _target_: optuna.samplers.GridSampler
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     n_trials: ???
-    n_jobs: 1
+  callbacks:
+    deckard_optuna:
+      _target_: deckard.layers.optimize.OptunaStudyCallback
+      storage: ${hydra.sweeper.storage}
+      study_name: ${hydra.sweeper.study_name}
+      directions: ${directions}
+      optimizers: ${optimizers}
+

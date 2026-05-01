@@ -11,7 +11,7 @@ model_params:
   decision_function_shape: ovr
   break_ties: false
   random_state: 0
-  max_iter: 10
+  max_iter: -1
   verbose: false
 _target_: deckard.ModelConfig
 alias: linear

@@ -4,6 +4,10 @@ data_params:
   n_features: 100
   n_classes: 2
   random_state: 0
+  n_informative: 1
+  n_redundant: 1
+  n_repeated: 0 
+  n_clusters_per_class: 1
 
 random_state: 0
 stratify: true

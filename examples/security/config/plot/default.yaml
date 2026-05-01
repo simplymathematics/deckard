@@ -11,5 +11,4 @@ experiment:
   defense: ${defense}
   attack: ${attack}
   files: ${files}
-  score: ${score}
   experiment_name: ${experiment_name}

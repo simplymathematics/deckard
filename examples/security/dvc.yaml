@@ -1,0 +1,45 @@
+stages:
+  set_config_paths:
+    cmd: >
+      echo "export DECKARD_CONFIG_DIR=./config" > .deckard_rc &&
+      echo "export DECKARD_DEFAULT_CONFIG_FILE=default.yaml" >> .deckard_rc &&
+      echo "export DECKARD_NJOBS=1" >> .deckard_rc &&
+      source .deckard_rc
+    outs:
+      - .deckard_rc
+    deps:
+      - ./config/default.yaml
+    params:
+      - ./config/default.yaml:
+  security_matrix:
+    matrix:
+      data:
+        - classification
+        - kdd-nsl
+        - truthseeker
+      model:
+        - linear
+        - rbf
+        - poly
+      attack:
+        # - hsj
+        - pgd
+    cmd: >
+      deckard optimize
+      data=${item.data}
+      model=${item.model}
+      defense=baseline
+      attack=${item.attack}
+      experiment_name=security_${item.data}_${item.model}_${item.attack}/*
+      hydra.sweeper.study_name=security_${item.data}_${item.model}_${item.attack}
+      --multirun
+    deps:
+      - .deckard_rc
+      - ./config/default.yaml
+      - ../../deckard
+    outs:
+      - outputs/logs/security_${item.data}_${item.model}_${item.attack}/
+    params:
+      - ./config/default.yaml:
+          - defaults
+          - hydra
