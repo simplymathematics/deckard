@@ -89,15 +89,18 @@ def test_filter_scores_splits_optimized_values_and_attributes():
     assert attrs == {"accuracy": 0.9, "latency": 12.0}
 
 
-def test_filter_scores_marks_missing_optimizer_score_as_nan():
+def test_filter_scores_marks_missing_optimizer_score_as_fallback_value():
     scores = {"loss": 0.2, "latency": 12.0}
 
-    with pytest.raises(RuntimeError, match="No optimization scores found"):
-        optimize_module.filter_scores(
-            scores,
-            ["loss", "accuracy"],
-            ["minimize", "diff"],
-        )
+    values, attrs = optimize_module.filter_scores(
+        scores,
+        ["loss", "accuracy"],
+        ["minimize", "diff"],
+    )
+
+    assert values == 0.2
+    assert attrs["accuracy"] == float("inf")
+    assert attrs["latency"] == 12.0
 
 
 def test_filter_scores_raises_for_invalid_direction():
@@ -184,19 +187,27 @@ def test_create_study_filters_diff_direction_for_optuna(monkeypatch):
     }
 
 
-def test_create_study_raises_when_only_diff_directions(monkeypatch):
+def test_create_study_allows_only_diff_directions(monkeypatch):
+    calls = {}
+
     def fake_create_study(**kwargs):
+        calls.update(kwargs)
         return object()
 
     monkeypatch.setattr(optimize_module.optuna, "create_study", fake_create_study)
 
-    with pytest.raises(RuntimeError, match="No Optuna objectives remain"):
-        optimize_module.create_study(
-            "study",
-            "sqlite:///db.sqlite3",
-            ["diff"],
-            ["latency_delta"],
-        )
+    optimize_module.create_study(
+        "study",
+        "sqlite:///db.sqlite3",
+        ["diff"],
+        ["latency_delta"],
+    )
+
+    assert calls == {
+        "study_name": "study",
+        "storage": "sqlite:///db.sqlite3",
+        "load_if_exists": True,
+    }
 
 
 def test_create_study_requires_matching_directions_and_optimizers():
@@ -315,7 +326,7 @@ def test_prepare_multirun_file_paths_updates_conf_and_files(tmp_path):
     assert conf.files.post_init_calls == 1
 
 
-def test_optimize_multirun_writes_params_scores_without_manual_callbacks(monkeypatch, tmp_path):
+def test_optimize_multirun_relies_on_callback_for_params_and_scores(monkeypatch, tmp_path):
     class MultirunConf:
         def __init__(self):
             self.files = DummyFiles(tmp_path)
@@ -350,11 +361,86 @@ def test_optimize_multirun_writes_params_scores_without_manual_callbacks(monkeyp
     )
 
     assert result == 0.25
+    assert not (tmp_path / "scores.json").exists()
+    assert not (tmp_path / "params.yaml").exists()
+
+
+def test_hydra_optuna_callback_on_compose_config_sets_experiment_and_files(monkeypatch, tmp_path):
+    hydra_cfg = SimpleNamespace(
+        mode="RunMode.MULTIRUN",
+        sweeper={"storage": "sqlite:///study.sqlite3", "study_name": "demo-study"},
+        sweep=SimpleNamespace(dir=str(tmp_path), subdir="run_3"),
+        job=SimpleNamespace(name="optimize"),
+    )
+    monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
+
+    callback = optimize_module.OptunaStudyCallback(
+        study_name="demo-study",
+        storage="sqlite:///study.sqlite3",
+        directions=["minimize"],
+        optimizers=["loss"],
+    )
+    cfg = OmegaConf.create({"name": "demo", "files": {}})
+
+    callback.on_compose_config(cfg)
+
+    assert isinstance(cfg.experiment_name, str)
+    assert len(cfg.experiment_name) == 32
+    assert cfg.files.log_file == str(tmp_path / "run_3" / "optimize.log")
+    assert cfg.files.score_file == str(tmp_path / "run_3" / "scores.json")
+    assert cfg.files.params_file == str(tmp_path / "run_3" / "params.yaml")
+    assert cfg.files.error_file == str(tmp_path / "run_3" / "error.log")
+
+
+def test_hydra_optuna_callback_on_job_start_writes_params_file(monkeypatch, tmp_path):
+    hydra_cfg = SimpleNamespace(mode="RunMode.MULTIRUN")
+    monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
+
+    callback = optimize_module.OptunaStudyCallback(
+        study_name="demo-study",
+        storage="sqlite:///study.sqlite3",
+        directions=["minimize"],
+        optimizers=["loss"],
+    )
+    cfg = OmegaConf.create(
+        {
+            "name": "demo",
+            "files": {"params_file": str(tmp_path / "params.yaml")},
+        },
+    )
+
+    callback.on_job_start(cfg)
+
+    assert (tmp_path / "params.yaml").exists()
+    assert "name: demo" in (tmp_path / "params.yaml").read_text()
+
+
+def test_hydra_optuna_callback_on_job_end_writes_score_file(monkeypatch, tmp_path):
+    hydra_cfg = SimpleNamespace(mode="RunMode.MULTIRUN")
+    monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
+
+    callback = optimize_module.OptunaStudyCallback(
+        study_name="demo-study",
+        storage="sqlite:///study.sqlite3",
+        directions=["minimize"],
+        optimizers=["loss"],
+    )
+    cfg = OmegaConf.create(
+        {
+            "name": "demo",
+            "files": {"score_file": str(tmp_path / "scores.json")},
+        },
+    )
+
+    callback.on_job_end(
+        cfg,
+        job_return=SimpleNamespace(return_value={"loss": 0.25, "accuracy": 0.9}),
+    )
+
     assert json.loads((tmp_path / "scores.json").read_text()) == {
         "loss": 0.25,
         "accuracy": 0.9,
     }
-    assert "foo: bar" in (tmp_path / "params.yaml").read_text()
 
 
 def test_set_trial_attributes_persists_all_attrs_via_storage():
@@ -388,22 +474,25 @@ def test_set_trial_attributes_persists_all_attrs_via_storage():
     assert storage.attrs[(101, "experiment_name")] == exp_hash
 
 
-def test_set_trial_attributes_raises_when_experiment_uuid_missing():
+def test_set_trial_attributes_skips_when_experiment_uuid_missing(caplog):
     experiment_name = "security_classification_linear_hsj"
+    storage = DummyStorage()
     study = SimpleNamespace(
         study_name="demo-study",
-        _storage=DummyStorage(),
+        _storage=storage,
         get_trials=lambda deepcopy=False: [
             DummyTrial(number=1, trial_id=11, user_attrs={"experiment_name": "different_hash"}),
         ],
     )
 
-    with pytest.raises(ValueError, match="Trial with experiment_name"):
-        optimize_module.set_trial_attributes(
-            study,
-            {"accuracy": 0.9},
-            experiment_name=experiment_name,
-        )
+    optimize_module.set_trial_attributes(
+        study,
+        {"accuracy": 0.9},
+        experiment_name=experiment_name,
+    )
+
+    assert storage.attrs == {}
+    assert "Skipping trial attribute sync" in caplog.text
 
 
 def test_optimize_main_executes_conf_object_in_single_run(monkeypatch):
@@ -451,7 +540,10 @@ def test_optimize_main_uses_multirun_path(monkeypatch):
         captured["conf_obj"] = obj
         return {"best": 0.1}
 
-    hydra_cfg = SimpleNamespace(mode="RunMode.MULTIRUN")
+    hydra_cfg = SimpleNamespace(
+        mode="RunMode.MULTIRUN",
+        sweeper={"storage": "sqlite:///db.sqlite3", "study_name": "demo-study"},
+    )
 
     monkeypatch.setattr(optimize_module, "ConfigBase", DummyBase)
     monkeypatch.setattr(optimize_module, "ExperimentConfig", DummyExperiment)

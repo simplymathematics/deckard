@@ -130,7 +130,7 @@ class _DefenseBehaviorMixin:
             raise ValueError("Model is not fitted yet.")
         return self._model
 
-    def apply_to(self, estimator: BaseEstimator, data) -> BaseEstimator:
+    def apply_to(self, estimator: Union[BaseEstimator, None], data) -> BaseEstimator:
         """Apply this defense to a pre-fitted estimator."""
         if estimator is None:
             raise ValueError("estimator must be provided before applying defense")

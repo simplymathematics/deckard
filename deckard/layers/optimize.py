@@ -43,6 +43,13 @@ class OptunaStudyCallback(HydraCallback):
             directions=self.directions,
         )
 
+    def on_compose_config(self, config: DictConfig, **kwargs: Any) -> None:
+        if not _is_multirun_mode(HydraConfig.get()):
+            return
+        hydra_cfg = HydraConfig.get()
+        _assert_multirun_sweeper(hydra_cfg)
+        _prepare_multirun_cfg(config, hydra_cfg, include_file_paths=True)
+    
     def on_multirun_end(self, config: DictConfig, **kwargs: Any) -> None:
         if self.study is None:
             return
@@ -53,13 +60,44 @@ class OptunaStudyCallback(HydraCallback):
         )
 
     def on_job_start(self, config: DictConfig, **kwargs: Any) -> None:
+        if not _is_multirun_mode(HydraConfig.get()):
+            return
+        files_cfg = getattr(config, "files", None)
+        if files_cfg is None:
+            return
+        params_file = files_cfg.get("params_file", None)
+        if not params_file:
+            return
+
+        params_path = Path(str(params_file))
+        params_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(params_path, "w") as f:
+            yaml.dump(OmegaConf.to_container(config, resolve=False), f, indent=4)
         return
 
     def on_job_end(
         self,
         config: DictConfig,
+        job_return,
         **kwargs: Any,
     ) -> None:
+        if not _is_multirun_mode(HydraConfig.get()):
+            return
+        files_cfg = getattr(config, "files", None)
+        if files_cfg is None:
+            return
+        score_file = files_cfg.get("score_file", None)
+        if not score_file:
+            return
+
+        score_payload = _extract_scores_from_job_end_kwargs(job_return=job_return, kwargs=kwargs)
+        if score_payload is None:
+            return
+
+        score_path = Path(str(score_file))
+        score_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(score_path, "w") as f:
+            json.dump(score_payload, f, indent=4)
         return
 
 
@@ -70,8 +108,74 @@ def _ensure_experiment_hash(value) -> str:
     return hash_conf_values(value)
 
 
+def _is_multirun_mode(hydra_cfg) -> bool:
+    return str(getattr(hydra_cfg, "mode", "")) == "RunMode.MULTIRUN"
+
+
+def _get_sweeper_cfg(hydra_cfg):
+    sweeper = getattr(hydra_cfg, "sweeper", None)
+    if isinstance(sweeper, DictConfig):
+        return OmegaConf.to_container(sweeper, resolve=True)
+    return sweeper
+
+
+def _assert_multirun_sweeper(hydra_cfg):
+    sweeper = _get_sweeper_cfg(hydra_cfg)
+    assert sweeper is not None, "Sweeper must be specified in multirun mode."
+    assert "storage" in sweeper, "Storage must be specified in the sweeper config."
+    assert "study_name" in sweeper, "Study name must be specified in the sweeper config."
+
+
+def _resolve_multirun_paths(hydra_cfg) -> dict:
+    log_dir = Path(hydra_cfg.sweep.dir, hydra_cfg.sweep.subdir)
+    return {
+        "log_file": (log_dir / f"{hydra_cfg.job.name}.log").as_posix(),
+        "score_file": (log_dir / "scores.json").as_posix(),
+        "params_file": (log_dir / "params.yaml").as_posix(),
+        "error_file": (log_dir / "error.log").as_posix(),
+    }
+
+
+def _prepare_multirun_cfg(cfg, hydra_cfg, include_file_paths: bool = False):
+    explicit_name = cfg.get("experiment_name", None)
+    if explicit_name is None or str(explicit_name).strip() == "":
+        cfg["experiment_name"] = hash_conf_values(_root_=cfg)
+    else:
+        cfg["experiment_name"] = _ensure_experiment_hash(explicit_name)
+    cfg["experiment_name"] = _ensure_experiment_hash(cfg.get("experiment_name"))
+
+    if include_file_paths:
+        file_paths = _resolve_multirun_paths(hydra_cfg)
+        files_cfg = cfg.get("files")
+        if isinstance(files_cfg, DictConfig):
+            for k, v in file_paths.items():
+                files_cfg[k] = v
+        elif isinstance(files_cfg, dict):
+            files_cfg.update(file_paths)
+        else:
+            cfg["files"] = file_paths
+    return cfg
+
+
+def _extract_scores_from_job_end_kwargs(job_return=None, kwargs: dict | None = None):
+    if job_return is None:
+        kwargs = kwargs or {}
+        job_return = kwargs.get("job_return")
+    if job_return is None:
+        return None
+
+    score_payload = getattr(job_return, "return_value", None)
+    if score_payload is None and isinstance(job_return, dict):
+        score_payload = job_return.get("return_value", None)
+    if score_payload is None:
+        return None
+    if isinstance(score_payload, DictConfig):
+        score_payload = OmegaConf.to_container(score_payload, resolve=True)
+    return score_payload
+
+
 def optimize_multirun(
-    cfg: ConfigBase,
+    cfg: Any,
     hydra_cfg,
     conf_obj: ExperimentConfig,
 ) -> dict:
@@ -104,34 +208,16 @@ def optimize_multirun(
         conf_obj,
         "directions",
     ), "conf_obj must have directions attribute in multirun mode."
-    conf_obj = prepare_multirun_file_paths(hydra_cfg, conf_obj)
     files = conf_obj.files._get_file_dict()
-    logger.info(f"Saving multirun parameters to {conf_obj.files.params_file}")
-    cfg_params = yaml.safe_load(cfg) if isinstance(cfg, str) else cfg
-    params_file = files.get("params_file")
-    if params_file is not None:
-        params_path = Path(params_file)
-        params_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(params_path, "w") as f:
-            yaml.dump(cfg_params, f, indent=4)
+    if not files.get("params_file") or not files.get("score_file"):
+        conf_obj = prepare_multirun_file_paths(hydra_cfg, conf_obj)
+        files = conf_obj.files._get_file_dict()
     scores = conf_obj.execute_without_mercy()
     # Filter scores according to the optimizer. Directions pass +/- infinit
-    optimizers = conf_obj.optimizers if hasattr(conf_obj, "optimizers") else []
-    directions = conf_obj.directions if hasattr(conf_obj, "directions") else []
+    optimizers = getattr(conf_obj, "optimizers", [])
+    directions = getattr(conf_obj, "directions", [])
     filtered_scores, _ = filter_scores(scores, optimizers, directions)
-    assert (
-        "storage" in hydra_cfg.sweeper
-    ), "Storage must be specified in the sweeper config."
-    assert (
-        "study_name" in hydra_cfg.sweeper
-    ), "Study name must be specified in the sweeper config."
-
-    score_file = files.get("score_file")
-    if score_file is not None:
-        score_path = Path(score_file)
-        score_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(score_path, "w") as f:
-            json.dump(scores, f, indent=4)
+    _assert_multirun_sweeper(hydra_cfg)
 
     return filtered_scores
 
@@ -144,7 +230,7 @@ def set_study_attributes(study, attrs):
 
 
 def optimize_main(
-    cfg: ConfigBase,
+    cfg: Any,
 ) -> dict | tuple[dict, ConfigBase]:
     """
         Parameters
@@ -166,32 +252,27 @@ def optimize_main(
           and executes the optimization process.
     """
     hydra_cfg = HydraConfig.get()
-    mode = hydra_cfg.mode
-    cfg = OmegaConf.to_container(cfg)
+    if isinstance(cfg, DictConfig):
+        cfg_dict = OmegaConf.to_container(cfg, resolve=False)
+    elif isinstance(cfg, dict):
+        cfg_dict = dict(cfg)
+    else:
+        cfg_dict = OmegaConf.to_container(OmegaConf.create(cfg), resolve=False)
+    assert isinstance(cfg_dict, dict), f"cfg must resolve to a dictionary. Got {type(cfg_dict)}"
 
-    if str(mode) == "RunMode.MULTIRUN":
-        assert (
-            "storage" in hydra_cfg.sweeper
-        ), "Storage must be specified in the sweeper config."
-        assert (
-            "study_name" in hydra_cfg.sweeper
-        ), "Study name must be specified in the sweeper config."
-        explicit_name = cfg.get("experiment_name", None)
-        if explicit_name is None or str(explicit_name).strip() == "":
-            cfg["experiment_name"] = hash_conf_values(_root_=cfg)
-        else:
-            cfg["experiment_name"] = _ensure_experiment_hash(explicit_name)
-        cfg["experiment_name"] = _ensure_experiment_hash(cfg.get("experiment_name"))
+    if _is_multirun_mode(hydra_cfg):
+        _assert_multirun_sweeper(hydra_cfg)
+        cfg_dict = _prepare_multirun_cfg(cfg_dict, hydra_cfg, include_file_paths=False)
 
-    cfg["_target_"] = cfg.get("_target_", "deckard.ExperimentConfig")
-    cfg_yaml = OmegaConf.to_yaml(cfg)
+    cfg_dict["_target_"] = cfg_dict.get("_target_", "deckard.ExperimentConfig")
+    cfg_yaml = OmegaConf.to_yaml(cfg_dict)
 
-    conf_obj = instantiate(cfg)
+    conf_obj = instantiate(cfg_dict)
     assert isinstance(
         conf_obj,
         ConfigBase,
     ), f"conf_obj must be an instance of ConfigBase. Got {type(conf_obj)}"
-    if str(mode) == "RunMode.MULTIRUN":
+    if _is_multirun_mode(hydra_cfg):
         assert isinstance(conf_obj, ExperimentConfig)
         scores = optimize_multirun(cfg_yaml, hydra_cfg, conf_obj)
     else:
@@ -377,7 +458,7 @@ def save_params_file(cfg, files):
     return cfg
 
 
-def filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
+def filter_scores(scores: dict, optimizers: list, directions: list) -> tuple[Any, dict]:
     """
     Overview
     ---

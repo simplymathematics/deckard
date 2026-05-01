@@ -175,7 +175,7 @@ def test_generate_hydra_main_passes_parser_args_and_hydra_overrides(
     assert result == "ok"
     assert seen["argv_to_parser"] == ["--alpha", "cli", "alpha=hydra"]
     assert sys.argv == ["deckard", "alpha=hydra"]
-    assert seen["kwargs"] == {"alpha": "hydra"}
+    assert seen["kwargs"] == {"alpha": "hydra", "overrides": ["alpha=hydra"]}
     assert seen["hydra_kwargs"] == {
         "config_path": None,
         "config_name": None,
@@ -246,7 +246,9 @@ def test_generate_hydra_main_forwards_hydra_multirun_flag(
     assert result == "ok"
     assert seen["argv_to_parser"] == ["--alpha", "cli", "--multirun", "alpha=hydra"]
     assert sys.argv == ["deckard", "--multirun", "alpha=hydra"]
-    assert seen["kwargs"] == {"alpha": "hydra"}
+    assert seen["kwargs"]["alpha"] == "hydra"
+    assert seen["kwargs"]["multirun"] is True
+    assert seen["kwargs"]["overrides"] == ["alpha=hydra"]
     assert seen["hydra_kwargs"] == {
         "config_path": None,
         "config_name": None,
