@@ -1,6 +1,6 @@
 import time
 import logging
-from typing import Union
+from typing import Any, Union
 from pathlib import Path
 from dataclasses import dataclass
 from omegaconf import DictConfig
@@ -184,12 +184,10 @@ class ModelConfig(ConfigBase):
     defense_application_time: Union[float, None] = None
     training_n: Union[int, None] = None
     prediction_n: Union[int, None] = None
-    training_predictions: Union[pd.Series, pd.DataFrame, np.ndarray, list, None] = None
-    predictions: Union[pd.Series, pd.DataFrame, np.ndarray, list, None] = None
-    training_probabilities: Union[pd.Series, pd.DataFrame, np.ndarray, list, None] = (
-        None
-    )
-    probabilities: Union[pd.Series, pd.DataFrame, np.ndarray, list, None] = None
+    training_predictions: Any = None
+    predictions: Any = None
+    training_probabilities: Any = None
+    probabilities: Any = None
     _target_: Union[str, None] = None
 
     def __post_init__(self):
