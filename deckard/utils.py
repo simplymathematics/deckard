@@ -54,7 +54,9 @@ def _canonicalize_for_hash(value):
 
     if isinstance(value, (set, frozenset)):
         items = [_canonicalize_for_hash(v) for v in value]
-        return sorted(items, key=lambda x: json.dumps(x, sort_keys=True, separators=(",", ":")))
+        return sorted(
+            items, key=lambda x: json.dumps(x, sort_keys=True, separators=(",", ":"))
+        )
 
     if isinstance(value, Path):
         return value.as_posix()
@@ -556,7 +558,9 @@ class ConfigBase:
 
         # Include any additional runtime attrs not declared as dataclass fields
         for name, value in self.__dict__.items():
-            if (name.startswith("_") and not (for_hash and name == "_target_")) or name in dict_:
+            if (
+                name.startswith("_") and not (for_hash and name == "_target_")
+            ) or name in dict_:
                 continue
             if for_hash and not self._is_hash_field(name):
                 continue
@@ -780,7 +784,9 @@ def _extract_param_help_from_docstring(docstring: str) -> dict[str, str]:
     def _flush_current():
         nonlocal current_name, current_desc
         if current_name:
-            description = " ".join(part.strip() for part in current_desc if part.strip())
+            description = " ".join(
+                part.strip() for part in current_desc if part.strip()
+            )
             if description:
                 help_map[current_name] = description
         current_name = None

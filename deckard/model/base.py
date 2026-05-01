@@ -77,6 +77,7 @@ regressor_dict = {
 sklearn_dict = {**classifier_dict, **regressor_dict}
 sklearn_models = list(sklearn_dict.values())
 
+
 @dataclass
 class ModelConfig(ConfigBase):
     """

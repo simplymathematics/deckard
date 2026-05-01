@@ -23,7 +23,9 @@ logger = logging.getLogger(__name__)
 class OptunaStudyCallback(HydraCallback):
     """Hydra-native callback that syncs study setup and metric names for multirun."""
 
-    def __init__(self, study_name: str, storage: str, directions: list, optimizers: list):
+    def __init__(
+        self, study_name: str, storage: str, directions: list, optimizers: list
+    ):
         self.study_name = study_name
         self.storage = storage
         self.directions = directions
@@ -49,7 +51,7 @@ class OptunaStudyCallback(HydraCallback):
         hydra_cfg = HydraConfig.get()
         _assert_multirun_sweeper(hydra_cfg)
         _prepare_multirun_cfg(config, hydra_cfg, include_file_paths=True)
-    
+
     def on_multirun_end(self, config: DictConfig, **kwargs: Any) -> None:
         if self.study is None:
             return
@@ -90,7 +92,9 @@ class OptunaStudyCallback(HydraCallback):
         if not score_file:
             return
 
-        score_payload = _extract_scores_from_job_end_kwargs(job_return=job_return, kwargs=kwargs)
+        score_payload = _extract_scores_from_job_end_kwargs(
+            job_return=job_return, kwargs=kwargs
+        )
         if score_payload is None:
             return
 
@@ -123,7 +127,9 @@ def _assert_multirun_sweeper(hydra_cfg):
     sweeper = _get_sweeper_cfg(hydra_cfg)
     assert sweeper is not None, "Sweeper must be specified in multirun mode."
     assert "storage" in sweeper, "Storage must be specified in the sweeper config."
-    assert "study_name" in sweeper, "Study name must be specified in the sweeper config."
+    assert (
+        "study_name" in sweeper
+    ), "Study name must be specified in the sweeper config."
 
 
 def _resolve_multirun_paths(hydra_cfg) -> dict:
@@ -254,7 +260,9 @@ def optimize_main(
         cfg_dict = dict(cfg)
     else:
         cfg_dict = OmegaConf.to_container(OmegaConf.create(cfg), resolve=False)
-    assert isinstance(cfg_dict, dict), f"cfg must resolve to a dictionary. Got {type(cfg_dict)}"
+    assert isinstance(
+        cfg_dict, dict
+    ), f"cfg must resolve to a dictionary. Got {type(cfg_dict)}"
 
     if _is_multirun_mode(hydra_cfg):
         _assert_multirun_sweeper(hydra_cfg)
@@ -408,7 +416,11 @@ def set_trial_attributes(study, attrs, experiment_name):
     exp_uuid = _ensure_experiment_hash(experiment_name)
     trials = study.get_trials(deepcopy=False)
     trial = next(
-        (t for t in trials if getattr(t, "user_attrs", {}).get("experiment_name") == exp_uuid),
+        (
+            t
+            for t in trials
+            if getattr(t, "user_attrs", {}).get("experiment_name") == exp_uuid
+        ),
         None,
     )
 

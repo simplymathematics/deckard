@@ -94,7 +94,9 @@ def get_configuration_paths():
 
 def _build_router() -> argparse.ArgumentParser:
     """Minimal routing parser: recognises the subcommand name and passes everything else through."""
-    parser = argparse.ArgumentParser(prog="deckard", description="Deckard command-line interface")
+    parser = argparse.ArgumentParser(
+        prog="deckard", description="Deckard command-line interface"
+    )
     subs = parser.add_subparsers(dest="module", metavar="MODULE", required=True)
     for name in layer_dict:
         sub = subs.add_parser(name, help=f"Run the {name} layer", add_help=False)
@@ -120,7 +122,9 @@ def main():
     if module in SUPPORTED_LAYERS:
         generate_hydra_main(module)
     else:
-        raise ValueError(f"Module: {module} not supported. Must be one of {SUPPORTED_LAYERS}")
+        raise ValueError(
+            f"Module: {module} not supported. Must be one of {SUPPORTED_LAYERS}"
+        )
 
 
 def generate_hydra_main(layer):

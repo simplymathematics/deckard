@@ -25,7 +25,6 @@ from optuna.exceptions import ExperimentalWarning
 from omegaconf import OmegaConf
 import yaml
 
-
 # Install library warning filters before importing deckard submodules, since
 # those imports can transitively import sklearn/art and emit warnings.
 warnings.filterwarnings("ignore", module=r"^sklearn(\.|$)")

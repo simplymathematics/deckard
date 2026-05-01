@@ -175,8 +175,6 @@ class FairnessDataConfig(DataPipelineConfig):
             "full-data sampling",
         )
 
-
-
     def _score(self) -> dict:
         """Compute dataset-only fairness metrics using fairlearn."""
         if (

@@ -214,6 +214,5 @@ class FileConfig(ConfigBase):
                 count += 1
         return count
 
-
     def __hash__(self):
         return super().__hash__()

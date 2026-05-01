@@ -18,11 +18,13 @@ from pathlib import Path
 from hydra.utils import instantiate
 
 from .data import DataConfig, DataPipelineConfig
+
 try:
     from .data import FairnessDataConfig
 except ImportError:  # pragma: no cover
     FairnessDataConfig = None
 from .model import ModelConfig
+
 try:
     from .model import FairnessModelConfig
 except ImportError:  # pragma: no cover
@@ -613,6 +615,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
 class SurvivalExperimentConfig(ExperimentConfig):
     """ExperimentConfig specialization for survival-analysis workflows."""
+
     """Experiment configuration tailored for survival analyses.
 
     This config enforces that both `data` and `model` are provided and valid,

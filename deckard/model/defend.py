@@ -283,7 +283,9 @@ class _DefenseBehaviorMixin:
 
     def get_art_class(self, data):
         if self.model_type in [None, "", "None", "null", "Null", "NULL"]:
-            raise ValueError("model_type must be set before creating an ART defense estimator")
+            raise ValueError(
+                "model_type must be set before creating an ART defense estimator"
+            )
         assert self.model_type is not None
         art_class = (
             classifier_dict[self.model_type.split(".")[-1]]
