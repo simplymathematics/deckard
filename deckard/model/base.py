@@ -433,7 +433,7 @@ class ModelConfig(ConfigBase):
 
         self.defense_application_time = end - start
         end = time.process_time()
-        logger.info(f"Defense applied in {self.defense_application_time} seconds.")
+        logger.info(f"Defense applied in {self.defense_application_time:.2f} seconds.")
         return defended_estimator
 
     def _train(self, X: pd.DataFrame, y: pd.Series):
