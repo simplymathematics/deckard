@@ -19,8 +19,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="File" href="file.html" />
-    <link rel="prev" title="deckard" href="modules.html" /> 
+    <link rel="next" title="Plot" href="plot.html" />
+    <link rel="prev" title="Score" href="score.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,6 +45,45 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="score.html">Score</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Experiment</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.experiment.ExperimentConfig"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.ExperimentConfig.set_device"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig.set_device()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.experiment.SurvivalExperimentConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.SurvivalExperimentConfig.calculate_failures_under_attack"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig.calculate_failures_under_attack()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.SurvivalExperimentConfig.make_survival_model_table"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig.make_survival_model_table()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#survival-extension">Survival Extension</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.survival.SurvivalExperimentConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.survival.SurvivalExperimentConfig.calculate_failures_under_attack"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig.calculate_failures_under_attack()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.survival.SurvivalExperimentConfig.make_survival_model_table"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig.make_survival_model_table()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#command-line-example">Command-line example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#see-also">See also</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="layers.html">Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="file.html">File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Experiment</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.ExperimentConfig"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig</span></code></a><ul>
@@ -99,7 +138,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">deckard</a></li>
       <li class="breadcrumb-item active">Experiment</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/experiment.rst.txt" rel="nofollow"> View page source</a>
@@ -220,50 +258,86 @@ experiment module so survival workflows can be treated as an optional extension.
 <h3>Command-line example<a class="headerlink" href="#command-line-example" title="Link to this heading"></a></h3>
 <p>Run an experiment from the project root:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment
+
+<span class="c1"># With explicit model and data configuration</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>data.dataset_name<span class="o">=</span>make_classification<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>data.data_params.n_samples<span class="o">=</span><span class="m">100</span><span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>model.model_type<span class="o">=</span>sklearn.ensemble.RandomForestClassifier<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>model.model_params.n_estimators<span class="o">=</span><span class="m">50</span>
+
+<span class="c1"># With evasion attack and defense pipeline</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_type<span class="o">=</span>art.attacks.evasion.FastGradientMethod<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_params.eps<span class="o">=</span><span class="m">0</span>.1<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>model.defense.defenses<span class="o">[</span><span class="m">0</span><span class="o">]</span>.defense_name<span class="o">=</span>art.defences.preprocessor.FeatureSqueezing
 </pre></div>
 </div>
 </section>
 <section id="programmatic-example">
 <h3>Programmatic example<a class="headerlink" href="#programmatic-example" title="Link to this heading"></a></h3>
-<p>Use the experiment config directly in Python:</p>
+<p>Use the experiment config directly in Python with explicit configurations:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttackConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">deckard.experiment</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model.defend</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefensePipelineConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.score</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultClassifierConfig</span>
 
+<span class="c1"># Explicit data configuration</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">DataConfig</span><span class="p">(</span>
    <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;make_classification&quot;</span><span class="p">,</span>
    <span class="n">data_params</span><span class="o">=</span><span class="p">{</span>
-      <span class="s2">&quot;n_samples&quot;</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span>
-      <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
-      <span class="s2">&quot;n_informative&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+      <span class="s2">&quot;n_samples&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+      <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+      <span class="s2">&quot;n_informative&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
       <span class="s2">&quot;n_redundant&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-      <span class="s2">&quot;n_clusters_per_class&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+      <span class="s2">&quot;n_clusters_per_class&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
       <span class="s2">&quot;n_classes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-      <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+      <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">,</span>
    <span class="p">},</span>
-   <span class="n">train_size</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
-   <span class="n">test_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+   <span class="n">train_size</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span>
+   <span class="n">test_size</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
    <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
    <span class="n">stratify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
    <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+   <span class="n">scorer</span><span class="o">=</span><span class="n">DefaultClassifierConfig</span><span class="p">(),</span>
 <span class="p">)</span>
 
+<span class="c1"># Explicit model configuration</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(</span>
-   <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;sklearn.linear_model.LogisticRegression&quot;</span><span class="p">,</span>
+   <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;sklearn.ensemble.RandomForestClassifier&quot;</span><span class="p">,</span>
    <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-   <span class="n">model_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="mi">25</span><span class="p">},</span>
+   <span class="n">model_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;n_estimators&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s2">&quot;max_depth&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">},</span>
+   <span class="n">scorer</span><span class="o">=</span><span class="n">DefaultClassifierConfig</span><span class="p">(),</span>
 <span class="p">)</span>
 
+<span class="c1"># Optional defense configuration</span>
+<span class="n">defense</span> <span class="o">=</span> <span class="n">DefensePipelineConfig</span><span class="p">(</span>
+   <span class="n">defenses</span><span class="o">=</span><span class="p">[</span>
+      <span class="p">{</span>
+         <span class="s2">&quot;defense_name&quot;</span><span class="p">:</span> <span class="s2">&quot;art.defences.preprocessor.FeatureSqueezing&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;defense_params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;bit_depth&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">},</span>
+      <span class="p">}</span>
+   <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">defense</span> <span class="o">=</span> <span class="n">defense</span>
+
+<span class="c1"># Optional attack configuration</span>
 <span class="n">attack</span> <span class="o">=</span> <span class="n">AttackConfig</span><span class="p">(</span>
    <span class="n">attack_type</span><span class="o">=</span><span class="s2">&quot;art.attacks.evasion.FastGradientMethod&quot;</span><span class="p">,</span>
-   <span class="n">attack_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;eps&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">},</span>
-   <span class="n">attack_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+   <span class="n">attack_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;eps&quot;</span><span class="p">:</span> <span class="mf">0.15</span><span class="p">},</span>
+   <span class="n">attack_size</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="c1"># Compose the full experiment</span>
 <span class="n">cfg</span> <span class="o">=</span> <span class="n">ExperimentConfig</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">attack</span><span class="o">=</span><span class="n">attack</span><span class="p">)</span>
 <span class="n">scores</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Experiment Results:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Data shape: </span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Model accuracy: </span><span class="si">{</span><span class="n">scores</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;N/A&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Attack success: </span><span class="si">{</span><span class="n">scores</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;evasion_success_rate&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;N/A&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -298,8 +372,8 @@ normalizes outputs for downstream scoring/serialization.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="modules.html" class="btn btn-neutral float-left" title="deckard" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="file.html" class="btn btn-neutral float-right" title="File" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="score.html" class="btn btn-neutral float-left" title="Score" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="plot.html" class="btn btn-neutral float-right" title="Plot" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

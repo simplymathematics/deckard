@@ -42,6 +42,15 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="score.html">Score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="layers.html">Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="file.html">File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">deckard</a></li>
 </ul>
 
@@ -224,11 +233,15 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="data.html#deckard.data.BaseSampler">BaseSampler (class in deckard.data)</a>
+
+      <ul>
+        <li><a href="data.html#deckard.data.sample.BaseSampler">(class in deckard.data.sample)</a>
 </li>
-      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.benign_metric">benign_metric (deckard.data.survival.LifelinesDataConfig attribute)</a>
-</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.benign_metric">benign_metric (deckard.data.survival.LifelinesDataConfig attribute)</a>
+</li>
       <li><a href="plot.html#deckard.plot.SurvivalSeabornPlotterConfig.build_calibration_plot">build_calibration_plot() (deckard.plot.SurvivalSeabornPlotterConfig method)</a>
 </li>
       <li><a href="plot.html#deckard.plot.SurvivalSeabornPlotterConfig.build_coefficients_plot">build_coefficients_plot() (deckard.plot.SurvivalSeabornPlotterConfig method)</a>
@@ -348,6 +361,13 @@
 </li>
       </ul></li>
       <li>
+    deckard.data.sample
+
+      <ul>
+        <li><a href="data.html#module-deckard.data.sample">module</a>
+</li>
+      </ul></li>
+      <li>
     deckard.data.survival
 
       <ul>
@@ -389,6 +409,8 @@
         <li><a href="model.html#module-deckard.model">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     deckard.model.fairness
 
@@ -396,8 +418,6 @@
         <li><a href="model.html#module-deckard.model.fairness">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     deckard.model.pytorch
 
@@ -648,9 +668,15 @@
       <li><a href="data.html#deckard.data.DataConfig.keep">keep (deckard.data.DataConfig attribute)</a>
 </li>
       <li><a href="data.html#deckard.data.KFoldSampler">KFoldSampler (class in deckard.data)</a>
+
+      <ul>
+        <li><a href="data.html#deckard.data.sample.KFoldSampler">(class in deckard.data.sample)</a>
 </li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="data.html#deckard.data.sample.KFoldSamplerConf">KFoldSamplerConf (class in deckard.data.sample)</a>
+</li>
       <li><a href="plot.html#deckard.plot.PlotConfig.kwargs">kwargs (deckard.plot.PlotConfig attribute)</a>
 
       <ul>
@@ -732,6 +758,8 @@
         <li><a href="data.html#module-deckard.data.fairness">deckard.data.fairness</a>
 </li>
         <li><a href="data.html#module-deckard.data.pytorch">deckard.data.pytorch</a>
+</li>
+        <li><a href="data.html#module-deckard.data.sample">deckard.data.sample</a>
 </li>
         <li><a href="data.html#module-deckard.data.survival">deckard.data.survival</a>
 </li>
@@ -896,12 +924,16 @@
         <li><a href="plot.html#deckard.plot.YellowbrickPlotConfig.rc_config">(deckard.plot.YellowbrickPlotConfig attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="utils.html#deckard.utils.ConfigBase.read_or_initialize_scores">read_or_initialize_scores() (deckard.utils.ConfigBase method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="data.html#deckard.data.register_sampler_configs">register_sampler_configs() (in module deckard.data)</a>
+
+      <ul>
+        <li><a href="data.html#deckard.data.sample.register_sampler_configs">(in module deckard.data.sample)</a>
 </li>
+      </ul></li>
       <li><a href="plot.html#deckard.plot.survival.SurvivalSeabornPlotConfigList.render_all">render_all() (deckard.plot.survival.SurvivalSeabornPlotConfigList method)</a>
 
       <ul>
@@ -959,10 +991,22 @@
       <li><a href="plot.html#deckard.plot.YellowbrickPlotConfig.show">show() (deckard.plot.YellowbrickPlotConfig method)</a>
 </li>
       <li><a href="data.html#deckard.data.ShuffleSampler">ShuffleSampler (class in deckard.data)</a>
+
+      <ul>
+        <li><a href="data.html#deckard.data.sample.ShuffleSampler">(class in deckard.data.sample)</a>
+</li>
+      </ul></li>
+      <li><a href="data.html#deckard.data.sample.ShuffleSamplerConf">ShuffleSamplerConf (class in deckard.data.sample)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="data.html#deckard.data.SplitSampler">SplitSampler (class in deckard.data)</a>
+
+      <ul>
+        <li><a href="data.html#deckard.data.sample.SplitSampler">(class in deckard.data.sample)</a>
+</li>
+      </ul></li>
+      <li><a href="data.html#deckard.data.sample.SplitSamplerConf">SplitSamplerConf (class in deckard.data.sample)</a>
 </li>
       <li><a href="data.html#deckard.data.DataConfig.stratify">stratify (deckard.data.DataConfig attribute)</a>
 

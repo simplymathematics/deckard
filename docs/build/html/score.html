@@ -19,8 +19,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Utils" href="utils.html" />
-    <link rel="prev" title="Plot" href="plot.html" /> 
+    <link rel="next" title="Experiment" href="experiment.html" />
+    <link rel="prev" title="Attack" href="attack.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,6 +45,56 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="attack.html">Attack</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Score</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.AttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">AttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultAttributeInferenceAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultAttributeInferenceRegressionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceRegressionAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultClassifierConfig"><code class="docutils literal notranslate"><span class="pre">DefaultClassifierConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultDataClassificationConfig"><code class="docutils literal notranslate"><span class="pre">DefaultDataClassificationConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultDataRegressionConfig"><code class="docutils literal notranslate"><span class="pre">DefaultDataRegressionConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultEvasionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultEvasionAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultEvasionRegressionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultEvasionRegressionAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultFairlearnClassificationConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnClassificationConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultFairlearnConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultFairlearnRegressionConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnRegressionConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultLifelinesConfig"><code class="docutils literal notranslate"><span class="pre">DefaultLifelinesConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultMembershipInferenceAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultMembershipInferenceAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultRegressorConfig"><code class="docutils literal notranslate"><span class="pre">DefaultRegressorConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.FairlearnScoreDictConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnScoreDictConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.ScorerConfig"><code class="docutils literal notranslate"><span class="pre">ScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.ScorerDictConfig"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.fairness_demographic_parity_difference"><code class="docutils literal notranslate"><span class="pre">fairness_demographic_parity_difference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.fairness_equalized_odds_difference"><code class="docutils literal notranslate"><span class="pre">fairness_equalized_odds_difference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.fairness_group_mae_difference"><code class="docutils literal notranslate"><span class="pre">fairness_group_mae_difference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.fairness_group_mean_prediction_difference"><code class="docutils literal notranslate"><span class="pre">fairness_group_mean_prediction_difference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.fairness_group_mse_difference"><code class="docutils literal notranslate"><span class="pre">fairness_group_mse_difference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.survival_aic_score"><code class="docutils literal notranslate"><span class="pre">survival_aic_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.survival_bic_score"><code class="docutils literal notranslate"><span class="pre">survival_bic_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.survival_concordance_score"><code class="docutils literal notranslate"><span class="pre">survival_concordance_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#model-and-data-scoring">Model and data scoring</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#attack-scoring">Attack scoring</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hydra-configstore-examples">Hydra ConfigStore examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#direct-scorerdictconfig-usage">Direct ScorerDictConfig Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#see-also">See also</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="layers.html">Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="file.html">File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="file.html">File</a></li>
@@ -84,6 +134,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#model-and-data-scoring">Model and data scoring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#attack-scoring">Attack scoring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#hydra-configstore-examples">Hydra ConfigStore examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#direct-scorerdictconfig-usage">Direct ScorerDictConfig Usage</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#internals">Internals</a></li>
@@ -113,7 +164,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">deckard</a></li>
       <li class="breadcrumb-item active">Score</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/score.rst.txt" rel="nofollow"> View page source</a>
@@ -440,9 +490,29 @@ import-time registration attempts in tests and repeated imports.</p>
 <section id="attack-scoring">
 <h3>Attack scoring<a class="headerlink" href="#attack-scoring" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttackConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">deckard.score</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultClassifierConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">deckard.score.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttackScorerConfig</span>
 
+<span class="c1"># Setup data and model</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">DataConfig</span><span class="p">(</span>
+   <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;make_classification&quot;</span><span class="p">,</span>
+   <span class="n">data_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;n_samples&quot;</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span> <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;n_informative&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">},</span>
+   <span class="n">train_size</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
+   <span class="n">test_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">data</span><span class="p">()</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(</span>
+   <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;sklearn.linear_model.LogisticRegression&quot;</span><span class="p">,</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+   <span class="n">model_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">},</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># Configure attack with evasion scorer profile</span>
 <span class="n">attack</span> <span class="o">=</span> <span class="n">AttackConfig</span><span class="p">(</span>
    <span class="n">attack_type</span><span class="o">=</span><span class="s2">&quot;art.attacks.evasion.FastGradientMethod&quot;</span><span class="p">,</span>
    <span class="n">attack_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;eps&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">},</span>
@@ -502,6 +572,53 @@ or two metrics:</p>
 separate canonical Hydra store alias for
 <code class="docutils literal notranslate"><span class="pre">attribute_inference_regression</span></code>. Configure that profile inline on
 <code class="docutils literal notranslate"><span class="pre">attack.scorer.attribute_inference_regression</span></code> when needed.</p>
+</section>
+<section id="direct-scorerdictconfig-usage">
+<h3>Direct ScorerDictConfig Usage<a class="headerlink" href="#direct-scorerdictconfig-usage" title="Link to this heading"></a></h3>
+<p>You can also instantiate <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.score.ScorerDictConfig</span></code></a> directly
+for fine-grained metric customization:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.score</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScorerConfig</span><span class="p">,</span> <span class="n">ScorerDictConfig</span>
+
+<span class="c1"># Define custom metrics with parameters</span>
+<span class="n">custom_scorers</span> <span class="o">=</span> <span class="n">ScorerDictConfig</span><span class="p">(</span>
+   <span class="n">scorers</span><span class="o">=</span><span class="p">{</span>
+      <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">ScorerConfig</span><span class="p">(</span>
+         <span class="n">score_name</span><span class="o">=</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span>
+         <span class="n">score_function</span><span class="o">=</span><span class="s2">&quot;sklearn.metrics.accuracy_score&quot;</span><span class="p">,</span>
+      <span class="p">),</span>
+      <span class="s2">&quot;f1_macro&quot;</span><span class="p">:</span> <span class="n">ScorerConfig</span><span class="p">(</span>
+         <span class="n">score_name</span><span class="o">=</span><span class="s2">&quot;f1_macro&quot;</span><span class="p">,</span>
+         <span class="n">score_function</span><span class="o">=</span><span class="s2">&quot;sklearn.metrics.f1_score&quot;</span><span class="p">,</span>
+         <span class="n">score_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;average&quot;</span><span class="p">:</span> <span class="s2">&quot;macro&quot;</span><span class="p">,</span> <span class="s2">&quot;zero_division&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+      <span class="p">),</span>
+      <span class="s2">&quot;precision_weighted&quot;</span><span class="p">:</span> <span class="n">ScorerConfig</span><span class="p">(</span>
+         <span class="n">score_name</span><span class="o">=</span><span class="s2">&quot;precision_weighted&quot;</span><span class="p">,</span>
+         <span class="n">score_function</span><span class="o">=</span><span class="s2">&quot;sklearn.metrics.precision_score&quot;</span><span class="p">,</span>
+         <span class="n">score_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;average&quot;</span><span class="p">:</span> <span class="s2">&quot;weighted&quot;</span><span class="p">,</span> <span class="s2">&quot;zero_division&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+      <span class="p">),</span>
+      <span class="s2">&quot;roc_auc&quot;</span><span class="p">:</span> <span class="n">ScorerConfig</span><span class="p">(</span>
+         <span class="n">score_name</span><span class="o">=</span><span class="s2">&quot;roc_auc&quot;</span><span class="p">,</span>
+         <span class="n">score_function</span><span class="o">=</span><span class="s2">&quot;sklearn.metrics.roc_auc_score&quot;</span><span class="p">,</span>
+         <span class="n">score_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;multi_class&quot;</span><span class="p">:</span> <span class="s2">&quot;ovr&quot;</span><span class="p">,</span> <span class="s2">&quot;average&quot;</span><span class="p">:</span> <span class="s2">&quot;weighted&quot;</span><span class="p">},</span>
+      <span class="p">),</span>
+   <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1"># Use custom scorers in model evaluation</span>
+<span class="n">callables</span> <span class="o">=</span> <span class="n">custom_scorers</span><span class="o">.</span><span class="n">get_callables</span><span class="p">()</span>
+<span class="n">y_true</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">y_pred</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">scorer_name</span><span class="p">,</span> <span class="n">scorer_fn</span> <span class="ow">in</span> <span class="n">callables</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+   <span class="k">try</span><span class="p">:</span>
+      <span class="n">results</span><span class="p">[</span><span class="n">scorer_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">scorer_fn</span><span class="p">(</span><span class="n">y_true</span><span class="o">=</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="o">=</span><span class="n">y_pred</span><span class="p">)</span>
+   <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Scorer </span><span class="si">{</span><span class="n">scorer_name</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Results: </span><span class="si">{</span><span class="n">results</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 </section>
 <section id="internals">
@@ -607,8 +724,8 @@ misleading values. Match the scorer profile to the task type.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="plot.html" class="btn btn-neutral float-left" title="Plot" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="utils.html" class="btn btn-neutral float-right" title="Utils" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="attack.html" class="btn btn-neutral float-left" title="Attack" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="experiment.html" class="btn btn-neutral float-right" title="Experiment" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

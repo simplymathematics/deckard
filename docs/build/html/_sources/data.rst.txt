@@ -10,6 +10,22 @@ It supports both real and synthetic datasets, as well as YAML/Hydra-based config
    :members:
    :show-inheritance:
 
+Data Sampling
+-------------
+
+The :mod:`deckard.data.sample` module provides pluggable sampling strategies via :class:`~deckard.data.sample.BaseSampler`
+for robust train/test/validation splits.
+
+.. automodule:: deckard.data.sample
+   :members:
+   :show-inheritance:
+
+Data Preprocessing Pipelines
+-----------------------------
+
+The :class:`~deckard.data.DataPipelineConfig` wraps scikit-learn's :class:`~sklearn.pipeline.Pipeline`
+to enable configurable feature preprocessing with timing instrumentation.
+
 Extensions
 ----------
 
@@ -205,6 +221,99 @@ Example inline overrides:
       data.data_params.n_features=10 \
       data.train_size=30 \
       data.test_size=10
+
+Data Pipeline Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Apply scikit-learn preprocessing pipelines via :class:`~deckard.data.DataPipelineConfig`:
+
+.. code-block:: python
+
+   from deckard.data import DataConfig, DataPipelineConfig
+
+   # Create a data config with preprocessing pipeline
+   data = DataConfig(
+      dataset_name="make_classification",
+      data_params={
+         "n_samples": 100,
+         "n_features": 20,
+         "n_informative": 10,
+         "random_state": 42,
+      },
+      train_size=70,
+      test_size=30,
+      classifier=True,
+      pipeline=DataPipelineConfig(
+         steps={
+            "scaler": {"name": "sklearn.preprocessing.StandardScaler"},
+            "pca": {
+               "name": "sklearn.decomposition.PCA",
+               "n_components": 10,
+            },
+         }
+      ),
+   )
+   data()
+   print(f"X_train shape after pipeline: {data.X_train.shape}")
+
+CLI example:
+
+.. code-block:: bash
+
+   python -m deckard optimize --config-name experiment \
+      data.dataset_name=make_classification \
+      data.pipeline.steps.scaler.name=sklearn.preprocessing.StandardScaler \
+      data.pipeline.steps.pca.name=sklearn.decomposition.PCA \
+      data.pipeline.steps.pca.n_components=10
+
+Sampling Strategies
+~~~~~~~~~~~~~~~~~~~
+
+Use pluggable samplers for robust train/test/validation splits:
+
+.. code-block:: python
+
+   from deckard.data import DataConfig
+   from deckard.data.sample import KFoldSampler, ShuffleSampler
+
+   # Standard 3-way split (default behavior with val_size)
+   data = DataConfig(
+      dataset_name="make_classification",
+      data_params={"n_samples": 100, "n_features": 20, "random_state": 42},
+      train_size=60,
+      test_size=20,
+      val_size=20,
+      classifier=True,
+   )
+
+   # K-fold cross-validation with 5 folds
+   data_kfold = DataConfig(
+      dataset_name="make_classification",
+      data_params={"n_samples": 100, "n_features": 20, "random_state": 42},
+      classifier=True,
+      sampler=KFoldSampler(n_splits=5, stratify=True),
+   )
+
+   # Repeated random splits (shuffle-split)
+   data_shuffle = DataConfig(
+      dataset_name="make_classification",
+      data_params={"n_samples": 100, "n_features": 20, "random_state": 42},
+      classifier=True,
+      sampler=ShuffleSampler(n_splits=3, test_size=0.2, random_state=42),
+   )
+
+CLI examples:
+
+.. code-block:: bash
+
+   # Use k-fold sampling
+   python -m deckard optimize --config-name experiment sample=kfold
+
+   # Use shuffle split sampling
+   python -m deckard optimize --config-name experiment sample=shuffle
+
+   # Disable sampling (use no sampler)
+   python -m deckard optimize --config-name experiment sample=none
 
 Internals
 ---------

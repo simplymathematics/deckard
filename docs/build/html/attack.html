@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Plot" href="plot.html" />
+    <link rel="next" title="Score" href="score.html" />
     <link rel="prev" title="Model" href="model.html" /> 
 </head>
 
@@ -45,6 +45,74 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Attack</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.attack.AttackConfig"><code class="docutils literal notranslate"><span class="pre">AttackConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.attack_type"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack_type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.attack_params"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack_params</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.attack_size"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.targeted_attribute"><code class="docutils literal notranslate"><span class="pre">AttackConfig.targeted_attribute</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.alias"><code class="docutils literal notranslate"><span class="pre">AttackConfig.alias</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.attack_time"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack_time</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.attack_prediction_time"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack_prediction_time</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.attack_score_time"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack_score_time</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.attack"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.attack_predictions"><code class="docutils literal notranslate"><span class="pre">AttackConfig.attack_predictions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.predictions"><code class="docutils literal notranslate"><span class="pre">AttackConfig.predictions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.labels"><code class="docutils literal notranslate"><span class="pre">AttackConfig.labels</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.target_index"><code class="docutils literal notranslate"><span class="pre">AttackConfig.target_index</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig._attack_type"><code class="docutils literal notranslate"><span class="pre">AttackConfig._attack_type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig._attack_subtype"><code class="docutils literal notranslate"><span class="pre">AttackConfig._attack_subtype</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.score_dict"><code class="docutils literal notranslate"><span class="pre">AttackConfig.score_dict</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig._target_"><code class="docutils literal notranslate"><span class="pre">AttackConfig._target_</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.__hash__"><code class="docutils literal notranslate"><span class="pre">AttackConfig.__hash__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.__post_init__"><code class="docutils literal notranslate"><span class="pre">AttackConfig.__post_init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig.__call__"><code class="docutils literal notranslate"><span class="pre">AttackConfig.__call__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig._get_benign_preds"><code class="docutils literal notranslate"><span class="pre">AttackConfig._get_benign_preds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig._get_feature_vector_preds"><code class="docutils literal notranslate"><span class="pre">AttackConfig._get_feature_vector_preds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig._score_attack"><code class="docutils literal notranslate"><span class="pre">AttackConfig._score_attack()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig._evade"><code class="docutils literal notranslate"><span class="pre">AttackConfig._evade()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig._infer_attribute"><code class="docutils literal notranslate"><span class="pre">AttackConfig._infer_attribute()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig._infer_membership"><code class="docutils literal notranslate"><span class="pre">AttackConfig._infer_membership()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig._poison"><code class="docutils literal notranslate"><span class="pre">AttackConfig._poison()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig._extract"><code class="docutils literal notranslate"><span class="pre">AttackConfig._extract()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig._save"><code class="docutils literal notranslate"><span class="pre">AttackConfig._save()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.attack.SensitiveFeaturesWrapper"><code class="docutils literal notranslate"><span class="pre">SensitiveFeaturesWrapper</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.SensitiveFeaturesWrapper.get_params"><code class="docutils literal notranslate"><span class="pre">SensitiveFeaturesWrapper.get_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.SensitiveFeaturesWrapper.set_params"><code class="docutils literal notranslate"><span class="pre">SensitiveFeaturesWrapper.set_params()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#supported-attacks">Supported Attacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#command-line-example">Command-line example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#programmatic-example">Programmatic example:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#boundaryattack-example">BoundaryAttack example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#custom-configuration">Custom Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#membership-inference-attack">Membership Inference Attack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#attribute-inference-attack">Attribute Inference Attack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cli-examples">CLI Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#internals">Internals</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#timing-and-logging">Timing and logging</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#see-also">See also</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="score.html">Score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="layers.html">Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="file.html">File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="file.html">File</a></li>
@@ -95,6 +163,9 @@
 <li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example:</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#boundaryattack-example">BoundaryAttack example</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#custom-configuration">Custom Configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#membership-inference-attack">Membership Inference Attack</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#attribute-inference-attack">Attribute Inference Attack</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cli-examples">CLI Examples</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#internals">Internals</a><ul>
@@ -129,7 +200,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">deckard</a></li>
       <li class="breadcrumb-item active">Attack</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/attack.rst.txt" rel="nofollow"> View page source</a>
@@ -604,6 +674,94 @@ Example minimal YAML (<cite>blackbox_evasion.yaml</cite>):</p>
 </pre></div>
 </div>
 </section>
+<section id="membership-inference-attack">
+<h3>Membership Inference Attack<a class="headerlink" href="#membership-inference-attack" title="Link to this heading"></a></h3>
+<p>To execute a membership inference attack against a trained model:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttackConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.score.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttackScorerConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.score</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultClassifierConfig</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">DataConfig</span><span class="p">(</span>
+   <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;make_classification&quot;</span><span class="p">,</span>
+   <span class="n">data_params</span><span class="o">=</span><span class="p">{</span>
+      <span class="s2">&quot;n_samples&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+      <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+      <span class="s2">&quot;n_informative&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+      <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">,</span>
+   <span class="p">},</span>
+   <span class="n">train_size</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span>
+   <span class="n">test_size</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">data</span><span class="p">()</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(</span>
+   <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;sklearn.ensemble.RandomForestClassifier&quot;</span><span class="p">,</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+   <span class="n">model_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;n_estimators&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">},</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># Membership inference with baseline attack</span>
+<span class="n">membership_attack</span> <span class="o">=</span> <span class="n">AttackConfig</span><span class="p">(</span>
+   <span class="n">attack_type</span><span class="o">=</span><span class="s2">&quot;art.attacks.inference.membership_inference.MembershipInferenceBlackBox&quot;</span><span class="p">,</span>
+   <span class="n">attack_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+   <span class="n">scorer</span><span class="o">=</span><span class="n">AttackScorerConfig</span><span class="p">(</span>
+      <span class="n">membership_inference</span><span class="o">=</span><span class="n">DefaultClassifierConfig</span><span class="p">(),</span>
+   <span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">scores</span> <span class="o">=</span> <span class="n">membership_attack</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Membership inference success: </span><span class="si">{</span><span class="n">scores</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;membership_inference_accuracy&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;N/A&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="attribute-inference-attack">
+<h3>Attribute Inference Attack<a class="headerlink" href="#attribute-inference-attack" title="Link to this heading"></a></h3>
+<p>To execute an attribute inference attack against a trained model:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttackConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.score.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttackScorerConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.score</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultClassifierConfig</span>
+
+<span class="c1"># Attribute inference targeting the first feature</span>
+<span class="n">attribute_attack</span> <span class="o">=</span> <span class="n">AttackConfig</span><span class="p">(</span>
+   <span class="n">attack_type</span><span class="o">=</span><span class="s2">&quot;art.attacks.inference.attribute_inference.AttributeInferenceBaseline&quot;</span><span class="p">,</span>
+   <span class="n">attack_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;attr_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;feature_0&quot;</span><span class="p">]},</span>
+   <span class="n">attack_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+   <span class="n">scorer</span><span class="o">=</span><span class="n">AttackScorerConfig</span><span class="p">(</span>
+      <span class="n">attribute_inference</span><span class="o">=</span><span class="n">DefaultClassifierConfig</span><span class="p">(),</span>
+   <span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">scores</span> <span class="o">=</span> <span class="n">attribute_attack</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">scores</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;inferred_&quot;</span><span class="p">)])</span>
+</pre></div>
+</div>
+</section>
+<section id="cli-examples">
+<h3>CLI Examples<a class="headerlink" href="#cli-examples" title="Link to this heading"></a></h3>
+<p>Run attacks directly from the terminal:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Evasion attack with FastGradientMethod</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_type<span class="o">=</span>art.attacks.evasion.FastGradientMethod<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_size<span class="o">=</span><span class="m">50</span><span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_params.eps<span class="o">=</span><span class="m">0</span>.2
+
+<span class="c1"># Boundary attack (slow but black-box)</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_type<span class="o">=</span>art.attacks.evasion.BoundaryAttack<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_size<span class="o">=</span><span class="m">20</span><span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_params.max_iter<span class="o">=</span><span class="m">100</span>
+
+<span class="c1"># Membership inference attack</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_type<span class="o">=</span>art.attacks.inference.membership_inference.MembershipInferenceBlackBox<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_size<span class="o">=</span><span class="m">30</span>
+</pre></div>
+</div>
+</section>
 </section>
 <section id="internals">
 <h2>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h2>
@@ -642,7 +800,7 @@ using Python’s built-in <cite>logging</cite> module.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="model.html" class="btn btn-neutral float-left" title="Model" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="plot.html" class="btn btn-neutral float-right" title="Plot" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="score.html" class="btn btn-neutral float-right" title="Score" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

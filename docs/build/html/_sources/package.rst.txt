@@ -45,8 +45,11 @@ Deckard addresses this by providing:
 - integrated result collection for comparison and reporting
 - ``hydra`` integration for command line configuration
 - ``optuna`` integration for search space sampling, experiment pruning, and multi-objective optimization.
-- Numerous extensions for attacking, defending, and measuring various ML metrics.
-- Designed to be easily extensible, but also provide reasonable defaults to minmize configuration needs.
+- **Defense pipelines** that chain ART-based defenses (preprocessors, postprocessors, detectors, trainers).
+- **Data sampling strategies** (split, k-fold, shuffle) for robust evaluation.
+- **Scorer dictionaries** for unified metric management across data, model, and attack components.
+- Numerous extensions for attacking, defending, and measuring various ML metrics (fairness, survival, PyTorch).
+- Designed to be easily extensible, but also provide reasonable defaults to minimize configuration needs.
 
 This reduces engineering friction so researchers can focus on methodology
 instead of ad-hoc pipeline glue code.
@@ -99,12 +102,12 @@ record of what was run.
 
 Typical workflow composition includes:
 
-1. dataset loading/sampling
-2. preprocessing and feature handling
-3. model training/evaluation
-4. optional defenses
-5. attack execution
-6. scoring and artifact persistence
+1. **Dataset Loading & Sampling** — Load data via :class:`~deckard.data.DataConfig`, apply data preprocessing pipelines via :class:`~deckard.data.DataPipelineConfig`, and sample via pluggable :class:`~deckard.data.sample.BaseSampler` strategies.
+2. **Preprocessing & Feature Handling** — Transform features via sklearn pipelines; automatically instrumented with timing metrics.
+3. **Model Training & Evaluation** — Train models via :class:`~deckard.model.ModelConfig` with configurable scorer profiles for classification, regression, fairness, and survival tasks.
+4. **Optional Defenses** — Apply adversarial robustness defenses via :class:`~deckard.model.DefensePipelineConfig` that chain ART-based preprocessing and postprocessing defenses.
+5. **Attack Execution** — Execute evasion or inference attacks via :class:`~deckard.attack.AttackConfig` with attack-specific scoring and metric aggregation.
+6. **Scoring & Artifact Persistence** — Normalize metrics via :class:`~deckard.score.ScorerDictConfig` and persist results via :class:`~deckard.file.FileConfig`.
 
 By standardizing these stages, Deckard reduces ambiguity in experiment setup
 and makes comparative benchmarking easier.
@@ -136,29 +139,71 @@ configuration, the same experiment definition can be reused across:
 This enables scalable trustworthiness studies without rewriting experiment code for
 each execution backend, allowing researchers to focus only on the component that they are truly testing while gaining access to numerous mitigations, defenses, attacks, and metrics for validating ML pipelines.
 
-Internals
----------
+Internals And Architecture
+--------------------------
 
-The package-level API exposes the core configuration classes that drive this
-workflow-- Data, Model, Attack, Experiment, File, and ScorerDictConfig objects.
-Natively, ``deckard`` supports ``adversarial-robustness-toolbox`` to apply defenses and conduct attacks, but these can be easily overloaded to support other attack and defense frameworks by overloading the :deckard.DefenseConfig: and/or :deckard.AttackConfig:.
+The package-level API exposes core configuration classes that drive the
+workflow: Data, Model, Attack, Experiment, File, and ScorerDict objects.
 
+**Core Config Classes**:
 
-- :class:`deckard.data.DataConfig`
-- :class:`deckard.model.ModelConfig` and :class:`deckard.model.DefenseConfig`
-- :class:`deckard.attack.AttackConfig`
-- :class:`deckard.experiment.ExperimentConfig`
-- :class:`deckard.file.FileConfig`
-- :class:`deckard.score.ScorerDictConfig`
+- :class:`deckard.data.DataConfig` — loads, preprocesses, and splits datasets
+- :class:`deckard.data.DataPipelineConfig` — configurable sklearn pipelines for feature preprocessing
+- :class:`deckard.model.ModelConfig` — instantiates and trains scikit-learn models
+- :class:`deckard.model.DefensePipelineConfig` — chains ART defenses (preprocessors, postprocessors, detectors)
+- :class:`deckard.attack.AttackConfig` — executes ART evasion and inference attacks
+- :class:`deckard.experiment.ExperimentConfig` — orchestrates end-to-end workflows
+- :class:`deckard.file.FileConfig` — manages result serialization and artifact tracking
+- :class:`deckard.score.ScorerDictConfig` — unified metric configuration and aggregation
 
+**Defense Architecture**:
 
-Extensions
----------
+Deckard supports `Adversarial Robustness Toolbox (ART) <https://github.com/Trusted-AI/adversarial-robustness-toolbox>`_ defenses by wrapping scikit-learn models as ART estimators. :class:`deckard.model.DefensePipelineConfig` composes multiple defenses into a chain, accumulating preprocessors and postprocessors into a single ART wrapper for efficient ensemble application.
 
-``deckard`` also provides support for 
+**Scoring Architecture**:
 
-- :class:`deckard.plot.PlotConfig`
-- :class:``
+:class:`deckard.score.ScorerDictConfig` normalizes metric definitions into callable maps, supporting classification, regression, fairness, and attack-specific scoring. Attack scoring routes outputs through attack-kind–aware profiles (evasion, membership, attribute) and prefixes metric names automatically.
+
+**Sampling Architecture**:
+
+:class:`deckard.data.sample.BaseSampler` and subclasses provide pluggable train/test/validation split strategies, enabling cross-validation, repeated random splits, and stratified sampling.
+
+**Data Pipeline Architecture**:
+
+:class:`deckard.data.DataPipelineConfig` wraps sklearn's :class:`~sklearn.pipeline.Pipeline` with timing instrumentation and optional normalization. Empty pipelines skip fitting entirely for efficiency.
+
+Extensions And Optional Backends
+----------------------------------
+
+Deckard maintains a modular, plugin-based architecture using Hydra's ``ConfigStore``.
+
+**Data Extensions**:
+
+- :mod:`deckard.data.fairness` — :class:`~deckard.data.fairness.FairlearnDataConfig` for group-aware sampling and fairness metrics (fairlearn integration)
+- :mod:`deckard.data.pytorch` — :class:`~deckard.data.pytorch.PyTorchDataConfig` for PyTorch dataset and DataLoader integration
+- :mod:`deckard.data.survival` — :class:`~deckard.data.survival.LifelinesDataConfig` for survival analysis with lifelines datasets and auxiliary models
+- :mod:`deckard.data.sample` — :class:`~deckard.data.sample.SplitSampler`, :class:`~deckard.data.sample.KFoldSampler`, :class:`~deckard.data.sample.ShuffleSampler` for robust sampling strategies
+
+**Model Extensions**:
+
+- :mod:`deckard.model.fairness` — :class:`~deckard.model.fairness.FairlearnModelConfig` for fairness-aware model fitting and fairlearn defense wrappers
+- :mod:`deckard.model.pytorch` — :class:`~deckard.model.pytorch.PyTorchModelConfig` for PyTorch-native model training and prediction
+- :mod:`deckard.model.survival` — :class:`~deckard.model.survival.LifelinesModelConfig` for survival models with lifelines estimators
+- :mod:`deckard.model.defend` — :class:`~deckard.model.defend.DefenseConfig` and :class:`~deckard.model.defend.DefensePipelineConfig` for ART defense application
+
+**Scoring Extensions**:
+
+- :mod:`deckard.score.fairness` — fairness metrics (disparate impact, equalized odds, etc.) via :class:`~deckard.score.fairness.FairnessScoreConfig`
+- :mod:`deckard.score.survival` — survival metrics (concordance, AIC, BIC) via :class:`~deckard.score.survival.SurvivalScoreConfig`
+- :mod:`deckard.score.attack` — attack-specific metrics with attack kind–aware routing via :class:`~deckard.score.attack.AttackScorerConfig`
+- :mod:`deckard.score.data` — data inspection metrics (distributions, imbalance) via :class:`~deckard.score.data.DataScoreConfig`
+
+**Other Extensions**:
+
+- :mod:`deckard.attack` — evasion, membership inference, and attribute inference attacks
+- :mod:`deckard.plot` — visualization (seaborn, yellowbrick, survival curves)
+- :mod:`deckard.layers` — advanced workflows (Optuna integration, multi-run optimization)
+- :mod:`deckard.experiment.survival` — survival-specific experiment orchestration
 
 Troubleshooting
 ---------------

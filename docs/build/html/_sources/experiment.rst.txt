@@ -42,10 +42,23 @@ Run an experiment from the project root:
 
    python -m deckard optimize --config-name experiment
 
+   # With explicit model and data configuration
+   python -m deckard optimize --config-name experiment \
+      data.dataset_name=make_classification \
+      data.data_params.n_samples=100 \
+      model.model_type=sklearn.ensemble.RandomForestClassifier \
+      model.model_params.n_estimators=50
+
+   # With evasion attack and defense pipeline
+   python -m deckard optimize --config-name experiment \
+      attack.attack_type=art.attacks.evasion.FastGradientMethod \
+      attack.attack_params.eps=0.1 \
+      model.defense.defenses[0].defense_name=art.defences.preprocessor.FeatureSqueezing
+
 Programmatic example
 ~~~~~~~~~~~~~~~~~~~~
 
-Use the experiment config directly in Python:
+Use the experiment config directly in Python with explicit configurations:
 
 .. code-block:: python
 
@@ -53,40 +66,63 @@ Use the experiment config directly in Python:
    from deckard.data import DataConfig
    from deckard.experiment import ExperimentConfig
    from deckard.model import ModelConfig
+   from deckard.model.defend import DefensePipelineConfig
+   from deckard.score import DefaultClassifierConfig
 
+   # Explicit data configuration
    data = DataConfig(
       dataset_name="make_classification",
       data_params={
-         "n_samples": 60,
-         "n_features": 10,
-         "n_informative": 4,
+         "n_samples": 100,
+         "n_features": 20,
+         "n_informative": 10,
          "n_redundant": 0,
-         "n_clusters_per_class": 1,
+         "n_clusters_per_class": 2,
          "n_classes": 2,
-         "random_state": 7,
+         "random_state": 42,
       },
-      train_size=40,
-      test_size=20,
+      train_size=70,
+      test_size=30,
       random_state=42,
       stratify=True,
       classifier=True,
+      scorer=DefaultClassifierConfig(),
    )
 
+   # Explicit model configuration
    model = ModelConfig(
-      model_type="sklearn.linear_model.LogisticRegression",
+      model_type="sklearn.ensemble.RandomForestClassifier",
       classifier=True,
-      model_params={"max_iter": 25},
+      model_params={"n_estimators": 50, "max_depth": 10, "random_state": 42},
+      scorer=DefaultClassifierConfig(),
    )
 
+   # Optional defense configuration
+   defense = DefensePipelineConfig(
+      defenses=[
+         {
+            "defense_name": "art.defences.preprocessor.FeatureSqueezing",
+            "defense_params": {"bit_depth": 8},
+         }
+      ]
+   )
+   model.defense = defense
+
+   # Optional attack configuration
    attack = AttackConfig(
       attack_type="art.attacks.evasion.FastGradientMethod",
-      attack_params={"eps": 0.1},
-      attack_size=20,
+      attack_params={"eps": 0.15},
+      attack_size=50,
    )
 
+   # Compose the full experiment
    cfg = ExperimentConfig(data=data, model=model, attack=attack)
    scores = cfg()
-   print(scores)
+   
+   print("Experiment Results:")
+   print(f"  Data shape: {data.X_train.shape}")
+   print(f"  Model accuracy: {scores.get('accuracy', 'N/A')}")
+   print(f"  Attack success: {scores.get('evasion_success_rate', 'N/A')}")
 
 Internals
 ---------

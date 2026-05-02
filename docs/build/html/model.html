@@ -92,6 +92,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#regression-example">Regression example</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#custom-configuration">Custom configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#defense-pipelines">Defense Pipelines</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#internals">Internals</a><ul>
@@ -745,6 +746,100 @@ python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> 
 <span class="w">   </span><span class="nt">max_iter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">25</span>
 </pre></div>
 </div>
+</section>
+<section id="defense-pipelines">
+<h3>Defense Pipelines<a class="headerlink" href="#defense-pipelines" title="Link to this heading"></a></h3>
+<p>Apply adversarial robustness defenses using <a class="reference internal" href="#deckard.model.DefensePipelineConfig" title="deckard.model.DefensePipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefensePipelineConfig</span></code></a>
+to chain multiple ART-based defenses:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model.defend</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefensePipelineConfig</span>
+
+<span class="c1"># Train a baseline model</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">DataConfig</span><span class="p">(</span>
+   <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;make_classification&quot;</span><span class="p">,</span>
+   <span class="n">data_params</span><span class="o">=</span><span class="p">{</span>
+      <span class="s2">&quot;n_samples&quot;</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span>
+      <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+      <span class="s2">&quot;n_informative&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+      <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">,</span>
+   <span class="p">},</span>
+   <span class="n">train_size</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
+   <span class="n">test_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">data</span><span class="p">()</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(</span>
+   <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;sklearn.linear_model.LogisticRegression&quot;</span><span class="p">,</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+   <span class="n">model_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">},</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># Apply a defense pipeline with feature squeezing preprocessor and gaussian noise postprocessor</span>
+<span class="n">defense_pipeline</span> <span class="o">=</span> <span class="n">DefensePipelineConfig</span><span class="p">(</span>
+   <span class="n">defenses</span><span class="o">=</span><span class="p">[</span>
+      <span class="p">{</span>
+         <span class="s2">&quot;defense_name&quot;</span><span class="p">:</span> <span class="s2">&quot;art.defences.preprocessor.FeatureSqueezing&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;defense_params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;bit_depth&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">},</span>
+      <span class="p">},</span>
+      <span class="p">{</span>
+         <span class="s2">&quot;defense_name&quot;</span><span class="p">:</span> <span class="s2">&quot;art.defences.postprocessor.GaussianNoise&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;defense_params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;sigma&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">},</span>
+      <span class="p">},</span>
+   <span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># Apply the defense to the trained model</span>
+<span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">defense_pipeline</span><span class="o">.</span><span class="n">apply_to_trained_model</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Defense applied in </span><span class="si">{</span><span class="n">defense_pipeline</span><span class="o">.</span><span class="n">defense_application_time</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>CLI example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Apply defenses via YAML config</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>model.defense.defenses<span class="o">[</span><span class="m">0</span><span class="o">]</span>.defense_name<span class="o">=</span>art.defences.preprocessor.FeatureSqueezing<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>model.defense.defenses<span class="o">[</span><span class="m">0</span><span class="o">]</span>.defense_params.bit_depth<span class="o">=</span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>model.defense.defenses<span class="o">[</span><span class="m">1</span><span class="o">]</span>.defense_name<span class="o">=</span>art.defences.postprocessor.GaussianNoise<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>model.defense.defenses<span class="o">[</span><span class="m">1</span><span class="o">]</span>.defense_params.sigma<span class="o">=</span><span class="m">0</span>.1
+</pre></div>
+</div>
+<p>Example YAML configuration (<code class="docutils literal notranslate"><span class="pre">configs/model/defended.yaml</span></code>):</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deckard.model.ModelConfig</span>
+<span class="nt">model_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sklearn.linear_model.LogisticRegression</span>
+<span class="nt">classifier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+<span class="nt">model_params</span><span class="p">:</span>
+<span class="w">   </span><span class="nt">max_iter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="nt">defense</span><span class="p">:</span>
+<span class="w">   </span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deckard.model.DefensePipelineConfig</span>
+<span class="w">   </span><span class="nt">defenses</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">defense_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">art.defences.preprocessor.FeatureSqueezing</span>
+<span class="w">        </span><span class="nt">defense_params</span><span class="p">:</span>
+<span class="w">           </span><span class="nt">bit_depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">defense_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">art.defences.postprocessor.GaussianNoise</span>
+<span class="w">        </span><span class="nt">defense_params</span><span class="p">:</span>
+<span class="w">           </span><span class="nt">sigma</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+</pre></div>
+</div>
+<section id="legacy-single-defense-format">
+<h4>Legacy Single-Defense Format<a class="headerlink" href="#legacy-single-defense-format" title="Link to this heading"></a></h4>
+<p><a class="reference internal" href="#deckard.model.DefensePipelineConfig" title="deckard.model.DefensePipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefensePipelineConfig</span></code></a> automatically converts legacy single-defense YAML configurations:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Legacy format (automatically converted to pipeline)</span>
+<span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deckard.model.DefenseConfig</span>
+<span class="nt">defense_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">art.defences.preprocessor.FeatureSqueezing</span>
+<span class="nt">defense_params</span><span class="p">:</span>
+<span class="w">   </span><span class="nt">bit_depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+
+<span class="c1"># Is converted to</span>
+<span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deckard.model.DefensePipelineConfig</span>
+<span class="nt">defenses</span><span class="p">:</span>
+<span class="w">   </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">defense_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">art.defences.preprocessor.FeatureSqueezing</span>
+<span class="w">     </span><span class="nt">defense_params</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">bit_depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+</pre></div>
+</div>
+</section>
 </section>
 </section>
 <section id="internals">

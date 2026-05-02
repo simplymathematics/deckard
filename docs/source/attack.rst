@@ -146,6 +146,100 @@ Example inline overrides:
       attack.attack_size=20 \
       attack.attack_params.eps=0.1
 
+Membership Inference Attack
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To execute a membership inference attack against a trained model:
+
+.. code-block:: python
+
+   from deckard.attack import AttackConfig
+   from deckard.data import DataConfig
+   from deckard.model import ModelConfig
+   from deckard.score.attack import AttackScorerConfig
+   from deckard.score import DefaultClassifierConfig
+
+   data = DataConfig(
+      dataset_name="make_classification",
+      data_params={
+         "n_samples": 100,
+         "n_features": 10,
+         "n_informative": 5,
+         "random_state": 42,
+      },
+      train_size=70,
+      test_size=30,
+      classifier=True,
+   )
+   data()
+
+   model = ModelConfig(
+      model_type="sklearn.ensemble.RandomForestClassifier",
+      classifier=True,
+      model_params={"n_estimators": 50, "random_state": 42},
+   )
+   model(data)
+
+   # Membership inference with baseline attack
+   membership_attack = AttackConfig(
+      attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+      attack_size=10,
+      scorer=AttackScorerConfig(
+         membership_inference=DefaultClassifierConfig(),
+      ),
+   )
+
+   scores = membership_attack(data=data, model=model)
+   print(f"Membership inference success: {scores.get('membership_inference_accuracy', 'N/A')}")
+
+Attribute Inference Attack
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To execute an attribute inference attack against a trained model:
+
+.. code-block:: python
+
+   from deckard.attack import AttackConfig
+   from deckard.score.attack import AttackScorerConfig
+   from deckard.score import DefaultClassifierConfig
+
+   # Attribute inference targeting the first feature
+   attribute_attack = AttackConfig(
+      attack_type="art.attacks.inference.attribute_inference.AttributeInferenceBaseline",
+      attack_params={"attr_names": ["feature_0"]},
+      attack_size=10,
+      scorer=AttackScorerConfig(
+         attribute_inference=DefaultClassifierConfig(),
+      ),
+   )
+
+   scores = attribute_attack(data=data, model=model)
+   print([k for k in scores if k.startswith("inferred_")])
+
+CLI Examples
+~~~~~~~~~~~~
+
+Run attacks directly from the terminal:
+
+.. code-block:: bash
+
+   # Evasion attack with FastGradientMethod
+   python -m deckard optimize --config-name experiment \
+      attack.attack_type=art.attacks.evasion.FastGradientMethod \
+      attack.attack_size=50 \
+      attack.attack_params.eps=0.2
+
+   # Boundary attack (slow but black-box)
+   python -m deckard optimize --config-name experiment \
+      attack.attack_type=art.attacks.evasion.BoundaryAttack \
+      attack.attack_size=20 \
+      attack.attack_params.max_iter=100
+
+   # Membership inference attack
+   python -m deckard optimize --config-name experiment \
+      attack.attack_type=art.attacks.inference.membership_inference.MembershipInferenceBlackBox \
+      attack.attack_size=30
+
 Internals
 ---------
 

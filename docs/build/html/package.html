@@ -56,8 +56,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#experiment-management">Experiment Management</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#reproducibility-and-auditability">Reproducibility And Auditability</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#parallel-and-distributed-design">Parallel And Distributed Design</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#internals">Internals</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#extensions">Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#internals-and-architecture">Internals And Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#extensions-and-optional-backends">Extensions And Optional Backends</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#see-also">See also</a></li>
 </ul>
@@ -1179,8 +1179,11 @@ difficult to audit.</p>
 <li><p>integrated result collection for comparison and reporting</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">hydra</span></code> integration for command line configuration</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">optuna</span></code> integration for search space sampling, experiment pruning, and multi-objective optimization.</p></li>
-<li><p>Numerous extensions for attacking, defending, and measuring various ML metrics.</p></li>
-<li><p>Designed to be easily extensible, but also provide reasonable defaults to minmize configuration needs.</p></li>
+<li><p><strong>Defense pipelines</strong> that chain ART-based defenses (preprocessors, postprocessors, detectors, trainers).</p></li>
+<li><p><strong>Data sampling strategies</strong> (split, k-fold, shuffle) for robust evaluation.</p></li>
+<li><p><strong>Scorer dictionaries</strong> for unified metric management across data, model, and attack components.</p></li>
+<li><p>Numerous extensions for attacking, defending, and measuring various ML metrics (fairness, survival, PyTorch).</p></li>
+<li><p>Designed to be easily extensible, but also provide reasonable defaults to minimize configuration needs.</p></li>
 </ul>
 <p>This reduces engineering friction so researchers can focus on methodology
 instead of ad-hoc pipeline glue code.</p>
@@ -1226,12 +1229,12 @@ This supports large parameter sweeps while maintaining a stable, auditable
 record of what was run.</p>
 <p>Typical workflow composition includes:</p>
 <ol class="arabic simple">
-<li><p>dataset loading/sampling</p></li>
-<li><p>preprocessing and feature handling</p></li>
-<li><p>model training/evaluation</p></li>
-<li><p>optional defenses</p></li>
-<li><p>attack execution</p></li>
-<li><p>scoring and artifact persistence</p></li>
+<li><p><strong>Dataset Loading &amp; Sampling</strong> — Load data via <a class="reference internal" href="data.html#deckard.data.DataConfig" title="deckard.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfig</span></code></a>, apply data preprocessing pipelines via <a class="reference internal" href="data.html#deckard.data.DataPipelineConfig" title="deckard.data.DataPipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataPipelineConfig</span></code></a>, and sample via pluggable <a class="reference internal" href="data.html#deckard.data.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a> strategies.</p></li>
+<li><p><strong>Preprocessing &amp; Feature Handling</strong> — Transform features via sklearn pipelines; automatically instrumented with timing metrics.</p></li>
+<li><p><strong>Model Training &amp; Evaluation</strong> — Train models via <a class="reference internal" href="model.html#deckard.model.ModelConfig" title="deckard.model.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelConfig</span></code></a> with configurable scorer profiles for classification, regression, fairness, and survival tasks.</p></li>
+<li><p><strong>Optional Defenses</strong> — Apply adversarial robustness defenses via <a class="reference internal" href="model.html#deckard.model.DefensePipelineConfig" title="deckard.model.DefensePipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefensePipelineConfig</span></code></a> that chain ART-based preprocessing and postprocessing defenses.</p></li>
+<li><p><strong>Attack Execution</strong> — Execute evasion or inference attacks via <a class="reference internal" href="attack.html#deckard.attack.AttackConfig" title="deckard.attack.AttackConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code></a> with attack-specific scoring and metric aggregation.</p></li>
+<li><p><strong>Scoring &amp; Artifact Persistence</strong> — Normalize metrics via <a class="reference internal" href="score.html#deckard.score.ScorerDictConfig" title="deckard.score.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a> and persist results via <a class="reference internal" href="file.html#deckard.file.FileConfig" title="deckard.file.FileConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileConfig</span></code></a>.</p></li>
 </ol>
 <p>By standardizing these stages, Deckard reduces ambiguity in experiment setup
 and makes comparative benchmarking easier.</p>
@@ -1261,26 +1264,60 @@ configuration, the same experiment definition can be reused across:</p>
 <p>This enables scalable trustworthiness studies without rewriting experiment code for
 each execution backend, allowing researchers to focus only on the component that they are truly testing while gaining access to numerous mitigations, defenses, attacks, and metrics for validating ML pipelines.</p>
 </section>
-<section id="internals">
-<h2>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h2>
-<p>The package-level API exposes the core configuration classes that drive this
-workflow– Data, Model, Attack, Experiment, File, and ScorerDictConfig objects.
-Natively, <code class="docutils literal notranslate"><span class="pre">deckard</span></code> supports <code class="docutils literal notranslate"><span class="pre">adversarial-robustness-toolbox</span></code> to apply defenses and conduct attacks, but these can be easily overloaded to support other attack and defense frameworks by overloading the :deckard.DefenseConfig: and/or :deckard.AttackConfig:.</p>
+<section id="internals-and-architecture">
+<h2>Internals And Architecture<a class="headerlink" href="#internals-and-architecture" title="Link to this heading"></a></h2>
+<p>The package-level API exposes core configuration classes that drive the
+workflow: Data, Model, Attack, Experiment, File, and ScorerDict objects.</p>
+<p><strong>Core Config Classes</strong>:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="data.html#deckard.data.DataConfig" title="deckard.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.data.DataConfig</span></code></a></p></li>
-<li><p><a class="reference internal" href="model.html#deckard.model.ModelConfig" title="deckard.model.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.model.ModelConfig</span></code></a> and <a class="reference internal" href="model.html#deckard.model.DefenseConfig" title="deckard.model.DefenseConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.model.DefenseConfig</span></code></a></p></li>
-<li><p><a class="reference internal" href="attack.html#deckard.attack.AttackConfig" title="deckard.attack.AttackConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.attack.AttackConfig</span></code></a></p></li>
-<li><p><a class="reference internal" href="experiment.html#deckard.experiment.ExperimentConfig" title="deckard.experiment.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.experiment.ExperimentConfig</span></code></a></p></li>
-<li><p><a class="reference internal" href="file.html#deckard.file.FileConfig" title="deckard.file.FileConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.file.FileConfig</span></code></a></p></li>
-<li><p><a class="reference internal" href="score.html#deckard.score.ScorerDictConfig" title="deckard.score.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.score.ScorerDictConfig</span></code></a></p></li>
+<li><p><a class="reference internal" href="data.html#deckard.data.DataConfig" title="deckard.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.data.DataConfig</span></code></a> — loads, preprocesses, and splits datasets</p></li>
+<li><p><a class="reference internal" href="data.html#deckard.data.DataPipelineConfig" title="deckard.data.DataPipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.data.DataPipelineConfig</span></code></a> — configurable sklearn pipelines for feature preprocessing</p></li>
+<li><p><a class="reference internal" href="model.html#deckard.model.ModelConfig" title="deckard.model.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.model.ModelConfig</span></code></a> — instantiates and trains scikit-learn models</p></li>
+<li><p><a class="reference internal" href="model.html#deckard.model.DefensePipelineConfig" title="deckard.model.DefensePipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.model.DefensePipelineConfig</span></code></a> — chains ART defenses (preprocessors, postprocessors, detectors)</p></li>
+<li><p><a class="reference internal" href="attack.html#deckard.attack.AttackConfig" title="deckard.attack.AttackConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.attack.AttackConfig</span></code></a> — executes ART evasion and inference attacks</p></li>
+<li><p><a class="reference internal" href="experiment.html#deckard.experiment.ExperimentConfig" title="deckard.experiment.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.experiment.ExperimentConfig</span></code></a> — orchestrates end-to-end workflows</p></li>
+<li><p><a class="reference internal" href="file.html#deckard.file.FileConfig" title="deckard.file.FileConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.file.FileConfig</span></code></a> — manages result serialization and artifact tracking</p></li>
+<li><p><a class="reference internal" href="score.html#deckard.score.ScorerDictConfig" title="deckard.score.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.score.ScorerDictConfig</span></code></a> — unified metric configuration and aggregation</p></li>
 </ul>
+<p><strong>Defense Architecture</strong>:</p>
+<p>Deckard supports <a class="reference external" href="https://github.com/Trusted-AI/adversarial-robustness-toolbox">Adversarial Robustness Toolbox (ART)</a> defenses by wrapping scikit-learn models as ART estimators. <a class="reference internal" href="model.html#deckard.model.DefensePipelineConfig" title="deckard.model.DefensePipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.model.DefensePipelineConfig</span></code></a> composes multiple defenses into a chain, accumulating preprocessors and postprocessors into a single ART wrapper for efficient ensemble application.</p>
+<p><strong>Scoring Architecture</strong>:</p>
+<p><a class="reference internal" href="score.html#deckard.score.ScorerDictConfig" title="deckard.score.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.score.ScorerDictConfig</span></code></a> normalizes metric definitions into callable maps, supporting classification, regression, fairness, and attack-specific scoring. Attack scoring routes outputs through attack-kind–aware profiles (evasion, membership, attribute) and prefixes metric names automatically.</p>
+<p><strong>Sampling Architecture</strong>:</p>
+<p><a class="reference internal" href="data.html#deckard.data.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.data.sample.BaseSampler</span></code></a> and subclasses provide pluggable train/test/validation split strategies, enabling cross-validation, repeated random splits, and stratified sampling.</p>
+<p><strong>Data Pipeline Architecture</strong>:</p>
+<p><a class="reference internal" href="data.html#deckard.data.DataPipelineConfig" title="deckard.data.DataPipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.data.DataPipelineConfig</span></code></a> wraps sklearn’s <code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code> with timing instrumentation and optional normalization. Empty pipelines skip fitting entirely for efficiency.</p>
 </section>
-<section id="extensions">
-<h2>Extensions<a class="headerlink" href="#extensions" title="Link to this heading"></a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">deckard</span></code> also provides support for</p>
+<section id="extensions-and-optional-backends">
+<h2>Extensions And Optional Backends<a class="headerlink" href="#extensions-and-optional-backends" title="Link to this heading"></a></h2>
+<p>Deckard maintains a modular, plugin-based architecture using Hydra’s <code class="docutils literal notranslate"><span class="pre">ConfigStore</span></code>.</p>
+<p><strong>Data Extensions</strong>:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="plot.html#deckard.plot.PlotConfig" title="deckard.plot.PlotConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.plot.PlotConfig</span></code></a></p></li>
-<li><p>:class:``</p></li>
+<li><p><a class="reference internal" href="data.html#module-deckard.data.fairness" title="deckard.data.fairness"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.data.fairness</span></code></a> — <a class="reference internal" href="data.html#deckard.data.fairness.FairlearnDataConfig" title="deckard.data.fairness.FairlearnDataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FairlearnDataConfig</span></code></a> for group-aware sampling and fairness metrics (fairlearn integration)</p></li>
+<li><p><a class="reference internal" href="data.html#module-deckard.data.pytorch" title="deckard.data.pytorch"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.data.pytorch</span></code></a> — <code class="xref py py-class docutils literal notranslate"><span class="pre">PyTorchDataConfig</span></code> for PyTorch dataset and DataLoader integration</p></li>
+<li><p><a class="reference internal" href="data.html#module-deckard.data.survival" title="deckard.data.survival"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.data.survival</span></code></a> — <a class="reference internal" href="data.html#deckard.data.survival.LifelinesDataConfig" title="deckard.data.survival.LifelinesDataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">LifelinesDataConfig</span></code></a> for survival analysis with lifelines datasets and auxiliary models</p></li>
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.data.sample</span></code> — <a class="reference internal" href="data.html#deckard.data.SplitSampler" title="deckard.data.sample.SplitSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SplitSampler</span></code></a>, <a class="reference internal" href="data.html#deckard.data.KFoldSampler" title="deckard.data.sample.KFoldSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">KFoldSampler</span></code></a>, <a class="reference internal" href="data.html#deckard.data.ShuffleSampler" title="deckard.data.sample.ShuffleSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a> for robust sampling strategies</p></li>
+</ul>
+<p><strong>Model Extensions</strong>:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="model.html#module-deckard.model.fairness" title="deckard.model.fairness"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.model.fairness</span></code></a> — <a class="reference internal" href="model.html#deckard.model.fairness.FairlearnModelConfig" title="deckard.model.fairness.FairlearnModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FairlearnModelConfig</span></code></a> for fairness-aware model fitting and fairlearn defense wrappers</p></li>
+<li><p><a class="reference internal" href="model.html#module-deckard.model.pytorch" title="deckard.model.pytorch"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.model.pytorch</span></code></a> — <code class="xref py py-class docutils literal notranslate"><span class="pre">PyTorchModelConfig</span></code> for PyTorch-native model training and prediction</p></li>
+<li><p><a class="reference internal" href="model.html#module-deckard.model.survival" title="deckard.model.survival"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.model.survival</span></code></a> — <code class="xref py py-class docutils literal notranslate"><span class="pre">LifelinesModelConfig</span></code> for survival models with lifelines estimators</p></li>
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.model.defend</span></code> — <a class="reference internal" href="model.html#deckard.model.DefenseConfig" title="deckard.model.defend.DefenseConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefenseConfig</span></code></a> and <a class="reference internal" href="model.html#deckard.model.DefensePipelineConfig" title="deckard.model.defend.DefensePipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefensePipelineConfig</span></code></a> for ART defense application</p></li>
+</ul>
+<p><strong>Scoring Extensions</strong>:</p>
+<ul class="simple">
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.score.fairness</span></code> — fairness metrics (disparate impact, equalized odds, etc.) via <code class="xref py py-class docutils literal notranslate"><span class="pre">FairnessScoreConfig</span></code></p></li>
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.score.survival</span></code> — survival metrics (concordance, AIC, BIC) via <code class="xref py py-class docutils literal notranslate"><span class="pre">SurvivalScoreConfig</span></code></p></li>
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.score.attack</span></code> — attack-specific metrics with attack kind–aware routing via <a class="reference internal" href="score.html#deckard.score.AttackScorerConfig" title="deckard.score.attack.AttackScorerConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">AttackScorerConfig</span></code></a></p></li>
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.score.data</span></code> — data inspection metrics (distributions, imbalance) via <code class="xref py py-class docutils literal notranslate"><span class="pre">DataScoreConfig</span></code></p></li>
+</ul>
+<p><strong>Other Extensions</strong>:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="attack.html#module-deckard.attack" title="deckard.attack"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.attack</span></code></a> — evasion, membership inference, and attribute inference attacks</p></li>
+<li><p><a class="reference internal" href="plot.html#module-deckard.plot" title="deckard.plot"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.plot</span></code></a> — visualization (seaborn, yellowbrick, survival curves)</p></li>
+<li><p><a class="reference internal" href="layers.html#module-deckard.layers" title="deckard.layers"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.layers</span></code></a> — advanced workflows (Optuna integration, multi-run optimization)</p></li>
+<li><p><a class="reference internal" href="experiment.html#module-deckard.experiment.survival" title="deckard.experiment.survival"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.experiment.survival</span></code></a> — survival-specific experiment orchestration</p></li>
 </ul>
 </section>
 <section id="troubleshooting">

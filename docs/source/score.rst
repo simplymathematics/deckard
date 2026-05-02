@@ -139,9 +139,29 @@ Attack scoring
 .. code-block:: python
 
    from deckard.attack import AttackConfig
+   from deckard.data import DataConfig
+   from deckard.model import ModelConfig
    from deckard.score import DefaultClassifierConfig
    from deckard.score.attack import AttackScorerConfig
 
+   # Setup data and model
+   data = DataConfig(
+      dataset_name="make_classification",
+      data_params={"n_samples": 60, "n_features": 10, "n_informative": 5, "random_state": 42},
+      train_size=40,
+      test_size=20,
+      classifier=True,
+   )
+   data()
+
+   model = ModelConfig(
+      model_type="sklearn.linear_model.LogisticRegression",
+      classifier=True,
+      model_params={"max_iter": 50},
+   )
+   model(data)
+
+   # Configure attack with evasion scorer profile
    attack = AttackConfig(
       attack_type="art.attacks.evasion.FastGradientMethod",
       attack_params={"eps": 0.1},
@@ -208,6 +228,55 @@ For attribute inference against continuous targets there is currently no
 separate canonical Hydra store alias for
 ``attribute_inference_regression``. Configure that profile inline on
 ``attack.scorer.attribute_inference_regression`` when needed.
+
+Direct ScorerDictConfig Usage
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can also instantiate :class:`deckard.score.ScorerDictConfig` directly 
+for fine-grained metric customization:
+
+.. code-block:: python
+
+   from deckard.score import ScorerConfig, ScorerDictConfig
+
+   # Define custom metrics with parameters
+   custom_scorers = ScorerDictConfig(
+      scorers={
+         "accuracy": ScorerConfig(
+            score_name="accuracy",
+            score_function="sklearn.metrics.accuracy_score",
+         ),
+         "f1_macro": ScorerConfig(
+            score_name="f1_macro",
+            score_function="sklearn.metrics.f1_score",
+            score_params={"average": "macro", "zero_division": 0},
+         ),
+         "precision_weighted": ScorerConfig(
+            score_name="precision_weighted",
+            score_function="sklearn.metrics.precision_score",
+            score_params={"average": "weighted", "zero_division": 0},
+         ),
+         "roc_auc": ScorerConfig(
+            score_name="roc_auc",
+            score_function="sklearn.metrics.roc_auc_score",
+            score_params={"multi_class": "ovr", "average": "weighted"},
+         ),
+      }
+   )
+
+   # Use custom scorers in model evaluation
+   callables = custom_scorers.get_callables()
+   y_true = [0, 1, 0, 1, 1, 0]
+   y_pred = [0, 1, 1, 1, 0, 0]
+   
+   results = {}
+   for scorer_name, scorer_fn in callables.items():
+      try:
+         results[scorer_name] = scorer_fn(y_true=y_true, y_pred=y_pred)
+      except Exception as e:
+         print(f"Scorer {scorer_name} failed: {e}")
+   
+   print(f"Results: {results}")
 
 Internals
 ---------

@@ -119,6 +119,20 @@
 <li class="toctree-l3"><a class="reference internal" href="#deckard.data.ShuffleSampler"><code class="docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.data.SplitSampler"><code class="docutils literal notranslate"><span class="pre">SplitSampler</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.data.register_sampler_configs"><code class="docutils literal notranslate"><span class="pre">register_sampler_configs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-sampling">Data Sampling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#samplers">Samplers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hydra-configstore">Hydra ConfigStore</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.sample.BaseSampler"><code class="docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.sample.KFoldSampler"><code class="docutils literal notranslate"><span class="pre">KFoldSampler</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.sample.KFoldSamplerConf"><code class="docutils literal notranslate"><span class="pre">KFoldSamplerConf</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.sample.ShuffleSampler"><code class="docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.sample.ShuffleSamplerConf"><code class="docutils literal notranslate"><span class="pre">ShuffleSamplerConf</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.sample.SplitSampler"><code class="docutils literal notranslate"><span class="pre">SplitSampler</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.sample.SplitSamplerConf"><code class="docutils literal notranslate"><span class="pre">SplitSamplerConf</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.sample.register_sampler_configs"><code class="docutils literal notranslate"><span class="pre">register_sampler_configs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#data-preprocessing-pipelines">Data Preprocessing Pipelines</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#extensions">Extensions</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#pipeline-extension">Pipeline Extension</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#fairness-extension">Fairness Extension</a></li>
@@ -137,6 +151,8 @@
 <li class="toctree-l4"><a class="reference internal" href="#fairness-data-usage">Fairness data usage</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#survival-data-usage">Survival data usage</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#custom-configuration">Custom configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#data-pipeline-configuration">Data Pipeline Configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sampling-strategies">Sampling Strategies</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#internals">Internals</a><ul>
@@ -256,8 +272,8 @@ Optional exports are only available when their dependencies are installed.</p>
 <dt class="sig sig-object py" id="deckard.data.DataConfig.val_size">
 <span class="sig-name descname"><span class="pre">val_size</span></span><a class="headerlink" href="#deckard.data.DataConfig.val_size" title="Link to this definition"></a></dt>
 <dd><p>Proportion or count of samples to include in the validation split when a
-<code class="docutils literal notranslate"><span class="pre">sample</span></code> is provided (e.g. <a class="reference internal" href="#deckard.data.SplitSampler" title="deckard.data.sample.SplitSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SplitSampler</span></code></a> or
-<a class="reference internal" href="#deckard.data.ShuffleSampler" title="deckard.data.sample.ShuffleSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a>).  Unused in legacy mode.</p>
+<code class="docutils literal notranslate"><span class="pre">sample</span></code> is provided (e.g. <a class="reference internal" href="#deckard.data.sample.SplitSampler" title="deckard.data.sample.SplitSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SplitSampler</span></code></a> or
+<a class="reference internal" href="#deckard.data.sample.ShuffleSampler" title="deckard.data.sample.ShuffleSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a>).  Unused in legacy mode.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Union[float, int, None]</p>
@@ -269,8 +285,8 @@ Optional exports are only available when their dependencies are installed.</p>
 <dt class="sig sig-object py" id="deckard.data.DataConfig.fold">
 <span class="sig-name descname"><span class="pre">fold</span></span><a class="headerlink" href="#deckard.data.DataConfig.fold" title="Link to this definition"></a></dt>
 <dd><p>Which fold to use as the validation set when <code class="docutils literal notranslate"><span class="pre">sample</span></code> performs cross-validation
-(e.g. <a class="reference internal" href="#deckard.data.KFoldSampler" title="deckard.data.sample.KFoldSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">KFoldSampler</span></code></a> or
-<a class="reference internal" href="#deckard.data.ShuffleSampler" title="deckard.data.sample.ShuffleSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a>).  Defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
+(e.g. <a class="reference internal" href="#deckard.data.sample.KFoldSampler" title="deckard.data.sample.KFoldSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">KFoldSampler</span></code></a> or
+<a class="reference internal" href="#deckard.data.sample.ShuffleSampler" title="deckard.data.sample.ShuffleSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a>).  Defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Union[int, None]</p>
@@ -283,7 +299,7 @@ Optional exports are only available when their dependencies are installed.</p>
 <span class="sig-name descname"><span class="pre">sample</span></span><a class="headerlink" href="#deckard.data.DataConfig.sample" title="Link to this definition"></a></dt>
 <dd><p>Optional pluggable sampler.  When <code class="docutils literal notranslate"><span class="pre">None</span></code> (default) the legacy 2-way
 <code class="docutils literal notranslate"><span class="pre">train_test_split</span></code> is used.  Can be an instantiated sampler object, a subclass
-of <a class="reference internal" href="#deckard.data.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a>, or a Hydra-style dict with a
+of <a class="reference internal" href="#deckard.data.sample.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a>, or a Hydra-style dict with a
 <code class="docutils literal notranslate"><span class="pre">name</span></code>/<code class="docutils literal notranslate"><span class="pre">_target_</span></code> key pointing to the sampler class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -723,7 +739,7 @@ of <a class="reference internal" href="#deckard.data.BaseSampler" title="deckard
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.data.KFoldSampler">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.</span></span><span class="sig-name descname"><span class="pre">KFoldSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_splits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shuffle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/sample.html#KFoldSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.KFoldSampler" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.data.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#deckard.data.sample.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></p>
 <p>Cross-validation sampler with disjoint validation folds.</p>
 <p>The val set is the fold selected by <code class="docutils literal notranslate"><span class="pre">cfg.fold</span></code>; the remaining data is
 split into train and test portions according to <code class="docutils literal notranslate"><span class="pre">cfg.test_size</span></code>.</p>
@@ -834,7 +850,7 @@ transforms and DataLoader-based loading.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.data.ShuffleSampler">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.</span></span><span class="sig-name descname"><span class="pre">ShuffleSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_splits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/sample.html#ShuffleSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.ShuffleSampler" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.data.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#deckard.data.sample.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></p>
 <p>Repeated random-split (Monte-Carlo) sampler.</p>
 <p>Each fold is an independent random split; the val set is <em>not</em>
 guaranteed to be disjoint across folds.</p>
@@ -848,7 +864,7 @@ guaranteed to be disjoint across folds.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.data.SplitSampler">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.</span></span><span class="sig-name descname"><span class="pre">SplitSampler</span></span><a class="reference internal" href="_modules/deckard/data/sample.html#SplitSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.SplitSampler" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.data.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#deckard.data.sample.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></p>
 <p>Standard 3-way stratified split: train / test / val.</p>
 <p>The dataset is first split into a <em>val</em> set (controlled by
 <code class="docutils literal notranslate"><span class="pre">cfg.val_size</span></code>) and a remaining <em>train+test</em> pool.  The pool is then
@@ -883,6 +899,144 @@ via the <code class="docutils literal notranslate"><span class="pre">&#64;data.s
 </dl>
 </dd></dl>
 
+<section id="data-sampling">
+<h2>Data Sampling<a class="headerlink" href="#data-sampling" title="Link to this heading"></a></h2>
+<p>The <a class="reference internal" href="#module-deckard.data.sample" title="deckard.data.sample"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.data.sample</span></code></a> module provides pluggable sampling strategies via <a class="reference internal" href="#deckard.data.sample.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a>
+for robust train/test/validation splits.</p>
+<p id="module-deckard.data.sample">Pluggable sampler classes for <a class="reference internal" href="#deckard.data.DataConfig" title="deckard.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfig</span></code></a>.</p>
+<p>Each sampler is a callable dataclass that accepts a <code class="docutils literal notranslate"><span class="pre">DataConfig</span></code> instance and
+returns <code class="docutils literal notranslate"><span class="pre">(train_idx,</span> <span class="pre">test_idx,</span> <span class="pre">val_idx)</span></code> as numpy arrays of integer indices.</p>
+<section id="samplers">
+<h3>Samplers<a class="headerlink" href="#samplers" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="#deckard.data.sample.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a>     – abstract interface (raises <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code>)</p></li>
+<li><p><a class="reference internal" href="#deckard.data.sample.SplitSampler" title="deckard.data.sample.SplitSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SplitSampler</span></code></a>    – deterministic 3-way train / test / val split</p></li>
+<li><p><a class="reference internal" href="#deckard.data.sample.KFoldSampler" title="deckard.data.sample.KFoldSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">KFoldSampler</span></code></a>    – cross-validation with disjoint validation folds</p></li>
+<li><p><a class="reference internal" href="#deckard.data.sample.ShuffleSampler" title="deckard.data.sample.ShuffleSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a>  – repeated random (Monte-Carlo) splits</p></li>
+</ul>
+</section>
+<section id="hydra-configstore">
+<h3>Hydra ConfigStore<a class="headerlink" href="#hydra-configstore" title="Link to this heading"></a></h3>
+<p>Calling <a class="reference internal" href="#deckard.data.sample.register_sampler_configs" title="deckard.data.sample.register_sampler_configs"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_sampler_configs()</span></code></a> registers structured-config defaults for
+all three concrete samplers under the <code class="docutils literal notranslate"><span class="pre">sample</span></code> Hydra config group.  The defaults
+are registered with names <code class="docutils literal notranslate"><span class="pre">split</span></code>, <code class="docutils literal notranslate"><span class="pre">kfold</span></code>, and <code class="docutils literal notranslate"><span class="pre">shuffle</span></code>.  A <code class="docutils literal notranslate"><span class="pre">none</span></code>
+entry (empty config / no sampler) is also registered so you can opt out explicitly.</p>
+<p>Example CLI usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">deckard</span> <span class="n">data</span><span class="o">=</span><span class="n">adult</span> <span class="n">sample</span><span class="o">=</span><span class="n">kfold</span>
+</pre></div>
+</div>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.data.sample.BaseSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.sample.</span></span><span class="sig-name descname"><span class="pre">BaseSampler</span></span><a class="reference internal" href="_modules/deckard/data/sample.html#BaseSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.sample.BaseSampler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Callable sampler interface.</p>
+<p>All concrete samplers must implement <code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code> and return a
+<code class="docutils literal notranslate"><span class="pre">(train_idx,</span> <span class="pre">test_idx,</span> <span class="pre">val_idx)</span></code> triple of integer numpy arrays.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.data.sample.KFoldSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.sample.</span></span><span class="sig-name descname"><span class="pre">KFoldSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_splits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shuffle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/sample.html#KFoldSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.sample.KFoldSampler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.data.sample.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></p>
+<p>Cross-validation sampler with disjoint validation folds.</p>
+<p>The val set is the fold selected by <code class="docutils literal notranslate"><span class="pre">cfg.fold</span></code>; the remaining data is
+split into train and test portions according to <code class="docutils literal notranslate"><span class="pre">cfg.test_size</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_splits</strong> (<em>int</em><em>, </em><em>default 5</em>) – Number of folds.</p></li>
+<li><p><strong>shuffle</strong> (<em>bool</em><em>, </em><em>default True</em>) – Whether to shuffle the data before splitting into folds.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.data.sample.KFoldSamplerConf">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.sample.</span></span><span class="sig-name descname"><span class="pre">KFoldSamplerConf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'deckard.data.sample.KFoldSampler'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_splits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shuffle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/sample.html#KFoldSamplerConf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.sample.KFoldSamplerConf" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Hydra structured config for <a class="reference internal" href="#deckard.data.sample.KFoldSampler" title="deckard.data.sample.KFoldSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">KFoldSampler</span></code></a>.</p>
+<p>Register with the <code class="docutils literal notranslate"><span class="pre">sample</span></code> config group via
+<a class="reference internal" href="#deckard.data.sample.register_sampler_configs" title="deckard.data.sample.register_sampler_configs"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_sampler_configs()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.data.sample.ShuffleSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.sample.</span></span><span class="sig-name descname"><span class="pre">ShuffleSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_splits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/sample.html#ShuffleSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.sample.ShuffleSampler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.data.sample.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></p>
+<p>Repeated random-split (Monte-Carlo) sampler.</p>
+<p>Each fold is an independent random split; the val set is <em>not</em>
+guaranteed to be disjoint across folds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>n_splits</strong> (<em>int</em><em>, </em><em>default 5</em>) – Number of re-shuffled splits to generate.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.data.sample.ShuffleSamplerConf">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.sample.</span></span><span class="sig-name descname"><span class="pre">ShuffleSamplerConf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'deckard.data.sample.ShuffleSampler'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_splits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/sample.html#ShuffleSamplerConf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.sample.ShuffleSamplerConf" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Hydra structured config for <a class="reference internal" href="#deckard.data.sample.ShuffleSampler" title="deckard.data.sample.ShuffleSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a>.</p>
+<p>Register with the <code class="docutils literal notranslate"><span class="pre">sample</span></code> config group via
+<a class="reference internal" href="#deckard.data.sample.register_sampler_configs" title="deckard.data.sample.register_sampler_configs"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_sampler_configs()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.data.sample.SplitSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.sample.</span></span><span class="sig-name descname"><span class="pre">SplitSampler</span></span><a class="reference internal" href="_modules/deckard/data/sample.html#SplitSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.sample.SplitSampler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.data.sample.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></p>
+<p>Standard 3-way stratified split: train / test / val.</p>
+<p>The dataset is first split into a <em>val</em> set (controlled by
+<code class="docutils literal notranslate"><span class="pre">cfg.val_size</span></code>) and a remaining <em>train+test</em> pool.  The pool is then
+split into <em>train</em> and <em>test</em> portions according to <code class="docutils literal notranslate"><span class="pre">cfg.test_size</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>to</strong> (<em>(</em><em>none – all parameters are read from the DataConfig passed</em>)</p>
+</dd>
+</dl>
+<p>:param <code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code>):</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.data.sample.SplitSamplerConf">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.sample.</span></span><span class="sig-name descname"><span class="pre">SplitSamplerConf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'deckard.data.sample.SplitSampler'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/sample.html#SplitSamplerConf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.sample.SplitSamplerConf" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Hydra structured config for <a class="reference internal" href="#deckard.data.sample.SplitSampler" title="deckard.data.sample.SplitSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SplitSampler</span></code></a>.</p>
+<p>Register with the <code class="docutils literal notranslate"><span class="pre">sample</span></code> config group via
+<a class="reference internal" href="#deckard.data.sample.register_sampler_configs" title="deckard.data.sample.register_sampler_configs"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_sampler_configs()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.data.sample.register_sampler_configs">
+<span class="sig-prename descclassname"><span class="pre">deckard.data.sample.</span></span><span class="sig-name descname"><span class="pre">register_sampler_configs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/sample.html#register_sampler_configs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.sample.register_sampler_configs" title="Link to this definition"></a></dt>
+<dd><p>Register sampler structured configs with the Hydra ConfigStore.</p>
+<p>Call this function once at application startup (e.g. in your <code class="docutils literal notranslate"><span class="pre">&#64;hydra.main</span></code>
+script) to make the <code class="docutils literal notranslate"><span class="pre">sample</span></code> config group available.</p>
+<p>After calling this function, the following CLI overrides are available:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sample</span><span class="o">=</span><span class="n">split</span>
+<span class="n">sample</span><span class="o">=</span><span class="n">kfold</span>
+<span class="n">sample</span><span class="o">=</span><span class="n">shuffle</span>
+<span class="n">sample</span><span class="o">=</span><span class="n">none</span>    <span class="c1"># disables the sampler (legacy 2-way split)</span>
+</pre></div>
+</div>
+<p>When a sampler is selected, the config is placed under <code class="docutils literal notranslate"><span class="pre">data.sample</span></code>
+via the <code class="docutils literal notranslate"><span class="pre">&#64;data.sample</span></code> package override.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="data-preprocessing-pipelines">
+<h2>Data Preprocessing Pipelines<a class="headerlink" href="#data-preprocessing-pipelines" title="Link to this heading"></a></h2>
+<p>The <a class="reference internal" href="#deckard.data.DataPipelineConfig" title="deckard.data.DataPipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataPipelineConfig</span></code></a> wraps scikit-learn’s <code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code>
+to enable configurable feature preprocessing with timing instrumentation.</p>
+</section>
 <section id="extensions">
 <h2>Extensions<a class="headerlink" href="#extensions" title="Link to this heading"></a></h2>
 <section id="pipeline-extension">
@@ -1343,6 +1497,91 @@ lifelines datasets:</p>
 <span class="w">   </span>data.data_params.n_features<span class="o">=</span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
 <span class="w">   </span>data.train_size<span class="o">=</span><span class="m">30</span><span class="w"> </span><span class="se">\</span>
 <span class="w">   </span>data.test_size<span class="o">=</span><span class="m">10</span>
+</pre></div>
+</div>
+</section>
+<section id="data-pipeline-configuration">
+<h3>Data Pipeline Configuration<a class="headerlink" href="#data-pipeline-configuration" title="Link to this heading"></a></h3>
+<p>Apply scikit-learn preprocessing pipelines via <a class="reference internal" href="#deckard.data.DataPipelineConfig" title="deckard.data.DataPipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataPipelineConfig</span></code></a>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span><span class="p">,</span> <span class="n">DataPipelineConfig</span>
+
+<span class="c1"># Create a data config with preprocessing pipeline</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">DataConfig</span><span class="p">(</span>
+   <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;make_classification&quot;</span><span class="p">,</span>
+   <span class="n">data_params</span><span class="o">=</span><span class="p">{</span>
+      <span class="s2">&quot;n_samples&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+      <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+      <span class="s2">&quot;n_informative&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+      <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">,</span>
+   <span class="p">},</span>
+   <span class="n">train_size</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span>
+   <span class="n">test_size</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+   <span class="n">pipeline</span><span class="o">=</span><span class="n">DataPipelineConfig</span><span class="p">(</span>
+      <span class="n">steps</span><span class="o">=</span><span class="p">{</span>
+         <span class="s2">&quot;scaler&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;sklearn.preprocessing.StandardScaler&quot;</span><span class="p">},</span>
+         <span class="s2">&quot;pca&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;sklearn.decomposition.PCA&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_components&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+         <span class="p">},</span>
+      <span class="p">}</span>
+   <span class="p">),</span>
+<span class="p">)</span>
+<span class="n">data</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;X_train shape after pipeline: </span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>CLI example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>data.dataset_name<span class="o">=</span>make_classification<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>data.pipeline.steps.scaler.name<span class="o">=</span>sklearn.preprocessing.StandardScaler<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>data.pipeline.steps.pca.name<span class="o">=</span>sklearn.decomposition.PCA<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>data.pipeline.steps.pca.n_components<span class="o">=</span><span class="m">10</span>
+</pre></div>
+</div>
+</section>
+<section id="sampling-strategies">
+<h3>Sampling Strategies<a class="headerlink" href="#sampling-strategies" title="Link to this heading"></a></h3>
+<p>Use pluggable samplers for robust train/test/validation splits:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data.sample</span><span class="w"> </span><span class="kn">import</span> <span class="n">KFoldSampler</span><span class="p">,</span> <span class="n">ShuffleSampler</span>
+
+<span class="c1"># Standard 3-way split (default behavior with val_size)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">DataConfig</span><span class="p">(</span>
+   <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;make_classification&quot;</span><span class="p">,</span>
+   <span class="n">data_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;n_samples&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span> <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">},</span>
+   <span class="n">train_size</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+   <span class="n">test_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+   <span class="n">val_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># K-fold cross-validation with 5 folds</span>
+<span class="n">data_kfold</span> <span class="o">=</span> <span class="n">DataConfig</span><span class="p">(</span>
+   <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;make_classification&quot;</span><span class="p">,</span>
+   <span class="n">data_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;n_samples&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span> <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">},</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+   <span class="n">sampler</span><span class="o">=</span><span class="n">KFoldSampler</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="c1"># Repeated random splits (shuffle-split)</span>
+<span class="n">data_shuffle</span> <span class="o">=</span> <span class="n">DataConfig</span><span class="p">(</span>
+   <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;make_classification&quot;</span><span class="p">,</span>
+   <span class="n">data_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;n_samples&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span> <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">},</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+   <span class="n">sampler</span><span class="o">=</span><span class="n">ShuffleSampler</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>CLI examples:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use k-fold sampling</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span><span class="nv">sample</span><span class="o">=</span>kfold
+
+<span class="c1"># Use shuffle split sampling</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span><span class="nv">sample</span><span class="o">=</span>shuffle
+
+<span class="c1"># Disable sampling (use no sampler)</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span><span class="nv">sample</span><span class="o">=</span>none
 </pre></div>
 </div>
 </section>

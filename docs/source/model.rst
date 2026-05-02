@@ -172,6 +172,108 @@ Example YAML configuration (``configs/model/rf.yaml``):
    model_params:
       max_iter: 25
 
+Defense Pipelines
+~~~~~~~~~~~~~~~~~
+
+Apply adversarial robustness defenses using :class:`~deckard.model.DefensePipelineConfig` 
+to chain multiple ART-based defenses:
+
+.. code-block:: python
+
+   from deckard.data import DataConfig
+   from deckard.model import ModelConfig
+   from deckard.model.defend import DefensePipelineConfig
+
+   # Train a baseline model
+   data = DataConfig(
+      dataset_name="make_classification",
+      data_params={
+         "n_samples": 60,
+         "n_features": 10,
+         "n_informative": 5,
+         "random_state": 42,
+      },
+      train_size=40,
+      test_size=20,
+      classifier=True,
+   )
+   data()
+
+   model = ModelConfig(
+      model_type="sklearn.linear_model.LogisticRegression",
+      classifier=True,
+      model_params={"max_iter": 50},
+   )
+   model(data)
+
+   # Apply a defense pipeline with feature squeezing preprocessor and gaussian noise postprocessor
+   defense_pipeline = DefensePipelineConfig(
+      defenses=[
+         {
+            "defense_name": "art.defences.preprocessor.FeatureSqueezing",
+            "defense_params": {"bit_depth": 8},
+         },
+         {
+            "defense_name": "art.defences.postprocessor.GaussianNoise",
+            "defense_params": {"sigma": 0.1},
+         },
+      ]
+   )
+
+   # Apply the defense to the trained model
+   defended_estimator = defense_pipeline.apply_to_trained_model(data=data, model=model)
+   print(f"Defense applied in {defense_pipeline.defense_application_time:.4f}s")
+
+CLI example:
+
+.. code-block:: bash
+
+   # Apply defenses via YAML config
+   python -m deckard optimize --config-name experiment \
+      model.defense.defenses[0].defense_name=art.defences.preprocessor.FeatureSqueezing \
+      model.defense.defenses[0].defense_params.bit_depth=8 \
+      model.defense.defenses[1].defense_name=art.defences.postprocessor.GaussianNoise \
+      model.defense.defenses[1].defense_params.sigma=0.1
+
+Example YAML configuration (``configs/model/defended.yaml``):
+
+.. code-block:: yaml
+
+   _target_: deckard.model.ModelConfig
+   model_type: sklearn.linear_model.LogisticRegression
+   classifier: True
+   model_params:
+      max_iter: 50
+   defense:
+      _target_: deckard.model.DefensePipelineConfig
+      defenses:
+         - defense_name: art.defences.preprocessor.FeatureSqueezing
+           defense_params:
+              bit_depth: 8
+         - defense_name: art.defences.postprocessor.GaussianNoise
+           defense_params:
+              sigma: 0.1
+
+Legacy Single-Defense Format
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:class:`~deckard.model.DefensePipelineConfig` automatically converts legacy single-defense YAML configurations:
+
+.. code-block:: yaml
+
+   # Legacy format (automatically converted to pipeline)
+   _target_: deckard.model.DefenseConfig
+   defense_name: art.defences.preprocessor.FeatureSqueezing
+   defense_params:
+      bit_depth: 8
+
+   # Is converted to
+   _target_: deckard.model.DefensePipelineConfig
+   defenses:
+      - defense_name: art.defences.preprocessor.FeatureSqueezing
+        defense_params:
+           bit_depth: 8
+
 Internals
 ---------
 
