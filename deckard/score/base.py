@@ -6,6 +6,8 @@ import logging
 from pathlib import Path
 from typing import Any, Callable, Dict, Literal, Union
 
+import numpy as np
+
 from hydra.core.config_store import ConfigStore
 
 from ..utils import ConfigBase, resolve_class
@@ -41,9 +43,76 @@ class ScorerConfig:
         if self.score_params is None:
             self.score_params = {}
 
+    def _validate_probability_input(self, y_true, y_pred):
+        """Validate probability-like inputs before metric execution."""
+        y_true_arr = np.asarray(y_true)
+        y_pred_arr = np.asarray(y_pred)
+
+        if y_pred_arr.ndim not in (1, 2):
+            raise ValueError(
+                f"Probability scorer '{self.score_name}' requires 1D/2D probability input; got shape {y_pred_arr.shape}",
+            )
+        if y_pred_arr.shape[0] != y_true_arr.shape[0]:
+            raise ValueError(
+                f"Probability scorer '{self.score_name}' requires matching sample counts; got {y_pred_arr.shape[0]} predictions for {y_true_arr.shape[0]} labels",
+            )
+        if not np.issubdtype(y_pred_arr.dtype, np.number):
+            raise ValueError(
+                f"Probability scorer '{self.score_name}' requires numeric probabilities",
+            )
+        if np.nanmin(y_pred_arr) < -1e-12 or np.nanmax(y_pred_arr) > 1.0 + 1e-12:
+            raise ValueError(
+                f"Probability scorer '{self.score_name}' requires values in [0, 1]",
+            )
+
+    def _normalize_predictions_for_metric(self, y_true, y_pred):
+        """Convert score/probability matrices to class labels for label-only metrics."""
+        metric_name = getattr(self.score_function, "__name__", "")
+        label_metrics = {
+            "accuracy_score",
+            "precision_score",
+            "recall_score",
+            "f1_score",
+            "balanced_accuracy_score",
+            "jaccard_score",
+            "matthews_corrcoef",
+            "cohen_kappa_score",
+        }
+
+        if self.needs_proba:
+            self._validate_probability_input(y_true=y_true, y_pred=y_pred)
+            y_pred_arr = np.asarray(y_pred)
+            if (
+                y_pred_arr.ndim == 2
+                and metric_name == "roc_auc_score"
+            ):
+                if y_pred_arr.shape[1] == 1:
+                    return y_pred_arr.reshape(-1)
+                if y_pred_arr.shape[1] == 2:
+                    return y_pred_arr[:, 1]
+            return y_pred
+        if metric_name not in label_metrics:
+            return y_pred
+        y_true_arr = np.asarray(y_true)
+        y_pred_arr = np.asarray(y_pred)
+        if y_true_arr.ndim != 1 or y_pred_arr.ndim != 2:
+            return y_pred
+        if not np.issubdtype(y_pred_arr.dtype, np.number):
+            return y_pred
+
+        if y_pred_arr.shape[1] == 1:
+            binary_scores = y_pred_arr.reshape(-1)
+            threshold = 0.5
+            if np.nanmin(binary_scores) < 0.0 or np.nanmax(binary_scores) > 1.0:
+                threshold = 0.0
+            return (binary_scores >= threshold).astype(int)
+
+        return np.argmax(y_pred_arr, axis=1)
+
     def __call__(self, y_true, y_pred, swap: bool = False, **kwargs):
         if swap:
             y_true, y_pred = y_pred, y_true
+        y_pred = self._normalize_predictions_for_metric(y_true=y_true, y_pred=y_pred)
         params = {**self.score_params, **kwargs}
         signature = inspect.signature(self.score_function)
         accepts_var_kwargs = any(
@@ -98,11 +167,49 @@ class ScorerDictConfig(ConfigBase):
     def __iter__(self):
         return iter(self.scorers.items())
 
+    def __hash__(self):
+        return super().__hash__()
+
     def __getitem__(self, key):
         return self.scorers[key]
 
     def get_callables(self):
         return {key: scorer for key, scorer in self.scorers.items()}
+
+    @staticmethod
+    def _resolve_mode_features(mode, data):
+        if data is None:
+            return None
+        if mode == "train":
+            return getattr(data, "X_train", None)
+        if mode == "test":
+            return getattr(data, "X_test", None)
+        if mode in {"val", "attack-val"}:
+            return getattr(data, "X_val", None)
+        return None
+
+    @staticmethod
+    def _predict_proba_from_model(model, X):
+        if model is None or X is None:
+            return None
+
+        estimator = None
+        if hasattr(model, "get_model") and callable(model.get_model):
+            try:
+                estimator = model.get_model()
+            except Exception:
+                estimator = None
+        if estimator is None:
+            estimator = getattr(model, "_model", None)
+        if estimator is None or not hasattr(estimator, "predict_proba"):
+            raise ValueError(
+                "Probability-required scorer configured but model does not expose predict_proba",
+            )
+
+        try:
+            return estimator.predict_proba(X)
+        except TypeError:
+            return estimator.predict_proba(np.asarray(X, dtype=float))
 
     def __call__(
         self,
@@ -150,6 +257,16 @@ class ScorerDictConfig(ConfigBase):
                 if value == "{attack}":
                     kwargs[key] = attack._attack
 
+        y_proba = kwargs.pop("y_proba", None)
+
+        runtime_kwargs = {
+            **kwargs,
+            "data": data,
+            "model": model,
+            "attack": attack,
+            "mode": mode,
+        }
+
         for key, scorer in self.scorers.items():
             scored_key = key
             if mode == "train":
@@ -157,7 +274,23 @@ class ScorerDictConfig(ConfigBase):
             elif mode == "attack":
                 scored_key = f"attack_{key}"
             if results.get(scored_key) is None:
-                results[scored_key] = scorer(y_true=y_true, y_pred=y_pred, **kwargs)
+                metric_input = y_pred
+                if scorer.needs_proba:
+                    if y_proba is not None:
+                        metric_input = y_proba
+                    else:
+                        X_mode = self._resolve_mode_features(mode=mode, data=data)
+                        if X_mode is not None and model is not None:
+                            metric_input = self._predict_proba_from_model(model=model, X=X_mode)
+                        else:
+                            raise ValueError(
+                                f"Scorer '{key}' requires probabilities from predict_proba; provide y_proba or pass model+data context",
+                            )
+                results[scored_key] = scorer(
+                    y_true=y_true,
+                    y_pred=metric_input,
+                    **runtime_kwargs,
+                )
 
         if score_file is not None:
             self.save_scores(results, score_file)
@@ -199,10 +332,12 @@ class DefaultClassifierConfig(ScorerDictConfig):
                 score_name="roc_auc",
                 score_function="sklearn.metrics.roc_auc_score",
                 score_params={"average": "weighted", "multi_class": "ovr"},
+                needs_proba=True,
             ),
             "log_loss": ScorerConfig(
                 score_name="log_loss",
                 score_function="sklearn.metrics.log_loss",
+                needs_proba=True,
             ),
         },
     )

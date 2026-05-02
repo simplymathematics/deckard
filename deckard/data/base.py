@@ -35,10 +35,13 @@ from scipy.sparse import csr_matrix
 
 # deckard
 from ..utils import ConfigBase, data_supported_filetypes, load_class
+from ..score.base import ScorerDictConfig
 
 # Setup logger
 logger = logging.getLogger(__name__)
-from ..score.base import ScorerDictConfig
+
+
+AUTO_SCORER = "auto"
 
 
 def _discover_lifelines_dataset_loaders() -> dict:
@@ -219,7 +222,7 @@ class DataConfig(ConfigBase):
     keep: list = None
     plugins: list = field(default_factory=list)
     alias: Union[str, None] = None
-    scorer: Union["ScorerDictConfig", None] = None
+    scorer: Union["ScorerDictConfig", dict, str, None] = AUTO_SCORER
 
     # Runtime state fields
     score_dict: dict = field(init=False, repr=True)
@@ -298,6 +301,24 @@ class DataConfig(ConfigBase):
 
     def __post_init__(self):
         self._validate_init()
+        if isinstance(self.scorer, str) and self.scorer.lower() in {
+            "none",
+            "null",
+            "n/a",
+        }:
+            self.scorer = None
+        if isinstance(self.scorer, str) and self.scorer.lower() in {
+            AUTO_SCORER,
+            "default",
+        }:
+            scorer_cls = (
+                "deckard.score.data.DefaultDataClassificationConfig"
+                if self.classifier
+                else "deckard.score.data.DefaultDataRegressionConfig"
+            )
+            self.scorer = load_class(scorer_cls)
+        elif isinstance(self.scorer, (dict, DictConfig)):
+            self.scorer = ScorerDictConfig(**self.scorer)
 
     @property
     def X(self):
@@ -360,6 +381,8 @@ class DataConfig(ConfigBase):
         if self.stratify is None or self.stratify is False:
             return None
         if self.stratify is True:
+            if self.classifier is False:
+                return None
             return self._y
         if isinstance(self.stratify, str):
             if self._X is not None and self.stratify in self._X.columns:
@@ -900,58 +923,21 @@ class DataConfig(ConfigBase):
         self._y = y
 
     def _score(self) -> dict:
-        """
-        Computes feature importance scores based on the type of task (classification or regression).
-
-        When a validation set is present (``self.X_val`` is not None), the score dictionary
-        also includes ``val_n`` (number of validation samples) and ``val_class_counts`` or
-        ``val_y_cdf`` depending on the task type.
-
-        Parameters
-        ----------
-        classifier : bool, optional
-            If True, computes classification feature scores; otherwise, computes regression feature scores. Default is False.
-
-        Returns
-        -------
-        dict
-            A dictionary containing feature importance scores.
-        """
+        """Thin wrapper that delegates all dataset scoring to ``self.scorer``."""
         self._run_plugin_hook("before_score")
-        if self.scorer is not None:
-            result_dict = self.scorer(
-                y_true=self.y_train,
-                y_pred=self.y_train,
-                mode=None,
-                data=self,
+        if self.scorer is None:
+            return {}
+        if not callable(self.scorer):
+            raise TypeError(
+                f"DataConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
-        elif self.classifier:
-            if isinstance(self.X_train, (pd.DataFrame, pd.Series)):
-                result_dict = self._classification_feature_scores()
-            else:
-                result_dict = {"class_counts": self._compute_class_counts(self.y_train)}
-        else:
-            if isinstance(self.X_train, (pd.DataFrame, pd.Series)):
-                result_dict = self._regression_feature_scores()
-            else:
-                y_train_cdf = self._empirical_cdf(self.y_train).tolist()
-                y_test_cdf = self._empirical_cdf(self.y_test).tolist()
-                result_dict = {
-                    "y_train_cdf": y_train_cdf,
-                    "y_test_cdf": y_test_cdf,
-                }
-        if isinstance(self.X_train, (pd.DataFrame, pd.Series)):
-            columns = self.X_train.columns
-            result_dict["column_names"] = columns.to_list()
 
-        # Include validation-set summary scores when a val split is present
-        if self.y_val is not None:
-            result_dict["val_n"] = len(self.y_val)
-            if self.classifier:
-                result_dict["val_class_counts"] = self._compute_class_counts(self.y_val)
-            else:
-                result_dict["val_y_cdf"] = self._empirical_cdf(self.y_val).tolist()
-
+        result_dict = self.scorer(
+            y_true=self.y_train,
+            y_pred=self.X_train,
+            mode=None,
+            data=self,
+        )
         plugin_scores = self._run_plugin_hook("after_score", scores=result_dict)
         for plugin_score in plugin_scores:
             if isinstance(plugin_score, dict):
@@ -1112,6 +1098,10 @@ class DataConfig(ConfigBase):
             # Sample data
             self._sample()
         time_dict["data_sample_time"] = (self.data_sample_time,)
+        time_dict["train_n"] = self.train_n
+        time_dict["test_n"] = self.test_n
+        if self.val_n is not None:
+            time_dict["val_n"] = self.val_n
         if self.X_val is not None:
             logger.info(
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}, "
@@ -1122,6 +1112,11 @@ class DataConfig(ConfigBase):
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
             )
         data_scores = self._score()
+        if self.y_val is not None:
+            if self.classifier:
+                data_scores.setdefault("val_class_counts", self._compute_class_counts(self.y_val))
+            else:
+                data_scores.setdefault("val_y_cdf", self._empirical_cdf(self.y_val).tolist())
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
@@ -1168,6 +1163,24 @@ class DataPipelineConfig(DataConfig):
             self.classifier = False
         else:
             self.classifier = None
+        if isinstance(self.scorer, str) and self.scorer.lower() in {
+            "none",
+            "null",
+            "n/a",
+        }:
+            self.scorer = None
+        if isinstance(self.scorer, str) and self.scorer.lower() in {
+            AUTO_SCORER,
+            "default",
+        }:
+            scorer_cls = (
+                "deckard.score.data.DefaultDataClassificationConfig"
+                if self.classifier
+                else "deckard.score.data.DefaultDataRegressionConfig"
+            )
+            self.scorer = load_class(scorer_cls)
+        elif isinstance(self.scorer, (dict, DictConfig)):
+            self.scorer = ScorerDictConfig(**self.scorer)
 
     def _init_pipeline(self):
         if not isinstance(self.pipeline, (dict, DictConfig)):

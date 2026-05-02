@@ -704,6 +704,10 @@ class AttackConfig(ConfigBase):
 
     def _score(self, attack_kind: str, y_true, y_pred, **kwargs) -> dict:
         """Dispatch attack scoring through the configured AttackScorerConfig."""
+        if self.scorer is None:
+            raise ValueError(
+                "AttackConfig.scorer must be configured with an AttackScorerConfig instance",
+            )
         score_dict = self.scorer._score(
             attack_kind=attack_kind,
             y_true=y_true,

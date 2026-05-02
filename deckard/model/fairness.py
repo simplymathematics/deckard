@@ -1,36 +1,58 @@
 import inspect
 import time
-from typing import Any, Union
+from dataclasses import dataclass
+from typing import Any, Optional, Union, cast
+
 import numpy as np
 import pandas as pd
-from dataclasses import dataclass
-from fairlearn.metrics import (
-    MetricFrame,
-)
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from art.config import ART_NUMPY_DTYPE
+from fairlearn.metrics import MetricFrame
+from sklearn.base import BaseEstimator
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 from .base import ModelConfig, logger
 from .defend import DefenseConfig
-
-from ..data.fairness import FairnessDataConfig
+from ..data.fairness import FairlearnDataConfig
 from ..utils import load_class, resolve_class
 
 ScorerDictConfig = Any
 
 
 class _FairnessBehaviorMixin:
-    """
-    A model configuration that extends ModelConfig to support fairness-aware evaluation.
+    """Model/defense mixin for explicit fairness-aware training and scoring."""
 
-    Trains normally on X_train, y_train, but uses group information from X_test, y_test
-    for fairness-aware scoring across demographic groups.
+    data: Any = None
+    _model: Any = None
+    scorer: Any = None
+    classifier: bool = False
+    probability: bool = False
+    fit_params: Any = None
 
-    Attributes:
-    -----------
-    fairness_data : FairnessDataConfig or None
-        Configuration containing group information and fairness metrics.
-    """
+    def _resolve_runtime_sensitive_source(self, split: str):
+        if split == "train":
+            return getattr(self.data, "_sensitive_train", None)
+        if split == "test":
+            return getattr(self.data, "_sensitive_test", None)
+        if split == "all":
+            return getattr(self.data, "_sensitive_all", None)
+        if split == "val":
+            raise NotImplementedError(
+                "Validation sensitive features are not implemented yet",
+            )
+        raise ValueError(f"Unsupported fairness split: {split}")
+
+    def _resolve_scoring_split(self, mode: str) -> str:
+        if mode == "train":
+            return "train"
+        if mode in {"test", "attack"}:
+            return "test"
+        if mode in {"val", "attack-val"}:
+            raise NotImplementedError(
+                "Validation fairness scoring is not implemented yet",
+            )
+        if mode == "all":
+            return "all"
+        raise ValueError(f"Unsupported fairness scoring mode: {mode}")
 
     def _validate_sensitive_series(self, sensitive, context: str):
         if sensitive is None:
@@ -44,46 +66,59 @@ class _FairnessBehaviorMixin:
             raise ValueError(f"Sensitive features are blank during {context}")
         return sensitive_series
 
-    def _resolve_sensitive_features_for_batch(self, batch):
+    def _infer_split_from_batch(self, batch):
+        if self.data is None:
+            return None
+        split_sources = [
+            ("train", getattr(self.data, "X_train", None)),
+            ("test", getattr(self.data, "X_test", None)),
+            ("all", getattr(self.data, "_X", None)),
+        ]
+        batch_index = getattr(batch, "index", None)
+        for split_name, split_data in split_sources:
+            if split_data is None:
+                continue
+            if batch is split_data:
+                return split_name
+            split_index = getattr(split_data, "index", None)
+            if batch_index is not None and split_index is not None and batch_index.equals(
+                split_index,
+            ):
+                return split_name
+        return None
+
+    def _resolve_sensitive_features_for_batch(
+        self,
+        batch,
+        split: Optional[str] = None,
+    ):
         if self.data is None:
             return None
 
         n_rows = len(batch)
         batch_index = getattr(batch, "index", None)
+        resolved_split = split or self._infer_split_from_batch(batch)
+        if resolved_split is None:
+            return None
 
-        candidates = [
-            getattr(self.data, "_sensitive_train", None),
-            getattr(self.data, "_sensitive_test", None),
-            getattr(self.data, "_sensitive_all", None),
-        ]
-
-        positional_matches = []
-        for sensitive in candidates:
-            if sensitive is None:
-                continue
-            sensitive_series = self._validate_sensitive_series(sensitive, "runtime")
-            if sensitive_series is None:
-                continue
-            if len(sensitive_series) == n_rows:
-                if batch_index is not None:
-                    try:
-                        aligned = sensitive_series.reindex(batch_index)
-                        if len(aligned) == n_rows and aligned.notna().all():
-                            return aligned.reset_index(drop=True)
-                    except Exception:
-                        pass
-                positional_matches.append(sensitive_series.reset_index(drop=True))
-
-        if len(positional_matches) == 1:
-            return positional_matches[0]
-        return None
+        sensitive = self._resolve_runtime_sensitive_source(resolved_split)
+        sensitive_series = self._validate_sensitive_series(sensitive, "runtime")
+        if sensitive_series is None or len(sensitive_series) != n_rows:
+            return None
+        if batch_index is not None:
+            try:
+                aligned = sensitive_series.reindex(batch_index)
+                if len(aligned) == n_rows and aligned.notna().all():
+                    return aligned.reset_index(drop=True)
+            except Exception:
+                return None
+        return sensitive_series.reset_index(drop=True)
 
     def _method_accepts_sensitive_features(self, method) -> bool:
         try:
             params = inspect.signature(method).parameters
             if "sensitive_features" in params:
                 return True
-            # fairlearn reductions (e.g., GridSearch.fit) accept sensitive features via **kwargs
             return any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values())
         except (TypeError, ValueError):
             return False
@@ -94,22 +129,18 @@ class _FairnessBehaviorMixin:
         return method(X)
 
     def _fit_defended_estimator(self, defended_estimator, data):
-        """Fit a defended estimator when defense application requires training."""
         if data is None or not hasattr(defended_estimator, "fit"):
             return defended_estimator
 
-        sensitive = self._resolve_sensitive_features_for_batch(data.y_train)
+        sensitive = self._resolve_sensitive_features_for_batch(data.y_train, split="train")
         fit_method = defended_estimator.fit
-        if sensitive is not None and self._method_accepts_sensitive_features(
-            fit_method,
-        ):
+        if sensitive is not None and self._method_accepts_sensitive_features(fit_method):
             fit_method(data.X_train, data.y_train, sensitive_features=sensitive)
         else:
             fit_method(data.X_train, data.y_train)
         return defended_estimator
 
     def _resolve_fairness_defense_spec(self):
-        """Resolve defense_name/defense_params from either model or defense config shapes."""
         if hasattr(self, "defense_name"):
             return getattr(self, "defense_name", None), dict(
                 getattr(self, "defense_params", {}) or {},
@@ -122,10 +153,9 @@ class _FairnessBehaviorMixin:
         return None, {}
 
     def _apply_defense(self, data):
-        """Apply fairlearn defenses when configured, otherwise defer to base behavior."""
         defense_name, defense_params = self._resolve_fairness_defense_spec()
         if not defense_name or not defense_name.startswith("fairlearn."):
-            return ModelConfig._apply_defense(self, data)
+            return ModelConfig._apply_defense(cast(ModelConfig, self), data)
 
         if self._model is None:
             raise ValueError(
@@ -135,10 +165,10 @@ class _FairnessBehaviorMixin:
         module_name, class_name = defense_name.rsplit(".", 1)
         try:
             defense_class = resolve_class(defense_name)
-        except (ImportError, AttributeError) as e:
+        except (ImportError, AttributeError) as exc:
             raise ImportError(
                 f"Could not import defense class {class_name} from {module_name}",
-            ) from e
+            ) from exc
 
         constraints = None
         if "constraints" in defense_params:
@@ -163,11 +193,7 @@ class _FairnessBehaviorMixin:
                 raise ValueError(
                     "fairlearn.reductions defenses require a 'constraints' key in defense parameters",
                 )
-            defended_estimator = defense_class(
-                base_estimator,
-                constraints,
-                **defense_params,
-            )
+            defended_estimator = defense_class(base_estimator, constraints, **defense_params)
         elif fairlearn_submodule == "postprocessing":
             if constraints is not None:
                 defended_estimator = defense_class(
@@ -191,8 +217,7 @@ class _FairnessBehaviorMixin:
         self._apply_fit = True
         if self._apply_fit:
             defended_estimator = self._fit_defended_estimator(defended_estimator, data)
-        end = time.process_time()
-        self.defense_application_time = end - start
+        self.defense_application_time = time.process_time() - start
         return defended_estimator
 
     def _train(self, X: pd.DataFrame, y: pd.Series):
@@ -200,8 +225,8 @@ class _FairnessBehaviorMixin:
             raise ValueError("Model not initialized")
         start_time = time.process_time()
         assert hasattr(self._model, "fit"), "Model does not have a fit method"
-        fit_params = {} if not hasattr(self, "fit_params") else self.fit_params
-        sensitive = self._resolve_sensitive_features_for_batch(y)
+        fit_params = getattr(self, "fit_params", None) or {}
+        sensitive = self._resolve_sensitive_features_for_batch(y, split="train")
         if (
             sensitive is not None
             and self._method_accepts_sensitive_features(self._model.fit)
@@ -209,84 +234,53 @@ class _FairnessBehaviorMixin:
         ):
             fit_params = {**fit_params, "sensitive_features": sensitive}
         self._model.fit(X, y, **fit_params)
-        end_time = time.process_time()
-        self.training_time = end_time - start_time
+        self.training_time = time.process_time() - start_time
         self.training_n = len(y)
         logger.info(f"Model trained in {self.training_time:.2f} seconds")
 
     def _predict(self, X: pd.DataFrame) -> pd.Series:
         if self._model is None:
             raise ValueError("Model not initialized")
-        sensitive = self._resolve_sensitive_features_for_batch(X)
+        sensitive = self._resolve_sensitive_features_for_batch(X, split="test")
         try:
-            y_pred = self._call_with_optional_sensitive(
-                self._model.predict,
-                X,
-                sensitive,
-            )
-        except TypeError as e:
-            if "loop of ufunc does not support argument" in str(
-                e,
-            ) or "can't convert" in str(e):
+            return self._call_with_optional_sensitive(self._model.predict, X, sensitive)
+        except TypeError as exc:
+            if "loop of ufunc does not support argument" in str(exc) or "can't convert" in str(exc):
                 X_array = np.array(X, dtype=ART_NUMPY_DTYPE)
-                y_pred = self._call_with_optional_sensitive(
-                    self._model.predict,
-                    X_array,
-                    sensitive,
-                )
-            else:
-                raise e
-        return y_pred
+                return self._call_with_optional_sensitive(self._model.predict, X_array, sensitive)
+            raise
 
     def _predict_proba(self, X: pd.DataFrame) -> pd.DataFrame:
         if self._model is None:
             raise ValueError("Model not initialized")
         if not self.probability:
             raise ValueError("Model does not support probability predictions")
-        sensitive = self._resolve_sensitive_features_for_batch(X)
-        return self._call_with_optional_sensitive(
-            self._model.predict_proba,
-            X,
-            sensitive,
-        )
+        sensitive = self._resolve_sensitive_features_for_batch(X, split="test")
+        return self._call_with_optional_sensitive(self._model.predict_proba, X, sensitive)
 
-    def _resolve_sensitive_features(self, y_true: pd.Series):
+    def _resolve_sensitive_features(self, y_true: pd.Series, mode: str = "test"):
         if self.data is None:
             return None
 
         y_true_series = pd.Series(y_true)
         y_true_n = len(y_true_series)
         y_index = getattr(y_true, "index", None)
-        candidates = [
-            getattr(self.data, "_sensitive_test", None),
-            getattr(self.data, "_sensitive_train", None),
-            getattr(self.data, "_sensitive_all", None),
-        ]
-        positional_matches = []
-        for sensitive in candidates:
-            if sensitive is None:
-                continue
-            sensitive_series = self._validate_sensitive_series(
-                sensitive,
-                "fairness scoring",
-            )
-            if sensitive_series is None:
-                continue
-            if len(sensitive_series) == y_true_n:
-                if y_index is not None:
-                    try:
-                        aligned = sensitive_series.reindex(y_index)
-                        if len(aligned) == y_true_n and aligned.notna().all():
-                            return aligned.reset_index(drop=True)
-                    except Exception:
-                        pass
-                positional_matches.append(sensitive_series.reset_index(drop=True))
-        if len(positional_matches) == 1:
-            return positional_matches[0]
-        return None
+        scoring_split = self._resolve_scoring_split(mode)
+        sensitive = self._resolve_runtime_sensitive_source(scoring_split)
+        sensitive_series = self._validate_sensitive_series(sensitive, "fairness scoring")
+        if sensitive_series is None or len(sensitive_series) != y_true_n:
+            return None
+        if y_index is not None:
+            try:
+                aligned = sensitive_series.reindex(y_index)
+                if len(aligned) == y_true_n and aligned.notna().all():
+                    return aligned.reset_index(drop=True)
+            except Exception:
+                return None
+        return sensitive_series.reset_index(drop=True)
 
-    def _compute_group_fairness_scores(self, y_true, y_pred) -> dict:
-        sensitive = self._resolve_sensitive_features(y_true)
+    def _compute_sensitive_fairness_scores(self, y_true, y_pred, mode: str = "test") -> dict:
+        sensitive = self._resolve_sensitive_features(y_true, mode=mode)
         if sensitive is None:
             if self.data is not None:
                 raise ValueError(
@@ -305,19 +299,13 @@ class _FairnessBehaviorMixin:
                     f"Unsupported prediction shape for fairness scoring: {y_pred_arr.shape}",
                 )
 
-            classes = np.unique(
-                np.asarray(y_true_ref)[~pd.isna(np.asarray(y_true_ref))],
-            )
-
+            classes = np.unique(np.asarray(y_true_ref)[~pd.isna(np.asarray(y_true_ref))])
             if y_pred_arr.shape[1] == 1:
                 binary_scores = y_pred_arr.reshape(-1)
                 threshold = 0.5
                 if np.nanmin(binary_scores) < 0.0 or np.nanmax(binary_scores) > 1.0:
                     threshold = 0.0
-                if len(classes) == 2 and np.issubdtype(
-                    np.asarray(classes).dtype,
-                    np.number,
-                ):
+                if len(classes) == 2 and np.issubdtype(np.asarray(classes).dtype, np.number):
                     sorted_classes = np.sort(np.asarray(classes, dtype=float))
                     low_label, high_label = sorted_classes[0], sorted_classes[1]
                     labels = np.where(binary_scores >= threshold, high_label, low_label)
@@ -325,50 +313,29 @@ class _FairnessBehaviorMixin:
                     labels = (binary_scores >= threshold).astype(int)
                 return pd.Series(labels).reset_index(drop=True)
 
-            # Multi-class: argmax gives indices, map to actual class labels
-            class_indices = np.argsort(classes)
-            sorted_classes = classes[class_indices]
+            sorted_classes = classes[np.argsort(classes)]
             pred_indices = np.argmax(y_pred_arr, axis=1)
-            labels = sorted_classes[pred_indices]
-            return pd.Series(labels).reset_index(drop=True)
+            return pd.Series(sorted_classes[pred_indices]).reset_index(drop=True)
 
         y_pred_series = _normalize_pred_labels(y_pred, y_true_series)
-        # Determine positive label BEFORE alignment so it stays consistent
-
         if self.classifier:
             metric_frame = MetricFrame(
                 metrics={
                     "accuracy": accuracy_score,
-                    "precision": lambda yt, yp: precision_score(
-                        yt,
-                        yp,
-                        average="weighted",
-                        zero_division=0,
-                    ),
-                    "recall": lambda yt, yp: recall_score(
-                        yt,
-                        yp,
-                        average="weighted",
-                        zero_division=0,
-                    ),
-                    "f1-score": lambda yt, yp: f1_score(
-                        yt,
-                        yp,
-                        average="weighted",
-                        zero_division=0,
-                    ),
+                    "precision": lambda yt, yp: precision_score(yt, yp, average="weighted", zero_division=0),
+                    "recall": lambda yt, yp: recall_score(yt, yp, average="weighted", zero_division=0),
+                    "f1-score": lambda yt, yp: f1_score(yt, yp, average="weighted", zero_division=0),
                 },
                 y_true=y_true_series,
                 y_pred=y_pred_series,
                 sensitive_features=sensitive,
             )
-            by_group = metric_frame.by_group.to_dict(orient="index")
-            group_scores = {
+            by_group = pd.DataFrame(metric_frame.by_group).to_dict(orient="index")
+            sensitive_scores = {
                 f"{group}_{metric}": float(value)
                 for group, metrics in by_group.items()
                 for metric, value in metrics.items()
             }
-
             score_df = pd.DataFrame(
                 {
                     "y_true": y_true_series,
@@ -376,79 +343,73 @@ class _FairnessBehaviorMixin:
                     "sensitive": pd.Series(sensitive).reset_index(drop=True),
                 },
             )
-
-            # Calculate sensitive feature importance based on accuracy variation across groups
-            group_accuracies = []
-            for group, group_df in score_df.groupby("sensitive", sort=False):
-                group_acc = float((group_df["y_true"] == group_df["y_pred"]).mean())
-                group_accuracies.append(group_acc)
-
-            if group_accuracies:
-                acc_arr = np.asarray(group_accuracies, dtype=float)
+            sensitive_accuracies = []
+            for _, sensitive_df in score_df.groupby("sensitive", sort=False):
+                sensitive_accuracies.append(
+                    float((sensitive_df["y_true"] == sensitive_df["y_pred"]).mean()),
+                )
+            if sensitive_accuracies:
+                acc_arr = np.asarray(sensitive_accuracies, dtype=float)
                 acc_min = float(np.min(acc_arr))
                 acc_max = float(np.max(acc_arr))
-                acc_diff = acc_max - acc_min
-                acc_std = float(np.std(acc_arr))
-                acc_ratio = (
+                sensitive_scores["sensitive_feature_accuracy_difference"] = acc_max - acc_min
+                sensitive_scores["sensitive_feature_accuracy_std"] = float(np.std(acc_arr))
+                sensitive_scores["sensitive_feature_accuracy_ratio"] = (
                     acc_min / acc_max
                     if not np.isclose(acc_max, 0.0)
                     else (1.0 if np.isclose(acc_min, 0.0) else 0.0)
                 )
-                group_scores["sensitive_feature_accuracy_difference"] = acc_diff
-                group_scores["sensitive_feature_accuracy_std"] = acc_std
-                group_scores["sensitive_feature_accuracy_ratio"] = acc_ratio
+            return sensitive_scores
 
-            return group_scores
-        # if not classifier
         metric_frame = MetricFrame(
             metrics={
-                "mse": lambda yt, yp: float(
-                    np.mean((np.asarray(yt) - np.asarray(yp)) ** 2),
-                ),
-                "rmse": lambda yt, yp: float(
-                    np.sqrt(np.mean((np.asarray(yt) - np.asarray(yp)) ** 2)),
-                ),
-                "mae": lambda yt, yp: float(
-                    np.mean(np.abs(np.asarray(yt) - np.asarray(yp))),
-                ),
+                "mse": lambda yt, yp: float(np.mean((np.asarray(yt) - np.asarray(yp)) ** 2)),
+                "rmse": lambda yt, yp: float(np.sqrt(np.mean((np.asarray(yt) - np.asarray(yp)) ** 2))),
+                "mae": lambda yt, yp: float(np.mean(np.abs(np.asarray(yt) - np.asarray(yp)))),
             },
             y_true=y_true_series,
             y_pred=y_pred_series,
             sensitive_features=sensitive,
         )
-        by_group = metric_frame.by_group.to_dict(orient="index")
+        by_group = pd.DataFrame(metric_frame.by_group).to_dict(orient="index")
         return {
             f"{group}_{metric}": float(value)
             for group, metrics in by_group.items()
             for metric, value in metrics.items()
         }
 
+    def _compute_group_fairness_scores(self, y_true, y_pred, mode: str = "test") -> dict:
+        return self._compute_sensitive_fairness_scores(y_true, y_pred, mode=mode)
+
+    def _score(self, y_true: pd.Series, y_pred: pd.Series, mode: str = "test", **kwargs) -> dict:
+        """Thin wrapper: delegate all scoring to configured scorer dict."""
+        return ModelConfig._score(cast(ModelConfig, self), y_true, y_pred, mode=mode, **kwargs)
+
     def _classification_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
-        scores = ModelConfig._classification_scores(self, y_true, y_pred)
-        scores.update(self._compute_group_fairness_scores(y_true, y_pred))
+        scores = ModelConfig._classification_scores(cast(ModelConfig, self), y_true, y_pred)
+        scores.update(self._compute_sensitive_fairness_scores(y_true, y_pred, mode="test"))
         return scores
 
     def _regression_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
-        scores = ModelConfig._regression_scores(self, y_true, y_pred)
-        scores.update(self._compute_group_fairness_scores(y_true, y_pred))
+        scores = ModelConfig._regression_scores(cast(ModelConfig, self), y_true, y_pred)
+        scores.update(self._compute_sensitive_fairness_scores(y_true, y_pred, mode="test"))
         return scores
 
 
 @dataclass
-class FairnessModelConfig(_FairnessBehaviorMixin, ModelConfig):
+class FairlearnModelConfig(_FairnessBehaviorMixin, ModelConfig):
     """Fairness-aware model config for standard model workflows."""
 
-    data: Union[FairnessDataConfig, None] = None
+    data: Union[FairlearnDataConfig, None] = None
 
 
 @dataclass
-class FairnessDefenseConfig(_FairnessBehaviorMixin, DefenseConfig):
+class FairlearnDefenseConfig(_FairnessBehaviorMixin, DefenseConfig):
     """Fairness-aware defense config that inherits DefenseConfig."""
 
-    data: Union[FairnessDataConfig, None] = None
+    data: Union[FairlearnDataConfig, None] = None
 
-    def apply_defense(self, data) -> object:
-        """Apply a fairlearn or ART defense to the base estimator."""
+    def apply_defense(self, data) -> BaseEstimator:
         defense_name, _ = self._resolve_fairness_defense_spec()
         if not defense_name or not defense_name.startswith("fairlearn."):
             return super().apply_defense(data)

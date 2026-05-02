@@ -19,10 +19,10 @@ __all__ = [
     "fairness_group_mean_prediction_difference",
     "fairness_group_mae_difference",
     "fairness_group_mse_difference",
-    "FairnessScoreDictConfig",
-    "DefaultFairnessClassificationConfig",
-    "DefaultFairnessRegressionConfig",
-    "DefaultFairnessConfig",
+    "FairlearnScoreDictConfig",
+    "DefaultFairlearnClassificationConfig",
+    "DefaultFairlearnRegressionConfig",
+    "DefaultFairlearnConfig",
 ]
 
 
@@ -128,13 +128,20 @@ def _flatten_metric_frame_by_group(by_group: pd.DataFrame) -> dict:
 
 
 def _series_like_to_float_dict(values) -> dict:
+    if isinstance(values, pd.DataFrame):
+        flattened = {}
+        for row_key, row_values in values.to_dict(orient="index").items():
+            row_label = str(row_key)
+            for col_key, col_val in row_values.items():
+                flattened[f"{row_label}_{col_key}"] = float(col_val)
+        return flattened
     if isinstance(values, pd.Series):
         return {str(key): float(value) for key, value in values.items()}
     return {"value": float(values)}
 
 
 @dataclass
-class FairnessScoreDictConfig(ScorerDictConfig):
+class FairlearnScoreDictConfig(ScorerDictConfig):
     """ScorerDictConfig variant that computes fairness metrics through MetricFrame.
 
     Use ``group_scorers`` to provide configurable metric callables evaluated per
@@ -144,12 +151,17 @@ class FairnessScoreDictConfig(ScorerDictConfig):
 
     group_scorers: Dict[
         str,
-        Union[ScorerConfig, Dict[str, Any], str, Callable],
+        Union[ScorerConfig, ScorerDictConfig, Dict[str, Any], str, Callable],
     ] = field(default_factory=dict)
     group_reduction: Literal["difference", "ratio", "none"] = "difference"
     group_reduction_method: Literal["between_groups", "to_overall"] = "between_groups"
     include_group_overall: bool = False
     include_group_by_group: bool = True
+    control_features: Any = None
+    sample_params: Union[Dict[str, Any], None] = None
+    n_boot: Union[int, None] = None
+    ci_quantiles: Union[list[float], None] = None
+    random_state: Any = None
 
     def __post_init__(self):
         super().__post_init__()
@@ -157,6 +169,10 @@ class FairnessScoreDictConfig(ScorerDictConfig):
         for key, value in self.group_scorers.items():
             if isinstance(value, ScorerConfig):
                 scorer = value
+                normalized[key] = scorer
+            elif isinstance(value, ScorerDictConfig):
+                for nested_key, nested_scorer in value.get_callables().items():
+                    normalized[f"{key}_{nested_key}"] = nested_scorer
             elif isinstance(value, dict):
                 scorer_data = dict(value)
                 scorer = ScorerConfig(
@@ -166,22 +182,51 @@ class FairnessScoreDictConfig(ScorerDictConfig):
                     greater_is_better=scorer_data.pop("greater_is_better", True),
                     needs_proba=scorer_data.pop("needs_proba", False),
                 )
+                normalized[key] = scorer
             elif isinstance(value, str) or callable(value):
                 scorer = ScorerConfig(score_name=key, score_function=value)
+                normalized[key] = scorer
             else:
                 raise TypeError(
-                    f"Value for key '{key}' must be ScorerConfig, dict, str, or callable. Got {type(value)}",
+                    "Value for key '{key}' must be ScorerConfig, ScorerDictConfig, dict, str, or callable. "
+                    f"Got {type(value)}",
                 )
-            normalized[key] = scorer
         self.group_scorers = normalized
 
-    def _build_metric_frame(self, y_true, y_pred, sensitive_features):
+    def _build_metric_frame(
+        self,
+        y_true,
+        y_pred,
+        sensitive_features,
+        scorer_kwargs: Union[Dict[str, Any], None] = None,
+        control_features=None,
+        sample_params=None,
+        n_boot=None,
+        ci_quantiles=None,
+        random_state=None,
+    ):
         if MetricFrame is None:
             raise ImportError(
                 "Fairness scorer requires optional dependency deckard[fairlearn]",
             )
+        scorer_kwargs = scorer_kwargs or {}
+        metrics_keys = list(cast(Dict[str, ScorerConfig], self.group_scorers).keys())
+        if isinstance(sample_params, dict):
+            sample_param_keys = set(sample_params.keys())
+            # MetricFrame expects nested sample params when metrics is a dict.
+            if not sample_param_keys.issubset(set(metrics_keys)):
+                sample_params = {
+                    metric_name: dict(sample_params) for metric_name in metrics_keys
+                }
         metrics = {
-            key: (lambda yt, yp, scorer=scorer: scorer(y_true=yt, y_pred=yp))
+            key: (
+                lambda yt, yp, scorer=scorer, **sample_kwargs: scorer(
+                    y_true=yt,
+                    y_pred=yp,
+                    **sample_kwargs,
+                    **scorer_kwargs,
+                )
+            )
             for key, scorer in cast(Dict[str, ScorerConfig], self.group_scorers).items()
         }
         return MetricFrame(
@@ -189,6 +234,11 @@ class FairnessScoreDictConfig(ScorerDictConfig):
             y_true=y_true,
             y_pred=y_pred,
             sensitive_features=sensitive_features,
+            control_features=control_features,
+            sample_params=sample_params,
+            n_boot=n_boot,
+            ci_quantiles=ci_quantiles,
+            random_state=random_state,
         )
 
     def __call__(
@@ -226,10 +276,21 @@ class FairnessScoreDictConfig(ScorerDictConfig):
         if sensitive_features is None:
             raise ValueError("sensitive_features are required for fairness scoring")
 
+        control_features = kwargs.pop("control_features", self.control_features)
+        sample_params = kwargs.pop("sample_params", self.sample_params)
+        n_boot = kwargs.pop("n_boot", self.n_boot)
+        ci_quantiles = kwargs.pop("ci_quantiles", self.ci_quantiles)
+        random_state = kwargs.pop("random_state", self.random_state)
         metric_frame = self._build_metric_frame(
             y_true=y_true,
             y_pred=y_pred,
             sensitive_features=sensitive_features,
+            scorer_kwargs=kwargs,
+            control_features=control_features,
+            sample_params=sample_params,
+            n_boot=n_boot,
+            ci_quantiles=ci_quantiles,
+            random_state=random_state,
         )
 
         if self.include_group_overall:
@@ -344,7 +405,7 @@ def fairness_group_mse_difference(y_true, y_pred, data=None, **kwargs):
 
 
 @dataclass
-class DefaultFairnessClassificationConfig(FairnessScoreDictConfig):
+class DefaultFairlearnClassificationConfig(FairlearnScoreDictConfig):
     """Default scorer set for classification fairness workflows."""
 
     scorers: Dict[str, Union[ScorerConfig, Dict[str, Any]]] = field(
@@ -364,7 +425,7 @@ class DefaultFairnessClassificationConfig(FairnessScoreDictConfig):
 
 
 @dataclass
-class DefaultFairnessRegressionConfig(FairnessScoreDictConfig):
+class DefaultFairlearnRegressionConfig(FairlearnScoreDictConfig):
     """Default scorer set for regression fairness workflows."""
 
     scorers: Dict[str, Union[ScorerConfig, Dict[str, Any]]] = field(
@@ -388,9 +449,8 @@ class DefaultFairnessRegressionConfig(FairnessScoreDictConfig):
     )
 
 
-# Backward-compatible class alias retained for Python imports.
-DefaultFairnessConfig = DefaultFairnessClassificationConfig
+DefaultFairlearnConfig = DefaultFairlearnClassificationConfig
 
 
-safe_store(group="score", name="fairness-classification", node=DefaultFairnessClassificationConfig)
-safe_store(group="score", name="fairness-regression", node=DefaultFairnessRegressionConfig)
+safe_store(group="score", name="fairlearn-classification", node=DefaultFairlearnClassificationConfig)
+safe_store(group="score", name="fairlearn-regression", node=DefaultFairlearnRegressionConfig)
