@@ -28,15 +28,7 @@ In practice, Deckard is used both as:
 - a backend for large-scale automated evaluation and benchmarking
 - a research platform for detailed empirical analysis
 
-The package-level API exposes the core configuration classes that drive this
-workflow:
 
-- :class:`deckard.data.DataConfig`
-- :class:`deckard.model.ModelConfig` and :class:`deckard.model.DefenseConfig`
-- :class:`deckard.attack.AttackConfig`
-- :class:`deckard.experiment.ExperimentConfig`
-- :class:`deckard.file.FileConfig`
-- :class:`deckard.score.ScorerDictConfig`
 
 Statement Of Need
 -----------------
@@ -51,6 +43,10 @@ Deckard addresses this by providing:
 - configuration-driven orchestration of full ML pipelines
 - repeatable experiment execution with explicit run metadata
 - integrated result collection for comparison and reporting
+- ``hydra`` integration for command line configuration
+- ``optuna`` integration for search space sampling, experiment pruning, and multi-objective optimization.
+- Numerous extensions for attacking, defending, and measuring various ML metrics.
+- Designed to be easily extensible, but also provide reasonable defaults to minmize configuration needs.
 
 This reduces engineering friction so researchers can focus on methodology
 instead of ad-hoc pipeline glue code.
@@ -137,18 +133,32 @@ configuration, the same experiment definition can be reused across:
 - parallel parameter sweeps
 - distributed batch execution
 
-This enables scalable robustness studies without rewriting experiment code for
-each execution backend.
-
-The same design also supports non-robustness-focused studies by swapping in
-new metrics, transforms, defenses, and task-specific evaluation components.
+This enables scalable trustworthiness studies without rewriting experiment code for
+each execution backend, allowing researchers to focus only on the component that they are truly testing while gaining access to numerous mitigations, defenses, attacks, and metrics for validating ML pipelines.
 
 Internals
 ---------
 
-At import time, the package registers OmegaConf resolvers (for example
-``file``, ``merge``, and ``hash``), installs warning filters, and exports the
-public API listed in ``deckard.__all__``.
+The package-level API exposes the core configuration classes that drive this
+workflow-- Data, Model, Attack, Experiment, File, and ScorerDictConfig objects.
+Natively, ``deckard`` supports ``adversarial-robustness-toolbox`` to apply defenses and conduct attacks, but these can be easily overloaded to support other attack and defense frameworks by overloading the :deckard.DefenseConfig: and/or :deckard.AttackConfig:.
+
+
+- :class:`deckard.data.DataConfig`
+- :class:`deckard.model.ModelConfig` and :class:`deckard.model.DefenseConfig`
+- :class:`deckard.attack.AttackConfig`
+- :class:`deckard.experiment.ExperimentConfig`
+- :class:`deckard.file.FileConfig`
+- :class:`deckard.score.ScorerDictConfig`
+
+
+Extensions
+---------
+
+``deckard`` also provides support for 
+
+- :class:`deckard.plot.PlotConfig`
+- :class:``
 
 Troubleshooting
 ---------------

@@ -70,81 +70,47 @@
            <div itemprop="articleBody">
              
   <h1>Source code for deckard.data.fairness</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">ListConfig</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">fairlearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">MetricFrame</span><span class="p">,</span>
-    <span class="n">count</span><span class="p">,</span>
-    <span class="n">demographic_parity_difference</span><span class="p">,</span>
-    <span class="n">demographic_parity_ratio</span><span class="p">,</span>
-    <span class="n">mean_prediction</span><span class="p">,</span>
-    <span class="n">selection_rate</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">mutual_info_score</span><span class="p">,</span> <span class="n">normalized_mutual_info_score</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataPipelineConfig</span>
-
-<span class="n">fairness_scores</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;classification&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="s2">&quot;count&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;selection_rate&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;selection_rate_difference&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;selection_rate_ratio&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;demographic_parity_difference&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;demographic_parity_ratio&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;target_mutual_information&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;target_normalized_mutual_information&quot;</span><span class="p">,</span>
-    <span class="p">],</span>
-    <span class="s2">&quot;regression&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="s2">&quot;count&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;mean_target&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;mean_target_difference&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;mean_target_ratio&quot;</span><span class="p">,</span>
-    <span class="p">],</span>
-<span class="p">}</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataPipelineConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_class</span>
 
 
-<div class="viewcode-block" id="FairnessDataConfig">
-<a class="viewcode-back" href="../../../data.html#deckard.data.FairnessDataConfig">[docs]</a>
-<span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">FairnessDataConfig</span><span class="p">(</span><span class="n">DataPipelineConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Extended DataConfig class that overloads key methods to operate on pandas groupby objects.</span>
+<div class="viewcode-block" id="FairlearnDataConfig">
+<a class="viewcode-back" href="../../../data.html#deckard.data.FairlearnDataConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FairlearnDataConfig</span><span class="p">(</span><span class="n">DataPipelineConfig</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Data pipeline config with fairlearn-sensitive feature support.&quot;&quot;&quot;</span>
 
-<span class="sd">    This allows stratified analysis of fairness metrics across different demographic groups.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">groupby_columns</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">sensitive_columns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">fairness_defense</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize with groupby_column support.&quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_init</span><span class="p">()</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupby_columns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;groupby_column must be specified for FairnessDataConfig&quot;</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groupby_columns</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">groupby_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groupby_columns</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groupby_columns</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">groupby_columns</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">groupby_columns</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensitive_columns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sensitive_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groupby_columns</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sensitive_columns</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sensitive_columns must be specified for FairlearnDataConfig&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sensitive_columns</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sensitive_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sensitive_columns</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sensitive_columns</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sensitive_columns</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sensitive_columns</span><span class="p">]</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_group_labels_from_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sensitive_labels_from_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Build a single sensitive-feature label series for fairlearn APIs.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groupby_columns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">frame</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">groupby_columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">frame</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">groupby_columns</span><span class="p">]</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensitive_columns</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">cols</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">cols</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sensitive_columns must be configured&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">frame</span><span class="p">[</span><span class="n">cols</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+        <span class="n">labels_df</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">labels_df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_validate_sensitive_runtime</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -162,7 +128,6 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_inject_fairness_defense_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Inject a fairlearn preprocessing defense into the DataPipelineConfig pipeline.&quot;&quot;&quot;</span>
-        <span class="c1"># Default behavior is no fairness pipeline step; opt-in via explicit config.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fairness_defense</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">False</span><span class="p">]:</span>
             <span class="k">return</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fairness_defense</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
@@ -171,7 +136,8 @@
             <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fairness_defense</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">)):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;fairness_defense must be a dict/DictConfig, False, or None. Got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fairness_defense</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;fairness_defense must be a dict/DictConfig, False, or None. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fairness_defense</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_X&quot;</span><span class="p">)</span>
@@ -180,6 +146,8 @@
         <span class="p">):</span>
             <span class="k">return</span>
 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensitive_columns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sensitive_columns must be configured&quot;</span><span class="p">)</span>
         <span class="n">sensitive_columns</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensitive_columns</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">columns</span>
         <span class="p">]</span>
@@ -188,9 +156,8 @@
                 <span class="sa">f</span><span class="s2">&quot;Sensitive features not found for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sensitive_columns</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="n">sensitive_feature_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sensitive_columns</span><span class="p">)</span>
         <span class="n">step_config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;sensitive_feature_ids&quot;</span><span class="p">:</span> <span class="n">sensitive_feature_ids</span><span class="p">,</span>
+            <span class="s2">&quot;sensitive_feature_ids&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">sensitive_columns</span><span class="p">),</span>
         <span class="p">}</span>
         <span class="n">step_name</span> <span class="o">=</span> <span class="s2">&quot;fairness_correlation_remover&quot;</span>
         <span class="n">custom</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fairness_defense</span><span class="p">)</span>
@@ -207,15 +174,17 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_load_data</span><span class="p">()</span>
         <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_X&quot;</span><span class="p">),</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="s2">&quot;self.X_ not found while loading FairnessDataConfig&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;self.X_ not found while loading FairlearnDataConfig&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_y&quot;</span><span class="p">),</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="s2">&quot;self.y_ not found whilte loading FairnessDataConfig&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;self.y_ not found while loading FairlearnDataConfig&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">),</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="s2">&quot;Expected a dataframe for self.X_&quot;</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupby_columns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensitive_columns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sensitive_columns must be configured&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensitive_columns</span><span class="p">:</span>
             <span class="k">assert</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">columns</span>
         <span class="k">return</span> <span class="bp">self</span>
 
@@ -224,18 +193,12 @@
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_init_pipeline</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Override _sample to handle groupby objects for fairness analysis.</span>
-
-<span class="sd">        Keeps X_train, y_train the same for all groups, but creates separate</span>
-<span class="sd">        X_test, y_test groups based on the groupby columns.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Call parent _sample to get standard train/test split</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Override _sample to cache sensitive labels used by fairlearn metrics.&quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_sample</span><span class="p">()</span>
 
-        <span class="c1"># Cache sensitive labels before pipeline transforms can drop sensitive columns.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sensitive_train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group_labels_from_frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sensitive_test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group_labels_from_frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_test</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sensitive_all</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group_labels_from_frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sensitive_train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensitive_labels_from_frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_train</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sensitive_test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensitive_labels_from_frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_test</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sensitive_all</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensitive_labels_from_frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sensitive_train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_sensitive_runtime</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sensitive_train</span><span class="p">,</span>
             <span class="s2">&quot;train sampling&quot;</span><span class="p">,</span>
@@ -248,130 +211,37 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_sensitive_all</span><span class="p">,</span>
             <span class="s2">&quot;full-data sampling&quot;</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="c1">#TODO: Add support for self._sensitive_val</span>
+        
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_score</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute dataset-only fairness metrics using fairlearn.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;X_test&quot;</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;y_test&quot;</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_test</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_test</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="p">):</span>
-            <span class="n">X_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_test</span>
-            <span class="n">y_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_test</span>
-            <span class="n">sensitive_test</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_sensitive_test&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">sensitive_test</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">sensitive_test</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
-                <span class="n">y_eval</span><span class="p">,</span>
-            <span class="p">):</span>
-                <span class="n">sensitive</span> <span class="o">=</span> <span class="n">sensitive_test</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">sensitive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group_labels_from_frame</span><span class="p">(</span><span class="n">X_eval</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">X_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span>
-            <span class="n">y_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span>
-            <span class="n">sensitive_all</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_sensitive_all&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">sensitive_all</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">sensitive_all</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
-                <span class="n">y_eval</span><span class="p">,</span>
-            <span class="p">):</span>
-                <span class="n">sensitive</span> <span class="o">=</span> <span class="n">sensitive_all</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">sensitive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group_labels_from_frame</span><span class="p">(</span><span class="n">X_eval</span><span class="p">)</span>
-        <span class="n">sensitive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_sensitive_runtime</span><span class="p">(</span><span class="n">sensitive</span><span class="p">,</span> <span class="s2">&quot;fairness scoring&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span><span class="p">:</span>
-            <span class="n">metric_frame</span> <span class="o">=</span> <span class="n">MetricFrame</span><span class="p">(</span>
-                <span class="n">metrics</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span> <span class="s2">&quot;selection_rate&quot;</span><span class="p">:</span> <span class="n">selection_rate</span><span class="p">},</span>
-                <span class="n">y_true</span><span class="o">=</span><span class="n">y_eval</span><span class="p">,</span>
-                <span class="n">y_pred</span><span class="o">=</span><span class="n">y_eval</span><span class="p">,</span>
-                <span class="n">sensitive_features</span><span class="o">=</span><span class="n">sensitive</span><span class="p">,</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Thin wrapper that delegates fairness dataset scoring to ``self.scorer``.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="s2">&quot;default&quot;</span><span class="p">}:</span>
+            <span class="n">scorer_cls</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;deckard.score.data.DefaultDataClassificationConfig&quot;</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span>
+                <span class="k">else</span> <span class="s2">&quot;deckard.score.data.DefaultDataRegressionConfig&quot;</span>
             <span class="p">)</span>
-            <span class="n">selection_diff</span> <span class="o">=</span> <span class="n">metric_frame</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;between_groups&quot;</span><span class="p">)</span>
-            <span class="n">selection_ratio</span> <span class="o">=</span> <span class="n">metric_frame</span><span class="o">.</span><span class="n">ratio</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;between_groups&quot;</span><span class="p">)</span>
-
-            <span class="c1"># Examine association between sensitive group membership and target labels.</span>
-            <span class="n">sensitive_labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">sensitive</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
-            <span class="n">target_labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">y_eval</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
-            <span class="n">target_distribution_by_group</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">crosstab</span><span class="p">(</span>
-                <span class="n">sensitive_labels</span><span class="p">,</span>
-                <span class="n">target_labels</span><span class="p">,</span>
-                <span class="n">normalize</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">,</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
-            <span class="n">fairness_payload</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;fairness_scores&quot;</span><span class="p">:</span> <span class="p">{</span>
-                    <span class="s2">&quot;metrics&quot;</span><span class="p">:</span> <span class="n">fairness_scores</span><span class="p">[</span><span class="s2">&quot;classification&quot;</span><span class="p">],</span>
-                    <span class="s2">&quot;overall&quot;</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">metric_frame</span><span class="o">.</span><span class="n">overall</span><span class="p">[</span><span class="s2">&quot;count&quot;</span><span class="p">]),</span>
-                        <span class="s2">&quot;selection_rate&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">metric_frame</span><span class="o">.</span><span class="n">overall</span><span class="p">[</span><span class="s2">&quot;selection_rate&quot;</span><span class="p">]),</span>
-                    <span class="p">},</span>
-                    <span class="s2">&quot;by_group&quot;</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="nb">str</span><span class="p">(</span><span class="n">group</span><span class="p">):</span> <span class="p">{</span>
-                            <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;count&quot;</span><span class="p">]),</span>
-                            <span class="s2">&quot;selection_rate&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;selection_rate&quot;</span><span class="p">]),</span>
-                        <span class="p">}</span>
-                        <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">metric_frame</span><span class="o">.</span><span class="n">by_group</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span>
-                            <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">,</span>
-                        <span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                    <span class="p">},</span>
-                    <span class="s2">&quot;target_distribution_by_group&quot;</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="nb">str</span><span class="p">(</span><span class="n">group</span><span class="p">):</span> <span class="p">{</span>
-                            <span class="nb">str</span><span class="p">(</span><span class="n">label</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="p">)</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                        <span class="p">}</span>
-                        <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">target_distribution_by_group</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                    <span class="p">},</span>
-                    <span class="s2">&quot;selection_rate_difference&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
-                        <span class="n">selection_diff</span><span class="p">[</span><span class="s2">&quot;selection_rate&quot;</span><span class="p">],</span>
-                    <span class="p">),</span>
-                    <span class="s2">&quot;selection_rate_ratio&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">selection_ratio</span><span class="p">[</span><span class="s2">&quot;selection_rate&quot;</span><span class="p">]),</span>
-                    <span class="s2">&quot;demographic_parity_difference&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
-                        <span class="n">demographic_parity_difference</span><span class="p">(</span>
-                            <span class="n">y_true</span><span class="o">=</span><span class="n">y_eval</span><span class="p">,</span>
-                            <span class="n">y_pred</span><span class="o">=</span><span class="n">y_eval</span><span class="p">,</span>
-                            <span class="n">sensitive_features</span><span class="o">=</span><span class="n">sensitive</span><span class="p">,</span>
-                        <span class="p">),</span>
-                    <span class="p">),</span>
-                    <span class="s2">&quot;demographic_parity_ratio&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
-                        <span class="n">demographic_parity_ratio</span><span class="p">(</span>
-                            <span class="n">y_true</span><span class="o">=</span><span class="n">y_eval</span><span class="p">,</span>
-                            <span class="n">y_pred</span><span class="o">=</span><span class="n">y_eval</span><span class="p">,</span>
-                            <span class="n">sensitive_features</span><span class="o">=</span><span class="n">sensitive</span><span class="p">,</span>
-                        <span class="p">),</span>
-                    <span class="p">),</span>
-                    <span class="s2">&quot;target_mutual_information&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
-                        <span class="n">mutual_info_score</span><span class="p">(</span><span class="n">sensitive_labels</span><span class="p">,</span> <span class="n">target_labels</span><span class="p">),</span>
-                    <span class="p">),</span>
-                    <span class="s2">&quot;target_normalized_mutual_information&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
-                        <span class="n">normalized_mutual_info_score</span><span class="p">(</span><span class="n">sensitive_labels</span><span class="p">,</span> <span class="n">target_labels</span><span class="p">),</span>
-                    <span class="p">),</span>
-                <span class="p">},</span>
-            <span class="p">}</span>
-            <span class="k">return</span> <span class="n">fairness_payload</span>
-        <span class="n">metric_frame</span> <span class="o">=</span> <span class="n">MetricFrame</span><span class="p">(</span>
-            <span class="n">metrics</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span> <span class="s2">&quot;mean_target&quot;</span><span class="p">:</span> <span class="n">mean_prediction</span><span class="p">},</span>
-            <span class="n">y_true</span><span class="o">=</span><span class="n">y_eval</span><span class="p">,</span>
-            <span class="n">y_pred</span><span class="o">=</span><span class="n">y_eval</span><span class="p">,</span>
-            <span class="n">sensitive_features</span><span class="o">=</span><span class="n">sensitive</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span> <span class="o">=</span> <span class="n">load_class</span><span class="p">(</span><span class="n">scorer_cls</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;FairlearnDataConfig.scorer must be callable or None, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">y_true</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_train</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;y_train&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_train</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;X_train&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">non_numeric</span> <span class="o">=</span> <span class="n">y_pred</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;number&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">columns</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">non_numeric</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">y_pred</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">drop_first</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">fairness_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="p">(</span>
+            <span class="n">y_true</span><span class="o">=</span><span class="n">y_true</span><span class="p">,</span>
+            <span class="n">y_pred</span><span class="o">=</span><span class="n">y_pred</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">by_group</span> <span class="o">=</span> <span class="n">metric_frame</span><span class="o">.</span><span class="n">by_group</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
-        <span class="n">means</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;mean_target&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">by_group</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
-        <span class="n">mean_diff</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">means</span><span class="p">)</span> <span class="o">-</span> <span class="nb">min</span><span class="p">(</span><span class="n">means</span><span class="p">)</span> <span class="k">if</span> <span class="n">means</span> <span class="k">else</span> <span class="mf">0.0</span>
-        <span class="n">mean_ratio</span> <span class="o">=</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">means</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">means</span><span class="p">))</span> <span class="k">if</span> <span class="n">means</span> <span class="ow">and</span> <span class="nb">max</span><span class="p">(</span><span class="n">means</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;fairness_scores&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;metrics&quot;</span><span class="p">:</span> <span class="n">fairness_scores</span><span class="p">[</span><span class="s2">&quot;regression&quot;</span><span class="p">],</span>
-                <span class="s2">&quot;overall&quot;</span><span class="p">:</span> <span class="p">{</span>
-                    <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">metric_frame</span><span class="o">.</span><span class="n">overall</span><span class="p">[</span><span class="s2">&quot;count&quot;</span><span class="p">]),</span>
-                    <span class="s2">&quot;mean_target&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">metric_frame</span><span class="o">.</span><span class="n">overall</span><span class="p">[</span><span class="s2">&quot;mean_target&quot;</span><span class="p">]),</span>
-                <span class="p">},</span>
-                <span class="s2">&quot;by_group&quot;</span><span class="p">:</span> <span class="p">{</span>
-                    <span class="nb">str</span><span class="p">(</span><span class="n">group</span><span class="p">):</span> <span class="p">{</span>
-                        <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;count&quot;</span><span class="p">]),</span>
-                        <span class="s2">&quot;mean_target&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;mean_target&quot;</span><span class="p">]),</span>
-                    <span class="p">}</span>
-                    <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">by_group</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                <span class="p">},</span>
-                <span class="s2">&quot;mean_target_difference&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">mean_diff</span><span class="p">),</span>
-                <span class="s2">&quot;mean_target_ratio&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">mean_ratio</span><span class="p">),</span>
-            <span class="p">},</span>
-        <span class="p">}</span></div>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;fairness_scores&quot;</span><span class="p">:</span> <span class="n">fairness_scores</span><span class="p">}</span></div>
 
 </pre></div>
 

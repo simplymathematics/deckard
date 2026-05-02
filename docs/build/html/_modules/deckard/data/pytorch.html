@@ -80,7 +80,7 @@
 
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span>
 
 <span class="c1"># PyTorch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
@@ -88,8 +88,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">Subset</span>
 
 <span class="c1"># deckard</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..score.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScorerDictConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_class</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span><span class="p">,</span> <span class="n">DataPipelineConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span><span class="p">,</span> <span class="n">DataPipelineConfig</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="c1"># Setup logger</span>
@@ -98,7 +99,7 @@
 
 <div class="viewcode-block" id="PytorchDataPipelineConfig">
 <a class="viewcode-back" href="../../../data.html#deckard.data.PytorchDataPipelineConfig">[docs]</a>
-<span class="nd">@dataclass</span>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PytorchDataPipelineConfig</span><span class="p">(</span><span class="n">DataPipelineConfig</span><span class="p">):</span>
     <span class="k">pass</span></div>
 
@@ -106,7 +107,7 @@
 
 <div class="viewcode-block" id="PytorchDataConfig">
 <a class="viewcode-back" href="../../../data.html#deckard.data.PytorchDataConfig">[docs]</a>
-<span class="nd">@dataclass</span>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PytorchDataConfig</span><span class="p">(</span><span class="n">DataConfig</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for PyTorch datasets.</span>
 
@@ -510,7 +511,7 @@
 
 <div class="viewcode-block" id="PytorchCustomDataConfig">
 <a class="viewcode-back" href="../../../data.html#deckard.data.PytorchCustomDataConfig">[docs]</a>
-<span class="nd">@dataclass</span>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PytorchCustomDataConfig</span><span class="p">(</span><span class="n">PytorchDataConfig</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for HuggingFace datasets loaded via DataLoader.</span>
 

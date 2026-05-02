@@ -46,9 +46,6 @@ module.
 Overview
 --------
 
-Overview
---------
-
 :class:`~deckard.model.ModelConfig` automates the following steps:
 
 * Dynamic instantiation of scikit-learn models via import strings (e.g. ``sklearn.svm.SVC``)
@@ -75,14 +72,16 @@ You can train and evaluate models directly from the terminal:
 
 .. code-block:: bash
 
-   # Train and evaluate using defaults (Logistic Regression)
-   python -m deckard optimize --config-name experiment model.model_type=sklearn.linear_model.LogisticRegression
+   # Integration-style logistic regression
+   python -m deckard optimize --config-name experiment \
+      model.model_type=sklearn.linear_model.LogisticRegression \
+      model.model_params.max_iter=25
 
-   # Override model type and parameters
+   # Integration-style random forest classifier
    python -m deckard optimize --config-name experiment \
       model.model_type=sklearn.ensemble.RandomForestClassifier \
-      model.model_params.n_estimators=100 \
-      model.model_params.max_depth=5
+      model.model_params.n_estimators=25 \
+      model.model_params.random_state=42
 
    # Use a custom Hydra/YAML configuration
    python -m deckard optimize --config-path configs --config-name experiment
@@ -95,19 +94,70 @@ To use :class:`~deckard.model.ModelConfig` from Python:
 
 .. code-block:: python
 
-   from deckard.data import initialize_data_config
-   from deckard.model import initialize_model_config
+   from deckard.data import DataConfig
+   from deckard.model import ModelConfig
 
-   # Load data and initialize model
-   data = data_config(dataset_name="adult", test_size=0.2, random_state=42)
-   model = initialize_model_config(model_type="sklearn.ensemble.RandomForestClassifier", n_estimators=100, max_depth=5, random_state=42)
+   data = DataConfig(
+      dataset_name="make_classification",
+      data_params={
+         "n_samples": 40,
+         "n_features": 10,
+         "n_informative": 4,
+         "n_redundant": 0,
+         "n_clusters_per_class": 1,
+         "n_classes": 2,
+         "random_state": 7,
+      },
+      train_size=30,
+      test_size=10,
+      random_state=42,
+      stratify=True,
+      classifier=True,
+   )
+   data()
 
-   # Call the data object to load/split the dataset
-   data(data_filepath="data.pkl", score_file="data_scores.json")
-   # Call the model object to train, predict, and score
-   scores = model(data=data, model_filepath="models/rf.pkl", score_file="model_scores.json")
+   model = ModelConfig(
+      model_type="sklearn.linear_model.LogisticRegression",
+      classifier=True,
+      model_params={"max_iter": 25},
+   )
+
+   scores = model(data)
 
    print(f"Scores: {scores}")
+
+Regression example
+~~~~~~~~~~~~~~~~~~
+
+The integration suite also validates regression with the same API:
+
+.. code-block:: python
+
+   from deckard.data import DataConfig
+   from deckard.model import ModelConfig
+
+   reg_data = DataConfig(
+      dataset_name="make_regression",
+      data_params={
+         "n_samples": 40,
+         "n_features": 10,
+         "n_informative": 5,
+         "noise": 0.1,
+         "random_state": 13,
+      },
+      train_size=30,
+      test_size=10,
+      random_state=42,
+      classifier=False,
+   )
+   reg_data()
+
+   reg_model = ModelConfig(
+      model_type="sklearn.linear_model.LinearRegression",
+      classifier=False,
+   )
+   reg_scores = reg_model(reg_data)
+   print(reg_scores["mse"])
 
 Custom configuration
 ~~~~~~~~~~~~~~~~~~~~
@@ -116,14 +166,11 @@ Example YAML configuration (``configs/model/rf.yaml``):
 
 .. code-block:: yaml
 
-   _target_: model.ModelConfig
-   model_type: sklearn.ensemble.RandomForestClassifier
+   _target_: deckard.model.ModelConfig
+   model_type: sklearn.linear_model.LogisticRegression
    classifier: True
-   probability: False
    model_params:
-      n_estimators: 100
-      max_depth: 5
-      random_state: 42
+      max_iter: 25
 
 Internals
 ---------

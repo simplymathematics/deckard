@@ -52,9 +52,6 @@ module.
 Overview
 --------
 
-Overview
---------
-
 :class:`~deckard.data.DataConfig` can load well-known datasets such as:
 
 - **Adult Income** (via OpenML)
@@ -75,11 +72,19 @@ Run data setup directly from the terminal:
 
 .. code-block:: bash
 
-   # Load the Adult dataset with default settings
-   python -m deckard optimize --config-name experiment data.dataset_name=adult data.test_size=0.2
+   # Integration-style synthetic classification data
+   python -m deckard optimize --config-name experiment \
+      data.dataset_name=make_classification \
+      data.data_params.n_samples=40 \
+      data.data_params.n_features=10 \
+      data.train_size=30 \
+      data.test_size=10
 
-   # Override configuration parameters inline
-   python -m deckard optimize --config-name experiment data.dataset_name=make_classification data.test_size=0.25
+   # Fairness integration-style Adult split
+   python -m deckard optimize --config-name experiment \
+      data.dataset_name=adult \
+      data.train_size=160 \
+      data.test_size=80
 
 Programmatic usage
 ~~~~~~~~~~~~~~~~~~
@@ -88,19 +93,82 @@ Use :class:`~deckard.data.DataConfig` from within your Python scripts or noteboo
 
 .. code-block:: python
 
-   from deckard.data import initialize_data_config
+   from deckard.data import DataConfig
 
-   # Initialize using default, Hydra/YAML, or CLI configuration
-   data = initialize_data_config(dataset_name="adult", test_size=0.2, random_state=42)
+   data = DataConfig(
+      dataset_name="make_classification",
+      data_params={
+         "n_samples": 40,
+         "n_features": 10,
+         "n_informative": 4,
+         "n_redundant": 0,
+         "n_clusters_per_class": 1,
+         "n_classes": 2,
+         "random_state": 17,
+      },
+      train_size=30,
+      test_size=10,
+      random_state=42,
+      stratify=True,
+      classifier=True,
+   )
+   data()
 
-   # Load and split the dataset
-   data(data_filepath="data.pkl", score_file="data_scores.json")
    X_train = data.X_train
    X_test = data.X_test
    y_train = data.y_train
    y_test = data.y_test
 
    print(f"Train size: {len(X_train)} | Test size: {len(X_test)}")
+
+Fairness data usage
+~~~~~~~~~~~~~~~~~~~
+
+The fairness integration tests use :class:`~deckard.data.fairness.FairlearnDataConfig`
+with explicit sensitive columns and a preprocessing pipeline:
+
+.. code-block:: python
+
+   from deckard.data.fairness import FairlearnDataConfig
+
+   fair_data = FairlearnDataConfig(
+      dataset_name="make_classification",
+      data_params={
+         "n_samples": 40,
+         "n_features": 10,
+         "n_informative": 4,
+         "n_redundant": 0,
+         "n_clusters_per_class": 1,
+         "n_classes": 2,
+         "random_state": 23,
+      },
+      train_size=30,
+      test_size=10,
+      random_state=42,
+      stratify=True,
+      classifier=True,
+      sensitive_columns=["feature_0"],
+      pipeline={
+         "scaler": {"name": "sklearn.preprocessing.StandardScaler"},
+      },
+   )
+   fair_data()
+
+Survival data usage
+~~~~~~~~~~~~~~~~~~~
+
+Survival integrations also use :class:`~deckard.data.DataConfig` for native
+lifelines datasets:
+
+.. code-block:: python
+
+   from deckard.data import DataConfig
+
+   survival_data = DataConfig(
+      dataset_name="lifelines_diabetes",
+      target="T",
+      classifier=False,
+   )
 
 Custom configuration
 ~~~~~~~~~~~~~~~~~~~~
@@ -111,17 +179,32 @@ Example minimal YAML (`adult.yaml`):
 
 .. code-block:: yaml
 
-   _target_: data.DataConfig
-   dataset_name: adult
-   test_size: 0.2
+   _target_: deckard.data.DataConfig
+   dataset_name: make_classification
+   data_params:
+     n_samples: 40
+     n_features: 10
+     n_informative: 4
+     n_redundant: 0
+     n_clusters_per_class: 1
+     n_classes: 2
+     random_state: 17
+   train_size: 30
+   test_size: 10
    random_state: 42
    stratify: True
+   classifier: True
 
 Example inline overrides:
 
 .. code-block:: bash
 
-   python -m deckard optimize --config-name experiment data.dataset_name=make_classification data.data_params.n_samples=2000 data.data_params.n_features=20
+   python -m deckard optimize --config-name experiment \
+      data.dataset_name=make_classification \
+      data.data_params.n_samples=40 \
+      data.data_params.n_features=10 \
+      data.train_size=30 \
+      data.test_size=10
 
 Internals
 ---------

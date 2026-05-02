@@ -206,7 +206,7 @@
 
 <div class="viewcode-block" id="SeabornPlotConfigList">
 <a class="viewcode-back" href="../../../plot.html#deckard.plot.SeabornPlotConfigList">[docs]</a>
-<span class="nd">@dataclass</span>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SeabornPlotConfigList</span><span class="p">(</span><span class="n">ConfigBase</span><span class="p">):</span>
     <span class="n">plots</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SeabornPlotConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">data_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>

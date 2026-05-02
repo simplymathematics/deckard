@@ -107,15 +107,19 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="data.html">Data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.BaseSampler"><code class="docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.DataConfig"><code class="docutils literal notranslate"><span class="pre">DataConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.DataPipelineConfig"><code class="docutils literal notranslate"><span class="pre">DataPipelineConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.FairnessDataConfig"><code class="docutils literal notranslate"><span class="pre">FairnessDataConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.FairlearnDataConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnDataConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.KFoldSampler"><code class="docutils literal notranslate"><span class="pre">KFoldSampler</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.PytorchCustomDataConfig"><code class="docutils literal notranslate"><span class="pre">PytorchCustomDataConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.PytorchDataConfig"><code class="docutils literal notranslate"><span class="pre">PytorchDataConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.ShuffleSampler"><code class="docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.SplitSampler"><code class="docutils literal notranslate"><span class="pre">SplitSampler</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.register_sampler_configs"><code class="docutils literal notranslate"><span class="pre">register_sampler_configs()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#extensions">Extensions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#survival-extension">Survival Extension</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#overview">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#id1">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#usage">Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#internals">Internals</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#troubleshooting">Troubleshooting</a></li>
@@ -123,14 +127,14 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="model.html">Model</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.DefenseConfig"><code class="docutils literal notranslate"><span class="pre">DefenseConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.FairnessDefenseConfig"><code class="docutils literal notranslate"><span class="pre">FairnessDefenseConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.FairnessModelConfig"><code class="docutils literal notranslate"><span class="pre">FairnessModelConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.DefensePipelineConfig"><code class="docutils literal notranslate"><span class="pre">DefensePipelineConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.FairlearnDefenseConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnDefenseConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.FairlearnModelConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnModelConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.ModelConfig"><code class="docutils literal notranslate"><span class="pre">ModelConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.PytorchModelConfig"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html#extensions">Extensions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html#survival-extension">Survival Extension</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html#overview">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model.html#id1">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html#usage">Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html#internals">Internals</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html#troubleshooting">Troubleshooting</a></li>
@@ -156,10 +160,31 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="score.html">Score</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultClassifierDict"><code class="docutils literal notranslate"><span class="pre">DefaultClassifierDict</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultRegressorDict"><code class="docutils literal notranslate"><span class="pre">DefaultRegressorDict</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.AttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">AttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultAttributeInferenceAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultAttributeInferenceRegressionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceRegressionAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultClassifierConfig"><code class="docutils literal notranslate"><span class="pre">DefaultClassifierConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultDataClassificationConfig"><code class="docutils literal notranslate"><span class="pre">DefaultDataClassificationConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultDataRegressionConfig"><code class="docutils literal notranslate"><span class="pre">DefaultDataRegressionConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultEvasionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultEvasionAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultEvasionRegressionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultEvasionRegressionAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultFairlearnClassificationConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnClassificationConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultFairlearnConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultFairlearnRegressionConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnRegressionConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultLifelinesConfig"><code class="docutils literal notranslate"><span class="pre">DefaultLifelinesConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultMembershipInferenceAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultMembershipInferenceAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultRegressorConfig"><code class="docutils literal notranslate"><span class="pre">DefaultRegressorConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.FairlearnScoreDictConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnScoreDictConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.ScorerConfig"><code class="docutils literal notranslate"><span class="pre">ScorerConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.ScorerDictConfig"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.fairness_demographic_parity_difference"><code class="docutils literal notranslate"><span class="pre">fairness_demographic_parity_difference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.fairness_equalized_odds_difference"><code class="docutils literal notranslate"><span class="pre">fairness_equalized_odds_difference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.fairness_group_mae_difference"><code class="docutils literal notranslate"><span class="pre">fairness_group_mae_difference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.fairness_group_mean_prediction_difference"><code class="docutils literal notranslate"><span class="pre">fairness_group_mean_prediction_difference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.fairness_group_mse_difference"><code class="docutils literal notranslate"><span class="pre">fairness_group_mse_difference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.survival_aic_score"><code class="docutils literal notranslate"><span class="pre">survival_aic_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.survival_bic_score"><code class="docutils literal notranslate"><span class="pre">survival_bic_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.survival_concordance_score"><code class="docutils literal notranslate"><span class="pre">survival_concordance_score()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#usage">Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#internals">Internals</a></li>
@@ -175,6 +200,7 @@
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.load_data"><code class="docutils literal notranslate"><span class="pre">load_data()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.normalize_for_hash"><code class="docutils literal notranslate"><span class="pre">normalize_for_hash()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.resolve_class"><code class="docutils literal notranslate"><span class="pre">resolve_class()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.round_scores"><code class="docutils literal notranslate"><span class="pre">round_scores()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.save_data"><code class="docutils literal notranslate"><span class="pre">save_data()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#usage">Usage</a></li>
@@ -189,7 +215,6 @@
 <li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.optimize_main"><code class="docutils literal notranslate"><span class="pre">optimize_main()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.plot_main"><code class="docutils literal notranslate"><span class="pre">plot_main()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.progress_bar_main"><code class="docutils literal notranslate"><span class="pre">progress_bar_main()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.survival_main"><code class="docutils literal notranslate"><span class="pre">survival_main()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html#usage">Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html#internals">Internals</a></li>

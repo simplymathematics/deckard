@@ -76,14 +76,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
 
 
-<div class="viewcode-block" id="SurvivalDataMode">
-<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataMode">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">SurvivalDataMode</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<div class="viewcode-block" id="LifelinesDataMode">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.LifelinesDataMode">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LifelinesDataMode</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Enumeration of survival analysis data modes.&quot;&quot;&quot;</span>
 
     <span class="c1"># Native survival data (duration_col + event_col already present)</span>
@@ -97,15 +95,15 @@
 
 
 
-<div class="viewcode-block" id="SurvivalDataConfig">
-<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig">[docs]</a>
-<span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">SurvivalDataConfig</span><span class="p">(</span><span class="n">DataConfig</span><span class="p">):</span>
+<div class="viewcode-block" id="LifelinesDataConfig">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.LifelinesDataConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LifelinesDataConfig</span><span class="p">(</span><span class="n">DataConfig</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;DataConfig specialization for survival analysis with explicit mode handling.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
-<span class="sd">    mode : SurvivalDataMode</span>
+<span class="sd">    mode : LifelinesDataMode</span>
 <span class="sd">        The survival data mode (NATIVE, AUXILIARY_MODEL, AUXILIARY_ATTACK, OPTUNA_DB).</span>
 <span class="sd">    duration_col : str</span>
 <span class="sd">        Column name for duration/time values. Required for NATIVE mode.</span>
@@ -123,7 +121,7 @@
 <span class="sd">        Optional Optuna query to filter results.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">mode</span><span class="p">:</span> <span class="n">SurvivalDataMode</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">NATIVE</span><span class="p">)</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="n">LifelinesDataMode</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">LifelinesDataMode</span><span class="o">.</span><span class="n">NATIVE</span><span class="p">)</span>
     <span class="n">duration_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;T&quot;</span>
     <span class="n">event_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;E&quot;</span>
     <span class="n">benign_metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;accuracy&quot;</span>
@@ -137,36 +135,36 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
 
         <span class="c1"># Validate mode-specific parameters</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">NATIVE</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">LifelinesDataMode</span><span class="o">.</span><span class="n">NATIVE</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration_col</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;duration_col required for NATIVE mode&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_col</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;event_col required for NATIVE mode&quot;</span><span class="p">)</span>
 
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">AUXILIARY_MODEL</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">LifelinesDataMode</span><span class="o">.</span><span class="n">AUXILIARY_MODEL</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">benign_metric</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;benign_metric required for AUXILIARY_MODEL mode&quot;</span><span class="p">)</span>
 
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">AUXILIARY_ATTACK</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">LifelinesDataMode</span><span class="o">.</span><span class="n">AUXILIARY_ATTACK</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;attack_config required for AUXILIARY_ATTACK mode&quot;</span><span class="p">)</span>
 
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">OPTUNA_DB</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">LifelinesDataMode</span><span class="o">.</span><span class="n">OPTUNA_DB</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">optuna_db</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;optuna_db path required for OPTUNA_DB mode&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="SurvivalDataConfig.from_data_and_model">
-<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.from_data_and_model">[docs]</a>
+<div class="viewcode-block" id="LifelinesDataConfig.from_data_and_model">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.LifelinesDataConfig.from_data_and_model">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_data_and_model</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">data_config</span><span class="p">:</span> <span class="n">DataConfig</span><span class="p">,</span>
         <span class="n">duration_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;T&quot;</span><span class="p">,</span>
         <span class="n">event_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;E&quot;</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SurvivalDataConfig&quot;</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;LifelinesDataConfig&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create NATIVE mode config from DataConfig.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
-            <span class="n">mode</span><span class="o">=</span><span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">NATIVE</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">LifelinesDataMode</span><span class="o">.</span><span class="n">NATIVE</span><span class="p">,</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span>
             <span class="n">target</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
             <span class="n">classifier</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -175,17 +173,17 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="SurvivalDataConfig.from_auxiliary_model">
-<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.from_auxiliary_model">[docs]</a>
+<div class="viewcode-block" id="LifelinesDataConfig.from_auxiliary_model">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.LifelinesDataConfig.from_auxiliary_model">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_auxiliary_model</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">data_config</span><span class="p">:</span> <span class="n">DataConfig</span><span class="p">,</span>
         <span class="n">benign_metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;accuracy&quot;</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SurvivalDataConfig&quot;</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;LifelinesDataConfig&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create AUXILIARY_MODEL mode config from DataConfig.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
-            <span class="n">mode</span><span class="o">=</span><span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">AUXILIARY_MODEL</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">LifelinesDataMode</span><span class="o">.</span><span class="n">AUXILIARY_MODEL</span><span class="p">,</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span>
             <span class="n">target</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
             <span class="n">classifier</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">classifier</span><span class="p">,</span>
@@ -193,17 +191,17 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="SurvivalDataConfig.from_auxiliary_attack">
-<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.from_auxiliary_attack">[docs]</a>
+<div class="viewcode-block" id="LifelinesDataConfig.from_auxiliary_attack">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.LifelinesDataConfig.from_auxiliary_attack">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_auxiliary_attack</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">data_config</span><span class="p">:</span> <span class="n">DataConfig</span><span class="p">,</span>
         <span class="n">attack_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SurvivalDataConfig&quot;</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;LifelinesDataConfig&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create AUXILIARY_ATTACK mode config from DataConfig and attack config.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
-            <span class="n">mode</span><span class="o">=</span><span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">AUXILIARY_ATTACK</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">LifelinesDataMode</span><span class="o">.</span><span class="n">AUXILIARY_ATTACK</span><span class="p">,</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span>
             <span class="n">target</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
             <span class="n">classifier</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">classifier</span><span class="p">,</span>
@@ -211,8 +209,8 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="SurvivalDataConfig.from_optuna_db">
-<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.from_optuna_db">[docs]</a>
+<div class="viewcode-block" id="LifelinesDataConfig.from_optuna_db">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.LifelinesDataConfig.from_optuna_db">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_optuna_db</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -220,10 +218,10 @@
         <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;optuna&quot;</span><span class="p">,</span>
         <span class="n">optuna_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">optuna_query</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SurvivalDataConfig&quot;</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;LifelinesDataConfig&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create OPTUNA_DB mode config from Optuna database path.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
-            <span class="n">mode</span><span class="o">=</span><span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">OPTUNA_DB</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">LifelinesDataMode</span><span class="o">.</span><span class="n">OPTUNA_DB</span><span class="p">,</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
             <span class="n">target</span><span class="o">=</span><span class="s2">&quot;optuna_result&quot;</span><span class="p">,</span>
             <span class="n">classifier</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -233,32 +231,32 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="SurvivalDataConfig.is_native_survival_data">
-<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.is_native_survival_data">[docs]</a>
+<div class="viewcode-block" id="LifelinesDataConfig.is_native_survival_data">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.LifelinesDataConfig.is_native_survival_data">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_native_survival_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if data is native survival data.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">NATIVE</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">LifelinesDataMode</span><span class="o">.</span><span class="n">NATIVE</span></div>
 
 
-<div class="viewcode-block" id="SurvivalDataConfig.has_auxiliary_model">
-<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.has_auxiliary_model">[docs]</a>
+<div class="viewcode-block" id="LifelinesDataConfig.has_auxiliary_model">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.LifelinesDataConfig.has_auxiliary_model">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">has_auxiliary_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if using auxiliary model for failure computation.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">AUXILIARY_MODEL</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">LifelinesDataMode</span><span class="o">.</span><span class="n">AUXILIARY_MODEL</span></div>
 
 
-<div class="viewcode-block" id="SurvivalDataConfig.has_auxiliary_attack">
-<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.has_auxiliary_attack">[docs]</a>
+<div class="viewcode-block" id="LifelinesDataConfig.has_auxiliary_attack">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.LifelinesDataConfig.has_auxiliary_attack">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">has_auxiliary_attack</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if using auxiliary attack for failure computation.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">AUXILIARY_ATTACK</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">LifelinesDataMode</span><span class="o">.</span><span class="n">AUXILIARY_ATTACK</span></div>
 
 
-<div class="viewcode-block" id="SurvivalDataConfig.is_optuna_db">
-<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.is_optuna_db">[docs]</a>
+<div class="viewcode-block" id="LifelinesDataConfig.is_optuna_db">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.LifelinesDataConfig.is_optuna_db">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_optuna_db</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if data is from Optuna database.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">OPTUNA_DB</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">LifelinesDataMode</span><span class="o">.</span><span class="n">OPTUNA_DB</span></div>
 </div>
 
 </pre></div>

@@ -91,7 +91,6 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
- | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
  | <a href="#X"><strong>X</strong></a>
  | <a href="#Y"><strong>Y</strong></a>
@@ -130,6 +129,8 @@
 </li>
       <li><a href="attack.html#deckard.attack.AttackConfig._get_feature_vector_preds">_get_feature_vector_preds() (deckard.attack.AttackConfig method)</a>
 </li>
+      <li><a href="data.html#deckard.data.DataConfig._get_stratify_col">_get_stratify_col() (deckard.data.DataConfig method)</a>
+</li>
       <li><a href="attack.html#deckard.attack.AttackConfig._infer_attribute">_infer_attribute() (deckard.attack.AttackConfig method)</a>
 </li>
       <li><a href="attack.html#deckard.attack.AttackConfig._infer_membership">_infer_membership() (deckard.attack.AttackConfig method)</a>
@@ -149,6 +150,8 @@
       <li><a href="data.html#deckard.data.DataConfig._make_regression_data">_make_regression_data() (deckard.data.DataConfig method)</a>
 </li>
       <li><a href="attack.html#deckard.attack.AttackConfig._poison">_poison() (deckard.attack.AttackConfig method)</a>
+</li>
+      <li><a href="data.html#deckard.data.DataConfig._resolve_sample">_resolve_sample() (deckard.data.DataConfig method)</a>
 </li>
       <li><a href="data.html#deckard.data.DataConfig._sample">_sample() (deckard.data.DataConfig method)</a>
 </li>
@@ -184,15 +187,15 @@
         <li><a href="data.html#deckard.data.DataConfig.alias">(deckard.data.DataConfig attribute)</a>
 </li>
       </ul></li>
-      <li><a href="model.html#deckard.model.fairness.FairnessDefenseConfig.apply_defense">apply_defense() (deckard.model.fairness.FairnessDefenseConfig method)</a>
+      <li><a href="model.html#deckard.model.FairlearnDefenseConfig.apply_defense">apply_defense() (deckard.model.FairlearnDefenseConfig method)</a>
 
       <ul>
-        <li><a href="model.html#deckard.model.FairnessDefenseConfig.apply_defense">(deckard.model.FairnessDefenseConfig method)</a>
+        <li><a href="model.html#deckard.model.fairness.FairlearnDefenseConfig.apply_defense">(deckard.model.fairness.FairlearnDefenseConfig method)</a>
 </li>
       </ul></li>
       <li><a href="attack.html#deckard.attack.AttackConfig.attack">attack (deckard.attack.AttackConfig attribute)</a>
 </li>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.attack_config">attack_config (deckard.data.survival.SurvivalDataConfig attribute)</a>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.attack_config">attack_config (deckard.data.survival.LifelinesDataConfig attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -212,13 +215,17 @@
 </li>
       <li><a href="attack.html#deckard.attack.AttackConfig">AttackConfig (class in deckard.attack)</a>
 </li>
+      <li><a href="score.html#deckard.score.AttackScorerConfig">AttackScorerConfig (class in deckard.score)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.benign_metric">benign_metric (deckard.data.survival.SurvivalDataConfig attribute)</a>
+      <li><a href="data.html#deckard.data.BaseSampler">BaseSampler (class in deckard.data)</a>
+</li>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.benign_metric">benign_metric (deckard.data.survival.LifelinesDataConfig attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -368,8 +375,6 @@
         <li><a href="file.html#module-deckard.file">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     deckard.layers
 
@@ -391,6 +396,8 @@
         <li><a href="model.html#module-deckard.model.fairness">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     deckard.model.pytorch
 
@@ -440,11 +447,35 @@
         <li><a href="utils.html#module-deckard.utils">module</a>
 </li>
       </ul></li>
-      <li><a href="score.html#deckard.score.DefaultClassifierDict">DefaultClassifierDict (class in deckard.score)</a>
+      <li><a href="score.html#deckard.score.DefaultAttributeInferenceAttackScorerConfig">DefaultAttributeInferenceAttackScorerConfig (class in deckard.score)</a>
 </li>
-      <li><a href="score.html#deckard.score.DefaultRegressorDict">DefaultRegressorDict (class in deckard.score)</a>
+      <li><a href="score.html#deckard.score.DefaultAttributeInferenceRegressionAttackScorerConfig">DefaultAttributeInferenceRegressionAttackScorerConfig (class in deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.DefaultClassifierConfig">DefaultClassifierConfig (class in deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.DefaultDataClassificationConfig">DefaultDataClassificationConfig (class in deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.DefaultDataRegressionConfig">DefaultDataRegressionConfig (class in deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.DefaultEvasionAttackScorerConfig">DefaultEvasionAttackScorerConfig (class in deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.DefaultEvasionRegressionAttackScorerConfig">DefaultEvasionRegressionAttackScorerConfig (class in deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.DefaultFairlearnClassificationConfig">DefaultFairlearnClassificationConfig (class in deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.DefaultFairlearnConfig">DefaultFairlearnConfig (in module deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.DefaultFairlearnRegressionConfig">DefaultFairlearnRegressionConfig (class in deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.DefaultLifelinesConfig">DefaultLifelinesConfig (class in deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.DefaultMembershipInferenceAttackScorerConfig">DefaultMembershipInferenceAttackScorerConfig (class in deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.DefaultRegressorConfig">DefaultRegressorConfig (class in deckard.score)</a>
 </li>
       <li><a href="model.html#deckard.model.DefenseConfig">DefenseConfig (class in deckard.model)</a>
+</li>
+      <li><a href="model.html#deckard.model.DefensePipelineConfig">DefensePipelineConfig (class in deckard.model)</a>
 </li>
       <li><a href="model.html#deckard.model.pytorch.PytorchModelConfig.device">device (deckard.model.pytorch.PytorchModelConfig attribute)</a>
 
@@ -454,7 +485,7 @@
       </ul></li>
       <li><a href="data.html#deckard.data.DataConfig.drop">drop (deckard.data.DataConfig attribute)</a>
 </li>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.duration_col">duration_col (deckard.data.survival.SurvivalDataConfig attribute)</a>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.duration_col">duration_col (deckard.data.survival.LifelinesDataConfig attribute)</a>
 
       <ul>
         <li><a href="model.html#deckard.model.survival.SurvivalModelConfig.duration_col">(deckard.model.survival.SurvivalModelConfig attribute)</a>
@@ -466,7 +497,7 @@
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.event_col">event_col (deckard.data.survival.SurvivalDataConfig attribute)</a>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.event_col">event_col (deckard.data.survival.LifelinesDataConfig attribute)</a>
 
       <ul>
         <li><a href="model.html#deckard.model.survival.SurvivalModelConfig.event_col">(deckard.model.survival.SurvivalModelConfig attribute)</a>
@@ -488,30 +519,42 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="data.html#deckard.data.FairnessDataConfig">FairnessDataConfig (class in deckard.data)</a>
+      <li><a href="data.html#deckard.data.FairlearnDataConfig">FairlearnDataConfig (class in deckard.data)</a>
 
       <ul>
-        <li><a href="data.html#deckard.data.fairness.FairnessDataConfig">(class in deckard.data.fairness)</a>
+        <li><a href="data.html#deckard.data.fairness.FairlearnDataConfig">(class in deckard.data.fairness)</a>
 </li>
       </ul></li>
-      <li><a href="model.html#deckard.model.FairnessDefenseConfig">FairnessDefenseConfig (class in deckard.model)</a>
+      <li><a href="model.html#deckard.model.FairlearnDefenseConfig">FairlearnDefenseConfig (class in deckard.model)</a>
 
       <ul>
-        <li><a href="model.html#deckard.model.fairness.FairnessDefenseConfig">(class in deckard.model.fairness)</a>
+        <li><a href="model.html#deckard.model.fairness.FairlearnDefenseConfig">(class in deckard.model.fairness)</a>
 </li>
       </ul></li>
-      <li><a href="model.html#deckard.model.FairnessModelConfig">FairnessModelConfig (class in deckard.model)</a>
+      <li><a href="model.html#deckard.model.FairlearnModelConfig">FairlearnModelConfig (class in deckard.model)</a>
 
       <ul>
-        <li><a href="model.html#deckard.model.fairness.FairnessModelConfig">(class in deckard.model.fairness)</a>
+        <li><a href="model.html#deckard.model.fairness.FairlearnModelConfig">(class in deckard.model.fairness)</a>
 </li>
       </ul></li>
+      <li><a href="score.html#deckard.score.FairlearnScoreDictConfig">FairlearnScoreDictConfig (class in deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.fairness_demographic_parity_difference">fairness_demographic_parity_difference() (in module deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.fairness_equalized_odds_difference">fairness_equalized_odds_difference() (in module deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.fairness_group_mae_difference">fairness_group_mae_difference() (in module deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.fairness_group_mean_prediction_difference">fairness_group_mean_prediction_difference() (in module deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.fairness_group_mse_difference">fairness_group_mse_difference() (in module deckard.score)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="plot.html#deckard.plot.YellowbrickPlotConfig.features">features (deckard.plot.YellowbrickPlotConfig attribute)</a>
 </li>
       <li><a href="file.html#deckard.file.FileConfig">FileConfig (class in deckard.file)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="model.html#deckard.model.survival.SurvivalModelConfig.fit_aft">fit_aft() (deckard.model.survival.SurvivalModelConfig method)</a>
 </li>
       <li><a href="model.html#deckard.model.pytorch.PytorchModelConfig.fit_params">fit_params (deckard.model.pytorch.PytorchModelConfig attribute)</a>
@@ -520,15 +563,17 @@
         <li><a href="model.html#deckard.model.PytorchModelConfig.fit_params">(deckard.model.PytorchModelConfig attribute)</a>
 </li>
       </ul></li>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.from_auxiliary_attack">from_auxiliary_attack() (deckard.data.survival.SurvivalDataConfig class method)</a>
+      <li><a href="data.html#deckard.data.DataConfig.fold">fold (deckard.data.DataConfig attribute)</a>
 </li>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.from_auxiliary_model">from_auxiliary_model() (deckard.data.survival.SurvivalDataConfig class method)</a>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.from_auxiliary_attack">from_auxiliary_attack() (deckard.data.survival.LifelinesDataConfig class method)</a>
 </li>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.from_data_and_model">from_data_and_model() (deckard.data.survival.SurvivalDataConfig class method)</a>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.from_auxiliary_model">from_auxiliary_model() (deckard.data.survival.LifelinesDataConfig class method)</a>
+</li>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.from_data_and_model">from_data_and_model() (deckard.data.survival.LifelinesDataConfig class method)</a>
 </li>
       <li><a href="utils.html#deckard.utils.ConfigBase.from_dict">from_dict() (deckard.utils.ConfigBase static method)</a>
 </li>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.from_optuna_db">from_optuna_db() (deckard.data.survival.SurvivalDataConfig class method)</a>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.from_optuna_db">from_optuna_db() (deckard.data.survival.LifelinesDataConfig class method)</a>
 </li>
       <li><a href="utils.html#deckard.utils.ConfigBase.from_yaml">from_yaml() (deckard.utils.ConfigBase static method)</a>
 </li>
@@ -552,8 +597,6 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="score.html#deckard.score.ScorerDictConfig.get_callables">get_callables() (deckard.score.ScorerDictConfig method)</a>
-</li>
       <li><a href="file.html#deckard.file.FileConfig.get_hydra_job_num">get_hydra_job_num() (deckard.file.FileConfig method)</a>
 </li>
       <li><a href="model.html#deckard.model.ModelConfig.get_model">get_model() (deckard.model.ModelConfig method)</a>
@@ -572,9 +615,9 @@
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.has_auxiliary_attack">has_auxiliary_attack() (deckard.data.survival.SurvivalDataConfig method)</a>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.has_auxiliary_attack">has_auxiliary_attack() (deckard.data.survival.LifelinesDataConfig method)</a>
 </li>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.has_auxiliary_model">has_auxiliary_model() (deckard.data.survival.SurvivalDataConfig method)</a>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.has_auxiliary_model">has_auxiliary_model() (deckard.data.survival.LifelinesDataConfig method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -592,9 +635,9 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.is_native_survival_data">is_native_survival_data() (deckard.data.survival.SurvivalDataConfig method)</a>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.is_native_survival_data">is_native_survival_data() (deckard.data.survival.LifelinesDataConfig method)</a>
 </li>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.is_optuna_db">is_optuna_db() (deckard.data.survival.SurvivalDataConfig method)</a>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.is_optuna_db">is_optuna_db() (deckard.data.survival.LifelinesDataConfig method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -603,6 +646,8 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="data.html#deckard.data.DataConfig.keep">keep (deckard.data.DataConfig attribute)</a>
+</li>
+      <li><a href="data.html#deckard.data.KFoldSampler">KFoldSampler (class in deckard.data)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -624,14 +669,18 @@
 </li>
       <li><a href="plot.html#deckard.plot.SeabornPlotConfig.legend_title">legend_title (deckard.plot.SeabornPlotConfig attribute)</a>
 </li>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig">LifelinesDataConfig (class in deckard.data.survival)</a>
+</li>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataMode">LifelinesDataMode (class in deckard.data.survival)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="data.html#deckard.data.DataConfig.load">load() (deckard.data.DataConfig method)</a>
 
       <ul>
         <li><a href="utils.html#deckard.utils.ConfigBase.load">(deckard.utils.ConfigBase method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="utils.html#deckard.utils.load_class">load_class() (in module deckard.utils)</a>
 </li>
       <li><a href="utils.html#deckard.utils.load_data">load_data() (in module deckard.utils)</a>
@@ -654,7 +703,7 @@
         <li><a href="model.html#deckard.model.survival.SurvivalModelConfig.make_survival_model_table">(deckard.model.survival.SurvivalModelConfig method)</a>
 </li>
       </ul></li>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.mode">mode (deckard.data.survival.SurvivalDataConfig attribute)</a>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.mode">mode (deckard.data.survival.LifelinesDataConfig attribute)</a>
 </li>
       <li><a href="model.html#deckard.model.pytorch.PytorchModelConfig.model_params">model_params (deckard.model.pytorch.PytorchModelConfig attribute)</a>
 
@@ -735,13 +784,13 @@
         <li><a href="model.html#deckard.model.PytorchModelConfig.optimizer">(deckard.model.PytorchModelConfig attribute)</a>
 </li>
       </ul></li>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.optuna_db">optuna_db (deckard.data.survival.SurvivalDataConfig attribute)</a>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.optuna_db">optuna_db (deckard.data.survival.LifelinesDataConfig attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.optuna_query">optuna_query (deckard.data.survival.SurvivalDataConfig attribute)</a>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.optuna_query">optuna_query (deckard.data.survival.LifelinesDataConfig attribute)</a>
 </li>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig.optuna_schema">optuna_schema (deckard.data.survival.SurvivalDataConfig attribute)</a>
+      <li><a href="data.html#deckard.data.survival.LifelinesDataConfig.optuna_schema">optuna_schema (deckard.data.survival.LifelinesDataConfig attribute)</a>
 </li>
       <li><a href="plot.html#deckard.plot.survival.SurvivalSeabornPlotConfigList.orchestrate_survival_models">orchestrate_survival_models() (deckard.plot.survival.SurvivalSeabornPlotConfigList method)</a>
 
@@ -851,6 +900,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="utils.html#deckard.utils.ConfigBase.read_or_initialize_scores">read_or_initialize_scores() (deckard.utils.ConfigBase method)</a>
 </li>
+      <li><a href="data.html#deckard.data.register_sampler_configs">register_sampler_configs() (in module deckard.data)</a>
+</li>
       <li><a href="plot.html#deckard.plot.survival.SurvivalSeabornPlotConfigList.render_all">render_all() (deckard.plot.survival.SurvivalSeabornPlotConfigList method)</a>
 
       <ul>
@@ -858,6 +909,8 @@
 </li>
       </ul></li>
       <li><a href="utils.html#deckard.utils.resolve_class">resolve_class() (in module deckard.utils)</a>
+</li>
+      <li><a href="utils.html#deckard.utils.round_scores">round_scores() (in module deckard.utils)</a>
 </li>
       <li><a href="plot.html#deckard.plot.SurvivalSeabornPlotConfigList.runtime_data">runtime_data (deckard.plot.SurvivalSeabornPlotConfigList attribute)</a>
 </li>
@@ -867,6 +920,8 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="data.html#deckard.data.DataConfig.sample">sample (deckard.data.DataConfig attribute)</a>
+</li>
       <li><a href="data.html#deckard.data.DataConfig.save">save() (deckard.data.DataConfig method)</a>
 
       <ul>
@@ -891,12 +946,6 @@
 </li>
       <li><a href="score.html#deckard.score.ScorerDictConfig">ScorerDictConfig (class in deckard.score)</a>
 </li>
-      <li><a href="score.html#deckard.score.DefaultClassifierDict.scorers">scorers (deckard.score.DefaultClassifierDict attribute)</a>
-
-      <ul>
-        <li><a href="score.html#deckard.score.DefaultRegressorDict.scorers">(deckard.score.DefaultRegressorDict attribute)</a>
-</li>
-      </ul></li>
       <li><a href="plot.html#deckard.plot.SeabornPlotConfig">SeabornPlotConfig (class in deckard.plot)</a>
 </li>
       <li><a href="plot.html#deckard.plot.SeabornPlotConfigList">SeabornPlotConfigList (class in deckard.plot)</a>
@@ -907,9 +956,13 @@
 </li>
       <li><a href="attack.html#deckard.attack.SensitiveFeaturesWrapper.set_params">set_params() (deckard.attack.SensitiveFeaturesWrapper method)</a>
 </li>
+      <li><a href="plot.html#deckard.plot.YellowbrickPlotConfig.show">show() (deckard.plot.YellowbrickPlotConfig method)</a>
+</li>
+      <li><a href="data.html#deckard.data.ShuffleSampler">ShuffleSampler (class in deckard.data)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="plot.html#deckard.plot.YellowbrickPlotConfig.show">show() (deckard.plot.YellowbrickPlotConfig method)</a>
+      <li><a href="data.html#deckard.data.SplitSampler">SplitSampler (class in deckard.data)</a>
 </li>
       <li><a href="data.html#deckard.data.DataConfig.stratify">stratify (deckard.data.DataConfig attribute)</a>
 
@@ -923,15 +976,15 @@
 </li>
       <li><a href="layers.html#deckard.layers.SUPPORTED_LAYERS">SUPPORTED_LAYERS (in module deckard.layers)</a>
 </li>
-      <li><a href="layers.html#deckard.layers.survival_main">survival_main() (in module deckard.layers)</a>
+      <li><a href="score.html#deckard.score.survival_aic_score">survival_aic_score() (in module deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.survival_bic_score">survival_bic_score() (in module deckard.score)</a>
+</li>
+      <li><a href="score.html#deckard.score.survival_concordance_score">survival_concordance_score() (in module deckard.score)</a>
 </li>
       <li><a href="model.html#deckard.model.survival.SurvivalModelConfig.survival_model">survival_model (deckard.model.survival.SurvivalModelConfig attribute)</a>
 </li>
       <li><a href="model.html#deckard.model.survival.SurvivalModelConfig.survival_probability_calibration">survival_probability_calibration() (deckard.model.survival.SurvivalModelConfig method)</a>
-</li>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataConfig">SurvivalDataConfig (class in deckard.data.survival)</a>
-</li>
-      <li><a href="data.html#deckard.data.survival.SurvivalDataMode">SurvivalDataMode (class in deckard.data.survival)</a>
 </li>
       <li><a href="experiment.html#deckard.experiment.SurvivalExperimentConfig">SurvivalExperimentConfig (class in deckard.experiment)</a>
 
@@ -1008,21 +1061,15 @@
   </ul></td>
 </tr></table>
 
-<h2 id="U">U</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="score.html#deckard.score.DefaultClassifierDict.Usage">Usage (deckard.score.DefaultClassifierDict attribute)</a>
-
-      <ul>
-        <li><a href="score.html#deckard.score.DefaultRegressorDict.Usage">(deckard.score.DefaultRegressorDict attribute)</a>
-</li>
-      </ul></li>
-  </ul></td>
-</tr></table>
-
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="data.html#deckard.data.DataConfig.val_indices">val_indices (deckard.data.DataConfig attribute)</a>
+</li>
+      <li><a href="data.html#deckard.data.DataConfig.val_n">val_n (deckard.data.DataConfig attribute)</a>
+</li>
+      <li><a href="data.html#deckard.data.DataConfig.val_size">val_size (deckard.data.DataConfig attribute)</a>
+</li>
       <li><a href="plot.html#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize">visualize() (deckard.plot.yellowbrick_plots.YellowbrickPlotConfig method)</a>
 
       <ul>
@@ -1031,10 +1078,10 @@
       </ul></li>
       <li><a href="plot.html#deckard.plot.YellowbrickPlotConfig.visualize_classifiers">visualize_classifiers() (deckard.plot.YellowbrickPlotConfig method)</a>
 </li>
-      <li><a href="plot.html#deckard.plot.YellowbrickPlotConfig.visualize_clusters">visualize_clusters() (deckard.plot.YellowbrickPlotConfig method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="plot.html#deckard.plot.YellowbrickPlotConfig.visualize_clusters">visualize_clusters() (deckard.plot.YellowbrickPlotConfig method)</a>
+</li>
       <li><a href="plot.html#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize_features">visualize_features() (deckard.plot.yellowbrick_plots.YellowbrickPlotConfig method)</a>
 
       <ul>
@@ -1063,6 +1110,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="data.html#deckard.data.DataConfig.X_train">X_train (deckard.data.DataConfig attribute)</a>
 </li>
+      <li><a href="data.html#deckard.data.DataConfig.X_val">X_val (deckard.data.DataConfig attribute)</a>
+</li>
       <li><a href="plot.html#deckard.plot.SeabornPlotConfig.xlabel">xlabel (deckard.plot.SeabornPlotConfig attribute)</a>
 </li>
       <li><a href="plot.html#deckard.plot.SeabornPlotConfig.xscale">xscale (deckard.plot.SeabornPlotConfig attribute)</a>
@@ -1083,14 +1132,16 @@
 </li>
       <li><a href="data.html#deckard.data.DataConfig.y_train">y_train (deckard.data.DataConfig attribute)</a>
 </li>
+      <li><a href="data.html#deckard.data.DataConfig.y_val">y_val (deckard.data.DataConfig attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="plot.html#deckard.plot.YellowbrickConfigList">YellowbrickConfigList (class in deckard.plot)</a>
 
       <ul>
         <li><a href="plot.html#deckard.plot.yellowbrick_plots.YellowbrickConfigList">(class in deckard.plot.yellowbrick_plots)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="plot.html#deckard.plot.YellowbrickPlotConfig">YellowbrickPlotConfig (class in deckard.plot)</a>
 
       <ul>

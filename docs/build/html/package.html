@@ -57,6 +57,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#reproducibility-and-auditability">Reproducibility And Auditability</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#parallel-and-distributed-design">Parallel And Distributed Design</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#extensions">Extensions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#see-also">See also</a></li>
 </ul>
@@ -112,7 +113,7 @@ that make up the supported public API:</p>
 who construct experiments from Python instead of the CLI.</p>
 <dl class="py class">
 <dt class="sig sig-object py">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.</span></span><span class="sig-name descname"><span class="pre">AttackConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_type='art.attacks.evasion.HopSkipJump'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_size=1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targeted_attribute=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_index=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_subtype=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.</span></span><span class="sig-name descname"><span class="pre">AttackConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_type='art.attacks.evasion.HopSkipJump'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_size=1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targeted_attribute=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_index=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_subtype=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
 <p>Configuration and execution class for adversarial attacks on machine learning models.
 This class provides a unified interface for configuring, executing, and scoring various types of adversarial attacks,
@@ -391,7 +392,7 @@ and the Adversarial Robustness Toolbox (ART), and provides detailed logging and 
 
 <dl class="py class">
 <dt class="sig sig-object py">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.</span></span><span class="sig-name descname"><span class="pre">DataConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_name='adult'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_size=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stratify=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_load_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sample_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_X=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_y=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/data.html#DataConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.</span></span><span class="sig-name descname"><span class="pre">DataConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_name='adult'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_size=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_size=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fold=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stratify=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_load_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sample_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_X=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_y=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_val=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_val=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/base.html#DataConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
 <p>Configuration and utility class for loading, preprocessing, and splitting datasets for machine learning tasks.</p>
 <dl class="py attribute">
@@ -434,6 +435,46 @@ and the Adversarial Robustness Toolbox (ART), and provides detailed logging and 
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">val_size</span></span></dt>
+<dd><p>Proportion or count of samples to include in the validation split when a
+<code class="docutils literal notranslate"><span class="pre">sample</span></code> is provided (e.g. <a class="reference internal" href="data.html#deckard.data.SplitSampler" title="deckard.data.sample.SplitSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SplitSampler</span></code></a> or
+<a class="reference internal" href="data.html#deckard.data.ShuffleSampler" title="deckard.data.sample.ShuffleSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a>).  Unused in legacy mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[float, int, None]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">fold</span></span></dt>
+<dd><p>Which fold to use as the validation set when <code class="docutils literal notranslate"><span class="pre">sample</span></code> performs cross-validation
+(e.g. <a class="reference internal" href="data.html#deckard.data.KFoldSampler" title="deckard.data.sample.KFoldSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">KFoldSampler</span></code></a> or
+<a class="reference internal" href="data.html#deckard.data.ShuffleSampler" title="deckard.data.sample.ShuffleSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a>).  Defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[int, None]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">sample</span></span></dt>
+<dd><p>Optional pluggable sampler.  When <code class="docutils literal notranslate"><span class="pre">None</span></code> (default) the legacy 2-way
+<code class="docutils literal notranslate"><span class="pre">train_test_split</span></code> is used.  Can be an instantiated sampler object, a subclass
+of <a class="reference internal" href="data.html#deckard.data.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a>, or a Hydra-style dict with a
+<code class="docutils literal notranslate"><span class="pre">name</span></code>/<code class="docutils literal notranslate"><span class="pre">_target_</span></code> key pointing to the sampler class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[callable, dict, None]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -583,6 +624,17 @@ and the Adversarial Robustness Toolbox (ART), and provides detailed logging and 
 
 <dl class="py attribute">
 <dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">val_n</span></span></dt>
+<dd><p>Number of validation samples (set only when a sampler is used).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">alias</span></span></dt>
 <dd><p>Optional alias for the dataset configuration.</p>
 <dl class="field-list simple">
@@ -607,6 +659,17 @@ and the Adversarial Robustness Toolbox (ART), and provides detailed logging and 
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">test_indices</span></span></dt>
 <dd><p>Indices for testing samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">val_indices</span></span></dt>
+<dd><p>Indices for validation samples (set only when a sampler is used).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list</p>
@@ -660,6 +723,28 @@ and the Adversarial Robustness Toolbox (ART), and provides detailed logging and 
 
 <dl class="py attribute">
 <dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">X_val</span></span></dt>
+<dd><p>Validation feature matrix (set only when a sampler is used).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">y_val</span></span></dt>
+<dd><p>Validation target vector (set only when a sampler is used).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.Series</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">score_dict</span></span></dt>
 <dd><p>Dictionary to store scores or metrics.</p>
 <dl class="field-list simple">
@@ -682,61 +767,73 @@ and the Adversarial Robustness Toolbox (ART), and provides detailed logging and 
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">__post_init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/data.html#DataConfig.__post_init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="pre">__post_init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/base.html#DataConfig.__post_init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Post-initialization method to validate parameters and initialize internal attributes.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/data.html#DataConfig.__hash__"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/base.html#DataConfig.__hash__"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Computes a hash value for the instance based on non-private attributes.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">_load_adult_income_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/data.html#DataConfig._load_adult_income_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="pre">_get_stratify_col</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/base.html#DataConfig._get_stratify_col"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Returns the stratification array (or None) based on <code class="docutils literal notranslate"><span class="pre">self.stratify</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">_resolve_sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/base.html#DataConfig._resolve_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Instantiates and returns the sampler object, or None for legacy mode.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">_load_adult_income_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/base.html#DataConfig._load_adult_income_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Loads and preprocesses the Adult Income dataset from OpenML.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">_load_generic_sklearn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loader_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">\*\*loader_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/data.html#DataConfig._load_generic_sklearn"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="pre">_load_generic_sklearn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loader_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">\*\*loader_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/base.html#DataConfig._load_generic_sklearn"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Loads a dataset using a generic scikit-learn loader function.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">_load_generic_openml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">\*\*loader_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/data.html#DataConfig._load_generic_openml"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="pre">_load_generic_openml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">\*\*loader_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/base.html#DataConfig._load_generic_openml"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Loads a dataset from OpenML using the specified dataset name and version.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">_make_classification_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/data.html#DataConfig._make_classification_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="pre">_make_classification_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/base.html#DataConfig._make_classification_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Generates a synthetic classification dataset.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">_make_regression_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/data.html#DataConfig._make_regression_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="pre">_make_regression_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/base.html#DataConfig._make_regression_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Generates a synthetic regression dataset.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">_sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/data.html#DataConfig._sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Splits the loaded dataset into training and testing sets, optionally using stratification.</p>
+<span class="sig-name descname"><span class="pre">_sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/base.html#DataConfig._sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Splits the loaded dataset into training, testing, and optionally validation sets.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">_load_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/data.html#DataConfig._load_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="pre">_load_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/base.html#DataConfig._load_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Loads the dataset based on the specified name or file type.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/data.html#DataConfig.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/base.html#DataConfig.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Loads and samples the dataset, splits it into training and testing sets, and returns the corresponding features and labels.</p>
 </dd></dl>
 
@@ -770,6 +867,18 @@ and the Adversarial Robustness Toolbox (ART), and provides detailed logging and 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">score_dict</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">score_dict</span>
 </pre></div>
 </div>
+<p>Using a pluggable sampler for 3-way splits:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data.sample</span><span class="w"> </span><span class="kn">import</span> <span class="n">SplitSampler</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">DataConfig</span><span class="p">(</span>
+    <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;digits&quot;</span><span class="p">,</span>
+    <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+    <span class="n">val_size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">sample</span><span class="o">=</span><span class="n">SplitSampler</span><span class="p">(),</span>
+<span class="p">)</span>
+<span class="n">config</span><span class="p">()</span>
+<span class="n">X_val</span><span class="p">,</span> <span class="n">y_val</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">X_val</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">y_val</span>
+</pre></div>
+</div>
 <dl class="py property">
 <dt class="sig sig-object py">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">X</span></span></dt>
@@ -786,7 +895,7 @@ and the Adversarial Robustness Toolbox (ART), and provides detailed logging and 
 
 <dl class="py class">
 <dt class="sig sig-object py">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.</span></span><span class="sig-name descname"><span class="pre">DefenseConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_values=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_model=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/defend.html#DefenseConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.</span></span><span class="sig-name descname"><span class="pre">DefenseConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_values=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_model=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/defend.html#DefenseConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_DefenseBehaviorMixin</span></code>, <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
 <p>Concrete defense config dataclass that uses shared defense behavior mixin.</p>
 </dd></dl>
@@ -848,7 +957,7 @@ For TensorFlow, configures GPU/CPU usage.
 
 <dl class="py class">
 <dt class="sig sig-object py">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.</span></span><span class="sig-name descname"><span class="pre">ModelConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_prediction_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_score_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_score_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_application_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_predictions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_probabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/base.html#ModelConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.</span></span><span class="sig-name descname"><span class="pre">ModelConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_prediction_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_score_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_score_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_application_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_predictions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_probabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_defense_pipeline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/base.html#ModelConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
 <p>A configuration and utility class for managing scikit-learn model instantiation, training, prediction, scoring, and persistence.</p>
 <section id="attributes">
@@ -1008,25 +1117,9 @@ test_scores = model_config(data, train=False, score=True)</p>
 
 <dl class="py class">
 <dt class="sig sig-object py">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.</span></span><span class="sig-name descname"><span class="pre">ScorerDictConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scorers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score.html#ScorerDictConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.</span></span><span class="sig-name descname"><span class="pre">ScorerDictConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#ScorerDictConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
-<p>Container of named <code class="docutils literal notranslate"><span class="pre">ScorerConfig</span></code> instances.</p>
-<p>The object behaves like a small registry for metrics and is the public score
-configuration type accepted by experiments, models, and attacks.</p>
-<dl class="py method">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">get_callables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score.html#ScorerDictConfig.get_callables"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Return the configured scorer callables.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Mapping from metric names to <code class="docutils literal notranslate"><span class="pre">ScorerConfig</span></code> objects.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
+<p>Container of named ScorerConfig instances.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -1072,16 +1165,6 @@ be easily extended with additional model, data, metric, and attack components.</
 <li><p>a backend for large-scale automated evaluation and benchmarking</p></li>
 <li><p>a research platform for detailed empirical analysis</p></li>
 </ul>
-<p>The package-level API exposes the core configuration classes that drive this
-workflow:</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="data.html#deckard.data.DataConfig" title="deckard.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.data.DataConfig</span></code></a></p></li>
-<li><p><a class="reference internal" href="model.html#deckard.model.ModelConfig" title="deckard.model.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.model.ModelConfig</span></code></a> and <a class="reference internal" href="model.html#deckard.model.DefenseConfig" title="deckard.model.DefenseConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.model.DefenseConfig</span></code></a></p></li>
-<li><p><a class="reference internal" href="attack.html#deckard.attack.AttackConfig" title="deckard.attack.AttackConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.attack.AttackConfig</span></code></a></p></li>
-<li><p><a class="reference internal" href="experiment.html#deckard.experiment.ExperimentConfig" title="deckard.experiment.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.experiment.ExperimentConfig</span></code></a></p></li>
-<li><p><a class="reference internal" href="file.html#deckard.file.FileConfig" title="deckard.file.FileConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.file.FileConfig</span></code></a></p></li>
-<li><p><a class="reference internal" href="score.html#deckard.score.ScorerDictConfig" title="deckard.score.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.score.ScorerDictConfig</span></code></a></p></li>
-</ul>
 </section>
 <section id="statement-of-need">
 <h2>Statement Of Need<a class="headerlink" href="#statement-of-need" title="Link to this heading"></a></h2>
@@ -1094,6 +1177,10 @@ difficult to audit.</p>
 <li><p>configuration-driven orchestration of full ML pipelines</p></li>
 <li><p>repeatable experiment execution with explicit run metadata</p></li>
 <li><p>integrated result collection for comparison and reporting</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hydra</span></code> integration for command line configuration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">optuna</span></code> integration for search space sampling, experiment pruning, and multi-objective optimization.</p></li>
+<li><p>Numerous extensions for attacking, defending, and measuring various ML metrics.</p></li>
+<li><p>Designed to be easily extensible, but also provide reasonable defaults to minmize configuration needs.</p></li>
 </ul>
 <p>This reduces engineering friction so researchers can focus on methodology
 instead of ad-hoc pipeline glue code.</p>
@@ -1171,16 +1258,30 @@ configuration, the same experiment definition can be reused across:</p>
 <li><p>parallel parameter sweeps</p></li>
 <li><p>distributed batch execution</p></li>
 </ul>
-<p>This enables scalable robustness studies without rewriting experiment code for
-each execution backend.</p>
-<p>The same design also supports non-robustness-focused studies by swapping in
-new metrics, transforms, defenses, and task-specific evaluation components.</p>
+<p>This enables scalable trustworthiness studies without rewriting experiment code for
+each execution backend, allowing researchers to focus only on the component that they are truly testing while gaining access to numerous mitigations, defenses, attacks, and metrics for validating ML pipelines.</p>
 </section>
 <section id="internals">
 <h2>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h2>
-<p>At import time, the package registers OmegaConf resolvers (for example
-<code class="docutils literal notranslate"><span class="pre">file</span></code>, <code class="docutils literal notranslate"><span class="pre">merge</span></code>, and <code class="docutils literal notranslate"><span class="pre">hash</span></code>), installs warning filters, and exports the
-public API listed in <code class="docutils literal notranslate"><span class="pre">deckard.__all__</span></code>.</p>
+<p>The package-level API exposes the core configuration classes that drive this
+workflow– Data, Model, Attack, Experiment, File, and ScorerDictConfig objects.
+Natively, <code class="docutils literal notranslate"><span class="pre">deckard</span></code> supports <code class="docutils literal notranslate"><span class="pre">adversarial-robustness-toolbox</span></code> to apply defenses and conduct attacks, but these can be easily overloaded to support other attack and defense frameworks by overloading the :deckard.DefenseConfig: and/or :deckard.AttackConfig:.</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="data.html#deckard.data.DataConfig" title="deckard.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.data.DataConfig</span></code></a></p></li>
+<li><p><a class="reference internal" href="model.html#deckard.model.ModelConfig" title="deckard.model.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.model.ModelConfig</span></code></a> and <a class="reference internal" href="model.html#deckard.model.DefenseConfig" title="deckard.model.DefenseConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.model.DefenseConfig</span></code></a></p></li>
+<li><p><a class="reference internal" href="attack.html#deckard.attack.AttackConfig" title="deckard.attack.AttackConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.attack.AttackConfig</span></code></a></p></li>
+<li><p><a class="reference internal" href="experiment.html#deckard.experiment.ExperimentConfig" title="deckard.experiment.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.experiment.ExperimentConfig</span></code></a></p></li>
+<li><p><a class="reference internal" href="file.html#deckard.file.FileConfig" title="deckard.file.FileConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.file.FileConfig</span></code></a></p></li>
+<li><p><a class="reference internal" href="score.html#deckard.score.ScorerDictConfig" title="deckard.score.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.score.ScorerDictConfig</span></code></a></p></li>
+</ul>
+</section>
+<section id="extensions">
+<h2>Extensions<a class="headerlink" href="#extensions" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">deckard</span></code> also provides support for</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="plot.html#deckard.plot.PlotConfig" title="deckard.plot.PlotConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.plot.PlotConfig</span></code></a></p></li>
+<li><p>:class:``</p></li>
+</ul>
 </section>
 <section id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>

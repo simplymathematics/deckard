@@ -93,6 +93,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#command-line-example">Command-line example</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#boundaryattack-example">BoundaryAttack example</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#custom-configuration">Custom Configuration</a></li>
 </ul>
 </li>
@@ -141,7 +142,7 @@
              
   <section id="attack">
 <h1>Attack<a class="headerlink" href="#attack" title="Link to this heading"></a></h1>
-<p>The <a class="reference internal" href="#module-deckard.attack" title="deckard.attack"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.attack</span></code></a> module contains the <code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code> dataclass and helper
+<p>The <a class="reference internal" href="#module-deckard.attack" title="deckard.attack"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.attack</span></code></a> module contains the <a class="reference internal" href="#deckard.attack.AttackConfig" title="deckard.attack.AttackConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code></a> dataclass and helper
 functions for running evasion and inference attacks against scikit-learn
 estimators using the Adversarial Robustness Toolbox (ART).</p>
 <p id="module-deckard.attack">Public attack configuration exports.</p>
@@ -149,7 +150,7 @@ estimators using the Adversarial Robustness Toolbox (ART).</p>
 <code class="docutils literal notranslate"><span class="pre">ExperimentConfig</span></code> and direct Python callers.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.attack.AttackConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.attack.</span></span><span class="sig-name descname"><span class="pre">AttackConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_type='art.attacks.evasion.HopSkipJump'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_size=1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targeted_attribute=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_index=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_subtype=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.attack.</span></span><span class="sig-name descname"><span class="pre">AttackConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_type='art.attacks.evasion.HopSkipJump'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_size=1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targeted_attribute=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_index=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_subtype=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
 <p>Configuration and execution class for adversarial attacks on machine learning models.
 This class provides a unified interface for configuring, executing, and scoring various types of adversarial attacks,
@@ -477,7 +478,7 @@ possible to update each component of a nested object.</p>
 
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
-<p><code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code> provides a configurable interface for setting up and executing
+<p><a class="reference internal" href="#deckard.attack.AttackConfig" title="deckard.attack.AttackConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code></a> provides a configurable interface for setting up and executing
 adversarial attacks. It supports:</p>
 <ul class="simple">
 <li><p>Black-box and white-box attacks</p></li>
@@ -508,33 +509,79 @@ Attribute Inference Attacks:
 <h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
 <section id="command-line-example">
 <h3>Command-line example<a class="headerlink" href="#command-line-example" title="Link to this heading"></a></h3>
-<p>You can run attacks directly from the terminal:
-.. code-block:: bash</p>
-<blockquote>
-<div><p># from the project root
-python -m deckard optimize –config-name experiment attack.attack_size=50</p>
-</div></blockquote>
+<p>You can run attacks directly from the terminal:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># from the project root</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_type<span class="o">=</span>art.attacks.evasion.FastGradientMethod<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_params.eps<span class="o">=</span><span class="m">0</span>.1<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_size<span class="o">=</span><span class="m">20</span>
+</pre></div>
+</div>
 </section>
 <section id="programmatic-example">
 <h3>Programmatic example:<a class="headerlink" href="#programmatic-example" title="Link to this heading"></a></h3>
 <p>You can also use the API programmatically:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_attack_config</span><span class="p">,</span> <span class="n">AttackConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_data_config</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_model_config</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttackConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span>
 
-<span class="c1"># initialize/load data</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">initialize_data_config</span><span class="p">()</span>
-<span class="n">data_scores</span> <span class="o">=</span> <span class="n">data</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;path/to/data.csv&quot;</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">DataConfig</span><span class="p">(</span>
+   <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;make_classification&quot;</span><span class="p">,</span>
+   <span class="n">data_params</span><span class="o">=</span><span class="p">{</span>
+      <span class="s2">&quot;n_samples&quot;</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span>
+      <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+      <span class="s2">&quot;n_informative&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+      <span class="s2">&quot;n_redundant&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="s2">&quot;n_clusters_per_class&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+      <span class="s2">&quot;n_classes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+      <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+   <span class="p">},</span>
+   <span class="n">train_size</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
+   <span class="n">test_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+   <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+   <span class="n">stratify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">data</span><span class="p">()</span>
 
-<span class="c1"># train a model (example)</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">initialize_model_config</span><span class="p">()</span>
-<span class="n">benign_scores</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">model_filepath</span><span class="o">=</span><span class="s2">&quot;models/rf.pkl&quot;</span><span class="p">,</span> <span class="n">score_file</span><span class="o">=</span><span class="s2">&quot;model_scores.json&quot;</span><span class="p">)</span>
-<span class="c1"># create an attack config (uses defaults or overrides)</span>
-<span class="n">attack_cfg</span> <span class="o">=</span> <span class="n">initialize_attack_config</span><span class="p">()</span>  <span class="c1"># or AttackConfig(attack_name=&quot;art.attacks.evasion.HopSkipJump&quot;, attack_size=50)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(</span>
+   <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;sklearn.linear_model.LogisticRegression&quot;</span><span class="p">,</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+   <span class="n">model_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="mi">25</span><span class="p">},</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="n">attack_cfg</span> <span class="o">=</span> <span class="n">AttackConfig</span><span class="p">(</span>
+   <span class="n">attack_type</span><span class="o">=</span><span class="s2">&quot;art.attacks.evasion.FastGradientMethod&quot;</span><span class="p">,</span>
+   <span class="n">attack_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;eps&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">},</span>
+   <span class="n">attack_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="c1"># run the attack against the trained model</span>
-<span class="n">benign_and_adversarial_scores</span> <span class="o">=</span> <span class="n">attack_cfg</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+<span class="n">scores</span> <span class="o">=</span> <span class="n">attack_cfg</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">scores</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;evasion_&quot;</span><span class="p">)])</span>
+</pre></div>
+</div>
+</section>
+<section id="boundaryattack-example">
+<h3>BoundaryAttack example<a class="headerlink" href="#boundaryattack-example" title="Link to this heading"></a></h3>
+<p>The fairness integration test exercises a small BoundaryAttack configuration:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">boundary_attack</span> <span class="o">=</span> <span class="n">AttackConfig</span><span class="p">(</span>
+   <span class="n">attack_type</span><span class="o">=</span><span class="s2">&quot;art.attacks.evasion.BoundaryAttack&quot;</span><span class="p">,</span>
+   <span class="n">attack_params</span><span class="o">=</span><span class="p">{</span>
+      <span class="s2">&quot;batch_size&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+      <span class="s2">&quot;targeted&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+      <span class="s2">&quot;delta&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span>
+      <span class="s2">&quot;epsilon&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span>
+      <span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+      <span class="s2">&quot;num_trial&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+      <span class="s2">&quot;sample_size&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+      <span class="s2">&quot;init_size&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+      <span class="s2">&quot;min_epsilon&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+      <span class="s2">&quot;verbose&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+   <span class="p">},</span>
+   <span class="n">attack_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -542,18 +589,18 @@ python -m deckard optimize –config-name experiment attack.attack_size=50</p>
 <h3>Custom Configuration<a class="headerlink" href="#custom-configuration" title="Link to this heading"></a></h3>
 <p>You can define a YAML file or override config parameters inline.
 Example minimal YAML (<cite>blackbox_evasion.yaml</cite>):</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">attack.AttackConfig</span>
-<span class="nt">attack_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">art.attacks.evasion.HopSkipJump</span>
-<span class="nt">attack_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deckard.attack.AttackConfig</span>
+<span class="nt">attack_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">art.attacks.evasion.FastGradientMethod</span>
+<span class="nt">attack_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
 <span class="nt">attack_params</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">max_iter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
-<span class="w">  </span><span class="nt">max_eval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
-<span class="w">  </span><span class="nt">init_eval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
-<span class="w">  </span><span class="nt">verbose</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+<span class="w">  </span><span class="nt">eps</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
 </pre></div>
 </div>
 <p>Example inline overrides:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span>attack.attack_name<span class="o">=</span>art.attacks.evasion.HopSkipJump<span class="w"> </span>attack.attack_size<span class="o">=</span><span class="m">100</span><span class="w"> </span>attack.attack_params.max_iter<span class="o">=</span><span class="m">10</span><span class="w"> </span>attack.attack_params.max_eval<span class="o">=</span><span class="m">100</span><span class="w"> </span>attack.attack_params.init_eval<span class="o">=</span><span class="m">10</span><span class="w"> </span>attack.attack_params.verbose<span class="o">=</span>True
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_type<span class="o">=</span>art.attacks.evasion.FastGradientMethod<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_size<span class="o">=</span><span class="m">20</span><span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>attack.attack_params.eps<span class="o">=</span><span class="m">0</span>.1
 </pre></div>
 </div>
 </section>
@@ -562,7 +609,7 @@ Example minimal YAML (<cite>blackbox_evasion.yaml</cite>):</p>
 <h2>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h2>
 <section id="timing-and-logging">
 <h3>Timing and logging<a class="headerlink" href="#timing-and-logging" title="Link to this heading"></a></h3>
-<p><code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code> uses the <cite>time</cite> module to measure execution time for key steps:
+<p><a class="reference internal" href="#deckard.attack.AttackConfig" title="deckard.attack.AttackConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code></a> uses the <cite>time</cite> module to measure execution time for key steps:
 - Attack setup time
 - Attack execution time
 - Attack prediction time
@@ -574,7 +621,7 @@ using Python’s built-in <cite>logging</cite> module.</p>
 <section id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
 <p>If you encounter issues running attacks, ensure that:
-- The specified attack name is valid and corresponds to an ART attack class.
+- The specified attack type is valid and corresponds to an ART attack class.
 - The model provided is compatible with the chosen attack.
 - The data is properly loaded and preprocessed.
 - The loaded model is trained before running attacks.</p>

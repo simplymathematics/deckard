@@ -76,6 +76,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.load_data"><code class="docutils literal notranslate"><span class="pre">load_data()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.normalize_for_hash"><code class="docutils literal notranslate"><span class="pre">normalize_for_hash()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.resolve_class"><code class="docutils literal notranslate"><span class="pre">resolve_class()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.round_scores"><code class="docutils literal notranslate"><span class="pre">round_scores()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.save_data"><code class="docutils literal notranslate"><span class="pre">save_data()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
@@ -418,6 +419,19 @@ serialization helpers used throughout Deckard.</p>
 <span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">resolve_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#resolve_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.resolve_class" title="Link to this definition"></a></dt>
 <dd><p>Resolve a class path into a class object without instantiating it.</p>
 <p>Supports dotted module paths (Hydra-style) and <code class="docutils literal notranslate"><span class="pre">file.py:ClassName</span></code> paths.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.round_scores">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">round_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger_obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#round_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.round_scores" title="Link to this definition"></a></dt>
+<dd><p>Round numeric score values using a sample-size-aware precision rule.</p>
+<p>The number of decimal places is derived from <code class="docutils literal notranslate"><span class="pre">log10(n_samples)</span> <span class="pre">+</span> <span class="pre">1</span></code> and
+clamped to at least one decimal place.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">

@@ -226,9 +226,42 @@ experiment module so survival workflows can be treated as an optional extension.
 <section id="programmatic-example">
 <h3>Programmatic example<a class="headerlink" href="#programmatic-example" title="Link to this heading"></a></h3>
 <p>Use the experiment config directly in Python:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.experiment</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentConfig</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttackConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.experiment</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span>
 
-<span class="n">cfg</span> <span class="o">=</span> <span class="n">ExperimentConfig</span><span class="p">()</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">DataConfig</span><span class="p">(</span>
+   <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;make_classification&quot;</span><span class="p">,</span>
+   <span class="n">data_params</span><span class="o">=</span><span class="p">{</span>
+      <span class="s2">&quot;n_samples&quot;</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span>
+      <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+      <span class="s2">&quot;n_informative&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+      <span class="s2">&quot;n_redundant&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="s2">&quot;n_clusters_per_class&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+      <span class="s2">&quot;n_classes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+      <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+   <span class="p">},</span>
+   <span class="n">train_size</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
+   <span class="n">test_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+   <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+   <span class="n">stratify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(</span>
+   <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;sklearn.linear_model.LogisticRegression&quot;</span><span class="p">,</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+   <span class="n">model_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="mi">25</span><span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">attack</span> <span class="o">=</span> <span class="n">AttackConfig</span><span class="p">(</span>
+   <span class="n">attack_type</span><span class="o">=</span><span class="s2">&quot;art.attacks.evasion.FastGradientMethod&quot;</span><span class="p">,</span>
+   <span class="n">attack_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;eps&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">},</span>
+   <span class="n">attack_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">ExperimentConfig</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">attack</span><span class="o">=</span><span class="n">attack</span><span class="p">)</span>
 <span class="n">scores</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
 </pre></div>

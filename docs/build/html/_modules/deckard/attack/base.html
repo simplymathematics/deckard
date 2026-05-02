@@ -80,19 +80,10 @@
 
 <span class="c1"># Typing imports</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="c1"># Sklearn and numpy imports</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">ClassifierMixin</span><span class="p">,</span> <span class="n">RegressorMixin</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">accuracy_score</span><span class="p">,</span>
-    <span class="n">precision_score</span><span class="p">,</span>
-    <span class="n">recall_score</span><span class="p">,</span>
-    <span class="n">f1_score</span><span class="p">,</span>
-    <span class="n">mean_squared_error</span><span class="p">,</span>
-    <span class="n">mean_absolute_error</span><span class="p">,</span>
-    <span class="n">r2_score</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.utils.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_is_fitted</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotFittedError</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -116,6 +107,9 @@
 <span class="p">)</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..score.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttackScorerConfig</span>
 
 
 <div class="viewcode-block" id="SensitiveFeaturesWrapper">
@@ -188,7 +182,7 @@
 
 <div class="viewcode-block" id="AttackConfig">
 <a class="viewcode-back" href="../../../package.html#deckard.attack.AttackConfig">[docs]</a>
-<span class="nd">@dataclass</span>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">AttackConfig</span><span class="p">(</span><span class="n">ConfigBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    AttackConfig</span>
@@ -287,6 +281,7 @@
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
         <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Targeted attribute for inference attacks.&quot;</span><span class="p">},</span>
     <span class="p">)</span>
+    <span class="n">scorer</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="s2">&quot;AttackScorerConfig&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">alias</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="c1"># Runtime state fields</span>
@@ -318,7 +313,12 @@
 <span class="sd">        Sets the internal attack attribute to None. If attack_params is not provided,</span>
 <span class="sd">        initializes it as an empty dictionary.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="o">=</span> <span class="s2">&quot;deckard.attack.AttackConfig&quot;</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="o">=</span> <span class="s2">&quot;deckard.attack.AttackConfig&quot;</span>
+        <span class="n">attack_scorer_cls</span> <span class="o">=</span> <span class="n">resolve_class</span><span class="p">(</span><span class="s2">&quot;deckard.score.attack.AttackScorerConfig&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span> <span class="o">=</span> <span class="n">attack_scorer_cls</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span> <span class="o">=</span> <span class="n">attack_scorer_cls</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_attack_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
@@ -353,6 +353,28 @@
         <span class="k">if</span> <span class="n">attack_type</span> <span class="o">==</span> <span class="s2">&quot;inference&quot;</span> <span class="ow">and</span> <span class="s2">&quot;attribute&quot;</span> <span class="ow">in</span> <span class="n">subtype</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;attribute&quot;</span>
         <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_infer_task_is_classification</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Infer task type from model first, then data config as fallback.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelConfig</span><span class="p">)</span> <span class="ow">and</span> <span class="n">model</span><span class="o">.</span><span class="n">classifier</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">classifier</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">RegressorMixin</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ClassifierMixin</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ClassifierMixin</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;classifier&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;classifier&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;classifier&quot;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_attack_task_compatibility</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fail fast for known unsupported task/attack combinations.&quot;&quot;&quot;</span>
+        <span class="n">attack_type</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack_family</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">task_is_classification</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_infer_task_is_classification</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">attack_type</span> <span class="o">==</span> <span class="s2">&quot;evasion&quot;</span> <span class="ow">and</span> <span class="n">task_is_classification</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Evasion attacks are not supported for regression models in the current sklearn+ART integration.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_attack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -555,6 +577,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">attack_predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_object</span><span class="p">(</span><span class="n">attack_predictions_file</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">score_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">score_file</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_scores</span><span class="p">(</span><span class="n">score_file</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_attack_task_compatibility</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
 
         <span class="n">attack</span><span class="p">,</span> <span class="n">art_model</span><span class="p">,</span> <span class="n">attack_type</span><span class="p">,</span> <span class="n">attack_subtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_attack</span><span class="p">(</span>
             <span class="n">model</span><span class="p">,</span>
@@ -765,48 +789,52 @@
 <span class="sd">        None</span>
 <span class="sd">            The function updates the instance&#39;s score_dict attribute with the computed metrics.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
-        <span class="n">adv_accuracy</span> <span class="o">=</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_test_numeric</span><span class="p">,</span> <span class="n">adv_pred_labels</span><span class="p">)</span>
-        <span class="n">adv_precision</span> <span class="o">=</span> <span class="n">precision_score</span><span class="p">(</span>
-            <span class="n">y_test_numeric</span><span class="p">,</span>
-            <span class="n">adv_pred_labels</span><span class="p">,</span>
-            <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
+        <span class="n">score_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score</span><span class="p">(</span>
+            <span class="n">attack_kind</span><span class="o">=</span><span class="s2">&quot;evasion&quot;</span><span class="p">,</span>
+            <span class="n">y_true</span><span class="o">=</span><span class="n">y_test_numeric</span><span class="p">,</span>
+            <span class="n">y_pred</span><span class="o">=</span><span class="n">adv_pred_labels</span><span class="p">,</span>
+            <span class="n">ben_pred_labels</span><span class="o">=</span><span class="n">ben_pred_labels</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">adv_recall</span> <span class="o">=</span> <span class="n">recall_score</span><span class="p">(</span>
-            <span class="n">y_test_numeric</span><span class="p">,</span>
-            <span class="n">adv_pred_labels</span><span class="p">,</span>
-            <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">adv_f1</span> <span class="o">=</span> <span class="n">f1_score</span><span class="p">(</span>
-            <span class="n">y_test_numeric</span><span class="p">,</span>
-            <span class="n">adv_pred_labels</span><span class="p">,</span>
-            <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">adv_success</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">ben_pred_labels</span><span class="p">,</span> <span class="n">adv_pred_labels</span><span class="p">)</span>
-        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">attack_score_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
-        <span class="n">score_dict</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;evasion_accuracy&quot;</span><span class="p">:</span> <span class="n">adv_accuracy</span><span class="p">,</span>
-            <span class="s2">&quot;evasion_precision&quot;</span><span class="p">:</span> <span class="n">adv_precision</span><span class="p">,</span>
-            <span class="s2">&quot;evasion_recall&quot;</span><span class="p">:</span> <span class="n">adv_recall</span><span class="p">,</span>
-            <span class="s2">&quot;evasion_f1-score&quot;</span><span class="p">:</span> <span class="n">adv_f1</span><span class="p">,</span>
-            <span class="s2">&quot;evasion_success&quot;</span><span class="p">:</span> <span class="n">adv_success</span><span class="p">,</span>
-        <span class="p">}</span>
-        <span class="n">sig_figs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">adv_pred_labels</span><span class="p">)))</span> <span class="o">+</span> <span class="mi">1</span>
-        <span class="n">score_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">sig_figs</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">score_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Attack scoring took </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">attack_score_time</span><span class="si">}</span><span class="s2"> seconds for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">adv_pred_labels</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples and </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">)</span><span class="si">}</span><span class="s2"> scores.&quot;</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="c1"># Add attack size and timing info</span>
-        <span class="n">score_dict</span><span class="p">[</span><span class="s2">&quot;attack_size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack_size</span>
-        <span class="n">score_dict</span><span class="p">[</span><span class="s2">&quot;attack_score_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack_score_time</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">score_dict</span><span class="p">}</span>
         <span class="k">for</span> <span class="n">score</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">[</span><span class="n">score</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attack_kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Dispatch attack scoring through the configured AttackScorerConfig.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;AttackConfig.scorer must be configured with an AttackScorerConfig instance&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">score_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="o">.</span><span class="n">_score</span><span class="p">(</span>
+            <span class="n">attack_kind</span><span class="o">=</span><span class="n">attack_kind</span><span class="p">,</span>
+            <span class="n">y_true</span><span class="o">=</span><span class="n">y_true</span><span class="p">,</span>
+            <span class="n">y_pred</span><span class="o">=</span><span class="n">y_pred</span><span class="p">,</span>
+            <span class="n">attack_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">attack_size</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attack_score_time</span> <span class="o">=</span> <span class="n">score_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;attack_score_time&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">score_dict</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_regression_prediction_output</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Infer whether attack predictions represent regression outputs.&quot;&quot;&quot;</span>
+        <span class="n">preds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">preds</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">preds</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">preds</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;f&quot;</span> <span class="ow">and</span> <span class="n">labels</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;f&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_score_attack_legacy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ben_pred_labels</span><span class="p">,</span> <span class="n">adv_pred_labels</span><span class="p">,</span> <span class="n">y_test_numeric</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Backward-compatible alias retained for older call sites.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score_attack</span><span class="p">(</span><span class="n">ben_pred_labels</span><span class="p">,</span> <span class="n">adv_pred_labels</span><span class="p">,</span> <span class="n">y_test_numeric</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AttackConfig._evade">
 <a class="viewcode-back" href="../../../package.html#deckard.attack.AttackConfig._evade">[docs]</a>
@@ -860,7 +888,11 @@
                 <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span>
             <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Expected labels to be a list of np.ndarray. Got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">y_subset</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="n">ben_preds</span> <span class="o">=</span> <span class="n">art_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x_subset</span><span class="p">)</span>
-        <span class="n">ben_pred_labels</span> <span class="o">=</span> <span class="n">ben_preds</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">is_regression</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_regression_prediction_output</span><span class="p">(</span><span class="n">y_subset</span><span class="p">,</span> <span class="n">ben_preds</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_regression</span><span class="p">:</span>
+            <span class="n">ben_pred_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ben_preds</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ben_pred_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ben_preds</span><span class="p">)</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">is_tensor</span><span class="p">(</span><span class="n">ben_pred_labels</span><span class="p">):</span>
             <span class="n">ben_pred_labels</span> <span class="o">=</span> <span class="n">tensor_to_numpy</span><span class="p">(</span><span class="n">ben_pred_labels</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ART_NUMPY_DTYPE</span><span class="p">)</span>
         <span class="k">if</span> <span class="s2">&quot;AdversarialPatch&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">attack</span><span class="p">)):</span>
@@ -895,20 +927,41 @@
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Adversarial prediction took </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">attack_prediction_time</span><span class="si">}</span><span class="s2"> seconds for </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> samples&quot;</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">adv_pred_labels</span> <span class="o">=</span> <span class="n">adv_pred</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_regression</span><span class="p">:</span>
+            <span class="n">adv_pred_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">adv_pred</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">adv_pred_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">adv_pred</span><span class="p">)</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y_subset</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
-            <span class="n">y_test_numeric</span> <span class="o">=</span> <span class="n">y_subset</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">codes</span>
+            <span class="k">if</span> <span class="n">is_regression</span><span class="p">:</span>
+                <span class="n">y_test_numeric</span> <span class="o">=</span> <span class="n">y_subset</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">y_test_numeric</span> <span class="o">=</span> <span class="n">y_subset</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">codes</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y_subset</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-            <span class="n">y_test_numeric</span> <span class="o">=</span> <span class="n">y_subset</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">codes</span>
+            <span class="k">if</span> <span class="n">is_regression</span><span class="p">:</span>
+                <span class="n">y_test_numeric</span> <span class="o">=</span> <span class="n">y_subset</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">y_test_numeric</span> <span class="o">=</span> <span class="n">y_subset</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">codes</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y_subset</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-            <span class="n">y_test_numeric</span> <span class="o">=</span> <span class="n">y_subset</span>
+            <span class="n">y_test_numeric</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_subset</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">is_tensor</span><span class="p">(</span><span class="n">y_subset</span><span class="p">):</span>
-            <span class="n">y_test_numeric</span> <span class="o">=</span> <span class="n">y_subset</span>
+            <span class="n">y_test_numeric</span> <span class="o">=</span> <span class="n">tensor_to_numpy</span><span class="p">(</span><span class="n">y_subset</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Unsupported type for y_subset: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">y_subset</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_score_attack</span><span class="p">(</span><span class="n">ben_pred_labels</span><span class="p">,</span> <span class="n">adv_pred_labels</span><span class="p">,</span> <span class="n">y_test_numeric</span><span class="p">)</span>
+        <span class="n">score_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score</span><span class="p">(</span>
+            <span class="n">attack_kind</span><span class="o">=</span><span class="s2">&quot;evasion&quot;</span><span class="p">,</span>
+            <span class="n">y_true</span><span class="o">=</span><span class="n">y_test_numeric</span><span class="p">,</span>
+            <span class="n">y_pred</span><span class="o">=</span><span class="n">adv_pred_labels</span><span class="p">,</span>
+            <span class="n">ben_pred_labels</span><span class="o">=</span><span class="n">ben_pred_labels</span><span class="p">,</span>
+            <span class="n">is_classification</span><span class="o">=</span><span class="ow">not</span> <span class="n">is_regression</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Attack scoring took </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">attack_score_time</span><span class="si">}</span><span class="s2"> seconds for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">adv_pred_labels</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples and </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">)</span><span class="si">}</span><span class="s2"> scores.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">score_dict</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">score</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">[</span><span class="n">score</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">=</span> <span class="n">adv_pred</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span></div>
 
@@ -977,6 +1030,7 @@
             <span class="n">data</span><span class="p">,</span>
             <span class="s2">&quot;y_train&quot;</span><span class="p">,</span>
         <span class="p">),</span> <span class="s2">&quot;DataConfig must have X_train, y_train attributes. Please ensure data() has been called.&quot;</span>
+        <span class="n">targeted_attribute_string</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">targeted_attribute</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">targeted_attribute</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">assert</span> <span class="n">targeted_attribute</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">X_test</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Targeted attribute &#39;</span><span class="si">{</span><span class="n">targeted_attribute</span><span class="si">}</span><span class="s2">&#39; not found in test data columns.&quot;</span><span class="p">,</span>
@@ -1086,54 +1140,14 @@
         <span class="p">)</span>
         <span class="c1"># Determine if the target is categorical or continuous</span>
         <span class="n">is_classification</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">attack</span><span class="o">.</span><span class="n">_is_continuous</span>
-        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
-
-        <span class="k">if</span> <span class="n">is_classification</span><span class="p">:</span>
-            <span class="n">inferred_accuracy</span> <span class="o">=</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">inferred</span><span class="p">)</span>
-            <span class="n">inferred_precision</span> <span class="o">=</span> <span class="n">precision_score</span><span class="p">(</span>
-                <span class="n">target</span><span class="p">,</span>
-                <span class="n">inferred</span><span class="p">,</span>
-                <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-                <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">inferred_recall</span> <span class="o">=</span> <span class="n">recall_score</span><span class="p">(</span>
-                <span class="n">target</span><span class="p">,</span>
-                <span class="n">inferred</span><span class="p">,</span>
-                <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-                <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">inferred_f1</span> <span class="o">=</span> <span class="n">f1_score</span><span class="p">(</span>
-                <span class="n">target</span><span class="p">,</span>
-                <span class="n">inferred</span><span class="p">,</span>
-                <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-                <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">attack_score_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
-            <span class="n">score_dict</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="sa">f</span><span class="s2">&quot;inferred_</span><span class="si">{</span><span class="n">targeted_attribute_string</span><span class="si">}</span><span class="s2">_accuracy&quot;</span><span class="p">:</span> <span class="n">inferred_accuracy</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">&quot;inferred_</span><span class="si">{</span><span class="n">targeted_attribute_string</span><span class="si">}</span><span class="s2">_precision&quot;</span><span class="p">:</span> <span class="n">inferred_precision</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">&quot;inferred_</span><span class="si">{</span><span class="n">targeted_attribute_string</span><span class="si">}</span><span class="s2">_recall&quot;</span><span class="p">:</span> <span class="n">inferred_recall</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">&quot;inferred_</span><span class="si">{</span><span class="n">targeted_attribute_string</span><span class="si">}</span><span class="s2">_f1&quot;</span><span class="p">:</span> <span class="n">inferred_f1</span><span class="p">,</span>
-            <span class="p">}</span>
-        <span class="k">else</span><span class="p">:</span>
-
-            <span class="n">inferred_mse</span> <span class="o">=</span> <span class="n">mean_squared_error</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">inferred</span><span class="p">)</span>
-            <span class="n">inferred_mae</span> <span class="o">=</span> <span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">inferred</span><span class="p">)</span>
-            <span class="n">inferred_r2</span> <span class="o">=</span> <span class="n">r2_score</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">inferred</span><span class="p">)</span>
-            <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">attack_score_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
-            <span class="n">score_dict</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="sa">f</span><span class="s2">&quot;inferred_</span><span class="si">{</span><span class="n">targeted_attribute_string</span><span class="si">}</span><span class="s2">_mse&quot;</span><span class="p">:</span> <span class="n">inferred_mse</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">&quot;inferred_</span><span class="si">{</span><span class="n">targeted_attribute_string</span><span class="si">}</span><span class="s2">_mae&quot;</span><span class="p">:</span> <span class="n">inferred_mae</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">&quot;inferred_</span><span class="si">{</span><span class="n">targeted_attribute_string</span><span class="si">}</span><span class="s2">_r2&quot;</span><span class="p">:</span> <span class="n">inferred_r2</span><span class="p">,</span>
-            <span class="p">}</span>
-        <span class="n">sig_figs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">)))</span> <span class="o">+</span> <span class="mi">1</span>
-        <span class="n">score_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">sig_figs</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">score_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-        <span class="c1"># Add attack size and timing info</span>
-        <span class="n">score_dict</span><span class="p">[</span><span class="s2">&quot;attack_size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack_size</span>
-        <span class="n">score_dict</span><span class="p">[</span><span class="s2">&quot;attack_score_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack_score_time</span>
-        <span class="n">score_dict</span><span class="p">[</span><span class="s2">&quot;attack_generation_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack_time</span>
+        <span class="n">score_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score</span><span class="p">(</span>
+            <span class="n">attack_kind</span><span class="o">=</span><span class="s2">&quot;attribute&quot;</span><span class="p">,</span>
+            <span class="n">y_true</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
+            <span class="n">y_pred</span><span class="o">=</span><span class="n">inferred</span><span class="p">,</span>
+            <span class="n">targeted_attribute</span><span class="o">=</span><span class="n">targeted_attribute_string</span><span class="p">,</span>
+            <span class="n">is_classification</span><span class="o">=</span><span class="n">is_classification</span><span class="p">,</span>
+            <span class="n">attack_generation_time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">attack_time</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">score_dict</span><span class="p">}</span>
         <span class="k">for</span> <span class="n">score</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">[</span><span class="n">score</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -1257,45 +1271,14 @@
             <span class="k">pass</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="o">=</span> <span class="n">inferred</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">labels</span>
-        <span class="n">inferred_accuracy</span> <span class="o">=</span> <span class="n">accuracy_score</span><span class="p">(</span>
-            <span class="n">labels</span><span class="p">,</span>
-            <span class="n">inferred</span><span class="p">,</span>
+        <span class="n">score_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score</span><span class="p">(</span>
+            <span class="n">attack_kind</span><span class="o">=</span><span class="s2">&quot;membership&quot;</span><span class="p">,</span>
+            <span class="n">y_true</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+            <span class="n">y_pred</span><span class="o">=</span><span class="n">inferred</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">inferred_precision</span> <span class="o">=</span> <span class="n">precision_score</span><span class="p">(</span>
-            <span class="n">labels</span><span class="p">,</span>
-            <span class="n">inferred</span><span class="p">,</span>
-            <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">inferred_recall</span> <span class="o">=</span> <span class="n">recall_score</span><span class="p">(</span>
-            <span class="n">labels</span><span class="p">,</span>
-            <span class="n">inferred</span><span class="p">,</span>
-            <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">inferred_f1</span> <span class="o">=</span> <span class="n">f1_score</span><span class="p">(</span>
-            <span class="n">labels</span><span class="p">,</span>
-            <span class="n">inferred</span><span class="p">,</span>
-            <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">attack_score_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
-        <span class="n">score_dict</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;membership_inference_accuracy&quot;</span><span class="p">:</span> <span class="n">inferred_accuracy</span><span class="p">,</span>
-            <span class="s2">&quot;membership_inference_precision&quot;</span><span class="p">:</span> <span class="n">inferred_precision</span><span class="p">,</span>
-            <span class="s2">&quot;membership_inference_recall&quot;</span><span class="p">:</span> <span class="n">inferred_recall</span><span class="p">,</span>
-            <span class="s2">&quot;membership_inference_f1&quot;</span><span class="p">:</span> <span class="n">inferred_f1</span><span class="p">,</span>
-        <span class="p">}</span>
-        <span class="c1"># Calculate the number of significant figures</span>
-        <span class="n">sig_figs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)))</span> <span class="o">+</span> <span class="mi">1</span>
-        <span class="n">score_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">sig_figs</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">score_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">score_dict</span><span class="p">}</span>
         <span class="k">for</span> <span class="n">score</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">[</span><span class="n">score</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="c1"># Add attack size and timing info</span>
-        <span class="n">score_dict</span><span class="p">[</span><span class="s2">&quot;attack_size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack_size</span>
-        <span class="n">score_dict</span><span class="p">[</span><span class="s2">&quot;attack_score_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack_score_time</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">score_dict</span><span class="p">}</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Membership inference attack scoring took </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">attack_score_time</span><span class="si">}</span><span class="s2"> seconds for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">attack_size</span><span class="si">}</span><span class="s2"> samples&quot;</span><span class="p">,</span>
         <span class="p">)</span>

@@ -72,35 +72,59 @@
   <h1>Source code for deckard.model.fairness</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">cast</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fairlearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">MetricFrame</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">accuracy_score</span><span class="p">,</span> <span class="n">f1_score</span><span class="p">,</span> <span class="n">precision_score</span><span class="p">,</span> <span class="n">recall_score</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">art.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">ART_NUMPY_DTYPE</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fairlearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetricFrame</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseEstimator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">accuracy_score</span><span class="p">,</span> <span class="n">f1_score</span><span class="p">,</span> <span class="n">precision_score</span><span class="p">,</span> <span class="n">recall_score</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span><span class="p">,</span> <span class="n">logger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.defend</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefenseConfig</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">..data.fairness</span><span class="w"> </span><span class="kn">import</span> <span class="n">FairnessDataConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..data.fairness</span><span class="w"> </span><span class="kn">import</span> <span class="n">FairlearnDataConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_class</span><span class="p">,</span> <span class="n">resolve_class</span>
+
+<span class="n">ScorerDictConfig</span> <span class="o">=</span> <span class="n">Any</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_FairnessBehaviorMixin</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A model configuration that extends ModelConfig to support fairness-aware evaluation.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Model/defense mixin for explicit fairness-aware training and scoring.&quot;&quot;&quot;</span>
 
-<span class="sd">    Trains normally on X_train, y_train, but uses group information from X_test, y_test</span>
-<span class="sd">    for fairness-aware scoring across demographic groups.</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_model</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">scorer</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">classifier</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">probability</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">fit_params</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
 
-<span class="sd">    Attributes:</span>
-<span class="sd">    -----------</span>
-<span class="sd">    fairness_data : FairnessDataConfig or None</span>
-<span class="sd">        Configuration containing group information and fairness metrics.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_runtime_sensitive_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">split</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">split</span> <span class="o">==</span> <span class="s2">&quot;train&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;_sensitive_train&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">split</span> <span class="o">==</span> <span class="s2">&quot;test&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;_sensitive_test&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">split</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;_sensitive_all&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">split</span> <span class="o">==</span> <span class="s2">&quot;val&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">&quot;Validation sensitive features are not implemented yet&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported fairness split: </span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_scoring_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;train&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;train&quot;</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="s2">&quot;attack&quot;</span><span class="p">}:</span>
+            <span class="k">return</span> <span class="s2">&quot;test&quot;</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;val&quot;</span><span class="p">,</span> <span class="s2">&quot;attack-val&quot;</span><span class="p">}:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">&quot;Validation fairness scoring is not implemented yet&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;all&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported fairness scoring mode: </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_validate_sensitive_series</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sensitive</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">sensitive</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -114,46 +138,59 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sensitive features are blank during </span><span class="si">{</span><span class="n">context</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">sensitive_series</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_sensitive_features_for_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_infer_split_from_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">split_sources</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;X_train&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
+            <span class="p">(</span><span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;X_test&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
+            <span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;_X&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
+        <span class="p">]</span>
+        <span class="n">batch_index</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">split_data</span> <span class="ow">in</span> <span class="n">split_sources</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">split_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">batch</span> <span class="ow">is</span> <span class="n">split_data</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">split_name</span>
+            <span class="n">split_index</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">split_data</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">batch_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">split_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">batch_index</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span>
+                <span class="n">split_index</span><span class="p">,</span>
+            <span class="p">):</span>
+                <span class="k">return</span> <span class="n">split_name</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_sensitive_features_for_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">batch</span><span class="p">,</span>
+        <span class="n">split</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
         <span class="n">n_rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
         <span class="n">batch_index</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">resolved_split</span> <span class="o">=</span> <span class="n">split</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_infer_split_from_batch</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resolved_split</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;_sensitive_train&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;_sensitive_test&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;_sensitive_all&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-        <span class="p">]</span>
-
-        <span class="n">positional_matches</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">sensitive</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">sensitive</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">sensitive_series</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_sensitive_series</span><span class="p">(</span><span class="n">sensitive</span><span class="p">,</span> <span class="s2">&quot;runtime&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">sensitive_series</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sensitive_series</span><span class="p">)</span> <span class="o">==</span> <span class="n">n_rows</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">batch_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">try</span><span class="p">:</span>
-                        <span class="n">aligned</span> <span class="o">=</span> <span class="n">sensitive_series</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">batch_index</span><span class="p">)</span>
-                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">aligned</span><span class="p">)</span> <span class="o">==</span> <span class="n">n_rows</span> <span class="ow">and</span> <span class="n">aligned</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-                            <span class="k">return</span> <span class="n">aligned</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                        <span class="k">pass</span>
-                <span class="n">positional_matches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sensitive_series</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">positional_matches</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">positional_matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">sensitive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_runtime_sensitive_source</span><span class="p">(</span><span class="n">resolved_split</span><span class="p">)</span>
+        <span class="n">sensitive_series</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_sensitive_series</span><span class="p">(</span><span class="n">sensitive</span><span class="p">,</span> <span class="s2">&quot;runtime&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sensitive_series</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">sensitive_series</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n_rows</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">batch_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">aligned</span> <span class="o">=</span> <span class="n">sensitive_series</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">batch_index</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">aligned</span><span class="p">)</span> <span class="o">==</span> <span class="n">n_rows</span> <span class="ow">and</span> <span class="n">aligned</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="n">aligned</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">sensitive_series</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_method_accepts_sensitive_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">params</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span>
             <span class="k">if</span> <span class="s2">&quot;sensitive_features&quot;</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
                 <span class="k">return</span> <span class="kc">True</span>
-            <span class="c1"># fairlearn reductions (e.g., GridSearch.fit) accept sensitive features via **kwargs</span>
             <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">VAR_KEYWORD</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
@@ -164,22 +201,18 @@
         <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_fit_defended_estimator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">defended_estimator</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit a defended estimator when defense application requires training.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">defended_estimator</span><span class="p">,</span> <span class="s2">&quot;fit&quot;</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">defended_estimator</span>
 
-        <span class="n">sensitive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_sensitive_features_for_batch</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">y_train</span><span class="p">)</span>
+        <span class="n">sensitive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_sensitive_features_for_batch</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">y_train</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="s2">&quot;train&quot;</span><span class="p">)</span>
         <span class="n">fit_method</span> <span class="o">=</span> <span class="n">defended_estimator</span><span class="o">.</span><span class="n">fit</span>
-        <span class="k">if</span> <span class="n">sensitive</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_method_accepts_sensitive_features</span><span class="p">(</span>
-            <span class="n">fit_method</span><span class="p">,</span>
-        <span class="p">):</span>
+        <span class="k">if</span> <span class="n">sensitive</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_method_accepts_sensitive_features</span><span class="p">(</span><span class="n">fit_method</span><span class="p">):</span>
             <span class="n">fit_method</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">y_train</span><span class="p">,</span> <span class="n">sensitive_features</span><span class="o">=</span><span class="n">sensitive</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">fit_method</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">y_train</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">defended_estimator</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_fairness_defense_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve defense_name/defense_params from either model or defense config shapes.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;defense_name&quot;</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;defense_name&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="nb">dict</span><span class="p">(</span>
                 <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;defense_params&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{},</span>
@@ -191,11 +224,10 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="p">{}</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_defense</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply fairlearn defenses when configured, otherwise defer to base behavior.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_fairlearn_defense</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="n">defense_name</span><span class="p">,</span> <span class="n">defense_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_fairness_defense_spec</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">defense_name</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">defense_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;fairlearn.&quot;</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">ModelConfig</span><span class="o">.</span><span class="n">_apply_defense</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Fairlearn defense helper requires a fairlearn defense_name&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -205,10 +237,10 @@
         <span class="n">module_name</span><span class="p">,</span> <span class="n">class_name</span> <span class="o">=</span> <span class="n">defense_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">defense_class</span> <span class="o">=</span> <span class="n">resolve_class</span><span class="p">(</span><span class="n">defense_name</span><span class="p">)</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Could not import defense class </span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
 
         <span class="n">constraints</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="s2">&quot;constraints&quot;</span> <span class="ow">in</span> <span class="n">defense_params</span><span class="p">:</span>
@@ -233,11 +265,7 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s2">&quot;fairlearn.reductions defenses require a &#39;constraints&#39; key in defense parameters&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
-            <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span>
-                <span class="n">base_estimator</span><span class="p">,</span>
-                <span class="n">constraints</span><span class="p">,</span>
-                <span class="o">**</span><span class="n">defense_params</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span><span class="n">base_estimator</span><span class="p">,</span> <span class="n">constraints</span><span class="p">,</span> <span class="o">**</span><span class="n">defense_params</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">fairlearn_submodule</span> <span class="o">==</span> <span class="s2">&quot;postprocessing&quot;</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span>
@@ -261,8 +289,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_apply_fit</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_fit</span><span class="p">:</span>
             <span class="n">defended_estimator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_defended_estimator</span><span class="p">(</span><span class="n">defended_estimator</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">defense_application_time</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">defense_application_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
         <span class="k">return</span> <span class="n">defended_estimator</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
@@ -270,8 +297,8 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model not initialized&quot;</span><span class="p">)</span>
         <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
         <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="s2">&quot;fit&quot;</span><span class="p">),</span> <span class="s2">&quot;Model does not have a fit method&quot;</span>
-        <span class="n">fit_params</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;fit_params&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_params</span>
-        <span class="n">sensitive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_sensitive_features_for_batch</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">fit_params</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;fit_params&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">sensitive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_sensitive_features_for_batch</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="s2">&quot;train&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">sensitive</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_method_accepts_sensitive_features</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">fit</span><span class="p">)</span>
@@ -279,84 +306,53 @@
         <span class="p">):</span>
             <span class="n">fit_params</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">fit_params</span><span class="p">,</span> <span class="s2">&quot;sensitive_features&quot;</span><span class="p">:</span> <span class="n">sensitive</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">fit_params</span><span class="p">)</span>
-        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">training_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">training_n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model trained in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">training_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model not initialized&quot;</span><span class="p">)</span>
-        <span class="n">sensitive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_sensitive_features_for_batch</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">sensitive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_sensitive_features_for_batch</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">y_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call_with_optional_sensitive</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">predict</span><span class="p">,</span>
-                <span class="n">X</span><span class="p">,</span>
-                <span class="n">sensitive</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">if</span> <span class="s2">&quot;loop of ufunc does not support argument&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span>
-                <span class="n">e</span><span class="p">,</span>
-            <span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;can&#39;t convert&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call_with_optional_sensitive</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">predict</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">sensitive</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;loop of ufunc does not support argument&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;can&#39;t convert&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
                 <span class="n">X_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ART_NUMPY_DTYPE</span><span class="p">)</span>
-                <span class="n">y_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call_with_optional_sensitive</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">predict</span><span class="p">,</span>
-                    <span class="n">X_array</span><span class="p">,</span>
-                    <span class="n">sensitive</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">e</span>
-        <span class="k">return</span> <span class="n">y_pred</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call_with_optional_sensitive</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">predict</span><span class="p">,</span> <span class="n">X_array</span><span class="p">,</span> <span class="n">sensitive</span><span class="p">)</span>
+            <span class="k">raise</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_predict_proba</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model not initialized&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">probability</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model does not support probability predictions&quot;</span><span class="p">)</span>
-        <span class="n">sensitive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_sensitive_features_for_batch</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call_with_optional_sensitive</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">,</span>
-            <span class="n">X</span><span class="p">,</span>
-            <span class="n">sensitive</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">sensitive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_sensitive_features_for_batch</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call_with_optional_sensitive</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">sensitive</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_sensitive_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_sensitive_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;test&quot;</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
         <span class="n">y_true_series</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span>
         <span class="n">y_true_n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_true_series</span><span class="p">)</span>
         <span class="n">y_index</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;_sensitive_test&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;_sensitive_train&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;_sensitive_all&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-        <span class="p">]</span>
-        <span class="n">positional_matches</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">sensitive</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">sensitive</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">sensitive_series</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_sensitive_series</span><span class="p">(</span>
-                <span class="n">sensitive</span><span class="p">,</span>
-                <span class="s2">&quot;fairness scoring&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">if</span> <span class="n">sensitive_series</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sensitive_series</span><span class="p">)</span> <span class="o">==</span> <span class="n">y_true_n</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">y_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">try</span><span class="p">:</span>
-                        <span class="n">aligned</span> <span class="o">=</span> <span class="n">sensitive_series</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">y_index</span><span class="p">)</span>
-                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">aligned</span><span class="p">)</span> <span class="o">==</span> <span class="n">y_true_n</span> <span class="ow">and</span> <span class="n">aligned</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-                            <span class="k">return</span> <span class="n">aligned</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                        <span class="k">pass</span>
-                <span class="n">positional_matches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sensitive_series</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">positional_matches</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">positional_matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">scoring_split</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_scoring_split</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span>
+        <span class="n">sensitive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_runtime_sensitive_source</span><span class="p">(</span><span class="n">scoring_split</span><span class="p">)</span>
+        <span class="n">sensitive_series</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_sensitive_series</span><span class="p">(</span><span class="n">sensitive</span><span class="p">,</span> <span class="s2">&quot;fairness scoring&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sensitive_series</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">sensitive_series</span><span class="p">)</span> <span class="o">!=</span> <span class="n">y_true_n</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">y_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">aligned</span> <span class="o">=</span> <span class="n">sensitive_series</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">y_index</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">aligned</span><span class="p">)</span> <span class="o">==</span> <span class="n">y_true_n</span> <span class="ow">and</span> <span class="n">aligned</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="n">aligned</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">sensitive_series</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_group_fairness_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="n">sensitive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_sensitive_features</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_sensitive_fairness_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;test&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="n">sensitive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_sensitive_features</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">sensitive</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -375,19 +371,13 @@
                     <span class="sa">f</span><span class="s2">&quot;Unsupported prediction shape for fairness scoring: </span><span class="si">{</span><span class="n">y_pred_arr</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
 
-            <span class="n">classes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_true_ref</span><span class="p">)[</span><span class="o">~</span><span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_true_ref</span><span class="p">))],</span>
-            <span class="p">)</span>
-
+            <span class="n">classes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_true_ref</span><span class="p">)[</span><span class="o">~</span><span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_true_ref</span><span class="p">))])</span>
             <span class="k">if</span> <span class="n">y_pred_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">binary_scores</span> <span class="o">=</span> <span class="n">y_pred_arr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.5</span>
                 <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">binary_scores</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">binary_scores</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
                     <span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.0</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span>
-                    <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                    <span class="n">np</span><span class="o">.</span><span class="n">number</span><span class="p">,</span>
-                <span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">number</span><span class="p">):</span>
                     <span class="n">sorted_classes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">classes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
                     <span class="n">low_label</span><span class="p">,</span> <span class="n">high_label</span> <span class="o">=</span> <span class="n">sorted_classes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sorted_classes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
                     <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">binary_scores</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">high_label</span><span class="p">,</span> <span class="n">low_label</span><span class="p">)</span>
@@ -395,50 +385,29 @@
                     <span class="n">labels</span> <span class="o">=</span> <span class="p">(</span><span class="n">binary_scores</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-            <span class="c1"># Multi-class: argmax gives indices, map to actual class labels</span>
-            <span class="n">class_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span>
-            <span class="n">sorted_classes</span> <span class="o">=</span> <span class="n">classes</span><span class="p">[</span><span class="n">class_indices</span><span class="p">]</span>
+            <span class="n">sorted_classes</span> <span class="o">=</span> <span class="n">classes</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">classes</span><span class="p">)]</span>
             <span class="n">pred_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">y_pred_arr</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">labels</span> <span class="o">=</span> <span class="n">sorted_classes</span><span class="p">[</span><span class="n">pred_indices</span><span class="p">]</span>
-            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">sorted_classes</span><span class="p">[</span><span class="n">pred_indices</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="n">y_pred_series</span> <span class="o">=</span> <span class="n">_normalize_pred_labels</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true_series</span><span class="p">)</span>
-        <span class="c1"># Determine positive label BEFORE alignment so it stays consistent</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span><span class="p">:</span>
             <span class="n">metric_frame</span> <span class="o">=</span> <span class="n">MetricFrame</span><span class="p">(</span>
                 <span class="n">metrics</span><span class="o">=</span><span class="p">{</span>
                     <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">accuracy_score</span><span class="p">,</span>
-                    <span class="s2">&quot;precision&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">yt</span><span class="p">,</span> <span class="n">yp</span><span class="p">:</span> <span class="n">precision_score</span><span class="p">(</span>
-                        <span class="n">yt</span><span class="p">,</span>
-                        <span class="n">yp</span><span class="p">,</span>
-                        <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
-                        <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-                    <span class="p">),</span>
-                    <span class="s2">&quot;recall&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">yt</span><span class="p">,</span> <span class="n">yp</span><span class="p">:</span> <span class="n">recall_score</span><span class="p">(</span>
-                        <span class="n">yt</span><span class="p">,</span>
-                        <span class="n">yp</span><span class="p">,</span>
-                        <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
-                        <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-                    <span class="p">),</span>
-                    <span class="s2">&quot;f1-score&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">yt</span><span class="p">,</span> <span class="n">yp</span><span class="p">:</span> <span class="n">f1_score</span><span class="p">(</span>
-                        <span class="n">yt</span><span class="p">,</span>
-                        <span class="n">yp</span><span class="p">,</span>
-                        <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
-                        <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-                    <span class="p">),</span>
+                    <span class="s2">&quot;precision&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">yt</span><span class="p">,</span> <span class="n">yp</span><span class="p">:</span> <span class="n">precision_score</span><span class="p">(</span><span class="n">yt</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+                    <span class="s2">&quot;recall&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">yt</span><span class="p">,</span> <span class="n">yp</span><span class="p">:</span> <span class="n">recall_score</span><span class="p">(</span><span class="n">yt</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+                    <span class="s2">&quot;f1-score&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">yt</span><span class="p">,</span> <span class="n">yp</span><span class="p">:</span> <span class="n">f1_score</span><span class="p">(</span><span class="n">yt</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
                 <span class="p">},</span>
                 <span class="n">y_true</span><span class="o">=</span><span class="n">y_true_series</span><span class="p">,</span>
                 <span class="n">y_pred</span><span class="o">=</span><span class="n">y_pred_series</span><span class="p">,</span>
                 <span class="n">sensitive_features</span><span class="o">=</span><span class="n">sensitive</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">by_group</span> <span class="o">=</span> <span class="n">metric_frame</span><span class="o">.</span><span class="n">by_group</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
-            <span class="n">group_scores</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">by_group</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">metric_frame</span><span class="o">.</span><span class="n">by_group</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
+            <span class="n">sensitive_scores</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">metrics</span> <span class="ow">in</span> <span class="n">by_group</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">metric</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">metrics</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="p">}</span>
-
             <span class="n">score_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">&quot;y_true&quot;</span><span class="p">:</span> <span class="n">y_true_series</span><span class="p">,</span>
@@ -446,90 +415,84 @@
                     <span class="s2">&quot;sensitive&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">sensitive</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
                 <span class="p">},</span>
             <span class="p">)</span>
-
-            <span class="c1"># Calculate sensitive feature importance based on accuracy variation across groups</span>
-            <span class="n">group_accuracies</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">group_df</span> <span class="ow">in</span> <span class="n">score_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;sensitive&quot;</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-                <span class="n">group_acc</span> <span class="o">=</span> <span class="nb">float</span><span class="p">((</span><span class="n">group_df</span><span class="p">[</span><span class="s2">&quot;y_true&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">group_df</span><span class="p">[</span><span class="s2">&quot;y_pred&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
-                <span class="n">group_accuracies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">group_acc</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="n">group_accuracies</span><span class="p">:</span>
-                <span class="n">acc_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">group_accuracies</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+            <span class="n">sensitive_accuracies</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">sensitive_df</span> <span class="ow">in</span> <span class="n">score_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;sensitive&quot;</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+                <span class="n">sensitive_accuracies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="nb">float</span><span class="p">((</span><span class="n">sensitive_df</span><span class="p">[</span><span class="s2">&quot;y_true&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">sensitive_df</span><span class="p">[</span><span class="s2">&quot;y_pred&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">sensitive_accuracies</span><span class="p">:</span>
+                <span class="n">acc_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sensitive_accuracies</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
                 <span class="n">acc_min</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">acc_arr</span><span class="p">))</span>
                 <span class="n">acc_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">acc_arr</span><span class="p">))</span>
-                <span class="n">acc_diff</span> <span class="o">=</span> <span class="n">acc_max</span> <span class="o">-</span> <span class="n">acc_min</span>
-                <span class="n">acc_std</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">acc_arr</span><span class="p">))</span>
-                <span class="n">acc_ratio</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">sensitive_scores</span><span class="p">[</span><span class="s2">&quot;sensitive_feature_accuracy_difference&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">acc_max</span> <span class="o">-</span> <span class="n">acc_min</span>
+                <span class="n">sensitive_scores</span><span class="p">[</span><span class="s2">&quot;sensitive_feature_accuracy_std&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">acc_arr</span><span class="p">))</span>
+                <span class="n">sensitive_scores</span><span class="p">[</span><span class="s2">&quot;sensitive_feature_accuracy_ratio&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="n">acc_min</span> <span class="o">/</span> <span class="n">acc_max</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">acc_max</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
                     <span class="k">else</span> <span class="p">(</span><span class="mf">1.0</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">acc_min</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">)</span>
                 <span class="p">)</span>
-                <span class="n">group_scores</span><span class="p">[</span><span class="s2">&quot;sensitive_feature_accuracy_difference&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">acc_diff</span>
-                <span class="n">group_scores</span><span class="p">[</span><span class="s2">&quot;sensitive_feature_accuracy_std&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">acc_std</span>
-                <span class="n">group_scores</span><span class="p">[</span><span class="s2">&quot;sensitive_feature_accuracy_ratio&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">acc_ratio</span>
+            <span class="k">return</span> <span class="n">sensitive_scores</span>
 
-            <span class="k">return</span> <span class="n">group_scores</span>
-        <span class="c1"># if not classifier</span>
         <span class="n">metric_frame</span> <span class="o">=</span> <span class="n">MetricFrame</span><span class="p">(</span>
             <span class="n">metrics</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">&quot;mse&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">yt</span><span class="p">,</span> <span class="n">yp</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
-                    <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">yt</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">yp</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span>
-                <span class="p">),</span>
-                <span class="s2">&quot;rmse&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">yt</span><span class="p">,</span> <span class="n">yp</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
-                    <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">yt</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">yp</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)),</span>
-                <span class="p">),</span>
-                <span class="s2">&quot;mae&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">yt</span><span class="p">,</span> <span class="n">yp</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
-                    <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">yt</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">yp</span><span class="p">))),</span>
-                <span class="p">),</span>
+                <span class="s2">&quot;mse&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">yt</span><span class="p">,</span> <span class="n">yp</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">yt</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">yp</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)),</span>
+                <span class="s2">&quot;rmse&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">yt</span><span class="p">,</span> <span class="n">yp</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">yt</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">yp</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))),</span>
+                <span class="s2">&quot;mae&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">yt</span><span class="p">,</span> <span class="n">yp</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">yt</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">yp</span><span class="p">)))),</span>
             <span class="p">},</span>
             <span class="n">y_true</span><span class="o">=</span><span class="n">y_true_series</span><span class="p">,</span>
             <span class="n">y_pred</span><span class="o">=</span><span class="n">y_pred_series</span><span class="p">,</span>
             <span class="n">sensitive_features</span><span class="o">=</span><span class="n">sensitive</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">by_group</span> <span class="o">=</span> <span class="n">metric_frame</span><span class="o">.</span><span class="n">by_group</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
+        <span class="n">by_group</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">metric_frame</span><span class="o">.</span><span class="n">by_group</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">metrics</span> <span class="ow">in</span> <span class="n">by_group</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">metric</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">metrics</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">}</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_group_fairness_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;test&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_sensitive_fairness_scores</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Thin wrapper: delegate all scoring to configured scorer dict.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ModelConfig</span><span class="o">.</span><span class="n">_score</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">ModelConfig</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_classification_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="n">scores</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="o">.</span><span class="n">_classification_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
-        <span class="n">scores</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_compute_group_fairness_scores</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">))</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="o">.</span><span class="n">_classification_scores</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">ModelConfig</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+        <span class="n">scores</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_compute_sensitive_fairness_scores</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">scores</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_regression_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="n">scores</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="o">.</span><span class="n">_regression_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
-        <span class="n">scores</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_compute_group_fairness_scores</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">))</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="o">.</span><span class="n">_regression_scores</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">ModelConfig</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+        <span class="n">scores</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_compute_sensitive_fairness_scores</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">scores</span>
 
 
-<div class="viewcode-block" id="FairnessModelConfig">
-<a class="viewcode-back" href="../../../model.html#deckard.model.FairnessModelConfig">[docs]</a>
-<span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">FairnessModelConfig</span><span class="p">(</span><span class="n">_FairnessBehaviorMixin</span><span class="p">,</span> <span class="n">ModelConfig</span><span class="p">):</span>
+<div class="viewcode-block" id="FairlearnModelConfig">
+<a class="viewcode-back" href="../../../model.html#deckard.model.FairlearnModelConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FairlearnModelConfig</span><span class="p">(</span><span class="n">_FairnessBehaviorMixin</span><span class="p">,</span> <span class="n">ModelConfig</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Fairness-aware model config for standard model workflows.&quot;&quot;&quot;</span>
 
-    <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">FairnessDataConfig</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+    <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">FairlearnDataConfig</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 
-<div class="viewcode-block" id="FairnessDefenseConfig">
-<a class="viewcode-back" href="../../../model.html#deckard.model.FairnessDefenseConfig">[docs]</a>
-<span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">FairnessDefenseConfig</span><span class="p">(</span><span class="n">_FairnessBehaviorMixin</span><span class="p">,</span> <span class="n">DefenseConfig</span><span class="p">):</span>
+<div class="viewcode-block" id="FairlearnDefenseConfig">
+<a class="viewcode-back" href="../../../model.html#deckard.model.FairlearnDefenseConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FairlearnDefenseConfig</span><span class="p">(</span><span class="n">_FairnessBehaviorMixin</span><span class="p">,</span> <span class="n">DefenseConfig</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Fairness-aware defense config that inherits DefenseConfig.&quot;&quot;&quot;</span>
 
-    <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">FairnessDataConfig</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">FairlearnDataConfig</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="FairnessDefenseConfig.apply_defense">
-<a class="viewcode-back" href="../../../model.html#deckard.model.FairnessDefenseConfig.apply_defense">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">apply_defense</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply a fairlearn or ART defense to the base estimator.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="FairlearnDefenseConfig.apply_defense">
+<a class="viewcode-back" href="../../../model.html#deckard.model.FairlearnDefenseConfig.apply_defense">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_defense</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseEstimator</span><span class="p">:</span>
         <span class="n">defense_name</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_fairness_defense_spec</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">defense_name</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">defense_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;fairlearn.&quot;</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">apply_defense</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_defense</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_fairlearn_defense</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

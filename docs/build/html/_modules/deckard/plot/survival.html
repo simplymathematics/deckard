@@ -315,7 +315,7 @@
 
 <div class="viewcode-block" id="SurvivalSeabornPlotConfigList">
 <a class="viewcode-back" href="../../../plot.html#deckard.plot.SurvivalSeabornPlotConfigList">[docs]</a>
-<span class="nd">@dataclass</span>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SurvivalSeabornPlotConfigList</span><span class="p">(</span><span class="n">ConfigBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for multiple survival model plots from SurvivalSeabornPlotterConfig.&quot;&quot;&quot;</span>
 
@@ -401,7 +401,7 @@
             <span class="ow">or</span> <span class="n">runtime_data</span><span class="o">.</span><span class="n">y_test</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Runtime survival split did not produce train/test partitions&quot;</span>
+                <span class="s2">&quot;Runtime survival split did not produce train/test partitions&quot;</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="n">X_train</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">runtime_data</span><span class="o">.</span><span class="n">X_train</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
