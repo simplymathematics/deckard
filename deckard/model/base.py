@@ -573,7 +573,7 @@ class ModelConfig(ConfigBase):
         }
         return scores
 
-    def _score(self, y_true: pd.Series, y_pred: pd.Series, **kwargs) -> dict:
+    def _score(self, y_true: pd.Series, y_pred: pd.Series, mode: str = "test", **kwargs) -> dict:
         """
         Compute and log performance scores for classification or regression.
 
@@ -594,7 +594,7 @@ class ModelConfig(ConfigBase):
             - Logs each rounded score.
         """
         if self.scorer is not None:
-            scores = self.scorer(y_true=y_true, y_pred=y_pred, mode=None, **kwargs)
+            scores = self.scorer(y_true=y_true, y_pred=y_pred, mode=mode, **kwargs)
         elif self.classifier:
             scores = self._classification_scores(y_true, y_pred)
         else:
@@ -924,7 +924,12 @@ class ModelConfig(ConfigBase):
         # Score training predictions from current run.
         if train_predictions is not None:
             start = time.process_time()
-            train_scores = self._score(data.y_train, train_predictions, data=data)
+            train_scores = self._score(
+                data.y_train,
+                train_predictions,
+                mode="train",
+                data=data,
+            )
             self.training_score_time = time.process_time() - start
             # Prefix training scores with 'train_'
             train_scores = {
@@ -990,7 +995,12 @@ class ModelConfig(ConfigBase):
         # Score test predictions from current run.
         if data.y_test is not None and test_predictions is not None:
             start = time.process_time()
-            test_scores = self._score(data.y_test, test_predictions, data=data)
+            test_scores = self._score(
+                data.y_test,
+                test_predictions,
+                mode="test",
+                data=data,
+            )
             if self.score_dict is None:
                 self.score_dict = {}
             self.score_dict = {**self.score_dict, **test_scores}
