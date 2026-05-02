@@ -265,6 +265,28 @@ class AttackConfig(ConfigBase):
             return "attribute"
         return None
 
+    @staticmethod
+    def _infer_task_is_classification(data, model) -> Optional[bool]:
+        """Infer task type from model first, then data config as fallback."""
+        if isinstance(model, ModelConfig) and model.classifier is not None:
+            return bool(model.classifier)
+        if isinstance(model, RegressorMixin) and not isinstance(model, ClassifierMixin):
+            return False
+        if isinstance(model, ClassifierMixin):
+            return True
+        if hasattr(data, "classifier") and getattr(data, "classifier") is not None:
+            return bool(getattr(data, "classifier"))
+        return None
+
+    def _validate_attack_task_compatibility(self, data, model):
+        """Fail fast for known unsupported task/attack combinations."""
+        attack_type = (self.attack_family or "").lower()
+        task_is_classification = self._infer_task_is_classification(data, model)
+        if attack_type == "evasion" and task_is_classification is False:
+            raise ValueError(
+                "Evasion attacks are not supported for regression models in the current sklearn+ART integration.",
+            )
+
     def _initialize_attack(self, model, data):
         """
         Initialize an attack instance for a given model.
@@ -464,6 +486,8 @@ class AttackConfig(ConfigBase):
             self.attack_predictions = self.load_object(attack_predictions_file)
         if score_file is not None and Path(score_file).exists():
             self.score_dict = self.load_scores(score_file)
+
+        self._validate_attack_task_compatibility(data, model)
 
         attack, art_model, attack_type, attack_subtype = self._initialize_attack(
             model,

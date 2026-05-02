@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from deckard.attack import AttackConfig
 
 
@@ -179,6 +179,24 @@ class TestAttackConfig(unittest.TestCase):
         ):
             with self.assertRaises(NotImplementedError):
                 attack(object(), object())
+
+    def test_call_rejects_regression_evasion_early(self):
+        class TinyData:
+            classifier = False
+
+        data = TinyData()
+        model = LinearRegression().fit([[0.0, 1.0], [1.0, 0.0]], [0.1, 0.9])
+        attack = AttackConfig(
+            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_params={"eps": 0.1},
+        )
+        with patch.object(
+            AttackConfig,
+            "_initialize_attack",
+            side_effect=AssertionError("_initialize_attack should not be called"),
+        ):
+            with self.assertRaises(ValueError):
+                attack(data, model)
 
     def test_initialize_attack_rejects_unsupported_type(self):
         attack = AttackConfig(
