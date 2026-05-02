@@ -152,10 +152,10 @@ class _FairnessBehaviorMixin:
             )
         return None, {}
 
-    def _apply_defense(self, data):
+    def _apply_fairlearn_defense(self, data):
         defense_name, defense_params = self._resolve_fairness_defense_spec()
         if not defense_name or not defense_name.startswith("fairlearn."):
-            return ModelConfig._apply_defense(cast(ModelConfig, self), data)
+            raise ValueError("Fairlearn defense helper requires a fairlearn defense_name")
 
         if self._model is None:
             raise ValueError(
@@ -413,4 +413,4 @@ class FairlearnDefenseConfig(_FairnessBehaviorMixin, DefenseConfig):
         defense_name, _ = self._resolve_fairness_defense_spec()
         if not defense_name or not defense_name.startswith("fairlearn."):
             return super().apply_defense(data)
-        return self._apply_defense(data)
+        return self._apply_fairlearn_defense(data)

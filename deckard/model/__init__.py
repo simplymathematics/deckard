@@ -8,7 +8,7 @@ dependencies are installed.
 import logging
 from typing import Any
 from .base import ModelConfig
-from .defend import DefenseConfig
+from .defend import DefenseConfig, DefensePipelineConfig
 
 ScorerDictConfig = Any
 
@@ -34,7 +34,7 @@ except ImportError:
     logger.debug("Torch not found. Cannot use torch features.")
 
 
-__all__ = ["ModelConfig", "DefenseConfig"]
+__all__ = ["ModelConfig", "DefenseConfig", "DefensePipelineConfig"]
 
 if "FairlearnDefenseConfig" in globals():
     __all__.extend(

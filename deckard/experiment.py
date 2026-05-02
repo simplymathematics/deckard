@@ -1,13 +1,15 @@
 """Experiment orchestration primitives for Deckard's Python API.
 
-This module contains the base experiment configuration object that ties data,
-model, defense, attack, files, and scorers into a single executable unit.
+This module contains the high-level experiment configuration objects that tie
+data, model, defense, attack, files, and scorers into a single executable unit.
+``ExperimentConfig`` is the main entrypoint for standard experiments and
+``SurvivalExperimentConfig`` specializes that workflow for survival analysis.
 """
 
 import logging
 import warnings
 import hashlib
-from typing import List, Union, Literal, Any
+from typing import Any, List, Optional, Union, Literal
 from omegaconf import DictConfig, OmegaConf
 import os
 import yaml
@@ -15,24 +17,25 @@ import numpy as np
 from pathlib import Path
 from hydra.utils import instantiate
 
-from ..data import DataConfig, DataPipelineConfig
+from .data import DataConfig, DataPipelineConfig
 
 try:
-    from ..data import FairlearnDataConfig
+    from .data import FairnessDataConfig
 except ImportError:  # pragma: no cover
-    FairlearnDataConfig = None
+    FairnessDataConfig = None
 
-from ..model import ModelConfig
+import pandas as pd
+from .model import ModelConfig
 
 try:
-    from ..model import FairlearnModelConfig
+    from .model import FairnessModelConfig
 except ImportError:  # pragma: no cover
-    FairlearnModelConfig = None
-from ..model.defend import DefensePipelineConfig
-from ..attack import AttackConfig
-from ..score import ScorerDictConfig
-from ..file import FileConfig, data_files, model_files, attack_files
-from ..utils import ConfigBase
+    FairnessModelConfig = None
+from .model.defend import DefensePipelineConfig
+from .attack import AttackConfig
+from .score import ScorerDictConfig
+from .file import FileConfig, data_files, model_files, attack_files
+from .utils import ConfigBase
 
 logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -115,6 +118,7 @@ class DataConfigResolutionMixin:
     """Resolve ExperimentConfig.data into the appropriate DataConfig subtype."""
 
     _fairness_keys = {
+        "groupby_columns",
         "sensitive_columns",
         "fairness_defense",
         "fairness_pipeline_step_name",
@@ -138,11 +142,11 @@ class DataConfigResolutionMixin:
 
     def _select_data_cls(self, data_dict: dict):
         if any(key in data_dict for key in self._fairness_keys):
-            if FairlearnDataConfig is None:
+            if FairnessDataConfig is None:
                 raise ImportError(
-                    "FairlearnDataConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn data configs.",
+                    "FairnessDataConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairness data configs.",
                 )
-            return FairlearnDataConfig
+            return FairnessDataConfig
         if "pipeline" in data_dict:
             return DataPipelineConfig
         return DataConfig
@@ -190,23 +194,6 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
     random_state: int = 42
     library: Literal["sklearn", "tensorflow", "pytorch"] = "sklearn"
     classifier: Union[str, bool] = True
-
-    def _coerce_scorer_config(self, scorer_obj: Any):
-        if scorer_obj is None:
-            return None
-        if isinstance(scorer_obj, ScorerDictConfig):
-            return scorer_obj
-        if isinstance(scorer_obj, DictConfig):
-            scorer_obj = OmegaConf.to_container(scorer_obj, resolve=True)
-        if isinstance(scorer_obj, ConfigBase):
-            scorer_obj = scorer_obj.to_dict()
-        if isinstance(scorer_obj, str):
-            scorer_obj = ScorerDictConfig.from_yaml(scorer_obj).to_dict()
-        if isinstance(scorer_obj, dict):
-            if "scorers" in scorer_obj:
-                return ScorerDictConfig(**scorer_obj)
-            return ScorerDictConfig(scorers=scorer_obj)
-        raise ValueError(f"Unsupported scorer config type: {type(scorer_obj)}")
 
     def set_device(self, device: Union[str, int] = "cpu"):
         """
@@ -360,16 +347,16 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     self.classifier == self.model.classifier
                 ), f"classifier in experiment must match model.classifier. Got {self.classifier} vs {self.model.classifier}"
 
-            if FairlearnDataConfig is not None and isinstance(
+            if FairnessDataConfig is not None and isinstance(
                 self.data,
-                FairlearnDataConfig,
+                FairnessDataConfig,
             ):
-                if FairlearnModelConfig is None:
+                if FairnessModelConfig is None:
                     raise ImportError(
-                        "FairlearnModelConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn model configs.",
+                        "FairnessModelConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairness model configs.",
                     )
-                if not isinstance(self.model, FairlearnModelConfig):
-                    self.model = FairlearnModelConfig(
+                if not isinstance(self.model, FairnessModelConfig):
+                    self.model = FairnessModelConfig(
                         model_type=self.model.model_type,
                         classifier=self.model.classifier,
                         model_params=self.model.model_params,
@@ -441,33 +428,22 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         self.files.__post_init__()
 
         # Set scorers
-        self.data_scorer = None
-        self.model_scorer = None
-        self.experiment_scorer = None
-        if self.score is not None:
-            score_cfg = self.score
-            if isinstance(score_cfg, DictConfig):
-                score_cfg = OmegaConf.to_container(score_cfg, resolve=True)
-            if isinstance(score_cfg, dict) and any(
-                key in score_cfg for key in ["data", "model", "experiment"]
-            ):
-                self.data_scorer = self._coerce_scorer_config(score_cfg.get("data"))
-                self.model_scorer = self._coerce_scorer_config(score_cfg.get("model"))
-                self.experiment_scorer = self._coerce_scorer_config(
-                    score_cfg.get("experiment"),
-                )
-            else:
-                # Backward-compatible shorthand: a single score config targets model scoring.
-                self.model_scorer = self._coerce_scorer_config(score_cfg)
-
-        # Attach component scorers so DataConfig/ModelConfig execute runtime-configured scoring.
-        if self.data_scorer is not None:
-            self.data.scorer = self.data_scorer
-        if self.model is not None and self.model_scorer is not None:
-            self.model.scorer = self.model_scorer
-
-        # Keep `score` as experiment-level scorer only.
-        self.score = self.experiment_scorer
+        if isinstance(self.score, DictConfig):
+            score_dict = OmegaConf.to_container(self.score)
+            self.score = ScorerDictConfig(**score_dict)
+        elif isinstance(self.score, ConfigBase):
+            score_dict = self.score.to_dict()
+            self.score = ScorerDictConfig(**score_dict)
+        elif isinstance(self.score, str):
+            score_dict = ScorerDictConfig.from_yaml(self.score).to_dict()
+            self.score = ScorerDictConfig(**score_dict)
+        elif isinstance(self.score, dict):
+            score_dict = self.score
+            self.score = ScorerDictConfig(**score_dict)
+        elif self.score is None:
+            pass
+        else:
+            raise ValueError(f"Unsupported type for score: {type(self.score)}")
 
     def set_random_seed(self):
         if self.library in ["sklearn"]:
@@ -624,3 +600,251 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         else:
             logger.info("No score_file specified, skipping score saving.")
         return scores
+
+
+class SurvivalExperimentConfig(ExperimentConfig):
+    """ExperimentConfig specialization for survival-analysis workflows."""
+
+    """Experiment configuration tailored for survival analyses.
+
+    This config enforces that both `data` and `model` are provided and valid,
+    while allowing survival-specific settings to be carried alongside standard
+    experiment settings.
+    """
+
+    survival_model = "weibull"
+    duration_col = "T"
+    event_col = "E"
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.data is None:
+            raise ValueError("SurvivalExperimentConfig requires a data config")
+        if self.attack is not None and self.model is None:
+            raise ValueError(
+                "SurvivalExperimentConfig requires a model config when an attack is specified",
+            )
+        if not isinstance(self.data, DataConfig):
+            raise TypeError(
+                f"Expected data to resolve to DataConfig, got {type(self.data)}",
+            )
+        if self.model is not None and not isinstance(self.model, ModelConfig):
+            raise TypeError(
+                f"Expected model to resolve to ModelConfig, got {type(self.model)}",
+            )
+        if self.duration_col in [None, ""]:
+            raise ValueError("duration_col must be provided for survival experiments")
+
+    @staticmethod
+    def _get_attack_label_column(data: pd.DataFrame) -> Optional[str]:
+        """Find the attack label column in the dataframe."""
+        for candidate in ["attack.alias", "attack name", "attack_name", "attack", "attack_alias"]:
+            if candidate in data.columns:
+                return candidate
+        return None
+
+    @staticmethod
+    def _infer_attack_kind_from_label(label: Optional[str]) -> Optional[str]:
+        """Infer attack kind from a label string."""
+        if label is None or (isinstance(label, float) and np.isnan(label)):
+            return None
+        value = str(label).strip().lower()
+        if value == "":
+            return None
+        elif any(token in value for token in ["membership", "member"]):
+            return "membership"
+        elif any(token in value for token in ["attribute", "attr"]):
+            return "attribute"
+        else:
+            return "evasion"
+
+    @staticmethod
+    def _candidate_attack_metrics_for_kind(attack_kind: Optional[str]) -> list[str]:
+        """Return candidate metrics for a given attack kind."""
+        if attack_kind == "evasion":
+            return ["evasion_success", "evasion_accuracy"]
+        if attack_kind == "membership":
+            return ["membership_inference_accuracy"]
+        if attack_kind == "attribute":
+            return ["sex_inference_accuracy", "attribute_inference_accuracy"]
+        return [
+            "evasion_success",
+            "evasion_accuracy",
+            "membership_inference_accuracy",
+            "sex_inference_accuracy",
+            "attribute_inference_accuracy",
+        ]
+
+    @staticmethod
+    def _resolve_attack_size(
+        output: pd.DataFrame,
+        row_index: Optional[Any] = None,
+        attack_config: Optional["AttackConfig"] = None,
+    ) -> float:
+        """Resolve attack size from output or attack config."""
+        if row_index is not None and "attack_size" in output.columns:
+            attack_size = output.at[row_index, "attack_size"]
+            if not pd.isna(attack_size):
+                return float(attack_size)
+        if "attack_size" in output.columns and output["attack_size"].notna().all():
+            unique_sizes = output["attack_size"].dropna().unique()
+            if len(unique_sizes) == 1:
+                return float(unique_sizes[0])
+        if attack_config is not None:
+            return float(attack_config.attack_size)
+        return 1.0
+
+    @staticmethod
+    def _failure_count_from_metric(
+        value: float,
+        metric: str,
+        attack_size: float,
+    ) -> float:
+        """Compute failure count from a metric value."""
+        failure_rate = value if metric.endswith("_success") else 1 - value
+        return attack_size * failure_rate
+
+    def calculate_failures_under_attack(
+        self,
+        data: pd.DataFrame,
+        attack_config: Optional["AttackConfig"] = None,
+        benign_metric: str = "accuracy",
+    ) -> pd.DataFrame:
+        """Optionally derive ben/adv failure counts from attack-specific accuracy metrics."""
+        output = data.copy()
+        if benign_metric in output.columns and "ben_failures" not in output.columns:
+            if "attack_size" in output.columns:
+                attack_sizes = output["attack_size"].fillna(
+                    self._resolve_attack_size(output, attack_config=attack_config),
+                )
+            else:
+                attack_sizes = pd.Series(
+                    self._resolve_attack_size(output, attack_config=attack_config),
+                    index=output.index,
+                    dtype=float,
+                )
+            output["ben_failures"] = attack_sizes * (1 - output[benign_metric])
+
+        attack_label_col = self._get_attack_label_column(output)
+        attack_kind = attack_config.attack_kind if attack_config is not None else None
+
+        if attack_label_col is not None:
+            adv_failures = pd.Series(np.nan, index=output.index, dtype=float)
+            for row_index, attack_label in output[attack_label_col].items():
+                row_kind = self._infer_attack_kind_from_label(attack_label) or attack_kind
+                for metric in self._candidate_attack_metrics_for_kind(row_kind):
+                    if metric not in output.columns or pd.isna(
+                        output.at[row_index, metric],
+                    ):
+                        continue
+                    value = output.at[row_index, metric]
+                    adv_failures.at[row_index] = self._failure_count_from_metric(
+                        value=value,
+                        metric=metric,
+                        attack_size=self._resolve_attack_size(
+                            output,
+                            row_index=row_index,
+                            attack_config=attack_config,
+                        ),
+                    )
+                    break
+            if adv_failures.notna().any():
+                output["adv_failures"] = adv_failures
+                return output
+
+        for metric in self._candidate_attack_metrics_for_kind(attack_kind):
+            if metric in output.columns:
+                if "attack_size" in output.columns:
+                    attack_sizes = output["attack_size"].fillna(
+                        self._resolve_attack_size(output, attack_config=attack_config),
+                    )
+                else:
+                    attack_sizes = pd.Series(
+                        self._resolve_attack_size(output, attack_config=attack_config),
+                        index=output.index,
+                        dtype=float,
+                    )
+                output["adv_failures"] = attack_sizes * (
+                    output[metric]
+                    if metric.endswith("_success")
+                    else 1 - output[metric]
+                )
+                break
+        return output
+
+    def make_survival_model_table(
+        self,
+        models: dict,
+        dataset: Optional[str],
+        X_train: pd.DataFrame,
+        X_test: pd.DataFrame,
+        folder: str = ".",
+        t0s: Optional[dict] = None,
+    ) -> pd.DataFrame:
+        """Build comparison table with AIC/BIC/Concordance/ICI/E50 columns."""
+        t0s = t0s or {}
+        comparison_data = []
+
+        for model_type, fitter in models.items():
+            if fitter is None:
+                continue
+            t0 = t0s.get(model_type, 0.35)
+            row = {"model": model_type, "t0": t0}
+
+            # Compute AIC and BIC if available
+            try:
+                if hasattr(fitter, "AIC_"):
+                    row["AIC"] = fitter.AIC_
+            except Exception:
+                pass
+
+            try:
+                if hasattr(fitter, "AIC_partial_"):
+                    row["AIC"] = fitter.AIC_partial_
+            except Exception:
+                pass
+
+            try:
+                if hasattr(fitter, "BIC_"):
+                    row["BIC"] = fitter.BIC_
+            except Exception:
+                pass
+
+            try:
+                if hasattr(fitter, "concordance_index_"):
+                    row["concordance"] = fitter.concordance_index_
+            except Exception:
+                pass
+
+            # Optionally compute ICI/E50 if needed
+            if (
+                self.duration_col in X_test.columns
+                and self.event_col in X_test.columns
+            ):
+                try:
+                    from deckard.layers.survival import (
+                        survival_probability_calibration,
+                    )
+
+                    calibration = survival_probability_calibration(
+                        fitter=fitter,
+                        X_test=X_test,
+                        duration_col=self.duration_col,
+                        event_col=self.event_col,
+                        t0=t0,
+                    )
+                    if calibration is not None:
+                        if "ICI" in calibration:
+                            row["ICI"] = calibration["ICI"]
+                        if "E50" in calibration:
+                            row["E50"] = calibration["E50"]
+                except Exception:
+                    pass
+
+            comparison_data.append(row)
+
+        table = pd.DataFrame(comparison_data)
+        if not table.empty:
+            csv_path = Path(folder) / "aft_comparison.csv"
+            table.to_csv(csv_path, index=False)
+        return table

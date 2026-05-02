@@ -6,7 +6,8 @@ import logging
 import warnings
 from sklearn.base import BaseEstimator
 from dataclasses import dataclass, field
-from typing import Any, Union
+from typing import Any, cast, Union
+from omegaconf import DictConfig, OmegaConf
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
 
@@ -26,7 +27,7 @@ from art.estimators.regression.scikitlearn import (
     ScikitlearnRegressor,
 )
 from ..data import DataConfig
-from . import ModelConfig
+from .base import ModelConfig
 from ..utils import ConfigBase, resolve_class
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -306,86 +307,197 @@ class _DefenseBehaviorMixin:
         model_file: Union[str, None] = None,
         test_predictions_file: Union[str, None] = None,
         train_predictions_file: Union[str, None] = None,
+        training_probabilities_file: Union[str, None] = None,
+        test_probabilities_file: Union[str, None] = None,
         score_file: Union[str, None] = None,
     ) -> dict[str, Any]:
-        """
-        Executes the model workflow: training, prediction, scoring, and model persistence.
-
-        Parameters
-        ----------
-        data : DataConfig
-            An instance of DataConfig containing training and test data.
-        model_file : str or None, optional
-            Path to save or load the model. If provided, the model will be loaded from or saved to this path.
-        test_predictions_file : str or None, optional
-            Path to save the predictions. If provided, the predictions will be saved to this path.
-        score_file : str or None, optional
-            Path to load existing scores. If provided, scores will be loaded from this path.
-
-        Returns
-        -------
-        dict
-            Dictionary containing scores and timing information for training, prediction, and scoring.
-        Raises
-        ------
-        ValueError
-            If prediction is requested without a trained or loaded model.
-
-        """
-        # Ensure data is loaded
-        if data.X_train is None or data.y_train is None:
-            raise ValueError(
-                "Data not loaded. Please load data before calling the model.",
-            )
-
-        model_cfg = self._get_model_config()
-        model_cfg.defense = None
-        model_cfg.classifier = self.classifier
-        model_cfg.probability = self.probability
-        model_cfg.model_params = self.model_params
-        if self._model is not None:
-            model_cfg._model = self._model
-
-        # Load the score_file if provided
-        times = model_cfg._load_score_file(score_file)
-
-        # Load predictions from filepaths and update times
-        times = model_cfg._load_all_predictions(
-            train_predictions_file,
-            test_predictions_file,
-            times,
+        raise NotImplementedError(
+            "DefenseConfig no longer owns model runtime orchestration. "
+            "Use ModelConfig(defense=DefensePipelineConfig(...))(data=...) instead.",
         )
 
-        # Train the model if training data is provided and model is not already trained
-        times = model_cfg._load_or_train_model(data, model_file, times)
-        self._model = model_cfg._model
-        model_cfg._model = self.apply_to(model_cfg._model, data)
-        self._model = model_cfg._model
 
-        model_cfg._evaluate_and_score(data, times)
-        self.score_dict = model_cfg.score_dict
-        self.training_predictions = model_cfg.training_predictions
-        self.predictions = model_cfg.predictions
-        self.training_time = model_cfg.training_time
-        self.prediction_time = model_cfg.prediction_time
-        self.training_score_time = model_cfg.training_score_time
-        self.prediction_score_time = model_cfg.prediction_score_time
-        self.training_n = model_cfg.training_n
-        self.prediction_n = model_cfg.prediction_n
+@dataclass
+class DefensePipelineConfig(ConfigBase):
+    """Runtime owner for applying an ordered chain of defense specs."""
 
-        if train_predictions_file is not None:
-            model_cfg.save_data(
-                self.training_predictions,
-                train_predictions_file,
+    defenses: list = field(default_factory=list)
+    plugins: list = field(default_factory=list)
+    alias: str = field(default_factory=str)
+    score_dict: dict = field(default_factory=dict)
+    defense_application_time: Union[float, None] = None
+    _target_: Union[str, None] = None
+    _plugin_objects: Union[list, None] = field(default=None, repr=False, compare=False)
+
+    def __post_init__(self):
+        if not hasattr(self, "score_dict") or self.score_dict is None:
+            self.score_dict = {}
+        if not hasattr(self, "_target_") or self._target_ is None:
+            self._target_ = "deckard.model.DefensePipelineConfig"
+        self.defenses = self.normalize_defenses(self.defenses)
+
+    def __hash__(self):
+        return super().__hash__()
+
+    def _instantiate_plugin(self, plugin_spec: Any):
+        if isinstance(plugin_spec, dict):
+            spec = dict(plugin_spec)
+            class_path = spec.pop("name", spec.pop("_target_", None))
+            if class_path is None:
+                raise ValueError("Plugin dict must include 'name' or '_target_'")
+            return resolve_class(class_path)(**spec)
+
+        if isinstance(plugin_spec, str):
+            return resolve_class(plugin_spec)()
+
+        if isinstance(plugin_spec, type):
+            return plugin_spec()
+
+        return plugin_spec
+
+    def _get_plugins(self) -> list:
+        if self._plugin_objects is None:
+            plugin_specs = self.plugins if self.plugins is not None else []
+            if not isinstance(plugin_specs, list):
+                raise TypeError(f"plugins must be a list, got {type(plugin_specs)}")
+            self._plugin_objects = [
+                self._instantiate_plugin(spec) for spec in plugin_specs
+            ]
+        return self._plugin_objects
+
+    def _run_plugin_hook(self, hook_name: str, **kwargs):
+        hook_outputs = []
+        for plugin in self._get_plugins():
+            hook = getattr(plugin, hook_name, None)
+            if callable(hook):
+                hook_outputs.append(hook(self, **kwargs))
+        return hook_outputs
+
+    def _merge_plugin_scores(self, hook_outputs):
+        if self.score_dict is None:
+            self.score_dict = {}
+        for output in hook_outputs:
+            if isinstance(output, dict):
+                self.score_dict.update(output)
+
+    def _coerce_single_defense(self, defense_obj):
+        if hasattr(defense_obj, "apply_to"):
+            return defense_obj
+
+        if isinstance(defense_obj, DictConfig):
+            defense_obj = OmegaConf.to_container(defense_obj, resolve=True)
+
+        if isinstance(defense_obj, dict):
+            defense_dict = cast(dict[str, Any], dict(defense_obj))
+            target = defense_dict.pop("_target_", None)
+            if target is not None:
+                return resolve_class(target)(**defense_dict)
+
+            defense_name = defense_dict.get("defense_name")
+            if isinstance(defense_name, str) and defense_name.startswith("fairlearn."):
+                try:
+                    fair_cls = resolve_class("deckard.model.fairness.FairlearnDefenseConfig")
+                    return fair_cls(**defense_dict)
+                except Exception:
+                    pass
+            return DefenseConfig(**defense_dict)
+
+        raise TypeError(
+            f"Unsupported defense specification in pipeline: {type(defense_obj)}",
+        )
+
+    def normalize_defenses(self, defenses) -> list:
+        if defenses is None:
+            return []
+        if isinstance(defenses, (tuple, list)):
+            defense_list = list(defenses)
+        else:
+            defense_list = [defenses]
+        return [self._coerce_single_defense(item) for item in defense_list]
+
+    def resolve_stage(self, default_stage: str = "post_fit_pre_predict", **context) -> str:
+        stage = default_stage
+        hook_outputs = self._run_plugin_hook(
+            "resolve_defense_stage",
+            default_stage=default_stage,
+            current_stage=stage,
+            **context,
+        )
+        for output in hook_outputs:
+            if isinstance(output, str) and output.strip():
+                stage = output.strip()
+            elif isinstance(output, dict):
+                candidate = output.get("defense_stage", output.get("stage", None))
+                if isinstance(candidate, str) and candidate.strip():
+                    stage = candidate.strip()
+        return stage
+
+    def apply(self, estimator: BaseEstimator, data, stage: str = "post_fit_pre_predict") -> BaseEstimator:
+        if estimator is None:
+            raise ValueError("estimator must be provided before applying defenses")
+        defense_chain = self.normalize_defenses(self.defenses)
+        if len(defense_chain) == 0:
+            return estimator
+
+        self._run_plugin_hook(
+            "before_apply_defense",
+            estimator=estimator,
+            data=data,
+            stage=stage,
+            defense_chain=defense_chain,
+        )
+
+        defended_estimator = estimator
+        total_defense_time = 0.0
+        applied_defenses = []
+        for defense_obj in defense_chain:
+            apply_to = getattr(defense_obj, "apply_to", None)
+            if not callable(apply_to):
+                raise TypeError(
+                    "Configured defenses must implement apply_to(estimator, data)",
+                )
+            self._run_plugin_hook(
+                "before_apply_defense_step",
+                estimator=defended_estimator,
+                data=data,
+                stage=stage,
+                defense=defense_obj,
+                applied_defenses=applied_defenses,
             )
-        if test_predictions_file is not None:
-            model_cfg.save_data(self.predictions, test_predictions_file)
-        if score_file is not None:
-            model_cfg.save_scores(self.score_dict, score_file)
-        return self.score_dict
+            started = time.process_time()
+            defended_estimator = apply_to(estimator=defended_estimator, data=data)
+            elapsed = getattr(defense_obj, "defense_application_time", None)
+            if elapsed is None:
+                elapsed = time.process_time() - started
+            total_defense_time += float(elapsed)
+            applied_defenses.append(defense_obj)
+            step_outputs = self._run_plugin_hook(
+                "after_apply_defense_step",
+                estimator=defended_estimator,
+                data=data,
+                stage=stage,
+                defense=defense_obj,
+                applied_defenses=applied_defenses,
+                step_defense_time=float(elapsed),
+            )
+            self._merge_plugin_scores(step_outputs)
+
+        self.defense_application_time = total_defense_time
+        hook_outputs = self._run_plugin_hook(
+            "after_apply_defense",
+            estimator=defended_estimator,
+            data=data,
+            stage=stage,
+            defense_chain=defense_chain,
+            applied_defenses=applied_defenses,
+            applied_defense_types=[type(d).__name__ for d in applied_defenses],
+            defense_application_time=total_defense_time,
+        )
+        self._merge_plugin_scores(hook_outputs)
+        return cast(BaseEstimator, defended_estimator)
 
 
-@dataclass(eq=False)
+@dataclass(kw_only=True)
 class DefenseConfig(_DefenseBehaviorMixin, ConfigBase):
     """Concrete defense config dataclass that uses shared defense behavior mixin."""
 
@@ -418,3 +530,6 @@ class DefenseConfig(_DefenseBehaviorMixin, ConfigBase):
         repr=False,
         compare=False,
     )
+
+    def __hash__(self):
+        return super().__hash__()
