@@ -135,7 +135,7 @@ class ScorerConfig:
         return self.score_function(y_true, y_pred, **params)
 
 
-@dataclass
+@dataclass(eq=False)
 class ScorerDictConfig(ConfigBase):
     """Container of named ScorerConfig instances."""
 
@@ -305,7 +305,7 @@ def build_scorer_dict(cfg: ScorerDictConfig):
     return cfg if isinstance(cfg, ScorerDictConfig) else ScorerDictConfig(**cfg)
 
 
-@dataclass
+@dataclass(eq=False)
 class DefaultClassifierConfig(ScorerDictConfig):
     scorers: Dict[str, ScorerConfig] = field(
         default_factory=lambda: {
@@ -343,7 +343,7 @@ class DefaultClassifierConfig(ScorerDictConfig):
     )
 
 
-@dataclass
+@dataclass(eq=False)
 class DefaultRegressorConfig(ScorerDictConfig):
     scorers: Dict[str, ScorerConfig] = field(
         default_factory=lambda: {

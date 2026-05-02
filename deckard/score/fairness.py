@@ -140,7 +140,7 @@ def _series_like_to_float_dict(values) -> dict:
     return {"value": float(values)}
 
 
-@dataclass
+@dataclass(eq=False)
 class FairlearnScoreDictConfig(ScorerDictConfig):
     """ScorerDictConfig variant that computes fairness metrics through MetricFrame.
 
@@ -404,7 +404,7 @@ def fairness_group_mse_difference(y_true, y_pred, data=None, **kwargs):
     )
 
 
-@dataclass
+@dataclass(eq=False)
 class DefaultFairlearnClassificationConfig(FairlearnScoreDictConfig):
     """Default scorer set for classification fairness workflows."""
 
@@ -424,7 +424,7 @@ class DefaultFairlearnClassificationConfig(FairlearnScoreDictConfig):
     )
 
 
-@dataclass
+@dataclass(eq=False)
 class DefaultFairlearnRegressionConfig(FairlearnScoreDictConfig):
     """Default scorer set for regression fairness workflows."""
 

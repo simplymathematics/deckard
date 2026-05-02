@@ -47,7 +47,7 @@ AFT_MODEL_TYPES = {
 }
 
 
-@dataclass
+@dataclass(eq=False)
 class SurvivalModelConfig(ModelConfig):
     """Configuration for survival analysis models using lifelines.
 

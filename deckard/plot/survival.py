@@ -219,7 +219,7 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
         return ax
 
 
-@dataclass
+@dataclass(eq=False)
 class SurvivalSeabornPlotConfigList(ConfigBase):
     """Container for multiple survival model plots from SurvivalSeabornPlotterConfig."""
 

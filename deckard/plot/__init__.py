@@ -40,7 +40,7 @@ except ImportError:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(eq=False)
 class PlotConfig(ConfigBase):
     """Wrapper that routes to appropriate plot config (Seaborn or Yellowbrick).
 

@@ -68,7 +68,7 @@ def initialize_optimizer(optimizer_spec, model_params):
         raise ValueError(f"optimizer must be str or dict, got {type(optimizer_spec)}")
 
 
-@dataclass
+@dataclass(eq=False)
 class PytorchModelConfig(ModelConfig):
     """Configuration for PyTorch models using load_class for generic instantiation.
 

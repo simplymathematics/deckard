@@ -128,7 +128,7 @@ class SeabornPlotConfig(ConfigBase):
         return ax
 
 
-@dataclass
+@dataclass(eq=False)
 class SeabornPlotConfigList(ConfigBase):
     plots: List[SeabornPlotConfig] = field(default_factory=list)
     data_file: str = field(default_factory=str)

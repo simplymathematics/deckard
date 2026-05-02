@@ -55,7 +55,7 @@ __all__ = [
 ]
 
 
-@dataclass
+@dataclass(eq=False)
 class FileConfig(ConfigBase):
     """Configuration object for Deckard artifact and log file paths."""
 

@@ -396,14 +396,14 @@ class _FairnessBehaviorMixin:
         return scores
 
 
-@dataclass
+@dataclass(eq=False)
 class FairlearnModelConfig(_FairnessBehaviorMixin, ModelConfig):
     """Fairness-aware model config for standard model workflows."""
 
     data: Union[FairlearnDataConfig, None] = None
 
 
-@dataclass
+@dataclass(eq=False)
 class FairlearnDefenseConfig(_FairnessBehaviorMixin, DefenseConfig):
     """Fairness-aware defense config that inherits DefenseConfig."""
 

@@ -130,7 +130,7 @@ def data_empirical_cdf_function_score(y_true, y_pred, **kwargs):
 	return ecdf
 
 
-@dataclass
+@dataclass(eq=False)
 class DefaultDataClassificationConfig(ScorerDictConfig):
 	"""Default dataset-analysis scorers for classification datasets."""
 
@@ -165,7 +165,7 @@ class DefaultDataClassificationConfig(ScorerDictConfig):
 	)
 
 
-@dataclass
+@dataclass(eq=False)
 class DefaultDataRegressionConfig(ScorerDictConfig):
 	"""Default dataset-analysis scorers for regression datasets."""
 

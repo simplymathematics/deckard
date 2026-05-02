@@ -99,7 +99,7 @@ sklearn_supported_models = list(sklearn_dict.values())
 supported_models = sklearn_supported_models
 
 
-@dataclass
+@dataclass(eq=False)
 class AttackConfig(ConfigBase):
     """
     AttackConfig

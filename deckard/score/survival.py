@@ -62,7 +62,7 @@ def survival_bic_score(y_true, y_pred, **kwargs):
     raise ValueError("y_pred must expose BIC_ or enough information to compute BIC")
 
 
-@dataclass
+@dataclass(eq=False)
 class DefaultLifelinesConfig(ScorerDictConfig):
     """Default scorer set for survival workflows."""
 

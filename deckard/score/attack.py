@@ -27,7 +27,7 @@ def evasion_success_score(y_true, y_pred, ben_pred_labels=None, **kwargs):
     return float(1 - accuracy_score(ben_pred_labels, y_pred))
 
 
-@dataclass
+@dataclass(eq=False)
 class DefaultEvasionAttackScorerConfig(ScorerDictConfig):
     """Default scorer set for evasion attack evaluation."""
 
@@ -60,7 +60,7 @@ class DefaultEvasionAttackScorerConfig(ScorerDictConfig):
     )
 
 
-@dataclass
+@dataclass(eq=False)
 class DefaultEvasionRegressionAttackScorerConfig(ScorerDictConfig):
     """Default scorer set for evasion attacks against regression models."""
 
@@ -84,7 +84,7 @@ class DefaultEvasionRegressionAttackScorerConfig(ScorerDictConfig):
     )
 
 
-@dataclass
+@dataclass(eq=False)
 class DefaultMembershipInferenceAttackScorerConfig(ScorerDictConfig):
     """Default scorer set for membership inference attack evaluation."""
 
@@ -113,7 +113,7 @@ class DefaultMembershipInferenceAttackScorerConfig(ScorerDictConfig):
     )
 
 
-@dataclass
+@dataclass(eq=False)
 class DefaultAttributeInferenceAttackScorerConfig(ScorerDictConfig):
     """Default scorer set for categorical attribute inference evaluation."""
 
@@ -142,7 +142,7 @@ class DefaultAttributeInferenceAttackScorerConfig(ScorerDictConfig):
     )
 
 
-@dataclass
+@dataclass(eq=False)
 class DefaultAttributeInferenceRegressionAttackScorerConfig(ScorerDictConfig):
     """Default scorer set for continuous attribute inference evaluation."""
 
@@ -166,7 +166,7 @@ class DefaultAttributeInferenceRegressionAttackScorerConfig(ScorerDictConfig):
     )
 
 
-@dataclass
+@dataclass(eq=False)
 class AttackScorerConfig(ConfigBase):
     """Owns all attack scoring logic and profile-specific scorer configs."""
 

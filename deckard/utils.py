@@ -232,6 +232,12 @@ class ConfigBase:
             self._hash_value = hash_conf_values(self._hash_payload)
         return int(self._hash_value, 16)
 
+    def __eq__(self, other: object) -> bool:
+        """Two ConfigBase instances are equal when their configuration hashes match."""
+        if not isinstance(other, ConfigBase):
+            return NotImplemented
+        return hash(self) == hash(other)
+
     def _is_hash_field(self, name: str) -> bool:
         if name == "_target_":
             return True

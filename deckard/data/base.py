@@ -65,7 +65,7 @@ def _lifelines_dataset_loaders() -> dict:
     return _discover_lifelines_dataset_loaders()
 
 
-@dataclass
+@dataclass(eq=False)
 class DataConfig(ConfigBase):
     """
     Configuration and utility class for loading, preprocessing, and splitting datasets for machine learning tasks.
@@ -1128,7 +1128,7 @@ class DataConfig(ConfigBase):
         return self.score_dict
 
 
-@dataclass
+@dataclass(eq=False)
 class DataPipelineConfig(DataConfig):
     """Initializes a data pipeline configuration and fits it to the data in the call() method."""
 
@@ -1285,6 +1285,14 @@ class DataPipelineConfig(DataConfig):
                 if len(input_cols) == n_features:
                     return list(input_cols)
                 return [f"feature_{i}" for i in range(n_features)]
+
+        # Nothing to do for an empty pipeline — skip fit/transform entirely.
+        if not pipeline.steps:
+            self.pipeline_fit_time = 0.0
+            self.pipeline_fit_n = X_train.shape[0]
+            self.pipeline_transform_time = 0.0
+            self.pipeline_transform_n = X_test.shape[0]
+            return X_train, X_test, y_train, y_test
 
         if not hasattr(self, "pipeline_fit_time") or self.pipeline_fit_time is None:
             logger.info("Fitting data pipeline to training data")

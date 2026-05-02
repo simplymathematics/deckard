@@ -81,7 +81,7 @@ sklearn_dict = {**classifier_dict, **regressor_dict}
 sklearn_models = list(sklearn_dict.values())
 
 
-@dataclass
+@dataclass(eq=False)
 class ModelConfig(ConfigBase):
     """
     A configuration and utility class for managing scikit-learn model instantiation, training, prediction, scoring, and persistence.

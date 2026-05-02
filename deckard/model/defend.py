@@ -317,7 +317,7 @@ class _DefenseBehaviorMixin:
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class DefensePipelineConfig(ConfigBase):
     """Runtime owner for applying an ordered chain of defense specs."""
 

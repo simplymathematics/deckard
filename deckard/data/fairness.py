@@ -8,7 +8,7 @@ from .base import DataPipelineConfig
 from ..utils import load_class
 
 
-@dataclass
+@dataclass(eq=False)
 class FairlearnDataConfig(DataPipelineConfig):
     """Data pipeline config with fairlearn-sensitive feature support."""
 
@@ -137,6 +137,8 @@ class FairlearnDataConfig(DataPipelineConfig):
             self._sensitive_all,
             "full-data sampling",
         )
+        #TODO: Add support for self._sensitive_val
+        
 
     def _score(self) -> dict:
         """Thin wrapper that delegates fairness dataset scoring to ``self.scorer``."""
