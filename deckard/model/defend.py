@@ -157,7 +157,10 @@ class _DefenseBehaviorMixin:
             raise ValueError(
                 "ModelConfig must have a fitted estimator before applying defense",
             )
-        else:
+        elif not isinstance(self._model, BaseEstimator) and not hasattr(
+            self._model,
+            "model",
+        ):
             assert isinstance(
                 self._model,
                 BaseEstimator,
@@ -166,8 +169,31 @@ class _DefenseBehaviorMixin:
         # Dynamically import the defense class with defense_params as kwargs
         defense_type, defense_subtype, defense_class = self.parse_defense_name()
         art_class, init_params = self.get_art_class(data)
+        base_estimator = self._model
+        existing_preprocessors = []
+        existing_postprocessors = []
+        if hasattr(self._model, "model") and hasattr(
+            self._model,
+            "preprocessing_defences",
+        ):
+            base_estimator = getattr(self._model, "model")
+            art_class = self._model.__class__
+            existing_preprocessors = list(
+                getattr(self._model, "preprocessing_defences", []) or [],
+            )
+            existing_postprocessors = list(
+                getattr(self._model, "postprocessing_defences", []) or [],
+            )
+            init_params["preprocessing"] = getattr(
+                self._model,
+                "preprocessing",
+                init_params.get("preprocessing"),
+            )
+            clip_values = getattr(self._model, "clip_values", None)
+            if clip_values is not None:
+                init_params["clip_values"] = clip_values
         try:
-            check_is_fitted(self._model)
+            check_is_fitted(base_estimator)
         except NotFittedError as e:
             raise ValueError(
                 "ModelConfig must have a fitted estimator before applying defense",
@@ -179,18 +205,21 @@ class _DefenseBehaviorMixin:
             case "preprocessor":
                 assert defense_class is not None
                 defense = defense_class(**(self.defense_params or {}))
+                preprocessing_defences = existing_preprocessors + [defense]
                 defended_estimator = art_class(
-                    self.get_model(),
-                    preprocessor=defense,
-                    preprocessing_defences=[defense],
+                    base_estimator,
+                    preprocessing_defences=preprocessing_defences,
+                    postprocessing_defences=existing_postprocessors or None,
                     **init_params,
                 )
             case "postprocessor":
                 assert defense_class is not None
                 defense = defense_class(**(self.defense_params or {}))
+                postprocessing_defences = existing_postprocessors + [defense]
                 defended_estimator = art_class(
-                    self.get_model(),
-                    postprocessing_defences=[defense],
+                    base_estimator,
+                    preprocessing_defences=existing_preprocessors or None,
+                    postprocessing_defences=postprocessing_defences,
                     **init_params,
                 )
             case "detector":
@@ -299,6 +328,8 @@ class _DefenseBehaviorMixin:
                 "input_shape": data.X_train.shape[1:],
                 "nb_classes": len(set(data.y_train)) if self.classifier else None,
             }
+        if "preprocessing" not in init_params:
+            init_params["preprocessing"] = None
         return art_class, init_params
 
     def __call__(
@@ -338,6 +369,62 @@ class DefensePipelineConfig(ConfigBase):
 
     def __hash__(self):
         return super().__hash__()
+
+    @classmethod
+    def _is_pipeline_target(cls, target: Any) -> bool:
+        if not isinstance(target, str):
+            return False
+        return target.rsplit(".", 1)[-1] == cls.__name__
+
+    @classmethod
+    def _looks_like_single_defense_spec(cls, defense_spec: dict[str, Any]) -> bool:
+        if "defenses" in defense_spec:
+            return False
+        target = defense_spec.get("_target_")
+        if target is not None and not cls._is_pipeline_target(target):
+            return True
+        legacy_keys = {
+            "defense_name",
+            "defense_params",
+            "model_type",
+            "classifier",
+            "probability",
+            "clip_values",
+            "alias",
+        }
+        return any(key in defense_spec for key in legacy_keys)
+
+    @classmethod
+    def coerce(cls, defense_config: Any):
+        if defense_config is None or isinstance(defense_config, cls):
+            return defense_config
+
+        if isinstance(defense_config, DictConfig):
+            defense_config = OmegaConf.to_container(defense_config, resolve=True)
+        elif isinstance(defense_config, ConfigBase):
+            defense_config = defense_config.to_dict()
+        elif isinstance(defense_config, str):
+            defense_config = OmegaConf.to_container(
+                OmegaConf.load(defense_config),
+                resolve=True,
+            )
+
+        if hasattr(defense_config, "apply_to"):
+            return cls(defenses=[defense_config])
+
+        if isinstance(defense_config, dict):
+            defense_dict = cast(dict[str, Any], dict(defense_config))
+            if cls._is_pipeline_target(defense_dict.get("_target_")):
+                defense_dict.pop("_target_", None)
+                return cls(**defense_dict)
+            if "defenses" in defense_dict:
+                return cls(**defense_dict)
+            if cls._looks_like_single_defense_spec(defense_dict):
+                return cls(defenses=[defense_dict])
+
+        raise TypeError(
+            "Defense config must be a DefensePipelineConfig, a single defense spec, or None",
+        )
 
     def _instantiate_plugin(self, plugin_spec: Any):
         if isinstance(plugin_spec, dict):
@@ -406,6 +493,41 @@ class DefensePipelineConfig(ConfigBase):
             f"Unsupported defense specification in pipeline: {type(defense_obj)}",
         )
 
+    def _inherit_model_context(self, defense_obj, estimator) -> None:
+        base_estimator = getattr(estimator, "model", estimator)
+        blank_values = {None, "", "None", "null", "Null", "NULL"}
+
+        if hasattr(defense_obj, "model_type") and getattr(
+            defense_obj,
+            "model_type",
+            None,
+        ) in blank_values:
+            defense_obj.model_type = (
+                f"{base_estimator.__class__.__module__}."
+                f"{base_estimator.__class__.__name__}"
+            )
+
+        if hasattr(defense_obj, "classifier") and getattr(
+            defense_obj,
+            "classifier",
+            None,
+        ) is None:
+            estimator_type = getattr(base_estimator, "_estimator_type", None)
+            if estimator_type == "classifier":
+                defense_obj.classifier = True
+            elif estimator_type == "regressor":
+                defense_obj.classifier = False
+
+        if hasattr(defense_obj, "model_params") and not getattr(
+            defense_obj,
+            "model_params",
+            None,
+        ) and hasattr(base_estimator, "get_params"):
+            defense_obj.model_params = base_estimator.get_params()
+
+        if hasattr(defense_obj, "probability") and hasattr(base_estimator, "predict_proba"):
+            defense_obj.probability = True
+
     def normalize_defenses(self, defenses) -> list:
         if defenses is None:
             return []
@@ -451,6 +573,7 @@ class DefensePipelineConfig(ConfigBase):
         total_defense_time = 0.0
         applied_defenses = []
         for defense_obj in defense_chain:
+            self._inherit_model_context(defense_obj, defended_estimator)
             apply_to = getattr(defense_obj, "apply_to", None)
             if not callable(apply_to):
                 raise TypeError(

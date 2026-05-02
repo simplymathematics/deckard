@@ -20,7 +20,7 @@ class LifelinesDataMode(str, Enum):
     OPTUNA_DB = "optuna_db"
 
 
-@dataclass
+@dataclass(eq=False)
 class LifelinesDataConfig(DataConfig):
     """DataConfig specialization for survival analysis with explicit mode handling.
 

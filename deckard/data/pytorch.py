@@ -25,12 +25,12 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(eq=False)
 class PytorchDataPipelineConfig(DataPipelineConfig):
     pass
 
 
-@dataclass
+@dataclass(eq=False)
 class PytorchDataConfig(DataConfig):
     """Configuration for PyTorch datasets.
 
@@ -431,7 +431,7 @@ class PytorchDataConfig(DataConfig):
         return all_scores
 
 
-@dataclass
+@dataclass(eq=False)
 class PytorchCustomDataConfig(PytorchDataConfig):
     """Configuration for HuggingFace datasets loaded via DataLoader.
 

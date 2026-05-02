@@ -266,10 +266,7 @@ class ModelConfig(ConfigBase):
         if self.defense is not None:
             from .defend import DefensePipelineConfig
 
-            if not isinstance(self.defense, DefensePipelineConfig):
-                raise TypeError(
-                    "ModelConfig.defense must be a DefensePipelineConfig or None",
-                )
+            self.defense = DefensePipelineConfig.coerce(self.defense)
 
     def _initialize_model(self):
         # Initialize model through the shared loader used by config objects.
@@ -360,11 +357,9 @@ class ModelConfig(ConfigBase):
 
         from .defend import DefensePipelineConfig
 
-        if isinstance(self.defense, DefensePipelineConfig):
-            self._defense_pipeline = self.defense
-            return self._defense_pipeline
-
-        raise TypeError("ModelConfig.defense must be a DefensePipelineConfig or None")
+        self.defense = DefensePipelineConfig.coerce(self.defense)
+        self._defense_pipeline = self.defense
+        return self._defense_pipeline
     
     
     def get_art_class(self, data):
