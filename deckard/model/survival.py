@@ -30,7 +30,6 @@ from lifelines.fitters import RegressionFitter
 from lifelines.utils import CensoringType
 
 from .base import ModelConfig
-from ..data import DataConfig
 from ..utils import save_data
 
 logger = logging.getLogger(__name__)
@@ -250,7 +249,8 @@ class SurvivalModelConfig(ModelConfig):
         predictions_at_t0 = np.clip(
             1
             - model.predict_survival_function(
-                calibration_df, times=[self.t0]
+                calibration_df,
+                times=[self.t0],
             ).T.squeeze(),
             1e-10,
             1 - 1e-10,

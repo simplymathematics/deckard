@@ -1,4 +1,5 @@
 """Unit tests for SurvivalDataConfig and four survival analysis modes."""
+
 import pytest
 
 from deckard.data import DataConfig

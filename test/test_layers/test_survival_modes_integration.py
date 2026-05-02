@@ -1,4 +1,5 @@
 """Integration tests for all four survival analysis modes."""
+
 import pandas as pd
 import pytest
 
@@ -85,10 +86,12 @@ class TestMode2AuxiliaryModelData:
     def test_mode2_failure_computation(self):
         """Mode 2: Compute failures from model accuracy."""
         # Create synthetic accuracy data
-        df = pd.DataFrame({
-            "accuracy": [0.7, 0.75, 0.82, 0.78, 0.80],
-            "model_pred": [0.7, 0.75, 0.82, 0.78, 0.80],
-        })
+        df = pd.DataFrame(
+            {
+                "accuracy": [0.7, 0.75, 0.82, 0.78, 0.80],
+                "model_pred": [0.7, 0.75, 0.82, 0.78, 0.80],
+            },
+        )
 
         # Compute failures as 100 * (1 - accuracy)
         df["ben_failures"] = 100 * (1 - df["accuracy"])
@@ -130,13 +133,21 @@ class TestMode3AuxiliaryAttackData:
     def test_mode3_attack_failure_computation(self):
         """Mode 3: Use attack metrics to compute failures."""
         # Create synthetic attack data
-        data = pd.DataFrame({
-            "model_accuracy": [0.8, 0.75, 0.82, 0.78, 0.80],
-            "attack.alias": ["evasion", "evasion", "membership", "membership", "evasion"],
-            "evasion_success": [0.3, 0.25, 0.28, 0.32, 0.27],
-            "T": [30, 60, 90, 120, 150],  # Duration
-            "E": [1, 1, 0, 1, 1],  # Event
-        })
+        data = pd.DataFrame(
+            {
+                "model_accuracy": [0.8, 0.75, 0.82, 0.78, 0.80],
+                "attack.alias": [
+                    "evasion",
+                    "evasion",
+                    "membership",
+                    "membership",
+                    "evasion",
+                ],
+                "evasion_success": [0.3, 0.25, 0.28, 0.32, 0.27],
+                "T": [30, 60, 90, 120, 150],  # Duration
+                "E": [1, 1, 0, 1, 1],  # Event
+            },
+        )
 
         # Compute failures from attack success rates
         data["adv_failures"] = 100 * data["evasion_success"]

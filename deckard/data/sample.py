@@ -90,9 +90,7 @@ class SplitSampler(BaseSampler):
 
         # Adjust stratification for the inner split
         stratify_sub = (
-            stratify_col.iloc[train_test_idx]
-            if stratify_col is not None
-            else None
+            stratify_col.iloc[train_test_idx] if stratify_col is not None else None
         )
 
         # Second split: train vs test
@@ -152,16 +150,14 @@ class KFoldSampler(BaseSampler):
         fold = cfg.fold if cfg.fold is not None else 0
         if fold >= len(splits):
             raise ValueError(
-                f"fold={fold} out of range for n_splits={self.n_splits}"
+                f"fold={fold} out of range for n_splits={self.n_splits}",
             )
 
         train_val_idx, val_idx = splits[fold]
 
         # Stratification for the inner train/test split
         stratify_sub = (
-            stratify_col.iloc[train_val_idx]
-            if stratify_col is not None
-            else None
+            stratify_col.iloc[train_val_idx] if stratify_col is not None else None
         )
 
         train_idx, test_idx = train_test_split(
@@ -220,16 +216,14 @@ class ShuffleSampler(BaseSampler):
         fold = cfg.fold if cfg.fold is not None else 0
         if fold >= len(splits):
             raise ValueError(
-                f"fold={fold} out of range for n_splits={self.n_splits}"
+                f"fold={fold} out of range for n_splits={self.n_splits}",
             )
 
         train_test_idx, val_idx = splits[fold]
 
         # Stratification for the inner train/test split
         stratify_sub = (
-            stratify_col.iloc[train_test_idx]
-            if stratify_col is not None
-            else None
+            stratify_col.iloc[train_test_idx] if stratify_col is not None else None
         )
 
         train_idx, test_idx = train_test_split(

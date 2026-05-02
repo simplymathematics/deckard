@@ -297,7 +297,7 @@ class SurvivalSeabornPlotConfigList(ConfigBase):
             or runtime_data.y_test is None
         ):
             raise ValueError(
-                "Runtime survival split did not produce train/test partitions"
+                "Runtime survival split did not produce train/test partitions",
             )
 
         X_train = pd.DataFrame(runtime_data.X_train).copy()

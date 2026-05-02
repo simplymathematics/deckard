@@ -77,7 +77,7 @@ class BatchedMixin:
                                 if "test_score" in locals():
                                     f.write(",test_score")
                                 f.write("\n")
-                                f.write(f"{i+1},")
+                                f.write(f"{i + 1},")
                                 f.write(f"{score},")
                                 if "test_score" in locals():
                                     f.write(f" {test_score},")
@@ -85,7 +85,7 @@ class BatchedMixin:
                         else:
                             with open(log_file, "a") as f:
                                 # assuming csv format
-                                f.write(f"{i+1},")
+                                f.write(f"{i + 1},")
                                 f.write(f"{score},")
                                 if "test_score" in locals():
                                     f.write(f"{test_score},")
@@ -96,7 +96,7 @@ class BatchedMixin:
                             if "test_score" in locals():
                                 f.write(" test_score,")
                             f.write("\n")
-                            f.write(f"{i+1},")
+                            f.write(f"{i + 1},")
                             f.write(f"{score},")
                             if "test_score" in locals():
                                 f.write(f"{test_score},")

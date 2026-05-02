@@ -363,7 +363,7 @@ class DataConfig(ConfigBase):
             if self._X is not None and self.stratify in self._X.columns:
                 return self._X[self.stratify]
             raise ValueError(
-                f"Stratify column '{self.stratify}' not found in data columns"
+                f"Stratify column '{self.stratify}' not found in data columns",
             )
         raise ValueError("stratify must be None, True, False, or a column name")
 

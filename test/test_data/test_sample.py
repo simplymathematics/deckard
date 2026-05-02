@@ -5,12 +5,19 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from deckard.data import DataConfig, BaseSampler, KFoldSampler, ShuffleSampler, SplitSampler
+from deckard.data import (
+    DataConfig,
+    BaseSampler,
+    KFoldSampler,
+    ShuffleSampler,
+    SplitSampler,
+)
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_clf_config(**kwargs):
     """Return a small classification DataConfig, loading data but not yet sampling."""
@@ -60,6 +67,7 @@ def _make_reg_config(**kwargs):
 # BaseSampler
 # ---------------------------------------------------------------------------
 
+
 class TestBaseSampler(unittest.TestCase):
     def test_base_sampler_raises(self):
         sampler = BaseSampler()
@@ -70,6 +78,7 @@ class TestBaseSampler(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # _get_stratify_col
 # ---------------------------------------------------------------------------
+
 
 class TestGetStratifyCol(unittest.TestCase):
     def test_stratify_true_returns_y(self):
@@ -111,6 +120,7 @@ class TestGetStratifyCol(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # SplitSampler
 # ---------------------------------------------------------------------------
+
 
 class TestSplitSampler(unittest.TestCase):
     def setUp(self):
@@ -258,6 +268,7 @@ class TestSplitSampler(unittest.TestCase):
 # KFoldSampler
 # ---------------------------------------------------------------------------
 
+
 class TestKFoldSampler(unittest.TestCase):
     def setUp(self):
         self.cfg = _make_clf_config()
@@ -344,6 +355,7 @@ class TestKFoldSampler(unittest.TestCase):
 # ShuffleSampler
 # ---------------------------------------------------------------------------
 
+
 class TestShuffleSampler(unittest.TestCase):
     def setUp(self):
         self.cfg = _make_clf_config(val_size=0.15)
@@ -418,6 +430,7 @@ class TestShuffleSampler(unittest.TestCase):
 # Legacy 2-way split still works (no sampler)
 # ---------------------------------------------------------------------------
 
+
 class TestLegacySplitUnchanged(unittest.TestCase):
     def test_no_val_set_when_no_sample(self):
         cfg = DataConfig(
@@ -490,6 +503,7 @@ class TestLegacySplitUnchanged(unittest.TestCase):
 # OmegaConf DictConfig sampler spec
 # ---------------------------------------------------------------------------
 
+
 class TestOmegaConfSampleSpec(unittest.TestCase):
     def test_omegaconf_dictconfig_sample(self):
         """_resolve_sample should handle an OmegaConf DictConfig spec."""
@@ -513,7 +527,7 @@ class TestOmegaConfSampleSpec(unittest.TestCase):
         )
         # Simulate Hydra passing an OmegaConf DictConfig for the sampler
         cfg.sample = OmegaConf.create(
-            {"name": "deckard.data.sample.SplitSampler"}
+            {"name": "deckard.data.sample.SplitSampler"},
         )
         cfg._load_data()
         cfg._sample()
@@ -524,6 +538,7 @@ class TestOmegaConfSampleSpec(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Hydra ConfigStore registration
 # ---------------------------------------------------------------------------
+
 
 class TestConfigStoreRegistration(unittest.TestCase):
     def test_register_sampler_configs_runs_without_error(self):
@@ -548,6 +563,7 @@ class TestConfigStoreRegistration(unittest.TestCase):
                 listed_names,
                 msg=f"Expected '{expected}' in ConfigStore sample group, got: {listed_names}",
             )
+
 
 if __name__ == "__main__":
     unittest.main()
