@@ -4,9 +4,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional, Union
 
-import pandas as pd
-
-from ..score.base import ScorerDictConfig
 from .base import DataConfig
 
 

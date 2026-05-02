@@ -1,0 +1,9 @@
+# Use with: sample=kfold
+# e.g. python -m deckard data=digits-kfold sample=kfold
+dataset_name: digits
+test_size: 0.2
+random_state: 42
+classifier: true
+stratify: true
+fold: 0
+alias: digits-kfold

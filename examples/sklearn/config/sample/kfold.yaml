@@ -1,0 +1,5 @@
+# K-Fold cross-validation sampler.
+# The fold selected by data.fold is used as the validation set.
+name: deckard.data.sample.KFoldSampler
+n_splits: 5
+shuffle: true
