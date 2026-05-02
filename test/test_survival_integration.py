@@ -28,14 +28,28 @@ def test_survival_cli_in_examples_sklearn(dataset_name, survival_model, tmp_path
     env["DECKARD_DEFAULT_CONFIG_FILE"] = "survival.yaml"
     env["MPLBACKEND"] = "Agg"
 
-    cmd = [
-        "deckard",
-        "survival",
-        f"data={dataset_name}",
-        f"model={survival_model}",
-        "score=survival",
-    ]
-    if shutil.which("deckard") is None:
+    deckard_cli = shutil.which("deckard")
+    if deckard_cli is not None:
+        probe = subprocess.run(
+            [deckard_cli, "--help"],
+            env=env,
+            cwd=examples_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    else:
+        probe = None
+
+    if probe is not None and probe.returncode == 0:
+        cmd = [
+            deckard_cli,
+            "survival",
+            f"data={dataset_name}",
+            f"model={survival_model}",
+            "score=survival",
+        ]
+    else:
         cmd = [
             sys.executable,
             "-m",

@@ -3,9 +3,9 @@ import numpy as np
 import tempfile
 import shutil
 from deckard.experiment import ExperimentConfig, SurvivalExperimentConfig
-from deckard.data import DataConfig, DataPipelineConfig, FairnessDataConfig
-from deckard.model import ModelConfig, FairnessModelConfig
-from deckard.model.defend import DefenseConfig
+from deckard.data import DataConfig, DataPipelineConfig, FairlearnDataConfig
+from deckard.model import ModelConfig, FairlearnModelConfig
+from deckard.model.defend import DefensePipelineConfig
 from deckard.attack import AttackConfig
 
 # from deckard.score import ScorerDictConfig  # Removed unused import
@@ -110,7 +110,6 @@ class TestExperimentConfig(unittest.TestCase):
             data={
                 "dataset_name": "make_classification",
                 "data_params": {"n_samples": 20, "n_features": 6},
-                "groupby_columns": ["feature_0"],
                 "sensitive_columns": ["feature_0"],
                 "pipeline": {},
                 "classifier": True,
@@ -120,14 +119,13 @@ class TestExperimentConfig(unittest.TestCase):
             files=FileConfig(),
             classifier=True,
         )
-        self.assertIsInstance(exp.data, FairnessDataConfig)
+        self.assertIsInstance(exp.data, FairlearnDataConfig)
 
     def test_fairness_data_auto_uses_fairness_model_config(self):
         exp = ExperimentConfig(
             data={
                 "dataset_name": "make_classification",
                 "data_params": {"n_samples": 40, "n_features": 6},
-                "groupby_columns": ["feature_0"],
                 "sensitive_columns": ["feature_0"],
                 "pipeline": {},
                 "classifier": True,
@@ -142,15 +140,14 @@ class TestExperimentConfig(unittest.TestCase):
             classifier=True,
         )
 
-        self.assertIsInstance(exp.data, FairnessDataConfig)
-        self.assertIsInstance(exp.model, FairnessModelConfig)
+        self.assertIsInstance(exp.data, FairlearnDataConfig)
+        self.assertIsInstance(exp.model, FairlearnModelConfig)
 
     def test_fairness_data_keeps_standard_defense_config(self):
         exp = ExperimentConfig(
             data={
                 "dataset_name": "adult",
                 "classifier": True,
-                "groupby_columns": ["sex"],
                 "sensitive_columns": ["sex"],
             },
             model=ModelConfig(
@@ -159,18 +156,24 @@ class TestExperimentConfig(unittest.TestCase):
                 model_params={"n_estimators": 10},
             ),
             defense={
-                "defense_name": "art.defences.postprocessor.ClassLabels",
-                "defense_params": {"apply_fit": False, "apply_predict": True},
-                "alias": "class-labels",
+                "defenses": [
+                    {
+                        "defense_name": "art.defences.postprocessor.ClassLabels",
+                        "defense_params": {"apply_fit": False, "apply_predict": True},
+                        "alias": "class-labels",
+                        "model_type": "sklearn.ensemble.RandomForestClassifier",
+                        "classifier": True,
+                    },
+                ],
             },
             attack=None,
             files=None,
             score=None,
         )
 
-        self.assertIsInstance(exp.data, FairnessDataConfig)
-        self.assertIsInstance(exp.model, FairnessModelConfig)
-        self.assertIsInstance(exp.model.defense, DefenseConfig)
+        self.assertIsInstance(exp.data, FairlearnDataConfig)
+        self.assertIsInstance(exp.model, FairlearnModelConfig)
+        self.assertIsInstance(exp.model.defense, DefensePipelineConfig)
         self.assertIs(exp.model.data, exp.data)
 
 

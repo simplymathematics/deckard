@@ -133,6 +133,23 @@ class TestDataConfig(unittest.TestCase):
         total = len(X_train) + len(X_test)
         self.assertEqual(total, 100)
 
+    def test_scorer_none_skips_data_scoring(self):
+        cfg = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 30,
+                "n_features": 4,
+                "n_informative": 2,
+                "n_redundant": 0,
+                "random_state": 42,
+            },
+            scorer=None,
+        )
+        scores = cfg()
+        self.assertIn("data_load_time", scores)
+        self.assertIn("data_sample_time", scores)
+        self.assertNotIn("class_counts", scores)
+
     def test_make_regression_data_loading_and_sampling(self):
         cfg = DataConfig(
             dataset_name="make_regression",

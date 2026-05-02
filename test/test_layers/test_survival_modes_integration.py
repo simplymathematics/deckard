@@ -5,7 +5,7 @@ import pytest
 
 from deckard.attack import AttackConfig
 from deckard.data import DataConfig
-from deckard.data.survival import SurvivalDataConfig, SurvivalDataMode
+from deckard.data.survival import LifelinesDataConfig, LifelinesDataMode
 from deckard.experiment import SurvivalExperimentConfig
 from deckard.layers.survival import survival_main
 
@@ -53,17 +53,17 @@ class TestMode2AuxiliaryModelData:
     """Integration test for Mode 2: Auxiliary model for arbitrary dataset."""
 
     def test_mode2_config_creation(self):
-        """Create SurvivalDataConfig for Mode 2."""
+        """Create LifelinesDataConfig for Mode 2."""
         base_config = DataConfig(
             dataset_name="toy_dataset",
             target="adv_failure_rate",
             classifier=False,
         )
-        survival_data_config = SurvivalDataConfig.from_auxiliary_model(
+        survival_data_config = LifelinesDataConfig.from_auxiliary_model(
             base_config,
             benign_metric="accuracy",
         )
-        assert survival_data_config.mode == SurvivalDataMode.AUXILIARY_MODEL
+        assert survival_data_config.mode == LifelinesDataMode.AUXILIARY_MODEL
         assert survival_data_config.has_auxiliary_model()
         assert survival_data_config.benign_metric == "accuracy"
 
@@ -104,18 +104,18 @@ class TestMode3AuxiliaryAttackData:
     """Integration test for Mode 3: Auxiliary attack for failure measurement."""
 
     def test_mode3_config_creation(self):
-        """Create SurvivalDataConfig for Mode 3."""
+        """Create LifelinesDataConfig for Mode 3."""
         base_config = DataConfig(
             dataset_name="attack_dataset",
             target="adv_failure_rate",
             classifier=False,
         )
         attack_config = {"attack_kind": "evasion", "attack_size": 100}
-        survival_data_config = SurvivalDataConfig.from_auxiliary_attack(
+        survival_data_config = LifelinesDataConfig.from_auxiliary_attack(
             base_config,
             attack_config=attack_config,
         )
-        assert survival_data_config.mode == SurvivalDataMode.AUXILIARY_ATTACK
+        assert survival_data_config.mode == LifelinesDataMode.AUXILIARY_ATTACK
         assert survival_data_config.has_auxiliary_attack()
         assert survival_data_config.attack_config == attack_config
 
@@ -159,21 +159,21 @@ class TestMode4OptunaDatabase:
     """Integration test for Mode 4: Pre-computed results from Optuna database."""
 
     def test_mode4_config_creation(self, tmp_path):
-        """Create SurvivalDataConfig for Mode 4."""
+        """Create LifelinesDataConfig for Mode 4."""
         optuna_db_path = str(tmp_path / "optuna.db")
-        survival_data_config = SurvivalDataConfig.from_optuna_db(
+        survival_data_config = LifelinesDataConfig.from_optuna_db(
             optuna_db=optuna_db_path,
             dataset_name="optuna_results",
             optuna_schema={"attack_kind": "evasion"},
         )
-        assert survival_data_config.mode == SurvivalDataMode.OPTUNA_DB
+        assert survival_data_config.mode == LifelinesDataMode.OPTUNA_DB
         assert survival_data_config.is_optuna_db()
         assert survival_data_config.optuna_schema == {"attack_kind": "evasion"}
 
     def test_mode4_optuna_query_filtering(self, tmp_path):
         """Mode 4: Support query filtering on Optuna results."""
         optuna_db_path = str(tmp_path / "optuna.db")
-        survival_data_config = SurvivalDataConfig.from_optuna_db(
+        survival_data_config = LifelinesDataConfig.from_optuna_db(
             optuna_db=optuna_db_path,
             dataset_name="optuna_results",
             optuna_query="trial_id > 10",
@@ -188,21 +188,21 @@ class TestModeInteroperability:
     def test_modes_are_mutually_exclusive(self):
         """Verify each config instance has exactly one mode."""
         configs = [
-            SurvivalDataConfig(
-                mode=SurvivalDataMode.NATIVE,
+            LifelinesDataConfig(
+                mode=LifelinesDataMode.NATIVE,
                 dataset_name="test",
                 target="T",
                 duration_col="T",
                 event_col="E",
             ),
-            SurvivalDataConfig(
-                mode=SurvivalDataMode.AUXILIARY_MODEL,
+            LifelinesDataConfig(
+                mode=LifelinesDataMode.AUXILIARY_MODEL,
                 dataset_name="test",
                 target="T",
                 benign_metric="accuracy",
             ),
-            SurvivalDataConfig(
-                mode=SurvivalDataMode.AUXILIARY_ATTACK,
+            LifelinesDataConfig(
+                mode=LifelinesDataMode.AUXILIARY_ATTACK,
                 dataset_name="test",
                 target="T",
                 attack_config={"attack_kind": "evasion"},
@@ -229,16 +229,16 @@ class TestModeInteroperability:
         )
 
         # Create different mode configs from same base
-        mode1 = SurvivalDataConfig.from_data_and_model(base_config)
-        mode2 = SurvivalDataConfig.from_auxiliary_model(base_config)
-        mode3 = SurvivalDataConfig.from_auxiliary_attack(
+        mode1 = LifelinesDataConfig.from_data_and_model(base_config)
+        mode2 = LifelinesDataConfig.from_auxiliary_model(base_config)
+        mode3 = LifelinesDataConfig.from_auxiliary_attack(
             base_config,
             {"attack_kind": "evasion"},
         )
 
-        assert mode1.mode == SurvivalDataMode.NATIVE
-        assert mode2.mode == SurvivalDataMode.AUXILIARY_MODEL
-        assert mode3.mode == SurvivalDataMode.AUXILIARY_ATTACK
+        assert mode1.mode == LifelinesDataMode.NATIVE
+        assert mode2.mode == LifelinesDataMode.AUXILIARY_MODEL
+        assert mode3.mode == LifelinesDataMode.AUXILIARY_ATTACK
 
 
 if __name__ == "__main__":

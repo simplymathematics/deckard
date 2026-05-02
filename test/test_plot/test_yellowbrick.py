@@ -96,6 +96,7 @@ class TestYellowbrickPlots(unittest.TestCase):
         cluster_files = FileConfig(data_file="", model_file="")
         cluster_data = OmegaConf.load(self.cluster_data_config)
         cluster_model = OmegaConf.load(self.cluster_model_config)
+        cluster_model["scorer"] = None
         experiment = ExperimentConfig(
             data=cluster_data,
             model=cluster_model,
@@ -122,6 +123,7 @@ class TestYellowbrickPlots(unittest.TestCase):
         )
         cluster_data = OmegaConf.load(self.cluster_data_config)
         cluster_model = OmegaConf.load(self.cluster_model_config)
+        cluster_model["scorer"] = None
         experiment = ExperimentConfig(
             data=cluster_data,
             model=cluster_model,

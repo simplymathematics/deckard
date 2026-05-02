@@ -7,6 +7,7 @@ from deckard.experiment import ExperimentConfig
 from deckard.file import FileConfig
 from deckard.model import DefenseConfig, ModelConfig
 from deckard.score.attack import AttackScorerConfig
+from deckard.score import DefaultDataClassificationConfig, DefaultDataRegressionConfig
 
 
 def _load_or_skip(cfg):
@@ -260,6 +261,60 @@ def test_attack_scorer_with_data_and_model_context():
     assert "evasion_accuracy" in scores
     assert "evasion_success" in scores
     assert "attack_score_time" in scores
+
+
+def test_data_analysis_scorer_classification_with_reference_column():
+    data = _base_classification_data()
+    scorer = DefaultDataClassificationConfig()
+
+    features = data.X_test.copy()
+    # Non-target analysis column to validate reference-column override behavior.
+    features["age_proxy"] = features["feature_0"] * 10 + 35
+
+    scores = scorer(
+        y_true=np.asarray(data.y_test),
+        y_pred=features,
+        mode=None,
+        reference_column="age_proxy",
+    )
+
+    assert "num_classes" in scores
+    assert "class_count_min" in scores
+    assert "mutual_information_mean" in scores
+    assert "mutual_information_max" in scores
+
+
+def test_data_analysis_scorer_regression_with_reference_column():
+    data = _load_or_skip(
+        DataConfig(
+            dataset_name="make_regression",
+            data_params={
+                "n_samples": 40,
+                "n_features": 10,
+                "n_informative": 5,
+                "noise": 0.1,
+                "random_state": 13,
+            },
+            train_size=30,
+            test_size=10,
+            random_state=42,
+            stratify=None,
+            classifier=False,
+        ),
+    )
+    scorer = DefaultDataRegressionConfig()
+
+    scores = scorer(
+        y_true=np.asarray(data.y_test),
+        y_pred=data.X_test,
+        mode=None,
+        reference_column="feature_0",
+    )
+
+    assert "mutual_information_mean" in scores
+    assert "mutual_information_max" in scores
+    assert "empirical_cdf" in scores
+    assert callable(scores["empirical_cdf"])
 
 
 def test_defense_config_apply_to_trained_model():

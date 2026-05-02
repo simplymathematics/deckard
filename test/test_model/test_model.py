@@ -70,8 +70,8 @@ class TestModelConfig(unittest.TestCase):
 
     def test_score(self):
         self.model._train(self.X_train, self.y_train)
-        preds = self.model._predict(self.X_train)
-        scores = self.model._score(self.y_train, preds)
+        proba = self.model._predict_proba(self.X_train)
+        scores = self.model._score(self.y_train, proba, y_proba=proba)
         self.assertIsInstance(scores, dict)
         self.assertIn("accuracy", scores)
 
@@ -102,6 +102,22 @@ class TestModelConfig(unittest.TestCase):
             self.assertIn(key, scores)
         for key in scores:
             self.assertIn(key, score_dict)
+
+    def test_call_skips_scoring_when_scorer_none(self):
+        data = DataConfig(scorer=None)
+        data()
+        model = ModelConfig(
+            model_type=self.model_type,
+            classifier=True,
+            model_params={"n_estimators": 10},
+            scorer=None,
+        )
+        scores = model(data=data, model_file=self.model_file)
+        self.assertIsInstance(scores, dict)
+        self.assertIn("training_time", scores)
+        self.assertIn("prediction_time", scores)
+        self.assertNotIn("accuracy", scores)
+        self.assertNotIn("training_accuracy", scores)
 
     def test_call_saves_test_predictions_when_file_requested(self):
         data = DataConfig(

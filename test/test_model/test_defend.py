@@ -1,11 +1,8 @@
 import unittest
 import numpy as np
 import pandas as pd
-from pathlib import Path
-import tempfile
-import os
-import shutil
 from deckard.model.defend import DefenseConfig
+from deckard.model.base import ModelConfig
 
 
 class DummyDataConfig:
@@ -22,17 +19,6 @@ class DummyDataConfig:
 
 class TestDefenseConfig(unittest.TestCase):
     def setUp(self):
-        # Set up temporary directories and mock data for testing
-        self.temp_dir = tempfile.mkdtemp()
-        self.model_file = os.path.join(self.temp_dir, "model.pkl")
-        self.test_predictions_file = os.path.join(self.temp_dir, "predictions.csv")
-        self.train_predictions_file = os.path.join(
-            self.temp_dir,
-            "training_predictions.csv",
-        )
-        self.score_file = os.path.join(self.temp_dir, "model_score.json")
-
-        # Mock data
         self.data = DummyDataConfig(
             X_train=pd.DataFrame(np.random.rand(100, 10)),
             y_train=pd.Series(np.random.randint(0, 2, size=100)),
@@ -40,15 +26,10 @@ class TestDefenseConfig(unittest.TestCase):
             y_test=pd.Series(np.random.randint(0, 2, size=20)),
         )
 
-        # Default DefenseConfig
         self.defense_config = DefenseConfig(
             defense_name="art.defences.postprocessor.HighConfidence",
             model_type="sklearn.ensemble.RandomForestClassifier",
         )
-
-    def tearDown(self):
-        # Clean up temporary directories
-        shutil.rmtree(self.temp_dir)
 
     def test_defense_config_initialization(self):
         # Test default initialization
@@ -75,45 +56,21 @@ class TestDefenseConfig(unittest.TestCase):
         with self.assertRaises(ImportError):
             self.defense_config.apply_defense(data=self.data)
 
-    def test_call_with_unloaded_data(self):
-        # Test calling the DefenseConfig with unloaded data
-        self.data.X_train = None
-        self.data.y_train = None
-        with self.assertRaises(ValueError):
+    def test_call_is_not_runtime_owner(self):
+        with self.assertRaises(NotImplementedError):
             self.defense_config(self.data)
 
-    def test_call_with_mock_data(self):
-        # Test the full workflow with mock data
-        self.defense_config.model_params = {"random_state": 42}
-        score_dict = self.defense_config(
-            data=self.data,
-            model_file=self.model_file,
-            test_predictions_file=self.test_predictions_file,
-            train_predictions_file=self.train_predictions_file,
-            score_file=self.score_file,
+    def test_apply_to_trained_model(self):
+        model = ModelConfig(
+            model_type="sklearn.ensemble.RandomForestClassifier",
+            classifier=True,
+            model_params={"n_estimators": 5, "random_state": 42},
         )
-        self.assertIsInstance(score_dict, dict)
-        self.assertIn("training_time", score_dict)
-        self.assertIn("training_score_time", score_dict)
-        self.assertIn("prediction_time", score_dict)
-        self.assertIn("prediction_score_time", score_dict)
+        model._train(self.data.X_train, self.data.y_train)
 
-    def test_save_and_load_model(self):
-        # Test saving and loading the model
-        self.defense_config.model_params = {"random_state": 42}
-        self.defense_config(self.data, model_file=self.model_file)
-        self.assertTrue(Path(self.model_file).exists())
-
-    def test_save_and_load_predictions(self):
-        # Test saving and loading predictions
-        self.defense_config.model_params = {"random_state": 42}
-        self.defense_config(
-            data=self.data,
-            test_predictions_file=self.test_predictions_file,
-            train_predictions_file=self.train_predictions_file,
-        )
-        self.assertTrue(Path(self.test_predictions_file).exists())
-        self.assertTrue(Path(self.train_predictions_file).exists())
+        defended = self.defense_config.apply_to(estimator=model.get_model(), data=self.data)
+        self.assertIsNotNone(defended)
+        self.assertIsNotNone(self.defense_config.defense_application_time)
 
     def test_hash_function(self):
         # Test the hash function for DefenseConfig
@@ -133,29 +90,17 @@ class TestDefenseConfig(unittest.TestCase):
         self.assertIn("postprocessor", supported_types)
         self.assertNotIn("unsupported_type", supported_types)
 
-    def test_hash_stable_after_call_for_defense_config(self):
-        """Test that DefenseConfig hash remains stable after defense application."""
+    def test_hash_stable_after_apply_for_defense_config(self):
+        """DefenseConfig hash remains stable after runtime-only apply attrs are set."""
         original_hash = hash(self.defense_config)
-        cls = self.defense_config.__class__
-        original_call = cls.__call__
-
-        def fake_call(self, data, **kwargs):
-            # Simulate runtime attributes that should not affect hash
-            self.defense_application_time = 1.23
-            self._defense_applied_at = 1234567890.5
-            self._runtime_defense_state = {"applied": True}
-            if hasattr(self, "score_dict") and isinstance(self.score_dict, dict):
-                self.score_dict["runtime"] = 1
-            return {"ok": 1}
-
-        setattr(cls, "__call__", fake_call)
-        try:
-            self.defense_config(data=self.data)
-        finally:
-            setattr(cls, "__call__", original_call)
+        self.defense_config.defense_application_time = 1.23
+        self.defense_config._defense_applied_at = 1234567890.5
+        self.defense_config._runtime_defense_state = {"applied": True}
+        if hasattr(self.defense_config, "score_dict") and isinstance(self.defense_config.score_dict, dict):
+            self.defense_config.score_dict["runtime"] = 1
 
         self.assertEqual(
             original_hash,
             hash(self.defense_config),
-            msg="Hash changed after defense application",
+            msg="Hash changed after defense apply-time runtime updates",
         )
