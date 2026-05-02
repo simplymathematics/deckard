@@ -115,7 +115,6 @@ class DataConfigResolutionMixin:
     """Resolve ExperimentConfig.data into the appropriate DataConfig subtype."""
 
     _fairness_keys = {
-        "groupby_columns",
         "sensitive_columns",
         "fairness_defense",
         "fairness_pipeline_step_name",
