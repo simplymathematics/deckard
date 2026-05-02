@@ -259,6 +259,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             logger.info("Device selection not supported for library: %s", self.library)
 
     def __post_init__(self):
+        if not hasattr(self, "score_dict") or self.score_dict is None:
+            self.score_dict = {}
         if not hasattr(self, "_target_") or self._target_ is None:
             self._target_ = "deckard.experiment.ExperimentConfig"
         # Set random seed
@@ -281,32 +283,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 self.classifier == self.data.classifier
             ), f"classifier in experiment must match data.classifier. Got {self.classifier} vs {self.data.classifier}"
         if self.defense is not None:
-
-            if isinstance(self.defense, DefensePipelineConfig):
-                pass
-            else:
-                if isinstance(self.defense, DictConfig):
-                    defense_dict = OmegaConf.to_container(self.defense)
-                elif isinstance(self.defense, str):
-                    defense_dict = DefensePipelineConfig.from_yaml(self.defense).to_dict()
-                elif isinstance(self.defense, ConfigBase):
-                    defense_dict = self.defense.to_dict()
-                elif isinstance(self.defense, dict):
-                    defense_dict = OmegaConf.to_container(
-                        OmegaConf.create(self.defense),
-                    )
-                else:
-                    raise ValueError(
-                        f"Unsupported type for defense: {type(self.defense)}",
-                    )
-                if "_target_" in defense_dict:
-                    self.defense = instantiate(self.defense)
-                else:
-                    if "defenses" not in defense_dict:
-                        raise TypeError(
-                            "ExperimentConfig.defense must be a DefensePipelineConfig shape with a 'defenses' list",
-                        )
-                    self.defense = DefensePipelineConfig(**defense_dict)
+            self.defense = DefensePipelineConfig.coerce(self.defense)
             assert isinstance(
                 self.defense,
                 DefensePipelineConfig,
