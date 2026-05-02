@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="deckard" href="modules.html" />
+    <link rel="next" title="Data" href="data.html" />
     <link rel="prev" title="deckard documentation" href="index.html" /> 
 </head>
 
@@ -64,6 +64,15 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="score.html">Score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="layers.html">Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="file.html">File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">deckard</a></li>
 </ul>
 
@@ -443,8 +452,8 @@ and the Adversarial Robustness Toolbox (ART), and provides detailed logging and 
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">val_size</span></span></dt>
 <dd><p>Proportion or count of samples to include in the validation split when a
-<code class="docutils literal notranslate"><span class="pre">sample</span></code> is provided (e.g. <a class="reference internal" href="data.html#deckard.data.SplitSampler" title="deckard.data.sample.SplitSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SplitSampler</span></code></a> or
-<a class="reference internal" href="data.html#deckard.data.ShuffleSampler" title="deckard.data.sample.ShuffleSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a>).  Unused in legacy mode.</p>
+<code class="docutils literal notranslate"><span class="pre">sample</span></code> is provided (e.g. <a class="reference internal" href="data.html#deckard.data.sample.SplitSampler" title="deckard.data.sample.SplitSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SplitSampler</span></code></a> or
+<a class="reference internal" href="data.html#deckard.data.sample.ShuffleSampler" title="deckard.data.sample.ShuffleSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a>).  Unused in legacy mode.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Union[float, int, None]</p>
@@ -456,8 +465,8 @@ and the Adversarial Robustness Toolbox (ART), and provides detailed logging and 
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">fold</span></span></dt>
 <dd><p>Which fold to use as the validation set when <code class="docutils literal notranslate"><span class="pre">sample</span></code> performs cross-validation
-(e.g. <a class="reference internal" href="data.html#deckard.data.KFoldSampler" title="deckard.data.sample.KFoldSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">KFoldSampler</span></code></a> or
-<a class="reference internal" href="data.html#deckard.data.ShuffleSampler" title="deckard.data.sample.ShuffleSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a>).  Defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
+(e.g. <a class="reference internal" href="data.html#deckard.data.sample.KFoldSampler" title="deckard.data.sample.KFoldSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">KFoldSampler</span></code></a> or
+<a class="reference internal" href="data.html#deckard.data.sample.ShuffleSampler" title="deckard.data.sample.ShuffleSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a>).  Defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Union[int, None]</p>
@@ -470,7 +479,7 @@ and the Adversarial Robustness Toolbox (ART), and provides detailed logging and 
 <span class="sig-name descname"><span class="pre">sample</span></span></dt>
 <dd><p>Optional pluggable sampler.  When <code class="docutils literal notranslate"><span class="pre">None</span></code> (default) the legacy 2-way
 <code class="docutils literal notranslate"><span class="pre">train_test_split</span></code> is used.  Can be an instantiated sampler object, a subclass
-of <a class="reference internal" href="data.html#deckard.data.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a>, or a Hydra-style dict with a
+of <a class="reference internal" href="data.html#deckard.data.sample.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a>, or a Hydra-style dict with a
 <code class="docutils literal notranslate"><span class="pre">name</span></code>/<code class="docutils literal notranslate"><span class="pre">_target_</span></code> key pointing to the sampler class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -1229,7 +1238,7 @@ This supports large parameter sweeps while maintaining a stable, auditable
 record of what was run.</p>
 <p>Typical workflow composition includes:</p>
 <ol class="arabic simple">
-<li><p><strong>Dataset Loading &amp; Sampling</strong> — Load data via <a class="reference internal" href="data.html#deckard.data.DataConfig" title="deckard.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfig</span></code></a>, apply data preprocessing pipelines via <a class="reference internal" href="data.html#deckard.data.DataPipelineConfig" title="deckard.data.DataPipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataPipelineConfig</span></code></a>, and sample via pluggable <a class="reference internal" href="data.html#deckard.data.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a> strategies.</p></li>
+<li><p><strong>Dataset Loading &amp; Sampling</strong> — Load data via <a class="reference internal" href="data.html#deckard.data.DataConfig" title="deckard.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfig</span></code></a>, apply data preprocessing pipelines via <a class="reference internal" href="data.html#deckard.data.DataPipelineConfig" title="deckard.data.DataPipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataPipelineConfig</span></code></a>, and sample via pluggable <a class="reference internal" href="data.html#deckard.data.sample.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a> strategies.</p></li>
 <li><p><strong>Preprocessing &amp; Feature Handling</strong> — Transform features via sklearn pipelines; automatically instrumented with timing metrics.</p></li>
 <li><p><strong>Model Training &amp; Evaluation</strong> — Train models via <a class="reference internal" href="model.html#deckard.model.ModelConfig" title="deckard.model.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelConfig</span></code></a> with configurable scorer profiles for classification, regression, fairness, and survival tasks.</p></li>
 <li><p><strong>Optional Defenses</strong> — Apply adversarial robustness defenses via <a class="reference internal" href="model.html#deckard.model.DefensePipelineConfig" title="deckard.model.DefensePipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefensePipelineConfig</span></code></a> that chain ART-based preprocessing and postprocessing defenses.</p></li>
@@ -1284,7 +1293,7 @@ workflow: Data, Model, Attack, Experiment, File, and ScorerDict objects.</p>
 <p><strong>Scoring Architecture</strong>:</p>
 <p><a class="reference internal" href="score.html#deckard.score.ScorerDictConfig" title="deckard.score.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.score.ScorerDictConfig</span></code></a> normalizes metric definitions into callable maps, supporting classification, regression, fairness, and attack-specific scoring. Attack scoring routes outputs through attack-kind–aware profiles (evasion, membership, attribute) and prefixes metric names automatically.</p>
 <p><strong>Sampling Architecture</strong>:</p>
-<p><a class="reference internal" href="data.html#deckard.data.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.data.sample.BaseSampler</span></code></a> and subclasses provide pluggable train/test/validation split strategies, enabling cross-validation, repeated random splits, and stratified sampling.</p>
+<p><a class="reference internal" href="data.html#deckard.data.sample.BaseSampler" title="deckard.data.sample.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.data.sample.BaseSampler</span></code></a> and subclasses provide pluggable train/test/validation split strategies, enabling cross-validation, repeated random splits, and stratified sampling.</p>
 <p><strong>Data Pipeline Architecture</strong>:</p>
 <p><a class="reference internal" href="data.html#deckard.data.DataPipelineConfig" title="deckard.data.DataPipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.data.DataPipelineConfig</span></code></a> wraps sklearn’s <code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code> with timing instrumentation and optional normalization. Empty pipelines skip fitting entirely for efficiency.</p>
 </section>
@@ -1296,7 +1305,7 @@ workflow: Data, Model, Attack, Experiment, File, and ScorerDict objects.</p>
 <li><p><a class="reference internal" href="data.html#module-deckard.data.fairness" title="deckard.data.fairness"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.data.fairness</span></code></a> — <a class="reference internal" href="data.html#deckard.data.fairness.FairlearnDataConfig" title="deckard.data.fairness.FairlearnDataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FairlearnDataConfig</span></code></a> for group-aware sampling and fairness metrics (fairlearn integration)</p></li>
 <li><p><a class="reference internal" href="data.html#module-deckard.data.pytorch" title="deckard.data.pytorch"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.data.pytorch</span></code></a> — <code class="xref py py-class docutils literal notranslate"><span class="pre">PyTorchDataConfig</span></code> for PyTorch dataset and DataLoader integration</p></li>
 <li><p><a class="reference internal" href="data.html#module-deckard.data.survival" title="deckard.data.survival"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.data.survival</span></code></a> — <a class="reference internal" href="data.html#deckard.data.survival.LifelinesDataConfig" title="deckard.data.survival.LifelinesDataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">LifelinesDataConfig</span></code></a> for survival analysis with lifelines datasets and auxiliary models</p></li>
-<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.data.sample</span></code> — <a class="reference internal" href="data.html#deckard.data.SplitSampler" title="deckard.data.sample.SplitSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SplitSampler</span></code></a>, <a class="reference internal" href="data.html#deckard.data.KFoldSampler" title="deckard.data.sample.KFoldSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">KFoldSampler</span></code></a>, <a class="reference internal" href="data.html#deckard.data.ShuffleSampler" title="deckard.data.sample.ShuffleSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a> for robust sampling strategies</p></li>
+<li><p><a class="reference internal" href="data.html#module-deckard.data.sample" title="deckard.data.sample"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.data.sample</span></code></a> — <a class="reference internal" href="data.html#deckard.data.sample.SplitSampler" title="deckard.data.sample.SplitSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SplitSampler</span></code></a>, <a class="reference internal" href="data.html#deckard.data.sample.KFoldSampler" title="deckard.data.sample.KFoldSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">KFoldSampler</span></code></a>, <a class="reference internal" href="data.html#deckard.data.sample.ShuffleSampler" title="deckard.data.sample.ShuffleSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShuffleSampler</span></code></a> for robust sampling strategies</p></li>
 </ul>
 <p><strong>Model Extensions</strong>:</p>
 <ul class="simple">
@@ -1343,7 +1352,7 @@ workflow: Data, Model, Attack, Experiment, File, and ScorerDict objects.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="index.html" class="btn btn-neutral float-left" title="deckard documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="modules.html" class="btn btn-neutral float-right" title="deckard" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="data.html" class="btn btn-neutral float-right" title="Data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

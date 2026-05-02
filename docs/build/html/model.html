@@ -45,6 +45,92 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Model</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.model.DefenseConfig"><code class="docutils literal notranslate"><span class="pre">DefenseConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.model.DefensePipelineConfig"><code class="docutils literal notranslate"><span class="pre">DefensePipelineConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.model.FairlearnDefenseConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnDefenseConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.FairlearnDefenseConfig.apply_defense"><code class="docutils literal notranslate"><span class="pre">FairlearnDefenseConfig.apply_defense()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.model.FairlearnModelConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnModelConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.model.ModelConfig"><code class="docutils literal notranslate"><span class="pre">ModelConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.ModelConfig.get_art_model"><code class="docutils literal notranslate"><span class="pre">ModelConfig.get_art_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.ModelConfig.get_model"><code class="docutils literal notranslate"><span class="pre">ModelConfig.get_model()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.model.PytorchModelConfig"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.PytorchModelConfig.model_type"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.model_type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.PytorchModelConfig.model_params"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.model_params</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.PytorchModelConfig.device"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.device</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.PytorchModelConfig.criterion"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.criterion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.PytorchModelConfig.optimizer"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.optimizer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.PytorchModelConfig.fit_params"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.fit_params</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.PytorchModelConfig.classifier"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.classifier</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.PytorchModelConfig.get_art_model"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.get_art_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.PytorchModelConfig.get_model"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.get_model()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#extensions">Extensions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fairness-extension">Fairness Extension</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.fairness.FairlearnDefenseConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnDefenseConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.fairness.FairlearnModelConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnModelConfig</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#torch-extension">Torch Extension</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.pytorch.PytorchModelConfig"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#survival-extension">Survival Extension</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.survival.SurvivalModelConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalModelConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.survival.SurvivalModelConfig.duration_col"><code class="docutils literal notranslate"><span class="pre">SurvivalModelConfig.duration_col</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.survival.SurvivalModelConfig.event_col"><code class="docutils literal notranslate"><span class="pre">SurvivalModelConfig.event_col</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.survival.SurvivalModelConfig.survival_model"><code class="docutils literal notranslate"><span class="pre">SurvivalModelConfig.survival_model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.survival.SurvivalModelConfig.t0"><code class="docutils literal notranslate"><span class="pre">SurvivalModelConfig.t0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.survival.SurvivalModelConfig.clean_data_for_aft"><code class="docutils literal notranslate"><span class="pre">SurvivalModelConfig.clean_data_for_aft()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.survival.SurvivalModelConfig.fit_aft"><code class="docutils literal notranslate"><span class="pre">SurvivalModelConfig.fit_aft()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.survival.SurvivalModelConfig.make_survival_model_table"><code class="docutils literal notranslate"><span class="pre">SurvivalModelConfig.make_survival_model_table()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.survival.SurvivalModelConfig.survival_probability_calibration"><code class="docutils literal notranslate"><span class="pre">SurvivalModelConfig.survival_probability_calibration()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#supported-frameworks">Supported frameworks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#command-line-example">Command-line example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#regression-example">Regression example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#custom-configuration">Custom configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#defense-pipelines">Defense Pipelines</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#legacy-single-defense-format">Legacy Single-Defense Format</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#internals">Internals</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#timing-and-logging">Timing and logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scoring">Scoring</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#persistence">Persistence</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#see-also">See also</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="score.html">Score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="layers.html">Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="file.html">File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="file.html">File</a></li>
@@ -130,7 +216,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">deckard</a></li>
       <li class="breadcrumb-item active">Model</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/model.rst.txt" rel="nofollow"> View page source</a>
