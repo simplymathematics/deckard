@@ -353,7 +353,7 @@ class DataConfig(ConfigBase):
         ------
         ValueError
             If ``stratify`` is a string that is not a column name in ``self._X``,
-            or if ``stratify`` is an unrecognised type.
+            or if ``stratify`` is an unrecognized type.
         """
         if self.stratify is None or self.stratify is False:
             return None
