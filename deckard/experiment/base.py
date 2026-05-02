@@ -18,16 +18,16 @@ from hydra.utils import instantiate
 from ..data import DataConfig, DataPipelineConfig
 
 try:
-    from ..data import FairnessDataConfig
+    from ..data import FairlearnDataConfig
 except ImportError:  # pragma: no cover
-    FairnessDataConfig = None
+    FairlearnDataConfig = None
 
 from ..model import ModelConfig
 
 try:
-    from ..model import FairnessModelConfig
+    from ..model import FairlearnModelConfig
 except ImportError:  # pragma: no cover
-    FairnessModelConfig = None
+    FairlearnModelConfig = None
 from ..model.defend import DefenseConfig
 from ..attack import AttackConfig
 from ..score import ScorerDictConfig
@@ -138,11 +138,11 @@ class DataConfigResolutionMixin:
 
     def _select_data_cls(self, data_dict: dict):
         if any(key in data_dict for key in self._fairness_keys):
-            if FairnessDataConfig is None:
+            if FairlearnDataConfig is None:
                 raise ImportError(
-                    "FairnessDataConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairness data configs.",
+                    "FairlearnDataConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn data configs.",
                 )
-            return FairnessDataConfig
+            return FairlearnDataConfig
         if "pipeline" in data_dict:
             return DataPipelineConfig
         return DataConfig
@@ -373,16 +373,16 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     self.classifier == self.model.classifier
                 ), f"classifier in experiment must match model.classifier. Got {self.classifier} vs {self.model.classifier}"
 
-            if FairnessDataConfig is not None and isinstance(
+            if FairlearnDataConfig is not None and isinstance(
                 self.data,
-                FairnessDataConfig,
+                FairlearnDataConfig,
             ):
-                if FairnessModelConfig is None:
+                if FairlearnModelConfig is None:
                     raise ImportError(
-                        "FairnessModelConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairness model configs.",
+                        "FairlearnModelConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn model configs.",
                     )
-                if not isinstance(self.model, FairnessModelConfig):
-                    self.model = FairnessModelConfig(
+                if not isinstance(self.model, FairlearnModelConfig):
+                    self.model = FairlearnModelConfig(
                         model_type=self.model.model_type,
                         classifier=self.model.classifier,
                         model_params=self.model.model_params,

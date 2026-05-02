@@ -7,7 +7,7 @@ from typing import Optional, Union
 from .base import DataConfig
 
 
-class SurvivalDataMode(str, Enum):
+class LifelinesDataMode(str, Enum):
     """Enumeration of survival analysis data modes."""
 
     # Native survival data (duration_col + event_col already present)
@@ -21,12 +21,12 @@ class SurvivalDataMode(str, Enum):
 
 
 @dataclass
-class SurvivalDataConfig(DataConfig):
+class LifelinesDataConfig(DataConfig):
     """DataConfig specialization for survival analysis with explicit mode handling.
 
     Attributes
     ----------
-    mode : SurvivalDataMode
+    mode : LifelinesDataMode
         The survival data mode (NATIVE, AUXILIARY_MODEL, AUXILIARY_ATTACK, OPTUNA_DB).
     duration_col : str
         Column name for duration/time values. Required for NATIVE mode.
@@ -44,7 +44,7 @@ class SurvivalDataConfig(DataConfig):
         Optional Optuna query to filter results.
     """
 
-    mode: SurvivalDataMode = field(default=SurvivalDataMode.NATIVE)
+    mode: LifelinesDataMode = field(default=LifelinesDataMode.NATIVE)
     duration_col: str = "T"
     event_col: str = "E"
     benign_metric: str = "accuracy"
@@ -58,21 +58,21 @@ class SurvivalDataConfig(DataConfig):
         super().__post_init__()
 
         # Validate mode-specific parameters
-        if self.mode == SurvivalDataMode.NATIVE:
+        if self.mode == LifelinesDataMode.NATIVE:
             if self.duration_col in [None, ""]:
                 raise ValueError("duration_col required for NATIVE mode")
             if self.event_col in [None, ""]:
                 raise ValueError("event_col required for NATIVE mode")
 
-        elif self.mode == SurvivalDataMode.AUXILIARY_MODEL:
+        elif self.mode == LifelinesDataMode.AUXILIARY_MODEL:
             if self.benign_metric in [None, ""]:
                 raise ValueError("benign_metric required for AUXILIARY_MODEL mode")
 
-        elif self.mode == SurvivalDataMode.AUXILIARY_ATTACK:
+        elif self.mode == LifelinesDataMode.AUXILIARY_ATTACK:
             if self.attack_config is None:
                 raise ValueError("attack_config required for AUXILIARY_ATTACK mode")
 
-        elif self.mode == SurvivalDataMode.OPTUNA_DB:
+        elif self.mode == LifelinesDataMode.OPTUNA_DB:
             if self.optuna_db is None:
                 raise ValueError("optuna_db path required for OPTUNA_DB mode")
 
@@ -82,10 +82,10 @@ class SurvivalDataConfig(DataConfig):
         data_config: DataConfig,
         duration_col: str = "T",
         event_col: str = "E",
-    ) -> "SurvivalDataConfig":
+    ) -> "LifelinesDataConfig":
         """Create NATIVE mode config from DataConfig."""
         return cls(
-            mode=SurvivalDataMode.NATIVE,
+            mode=LifelinesDataMode.NATIVE,
             dataset_name=data_config.dataset_name,
             target=data_config.target,
             classifier=False,
@@ -98,10 +98,10 @@ class SurvivalDataConfig(DataConfig):
         cls,
         data_config: DataConfig,
         benign_metric: str = "accuracy",
-    ) -> "SurvivalDataConfig":
+    ) -> "LifelinesDataConfig":
         """Create AUXILIARY_MODEL mode config from DataConfig."""
         return cls(
-            mode=SurvivalDataMode.AUXILIARY_MODEL,
+            mode=LifelinesDataMode.AUXILIARY_MODEL,
             dataset_name=data_config.dataset_name,
             target=data_config.target,
             classifier=data_config.classifier,
@@ -113,10 +113,10 @@ class SurvivalDataConfig(DataConfig):
         cls,
         data_config: DataConfig,
         attack_config: dict,
-    ) -> "SurvivalDataConfig":
+    ) -> "LifelinesDataConfig":
         """Create AUXILIARY_ATTACK mode config from DataConfig and attack config."""
         return cls(
-            mode=SurvivalDataMode.AUXILIARY_ATTACK,
+            mode=LifelinesDataMode.AUXILIARY_ATTACK,
             dataset_name=data_config.dataset_name,
             target=data_config.target,
             classifier=data_config.classifier,
@@ -130,10 +130,10 @@ class SurvivalDataConfig(DataConfig):
         dataset_name: str = "optuna",
         optuna_schema: Optional[Union[str, dict]] = None,
         optuna_query: Optional[str] = None,
-    ) -> "SurvivalDataConfig":
+    ) -> "LifelinesDataConfig":
         """Create OPTUNA_DB mode config from Optuna database path."""
         return cls(
-            mode=SurvivalDataMode.OPTUNA_DB,
+            mode=LifelinesDataMode.OPTUNA_DB,
             dataset_name=dataset_name,
             target="optuna_result",
             classifier=False,
@@ -144,16 +144,16 @@ class SurvivalDataConfig(DataConfig):
 
     def is_native_survival_data(self) -> bool:
         """Check if data is native survival data."""
-        return self.mode == SurvivalDataMode.NATIVE
+        return self.mode == LifelinesDataMode.NATIVE
 
     def has_auxiliary_model(self) -> bool:
         """Check if using auxiliary model for failure computation."""
-        return self.mode == SurvivalDataMode.AUXILIARY_MODEL
+        return self.mode == LifelinesDataMode.AUXILIARY_MODEL
 
     def has_auxiliary_attack(self) -> bool:
         """Check if using auxiliary attack for failure computation."""
-        return self.mode == SurvivalDataMode.AUXILIARY_ATTACK
+        return self.mode == LifelinesDataMode.AUXILIARY_ATTACK
 
     def is_optuna_db(self) -> bool:
         """Check if data is from Optuna database."""
-        return self.mode == SurvivalDataMode.OPTUNA_DB
+        return self.mode == LifelinesDataMode.OPTUNA_DB

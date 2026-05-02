@@ -19,9 +19,9 @@ from .sample import (
 logger = logging.getLogger(__name__)
 
 try:
-    from .fairness import FairnessDataConfig
+    from .fairness import FairlearnDataConfig
 except ImportError:  # pragma: no cover
-    logger.debug("Fairlearn not found. FairnessDataConfig is unavailable.")
+    logger.debug("Fairlearn not found. FairlearnDataConfig is unavailable.")
 
 try:
     import torch
@@ -40,7 +40,7 @@ __all__ = [
     "register_sampler_configs",
 ]
 
-if "FairnessDataConfig" in globals():
-    __all__.append("FairnessDataConfig")
+if "FairlearnDataConfig" in globals():
+    __all__.append("FairlearnDataConfig")
 if "PytorchDataConfig" in globals():
     __all__.extend(["PytorchDataConfig", "PytorchCustomDataConfig"])

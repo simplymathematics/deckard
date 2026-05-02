@@ -1,12 +1,10 @@
 dataset_name: diabetes
 test_size: 0.2
 random_state: 42
-_target_: deckard.data.FairnessDataConfig
+_target_: deckard.data.FairlearnDataConfig
 classifier: False
 stratify: False
 alias: fair-diabetes
-groupby_columns:
-  - sex
 sensitive_columns:
   - sex
 pipeline:

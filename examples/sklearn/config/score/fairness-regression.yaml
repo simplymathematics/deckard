@@ -1,0 +1,17 @@
+scorers:
+  mse:
+    score_function: sklearn.metrics.mean_squared_error
+  rmse:
+    score_function: sklearn.metrics.mean_squared_error
+    score_params:
+      squared: false
+  mae:
+    score_function: sklearn.metrics.mean_absolute_error
+  r2:
+    score_function: sklearn.metrics.r2_score
+  group_mean_prediction_difference:
+    score_function: deckard.score.fairness_group_mean_prediction_difference
+  group_mae_difference:
+    score_function: deckard.score.fairness_group_mae_difference
+  group_mse_difference:
+    score_function: deckard.score.fairness_group_mse_difference

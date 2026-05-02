@@ -1,12 +1,10 @@
 dataset_name: adult
 test_size: 0.2
 random_state: 42
-_target_: deckard.data.FairnessDataConfig
+_target_: deckard.data.FairlearnDataConfig
 classifier: True
 stratify: False
 alias: fair-adult-fairlearn
-groupby_columns:
-  - sex
 sensitive_columns:
   - sex
 fairness_defense:

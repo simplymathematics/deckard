@@ -10,12 +10,11 @@ from .base import (  # noqa: F401
     safe_store,
 )
 
-
 from .fairness import (  # noqa: E402
-    DefaultFairnessClassificationConfig,
-    DefaultFairnessConfig,
-    DefaultFairnessRegressionConfig,
-    FairnessScoreDictConfig,
+    DefaultFairlearnClassificationConfig,
+    DefaultFairlearnConfig,
+    DefaultFairlearnRegressionConfig,
+    FairlearnScoreDictConfig,
     fairness_demographic_parity_difference,
     fairness_equalized_odds_difference,
     fairness_group_mae_difference,
@@ -23,7 +22,7 @@ from .fairness import (  # noqa: E402
     fairness_group_mse_difference,
 )
 from .survival import (  # noqa: E402
-    DefaultSurvivalConfig,
+    DefaultLifelinesConfig,
     survival_aic_score,
     survival_bic_score,
     survival_concordance_score,
@@ -47,43 +46,16 @@ from .data import (  # noqa: E402
     data_mutual_information_max_score,
     data_empirical_cdf_function_score,
 )
-
-
-class DefaultClassifierDict:
-    scorers = DefaultClassifierConfig()
-
-
-class DefaultRegressorDict:
-    scorers = DefaultRegressorConfig()
-
-
-class DefaultFairnessDict:
-    scorers = DefaultFairnessConfig()
-
-
-class DefaultFairnessClassificationDict:
-    scorers = DefaultFairnessClassificationConfig()
-
-
-class DefaultFairnessRegressionDict:
-    scorers = DefaultFairnessRegressionConfig()
-
-
-class DefaultSurvivalDict:
-    scorers = DefaultSurvivalConfig()
-
-
-class DefaultDataClassificationDict:
-    scorers = DefaultDataClassificationConfig()
-
-
-class DefaultDataRegressionDict:
-    scorers = DefaultDataRegressionConfig()
-
-
-safe_store(group="score", name="fairness-classification", node=DefaultFairnessClassificationConfig)
-safe_store(group="score", name="fairness-regression", node=DefaultFairnessRegressionConfig)
-safe_store(group="score", name="survival", node=DefaultSurvivalConfig)
+from .declarations import (  # noqa: E402
+    DefaultClassifierDict,
+    DefaultDataClassificationDict,
+    DefaultDataRegressionDict,
+    DefaultFairlearnClassificationDict,
+    DefaultFairlearnDict,
+    DefaultFairlearnRegressionDict,
+    DefaultLifelinesDict,
+    DefaultRegressorDict,
+)
 
 
 __all__ = [
@@ -91,11 +63,11 @@ __all__ = [
     "ScorerDictConfig",
     "DefaultClassifierConfig",
     "DefaultRegressorConfig",
-    "DefaultFairnessClassificationConfig",
-    "DefaultFairnessConfig",
-    "DefaultFairnessRegressionConfig",
-    "FairnessScoreDictConfig",
-    "DefaultSurvivalConfig",
+    "DefaultFairlearnClassificationConfig",
+    "DefaultFairlearnConfig",
+    "DefaultFairlearnRegressionConfig",
+    "FairlearnScoreDictConfig",
+    "DefaultLifelinesConfig",
     "AttackScorerConfig",
     "DefaultEvasionAttackScorerConfig",
     "DefaultEvasionRegressionAttackScorerConfig",
@@ -104,10 +76,10 @@ __all__ = [
     "DefaultAttributeInferenceRegressionAttackScorerConfig",
     "DefaultClassifierDict",
     "DefaultRegressorDict",
-    "DefaultFairnessDict",
-    "DefaultFairnessClassificationDict",
-    "DefaultFairnessRegressionDict",
-    "DefaultSurvivalDict",
+    "DefaultFairlearnDict",
+    "DefaultFairlearnClassificationDict",
+    "DefaultFairlearnRegressionDict",
+    "DefaultLifelinesDict",
     "DefaultDataClassificationConfig",
     "DefaultDataRegressionConfig",
     "DefaultDataClassificationDict",

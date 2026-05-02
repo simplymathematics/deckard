@@ -10,7 +10,7 @@ from lifelines.fitters import RegressionFitter
 
 from ..attack import AttackConfig
 from ..data import DataConfig
-from ..data.data import _lifelines_dataset_loaders
+from ..data.base import _lifelines_dataset_loaders
 from ..experiment import SurvivalExperimentConfig
 from ..model.survival import SurvivalModelConfig
 from .compile_results import parse_studies

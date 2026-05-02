@@ -10,7 +10,7 @@ __all__ = [
     "survival_concordance_score",
     "survival_aic_score",
     "survival_bic_score",
-    "DefaultSurvivalConfig",
+    "DefaultLifelinesConfig",
 ]
 
 
@@ -63,7 +63,7 @@ def survival_bic_score(y_true, y_pred, **kwargs):
 
 
 @dataclass
-class DefaultSurvivalConfig(ScorerDictConfig):
+class DefaultLifelinesConfig(ScorerDictConfig):
     """Default scorer set for survival workflows."""
 
     scorers: Dict[str, ScorerConfig] = field(
@@ -84,6 +84,4 @@ class DefaultSurvivalConfig(ScorerDictConfig):
             ),
         },
     )
-
-
-safe_store(group="scorers", name="survival", node=DefaultSurvivalConfig)
+safe_store(group="score", name="lifelines", node=DefaultLifelinesConfig)

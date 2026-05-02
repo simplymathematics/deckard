@@ -20,9 +20,12 @@ except ImportError:  # pragma: no cover
     logger.debug("Lifelines not found. Survival model configs are unavailable.")
 
 try:
-    from .fairness import FairnessDefenseConfig, FairnessModelConfig
+    from .fairness import (
+        FairlearnDefenseConfig,
+        FairlearnModelConfig,
+    )
 except ImportError:  # pragma: no cover
-    logger.debug("Fairlearn not found. Fairness model configs are unavailable.")
+    logger.debug("Fairlearn not found. Fairlearn model configs are unavailable.")
 
 try:
     import torch
@@ -33,7 +36,12 @@ except ImportError:
 
 __all__ = ["ModelConfig", "DefenseConfig"]
 
-if "FairnessDefenseConfig" in globals():
-    __all__.extend(["FairnessDefenseConfig", "FairnessModelConfig"])
+if "FairlearnDefenseConfig" in globals():
+    __all__.extend(
+        [
+            "FairlearnDefenseConfig",
+            "FairlearnModelConfig",
+        ],
+    )
 if "PytorchModelConfig" in globals():
     __all__.extend(["PytorchModelConfig"])
