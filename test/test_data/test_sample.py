@@ -461,6 +461,92 @@ class TestLegacySplitUnchanged(unittest.TestCase):
         self.assertNotIn("val_n", scores)
         self.assertNotIn("val_class_counts", scores)
 
+    def test_val_size_zero_gives_legacy_behavior(self):
+        """val_size=0 (or None) with no sampler should not create a val set."""
+        cfg = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 100,
+                "n_features": 5,
+                "n_informative": 3,
+                "n_redundant": 0,
+                "random_state": 0,
+                "n_clusters_per_class": 1,
+            },
+            test_size=0.2,
+            val_size=None,
+            random_state=42,
+            stratify=True,
+            classifier=True,
+            sampler=None,
+        )
+        cfg()
+        self.assertIsNone(cfg.X_val)
+        self.assertIsNone(cfg.y_val)
+        self.assertEqual(len(cfg.X_train) + len(cfg.X_test), 100)
 
-if __name__ == "__main__":
+
+# ---------------------------------------------------------------------------
+# OmegaConf DictConfig sampler spec
+# ---------------------------------------------------------------------------
+
+class TestOmegaConfSamplerSpec(unittest.TestCase):
+    def test_omegaconf_dictconfig_sampler(self):
+        """_resolve_sampler should handle an OmegaConf DictConfig spec."""
+        from omegaconf import OmegaConf
+
+        cfg = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 150,
+                "n_features": 5,
+                "n_informative": 3,
+                "n_redundant": 0,
+                "random_state": 5,
+                "n_clusters_per_class": 1,
+            },
+            test_size=0.2,
+            val_size=0.1,
+            random_state=42,
+            stratify=True,
+            classifier=True,
+        )
+        # Simulate Hydra passing an OmegaConf DictConfig for the sampler
+        cfg.sampler = OmegaConf.create(
+            {"name": "deckard.data.sample.SplitSampler"}
+        )
+        cfg._load_data()
+        cfg._sample()
+        self.assertIsNotNone(cfg.X_val)
+        self.assertGreater(len(cfg.X_val), 0)
+
+
+# ---------------------------------------------------------------------------
+# Hydra ConfigStore registration
+# ---------------------------------------------------------------------------
+
+class TestConfigStoreRegistration(unittest.TestCase):
+    def test_register_sampler_configs_runs_without_error(self):
+        from deckard.data.sample import register_sampler_configs
+
+        # Should not raise even when called multiple times
+        register_sampler_configs()
+        register_sampler_configs()
+
+    def test_configstore_has_expected_groups(self):
+        from deckard.data.sample import register_sampler_configs
+        from hydra.core.config_store import ConfigStore
+
+        register_sampler_configs()
+        cs = ConfigStore.instance()
+        # Verify that our entries are present in the store
+        sample_group = cs.repo.get("sample", {})
+        for name in ("split", "kfold", "shuffle", "none"):
+            self.assertIn(
+                f"{name}.yaml",
+                sample_group,
+                msg=f"Expected 'sample/{name}' in ConfigStore",
+            )
+
+if __name__ == '__main__':
     unittest.main()

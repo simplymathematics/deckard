@@ -1,3 +1,5 @@
+# Use with: sample=shuffle
+# e.g. python -m deckard data=digits-shuffle sample=shuffle
 dataset_name: digits
 test_size: 0.2
 val_size: 0.1
@@ -6,7 +8,3 @@ classifier: true
 stratify: true
 fold: 0
 alias: digits-shuffle
-
-sampler:
-  name: deckard.data.sample.ShuffleSampler
-  n_splits: 5

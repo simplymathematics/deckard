@@ -9,6 +9,18 @@ Samplers
 - :class:`SplitSampler`    – deterministic 3-way train / test / val split
 - :class:`KFoldSampler`    – cross-validation with disjoint validation folds
 - :class:`ShuffleSampler`  – repeated random (Monte-Carlo) splits
+
+Hydra ConfigStore
+-----------------
+Calling :func:`register_sampler_configs` registers structured-config defaults for
+all three concrete samplers under the ``sample`` Hydra config group.  The defaults
+are registered with names ``split``, ``kfold``, and ``shuffle``.  A ``none``
+entry (empty config / no sampler) is also registered so you can opt out explicitly.
+
+Example CLI usage::
+
+    python -m deckard data=adult sample=kfold
+
 """
 
 from dataclasses import dataclass
@@ -208,7 +220,7 @@ class ShuffleSampler(BaseSampler):
         fold = cfg.fold if cfg.fold is not None else 0
         if fold >= len(splits):
             raise ValueError(
-                f"fold={fold} out of range for n_splits={self.n_splits}"
+                f"fold={cfg.fold} out of range for n_splits={self.n_splits}"
             )
 
         train_test_idx, val_idx = splits[fold]
@@ -228,3 +240,93 @@ class ShuffleSampler(BaseSampler):
         )
 
         return train_idx, test_idx, val_idx
+
+
+# =========================================================
+# Hydra structured config dataclasses
+# =========================================================
+
+
+@dataclass
+class SplitSamplerConf:
+    """Hydra structured config for :class:`SplitSampler`.
+
+    Register with the ``sample`` config group via
+    :func:`register_sampler_configs`.
+    """
+
+    name: str = "deckard.data.sample.SplitSampler"
+
+
+@dataclass
+class KFoldSamplerConf:
+    """Hydra structured config for :class:`KFoldSampler`.
+
+    Register with the ``sample`` config group via
+    :func:`register_sampler_configs`.
+    """
+
+    name: str = "deckard.data.sample.KFoldSampler"
+    n_splits: int = 5
+    shuffle: bool = True
+
+
+@dataclass
+class ShuffleSamplerConf:
+    """Hydra structured config for :class:`ShuffleSampler`.
+
+    Register with the ``sample`` config group via
+    :func:`register_sampler_configs`.
+    """
+
+    name: str = "deckard.data.sample.ShuffleSampler"
+    n_splits: int = 5
+
+
+def register_sampler_configs() -> None:
+    """Register sampler structured configs with the Hydra ConfigStore.
+
+    Call this function once at application startup (e.g. in your ``@hydra.main``
+    script) to make the ``sample`` config group available.
+
+    After calling this function, the following CLI overrides are available::
+
+        sample=split
+        sample=kfold
+        sample=shuffle
+        sample=none    # disables the sampler (legacy 2-way split)
+
+    When a sampler is selected, the config is placed under ``data.sampler``
+    via the ``@data.sampler`` package override.
+    """
+    try:
+        from hydra.core.config_store import ConfigStore
+    except ImportError:  # pragma: no cover
+        return
+
+    cs = ConfigStore.instance()
+    cs.store(
+        group="sample",
+        name="split",
+        node=SplitSamplerConf,
+        package="data.sampler",
+    )
+    cs.store(
+        group="sample",
+        name="kfold",
+        node=KFoldSamplerConf,
+        package="data.sampler",
+    )
+    cs.store(
+        group="sample",
+        name="shuffle",
+        node=ShuffleSamplerConf,
+        package="data.sampler",
+    )
+    # 'none' leaves data.sampler as None (no sampler, legacy behavior)
+    cs.store(
+        group="sample",
+        name="none",
+        node={},
+        package="data.sampler",
+    )
