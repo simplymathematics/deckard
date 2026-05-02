@@ -44,34 +44,25 @@ class FairnessDataConfig(DataPipelineConfig):
     This allows stratified analysis of fairness metrics across different demographic groups.
     """
 
-    groupby_columns: Union[str, list] = None
     sensitive_columns: Optional[Union[str, list]] = None
     fairness_defense: Union[None, bool, Dict[str, Any]] = None
 
     def __post_init__(self):
-        """Initialize with groupby_column support."""
+        """Initialize with sensitive-column support."""
         super().__post_init__()
         self._validate_init()
-        if self.groupby_columns is None:
-            raise ValueError("groupby_column must be specified for FairnessDataConfig")
-
-        if isinstance(self.groupby_columns, ListConfig):
-            self.groupby_columns = list(self.groupby_columns)
-        if isinstance(self.groupby_columns, str):
-            self.groupby_columns = [self.groupby_columns]
-
         if self.sensitive_columns is None:
-            self.sensitive_columns = list(self.groupby_columns)
-        elif isinstance(self.sensitive_columns, ListConfig):
+            raise ValueError("sensitive_columns must be specified for FairnessDataConfig")
+        if isinstance(self.sensitive_columns, ListConfig):
             self.sensitive_columns = list(self.sensitive_columns)
         elif isinstance(self.sensitive_columns, str):
             self.sensitive_columns = [self.sensitive_columns]
 
-    def _group_labels_from_frame(self, frame: pd.DataFrame) -> pd.Series:
+    def _sensitive_labels_from_frame(self, frame: pd.DataFrame) -> pd.Series:
         """Build a single sensitive-feature label series for fairlearn APIs."""
-        if len(self.groupby_columns) == 1:
-            return frame[self.groupby_columns[0]].astype(str)
-        return frame[self.groupby_columns]
+        if len(self.sensitive_columns) == 1:
+            return frame[self.sensitive_columns[0]].astype(str)
+        return frame[self.sensitive_columns].astype(str).agg(tuple, axis=1)
 
     def _validate_sensitive_runtime(
         self,
@@ -142,7 +133,7 @@ class FairnessDataConfig(DataPipelineConfig):
         assert isinstance(self._X, pd.DataFrame), ValueError(
             "Expected a dataframe for self.X_",
         )
-        for col in self.groupby_columns:
+        for col in self.sensitive_columns:
             assert col in self._X.columns
         return self
 
@@ -151,18 +142,14 @@ class FairnessDataConfig(DataPipelineConfig):
         return super()._init_pipeline()
 
     def _sample(self):
-        """Override _sample to handle groupby objects for fairness analysis.
-
-        Keeps X_train, y_train the same for all groups, but creates separate
-        X_test, y_test groups based on the groupby columns.
-        """
+        """Override _sample to cache sensitive labels used by fairlearn metrics."""
         # Call parent _sample to get standard train/test split
         super()._sample()
 
         # Cache sensitive labels before pipeline transforms can drop sensitive columns.
-        self._sensitive_train = self._group_labels_from_frame(self.X_train)
-        self._sensitive_test = self._group_labels_from_frame(self.X_test)
-        self._sensitive_all = self._group_labels_from_frame(self._X)
+        self._sensitive_train = self._sensitive_labels_from_frame(self.X_train)
+        self._sensitive_test = self._sensitive_labels_from_frame(self.X_test)
+        self._sensitive_all = self._sensitive_labels_from_frame(self._X)
         self._sensitive_train = self._validate_sensitive_runtime(
             self._sensitive_train,
             "train sampling",
@@ -192,7 +179,7 @@ class FairnessDataConfig(DataPipelineConfig):
             ):
                 sensitive = sensitive_test
             else:
-                sensitive = self._group_labels_from_frame(X_eval)
+                sensitive = self._sensitive_labels_from_frame(X_eval)
         else:
             X_eval = self._X
             y_eval = self._y
@@ -202,7 +189,7 @@ class FairnessDataConfig(DataPipelineConfig):
             ):
                 sensitive = sensitive_all
             else:
-                sensitive = self._group_labels_from_frame(X_eval)
+                sensitive = self._sensitive_labels_from_frame(X_eval)
         sensitive = self._validate_sensitive_runtime(sensitive, "fairness scoring")
         if self.classifier:
             metric_frame = MetricFrame(
