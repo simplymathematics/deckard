@@ -9,7 +9,6 @@ defaults:
   - defense: class-labels
   - attack: hsj
   - score: classification
-  - sample@data.sample: none
   - search/models: ${model}
   - search/defenses: ${defense}
   - search/attacks: ${attack}

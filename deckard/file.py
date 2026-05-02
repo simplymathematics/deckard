@@ -12,7 +12,7 @@ import logging
 from typing import Dict, Optional
 
 
-from .utils import ConfigBase
+from .utils import ConfigBase, safe_store
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +53,15 @@ __all__ = [
     "other_files",
     "all_files",
 ]
+
+
+FILES_DEFAULT = {
+    "data_file": "data/${hash:${data}}.pkl",
+    "model_file": "model/${hash:${data},${model}}.pkl",
+    "attack_file": "attack/${hash:${data},${model},${attack}}.pkl",
+}
+
+safe_store(group="files", name="default", node=FILES_DEFAULT)
 
 
 @dataclass(eq=False)

@@ -6,4 +6,7 @@ This subpackage exposes the attack-side configuration objects used by
 
 from .base import AttackConfig, SensitiveFeaturesWrapper
 
+# Import declarations to register example configs with ConfigStore
+from . import declarations  # noqa: F401
+
 __all__ = ["AttackConfig", "SensitiveFeaturesWrapper"]

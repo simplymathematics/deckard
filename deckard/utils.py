@@ -20,7 +20,8 @@ from pathlib import Path
 from typing import Union, Any
 from dataclasses import dataclass, field
 from hydra.utils import instantiate, get_class
-from omegaconf import OmegaConf
+from hydra.core.config_store import ConfigStore
+from omegaconf import DictConfig, OmegaConf
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -35,9 +36,46 @@ __all__ = [
     "import_class_from_file",
     "resolve_class",
     "load_class",
+    "safe_store",
+    "coerce_config",
     "create_parser_from_function",
     "round_scores",
 ]
+
+
+def safe_store(group: str, name: str, node) -> None:
+    """Register a Hydra config node while tolerating duplicate registrations."""
+    cs = ConfigStore.instance()
+    try:
+        cs.store(group=group, name=name, node=node)
+    except Exception:
+        # Re-imports in tests/dev can register the same node repeatedly.
+        pass
+
+
+def coerce_config(config_obj: Any) -> Any:
+    """Coerce config-like objects into plain Python structures when possible.
+
+    Supported coercions:
+    - ``DictConfig`` -> ``dict``/``list`` via ``OmegaConf.to_container``
+    - ``ConfigBase`` -> ``dict`` via ``to_dict``
+    - existing YAML file path string -> loaded config container
+    """
+    if config_obj is None:
+        return None
+
+    if isinstance(config_obj, DictConfig):
+        return OmegaConf.to_container(config_obj, resolve=True)
+
+    if isinstance(config_obj, ConfigBase):
+        return config_obj.to_dict()
+
+    if isinstance(config_obj, str):
+        path = Path(config_obj)
+        if path.exists() and path.suffix in {".yaml", ".yml"}:
+            return OmegaConf.to_container(OmegaConf.load(path), resolve=True)
+
+    return config_obj
 
 
 def round_scores(scores: dict, n_samples: int, logger_obj=None) -> dict:

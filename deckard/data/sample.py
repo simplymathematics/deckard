@@ -74,32 +74,36 @@ class SplitSampler(BaseSampler):
     """
 
     def __call__(self, cfg) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        if cfg.val_size is None:
-            raise ValueError("val_size must be set for SplitSampler")
-
         indices = np.arange(len(cfg._X))
         stratify_col = cfg._get_stratify_col()
 
-        # First split: isolate validation set
-        train_test_idx, val_idx = train_test_split(
-            indices,
-            test_size=cfg.val_size,
-            random_state=cfg.random_state,
-            stratify=stratify_col if stratify_col is not None else None,
-        )
-
-        # Adjust stratification for the inner split
-        stratify_sub = (
-            stratify_col.iloc[train_test_idx] if stratify_col is not None else None
-        )
-
-        # Second split: train vs test
-        train_idx, test_idx = train_test_split(
-            train_test_idx,
-            test_size=cfg.test_size,
-            random_state=cfg.random_state,
-            stratify=stratify_sub,
-        )
+        if cfg.val_size is not None:
+            # 3-way split: isolate validation set first
+            train_test_idx, val_idx = train_test_split(
+                indices,
+                test_size=cfg.val_size,
+                random_state=cfg.random_state,
+                stratify=stratify_col if stratify_col is not None else None,
+            )
+            stratify_sub = (
+                stratify_col.iloc[train_test_idx] if stratify_col is not None else None
+            )
+            train_idx, test_idx = train_test_split(
+                train_test_idx,
+                test_size=cfg.test_size,
+                random_state=cfg.random_state,
+                stratify=stratify_sub,
+            )
+        else:
+            # 2-way split: no validation set
+            train_idx, test_idx = train_test_split(
+                indices,
+                train_size=cfg.train_size,
+                test_size=cfg.test_size,
+                random_state=cfg.random_state,
+                stratify=stratify_col if stratify_col is not None else None,
+            )
+            val_idx = np.array([], dtype=int)
 
         return train_idx, test_idx, val_idx
 

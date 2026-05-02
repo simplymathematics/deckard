@@ -1,13 +1,9 @@
 """Named score-profile declarations and ConfigStore registrations."""
 
+from pathlib import Path
+from omegaconf import OmegaConf
 from .base import DefaultClassifierConfig, DefaultRegressorConfig, safe_store
 from .data import DefaultDataClassificationConfig, DefaultDataRegressionConfig
-from .fairness import (
-    DefaultFairlearnClassificationConfig,
-    DefaultFairlearnConfig,
-    DefaultFairlearnRegressionConfig,
-)
-from .survival import DefaultLifelinesConfig
 
 
 class DefaultClassifierDict:
@@ -18,22 +14,6 @@ class DefaultRegressorDict:
     scorers = DefaultRegressorConfig()
 
 
-class DefaultFairlearnDict:
-    scorers = DefaultFairlearnConfig()
-
-
-class DefaultFairlearnClassificationDict:
-    scorers = DefaultFairlearnClassificationConfig()
-
-
-class DefaultFairlearnRegressionDict:
-    scorers = DefaultFairlearnRegressionConfig()
-
-
-class DefaultLifelinesDict:
-    scorers = DefaultLifelinesConfig()
-
-
 class DefaultDataClassificationDict:
     scorers = DefaultDataClassificationConfig()
 
@@ -42,6 +22,21 @@ class DefaultDataRegressionDict:
     scorers = DefaultDataRegressionConfig()
 
 
-safe_store(group="score", name="fairlearn-classification", node=DefaultFairlearnClassificationConfig)
-safe_store(group="score", name="fairlearn-regression", node=DefaultFairlearnRegressionConfig)
-safe_store(group="score", name="lifelines", node=DefaultLifelinesConfig)
+def _load_example_score_configs():
+    """Load score configs from examples/sklearn/config/score and register with ConfigStore."""
+    examples_dir = Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config" / "score"
+    
+    if not examples_dir.exists():
+        return
+    
+    for yaml_file in sorted(examples_dir.glob("*.yaml")):
+        try:
+            config_name = yaml_file.stem
+            cfg = OmegaConf.load(yaml_file)
+            safe_store(group="score", name=config_name, node=cfg)
+        except Exception:
+            pass  # Silently skip any problematic configs
+
+
+_load_example_score_configs()
+

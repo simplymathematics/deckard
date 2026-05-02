@@ -32,7 +32,7 @@ from ..model.defend import DefensePipelineConfig
 from ..attack import AttackConfig
 from ..score import ScorerDictConfig
 from ..file import FileConfig, data_files, model_files, attack_files
-from ..utils import ConfigBase
+from ..utils import ConfigBase, coerce_config
 
 logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -196,10 +196,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             return None
         if isinstance(scorer_obj, ScorerDictConfig):
             return scorer_obj
-        if isinstance(scorer_obj, DictConfig):
-            scorer_obj = OmegaConf.to_container(scorer_obj, resolve=True)
-        if isinstance(scorer_obj, ConfigBase):
-            scorer_obj = scorer_obj.to_dict()
+        scorer_obj = coerce_config(scorer_obj)
         if isinstance(scorer_obj, str):
             scorer_obj = ScorerDictConfig.from_yaml(scorer_obj).to_dict()
         if isinstance(scorer_obj, dict):

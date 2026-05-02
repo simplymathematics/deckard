@@ -28,7 +28,7 @@ from art.estimators.regression.scikitlearn import (
 )
 from ..data import DataConfig
 from .base import ModelConfig
-from ..utils import ConfigBase, resolve_class
+from ..utils import ConfigBase, coerce_config, resolve_class
 
 warnings.filterwarnings("ignore", category=UserWarning)
 logger = logging.getLogger(__name__)
@@ -399,15 +399,7 @@ class DefensePipelineConfig(ConfigBase):
         if defense_config is None or isinstance(defense_config, cls):
             return defense_config
 
-        if isinstance(defense_config, DictConfig):
-            defense_config = OmegaConf.to_container(defense_config, resolve=True)
-        elif isinstance(defense_config, ConfigBase):
-            defense_config = defense_config.to_dict()
-        elif isinstance(defense_config, str):
-            defense_config = OmegaConf.to_container(
-                OmegaConf.load(defense_config),
-                resolve=True,
-            )
+        defense_config = coerce_config(defense_config)
 
         if hasattr(defense_config, "apply_to"):
             return cls(defenses=[defense_config])
@@ -471,8 +463,7 @@ class DefensePipelineConfig(ConfigBase):
         if hasattr(defense_obj, "apply_to"):
             return defense_obj
 
-        if isinstance(defense_obj, DictConfig):
-            defense_obj = OmegaConf.to_container(defense_obj, resolve=True)
+        defense_obj = coerce_config(defense_obj)
 
         if isinstance(defense_obj, dict):
             defense_dict = cast(dict[str, Any], dict(defense_obj))

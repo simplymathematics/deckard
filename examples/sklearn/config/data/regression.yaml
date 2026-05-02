@@ -6,6 +6,9 @@ data_params:
   n_informative: 10
   noise: 0.1
   random_state: 42
+test_size: 0.2
+random_state: 42
+sample: split
 
 stratify: False
 classifier: False

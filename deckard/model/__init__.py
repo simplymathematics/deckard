@@ -10,6 +10,9 @@ from typing import Any
 from .base import ModelConfig
 from .defend import DefenseConfig, DefensePipelineConfig
 
+# Import declarations to register example configs with ConfigStore
+from . import declarations  # noqa: F401
+
 ScorerDictConfig = Any
 
 logger = logging.getLogger(__name__)

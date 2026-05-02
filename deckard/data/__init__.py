@@ -16,6 +16,9 @@ from .sample import (
     register_sampler_configs,
 )
 
+# Import declarations to register example configs with ConfigStore
+from . import declarations  # noqa: F401
+
 logger = logging.getLogger(__name__)
 
 try:

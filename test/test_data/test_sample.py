@@ -144,12 +144,14 @@ class TestSplitSampler(unittest.TestCase):
         total = len(train) + len(test) + len(val)
         self.assertEqual(total, len(self.cfg._X))
 
-    def test_raises_without_val_size(self):
+    def test_two_way_split_without_val_size(self):
         cfg = _make_clf_config()
         cfg.val_size = None
         sampler = SplitSampler()
-        with self.assertRaises(ValueError):
-            sampler(cfg)
+        train, test, val = sampler(cfg)
+        self.assertEqual(len(val), 0)
+        self.assertGreater(len(train), 0)
+        self.assertGreater(len(test), 0)
 
     def test_stratified_class_distribution(self):
         sampler = SplitSampler()
@@ -427,12 +429,13 @@ class TestShuffleSampler(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Legacy 2-way split still works (no sampler)
+# ---------------------------------------------------------------------------
+# 2-way split (sample="split", no val_size)
 # ---------------------------------------------------------------------------
 
 
 class TestLegacySplitUnchanged(unittest.TestCase):
-    def test_no_val_set_when_no_sample(self):
+    def test_no_val_set_when_no_val_size(self):
         cfg = DataConfig(
             dataset_name="make_classification",
             data_params={
@@ -447,14 +450,15 @@ class TestLegacySplitUnchanged(unittest.TestCase):
             random_state=42,
             stratify=True,
             classifier=True,
+            sample="split",
         )
         cfg()
         self.assertIsNone(cfg.X_val)
         self.assertIsNone(cfg.y_val)
-        self.assertIsNone(cfg.val_indices)
+        self.assertEqual(len(cfg.val_indices), 0)
         self.assertEqual(len(cfg.X_train) + len(cfg.X_test), 100)
 
-    def test_score_dict_no_val_fields_without_sampler(self):
+    def test_score_dict_no_val_fields_without_val_size(self):
         cfg = DataConfig(
             dataset_name="make_classification",
             data_params={
@@ -469,13 +473,14 @@ class TestLegacySplitUnchanged(unittest.TestCase):
             random_state=42,
             stratify=True,
             classifier=True,
+            sample="split",
         )
         scores = cfg()
         self.assertNotIn("val_n", scores)
         self.assertNotIn("val_class_counts", scores)
 
-    def test_val_size_zero_gives_legacy_behavior(self):
-        """val_size=0 (or None) with no sampler should not create a val set."""
+    def test_val_size_none_gives_two_way_split(self):
+        """sample='split' with val_size=None should not create a val set."""
         cfg = DataConfig(
             dataset_name="make_classification",
             data_params={
@@ -491,7 +496,7 @@ class TestLegacySplitUnchanged(unittest.TestCase):
             random_state=42,
             stratify=True,
             classifier=True,
-            sample=None,
+            sample="split",
         )
         cfg()
         self.assertIsNone(cfg.X_val)

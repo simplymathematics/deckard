@@ -4,8 +4,10 @@ import logging
 import tempfile
 import unittest
 from pathlib import Path
+from uuid import uuid4
 
 import pandas as pd
+from omegaconf import OmegaConf
 
 from deckard import utils
 from deckard import (
@@ -20,10 +22,12 @@ from deckard import (
 )
 from deckard.utils import (
     ConfigBase,
+    coerce_config,
     create_parser_from_function,
     import_class_from_file,
     load_class,
     load_data,
+    safe_store,
     save_data,
 )
 
@@ -62,6 +66,38 @@ class TypeBConfig(ConfigBase):
 
 
 class TestUtilsAdditional(unittest.TestCase):
+    def test_coerce_config_dictconfig_to_dict(self):
+        cfg = OmegaConf.create({"alpha": 1, "beta": {"gamma": 2}})
+        out = coerce_config(cfg)
+        self.assertIsInstance(out, dict)
+        self.assertEqual(out["alpha"], 1)
+        self.assertEqual(out["beta"]["gamma"], 2)
+
+    def test_coerce_config_configbase_to_dict(self):
+        obj = BaseConfig(score_dict={"x": 1})
+        out = coerce_config(obj)
+        self.assertIsInstance(out, dict)
+        self.assertIn("score_dict", out)
+
+    def test_coerce_config_yaml_path_to_dict(self):
+        with tempfile.TemporaryDirectory() as td:
+            cfg_path = Path(td) / "scorer.yaml"
+            cfg_path.write_text("scorers:\n  acc:\n    score_name: acc\n")
+            out = coerce_config(str(cfg_path))
+            self.assertIsInstance(out, dict)
+            self.assertIn("scorers", out)
+
+    def test_coerce_config_non_yaml_string_passthrough(self):
+        class_path = "sklearn.metrics.accuracy_score"
+        self.assertEqual(coerce_config(class_path), class_path)
+
+    def test_safe_store_tolerates_duplicate_registration(self):
+        group = f"test_safe_store_{uuid4().hex}"
+        # First registration
+        safe_store(group=group, name="cfg", node={"x": 1})
+        # Duplicate registration should not raise
+        safe_store(group=group, name="cfg", node={"x": 1})
+
     def test_hash_stable_after_call_for_core_configbase_objects(self):
         configs = [
             DataConfig(),

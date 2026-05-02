@@ -6,7 +6,7 @@ from typing import Dict, Literal, Union
 
 from sklearn.metrics import accuracy_score
 
-from ..utils import ConfigBase, round_scores
+from ..utils import ConfigBase, coerce_config, round_scores
 from .base import ScorerConfig, ScorerDictConfig, safe_store
 
 __all__ = [
@@ -202,6 +202,7 @@ class AttackScorerConfig(ConfigBase):
     def _coerce_profile(profile, default_cls):
         if profile is None:
             return default_cls()
+        profile = coerce_config(profile)
         if isinstance(profile, ScorerDictConfig):
             return profile
         if isinstance(profile, dict):

@@ -1,5 +1,7 @@
 """Scoring configuration exports and Hydra registrations."""
 
+import logging
+
 from .base import (  # noqa: F401
     DefaultClassifierConfig,
     DefaultRegressorConfig,
@@ -10,23 +12,6 @@ from .base import (  # noqa: F401
     safe_store,
 )
 
-from .fairness import (  # noqa: E402
-    DefaultFairlearnClassificationConfig,
-    DefaultFairlearnConfig,
-    DefaultFairlearnRegressionConfig,
-    FairlearnScoreDictConfig,
-    fairness_demographic_parity_difference,
-    fairness_equalized_odds_difference,
-    fairness_group_mae_difference,
-    fairness_group_mean_prediction_difference,
-    fairness_group_mse_difference,
-)
-from .survival import (  # noqa: E402
-    DefaultLifelinesConfig,
-    survival_aic_score,
-    survival_bic_score,
-    survival_concordance_score,
-)
 from .attack import (  # noqa: E402
     AttackScorerConfig,
     DefaultEvasionAttackScorerConfig,
@@ -46,16 +31,50 @@ from .data import (  # noqa: E402
     data_mutual_information_max_score,
     data_empirical_cdf_function_score,
 )
+
+logger = logging.getLogger(__name__)
+
 from .declarations import (  # noqa: E402
     DefaultClassifierDict,
     DefaultDataClassificationDict,
     DefaultDataRegressionDict,
-    DefaultFairlearnClassificationDict,
-    DefaultFairlearnDict,
-    DefaultFairlearnRegressionDict,
-    DefaultLifelinesDict,
     DefaultRegressorDict,
 )
+
+try:
+    from .fairness import (  # noqa: E402
+        DefaultFairlearnClassificationConfig,
+        DefaultFairlearnConfig,
+        DefaultFairlearnRegressionConfig,
+        FairlearnScoreDictConfig,
+        fairness_demographic_parity_difference,
+        fairness_equalized_odds_difference,
+        fairness_group_mae_difference,
+        fairness_group_mean_prediction_difference,
+        fairness_group_mse_difference,
+    )
+except ImportError:  # pragma: no cover - optional dependency
+    logger.debug("Fairlearn not found. Fairness score configs are unavailable.")
+
+try:
+    from .survival import (  # noqa: E402
+        DefaultLifelinesConfig,
+        survival_aic_score,
+        survival_bic_score,
+        survival_concordance_score,
+    )
+except ImportError:  # pragma: no cover - optional dependency
+    logger.debug("Lifelines not found. Survival score configs are unavailable.")
+
+if "DefaultFairlearnConfig" in globals():
+    from .declarations_fairness import (  # noqa: E402
+        DefaultFairlearnClassificationDict,
+        DefaultFairlearnDict,
+        DefaultFairlearnRegressionDict,
+    )
+
+if "DefaultLifelinesConfig" in globals():
+    from .declarations_survival import DefaultLifelinesDict  # noqa: E402
 
 
 __all__ = [
@@ -63,11 +82,6 @@ __all__ = [
     "ScorerDictConfig",
     "DefaultClassifierConfig",
     "DefaultRegressorConfig",
-    "DefaultFairlearnClassificationConfig",
-    "DefaultFairlearnConfig",
-    "DefaultFairlearnRegressionConfig",
-    "FairlearnScoreDictConfig",
-    "DefaultLifelinesConfig",
     "AttackScorerConfig",
     "DefaultEvasionAttackScorerConfig",
     "DefaultEvasionRegressionAttackScorerConfig",
@@ -76,10 +90,6 @@ __all__ = [
     "DefaultAttributeInferenceRegressionAttackScorerConfig",
     "DefaultClassifierDict",
     "DefaultRegressorDict",
-    "DefaultFairlearnDict",
-    "DefaultFairlearnClassificationDict",
-    "DefaultFairlearnRegressionDict",
-    "DefaultLifelinesDict",
     "DefaultDataClassificationConfig",
     "DefaultDataRegressionConfig",
     "DefaultDataClassificationDict",
@@ -93,12 +103,33 @@ __all__ = [
     "data_empirical_cdf_function_score",
     "build_scorer",
     "build_scorer_dict",
-    "survival_concordance_score",
-    "survival_aic_score",
-    "survival_bic_score",
-    "fairness_demographic_parity_difference",
-    "fairness_equalized_odds_difference",
-    "fairness_group_mean_prediction_difference",
-    "fairness_group_mae_difference",
-    "fairness_group_mse_difference",
 ]
+
+if "DefaultFairlearnConfig" in globals():
+    __all__.extend(
+        [
+            "DefaultFairlearnClassificationConfig",
+            "DefaultFairlearnConfig",
+            "DefaultFairlearnRegressionConfig",
+            "FairlearnScoreDictConfig",
+            "DefaultFairlearnDict",
+            "DefaultFairlearnClassificationDict",
+            "DefaultFairlearnRegressionDict",
+            "fairness_demographic_parity_difference",
+            "fairness_equalized_odds_difference",
+            "fairness_group_mean_prediction_difference",
+            "fairness_group_mae_difference",
+            "fairness_group_mse_difference",
+        ]
+    )
+
+if "DefaultLifelinesConfig" in globals():
+    __all__.extend(
+        [
+            "DefaultLifelinesConfig",
+            "DefaultLifelinesDict",
+            "survival_concordance_score",
+            "survival_aic_score",
+            "survival_bic_score",
+        ]
+    )

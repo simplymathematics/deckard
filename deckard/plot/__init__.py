@@ -39,6 +39,9 @@ except ImportError:  # pragma: no cover
 
 logger = logging.getLogger(__name__)
 
+# Import declarations to register static plot configs with ConfigStore.
+from . import declarations  # noqa: F401
+
 
 @dataclass(eq=False)
 class PlotConfig(ConfigBase):

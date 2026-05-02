@@ -8,21 +8,9 @@ from typing import Any, Callable, Dict, Literal, Union
 
 import numpy as np
 
-from hydra.core.config_store import ConfigStore
-
-from ..utils import ConfigBase, resolve_class
+from ..utils import ConfigBase, resolve_class, safe_store
 
 logger = logging.getLogger(__name__)
-
-
-def safe_store(group: str, name: str, node):
-    """Register a config node while tolerating duplicate import-time stores."""
-    cs = ConfigStore.instance()
-    try:
-        cs.store(group=group, name=name, node=node)
-    except Exception:
-        # Re-imports can attempt duplicate registrations in some test contexts.
-        pass
 
 
 @dataclass

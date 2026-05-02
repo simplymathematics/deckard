@@ -213,7 +213,7 @@ class DataConfig(ConfigBase):
     train_size: Union[float, int, None] = None
     val_size: Union[float, int, None] = None
     fold: Union[int, None] = None
-    sample: Union[Any, None] = None
+    sample: Union[str, Any] = "split"
     random_state: int = 42
     stratify: Union[None, str, bool] = True
     classifier: Union[bool, None, str] = True
@@ -393,10 +393,10 @@ class DataConfig(ConfigBase):
         raise ValueError("stratify must be None, True, False, or a column name")
 
     def _resolve_sample(self):
-        """Instantiate and return the sampler object, or ``None`` for legacy mode.
+        """Instantiate and return the sampler object.
 
         Accepts:
-        - ``None`` → no sampler (legacy 2-way split)
+        - ``"split"`` / ``"fold"`` / ``"shuffle"`` → corresponding sampler class
         - An already-instantiated sampler object (returned as-is)
         - A plain :class:`dict` or OmegaConf :class:`~omegaconf.DictConfig` with a
           ``name`` or ``_target_`` key pointing to the sampler class
@@ -404,10 +404,24 @@ class DataConfig(ConfigBase):
 
         Returns
         -------
-        callable or None
+        callable
         """
-        if self.sample is None:
-            return None
+        from .sample import KFoldSampler, ShuffleSampler, SplitSampler
+
+        _SAMPLER_ALIASES = {
+            "split": SplitSampler,
+            "fold": KFoldSampler,
+            "shuffle": ShuffleSampler,
+        }
+
+        if isinstance(self.sample, str):
+            key = self.sample.lower()
+            if key not in _SAMPLER_ALIASES:
+                raise ValueError(
+                    f"Unknown sampler '{self.sample}'. Must be one of {list(_SAMPLER_ALIASES)}."
+                )
+            return _SAMPLER_ALIASES[key]()
+
         spec = self.sample
 
         # 1. Convert OmegaConf DictConfig to a plain dict first so subsequent
@@ -422,6 +436,9 @@ class DataConfig(ConfigBase):
 
         # 2. Resolve dict / plain-dict spec (supports 'name' or '_target_' key).
         if isinstance(spec, dict):
+            # Treat empty dict as None (no sampler)
+            if not spec:
+                return None
             spec = dict(spec)
             class_path = spec.pop("name", spec.pop("_target_", None))
             if class_path is None:
@@ -621,35 +638,14 @@ class DataConfig(ConfigBase):
         start_time = time.process_time()
 
         sampler_obj = self._resolve_sample()
-        if sampler_obj is not None:
-            # Delegate to the pluggable sampler
-            train_idx, test_idx, val_idx = sampler_obj(self)
-            self.train_indices = train_idx
-            self.test_indices = test_idx
-            self.val_indices = val_idx
+        train_idx, test_idx, val_idx = sampler_obj(self)
+        self.train_indices = train_idx
+        self.test_indices = test_idx
+        self.val_indices = val_idx
+        if len(val_idx) > 0:
             self.X_val = self._X.iloc[self.val_indices].reset_index(drop=True)
             self.y_val = self._y.iloc[self.val_indices].reset_index(drop=True)
             self.val_n = len(self.X_val)
-        else:
-            # Legacy 2-way split (no sample)
-            stratify_col = self._get_stratify_col()
-            indices = range(len(self._X))
-            try:
-                train_idx, test_idx = train_test_split(
-                    indices,
-                    train_size=self.train_size,
-                    test_size=self.test_size,
-                    random_state=self.random_state,
-                    stratify=stratify_col if stratify_col is not None else None,
-                )
-            except ValueError as e:
-                raise ValueError(
-                    f"Error during train/test split with train_size={self.train_size}, "
-                    f"test_size={self.test_size}, random_state={self.random_state}, "
-                    f"stratify={self.stratify}: {e} ",
-                )
-            self.train_indices = train_idx
-            self.test_indices = test_idx
 
         end_time = time.process_time()
         self.data_sample_time = end_time - start_time

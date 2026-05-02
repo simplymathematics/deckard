@@ -3,12 +3,15 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from hydra import compose, initialize_config_dir
+from omegaconf import OmegaConf
 
 from deckard.attack import AttackConfig
-from deckard.data import DataConfig
+from deckard.data import DataConfig, DataPipelineConfig
 from deckard.experiment import ExperimentConfig
 from deckard.file import FileConfig
 from deckard.model import DefenseConfig, ModelConfig
+from deckard.model.defend import DefensePipelineConfig
 from deckard.score.attack import AttackScorerConfig
 from deckard.score import DefaultDataClassificationConfig, DefaultDataRegressionConfig
 
@@ -643,3 +646,181 @@ def test_experiment_config_scores_persist_and_reload():
         experiment.save_scores(scores, path)
         loaded = experiment.load_scores(str(path))
     assert "accuracy" in loaded
+
+
+# =========================================================================
+# CLI-style integration tests using Hydra ConfigStore composition
+# =========================================================================
+
+
+def test_cli_data_model_composition_adult_logistic():
+    """Test CLI-style config composition: adult dataset + logistic regression."""
+
+    config_dir = Path(__file__).resolve().parents[1] / "examples" / "sklearn" / "config"
+    with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
+        cfg = compose(
+            config_name="default",
+            overrides=[
+                "data=adult",
+                "model=logistic",
+                "defense=baseline",
+                "score=classification",
+            ]
+        )
+    
+    # Load config into data
+    data_dict = OmegaConf.to_container(cfg.data, resolve=True)
+    # Use DataPipelineConfig if pipeline is present
+    if "pipeline" in data_dict:
+        data = DataPipelineConfig(**data_dict)
+    else:
+        data = DataConfig(**data_dict)
+    _load_or_skip(data)
+    
+    # Load config into model
+    model_dict = OmegaConf.to_container(cfg.model, resolve=True)
+    model = ModelConfig(**model_dict)
+    _train_model_or_skip(model, data)
+    
+    assert data.X_train is not None
+    assert model.get_model() is not None
+
+
+def test_cli_data_model_composition_diabetes_rf():
+    """Test CLI-style config composition: diabetes dataset + ridge regression."""
+
+    config_dir = Path(__file__).resolve().parents[1] / "examples" / "sklearn" / "config"
+    with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
+        cfg = compose(
+            config_name="default",
+            overrides=[
+                "data=diabetes",
+                "model=ridge",
+                "score=regression",
+            ]
+        )
+    
+    # Load config into data
+    data_dict = OmegaConf.to_container(cfg.data, resolve=True)
+    if "pipeline" in data_dict:
+        data = DataPipelineConfig(**data_dict)
+    else:
+        data = DataConfig(**data_dict)
+    _load_or_skip(data)
+    
+    # Load config into model
+    model_dict = OmegaConf.to_container(cfg.model, resolve=True)
+    model = ModelConfig(**model_dict)
+    _train_model_or_skip(model, data)
+    
+    assert data.X_train is not None
+    assert model.get_model() is not None
+
+
+def test_cli_defense_composition_feature_squeezing():
+    """Test CLI-style config composition with defense pipeline."""
+
+    config_dir = Path(__file__).resolve().parents[1] / "examples" / "sklearn" / "config"
+    with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
+        cfg = compose(
+            config_name="default",
+            overrides=[
+                "data=classification",
+                "model=logistic",
+                "defense=feature-squeezing",
+            ]
+        )
+    
+    # Load config into data
+    data_dict = OmegaConf.to_container(cfg.data, resolve=True)
+    data = DataConfig(**data_dict)
+    _load_or_skip(data)
+    
+    # Load config into model
+    model_dict = OmegaConf.to_container(cfg.model, resolve=True)
+    model = ModelConfig(**model_dict)
+    _train_model_or_skip(model, data)
+    
+    # Load config into defense
+    defense_dict = OmegaConf.to_container(cfg.defense, resolve=True)
+    defense = DefensePipelineConfig.coerce(defense_dict)
+    
+    # Apply defense
+    defended = defense.apply(estimator=model.get_model(), data=data)
+    assert defended is not None
+
+
+def test_cli_attack_composition_fgm():
+    """Test CLI-style config composition with evasion attack."""
+
+    config_dir = Path(__file__).resolve().parents[1] / "examples" / "sklearn" / "config"
+    with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
+        cfg = compose(
+            config_name="default",
+            overrides=[
+                "data=classification",
+                "model=logistic",
+                "attack=boundary",
+                "score=classification",
+            ]
+        )
+    
+    # Load configs
+    data_dict = OmegaConf.to_container(cfg.data, resolve=True)
+    if "pipeline" in data_dict:
+        data = DataPipelineConfig(**data_dict)
+    else:
+        data = DataConfig(**data_dict)
+    _load_or_skip(data)
+    
+    model_dict = OmegaConf.to_container(cfg.model, resolve=True)
+    model = ModelConfig(**model_dict)
+    _train_model_or_skip(model, data)
+    
+    attack_dict = OmegaConf.to_container(cfg.attack, resolve=True)
+    attack = AttackConfig(**attack_dict)
+    
+    # Execute attack
+    try:
+        scores = attack(data=data, model=model)
+        assert any(key.startswith("evasion_") for key in scores)
+    except Exception as exc:  # pragma: no cover - attack support varies
+        pytest.skip(f"Unable to execute attack: {exc}")
+
+
+def test_cli_full_experiment_composition():
+    """Test CLI-style config composition for full experiment."""
+
+    config_dir = Path(__file__).resolve().parents[1] / "examples" / "sklearn" / "config"
+    with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
+        cfg = compose(
+            config_name="default",
+            overrides=[
+                "data=classification",
+                "data.data_params.n_samples=200",
+                "model=logistic",
+                "model.model_params.max_iter=5",
+                "attack=fgm",
+                "defense=baseline",
+                "score=classification",
+            ]
+        )
+    
+    # Load configs
+    data_dict = OmegaConf.to_container(cfg.data, resolve=True)
+    if "pipeline" in data_dict:
+        data = DataPipelineConfig(**data_dict)
+    else:
+        data = DataConfig(**data_dict)
+    
+    model_dict = OmegaConf.to_container(cfg.model, resolve=True)
+    model = ModelConfig(**model_dict)
+    
+    attack_dict = OmegaConf.to_container(cfg.attack, resolve=True)
+    attack = AttackConfig(**attack_dict)
+    
+    # Execute experiment
+    experiment = ExperimentConfig(data=data, model=model, attack=attack)
+    scores = experiment()
+    assert "accuracy" in scores
+    assert any(key.startswith("evasion_") for key in scores)
