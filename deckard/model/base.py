@@ -55,6 +55,8 @@ art_model_types = tuple(
 
 logger = logging.getLogger(__name__)
 
+AUTO_SCORER = "auto"
+
 __all__ = ["ModelConfig"]
 
 
@@ -162,8 +164,8 @@ class ModelConfig(ConfigBase):
     model_params: dict = None
     probability: bool = False
     alias: Union[str, None] = None
-    defense: Union[dict, None] = None
-    scorer: Union["ScorerDictConfig", None] = None
+    defense: Any = None
+    scorer: Union["ScorerDictConfig", dict, str, None] = AUTO_SCORER
 
     # Runtime/model state fields
     _model: Union[BaseEstimator, None] = None
@@ -238,6 +240,24 @@ class ModelConfig(ConfigBase):
             self.classifier = False
         else:
             self.classifier = None
+        if isinstance(self.scorer, str) and self.scorer.lower() in {
+            "none",
+            "null",
+            "n/a",
+        }:
+            self.scorer = None
+        if isinstance(self.scorer, str) and self.scorer.lower() in {
+            AUTO_SCORER,
+            "default",
+        }:
+            scorer_cls = (
+                "deckard.score.base.DefaultClassifierConfig"
+                if self.classifier
+                else "deckard.score.base.DefaultRegressorConfig"
+            )
+            self.scorer = load_class(scorer_cls)
+        elif isinstance(self.scorer, (dict, DictConfig)):
+            self.scorer = ScorerDictConfig(**self.scorer)
 
     def _initialize_model(self):
         # Initialize model through the shared loader used by config objects.
@@ -252,10 +272,14 @@ class ModelConfig(ConfigBase):
                 self.model_params,
                 (dict, DictConfig),
             ), f"model_params must be a dict if model does not have get_params method. Got {type(self.model_params)}"
-
+        if hasattr(self._model, "predict_proba"):
+            self.probability = True
+    
+        
     def __hash__(self):
         return super().__hash__()
-
+    
+    
     def get_art_class(self, data):
 
         art_class = (
@@ -318,18 +342,27 @@ class ModelConfig(ConfigBase):
             raise ValueError(
                 "ModelConfig must have a fitted estimator before applying defense",
             )
-        apply_to = getattr(self.defense, "apply_to", None)
-        if not callable(apply_to):
-            raise TypeError(
-                "Configured defense must implement apply_to(estimator, data)",
-            )
 
-        defended_estimator = apply_to(estimator=self._model, data=data)
-        self.defense_application_time = getattr(
-            self.defense,
-            "defense_application_time",
-            self.defense_application_time,
+        defense_chain = (
+            list(self.defense)
+            if isinstance(self.defense, (list, tuple))
+            else [self.defense]
         )
+        defended_estimator = self._model
+        total_defense_time = 0.0
+        for defense_obj in defense_chain:
+            apply_to = getattr(defense_obj, "apply_to", None)
+            if not callable(apply_to):
+                raise TypeError(
+                    "Configured defenses must implement apply_to(estimator, data)",
+                )
+            started = time.process_time()
+            defended_estimator = apply_to(estimator=defended_estimator, data=data)
+            elapsed = getattr(defense_obj, "defense_application_time", None)
+            if elapsed is None:
+                elapsed = time.process_time() - started
+            total_defense_time += float(elapsed)
+        self.defense_application_time = total_defense_time
         return defended_estimator
 
     def _train(self, X: pd.DataFrame, y: pd.Series):
@@ -593,22 +626,27 @@ class ModelConfig(ConfigBase):
             - Rounds scores based on the size of `y_true`.
             - Logs each rounded score.
         """
-        if self.scorer is not None:
-            scores = self.scorer(y_true=y_true, y_pred=y_pred, mode=mode, **kwargs)
-        elif self.classifier:
-            scores = self._classification_scores(y_true, y_pred)
-        else:
-            scores = self._regression_scores(y_true, y_pred)
+        if self.scorer is None:
+            return {}
+        if not callable(self.scorer):
+            raise TypeError(
+                f"ModelConfig.scorer must be callable or None, got {type(self.scorer)}",
+            )
+        scores = self.scorer(y_true=y_true, y_pred=y_pred, mode=mode, **kwargs)
         return round_scores(scores=scores, n_samples=len(y_true), logger_obj=logger)
 
     def _decode_predictions_for_persistence(self, y_pred, y_true=None):
-        """Convert classifier score/probability matrices into label vectors for file output."""
+        """Persist classifier outputs with explicit probability-vs-label behavior."""
         if not self.classifier:
             return y_pred
         y_pred_arr = np.asarray(y_pred)
         if y_pred_arr.ndim == 1:
             return y_pred
         if y_pred_arr.ndim != 2:
+            return y_pred
+
+        # Explicitly preserve matrix outputs when probability mode is enabled.
+        if bool(self.probability):
             return y_pred
 
         if y_pred_arr.shape[1] == 1:
@@ -923,27 +961,29 @@ class ModelConfig(ConfigBase):
 
         # Score training predictions from current run.
         if train_predictions is not None:
-            start = time.process_time()
-            train_scores = self._score(
-                data.y_train,
-                train_predictions,
-                mode="train",
-                data=data,
-            )
-            self.training_score_time = time.process_time() - start
-            # Prefix training scores with 'train_'
-            train_scores = {
-                f"training_{key}": value for key, value in train_scores.items()
-            }
-            if "training_loss_curve" in train_scores:
-                del train_scores["training_loss_curve"]
-            if self.score_dict is None:
-                self.score_dict = {}
-            self.score_dict.update(train_scores)
-            times["training_score_time"] = self.training_score_time
-            logger.info(
-                f"Training scores computed in {self.training_score_time:.2f} seconds",
-            )
+            if self.scorer is not None:
+                start = time.process_time()
+                train_scores = self._score(
+                    data.y_train,
+                    train_predictions,
+                    mode="train",
+                    data=data,
+                    model=self,
+                )
+                self.training_score_time = time.process_time() - start
+                # Prefix training scores with 'train_'
+                train_scores = {
+                    f"training_{key}": value for key, value in train_scores.items()
+                }
+                if "training_loss_curve" in train_scores:
+                    del train_scores["training_loss_curve"]
+                if self.score_dict is None:
+                    self.score_dict = {}
+                self.score_dict.update(train_scores)
+                times["training_score_time"] = self.training_score_time
+                logger.info(
+                    f"Training scores computed in {self.training_score_time:.2f} seconds",
+                )
         else:
             raise ValueError("Training predictions not available for scoring.")
         if self.predictions is not None:
@@ -994,21 +1034,23 @@ class ModelConfig(ConfigBase):
                 raise ValueError("No test data available for prediction.")
         # Score test predictions from current run.
         if data.y_test is not None and test_predictions is not None:
-            start = time.process_time()
-            test_scores = self._score(
-                data.y_test,
-                test_predictions,
-                mode="test",
-                data=data,
-            )
-            if self.score_dict is None:
-                self.score_dict = {}
-            self.score_dict = {**self.score_dict, **test_scores}
-            self.prediction_score_time = time.process_time() - start
-            times["prediction_score_time"] = self.prediction_score_time
-            logger.info(
-                f"Prediction scores computed in {self.prediction_score_time:.2f} seconds",
-            )
+            if self.scorer is not None:
+                start = time.process_time()
+                test_scores = self._score(
+                    data.y_test,
+                    test_predictions,
+                    mode="test",
+                    data=data,
+                    model=self,
+                )
+                if self.score_dict is None:
+                    self.score_dict = {}
+                self.score_dict = {**self.score_dict, **test_scores}
+                self.prediction_score_time = time.process_time() - start
+                times["prediction_score_time"] = self.prediction_score_time
+                logger.info(
+                    f"Prediction scores computed in {self.prediction_score_time:.2f} seconds",
+                )
         else:
             raise ValueError("No test labels available for scoring.")
         self.score_dict.update(times)
