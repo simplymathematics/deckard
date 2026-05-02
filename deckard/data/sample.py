@@ -296,8 +296,8 @@ def register_sampler_configs() -> None:
         sample=shuffle
         sample=none    # disables the sampler (legacy 2-way split)
 
-    When a sampler is selected, the config is placed under ``data.sampler``
-    via the ``@data.sampler`` package override.
+    When a sampler is selected, the config is placed under ``data.sample``
+    via the ``@data.sample`` package override.
     """
     try:
         from hydra.core.config_store import ConfigStore
@@ -309,24 +309,24 @@ def register_sampler_configs() -> None:
         group="sample",
         name="split",
         node=SplitSamplerConf,
-        package="data.sampler",
+        package="data.sample",
     )
     cs.store(
         group="sample",
         name="kfold",
         node=KFoldSamplerConf,
-        package="data.sampler",
+        package="data.sample",
     )
     cs.store(
         group="sample",
         name="shuffle",
         node=ShuffleSamplerConf,
-        package="data.sampler",
+        package="data.sample",
     )
-    # 'none' leaves data.sampler as None (no sampler, legacy behavior)
+    # 'none' leaves data.sample as None (no sampler, legacy behavior)
     cs.store(
         group="sample",
         name="none",
         node={},
-        package="data.sampler",
+        package="data.sample",
     )

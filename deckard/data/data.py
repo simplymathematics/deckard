@@ -78,13 +78,13 @@ class DataConfig(ConfigBase):
         Proportion or count of samples to include in the training split.
     val_size : Union[float, int, None]
         Proportion or count of samples to include in the validation split when a
-        ``sampler`` is provided (e.g. :class:`~deckard.data.sample.SplitSampler` or
+        ``sample`` is provided (e.g. :class:`~deckard.data.sample.SplitSampler` or
         :class:`~deckard.data.sample.ShuffleSampler`).  Unused in legacy mode.
     fold : Union[int, None]
-        Which fold to use as the validation set when ``sampler`` performs cross-validation
+        Which fold to use as the validation set when ``sample`` performs cross-validation
         (e.g. :class:`~deckard.data.sample.KFoldSampler` or
         :class:`~deckard.data.sample.ShuffleSampler`).  Defaults to ``0``.
-    sampler : Union[callable, dict, None]
+    sample : Union[callable, dict, None]
         Optional pluggable sampler.  When ``None`` (default) the legacy 2-way
         ``train_test_split`` is used.  Can be an instantiated sampler object, a subclass
         of :class:`~deckard.data.sample.BaseSampler`, or a Hydra-style dict with a
@@ -150,7 +150,7 @@ class DataConfig(ConfigBase):
         Computes a hash value for the instance based on non-private attributes.
     _get_stratify_col()
         Returns the stratification array (or None) based on ``self.stratify``.
-    _resolve_sampler()
+    _resolve_sample()
         Instantiates and returns the sampler object, or None for legacy mode.
     _load_adult_income_data()
         Loads and preprocesses the Adult Income dataset from OpenML.
@@ -196,7 +196,7 @@ class DataConfig(ConfigBase):
             dataset_name="digits",
             test_size=0.2,
             val_size=0.1,
-            sampler=SplitSampler(),
+            sample=SplitSampler(),
         )
         config()
         X_val, y_val = config.X_val, config.y_val
@@ -209,7 +209,7 @@ class DataConfig(ConfigBase):
     train_size: Union[float, int, None] = None
     val_size: Union[float, int, None] = None
     fold: Union[int, None] = None
-    sampler: Union[Any, None] = None
+    sample: Union[Any, None] = None
     random_state: int = 42
     stratify: Union[None, str, bool] = True
     classifier: Union[bool, None, str] = True
@@ -367,7 +367,7 @@ class DataConfig(ConfigBase):
             )
         raise ValueError("stratify must be None, True, False, or a column name")
 
-    def _resolve_sampler(self):
+    def _resolve_sample(self):
         """Instantiate and return the sampler object, or ``None`` for legacy mode.
 
         Accepts:
@@ -381,9 +381,9 @@ class DataConfig(ConfigBase):
         -------
         callable or None
         """
-        if self.sampler is None:
+        if self.sample is None:
             return None
-        spec = self.sampler
+        spec = self.sample
 
         # 1. Convert OmegaConf DictConfig to a plain dict first so subsequent
         #    checks can rely on isinstance(spec, dict).
@@ -400,7 +400,7 @@ class DataConfig(ConfigBase):
             spec = dict(spec)
             class_path = spec.pop("name", spec.pop("_target_", None))
             if class_path is None:
-                raise ValueError("sampler dict must include 'name' or '_target_'")
+                raise ValueError("sample dict must include 'name' or '_target_'")
             return load_class(class_path, **spec)
 
         # 3. Already an instantiated callable (e.g. a sampler instance).
@@ -411,7 +411,7 @@ class DataConfig(ConfigBase):
         if isinstance(spec, type):
             return spec()
 
-        raise ValueError(f"Unsupported sampler specification: {type(spec)}")
+        raise ValueError(f"Unsupported sample specification: {type(spec)}")
 
     def __hash__(self):
         return super().__hash__()
@@ -571,11 +571,11 @@ class DataConfig(ConfigBase):
         """
         Samples training, testing, and optionally validation indices from the loaded dataset.
 
-        When ``self.sampler`` is set, delegates to the sampler callable which returns
+        When ``self.sample`` is set, delegates to the sampler callable which returns
         ``(train_idx, test_idx, val_idx)`` and populates ``X_val``/``y_val`` in addition
         to the standard ``X_train``/``X_test`` splits.
 
-        Without a sampler, falls back to the original 2-way ``train_test_split`` behaviour
+        Without a sample, falls back to the original 2-way ``train_test_split`` behaviour
         (``X_val``/``y_val`` remain ``None``).
 
         Raises
@@ -595,7 +595,7 @@ class DataConfig(ConfigBase):
 
         start_time = time.process_time()
 
-        sampler_obj = self._resolve_sampler()
+        sampler_obj = self._resolve_sample()
         if sampler_obj is not None:
             # Delegate to the pluggable sampler
             train_idx, test_idx, val_idx = sampler_obj(self)
@@ -606,7 +606,7 @@ class DataConfig(ConfigBase):
             self.y_val = self._y.iloc[self.val_indices].reset_index(drop=True)
             self.val_n = len(self.X_val)
         else:
-            # Legacy 2-way split (no sampler)
+            # Legacy 2-way split (no sample)
             stratify_col = self._get_stratify_col()
             indices = range(len(self._X))
             try:

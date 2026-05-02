@@ -172,7 +172,7 @@ class TestSplitSampler(unittest.TestCase):
             random_state=42,
             stratify=True,
             classifier=True,
-            sampler=SplitSampler(),
+            sample=SplitSampler(),
         )
         cfg()
         self.assertIsNotNone(cfg.X_val)
@@ -198,7 +198,7 @@ class TestSplitSampler(unittest.TestCase):
             random_state=42,
             stratify=True,
             classifier=True,
-            sampler=SplitSampler(),
+            sample=SplitSampler(),
         )
         scores = cfg()
         self.assertIn("val_n", scores)
@@ -218,13 +218,13 @@ class TestSplitSampler(unittest.TestCase):
             random_state=1,
             stratify=False,
             classifier=False,
-            sampler=SplitSampler(),
+            sample=SplitSampler(),
         )
         scores = cfg()
         self.assertIn("val_n", scores)
         self.assertIn("val_y_cdf", scores)
 
-    def test_sampler_dict_spec(self):
+    def test_sample_dict_spec(self):
         """DataConfig should accept a dict sampler spec and instantiate it."""
         cfg = DataConfig(
             dataset_name="make_classification",
@@ -241,7 +241,7 @@ class TestSplitSampler(unittest.TestCase):
             random_state=42,
             stratify=True,
             classifier=True,
-            sampler={"name": "deckard.data.sample.SplitSampler"},
+            sample={"name": "deckard.data.sample.SplitSampler"},
         )
         cfg()
         self.assertIsNotNone(cfg.X_val)
@@ -321,7 +321,7 @@ class TestKFoldSampler(unittest.TestCase):
             fold=1,
             stratify=True,
             classifier=True,
-            sampler=KFoldSampler(n_splits=5),
+            sample=KFoldSampler(n_splits=5),
         )
         cfg()
         self.assertIsNotNone(cfg.X_val)
@@ -398,7 +398,7 @@ class TestShuffleSampler(unittest.TestCase):
             random_state=42,
             stratify=True,
             classifier=True,
-            sampler=ShuffleSampler(n_splits=5),
+            sample=ShuffleSampler(n_splits=5),
         )
         cfg()
         self.assertIsNotNone(cfg.X_val)
@@ -419,7 +419,7 @@ class TestShuffleSampler(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 class TestLegacySplitUnchanged(unittest.TestCase):
-    def test_no_val_set_when_no_sampler(self):
+    def test_no_val_set_when_no_sample(self):
         cfg = DataConfig(
             dataset_name="make_classification",
             data_params={
@@ -478,7 +478,7 @@ class TestLegacySplitUnchanged(unittest.TestCase):
             random_state=42,
             stratify=True,
             classifier=True,
-            sampler=None,
+            sample=None,
         )
         cfg()
         self.assertIsNone(cfg.X_val)
@@ -490,9 +490,9 @@ class TestLegacySplitUnchanged(unittest.TestCase):
 # OmegaConf DictConfig sampler spec
 # ---------------------------------------------------------------------------
 
-class TestOmegaConfSamplerSpec(unittest.TestCase):
-    def test_omegaconf_dictconfig_sampler(self):
-        """_resolve_sampler should handle an OmegaConf DictConfig spec."""
+class TestOmegaConfSampleSpec(unittest.TestCase):
+    def test_omegaconf_dictconfig_sample(self):
+        """_resolve_sample should handle an OmegaConf DictConfig spec."""
         from omegaconf import OmegaConf
 
         cfg = DataConfig(
@@ -512,7 +512,7 @@ class TestOmegaConfSamplerSpec(unittest.TestCase):
             classifier=True,
         )
         # Simulate Hydra passing an OmegaConf DictConfig for the sampler
-        cfg.sampler = OmegaConf.create(
+        cfg.sample = OmegaConf.create(
             {"name": "deckard.data.sample.SplitSampler"}
         )
         cfg._load_data()

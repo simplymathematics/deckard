@@ -8,7 +8,7 @@ defaults:
   - model: rf
   - defense: class-labels
   - attack: hsj
-  - sample@data.sampler: none
+  - sample@data.sample: none
   - search/models: ${model}
   - search/defenses: ${defense}
   - search/attacks: ${attack}
