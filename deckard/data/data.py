@@ -76,6 +76,19 @@ class DataConfig(ConfigBase):
         Proportion of the dataset to include in the test split (between 0 and 1).
     train_size : float
         Proportion or count of samples to include in the training split.
+    val_size : Union[float, int, None]
+        Proportion or count of samples to include in the validation split when a
+        ``sample`` is provided (e.g. :class:`~deckard.data.sample.SplitSampler` or
+        :class:`~deckard.data.sample.ShuffleSampler`).  Unused in legacy mode.
+    fold : Union[int, None]
+        Which fold to use as the validation set when ``sample`` performs cross-validation
+        (e.g. :class:`~deckard.data.sample.KFoldSampler` or
+        :class:`~deckard.data.sample.ShuffleSampler`).  Defaults to ``0``.
+    sample : Union[callable, dict, None]
+        Optional pluggable sampler.  When ``None`` (default) the legacy 2-way
+        ``train_test_split`` is used.  Can be an instantiated sampler object, a subclass
+        of :class:`~deckard.data.sample.BaseSampler`, or a Hydra-style dict with a
+        ``name``/``_target_`` key pointing to the sampler class.
     random_state : int
         Seed for random number generation to ensure reproducibility.
     stratify : Union[None, str, bool]
@@ -102,12 +115,16 @@ class DataConfig(ConfigBase):
         Number of training samples.
     test_n : int
         Number of testing samples.
+    val_n : int
+        Number of validation samples (set only when a sampler is used).
     alias: str
         Optional alias for the dataset configuration.
     train_indices : list
         Indices for training samples.
     test_indices : list
         Indices for testing samples.
+    val_indices : list
+        Indices for validation samples (set only when a sampler is used).
     X_train : pd.DataFrame
         Training feature matrix.
     y_train : pd.Series
@@ -116,6 +133,10 @@ class DataConfig(ConfigBase):
         Testing feature matrix.
     y_test : pd.Series
         Testing target vector.
+    X_val : pd.DataFrame
+        Validation feature matrix (set only when a sampler is used).
+    y_val : pd.Series
+        Validation target vector (set only when a sampler is used).
     score_dict : dict
         Dictionary to store scores or metrics.
     _target_ : str
@@ -127,6 +148,10 @@ class DataConfig(ConfigBase):
         Post-initialization method to validate parameters and initialize internal attributes.
     __hash__()
         Computes a hash value for the instance based on non-private attributes.
+    _get_stratify_col()
+        Returns the stratification array (or None) based on ``self.stratify``.
+    _resolve_sample()
+        Instantiates and returns the sampler object, or None for legacy mode.
     _load_adult_income_data()
         Loads and preprocesses the Adult Income dataset from OpenML.
     _load_generic_sklearn(loader_func, **loader_params)
@@ -138,7 +163,7 @@ class DataConfig(ConfigBase):
     _make_regression_data()
         Generates a synthetic regression dataset.
     _sample()
-        Splits the loaded dataset into training and testing sets, optionally using stratification.
+        Splits the loaded dataset into training, testing, and optionally validation sets.
     _load_data()
         Loads the dataset based on the specified name or file type.
     __call__(filepath=None)
@@ -163,6 +188,18 @@ class DataConfig(ConfigBase):
     >>> X_test = config.X_test
     >>> y_test = config.y_test
     >>> score_dict = config.score_dict
+
+    Using a pluggable sampler for 3-way splits::
+
+        from deckard.data.sample import SplitSampler
+        config = DataConfig(
+            dataset_name="digits",
+            test_size=0.2,
+            val_size=0.1,
+            sample=SplitSampler(),
+        )
+        config()
+        X_val, y_val = config.X_val, config.y_val
     """
 
     # Configuration fields
@@ -170,6 +207,9 @@ class DataConfig(ConfigBase):
     data_params: dict = None
     test_size: Union[float, int, None] = None
     train_size: Union[float, int, None] = None
+    val_size: Union[float, int, None] = None
+    fold: Union[int, None] = None
+    sample: Union[Any, None] = None
     random_state: int = 42
     stratify: Union[None, str, bool] = True
     classifier: Union[bool, None, str] = True
@@ -187,12 +227,16 @@ class DataConfig(ConfigBase):
     _y: Union[pd.Series, None] = None
     train_indices: Union[list, None] = None
     test_indices: Union[list, None] = None
+    val_indices: Union[list, None] = None
     X_train: Union[pd.DataFrame, pd.Series, None] = None
     y_train: Union[pd.Series, None] = None
     X_test: Union[pd.DataFrame, pd.Series, None] = None
     y_test: Union[pd.Series, None] = None
+    X_val: Union[pd.DataFrame, pd.Series, None] = None
+    y_val: Union[pd.Series, None] = None
     train_n: Union[int, None] = None
     test_n: Union[int, None] = None
+    val_n: Union[int, None] = None
     _target_: Union[str, None] = None
     _plugin_objects: Union[list, None] = None
 
@@ -229,12 +273,16 @@ class DataConfig(ConfigBase):
             "_y",
             "train_indices",
             "test_indices",
+            "val_indices",
             "X_train",
             "y_train",
             "X_test",
             "y_test",
+            "X_val",
+            "y_val",
             "train_n",
             "test_n",
+            "val_n",
         ]:
             if not hasattr(self, attr):
                 setattr(self, attr, None)
@@ -292,6 +340,78 @@ class DataConfig(ConfigBase):
             if callable(hook):
                 hook_outputs.append(hook(self, **kwargs))
         return hook_outputs
+
+    def _get_stratify_col(self):
+        """Return the stratification array (or ``None``) based on ``self.stratify``.
+
+        Returns
+        -------
+        pd.Series or None
+            The column to stratify on, or ``None`` if stratification is disabled.
+
+        Raises
+        ------
+        ValueError
+            If ``stratify`` is a string that is not a column name in ``self._X``,
+            or if ``stratify`` is an unrecognized type.
+        """
+        if self.stratify is None or self.stratify is False:
+            return None
+        if self.stratify is True:
+            return self._y
+        if isinstance(self.stratify, str):
+            if self._X is not None and self.stratify in self._X.columns:
+                return self._X[self.stratify]
+            raise ValueError(
+                f"Stratify column '{self.stratify}' not found in data columns",
+            )
+        raise ValueError("stratify must be None, True, False, or a column name")
+
+    def _resolve_sample(self):
+        """Instantiate and return the sampler object, or ``None`` for legacy mode.
+
+        Accepts:
+        - ``None`` → no sampler (legacy 2-way split)
+        - An already-instantiated sampler object (returned as-is)
+        - A plain :class:`dict` or OmegaConf :class:`~omegaconf.DictConfig` with a
+          ``name`` or ``_target_`` key pointing to the sampler class
+        - A :class:`type` subclass of :class:`BaseSampler` (instantiated with no args)
+
+        Returns
+        -------
+        callable or None
+        """
+        if self.sample is None:
+            return None
+        spec = self.sample
+
+        # 1. Convert OmegaConf DictConfig to a plain dict first so subsequent
+        #    checks can rely on isinstance(spec, dict).
+        try:
+            from omegaconf import DictConfig, OmegaConf
+
+            if isinstance(spec, DictConfig):
+                spec = OmegaConf.to_container(spec, resolve=True)
+        except ImportError:
+            pass
+
+        # 2. Resolve dict / plain-dict spec (supports 'name' or '_target_' key).
+        if isinstance(spec, dict):
+            spec = dict(spec)
+            class_path = spec.pop("name", spec.pop("_target_", None))
+            if class_path is None:
+                raise ValueError("sample dict must include 'name' or '_target_'")
+            return load_class(class_path, **spec)
+
+        # 3. Already an instantiated callable (e.g. a sampler instance).
+        if callable(spec) and not isinstance(spec, type):
+            return spec
+
+        # 4. A bare class – instantiate with no arguments.
+        if isinstance(spec, type):
+            return spec()
+
+        raise ValueError(f"Unsupported sample specification: {type(spec)}")
 
     def __hash__(self):
         return super().__hash__()
@@ -449,11 +569,14 @@ class DataConfig(ConfigBase):
         self,
     ):
         """
-        Samples training and testing indices from the loaded dataset, optionally using stratification.
+        Samples training, testing, and optionally validation indices from the loaded dataset.
 
-        Calculates the number of samples for training and testing based on ``train_size`` and ``test_size``.
-        Supports stratified sampling using the target variable or a specified column.
-        Splits the data into training and testing sets, records the sampling time, and stores the resulting indices.
+        When ``self.sample`` is set, delegates to the sampler callable which returns
+        ``(train_idx, test_idx, val_idx)`` and populates ``X_val``/``y_val`` in addition
+        to the standard ``X_train``/``X_test`` splits.
+
+        Without a sample, falls back to the original 2-way ``train_test_split`` behaviour
+        (``X_val``/``y_val`` remain ``None``).
 
         Raises
         ------
@@ -462,46 +585,51 @@ class DataConfig(ConfigBase):
 
         Side Effects
         ------------
-        Sets ``self.train_indices``, ``self.test_indices``, and ``self.data_sample_time``.
+        Sets ``self.train_indices``, ``self.test_indices``, ``self.val_indices`` (may be
+        ``None``), and ``self.data_sample_time``.
         Logs the time taken for sampling.
         """
         self._run_plugin_hook("before_sample")
-        stratify_col = None
         if self._X is None or self._y is None:
             raise ValueError("Data not loaded. Cannot sample.")
-        if self.stratify is not None:
-            if self.stratify is True:
-                stratify_col = self._y
-            elif isinstance(self.stratify, str):
-                if self.stratify in self._X.columns:
-                    stratify_col = self._X[self.stratify]
-                else:
-                    raise ValueError(
-                        f"Stratify column {self.stratify} not found in data columns",
-                    )
-            elif self.stratify is False:
-                stratify_col = None
-            else:
-                raise ValueError("stratify must be None, True, or a column name")
-        indices = range(len(self._X))
+
         start_time = time.process_time()
-        try:
-            train_idx, test_idx = train_test_split(
-                indices,
-                train_size=self.train_size,
-                test_size=self.test_size,
-                random_state=self.random_state,
-                stratify=stratify_col if self.stratify is not None else None,
-            )
-        except ValueError as e:
-            raise ValueError(
-                f"Error during train/test split with train_size={self.train_size}, test_size={self.test_size}, random_state={self.random_state}, stratify={self.stratify}: {e} ",
-            )
+
+        sampler_obj = self._resolve_sample()
+        if sampler_obj is not None:
+            # Delegate to the pluggable sampler
+            train_idx, test_idx, val_idx = sampler_obj(self)
+            self.train_indices = train_idx
+            self.test_indices = test_idx
+            self.val_indices = val_idx
+            self.X_val = self._X.iloc[self.val_indices].reset_index(drop=True)
+            self.y_val = self._y.iloc[self.val_indices].reset_index(drop=True)
+            self.val_n = len(self.X_val)
+        else:
+            # Legacy 2-way split (no sample)
+            stratify_col = self._get_stratify_col()
+            indices = range(len(self._X))
+            try:
+                train_idx, test_idx = train_test_split(
+                    indices,
+                    train_size=self.train_size,
+                    test_size=self.test_size,
+                    random_state=self.random_state,
+                    stratify=stratify_col if stratify_col is not None else None,
+                )
+            except ValueError as e:
+                raise ValueError(
+                    f"Error during train/test split with train_size={self.train_size}, "
+                    f"test_size={self.test_size}, random_state={self.random_state}, "
+                    f"stratify={self.stratify}: {e} ",
+                )
+            self.train_indices = train_idx
+            self.test_indices = test_idx
+
         end_time = time.process_time()
         self.data_sample_time = end_time - start_time
         logger.info(f"Data sampled in {self.data_sample_time:.2f} seconds")
-        self.train_indices = train_idx
-        self.test_indices = test_idx
+
         self.X_train = self._X.iloc[self.train_indices].reset_index(drop=True)
         self.y_train = self._y.iloc[self.train_indices].reset_index(drop=True)
         self.X_test = self._X.iloc[self.test_indices].reset_index(drop=True)
@@ -773,6 +901,10 @@ class DataConfig(ConfigBase):
         """
         Computes feature importance scores based on the type of task (classification or regression).
 
+        When a validation set is present (``self.X_val`` is not None), the score dictionary
+        also includes ``val_n`` (number of validation samples) and ``val_class_counts`` or
+        ``val_y_cdf`` depending on the task type.
+
         Parameters
         ----------
         classifier : bool, optional
@@ -802,6 +934,14 @@ class DataConfig(ConfigBase):
         if isinstance(self.X_train, (pd.DataFrame, pd.Series)):
             columns = self.X_train.columns
             result_dict["column_names"] = columns.to_list()
+
+        # Include validation-set summary scores when a val split is present
+        if self.y_val is not None:
+            result_dict["val_n"] = len(self.y_val)
+            if self.classifier:
+                result_dict["val_class_counts"] = self._compute_class_counts(self.y_val)
+            else:
+                result_dict["val_y_cdf"] = self._empirical_cdf(self.y_val).tolist()
 
         plugin_scores = self._run_plugin_hook("after_score", scores=result_dict)
         for plugin_score in plugin_scores:
@@ -963,9 +1103,15 @@ class DataConfig(ConfigBase):
             # Sample data
             self._sample()
         time_dict["data_sample_time"] = (self.data_sample_time,)
-        logger.info(
-            f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
-        )
+        if self.X_val is not None:
+            logger.info(
+                f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}, "
+                f"Val set size: {len(self.X_val)}",
+            )
+        else:
+            logger.info(
+                f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
+            )
         data_scores = self._score()
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores

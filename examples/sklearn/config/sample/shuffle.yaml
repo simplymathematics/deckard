@@ -1,0 +1,4 @@
+# Repeated random-split (Monte-Carlo) sampler.
+# Requires val_size to be set in the data config.
+name: deckard.data.sample.ShuffleSampler
+n_splits: 5

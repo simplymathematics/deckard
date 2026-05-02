@@ -1,0 +1,2 @@
+# No sampler – legacy 2-way train/test split.
+# Selecting this option preserves the original DataConfig behavior.

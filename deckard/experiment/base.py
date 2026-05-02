@@ -22,7 +22,6 @@ try:
 except ImportError:  # pragma: no cover
     FairnessDataConfig = None
 
-import pandas as pd
 from ..model import ModelConfig
 
 try:

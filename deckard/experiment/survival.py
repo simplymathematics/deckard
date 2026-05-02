@@ -155,7 +155,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
                 )
                 for metric in self._candidate_attack_metrics_for_kind(row_kind):
                     if metric not in output.columns or pd.isna(
-                        output.at[row_index, metric]
+                        output.at[row_index, metric],
                     ):
                         continue
                     value = output.at[row_index, metric]
