@@ -8,6 +8,7 @@ Optional exports are only available when their dependencies are installed.
 import logging
 
 from .data import DataConfig, DataPipelineConfig
+from .sample import BaseSampler, SplitSampler, KFoldSampler, ShuffleSampler
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,14 @@ except ImportError:
     logger.debug("Torch not found.")
 
 
-__all__ = ["DataConfig", "DataPipelineConfig"]
+__all__ = [
+    "DataConfig",
+    "DataPipelineConfig",
+    "BaseSampler",
+    "SplitSampler",
+    "KFoldSampler",
+    "ShuffleSampler",
+]
 
 if "FairnessDataConfig" in globals():
     __all__.append("FairnessDataConfig")

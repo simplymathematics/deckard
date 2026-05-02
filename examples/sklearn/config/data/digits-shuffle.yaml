@@ -1,0 +1,12 @@
+dataset_name: digits
+test_size: 0.2
+val_size: 0.1
+random_state: 42
+classifier: true
+stratify: true
+fold: 0
+alias: digits-shuffle
+
+sampler:
+  name: deckard.data.sample.ShuffleSampler
+  n_splits: 5

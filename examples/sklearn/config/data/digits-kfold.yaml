@@ -1,0 +1,12 @@
+dataset_name: digits
+test_size: 0.2
+random_state: 42
+classifier: true
+stratify: true
+fold: 0
+alias: digits-kfold
+
+sampler:
+  name: deckard.data.sample.KFoldSampler
+  n_splits: 5
+  shuffle: true
