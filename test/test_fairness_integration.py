@@ -1,3 +1,6 @@
+import tempfile
+from pathlib import Path
+
 import pytest
 
 from deckard.attack import AttackConfig
@@ -36,9 +39,6 @@ def _fairness_data():
         stratify=True,
         classifier=True,
         sensitive_columns=["feature_0"],
-        pipeline={
-            "scaler": {"name": "sklearn.preprocessing.StandardScaler"},
-        },
     )
     cfg()
     return cfg
@@ -75,9 +75,6 @@ def test_fairness_regression_data_and_metric_frame_scores():
         random_state=42,
         classifier=False,
         sensitive_columns=["feature_0"],
-        pipeline={
-            "scaler": {"name": "sklearn.preprocessing.StandardScaler"},
-        },
     )
     data()
 
@@ -257,3 +254,127 @@ def test_adult_fairness_data_model_with_and_without_attack(
 
     assert any(key.startswith("evasion_") for key in scores)
     assert "attack_score_time" in scores
+
+
+# ---------------------------------------------------------------------------
+# Hash stability and persistence
+# ---------------------------------------------------------------------------
+
+def test_fairness_data_config_hash_stable_after_execution():
+    cfg = FairlearnDataConfig(
+        dataset_name="make_classification",
+        data_params={
+            "n_samples": 40,
+            "n_features": 10,
+            "n_informative": 4,
+            "n_redundant": 0,
+            "random_state": 7,
+        },
+        train_size=30,
+        test_size=10,
+        random_state=42,
+        stratify=True,
+        classifier=True,
+        sensitive_columns=["feature_0"],
+    )
+    original_hash = hash(cfg)
+    cfg()
+    cfg.score_dict["runtime_metric"] = 1.0
+    assert hash(cfg) == original_hash
+
+
+def test_fairness_model_config_hash_stable_after_training():
+    data = FairlearnDataConfig(
+        dataset_name="make_classification",
+        data_params={
+            "n_samples": 40,
+            "n_features": 10,
+            "n_informative": 4,
+            "n_redundant": 0,
+            "random_state": 11,
+        },
+        train_size=30,
+        test_size=10,
+        random_state=42,
+        stratify=True,
+        classifier=True,
+        sensitive_columns=["feature_0"],
+        pipeline={
+            "scaler": {"name": "sklearn.preprocessing.StandardScaler"},
+        },
+    )
+    data()
+    model = FairlearnModelConfig(
+        model_type="sklearn.linear_model.LogisticRegression",
+        classifier=True,
+        model_params={"max_iter": 25},
+        data=data,
+    )
+    original_hash = hash(model)
+    model(data)
+    model.score_dict["extra"] = 99
+    assert hash(model) == original_hash
+
+
+def test_fairness_data_config_scores_persist_and_reload():
+    cfg = FairlearnDataConfig(
+        dataset_name="make_classification",
+        data_params={
+            "n_samples": 40,
+            "n_features": 10,
+            "n_informative": 4,
+            "n_redundant": 0,
+            "random_state": 13,
+        },
+        train_size=30,
+        test_size=10,
+        random_state=42,
+        stratify=True,
+        classifier=True,
+        sensitive_columns=["feature_0"],
+    )
+    cfg()
+    scores = dict(cfg.score_dict)
+    scores["n_samples"] = 40
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "fairness_scores.json"
+        cfg.save_scores(scores, path)
+        loaded = cfg.load_scores(str(path))
+    assert "n_samples" in loaded
+    assert loaded["n_samples"] == 40
+
+
+def test_fairness_model_config_object_pickle_roundtrip():
+    data = FairlearnDataConfig(
+        dataset_name="make_classification",
+        data_params={
+            "n_samples": 40,
+            "n_features": 10,
+            "n_informative": 4,
+            "n_redundant": 0,
+            "random_state": 17,
+        },
+        train_size=30,
+        test_size=10,
+        random_state=42,
+        stratify=True,
+        classifier=True,
+        sensitive_columns=["feature_0"],
+        pipeline={
+            "scaler": {"name": "sklearn.preprocessing.StandardScaler"},
+        },
+    )
+    data()
+    model = FairlearnModelConfig(
+        model_type="sklearn.linear_model.LogisticRegression",
+        classifier=True,
+        model_params={"max_iter": 25},
+        data=data,
+    )
+    model(data)
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "fairness_model.pkl"
+        model.save_object(model, str(path))
+        loaded = model.load_object(str(path))
+    assert isinstance(loaded, FairlearnModelConfig)
+    assert "accuracy" in loaded.score_dict

@@ -113,6 +113,29 @@ class TestFairlearnModelConfig(unittest.TestCase):
         fair_defense.apply_to.assert_called_once_with(estimator=first_estimator, data=runtime_data)
         self.assertAlmostEqual(model.defense_application_time, 0.7)
 
+    def test_apply_defense_rejects_legacy_defense_list(self):
+        """Legacy list assignment is intentionally unsupported after pipeline migration."""
+        model = FairlearnModelConfig(
+            model_type=self.model_type,
+            classifier=True,
+            model_params={"n_estimators": 10},
+            data=None,
+        )
+        model._model = Mock()
+
+        model.defense = [
+            DefenseConfig(
+                model_type=self.model_type,
+                classifier=True,
+                model_params={"n_estimators": 10},
+                defense_name=None,
+                defense_params={},
+            ),
+        ]
+
+        with self.assertRaises(TypeError):
+            model._apply_defense(data=Mock())
+
     def test_classification_scores_without_fairness_data(self):
         """Test classification scores when fairness_data is None."""
         model = FairlearnModelConfig(

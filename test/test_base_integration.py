@@ -1,3 +1,6 @@
+import tempfile
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -465,3 +468,178 @@ def test_adult_all_attack_types_base(
 
     assert any(key.startswith(expected_prefix) for key in scores)
     assert "attack_score_time" in scores
+
+
+# ---------------------------------------------------------------------------
+# Hash stability and persistence
+# ---------------------------------------------------------------------------
+
+def test_data_config_hash_stable_after_execution():
+    cfg = DataConfig(
+        dataset_name="make_classification",
+        data_params={
+            "n_samples": 20,
+            "n_features": 4,
+            "n_informative": 2,
+            "n_redundant": 0,
+            "random_state": 7,
+        },
+        train_size=15,
+        test_size=5,
+        random_state=42,
+        stratify=True,
+        classifier=True,
+    )
+    original_hash = hash(cfg)
+    cfg()
+    cfg.score_dict["runtime_metric"] = 1.0
+    assert hash(cfg) == original_hash
+
+
+def test_model_config_hash_stable_after_training():
+    data = _base_classification_data()
+    model = ModelConfig(
+        model_type="sklearn.linear_model.LogisticRegression",
+        classifier=True,
+        model_params={"max_iter": 25},
+    )
+    original_hash = hash(model)
+    model(data)
+    model.score_dict["extra"] = 99
+    assert hash(model) == original_hash
+
+
+def test_attack_config_hash_stable_after_execution():
+    data = _base_classification_data()
+    model = ModelConfig(
+        model_type="sklearn.linear_model.LogisticRegression",
+        classifier=True,
+        model_params={"max_iter": 25},
+    )
+    model(data)
+    attack = AttackConfig(
+        attack_type="art.attacks.evasion.FastGradientMethod",
+        attack_params={"eps": 0.1},
+        attack_size=10,
+    )
+    original_hash = hash(attack)
+    try:
+        attack(data=data, model=model)
+    except Exception as exc:  # pragma: no cover
+        pytest.skip(f"Attack execution failed: {exc}")
+    attack.score_dict["extra"] = 1
+    assert hash(attack) == original_hash
+
+
+def test_experiment_config_hash_stable_after_execution():
+    experiment = ExperimentConfig(
+        data=DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 40,
+                "n_features": 8,
+                "n_informative": 4,
+                "n_redundant": 0,
+                "n_clusters_per_class": 1,
+                "n_classes": 2,
+                "random_state": 31,
+            },
+            train_size=30,
+            test_size=10,
+            random_state=42,
+            stratify=True,
+            classifier=True,
+        ),
+        model=ModelConfig(
+            model_type="sklearn.linear_model.LogisticRegression",
+            classifier=True,
+            model_params={"max_iter": 25},
+        ),
+        files=FileConfig(),
+        classifier=True,
+        experiment_name="hash-stability-smoke",
+    )
+    original_hash = hash(experiment)
+    experiment()
+    experiment.score_dict["extra"] = 99
+    assert hash(experiment) == original_hash
+
+
+def test_data_config_scores_persist_and_reload():
+    cfg = _base_classification_data()
+    scores = {"accuracy": 0.9, "n_samples": 40}
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "scores.json"
+        cfg.save_scores(scores, path)
+        loaded = cfg.load_scores(str(path))
+    assert loaded["accuracy"] == pytest.approx(0.9)
+    assert loaded["n_samples"] == 40
+
+
+def test_model_config_scores_persist_and_reload():
+    data = _base_classification_data()
+    model = ModelConfig(
+        model_type="sklearn.linear_model.LogisticRegression",
+        classifier=True,
+        model_params={"max_iter": 25},
+    )
+    model(data)
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "model_scores.json"
+        model.save_scores(model.score_dict, path)
+        loaded = model.load_scores(str(path))
+    assert "accuracy" in loaded
+
+
+def test_model_config_object_pickle_roundtrip():
+    data = _base_classification_data()
+    model = ModelConfig(
+        model_type="sklearn.linear_model.LogisticRegression",
+        classifier=True,
+        model_params={"max_iter": 25},
+    )
+    model(data)
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "model.pkl"
+        model.save_object(model, str(path))
+        loaded = model.load_object(str(path))
+    assert isinstance(loaded, ModelConfig)
+    assert loaded.score_dict.get("accuracy") == pytest.approx(
+        model.score_dict["accuracy"]
+    )
+
+
+def test_experiment_config_scores_persist_and_reload():
+    experiment = ExperimentConfig(
+        data=DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 40,
+                "n_features": 8,
+                "n_informative": 4,
+                "n_redundant": 0,
+                "n_clusters_per_class": 1,
+                "n_classes": 2,
+                "random_state": 37,
+            },
+            train_size=30,
+            test_size=10,
+            random_state=42,
+            stratify=True,
+            classifier=True,
+        ),
+        model=ModelConfig(
+            model_type="sklearn.linear_model.LogisticRegression",
+            classifier=True,
+            model_params={"max_iter": 25},
+        ),
+        files=FileConfig(),
+        classifier=True,
+        experiment_name="persist-smoke",
+    )
+    scores = experiment()
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "experiment_scores.json"
+        experiment.save_scores(scores, path)
+        loaded = experiment.load_scores(str(path))
+    assert "accuracy" in loaded

@@ -1,6 +1,7 @@
 from pathlib import Path
 import importlib.util
 import math
+import tempfile
 
 import pytest
 from hydra import compose, initialize_config_dir
@@ -107,3 +108,45 @@ def test_fairness_score_group_executes_end_to_end():
 
     assert "demographic_parity_difference" in scores
     assert "equalized_odds_difference" in scores
+
+
+# ---------------------------------------------------------------------------
+# Hash stability and persistence
+# ---------------------------------------------------------------------------
+
+def test_scorer_dict_config_hash_stable_after_scoring():
+    cfg = _compose("default", overrides=["score=classification"])
+    scorer = ScorerDictConfig(**OmegaConf.to_container(cfg.score, resolve=True))
+    original_hash = hash(scorer)
+    scorer(y_true=[1, 0, 1, 1], y_pred=[1, 0, 0, 1], mode=None)
+    scorer.score_dict["extra"] = 42
+    assert hash(scorer) == original_hash
+
+
+def test_scorer_dict_config_equal_content_produces_equal_hash():
+    cfg = _compose("default", overrides=["score=classification"])
+    raw = OmegaConf.to_container(cfg.score, resolve=True)
+    scorer_a = ScorerDictConfig(**raw)
+    scorer_b = ScorerDictConfig(**raw)
+    assert hash(scorer_a) == hash(scorer_b)
+
+
+def test_scorer_dict_config_scores_persist_and_reload():
+    cfg = _compose("default", overrides=["score=classification"])
+    scorer = ScorerDictConfig(**OmegaConf.to_container(cfg.score, resolve=True))
+    scores = scorer(y_true=[1, 0, 1, 1], y_pred=[1, 0, 0, 1], mode=None)
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "scorer_scores.json"
+        scorer.save_scores(scores, path)
+        loaded = scorer.load_scores(str(path))
+    assert "accuracy" in loaded
+
+
+def test_scorer_dict_config_object_pickle_roundtrip():
+    cfg = _compose("default", overrides=["score=classification"])
+    scorer = ScorerDictConfig(**OmegaConf.to_container(cfg.score, resolve=True))
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "scorer.pkl"
+        scorer.save_object(scorer, str(path))
+        loaded = scorer.load_object(str(path))
+    assert isinstance(loaded, ScorerDictConfig)

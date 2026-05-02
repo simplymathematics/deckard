@@ -2,9 +2,31 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
+
+
+ROOT = Path(__file__).resolve().parents[1]
+EXAMPLES_SKLEARN_DIR = ROOT / "examples" / "sklearn"
+DECKARD_RC_PATH = EXAMPLES_SKLEARN_DIR / ".deckard_rc"
+
+
+def _load_env_from_deckard_rc(path: Path) -> dict[str, str]:
+    env_overrides: dict[str, str] = {}
+    if not path.exists():
+        return env_overrides
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or not line.startswith("export "):
+            continue
+        key_value = line[len("export ") :]
+        if "=" not in key_value:
+            continue
+        key, value = key_value.split("=", 1)
+        env_overrides[key.strip()] = value.strip().strip('"').strip("'")
+    return env_overrides
 
 
 @pytest.mark.skipif(
@@ -22,9 +44,9 @@ import pytest
     ],
 )
 def test_survival_cli_in_examples_sklearn(dataset_name, survival_model, tmp_path):
-    examples_dir = Path(__file__).resolve().parent
+    examples_dir = EXAMPLES_SKLEARN_DIR
     env = os.environ.copy()
-    env["DECKARD_CONFIG_DIR"] = "./config"
+    env.update(_load_env_from_deckard_rc(DECKARD_RC_PATH))
     env["DECKARD_DEFAULT_CONFIG_FILE"] = "survival.yaml"
     env["MPLBACKEND"] = "Agg"
 
@@ -83,3 +105,111 @@ def test_survival_cli_in_examples_sklearn(dataset_name, survival_model, tmp_path
     with expected_table.open("r", encoding="utf-8") as handle:
         header = handle.readline().strip().split(",")
     assert "AIC" in header
+
+
+# ---------------------------------------------------------------------------
+# Hash stability and persistence (Python API level, no lifelines runtime needed)
+# ---------------------------------------------------------------------------
+
+lifelines_installed = __import__("importlib").util.find_spec("lifelines") is not None
+
+
+@pytest.mark.skipif(
+    not lifelines_installed,
+    reason="lifelines is required for LifelinesDataConfig hash tests",
+)
+def test_lifelines_data_config_hash_stable_after_execution():
+    from deckard.data.survival import LifelinesDataConfig, LifelinesDataMode
+
+    cfg = LifelinesDataConfig(
+        dataset_name="make_classification",
+        data_params={
+            "n_samples": 40,
+            "n_features": 6,
+            "n_informative": 3,
+            "n_redundant": 0,
+            "random_state": 7,
+        },
+        train_size=30,
+        test_size=10,
+        random_state=42,
+        stratify=True,
+        classifier=True,
+        mode=LifelinesDataMode.AUXILIARY_MODEL,
+        duration_col="T",
+        event_col="E",
+        benign_metric="accuracy",
+    )
+    original_hash = hash(cfg)
+    cfg.score_dict["runtime_metric"] = 1.0
+    assert hash(cfg) == original_hash
+
+
+@pytest.mark.skipif(
+    not lifelines_installed,
+    reason="lifelines is required for LifelinesDataConfig persistence tests",
+)
+def test_lifelines_data_config_scores_persist_and_reload():
+    from deckard.data.survival import LifelinesDataConfig, LifelinesDataMode
+
+    cfg = LifelinesDataConfig(
+        dataset_name="make_classification",
+        data_params={
+            "n_samples": 40,
+            "n_features": 6,
+            "n_informative": 3,
+            "n_redundant": 0,
+            "random_state": 11,
+        },
+        train_size=30,
+        test_size=10,
+        random_state=42,
+        stratify=True,
+        classifier=True,
+        mode=LifelinesDataMode.AUXILIARY_MODEL,
+        duration_col="T",
+        event_col="E",
+        benign_metric="accuracy",
+    )
+    scores = {"concordance": 0.71, "aic": 120.5}
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "survival_scores.json"
+        cfg.save_scores(scores, path)
+        loaded = cfg.load_scores(str(path))
+    assert loaded["concordance"] == pytest.approx(0.71)
+    assert "aic" in loaded
+
+
+@pytest.mark.skipif(
+    not lifelines_installed,
+    reason="lifelines is required for LifelinesDataConfig pickle tests",
+)
+def test_lifelines_data_config_object_pickle_roundtrip():
+    from deckard.data.survival import LifelinesDataConfig, LifelinesDataMode
+
+    cfg = LifelinesDataConfig(
+        dataset_name="make_classification",
+        data_params={
+            "n_samples": 40,
+            "n_features": 6,
+            "n_informative": 3,
+            "n_redundant": 0,
+            "random_state": 13,
+        },
+        train_size=30,
+        test_size=10,
+        random_state=42,
+        stratify=True,
+        classifier=True,
+        mode=LifelinesDataMode.AUXILIARY_MODEL,
+        duration_col="T",
+        event_col="E",
+        benign_metric="accuracy",
+    )
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "survival_data.pkl"
+        cfg.save_object(cfg, str(path))
+        loaded = cfg.load_object(str(path))
+    assert isinstance(loaded, LifelinesDataConfig)
+    assert loaded.duration_col == "T"
+    assert loaded.event_col == "E"
