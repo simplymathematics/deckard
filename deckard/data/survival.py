@@ -6,7 +6,8 @@ from typing import Optional, Union
 
 import pandas as pd
 
-from .data import DataConfig
+from ..score.base import ScorerDictConfig
+from .base import DataConfig
 
 
 class SurvivalDataMode(str, Enum):

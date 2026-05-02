@@ -5,7 +5,7 @@ import time
 # Typing imports
 from dataclasses import dataclass, field
 from omegaconf import DictConfig
-from typing import Union
+from typing import Any, Union
 import numpy as np
 
 # Torch imports
@@ -23,6 +23,8 @@ from ..data import DataConfig
 from ..utils import load_class
 
 logger = logging.getLogger(__name__)
+
+ScorerDictConfig = Any
 
 __all__ = ["PytorchModelConfig"]
 

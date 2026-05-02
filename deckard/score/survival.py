@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 import math
 from typing import Dict
 
-from . import ScorerConfig, ScorerDictConfig, safe_store
+from .base import ScorerConfig, ScorerDictConfig, safe_store
 
 __all__ = [
     "survival_concordance_score",

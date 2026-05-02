@@ -6,7 +6,7 @@ import importlib
 from pathlib import Path
 
 from dataclasses import dataclass, field
-from typing import Any, Tuple, Union, TYPE_CHECKING
+from typing import Any, Tuple, Union
 from omegaconf import DictConfig
 
 import numpy as np
@@ -38,9 +38,7 @@ from ..utils import ConfigBase, data_supported_filetypes, load_class
 
 # Setup logger
 logger = logging.getLogger(__name__)
-
-if TYPE_CHECKING:
-    from ..score import ScorerDictConfig
+from ..score.base import ScorerDictConfig
 
 
 def _discover_lifelines_dataset_loaders() -> dict:

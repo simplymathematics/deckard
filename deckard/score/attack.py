@@ -7,7 +7,7 @@ from typing import Dict, Literal, Union
 from sklearn.metrics import accuracy_score
 
 from ..utils import ConfigBase, round_scores
-from . import ScorerConfig, ScorerDictConfig, safe_store
+from .base import ScorerConfig, ScorerDictConfig, safe_store
 
 __all__ = [
     "evasion_success_score",

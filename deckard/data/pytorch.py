@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 from dataclasses import dataclass, field
-from typing import Union, List, Optional, Callable
+from typing import Any, Union, List, Optional, Callable
 
 # PyTorch
 import torch
@@ -16,8 +16,9 @@ from torch import Tensor
 from torch.utils.data import DataLoader, Dataset, Subset
 
 # deckard
+from ..score.base import ScorerDictConfig
 from ..utils import load_class
-from .data import DataConfig, DataPipelineConfig
+from .base import DataConfig, DataPipelineConfig
 import numpy as np
 
 # Setup logger

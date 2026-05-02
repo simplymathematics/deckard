@@ -1,6 +1,6 @@
 import time
 import logging
-from typing import Any, Union, TYPE_CHECKING
+from typing import Any, Union
 from pathlib import Path
 from dataclasses import dataclass
 from omegaconf import DictConfig
@@ -40,10 +40,8 @@ from art.estimators.regression import PyTorchRegressor
 from art.config import ART_NUMPY_DTYPE
 
 from ..data import DataConfig
+from ..score.base import ScorerDictConfig
 from ..utils import ConfigBase, load_class, round_scores
-
-if TYPE_CHECKING:
-    from ..score import ScorerDictConfig
 
 art_model_types = tuple(
     [

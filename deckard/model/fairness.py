@@ -1,6 +1,6 @@
 import inspect
 import time
-from typing import Union
+from typing import Any, Union
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass
@@ -15,6 +15,8 @@ from .defend import DefenseConfig
 
 from ..data.fairness import FairnessDataConfig
 from ..utils import load_class, resolve_class
+
+ScorerDictConfig = Any
 
 
 class _FairnessBehaviorMixin:

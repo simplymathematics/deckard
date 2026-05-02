@@ -777,12 +777,16 @@ def resolve_class(cls: str):
             instantiate_class=False,
         )
 
+    module_name, attr_name = cls.rsplit(".", 1)
+
+    # Prefer direct module attribute resolution first. This supports classes
+    # and functions without emitting Hydra's "non-class" diagnostics.
     try:
-        return get_class(cls)
-    except Exception:
-        module_name, class_name = cls.rsplit(".", 1)
         module = importlib.import_module(module_name)
-        return getattr(module, class_name)
+        return getattr(module, attr_name)
+    except Exception:
+        # Fall back to Hydra's class resolver for non-standard targets.
+        return get_class(cls)
 
 
 def load_class(cls, *args, **kwargs):

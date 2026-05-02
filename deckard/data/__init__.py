@@ -7,7 +7,8 @@ Optional exports are only available when their dependencies are installed.
 
 import logging
 
-from .data import DataConfig, DataPipelineConfig
+from ..score.base import ScorerDictConfig
+from .base import DataConfig, DataPipelineConfig
 
 logger = logging.getLogger(__name__)
 

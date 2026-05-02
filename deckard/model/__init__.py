@@ -6,8 +6,11 @@ dependencies are installed.
 """
 
 import logging
+from typing import Any
 from .base import ModelConfig
 from .defend import DefenseConfig
+
+ScorerDictConfig = Any
 
 logger = logging.getLogger(__name__)
 

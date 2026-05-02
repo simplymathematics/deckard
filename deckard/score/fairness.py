@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Dict
 
-from . import ScorerConfig, ScorerDictConfig, safe_store
+from .base import ScorerConfig, ScorerDictConfig, safe_store
 
 __all__ = [
     "fairness_demographic_parity_difference",

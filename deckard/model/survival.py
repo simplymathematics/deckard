@@ -32,6 +32,8 @@ from lifelines.utils import CensoringType
 from .base import ModelConfig
 from ..utils import save_data
 
+ScorerDictConfig = Any
+
 logger = logging.getLogger(__name__)
 
 AFT_MODEL_TYPES = {

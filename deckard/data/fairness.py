@@ -13,7 +13,8 @@ from fairlearn.metrics import (
 )
 from sklearn.metrics import mutual_info_score, normalized_mutual_info_score
 
-from .data import DataPipelineConfig
+from ..score.base import ScorerDictConfig
+from .base import DataPipelineConfig
 
 fairness_scores = {
     "classification": [

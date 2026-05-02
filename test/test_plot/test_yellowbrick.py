@@ -16,7 +16,7 @@ from deckard.plot.yellowbrick_plots import (  # NOQA E402
     model_selection_viz_types,
     cluster_viz_types,
 )
-from deckard.data.data import DataConfig  # noqa 402
+from deckard.data import DataConfig  # noqa 402
 from deckard.model import ModelConfig  # noqa 402
 
 expensive_viz_types = [
