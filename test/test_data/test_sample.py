@@ -539,14 +539,15 @@ class TestConfigStoreRegistration(unittest.TestCase):
 
         register_sampler_configs()
         cs = ConfigStore.instance()
-        # Verify that our entries are present in the store
-        sample_group = cs.repo.get("sample", {})
-        for name in ("split", "kfold", "shuffle", "none"):
+        # Verify that our entries are present under the 'sample' group.
+        # cs.list() returns a list of config names in the given group.
+        listed_names = set(cs.list("sample"))
+        for expected in ("split.yaml", "kfold.yaml", "shuffle.yaml", "none.yaml"):
             self.assertIn(
-                f"{name}.yaml",
-                sample_group,
-                msg=f"Expected 'sample/{name}' in ConfigStore",
+                expected,
+                listed_names,
+                msg=f"Expected '{expected}' in ConfigStore sample group, got: {listed_names}",
             )
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

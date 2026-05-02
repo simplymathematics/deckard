@@ -373,9 +373,9 @@ class DataConfig(ConfigBase):
         Accepts:
         - ``None`` → no sampler (legacy 2-way split)
         - An already-instantiated sampler object (returned as-is)
-        - A :class:`type` subclass of :class:`BaseSampler` (instantiated with no args)
         - A plain :class:`dict` or OmegaConf :class:`~omegaconf.DictConfig` with a
           ``name`` or ``_target_`` key pointing to the sampler class
+        - A :class:`type` subclass of :class:`BaseSampler` (instantiated with no args)
 
         Returns
         -------
@@ -384,12 +384,9 @@ class DataConfig(ConfigBase):
         if self.sampler is None:
             return None
         spec = self.sampler
-        if callable(spec) and not isinstance(spec, type):
-            # Already an instantiated callable (e.g. a sampler instance)
-            return spec
-        if isinstance(spec, type):
-            return spec()
-        # Handle plain dict or OmegaConf DictConfig
+
+        # 1. Convert OmegaConf DictConfig to a plain dict first so subsequent
+        #    checks can rely on isinstance(spec, dict).
         try:
             from omegaconf import DictConfig, OmegaConf
 
@@ -397,12 +394,23 @@ class DataConfig(ConfigBase):
                 spec = OmegaConf.to_container(spec, resolve=True)
         except ImportError:
             pass
+
+        # 2. Resolve dict / plain-dict spec (supports 'name' or '_target_' key).
         if isinstance(spec, dict):
             spec = dict(spec)
             class_path = spec.pop("name", spec.pop("_target_", None))
             if class_path is None:
                 raise ValueError("sampler dict must include 'name' or '_target_'")
             return load_class(class_path, **spec)
+
+        # 3. Already an instantiated callable (e.g. a sampler instance).
+        if callable(spec) and not isinstance(spec, type):
+            return spec
+
+        # 4. A bare class – instantiate with no arguments.
+        if isinstance(spec, type):
+            return spec()
+
         raise ValueError(f"Unsupported sampler specification: {type(spec)}")
 
     def __hash__(self):

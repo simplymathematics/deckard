@@ -220,7 +220,7 @@ class ShuffleSampler(BaseSampler):
         fold = cfg.fold if cfg.fold is not None else 0
         if fold >= len(splits):
             raise ValueError(
-                f"fold={cfg.fold} out of range for n_splits={self.n_splits}"
+                f"fold={fold} out of range for n_splits={self.n_splits}"
             )
 
         train_test_idx, val_idx = splits[fold]
