@@ -230,8 +230,8 @@ class DefaultRegressorConfig(ScorerDictConfig):
     )
 
 
-safe_store(group="scorers", name="classification", node=DefaultClassifierConfig)
-safe_store(group="scorers", name="regression", node=DefaultRegressorConfig)
+safe_store(group="score", name="classification", node=DefaultClassifierConfig)
+safe_store(group="score", name="regression", node=DefaultRegressorConfig)
 
 
 __all__ = [
