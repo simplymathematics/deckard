@@ -182,3 +182,59 @@ stages:
       # +files.data_file=data/${item.data}.pkl <-- Specifies the input data file
       # +files.model_file=models/${item.data}_resnet18_defense.pkl <-- Specifies the output model file
       ################################################
+  fairness_train:
+    cmd: >
+      source .deckard_rc &&
+      deckard
+      data=fairlearn_celeba
+      ~attack
+      files.attack_file=null
+      experiment_name=fairlearn_celeba_resnet18_training
+      ++model.model_params.num_channels=3
+      ++model.model_params.num_classes=2
+      files.model_file=output/models/fairlearn_celeba_resnet18_training.pkl
+      files.score_file=output/scores/fairlearn_celeba_resnet18_training.json
+    outs:
+      - output/models/fairlearn_celeba_resnet18_training.pkl
+    deps:
+      - .deckard_rc
+      - ../../deckard/data/pytorch.py
+      - ../../deckard/model/pytorch.py
+      - ./torch_fairness_dataset.py
+      - ./config/data/fairlearn_celeba.yaml
+    metrics:
+      - output/scores/fairlearn_celeba_resnet18_training.json
+    params:
+      - ./config/data/fairlearn_celeba.yaml:
+      - ./config/model/default.yaml:
+
+  fairness_defend:
+    cmd: >
+      source .deckard_rc &&
+      deckard
+      optimize 
+      data=fairlearn_celeba
+      +defense=torch-fairness
+      +score=fairness-classification
+      ~attack
+      files.attack_file=null
+      files.model_file=null
+      files.score_file=output/scores/fairlearn_celeba_resnet18_fairness.json
+      experiment_name=fairlearn_celeba_resnet18_fairness
+      ++model.model_params.num_channels=3
+      ++model.model_params.num_classes=2
+      ++model.fit_params.nb_epochs=1
+    deps:
+      - .deckard_rc
+      - ../../deckard/data/pytorch.py
+      - ../../deckard/model/pytorch.py
+      - ../../deckard/model/fairness.py
+      - ./torch_fairness_dataset.py
+      - ./config/data/fairlearn_celeba.yaml
+      - ./config/defense/torch-fairness.yaml
+    metrics:
+      - output/scores/fairlearn_celeba_resnet18_fairness.json
+    params:
+      - ./config/data/fairlearn_celeba.yaml:
+      - ./config/model/default.yaml:
+      - ./config/defense/torch-fairness.yaml:

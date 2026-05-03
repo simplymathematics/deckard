@@ -32,7 +32,7 @@ from ..model.defend import DefensePipelineConfig
 from ..attack import AttackConfig
 from ..score import ScorerDictConfig
 from ..file import FileConfig, data_files, model_files, attack_files
-from ..utils import ConfigBase, coerce_config
+from ..utils import ConfigBase, coerce_config, resolve_torch_device
 
 logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -189,9 +189,89 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
     score: ScorerDictConfig = None
     random_state: int = 42
     library: Literal["sklearn", "tensorflow", "pytorch"] = "sklearn"
+    device: Any = None
     classifier: Union[str, bool] = True
     evaluation_mode: Literal["standard", "tuning", "report"] = "standard"
     score_modes: Union[list[str], None] = None
+
+    @staticmethod
+    def _canonical_device(device_value: Any) -> Union[str, None]:
+        if device_value is None:
+            return None
+        text = str(device_value).strip()
+        if text == "":
+            return None
+        if text.lower() in {"none", "null", "auto", "best", "default"}:
+            return None
+        return text.lower()
+
+    def _reconcile_component_devices(self):
+        if self.library != "pytorch":
+            return
+
+        exp_device = self._canonical_device(getattr(self, "device", None))
+        data_device = self._canonical_device(getattr(self.data, "device", None))
+        model_device = (
+            self._canonical_device(getattr(self.model, "device", None))
+            if self.model is not None
+            else None
+        )
+        attack_device = (
+            self._canonical_device(getattr(self.attack, "device", None))
+            if self.attack is not None
+            else None
+        )
+
+        raw_values = [exp_device, data_device, model_device, attack_device]
+        strong_values = {v for v in raw_values if v not in {None, "", "cpu"}}
+        if len(strong_values) > 1:
+            raise AssertionError(
+                "Experiment, data, model, and attack devices must match. "
+                f"Got experiment={exp_device}, data={data_device}, model={model_device}, attack={attack_device}",
+            )
+
+        if exp_device is not None:
+            unified_device = exp_device
+        elif len(strong_values) == 1:
+            unified_device = next(iter(strong_values))
+        elif model_device is not None:
+            unified_device = model_device
+        elif attack_device is not None:
+            unified_device = attack_device
+        elif data_device is not None:
+            unified_device = data_device
+        else:
+            unified_device = str(resolve_torch_device(None))
+
+        self.device = unified_device
+        setattr(self.data, "device", unified_device)
+        if self.model is not None:
+            setattr(self.model, "device", unified_device)
+            if hasattr(self.model, "_resolve_torch_device") and callable(
+                getattr(self.model, "_resolve_torch_device"),
+            ):
+                self.model.device = self.model._resolve_torch_device(self.model.device)
+        if self.attack is not None:
+            setattr(self.attack, "device", unified_device)
+
+        final_exp = self._canonical_device(self.device)
+        final_data = self._canonical_device(getattr(self.data, "device", None))
+        final_model = (
+            self._canonical_device(getattr(self.model, "device", None))
+            if self.model is not None
+            else final_exp
+        )
+        final_attack = (
+            self._canonical_device(getattr(self.attack, "device", None))
+            if self.attack is not None
+            else final_exp
+        )
+        if not (final_exp == final_data == final_model == final_attack):
+            raise AssertionError(
+                "Experiment, data, model, and attack devices must be identical after reconciliation. "
+                f"Got experiment={final_exp}, data={final_data}, model={final_model}, attack={final_attack}",
+            )
+        logger.info("Unified pytorch device across components: %s", final_exp)
 
     def _resolve_score_modes(self) -> list[str]:
         if self.score_modes is not None:
@@ -310,29 +390,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     "Invalid device specified for TensorFlow, using default device.",
                 )
         elif self.library == "pytorch":
-            import torch
-
-            if device == "cpu":
-                torch_device = torch.device("cpu")
-                logger.info("Using CPU for PyTorch")
-            elif (
-                isinstance(device, str)
-                and "gpu" in device.lower()
-                and torch.cuda.is_available()
-            ):
-                torch_device = torch.device("cuda:0")
-                logger.info("Using GPU for PyTorch: cuda:0")
-            elif (
-                isinstance(device, int)
-                and torch.cuda.is_available()
-                and device < torch.cuda.device_count()
-            ):
-                torch_device = torch.device(f"cuda:{device}")
-                logger.info(f"Using GPU for PyTorch: cuda:{device}")
-            else:
-                torch_device = torch.device("cpu")
-                logger.warning("Invalid device specified for PyTorch, using CPU.")
+            torch_device = resolve_torch_device(device)
             self.torch_device = torch_device
+            self.device = str(torch_device)
         else:
             logger.info("Device selection not supported for library: %s", self.library)
 
@@ -343,9 +403,6 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             self._target_ = "deckard.experiment.ExperimentConfig"
         # Set random seed
         self.set_random_seed()
-        # Set device
-        if self.library not in ["sklearn"]:
-            self.set_device()
         # Validate and initialize data config
         self.data = self._resolve_data_config()
 
@@ -511,6 +568,11 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         # Keep `score` as experiment-level scorer only.
         self.score = self.experiment_scorer
 
+        # Reconcile and enforce a single device across experiment/data/model.
+        self._reconcile_component_devices()
+        if self.library not in ["sklearn"]:
+            self.set_device(self.device if self.device is not None else "cpu")
+
     def set_random_seed(self):
         if self.library in ["sklearn"]:
             np.random.seed(self.random_state)
@@ -582,6 +644,10 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         scores.update(**self.data.score_dict)
 
         if self.model:
+            if hasattr(self.model, "set_epoch_attack") and callable(
+                getattr(self.model, "set_epoch_attack"),
+            ):
+                self.model.set_epoch_attack(self.attack)
             self.model(data=self.data, **model_file_outputs)
             assert hasattr(
                 self.model,
@@ -596,6 +662,10 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 "score_dict",
             ), "model must have score_dict attribute after training"
             scores.update(**self.model.score_dict)
+            if hasattr(self.model, "set_epoch_attack") and callable(
+                getattr(self.model, "set_epoch_attack"),
+            ):
+                self.model.set_epoch_attack(None)
         else:
             logger.info("No model config provided, skipping model training.")
 

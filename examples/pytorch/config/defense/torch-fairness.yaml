@@ -1,0 +1,14 @@
+defense_name: fairlearn.adversarial.AdversarialFairnessClassifier
+defense_params:
+    backend: torch
+    predictor_model: ${model}
+    adversary_model: ${model}
+    predictor_optimizer: Adam
+    adversary_optimizer: Adam
+    constraints: 'demographic_parity'
+    learning_rate: 0.001
+    alpha: 1.0
+    epochs: 1
+    batch_size: ${data.data_params.batch_size}
+    shuffle: true
+    

@@ -4,6 +4,8 @@ import logging
 
 from .base import (  # noqa: F401
     DefaultClassifierConfig,
+    DefaultPytorchClassifierConfig,
+    DefaultPytorchRegressorConfig,
     DefaultRegressorConfig,
     ScorerConfig,
     ScorerDictConfig,
@@ -81,6 +83,8 @@ __all__ = [
     "ScorerConfig",
     "ScorerDictConfig",
     "DefaultClassifierConfig",
+    "DefaultPytorchClassifierConfig",
+    "DefaultPytorchRegressorConfig",
     "DefaultRegressorConfig",
     "AttackScorerConfig",
     "DefaultEvasionAttackScorerConfig",

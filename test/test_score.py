@@ -118,6 +118,22 @@ class TestScorerConfig(unittest.TestCase):
             precision_score(y_true, y_pred, average="binary", zero_division=0),
         )
 
+    def test_scorer_config_accepts_torch_tensors_when_available(self):
+        try:
+            import torch
+        except ImportError:
+            self.skipTest("torch is optional and not installed")
+
+        y_true = torch.tensor([1, 0, 1, 1])
+        y_pred = torch.tensor([1, 0, 0, 1])
+        config = ScorerConfig(
+            score_name="accuracy",
+            score_function="sklearn.metrics.accuracy_score",
+            score_params={},
+        )
+        score = config(y_true=y_true, y_pred=y_pred)
+        self.assertEqual(score, 0.75)
+
 
 class TestScorerDictConfig(unittest.TestCase):
     def test_scorer_dict_config_initialization_and_call(self):

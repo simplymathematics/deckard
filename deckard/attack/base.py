@@ -24,7 +24,7 @@ from omegaconf import DictConfig, OmegaConf, ListConfig
 
 from ..model import ModelConfig
 from ..model.defend import sklearn_dict
-from ..utils import ConfigBase, resolve_class
+from ..utils import ConfigBase, resolve_class, resolve_torch_device
 from .pytorch import (
     build_torch_art_model,
     collect_subset_from_dataloader,
@@ -200,6 +200,7 @@ class AttackConfig(ConfigBase):
     )
     scorer: Union["AttackScorerConfig", None] = None
     alias: Union[str, None] = None
+    device: Union[str, None] = None
 
     # Runtime state fields
     attack_time: Union[float, None] = None
@@ -231,6 +232,7 @@ class AttackConfig(ConfigBase):
             self.scorer = attack_scorer_cls()
         elif isinstance(self.scorer, dict):
             self.scorer = attack_scorer_cls(**self.scorer)
+        self.device = str(resolve_torch_device(self.device))
 
     def _parse_attack_path(self) -> tuple[str, str]:
         parts = (self.attack_type or "").split("attacks.")[-1].split(".")
@@ -764,12 +766,6 @@ class AttackConfig(ConfigBase):
         n, x_subset, y_subset = self.get_attack_subset(data)
         if is_tensor(x_subset):
             x_subset = tensor_to_numpy(x_subset, dtype=ART_NUMPY_DTYPE)
-            if hasattr(art_model, "_model") and hasattr(art_model._model, "to"):
-                art_model._model.to("cpu")
-            elif hasattr(art_model, "_model") and hasattr(art_model._model, "_device"):
-                art_model._model._device = "cpu"
-            else:
-                logger.warning("Unable to move model to CPU for prediction.")
         elif isinstance(x_subset, pd.DataFrame):
             x_subset = x_subset.values
         else:

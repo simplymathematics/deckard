@@ -221,7 +221,7 @@ class DataConfig(ConfigBase):
     keep: list = None
     plugins: list = field(default_factory=list)
     alias: Union[str, None] = None
-    scorer: Union["ScorerDictConfig", dict, str, None] = AUTO_SCORER
+    scorer: Any = AUTO_SCORER
 
     # Runtime state fields
     score_dict: dict = field(init=False, repr=True)

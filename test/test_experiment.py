@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 import tempfile
 import shutil
+from unittest.mock import patch
 from deckard.experiment import ExperimentConfig, SurvivalExperimentConfig
 from deckard.data import DataConfig, DataPipelineConfig, FairlearnDataConfig
 from deckard.model import ModelConfig, FairlearnModelConfig
@@ -176,6 +177,89 @@ class TestExperimentConfig(unittest.TestCase):
         self.assertIsInstance(exp.model, FairlearnModelConfig)
         self.assertIsInstance(exp.model.defense, DefensePipelineConfig)
         self.assertIs(exp.model.data, exp.data)
+
+    def test_pytorch_device_propagates_from_experiment(self):
+        data = DataConfig(dataset_name="make_classification")
+        model = ModelConfig(
+            model_type="sklearn.linear_model.LogisticRegression",
+            classifier=True,
+        )
+        exp = ExperimentConfig(
+            data=data,
+            model=model,
+            attack=None,
+            files=FileConfig(),
+            library="pytorch",
+            device="cpu",
+            classifier=True,
+        )
+
+        self.assertEqual(str(exp.device), "cpu")
+        self.assertEqual(str(getattr(exp.data, "device")), "cpu")
+        self.assertEqual(str(getattr(exp.model, "device")), "cpu")
+
+    def test_pytorch_device_propagates_from_model_when_only_one_specified(self):
+        data = DataConfig(dataset_name="make_classification")
+        model = ModelConfig(
+            model_type="sklearn.linear_model.LogisticRegression",
+            classifier=True,
+        )
+        model.device = "cpu"
+        exp = ExperimentConfig(
+            data=data,
+            model=model,
+            attack=None,
+            files=FileConfig(),
+            library="pytorch",
+            classifier=True,
+        )
+
+        self.assertEqual(str(exp.device), "cpu")
+        self.assertEqual(str(getattr(exp.data, "device")), "cpu")
+        self.assertEqual(str(getattr(exp.model, "device")), "cpu")
+
+    def test_pytorch_device_mismatch_raises_assertion(self):
+        data = DataConfig(dataset_name="make_classification")
+        data.device = "cuda"
+        model = ModelConfig(
+            model_type="sklearn.linear_model.LogisticRegression",
+            classifier=True,
+        )
+        model.device = "mps"
+
+        with self.assertRaises(AssertionError):
+            ExperimentConfig(
+                data=data,
+                model=model,
+                attack=None,
+                files=FileConfig(),
+                library="pytorch",
+                classifier=True,
+            )
+
+    def test_pytorch_auto_device_propagates_to_all_components(self):
+        data = DataConfig(dataset_name="make_classification")
+        model = ModelConfig(
+            model_type="sklearn.linear_model.LogisticRegression",
+            classifier=True,
+        )
+        attack = AttackConfig(attack_size=1)
+
+        with patch("deckard.experiment.base.resolve_torch_device") as resolve_device:
+            resolve_device.return_value = "cpu"
+            exp = ExperimentConfig(
+                data=data,
+                model=model,
+                attack=attack,
+                files=FileConfig(),
+                library="pytorch",
+                classifier=True,
+            )
+
+        self.assertEqual(str(exp.device), "cpu")
+        self.assertEqual(str(getattr(exp.data, "device")), "cpu")
+        self.assertEqual(str(getattr(exp.model, "device")), "cpu")
+        self.assertEqual(str(getattr(exp.attack, "device")), "cpu")
 
 
 class TestKFoldExperiment(unittest.TestCase):

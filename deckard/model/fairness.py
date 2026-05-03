@@ -13,7 +13,7 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from .base import ModelConfig, logger
 from .defend import DefenseConfig
 from ..data.fairness import FairlearnDataConfig
-from ..utils import load_class, resolve_class
+from ..utils import ConfigBase, load_class, resolve_class
 
 ScorerDictConfig = Any
 
@@ -132,13 +132,167 @@ class _FairnessBehaviorMixin:
         if data is None or not hasattr(defended_estimator, "fit"):
             return defended_estimator
 
+        if getattr(self, "data", None) is None:
+            self.data = data
+
         sensitive = self._resolve_sensitive_features_for_batch(data.y_train, split="train")
         fit_method = defended_estimator.fit
         if sensitive is not None and self._method_accepts_sensitive_features(fit_method):
-            fit_method(data.X_train, data.y_train, sensitive_features=sensitive)
+            sensitive_arg = sensitive.to_numpy() if hasattr(sensitive, "to_numpy") else sensitive
+            fit_method(data.X_train, data.y_train, sensitive_features=sensitive_arg)
         else:
             fit_method(data.X_train, data.y_train)
         return defended_estimator
+
+    def _resolve_torch_device(self, requested_device):
+        try:
+            import torch
+        except ImportError:
+            return None
+
+        requested = str(requested_device).strip().lower()
+        if requested.startswith("mps"):
+            mps_available = bool(
+                hasattr(torch.backends, "mps") and torch.backends.mps.is_available(),
+            )
+            if not mps_available:
+                logger.warning("MPS requested for fairlearn model, but unavailable; using CPU")
+                return torch.device("cpu")
+            return torch.device("mps")
+        if requested.startswith("cuda"):
+            if not torch.cuda.is_available():
+                logger.warning("CUDA requested for fairlearn model, but unavailable; using CPU")
+                return torch.device("cpu")
+            return torch.device(requested)
+        return torch.device(requested)
+
+    def _move_torch_model_to_device(self, model_obj, requested_device):
+        if requested_device is None:
+            return model_obj
+        try:
+            import torch
+        except ImportError:
+            return model_obj
+
+        if not isinstance(model_obj, torch.nn.Module):
+            return model_obj
+
+        try:
+            device = self._resolve_torch_device(requested_device)
+            if device is not None:
+                model_obj = model_obj.to(device)
+        except (RuntimeError, TypeError, ValueError) as exc:
+            logger.warning(
+                "Failed to move fairlearn model to device '%s': %s",
+                requested_device,
+                exc,
+            )
+        return model_obj
+
+    def _resolve_fairlearn_model_param(self, spec, fallback=None):
+        if spec is None:
+            return fallback
+        if hasattr(spec, "get_model") and callable(spec.get_model):
+            try:
+                return spec.get_model()
+            except Exception:
+                pass
+        if hasattr(spec, "_model") and getattr(spec, "_model", None) is not None:
+            return getattr(spec, "_model")
+        if isinstance(spec, dict):
+            if "model_type" in spec:
+                model_type = spec.get("model_type")
+                model_params = spec.get("model_params", {}) or {}
+                if isinstance(model_type, str):
+                    model_obj = load_class(model_type, **model_params)
+                    model_obj = self._move_torch_model_to_device(
+                        model_obj,
+                        spec.get("device", None),
+                    )
+                    return model_obj
+            if "name" in spec:
+                spec = {"_target_": spec["name"], **{k: v for k, v in spec.items() if k != "name"}}
+            if "_target_" in spec:
+                target = spec.get("_target_")
+                kwargs = {k: v for k, v in spec.items() if k != "_target_"}
+                obj = load_class(target, **kwargs)
+                if hasattr(obj, "get_model") and callable(obj.get_model):
+                    try:
+                        return obj.get_model()
+                    except Exception:
+                        return obj
+                return obj
+        if isinstance(spec, ConfigBase):
+            if hasattr(spec, "get_model") and callable(spec.get_model):
+                return spec.get_model()
+            spec_dict = spec.to_dict()
+            target = spec_dict.get("model_type")
+            params = spec_dict.get("model_params", {})
+            if isinstance(target, str):
+                return load_class(target, **params)
+        if isinstance(spec, str):
+            if "." in spec or ":" in spec:
+                return load_class(spec)
+            return spec
+        return spec
+
+    def _adapt_binary_torch_predictor(self, predictor_model, data):
+        """Fairlearn binary classification expects a single-score predictor output."""
+        try:
+            import torch
+            import torch.nn as nn
+        except ImportError:
+            return predictor_model
+
+        if not hasattr(predictor_model, "forward"):
+            return predictor_model
+
+        y_train = getattr(data, "y_train", None)
+        if y_train is None:
+            return predictor_model
+
+        if isinstance(y_train, torch.Tensor):
+            y_values = y_train.detach().cpu().numpy()
+        else:
+            y_values = np.asarray(y_train)
+        if np.unique(y_values).size != 2:
+            return predictor_model
+
+        def _needs_wrap(model) -> bool:
+            num_classes = getattr(model, "num_classes", None)
+            if num_classes == 2:
+                return True
+            x_train = getattr(data, "X_train", None)
+            if not isinstance(x_train, torch.Tensor) or len(x_train) == 0:
+                return False
+            try:
+                with torch.no_grad():
+                    sample = x_train[:1]
+                    device = next(model.parameters()).device
+                    out = model(sample.to(device))
+                return bool(getattr(out, "ndim", 0) == 2 and out.shape[1] == 2)
+            except Exception:
+                return False
+
+        if not _needs_wrap(predictor_model):
+            return predictor_model
+
+        class _BinaryLogitAdapter(nn.Module):
+            def __init__(self, base_model):
+                super().__init__()
+                self.base_model = base_model
+
+            def forward(self, x):
+                out = self.base_model(x)
+                if out.ndim == 1:
+                    return out.reshape(-1, 1)
+                if out.ndim == 2 and out.shape[1] == 1:
+                    return out
+                if out.ndim == 2 and out.shape[1] >= 2:
+                    return out[:, 1:2]
+                raise ValueError(f"Unsupported predictor output shape for fairness: {out.shape}")
+
+        return _BinaryLogitAdapter(predictor_model)
 
     def _resolve_fairness_defense_spec(self):
         if hasattr(self, "defense_name"):
@@ -156,6 +310,9 @@ class _FairnessBehaviorMixin:
         defense_name, defense_params = self._resolve_fairness_defense_spec()
         if not defense_name or not defense_name.startswith("fairlearn."):
             raise ValueError("Fairlearn defense helper requires a fairlearn defense_name")
+
+        if getattr(self, "data", None) is None:
+            self.data = data
 
         if self._model is None:
             raise ValueError(
@@ -207,6 +364,17 @@ class _FairnessBehaviorMixin:
                     **defense_params,
                 )
         elif fairlearn_submodule == "adversarial":
+            predictor_model = self._resolve_fairlearn_model_param(
+                defense_params.pop("predictor_model", None),
+                fallback=base_estimator,
+            )
+            predictor_model = self._adapt_binary_torch_predictor(predictor_model, data)
+            adversary_model = self._resolve_fairlearn_model_param(
+                defense_params.pop("adversary_model", None),
+                fallback=base_estimator,
+            )
+            defense_params["predictor_model"] = predictor_model
+            defense_params["adversary_model"] = adversary_model
             defended_estimator = defense_class(**defense_params)
         else:
             raise NotImplementedError(

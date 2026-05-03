@@ -37,6 +37,15 @@ def tensor_to_numpy(value, dtype=None):
     return arr
 
 
+def get_torch_model_device(model):
+    if not is_torch_model(model):
+        return torch.device("cpu")
+    first_param = next(model.parameters(), None)
+    if first_param is None:
+        return torch.device("cpu")
+    return getattr(first_param, "device", torch.device("cpu"))
+
+
 def build_torch_art_model(model, data):
     if not HAS_TORCH:
         raise ImportError("Torch support requires optional dependency deckard[torch]")
@@ -55,15 +64,33 @@ def build_torch_art_model(model, data):
     import numpy as np
 
     nb_classes = len(np.unique(np.asarray(data.y_train).flatten()))
-    return PyTorchClassifier(
-        model=model,
+    art_model = model
+    target_device = get_torch_model_device(model)
+    device_type = "gpu" if getattr(target_device, "type", "cpu") == "cuda" else "cpu"
+
+    estimator = PyTorchClassifier(
+        model=art_model,
         loss=torch.nn.CrossEntropyLoss(),
-        optimizer=torch.optim.SGD(model.parameters(), lr=0.01),
+        optimizer=torch.optim.SGD(art_model.parameters(), lr=0.01),
         input_shape=input_shape,
         nb_classes=nb_classes,
         clip_values=(0.0, 1.0),
-        device_type="gpu" if torch.cuda.is_available() else "cpu",
+        device_type=device_type,
     )
+
+    # Directly override ART device internals because device_type only supports cpu/gpu.
+    if hasattr(estimator, "_device"):
+        estimator._device = target_device
+    if hasattr(estimator, "_model") and hasattr(estimator._model, "to"):
+        estimator._model = estimator._model.to(target_device)
+    preprocessing = getattr(estimator, "preprocessing", None)
+    if hasattr(preprocessing, "_device"):
+        preprocessing._device = target_device
+    for op in getattr(estimator, "preprocessing_operations", []) or []:
+        if hasattr(op, "_device"):
+            op._device = target_device
+
+    return estimator
 
 
 def collect_subset_from_dataloader(loader, n):

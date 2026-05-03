@@ -1,6 +1,8 @@
 # OS imports
+import copy
 import logging
 import time
+from pathlib import Path
 
 # Typing imports
 from dataclasses import dataclass, field
@@ -20,7 +22,7 @@ from art.estimators.regression import PyTorchRegressor
 
 from . import ModelConfig
 from ..data import DataConfig
-from ..utils import load_class
+from ..utils import load_class, resolve_torch_device
 
 logger = logging.getLogger(__name__)
 
@@ -87,19 +89,27 @@ class PytorchModelConfig(ModelConfig):
     classifier: bool = True
     fit_params: dict = field(default_factory=dict)
     library: str = "pytorch"
-    device: Union[str, torch.device] = field(
-        default_factory=lambda: ("cuda" if torch.cuda.is_available() else "cpu"),
-    )
-    criterion: Union[dict, str] = field(default="torch.nn.CrossEntropyLoss")
-    optimizer: Union[dict, str] = field(default="torch.optim.SGD")
+    device: Any = None
+    criterion: Any = field(default="torch.nn.CrossEntropyLoss")
+    optimizer: Any = field(default="torch.optim.SGD")
     clip_values: Union[tuple, None] = None
     random_seed: int = 42
     channels_first: bool = True
+    checkpoint_records: list = field(default_factory=list)
+    _checkpoint_context: Any = field(default=None, repr=False, compare=False)
+    _epoch_attack: Any = field(default=None, repr=False, compare=False)
 
     def __post_init__(self):
         """Initialize model using load_class, following parent pattern."""
-        if isinstance(self.device, str):
-            self.device = torch.device(self.device)
+        if isinstance(self.scorer, str) and self.scorer.lower() in {"auto", "default"}:
+            scorer_cls = (
+                "deckard.score.base.DefaultPytorchClassifierConfig"
+                if self.classifier
+                else "deckard.score.base.DefaultPytorchRegressorConfig"
+            )
+            self.scorer = load_class(scorer_cls)
+
+        self.device = self._resolve_torch_device(self.device)
 
         torch.manual_seed(self.random_seed)
         if self.device.type == "cuda":
@@ -107,6 +117,58 @@ class PytorchModelConfig(ModelConfig):
 
         # Call parent __post_init__ for shared initialization
         super().__post_init__()
+
+    def _resolve_torch_device(self, requested_device: Any) -> torch.device:
+        return resolve_torch_device(requested_device)
+
+    def _resolve_art_device_type(self) -> str:
+        if self.device.type == "cuda":
+            return "gpu"
+        if self.device.type == "mps":
+            logger.info("ART device_type has no native MPS option; overriding ART internal device directly")
+            return "cpu"
+        return "cpu"
+
+    def _model_for_art(self):
+        if self._model is None:
+            raise ValueError("Model not initialized")
+        if self.device.type == "mps":
+            # Keep training model on MPS while giving ART a CPU-compatible copy.
+            model_copy = copy.deepcopy(self._model)
+            return model_copy.to(torch.device("cpu"))
+        return self._model
+
+    def _override_art_internal_device(self, art_estimator):
+        if self.device.type not in {"mps", "cuda", "cpu"}:
+            return art_estimator
+
+        target_device = self.device
+        if self.device.type == "cuda" and not torch.cuda.is_available():
+            target_device = torch.device("cpu")
+        if self.device.type == "mps":
+            mps_available = bool(
+                hasattr(torch.backends, "mps") and torch.backends.mps.is_available(),
+            )
+            if not mps_available:
+                target_device = torch.device("cpu")
+
+        if hasattr(art_estimator, "_device"):
+            art_estimator._device = target_device
+        if hasattr(art_estimator, "_model") and hasattr(art_estimator._model, "to"):
+            art_estimator._model = art_estimator._model.to(target_device)
+
+        preprocessing = getattr(art_estimator, "preprocessing", None)
+        if hasattr(preprocessing, "_device"):
+            preprocessing._device = target_device
+
+        for op in getattr(art_estimator, "preprocessing_operations", []) or []:
+            if hasattr(op, "_device"):
+                op._device = target_device
+
+        return art_estimator
+
+    def set_epoch_attack(self, attack_config: Any) -> None:
+        self._epoch_attack = attack_config
 
     def _initialize_model(self):
         """Initialize PyTorch model using load_class."""
@@ -125,21 +187,280 @@ class PytorchModelConfig(ModelConfig):
             raise ValueError("Model not initialized")
         return self._model
 
-    def _train(self, X: torch.Tensor, y: torch.Tensor):
-        """Train the PyTorch model."""
+    def save(self, filepath: str) -> None:
+        """Serialize PyTorch model state and config metadata."""
         if self._model is None:
             raise ValueError("Model not initialized")
+        path = Path(filepath)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path.exists():
+            raise ValueError(f"File {filepath} already exists. Will not overwrite.")
 
-        start_time = time.process_time()
+        payload = {
+            "model_type": self.model_type,
+            "model_params": self.model_params,
+            "classifier": self.classifier,
+            "fit_params": self.fit_params,
+            "criterion": self.criterion,
+            "optimizer": self.optimizer,
+            "clip_values": self.clip_values,
+            "random_seed": self.random_seed,
+            "channels_first": self.channels_first,
+            "library": self.library,
+            "alias": self.alias,
+            "device": str(self.device),
+            "score_dict": self.score_dict,
+            "checkpoint_records": self.checkpoint_records,
+            "training_time": self.training_time,
+            "prediction_time": self.prediction_time,
+            "training_n": self.training_n,
+            "prediction_n": self.prediction_n,
+            "state_dict": self._model.state_dict(),
+        }
+        torch.save(payload, path)
 
-        criterion = initialize_criterion(self.criterion)
-        optimizer = initialize_optimizer(self.optimizer, self._model.parameters())
+    def load(self, filepath: str) -> "PytorchModelConfig":
+        """Load PyTorch model state and config metadata."""
+        path = Path(filepath)
+        if not path.exists():
+            raise FileNotFoundError(filepath)
 
-        nb_epochs = self.fit_params.get("nb_epochs", 1)
-        batch_size = self.fit_params.get("batch_size", 32)
+        payload = torch.load(path, map_location=self.device)
+        if not isinstance(payload, dict) or "state_dict" not in payload:
+            raise TypeError(f"Unsupported serialized payload in {filepath}")
 
+        self.model_type = payload.get("model_type", self.model_type)
+        self.model_params = payload.get("model_params", self.model_params)
+        self.classifier = payload.get("classifier", self.classifier)
+        self.fit_params = payload.get("fit_params", self.fit_params)
+        self.criterion = payload.get("criterion", self.criterion)
+        self.optimizer = payload.get("optimizer", self.optimizer)
+        self.clip_values = payload.get("clip_values", self.clip_values)
+        self.random_seed = payload.get("random_seed", self.random_seed)
+        self.channels_first = payload.get("channels_first", self.channels_first)
+        self.library = payload.get("library", self.library)
+        self.alias = payload.get("alias", self.alias)
+        self.score_dict = payload.get("score_dict", self.score_dict)
+        self.checkpoint_records = payload.get(
+            "checkpoint_records",
+            self.checkpoint_records,
+        )
+        self.training_time = payload.get("training_time", self.training_time)
+        self.prediction_time = payload.get("prediction_time", self.prediction_time)
+        self.training_n = payload.get("training_n", self.training_n)
+        self.prediction_n = payload.get("prediction_n", self.prediction_n)
+
+        self._initialize_model()
+        self._model.load_state_dict(payload["state_dict"])
+        self._model = self._model.to(self.device)
+        return self
+
+    def _coerce_bool(self, value: Any, default: bool) -> bool:
+        if value is None:
+            return default
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes", "y", "on"}
+        return bool(value)
+
+    def _resolve_checkpoint_config(self, model_file=None):
+        every = self.fit_params.get(
+            "checkpoint_every_epochs",
+            self.fit_params.get("checkpoint_every_cycles", None),
+        )
+        if every in {None, "", 0, "0"}:
+            return None
+
+        try:
+            every = int(every)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"checkpoint_every_epochs must be an integer, got {every}",
+            ) from exc
+        if every <= 0:
+            return None
+
+        checkpoint_dir = self.fit_params.get("checkpoint_dir", None)
+        if checkpoint_dir is None:
+            if model_file is None:
+                raise ValueError(
+                    "checkpoint_dir must be provided when checkpointing is enabled without a model_file",
+                )
+            model_path = Path(model_file)
+            checkpoint_dir = model_path.parent / f"{model_path.stem}_checkpoints"
+        checkpoint_dir = Path(checkpoint_dir)
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+        checkpoint_prefix = self.fit_params.get("checkpoint_prefix", None)
+        if checkpoint_prefix in {None, ""}:
+            if model_file is not None:
+                checkpoint_prefix = Path(model_file).stem
+            elif self.alias not in {None, ""}:
+                checkpoint_prefix = self.alias
+            else:
+                checkpoint_prefix = str(self.model_type).split(":")[-1].split(".")[-1]
+
+        return {
+            "every": every,
+            "dir": checkpoint_dir,
+            "prefix": str(checkpoint_prefix),
+            "score": self._coerce_bool(
+                self.fit_params.get("checkpoint_score", True),
+                default=True,
+            ),
+            "include_final": self._coerce_bool(
+                self.fit_params.get("checkpoint_include_final", True),
+                default=True,
+            ),
+        }
+
+    def _build_checkpoint_snapshot(self):
+        snapshot = type(self)(
+            model_type=self.model_type,
+            model_params=copy.deepcopy(self.model_params),
+            classifier=self.classifier,
+            fit_params=copy.deepcopy(self.fit_params),
+            library=self.library,
+            device=str(self.device),
+            criterion=copy.deepcopy(self.criterion),
+            optimizer=copy.deepcopy(self.optimizer),
+            clip_values=copy.deepcopy(self.clip_values),
+            random_seed=self.random_seed,
+            channels_first=self.channels_first,
+        )
+        snapshot.alias = self.alias
+        snapshot.scorer = self.scorer
+        snapshot.defense = self.defense
+        snapshot.score_dict = {}
+        snapshot.checkpoint_records = copy.deepcopy(self.checkpoint_records)
+        snapshot._model.load_state_dict(copy.deepcopy(self._model.state_dict()))
+        snapshot._model = snapshot._model.to(snapshot.device)
+        return snapshot
+
+    def _score_checkpoint_snapshot(self, snapshot, data):
+        # Copy over epoch metrics from our score_dict if they exist
+        if "epochs" in self.score_dict:
+            snapshot.score_dict["epochs"] = copy.deepcopy(self.score_dict["epochs"])
+        checkpoint_stage = None
+        if snapshot.defense is not None:
+            defense_pipeline = snapshot._require_defense_pipeline()
+            checkpoint_stage = defense_pipeline.resolve_stage(
+                default_stage="post_fit_pre_predict",
+                model=snapshot,
+                data=data,
+            )
+            if checkpoint_stage == "post_fit_pre_predict":
+                snapshot._model = snapshot._apply_defense(data)
+        try:
+            snapshot._evaluate_and_score(data, times={})
+        except ValueError as exc:
+            if "predict_proba" not in str(exc):
+                raise
+            if checkpoint_stage == "before_predict" and snapshot.defense is not None:
+                snapshot._model = snapshot._apply_defense(data)
+            train_pred = snapshot._predict(data.X_train)
+            test_pred = snapshot._predict(data.X_test)
+            if snapshot.classifier:
+                train_scores = snapshot._classification_scores(data.y_train, train_pred)
+                test_scores = snapshot._classification_scores(data.y_test, test_pred)
+            else:
+                train_scores = snapshot._regression_scores(data.y_train, train_pred)
+                test_scores = snapshot._regression_scores(data.y_test, test_pred)
+            snapshot.score_dict.update(
+                {f"training_{key}": value for key, value in train_scores.items()},
+            )
+            snapshot.score_dict.update(test_scores)
+        return dict(snapshot.score_dict or {})
+
+    def _score_epoch_snapshot(self, epoch_index: int, data, attack_config=None):
+        if data is None:
+            return
+
+        epoch_entry = self.score_dict["epochs"].setdefault(epoch_index, {})
+        snapshot = self._build_checkpoint_snapshot()
+
+        benign_start = time.process_time()
+        benign_scores = self._score_checkpoint_snapshot(snapshot, data)
+        benign_time = time.process_time() - benign_start
+
+        epoch_entry["benign_scores"] = benign_scores
+        epoch_entry.setdefault("timings", {})["benign_score_time"] = benign_time
+
+        if attack_config is None:
+            return
+
+        attack_start = time.process_time()
+        attack_runner = copy.deepcopy(attack_config)
+        attack_scores = attack_runner(
+            data=data,
+            model=snapshot,
+            attack_file=None,
+            attack_predictions_file=None,
+            score_file=None,
+        )
+        attack_time = time.process_time() - attack_start
+
+        epoch_entry["adversarial_scores"] = dict(attack_scores or {})
+        epoch_entry["timings"]["adversarial_score_time"] = attack_time
+
+    @staticmethod
+    def _checkpoint_file(path_dir: Path, prefix: str, epoch_index: int, suffix: str) -> Path:
+        # Standardized format: <prefix>_<epoch><suffix>
+        return path_dir / f"{prefix}_{epoch_index}{suffix}"
+
+    def _persist_checkpoint(self, epoch_index: int, data, checkpoint_cfg, elapsed_time: float):
+        snapshot = self._build_checkpoint_snapshot()
+        snapshot.training_time = elapsed_time
+        snapshot.training_n = len(data.y_train) if data is not None else self.training_n
+
+        model_path = self._checkpoint_file(
+            checkpoint_cfg["dir"],
+            checkpoint_cfg["prefix"],
+            epoch_index,
+            ".pkl",
+        )
+        if model_path.exists():
+            model_path.unlink()
+        snapshot.save(str(model_path))
+
+        record = {
+            "epoch": epoch_index,
+            "model_file": str(model_path),
+        }
+
+        if checkpoint_cfg["score"] and data is not None:
+            score_path = self._checkpoint_file(
+                checkpoint_cfg["dir"],
+                checkpoint_cfg["prefix"],
+                epoch_index,
+                ".json",
+            )
+            if score_path.exists():
+                score_path.unlink()
+            checkpoint_scores = self._score_checkpoint_snapshot(snapshot, data)
+            snapshot.save_scores(checkpoint_scores, str(score_path))
+            record["score_file"] = str(score_path)
+
+        self.checkpoint_records.append(record)
+
+    def _run_training_epochs(self, X, y, *, criterion, optimizer, batch_size, epochs, batch_losses, epoch_offset=0):
+        """Run training epochs and track per-epoch metrics.
+        
+        Args:
+            epoch_offset: Starting epoch number (for logging and metrics)
+        
+        Returns:
+            dict mapping epoch numbers to their metrics
+        """
         self._model.train()
-        for epoch in range(nb_epochs):
+        epoch_metrics = {}
+        
+        for epoch_num in range(epochs):
+            epoch_idx = epoch_offset + epoch_num + 1
+            epoch_start = time.process_time()
+            epoch_losses = []
+            
             for i in range(0, len(X), batch_size):
                 batch_X = X[i : i + batch_size].to(self.device)  # noqa E203
                 batch_y = y[i : i + batch_size].to(self.device)  # noqa E203
@@ -147,18 +468,148 @@ class PytorchModelConfig(ModelConfig):
                 optimizer.zero_grad()
                 outputs = self._model(batch_X)
                 loss = criterion(outputs, batch_y)
+                loss_val = float(loss.detach().item())
+                batch_losses.append(loss_val)
+                epoch_losses.append(loss_val)
                 loss.backward()
                 optimizer.step()
+            
+            epoch_time = time.process_time() - epoch_start
+            epoch_loss_mean = float(np.mean(epoch_losses)) if epoch_losses else None
+            
+            epoch_metrics[epoch_idx] = {
+                "loss": epoch_loss_mean,
+                "time": epoch_time,
+                "batches": len(epoch_losses),
+            }
+            
+            logger.info(f"Epoch {epoch_idx}/{epoch_offset + epochs}: loss={epoch_loss_mean:.6f}, time={epoch_time:.3f}s")
+        
+        return epoch_metrics
+
+    def _load_or_train_model(self, data, model_file, times):
+        self._checkpoint_context = {
+            "data": data,
+            "model_file": model_file,
+            "attack": self._epoch_attack,
+        }
+        try:
+            return super()._load_or_train_model(data, model_file, times)
+        finally:
+            self._checkpoint_context = None
+
+    def _train(self, X: torch.Tensor, y: torch.Tensor):
+        """Train the PyTorch model with per-epoch logging and metrics tracking."""
+        if self._model is None:
+            raise ValueError("Model not initialized")
+
+        start_time = time.process_time()
+        logger.info(f"Starting training with {len(y)} samples")
+
+        criterion = initialize_criterion(self.criterion)
+        optimizer = initialize_optimizer(self.optimizer, self._model.parameters())
+
+        nb_epochs = self.fit_params.get("nb_epochs", 1)
+        batch_size = self.fit_params.get("batch_size", 32)
+        batch_losses = []
+        self.checkpoint_records = []
+        
+        # Initialize score_dict with epochs subdictionary
+        if self.score_dict is None:
+            self.score_dict = {}
+        if "epochs" not in self.score_dict:
+            self.score_dict["epochs"] = {}
+
+        checkpoint_context = self._checkpoint_context or {}
+        checkpoint_cfg = self._resolve_checkpoint_config(
+            model_file=checkpoint_context.get("model_file", None),
+        )
+        checkpoint_data = checkpoint_context.get("data", None)
+        checkpoint_attack = checkpoint_context.get("attack", None)
+
+        logger.info(
+            "Training for %s epochs%s",
+            nb_epochs,
+            f" with checkpointing every {checkpoint_cfg['every']} epochs"
+            if checkpoint_cfg is not None
+            else " without checkpointing",
+        )
+
+        for epoch_index in range(1, nb_epochs + 1):
+            epoch_metrics = self._run_training_epochs(
+                X,
+                y,
+                criterion=criterion,
+                optimizer=optimizer,
+                batch_size=batch_size,
+                epochs=1,
+                batch_losses=batch_losses,
+                epoch_offset=epoch_index - 1,
+            )
+            self.score_dict["epochs"].update(epoch_metrics)
+            self.training_n = len(y)
+
+            if checkpoint_data is not None:
+                self._score_epoch_snapshot(
+                    epoch_index=epoch_index,
+                    data=checkpoint_data,
+                    attack_config=checkpoint_attack,
+                )
+
+            if checkpoint_cfg is not None:
+                should_checkpoint = (epoch_index % checkpoint_cfg["every"]) == 0
+                is_final = epoch_index == nb_epochs
+                if is_final and checkpoint_cfg["include_final"]:
+                    should_checkpoint = True
+                if should_checkpoint:
+                    elapsed = time.process_time() - start_time
+                    logger.info("Checkpointing at epoch %s", epoch_index)
+                    self._persist_checkpoint(
+                        epoch_index,
+                        checkpoint_data,
+                        checkpoint_cfg,
+                        elapsed,
+                    )
 
         end_time = time.process_time()
         self.training_time = end_time - start_time
         self.training_n = len(y)
-        logger.info(f"Model trained in {self.training_time:.2f} seconds")
+        
+        # Compute final loss from all batches
+        final_loss = float(np.mean(batch_losses)) if batch_losses else None
+        self.score_dict["optimizer_loss"] = final_loss
+        self.score_dict["training_time"] = self.training_time
+        
+        if len(self.checkpoint_records) > 0:
+            self.score_dict["checkpoints"] = copy.deepcopy(self.checkpoint_records)
+        
+        logger.info(
+            "Training completed: loss=%0.6f, time=%0.2fs, epochs=%s",
+            final_loss if final_loss is not None else float("nan"),
+            self.training_time,
+            nb_epochs,
+        )
 
     def _predict(self, X: Union[torch.Tensor, torch.utils.data.DataLoader]):
         """Make predictions, handling both Tensor and DataLoader inputs."""
         if self._model is None:
             raise ValueError("Model not initialized")
+
+        # ART wrappers (e.g., PyTorchClassifier) expose predict() instead of eval().
+        if hasattr(self._model, "predict") and not hasattr(self._model, "eval"):
+            if isinstance(X, torch.utils.data.DataLoader):
+                x_batches = []
+                for batch in X:
+                    batch_x = batch[0] if isinstance(batch, (tuple, list)) else batch
+                    x_batches.append(batch_x)
+                if len(x_batches) == 0:
+                    return torch.empty(0)
+                x_tensor = torch.cat(x_batches, dim=0)
+            else:
+                x_tensor = X
+            x_np = x_tensor.detach().cpu().numpy() if isinstance(x_tensor, torch.Tensor) else np.asarray(x_tensor)
+            y_pred = self._model.predict(x_np)
+            return torch.as_tensor(y_pred)
 
         self._model.eval()
         predictions = []
@@ -244,29 +695,33 @@ class PytorchModelConfig(ModelConfig):
             input_shape = data.X_train.shape[1:]
 
         nb_classes = len(torch.unique(data.y_train))
+        art_model = self._model_for_art()
+        art_device_type = self._resolve_art_device_type()
         if self.classifier:
-            return PyTorchClassifier(
-                model=self._model,
+            estimator = PyTorchClassifier(
+                model=art_model,
                 loss=initialize_criterion(self.criterion),
                 optimizer=initialize_optimizer(
                     self.optimizer,
-                    self._model.parameters(),
+                    art_model.parameters(),
                 ),
                 input_shape=input_shape,
                 nb_classes=nb_classes,
                 clip_values=clip_values,
-                device_type="gpu" if "cuda" in str(self.device) else "cpu",
+                device_type=art_device_type,
             )
+            return self._override_art_internal_device(estimator)
         else:
-            return PyTorchRegressor(
-                model=self._model,
+            estimator = PyTorchRegressor(
+                model=art_model,
                 loss=initialize_criterion(self.criterion),
                 optimizer=initialize_optimizer(
                     self.optimizer,
-                    self._model.parameters(),
+                    art_model.parameters(),
                 ),
                 input_shape=input_shape,
                 nb_classes=nb_classes,
                 clip_values=clip_values,
-                device_type="gpu" if "cuda" in str(self.device) else "cpu",
+                device_type=art_device_type,
             )
+            return self._override_art_internal_device(estimator)

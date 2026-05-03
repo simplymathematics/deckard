@@ -112,6 +112,7 @@ class TestFairlearnModelConfig(unittest.TestCase):
         art_defense.apply_to.assert_called_once_with(estimator=model._model, data=runtime_data)
         fair_defense.apply_to.assert_called_once_with(estimator=first_estimator, data=runtime_data)
         self.assertAlmostEqual(model.defense_application_time, 0.7)
+        self.assertIs(fair_defense.data, runtime_data)
 
     def test_apply_defense_rejects_legacy_defense_list(self):
         """Legacy list assignment is intentionally unsupported after pipeline migration."""
@@ -317,6 +318,54 @@ class TestFairlearnModelConfig(unittest.TestCase):
                     for key in scores.keys()
                 ),
             )
+
+
+def test_resolve_fairlearn_model_param_moves_torch_model_to_cpu():
+    torch = pytest.importorskip("torch")
+
+    cfg = FairlearnModelConfig(
+        model_type="sklearn.linear_model.LogisticRegression",
+        classifier=True,
+        model_params={"max_iter": 25},
+        data=None,
+    )
+
+    resolved = cfg._resolve_fairlearn_model_param(
+        {
+            "model_type": "torch.nn.Linear",
+            "model_params": {"in_features": 4, "out_features": 2},
+            "device": "cpu",
+        },
+    )
+
+    assert isinstance(resolved, torch.nn.Module)
+    assert next(resolved.parameters()).device.type == "cpu"
+
+
+def test_resolve_fairlearn_model_param_falls_back_from_unavailable_mps(monkeypatch):
+    torch = pytest.importorskip("torch")
+    if not hasattr(torch.backends, "mps"):
+        pytest.skip("torch backend has no mps support")
+
+    monkeypatch.setattr(torch.backends.mps, "is_available", lambda: False)
+
+    cfg = FairlearnModelConfig(
+        model_type="sklearn.linear_model.LogisticRegression",
+        classifier=True,
+        model_params={"max_iter": 25},
+        data=None,
+    )
+
+    resolved = cfg._resolve_fairlearn_model_param(
+        {
+            "model_type": "torch.nn.Linear",
+            "model_params": {"in_features": 4, "out_features": 2},
+            "device": "mps",
+        },
+    )
+
+    assert isinstance(resolved, torch.nn.Module)
+    assert next(resolved.parameters()).device.type == "cpu"
 
     def test_sensitive_fairness_scores_naming_convention(self):
         """Test that sensitive fairness scores follow naming convention."""

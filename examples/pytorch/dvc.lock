@@ -6,9 +6,9 @@ stages:
     deps:
     - path: ./config/
       hash: md5
-      md5: 34302d2b00b1aaa98916852317908e6c.dir
-      size: 6082
-      nfiles: 29
+      md5: b67f39095158cfb9acd2527350852749.dir
+      size: 6905
+      nfiles: 31
     outs:
     - path: .deckard_rc
       hash: md5

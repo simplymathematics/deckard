@@ -166,10 +166,10 @@ class ModelConfig(ConfigBase):
     alias: Union[str, None] = None
     defense: Any = None
     plugins: Union[list, None] = None
-    scorer: Union["ScorerDictConfig", dict, str, None] = AUTO_SCORER
+    scorer: Any = AUTO_SCORER
 
     # Runtime/model state fields
-    _model: Union[BaseEstimator, None] = None
+    _model: Any = None
     score_dict: dict = None
     training_time: Union[float, None] = None
     prediction_time: Union[float, None] = None

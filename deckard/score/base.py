@@ -4,11 +4,19 @@ from dataclasses import dataclass, field
 import inspect
 import logging
 from pathlib import Path
-from typing import Any, Callable, Dict, Literal, Union
+from typing import Any, Dict, Literal, Union
 
 import numpy as np
+from omegaconf import OmegaConf
 
-from ..utils import ConfigBase, resolve_class, safe_store, merge_list_of_dicts
+from ..utils import (
+    ConfigBase,
+    resolve_class,
+    safe_store,
+    merge_list_of_dicts,
+    load_class,
+)
+from .pytorch import to_numpy_if_torch
 
 logger = logging.getLogger(__name__)
 
@@ -18,12 +26,25 @@ class ScorerConfig:
     """Atomic scorer configuration."""
 
     score_name: str
-    score_function: Union[str, Callable]
+    score_function: Any
     score_params: Dict[str, Any] = field(default_factory=dict)
     greater_is_better: bool = True
     needs_proba: bool = False
 
     def __post_init__(self):
+        if OmegaConf.is_config(self.score_function):
+            self.score_function = OmegaConf.to_container(self.score_function, resolve=True)
+        if isinstance(self.score_function, dict):
+            score_fn_spec = dict(self.score_function)
+            target = score_fn_spec.pop("_target_", score_fn_spec.pop("name", None))
+            if target is None:
+                raise ValueError(
+                    f"Scorer '{self.score_name}' dict score_function must include '_target_' or 'name'",
+                )
+            args = score_fn_spec.pop("_args_", [])
+            if not isinstance(args, (list, tuple)):
+                args = [args]
+            self.score_function = load_class(target, *list(args), **score_fn_spec)
         if isinstance(self.score_function, str):
             self.score_function = resolve_class(self.score_function)
         if not callable(self.score_function):
@@ -33,8 +54,8 @@ class ScorerConfig:
 
     def _validate_probability_input(self, y_true, y_pred):
         """Validate probability-like inputs before metric execution."""
-        y_true_arr = np.asarray(y_true)
-        y_pred_arr = np.asarray(y_pred)
+        y_true_arr = np.asarray(to_numpy_if_torch(y_true))
+        y_pred_arr = np.asarray(to_numpy_if_torch(y_pred))
 
         if y_pred_arr.ndim not in (1, 2):
             raise ValueError(
@@ -69,7 +90,7 @@ class ScorerConfig:
 
         if self.needs_proba:
             self._validate_probability_input(y_true=y_true, y_pred=y_pred)
-            y_pred_arr = np.asarray(y_pred)
+            y_pred_arr = np.asarray(to_numpy_if_torch(y_pred))
             if (
                 y_pred_arr.ndim == 2
                 and metric_name == "roc_auc_score"
@@ -81,8 +102,8 @@ class ScorerConfig:
             return y_pred
         if metric_name not in label_metrics:
             return y_pred
-        y_true_arr = np.asarray(y_true)
-        y_pred_arr = np.asarray(y_pred)
+        y_true_arr = np.asarray(to_numpy_if_torch(y_true))
+        y_pred_arr = np.asarray(to_numpy_if_torch(y_pred))
         if y_true_arr.ndim != 1 or y_pred_arr.ndim != 2:
             return y_pred
         if not np.issubdtype(y_pred_arr.dtype, np.number):
@@ -100,6 +121,8 @@ class ScorerConfig:
     def __call__(self, y_true, y_pred, swap: bool = False, **kwargs):
         if swap:
             y_true, y_pred = y_pred, y_true
+        y_true = to_numpy_if_torch(y_true)
+        y_pred = to_numpy_if_torch(y_pred)
         y_pred = self._normalize_predictions_for_metric(y_true=y_true, y_pred=y_pred)
         params = {**self.score_params, **kwargs}
         signature = inspect.signature(self.score_function)
@@ -375,8 +398,68 @@ class DefaultRegressorConfig(ScorerDictConfig):
     )
 
 
+@dataclass(eq=False)
+class DefaultPytorchClassifierConfig(ScorerDictConfig):
+    """Default classifier scorers for PyTorch models.
+
+    PyTorch model wrappers often expose logits but not ``predict_proba``. This
+    default avoids probability-required metrics so automatic scoring works out
+    of the box.
+    """
+
+    scorers: Dict[str, ScorerConfig] = field(
+        default_factory=lambda: {
+            "accuracy": ScorerConfig(
+                score_name="accuracy",
+                score_function="sklearn.metrics.accuracy_score",
+            ),
+            "precision": ScorerConfig(
+                score_name="precision",
+                score_function="sklearn.metrics.precision_score",
+                score_params={"average": "weighted", "zero_division": 0},
+            ),
+            "recall": ScorerConfig(
+                score_name="recall",
+                score_function="sklearn.metrics.recall_score",
+                score_params={"average": "weighted", "zero_division": 0},
+            ),
+            "f1": ScorerConfig(
+                score_name="f1",
+                score_function="sklearn.metrics.f1_score",
+                score_params={"average": "weighted", "zero_division": 0},
+            ),
+        },
+    )
+
+
+@dataclass(eq=False)
+class DefaultPytorchRegressorConfig(ScorerDictConfig):
+    """Default regressor scorers for PyTorch models."""
+
+    scorers: Dict[str, ScorerConfig] = field(
+        default_factory=lambda: {
+            "mse": ScorerConfig(
+                score_name="mse",
+                score_function="sklearn.metrics.mean_squared_error",
+                greater_is_better=False,
+            ),
+            "mae": ScorerConfig(
+                score_name="mae",
+                score_function="sklearn.metrics.mean_absolute_error",
+                greater_is_better=False,
+            ),
+            "r2": ScorerConfig(
+                score_name="r2",
+                score_function="sklearn.metrics.r2_score",
+            ),
+        },
+    )
+
+
 safe_store(group="score", name="classification", node=DefaultClassifierConfig)
 safe_store(group="score", name="regression", node=DefaultRegressorConfig)
+safe_store(group="score", name="pytorch_classification", node=DefaultPytorchClassifierConfig)
+safe_store(group="score", name="pytorch_regression", node=DefaultPytorchRegressorConfig)
 
 
 __all__ = [
@@ -385,6 +468,8 @@ __all__ = [
     "ScorerDictConfig",
     "DefaultClassifierConfig",
     "DefaultRegressorConfig",
+    "DefaultPytorchClassifierConfig",
+    "DefaultPytorchRegressorConfig",
     "build_scorer",
     "build_scorer_dict",
 ]

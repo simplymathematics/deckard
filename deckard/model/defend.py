@@ -26,6 +26,8 @@ from art.estimators.regression.scikitlearn import (
     ScikitlearnDecisionTreeRegressor,
     ScikitlearnRegressor,
 )
+from art.estimators.classification import PyTorchClassifier
+from art.estimators.regression import PyTorchRegressor
 from ..data import DataConfig
 from .base import ModelConfig
 from ..utils import ConfigBase, coerce_config, resolve_class, coerce_to_list
@@ -62,6 +64,14 @@ supported_defense_types = [
     "transformer",
     None,
 ]
+
+
+def _is_torch_model_instance(model_obj) -> bool:
+    try:
+        import torch
+    except ImportError:  # pragma: no cover
+        return False
+    return isinstance(model_obj, torch.nn.Module)
 
 
 class _DefenseBehaviorMixin:
@@ -157,9 +167,13 @@ class _DefenseBehaviorMixin:
             raise ValueError(
                 "ModelConfig must have a fitted estimator before applying defense",
             )
-        elif not isinstance(self._model, BaseEstimator) and not hasattr(
+        elif (
+            not isinstance(self._model, BaseEstimator)
+            and not _is_torch_model_instance(self._model)
+            and not hasattr(
             self._model,
             "model",
+            )
         ):
             assert isinstance(
                 self._model,
@@ -192,12 +206,13 @@ class _DefenseBehaviorMixin:
             clip_values = getattr(self._model, "clip_values", None)
             if clip_values is not None:
                 init_params["clip_values"] = clip_values
-        try:
-            check_is_fitted(base_estimator)
-        except NotFittedError as e:
-            raise ValueError(
-                "ModelConfig must have a fitted estimator before applying defense",
-            ) from e
+        if not _is_torch_model_instance(base_estimator):
+            try:
+                check_is_fitted(base_estimator)
+            except NotFittedError as e:
+                raise ValueError(
+                    "ModelConfig must have a fitted estimator before applying defense",
+                ) from e
         start = time.process_time()
         defense = None
         defended_estimator = None
@@ -311,6 +326,47 @@ class _DefenseBehaviorMixin:
         return defense_type, defense_subtype, defense_class
 
     def get_art_class(self, data):
+        if _is_torch_model_instance(getattr(self, "_model", None)) or (
+            isinstance(self.model_type, str) and self.model_type.startswith("torch.")
+        ):
+            try:
+                import torch
+            except ImportError as exc:  # pragma: no cover
+                raise ImportError(
+                    "Torch model defenses require optional dependency deckard[torch]",
+                ) from exc
+
+            input_shape = tuple(getattr(data, "X_train").shape[1:])
+            y_train = getattr(data, "y_train")
+            if isinstance(y_train, torch.Tensor):
+                nb_classes = int(torch.unique(y_train).numel())
+            else:
+                nb_classes = len(set(y_train))
+
+            if self.classifier:
+                art_class = PyTorchClassifier
+                init_params = {
+                    "loss": torch.nn.CrossEntropyLoss(),
+                    "optimizer": torch.optim.SGD(self.get_model().parameters(), lr=0.01),
+                    "input_shape": input_shape,
+                    "nb_classes": nb_classes,
+                    "clip_values": getattr(self, "clip_values", None) or (0.0, 1.0),
+                    "device_type": "gpu" if torch.cuda.is_available() else "cpu",
+                }
+            else:
+                art_class = PyTorchRegressor
+                init_params = {
+                    "loss": torch.nn.MSELoss(),
+                    "optimizer": torch.optim.SGD(self.get_model().parameters(), lr=0.01),
+                    "input_shape": input_shape,
+                    "nb_classes": None,
+                    "clip_values": getattr(self, "clip_values", None) or (0.0, 1.0),
+                    "device_type": "gpu" if torch.cuda.is_available() else "cpu",
+                }
+            if "preprocessing" not in init_params:
+                init_params["preprocessing"] = None
+            return art_class, init_params
+
         if self.model_type in [None, "", "None", "null", "Null", "NULL"]:
             raise ValueError(
                 "model_type must be set before creating an ART defense estimator",
@@ -573,6 +629,8 @@ class DefensePipelineConfig(ConfigBase):
         applied_defenses = []
         for defense_obj in defense_chain:
             self._inherit_model_context(defense_obj, defended_estimator)
+            if hasattr(defense_obj, "data") and getattr(defense_obj, "data", None) is None:
+                setattr(defense_obj, "data", data)
             apply_to = getattr(defense_obj, "apply_to", None)
             if not callable(apply_to):
                 raise TypeError(

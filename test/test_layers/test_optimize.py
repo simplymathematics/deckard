@@ -2,6 +2,7 @@ import json
 from types import SimpleNamespace
 import pytest
 from omegaconf import OmegaConf
+import torch
 from deckard.layers import optimize as optimize_module
 
 
@@ -572,3 +573,46 @@ def test_optimize_main_uses_multirun_path(monkeypatch):
     assert captured["cfg"]["experiment_name"] == optimize_module.hash_conf_values(
         _root_={"name": "demo"},
     )
+
+
+def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):
+    hydra_cfg = SimpleNamespace(mode="RunMode.RUN")
+    monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
+
+    X = torch.randn(48, 4)
+    y = torch.randint(0, 2, (48,))
+    dataset = torch.utils.data.TensorDataset(X, y)
+
+    monkeypatch.setattr("deckard.data.pytorch.load_class", lambda *_args, **_kwargs: dataset)
+
+    cfg = OmegaConf.create(
+        {
+            "_target_": "deckard.experiment.ExperimentConfig",
+            "library": "pytorch",
+            "classifier": True,
+            "data": {
+                "_target_": "deckard.data.pytorch.PytorchDataConfig",
+                "dataset_name": "torch.utils.data.TensorDataset",
+                "data_params": {},
+                "train_size": 32,
+                "test_size": 16,
+                "stratify": True,
+            },
+            "model": {
+                "_target_": "deckard.model.pytorch.PytorchModelConfig",
+                "model_type": "torch.nn.Linear",
+                "model_params": {"in_features": 4, "out_features": 2},
+                "classifier": True,
+                "fit_params": {"nb_epochs": 1, "batch_size": 8},
+                "criterion": "CrossEntropyLoss",
+                "optimizer": {"name": "SGD", "lr": 0.01},
+            },
+            "attack": None,
+            "files": {"_target_": "deckard.file.FileConfig"},
+        }
+    )
+
+    scores = optimize_module.optimize_main(cfg)
+
+    assert "accuracy" in scores
+    assert "optimizer_loss" in scores
