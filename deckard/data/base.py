@@ -27,14 +27,13 @@ from sklearn.feature_selection import (
     f_regression,
     r_regression,
 )
-from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.compose import make_column_selector, ColumnTransformer
 
 from scipy.sparse import csr_matrix
 
 # deckard
-from ..utils import ConfigBase, data_supported_filetypes, load_class
+from ..utils import ConfigBase, data_supported_filetypes, load_class, coerce_to_list, merge_list_of_dicts
 from ..score.base import ScorerDictConfig
 
 # Setup logger
@@ -1132,6 +1131,10 @@ class DataPipelineConfig(DataConfig):
 
     def __post_init__(self):
         self._validate_init()
+        # Allow a list of step-dicts: merge them in order (later wins on key conflict)
+        from omegaconf import ListConfig
+        if isinstance(self.pipeline, (list, ListConfig)):
+            self.pipeline = merge_list_of_dicts(coerce_to_list(self.pipeline))
         assert isinstance(
             self.pipeline,
             (dict, DictConfig),

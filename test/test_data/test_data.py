@@ -16,6 +16,31 @@ except ImportError:
     HAS_LIFELINES = False
 
 
+class TestDataPipelineConfigListMerge(unittest.TestCase):
+    """DataPipelineConfig should accept a list of step-dicts and merge them."""
+
+    steps_a = {"imputer": {"name": "sklearn.impute.SimpleImputer", "strategy": "mean"}}
+    steps_b = {"scaler": {"name": "sklearn.preprocessing.StandardScaler"}}
+    steps_override = {"imputer": {"name": "sklearn.impute.SimpleImputer", "strategy": "median"}}
+
+    def test_list_of_two_dicts_merges_steps(self):
+        cfg = DataPipelineConfig(dataset_name="make_classification", pipeline=[self.steps_a, self.steps_b])
+        self.assertIsInstance(cfg.pipeline, dict)
+        self.assertIn("imputer", cfg.pipeline)
+        self.assertIn("scaler", cfg.pipeline)
+
+    def test_list_later_entry_wins_on_key_conflict(self):
+        cfg = DataPipelineConfig(dataset_name="make_classification", pipeline=[self.steps_a, self.steps_override])
+        self.assertEqual(cfg.pipeline["imputer"]["strategy"], "median")
+
+    def test_single_dict_still_works(self):
+        cfg = DataPipelineConfig(
+            dataset_name="make_classification",
+            pipeline={"imputer": {"name": "sklearn.impute.SimpleImputer"}},
+        )
+        self.assertIn("imputer", cfg.pipeline)
+
+
 class TestDataPipelineConfig(unittest.TestCase):
     def setUp(self):
         self.pipeline_config_dict = {

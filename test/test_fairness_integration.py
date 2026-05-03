@@ -102,6 +102,33 @@ def test_fairness_regression_data_and_metric_frame_scores():
     assert any(key.endswith("_mse") for key in model.score_dict)
 
 
+def test_fairlearn_group_scorers_list_merges_dicts():
+    scorer = FairlearnScoreDictConfig(
+        group_scorers=[
+            {"mse": {"score_function": "sklearn.metrics.mean_squared_error"}},
+            {
+                "group_scorers": {
+                    "mae": {"score_function": "sklearn.metrics.mean_absolute_error"},
+                },
+            },
+        ],
+    )
+
+    assert "mse" in scorer.group_scorers
+    assert "mae" in scorer.group_scorers
+
+
+def test_fairlearn_group_scorers_list_later_wins_on_conflict():
+    scorer = FairlearnScoreDictConfig(
+        group_scorers=[
+            {"mse": {"score_function": "sklearn.metrics.mean_squared_error"}},
+            {"mse": {"score_function": "sklearn.metrics.mean_absolute_error"}},
+        ],
+    )
+
+    assert scorer.group_scorers["mse"].score_function.__name__ == "mean_absolute_error"
+
+
 def test_fairness_defense_config_apply_to_trained_model():
     data = _fairness_data()
 

@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, Literal, Union
 
 import numpy as np
 
-from ..utils import ConfigBase, resolve_class, safe_store
+from ..utils import ConfigBase, resolve_class, safe_store, merge_list_of_dicts
 
 logger = logging.getLogger(__name__)
 
@@ -163,6 +163,28 @@ class ScorerDictConfig(ConfigBase):
 
     def get_callables(self):
         return {key: scorer for key, scorer in self.scorers.items()}
+
+    @classmethod
+    def merge(cls, items):
+        """Merge a list of scorer specs into a single ScorerDictConfig.
+
+        Each element of *items* may be a :class:`ScorerDictConfig`, a dict
+        with a ``scorers`` key, or a bare scorers dict (name → scorer spec).
+        Later entries win on duplicate scorer names.
+        """
+        merged_scorers: dict = {}
+        for item in items:
+            if isinstance(item, ScorerDictConfig):
+                # Already normalised – grab the inner scorer dict directly
+                merged_scorers.update(item.scorers)
+            else:
+                # Delegate OmegaConf/dict normalisation to the shared utility
+                plain = merge_list_of_dicts([item])
+                if "scorers" in plain:
+                    merged_scorers.update(plain["scorers"])
+                else:
+                    merged_scorers.update(plain)
+        return cls(scorers=merged_scorers)
 
     @staticmethod
     def _resolve_mode_features(mode, data):

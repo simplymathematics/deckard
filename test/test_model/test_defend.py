@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 import pandas as pd
-from deckard.model.defend import DefenseConfig
+from deckard.model.defend import DefenseConfig, DefensePipelineConfig
 from deckard.model.base import ModelConfig
 
 
@@ -58,7 +58,7 @@ class TestDefenseConfig(unittest.TestCase):
 
     def test_call_is_not_runtime_owner(self):
         with self.assertRaises(NotImplementedError):
-            self.defense_config(self.data)
+            self.defense_config(data=self.data)
 
     def test_apply_to_trained_model(self):
         model = ModelConfig(
@@ -104,3 +104,45 @@ class TestDefenseConfig(unittest.TestCase):
             hash(self.defense_config),
             msg="Hash changed after defense apply-time runtime updates",
         )
+
+
+class TestDefensePipelineConfigListCoerce(unittest.TestCase):
+    """DefensePipelineConfig.coerce() with a list should chain all specs."""
+
+    spec_a = {
+        "defense_name": "art.defences.postprocessor.HighConfidence",
+        "defense_params": {"cutoff": 0.25},
+    }
+    spec_b = {
+        "defense_name": "art.defences.postprocessor.ClassLabels",
+        "defense_params": {"apply_fit": False, "apply_predict": True},
+    }
+
+    def test_list_of_two_specs_produces_two_defenses(self):
+        result = DefensePipelineConfig.coerce([self.spec_a, self.spec_b])
+        self.assertIsInstance(result, DefensePipelineConfig)
+        self.assertEqual(len(result.defenses), 2)
+
+    def test_list_of_one_spec_produces_one_defense(self):
+        result = DefensePipelineConfig.coerce([self.spec_a])
+        self.assertIsInstance(result, DefensePipelineConfig)
+        self.assertEqual(len(result.defenses), 1)
+
+    def test_list_order_is_preserved(self):
+        result = DefensePipelineConfig.coerce([self.spec_a, self.spec_b])
+        self.assertIn("HighConfidence", result.defenses[0].defense_name)
+        self.assertIn("ClassLabels", result.defenses[1].defense_name)
+
+    def test_empty_list_produces_empty_pipeline(self):
+        result = DefensePipelineConfig.coerce([])
+        self.assertIsInstance(result, DefensePipelineConfig)
+        self.assertEqual(len(result.defenses), 0)
+
+    def test_none_still_returns_none(self):
+        result = DefensePipelineConfig.coerce(None)
+        self.assertIsNone(result)
+
+    def test_single_dict_still_wraps_in_one_element_list(self):
+        result = DefensePipelineConfig.coerce(self.spec_a)
+        self.assertIsInstance(result, DefensePipelineConfig)
+        self.assertEqual(len(result.defenses), 1)

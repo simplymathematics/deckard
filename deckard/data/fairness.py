@@ -5,7 +5,7 @@ import pandas as pd
 from omegaconf import DictConfig, ListConfig
 
 from .base import DataPipelineConfig
-from ..utils import load_class
+from ..utils import coerce_to_list, load_class, merge_list_of_dicts
 
 
 @dataclass(eq=False)
@@ -13,11 +13,16 @@ class FairlearnDataConfig(DataPipelineConfig):
     """Data pipeline config with fairlearn-sensitive feature support."""
 
     sensitive_columns: Optional[Union[str, list]] = None
-    fairness_defense: Union[None, bool, Dict[str, Any]] = None
+    fairness_defense: Union[None, bool, Dict[str, Any], list] = None
 
     def __post_init__(self):
         super().__post_init__()
         self._validate_init()
+
+        if isinstance(self.fairness_defense, (list, ListConfig)):
+            self.fairness_defense = merge_list_of_dicts(
+                coerce_to_list(self.fairness_defense),
+            )
 
         if self.sensitive_columns is None:
             raise ValueError("sensitive_columns must be specified for FairlearnDataConfig")

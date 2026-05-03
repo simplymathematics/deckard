@@ -260,6 +260,10 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             return None
         if isinstance(scorer_obj, ScorerDictConfig):
             return scorer_obj
+        # List of scorer specs → merge all into one ScorerDictConfig
+        from omegaconf import ListConfig
+        if isinstance(scorer_obj, (list, ListConfig)):
+            return ScorerDictConfig.merge(list(scorer_obj))
         scorer_obj = coerce_config(scorer_obj)
         if isinstance(scorer_obj, str):
             scorer_obj = ScorerDictConfig.from_yaml(scorer_obj).to_dict()

@@ -7,7 +7,7 @@ import warnings
 from sklearn.base import BaseEstimator
 from dataclasses import dataclass, field
 from typing import Any, cast, Union
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, ListConfig, OmegaConf
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
 
@@ -28,7 +28,7 @@ from art.estimators.regression.scikitlearn import (
 )
 from ..data import DataConfig
 from .base import ModelConfig
-from ..utils import ConfigBase, coerce_config, resolve_class
+from ..utils import ConfigBase, coerce_config, resolve_class, coerce_to_list
 
 warnings.filterwarnings("ignore", category=UserWarning)
 logger = logging.getLogger(__name__)
@@ -399,7 +399,15 @@ class DefensePipelineConfig(ConfigBase):
         if defense_config is None or isinstance(defense_config, cls):
             return defense_config
 
+        # List of defense specs → chain them all inside one pipeline
+        if isinstance(defense_config, (list, ListConfig)):
+            return cls(defenses=coerce_to_list(defense_config))
+
         defense_config = coerce_config(defense_config)
+
+        # Re-check after coerce (coerce_config may return a list)
+        if isinstance(defense_config, (list, ListConfig)):
+            return cls(defenses=coerce_to_list(defense_config))
 
         if hasattr(defense_config, "apply_to"):
             return cls(defenses=[defense_config])

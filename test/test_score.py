@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 import pandas as pd
 from hydra.core.config_store import ConfigStore
+from deckard.score.base import ScorerDictConfig, ScorerConfig
 from deckard.score import (
     ScorerConfig,
     ScorerDictConfig,
@@ -20,6 +21,54 @@ from deckard.score import (
     survival_bic_score,
 )
 from sklearn.metrics import accuracy_score, mean_squared_error, precision_score
+
+
+class TestScorerDictConfigMerge(unittest.TestCase):
+    """ScorerDictConfig.merge() should union scorer dicts from multiple specs."""
+
+    acc_dict = {"accuracy": {"score_function": "sklearn.metrics.accuracy_score"}}
+    prec_dict = {
+        "precision": {
+            "score_function": "sklearn.metrics.precision_score",
+            "score_params": {"average": "weighted", "zero_division": 0},
+        }
+    }
+    f1_dict = {"f1": {"score_function": "sklearn.metrics.f1_score", "score_params": {"average": "weighted", "zero_division": 0}}}
+
+    def test_merge_two_bare_dicts(self):
+        result = ScorerDictConfig.merge([self.acc_dict, self.prec_dict])
+        self.assertIsInstance(result, ScorerDictConfig)
+        self.assertIn("accuracy", result.scorers)
+        self.assertIn("precision", result.scorers)
+
+    def test_merge_three_dicts(self):
+        result = ScorerDictConfig.merge([self.acc_dict, self.prec_dict, self.f1_dict])
+        self.assertEqual(set(result.scorers.keys()), {"accuracy", "precision", "f1"})
+
+    def test_merge_scorer_dict_config_instances(self):
+        a = ScorerDictConfig(scorers=self.acc_dict)
+        b = ScorerDictConfig(scorers=self.prec_dict)
+        result = ScorerDictConfig.merge([a, b])
+        self.assertIn("accuracy", result.scorers)
+        self.assertIn("precision", result.scorers)
+
+    def test_merge_later_wins_on_key_conflict(self):
+        override = {"accuracy": {"score_function": "sklearn.metrics.balanced_accuracy_score"}}
+        result = ScorerDictConfig.merge([self.acc_dict, override])
+        self.assertEqual(
+            result.scorers["accuracy"].score_function.__name__,
+            "balanced_accuracy_score",
+        )
+
+    def test_merge_dict_with_scorers_key(self):
+        wrapped = {"scorers": self.acc_dict}
+        result = ScorerDictConfig.merge([wrapped, self.prec_dict])
+        self.assertIn("accuracy", result.scorers)
+        self.assertIn("precision", result.scorers)
+
+    def test_merge_single_element_list(self):
+        result = ScorerDictConfig.merge([self.acc_dict])
+        self.assertIn("accuracy", result.scorers)
 
 
 class TestScorerConfig(unittest.TestCase):

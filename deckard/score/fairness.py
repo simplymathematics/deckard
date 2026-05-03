@@ -5,6 +5,7 @@ from typing import Any, Callable, Dict, Literal, Union, cast
 
 import numpy as np
 import pandas as pd
+from omegaconf import ListConfig
 
 try:
     from fairlearn.metrics import MetricFrame
@@ -12,6 +13,7 @@ except ImportError:  # pragma: no cover
     MetricFrame = None
 
 from .base import ScorerConfig, ScorerDictConfig, safe_store
+from ..utils import coerce_to_list, merge_list_of_dicts
 
 __all__ = [
     "fairness_demographic_parity_difference",
@@ -165,6 +167,20 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
 
     def __post_init__(self):
         super().__post_init__()
+        if isinstance(self.group_scorers, (list, ListConfig)):
+            merged_group_scorers: dict = {}
+            for item in coerce_to_list(self.group_scorers):
+                plain = merge_list_of_dicts([item])
+                if "group_scorers" in plain:
+                    nested = plain["group_scorers"]
+                    if not isinstance(nested, dict):
+                        raise TypeError(
+                            "group_scorers wrapper must contain a dict under 'group_scorers'",
+                        )
+                    merged_group_scorers.update(nested)
+                else:
+                    merged_group_scorers.update(plain)
+            self.group_scorers = merged_group_scorers
         normalized = {}
         for key, value in self.group_scorers.items():
             if isinstance(value, ScorerConfig):

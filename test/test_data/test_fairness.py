@@ -30,6 +30,31 @@ class TestFairlearnDataConfigInit:
         )
         assert config.sensitive_columns == columns
 
+    def test_init_with_fairness_defense_list_merges_dicts(self):
+        """List fairness_defense specs should merge into one dict."""
+        config = FairlearnDataConfig(
+            sensitive_columns="gender",
+            fairness_defense=[
+                {"name": "fairlearn.preprocessing.CorrelationRemover"},
+                {"alpha": 0.25, "step_name": "fairness_pre"},
+            ],
+        )
+        assert isinstance(config.fairness_defense, dict)
+        assert config.fairness_defense["name"] == "fairlearn.preprocessing.CorrelationRemover"
+        assert config.fairness_defense["alpha"] == 0.25
+        assert config.fairness_defense["step_name"] == "fairness_pre"
+
+    def test_init_with_fairness_defense_list_later_wins(self):
+        """Later fairness_defense list entries should override earlier keys."""
+        config = FairlearnDataConfig(
+            sensitive_columns="gender",
+            fairness_defense=[
+                {"name": "fairlearn.preprocessing.CorrelationRemover", "alpha": 0.1},
+                {"alpha": 0.4},
+            ],
+        )
+        assert config.fairness_defense["alpha"] == 0.4
+
 
 class TestLoadData:
     @patch("deckard.data.base.DataConfig._load_data")

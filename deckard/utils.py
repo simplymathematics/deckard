@@ -40,6 +40,8 @@ __all__ = [
     "coerce_config",
     "create_parser_from_function",
     "round_scores",
+    "coerce_to_list",
+    "merge_list_of_dicts",
 ]
 
 
@@ -51,6 +53,65 @@ def safe_store(group: str, name: str, node) -> None:
     except Exception:
         # Re-imports in tests/dev can register the same node repeatedly.
         pass
+
+
+def coerce_to_list(items) -> list:
+    """Normalize a ``list`` or OmegaConf ``ListConfig`` to a plain Python list.
+
+    Parameters
+    ----------
+    items:
+        A ``list`` or OmegaConf ``ListConfig``.
+
+    Returns
+    -------
+    list
+        A plain Python list whose elements are the same objects as *items*.
+
+    Raises
+    ------
+    TypeError
+        If *items* is neither a ``list`` nor a ``ListConfig``.
+    """
+    from omegaconf import ListConfig
+
+    if isinstance(items, (list, ListConfig)):
+        return list(items)
+    raise TypeError(f"Expected list or ListConfig, got {type(items)}")
+
+
+def merge_list_of_dicts(items) -> dict:
+    """Merge a sequence of dict-like items into a single ``dict``.
+
+    Each element of *items* may be a plain ``dict`` or an OmegaConf
+    ``DictConfig``; the latter is converted via ``OmegaConf.to_container``
+    before merging.  When two elements share a key, the later element wins.
+
+    Parameters
+    ----------
+    items:
+        An iterable of ``dict`` / ``DictConfig`` objects.
+
+    Returns
+    -------
+    dict
+        A single merged plain-Python ``dict``.
+
+    Raises
+    ------
+    TypeError
+        If any element cannot be resolved to a ``dict``.
+    """
+    merged: dict = {}
+    for item in items:
+        if OmegaConf.is_config(item):
+            item = OmegaConf.to_container(item, resolve=True)
+        if not isinstance(item, dict):
+            raise TypeError(
+                f"merge_list_of_dicts: each element must be a dict, got {type(item)}"
+            )
+        merged.update(item)
+    return merged
 
 
 def coerce_config(config_obj: Any) -> Any:
