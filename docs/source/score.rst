@@ -179,6 +179,77 @@ set. Deckard passes the attack-specific prediction values to that generic
 profile and prefixes the output keys so they remain unambiguous in merged score
 dicts.
 
+Fairness Scoring Examples
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Fairness score profiles are available in
+``examples/sklearn/config/score/fairness-classification.yaml`` and
+``examples/sklearn/config/score/fairness-regression.yaml``.
+
+Classification fairness command:
+
+.. code-block:: bash
+
+   python -m deckard optimize \
+      --config-path examples/sklearn/config \
+      --config-name fairness-default \
+      score=fairness-classification
+
+Regression fairness command:
+
+.. code-block:: bash
+
+   python -m deckard optimize \
+      --config-path examples/sklearn/config \
+      --config-name fairness-default \
+      score=fairness-regression
+
+These profiles include metrics such as:
+
+- ``demographic_parity_difference``
+- ``equalized_odds_difference``
+- ``group_mean_prediction_difference``
+- ``group_mae_difference``
+- ``group_mse_difference``
+
+Attack + Fairlearn MetricFrame
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For attack evaluations across sensitive groups, Deckard supports
+``FairlearnAttackScorerConfig``. This computes group-level attack metrics
+through fairlearn's ``MetricFrame`` for evasion, membership inference, and
+attribute inference outputs.
+
+Programmatic example:
+
+.. code-block:: python
+
+   from deckard.score.attack import FairlearnAttackScorerConfig
+
+   attack_scorer = FairlearnAttackScorerConfig()
+   # Pass as AttackConfig(..., scorer=attack_scorer)
+
+Anjana Scoring Examples
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Anjana scoring functions are available under :mod:`deckard.score.anjana` and
+can be attached through :class:`deckard.score.ScorerDictConfig`.
+
+Example scorer declaration:
+
+.. code-block:: yaml
+
+   scorers:
+      k_anonymity:
+         score_function: deckard.score.anjana.anjana_k_anonymity_score
+      l_diversity:
+         score_function: deckard.score.anjana.anjana_l_diversity_score
+      t_closeness:
+         score_function: deckard.score.anjana.anjana_t_closeness_score
+
+This is useful when evaluating anonymization quality jointly with predictive
+metrics and fairness/attack metrics in the same experiment run.
+
 Hydra ConfigStore examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -335,6 +406,9 @@ Troubleshooting
 See also
 ~~~~~~~~
 
-* :doc:`model`
-* :doc:`attack`
-* :doc:`experiment`
+* :doc:`model` — model configuration and evaluation
+* :doc:`data` — data configuration
+* :doc:`attack` — attack scoring
+* :doc:`experiment` — experiment orchestration
+* :doc:`lifelines` — survival-specific metrics
+* :doc:`anjana` — anonymization metrics

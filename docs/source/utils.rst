@@ -21,6 +21,8 @@ Key responsibilities include:
 - safe object/data serialization helpers
 - dynamic class loading from import paths
 - parser creation from callable signatures
+- torch device resolution helpers for cpu/cuda/mps selection
+- ConfigStore-safe registration helpers for Hydra config groups
 
 Usage
 -----
@@ -30,7 +32,12 @@ Programmatic example
 
 .. code-block:: python
 
-   from deckard.utils import hash_conf_values, create_parser_from_function
+   from deckard.utils import (
+      hash_conf_values,
+      create_parser_from_function,
+      resolve_torch_device,
+      safe_store,
+   )
 
    conf_hash = hash_conf_values({"a": 1, "b": [2, 3]})
    print(conf_hash)
@@ -40,6 +47,24 @@ Programmatic example
 
    parser = create_parser_from_function(fn)
    print(parser)
+
+   device = resolve_torch_device("auto")
+   print(device)
+
+   # Safe duplicate-tolerant ConfigStore registration
+   safe_store(group="score", name="my-score", node={"scorers": {}})
+
+ConfigBase Helpers
+~~~~~~~~~~~~~~~~~~
+
+Most major config classes inherit from :class:`deckard.utils.ConfigBase`, which
+provides shared persistence and serialization primitives:
+
+- ``save(filepath)`` / ``load(filepath)`` for object persistence
+- ``save_data`` / ``load_data`` for tabular artifacts
+- ``save_scores`` / ``load_scores`` for score dictionaries
+- stable hash computation via ``to_dict(for_hash=True)`` +
+   :func:`deckard.utils.hash_conf_values`
 
 Internals
 ---------
