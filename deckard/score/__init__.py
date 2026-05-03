@@ -56,11 +56,31 @@ try:
         fairness_group_mean_prediction_difference,
         fairness_group_mse_difference,
     )
+
+    _ = (
+        DefaultFairlearnClassificationConfig,
+        DefaultFairlearnConfig,
+        DefaultFairlearnRegressionConfig,
+        FairlearnScoreDictConfig,
+        fairness_demographic_parity_difference,
+        fairness_equalized_odds_difference,
+        fairness_group_mae_difference,
+        fairness_group_mean_prediction_difference,
+        fairness_group_mse_difference,
+    )
 except ImportError:  # pragma: no cover - optional dependency
     logger.debug("Fairlearn not found. Fairness score configs are unavailable.")
 
 try:
     from .anjana import (  # noqa: E402
+        DefaultAnjanaDataScoreConfig,
+        DefaultAnjanaModelScoreConfig,
+        anjana_k_anonymity_score,
+        anjana_l_diversity_score,
+        anjana_t_closeness_score,
+    )
+
+    _ = (
         DefaultAnjanaDataScoreConfig,
         DefaultAnjanaModelScoreConfig,
         anjana_k_anonymity_score,
@@ -77,6 +97,13 @@ try:
         survival_bic_score,
         survival_concordance_score,
     )
+
+    _ = (
+        DefaultLifelinesConfig,
+        survival_aic_score,
+        survival_bic_score,
+        survival_concordance_score,
+    )
 except ImportError:  # pragma: no cover - optional dependency
     logger.debug("Lifelines not found. Survival score configs are unavailable.")
 
@@ -87,8 +114,16 @@ if "DefaultFairlearnConfig" in globals():
         DefaultFairlearnRegressionDict,
     )
 
+    _ = (
+        DefaultFairlearnClassificationDict,
+        DefaultFairlearnDict,
+        DefaultFairlearnRegressionDict,
+    )
+
 if "DefaultLifelinesConfig" in globals():
     from .declarations_survival import DefaultLifelinesDict  # noqa: E402
+
+    _ = DefaultLifelinesDict
 
 
 __all__ = [
@@ -99,6 +134,7 @@ __all__ = [
     "DefaultPytorchRegressorConfig",
     "DefaultRegressorConfig",
     "AttackScorerConfig",
+    "FairlearnAttackScorerConfig",
     "DefaultEvasionAttackScorerConfig",
     "DefaultEvasionRegressionAttackScorerConfig",
     "DefaultMembershipInferenceAttackScorerConfig",

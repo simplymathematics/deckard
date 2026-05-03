@@ -140,6 +140,7 @@ deckard = "deckard.__main__:main"
 
 [tool.flake8]
 max-line-length = 87
+extend-ignore = ["E203", "E501"]
 exclude = [
   "__pycache__",
   "*.egg-info",

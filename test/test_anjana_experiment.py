@@ -532,10 +532,9 @@ def test_anjana_data_with_fairlearn_model_chain(monkeypatch):
     Verification: AnjanaDataConfig present, FairlearnModelConfig used,
     fairlearn defense is not treated as ART.
     """
-    fairlearn = pytest.importorskip("fairlearn")
+    pytest.importorskip("fairlearn")
 
     from deckard.data.anjana import AnjanaDataConfig
-    from deckard.model import FairlearnDefenseConfig, FairlearnModelConfig
     from deckard.model import DefensePipelineConfig
 
     def _stub_k_anon(data, **kwargs):
@@ -740,7 +739,6 @@ def test_anjana_experiment_scores_persist_to_json(monkeypatch, tmp_path):
 )
 def test_deckard_optimize_subcommand_help_in_sklearn_dir():
     """Verify deckard optimize --help runs cleanly from examples/sklearn context."""
-    import os
 
     env = os.environ.copy()
     for raw_line in DECKARD_RC_PATH.read_text(encoding="utf-8").splitlines():

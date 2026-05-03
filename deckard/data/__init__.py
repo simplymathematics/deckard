@@ -23,17 +23,22 @@ logger = logging.getLogger(__name__)
 
 try:
     from .fairness import FairlearnDataConfig
+
+    _ = FairlearnDataConfig
 except ImportError:  # pragma: no cover
     logger.debug("Fairlearn not found. FairlearnDataConfig is unavailable.")
 
 try:
     from .anjana import AnjanaDataConfig
+
+    _ = AnjanaDataConfig
 except ImportError:  # pragma: no cover
     logger.debug("Anjana not found. AnjanaDataConfig is unavailable.")
 
 try:
-    import torch
     from .pytorch import PytorchDataConfig, PytorchCustomDataConfig
+
+    _ = (PytorchDataConfig, PytorchCustomDataConfig)
 except ImportError:
     logger.debug("Torch not found.")
 

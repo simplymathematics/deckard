@@ -11,7 +11,9 @@ from dataclasses import dataclass, field
 from typing import Union
 
 from ..utils import ConfigBase
-from ..experiment import ExperimentConfig
+
+# Import declarations to register static plot configs with ConfigStore.
+from . import declarations  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +27,12 @@ except ImportError:  # pragma: no cover
     SeabornPlotConfigList = None
 
 try:
-    import lifelines  # noqa: F401
     from .survival import (
         SurvivalSeabornPlotConfigList,
         SurvivalSeabornPlotterConfig,
     )
+
+    _ = (SurvivalSeabornPlotConfigList, SurvivalSeabornPlotterConfig)
 except ImportError:  # pragma: no cover
     logger.debug(
         "Lifelines not found. Survival plotting configs are unavailable.",
@@ -39,13 +42,11 @@ except ImportError:  # pragma: no cover
 
 try:
     from .yellowbrick_plots import YellowbrickConfigList, YellowbrickPlotConfig
+
+    _ = (YellowbrickConfigList, YellowbrickPlotConfig)
 except ImportError:  # pragma: no cover
     YellowbrickConfigList = None
     YellowbrickPlotConfig = None
-
-
-# Import declarations to register static plot configs with ConfigStore.
-from . import declarations  # noqa: F401
 
 
 @dataclass(eq=False)

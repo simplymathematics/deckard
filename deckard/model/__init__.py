@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 try:
     from .survival import SurvivalModelConfig
+
+    _ = SurvivalModelConfig
 except ImportError:  # pragma: no cover
     logger.debug("Lifelines not found. Survival model configs are unavailable.")
 
@@ -27,6 +29,8 @@ try:
         FairlearnDefenseConfig,
         FairlearnModelConfig,
     )
+
+    _ = (FairlearnDefenseConfig, FairlearnModelConfig)
 except ImportError:  # pragma: no cover
     logger.debug(
         "Fairlearn not found. Fairlearn model configs are unavailable.",
@@ -34,12 +38,15 @@ except ImportError:  # pragma: no cover
 
 try:
     from .anjana import AnjanaModelConfig
+
+    _ = AnjanaModelConfig
 except ImportError:  # pragma: no cover
     logger.debug("Anjana not found. Anjana model configs are unavailable.")
 
 try:
-    import torch
     from .pytorch import PytorchModelConfig
+
+    _ = PytorchModelConfig
 except ImportError:
     logger.debug("Torch not found. Cannot use torch features.")
 

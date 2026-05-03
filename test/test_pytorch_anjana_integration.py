@@ -4,12 +4,11 @@ from pathlib import Path
 
 import pytest
 
-torch = pytest.importorskip("torch")
 
 from deckard.data.pytorch import PytorchDataConfig
 from deckard.model.pytorch import PytorchModelConfig
 
-
+torch = pytest.importorskip("torch")
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES_PYTORCH_DIR = ROOT / "examples" / "pytorch"
 

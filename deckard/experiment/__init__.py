@@ -11,16 +11,18 @@ from .base import ExperimentConfig
 logger = logging.getLogger(__name__)
 
 try:
-    import torch  # noqa: F401
     from .torch_experiment import TorchExperimentConfig
+
+    _ = TorchExperimentConfig
 except ImportError:  # pragma: no cover
     logger.debug(
         "PyTorch not found. TorchExperimentConfig is unavailable.",
     )
 
 try:
-    import lifelines  # noqa: F401
     from .survival import SurvivalExperimentConfig
+
+    _ = SurvivalExperimentConfig
 except ImportError:  # pragma: no cover
     logger.debug(
         "Lifelines not found. SurvivalExperimentConfig is unavailable.",

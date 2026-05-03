@@ -35,20 +35,19 @@ warnings.filterwarnings(
     message=r"PyTorch not found\. Not importing DeepZ or Interval Bound Propagation functionality",
 )
 
-
-from .data import DataConfig
-from .model import ModelConfig
-from .model.defend import DefenseConfig
-from .attack import AttackConfig
-from .experiment import ExperimentConfig
+from .data import DataConfig  # noqa E402
+from .model import ModelConfig  # noqa E402
+from .model.defend import DefenseConfig  # noqa E402
+from .attack import AttackConfig  # noqa E402
+from .experiment import ExperimentConfig  # noqa E402
 
 try:
-    from .experiment import SurvivalExperimentConfig
+    from .experiment import SurvivalExperimentConfig  # noqa E402
 except ImportError:  # pragma: no cover
     SurvivalExperimentConfig = None
-from .file import FileConfig
-from .score import ScorerDictConfig
-from .utils import *
+from .file import FileConfig  # noqa E402
+from .score import ScorerDictConfig  # noqa E402
+from .utils import hash_conf_values  # noqa E402
 
 # from .plot import YellowbrickConfigList, YellowbrickPlotConfig
 
@@ -57,6 +56,15 @@ DECKARD_CONFIG_DIR = os.environ.get("DECKARD_CONFIG_DIR", "config")
 DECKARD_DEFAULT_CONFIG_FILE = os.environ.get(
     "DECKARD_DEFAULT_CONFIG_FILE",
     "default.yaml",
+)
+
+# those imports can transitively import sklearn/art and emit warnings.
+warnings.filterwarnings("ignore", module=r"^sklearn(\.|$)")
+warnings.filterwarnings("ignore", module=r"^art(\.|$)")
+warnings.filterwarnings(
+    "ignore",
+    category=UserWarning,
+    message=r"PyTorch not found\. Not importing DeepZ or Interval Bound Propagation functionality",
 )
 
 
