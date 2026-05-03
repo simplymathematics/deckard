@@ -42,7 +42,109 @@ __all__ = [
     "round_scores",
     "coerce_to_list",
     "merge_list_of_dicts",
+    "resolve_torch_device",
 ]
+
+
+def _torch_compiler_backends(torch_module) -> list[str]:
+    compiler = getattr(torch_module, "compiler", None)
+    if compiler is None or not hasattr(compiler, "list_backends"):
+        return []
+    try:
+        return [str(name).strip().lower() for name in compiler.list_backends()]
+    except Exception:
+        return []
+
+
+def _auto_torch_device_from_backends(torch_module):
+    backends = set(_torch_compiler_backends(torch_module))
+    cuda_available = bool(torch_module.cuda.is_available())
+    mps_available = bool(
+        hasattr(torch_module.backends, "mps") and torch_module.backends.mps.is_available(),
+    )
+
+    cuda_preferred = {
+        "inductor",
+        "cudagraphs",
+        "onnxrt",
+        "openxla",
+        "tensorrt",
+    }
+    mps_preferred = {"inductor", "aot_eager", "eager"}
+
+    if cuda_available and len(backends.intersection(cuda_preferred)) > 0:
+        logger.info(
+            "Auto-selected torch device cuda:0 via compiler backends: %s",
+            sorted(backends),
+        )
+        return torch_module.device("cuda:0")
+    if mps_available and len(backends.intersection(mps_preferred)) > 0:
+        logger.info(
+            "Auto-selected torch device mps via compiler backends: %s",
+            sorted(backends),
+        )
+        return torch_module.device("mps")
+    if cuda_available:
+        logger.info("Auto-selected torch device cuda:0")
+        return torch_module.device("cuda:0")
+    if mps_available:
+        logger.info("Auto-selected torch device mps")
+        return torch_module.device("mps")
+    logger.info("Auto-selected torch device cpu")
+    return torch_module.device("cpu")
+
+
+def resolve_torch_device(requested_device: Any = None):
+    try:
+        import torch
+    except ImportError:
+        if requested_device is None:
+            return "cpu"
+        return str(requested_device)
+
+    if isinstance(requested_device, torch.device):
+        return requested_device
+
+    if isinstance(requested_device, int):
+        if requested_device >= 0 and torch.cuda.is_available() and requested_device < torch.cuda.device_count():
+            return torch.device(f"cuda:{requested_device}")
+        logger.warning("Invalid CUDA index %s; falling back to CPU", requested_device)
+        return torch.device("cpu")
+
+    requested_text = ""
+    if requested_device is not None:
+        requested_text = str(requested_device).strip().lower()
+
+    if requested_text in {"", "none", "null", "auto", "best", "default"}:
+        return _auto_torch_device_from_backends(torch)
+    if requested_text in {"gpu", "cuda"}:
+        if torch.cuda.is_available():
+            return torch.device("cuda:0")
+        logger.warning("GPU requested but CUDA unavailable; falling back to CPU")
+        return torch.device("cpu")
+    if requested_text.startswith("cuda"):
+        if not torch.cuda.is_available():
+            logger.warning("CUDA requested but unavailable; falling back to CPU")
+            return torch.device("cpu")
+        try:
+            return torch.device(requested_text)
+        except (TypeError, ValueError):
+            logger.warning("Invalid CUDA device '%s'; falling back to CPU", requested_text)
+            return torch.device("cpu")
+    if requested_text.startswith("mps"):
+        mps_available = bool(
+            hasattr(torch.backends, "mps") and torch.backends.mps.is_available(),
+        )
+        if not mps_available:
+            logger.warning("MPS requested but unavailable; falling back to CPU")
+            return torch.device("cpu")
+        return torch.device("mps")
+
+    try:
+        return torch.device(requested_text)
+    except (TypeError, ValueError):
+        logger.warning("Invalid torch device '%s'; falling back to auto device", requested_text)
+        return _auto_torch_device_from_backends(torch)
 
 
 def safe_store(group: str, name: str, node) -> None:
