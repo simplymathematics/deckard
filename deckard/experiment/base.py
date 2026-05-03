@@ -94,7 +94,7 @@ def _file_resolver(arg: str):
                 cur = cur[p]
             else:
                 raise KeyError(
-                    f"file resolver: key '{key_part}' not found in {path}"
+                    f"file resolver: key '{key_part}' not found in {path}",
                 )
         data = cur
     data = OmegaConf.create(data)
@@ -104,7 +104,10 @@ def _file_resolver(arg: str):
 
 # Register resolver with OmegaConf (Hydra will pick up this plugin module automatically)
 OmegaConf.register_new_resolver(
-    "file", _file_resolver, replace=True, use_cache=True
+    "file",
+    _file_resolver,
+    replace=True,
+    use_cache=True,
 )
 
 
@@ -255,7 +258,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
     def _compute_val_predictions(self):
         if self.model is None:
             raise ValueError(
-                "Validation scoring requires a model, but model is None"
+                "Validation scoring requires a model, but model is None",
             )
         if (
             getattr(self.data, "X_val", None) is None
@@ -274,14 +277,14 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
     def _ensure_mode_predictions(self, mode: str):
         if self.model is None:
             raise ValueError(
-                f"{mode} scoring requires a model, but model is None"
+                f"{mode} scoring requires a model, but model is None",
             )
         if not hasattr(self.model, "_predict"):
             raise ValueError(f"{mode} scoring requires model._predict")
         if mode == "train":
             if getattr(self.model, "training_predictions", None) is None:
                 self.model.training_predictions = self.model._predict(
-                    self.data.X_train
+                    self.data.X_train,
                 )
             return
         if mode == "test":
@@ -365,7 +368,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 )
         else:
             logger.info(
-                "Device selection not supported for library: %s", self.library
+                "Device selection not supported for library: %s",
+                self.library,
             )
 
     def __post_init__(self):
@@ -418,7 +422,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     self.model = ModelConfig(**model_dict)
                 else:
                     raise ValueError(
-                        f"Unsupported type for model: {type(self.model)}"
+                        f"Unsupported type for model: {type(self.model)}",
                     )
             assert isinstance(
                 self.model,
@@ -489,7 +493,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     attack_dict = self.attack.to_dict()
                 elif isinstance(self.attack, dict):
                     attack_dict = OmegaConf.to_container(
-                        OmegaConf.create(self.attack)
+                        OmegaConf.create(self.attack),
                     )
                 else:
                     raise ValueError(
@@ -551,10 +555,10 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 key in score_cfg for key in ["data", "model", "experiment"]
             ):
                 self.data_scorer = self._coerce_scorer_config(
-                    score_cfg.get("data")
+                    score_cfg.get("data"),
                 )
                 self.model_scorer = self._coerce_scorer_config(
-                    score_cfg.get("model")
+                    score_cfg.get("model"),
                 )
                 self.experiment_scorer = self._coerce_scorer_config(
                     score_cfg.get("experiment"),
@@ -708,7 +712,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
     @staticmethod
     def _aggregate_repeated_scores(
-        per_run_scores: list, suffix: str = "fold"
+        per_run_scores: list,
+        suffix: str = "fold",
     ) -> dict:
         """Merge per-run score dicts into a single dict.
 
@@ -805,7 +810,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             # Repeated split evaluation: run one pipeline pass per split/fold
             # ------------------------------------------------------------------
             logger.info(
-                f"Running {n_repeats} repeated {run_suffix} evaluations."
+                f"Running {n_repeats} repeated {run_suffix} evaluations.",
             )
             per_run_scores: list = []
             for run_idx in range(n_repeats):
@@ -868,7 +873,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 "score_dict",
             ), "data must have score_dict attribute after loading"
             scores = self._run_single_pipeline(
-                model_file_outputs, attack_file_outputs
+                model_file_outputs,
+                attack_file_outputs,
             )
             custom_scores = self._run_experiment_scorer_modes(
                 score_file=file_dict.get("score_file", None),

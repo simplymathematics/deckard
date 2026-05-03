@@ -27,7 +27,8 @@ def _coerce_features_dataframe(y_pred) -> pd.DataFrame:
     if arr.ndim == 1:
         return pd.DataFrame({"feature_0": arr})
     return pd.DataFrame(
-        arr, columns=[f"feature_{i}" for i in range(arr.shape[1])]
+        arr,
+        columns=[f"feature_{i}" for i in range(arr.shape[1])],
     )
 
 
@@ -55,7 +56,7 @@ def _is_discrete_reference(values: np.ndarray) -> bool:
         return True
     series = pd.Series(values)
     if pd.api.types.is_bool_dtype(series) or pd.api.types.is_object_dtype(
-        series
+        series,
     ):
         return True
     if pd.api.types.is_integer_dtype(series):
@@ -70,7 +71,7 @@ def _feature_mutual_information_vector(y_true, y_pred, **kwargs) -> np.ndarray:
     reference, X = _resolve_reference_vector(y_true=y_true, X=X, **kwargs)
     if X.shape[1] == 0:
         raise ValueError(
-            "No feature columns available for mutual-information analysis"
+            "No feature columns available for mutual-information analysis",
         )
 
     random_state = kwargs.get("random_state", 42)
@@ -116,14 +117,18 @@ def data_class_imbalance_ratio_score(y_true, y_pred, **kwargs):
 
 def data_mutual_information_mean_score(y_true, y_pred, **kwargs):
     mi = _feature_mutual_information_vector(
-        y_true=y_true, y_pred=y_pred, **kwargs
+        y_true=y_true,
+        y_pred=y_pred,
+        **kwargs,
     )
     return float(np.mean(mi))
 
 
 def data_mutual_information_max_score(y_true, y_pred, **kwargs):
     mi = _feature_mutual_information_vector(
-        y_true=y_true, y_pred=y_pred, **kwargs
+        y_true=y_true,
+        y_pred=y_pred,
+        **kwargs,
     )
     return float(np.max(mi))
 
@@ -208,7 +213,9 @@ safe_store(
     node=DefaultDataClassificationConfig,
 )
 safe_store(
-    group="score", name="data-regression", node=DefaultDataRegressionConfig
+    group="score",
+    name="data-regression",
+    node=DefaultDataRegressionConfig,
 )
 
 

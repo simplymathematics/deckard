@@ -62,7 +62,8 @@ def _make_anjana_data(n=20, monkeypatch=None, defense=None):
             return data.copy()
 
         monkeypatch.setattr(
-            "deckard.data.anjana.resolve_class", lambda _: _fake_k_anon
+            "deckard.data.anjana.resolve_class",
+            lambda _: _fake_k_anon,
         )
 
     return cfg
@@ -268,7 +269,8 @@ def test_anjana_experiment_with_defense(monkeypatch):
         return data.copy()
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class", lambda _: _stub_k_anon
+        "deckard.data.anjana.resolve_class",
+        lambda _: _stub_k_anon,
     )
 
     cfg = _make_anjana_data(
@@ -314,7 +316,8 @@ def test_anjana_data_with_art_model_defense_chain(monkeypatch):
         return data.copy()
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class", lambda _: _stub_k_anon
+        "deckard.data.anjana.resolve_class",
+        lambda _: _stub_k_anon,
     )
 
     data_cfg = _make_anjana_data(
@@ -412,7 +415,8 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
         return data.iloc[: len(data) // 2].copy()
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class", lambda _: _drop_half_rows
+        "deckard.data.anjana.resolve_class",
+        lambda _: _drop_half_rows,
     )
 
     data_cfg = AnjanaDataConfig(
@@ -541,7 +545,8 @@ def test_anjana_data_with_fairlearn_model_chain(monkeypatch):
         return data.copy()
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class", lambda _: _stub_k_anon
+        "deckard.data.anjana.resolve_class",
+        lambda _: _stub_k_anon,
     )
 
     data_cfg = _make_anjana_data(
@@ -591,7 +596,8 @@ def test_anjana_data_with_attack_scoring(monkeypatch):
         return data.copy()
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class", lambda _: _stub_k_anon
+        "deckard.data.anjana.resolve_class",
+        lambda _: _stub_k_anon,
     )
 
     data_cfg = _make_anjana_data(

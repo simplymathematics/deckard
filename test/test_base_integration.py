@@ -129,7 +129,9 @@ def _base_classification_data():
     ],
 )
 def test_base_data_model_end_to_end_without_attack(
-    data_cfg, model_cfg, expected_key
+    data_cfg,
+    model_cfg,
+    expected_key,
 ):
     data_cfg = _load_or_skip(data_cfg)
     model_cfg = _train_model_or_skip(model_cfg, data_cfg)

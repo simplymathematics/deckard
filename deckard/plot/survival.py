@@ -33,7 +33,8 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
         return Path(folder) / file_path
 
     def build_coefficients_plot(
-        self, summary: pd.DataFrame
+        self,
+        summary: pd.DataFrame,
     ) -> SeabornPlotConfig:
         summary_df = pd.DataFrame(summary).copy()
         if isinstance(summary_df.index, pd.MultiIndex):
@@ -57,7 +58,8 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
         )
 
     def build_calibration_plot(
-        self, calibration: pd.DataFrame
+        self,
+        calibration: pd.DataFrame,
     ) -> SeabornPlotConfig:
         calibration_df = pd.DataFrame(calibration).copy()
         return SeabornPlotConfig(
@@ -144,7 +146,7 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
 
         if replacement_dict:
             summary["covariate"] = summary["covariate"].replace(
-                replacement_dict
+                replacement_dict,
             )
 
         if dummy_dict:

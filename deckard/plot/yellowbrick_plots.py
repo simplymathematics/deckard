@@ -400,7 +400,9 @@ class YellowbrickPlotConfig(ConfigBase):
             visualizer.fit_transform(X, y)
         elif self.plot_type == "pca":
             visualizer = PCADecomposition(
-                classes=classes, **self.plot_params, ax=ax
+                classes=classes,
+                **self.plot_params,
+                ax=ax,
             )
             visualizer.fit_transform(X, y)
         elif self.plot_type == "manifold":
@@ -472,7 +474,10 @@ class YellowbrickPlotConfig(ConfigBase):
             visualizer.score(X_test, y_test)
         elif self.plot_type == "roc_auc":
             visualizer = ROCAUC(
-                model, classes=classes, **self.plot_params, ax=ax
+                model,
+                classes=classes,
+                **self.plot_params,
+                ax=ax,
             )
             visualizer.fit(X, y)
             visualizer.score(X_test, y_test)
@@ -496,7 +501,9 @@ class YellowbrickPlotConfig(ConfigBase):
             visualizer.score(X_test, y_test)
         elif self.plot_type == "discrimination_threshold":
             visualizer = DiscriminationThreshold(
-                model, **self.plot_params, ax=ax
+                model,
+                **self.plot_params,
+                ax=ax,
             )
             visualizer.fit(X, y)
             visualizer.score(X_test, y_test)
@@ -558,7 +565,7 @@ class YellowbrickPlotConfig(ConfigBase):
             raise ValueError(f"Unsupported plot type: {self.plot_type}")
         self.show(visualizer)
         logger.info(
-            f"Yellowbrick model selection plot saved to {self.save_path}"
+            f"Yellowbrick model selection plot saved to {self.save_path}",
         )
 
     def parse_cv(self):
@@ -606,7 +613,9 @@ class YellowbrickPlotConfig(ConfigBase):
                 )
             elif param_range[2] == "linear":
                 param_range = np.linspace(
-                    param_range[0], param_range[1], num=num
+                    param_range[0],
+                    param_range[1],
+                    num=num,
                 )
             elif isinstance(param_range[2], (int, float)):
                 steps = int((param_range[1] - param_range[0]) // param_range[2])
@@ -618,7 +627,7 @@ class YellowbrickPlotConfig(ConfigBase):
                 )
             else:
                 raise ValueError(
-                    "Distribution must be either 'log' or 'linear'"
+                    "Distribution must be either 'log' or 'linear'",
                 )
         # Always return as list for compatibility
         return (
@@ -657,7 +666,8 @@ class YellowbrickPlotConfig(ConfigBase):
 
     def show(self, visualizer):
         assert hasattr(
-            visualizer, "show"
+            visualizer,
+            "show",
         ), "Visualizer does not have a show method"
         assert isinstance(
             visualizer,
@@ -688,7 +698,9 @@ class YellowbrickConfigList(ConfigBase):
 
     experiment: ExperimentConfig
     plots: Union[
-        Dict[str, YellowbrickPlotConfig], Literal["all"], List[str]
+        Dict[str, YellowbrickPlotConfig],
+        Literal["all"],
+        List[str],
     ] = "all"
     plot_folder: Optional[str] = None
     rc_config: Dict[str, Any] = field(default_factory=dict)
@@ -827,6 +839,7 @@ class YellowbrickConfigList(ConfigBase):
                 plot_cfg()
             except Exception:
                 logger.exception(
-                    "Failed to generate plot %s", plot_cfg.plot_type
+                    "Failed to generate plot %s",
+                    plot_cfg.plot_type,
                 )
         return scores

@@ -13,7 +13,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--data", type=str, required=True)
 parser.add_argument("--config_file", type=str, required=True)
 parser.add_argument(
-    "--target", type=str, required=True, help="Target column name"
+    "--target",
+    type=str,
+    required=True,
+    help="Target column name",
 )
 parser.add_argument(
     "--duration_col",
@@ -35,7 +38,7 @@ else:
 
 suffix = Path(args.config_file).suffix
 assert Path(
-    args.config_file
+    args.config_file,
 ).exists(), f"Model file not found: {args.config_file}"
 
 if suffix == ".yaml":
@@ -54,7 +57,10 @@ data = df.copy()
 data = calculate_raw_failures(args, df, config)
 # Clean data by removing columns that are not in the covariate list and creating dummies for the categorical variables
 data = clean_data_for_aft(
-    data, covariate_list, target=args.target, dummy_dict=dummies
+    data,
+    covariate_list,
+    target=args.target,
+    dummy_dict=dummies,
 )
 # Fit the model
 model = fit_aft(

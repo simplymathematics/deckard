@@ -59,7 +59,7 @@ class SeabornPlotConfig(ConfigBase):
             data = self.data.copy()
         else:
             assert Path(
-                self.data_file
+                self.data_file,
             ).exists(), f"File: {self.data_file} not found."
             data = load_data(self.data_file)
         # Validate columns are in data
@@ -144,7 +144,7 @@ class SeabornPlotConfigList(ConfigBase):
     def __post_init__(self):
         # Validate self.data_file
         assert Path(
-            self.data_file
+            self.data_file,
         ).exists(), f"File: {self.data_file} not found."
 
     def __iter__(self):

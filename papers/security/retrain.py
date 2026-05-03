@@ -65,7 +65,14 @@ def _load_data_from_security_config() -> tuple:
 
 
 def retrain_loop(
-    clf, X_train, y_train, X_test, y_test, atk, attack_size, epochs
+    clf,
+    X_train,
+    y_train,
+    X_test,
+    y_test,
+    atk,
+    attack_size,
+    epochs,
 ):
     i = 0
     results = []
@@ -117,7 +124,10 @@ def retrain_loop(
 
 
 def save_results(
-    results: pd.DataFrame, kernel: str, epochs: int, model
+    results: pd.DataFrame,
+    kernel: str,
+    epochs: int,
+    model,
 ) -> None:
     out_dir = RETRAIN_DIR / kernel
     out_dir.mkdir(parents=True, exist_ok=True)

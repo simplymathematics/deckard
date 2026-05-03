@@ -70,7 +70,9 @@ class TestAttackConfig(unittest.TestCase):
         adv_pred_labels = [0, 0, 0]
         y_test_numeric = [0, 1, 0]
         self.attack._score_attack(
-            ben_pred_labels, adv_pred_labels, y_test_numeric
+            ben_pred_labels,
+            adv_pred_labels,
+            y_test_numeric,
         )
         metrics = self.attack.score_dict
         self.assertIn("evasion_success", metrics)
@@ -159,7 +161,9 @@ class TestAttackConfig(unittest.TestCase):
                 ),
             ),
             patch.object(
-                AttackConfig, "_infer_attribute", side_effect=_fake_attribute
+                AttackConfig,
+                "_infer_attribute",
+                side_effect=_fake_attribute,
             ),
         ):
             result = attack(object(), object())
@@ -239,7 +243,7 @@ class TestAttackConfig(unittest.TestCase):
             AttackConfig,
             "_initialize_attack",
             side_effect=AssertionError(
-                "_initialize_attack should not be called"
+                "_initialize_attack should not be called",
             ),
         ):
             with self.assertRaises(ValueError):
@@ -388,10 +392,12 @@ class TestFairlearnAttackScorer(unittest.TestCase):
         scorer = FairlearnAttackScorerConfig()
         self.assertIsInstance(scorer.evasion, FairlearnScoreDictConfig)
         self.assertIsInstance(
-            scorer.membership_inference, FairlearnScoreDictConfig
+            scorer.membership_inference,
+            FairlearnScoreDictConfig,
         )
         self.assertIsInstance(
-            scorer.attribute_inference, FairlearnScoreDictConfig
+            scorer.attribute_inference,
+            FairlearnScoreDictConfig,
         )
 
     def test_score_evasion_with_sensitive_features_produces_group_metrics(self):

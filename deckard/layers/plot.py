@@ -44,7 +44,7 @@ def _load_experiment_config(experiment_config: str) -> Dict[str, Any]:
     raw_cfg = OmegaConf.to_container(OmegaConf.load(cfg_path), resolve=True)
     if not isinstance(raw_cfg, dict):
         raise TypeError(
-            f"Experiment config must resolve to a dictionary: {cfg_path}"
+            f"Experiment config must resolve to a dictionary: {cfg_path}",
         )
     return raw_cfg
 
@@ -286,7 +286,7 @@ def plot_main(cfg: Any) -> dict:
 
     if backend == "yellowbrick" and plots_file:
         raise ValueError(
-            "plot.plots_file is only supported for seaborn backend."
+            "plot.plots_file is only supported for seaborn backend.",
         )
 
     if backend == "yellowbrick":
@@ -382,7 +382,7 @@ def plot_main(cfg: Any) -> dict:
     if plot_type:
         if not x or not y:
             raise ValueError(
-                "seaborn single-plot mode requires plot.x and plot.y"
+                "seaborn single-plot mode requires plot.x and plot.y",
             )
         cfg = SeabornPlotConfig(
             data_file=data_file,
@@ -419,7 +419,7 @@ def plot_main(cfg: Any) -> dict:
         plot_specs = loaded
     else:
         raise TypeError(
-            "plots_file must contain a list or a dict with key 'plots'."
+            "plots_file must contain a list or a dict with key 'plots'.",
         )
 
     plot_cfgs = []

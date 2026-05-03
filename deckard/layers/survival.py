@@ -260,7 +260,9 @@ def calculate_failures_under_attack(
     """Optionally derive ben/adv failure counts from attack-specific accuracy metrics."""
     config = SurvivalExperimentConfig(data=DataConfig(dataset_name="toy"))
     return config.calculate_failures_under_attack(
-        data, attack_config, benign_metric
+        data,
+        attack_config,
+        benign_metric,
     )
 
 
@@ -330,7 +332,7 @@ def survival_main(
         attack_query = config.pop("attack_query")
     if not calculate_attack_failures and "calculate_attack_failures" in config:
         calculate_attack_failures = bool(
-            config.pop("calculate_attack_failures")
+            config.pop("calculate_attack_failures"),
         )
 
     output_folder = Path(plots_folder)
@@ -389,7 +391,8 @@ def survival_main(
     elif isinstance(data_spec, Mapping):
         data_spec = dict(data_spec)
         dataset_name_value = data_spec.get(
-            "dataset_name", data_spec.get("alias")
+            "dataset_name",
+            data_spec.get("alias"),
         )
         if dataset_name_value is not None:
             normalized_data_spec = _normalize_survival_dataset_name(
@@ -462,7 +465,7 @@ def survival_main(
         loaded_frame = data_cfg.X
         if loaded_frame is None:
             raise ValueError(
-                "DataConfig did not load features for survival experiment"
+                "DataConfig did not load features for survival experiment",
             )
         loaded_data = (
             loaded_frame.to_frame().copy()
@@ -561,7 +564,7 @@ def survival_main(
             or runtime_data.y_test is None
         ):
             raise ValueError(
-                "Runtime survival split unavailable for auxiliary model"
+                "Runtime survival split unavailable for auxiliary model",
             )
         try:
             model_scores = aux_model(runtime_data)

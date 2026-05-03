@@ -209,7 +209,10 @@ class SurvivalModelConfig(ModelConfig):
         """
         if getattr(self, "scorer", None) is not None:
             return self.scorer(
-                y_true=y_true, y_pred=y_pred, mode=None, data=y_true
+                y_true=y_true,
+                y_pred=y_pred,
+                mode=None,
+                data=y_true,
             )
 
         scores = {}
@@ -250,7 +253,8 @@ class SurvivalModelConfig(ModelConfig):
         return_curve: bool = False,
         plot: bool = True,
     ) -> Union[
-        tuple[Any, float, float], tuple[Any, float, float, pd.DataFrame]
+        tuple[Any, float, float],
+        tuple[Any, float, float, pd.DataFrame],
     ]:
         """Compute survival calibration metrics and optionally render curve."""
         if ax is None:
@@ -261,7 +265,8 @@ class SurvivalModelConfig(ModelConfig):
         calibration_df = df.copy()
         for col in calibration_df.columns:
             calibration_df[col] = pd.to_numeric(
-                calibration_df[col], errors="raise"
+                calibration_df[col],
+                errors="raise",
             )
         calibration_df = calibration_df.dropna()
 
@@ -326,7 +331,8 @@ class SurvivalModelConfig(ModelConfig):
                     )
             except Exception as error:
                 logger.error(
-                    "Could not fit CRC model for calibration: %s", error
+                    "Could not fit CRC model for calibration: %s",
+                    error,
                 )
                 if return_curve:
                     curve = pd.DataFrame(
@@ -361,7 +367,8 @@ class SurvivalModelConfig(ModelConfig):
                 (
                     1
                     - crc.predict_survival_function(
-                        prediction_df, times=[self.t0]
+                        prediction_df,
+                        times=[self.t0],
                     )
                 ).T.squeeze()
                 - predictions_at_t0
@@ -415,7 +422,9 @@ class SurvivalModelConfig(ModelConfig):
             ]
             if len(object_cols) > 0:
                 dummies = pd.get_dummies(
-                    cleaned[object_cols], prefix="", prefix_sep=""
+                    cleaned[object_cols],
+                    prefix="",
+                    prefix_sep="",
                 )
                 cleaned = cleaned.drop(columns=object_cols)
                 cleaned = pd.concat([cleaned, dummies], axis=1)

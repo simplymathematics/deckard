@@ -522,7 +522,7 @@ class ConfigBase:
                 f"Unsupported file type {score_path.suffix}. Supported types: {supported_filtypes}",
             )
         assert Path(
-            score_path
+            score_path,
         ).exists(), f"Failed to save scores to {score_path}"
         logger.info(f"Scores saved to {score_path}")
 
@@ -719,11 +719,11 @@ class ConfigBase:
         """
         if Path(filepath).exists():
             raise ValueError(
-                f"File {filepath} already exists. Will not overwrite."
+                f"File {filepath} already exists. Will not overwrite.",
             )
         self.save_object(self, filepath)
         logger.info(
-            f"Instance of {self.__class__.__name__} saved to {filepath}"
+            f"Instance of {self.__class__.__name__} saved to {filepath}",
         )
 
     def load(self, filepath: str) -> "ConfigBase":
@@ -744,10 +744,10 @@ class ConfigBase:
         obj = self.load_object(filepath)
         if not isinstance(obj, self.__class__):
             raise TypeError(
-                f"Loaded object is not of type {self.__class__.__name__}"
+                f"Loaded object is not of type {self.__class__.__name__}",
             )
         logger.info(
-            f"Instance of {self.__class__.__name__} loaded from {filepath}"
+            f"Instance of {self.__class__.__name__} loaded from {filepath}",
         )
         # Update the current instance's __dict__ with the loaded object's __dict__
         self.__dict__.update(obj.__dict__)
@@ -771,7 +771,7 @@ class ConfigBase:
         config = OmegaConf.to_container(OmegaConf.load(filepath), resolve=True)
         if not isinstance(config, dict):
             raise TypeError(
-                f"Loaded config is not a dictionary from {filepath}"
+                f"Loaded config is not a dictionary from {filepath}",
             )
         instance = instantiate(config)
         logger.info(
@@ -838,7 +838,8 @@ class ConfigBase:
                         dict_[name] = value.to_dict(for_hash=for_hash)
                     elif OmegaConf.is_config(value):
                         dict_[name] = OmegaConf.to_container(
-                            value, resolve=True
+                            value,
+                            resolve=True,
                         )
                     else:
                         dict_[name] = value

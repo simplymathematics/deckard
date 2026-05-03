@@ -354,7 +354,8 @@ class TestUtilsAdditional(unittest.TestCase):
         count_action = next(a for a in parser._actions if a.dest == "count")
 
         self.assertEqual(
-            name_action.help, "Name to echo in the command output."
+            name_action.help,
+            "Name to echo in the command output.",
         )
         self.assertEqual(count_action.help, "Number of iterations to run.")
 

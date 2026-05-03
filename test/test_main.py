@@ -160,7 +160,9 @@ def test_generate_hydra_main_passes_parser_args_and_hydra_overrides(
         return decorator
 
     monkeypatch.setitem(
-        main_module.layer_dict, "layer", (FakeParser(), fake_main_fn)
+        main_module.layer_dict,
+        "layer",
+        (FakeParser(), fake_main_fn),
     )
     monkeypatch.setattr(main_module.hydra, "main", fake_hydra_main)
     monkeypatch.setattr(
@@ -169,7 +171,9 @@ def test_generate_hydra_main_passes_parser_args_and_hydra_overrides(
         lambda: (None, None),
     )
     monkeypatch.setattr(
-        sys, "argv", ["deckard", "--alpha", "cli", "alpha=hydra"]
+        sys,
+        "argv",
+        ["deckard", "--alpha", "cli", "alpha=hydra"],
     )
 
     result = main_module.generate_hydra_main("layer")
@@ -231,7 +235,9 @@ def test_generate_hydra_main_forwards_hydra_multirun_flag(
         return decorator
 
     monkeypatch.setitem(
-        main_module.layer_dict, "layer", (FakeParser(), fake_main_fn)
+        main_module.layer_dict,
+        "layer",
+        (FakeParser(), fake_main_fn),
     )
     monkeypatch.setattr(main_module.hydra, "main", fake_hydra_main)
     monkeypatch.setattr(

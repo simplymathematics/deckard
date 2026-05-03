@@ -18,7 +18,7 @@ class CelebASmileDataset(Dataset):
         self.smile_attribute = smile_attribute
         self.sensitive_attribute = sensitive_attribute
         self.sensitive_attributes = sensitive_attributes or [
-            sensitive_attribute
+            sensitive_attribute,
         ]
         self.transform = transform
 
@@ -144,10 +144,14 @@ class SyntheticTabularFairnessDataset(Dataset):
 
         rng = np.random.default_rng(int(random_state))
         X = rng.standard_normal(
-            (self.num_samples, self.n_features), dtype=np.float32
+            (self.num_samples, self.n_features),
+            dtype=np.float32,
         )
         y = rng.integers(
-            0, self.num_classes, size=self.num_samples, dtype=np.int64
+            0,
+            self.num_classes,
+            size=self.num_samples,
+            dtype=np.int64,
         )
         sensitive = rng.integers(0, 2, size=self.num_samples, dtype=np.int64)
 

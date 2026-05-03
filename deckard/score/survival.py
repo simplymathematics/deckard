@@ -19,7 +19,7 @@ def survival_concordance_score(y_true, y_pred, **kwargs):
     if hasattr(y_pred, "concordance_index_"):
         return float(y_pred.concordance_index_)
     raise ValueError(
-        "y_pred must be a fitted survival model with concordance_index_"
+        "y_pred must be a fitted survival model with concordance_index_",
     )
 
 
@@ -38,7 +38,7 @@ def survival_aic_score(y_true, y_pred, **kwargs):
         if k is not None:
             return float(-2.0 * float(y_pred.log_likelihood_) + 2.0 * float(k))
     raise ValueError(
-        "y_pred must expose AIC_ or enough information to compute AIC"
+        "y_pred must expose AIC_ or enough information to compute AIC",
     )
 
 
@@ -62,11 +62,11 @@ def survival_bic_score(y_true, y_pred, **kwargs):
             k = len(y_pred.params())
         if k is not None and n > 0:
             return float(
-                -2.0 * float(y_pred.log_likelihood_) + float(k) * math.log(n)
+                -2.0 * float(y_pred.log_likelihood_) + float(k) * math.log(n),
             )
 
     raise ValueError(
-        "y_pred must expose BIC_ or enough information to compute BIC"
+        "y_pred must expose BIC_ or enough information to compute BIC",
     )
 
 

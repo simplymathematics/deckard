@@ -240,7 +240,7 @@ class AttackConfig(ConfigBase):
         """
         self._target_ = "deckard.attack.AttackConfig"
         attack_scorer_cls = resolve_class(
-            "deckard.score.attack.AttackScorerConfig"
+            "deckard.score.attack.AttackScorerConfig",
         )
         if self.scorer is None:
             self.scorer = attack_scorer_cls()
@@ -287,7 +287,8 @@ class AttackConfig(ConfigBase):
         if isinstance(model, ModelConfig) and model.classifier is not None:
             return bool(model.classifier)
         if isinstance(model, RegressorMixin) and not isinstance(
-            model, ClassifierMixin
+            model,
+            ClassifierMixin,
         ):
             return False
         if isinstance(model, ClassifierMixin):
@@ -551,7 +552,7 @@ class AttackConfig(ConfigBase):
                     )
         else:
             raise NotImplementedError(
-                f"Attack type {attack_type} not implemented yet."
+                f"Attack type {attack_type} not implemented yet.",
             )
         assert isinstance(scores, dict), "Scores should be a dictionary"
         assert isinstance(
@@ -762,11 +763,16 @@ class AttackConfig(ConfigBase):
         return False
 
     def _score_attack_legacy(
-        self, ben_pred_labels, adv_pred_labels, y_test_numeric
+        self,
+        ben_pred_labels,
+        adv_pred_labels,
+        y_test_numeric,
     ):
         """Backward-compatible alias retained for older call sites."""
         return self._score_attack(
-            ben_pred_labels, adv_pred_labels, y_test_numeric
+            ben_pred_labels,
+            adv_pred_labels,
+            y_test_numeric,
         )
 
     def _evade(self, data, art_model, attack):
@@ -814,7 +820,8 @@ class AttackConfig(ConfigBase):
             ), f"Expected labels to be a list of np.ndarray. Got {type(y_subset)}"
         ben_preds = art_model.predict(x_subset)
         is_regression = self._is_regression_prediction_output(
-            y_subset, ben_preds
+            y_subset,
+            ben_preds,
         )
         if is_regression:
             ben_pred_labels = np.asarray(ben_preds).reshape(-1)
@@ -822,7 +829,8 @@ class AttackConfig(ConfigBase):
             ben_pred_labels = np.asarray(ben_preds).argmax(axis=1)
         if is_tensor(ben_pred_labels):
             ben_pred_labels = tensor_to_numpy(
-                ben_pred_labels, dtype=ART_NUMPY_DTYPE
+                ben_pred_labels,
+                dtype=ART_NUMPY_DTYPE,
             )
         if "AdversarialPatch" in str(type(attack)):
             # Special handling for AdversarialPatch attack
@@ -846,7 +854,7 @@ class AttackConfig(ConfigBase):
         end_time = time.process_time()
         self.attack_time = end_time - start_time
         logger.info(
-            f"Evasion attack took {self.attack_time} seconds for {n} samples"
+            f"Evasion attack took {self.attack_time} seconds for {n} samples",
         )
         start_time = time.process_time()
         adv_pred = art_model.predict(X_test_adv)
@@ -911,7 +919,7 @@ class AttackConfig(ConfigBase):
             x_ = data.X_train
             y_ = data.y_train
         if isinstance(x_, (pd.Series, np.ndarray, pd.DataFrame)) or is_tensor(
-            x_
+            x_,
         ):
             x_subset = x_[:n]
             y_subset = y_[:n]
@@ -1145,7 +1153,7 @@ class AttackConfig(ConfigBase):
         except AxisError:
             # Fallback: ensure y is strictly 2D one-hot to avoid axis=1 errors
             safe_y_data = pd.get_dummies(
-                np.asarray(y_train_values).reshape(-1)
+                np.asarray(y_train_values).reshape(-1),
             ).values
             attack.fit(
                 x=data.X_train.copy().values,
@@ -1159,10 +1167,10 @@ class AttackConfig(ConfigBase):
             f"Membership inference attack training took {self.attack_time} seconds for {self.attack_size} samples",
         )
         big_X = np.vstack(
-            (data.X_train.copy().values, data.X_test.copy().values)
+            (data.X_train.copy().values, data.X_test.copy().values),
         )
         big_y = np.hstack(
-            (data.y_train.copy().values, data.y_test.copy().values)
+            (data.y_train.copy().values, data.y_test.copy().values),
         )
         labels = np.array([1] * len(data.X_train) + [0] * len(data.X_test))
         # Build combined sensitive-feature array aligned with big_X (train then test).

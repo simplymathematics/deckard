@@ -87,7 +87,7 @@ class TestModelConfig(unittest.TestCase):
         scores = model.score_dict
         self.assertIsInstance(scores, dict)
         self.assertTrue(
-            "training_time" in scores and "prediction_time" in scores
+            "training_time" in scores and "prediction_time" in scores,
         )
         self.assertTrue("accuracy" in scores)
         self.assertTrue("training_time" in scores)
@@ -314,7 +314,8 @@ class TestModelConfig(unittest.TestCase):
         y_true = pd.Series([0, 1, 0, 1])
         y_pred = np.array([[1.0, 1.0], [0.0, 2.0], [2.0, 0.0], [1.0, 1.0]])
         decoded = model._decode_predictions_for_persistence(
-            y_pred, y_true=y_true
+            y_pred,
+            y_true=y_true,
         )
         self.assertEqual(decoded.ndim, 1)
         self.assertEqual(len(decoded), len(y_true))

@@ -10,7 +10,10 @@ from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 sns.set_theme(
-    context="paper", style="whitegrid", font="Times New Roman", font_scale=2
+    context="paper",
+    style="whitegrid",
+    font="Times New Roman",
+    font_scale=2,
 )
 
 
@@ -288,5 +291,6 @@ if __name__ == "__main__":
     df = pd.read_csv(Path(args.results_folder) / Path(args.results_file))
     # Plot the results
     plot_results(
-        df, results_plot=Path(args.results_folder) / Path(args.results_plot)
+        df,
+        results_plot=Path(args.results_folder) / Path(args.results_plot),
     )

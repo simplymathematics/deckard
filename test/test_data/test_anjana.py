@@ -63,7 +63,8 @@ def test_anjana_data_score_uses_auto_default(monkeypatch):
             return {"k_anonymity": 2.0}
 
     monkeypatch.setattr(
-        "deckard.data.anjana.load_class", lambda _: _StubScorer()
+        "deckard.data.anjana.load_class",
+        lambda _: _StubScorer(),
     )
     cfg.scorer = "auto"
 

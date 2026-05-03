@@ -101,7 +101,9 @@ Path("data/combined").mkdir(parents=True, exist_ok=True)
 Path("combined").mkdir(parents=True, exist_ok=True)
 big_df.to_csv("data/combined/combined.csv")
 big_df = pd.read_csv(
-    "data/combined/combined.csv", index_col=0, low_memory=False
+    "data/combined/combined.csv",
+    index_col=0,
+    low_memory=False,
 )
 
 # Capitalize all letters in the dataset

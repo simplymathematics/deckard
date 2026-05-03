@@ -102,7 +102,7 @@ class TorchExperimentConfig(ExperimentConfig):
                 getattr(self.model, "_resolve_torch_device"),
             ):
                 self.model.device = self.model._resolve_torch_device(
-                    self.model.device
+                    self.model.device,
                 )
         if self.attack is not None:
             setattr(self.attack, "device", unified_device)

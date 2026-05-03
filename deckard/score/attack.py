@@ -25,7 +25,7 @@ def evasion_success_score(y_true, y_pred, ben_pred_labels=None, **kwargs):
     """Compute evasion success as one minus benign/adversarial agreement."""
     if ben_pred_labels is None:
         raise ValueError(
-            "ben_pred_labels are required for evasion_success scoring"
+            "ben_pred_labels are required for evasion_success scoring",
         )
     return float(1 - accuracy_score(ben_pred_labels, y_pred))
 
@@ -510,7 +510,9 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
         from .fairness import FairlearnScoreDictConfig
 
         def _fairlearn_profile(
-            field_val, default_group_scorers, base_scorers=None
+            field_val,
+            default_group_scorers,
+            base_scorers=None,
         ):
             """Return a FairlearnScoreDictConfig, merging any user-supplied overrides."""
             if field_val is None:

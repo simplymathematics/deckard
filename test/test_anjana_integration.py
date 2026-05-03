@@ -74,7 +74,8 @@ def _make_anjana_data(n=40, monkeypatch=None, defense=None):
             return data.copy()
 
         monkeypatch.setattr(
-            "deckard.data.anjana.resolve_class", lambda _: _stub_k_anon
+            "deckard.data.anjana.resolve_class",
+            lambda _: _stub_k_anon,
         )
     return cfg
 
@@ -135,7 +136,8 @@ def test_anjana_attack_chain_type_and_scores(monkeypatch):
         return data.copy()
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class", lambda _: _stub_k_anon
+        "deckard.data.anjana.resolve_class",
+        lambda _: _stub_k_anon,
     )
 
     data_cfg = _make_anjana_data(
@@ -185,7 +187,8 @@ def test_anjana_fairness_and_art_chain_type_and_transform(monkeypatch):
         return data.iloc[: len(data) // 2].copy()
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class", lambda _: _drop_half_rows
+        "deckard.data.anjana.resolve_class",
+        lambda _: _drop_half_rows,
     )
 
     data_cfg = _make_anjana_data(
@@ -255,7 +258,7 @@ def test_wrapper_defenses_reordered_last_with_warning(caplog):
             return estimator
 
     pipeline = DefensePipelineConfig(
-        defenses=[_StubArtDefense(), _StubDataDefense()]
+        defenses=[_StubArtDefense(), _StubDataDefense()],
     )
 
     with caplog.at_level(logging.WARNING, logger="deckard.model.defend"):

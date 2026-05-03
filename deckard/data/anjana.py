@@ -73,7 +73,8 @@ class AnjanaDataConfig(DataPipelineConfig):
         values = pd.to_numeric(series, errors="coerce")
         if values.isna().all():
             return np.array(
-                [self.hierarchy_fill_value] * len(series), dtype=object
+                [self.hierarchy_fill_value] * len(series),
+                dtype=object,
             )
         size = float(interval_size)
         min_val = float(values.min())
@@ -98,7 +99,7 @@ class AnjanaDataConfig(DataPipelineConfig):
         source = frame if frame is not None else getattr(self, "_X", None)
         if not isinstance(source, pd.DataFrame):
             raise TypeError(
-                "Hierarchy generation requires a pandas.DataFrame source"
+                "Hierarchy generation requires a pandas.DataFrame source",
             )
 
         qids = (
@@ -125,7 +126,7 @@ class AnjanaDataConfig(DataPipelineConfig):
         for col in qids:
             if col not in source.columns:
                 raise KeyError(
-                    f"Quasi-identifier '{col}' not found in frame columns"
+                    f"Quasi-identifier '{col}' not found in frame columns",
                 )
             series = source[col]
             levels: Dict[int, Any] = {0: series.to_numpy(copy=True)}
@@ -145,7 +146,8 @@ class AnjanaDataConfig(DataPipelineConfig):
                     )
             else:
                 levels[1] = np.asarray(
-                    [replacement] * len(series), dtype=object
+                    [replacement] * len(series),
+                    dtype=object,
                 )
             hierarchies[col] = levels
         return hierarchies
@@ -176,7 +178,7 @@ class AnjanaDataConfig(DataPipelineConfig):
             raise ValueError(f"Sensitive features are empty during {context}")
         if sensitive_series.dropna().empty:
             raise ValueError(
-                f"Sensitive features are all null during {context}"
+                f"Sensitive features are all null during {context}",
             )
         if sensitive_series.astype(str).str.strip().eq("").all():
             raise ValueError(f"Sensitive features are blank during {context}")
@@ -223,7 +225,7 @@ class AnjanaDataConfig(DataPipelineConfig):
         step_config.update(custom)
         if "name" not in step_config:
             raise ValueError(
-                "fairness_defense config must include a 'name' key"
+                "fairness_defense config must include a 'name' key",
             )
 
         if step_name in self.pipeline:
@@ -256,7 +258,8 @@ class AnjanaDataConfig(DataPipelineConfig):
 
         defense_cfg = dict(self.anjana_defense)
         defense_name = defense_cfg.pop(
-            "name", defense_cfg.pop("_target_", None)
+            "name",
+            defense_cfg.pop("_target_", None),
         )
         if not isinstance(defense_name, str):
             raise ValueError(

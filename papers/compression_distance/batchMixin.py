@@ -45,7 +45,10 @@ class BatchedMixin:
                 self.training_log if hasattr(self, "training_log") else None
             )
             for i in tqdm(
-                range(self.nb_epoch), desc="Epochs", leave=True, position=0
+                range(self.nb_epoch),
+                desc="Epochs",
+                leave=True,
+                position=0,
             ):
                 # Shuffle the indices of X,y
                 indices = np.arange(len(X))
@@ -64,7 +67,7 @@ class BatchedMixin:
                         test_score = self.score(X_test, y_test)
                         test_scores.append(test_score)
                         logger.info(
-                            f"Train score: {score}, Test score: {test_score}"
+                            f"Train score: {score}, Test score: {test_score}",
                         )
                     else:
                         logger.info(f"Train score: {score}")
@@ -173,7 +176,10 @@ class BatchedMixin:
                         i * self.batch_size : (i + 1) * self.batch_size
                     ]  # noqa
                     indices = func(
-                        X=new_X, y=new_y, method=method, n_jobs=n_jobs
+                        X=new_X,
+                        y=new_y,
+                        method=method,
+                        n_jobs=n_jobs,
                     )
                     X = X[indices]
                     y = y[indices]

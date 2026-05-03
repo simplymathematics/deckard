@@ -89,7 +89,8 @@ def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def parse_studies(
-    optuna_db: str, schema: Union[str, dict[str, Any]]
+    optuna_db: str,
+    schema: Union[str, dict[str, Any]],
 ) -> pd.DataFrame:
     """Load and merge all studies from an Optuna storage into one dataframe."""
     studies = optuna.study.get_all_study_summaries(storage=optuna_db)

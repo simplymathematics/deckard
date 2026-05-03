@@ -62,7 +62,9 @@ def _wrapper_defense_names(wrapper, attr_name: str):
 
 
 def _assert_wrapper_defenses(
-    wrapper, expected_preprocessors, expected_postprocessors
+    wrapper,
+    expected_preprocessors,
+    expected_postprocessors,
 ):
     assert (
         _wrapper_defense_names(wrapper, "preprocessing_defences")
@@ -143,7 +145,7 @@ def test_experiment_config_accepts_legacy_single_defense_yaml():
             model_params={"max_iter": 25},
         ),
         defense=str(
-            ROOT / "examples/sklearn/config/defense/feature-squeezing.yaml"
+            ROOT / "examples/sklearn/config/defense/feature-squeezing.yaml",
         ),
         files=FileConfig(),
         classifier=True,
@@ -182,10 +184,10 @@ def test_experiment_config_accepts_legacy_single_defense_yaml():
         (
             [
                 _example_defense(
-                    "examples/sklearn/config/defense/gaussian-noise.yaml"
+                    "examples/sklearn/config/defense/gaussian-noise.yaml",
                 ),
                 _example_defense(
-                    "examples/sklearn/config/defense/class-labels.yaml"
+                    "examples/sklearn/config/defense/class-labels.yaml",
                 ),
             ],
             [],
@@ -197,7 +199,7 @@ def test_experiment_config_accepts_legacy_single_defense_yaml():
                     "examples/sklearn/config/defense/feature-squeezing.yaml",
                 ),
                 _example_defense(
-                    "examples/sklearn/config/defense/gaussian-noise.yaml"
+                    "examples/sklearn/config/defense/gaussian-noise.yaml",
                 ),
             ],
             ["FeatureSqueezing"],
@@ -292,7 +294,7 @@ def test_defense_pipeline_scores_persist_and_reload():
                     "examples/sklearn/config/defense/feature-squeezing.yaml",
                 ),
                 _example_defense(
-                    "examples/sklearn/config/defense/gaussian-noise.yaml"
+                    "examples/sklearn/config/defense/gaussian-noise.yaml",
                 ),
             ],
         },
@@ -313,10 +315,10 @@ def test_defense_pipeline_config_object_pickle_roundtrip():
     pipeline = DefensePipelineConfig(
         defenses=[
             _example_defense(
-                "examples/sklearn/config/defense/feature-squeezing.yaml"
+                "examples/sklearn/config/defense/feature-squeezing.yaml",
             ),
             _example_defense(
-                "examples/sklearn/config/defense/gaussian-noise.yaml"
+                "examples/sklearn/config/defense/gaussian-noise.yaml",
             ),
         ],
     )

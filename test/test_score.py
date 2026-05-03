@@ -26,7 +26,7 @@ class TestScorerDictConfigMerge(unittest.TestCase):
     """ScorerDictConfig.merge() should union scorer dicts from multiple specs."""
 
     acc_dict = {
-        "accuracy": {"score_function": "sklearn.metrics.accuracy_score"}
+        "accuracy": {"score_function": "sklearn.metrics.accuracy_score"},
     }
     prec_dict = {
         "precision": {
@@ -49,10 +49,11 @@ class TestScorerDictConfigMerge(unittest.TestCase):
 
     def test_merge_three_dicts(self):
         result = ScorerDictConfig.merge(
-            [self.acc_dict, self.prec_dict, self.f1_dict]
+            [self.acc_dict, self.prec_dict, self.f1_dict],
         )
         self.assertEqual(
-            set(result.scorers.keys()), {"accuracy", "precision", "f1"}
+            set(result.scorers.keys()),
+            {"accuracy", "precision", "f1"},
         )
 
     def test_merge_scorer_dict_config_instances(self):
@@ -65,7 +66,7 @@ class TestScorerDictConfigMerge(unittest.TestCase):
     def test_merge_later_wins_on_key_conflict(self):
         override = {
             "accuracy": {
-                "score_function": "sklearn.metrics.balanced_accuracy_score"
+                "score_function": "sklearn.metrics.balanced_accuracy_score",
             },
         }
         result = ScorerDictConfig.merge([self.acc_dict, override])
@@ -507,7 +508,9 @@ class TestDataInspectionScorers(unittest.TestCase):
             },
         )
         scores = DefaultDataRegressionDict.scorers(
-            y_true=y_true, y_pred=X, mode=None
+            y_true=y_true,
+            y_pred=X,
+            mode=None,
         )
         self.assertIn("mutual_information_mean", scores)
         self.assertIn("mutual_information_max", scores)
@@ -534,10 +537,12 @@ class TestDataInspectionScorers(unittest.TestCase):
         self.assertIsInstance(DefaultClassifierDict.scorers, ScorerDictConfig)
         self.assertIsInstance(DefaultRegressorDict.scorers, ScorerDictConfig)
         self.assertIsInstance(
-            DefaultFairlearnClassificationConfig(), ScorerDictConfig
+            DefaultFairlearnClassificationConfig(),
+            ScorerDictConfig,
         )
         self.assertIsInstance(
-            DefaultFairlearnRegressionConfig(), ScorerDictConfig
+            DefaultFairlearnRegressionConfig(),
+            ScorerDictConfig,
         )
 
 

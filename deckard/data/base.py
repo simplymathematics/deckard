@@ -384,7 +384,7 @@ class DataConfig(ConfigBase):
             class_path = spec.pop("name", spec.pop("_target_", None))
             if class_path is None:
                 raise ValueError(
-                    "Plugin dict must include 'name' or '_target_'"
+                    "Plugin dict must include 'name' or '_target_'",
                 )
             return load_class(class_path, **spec)
 
@@ -401,7 +401,7 @@ class DataConfig(ConfigBase):
             plugin_specs = self.plugins if self.plugins is not None else []
             if not isinstance(plugin_specs, list):
                 raise TypeError(
-                    f"plugins must be a list, got {type(plugin_specs)}"
+                    f"plugins must be a list, got {type(plugin_specs)}",
                 )
             self._plugin_objects = [
                 self._instantiate_plugin(spec) for spec in plugin_specs
@@ -495,7 +495,7 @@ class DataConfig(ConfigBase):
             class_path = spec.pop("name", spec.pop("_target_", None))
             if class_path is None:
                 raise ValueError(
-                    "sample dict must include 'name' or '_target_'"
+                    "sample dict must include 'name' or '_target_'",
                 )
             return load_class(class_path, **spec)
 
@@ -560,7 +560,8 @@ class DataConfig(ConfigBase):
             pd.DataFrame,
         ), f"Expected DataFrame got {type(self._X)}"
         assert isinstance(
-            self._y, pd.Series
+            self._y,
+            pd.Series,
         ), f"Expected Series got {type(self._y)}"
         self._X = self._X.apply(pd.to_numeric, errors="coerce")
         return self
@@ -615,7 +616,8 @@ class DataConfig(ConfigBase):
             **kwargs,
         )
         self._X = pd.DataFrame(
-            X, columns=[f"feature_{i}" for i in range(X.shape[1])]
+            X,
+            columns=[f"feature_{i}" for i in range(X.shape[1])],
         )
         self._y = pd.Series(y)
         end_time = time.process_time()
@@ -660,7 +662,8 @@ class DataConfig(ConfigBase):
             random_state=random_state,
         )
         self._X = pd.DataFrame(
-            X, columns=[f"feature_{i}" for i in range(X.shape[1])]
+            X,
+            columns=[f"feature_{i}" for i in range(X.shape[1])],
         )
         self._y = pd.Series(y)
         end_time = time.process_time()
@@ -898,7 +901,8 @@ class DataConfig(ConfigBase):
                 **params,
             ),
             "iris": lambda **params: self._load_generic_sklearn(
-                load_iris, **params
+                load_iris,
+                **params,
             ),
         }
         for dataset_name in _lifelines_dataset_loaders().keys():
@@ -957,7 +961,8 @@ class DataConfig(ConfigBase):
             (pd.DataFrame, pd.Series),
         ), "_X must be a DataFrame after loading data"
         assert isinstance(
-            self._y, pd.Series
+            self._y,
+            pd.Series,
         ), "_y must be a Series after loading data"
         self._apply_max_samples()
         self._run_plugin_hook("after_load_data")
@@ -1104,7 +1109,8 @@ class DataConfig(ConfigBase):
             0
         ].tolist()
         scores["r_regression"] = r_regression(
-            self.X_train, self.y_train
+            self.X_train,
+            self.y_train,
         ).tolist()
         scores["y_train_cdf"] = self._empirical_cdf(self.y_train).tolist()
         scores["y_test_cdf"] = self._empirical_cdf(self.y_test).tolist()
@@ -1282,7 +1288,7 @@ class DataPipelineConfig(DataConfig):
             fit_Xy = step_config.get("fit_xy", False)
             if fit_Xy is True:
                 raise ValueError(
-                    "fit_xy pipeline steps are no longer supported."
+                    "fit_xy pipeline steps are no longer supported.",
                 )
             dtype = step_config.get("dtype", None)
             step_config_without_name = {**step_config}

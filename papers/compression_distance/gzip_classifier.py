@@ -198,7 +198,7 @@ def distance_helper(
     else:
         print(f"Modified: {modified}, Symmetric: {symmetric}")
         print(
-            f"type modified: {type(modified)}, type symmetric: {type(symmetric)}"
+            f"type modified: {type(modified)}, type symmetric: {type(symmetric)}",
         )
         raise ValueError(f"Expected {modified} and {symmetric} to be boolean")
     return result
@@ -210,7 +210,13 @@ def ncd(
     cx1=None,
     cx2=None,
     method: Literal[
-        "gzip", "lzma", "bz2", "zstd", "pkl", "brotli", None
+        "gzip",
+        "lzma",
+        "bz2",
+        "zstd",
+        "pkl",
+        "brotli",
+        None,
     ] = "gzip",
 ) -> float:
     """
@@ -386,7 +392,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         """
         n_jobs = self.n_jobs
         logger.info(
-            f"Calculating rectangular distance matrix with {n_jobs} jobs"
+            f"Calculating rectangular distance matrix with {n_jobs} jobs",
         )
         matrix_ = np.zeros((len(x1), len(x2)))
         Cx1 = Cx1 if Cx1 is not None else [None] * len(x1)
@@ -396,7 +402,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             n_jobs = cpu_count()
         else:
             assert isinstance(
-                n_jobs, int
+                n_jobs,
+                int,
             ), f"Expected {n_jobs} to be an integer"
             assert n_jobs > 0, f"Expected {n_jobs} > 0 or -1"
             assert n_jobs <= cpu_count(), f"Expected {n_jobs} <= {cpu_count()}"
@@ -446,7 +453,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         """
         n_jobs = self.n_jobs
         logger.info(
-            f"Calculating lower triangular distance matrix with {n_jobs} jobs"
+            f"Calculating lower triangular distance matrix with {n_jobs} jobs",
         )
         # assert len(x1) == len(x2), f"Expected {len(x1)} == {len(x2)}"
         matrix_ = np.zeros((len(x1), len(x2)))
@@ -458,7 +465,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             n_jobs = cpu_count()
         else:
             assert isinstance(
-                n_jobs, int
+                n_jobs,
+                int,
             ), f"Expected {n_jobs} to be an integer"
             assert n_jobs > 0, f"Expected {n_jobs} > 0 or -1"
             assert n_jobs <= cpu_count(), f"Expected {n_jobs} <= {cpu_count()}"
@@ -510,7 +518,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     ):
         n_jobs = self.n_jobs
         logger.info(
-            f"Calculating upper triangular distance matrix with {n_jobs} jobs"
+            f"Calculating upper triangular distance matrix with {n_jobs} jobs",
         )
         matrix_ = np.zeros((len(x1), len(x2)))
         Cx1 = Cx1 if Cx1 is not None else [None] * len(x1)
@@ -596,7 +604,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             and Path(self.distance_matrix_train).exists()
         ):
             distance_matrix = self._load_distance_matrix(
-                self.distance_matrix_train
+                self.distance_matrix_train,
             )
         else:
             distance_matrix = self._calculate_training_distance_matrix(
@@ -617,7 +625,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         if self.distance_matrix_train is not None:
             # Save the distance matrix
             self._save_distance_matrix(
-                self.distance_matrix_train, distance_matrix
+                self.distance_matrix_train,
+                distance_matrix,
             )
         return distance_matrix
 
@@ -659,7 +668,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         # it will raise an AssertionError with a message indicating the expected and actual lengths.
         # assert len(X) == len(y), f"Expected {len(X)} == {len(y)}"
         logger.debug(
-            f"Fitting with X of shape {X.shape} and y of shape {y.shape}"
+            f"Fitting with X of shape {X.shape} and y of shape {y.shape}",
         )
         self.X_ = np.array(X) if not isinstance(X, np.ndarray) else X
         self.X_ = np.array([str(x) for x in self.X_])
@@ -682,7 +691,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self._train_matrix = self._prepare_training_matrix()
         if self.transform is not None:
             self._train_matrix = transform_dict[self.transform](
-                self._train_matrix
+                self._train_matrix,
             )
         self.clf_ = self.clf_.fit(self._train_matrix, self.y_)
         return self
@@ -703,7 +712,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             and Path(self.distance_matrix_test).exists()
         ):
             distance_matrix = self._load_distance_matrix(
-                self.distance_matrix_test
+                self.distance_matrix_test,
             )
         else:
             if self.metric in compressors.keys():
@@ -737,7 +746,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         if self.distance_matrix_test is not None:
             # Save the distance matrix
             self._save_distance_matrix(
-                self.distance_matrix_test, distance_matrix
+                self.distance_matrix_test,
+                distance_matrix,
             )
         if self.transform is not None:
             distance_matrix = transform_dict[self.transform](distance_matrix)
@@ -1047,7 +1057,7 @@ def load_data(dataset, precompressed):
         )
     if precompressed is True:
         X = pd.DataFrame(X).applymap(
-            lambda x: len(gzip.compress(str(x).encode()))
+            lambda x: len(gzip.compress(str(x).encode())),
         )
     else:
         X = pd.DataFrame(X).applymap(str)
@@ -1235,7 +1245,9 @@ def grid_search_main(args: argparse.Namespace):
     model_type = params.pop("model_type")
     optimizer = params.pop("optimizer")
     skf = StratifiedKFold(
-        n_splits=n_splits, random_state=random_state, shuffle=True
+        n_splits=n_splits,
+        random_state=random_state,
+        shuffle=True,
     )
     n_jobs = params.pop("n_jobs", cpu_count())
     model = supported_models[model_type](n_jobs=1)

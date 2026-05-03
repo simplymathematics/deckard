@@ -48,7 +48,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
             )
         if self.duration_col in [None, ""]:
             raise ValueError(
-                "duration_col must be provided for survival experiments"
+                "duration_col must be provided for survival experiments",
             )
 
     @staticmethod
@@ -145,13 +145,15 @@ class SurvivalExperimentConfig(ExperimentConfig):
             if "attack_size" in output.columns:
                 attack_sizes = output["attack_size"].fillna(
                     self._resolve_attack_size(
-                        output, attack_config=attack_config
+                        output,
+                        attack_config=attack_config,
                     ),
                 )
             else:
                 attack_sizes = pd.Series(
                     self._resolve_attack_size(
-                        output, attack_config=attack_config
+                        output,
+                        attack_config=attack_config,
                     ),
                     index=output.index,
                     dtype=float,
@@ -197,13 +199,15 @@ class SurvivalExperimentConfig(ExperimentConfig):
                 if "attack_size" in output.columns:
                     attack_sizes = output["attack_size"].fillna(
                         self._resolve_attack_size(
-                            output, attack_config=attack_config
+                            output,
+                            attack_config=attack_config,
                         ),
                     )
                 else:
                     attack_sizes = pd.Series(
                         self._resolve_attack_size(
-                            output, attack_config=attack_config
+                            output,
+                            attack_config=attack_config,
                         ),
                         index=output.index,
                         dtype=float,

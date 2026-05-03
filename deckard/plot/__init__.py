@@ -32,7 +32,7 @@ try:
     )
 except ImportError:  # pragma: no cover
     logger.debug(
-        "Lifelines not found. Survival plotting configs are unavailable."
+        "Lifelines not found. Survival plotting configs are unavailable.",
     )
     SurvivalSeabornPlotConfigList = None
     SurvivalSeabornPlotterConfig = None
@@ -76,7 +76,7 @@ class PlotConfig(ConfigBase):
 
         if has_experiment and has_data_file:
             raise ValueError(
-                "Provide either 'experiment' or 'data_file', not both."
+                "Provide either 'experiment' or 'data_file', not both.",
             )
         if not has_experiment and not has_data_file:
             raise ValueError(

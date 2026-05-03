@@ -108,7 +108,7 @@ def test_fairlearn_group_scorers_list_merges_dicts():
             {
                 "group_scorers": {
                     "mae": {
-                        "score_function": "sklearn.metrics.mean_absolute_error"
+                        "score_function": "sklearn.metrics.mean_absolute_error",
                     },
                 },
             },

@@ -40,7 +40,8 @@ class ScorerConfig:
         if isinstance(self.score_function, dict):
             score_fn_spec = dict(self.score_function)
             target = score_fn_spec.pop(
-                "_target_", score_fn_spec.pop("name", None)
+                "_target_",
+                score_fn_spec.pop("name", None),
             )
             if target is None:
                 raise ValueError(
@@ -50,13 +51,15 @@ class ScorerConfig:
             if not isinstance(args, (list, tuple)):
                 args = [args]
             self.score_function = load_class(
-                target, *list(args), **score_fn_spec
+                target,
+                *list(args),
+                **score_fn_spec,
             )
         if isinstance(self.score_function, str):
             self.score_function = resolve_class(self.score_function)
         if not callable(self.score_function):
             raise TypeError(
-                "score_function must be callable or import path string"
+                "score_function must be callable or import path string",
             )
         if self.score_params is None:
             self.score_params = {}
@@ -133,7 +136,8 @@ class ScorerConfig:
         y_true = to_numpy_if_torch(y_true)
         y_pred = to_numpy_if_torch(y_pred)
         y_pred = self._normalize_predictions_for_metric(
-            y_true=y_true, y_pred=y_pred
+            y_true=y_true,
+            y_pred=y_pred,
         )
         params = {**self.score_params, **kwargs}
         signature = inspect.signature(self.score_function)
@@ -177,7 +181,8 @@ class ScorerDictConfig(ConfigBase):
                     score_function=scorer_data.pop("score_function"),
                     score_params=scorer_data.pop("score_params", {}),
                     greater_is_better=scorer_data.pop(
-                        "greater_is_better", True
+                        "greater_is_better",
+                        True,
                     ),
                     needs_proba=scorer_data.pop("needs_proba", False),
                 )
@@ -260,7 +265,12 @@ class ScorerDictConfig(ConfigBase):
     def __call__(
         self,
         mode: Literal[
-            "test", "train", "attack", "val", "attack-val", None
+            "test",
+            "train",
+            "attack",
+            "val",
+            "attack-val",
+            None,
         ] = "test",
         data=None,
         model=None,
@@ -328,7 +338,8 @@ class ScorerDictConfig(ConfigBase):
                         metric_input = y_proba
                     else:
                         X_mode = self._resolve_mode_features(
-                            mode=mode, data=data
+                            mode=mode,
+                            data=data,
                         )
                         if X_mode is not None and model is not None:
                             metric_input = self._predict_proba_from_model(
@@ -484,7 +495,9 @@ safe_store(
     node=DefaultPytorchClassifierConfig,
 )
 safe_store(
-    group="score", name="pytorch_regression", node=DefaultPytorchRegressorConfig
+    group="score",
+    name="pytorch_regression",
+    node=DefaultPytorchRegressorConfig,
 )
 
 

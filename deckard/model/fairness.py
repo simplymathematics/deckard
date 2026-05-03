@@ -67,7 +67,7 @@ class _FairnessBehaviorMixin:
             raise ValueError(f"Sensitive features are empty during {context}")
         if sensitive_series.dropna().empty:
             raise ValueError(
-                f"Sensitive features are all null during {context}"
+                f"Sensitive features are all null during {context}",
             )
         if sensitive_series.astype(str).str.strip().eq("").all():
             raise ValueError(f"Sensitive features are blank during {context}")
@@ -138,7 +138,7 @@ class _FairnessBehaviorMixin:
 
     def _call_with_optional_sensitive(self, method, X, sensitive):
         if sensitive is not None and self._method_accepts_sensitive_features(
-            method
+            method,
         ):
             return method(X, sensitive_features=sensitive)
         return method(X)
@@ -164,7 +164,9 @@ class _FairnessBehaviorMixin:
                 else sensitive
             )
             fit_method(
-                data.X_train, data.y_train, sensitive_features=sensitive_arg
+                data.X_train,
+                data.y_train,
+                sensitive_features=sensitive_arg,
             )
         else:
             fit_method(data.X_train, data.y_train)
@@ -393,7 +395,8 @@ class _FairnessBehaviorMixin:
                 fallback=base_estimator,
             )
             predictor_model = self._adapt_binary_torch_predictor(
-                predictor_model, data
+                predictor_model,
+                data,
             )
             adversary_model = self._resolve_fairlearn_model_param(
                 defense_params.pop("adversary_model", None),
@@ -411,7 +414,8 @@ class _FairnessBehaviorMixin:
         self._apply_fit = True
         if self._apply_fit:
             defended_estimator = self._fit_defended_estimator(
-                defended_estimator, data
+                defended_estimator,
+                data,
             )
         self.defense_application_time = time.process_time() - start
         return defended_estimator
@@ -440,7 +444,9 @@ class _FairnessBehaviorMixin:
         sensitive = self._resolve_sensitive_features_for_batch(X, split="test")
         try:
             return self._call_with_optional_sensitive(
-                self._model.predict, X, sensitive
+                self._model.predict,
+                X,
+                sensitive,
             )
         except TypeError as exc:
             if "loop of ufunc does not support argument" in str(
@@ -467,7 +473,9 @@ class _FairnessBehaviorMixin:
         )
 
     def _resolve_sensitive_features(
-        self, y_true: pd.Series, mode: str = "test"
+        self,
+        y_true: pd.Series,
+        mode: str = "test",
     ):
         if self.data is None:
             return None
@@ -535,7 +543,9 @@ class _FairnessBehaviorMixin:
                     sorted_classes = np.sort(np.asarray(classes, dtype=float))
                     low_label, high_label = sorted_classes[0], sorted_classes[1]
                     labels = np.where(
-                        binary_scores >= threshold, high_label, low_label
+                        binary_scores >= threshold,
+                        high_label,
+                        low_label,
                     )
                 else:
                     labels = (binary_scores >= threshold).astype(int)
@@ -544,7 +554,7 @@ class _FairnessBehaviorMixin:
             sorted_classes = classes[np.argsort(classes)]
             pred_indices = np.argmax(y_pred_arr, axis=1)
             return pd.Series(sorted_classes[pred_indices]).reset_index(
-                drop=True
+                drop=True,
             )
 
         y_pred_series = _normalize_pred_labels(y_pred, y_true_series)
@@ -576,7 +586,7 @@ class _FairnessBehaviorMixin:
                 sensitive_features=sensitive,
             )
             by_group = pd.DataFrame(metric_frame.by_group).to_dict(
-                orient="index"
+                orient="index",
             )
             sensitive_scores = {
                 f"{group}_{metric}": float(value)
@@ -596,7 +606,7 @@ class _FairnessBehaviorMixin:
                     float(
                         (
                             sensitive_df["y_true"] == sensitive_df["y_pred"]
-                        ).mean()
+                        ).mean(),
                     ),
                 )
             if sensitive_accuracies:
@@ -646,7 +656,9 @@ class _FairnessBehaviorMixin:
         mode: str = "test",
     ) -> dict:
         return self._compute_sensitive_fairness_scores(
-            y_true, y_pred, mode=mode
+            y_true,
+            y_pred,
+            mode=mode,
         )
 
     def _score(
@@ -666,7 +678,9 @@ class _FairnessBehaviorMixin:
         )
 
     def _classification_scores(
-        self, y_true: pd.Series, y_pred: pd.Series
+        self,
+        y_true: pd.Series,
+        y_pred: pd.Series,
     ) -> dict:
         scores = ModelConfig._classification_scores(
             cast(ModelConfig, self),
@@ -675,18 +689,24 @@ class _FairnessBehaviorMixin:
         )
         scores.update(
             self._compute_sensitive_fairness_scores(
-                y_true, y_pred, mode="test"
+                y_true,
+                y_pred,
+                mode="test",
             ),
         )
         return scores
 
     def _regression_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
         scores = ModelConfig._regression_scores(
-            cast(ModelConfig, self), y_true, y_pred
+            cast(ModelConfig, self),
+            y_true,
+            y_pred,
         )
         scores.update(
             self._compute_sensitive_fairness_scores(
-                y_true, y_pred, mode="test"
+                y_true,
+                y_pred,
+                mode="test",
             ),
         )
         return scores

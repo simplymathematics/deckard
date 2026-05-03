@@ -52,7 +52,7 @@ class TestYellowbrickPlots(unittest.TestCase):
         )
         plot_cfg()
         self.assertTrue(
-            Path(f"{self.temp_dir}/{plot_type}_dataconfig.png").exists()
+            Path(f"{self.temp_dir}/{plot_type}_dataconfig.png").exists(),
         )
 
     @classmethod
@@ -95,7 +95,7 @@ class TestYellowbrickPlots(unittest.TestCase):
         )
         plot_cfg()
         self.assertTrue(
-            Path(f"{self.temp_dir}/{plot_type}_regression.png").exists()
+            Path(f"{self.temp_dir}/{plot_type}_regression.png").exists(),
         )
 
     def test_one_clustering_plot(self):
@@ -119,7 +119,7 @@ class TestYellowbrickPlots(unittest.TestCase):
         )
         plot_cfg()
         self.assertTrue(
-            Path(f"{self.temp_dir}/{plot_type}_clustering.png").exists()
+            Path(f"{self.temp_dir}/{plot_type}_clustering.png").exists(),
         )
 
     def test_clustering_plots(self):
@@ -234,7 +234,7 @@ class TestYellowbrickPlots(unittest.TestCase):
         from deckard.model import ModelConfig
 
         model = ModelConfig(
-            model_type="sklearn.linear_model.LogisticRegression"
+            model_type="sklearn.linear_model.LogisticRegression",
         )
         files = FileConfig(
             data_file=f"{self.temp_dir}/data/rc_single.pkl",
@@ -294,7 +294,9 @@ class TestYellowbrickPlots(unittest.TestCase):
                 return_value={},
             ),
             patch.object(
-                YellowbrickConfigList, "_set_plot_dict", return_value=None
+                YellowbrickConfigList,
+                "_set_plot_dict",
+                return_value=None,
             ),
         ):
             plot_cfg()

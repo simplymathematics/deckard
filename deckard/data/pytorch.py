@@ -218,7 +218,8 @@ class PytorchDataConfig(DataConfig):
 
             # Allow datasets to expose sensitive metadata separately from model inputs.
             if len(sensitive_values) == 0 and hasattr(
-                full_dataset, "_sensitive"
+                full_dataset,
+                "_sensitive",
             ):
                 raw_sensitive = getattr(full_dataset, "_sensitive")
                 if raw_sensitive is not None:
@@ -291,7 +292,7 @@ class PytorchDataConfig(DataConfig):
 
         if self.train_size is None and self.test_size is None:
             raise ValueError(
-                "Either train_size or test_size must be specified."
+                "Either train_size or test_size must be specified.",
             )
 
         if self.train_size is None:
@@ -434,7 +435,7 @@ class PytorchDataConfig(DataConfig):
         y_train_sorted = np.sort(y_train_np)
         y_test_sorted = np.sort(y_test_np)
         y_train_cdf = np.arange(1, len(y_train_sorted) + 1) / len(
-            y_train_sorted
+            y_train_sorted,
         )
         y_test_cdf = np.arange(1, len(y_test_sorted) + 1) / len(y_test_sorted)
         score_dict["y_train_cdf"] = y_train_cdf.tolist()
@@ -476,7 +477,8 @@ class PytorchDataConfig(DataConfig):
         """
         if data_file is not None:
             assert isinstance(
-                data_file, str
+                data_file,
+                str,
             ), "data_file must be a string path."
             if not Path(data_file).exists():
                 Path(data_file).parent.mkdir(parents=True, exist_ok=True)
@@ -485,7 +487,8 @@ class PytorchDataConfig(DataConfig):
 
         if score_file is not None:
             assert isinstance(
-                score_file, str
+                score_file,
+                str,
             ), "score_file must be a string path."
             if Path(score_file).exists():
                 pass
@@ -566,7 +569,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         elif isinstance(obj, Dataset):
             return obj(**self.dataset_params, split=split, transform=transform)
         raise TypeError(
-            f"Invalid dataset object for split '{split}': {type(obj)}"
+            f"Invalid dataset object for split '{split}': {type(obj)}",
         )
 
     def _truncate_dataset(self, dataset: Dataset, size: int):
@@ -642,7 +645,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         batch_size = int(self.data_params.get("batch_size", 32))
         num_workers = int(self.data_params.get("num_workers", 0))
         pin_memory = bool(
-            self.data_params.get("pin_memory", self.device != "cpu")
+            self.data_params.get("pin_memory", self.device != "cpu"),
         )
         train_ds = self._X[0]
         test_ds = self._X[1]
@@ -674,7 +677,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         ):
             if not isinstance(batch, (tuple, list)) or len(batch) < 2:
                 raise ValueError(
-                    "Each train batch must be (X, y) or (X, y, sensitive)"
+                    "Each train batch must be (X, y) or (X, y, sensitive)",
                 )
             yb = batch[1]
             train_y_batches.append(yb)
@@ -693,7 +696,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         ):
             if not isinstance(batch, (tuple, list)) or len(batch) < 2:
                 raise ValueError(
-                    "Each test batch must be (X, y) or (X, y, sensitive)"
+                    "Each test batch must be (X, y) or (X, y, sensitive)",
                 )
             yb = batch[1]
             test_y_batches.append(yb)

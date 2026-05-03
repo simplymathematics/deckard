@@ -21,7 +21,8 @@ def _resolve_frame_and_context(data=None, y_pred=None, **kwargs):
     if isinstance(y_pred, pd.DataFrame):
         frame = y_pred
     elif data is not None and isinstance(
-        getattr(data, "_X", None), pd.DataFrame
+        getattr(data, "_X", None),
+        pd.DataFrame,
     ):
         frame = data._X
     if frame is None:
@@ -30,10 +31,12 @@ def _resolve_frame_and_context(data=None, y_pred=None, **kwargs):
         )
 
     quasi_ident = kwargs.get(
-        "quasi_ident", getattr(data, "quasi_identifiers", None)
+        "quasi_ident",
+        getattr(data, "quasi_identifiers", None),
     )
     sens_att = kwargs.get(
-        "sens_att", getattr(data, "sensitive_attribute", None)
+        "sens_att",
+        getattr(data, "sensitive_attribute", None),
     )
     if isinstance(quasi_ident, str):
         quasi_ident = [quasi_ident]
@@ -146,5 +149,7 @@ class DefaultAnjanaModelScoreConfig(ScorerDictConfig):
 
 safe_store(group="score", name="anjana_data", node=DefaultAnjanaDataScoreConfig)
 safe_store(
-    group="score", name="anjana_model", node=DefaultAnjanaModelScoreConfig
+    group="score",
+    name="anjana_model",
+    node=DefaultAnjanaModelScoreConfig,
 )

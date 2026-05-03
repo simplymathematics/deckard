@@ -196,7 +196,8 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
                     score_function=scorer_data.pop("score_function"),
                     score_params=scorer_data.pop("score_params", {}),
                     greater_is_better=scorer_data.pop(
-                        "greater_is_better", True
+                        "greater_is_better",
+                        True,
                     ),
                     needs_proba=scorer_data.pop("needs_proba", False),
                 )
@@ -229,7 +230,7 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
             )
         scorer_kwargs = scorer_kwargs or {}
         metrics_keys = list(
-            cast(Dict[str, ScorerConfig], self.group_scorers).keys()
+            cast(Dict[str, ScorerConfig], self.group_scorers).keys(),
         )
         if isinstance(sample_params, dict):
             sample_param_keys = set(sample_params.keys())
@@ -249,7 +250,8 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
                 )
             )
             for key, scorer in cast(
-                Dict[str, ScorerConfig], self.group_scorers
+                Dict[str, ScorerConfig],
+                self.group_scorers,
             ).items()
         }
         return MetricFrame(
@@ -267,7 +269,12 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
     def __call__(
         self,
         mode: Literal[
-            "test", "train", "attack", "val", "attack-val", None
+            "test",
+            "train",
+            "attack",
+            "val",
+            "attack-val",
+            None,
         ] = "test",
         data=None,
         model=None,
@@ -300,7 +307,7 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
             )
         if sensitive_features is None:
             raise ValueError(
-                "sensitive_features are required for fairness scoring"
+                "sensitive_features are required for fairness scoring",
             )
 
         control_features = kwargs.pop("control_features", self.control_features)
@@ -338,22 +345,22 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
         if self.include_group_by_group:
             results.update(
                 _flatten_metric_frame_by_group(
-                    pd.DataFrame(metric_frame.by_group)
+                    pd.DataFrame(metric_frame.by_group),
                 ),
             )
 
         if self.group_reduction == "difference":
             reduced = metric_frame.difference(
-                method=self.group_reduction_method
+                method=self.group_reduction_method,
             )
             for metric_name, value in _series_like_to_float_dict(
-                reduced
+                reduced,
             ).items():
                 results[f"{metric_name}_difference"] = value
         elif self.group_reduction == "ratio":
             reduced = metric_frame.ratio(method=self.group_reduction_method)
             for metric_name, value in _series_like_to_float_dict(
-                reduced
+                reduced,
             ).items():
                 results[f"{metric_name}_ratio"] = value
         elif self.group_reduction != "none":
@@ -378,7 +385,7 @@ def _group_metric_difference(y_true, y_pred, sensitive_features, metric_fn):
         if not np.any(mask):
             continue
         group_scores.append(
-            float(metric_fn(y_true_arr[mask], y_pred_arr[mask]))
+            float(metric_fn(y_true_arr[mask], y_pred_arr[mask])),
         )
 
     if len(group_scores) < 2:
@@ -387,7 +394,10 @@ def _group_metric_difference(y_true, y_pred, sensitive_features, metric_fn):
 
 
 def fairness_group_mean_prediction_difference(
-    y_true, y_pred, data=None, **kwargs
+    y_true,
+    y_pred,
+    data=None,
+    **kwargs,
 ):
     """Compute disparity in mean prediction across sensitive groups."""
     sensitive_features = _resolve_sensitive_from_kwargs_or_data(

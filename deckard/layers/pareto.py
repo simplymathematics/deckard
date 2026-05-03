@@ -36,7 +36,8 @@ def _normalize_direction(direction: str) -> str:
 
 
 def _resolve_study(
-    optuna_db: str, study_name: Optional[str]
+    optuna_db: str,
+    study_name: Optional[str],
 ) -> optuna.study.Study:
     if study_name:
         logger.info(f"Loading study '{study_name}' from {optuna_db}")
@@ -63,7 +64,7 @@ def _resolve_study(
     if inferred_name is None:
         raise ValueError("Could not infer study name from summary")
     logger.info(
-        f"No study_name provided; using only available study '{inferred_name}'"
+        f"No study_name provided; using only available study '{inferred_name}'",
     )
     return optuna.study.load_study(storage=optuna_db, study_name=inferred_name)
 
@@ -255,7 +256,8 @@ def pareto_main(
     user_specified_objectives = len(objective_names) > 0
     if len(objective_names) == 0:
         objective_names = _infer_default_optimizers(
-            study=study, trials_df=trial_df
+            study=study,
+            trials_df=trial_df,
         )
 
     metric_names = list(getattr(study, "metric_names", []) or [])

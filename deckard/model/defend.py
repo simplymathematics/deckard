@@ -148,7 +148,7 @@ class _DefenseBehaviorMixin:
         return (
             getattr(self, "defense_name", None),
             self._freeze_defense_value(
-                getattr(self, "defense_params", {}) or {}
+                getattr(self, "defense_params", {}) or {},
             ),
         )
 
@@ -222,12 +222,14 @@ class _DefenseBehaviorMixin:
         return self._model
 
     def apply_to(
-        self, estimator: Union[BaseEstimator, None], data
+        self,
+        estimator: Union[BaseEstimator, None],
+        data,
     ) -> BaseEstimator:
         """Apply this defense to a pre-fitted estimator."""
         if estimator is None:
             raise ValueError(
-                "estimator must be provided before applying defense"
+                "estimator must be provided before applying defense",
             )
         self._model = estimator
         model_cfg = getattr(self, "_model_config", None)
@@ -267,7 +269,7 @@ class _DefenseBehaviorMixin:
 
         defense_signature = self._defense_signature()
         if defense_signature in self._get_applied_defense_signatures(
-            self._model
+            self._model,
         ):
             self._apply_fit = False
             self.defense_application_time = 0.0
@@ -323,12 +325,14 @@ class _DefenseBehaviorMixin:
                     case "evasion":
                         defense = defense_class(**(self.defense_params or {}))
                         defended_estimator = defense(
-                            self.get_model(), **init_params
+                            self.get_model(),
+                            **init_params,
                         )
                     case "poison":
                         defense = defense_class(**(self.defense_params or {}))
                         defended_estimator = defense(
-                            self.get_model(), **init_params
+                            self.get_model(),
+                            **init_params,
                         )
                     case _:
                         raise NotImplementedError(
@@ -366,13 +370,14 @@ class _DefenseBehaviorMixin:
                 )
         if defended_estimator is None:
             raise RuntimeError(
-                "Defense application did not produce an estimator"
+                "Defense application did not produce an estimator",
             )
         # Some defences can optionally be applied during training or prediction
         end = time.process_time()
         self._apply_fit = getattr(defense, "_apply_fit", True)
         self._mark_applied_defense_signature(
-            defended_estimator, defense_signature
+            defended_estimator,
+            defense_signature,
         )
 
         self.defense_application_time = end - start
@@ -454,7 +459,8 @@ class _DefenseBehaviorMixin:
                 init_params = {
                     "loss": torch.nn.CrossEntropyLoss(),
                     "optimizer": torch.optim.SGD(
-                        raw_model.parameters(), lr=0.01
+                        raw_model.parameters(),
+                        lr=0.01,
                     ),
                     "input_shape": input_shape,
                     "nb_classes": nb_classes,
@@ -469,7 +475,8 @@ class _DefenseBehaviorMixin:
                 init_params = {
                     "loss": torch.nn.MSELoss(),
                     "optimizer": torch.optim.SGD(
-                        raw_model.parameters(), lr=0.01
+                        raw_model.parameters(),
+                        lr=0.01,
                     ),
                     "input_shape": input_shape,
                     "nb_classes": None,
@@ -533,7 +540,9 @@ class DefensePipelineConfig(ConfigBase):
     defense_application_time: Union[float, None] = None
     _target_: Union[str, None] = None
     _plugin_objects: Union[list, None] = field(
-        default=None, repr=False, compare=False
+        default=None,
+        repr=False,
+        compare=False,
     )
 
     def __post_init__(self):
@@ -554,7 +563,8 @@ class DefensePipelineConfig(ConfigBase):
 
     @classmethod
     def _looks_like_single_defense_spec(
-        cls, defense_spec: dict[str, Any]
+        cls,
+        defense_spec: dict[str, Any],
     ) -> bool:
         if "defenses" in defense_spec:
             return False
@@ -612,7 +622,7 @@ class DefensePipelineConfig(ConfigBase):
             class_path = spec.pop("name", spec.pop("_target_", None))
             if class_path is None:
                 raise ValueError(
-                    "Plugin dict must include 'name' or '_target_'"
+                    "Plugin dict must include 'name' or '_target_'",
                 )
             return resolve_class(class_path)(**spec)
 
@@ -629,7 +639,7 @@ class DefensePipelineConfig(ConfigBase):
             plugin_specs = self.plugins if self.plugins is not None else []
             if not isinstance(plugin_specs, list):
                 raise TypeError(
-                    f"plugins must be a list, got {type(plugin_specs)}"
+                    f"plugins must be a list, got {type(plugin_specs)}",
                 )
             self._plugin_objects = [
                 self._instantiate_plugin(spec) for spec in plugin_specs
@@ -665,7 +675,7 @@ class DefensePipelineConfig(ConfigBase):
 
             defense_name = defense_dict.get("defense_name")
             if isinstance(defense_name, str) and defense_name.startswith(
-                "fairlearn."
+                "fairlearn.",
             ):
                 try:
                     fair_cls = resolve_class(
@@ -756,7 +766,8 @@ class DefensePipelineConfig(ConfigBase):
                 stage = output.strip()
             elif isinstance(output, dict):
                 candidate = output.get(
-                    "defense_stage", output.get("stage", None)
+                    "defense_stage",
+                    output.get("stage", None),
                 )
                 if isinstance(candidate, str) and candidate.strip():
                     stage = candidate.strip()
@@ -800,7 +811,7 @@ class DefensePipelineConfig(ConfigBase):
     ) -> BaseEstimator:
         if estimator is None:
             raise ValueError(
-                "estimator must be provided before applying defenses"
+                "estimator must be provided before applying defenses",
             )
         defense_chain = self.normalize_defenses(self.defenses)
         if len(defense_chain) == 0:
@@ -874,7 +885,8 @@ class DefensePipelineConfig(ConfigBase):
             )
             started = time.process_time()
             defended_estimator = apply_to(
-                estimator=defended_estimator, data=data
+                estimator=defended_estimator,
+                data=data,
             )
             elapsed = getattr(defense_obj, "defense_application_time", None)
             if elapsed is None:
@@ -921,7 +933,7 @@ class DefenseConfig(_DefenseBehaviorMixin, ConfigBase):
     clip_values: tuple | None = field(
         default=None,
         metadata={
-            "help": "Tuple of the form (min, max) to clip input features."
+            "help": "Tuple of the form (min, max) to clip input features.",
         },
     )
     defense_name: Union[str, None] = field(

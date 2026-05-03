@@ -185,7 +185,9 @@ class ModelConfig(ConfigBase):
     probabilities: Any = None
     _target_: Union[str, None] = None
     _plugin_objects: Union[list, None] = field(
-        default=None, repr=False, compare=False
+        default=None,
+        repr=False,
+        compare=False,
     )
     _defense_pipeline: Any = field(default=None, repr=False, compare=False)
 
@@ -295,7 +297,7 @@ class ModelConfig(ConfigBase):
             class_path = spec.pop("name", spec.pop("_target_", None))
             if class_path is None:
                 raise ValueError(
-                    "Plugin dict must include 'name' or '_target_'"
+                    "Plugin dict must include 'name' or '_target_'",
                 )
             return load_class(class_path, **spec)
 
@@ -312,7 +314,7 @@ class ModelConfig(ConfigBase):
             plugin_specs = self.plugins if self.plugins is not None else []
             if not isinstance(plugin_specs, list):
                 raise TypeError(
-                    f"plugins must be a list, got {type(plugin_specs)}"
+                    f"plugins must be a list, got {type(plugin_specs)}",
                 )
             self._plugin_objects = [
                 self._instantiate_plugin(spec) for spec in plugin_specs
@@ -529,7 +531,8 @@ class ModelConfig(ConfigBase):
                 if invalid_matrix:
                     base_model = getattr(self._model, "model", None)
                     if base_model is not None and hasattr(
-                        base_model, "predict"
+                        base_model,
+                        "predict",
                     ):
                         logger.warning(
                             "Detected invalid classifier prediction matrix from wrapped model; "
@@ -564,7 +567,9 @@ class ModelConfig(ConfigBase):
         return y_proba
 
     def _classification_scores(
-        self, y_true: pd.Series, y_pred: pd.Series
+        self,
+        y_true: pd.Series,
+        y_pred: pd.Series,
     ) -> dict:
         """
         Computes classification metrics including accuracy, precision, recall, and F1-score.
@@ -587,7 +592,7 @@ class ModelConfig(ConfigBase):
         """
         # Ensure that y_true and y_pred have the same length
         assert len(y_true) == len(
-            y_pred
+            y_pred,
         ), "y_true and y_pred must have the same length"
         # Ensure that y_true.shape and y_pred.shape are compatible
         y_true_arr = np.asarray(y_true)
@@ -616,7 +621,9 @@ class ModelConfig(ConfigBase):
                     low_label = sorted_classes[0]
                     high_label = sorted_classes[1]
                     y_pred = np.where(
-                        binary_scores >= threshold, high_label, low_label
+                        binary_scores >= threshold,
+                        high_label,
+                        low_label,
                     )
                 else:
                     y_pred = (binary_scores >= threshold).astype(int)
@@ -646,7 +653,10 @@ class ModelConfig(ConfigBase):
                 zero_division=0,
             )
             recall = recall_score(
-                y_true, y_pred, average="weighted", zero_division=0
+                y_true,
+                y_pred,
+                average="weighted",
+                zero_division=0,
             )
             f1 = f1_score(y_true, y_pred, average="weighted", zero_division=0)
 
@@ -693,7 +703,7 @@ class ModelConfig(ConfigBase):
         """
         # Ensure that y_true and y_pred have the same length
         assert len(y_true) == len(
-            y_pred
+            y_pred,
         ), "y_true and y_pred must have the same length"
         mse = ((y_true - y_pred) ** 2).mean()
         rmse = mse**0.5
@@ -749,7 +759,9 @@ class ModelConfig(ConfigBase):
             )
         scores = self.scorer(y_true=y_true, y_pred=y_pred, mode=mode, **kwargs)
         return round_scores(
-            scores=scores, n_samples=len(y_true), logger_obj=logger
+            scores=scores,
+            n_samples=len(y_true),
+            logger_obj=logger,
         )
 
     def _decode_predictions_for_persistence(self, y_pred, y_true=None):
@@ -778,7 +790,9 @@ class ModelConfig(ConfigBase):
                     low_label = sorted_classes[0]
                     high_label = sorted_classes[1]
                     return np.where(
-                        binary_scores >= threshold, high_label, low_label
+                        binary_scores >= threshold,
+                        high_label,
+                        low_label,
                     )
             return (binary_scores >= threshold).astype(int)
 
@@ -804,7 +818,8 @@ class ModelConfig(ConfigBase):
         try:
             predictions = self.load_data(filepath)
             if not isinstance(
-                predictions, (pd.Series, pd.DataFrame, np.ndarray, list)
+                predictions,
+                (pd.Series, pd.DataFrame, np.ndarray, list),
             ):
                 raise ValueError("Loaded predictions are not in a valid format")
             logger.info(f"Predictions loaded from {filepath}")
@@ -1063,7 +1078,8 @@ class ModelConfig(ConfigBase):
             and self.training_probabilities is not None
         ):
             self.save_data(
-                self.training_probabilities, training_probabilities_file
+                self.training_probabilities,
+                training_probabilities_file,
             )
         if (
             test_probabilities_file is not None
@@ -1182,7 +1198,8 @@ class ModelConfig(ConfigBase):
                                 e,
                             ) or "can't convert" in str(e):
                                 X_array = np.array(
-                                    data.X_train, dtype=ART_NUMPY_DTYPE
+                                    data.X_train,
+                                    dtype=ART_NUMPY_DTYPE,
                                 )
                                 self.training_probabilities = (
                                     self._model.predict_proba(
@@ -1193,7 +1210,7 @@ class ModelConfig(ConfigBase):
                                 raise e
                     else:
                         self.training_probabilities = self._predict(
-                            data.X_train
+                            data.X_train,
                         )
                 except ValueError as e:
                     logger.warning(
@@ -1341,7 +1358,9 @@ class ModelConfig(ConfigBase):
                 if wrapped is None or wrapped is estimator:
                     continue
                 if _is_model_fitted(
-                    wrapped, X_sample=X_sample, depth=depth + 1
+                    wrapped,
+                    X_sample=X_sample,
+                    depth=depth + 1,
                 ):
                     return True
 
@@ -1374,7 +1393,7 @@ class ModelConfig(ConfigBase):
             case _, _:  # Model and/or filepath provided
                 if model_file is not None and Path(model_file).exists():
                     logger.info(
-                        f"Model file {model_file} exists. Loading model."
+                        f"Model file {model_file} exists. Loading model.",
                     )
                     self = self.load(model_file)
                     if _is_model_fitted(self._model, X_sample=data.X_train):
@@ -1384,7 +1403,7 @@ class ModelConfig(ConfigBase):
                             "Loaded model is not fitted. Training a new model.",
                         )
                         logger.info(
-                            f"Training model on {len(data.y_train)} samples..."
+                            f"Training model on {len(data.y_train)} samples...",
                         )
                         self._train(data.X_train, data.y_train)
                         assert hasattr(
@@ -1399,7 +1418,7 @@ class ModelConfig(ConfigBase):
                 else:
                     # train the model if no model exists at the filepath
                     logger.info(
-                        f"Training model on {len(data.y_train)} samples..."
+                        f"Training model on {len(data.y_train)} samples...",
                     )
                     model_is_fitted = _is_model_fitted(
                         self._model,

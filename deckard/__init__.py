@@ -102,7 +102,7 @@ def _file_resolver(arg: str):
                 cur = cur[p]
             else:
                 raise KeyError(
-                    f"file resolver: key '{key_part}' not found in {path}"
+                    f"file resolver: key '{key_part}' not found in {path}",
                 )
         data = cur
     data = OmegaConf.create(data)
@@ -112,7 +112,10 @@ def _file_resolver(arg: str):
 
 # Register resolver with OmegaConf (Hydra will pick up this plugin module automatically)
 OmegaConf.register_new_resolver(
-    "file", _file_resolver, replace=True, use_cache=True
+    "file",
+    _file_resolver,
+    replace=True,
+    use_cache=True,
 )
 
 
@@ -135,7 +138,10 @@ def _hash_conf(*values, _root_=None):
 
 
 OmegaConf.register_new_resolver(
-    "hash", _hash_conf, replace=True, use_cache=False
+    "hash",
+    _hash_conf,
+    replace=True,
+    use_cache=False,
 )
 
 

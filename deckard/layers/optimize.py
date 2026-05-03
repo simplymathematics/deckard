@@ -83,7 +83,9 @@ class OptunaStudyCallback(HydraCallback):
         params_path.parent.mkdir(parents=True, exist_ok=True)
         with open(params_path, "w") as f:
             yaml.dump(
-                OmegaConf.to_container(config, resolve=False), f, indent=4
+                OmegaConf.to_container(config, resolve=False),
+                f,
+                indent=4,
             )
         return
 
@@ -178,7 +180,8 @@ def _prepare_multirun_cfg(cfg, hydra_cfg, include_file_paths: bool = False):
 
 
 def _extract_scores_from_job_end_kwargs(
-    job_return=None, kwargs: dict | None = None
+    job_return=None,
+    kwargs: dict | None = None,
 ):
     if job_return is None:
         kwargs = kwargs or {}
@@ -288,7 +291,9 @@ def optimize_main(
     if _is_multirun_mode(hydra_cfg):
         _assert_multirun_sweeper(hydra_cfg)
         cfg_dict = _prepare_multirun_cfg(
-            cfg_dict, hydra_cfg, include_file_paths=False
+            cfg_dict,
+            hydra_cfg,
+            include_file_paths=False,
         )
 
     # Optimize layer always executes an ExperimentConfig payload.
@@ -506,7 +511,7 @@ def save_params_file(cfg: dict[str, Any], files: dict[str, str]) -> DictConfig:
         OmegaConf.save(cfg, files["params_file"])
     else:
         raise ValueError(
-            "params_file must be specified in files to save parameters."
+            "params_file must be specified in files to save parameters.",
         )
     return cfg
 

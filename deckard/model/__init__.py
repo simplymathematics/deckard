@@ -29,7 +29,7 @@ try:
     )
 except ImportError:  # pragma: no cover
     logger.debug(
-        "Fairlearn not found. Fairlearn model configs are unavailable."
+        "Fairlearn not found. Fairlearn model configs are unavailable.",
     )
 
 try:

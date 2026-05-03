@@ -65,7 +65,8 @@ class TestFileConfig(unittest.TestCase):
 
     def test_timestamp_placeholder(self):
         config = FileConfig(
-            replace=self.config.replace, attack_file="{timestamp}"
+            replace=self.config.replace,
+            attack_file="{timestamp}",
         )
         file_dict = config._file_dict
         attack_file = file_dict.get("attack_file", KeyError)

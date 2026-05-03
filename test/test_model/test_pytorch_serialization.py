@@ -8,7 +8,7 @@ import torch
 from deckard.model.defend import DefensePipelineConfig
 
 PytorchModelConfig = pytest.importorskip(
-    "deckard.model.pytorch"
+    "deckard.model.pytorch",
 ).PytorchModelConfig
 
 

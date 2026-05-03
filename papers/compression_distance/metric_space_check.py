@@ -19,7 +19,10 @@ from gzip_classifier import compressors
 logger = logging.getLogger(__name__)
 
 sns.set_theme(
-    context="paper", style="whitegrid", font="Times New Roman", font_scale=2
+    context="paper",
+    style="whitegrid",
+    font="Times New Roman",
+    font_scale=2,
 )
 
 
@@ -29,7 +32,13 @@ def old_ncd(
     cx1=None,
     cx2=None,
     method: Literal[
-        "gzip", "lzma", "bz2", "zstd", "pkl", "brotli", None
+        "gzip",
+        "lzma",
+        "bz2",
+        "zstd",
+        "pkl",
+        "brotli",
+        None,
     ] = "gzip",
 ) -> float:
     """
@@ -215,7 +224,11 @@ def check_loop(
     # Generate a list of arguments for the parallelized for loop
     for i in range(samples):
         x, y, z = get_data_triplet(
-            max_string_size, data, alphabet_size, samples, i
+            max_string_size,
+            data,
+            alphabet_size,
+            samples,
+            i,
         )
         arg_list += [(sig_figs, distance, metric, x, y, z)]
 
@@ -234,11 +247,11 @@ def check_loop(
     # Convert failures to percent
     df = df.sum(axis=0) / samples
     logger.info(
-        f"Percent of examples where triangle inequality was violated: {df[0]}"
+        f"Percent of examples where triangle inequality was violated: {df[0]}",
     )
     logger.info(f"Percent of examples where symmetry was violated: {df[1]}")
     logger.info(
-        f"Percent of examples where zero identity was violated: {df[2]}"
+        f"Percent of examples where zero identity was violated: {df[2]}",
     )
     logger.info(f"Percent of examples where positivity was violated: {df[3]}")
     logger.info(f"Shape of df is {df.shape}")
@@ -277,7 +290,7 @@ def get_data_triplet(max_string_size, data, alphabet_size, samples, i):
         )
     elif data in ["bytes"]:
         assert max_string_size <= 256, ValueError(
-            "Max string size is too large"
+            "Max string size is too large",
         )
         x = byte_generator(
             size=random.randint(1, max_string_size),
@@ -321,7 +334,12 @@ def count_metric_assumption_failures(sig_figs, distance, metric, x, y, z):
     zy = round(zy, sig_figs)
     try:
         symmetric_failures = check_symmetry(
-            xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy
+            xy=xy,
+            xz=xz,
+            yz=yz,
+            yx=yx,
+            zx=zx,
+            zy=zy,
         )
     except ValueError as e:
         symmetric_failures = 1
@@ -364,7 +382,12 @@ def count_metric_assumption_failures(sig_figs, distance, metric, x, y, z):
         )
     try:
         positivity_failures = check_positivity(
-            xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy
+            xy=xy,
+            xz=xz,
+            yz=yz,
+            yx=yx,
+            zx=zx,
+            zy=zy,
         )
     except ValueError as e:
         positivity_failures = 1
@@ -467,12 +490,12 @@ def check_all_metric_space_assumptions(
         kwargs[iterate] = i
         t, s, z, p = check_loop(**kwargs, distance=distance)
         logger.info(
-            f"Percent of examples where zero identity was violated: {z}"
+            f"Percent of examples where zero identity was violated: {z}",
         )
         logger.info(f"Percent of examples where positivity  was violated: {p}")
         logger.info(f"Percent of examples where symmetry was violated: {s}")
         logger.info(
-            f"Percent of examples where triangle inequality was violated: {t}"
+            f"Percent of examples where triangle inequality was violated: {t}",
         )
         symmetries.append(s)
         zeroes.append(z)
@@ -512,7 +535,9 @@ def check_all_metric_space_assumptions(
 
 
 def find_all_combinations(
-    max_alphabet_size=52, max_string_size=10, reverse=False
+    max_alphabet_size=52,
+    max_string_size=10,
+    reverse=False,
 ):
     chars = []
     chars = (
@@ -528,13 +553,14 @@ def find_all_combinations(
     )
     # Join into a string
     assert max_alphabet_size <= len(chars), ValueError(
-        "Alphabet size is too large"
+        "Alphabet size is too large",
     )
     chars = chars[:max_alphabet_size]
     # Find all combinations of length max_string_size
     perms = []
     for i in tqdm(
-        range(1, max_string_size + 1), desc="Finding all combinations"
+        range(1, max_string_size + 1),
+        desc="Finding all combinations",
     ):
         marginal = combinations(chars, i)
         # Join each entry into a string
@@ -663,7 +689,9 @@ if __name__ == "__main__":
     parser.add_argument("--samples", type=int, default=1000)
     parser.add_argument("--max_string_size", type=int, default=5)
     parser.add_argument(
-        "--max_alphabet_size", type=int, default=95
+        "--max_alphabet_size",
+        type=int,
+        default=95,
     )  # acutal max is 95
     parser.add_argument(
         "--iterate",
@@ -674,7 +702,9 @@ if __name__ == "__main__":
     parser.add_argument("--data", type=str, default="alphabet")
     parser.add_argument("--folder", type=str, default="metric_space_check")
     parser.add_argument(
-        "--log_file", type=str, default="metric_space_check.log"
+        "--log_file",
+        type=str,
+        default="metric_space_check.log",
     )
     parser.add_argument("--results_file", type=str, default="results.csv")
     parser.add_argument("--plot_file", type=str, default="results.pdf")

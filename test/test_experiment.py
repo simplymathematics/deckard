@@ -48,7 +48,9 @@ class TestKFoldExperiment(unittest.TestCase):
         scores = exp()
         for k in range(self.N_FOLDS):
             self.assertIn(
-                f"accuracy_fold_{k}", scores, f"missing accuracy_fold_{k}"
+                f"accuracy_fold_{k}",
+                scores,
+                f"missing accuracy_fold_{k}",
             )
 
     def test_mean_key_present(self):
@@ -61,7 +63,9 @@ class TestKFoldExperiment(unittest.TestCase):
         scores = exp()
         fold_accs = [scores[f"accuracy_fold_{k}"] for k in range(self.N_FOLDS)]
         self.assertAlmostEqual(
-            scores["accuracy"], float(np.mean(fold_accs)), places=10
+            scores["accuracy"],
+            float(np.mean(fold_accs)),
+            places=10,
         )
 
 
@@ -104,7 +108,9 @@ class TestShuffleExperiment(unittest.TestCase):
         scores = exp()
         for k in range(self.N_SPLITS):
             self.assertIn(
-                f"accuracy_split_{k}", scores, f"missing accuracy_split_{k}"
+                f"accuracy_split_{k}",
+                scores,
+                f"missing accuracy_split_{k}",
             )
 
     def test_mean_key_present(self):
@@ -192,7 +198,8 @@ class TestSurvivalExperimentConfig(unittest.TestCase):
         with self.assertRaises(ValueError):
             SurvivalExperimentConfig(
                 data=DataConfig(
-                    dataset_name="make_regression", classifier=False
+                    dataset_name="make_regression",
+                    classifier=False,
                 ),
                 model=None,
                 classifier=False,
@@ -200,7 +207,7 @@ class TestSurvivalExperimentConfig(unittest.TestCase):
                 duration_col="T",
                 event_col="E",
                 attack=AttackConfig(
-                    attack_type="art.attacks.evasion.HopSkipJump"
+                    attack_type="art.attacks.evasion.HopSkipJump",
                 ),
             )
 

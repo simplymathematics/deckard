@@ -52,7 +52,8 @@ def merge_csv(
         and Path(Path(little_dir) / little_dir_data_file).exists()
     ):
         small = pd.read_csv(
-            Path(little_dir) / little_dir_data_file, index_col=0
+            Path(little_dir) / little_dir_data_file,
+            index_col=0,
         )
         assert "name" in small
     elif (

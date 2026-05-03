@@ -49,7 +49,7 @@ def get_torch_model_device(model):
 def build_torch_art_model(model, data):
     if not HAS_TORCH:
         raise ImportError(
-            "Torch support requires optional dependency deckard[torch]"
+            "Torch support requires optional dependency deckard[torch]",
         )
 
     from art.estimators.classification import PyTorchClassifier
@@ -100,7 +100,7 @@ def build_torch_art_model(model, data):
 def collect_subset_from_dataloader(loader, n):
     if not HAS_TORCH:
         raise ImportError(
-            "Torch support requires optional dependency deckard[torch]"
+            "Torch support requires optional dependency deckard[torch]",
         )
     if not is_dataloader(loader):
         raise TypeError(f"Expected DataLoader, got {type(loader)}")

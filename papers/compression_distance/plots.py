@@ -5,7 +5,10 @@ from pathlib import Path
 
 # Set seaborn theme to paper using times new roman font
 sns.set_theme(
-    context="paper", style="whitegrid", font="Times New Roman", font_scale=2
+    context="paper",
+    style="whitegrid",
+    font="Times New Roman",
+    font_scale=2,
 )
 if __name__ == "__main__":
     input_file = "output/combined/plots/search_merged.csv"
@@ -203,7 +206,7 @@ if __name__ == "__main__":
     train_time_graph._legend.set_bbox_to_anchor((1, 0.5))
     train_time_graph.tight_layout()
     train_time_graph.savefig(
-        "output/combined/plots/train_time_vs_algorithm.pdf"
+        "output/combined/plots/train_time_vs_algorithm.pdf",
     )
 
     sns.set_theme(
@@ -226,7 +229,8 @@ if __name__ == "__main__":
         col_order=["KNN", "Logistic", "SVC"],
     )
     pred_time_graph.set_axis_labels(
-        "Metric", "Prediction Time per Sample (seconds)"
+        "Metric",
+        "Prediction Time per Sample (seconds)",
     )
     pred_time_graph.set_titles("{col_name} - {row_name}")
     # Change legend title
@@ -240,7 +244,8 @@ if __name__ == "__main__":
     pred_time_graph.savefig("output/combined/plots/pred_time_vs_algorithm.pdf")
 
     refit_df = pd.read_csv(
-        "output/combined/plots/refit_merged.csv", index_col=0
+        "output/combined/plots/refit_merged.csv",
+        index_col=0,
     )
     refit_df["Algorithm"] = refit_df["algorithm"]
     refit_df["accuracy"] = refit_df["accuracy"] * 100

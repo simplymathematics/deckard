@@ -11,7 +11,8 @@ class TestFairlearnDataConfigInit:
     def test_init_without_sensitive_columns_raises_error(self):
         """Test that FairlearnDataConfig raises ValueError when sensitive_columns is None."""
         with pytest.raises(
-            ValueError, match="sensitive_columns must be specified"
+            ValueError,
+            match="sensitive_columns must be specified",
         ):
             FairlearnDataConfig(
                 sensitive_columns=None,
@@ -67,7 +68,9 @@ class TestFairlearnDataConfigInit:
 class TestLoadData:
     @patch("deckard.data.base.DataConfig._load_data")
     def test_load_data_validates_sensitive_columns(
-        self, mock_super_load, capfd
+        self,
+        mock_super_load,
+        capfd,
     ):
         """Test that _load_data validates configured sensitive columns."""
         df = pd.DataFrame(
@@ -141,7 +144,9 @@ class TestScore:
         config.classifier = True
 
         with patch.object(
-            config, "_classification_feature_scores", return_value={}
+            config,
+            "_classification_feature_scores",
+            return_value={},
         ):
             scores = config._score()
 
@@ -173,7 +178,8 @@ class TestComputeClassCounts:
 class TestClassificationFeatureScoresForGroup:
     @patch("deckard.data.fairness.FairlearnDataConfig.__post_init__")
     def test_classification_scores_contains_required_metrics(
-        self, mock_post_init
+        self,
+        mock_post_init,
     ):
         """Test that classification scores include all required metrics."""
         X = pd.DataFrame(

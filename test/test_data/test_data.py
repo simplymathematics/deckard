@@ -21,7 +21,7 @@ class TestDataPipelineConfigListMerge(unittest.TestCase):
     """DataPipelineConfig should accept a list of step-dicts and merge them."""
 
     steps_a = {
-        "imputer": {"name": "sklearn.impute.SimpleImputer", "strategy": "mean"}
+        "imputer": {"name": "sklearn.impute.SimpleImputer", "strategy": "mean"},
     }
     steps_b = {"scaler": {"name": "sklearn.preprocessing.StandardScaler"}}
     steps_override = {
@@ -344,7 +344,8 @@ class TestDataConfig(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             csv_path = Path(tmpdirname) / "test.csv"
             pd.DataFrame({"a": [1, 2], "b": [3, 4]}).to_csv(
-                csv_path, index=False
+                csv_path,
+                index=False,
             )
             cfg = DataConfig(dataset_name=str(csv_path), data_params={})
             with self.assertRaises(ValueError):

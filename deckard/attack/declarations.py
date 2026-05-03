@@ -104,7 +104,9 @@ safe_store(group="attack", name="membership", node=ATTACK_MEMBERSHIP)
 safe_store(group="attack", name="zoo", node=ATTACK_ZOO)
 
 safe_store(
-    group="search/attacks", name="attribute-bb", node=ATTACK_ATTRIBUTE_BB
+    group="search/attacks",
+    name="attribute-bb",
+    node=ATTACK_ATTRIBUTE_BB,
 )
 safe_store(group="search/attacks", name="boundary", node=ATTACK_BOUNDARY)
 safe_store(group="search/attacks", name="fgm", node=ATTACK_FGM)

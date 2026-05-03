@@ -175,7 +175,10 @@ def calculate_rectangular_distance_matrix(
     distances = Parallel(n_jobs=-1)(
         delayed(distance_helper)(*args)
         for args in tqdm(
-            queue, total=n * m, desc="Calculating distances.", leave=False
+            queue,
+            total=n * m,
+            desc="Calculating distances.",
+            leave=False,
         )
     )
     # Reformat the distances into a matrix
@@ -224,7 +227,10 @@ def calculate_lower_triangular_distance_matrix(
     distances = Parallel(n_jobs=-1)(
         delayed(distance_helper)(*args)
         for args in tqdm(
-            queue, total=n * m, desc="Calculating distances.", leave=False
+            queue,
+            total=n * m,
+            desc="Calculating distances.",
+            leave=False,
         )
     )
     # get lower triangular indices
@@ -285,7 +291,10 @@ def calculate_upper_triangular_distance_matrix(
     distances = Parallel(n_jobs=-1)(
         delayed(distance_helper)(*args)
         for args in tqdm(
-            queue, total=n * m, desc="Calculating distances.", leave=False
+            queue,
+            total=n * m,
+            desc="Calculating distances.",
+            leave=False,
         )
     )
     # Reformat the distances into a matrix
@@ -440,7 +449,7 @@ class DistanceMatrixKernelizer(BaseEstimator, TransformerMixin):
         if self.form in ["multiquadric", "quadratic"]:
             if degree != 2:
                 logger.warning(
-                    f"Degree must be 2 for {form} form. Setting degree to 2"
+                    f"Degree must be 2 for {form} form. Setting degree to 2",
                 )
             self.degree = 2
         else:
@@ -453,7 +462,7 @@ class DistanceMatrixKernelizer(BaseEstimator, TransformerMixin):
         elif self.form == "exp_neg":
             assert self.coef0 == 0, "coef0 must be 0 for exp_neg form"
             self.kernel_function = lambda x: np.exp(
-                -(x**self.degree) / self.gamma
+                -(x**self.degree) / self.gamma,
             )
         elif self.form == "poly":
             self.kernel_function = (

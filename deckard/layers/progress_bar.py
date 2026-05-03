@@ -103,7 +103,8 @@ def _extract_stage_config_name(stage_conf: dict) -> Optional[str]:
 
 
 def _resolve_hydra_config_for_stage(
-    stage_conf: dict, hydra_cfg_file: str
+    stage_conf: dict,
+    hydra_cfg_file: str,
 ) -> str:
     """Resolve per-stage Hydra config file using --config-name (extension optional)."""
     default_cfg = Path(hydra_cfg_file)
@@ -153,13 +154,14 @@ def _collect_storage_finished_counts(optuna_db: str, end_states: set) -> tuple:
             continue
 
         study = optuna.study.load_study(
-            storage=optuna_db, study_name=study_name
+            storage=optuna_db,
+            study_name=study_name,
         )
         study_df = study.trials_dataframe()
 
         if "state" in study_df.columns:
             finished_counts.append(
-                int(study_df["state"].isin(end_states).sum())
+                int(study_df["state"].isin(end_states).sum()),
             )
 
         for trial in study.get_trials(deepcopy=False):
@@ -342,7 +344,7 @@ def _get_hydra_sweeper_config(hydra_cfg_file: str) -> tuple:
 
     if not isinstance(loaded_cfg, dict):
         raise ValueError(
-            f"Expected mapping at root of Hydra config: {cfg_path}"
+            f"Expected mapping at root of Hydra config: {cfg_path}",
         )
 
     raw_cfg = loaded_cfg
@@ -382,7 +384,7 @@ def _get_hydra_sweeper_config(hydra_cfg_file: str) -> tuple:
     is_grid_sampler = "GridSampler" in sampler_target or "grid" in str(defaults)
     if is_grid_sampler:
         grid_n_trials = _calculate_grid_search_n_trials(
-            sweeper.get("params", {})
+            sweeper.get("params", {}),
         )
         if grid_n_trials is not None:
             n_trials = grid_n_trials
@@ -487,7 +489,8 @@ def progress_bar_main(
                 required_trials=req["required_trials"],
             )
             storage_completed_trials = min(
-                sum(finished_counts), req["expected_trials"]
+                sum(finished_counts),
+                req["expected_trials"],
             )
 
             total_completed_studies += min(

@@ -64,7 +64,7 @@ def get_configuration_paths():
     )
     if config_dir is None:
         logger.error(
-            "DECKARD_CONFIG_DIR must be specified as an environment variable."
+            "DECKARD_CONFIG_DIR must be specified as an environment variable.",
         )
         sys.exit(1)
     while not Path(config_dir).exists():
@@ -78,7 +78,8 @@ def get_configuration_paths():
     logger.debug("No optional arguments provided.")
     config_file = Path(
         os.environ.get(
-            "DECKARD_DEFAULT_CONFIG_FILE", DECKARD_DEFAULT_CONFIG_FILE
+            "DECKARD_DEFAULT_CONFIG_FILE",
+            DECKARD_DEFAULT_CONFIG_FILE,
         ),
     ).as_posix()
     working_dir = os.getcwd()
@@ -105,7 +106,9 @@ def _build_router() -> argparse.ArgumentParser:
     subs = parser.add_subparsers(dest="module", metavar="MODULE", required=True)
     for name in layer_dict:
         sub = subs.add_parser(
-            name, help=f"Run the {name} layer", add_help=False
+            name,
+            help=f"Run the {name} layer",
+            add_help=False,
         )
         sub.add_argument("remainder", nargs=argparse.REMAINDER)
     return parser
@@ -161,7 +164,8 @@ def generate_hydra_main(layer):
 
     forwarded_overrides = []
     if hasattr(parsed_args, "overrides") and isinstance(
-        parsed_args.overrides, list
+        parsed_args.overrides,
+        list,
     ):
         # get_args_parser may parse Hydra key=value arguments into `overrides`.
         forwarded_overrides = parsed_args.overrides

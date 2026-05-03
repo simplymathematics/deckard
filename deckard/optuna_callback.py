@@ -33,7 +33,8 @@ class OptunaStudyDumpCallback(Callback):
         # Set metric names
         if isinstance(metric_names, ListConfig):
             self.metric_names = OmegaConf.to_container(
-                metric_names, resolve=True
+                metric_names,
+                resolve=True,
             )
         elif isinstance(metric_names, list):
             self.metric_names = metric_names

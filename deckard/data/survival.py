@@ -67,13 +67,13 @@ class LifelinesDataConfig(DataConfig):
         elif self.mode == LifelinesDataMode.AUXILIARY_MODEL:
             if self.benign_metric in [None, ""]:
                 raise ValueError(
-                    "benign_metric required for AUXILIARY_MODEL mode"
+                    "benign_metric required for AUXILIARY_MODEL mode",
                 )
 
         elif self.mode == LifelinesDataMode.AUXILIARY_ATTACK:
             if self.attack_config is None:
                 raise ValueError(
-                    "attack_config required for AUXILIARY_ATTACK mode"
+                    "attack_config required for AUXILIARY_ATTACK mode",
                 )
 
         elif self.mode == LifelinesDataMode.OPTUNA_DB:

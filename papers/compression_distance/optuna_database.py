@@ -34,7 +34,8 @@ class OptunaStudyDumpCallback(Callback):
         # Set metric names
         if isinstance(metric_names, ListConfig):
             self.metric_names = OmegaConf.to_container(
-                metric_names, resolve=True
+                metric_names,
+                resolve=True,
             )
         elif isinstance(metric_names, list):
             self.metric_names = metric_names
@@ -114,7 +115,9 @@ def multirun_call(args):
 optuna_callback_parser = argparse.ArgumentParser()
 optuna_callback_parser.add_argument("--storage", type=str, default=storage)
 optuna_callback_parser.add_argument(
-    "--study_name", type=str, default=study_name
+    "--study_name",
+    type=str,
+    default=study_name,
 )
 optuna_callback_parser.add_argument(
     "--metric_names",
@@ -129,7 +132,9 @@ optuna_callback_parser.add_argument(
     default=directions,
 )
 optuna_callback_parser.add_argument(
-    "--output_file", type=str, default=output_file
+    "--output_file",
+    type=str,
+    default=output_file,
 )
 
 if __name__ == "__main__":

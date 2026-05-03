@@ -45,7 +45,7 @@ def initialize_criterion(criterion_spec):
         return load_class(criterion_spec)
     elif isinstance(criterion_spec, (dict, DictConfig)):
         criterion_name = criterion_spec.get("name") or criterion_spec.get(
-            "_target_"
+            "_target_",
         )
         criterion_params = {
             k: v
@@ -55,7 +55,7 @@ def initialize_criterion(criterion_spec):
         return load_class(criterion_name, **criterion_params)
     else:
         raise ValueError(
-            f"criterion must be str or dict, got {type(criterion_spec)}"
+            f"criterion must be str or dict, got {type(criterion_spec)}",
         )
 
 
@@ -67,7 +67,7 @@ def initialize_optimizer(optimizer_spec, model_params):
         return load_class(optimizer_spec, model_params)
     elif isinstance(optimizer_spec, (dict, DictConfig)):
         optimizer_name = optimizer_spec.get("name") or optimizer_spec.get(
-            "_target_"
+            "_target_",
         )
         if (
             isinstance(optimizer_name, str)
@@ -84,7 +84,7 @@ def initialize_optimizer(optimizer_spec, model_params):
         return load_class(optimizer_name, **optimizer_params)
     else:
         raise ValueError(
-            f"optimizer must be str or dict, got {type(optimizer_spec)}"
+            f"optimizer must be str or dict, got {type(optimizer_spec)}",
         )
 
 
@@ -179,7 +179,8 @@ class PytorchModelConfig(ModelConfig):
         if hasattr(art_estimator, "_device"):
             art_estimator._device = target_device
         if hasattr(art_estimator, "_model") and hasattr(
-            art_estimator._model, "to"
+            art_estimator._model,
+            "to",
         ):
             art_estimator._model = art_estimator._model.to(target_device)
 
@@ -235,7 +236,7 @@ class PytorchModelConfig(ModelConfig):
         # Move model to device
         self._model = self._model.to(self.device)
         logger.info(
-            f"Initialized model {self.model_type} on device {self.device}"
+            f"Initialized model {self.model_type} on device {self.device}",
         )
 
     def get_model(self):
@@ -252,7 +253,7 @@ class PytorchModelConfig(ModelConfig):
         path.parent.mkdir(parents=True, exist_ok=True)
         if path.exists():
             raise ValueError(
-                f"File {filepath} already exists. Will not overwrite."
+                f"File {filepath} already exists. Will not overwrite.",
             )
 
         payload = {
@@ -306,7 +307,8 @@ class PytorchModelConfig(ModelConfig):
         )
         self.training_time = payload.get("training_time", self.training_time)
         self.prediction_time = payload.get(
-            "prediction_time", self.prediction_time
+            "prediction_time",
+            self.prediction_time,
         )
         self.training_n = payload.get("training_n", self.training_n)
         self.prediction_n = payload.get("prediction_n", self.prediction_n)
@@ -407,7 +409,7 @@ class PytorchModelConfig(ModelConfig):
         # Copy over epoch metrics from our score_dict if they exist
         if "epochs" in self.score_dict:
             snapshot.score_dict["epochs"] = copy.deepcopy(
-                self.score_dict["epochs"]
+                self.score_dict["epochs"],
             )
         checkpoint_stage = None
         if snapshot.defense is not None:
@@ -433,17 +435,21 @@ class PytorchModelConfig(ModelConfig):
             test_pred = snapshot._predict(data.X_test)
             if snapshot.classifier:
                 train_scores = snapshot._classification_scores(
-                    data.y_train, train_pred
+                    data.y_train,
+                    train_pred,
                 )
                 test_scores = snapshot._classification_scores(
-                    data.y_test, test_pred
+                    data.y_test,
+                    test_pred,
                 )
             else:
                 train_scores = snapshot._regression_scores(
-                    data.y_train, train_pred
+                    data.y_train,
+                    train_pred,
                 )
                 test_scores = snapshot._regression_scores(
-                    data.y_test, test_pred
+                    data.y_test,
+                    test_pred,
                 )
             snapshot.score_dict.update(
                 {
@@ -642,10 +648,11 @@ class PytorchModelConfig(ModelConfig):
         # Re-apply device overrides so any newly created preprocessing ops are
         # placed on the correct device (particularly important for MPS).
         if isinstance(
-            defended_estimator, (PyTorchClassifier, PyTorchRegressor)
+            defended_estimator,
+            (PyTorchClassifier, PyTorchRegressor),
         ):
             defended_estimator = self._override_art_internal_device(
-                defended_estimator
+                defended_estimator,
             )
         return defended_estimator
 
@@ -691,7 +698,8 @@ class PytorchModelConfig(ModelConfig):
 
         criterion = initialize_criterion(self.criterion)
         optimizer = initialize_optimizer(
-            self.optimizer, self._model.parameters()
+            self.optimizer,
+            self._model.parameters(),
         )
 
         nb_epochs = self.fit_params.get("nb_epochs", 1)
@@ -769,7 +777,7 @@ class PytorchModelConfig(ModelConfig):
 
         if len(self.checkpoint_records) > 0:
             self.score_dict["checkpoints"] = copy.deepcopy(
-                self.checkpoint_records
+                self.checkpoint_records,
             )
 
         logger.info(
@@ -854,12 +862,18 @@ class PytorchModelConfig(ModelConfig):
             ),
             "recall": float(
                 recall_score(
-                    y_true_np, y_pred_np, average="weighted", zero_division=0
+                    y_true_np,
+                    y_pred_np,
+                    average="weighted",
+                    zero_division=0,
                 ),
             ),
             "f1": float(
                 f1_score(
-                    y_true_np, y_pred_np, average="weighted", zero_division=0
+                    y_true_np,
+                    y_pred_np,
+                    average="weighted",
+                    zero_division=0,
                 ),
             ),
         }

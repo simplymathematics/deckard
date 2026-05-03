@@ -9,7 +9,7 @@ from unittest.mock import patch
 torch = pytest.importorskip("torch")
 Tensor = pytest.importorskip("torch").Tensor
 PytorchDataConfig = pytest.importorskip(
-    "deckard.data.pytorch"
+    "deckard.data.pytorch",
 ).PytorchDataConfig
 
 
@@ -66,7 +66,8 @@ class TestPytorchDataConfig(unittest.TestCase):
 
     def test_initialization(self):
         self.assertEqual(
-            self.config.dataset_name, "torch.utils.data.TensorDataset"
+            self.config.dataset_name,
+            "torch.utils.data.TensorDataset",
         )
         self.assertEqual(self.config.data_dir, self.temp_dir)
         self.assertEqual(self.config.test_size, 100)

@@ -44,7 +44,9 @@ def _load_env_from_deckard_rc(path: Path) -> dict[str, str]:
     ],
 )
 def test_survival_cli_in_examples_sklearn(
-    dataset_name, survival_model, tmp_path
+    dataset_name,
+    survival_model,
+    tmp_path,
 ):
     examples_dir = EXAMPLES_SKLEARN_DIR
     env = os.environ.copy()

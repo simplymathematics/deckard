@@ -55,7 +55,7 @@ class FairlearnDataConfig(DataPipelineConfig):
             raise ValueError(f"Sensitive features are empty during {context}")
         if sensitive_series.dropna().empty:
             raise ValueError(
-                f"Sensitive features are all null during {context}"
+                f"Sensitive features are all null during {context}",
             )
         if sensitive_series.astype(str).str.strip().eq("").all():
             raise ValueError(f"Sensitive features are blank during {context}")
@@ -100,7 +100,7 @@ class FairlearnDataConfig(DataPipelineConfig):
         step_config.update(custom)
         if "name" not in step_config:
             raise ValueError(
-                "fairness_defense config must include a 'name' key"
+                "fairness_defense config must include a 'name' key",
             )
 
         if step_name in self.pipeline:

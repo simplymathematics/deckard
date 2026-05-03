@@ -37,7 +37,8 @@ class TestFairlearnModelConfig(unittest.TestCase):
 
         # Create sensitive feature series for fairness evaluation
         self.sensitive_test = pd.Series(
-            ["A", "B", "A", "B"], index=self.y_test.index
+            ["A", "B", "A", "B"],
+            index=self.y_test.index,
         )
 
         self.model_type = "sklearn.ensemble.RandomForestClassifier"
@@ -107,7 +108,7 @@ class TestFairlearnModelConfig(unittest.TestCase):
         fair_defense.apply_to = Mock(return_value=second_estimator)
 
         model.defense = DefensePipelineConfig(
-            defenses=[art_defense, fair_defense]
+            defenses=[art_defense, fair_defense],
         )
         runtime_data = Mock()
         result = model._apply_defense(data=runtime_data)
@@ -206,10 +207,12 @@ class TestFairlearnModelConfig(unittest.TestCase):
     def test_regression_scores_with_fairness_data(self):
         """Test regression scores includes group fairness metrics."""
         y_true = pd.Series(
-            [1.0, 2.0, 3.0, 4.0], index=self.sensitive_test.index
+            [1.0, 2.0, 3.0, 4.0],
+            index=self.sensitive_test.index,
         )
         y_pred = pd.Series(
-            [1.1, 1.9, 3.2, 3.8], index=self.sensitive_test.index
+            [1.1, 1.9, 3.2, 3.8],
+            index=self.sensitive_test.index,
         )
 
         fairness_data = Mock(spec=FairlearnDataConfig)
@@ -265,7 +268,8 @@ class TestFairlearnModelConfig(unittest.TestCase):
         """Test sensitive fairness scores skips empty groups."""
         # Create groups with different sizes
         sensitive_test = pd.Series(
-            ["A", "A", "A", "B"], index=self.y_test.index
+            ["A", "A", "A", "B"],
+            index=self.y_test.index,
         )
 
         fairness_data = Mock(spec=FairlearnDataConfig)
@@ -279,7 +283,8 @@ class TestFairlearnModelConfig(unittest.TestCase):
         )
 
         scores = model._compute_sensitive_fairness_scores(
-            self.y_test, self.y_test
+            self.y_test,
+            self.y_test,
         )
 
         self.assertIsInstance(scores, dict)
@@ -300,7 +305,8 @@ class TestFairlearnModelConfig(unittest.TestCase):
         )
 
         scores = model._compute_sensitive_fairness_scores(
-            self.y_test, self.y_test
+            self.y_test,
+            self.y_test,
         )
 
         self.assertIsInstance(scores, dict)
@@ -316,10 +322,12 @@ class TestFairlearnModelConfig(unittest.TestCase):
     def test_compute_sensitive_fairness_scores_regression(self):
         """Test sensitive fairness scores for regression task."""
         y_true = pd.Series(
-            [1.0, 2.0, 3.0, 4.0], index=self.sensitive_test.index
+            [1.0, 2.0, 3.0, 4.0],
+            index=self.sensitive_test.index,
         )
         y_pred = pd.Series(
-            [1.1, 1.9, 3.2, 3.8], index=self.sensitive_test.index
+            [1.1, 1.9, 3.2, 3.8],
+            index=self.sensitive_test.index,
         )
 
         fairness_data = Mock(spec=FairlearnDataConfig)
@@ -406,13 +414,15 @@ def test_resolve_fairlearn_model_param_falls_back_from_unavailable_mps(
         )
 
         scores = model._compute_sensitive_fairness_scores(
-            self.y_test, self.y_test
+            self.y_test,
+            self.y_test,
         )
 
         # Check naming convention: {group_name}_{metric}
         for key in scores.keys():
             self.assertTrue(
-                "_" in key, f"Key {key} should contain group_metric format"
+                "_" in key,
+                f"Key {key} should contain group_metric format",
             )
             parts = key.split("_")
             self.assertGreaterEqual(
@@ -455,7 +465,8 @@ def test_resolve_fairlearn_model_param_falls_back_from_unavailable_mps(
         self,
     ):
         train_sensitive = pd.Series(
-            ["T0", "T1", "T0", "T1"], index=self.y_test.index
+            ["T0", "T1", "T0", "T1"],
+            index=self.y_test.index,
         )
         fairness_data = Mock(spec=FairlearnDataConfig)
         fairness_data._sensitive_train = train_sensitive
@@ -612,7 +623,7 @@ class TestFairlearnDefenseConfigApplyDefense(unittest.TestCase):
             "fairlearn.reductions.ExponentiatedGradient",
             {
                 "constraints": {
-                    "_target_": "fairlearn.reductions.EqualizedOdds"
+                    "_target_": "fairlearn.reductions.EqualizedOdds",
                 },
                 "eps": 0.1,
             },
@@ -625,7 +636,7 @@ class TestFairlearnDefenseConfigApplyDefense(unittest.TestCase):
     def test_apply_defense_reductions_requires_constraints(self):
         """ExponentiatedGradient without a constraints key must raise ValueError."""
         cfg = self._make_fitted_defense(
-            "fairlearn.reductions.ExponentiatedGradient"
+            "fairlearn.reductions.ExponentiatedGradient",
         )
         with self.assertRaises(
             ValueError,
@@ -647,7 +658,7 @@ class TestFairlearnDefenseConfigApplyDefense(unittest.TestCase):
     def test_apply_defense_postprocessing_no_constraints(self):
         """ThresholdOptimizer with no constraints key uses default."""
         cfg = self._make_fitted_defense(
-            "fairlearn.postprocessing.ThresholdOptimizer"
+            "fairlearn.postprocessing.ThresholdOptimizer",
         )
         result = cfg.apply_defense(None)
         from fairlearn.postprocessing import ThresholdOptimizer

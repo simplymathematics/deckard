@@ -290,7 +290,7 @@ def test_art_last_ordering_no_warning_for_wrapper_only_chain(caplog):
     }
 
     pipeline = DefensePipelineConfig(
-        defenses=[art_defense_dict, fairlearn_defense]
+        defenses=[art_defense_dict, fairlearn_defense],
     )
 
     with caplog.at_level(logging.WARNING, logger="deckard.model.defend"):
@@ -405,7 +405,9 @@ def test_pytorch_scores_persist_to_json():
     model(data)
 
     with tempfile.NamedTemporaryFile(
-        suffix=".json", delete=False, mode="w"
+        suffix=".json",
+        delete=False,
+        mode="w",
     ) as f:
         score_path = f.name
         json.dump(model.score_dict, f)
