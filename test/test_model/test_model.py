@@ -86,7 +86,9 @@ class TestModelConfig(unittest.TestCase):
         score_dict = model(data=data, model_file=self.model_file)
         scores = model.score_dict
         self.assertIsInstance(scores, dict)
-        self.assertTrue("training_time" in scores and "prediction_time" in scores)
+        self.assertTrue(
+            "training_time" in scores and "prediction_time" in scores
+        )
         self.assertTrue("accuracy" in scores)
         self.assertTrue("training_time" in scores)
         self.assertTrue("prediction_time" in scores)
@@ -253,7 +255,9 @@ class TestModelConfig(unittest.TestCase):
         self.assertTrue(np.array_equal(loaded, preds))
         self.model.load_data = orig_load_data
 
-    def test_load_or_train_model_trains_when_not_fitted_even_if_training_time_set(self):
+    def test_load_or_train_model_trains_when_not_fitted_even_if_training_time_set(
+        self,
+    ):
         data = DataConfig(
             dataset_name="make_classification",
             data_params={
@@ -299,7 +303,9 @@ class TestModelConfig(unittest.TestCase):
         preds = model._predict(self.X_test)
         self.assertTrue(np.array_equal(preds, np.array([0, 1])))
 
-    def test_decode_predictions_for_persistence_converts_2d_classifier_output(self):
+    def test_decode_predictions_for_persistence_converts_2d_classifier_output(
+        self,
+    ):
         model = ModelConfig(
             model_type=self.model_type,
             classifier=True,
@@ -307,7 +313,9 @@ class TestModelConfig(unittest.TestCase):
         )
         y_true = pd.Series([0, 1, 0, 1])
         y_pred = np.array([[1.0, 1.0], [0.0, 2.0], [2.0, 0.0], [1.0, 1.0]])
-        decoded = model._decode_predictions_for_persistence(y_pred, y_true=y_true)
+        decoded = model._decode_predictions_for_persistence(
+            y_pred, y_true=y_true
+        )
         self.assertEqual(decoded.ndim, 1)
         self.assertEqual(len(decoded), len(y_true))
 
@@ -318,25 +326,17 @@ class TestModelConfig(unittest.TestCase):
             model_params={"n_estimators": 10},
         )
         original_hash = hash(model)
-        cls = model.__class__
-        original_call = cls.__call__
-
-        def fake_call(self):
-            self.training_time = 1.23
-            self.prediction_time = 2.34
-            self.probabilities = [0.1, 0.9]
-            self.predictions = [1, 0]
-            self._random_runtime_field = {"seen": True}
-            if hasattr(self, "score_dict") and isinstance(self.score_dict, dict):
-                self.score_dict["runtime"] = 1
-            return {"ok": 1}
-
-        setattr(cls, "__call__", fake_call)
-        try:
-            model.execute_without_mercy()
-        finally:
-            setattr(cls, "__call__", original_call)
-
+        data = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 40,
+                "n_features": 4,
+                "n_informative": 2,
+                "n_redundant": 0,
+            },
+        )
+        data()
+        model(data)
         self.assertEqual(
             original_hash,
             hash(model),

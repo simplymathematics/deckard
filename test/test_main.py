@@ -159,14 +159,18 @@ def test_generate_hydra_main_passes_parser_args_and_hydra_overrides(
 
         return decorator
 
-    monkeypatch.setitem(main_module.layer_dict, "layer", (FakeParser(), fake_main_fn))
+    monkeypatch.setitem(
+        main_module.layer_dict, "layer", (FakeParser(), fake_main_fn)
+    )
     monkeypatch.setattr(main_module.hydra, "main", fake_hydra_main)
     monkeypatch.setattr(
         main_module,
         "get_configuration_paths",
         lambda: (None, None),
     )
-    monkeypatch.setattr(sys, "argv", ["deckard", "--alpha", "cli", "alpha=hydra"])
+    monkeypatch.setattr(
+        sys, "argv", ["deckard", "--alpha", "cli", "alpha=hydra"]
+    )
 
     result = main_module.generate_hydra_main("layer")
 
@@ -226,7 +230,9 @@ def test_generate_hydra_main_forwards_hydra_multirun_flag(
 
         return decorator
 
-    monkeypatch.setitem(main_module.layer_dict, "layer", (FakeParser(), fake_main_fn))
+    monkeypatch.setitem(
+        main_module.layer_dict, "layer", (FakeParser(), fake_main_fn)
+    )
     monkeypatch.setattr(main_module.hydra, "main", fake_hydra_main)
     monkeypatch.setattr(
         main_module,
@@ -242,7 +248,12 @@ def test_generate_hydra_main_forwards_hydra_multirun_flag(
     result = main_module.generate_hydra_main("layer")
 
     assert result == "ok"
-    assert seen["argv_to_parser"] == ["--alpha", "cli", "--multirun", "alpha=hydra"]
+    assert seen["argv_to_parser"] == [
+        "--alpha",
+        "cli",
+        "--multirun",
+        "alpha=hydra",
+    ]
     assert sys.argv == ["deckard", "--multirun", "alpha=hydra"]
     assert seen["kwargs"]["alpha"] == "hydra"
     assert seen["kwargs"]["multirun"] is True

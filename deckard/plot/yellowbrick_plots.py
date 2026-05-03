@@ -314,7 +314,10 @@ class YellowbrickPlotConfig(ConfigBase):
             test and attack
         ), "Cannot load both test and attack data simultaneously"
         X, y = self.experiment.data.X_train, self.experiment.data.y_train
-        X_test, y_test = self.experiment.data.X_test, self.experiment.data.y_test
+        X_test, y_test = (
+            self.experiment.data.X_test,
+            self.experiment.data.y_test,
+        )
         if self.classes == "all":
             classes = np.unique(y)
         else:
@@ -338,7 +341,9 @@ class YellowbrickPlotConfig(ConfigBase):
         if attack:
             X_attack, y_attack = (
                 self.experiment.attack.attack,
-                self.experiment.data.y_train[: self.experiment.attack.attack_size],
+                self.experiment.data.y_train[
+                    : self.experiment.attack.attack_size
+                ],
             )
             return X_attack, y_attack, classes, features
         if not test:
@@ -394,7 +399,9 @@ class YellowbrickPlotConfig(ConfigBase):
             visualizer = JointPlotVisualizer(**self.plot_params, ax=ax)
             visualizer.fit_transform(X, y)
         elif self.plot_type == "pca":
-            visualizer = PCADecomposition(classes=classes, **self.plot_params, ax=ax)
+            visualizer = PCADecomposition(
+                classes=classes, **self.plot_params, ax=ax
+            )
             visualizer.fit_transform(X, y)
         elif self.plot_type == "manifold":
             visualizer = Manifold(
@@ -464,7 +471,9 @@ class YellowbrickPlotConfig(ConfigBase):
             visualizer.fit(X, y)
             visualizer.score(X_test, y_test)
         elif self.plot_type == "roc_auc":
-            visualizer = ROCAUC(model, classes=classes, **self.plot_params, ax=ax)
+            visualizer = ROCAUC(
+                model, classes=classes, **self.plot_params, ax=ax
+            )
             visualizer.fit(X, y)
             visualizer.score(X_test, y_test)
         elif self.plot_type == "precision_recall_curve":
@@ -486,7 +495,9 @@ class YellowbrickPlotConfig(ConfigBase):
             visualizer.fit(X, y)
             visualizer.score(X_test, y_test)
         elif self.plot_type == "discrimination_threshold":
-            visualizer = DiscriminationThreshold(model, **self.plot_params, ax=ax)
+            visualizer = DiscriminationThreshold(
+                model, **self.plot_params, ax=ax
+            )
             visualizer.fit(X, y)
             visualizer.score(X_test, y_test)
         else:
@@ -546,7 +557,9 @@ class YellowbrickPlotConfig(ConfigBase):
         else:
             raise ValueError(f"Unsupported plot type: {self.plot_type}")
         self.show(visualizer)
-        logger.info(f"Yellowbrick model selection plot saved to {self.save_path}")
+        logger.info(
+            f"Yellowbrick model selection plot saved to {self.save_path}"
+        )
 
     def parse_cv(self):
         assert (
@@ -592,7 +605,9 @@ class YellowbrickPlotConfig(ConfigBase):
                     num=num,
                 )
             elif param_range[2] == "linear":
-                param_range = np.linspace(param_range[0], param_range[1], num=num)
+                param_range = np.linspace(
+                    param_range[0], param_range[1], num=num
+                )
             elif isinstance(param_range[2], (int, float)):
                 steps = int((param_range[1] - param_range[0]) // param_range[2])
                 param_range = np.linspace(
@@ -602,7 +617,9 @@ class YellowbrickPlotConfig(ConfigBase):
                     dtype=type(param_range[2]),
                 )
             else:
-                raise ValueError("Distribution must be either 'log' or 'linear'")
+                raise ValueError(
+                    "Distribution must be either 'log' or 'linear'"
+                )
         # Always return as list for compatibility
         return (
             param_range.tolist()
@@ -639,7 +656,9 @@ class YellowbrickPlotConfig(ConfigBase):
             raise ValueError(f"Unsupported plot type: {self.plot_type}")
 
     def show(self, visualizer):
-        assert hasattr(visualizer, "show"), "Visualizer does not have a show method"
+        assert hasattr(
+            visualizer, "show"
+        ), "Visualizer does not have a show method"
         assert isinstance(
             visualizer,
             tuple(all_viz_objects),
@@ -668,7 +687,9 @@ class YellowbrickConfigList(ConfigBase):
     """
 
     experiment: ExperimentConfig
-    plots: Union[Dict[str, YellowbrickPlotConfig], Literal["all"], List[str]] = "all"
+    plots: Union[
+        Dict[str, YellowbrickPlotConfig], Literal["all"], List[str]
+    ] = "all"
     plot_folder: Optional[str] = None
     rc_config: Dict[str, Any] = field(default_factory=dict)
 
@@ -697,7 +718,10 @@ class YellowbrickConfigList(ConfigBase):
         if plot_type == "jointplot":
             x_train = getattr(self.experiment.data, "X_train", None)
             if hasattr(x_train, "columns") and len(x_train.columns) >= 2:
-                plot_params["columns"] = [x_train.columns[0], x_train.columns[1]]
+                plot_params["columns"] = [
+                    x_train.columns[0],
+                    x_train.columns[1],
+                ]
 
         return {
             "features": "all",
@@ -802,5 +826,7 @@ class YellowbrickConfigList(ConfigBase):
                 )
                 plot_cfg()
             except Exception:
-                logger.exception("Failed to generate plot %s", plot_cfg.plot_type)
+                logger.exception(
+                    "Failed to generate plot %s", plot_cfg.plot_type
+                )
         return scores

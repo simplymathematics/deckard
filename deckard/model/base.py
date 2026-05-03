@@ -184,7 +184,9 @@ class ModelConfig(ConfigBase):
     training_probabilities: Any = None
     probabilities: Any = None
     _target_: Union[str, None] = None
-    _plugin_objects: Union[list, None] = field(default=None, repr=False, compare=False)
+    _plugin_objects: Union[list, None] = field(
+        default=None, repr=False, compare=False
+    )
     _defense_pipeline: Any = field(default=None, repr=False, compare=False)
 
     def __post_init__(self):
@@ -283,8 +285,7 @@ class ModelConfig(ConfigBase):
             ), f"model_params must be a dict if model does not have get_params method. Got {type(self.model_params)}"
         if hasattr(self._model, "predict_proba"):
             self.probability = True
-    
-        
+
     def __hash__(self):
         return super().__hash__()
 
@@ -293,7 +294,9 @@ class ModelConfig(ConfigBase):
             spec = dict(plugin_spec)
             class_path = spec.pop("name", spec.pop("_target_", None))
             if class_path is None:
-                raise ValueError("Plugin dict must include 'name' or '_target_'")
+                raise ValueError(
+                    "Plugin dict must include 'name' or '_target_'"
+                )
             return load_class(class_path, **spec)
 
         if isinstance(plugin_spec, str):
@@ -308,7 +311,9 @@ class ModelConfig(ConfigBase):
         if self._plugin_objects is None:
             plugin_specs = self.plugins if self.plugins is not None else []
             if not isinstance(plugin_specs, list):
-                raise TypeError(f"plugins must be a list, got {type(plugin_specs)}")
+                raise TypeError(
+                    f"plugins must be a list, got {type(plugin_specs)}"
+                )
             self._plugin_objects = [
                 self._instantiate_plugin(spec) for spec in plugin_specs
             ]
@@ -360,8 +365,7 @@ class ModelConfig(ConfigBase):
         self.defense = DefensePipelineConfig.coerce(self.defense)
         self._defense_pipeline = self.defense
         return self._defense_pipeline
-    
-    
+
     def get_art_class(self, data):
 
         art_class = (
@@ -374,7 +378,9 @@ class ModelConfig(ConfigBase):
         else:
             init_params = {
                 "input_shape": data.X_train.shape[1:],
-                "nb_classes": len(set(data.y_train)) if self.classifier else None,
+                "nb_classes": (
+                    len(set(data.y_train)) if self.classifier else None
+                ),
             }
         if "preprocessing" not in init_params:
             init_params["preprocessing"] = None
@@ -514,11 +520,17 @@ class ModelConfig(ConfigBase):
             if y_pred_array.ndim == 2 and y_pred_array.shape[1] > 1:
                 row_sums = np.sum(y_pred_array, axis=1)
                 invalid_matrix = (
-                    np.isfinite(y_pred_array).all() and np.allclose(y_pred_array, 1.0)
-                ) or (np.isfinite(row_sums).all() and np.all(row_sums > 1.0 + 1e-8))
+                    np.isfinite(y_pred_array).all()
+                    and np.allclose(y_pred_array, 1.0)
+                ) or (
+                    np.isfinite(row_sums).all()
+                    and np.all(row_sums > 1.0 + 1e-8)
+                )
                 if invalid_matrix:
                     base_model = getattr(self._model, "model", None)
-                    if base_model is not None and hasattr(base_model, "predict"):
+                    if base_model is not None and hasattr(
+                        base_model, "predict"
+                    ):
                         logger.warning(
                             "Detected invalid classifier prediction matrix from wrapped model; "
                             "falling back to underlying estimator predictions.",
@@ -551,7 +563,9 @@ class ModelConfig(ConfigBase):
 
         return y_proba
 
-    def _classification_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
+    def _classification_scores(
+        self, y_true: pd.Series, y_pred: pd.Series
+    ) -> dict:
         """
         Computes classification metrics including accuracy, precision, recall, and F1-score.
 
@@ -572,7 +586,9 @@ class ModelConfig(ConfigBase):
             AssertionError: If y_true and y_pred do not have the same length.
         """
         # Ensure that y_true and y_pred have the same length
-        assert len(y_true) == len(y_pred), "y_true and y_pred must have the same length"
+        assert len(y_true) == len(
+            y_pred
+        ), "y_true and y_pred must have the same length"
         # Ensure that y_true.shape and y_pred.shape are compatible
         y_true_arr = np.asarray(y_true)
         y_pred_arr = np.asarray(y_pred)
@@ -586,7 +602,10 @@ class ModelConfig(ConfigBase):
                 # Handle binary models that emit a single score/probability column.
                 binary_scores = y_pred_arr.reshape(-1)
                 threshold = 0.5
-                if np.nanmin(binary_scores) < 0.0 or np.nanmax(binary_scores) > 1.0:
+                if (
+                    np.nanmin(binary_scores) < 0.0
+                    or np.nanmax(binary_scores) > 1.0
+                ):
                     threshold = 0.0
                 classes = np.unique(y_true_arr[~pd.isna(y_true_arr)])
                 if len(classes) == 2 and np.issubdtype(
@@ -596,7 +615,9 @@ class ModelConfig(ConfigBase):
                     sorted_classes = np.sort(np.asarray(classes, dtype=float))
                     low_label = sorted_classes[0]
                     high_label = sorted_classes[1]
-                    y_pred = np.where(binary_scores >= threshold, high_label, low_label)
+                    y_pred = np.where(
+                        binary_scores >= threshold, high_label, low_label
+                    )
                 else:
                     y_pred = (binary_scores >= threshold).astype(int)
             else:
@@ -624,7 +645,9 @@ class ModelConfig(ConfigBase):
                 average="weighted",
                 zero_division=0,
             )
-            recall = recall_score(y_true, y_pred, average="weighted", zero_division=0)
+            recall = recall_score(
+                y_true, y_pred, average="weighted", zero_division=0
+            )
             f1 = f1_score(y_true, y_pred, average="weighted", zero_division=0)
 
         except Exception as e:
@@ -669,7 +692,9 @@ class ModelConfig(ConfigBase):
             AssertionError: If y_true and y_pred do not have the same length.
         """
         # Ensure that y_true and y_pred have the same length
-        assert len(y_true) == len(y_pred), "y_true and y_pred must have the same length"
+        assert len(y_true) == len(
+            y_pred
+        ), "y_true and y_pred must have the same length"
         mse = ((y_true - y_pred) ** 2).mean()
         rmse = mse**0.5
         mae = np.abs(y_true - y_pred).mean()
@@ -690,7 +715,13 @@ class ModelConfig(ConfigBase):
         }
         return scores
 
-    def _score(self, y_true: pd.Series, y_pred: pd.Series, mode: str = "test", **kwargs) -> dict:
+    def _score(
+        self,
+        y_true: pd.Series,
+        y_pred: pd.Series,
+        mode: str = "test",
+        **kwargs,
+    ) -> dict:
         """
         Compute and log performance scores for classification or regression.
 
@@ -717,7 +748,9 @@ class ModelConfig(ConfigBase):
                 f"ModelConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
         scores = self.scorer(y_true=y_true, y_pred=y_pred, mode=mode, **kwargs)
-        return round_scores(scores=scores, n_samples=len(y_true), logger_obj=logger)
+        return round_scores(
+            scores=scores, n_samples=len(y_true), logger_obj=logger
+        )
 
     def _decode_predictions_for_persistence(self, y_pred, y_true=None):
         """Persist classifier outputs with explicit probability-vs-label behavior."""
@@ -744,7 +777,9 @@ class ModelConfig(ConfigBase):
                     sorted_classes = np.sort(np.asarray(classes, dtype=float))
                     low_label = sorted_classes[0]
                     high_label = sorted_classes[1]
-                    return np.where(binary_scores >= threshold, high_label, low_label)
+                    return np.where(
+                        binary_scores >= threshold, high_label, low_label
+                    )
             return (binary_scores >= threshold).astype(int)
 
         return np.argmax(y_pred_arr, axis=1)
@@ -768,7 +803,9 @@ class ModelConfig(ConfigBase):
         """
         try:
             predictions = self.load_data(filepath)
-            if not isinstance(predictions, (pd.Series, pd.DataFrame, np.ndarray, list)):
+            if not isinstance(
+                predictions, (pd.Series, pd.DataFrame, np.ndarray, list)
+            ):
                 raise ValueError("Loaded predictions are not in a valid format")
             logger.info(f"Predictions loaded from {filepath}")
         except FileNotFoundError:
@@ -826,7 +863,10 @@ class ModelConfig(ConfigBase):
             If training or prediction time is not set when corresponding predictions are loaded.
         """
         # Load the training predictions if provided
-        if train_predictions_file is not None and Path(train_predictions_file).exists():
+        if (
+            train_predictions_file is not None
+            and Path(train_predictions_file).exists()
+        ):
             self.training_predictions = self._load_predictions(
                 train_predictions_file,
             )
@@ -837,7 +877,10 @@ class ModelConfig(ConfigBase):
             times["training_n"] = len(self.training_predictions)
 
         # Load the predictions if provided
-        if test_predictions_file is not None and Path(test_predictions_file).exists():
+        if (
+            test_predictions_file is not None
+            and Path(test_predictions_file).exists()
+        ):
             self.predictions = self._load_predictions(test_predictions_file)
             assert (
                 self.prediction_time is not None
@@ -868,7 +911,9 @@ class ModelConfig(ConfigBase):
         times = {}
         if score_file is not None and Path(score_file).exists():
             new_score_dict = self.load_scores(score_file)
-            old_score_dict = self.score_dict if self.score_dict is not None else {}
+            old_score_dict = (
+                self.score_dict if self.score_dict is not None else {}
+            )
             # Update old_score_dict with new_score_dict
             score_dict = {**old_score_dict, **new_score_dict}
             # pop keys ending with _time and add to times dict
@@ -981,7 +1026,8 @@ class ModelConfig(ConfigBase):
             times,
             persist_training_predictions=train_predictions_file is not None,
             persist_test_predictions=test_predictions_file is not None,
-            persist_training_probabilities=training_probabilities_file is not None,
+            persist_training_probabilities=training_probabilities_file
+            is not None,
             persist_test_probabilities=test_probabilities_file is not None,
         )
         hook_outputs = self._run_plugin_hook(
@@ -1002,7 +1048,10 @@ class ModelConfig(ConfigBase):
             test_probabilities_file=test_probabilities_file,
             score_file=score_file,
         )
-        if train_predictions_file is not None and self.training_predictions is not None:
+        if (
+            train_predictions_file is not None
+            and self.training_predictions is not None
+        ):
             self.save_data(
                 self.training_predictions,
                 train_predictions_file,
@@ -1013,8 +1062,13 @@ class ModelConfig(ConfigBase):
             training_probabilities_file is not None
             and self.training_probabilities is not None
         ):
-            self.save_data(self.training_probabilities, training_probabilities_file)
-        if test_probabilities_file is not None and self.probabilities is not None:
+            self.save_data(
+                self.training_probabilities, training_probabilities_file
+            )
+        if (
+            test_probabilities_file is not None
+            and self.probabilities is not None
+        ):
             self.save_data(self.probabilities, test_probabilities_file)
         if score_file is not None:
             self.save_scores(self.score_dict, score_file)
@@ -1088,7 +1142,9 @@ class ModelConfig(ConfigBase):
                     None,
                 )
                 if self.defense_application_time is not None:
-                    times["defense_application_time"] = self.defense_application_time
+                    times["defense_application_time"] = (
+                        self.defense_application_time
+                    )
                 if getattr(defense_pipeline, "score_dict", None):
                     if self.score_dict is None:
                         self.score_dict = {}
@@ -1106,29 +1162,39 @@ class ModelConfig(ConfigBase):
             times["training_prediction_time"] = self.training_prediction_time
             times["training_n"] = len(train_predictions)
             if persist_training_predictions:
-                self.training_predictions = self._decode_predictions_for_persistence(
-                    train_predictions,
-                    y_true=data.y_train,
+                self.training_predictions = (
+                    self._decode_predictions_for_persistence(
+                        train_predictions,
+                        y_true=data.y_train,
+                    )
                 )
             if persist_training_probabilities and self.classifier:
                 try:
                     if hasattr(self._model, "predict_proba"):
                         try:
-                            self.training_probabilities = self._model.predict_proba(
-                                data.X_train,
+                            self.training_probabilities = (
+                                self._model.predict_proba(
+                                    data.X_train,
+                                )
                             )
                         except TypeError as e:
                             if "loop of ufunc does not support argument" in str(
                                 e,
                             ) or "can't convert" in str(e):
-                                X_array = np.array(data.X_train, dtype=ART_NUMPY_DTYPE)
-                                self.training_probabilities = self._model.predict_proba(
-                                    X_array,
+                                X_array = np.array(
+                                    data.X_train, dtype=ART_NUMPY_DTYPE
+                                )
+                                self.training_probabilities = (
+                                    self._model.predict_proba(
+                                        X_array,
+                                    )
                                 )
                             else:
                                 raise e
                     else:
-                        self.training_probabilities = self._predict(data.X_train)
+                        self.training_probabilities = self._predict(
+                            data.X_train
+                        )
                 except ValueError as e:
                     logger.warning(
                         "Skipping training probability persistence: %s",
@@ -1150,7 +1216,8 @@ class ModelConfig(ConfigBase):
                 self.training_score_time = time.process_time() - start
                 # Prefix training scores with 'train_'
                 train_scores = {
-                    f"training_{key}": value for key, value in train_scores.items()
+                    f"training_{key}": value
+                    for key, value in train_scores.items()
                 }
                 if "training_loss_curve" in train_scores:
                     del train_scores["training_loss_curve"]
@@ -1187,15 +1254,21 @@ class ModelConfig(ConfigBase):
                                     data.X_test,
                                 )
                             except TypeError as e:
-                                if "loop of ufunc does not support argument" in str(
-                                    e,
-                                ) or "can't convert" in str(e):
+                                if (
+                                    "loop of ufunc does not support argument"
+                                    in str(
+                                        e,
+                                    )
+                                    or "can't convert" in str(e)
+                                ):
                                     X_array = np.array(
                                         data.X_test,
                                         dtype=ART_NUMPY_DTYPE,
                                     )
-                                    self.probabilities = self._model.predict_proba(
-                                        X_array,
+                                    self.probabilities = (
+                                        self._model.predict_proba(
+                                            X_array,
+                                        )
                                     )
                                 else:
                                     raise e
@@ -1267,7 +1340,9 @@ class ModelConfig(ConfigBase):
                 wrapped = getattr(estimator, attr, None)
                 if wrapped is None or wrapped is estimator:
                     continue
-                if _is_model_fitted(wrapped, X_sample=X_sample, depth=depth + 1):
+                if _is_model_fitted(
+                    wrapped, X_sample=X_sample, depth=depth + 1
+                ):
                     return True
 
             for attr in ["is_fitted_", "fitted", "_is_fitted"]:
@@ -1298,7 +1373,9 @@ class ModelConfig(ConfigBase):
                 )
             case _, _:  # Model and/or filepath provided
                 if model_file is not None and Path(model_file).exists():
-                    logger.info(f"Model file {model_file} exists. Loading model.")
+                    logger.info(
+                        f"Model file {model_file} exists. Loading model."
+                    )
                     self = self.load(model_file)
                     if _is_model_fitted(self._model, X_sample=data.X_train):
                         logger.info("Model loaded and is fitted.")
@@ -1306,7 +1383,9 @@ class ModelConfig(ConfigBase):
                         logger.warning(
                             "Loaded model is not fitted. Training a new model.",
                         )
-                        logger.info(f"Training model on {len(data.y_train)} samples...")
+                        logger.info(
+                            f"Training model on {len(data.y_train)} samples..."
+                        )
                         self._train(data.X_train, data.y_train)
                         assert hasattr(
                             self,
@@ -1319,7 +1398,9 @@ class ModelConfig(ConfigBase):
                         # Save the newly trained mode
                 else:
                     # train the model if no model exists at the filepath
-                    logger.info(f"Training model on {len(data.y_train)} samples...")
+                    logger.info(
+                        f"Training model on {len(data.y_train)} samples..."
+                    )
                     model_is_fitted = _is_model_fitted(
                         self._model,
                         X_sample=data.X_train,
@@ -1346,5 +1427,7 @@ class ModelConfig(ConfigBase):
             if stage == "post_fit_pre_predict":
                 self._model = self._apply_defense(data)
                 if getattr(self, "defense_application_time", None) is not None:
-                    times["defense_application_time"] = self.defense_application_time
+                    times["defense_application_time"] = (
+                        self.defense_application_time
+                    )
         return times

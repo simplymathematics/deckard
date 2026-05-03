@@ -161,11 +161,22 @@ def calculate_rectangular_distance_matrix(
             Cx_i = Cx[i]
             Cy_j = Cy[j]
             queue.append(
-                (x, y, Cx_i, Cy_j, metric, sorting_hack, zero_hack, average_hack),
+                (
+                    x,
+                    y,
+                    Cx_i,
+                    Cy_j,
+                    metric,
+                    sorting_hack,
+                    zero_hack,
+                    average_hack,
+                ),
             )
     distances = Parallel(n_jobs=-1)(
         delayed(distance_helper)(*args)
-        for args in tqdm(queue, total=n * m, desc="Calculating distances.", leave=False)
+        for args in tqdm(
+            queue, total=n * m, desc="Calculating distances.", leave=False
+        )
     )
     # Reformat the distances into a matrix
     distances = np.array(distances).reshape(n, m)
@@ -182,7 +193,9 @@ def calculate_lower_triangular_distance_matrix(
 ):
     n = len(X)
     m = len(Y)
-    assert m == n, "Lower triangular matrix can only be calculated for square matrices"
+    assert (
+        m == n
+    ), "Lower triangular matrix can only be calculated for square matrices"
     if metric in compressors:
         Cx = [compressors[metric](x) for x in X]
         Cy = [compressors[metric](y) for y in Y]
@@ -197,11 +210,22 @@ def calculate_lower_triangular_distance_matrix(
             Cx_i = Cx[i]
             Cy_j = Cy[j]
             queue.append(
-                (x, y, Cx_i, Cy_j, metric, sorting_hack, zero_hack, average_hack),
+                (
+                    x,
+                    y,
+                    Cx_i,
+                    Cy_j,
+                    metric,
+                    sorting_hack,
+                    zero_hack,
+                    average_hack,
+                ),
             )
     distances = Parallel(n_jobs=-1)(
         delayed(distance_helper)(*args)
-        for args in tqdm(queue, total=n * m, desc="Calculating distances.", leave=False)
+        for args in tqdm(
+            queue, total=n * m, desc="Calculating distances.", leave=False
+        )
     )
     # get lower triangular indices
     indices = np.tril_indices(n)
@@ -212,7 +236,10 @@ def calculate_lower_triangular_distance_matrix(
     mtx = mtx + mtx.T - old_diag
     new_diag = np.diag(np.diag(mtx))
     assert np.all(new_diag == old_diag), "Diagonal elements have changed"
-    assert mtx.shape == (n, m), f"Matrix shape is {mtx.shape} but should be {(n, m)}"
+    assert mtx.shape == (
+        n,
+        m,
+    ), f"Matrix shape is {mtx.shape} but should be {(n, m)}"
 
     return mtx
 
@@ -227,7 +254,9 @@ def calculate_upper_triangular_distance_matrix(
 ):
     n = len(X)
     m = len(Y)
-    assert m == n, "Upper triangular matrix can only be calculated for square matrices"
+    assert (
+        m == n
+    ), "Upper triangular matrix can only be calculated for square matrices"
     if metric in compressors:
         Cx = [compressors[metric](x) for x in X]
         Cy = [compressors[metric](y) for y in Y]
@@ -242,11 +271,22 @@ def calculate_upper_triangular_distance_matrix(
             Cx_i = Cx[i]
             Cy_j = Cy[j]
             queue.append(
-                (x, y, Cx_i, Cy_j, metric, sorting_hack, zero_hack, average_hack),
+                (
+                    x,
+                    y,
+                    Cx_i,
+                    Cy_j,
+                    metric,
+                    sorting_hack,
+                    zero_hack,
+                    average_hack,
+                ),
             )
     distances = Parallel(n_jobs=-1)(
         delayed(distance_helper)(*args)
-        for args in tqdm(queue, total=n * m, desc="Calculating distances.", leave=False)
+        for args in tqdm(
+            queue, total=n * m, desc="Calculating distances.", leave=False
+        )
     )
     # Reformat the distances into a matrix
     mtx = np.zeros((n, m))
@@ -258,7 +298,10 @@ def calculate_upper_triangular_distance_matrix(
     mtx = mtx + mtx.T - old_diag
     new_diag = np.diag(np.diag(mtx))
     assert np.all(new_diag == old_diag), "Diagonal elements have changed"
-    assert mtx.shape == (n, m), f"Matrix shape is {mtx.shape} but should be {(n, m)}"
+    assert mtx.shape == (
+        n,
+        m,
+    ), f"Matrix shape is {mtx.shape} but should be {(n, m)}"
     return mtx
 
 
@@ -314,10 +357,14 @@ class StringDistanceTransformer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         X = np.array([str(x) for x in X])
         if self.lower_triangle:
-            self.calculate_fit_matrix = calculate_lower_triangular_distance_matrix
+            self.calculate_fit_matrix = (
+                calculate_lower_triangular_distance_matrix
+            )
             self.lower_triangle = True
         elif self.upper_triangle:
-            self.calculate_fit_matrix = calculate_upper_triangular_distance_matrix
+            self.calculate_fit_matrix = (
+                calculate_upper_triangular_distance_matrix
+            )
             self.upper_triangle = True
         else:
             self.calculate_fit_matrix = calculate_rectangular_distance_matrix
@@ -392,7 +439,9 @@ class DistanceMatrixKernelizer(BaseEstimator, TransformerMixin):
         self.form = form
         if self.form in ["multiquadric", "quadratic"]:
             if degree != 2:
-                logger.warning(f"Degree must be 2 for {form} form. Setting degree to 2")
+                logger.warning(
+                    f"Degree must be 2 for {form} form. Setting degree to 2"
+                )
             self.degree = 2
         else:
             self.degree = degree
@@ -403,7 +452,9 @@ class DistanceMatrixKernelizer(BaseEstimator, TransformerMixin):
             self.kernel_function = lambda x: np.exp(x**self.degree / self.gamma)
         elif self.form == "exp_neg":
             assert self.coef0 == 0, "coef0 must be 0 for exp_neg form"
-            self.kernel_function = lambda x: np.exp(-(x**self.degree) / self.gamma)
+            self.kernel_function = lambda x: np.exp(
+                -(x**self.degree) / self.gamma
+            )
         elif self.form == "poly":
             self.kernel_function = (
                 lambda x: (self.gamma * x + self.coef0) ** self.degree

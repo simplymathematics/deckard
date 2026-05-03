@@ -8,12 +8,17 @@ import pandas as pd
 from art.config import ART_NUMPY_DTYPE
 from fairlearn.metrics import MetricFrame
 from sklearn.base import BaseEstimator
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+)
 
 from .base import ModelConfig, logger
 from .defend import DefenseConfig
 from ..data.fairness import FairlearnDataConfig
-from ..utils import ConfigBase, load_class, resolve_class
+from ..utils import ConfigBase, load_class, resolve_class, resolve_torch_device
 
 ScorerDictConfig = Any
 
@@ -61,7 +66,9 @@ class _FairnessBehaviorMixin:
         if len(sensitive_series) == 0:
             raise ValueError(f"Sensitive features are empty during {context}")
         if sensitive_series.dropna().empty:
-            raise ValueError(f"Sensitive features are all null during {context}")
+            raise ValueError(
+                f"Sensitive features are all null during {context}"
+            )
         if sensitive_series.astype(str).str.strip().eq("").all():
             raise ValueError(f"Sensitive features are blank during {context}")
         return sensitive_series
@@ -81,8 +88,12 @@ class _FairnessBehaviorMixin:
             if batch is split_data:
                 return split_name
             split_index = getattr(split_data, "index", None)
-            if batch_index is not None and split_index is not None and batch_index.equals(
-                split_index,
+            if (
+                batch_index is not None
+                and split_index is not None
+                and batch_index.equals(
+                    split_index,
+                )
             ):
                 return split_name
         return None
@@ -119,12 +130,16 @@ class _FairnessBehaviorMixin:
             params = inspect.signature(method).parameters
             if "sensitive_features" in params:
                 return True
-            return any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values())
+            return any(
+                p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()
+            )
         except (TypeError, ValueError):
             return False
 
     def _call_with_optional_sensitive(self, method, X, sensitive):
-        if sensitive is not None and self._method_accepts_sensitive_features(method):
+        if sensitive is not None and self._method_accepts_sensitive_features(
+            method
+        ):
             return method(X, sensitive_features=sensitive)
         return method(X)
 
@@ -135,36 +150,31 @@ class _FairnessBehaviorMixin:
         if getattr(self, "data", None) is None:
             self.data = data
 
-        sensitive = self._resolve_sensitive_features_for_batch(data.y_train, split="train")
+        sensitive = self._resolve_sensitive_features_for_batch(
+            data.y_train,
+            split="train",
+        )
         fit_method = defended_estimator.fit
-        if sensitive is not None and self._method_accepts_sensitive_features(fit_method):
-            sensitive_arg = sensitive.to_numpy() if hasattr(sensitive, "to_numpy") else sensitive
-            fit_method(data.X_train, data.y_train, sensitive_features=sensitive_arg)
+        if sensitive is not None and self._method_accepts_sensitive_features(
+            fit_method,
+        ):
+            sensitive_arg = (
+                sensitive.to_numpy()
+                if hasattr(sensitive, "to_numpy")
+                else sensitive
+            )
+            fit_method(
+                data.X_train, data.y_train, sensitive_features=sensitive_arg
+            )
         else:
             fit_method(data.X_train, data.y_train)
         return defended_estimator
 
     def _resolve_torch_device(self, requested_device):
         try:
-            import torch
-        except ImportError:
+            return resolve_torch_device(requested_device)
+        except Exception:
             return None
-
-        requested = str(requested_device).strip().lower()
-        if requested.startswith("mps"):
-            mps_available = bool(
-                hasattr(torch.backends, "mps") and torch.backends.mps.is_available(),
-            )
-            if not mps_available:
-                logger.warning("MPS requested for fairlearn model, but unavailable; using CPU")
-                return torch.device("cpu")
-            return torch.device("mps")
-        if requested.startswith("cuda"):
-            if not torch.cuda.is_available():
-                logger.warning("CUDA requested for fairlearn model, but unavailable; using CPU")
-                return torch.device("cpu")
-            return torch.device(requested)
-        return torch.device(requested)
 
     def _move_torch_model_to_device(self, model_obj, requested_device):
         if requested_device is None:
@@ -197,7 +207,10 @@ class _FairnessBehaviorMixin:
                 return spec.get_model()
             except Exception:
                 pass
-        if hasattr(spec, "_model") and getattr(spec, "_model", None) is not None:
+        if (
+            hasattr(spec, "_model")
+            and getattr(spec, "_model", None) is not None
+        ):
             return getattr(spec, "_model")
         if isinstance(spec, dict):
             if "model_type" in spec:
@@ -211,7 +224,10 @@ class _FairnessBehaviorMixin:
                     )
                     return model_obj
             if "name" in spec:
-                spec = {"_target_": spec["name"], **{k: v for k, v in spec.items() if k != "name"}}
+                spec = {
+                    "_target_": spec["name"],
+                    **{k: v for k, v in spec.items() if k != "name"},
+                }
             if "_target_" in spec:
                 target = spec.get("_target_")
                 kwargs = {k: v for k, v in spec.items() if k != "_target_"}
@@ -290,7 +306,9 @@ class _FairnessBehaviorMixin:
                     return out
                 if out.ndim == 2 and out.shape[1] >= 2:
                     return out[:, 1:2]
-                raise ValueError(f"Unsupported predictor output shape for fairness: {out.shape}")
+                raise ValueError(
+                    f"Unsupported predictor output shape for fairness: {out.shape}",
+                )
 
         return _BinaryLogitAdapter(predictor_model)
 
@@ -309,7 +327,9 @@ class _FairnessBehaviorMixin:
     def _apply_fairlearn_defense(self, data):
         defense_name, defense_params = self._resolve_fairness_defense_spec()
         if not defense_name or not defense_name.startswith("fairlearn."):
-            raise ValueError("Fairlearn defense helper requires a fairlearn defense_name")
+            raise ValueError(
+                "Fairlearn defense helper requires a fairlearn defense_name",
+            )
 
         if getattr(self, "data", None) is None:
             self.data = data
@@ -350,7 +370,11 @@ class _FairnessBehaviorMixin:
                 raise ValueError(
                     "fairlearn.reductions defenses require a 'constraints' key in defense parameters",
                 )
-            defended_estimator = defense_class(base_estimator, constraints, **defense_params)
+            defended_estimator = defense_class(
+                base_estimator,
+                constraints,
+                **defense_params,
+            )
         elif fairlearn_submodule == "postprocessing":
             if constraints is not None:
                 defended_estimator = defense_class(
@@ -368,7 +392,9 @@ class _FairnessBehaviorMixin:
                 defense_params.pop("predictor_model", None),
                 fallback=base_estimator,
             )
-            predictor_model = self._adapt_binary_torch_predictor(predictor_model, data)
+            predictor_model = self._adapt_binary_torch_predictor(
+                predictor_model, data
+            )
             adversary_model = self._resolve_fairlearn_model_param(
                 defense_params.pop("adversary_model", None),
                 fallback=base_estimator,
@@ -384,7 +410,9 @@ class _FairnessBehaviorMixin:
 
         self._apply_fit = True
         if self._apply_fit:
-            defended_estimator = self._fit_defended_estimator(defended_estimator, data)
+            defended_estimator = self._fit_defended_estimator(
+                defended_estimator, data
+            )
         self.defense_application_time = time.process_time() - start
         return defended_estimator
 
@@ -411,11 +439,19 @@ class _FairnessBehaviorMixin:
             raise ValueError("Model not initialized")
         sensitive = self._resolve_sensitive_features_for_batch(X, split="test")
         try:
-            return self._call_with_optional_sensitive(self._model.predict, X, sensitive)
+            return self._call_with_optional_sensitive(
+                self._model.predict, X, sensitive
+            )
         except TypeError as exc:
-            if "loop of ufunc does not support argument" in str(exc) or "can't convert" in str(exc):
+            if "loop of ufunc does not support argument" in str(
+                exc,
+            ) or "can't convert" in str(exc):
                 X_array = np.array(X, dtype=ART_NUMPY_DTYPE)
-                return self._call_with_optional_sensitive(self._model.predict, X_array, sensitive)
+                return self._call_with_optional_sensitive(
+                    self._model.predict,
+                    X_array,
+                    sensitive,
+                )
             raise
 
     def _predict_proba(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -424,9 +460,15 @@ class _FairnessBehaviorMixin:
         if not self.probability:
             raise ValueError("Model does not support probability predictions")
         sensitive = self._resolve_sensitive_features_for_batch(X, split="test")
-        return self._call_with_optional_sensitive(self._model.predict_proba, X, sensitive)
+        return self._call_with_optional_sensitive(
+            self._model.predict_proba,
+            X,
+            sensitive,
+        )
 
-    def _resolve_sensitive_features(self, y_true: pd.Series, mode: str = "test"):
+    def _resolve_sensitive_features(
+        self, y_true: pd.Series, mode: str = "test"
+    ):
         if self.data is None:
             return None
 
@@ -435,7 +477,10 @@ class _FairnessBehaviorMixin:
         y_index = getattr(y_true, "index", None)
         scoring_split = self._resolve_scoring_split(mode)
         sensitive = self._resolve_runtime_sensitive_source(scoring_split)
-        sensitive_series = self._validate_sensitive_series(sensitive, "fairness scoring")
+        sensitive_series = self._validate_sensitive_series(
+            sensitive,
+            "fairness scoring",
+        )
         if sensitive_series is None or len(sensitive_series) != y_true_n:
             return None
         if y_index is not None:
@@ -447,7 +492,12 @@ class _FairnessBehaviorMixin:
                 return None
         return sensitive_series.reset_index(drop=True)
 
-    def _compute_sensitive_fairness_scores(self, y_true, y_pred, mode: str = "test") -> dict:
+    def _compute_sensitive_fairness_scores(
+        self,
+        y_true,
+        y_pred,
+        mode: str = "test",
+    ) -> dict:
         sensitive = self._resolve_sensitive_features(y_true, mode=mode)
         if sensitive is None:
             if self.data is not None:
@@ -467,38 +517,67 @@ class _FairnessBehaviorMixin:
                     f"Unsupported prediction shape for fairness scoring: {y_pred_arr.shape}",
                 )
 
-            classes = np.unique(np.asarray(y_true_ref)[~pd.isna(np.asarray(y_true_ref))])
+            classes = np.unique(
+                np.asarray(y_true_ref)[~pd.isna(np.asarray(y_true_ref))],
+            )
             if y_pred_arr.shape[1] == 1:
                 binary_scores = y_pred_arr.reshape(-1)
                 threshold = 0.5
-                if np.nanmin(binary_scores) < 0.0 or np.nanmax(binary_scores) > 1.0:
+                if (
+                    np.nanmin(binary_scores) < 0.0
+                    or np.nanmax(binary_scores) > 1.0
+                ):
                     threshold = 0.0
-                if len(classes) == 2 and np.issubdtype(np.asarray(classes).dtype, np.number):
+                if len(classes) == 2 and np.issubdtype(
+                    np.asarray(classes).dtype,
+                    np.number,
+                ):
                     sorted_classes = np.sort(np.asarray(classes, dtype=float))
                     low_label, high_label = sorted_classes[0], sorted_classes[1]
-                    labels = np.where(binary_scores >= threshold, high_label, low_label)
+                    labels = np.where(
+                        binary_scores >= threshold, high_label, low_label
+                    )
                 else:
                     labels = (binary_scores >= threshold).astype(int)
                 return pd.Series(labels).reset_index(drop=True)
 
             sorted_classes = classes[np.argsort(classes)]
             pred_indices = np.argmax(y_pred_arr, axis=1)
-            return pd.Series(sorted_classes[pred_indices]).reset_index(drop=True)
+            return pd.Series(sorted_classes[pred_indices]).reset_index(
+                drop=True
+            )
 
         y_pred_series = _normalize_pred_labels(y_pred, y_true_series)
         if self.classifier:
             metric_frame = MetricFrame(
                 metrics={
                     "accuracy": accuracy_score,
-                    "precision": lambda yt, yp: precision_score(yt, yp, average="weighted", zero_division=0),
-                    "recall": lambda yt, yp: recall_score(yt, yp, average="weighted", zero_division=0),
-                    "f1-score": lambda yt, yp: f1_score(yt, yp, average="weighted", zero_division=0),
+                    "precision": lambda yt, yp: precision_score(
+                        yt,
+                        yp,
+                        average="weighted",
+                        zero_division=0,
+                    ),
+                    "recall": lambda yt, yp: recall_score(
+                        yt,
+                        yp,
+                        average="weighted",
+                        zero_division=0,
+                    ),
+                    "f1-score": lambda yt, yp: f1_score(
+                        yt,
+                        yp,
+                        average="weighted",
+                        zero_division=0,
+                    ),
                 },
                 y_true=y_true_series,
                 y_pred=y_pred_series,
                 sensitive_features=sensitive,
             )
-            by_group = pd.DataFrame(metric_frame.by_group).to_dict(orient="index")
+            by_group = pd.DataFrame(metric_frame.by_group).to_dict(
+                orient="index"
+            )
             sensitive_scores = {
                 f"{group}_{metric}": float(value)
                 for group, metrics in by_group.items()
@@ -514,14 +593,22 @@ class _FairnessBehaviorMixin:
             sensitive_accuracies = []
             for _, sensitive_df in score_df.groupby("sensitive", sort=False):
                 sensitive_accuracies.append(
-                    float((sensitive_df["y_true"] == sensitive_df["y_pred"]).mean()),
+                    float(
+                        (
+                            sensitive_df["y_true"] == sensitive_df["y_pred"]
+                        ).mean()
+                    ),
                 )
             if sensitive_accuracies:
                 acc_arr = np.asarray(sensitive_accuracies, dtype=float)
                 acc_min = float(np.min(acc_arr))
                 acc_max = float(np.max(acc_arr))
-                sensitive_scores["sensitive_feature_accuracy_difference"] = acc_max - acc_min
-                sensitive_scores["sensitive_feature_accuracy_std"] = float(np.std(acc_arr))
+                sensitive_scores["sensitive_feature_accuracy_difference"] = (
+                    acc_max - acc_min
+                )
+                sensitive_scores["sensitive_feature_accuracy_std"] = float(
+                    np.std(acc_arr),
+                )
                 sensitive_scores["sensitive_feature_accuracy_ratio"] = (
                     acc_min / acc_max
                     if not np.isclose(acc_max, 0.0)
@@ -531,9 +618,15 @@ class _FairnessBehaviorMixin:
 
         metric_frame = MetricFrame(
             metrics={
-                "mse": lambda yt, yp: float(np.mean((np.asarray(yt) - np.asarray(yp)) ** 2)),
-                "rmse": lambda yt, yp: float(np.sqrt(np.mean((np.asarray(yt) - np.asarray(yp)) ** 2))),
-                "mae": lambda yt, yp: float(np.mean(np.abs(np.asarray(yt) - np.asarray(yp)))),
+                "mse": lambda yt, yp: float(
+                    np.mean((np.asarray(yt) - np.asarray(yp)) ** 2),
+                ),
+                "rmse": lambda yt, yp: float(
+                    np.sqrt(np.mean((np.asarray(yt) - np.asarray(yp)) ** 2)),
+                ),
+                "mae": lambda yt, yp: float(
+                    np.mean(np.abs(np.asarray(yt) - np.asarray(yp))),
+                ),
             },
             y_true=y_true_series,
             y_pred=y_pred_series,
@@ -546,21 +639,56 @@ class _FairnessBehaviorMixin:
             for metric, value in metrics.items()
         }
 
-    def _compute_group_fairness_scores(self, y_true, y_pred, mode: str = "test") -> dict:
-        return self._compute_sensitive_fairness_scores(y_true, y_pred, mode=mode)
+    def _compute_group_fairness_scores(
+        self,
+        y_true,
+        y_pred,
+        mode: str = "test",
+    ) -> dict:
+        return self._compute_sensitive_fairness_scores(
+            y_true, y_pred, mode=mode
+        )
 
-    def _score(self, y_true: pd.Series, y_pred: pd.Series, mode: str = "test", **kwargs) -> dict:
+    def _score(
+        self,
+        y_true: pd.Series,
+        y_pred: pd.Series,
+        mode: str = "test",
+        **kwargs,
+    ) -> dict:
         """Thin wrapper: delegate all scoring to configured scorer dict."""
-        return ModelConfig._score(cast(ModelConfig, self), y_true, y_pred, mode=mode, **kwargs)
+        return ModelConfig._score(
+            cast(ModelConfig, self),
+            y_true,
+            y_pred,
+            mode=mode,
+            **kwargs,
+        )
 
-    def _classification_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
-        scores = ModelConfig._classification_scores(cast(ModelConfig, self), y_true, y_pred)
-        scores.update(self._compute_sensitive_fairness_scores(y_true, y_pred, mode="test"))
+    def _classification_scores(
+        self, y_true: pd.Series, y_pred: pd.Series
+    ) -> dict:
+        scores = ModelConfig._classification_scores(
+            cast(ModelConfig, self),
+            y_true,
+            y_pred,
+        )
+        scores.update(
+            self._compute_sensitive_fairness_scores(
+                y_true, y_pred, mode="test"
+            ),
+        )
         return scores
 
     def _regression_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
-        scores = ModelConfig._regression_scores(cast(ModelConfig, self), y_true, y_pred)
-        scores.update(self._compute_sensitive_fairness_scores(y_true, y_pred, mode="test"))
+        scores = ModelConfig._regression_scores(
+            cast(ModelConfig, self), y_true, y_pred
+        )
+        scores.update(
+            self._compute_sensitive_fairness_scores(
+                y_true, y_pred, mode="test"
+            ),
+        )
         return scores
 
 

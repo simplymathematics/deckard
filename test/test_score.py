@@ -2,7 +2,6 @@ import unittest
 import numpy as np
 import pandas as pd
 from hydra.core.config_store import ConfigStore
-from deckard.score.base import ScorerDictConfig, ScorerConfig
 from deckard.score import (
     ScorerConfig,
     ScorerDictConfig,
@@ -26,14 +25,21 @@ from sklearn.metrics import accuracy_score, mean_squared_error, precision_score
 class TestScorerDictConfigMerge(unittest.TestCase):
     """ScorerDictConfig.merge() should union scorer dicts from multiple specs."""
 
-    acc_dict = {"accuracy": {"score_function": "sklearn.metrics.accuracy_score"}}
+    acc_dict = {
+        "accuracy": {"score_function": "sklearn.metrics.accuracy_score"}
+    }
     prec_dict = {
         "precision": {
             "score_function": "sklearn.metrics.precision_score",
             "score_params": {"average": "weighted", "zero_division": 0},
-        }
+        },
     }
-    f1_dict = {"f1": {"score_function": "sklearn.metrics.f1_score", "score_params": {"average": "weighted", "zero_division": 0}}}
+    f1_dict = {
+        "f1": {
+            "score_function": "sklearn.metrics.f1_score",
+            "score_params": {"average": "weighted", "zero_division": 0},
+        },
+    }
 
     def test_merge_two_bare_dicts(self):
         result = ScorerDictConfig.merge([self.acc_dict, self.prec_dict])
@@ -42,8 +48,12 @@ class TestScorerDictConfigMerge(unittest.TestCase):
         self.assertIn("precision", result.scorers)
 
     def test_merge_three_dicts(self):
-        result = ScorerDictConfig.merge([self.acc_dict, self.prec_dict, self.f1_dict])
-        self.assertEqual(set(result.scorers.keys()), {"accuracy", "precision", "f1"})
+        result = ScorerDictConfig.merge(
+            [self.acc_dict, self.prec_dict, self.f1_dict]
+        )
+        self.assertEqual(
+            set(result.scorers.keys()), {"accuracy", "precision", "f1"}
+        )
 
     def test_merge_scorer_dict_config_instances(self):
         a = ScorerDictConfig(scorers=self.acc_dict)
@@ -53,7 +63,11 @@ class TestScorerDictConfigMerge(unittest.TestCase):
         self.assertIn("precision", result.scorers)
 
     def test_merge_later_wins_on_key_conflict(self):
-        override = {"accuracy": {"score_function": "sklearn.metrics.balanced_accuracy_score"}}
+        override = {
+            "accuracy": {
+                "score_function": "sklearn.metrics.balanced_accuracy_score"
+            },
+        }
         result = ScorerDictConfig.merge([self.acc_dict, override])
         self.assertEqual(
             result.scorers["accuracy"].score_function.__name__,
@@ -191,7 +205,9 @@ class TestDefaultScorerDicts(unittest.TestCase):
         self.assertIn("roc_auc", scores)
         self.assertIn("log_loss", scores)
 
-    def test_default_classifier_dict_requires_probabilities_for_probability_metrics(self):
+    def test_default_classifier_dict_requires_probabilities_for_probability_metrics(
+        self,
+    ):
         y_true = [1, 0, 1, 1]
         y_pred = [1, 0, 0, 1]
         with self.assertRaises(ValueError):
@@ -330,7 +346,9 @@ class TestFairnessScorers(unittest.TestCase):
         self.assertIn("1_mse", scores)
         self.assertIn("mse_ratio", scores)
 
-    def test_metric_frame_fairness_score_dict_supports_full_metricframe_kwargs(self):
+    def test_metric_frame_fairness_score_dict_supports_full_metricframe_kwargs(
+        self,
+    ):
         scorer = FairlearnScoreDictConfig(
             group_scorers={
                 "accuracy": ScorerConfig(
@@ -450,7 +468,11 @@ class TestDataInspectionScorers(unittest.TestCase):
                 "feature_1": [1, 2, 1, 2, 2, 1, 2, 1],
             },
         )
-        scores = DefaultDataClassificationDict.scorers(y_true=y_true, y_pred=X, mode=None)
+        scores = DefaultDataClassificationDict.scorers(
+            y_true=y_true,
+            y_pred=X,
+            mode=None,
+        )
         self.assertIn("num_classes", scores)
         self.assertIn("class_count_min", scores)
         self.assertIn("class_count_max", scores)
@@ -484,7 +506,9 @@ class TestDataInspectionScorers(unittest.TestCase):
                 "feature_1": [10, 12, 14, 18, 19, 22],
             },
         )
-        scores = DefaultDataRegressionDict.scorers(y_true=y_true, y_pred=X, mode=None)
+        scores = DefaultDataRegressionDict.scorers(
+            y_true=y_true, y_pred=X, mode=None
+        )
         self.assertIn("mutual_information_mean", scores)
         self.assertIn("mutual_information_max", scores)
         self.assertIn("empirical_cdf", scores)
@@ -497,14 +521,24 @@ class TestDataInspectionScorers(unittest.TestCase):
     def test_data_scorer_configstores_registered(self):
         cs = ConfigStore.instance()
         self.assertIsNotNone(cs)
-        self.assertIsInstance(DefaultDataClassificationConfig(), DefaultDataClassificationConfig)
-        self.assertIsInstance(DefaultDataRegressionConfig(), DefaultDataRegressionConfig)
+        self.assertIsInstance(
+            DefaultDataClassificationConfig(),
+            DefaultDataClassificationConfig,
+        )
+        self.assertIsInstance(
+            DefaultDataRegressionConfig(),
+            DefaultDataRegressionConfig,
+        )
 
     def test_score_profile_classes_available(self):
         self.assertIsInstance(DefaultClassifierDict.scorers, ScorerDictConfig)
         self.assertIsInstance(DefaultRegressorDict.scorers, ScorerDictConfig)
-        self.assertIsInstance(DefaultFairlearnClassificationConfig(), ScorerDictConfig)
-        self.assertIsInstance(DefaultFairlearnRegressionConfig(), ScorerDictConfig)
+        self.assertIsInstance(
+            DefaultFairlearnClassificationConfig(), ScorerDictConfig
+        )
+        self.assertIsInstance(
+            DefaultFairlearnRegressionConfig(), ScorerDictConfig
+        )
 
 
 if __name__ == "__main__":

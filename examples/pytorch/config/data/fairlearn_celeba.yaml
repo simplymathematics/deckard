@@ -12,6 +12,6 @@ data_params:
   smile_attribute: Smiling
   sensitive_attribute: Male
   sensitive_attributes: [Male]
-  max_samples: 256
+
   batch_size: 32
   num_workers: 4

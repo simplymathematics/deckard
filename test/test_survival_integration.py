@@ -43,7 +43,9 @@ def _load_env_from_deckard_rc(path: Path) -> dict[str, str]:
         ("lifelines_diabetes", "cox"),
     ],
 )
-def test_survival_cli_in_examples_sklearn(dataset_name, survival_model, tmp_path):
+def test_survival_cli_in_examples_sklearn(
+    dataset_name, survival_model, tmp_path
+):
     examples_dir = EXAMPLES_SKLEARN_DIR
     env = os.environ.copy()
     env.update(_load_env_from_deckard_rc(DECKARD_RC_PATH))
@@ -96,7 +98,9 @@ def test_survival_cli_in_examples_sklearn(dataset_name, survival_model, tmp_path
         f"STDOUT:\n{completed.stdout}\nSTDERR:\n{completed.stderr}"
     )
 
-    expected_plot = examples_dir / "plots" / "survival" / f"{survival_model}_aft.pdf"
+    expected_plot = (
+        examples_dir / "plots" / "survival" / f"{survival_model}_aft.pdf"
+    )
     expected_table = examples_dir / "plots" / "survival" / "aft_comparison.csv"
     assert expected_plot.exists()
     assert expected_table.exists()
@@ -111,7 +115,9 @@ def test_survival_cli_in_examples_sklearn(dataset_name, survival_model, tmp_path
 # Hash stability and persistence (Python API level, no lifelines runtime needed)
 # ---------------------------------------------------------------------------
 
-lifelines_installed = __import__("importlib").util.find_spec("lifelines") is not None
+lifelines_installed = (
+    __import__("importlib").util.find_spec("lifelines") is not None
+)
 
 
 @pytest.mark.skipif(

@@ -9,7 +9,9 @@ from omegaconf import OmegaConf
 
 from deckard.score import ScorerDictConfig
 
-CONFIG_DIR = Path(__file__).resolve().parents[1] / "examples" / "sklearn" / "config"
+CONFIG_DIR = (
+    Path(__file__).resolve().parents[1] / "examples" / "sklearn" / "config"
+)
 
 
 def _compose(config_name: str, overrides: list[str] | None = None):
@@ -79,7 +81,10 @@ def test_survival_score_group_executes_end_to_end():
     reason="fairlearn is required to validate fairness score profile integration",
 )
 def test_default_can_switch_to_fairness_score_group():
-    cfg = _compose("default", overrides=["data=fair-adult", "score=fairness-classification"])
+    cfg = _compose(
+        "default",
+        overrides=["data=fair-adult", "score=fairness-classification"],
+    )
     score_cfg = OmegaConf.to_container(cfg.score, resolve=True)
 
     assert "scorers" in score_cfg
@@ -92,7 +97,10 @@ def test_default_can_switch_to_fairness_score_group():
     reason="fairlearn is required to validate fairness score runtime",
 )
 def test_fairness_score_group_executes_end_to_end():
-    cfg = _compose("default", overrides=["data=fair-adult", "score=fairness-classification"])
+    cfg = _compose(
+        "default",
+        overrides=["data=fair-adult", "score=fairness-classification"],
+    )
     scorer = ScorerDictConfig(**OmegaConf.to_container(cfg.score, resolve=True))
 
     y_true = [1, 0, 1, 0]
@@ -113,6 +121,7 @@ def test_fairness_score_group_executes_end_to_end():
 # ---------------------------------------------------------------------------
 # Hash stability and persistence
 # ---------------------------------------------------------------------------
+
 
 def test_scorer_dict_config_hash_stable_after_scoring():
     cfg = _compose("default", overrides=["score=classification"])

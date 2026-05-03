@@ -16,7 +16,6 @@ from torch import Tensor
 from torch.utils.data import DataLoader, Dataset, Subset
 
 # deckard
-from ..score.base import ScorerDictConfig
 from ..utils import load_class, resolve_torch_device
 from .base import DataConfig, DataPipelineConfig
 import numpy as np
@@ -72,21 +71,10 @@ class PytorchDataConfig(DataConfig):
         if isinstance(sensitive_item, (list, tuple)):
             return tuple(sensitive_item)
         if isinstance(sensitive_item, dict):
-            return tuple((k, sensitive_item[k]) for k in sorted(sensitive_item.keys()))
+            return tuple(
+                (k, sensitive_item[k]) for k in sorted(sensitive_item.keys())
+            )
         return sensitive_item
-
-    def _resolve_max_samples(self, dataset_len: int) -> Union[int, None]:
-        """Resolve optional max sample cap from data params for faster experiments."""
-        max_samples = self.data_params.get("max_samples", None)
-        if max_samples is None:
-            return None
-        try:
-            max_samples = int(max_samples)
-        except (TypeError, ValueError):
-            raise ValueError(f"max_samples must be an integer, got {max_samples}")
-        if max_samples <= 0:
-            return None
-        return min(max_samples, dataset_len)
 
     def __post_init__(self):
         super().__post_init__()
@@ -161,10 +149,25 @@ class PytorchDataConfig(DataConfig):
                 dataset_name = dataset_aliases[dataset_name.lower()]
 
             # Instantiate the dataset using load_class.
-            full_dataset = load_class(dataset_name, **self.data_params)
+            # Keep DataLoader-only keys out of dataset constructor kwargs.
+            loader_only_keys = {
+                "batch_size",
+                "num_workers",
+                "pin_memory",
+                "shuffle",
+                "drop_last",
+                "persistent_workers",
+                "prefetch_factor",
+            }
+            dataset_params = {
+                key: value
+                for key, value in (self.data_params or {}).items()
+                if key not in loader_only_keys
+            }
+            full_dataset = load_class(dataset_name, **dataset_params)
 
             # Extract data and labels from dataset. For very large datasets,
-            # max_samples can cap materialization for fast iteration.
+            # _max_samples can cap materialization for fast iteration.
             dataset_len = len(full_dataset)
             sample_cap = self._resolve_max_samples(dataset_len)
             n_to_load = dataset_len if sample_cap is None else sample_cap
@@ -173,12 +176,23 @@ class PytorchDataConfig(DataConfig):
 
             # Stack tensors and labels
             if isinstance(samples[0], (tuple, list)) and len(samples[0]) >= 2:
-                X_list = [
-                    s[0] if isinstance(s[0], Tensor) else torch.tensor(s[0])
-                    for s in samples
-                ]
+
+                def _coerce_tensor(value: Any) -> Tensor:
+                    if isinstance(value, Tensor):
+                        return value
+                    try:
+                        return torch.as_tensor(value)
+                    except Exception:
+                        # torchvision datasets can return PIL images; normalize via numpy first.
+                        return torch.as_tensor(np.asarray(value))
+
+                X_list = [_coerce_tensor(s[0]) for s in samples]
                 y_list = [
-                    s[1] if isinstance(s[1], (int, Tensor)) else torch.tensor(s[1])
+                    (
+                        s[1]
+                        if isinstance(s[1], (int, Tensor))
+                        else _coerce_tensor(s[1])
+                    )
                     for s in samples
                 ]
                 if len(samples[0]) >= 3:
@@ -186,6 +200,12 @@ class PytorchDataConfig(DataConfig):
                         self._normalize_sensitive_item(s[2]) for s in samples
                     ]
                 self._X = torch.stack(X_list)
+                if self._X.ndim == 3:
+                    self._X = self._X.unsqueeze(1)
+                if self._X.dtype == torch.uint8:
+                    self._X = self._X.float().div(255.0)
+                elif not torch.is_floating_point(self._X):
+                    self._X = self._X.float()
                 self._y = (
                     torch.stack(y_list)
                     if isinstance(y_list[0], Tensor)
@@ -197,11 +217,14 @@ class PytorchDataConfig(DataConfig):
                 )
 
             # Allow datasets to expose sensitive metadata separately from model inputs.
-            if len(sensitive_values) == 0 and hasattr(full_dataset, "_sensitive"):
+            if len(sensitive_values) == 0 and hasattr(
+                full_dataset, "_sensitive"
+            ):
                 raw_sensitive = getattr(full_dataset, "_sensitive")
                 if raw_sensitive is not None:
                     sensitive_values = [
-                        self._normalize_sensitive_item(v) for v in list(raw_sensitive)
+                        self._normalize_sensitive_item(v)
+                        for v in list(raw_sensitive)
                     ]
 
             if len(sensitive_values) > 0:
@@ -257,18 +280,19 @@ class PytorchDataConfig(DataConfig):
         num_samples = len(self._X)
         indices = torch.arange(num_samples)
         # Determine stratification
-        if self.stratify is not None:
-            if self.stratify is not True:
-                raise ValueError(
-                    f"stratify must be None or True for PyTorch datasets; got {self.stratify}.",
-                )
+        if self.stratify not in (None, True, False):
+            raise ValueError(
+                f"stratify must be None, True, or False for PyTorch datasets; got {self.stratify}.",
+            )
 
         # Calculate train and test sizes
         train_size: int
         test_size: int
 
         if self.train_size is None and self.test_size is None:
-            raise ValueError("Either train_size or test_size must be specified.")
+            raise ValueError(
+                "Either train_size or test_size must be specified."
+            )
 
         if self.train_size is None:
             test_size = (
@@ -409,7 +433,9 @@ class PytorchDataConfig(DataConfig):
         # Empirical CDFs
         y_train_sorted = np.sort(y_train_np)
         y_test_sorted = np.sort(y_test_np)
-        y_train_cdf = np.arange(1, len(y_train_sorted) + 1) / len(y_train_sorted)
+        y_train_cdf = np.arange(1, len(y_train_sorted) + 1) / len(
+            y_train_sorted
+        )
         y_test_cdf = np.arange(1, len(y_test_sorted) + 1) / len(y_test_sorted)
         score_dict["y_train_cdf"] = y_train_cdf.tolist()
         score_dict["y_test_cdf"] = y_test_cdf.tolist()
@@ -449,14 +475,18 @@ class PytorchDataConfig(DataConfig):
             - Additional times/scores can be added in the future.
         """
         if data_file is not None:
-            assert isinstance(data_file, str), "data_file must be a string path."
+            assert isinstance(
+                data_file, str
+            ), "data_file must be a string path."
             if not Path(data_file).exists():
                 Path(data_file).parent.mkdir(parents=True, exist_ok=True)
             else:
                 pass
 
         if score_file is not None:
-            assert isinstance(score_file, str), "score_file must be a string path."
+            assert isinstance(
+                score_file, str
+            ), "score_file must be a string path."
             if Path(score_file).exists():
                 pass
 
@@ -535,7 +565,9 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             return obj
         elif isinstance(obj, Dataset):
             return obj(**self.dataset_params, split=split, transform=transform)
-        raise TypeError(f"Invalid dataset object for split '{split}': {type(obj)}")
+        raise TypeError(
+            f"Invalid dataset object for split '{split}': {type(obj)}"
+        )
 
     def _truncate_dataset(self, dataset: Dataset, size: int):
         assert isinstance(size, int), ValueError(
@@ -609,7 +641,9 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         start = time.process_time()
         batch_size = int(self.data_params.get("batch_size", 32))
         num_workers = int(self.data_params.get("num_workers", 0))
-        pin_memory = bool(self.data_params.get("pin_memory", self.device != "cpu"))
+        pin_memory = bool(
+            self.data_params.get("pin_memory", self.device != "cpu")
+        )
         train_ds = self._X[0]
         test_ds = self._X[1]
         torch.manual_seed(self.random_state)
@@ -639,12 +673,14 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             leave=False,
         ):
             if not isinstance(batch, (tuple, list)) or len(batch) < 2:
-                raise ValueError("Each train batch must be (X, y) or (X, y, sensitive)")
+                raise ValueError(
+                    "Each train batch must be (X, y) or (X, y, sensitive)"
+                )
             yb = batch[1]
             train_y_batches.append(yb)
             if len(batch) >= 3:
                 train_sensitive_batches.extend(
-                    [self._normalize_sensitive_item(v) for v in list(batch[2])]
+                    [self._normalize_sensitive_item(v) for v in list(batch[2])],
                 )
 
         test_y_batches = []
@@ -656,12 +692,14 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             leave=False,
         ):
             if not isinstance(batch, (tuple, list)) or len(batch) < 2:
-                raise ValueError("Each test batch must be (X, y) or (X, y, sensitive)")
+                raise ValueError(
+                    "Each test batch must be (X, y) or (X, y, sensitive)"
+                )
             yb = batch[1]
             test_y_batches.append(yb)
             if len(batch) >= 3:
                 test_sensitive_batches.extend(
-                    [self._normalize_sensitive_item(v) for v in list(batch[2])]
+                    [self._normalize_sensitive_item(v) for v in list(batch[2])],
                 )
 
         self.X_train = train_loader
@@ -680,7 +718,9 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         if len(train_sensitive_batches) > 0 or len(test_sensitive_batches) > 0:
             self._sensitive_train = train_sensitive_batches
             self._sensitive_test = test_sensitive_batches
-            self._sensitive_all = train_sensitive_batches + test_sensitive_batches
+            self._sensitive_all = (
+                train_sensitive_batches + test_sensitive_batches
+            )
 
         end = time.process_time()
         self.data_sample_time = end - start
@@ -710,4 +750,3 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         if data_file is not None:
             self.save_object(self, data_file)
         return scores
-

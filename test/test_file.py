@@ -64,7 +64,9 @@ class TestFileConfig(unittest.TestCase):
         self.assertIsInstance(int(attack_file), int)
 
     def test_timestamp_placeholder(self):
-        config = FileConfig(replace=self.config.replace, attack_file="{timestamp}")
+        config = FileConfig(
+            replace=self.config.replace, attack_file="{timestamp}"
+        )
         file_dict = config._file_dict
         attack_file = file_dict.get("attack_file", KeyError)
         self.assertNotEqual(attack_file, "{timestamp}")

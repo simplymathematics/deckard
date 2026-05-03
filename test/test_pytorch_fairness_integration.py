@@ -4,22 +4,19 @@ Tests the end-to-end torch-fairness.yaml defense config with PyTorch models
 and sensitive features from fairlearn_celeba.yaml dataset config.
 """
 
-import tempfile
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
-
-torch = pytest.importorskip("torch")
-fairlearn = pytest.importorskip("fairlearn")
 
 from deckard.data import PytorchDataConfig
 from deckard.model import (
     DefensePipelineConfig,
-    FairlearnDefenseConfig,
     FairlearnModelConfig,
     PytorchModelConfig,
 )
+
+torch = pytest.importorskip("torch")
+pytest.importorskip("fairlearn")
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -46,18 +43,22 @@ def _load_env_from_deckard_rc(path: Path) -> dict[str, str]:
 
 def _torch_fairness_data():
     """Create minimal PyTorch fairness dataset for testing.
-    
+
     Uses synthetic data instead of real CelebA to avoid download delays in tests.
     Structure mimics what fairlearn_celeba.yaml creates.
     """
     X_train = torch.randn(32, 3, 32, 32)  # 32 samples, 3 channels, 32x32 images
     y_train = torch.randint(0, 2, (32,))
-    sensitive_train = torch.randint(0, 2, (32,))  # Binary sensitive attribute (e.g., Male)
-    
+    sensitive_train = torch.randint(
+        0,
+        2,
+        (32,),
+    )  # Binary sensitive attribute (e.g., Male)
+
     X_test = torch.randn(16, 3, 32, 32)
     y_test = torch.randint(0, 2, (16,))
     sensitive_test = torch.randint(0, 2, (16,))
-    
+
     cfg = PytorchDataConfig(
         dataset_name="torch_fairness_dataset.py:SyntheticImageDataset",
         train_size=32,
@@ -75,7 +76,7 @@ def _torch_fairness_data():
             "batch_size": 8,
         },
     )
-    
+
     # Directly set data for testing to avoid needing the custom dataset
     cfg._X_train = X_train
     cfg._y_train = y_train
@@ -83,14 +84,14 @@ def _torch_fairness_data():
     cfg._X_test = X_test
     cfg._y_test = y_test
     cfg._sensitive_test = sensitive_test
-    
+
     return cfg
 
 
 def test_pytorch_fairness_data_loads_with_sensitive_features():
     """Test that PyTorch fairness data loads and preserves sensitive features."""
     data = _torch_fairness_data()
-    
+
     # Verify data shapes
     assert data._X_train.shape[0] == 32
     assert data._y_train.shape[0] == 32
@@ -98,7 +99,7 @@ def test_pytorch_fairness_data_loads_with_sensitive_features():
     assert data._X_test.shape[0] == 16
     assert data._y_test.shape[0] == 16
     assert data._sensitive_test.shape[0] == 16
-    
+
     # Verify sensitive features are preserved
     assert hasattr(data, "_sensitive_train")
     assert hasattr(data, "_sensitive_test")
@@ -157,28 +158,27 @@ def test_pytorch_model_training_with_fairness_style_data():
 def test_pytorch_fairness_model_fit_and_score():
     """Test that PyTorch model with fairness defense can fit and produce scores."""
     data = _torch_fairness_data()
-    
+
     # Flatten images for sklearn Linear model
-    import numpy as np
     data._X_train = data._X_train.reshape(data._X_train.shape[0], -1)
     data._X_test = data._X_test.reshape(data._X_test.shape[0], -1)
-    
+
     # Set data attributes that the model expects
     data.X_train = data._X_train
     data.y_train = data._y_train
     data.X_test = data._X_test
     data.y_test = data._y_test
-    
+
     model = FairlearnModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
         data=data,
     )
-    
+
     # Execute the config to trigger training
     model(data)
-    
+
     # Verify scores were recorded
     assert "accuracy" in model.score_dict or len(model.score_dict) > 0
 
@@ -186,7 +186,7 @@ def test_pytorch_fairness_model_fit_and_score():
 def test_pytorch_fairness_defense_receives_sensitive_features():
     """Test that fairness defense receives sensitive features from data config."""
     data = _torch_fairness_data()
-    
+
     # Mock a simple defense to capture the call
     class _MockFairnessDefense:
         def __init__(self, **kwargs):
@@ -194,35 +194,38 @@ def test_pytorch_fairness_defense_receives_sensitive_features():
             self.fit_calls = []
             self.apply_calls = []
             self.defense_application_time = 0.0
-        
+
         def fit(self, X, y, sensitive_features=None, **kwargs):
-            self.fit_calls.append({
-                "X_shape": X.shape if hasattr(X, "shape") else len(X),
-                "y_shape": y.shape if hasattr(y, "shape") else len(y),
-                "sensitive_features_provided": sensitive_features is not None,
-                "kwargs": kwargs,
-            })
+            self.fit_calls.append(
+                {
+                    "X_shape": X.shape if hasattr(X, "shape") else len(X),
+                    "y_shape": y.shape if hasattr(y, "shape") else len(y),
+                    "sensitive_features_provided": sensitive_features
+                    is not None,
+                    "kwargs": kwargs,
+                },
+            )
             return self
-        
+
         def predict(self, X):
             # Return random predictions
             return [0] * (X.shape[0] if hasattr(X, "shape") else len(X))
-        
+
         def apply_to(self, estimator, data):
             self.apply_calls.append((estimator, data))
             return estimator
-    
+
     # Create defense using mock
     defense = _MockFairnessDefense(
         backend="torch",
         constraints="demographic_parity",
     )
-    
+
     # Create defense config that wraps the mock
     defense_cfg = DefensePipelineConfig(
         defenses=[defense],
     )
-    
+
     model = FairlearnModelConfig(
         model_type="torch.nn.Linear",
         model_params={"in_features": 100, "out_features": 2},
@@ -230,7 +233,7 @@ def test_pytorch_fairness_defense_receives_sensitive_features():
         defense=defense_cfg,
         data=data,
     )
-    
+
     assert model.defense is not None
     assert len(model.defense.defenses) == 1
 
@@ -326,14 +329,14 @@ def test_torch_pipeline_applies_fairlearn_and_art_style_defense_steps_in_order()
 def test_pytorch_fairness_model_serialization_with_defense():
     """Test that PyTorch fairness model config can be created and preserved."""
     data = _torch_fairness_data()
-    
+
     model = FairlearnModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
         data=data,
     )
-    
+
     assert model.model_type == "sklearn.linear_model.LogisticRegression"
     assert model.model_params["max_iter"] == 25
     assert model.classifier is True
@@ -342,7 +345,7 @@ def test_pytorch_fairness_model_serialization_with_defense():
 def test_deckard_rc_environment_loading():
     """Test that .deckard_rc file can be parsed for environment setup."""
     env_vars = _load_env_from_deckard_rc(DECKARD_RC_PATH)
-    
+
     assert "DECKARD_CONFIG_DIR" in env_vars
     assert "DECKARD_DEFAULT_CONFIG_FILE" in env_vars
     assert env_vars["DECKARD_CONFIG_DIR"] == "./config"

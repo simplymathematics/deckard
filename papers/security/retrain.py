@@ -64,7 +64,9 @@ def _load_data_from_security_config() -> tuple:
     return X_train, X_test, y_train, y_test
 
 
-def retrain_loop(clf, X_train, y_train, X_test, y_test, atk, attack_size, epochs):
+def retrain_loop(
+    clf, X_train, y_train, X_test, y_test, atk, attack_size, epochs
+):
     i = 0
     results = []
     for _ in tqdm(range(epochs), desc="Epochs"):
@@ -114,7 +116,9 @@ def retrain_loop(clf, X_train, y_train, X_test, y_test, atk, attack_size, epochs
     return pd.DataFrame(results)
 
 
-def save_results(results: pd.DataFrame, kernel: str, epochs: int, model) -> None:
+def save_results(
+    results: pd.DataFrame, kernel: str, epochs: int, model
+) -> None:
     out_dir = RETRAIN_DIR / kernel
     out_dir.mkdir(parents=True, exist_ok=True)
     results.to_csv(out_dir / "results.csv", index=False)

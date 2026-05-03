@@ -2,7 +2,6 @@
 
 from ..utils import safe_store
 
-
 # Static model options mirrored from examples/sklearn/config/model.
 MODEL_LOGISTIC = {
     "model_type": "sklearn.linear_model.LogisticRegression",
@@ -128,9 +127,16 @@ safe_store(group="search/models", name="linear", node=MODEL_LINEAR)
 
 safe_store(group="defense", name="baseline", node=DEFENSE_BASELINE)
 safe_store(group="defense", name="class-labels", node=DEFENSE_CLASS_LABELS)
-safe_store(group="defense", name="feature-squeezing", node=DEFENSE_FEATURE_SQUEEZING)
+safe_store(
+    group="defense", name="feature-squeezing", node=DEFENSE_FEATURE_SQUEEZING
+)
 
 safe_store(group="search/defenses", name="baseline", node=DEFENSE_BASELINE)
-safe_store(group="search/defenses", name="class-labels", node=DEFENSE_CLASS_LABELS)
-safe_store(group="search/defenses", name="feature-squeezing", node=DEFENSE_FEATURE_SQUEEZING)
-
+safe_store(
+    group="search/defenses", name="class-labels", node=DEFENSE_CLASS_LABELS
+)
+safe_store(
+    group="search/defenses",
+    name="feature-squeezing",
+    node=DEFENSE_FEATURE_SQUEEZING,
+)

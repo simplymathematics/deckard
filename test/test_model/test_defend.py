@@ -68,7 +68,10 @@ class TestDefenseConfig(unittest.TestCase):
         )
         model._train(self.data.X_train, self.data.y_train)
 
-        defended = self.defense_config.apply_to(estimator=model.get_model(), data=self.data)
+        defended = self.defense_config.apply_to(
+            estimator=model.get_model(),
+            data=self.data,
+        )
         self.assertIsNotNone(defended)
         self.assertIsNotNone(self.defense_config.defense_application_time)
 
@@ -96,7 +99,10 @@ class TestDefenseConfig(unittest.TestCase):
         self.defense_config.defense_application_time = 1.23
         self.defense_config._defense_applied_at = 1234567890.5
         self.defense_config._runtime_defense_state = {"applied": True}
-        if hasattr(self.defense_config, "score_dict") and isinstance(self.defense_config.score_dict, dict):
+        if hasattr(self.defense_config, "score_dict") and isinstance(
+            self.defense_config.score_dict,
+            dict,
+        ):
             self.defense_config.score_dict["runtime"] = 1
 
         self.assertEqual(

@@ -82,7 +82,9 @@ class OptunaStudyCallback(HydraCallback):
         params_path = Path(str(params_file))
         params_path.parent.mkdir(parents=True, exist_ok=True)
         with open(params_path, "w") as f:
-            yaml.dump(OmegaConf.to_container(config, resolve=False), f, indent=4)
+            yaml.dump(
+                OmegaConf.to_container(config, resolve=False), f, indent=4
+            )
         return
 
     def on_job_end(
@@ -136,7 +138,9 @@ def _get_sweeper_cfg(hydra_cfg):
 def _assert_multirun_sweeper(hydra_cfg):
     sweeper = _get_sweeper_cfg(hydra_cfg)
     assert sweeper is not None, "Sweeper must be specified in multirun mode."
-    assert "storage" in sweeper, "Storage must be specified in the sweeper config."
+    assert (
+        "storage" in sweeper
+    ), "Storage must be specified in the sweeper config."
     assert (
         "study_name" in sweeper
     ), "Study name must be specified in the sweeper config."
@@ -173,7 +177,9 @@ def _prepare_multirun_cfg(cfg, hydra_cfg, include_file_paths: bool = False):
     return cfg
 
 
-def _extract_scores_from_job_end_kwargs(job_return=None, kwargs: dict | None = None):
+def _extract_scores_from_job_end_kwargs(
+    job_return=None, kwargs: dict | None = None
+):
     if job_return is None:
         kwargs = kwargs or {}
         job_return = kwargs.get("job_return")
@@ -281,9 +287,14 @@ def optimize_main(
 
     if _is_multirun_mode(hydra_cfg):
         _assert_multirun_sweeper(hydra_cfg)
-        cfg_dict = _prepare_multirun_cfg(cfg_dict, hydra_cfg, include_file_paths=False)
+        cfg_dict = _prepare_multirun_cfg(
+            cfg_dict, hydra_cfg, include_file_paths=False
+        )
 
-    cfg_dict["_target_"] = cfg_dict.get("_target_", "deckard.ExperimentConfig")
+    # Optimize layer always executes an ExperimentConfig payload.
+    # Some config compositions can leak a root `_target_` from global search
+    # overrides; force the correct root target to avoid mis-instantiation.
+    cfg_dict["_target_"] = "deckard.ExperimentConfig"
     cfg_yaml = OmegaConf.to_yaml(cfg_dict)
 
     conf_obj = instantiate(cfg_dict)
@@ -494,7 +505,9 @@ def save_params_file(cfg: dict[str, Any], files: dict[str, str]) -> DictConfig:
         Path(files["params_file"]).parent.mkdir(parents=True, exist_ok=True)
         OmegaConf.save(cfg, files["params_file"])
     else:
-        raise ValueError("params_file must be specified in files to save parameters.")
+        raise ValueError(
+            "params_file must be specified in files to save parameters."
+        )
     return cfg
 
 

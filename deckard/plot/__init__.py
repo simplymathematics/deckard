@@ -13,6 +13,8 @@ from typing import Union
 from ..utils import ConfigBase
 from ..experiment import ExperimentConfig
 
+logger = logging.getLogger(__name__)
+
 try:
     from .seaborn_plots import (
         SeabornPlotConfig,
@@ -24,9 +26,14 @@ except ImportError:  # pragma: no cover
 
 try:
     import lifelines  # noqa: F401
-    from .survival import SurvivalSeabornPlotConfigList, SurvivalSeabornPlotterConfig
+    from .survival import (
+        SurvivalSeabornPlotConfigList,
+        SurvivalSeabornPlotterConfig,
+    )
 except ImportError:  # pragma: no cover
-    logger.debug("Lifelines not found. Survival plotting configs are unavailable.")
+    logger.debug(
+        "Lifelines not found. Survival plotting configs are unavailable."
+    )
     SurvivalSeabornPlotConfigList = None
     SurvivalSeabornPlotterConfig = None
 
@@ -36,8 +43,6 @@ except ImportError:  # pragma: no cover
     YellowbrickConfigList = None
     YellowbrickPlotConfig = None
 
-
-logger = logging.getLogger(__name__)
 
 # Import declarations to register static plot configs with ConfigStore.
 from . import declarations  # noqa: F401
@@ -70,7 +75,9 @@ class PlotConfig(ConfigBase):
         has_data_file = self.kwargs.get("data_file") is not None
 
         if has_experiment and has_data_file:
-            raise ValueError("Provide either 'experiment' or 'data_file', not both.")
+            raise ValueError(
+                "Provide either 'experiment' or 'data_file', not both."
+            )
         if not has_experiment and not has_data_file:
             raise ValueError(
                 "Missing required source key: provide 'experiment' or 'data_file'.",
@@ -92,7 +99,9 @@ class PlotConfig(ConfigBase):
                     "Seaborn plotting requires optional dependency deckard[seaborn]",
                 )
             config_cls = (
-                SeabornPlotConfigList if "plots" in self.kwargs else SeabornPlotConfig
+                SeabornPlotConfigList
+                if "plots" in self.kwargs
+                else SeabornPlotConfig
             )
 
         self.config = config_cls(**self.kwargs)

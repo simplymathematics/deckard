@@ -33,10 +33,15 @@ class ScorerConfig:
 
     def __post_init__(self):
         if OmegaConf.is_config(self.score_function):
-            self.score_function = OmegaConf.to_container(self.score_function, resolve=True)
+            self.score_function = OmegaConf.to_container(
+                self.score_function,
+                resolve=True,
+            )
         if isinstance(self.score_function, dict):
             score_fn_spec = dict(self.score_function)
-            target = score_fn_spec.pop("_target_", score_fn_spec.pop("name", None))
+            target = score_fn_spec.pop(
+                "_target_", score_fn_spec.pop("name", None)
+            )
             if target is None:
                 raise ValueError(
                     f"Scorer '{self.score_name}' dict score_function must include '_target_' or 'name'",
@@ -44,11 +49,15 @@ class ScorerConfig:
             args = score_fn_spec.pop("_args_", [])
             if not isinstance(args, (list, tuple)):
                 args = [args]
-            self.score_function = load_class(target, *list(args), **score_fn_spec)
+            self.score_function = load_class(
+                target, *list(args), **score_fn_spec
+            )
         if isinstance(self.score_function, str):
             self.score_function = resolve_class(self.score_function)
         if not callable(self.score_function):
-            raise TypeError("score_function must be callable or import path string")
+            raise TypeError(
+                "score_function must be callable or import path string"
+            )
         if self.score_params is None:
             self.score_params = {}
 
@@ -69,7 +78,10 @@ class ScorerConfig:
             raise ValueError(
                 f"Probability scorer '{self.score_name}' requires numeric probabilities",
             )
-        if np.nanmin(y_pred_arr) < -1e-12 or np.nanmax(y_pred_arr) > 1.0 + 1e-12:
+        if (
+            np.nanmin(y_pred_arr) < -1e-12
+            or np.nanmax(y_pred_arr) > 1.0 + 1e-12
+        ):
             raise ValueError(
                 f"Probability scorer '{self.score_name}' requires values in [0, 1]",
             )
@@ -91,10 +103,7 @@ class ScorerConfig:
         if self.needs_proba:
             self._validate_probability_input(y_true=y_true, y_pred=y_pred)
             y_pred_arr = np.asarray(to_numpy_if_torch(y_pred))
-            if (
-                y_pred_arr.ndim == 2
-                and metric_name == "roc_auc_score"
-            ):
+            if y_pred_arr.ndim == 2 and metric_name == "roc_auc_score":
                 if y_pred_arr.shape[1] == 1:
                     return y_pred_arr.reshape(-1)
                 if y_pred_arr.shape[1] == 2:
@@ -123,7 +132,9 @@ class ScorerConfig:
             y_true, y_pred = y_pred, y_true
         y_true = to_numpy_if_torch(y_true)
         y_pred = to_numpy_if_torch(y_pred)
-        y_pred = self._normalize_predictions_for_metric(y_true=y_true, y_pred=y_pred)
+        y_pred = self._normalize_predictions_for_metric(
+            y_true=y_true, y_pred=y_pred
+        )
         params = {**self.score_params, **kwargs}
         signature = inspect.signature(self.score_function)
         accepts_var_kwargs = any(
@@ -151,7 +162,7 @@ class ScorerDictConfig(ConfigBase):
     """Container of named ScorerConfig instances."""
 
     scorers: Dict[str, Union[ScorerConfig, Dict[str, Any]]] = field(
-        default_factory=dict
+        default_factory=dict,
     )
 
     def __post_init__(self):
@@ -165,7 +176,9 @@ class ScorerDictConfig(ConfigBase):
                     score_name=scorer_data.pop("score_name", key),
                     score_function=scorer_data.pop("score_function"),
                     score_params=scorer_data.pop("score_params", {}),
-                    greater_is_better=scorer_data.pop("greater_is_better", True),
+                    greater_is_better=scorer_data.pop(
+                        "greater_is_better", True
+                    ),
                     needs_proba=scorer_data.pop("needs_proba", False),
                 )
             else:
@@ -246,7 +259,9 @@ class ScorerDictConfig(ConfigBase):
 
     def __call__(
         self,
-        mode: Literal["test", "train", "attack", "val", "attack-val", None] = "test",
+        mode: Literal[
+            "test", "train", "attack", "val", "attack-val", None
+        ] = "test",
         data=None,
         model=None,
         attack=None,
@@ -312,9 +327,14 @@ class ScorerDictConfig(ConfigBase):
                     if y_proba is not None:
                         metric_input = y_proba
                     else:
-                        X_mode = self._resolve_mode_features(mode=mode, data=data)
+                        X_mode = self._resolve_mode_features(
+                            mode=mode, data=data
+                        )
                         if X_mode is not None and model is not None:
-                            metric_input = self._predict_proba_from_model(model=model, X=X_mode)
+                            metric_input = self._predict_proba_from_model(
+                                model=model,
+                                X=X_mode,
+                            )
                         else:
                             raise ValueError(
                                 f"Scorer '{key}' requires probabilities from predict_proba; provide y_proba or pass model+data context",
@@ -458,8 +478,14 @@ class DefaultPytorchRegressorConfig(ScorerDictConfig):
 
 safe_store(group="score", name="classification", node=DefaultClassifierConfig)
 safe_store(group="score", name="regression", node=DefaultRegressorConfig)
-safe_store(group="score", name="pytorch_classification", node=DefaultPytorchClassifierConfig)
-safe_store(group="score", name="pytorch_regression", node=DefaultPytorchRegressorConfig)
+safe_store(
+    group="score",
+    name="pytorch_classification",
+    node=DefaultPytorchClassifierConfig,
+)
+safe_store(
+    group="score", name="pytorch_regression", node=DefaultPytorchRegressorConfig
+)
 
 
 __all__ = [

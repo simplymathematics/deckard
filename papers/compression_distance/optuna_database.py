@@ -33,7 +33,9 @@ class OptunaStudyDumpCallback(Callback):
         Path(db_folder).mkdir(parents=True, exist_ok=True)
         # Set metric names
         if isinstance(metric_names, ListConfig):
-            self.metric_names = OmegaConf.to_container(metric_names, resolve=True)
+            self.metric_names = OmegaConf.to_container(
+                metric_names, resolve=True
+            )
         elif isinstance(metric_names, list):
             self.metric_names = metric_names
         else:
@@ -93,7 +95,9 @@ def multirun_call(args):
         else [args.metric_names]
     )
     directions = (
-        args.directions if isinstance(args.directions, list) else [args.directions]
+        args.directions
+        if isinstance(args.directions, list)
+        else [args.directions]
     )
     output_file = args.output_file
     if output_file is not None:
@@ -109,7 +113,9 @@ def multirun_call(args):
 
 optuna_callback_parser = argparse.ArgumentParser()
 optuna_callback_parser.add_argument("--storage", type=str, default=storage)
-optuna_callback_parser.add_argument("--study_name", type=str, default=study_name)
+optuna_callback_parser.add_argument(
+    "--study_name", type=str, default=study_name
+)
 optuna_callback_parser.add_argument(
     "--metric_names",
     type=str,
@@ -122,7 +128,9 @@ optuna_callback_parser.add_argument(
     nargs="+",
     default=directions,
 )
-optuna_callback_parser.add_argument("--output_file", type=str, default=output_file)
+optuna_callback_parser.add_argument(
+    "--output_file", type=str, default=output_file
+)
 
 if __name__ == "__main__":
     args = optuna_callback_parser.parse_args()

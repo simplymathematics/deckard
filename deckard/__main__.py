@@ -63,7 +63,9 @@ def get_configuration_paths():
         DECKARD_CONFIG_DIR,
     )
     if config_dir is None:
-        logger.error("DECKARD_CONFIG_DIR must be specified as an environment variable.")
+        logger.error(
+            "DECKARD_CONFIG_DIR must be specified as an environment variable."
+        )
         sys.exit(1)
     while not Path(config_dir).exists():
         # Deckard_config dir does not exist, have the user set it using input()
@@ -75,7 +77,9 @@ def get_configuration_paths():
             config_dir = None
     logger.debug("No optional arguments provided.")
     config_file = Path(
-        os.environ.get("DECKARD_DEFAULT_CONFIG_FILE", DECKARD_DEFAULT_CONFIG_FILE),
+        os.environ.get(
+            "DECKARD_DEFAULT_CONFIG_FILE", DECKARD_DEFAULT_CONFIG_FILE
+        ),
     ).as_posix()
     working_dir = os.getcwd()
     logger.info(f"Current working directory: {working_dir}")
@@ -100,7 +104,9 @@ def _build_router() -> argparse.ArgumentParser:
     )
     subs = parser.add_subparsers(dest="module", metavar="MODULE", required=True)
     for name in layer_dict:
-        sub = subs.add_parser(name, help=f"Run the {name} layer", add_help=False)
+        sub = subs.add_parser(
+            name, help=f"Run the {name} layer", add_help=False
+        )
         sub.add_argument("remainder", nargs=argparse.REMAINDER)
     return parser
 
@@ -154,7 +160,9 @@ def generate_hydra_main(layer):
     config_file = cli_config_name if cli_config_name else default_config_file
 
     forwarded_overrides = []
-    if hasattr(parsed_args, "overrides") and isinstance(parsed_args.overrides, list):
+    if hasattr(parsed_args, "overrides") and isinstance(
+        parsed_args.overrides, list
+    ):
         # get_args_parser may parse Hydra key=value arguments into `overrides`.
         forwarded_overrides = parsed_args.overrides
     forwarded_control_args = _forward_hydra_control_args(parsed_args)

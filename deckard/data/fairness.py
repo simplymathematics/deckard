@@ -25,7 +25,9 @@ class FairlearnDataConfig(DataPipelineConfig):
             )
 
         if self.sensitive_columns is None:
-            raise ValueError("sensitive_columns must be specified for FairlearnDataConfig")
+            raise ValueError(
+                "sensitive_columns must be specified for FairlearnDataConfig",
+            )
         if isinstance(self.sensitive_columns, ListConfig):
             self.sensitive_columns = list(self.sensitive_columns)
         elif isinstance(self.sensitive_columns, str):
@@ -52,7 +54,9 @@ class FairlearnDataConfig(DataPipelineConfig):
         if len(sensitive_series) == 0:
             raise ValueError(f"Sensitive features are empty during {context}")
         if sensitive_series.dropna().empty:
-            raise ValueError(f"Sensitive features are all null during {context}")
+            raise ValueError(
+                f"Sensitive features are all null during {context}"
+            )
         if sensitive_series.astype(str).str.strip().eq("").all():
             raise ValueError(f"Sensitive features are blank during {context}")
         return sensitive_series
@@ -95,7 +99,9 @@ class FairlearnDataConfig(DataPipelineConfig):
         step_name = custom.pop("step_name", step_name)
         step_config.update(custom)
         if "name" not in step_config:
-            raise ValueError("fairness_defense config must include a 'name' key")
+            raise ValueError(
+                "fairness_defense config must include a 'name' key"
+            )
 
         if step_name in self.pipeline:
             return
@@ -142,12 +148,22 @@ class FairlearnDataConfig(DataPipelineConfig):
             self._sensitive_all,
             "full-data sampling",
         )
-        #TODO: Add support for self._sensitive_val
-        
+        # Compute sensitive labels for the validation split when present.
+        if getattr(self, "X_val", None) is not None:
+            self._sensitive_val = self._sensitive_labels_from_frame(self.X_val)
+            self._sensitive_val = self._validate_sensitive_runtime(
+                self._sensitive_val,
+                "val sampling",
+            )
+        else:
+            self._sensitive_val = None
 
     def _score(self) -> dict:
         """Thin wrapper that delegates fairness dataset scoring to ``self.scorer``."""
-        if isinstance(self.scorer, str) and self.scorer.lower() in {"auto", "default"}:
+        if isinstance(self.scorer, str) and self.scorer.lower() in {
+            "auto",
+            "default",
+        }:
             scorer_cls = (
                 "deckard.score.data.DefaultDataClassificationConfig"
                 if self.classifier
@@ -160,8 +176,16 @@ class FairlearnDataConfig(DataPipelineConfig):
             raise TypeError(
                 f"FairlearnDataConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
-        y_true = self.y_train if getattr(self, "y_train", None) is not None else self._y
-        y_pred = self.X_train if getattr(self, "X_train", None) is not None else self._X
+        y_true = (
+            self.y_train
+            if getattr(self, "y_train", None) is not None
+            else self._y
+        )
+        y_pred = (
+            self.X_train
+            if getattr(self, "X_train", None) is not None
+            else self._X
+        )
         if isinstance(y_pred, pd.DataFrame):
             non_numeric = y_pred.select_dtypes(exclude=["number"]).columns
             if len(non_numeric) > 0:

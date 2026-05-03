@@ -24,11 +24,17 @@ class DefaultDataRegressionDict:
 
 def _load_example_score_configs():
     """Load score configs from examples/sklearn/config/score and register with ConfigStore."""
-    examples_dir = Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config" / "score"
-    
+    examples_dir = (
+        Path(__file__).resolve().parents[2]
+        / "examples"
+        / "sklearn"
+        / "config"
+        / "score"
+    )
+
     if not examples_dir.exists():
         return
-    
+
     for yaml_file in sorted(examples_dir.glob("*.yaml")):
         try:
             config_name = yaml_file.stem
@@ -39,4 +45,3 @@ def _load_example_score_configs():
 
 
 _load_example_score_configs()
-

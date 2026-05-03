@@ -17,7 +17,9 @@ class CelebASmileDataset(Dataset):
     ):
         self.smile_attribute = smile_attribute
         self.sensitive_attribute = sensitive_attribute
-        self.sensitive_attributes = sensitive_attributes or [sensitive_attribute]
+        self.sensitive_attributes = sensitive_attributes or [
+            sensitive_attribute
+        ]
         self.transform = transform
 
         try:
@@ -53,7 +55,11 @@ class CelebASmileDataset(Dataset):
             image = torch.from_numpy(image)
         if isinstance(image, torch.Tensor):
             # Ensure tensors are channel-first for PyTorch models.
-            if image.ndim == 3 and image.shape[0] not in {1, 3} and image.shape[-1] in {1, 3}:
+            if (
+                image.ndim == 3
+                and image.shape[0] not in {1, 3}
+                and image.shape[-1] in {1, 3}
+            ):
                 image = image.permute(2, 0, 1)
             image = image.float()
             if torch.max(image) > 1.0:
@@ -68,6 +74,92 @@ class CelebASmileDataset(Dataset):
 
         self._sensitive.append(sensitive)
         return image, smile_label, sensitive
+
+
+class SyntheticImageDataset(Dataset):
+    def __init__(
+        self,
+        num_samples: int = 256,
+        image_size: int = 28,
+        num_channels: int = 1,
+        num_classes: int = 2,
+        random_state: int = 42,
+        transform=None,
+        split: str = "train",
+        **kwargs,
+    ):
+        self.transform = transform
+        self.num_samples = int(num_samples)
+        self.image_size = int(image_size)
+        self.num_channels = int(num_channels)
+        self.num_classes = int(num_classes)
+
+        split_offsets = {"train": 0, "valid": 1, "test": 2}
+        seed = int(random_state) + split_offsets.get(split, 3)
+        rng = np.random.default_rng(seed)
+
+        images = rng.random(
+            (
+                self.num_samples,
+                self.num_channels,
+                self.image_size,
+                self.image_size,
+            ),
+            dtype=np.float32,
+        )
+        labels = rng.integers(
+            0,
+            self.num_classes,
+            size=self.num_samples,
+            dtype=np.int64,
+        )
+        sensitive = rng.integers(0, 2, size=self.num_samples, dtype=np.int64)
+
+        self._X = torch.from_numpy(images)
+        self._y = torch.from_numpy(labels)
+        self._sensitive = sensitive.tolist()
+
+    def __len__(self):
+        return self.num_samples
+
+    def __getitem__(self, idx):
+        image = self._X[idx]
+        if self.transform:
+            image = self.transform(image)
+        return image, int(self._y[idx].item()), int(self._sensitive[idx])
+
+
+class SyntheticTabularFairnessDataset(Dataset):
+    def __init__(
+        self,
+        num_samples: int = 256,
+        n_features: int = 16,
+        num_classes: int = 2,
+        random_state: int = 42,
+        **kwargs,
+    ):
+        self.num_samples = int(num_samples)
+        self.n_features = int(n_features)
+        self.num_classes = int(num_classes)
+
+        rng = np.random.default_rng(int(random_state))
+        X = rng.standard_normal(
+            (self.num_samples, self.n_features), dtype=np.float32
+        )
+        y = rng.integers(
+            0, self.num_classes, size=self.num_samples, dtype=np.int64
+        )
+        sensitive = rng.integers(0, 2, size=self.num_samples, dtype=np.int64)
+
+        self._X = torch.from_numpy(X)
+        self._y = torch.from_numpy(y)
+        self._sensitive = sensitive.tolist()
+
+    def __len__(self):
+        return self.num_samples
+
+    def __getitem__(self, idx):
+        return self._X[idx], int(self._y[idx].item()), int(self._sensitive[idx])
 
 
 def build_celeba_smile_loaders(cfg):
@@ -138,4 +230,3 @@ def build_celeba_smile_loaders(cfg):
     )
 
     return train_loader, val_loader, test_loader
-

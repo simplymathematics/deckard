@@ -13,12 +13,11 @@ from deckard.model import (
     ModelConfig,
 )
 from deckard.score import FairlearnScoreDictConfig, ScorerConfig
+from art.estimators.classification.scikitlearn import ScikitlearnClassifier
+from fairlearn.reductions import ExponentiatedGradient
 
 pytest.importorskip("fairlearn")
 pytest.importorskip("art")
-
-from art.estimators.classification.scikitlearn import ScikitlearnClassifier
-from fairlearn.reductions import ExponentiatedGradient
 
 
 def _fairness_data():
@@ -108,7 +107,9 @@ def test_fairlearn_group_scorers_list_merges_dicts():
             {"mse": {"score_function": "sklearn.metrics.mean_squared_error"}},
             {
                 "group_scorers": {
-                    "mae": {"score_function": "sklearn.metrics.mean_absolute_error"},
+                    "mae": {
+                        "score_function": "sklearn.metrics.mean_absolute_error"
+                    },
                 },
             },
         ],
@@ -126,7 +127,10 @@ def test_fairlearn_group_scorers_list_later_wins_on_conflict():
         ],
     )
 
-    assert scorer.group_scorers["mse"].score_function.__name__ == "mean_absolute_error"
+    assert (
+        scorer.group_scorers["mse"].score_function.__name__
+        == "mean_absolute_error"
+    )
 
 
 def test_fairness_defense_config_apply_to_trained_model():
@@ -274,10 +278,7 @@ def test_adult_fairness_data_model_with_and_without_attack(
         },
         attack_size=5,
     )
-    try:
-        scores = attack_cfg(data=adult_fairness_data, model=adult_fairness_model)
-    except Exception as exc:  # pragma: no cover - runtime-specific attack failures
-        pytest.skip(f"Unable to run adult evasion attack for fairness module: {exc}")
+    scores = attack_cfg(data=adult_fairness_data, model=adult_fairness_model)
 
     assert any(key.startswith("evasion_") for key in scores)
     assert "attack_score_time" in scores
@@ -286,6 +287,7 @@ def test_adult_fairness_data_model_with_and_without_attack(
 # ---------------------------------------------------------------------------
 # Hash stability and persistence
 # ---------------------------------------------------------------------------
+
 
 def test_fairness_data_config_hash_stable_after_execution():
     cfg = FairlearnDataConfig(

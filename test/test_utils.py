@@ -4,22 +4,13 @@ import logging
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 from uuid import uuid4
 
 import pandas as pd
 from omegaconf import OmegaConf
 
 from deckard import utils
-from deckard import (
-    DataConfig,
-    ModelConfig,
-    DefenseConfig,
-    AttackConfig,
-    ExperimentConfig,
-    SurvivalExperimentConfig,
-    FileConfig,
-    ScorerDictConfig,
-)
 from deckard.utils import (
     ConfigBase,
     coerce_config,
@@ -98,46 +89,6 @@ class TestUtilsAdditional(unittest.TestCase):
         # Duplicate registration should not raise
         safe_store(group=group, name="cfg", node={"x": 1})
 
-    def test_hash_stable_after_call_for_core_configbase_objects(self):
-        configs = [
-            DataConfig(),
-            ModelConfig(model_type="sklearn.linear_model.LogisticRegression"),
-            DefenseConfig(),
-            AttackConfig(),
-            FileConfig(),
-            ScorerDictConfig(scorers={}),
-            ExperimentConfig(data=DataConfig()),
-            SurvivalExperimentConfig(data=DataConfig()),
-        ]
-
-        for cfg in configs:
-            original_hash = hash(cfg)
-            cls = cfg.__class__
-            original_call = cls.__call__
-
-            def fake_call(self):
-                # Simulate runtime-only side effects commonly produced during execution.
-                self.training_time = 1.23
-                self.prediction_time = 2.34
-                self.probabilities = [0.1, 0.9]
-                self.predictions = [1, 0]
-                self._random_runtime_field = {"seen": True}
-                if hasattr(self, "score_dict") and isinstance(self.score_dict, dict):
-                    self.score_dict["runtime"] = 1
-                return {"ok": 1}
-
-            setattr(cls, "__call__", fake_call)
-            try:
-                cfg.execute_without_mercy()
-            finally:
-                setattr(cls, "__call__", original_call)
-
-            self.assertEqual(
-                original_hash,
-                hash(cfg),
-                msg=f"Hash changed after call for {cls.__name__}",
-            )
-
     def test_hash_conf_values_stable_across_dict_order_and_set_order(self):
         left = {
             "b": [3, 2, 1],
@@ -172,6 +123,67 @@ class TestUtilsAdditional(unittest.TestCase):
         cfg2.custom = {"a": {"n": 8, "m": 9}, "z": [1, 2]}
 
         self.assertEqual(hash(cfg1), hash(cfg2))
+
+    def test_resolve_torch_device_cuda_falls_back_to_best_available(self):
+        try:
+            import torch
+        except ImportError:
+            self.skipTest("Torch not available")
+
+        with (
+            patch("torch.cuda.is_available", return_value=False),
+            patch(
+                "deckard.utils._auto_torch_device_from_backends",
+                return_value=torch.device("mps"),
+            ),
+        ):
+            resolved = utils.resolve_torch_device("cuda")
+
+        self.assertEqual(str(resolved), "mps")
+
+    def test_resolve_torch_device_invalid_cuda_index_falls_back_to_best_available(
+        self,
+    ):
+        try:
+            import torch
+        except ImportError:
+            self.skipTest("Torch not available")
+
+        with (
+            patch("torch.cuda.is_available", return_value=True),
+            patch(
+                "torch.cuda.device_count",
+                return_value=1,
+            ),
+            patch(
+                "deckard.utils._auto_torch_device_from_backends",
+                return_value=torch.device("mps"),
+            ),
+        ):
+            resolved = utils.resolve_torch_device(5)
+
+        self.assertEqual(str(resolved), "mps")
+
+    def test_resolve_torch_device_mps_unavailable_falls_back_to_best_available(
+        self,
+    ):
+        try:
+            import torch
+        except ImportError:
+            self.skipTest("Torch not available")
+        if not hasattr(torch.backends, "mps"):
+            self.skipTest("Torch build has no MPS backend")
+
+        with (
+            patch("torch.backends.mps.is_available", return_value=False),
+            patch(
+                "deckard.utils._auto_torch_device_from_backends",
+                return_value=torch.device("cuda:0"),
+            ),
+        ):
+            resolved = utils.resolve_torch_device("mps")
+
+        self.assertEqual(str(resolved), "cuda:0")
 
     def test_get_call_params_success(self):
         cfg = ParamsConfig()
@@ -341,7 +353,9 @@ class TestUtilsAdditional(unittest.TestCase):
         name_action = next(a for a in parser._actions if a.dest == "name")
         count_action = next(a for a in parser._actions if a.dest == "count")
 
-        self.assertEqual(name_action.help, "Name to echo in the command output.")
+        self.assertEqual(
+            name_action.help, "Name to echo in the command output."
+        )
         self.assertEqual(count_action.help, "Number of iterations to run.")
 
 

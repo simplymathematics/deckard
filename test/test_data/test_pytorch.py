@@ -8,7 +8,9 @@ from unittest.mock import patch
 
 torch = pytest.importorskip("torch")
 Tensor = pytest.importorskip("torch").Tensor
-PytorchDataConfig = pytest.importorskip("deckard.data.pytorch").PytorchDataConfig
+PytorchDataConfig = pytest.importorskip(
+    "deckard.data.pytorch"
+).PytorchDataConfig
 
 
 class TensorWithSensitiveDataset(Dataset):
@@ -63,7 +65,9 @@ class TestPytorchDataConfig(unittest.TestCase):
         shutil.rmtree(cls.temp_dir, ignore_errors=True)
 
     def test_initialization(self):
-        self.assertEqual(self.config.dataset_name, "torch.utils.data.TensorDataset")
+        self.assertEqual(
+            self.config.dataset_name, "torch.utils.data.TensorDataset"
+        )
         self.assertEqual(self.config.data_dir, self.temp_dir)
         self.assertEqual(self.config.test_size, 100)
         self.assertEqual(self.config.train_size, 100)
@@ -76,6 +80,24 @@ class TestPytorchDataConfig(unittest.TestCase):
         self.assertIsInstance(self.config._y, Tensor)
         self.assertGreater(self.config.data_load_time, 0)
 
+    def test_private_max_samples_caps_loaded_dataset(self):
+        X = torch.randn(300, 4)
+        y = torch.randint(0, 2, (300,))
+        with patch.dict("os.environ", {"DECKARD_TEST_MAX_SAMPLES": "120"}):
+            cfg = PytorchDataConfig(
+                dataset_name="torch.utils.data.TensorDataset",
+                data_dir=self.temp_dir,
+                train_size=80,
+                test_size=40,
+                random_state=42,
+                data_params={"_args_": [X, y]},
+            )
+
+            cfg._load_data()
+
+        self.assertEqual(cfg._X.shape[0], 120)
+        self.assertEqual(cfg._y.shape[0], 120)
+
     def test_sample(self):
         self.config._load_data()
         self.config._sample()
@@ -83,6 +105,13 @@ class TestPytorchDataConfig(unittest.TestCase):
         self.assertIsInstance(self.config.y_train, Tensor)
         self.assertIsInstance(self.config.X_test, Tensor)
         self.assertIsInstance(self.config.y_test, Tensor)
+
+    def test_sample_allows_stratify_false(self):
+        self.config.stratify = False
+        self.config._load_data()
+        self.config._sample()
+        self.assertEqual(len(self.config.X_train), 100)
+        self.assertEqual(len(self.config.X_test), 100)
 
     def test_call(self):
         scores = self.config(data_file=str(Path(self.temp_dir) / "data.pkl"))

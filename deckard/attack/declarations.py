@@ -2,7 +2,6 @@
 
 from ..utils import safe_store
 
-
 ATTACK_BOUNDARY = {
     "attack_type": "art.attacks.evasion.BoundaryAttack",
     "attack_params": {
@@ -104,7 +103,9 @@ safe_store(group="attack", name="hsj", node=ATTACK_HSJ)
 safe_store(group="attack", name="membership", node=ATTACK_MEMBERSHIP)
 safe_store(group="attack", name="zoo", node=ATTACK_ZOO)
 
-safe_store(group="search/attacks", name="attribute-bb", node=ATTACK_ATTRIBUTE_BB)
+safe_store(
+    group="search/attacks", name="attribute-bb", node=ATTACK_ATTRIBUTE_BB
+)
 safe_store(group="search/attacks", name="boundary", node=ATTACK_BOUNDARY)
 safe_store(group="search/attacks", name="fgm", node=ATTACK_FGM)
 safe_store(group="search/attacks", name="hsj", node=ATTACK_HSJ)

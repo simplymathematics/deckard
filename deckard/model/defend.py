@@ -123,10 +123,91 @@ class _DefenseBehaviorMixin:
         self.defense_prediction_time = None
         self.defense_scoring_time = None
         self.defense_params = self.defense_params or {}
-        self._apply_fit = True  # Whether to apply fit during defense application
+        self._apply_fit = (
+            True  # Whether to apply fit during defense application
+        )
 
     def __hash__(self):
         return super().__hash__()
+
+    def _freeze_defense_value(self, value):
+        if isinstance(value, DictConfig):
+            value = OmegaConf.to_container(value, resolve=True)
+        if isinstance(value, dict):
+            return tuple(
+                sorted(
+                    (key, self._freeze_defense_value(val))
+                    for key, val in value.items()
+                ),
+            )
+        if isinstance(value, (list, tuple, ListConfig)):
+            return tuple(self._freeze_defense_value(item) for item in value)
+        return value
+
+    def _defense_signature(self):
+        return (
+            getattr(self, "defense_name", None),
+            self._freeze_defense_value(
+                getattr(self, "defense_params", {}) or {}
+            ),
+        )
+
+    def _get_applied_defense_signatures(self, estimator) -> list:
+        return list(
+            getattr(estimator, "_deckard_applied_defense_signatures", []) or [],
+        )
+
+    def _mark_applied_defense_signature(self, estimator, signature) -> None:
+        existing = self._get_applied_defense_signatures(estimator)
+        if signature not in existing:
+            existing.append(signature)
+        setattr(estimator, "_deckard_applied_defense_signatures", existing)
+
+    def _extract_art_wrapper_context(self, art_class, init_params):
+        base_estimator = self._model
+        art_params = dict(init_params or {})
+        existing_preprocessors = []
+        existing_postprocessors = []
+        if hasattr(self._model, "model") and hasattr(
+            self._model,
+            "preprocessing_defences",
+        ):
+            base_estimator = getattr(self._model, "model")
+            art_class = self._model.__class__
+            existing_preprocessors = list(
+                getattr(self._model, "preprocessing_defences", []) or [],
+            )
+            existing_postprocessors = list(
+                getattr(self._model, "postprocessing_defences", []) or [],
+            )
+            art_params["preprocessing"] = getattr(
+                self._model,
+                "preprocessing",
+                art_params.get("preprocessing"),
+            )
+            clip_values = getattr(self._model, "clip_values", None)
+            if clip_values is not None:
+                art_params["clip_values"] = clip_values
+        return (
+            base_estimator,
+            art_class,
+            art_params,
+            existing_preprocessors,
+            existing_postprocessors,
+        )
+
+    def _build_art_wrapper(
+        self,
+        art_class,
+        base_estimator,
+        init_params,
+        preprocessing_defences,
+        postprocessing_defences,
+    ):
+        art_params = dict(init_params or {})
+        art_params["preprocessing_defences"] = preprocessing_defences or None
+        art_params["postprocessing_defences"] = postprocessing_defences or None
+        return art_class(base_estimator, **art_params)
 
     def get_model(self) -> BaseEstimator:
         """Get the model's estimator.
@@ -140,10 +221,14 @@ class _DefenseBehaviorMixin:
             raise ValueError("Model is not fitted yet.")
         return self._model
 
-    def apply_to(self, estimator: Union[BaseEstimator, None], data) -> BaseEstimator:
+    def apply_to(
+        self, estimator: Union[BaseEstimator, None], data
+    ) -> BaseEstimator:
         """Apply this defense to a pre-fitted estimator."""
         if estimator is None:
-            raise ValueError("estimator must be provided before applying defense")
+            raise ValueError(
+                "estimator must be provided before applying defense"
+            )
         self._model = estimator
         model_cfg = getattr(self, "_model_config", None)
         if model_cfg is not None:
@@ -171,8 +256,8 @@ class _DefenseBehaviorMixin:
             not isinstance(self._model, BaseEstimator)
             and not _is_torch_model_instance(self._model)
             and not hasattr(
-            self._model,
-            "model",
+                self._model,
+                "model",
             )
         ):
             assert isinstance(
@@ -180,32 +265,27 @@ class _DefenseBehaviorMixin:
                 BaseEstimator,
             ), "ModelConfig's _model must be a scikit-learn BaseEstimator"
 
+        defense_signature = self._defense_signature()
+        if defense_signature in self._get_applied_defense_signatures(
+            self._model
+        ):
+            self._apply_fit = False
+            self.defense_application_time = 0.0
+            return self._model
+
         # Dynamically import the defense class with defense_params as kwargs
         defense_type, defense_subtype, defense_class = self.parse_defense_name()
         art_class, init_params = self.get_art_class(data)
-        base_estimator = self._model
-        existing_preprocessors = []
-        existing_postprocessors = []
-        if hasattr(self._model, "model") and hasattr(
-            self._model,
-            "preprocessing_defences",
-        ):
-            base_estimator = getattr(self._model, "model")
-            art_class = self._model.__class__
-            existing_preprocessors = list(
-                getattr(self._model, "preprocessing_defences", []) or [],
-            )
-            existing_postprocessors = list(
-                getattr(self._model, "postprocessing_defences", []) or [],
-            )
-            init_params["preprocessing"] = getattr(
-                self._model,
-                "preprocessing",
-                init_params.get("preprocessing"),
-            )
-            clip_values = getattr(self._model, "clip_values", None)
-            if clip_values is not None:
-                init_params["clip_values"] = clip_values
+        (
+            base_estimator,
+            art_class,
+            init_params,
+            existing_preprocessors,
+            existing_postprocessors,
+        ) = self._extract_art_wrapper_context(
+            art_class=art_class,
+            init_params=init_params,
+        )
         if not _is_torch_model_instance(base_estimator):
             try:
                 check_is_fitted(base_estimator)
@@ -220,32 +300,36 @@ class _DefenseBehaviorMixin:
             case "preprocessor":
                 assert defense_class is not None
                 defense = defense_class(**(self.defense_params or {}))
-                preprocessing_defences = existing_preprocessors + [defense]
-                defended_estimator = art_class(
-                    base_estimator,
-                    preprocessing_defences=preprocessing_defences,
-                    postprocessing_defences=existing_postprocessors or None,
-                    **init_params,
+                defended_estimator = self._build_art_wrapper(
+                    art_class=art_class,
+                    base_estimator=base_estimator,
+                    init_params=init_params,
+                    preprocessing_defences=existing_preprocessors + [defense],
+                    postprocessing_defences=existing_postprocessors,
                 )
             case "postprocessor":
                 assert defense_class is not None
                 defense = defense_class(**(self.defense_params or {}))
-                postprocessing_defences = existing_postprocessors + [defense]
-                defended_estimator = art_class(
-                    base_estimator,
-                    preprocessing_defences=existing_preprocessors or None,
-                    postprocessing_defences=postprocessing_defences,
-                    **init_params,
+                defended_estimator = self._build_art_wrapper(
+                    art_class=art_class,
+                    base_estimator=base_estimator,
+                    init_params=init_params,
+                    preprocessing_defences=existing_preprocessors,
+                    postprocessing_defences=existing_postprocessors + [defense],
                 )
             case "detector":
                 assert defense_class is not None
                 match defense_subtype:
                     case "evasion":
                         defense = defense_class(**(self.defense_params or {}))
-                        defended_estimator = defense(self.get_model(), **init_params)
+                        defended_estimator = defense(
+                            self.get_model(), **init_params
+                        )
                     case "poison":
                         defense = defense_class(**(self.defense_params or {}))
-                        defended_estimator = defense(self.get_model(), **init_params)
+                        defended_estimator = defense(
+                            self.get_model(), **init_params
+                        )
                     case _:
                         raise NotImplementedError(
                             f"Detector subtype '{defense_subtype}' is not implemented yet.",
@@ -269,20 +353,27 @@ class _DefenseBehaviorMixin:
                 )
             case None:
                 defense = None
-                defense_params = {**self.defense_params, **init_params}
-                defended_estimator = art_class(
-                    self.get_model(),
-                    **defense_params,
+                defended_estimator = self._build_art_wrapper(
+                    art_class=art_class,
+                    base_estimator=base_estimator,
+                    init_params={**self.defense_params, **init_params},
+                    preprocessing_defences=existing_preprocessors,
+                    postprocessing_defences=existing_postprocessors,
                 )
             case "_":
                 raise NotImplementedError(
                     f"Defense type '{defense_type}' is not implemented yet.",
                 )
         if defended_estimator is None:
-            raise RuntimeError("Defense application did not produce an estimator")
+            raise RuntimeError(
+                "Defense application did not produce an estimator"
+            )
         # Some defences can optionally be applied during training or prediction
         end = time.process_time()
         self._apply_fit = getattr(defense, "_apply_fit", True)
+        self._mark_applied_defense_signature(
+            defended_estimator, defense_signature
+        )
 
         self.defense_application_time = end - start
         model_cfg = getattr(self, "_model_config", None)
@@ -306,7 +397,9 @@ class _DefenseBehaviorMixin:
                     f"Could not parse defense type from defense name {self.defense_name}",
                 )
         if module_name is not None and len(module_name.split(".")) >= 4:
-            defense_subtype = module_name.split(".")[3]  # e.g., 'FeatureSqueezing'
+            defense_subtype = module_name.split(".")[
+                3
+            ]  # e.g., 'FeatureSqueezing'
         else:
             defense_subtype = None
         if defense_type is not None:
@@ -326,8 +419,16 @@ class _DefenseBehaviorMixin:
         return defense_type, defense_subtype, defense_class
 
     def get_art_class(self, data):
-        if _is_torch_model_instance(getattr(self, "_model", None)) or (
-            isinstance(self.model_type, str) and self.model_type.startswith("torch.")
+        if (
+            _is_torch_model_instance(getattr(self, "_model", None))
+            or (
+                isinstance(self.model_type, str)
+                and self.model_type.startswith("torch.")
+            )
+            or isinstance(
+                getattr(self, "_model", None),
+                (PyTorchClassifier, PyTorchRegressor),
+            )
         ):
             try:
                 import torch
@@ -343,25 +444,40 @@ class _DefenseBehaviorMixin:
             else:
                 nb_classes = len(set(y_train))
 
+            # Resolve the underlying nn.Module (unwrap if already an ART wrapper).
+            raw_model = self._model
+            if isinstance(raw_model, (PyTorchClassifier, PyTorchRegressor)):
+                raw_model = getattr(raw_model, "model", raw_model)
+
             if self.classifier:
                 art_class = PyTorchClassifier
                 init_params = {
                     "loss": torch.nn.CrossEntropyLoss(),
-                    "optimizer": torch.optim.SGD(self.get_model().parameters(), lr=0.01),
+                    "optimizer": torch.optim.SGD(
+                        raw_model.parameters(), lr=0.01
+                    ),
                     "input_shape": input_shape,
                     "nb_classes": nb_classes,
-                    "clip_values": getattr(self, "clip_values", None) or (0.0, 1.0),
-                    "device_type": "gpu" if torch.cuda.is_available() else "cpu",
+                    "clip_values": getattr(self, "clip_values", None)
+                    or (0.0, 1.0),
+                    "device_type": (
+                        "gpu" if torch.cuda.is_available() else "cpu"
+                    ),
                 }
             else:
                 art_class = PyTorchRegressor
                 init_params = {
                     "loss": torch.nn.MSELoss(),
-                    "optimizer": torch.optim.SGD(self.get_model().parameters(), lr=0.01),
+                    "optimizer": torch.optim.SGD(
+                        raw_model.parameters(), lr=0.01
+                    ),
                     "input_shape": input_shape,
                     "nb_classes": None,
-                    "clip_values": getattr(self, "clip_values", None) or (0.0, 1.0),
-                    "device_type": "gpu" if torch.cuda.is_available() else "cpu",
+                    "clip_values": getattr(self, "clip_values", None)
+                    or (0.0, 1.0),
+                    "device_type": (
+                        "gpu" if torch.cuda.is_available() else "cpu"
+                    ),
                 }
             if "preprocessing" not in init_params:
                 init_params["preprocessing"] = None
@@ -382,7 +498,9 @@ class _DefenseBehaviorMixin:
         else:
             init_params = {
                 "input_shape": data.X_train.shape[1:],
-                "nb_classes": len(set(data.y_train)) if self.classifier else None,
+                "nb_classes": (
+                    len(set(data.y_train)) if self.classifier else None
+                ),
             }
         if "preprocessing" not in init_params:
             init_params["preprocessing"] = None
@@ -414,7 +532,9 @@ class DefensePipelineConfig(ConfigBase):
     score_dict: dict = field(default_factory=dict)
     defense_application_time: Union[float, None] = None
     _target_: Union[str, None] = None
-    _plugin_objects: Union[list, None] = field(default=None, repr=False, compare=False)
+    _plugin_objects: Union[list, None] = field(
+        default=None, repr=False, compare=False
+    )
 
     def __post_init__(self):
         if not hasattr(self, "score_dict") or self.score_dict is None:
@@ -433,7 +553,9 @@ class DefensePipelineConfig(ConfigBase):
         return target.rsplit(".", 1)[-1] == cls.__name__
 
     @classmethod
-    def _looks_like_single_defense_spec(cls, defense_spec: dict[str, Any]) -> bool:
+    def _looks_like_single_defense_spec(
+        cls, defense_spec: dict[str, Any]
+    ) -> bool:
         if "defenses" in defense_spec:
             return False
         target = defense_spec.get("_target_")
@@ -455,6 +577,11 @@ class DefensePipelineConfig(ConfigBase):
         if defense_config is None or isinstance(defense_config, cls):
             return defense_config
 
+        # Keep concrete defense objects intact; converting them to dict can
+        # capture runtime-only attrs that are not valid constructor kwargs.
+        if hasattr(defense_config, "apply_to"):
+            return cls(defenses=[defense_config])
+
         # List of defense specs → chain them all inside one pipeline
         if isinstance(defense_config, (list, ListConfig)):
             return cls(defenses=coerce_to_list(defense_config))
@@ -464,9 +591,6 @@ class DefensePipelineConfig(ConfigBase):
         # Re-check after coerce (coerce_config may return a list)
         if isinstance(defense_config, (list, ListConfig)):
             return cls(defenses=coerce_to_list(defense_config))
-
-        if hasattr(defense_config, "apply_to"):
-            return cls(defenses=[defense_config])
 
         if isinstance(defense_config, dict):
             defense_dict = cast(dict[str, Any], dict(defense_config))
@@ -487,7 +611,9 @@ class DefensePipelineConfig(ConfigBase):
             spec = dict(plugin_spec)
             class_path = spec.pop("name", spec.pop("_target_", None))
             if class_path is None:
-                raise ValueError("Plugin dict must include 'name' or '_target_'")
+                raise ValueError(
+                    "Plugin dict must include 'name' or '_target_'"
+                )
             return resolve_class(class_path)(**spec)
 
         if isinstance(plugin_spec, str):
@@ -502,7 +628,9 @@ class DefensePipelineConfig(ConfigBase):
         if self._plugin_objects is None:
             plugin_specs = self.plugins if self.plugins is not None else []
             if not isinstance(plugin_specs, list):
-                raise TypeError(f"plugins must be a list, got {type(plugin_specs)}")
+                raise TypeError(
+                    f"plugins must be a list, got {type(plugin_specs)}"
+                )
             self._plugin_objects = [
                 self._instantiate_plugin(spec) for spec in plugin_specs
             ]
@@ -536,9 +664,13 @@ class DefensePipelineConfig(ConfigBase):
                 return resolve_class(target)(**defense_dict)
 
             defense_name = defense_dict.get("defense_name")
-            if isinstance(defense_name, str) and defense_name.startswith("fairlearn."):
+            if isinstance(defense_name, str) and defense_name.startswith(
+                "fairlearn."
+            ):
                 try:
-                    fair_cls = resolve_class("deckard.model.fairness.FairlearnDefenseConfig")
+                    fair_cls = resolve_class(
+                        "deckard.model.fairness.FairlearnDefenseConfig",
+                    )
                     return fair_cls(**defense_dict)
                 except Exception:
                     pass
@@ -552,35 +684,50 @@ class DefensePipelineConfig(ConfigBase):
         base_estimator = getattr(estimator, "model", estimator)
         blank_values = {None, "", "None", "null", "Null", "NULL"}
 
-        if hasattr(defense_obj, "model_type") and getattr(
-            defense_obj,
-            "model_type",
-            None,
-        ) in blank_values:
+        if (
+            hasattr(defense_obj, "model_type")
+            and getattr(
+                defense_obj,
+                "model_type",
+                None,
+            )
+            in blank_values
+        ):
             defense_obj.model_type = (
                 f"{base_estimator.__class__.__module__}."
                 f"{base_estimator.__class__.__name__}"
             )
 
-        if hasattr(defense_obj, "classifier") and getattr(
-            defense_obj,
-            "classifier",
-            None,
-        ) is None:
+        if (
+            hasattr(defense_obj, "classifier")
+            and getattr(
+                defense_obj,
+                "classifier",
+                None,
+            )
+            is None
+        ):
             estimator_type = getattr(base_estimator, "_estimator_type", None)
             if estimator_type == "classifier":
                 defense_obj.classifier = True
             elif estimator_type == "regressor":
                 defense_obj.classifier = False
 
-        if hasattr(defense_obj, "model_params") and not getattr(
-            defense_obj,
-            "model_params",
-            None,
-        ) and hasattr(base_estimator, "get_params"):
+        if (
+            hasattr(defense_obj, "model_params")
+            and not getattr(
+                defense_obj,
+                "model_params",
+                None,
+            )
+            and hasattr(base_estimator, "get_params")
+        ):
             defense_obj.model_params = base_estimator.get_params()
 
-        if hasattr(defense_obj, "probability") and hasattr(base_estimator, "predict_proba"):
+        if hasattr(defense_obj, "probability") and hasattr(
+            base_estimator,
+            "predict_proba",
+        ):
             defense_obj.probability = True
 
     def normalize_defenses(self, defenses) -> list:
@@ -592,7 +739,11 @@ class DefensePipelineConfig(ConfigBase):
             defense_list = [defenses]
         return [self._coerce_single_defense(item) for item in defense_list]
 
-    def resolve_stage(self, default_stage: str = "post_fit_pre_predict", **context) -> str:
+    def resolve_stage(
+        self,
+        default_stage: str = "post_fit_pre_predict",
+        **context,
+    ) -> str:
         stage = default_stage
         hook_outputs = self._run_plugin_hook(
             "resolve_defense_stage",
@@ -604,18 +755,92 @@ class DefensePipelineConfig(ConfigBase):
             if isinstance(output, str) and output.strip():
                 stage = output.strip()
             elif isinstance(output, dict):
-                candidate = output.get("defense_stage", output.get("stage", None))
+                candidate = output.get(
+                    "defense_stage", output.get("stage", None)
+                )
                 if isinstance(candidate, str) and candidate.strip():
                     stage = candidate.strip()
         return stage
 
-    def apply(self, estimator: BaseEstimator, data, stage: str = "post_fit_pre_predict") -> BaseEstimator:
+    def _is_art_defense(self, defense_obj) -> bool:
+        """Return True if defense_obj is an ART defense (wraps model, must be last)."""
+        defense_name = getattr(defense_obj, "defense_name", None)
+        if isinstance(defense_name, str) and defense_name.startswith("art."):
+            return True
+        # DefenseConfig instances without a fairlearn/art prefix are ART-style model wrappers
+        try:
+            from .fairness import FairlearnDefenseConfig
+
+            if isinstance(defense_obj, FairlearnDefenseConfig):
+                return False
+        except ImportError:
+            pass
+        if isinstance(defense_obj, DefenseConfig):
+            return True
+        return False
+
+    def _is_model_wrapper_defense(self, defense_obj) -> bool:
+        """Return True for defenses that wrap/transform estimators rather than raw data."""
+        if self._is_art_defense(defense_obj):
+            return True
+        try:
+            from .fairness import FairlearnDefenseConfig
+
+            if isinstance(defense_obj, FairlearnDefenseConfig):
+                return True
+        except ImportError:
+            pass
+        return False
+
+    def apply(
+        self,
+        estimator: BaseEstimator,
+        data,
+        stage: str = "post_fit_pre_predict",
+    ) -> BaseEstimator:
         if estimator is None:
-            raise ValueError("estimator must be provided before applying defenses")
+            raise ValueError(
+                "estimator must be provided before applying defenses"
+            )
         defense_chain = self.normalize_defenses(self.defenses)
         if len(defense_chain) == 0:
             return estimator
 
+        # Enforce model-wrapper defenses last: ART/fairlearn estimator wrappers should run
+        # after data-transform defenses, while preserving user order within each group.
+        wrapper_defenses = [
+            d for d in defense_chain if self._is_model_wrapper_defense(d)
+        ]
+        data_defenses = [
+            d for d in defense_chain if not self._is_model_wrapper_defense(d)
+        ]
+        if wrapper_defenses and data_defenses:
+            first_wrapper_idx = next(
+                i
+                for i, d in enumerate(defense_chain)
+                if self._is_model_wrapper_defense(d)
+            )
+            last_data_idx = max(
+                i
+                for i, d in enumerate(defense_chain)
+                if not self._is_model_wrapper_defense(d)
+            )
+            if first_wrapper_idx < last_data_idx:
+                logger.warning(
+                    "Defense chain contains model-wrapper defenses (ART/fairlearn) before "
+                    "data-transform defenses. Wrapper defenses only transform the estimator, "
+                    "so they are automatically reordered to run last. "
+                    "Data defenses: %s; wrapper defenses: %s.",
+                    [
+                        getattr(d, "defense_name", type(d).__name__)
+                        for d in data_defenses
+                    ],
+                    [
+                        getattr(d, "defense_name", type(d).__name__)
+                        for d in wrapper_defenses
+                    ],
+                )
+                defense_chain = data_defenses + wrapper_defenses
         self._run_plugin_hook(
             "before_apply_defense",
             estimator=estimator,
@@ -629,7 +854,10 @@ class DefensePipelineConfig(ConfigBase):
         applied_defenses = []
         for defense_obj in defense_chain:
             self._inherit_model_context(defense_obj, defended_estimator)
-            if hasattr(defense_obj, "data") and getattr(defense_obj, "data", None) is None:
+            if (
+                hasattr(defense_obj, "data")
+                and getattr(defense_obj, "data", None) is None
+            ):
                 setattr(defense_obj, "data", data)
             apply_to = getattr(defense_obj, "apply_to", None)
             if not callable(apply_to):
@@ -645,7 +873,9 @@ class DefensePipelineConfig(ConfigBase):
                 applied_defenses=applied_defenses,
             )
             started = time.process_time()
-            defended_estimator = apply_to(estimator=defended_estimator, data=data)
+            defended_estimator = apply_to(
+                estimator=defended_estimator, data=data
+            )
             elapsed = getattr(defense_obj, "defense_application_time", None)
             if elapsed is None:
                 elapsed = time.process_time() - started
@@ -690,7 +920,9 @@ class DefenseConfig(_DefenseBehaviorMixin, ConfigBase):
     probability: bool = False
     clip_values: tuple | None = field(
         default=None,
-        metadata={"help": "Tuple of the form (min, max) to clip input features."},
+        metadata={
+            "help": "Tuple of the form (min, max) to clip input features."
+        },
     )
     defense_name: Union[str, None] = field(
         default=None,

@@ -7,7 +7,9 @@ import torch
 
 from deckard.model.defend import DefensePipelineConfig
 
-PytorchModelConfig = pytest.importorskip("deckard.model.pytorch").PytorchModelConfig
+PytorchModelConfig = pytest.importorskip(
+    "deckard.model.pytorch"
+).PytorchModelConfig
 
 
 def test_pytorch_model_config_save_and_load_roundtrip():
@@ -73,7 +75,10 @@ def test_pytorch_model_training_records_optimizer_loss_and_serializes_it():
         )
         loaded.load(str(model_path))
 
-        assert loaded.score_dict["optimizer_loss"] == cfg.score_dict["optimizer_loss"]
+        assert (
+            loaded.score_dict["optimizer_loss"]
+            == cfg.score_dict["optimizer_loss"]
+        )
         assert "epochs" in loaded.score_dict
         assert len(loaded.score_dict["epochs"]) == 2
 
@@ -289,7 +294,7 @@ def test_pytorch_model_checkpoint_records_track_epochs():
 
         # 6 epochs / 2 epochs per checkpoint = 3 checkpoints
         assert len(cfg.checkpoint_records) == 3
-        
+
         # Verify checkpoint records have epoch info and file paths
         for record in cfg.checkpoint_records:
             assert "epoch" in record
@@ -413,16 +418,16 @@ def test_pytorch_model_loss_decreases_during_training():
 
     X = torch.randn(20, 10)
     y = torch.randint(0, 2, (20,))
-    
+
     # Train and capture loss
     cfg._train(X, y)
     final_loss_1 = cfg.score_dict["optimizer_loss"]
-    
+
     # Retrain with more epochs to verify loss changes
     cfg.fit_params["nb_epochs"] = 10
     cfg._train(X, y)
     final_loss_2 = cfg.score_dict["optimizer_loss"]
-    
+
     # Loss should be different (not necessarily lower due to randomness)
     # but the metric should exist and be a valid float
     assert isinstance(final_loss_1, float)
@@ -442,10 +447,10 @@ def test_pytorch_model_different_batch_sizes():
         X_test=torch.randn(8, 4),
         y_test=torch.randint(0, 2, (8,)),
     )
-    
+
     batch_sizes = [2, 4, 8]
     losses = []
-    
+
     for batch_size in batch_sizes:
         cfg = PytorchModelConfig(
             model_type="torch.nn.Linear",
@@ -457,7 +462,7 @@ def test_pytorch_model_different_batch_sizes():
         )
         cfg._train(data.X_train, data.y_train)
         losses.append(cfg.score_dict["optimizer_loss"])
-    
+
     # All batch sizes should produce valid losses
     for loss in losses:
         assert isinstance(loss, float)

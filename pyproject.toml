@@ -87,7 +87,8 @@ lint = [
     "black",
     "isort",
     "mypy",
-    "pre-commit"
+    "pre-commit",
+    "flake8-pyproject",
 ]
 
 
@@ -130,12 +131,23 @@ all  = [
 ]
 
 [tool.black]
-line-length = 88
+line-length = 80
 target-version = ['py310']
 include = 'deckard/.*\.py'
 
 [project.scripts]
 deckard = "deckard.__main__:main"
+
+[tool.flake8]
+max-line-length = 80
+exclude = [
+  "__pycache__",
+  "*.egg-info",
+  ".git",
+  ".venv",
+  "build",
+  "docs"
+]
 
 [tool.pytest.ini_options]
 filterwarnings = [

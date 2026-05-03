@@ -2,13 +2,19 @@ import argparse
 from pathlib import Path
 import pandas as pd
 import yaml
-from deckard.layers.aft import fit_aft, clean_data_for_aft, calculate_raw_failures
+from deckard.layers.aft import (
+    fit_aft,
+    clean_data_for_aft,
+    calculate_raw_failures,
+)
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data", type=str, required=True)
 parser.add_argument("--config_file", type=str, required=True)
-parser.add_argument("--target", type=str, required=True, help="Target column name")
+parser.add_argument(
+    "--target", type=str, required=True, help="Target column name"
+)
 parser.add_argument(
     "--duration_col",
     type=str,
@@ -28,7 +34,9 @@ else:
     raise NotImplementedError(f"Unknown file format: {suffix}")
 
 suffix = Path(args.config_file).suffix
-assert Path(args.config_file).exists(), f"Model file not found: {args.config_file}"
+assert Path(
+    args.config_file
+).exists(), f"Model file not found: {args.config_file}"
 
 if suffix == ".yaml":
     with open(args.config_file, "r") as f:
@@ -45,7 +53,9 @@ data = df.copy()
 # Calculate raw failures from accuracy
 data = calculate_raw_failures(args, df, config)
 # Clean data by removing columns that are not in the covariate list and creating dummies for the categorical variables
-data = clean_data_for_aft(data, covariate_list, target=args.target, dummy_dict=dummies)
+data = clean_data_for_aft(
+    data, covariate_list, target=args.target, dummy_dict=dummies
+)
 # Fit the model
 model = fit_aft(
     data,

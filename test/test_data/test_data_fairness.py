@@ -41,13 +41,38 @@ class ScorePlugin:
 class TestDataPipelineConfig(unittest.TestCase):
     def setUp(self):
         self.pipeline_config_dict = {
-            "imputer": {"name": "sklearn.impute.SimpleImputer", "strategy": "mean"},
+            "imputer": {
+                "name": "sklearn.impute.SimpleImputer",
+                "strategy": "mean",
+            },
             "scaler": {"name": "sklearn.preprocessing.StandardScaler"},
         }
         self.X_train = pd.DataFrame(
             {
-                "feature1": [1.0, 2.0, np.nan, 4.0, 5.0, 1.0, 2.0, np.nan, 4.0, 5.0],
-                "feature2": [np.nan, 1.0, 2.0, 3.0, 4.0, np.nan, 1.0, 2.0, 3.0, 4.0],
+                "feature1": [
+                    1.0,
+                    2.0,
+                    np.nan,
+                    4.0,
+                    5.0,
+                    1.0,
+                    2.0,
+                    np.nan,
+                    4.0,
+                    5.0,
+                ],
+                "feature2": [
+                    np.nan,
+                    1.0,
+                    2.0,
+                    3.0,
+                    4.0,
+                    np.nan,
+                    1.0,
+                    2.0,
+                    3.0,
+                    4.0,
+                ],
             },
         )
         self.y_train = pd.Series([0, 1, 0, 1, 0, 0, 1, 0, 1, 0])
@@ -64,7 +89,10 @@ class TestDataPipelineConfig(unittest.TestCase):
                 "strategy": "mean",
                 "dtype": "num",
             },
-            "scaler": {"name": "sklearn.preprocessing.StandardScaler", "dtype": "num"},
+            "scaler": {
+                "name": "sklearn.preprocessing.StandardScaler",
+                "dtype": "num",
+            },
         }
 
     def test_pipelineconfig_initialization(self):
@@ -254,7 +282,9 @@ class TestDataConfig(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             csv_path = Path(tmpdirname) / "test.csv"
-            pd.DataFrame({"a": [1, 2], "b": [3, 4]}).to_csv(csv_path, index=False)
+            pd.DataFrame({"a": [1, 2], "b": [3, 4]}).to_csv(
+                csv_path, index=False
+            )
             cfg = DataConfig(dataset_name=str(csv_path), data_params={})
             with self.assertRaises(ValueError):
                 cfg._load_data()

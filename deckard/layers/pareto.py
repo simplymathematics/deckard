@@ -35,7 +35,9 @@ def _normalize_direction(direction: str) -> str:
     )
 
 
-def _resolve_study(optuna_db: str, study_name: Optional[str]) -> optuna.study.Study:
+def _resolve_study(
+    optuna_db: str, study_name: Optional[str]
+) -> optuna.study.Study:
     if study_name:
         logger.info(f"Loading study '{study_name}' from {optuna_db}")
         return optuna.study.load_study(storage=optuna_db, study_name=study_name)
@@ -45,7 +47,8 @@ def _resolve_study(optuna_db: str, study_name: Optional[str]) -> optuna.study.St
         raise ValueError(f"No studies found in {optuna_db}")
     if len(summaries) > 1:
         names = [
-            getattr(s, "study_name", getattr(s, "name", "<unknown>")) for s in summaries
+            getattr(s, "study_name", getattr(s, "name", "<unknown>"))
+            for s in summaries
         ]
         raise ValueError(
             "Multiple studies found. Please provide study_name. "
@@ -59,7 +62,9 @@ def _resolve_study(optuna_db: str, study_name: Optional[str]) -> optuna.study.St
     )
     if inferred_name is None:
         raise ValueError("Could not infer study name from summary")
-    logger.info(f"No study_name provided; using only available study '{inferred_name}'")
+    logger.info(
+        f"No study_name provided; using only available study '{inferred_name}'"
+    )
     return optuna.study.load_study(storage=optuna_db, study_name=inferred_name)
 
 
@@ -249,7 +254,9 @@ def pareto_main(
     objective_names = _parse_csv_arg(optimizers)
     user_specified_objectives = len(objective_names) > 0
     if len(objective_names) == 0:
-        objective_names = _infer_default_optimizers(study=study, trials_df=trial_df)
+        objective_names = _infer_default_optimizers(
+            study=study, trials_df=trial_df
+        )
 
     metric_names = list(getattr(study, "metric_names", []) or [])
     objective_columns = [
@@ -264,7 +271,9 @@ def pareto_main(
     ]
     trial_df = _coerce_objective_columns_numeric(trial_df, objective_columns)
 
-    direction_list = [_normalize_direction(d) for d in _parse_csv_arg(directions)]
+    direction_list = [
+        _normalize_direction(d) for d in _parse_csv_arg(directions)
+    ]
     if len(direction_list) == 0:
         direction_list = _infer_directions_for_objectives(
             study=study,
@@ -288,7 +297,9 @@ def pareto_main(
         column = objective_columns[0]
         ascending = direction_list[0] == "minimize"
         selected = (
-            trial_df.sort_values(by=column, ascending=ascending).head(top_k).copy()
+            trial_df.sort_values(by=column, ascending=ascending)
+            .head(top_k)
+            .copy()
         )
         selected["_selection_type"] = "single_objective"
     else:

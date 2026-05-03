@@ -18,7 +18,9 @@ from gzip_classifier import compressors
 
 logger = logging.getLogger(__name__)
 
-sns.set_theme(context="paper", style="whitegrid", font="Times New Roman", font_scale=2)
+sns.set_theme(
+    context="paper", style="whitegrid", font="Times New Roman", font_scale=2
+)
 
 
 def old_ncd(
@@ -26,7 +28,9 @@ def old_ncd(
     x2,
     cx1=None,
     cx2=None,
-    method: Literal["gzip", "lzma", "bz2", "zstd", "pkl", "brotli", None] = "gzip",
+    method: Literal[
+        "gzip", "lzma", "bz2", "zstd", "pkl", "brotli", None
+    ] = "gzip",
 ) -> float:
     """
     Calculate the normalized compression distance between two objects treated as strings.
@@ -38,7 +42,9 @@ def old_ncd(
     """
 
     metric_len = (
-        compressors[method] if method in compressors.keys() else compressors["gzip"]
+        compressors[method]
+        if method in compressors.keys()
+        else compressors["gzip"]
     )
     Cx1 = metric_len(x1) if cx1 is None else cx1
     Cx2 = metric_len(x2) if cx2 is None else cx2
@@ -208,7 +214,9 @@ def check_loop(
 
     # Generate a list of arguments for the parallelized for loop
     for i in range(samples):
-        x, y, z = get_data_triplet(max_string_size, data, alphabet_size, samples, i)
+        x, y, z = get_data_triplet(
+            max_string_size, data, alphabet_size, samples, i
+        )
         arg_list += [(sig_figs, distance, metric, x, y, z)]
 
     # Parallelize the for loop using joblib and tqdm
@@ -225,9 +233,13 @@ def check_loop(
     )  # 4 columns, 1 for each assumption,
     # Convert failures to percent
     df = df.sum(axis=0) / samples
-    logger.info(f"Percent of examples where triangle inequality was violated: {df[0]}")
+    logger.info(
+        f"Percent of examples where triangle inequality was violated: {df[0]}"
+    )
     logger.info(f"Percent of examples where symmetry was violated: {df[1]}")
-    logger.info(f"Percent of examples where zero identity was violated: {df[2]}")
+    logger.info(
+        f"Percent of examples where zero identity was violated: {df[2]}"
+    )
     logger.info(f"Percent of examples where positivity was violated: {df[3]}")
     logger.info(f"Shape of df is {df.shape}")
     return df
@@ -264,7 +276,9 @@ def get_data_triplet(max_string_size, data, alphabet_size, samples, i):
             alphabet_size=alphabet_size,
         )
     elif data in ["bytes"]:
-        assert max_string_size <= 256, ValueError("Max string size is too large")
+        assert max_string_size <= 256, ValueError(
+            "Max string size is too large"
+        )
         x = byte_generator(
             size=random.randint(1, max_string_size),
             alphabet_size=alphabet_size,
@@ -306,7 +320,9 @@ def count_metric_assumption_failures(sig_figs, distance, metric, x, y, z):
     zx = round(zx, sig_figs)
     zy = round(zy, sig_figs)
     try:
-        symmetric_failures = check_symmetry(xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy)
+        symmetric_failures = check_symmetry(
+            xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy
+        )
     except ValueError as e:
         symmetric_failures = 1
         logger.error(
@@ -347,13 +363,20 @@ def count_metric_assumption_failures(sig_figs, distance, metric, x, y, z):
             f"Zero Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with metric {metric}",
         )
     try:
-        positivity_failures = check_positivity(xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy)
+        positivity_failures = check_positivity(
+            xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy
+        )
     except ValueError as e:
         positivity_failures = 1
         logger.error(
             f"Positivity Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with metric {metric}",
         )
-    return triangle_failures, symmetric_failures, zero_failures, positivity_failures
+    return (
+        triangle_failures,
+        symmetric_failures,
+        zero_failures,
+        positivity_failures,
+    )
 
 
 def get_distance_function(distance):
@@ -443,10 +466,14 @@ def check_all_metric_space_assumptions(
             continue
         kwargs[iterate] = i
         t, s, z, p = check_loop(**kwargs, distance=distance)
-        logger.info(f"Percent of examples where zero identity was violated: {z}")
+        logger.info(
+            f"Percent of examples where zero identity was violated: {z}"
+        )
         logger.info(f"Percent of examples where positivity  was violated: {p}")
         logger.info(f"Percent of examples where symmetry was violated: {s}")
-        logger.info(f"Percent of examples where triangle inequality was violated: {t}")
+        logger.info(
+            f"Percent of examples where triangle inequality was violated: {t}"
+        )
         symmetries.append(s)
         zeroes.append(z)
         triangles.append(t)
@@ -484,7 +511,9 @@ def check_all_metric_space_assumptions(
     return df
 
 
-def find_all_combinations(max_alphabet_size=52, max_string_size=10, reverse=False):
+def find_all_combinations(
+    max_alphabet_size=52, max_string_size=10, reverse=False
+):
     chars = []
     chars = (
         string.ascii_lowercase + string.ascii_uppercase
@@ -498,11 +527,15 @@ def find_all_combinations(max_alphabet_size=52, max_string_size=10, reverse=Fals
         + string.ascii_lowercase
     )
     # Join into a string
-    assert max_alphabet_size <= len(chars), ValueError("Alphabet size is too large")
+    assert max_alphabet_size <= len(chars), ValueError(
+        "Alphabet size is too large"
+    )
     chars = chars[:max_alphabet_size]
     # Find all combinations of length max_string_size
     perms = []
-    for i in tqdm(range(1, max_string_size + 1), desc="Finding all combinations"):
+    for i in tqdm(
+        range(1, max_string_size + 1), desc="Finding all combinations"
+    ):
         marginal = combinations(chars, i)
         # Join each entry into a string
         marginal = ["".join(m) for m in marginal]
@@ -576,7 +609,9 @@ def checkpoint_results(args, *dfs):
 def plot_identity_violations(args, big_df):
     big_df["i"] = big_df["i"].astype(int)
     big_df["Percent Violations"] = big_df["Percent Violations"] * 100
-    big_df["Percent Violations"] = big_df["Percent Violations"].round(2).astype(float)
+    big_df["Percent Violations"] = (
+        big_df["Percent Violations"].round(2).astype(float)
+    )
     # Replace the underscore in "Iterate", "Algorithm" with a space
     big_df["Iterate"] = big_df["Iterate"].str.replace("_", " ")
     big_df["Algorithm"] = big_df["Algorithm"].str.replace("_", " ")
@@ -627,7 +662,9 @@ if __name__ == "__main__":
     parser.add_argument("--sig_figs", type=int, default=5)
     parser.add_argument("--samples", type=int, default=1000)
     parser.add_argument("--max_string_size", type=int, default=5)
-    parser.add_argument("--max_alphabet_size", type=int, default=95)  # acutal max is 95
+    parser.add_argument(
+        "--max_alphabet_size", type=int, default=95
+    )  # acutal max is 95
     parser.add_argument(
         "--iterate",
         type=str,
@@ -636,7 +673,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("--data", type=str, default="alphabet")
     parser.add_argument("--folder", type=str, default="metric_space_check")
-    parser.add_argument("--log_file", type=str, default="metric_space_check.log")
+    parser.add_argument(
+        "--log_file", type=str, default="metric_space_check.log"
+    )
     parser.add_argument("--results_file", type=str, default="results.csv")
     parser.add_argument("--plot_file", type=str, default="results.pdf")
     args = parser.parse_args()

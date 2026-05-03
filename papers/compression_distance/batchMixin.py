@@ -41,8 +41,12 @@ class BatchedMixin:
             X, y = args
             X_test = kwargs.pop("X_test", None)
             y_test = kwargs.pop("y_test", None)
-            log_file = self.training_log if hasattr(self, "training_log") else None
-            for i in tqdm(range(self.nb_epoch), desc="Epochs", leave=True, position=0):
+            log_file = (
+                self.training_log if hasattr(self, "training_log") else None
+            )
+            for i in tqdm(
+                range(self.nb_epoch), desc="Epochs", leave=True, position=0
+            ):
                 # Shuffle the indices of X,y
                 indices = np.arange(len(X))
                 np.random.shuffle(indices)
@@ -59,7 +63,9 @@ class BatchedMixin:
                         ), "X_test and y_test must have the same length"
                         test_score = self.score(X_test, y_test)
                         test_scores.append(test_score)
-                        logger.info(f"Train score: {score}, Test score: {test_score}")
+                        logger.info(
+                            f"Train score: {score}, Test score: {test_score}"
+                        )
                     else:
                         logger.info(f"Train score: {score}")
                 if log_file is not None:
@@ -160,9 +166,15 @@ class BatchedMixin:
                 n_batches = 1
             for i in range(n_batches):
                 if append is True:
-                    new_X = X[i * self.batch_size : (i + 1) * self.batch_size]  # noqa
-                    new_y = y[i * self.batch_size : (i + 1) * self.batch_size]  # noqa
-                    indices = func(X=new_X, y=new_y, method=method, n_jobs=n_jobs)
+                    new_X = X[
+                        i * self.batch_size : (i + 1) * self.batch_size
+                    ]  # noqa
+                    new_y = y[
+                        i * self.batch_size : (i + 1) * self.batch_size
+                    ]  # noqa
+                    indices = func(
+                        X=new_X, y=new_y, method=method, n_jobs=n_jobs
+                    )
                     X = X[indices]
                     y = y[indices]
                     self.X_ = X

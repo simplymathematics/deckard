@@ -28,7 +28,9 @@ try:
         FairlearnModelConfig,
     )
 except ImportError:  # pragma: no cover
-    logger.debug("Fairlearn not found. Fairlearn model configs are unavailable.")
+    logger.debug(
+        "Fairlearn not found. Fairlearn model configs are unavailable."
+    )
 
 try:
     from .anjana import AnjanaModelConfig

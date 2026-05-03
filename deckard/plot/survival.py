@@ -32,7 +32,9 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
             file_path = file_path.with_suffix(filetype)
         return Path(folder) / file_path
 
-    def build_coefficients_plot(self, summary: pd.DataFrame) -> SeabornPlotConfig:
+    def build_coefficients_plot(
+        self, summary: pd.DataFrame
+    ) -> SeabornPlotConfig:
         summary_df = pd.DataFrame(summary).copy()
         if isinstance(summary_df.index, pd.MultiIndex):
             summary_df["covariate"] = summary_df.index.get_level_values(1)
@@ -54,7 +56,9 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
             plot_file=self.coefficients_file,
         )
 
-    def build_calibration_plot(self, calibration: pd.DataFrame) -> SeabornPlotConfig:
+    def build_calibration_plot(
+        self, calibration: pd.DataFrame
+    ) -> SeabornPlotConfig:
         calibration_df = pd.DataFrame(calibration).copy()
         return SeabornPlotConfig(
             plot_type="line",
@@ -139,7 +143,9 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
             summary = summary[summary["covariate"] != "Intercept"]
 
         if replacement_dict:
-            summary["covariate"] = summary["covariate"].replace(replacement_dict)
+            summary["covariate"] = summary["covariate"].replace(
+                replacement_dict
+            )
 
         if dummy_dict:
             summary["covariate"] = summary["covariate"].replace(dummy_dict)

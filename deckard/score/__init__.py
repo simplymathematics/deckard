@@ -16,6 +16,7 @@ from .base import (  # noqa: F401
 
 from .attack import (  # noqa: E402
     AttackScorerConfig,
+    FairlearnAttackScorerConfig,
     DefaultEvasionAttackScorerConfig,
     DefaultEvasionRegressionAttackScorerConfig,
     DefaultMembershipInferenceAttackScorerConfig,
@@ -135,7 +136,7 @@ if "DefaultFairlearnConfig" in globals():
             "fairness_group_mean_prediction_difference",
             "fairness_group_mae_difference",
             "fairness_group_mse_difference",
-        ]
+        ],
     )
 
 if "DefaultAnjanaDataScoreConfig" in globals():
@@ -146,7 +147,7 @@ if "DefaultAnjanaDataScoreConfig" in globals():
             "anjana_k_anonymity_score",
             "anjana_l_diversity_score",
             "anjana_t_closeness_score",
-        ]
+        ],
     )
 
 if "DefaultLifelinesConfig" in globals():
@@ -157,5 +158,5 @@ if "DefaultLifelinesConfig" in globals():
             "survival_concordance_score",
             "survival_aic_score",
             "survival_bic_score",
-        ]
+        ],
     )

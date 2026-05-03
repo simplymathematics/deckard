@@ -14,7 +14,10 @@ from ..data.base import _lifelines_dataset_loaders
 from ..experiment import SurvivalExperimentConfig
 from ..model.survival import SurvivalModelConfig
 from .compile_results import parse_studies
-from ..plot.survival import SurvivalSeabornPlotterConfig, SurvivalSeabornPlotConfigList
+from ..plot.survival import (
+    SurvivalSeabornPlotterConfig,
+    SurvivalSeabornPlotConfigList,
+)
 from ..utils import create_parser_from_function
 
 logger = logging.getLogger(__name__)
@@ -256,7 +259,9 @@ def calculate_failures_under_attack(
 ) -> pd.DataFrame:
     """Optionally derive ben/adv failure counts from attack-specific accuracy metrics."""
     config = SurvivalExperimentConfig(data=DataConfig(dataset_name="toy"))
-    return config.calculate_failures_under_attack(data, attack_config, benign_metric)
+    return config.calculate_failures_under_attack(
+        data, attack_config, benign_metric
+    )
 
 
 def survival_main(
@@ -324,7 +329,9 @@ def survival_main(
     if attack_query is None and "attack_query" in config:
         attack_query = config.pop("attack_query")
     if not calculate_attack_failures and "calculate_attack_failures" in config:
-        calculate_attack_failures = bool(config.pop("calculate_attack_failures"))
+        calculate_attack_failures = bool(
+            config.pop("calculate_attack_failures")
+        )
 
     output_folder = Path(plots_folder)
     output_folder.mkdir(exist_ok=True, parents=True)
@@ -334,7 +341,9 @@ def survival_main(
     fillna = dict(config.pop("fillna", {}))
     dummies = dict(config.pop("dummies", {}))
     covariates = list(config.pop("covariates", [duration_col, target]))
-    data_spec: Union[str, dict[str, Any], DataConfig] = data_file if data_file else data
+    data_spec: Union[str, dict[str, Any], DataConfig] = (
+        data_file if data_file else data
+    )
     lifelines_dataset_names = set(_lifelines_dataset_loaders().keys())
 
     def _is_lifelines_dataset_name(name: str) -> bool:
@@ -361,7 +370,9 @@ def survival_main(
         data_spec = {
             "dataset_name": normalized_data_spec,
             "target": (
-                None if _is_lifelines_dataset_name(normalized_data_spec) else target
+                None
+                if _is_lifelines_dataset_name(normalized_data_spec)
+                else target
             ),
             "classifier": False,
             "stratify": False,
@@ -377,7 +388,9 @@ def survival_main(
         data_name = data_spec.dataset_name
     elif isinstance(data_spec, Mapping):
         data_spec = dict(data_spec)
-        dataset_name_value = data_spec.get("dataset_name", data_spec.get("alias"))
+        dataset_name_value = data_spec.get(
+            "dataset_name", data_spec.get("alias")
+        )
         if dataset_name_value is not None:
             normalized_data_spec = _normalize_survival_dataset_name(
                 str(dataset_name_value),
@@ -448,7 +461,9 @@ def survival_main(
             data_cfg._load_data()
         loaded_frame = data_cfg.X
         if loaded_frame is None:
-            raise ValueError("DataConfig did not load features for survival experiment")
+            raise ValueError(
+                "DataConfig did not load features for survival experiment"
+            )
         loaded_data = (
             loaded_frame.to_frame().copy()
             if isinstance(loaded_frame, pd.Series)
@@ -507,7 +522,9 @@ def survival_main(
 
     if dataset is None:
         dataset = (
-            Path(attack_optuna_db).stem if attack_optuna_db is not None else data_name
+            Path(attack_optuna_db).stem
+            if attack_optuna_db is not None
+            else data_name
         )
 
     survival_config = (
@@ -543,7 +560,9 @@ def survival_main(
             or runtime_data.y_train is None
             or runtime_data.y_test is None
         ):
-            raise ValueError("Runtime survival split unavailable for auxiliary model")
+            raise ValueError(
+                "Runtime survival split unavailable for auxiliary model"
+            )
         try:
             model_scores = aux_model(runtime_data)
         except Exception as error:

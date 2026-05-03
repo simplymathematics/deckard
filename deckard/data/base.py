@@ -1,4 +1,5 @@
 # Imports
+import os
 import pandas as pd
 import time
 import logging
@@ -33,7 +34,13 @@ from sklearn.compose import make_column_selector, ColumnTransformer
 from scipy.sparse import csr_matrix
 
 # deckard
-from ..utils import ConfigBase, data_supported_filetypes, load_class, coerce_to_list, merge_list_of_dicts
+from ..utils import (
+    ConfigBase,
+    data_supported_filetypes,
+    load_class,
+    coerce_to_list,
+    merge_list_of_dicts,
+)
 from ..score.base import ScorerDictConfig
 
 # Setup logger
@@ -41,6 +48,7 @@ logger = logging.getLogger(__name__)
 
 
 AUTO_SCORER = "auto"
+DECKARD_TEST_MAX_SAMPLES_ENV = "DECKARD_TEST_MAX_SAMPLES"
 
 
 def _discover_lifelines_dataset_loaders() -> dict:
@@ -267,9 +275,15 @@ class DataConfig(ConfigBase):
                     self.train_size = None
                 else:
                     raise ValueError("test_size must be a float or int")
-        self.data_params = self.data_params if self.data_params is not None else {}
-        self.drop = [] if not hasattr(self, "drop") or self.drop is None else self.drop
-        self.keep = [] if not hasattr(self, "keep") or self.keep is None else self.keep
+        self.data_params = (
+            self.data_params if self.data_params is not None else {}
+        )
+        self.drop = (
+            [] if not hasattr(self, "drop") or self.drop is None else self.drop
+        )
+        self.keep = (
+            [] if not hasattr(self, "keep") or self.keep is None else self.keep
+        )
         for attr in [
             "data_load_time",
             "data_sample_time",
@@ -297,6 +311,41 @@ class DataConfig(ConfigBase):
             self._target_ = "deckard.data.DataConfig"
         if not self.data_params:
             self.data_params = {}
+
+    def _resolve_max_samples(self, dataset_len: int) -> Union[int, None]:
+        """Resolve an optional dataset cap from the test-only environment variable."""
+        max_samples = os.environ.get(DECKARD_TEST_MAX_SAMPLES_ENV)
+        if max_samples in [None, ""]:
+            return None
+        try:
+            max_samples = int(max_samples)
+        except (TypeError, ValueError):
+            raise ValueError(
+                f"{DECKARD_TEST_MAX_SAMPLES_ENV} must be an integer, got {max_samples}",
+            )
+        if max_samples <= 0:
+            return None
+        return min(max_samples, dataset_len)
+
+    def _apply_max_samples(self):
+        """Truncate loaded tabular data to the configured test-only max sample cap."""
+        if self._X is None or self._y is None:
+            return
+
+        sample_cap = self._resolve_max_samples(len(self._y))
+        if sample_cap is None or sample_cap >= len(self._y):
+            return
+
+        if isinstance(self._X, pd.DataFrame):
+            self._X = self._X.iloc[:sample_cap].copy()
+        elif isinstance(self._X, pd.Series):
+            self._X = self._X.iloc[:sample_cap].copy()
+        else:
+            raise TypeError(
+                f"Unsupported _X type for {DECKARD_TEST_MAX_SAMPLES_ENV}: {type(self._X)}",
+            )
+
+        self._y = self._y.iloc[:sample_cap].copy()
 
     def __post_init__(self):
         self._validate_init()
@@ -334,7 +383,9 @@ class DataConfig(ConfigBase):
             spec = dict(plugin_spec)
             class_path = spec.pop("name", spec.pop("_target_", None))
             if class_path is None:
-                raise ValueError("Plugin dict must include 'name' or '_target_'")
+                raise ValueError(
+                    "Plugin dict must include 'name' or '_target_'"
+                )
             return load_class(class_path, **spec)
 
         if isinstance(plugin_spec, str):
@@ -349,7 +400,9 @@ class DataConfig(ConfigBase):
         if not hasattr(self, "_plugin_objects") or self._plugin_objects is None:
             plugin_specs = self.plugins if self.plugins is not None else []
             if not isinstance(plugin_specs, list):
-                raise TypeError(f"plugins must be a list, got {type(plugin_specs)}")
+                raise TypeError(
+                    f"plugins must be a list, got {type(plugin_specs)}"
+                )
             self._plugin_objects = [
                 self._instantiate_plugin(spec) for spec in plugin_specs
             ]
@@ -417,7 +470,7 @@ class DataConfig(ConfigBase):
             key = self.sample.lower()
             if key not in _SAMPLER_ALIASES:
                 raise ValueError(
-                    f"Unknown sampler '{self.sample}'. Must be one of {list(_SAMPLER_ALIASES)}."
+                    f"Unknown sampler '{self.sample}'. Must be one of {list(_SAMPLER_ALIASES)}.",
                 )
             return _SAMPLER_ALIASES[key]()
 
@@ -441,7 +494,9 @@ class DataConfig(ConfigBase):
             spec = dict(spec)
             class_path = spec.pop("name", spec.pop("_target_", None))
             if class_path is None:
-                raise ValueError("sample dict must include 'name' or '_target_'")
+                raise ValueError(
+                    "sample dict must include 'name' or '_target_'"
+                )
             return load_class(class_path, **spec)
 
         # 3. Already an instantiated callable (e.g. a sampler instance).
@@ -504,7 +559,9 @@ class DataConfig(ConfigBase):
             self._X,
             pd.DataFrame,
         ), f"Expected DataFrame got {type(self._X)}"
-        assert isinstance(self._y, pd.Series), f"Expected Series got {type(self._y)}"
+        assert isinstance(
+            self._y, pd.Series
+        ), f"Expected Series got {type(self._y)}"
         self._X = self._X.apply(pd.to_numeric, errors="coerce")
         return self
 
@@ -557,7 +614,9 @@ class DataConfig(ConfigBase):
             random_state=random_state,
             **kwargs,
         )
-        self._X = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(X.shape[1])])
+        self._X = pd.DataFrame(
+            X, columns=[f"feature_{i}" for i in range(X.shape[1])]
+        )
         self._y = pd.Series(y)
         end_time = time.process_time()
         self.data_load_time = end_time - start_time
@@ -600,7 +659,9 @@ class DataConfig(ConfigBase):
             noise=noise,
             random_state=random_state,
         )
-        self._X = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(X.shape[1])])
+        self._X = pd.DataFrame(
+            X, columns=[f"feature_{i}" for i in range(X.shape[1])]
+        )
         self._y = pd.Series(y)
         end_time = time.process_time()
         self.data_load_time = end_time - start_time
@@ -836,7 +897,9 @@ class DataConfig(ConfigBase):
                 load_digits,
                 **params,
             ),
-            "iris": lambda **params: self._load_generic_sklearn(load_iris, **params),
+            "iris": lambda **params: self._load_generic_sklearn(
+                load_iris, **params
+            ),
         }
         for dataset_name in _lifelines_dataset_loaders().keys():
             supported_datasets.setdefault(
@@ -893,7 +956,10 @@ class DataConfig(ConfigBase):
             self._X,
             (pd.DataFrame, pd.Series),
         ), "_X must be a DataFrame after loading data"
-        assert isinstance(self._y, pd.Series), "_y must be a Series after loading data"
+        assert isinstance(
+            self._y, pd.Series
+        ), "_y must be a Series after loading data"
+        self._apply_max_samples()
         self._run_plugin_hook("after_load_data")
         logger.info(
             f"Data loaded from {self.dataset_name} in {self.data_load_time:.2f} seconds",
@@ -911,7 +977,9 @@ class DataConfig(ConfigBase):
         elif len(self.keep) == 1:
             data = data[self.keep[0]]
         for del_col in self.drop:
-            assert len(self.keep) == 0, "Cannot specify both keep and drop columns"
+            assert (
+                len(self.keep) == 0
+            ), "Cannot specify both keep and drop columns"
             if del_col in data.columns:
                 data = data.drop(columns=del_col)
         self._X = data
@@ -974,7 +1042,9 @@ class DataConfig(ConfigBase):
                     f"Mutual information could not be computed: {e}. Skipping mutual_info_classif scoring.",
                 )
             try:
-                scores["f_classif"] = f_classif(self.X_train, self.y_train)[0].tolist()
+                scores["f_classif"] = f_classif(self.X_train, self.y_train)[
+                    0
+                ].tolist()
             except ValueError as e:
                 logger.warning(
                     f"ANOVA F-value could not be computed: {e}. Skipping f_classif scoring.",
@@ -1004,7 +1074,9 @@ class DataConfig(ConfigBase):
             A pandas Series representing the empirical CDF values corresponding to the input data.
         """
         sorted_data = data.sort_values().reset_index(drop=True)
-        cdf_values = (sorted_data.rank(method="first") / len(sorted_data)).values
+        cdf_values = (
+            sorted_data.rank(method="first") / len(sorted_data)
+        ).values
         cdf_series = pd.Series(cdf_values, index=sorted_data.index)
         return cdf_series
 
@@ -1028,8 +1100,12 @@ class DataConfig(ConfigBase):
             self.y_train,
             random_state=self.random_state,
         ).tolist()
-        scores["f_regression"] = f_regression(self.X_train, self.y_train)[0].tolist()
-        scores["r_regression"] = r_regression(self.X_train, self.y_train).tolist()
+        scores["f_regression"] = f_regression(self.X_train, self.y_train)[
+            0
+        ].tolist()
+        scores["r_regression"] = r_regression(
+            self.X_train, self.y_train
+        ).tolist()
         scores["y_train_cdf"] = self._empirical_cdf(self.y_train).tolist()
         scores["y_test_cdf"] = self._empirical_cdf(self.y_test).tolist()
         return scores
@@ -1089,7 +1165,10 @@ class DataConfig(ConfigBase):
             logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
         time_dict = {"data_load_time": self.data_load_time}
         # Sample data if not already sampled
-        if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
+        if (
+            not hasattr(self, "data_sample_time")
+            or self.data_sample_time is None
+        ):
             # Sample data
             self._sample()
         time_dict["data_sample_time"] = (self.data_sample_time,)
@@ -1109,9 +1188,15 @@ class DataConfig(ConfigBase):
         data_scores = self._score()
         if self.y_val is not None:
             if self.classifier:
-                data_scores.setdefault("val_class_counts", self._compute_class_counts(self.y_val))
+                data_scores.setdefault(
+                    "val_class_counts",
+                    self._compute_class_counts(self.y_val),
+                )
             else:
-                data_scores.setdefault("val_y_cdf", self._empirical_cdf(self.y_val).tolist())
+                data_scores.setdefault(
+                    "val_y_cdf",
+                    self._empirical_cdf(self.y_val).tolist(),
+                )
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
@@ -1133,6 +1218,7 @@ class DataPipelineConfig(DataConfig):
         self._validate_init()
         # Allow a list of step-dicts: merge them in order (later wins on key conflict)
         from omegaconf import ListConfig
+
         if isinstance(self.pipeline, (list, ListConfig)):
             self.pipeline = merge_list_of_dicts(coerce_to_list(self.pipeline))
         assert isinstance(
@@ -1195,7 +1281,9 @@ class DataPipelineConfig(DataConfig):
             fit_y = step_config.get("fit_y", False)
             fit_Xy = step_config.get("fit_xy", False)
             if fit_Xy is True:
-                raise ValueError("fit_xy pipeline steps are no longer supported.")
+                raise ValueError(
+                    "fit_xy pipeline steps are no longer supported."
+                )
             dtype = step_config.get("dtype", None)
             step_config_without_name = {**step_config}
             del step_config_without_name["name"]
@@ -1293,7 +1381,10 @@ class DataPipelineConfig(DataConfig):
             self.pipeline_transform_n = X_test.shape[0]
             return X_train, X_test, y_train, y_test
 
-        if not hasattr(self, "pipeline_fit_time") or self.pipeline_fit_time is None:
+        if (
+            not hasattr(self, "pipeline_fit_time")
+            or self.pipeline_fit_time is None
+        ):
             logger.info("Fitting data pipeline to training data")
             # Fit and transform the training data
             start = time.process_time()
@@ -1364,10 +1455,15 @@ class DataPipelineConfig(DataConfig):
             else pd.DataFrame(y_train)
         )
         y_test_2d = (
-            y_test.to_frame() if isinstance(y_test, pd.Series) else pd.DataFrame(y_test)
+            y_test.to_frame()
+            if isinstance(y_test, pd.Series)
+            else pd.DataFrame(y_test)
         )
 
-        if not hasattr(self, "pipeline_y_fit_time") or self.pipeline_y_fit_time is None:
+        if (
+            not hasattr(self, "pipeline_y_fit_time")
+            or self.pipeline_y_fit_time is None
+        ):
             logger.info("Fitting data pipeline to training target")
             start = time.process_time()
             for name, stage in pipeline:
@@ -1450,19 +1546,24 @@ class DataPipelineConfig(DataConfig):
         time_dict = {"data_load_time": self.data_load_time}
         X_pipeline, y_pipeline = self._init_pipeline()
 
-        if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
+        if (
+            not hasattr(self, "data_sample_time")
+            or self.data_sample_time is None
+        ):
             self._sample()
         time_dict["data_sample_time"] = (self.data_sample_time,)
         logger.info(
             f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
         )
         # Fit X pipeline
-        self.X_train, self.X_test, self.y_train, self.y_test = self._fit_transform_X(
-            self.X_train,
-            self.X_test,
-            self.y_train,
-            self.y_test,
-            X_pipeline,
+        self.X_train, self.X_test, self.y_train, self.y_test = (
+            self._fit_transform_X(
+                self.X_train,
+                self.X_test,
+                self.y_train,
+                self.y_test,
+                X_pipeline,
+            )
         )
         # Fit y pipeline
         if y_pipeline is not None:

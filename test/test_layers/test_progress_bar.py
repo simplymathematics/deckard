@@ -39,7 +39,9 @@ def test_count_studies_for_stage_conf_variants():
         == 6
     )
     assert (
-        progress_bar_module._count_studies_for_stage_conf({"foreach": ["a", "b", "c"]})
+        progress_bar_module._count_studies_for_stage_conf(
+            {"foreach": ["a", "b", "c"]}
+        )
         == 3
     )
     assert (
@@ -74,14 +76,24 @@ def test_extract_and_resolve_stage_config_name(tmp_path):
     stage_cfg = cfg_dir / "inference-default.yaml"
     _write_yaml(
         default_cfg,
-        {"hydra": {"sweeper": {"storage": "sqlite:///db.sqlite3", "n_trials": 1}}},
+        {
+            "hydra": {
+                "sweeper": {"storage": "sqlite:///db.sqlite3", "n_trials": 1}
+            }
+        },
     )
     _write_yaml(
         stage_cfg,
-        {"hydra": {"sweeper": {"storage": "sqlite:///db.sqlite3", "n_trials": 5}}},
+        {
+            "hydra": {
+                "sweeper": {"storage": "sqlite:///db.sqlite3", "n_trials": 5}
+            }
+        },
     )
 
-    stage_conf = {"cmd": "deckard optimize --multirun --config-name inference-default"}
+    stage_conf = {
+        "cmd": "deckard optimize --multirun --config-name inference-default"
+    }
 
     assert (
         progress_bar_module._extract_stage_config_name(stage_conf)
@@ -100,7 +112,14 @@ def test_get_hydra_sweeper_config_supports_flat_or_nested_hydra(tmp_path):
 
     _write_yaml(
         nested_cfg,
-        {"hydra": {"sweeper": {"storage": "sqlite:///nested.sqlite3", "n_trials": 11}}},
+        {
+            "hydra": {
+                "sweeper": {
+                    "storage": "sqlite:///nested.sqlite3",
+                    "n_trials": 11,
+                }
+            }
+        },
     )
     _write_yaml(flat_cfg, {"sweeper": {"storage": "sqlite:///flat.sqlite3"}})
 
@@ -135,7 +154,9 @@ def test_collect_storage_finished_counts_reads_trials_and_earliest(tmp_path):
     assert earliest is not None
 
 
-def test_progress_bar_main_integration_reads_dvc_and_optuna_db(tmp_path, monkeypatch):
+def test_progress_bar_main_integration_reads_dvc_and_optuna_db(
+    tmp_path, monkeypatch
+):
     cfg_dir = tmp_path / "config"
     dvc_file = tmp_path / "dvc.yaml"
     default_cfg = cfg_dir / "default.yaml"
@@ -154,8 +175,12 @@ def test_progress_bar_main_integration_reads_dvc_and_optuna_db(tmp_path, monkeyp
             },
         },
     )
-    _write_yaml(default_cfg, {"hydra": {"sweeper": {"storage": db_url, "n_trials": 2}}})
-    _write_yaml(stage_cfg, {"hydra": {"sweeper": {"storage": db_url, "n_trials": 2}}})
+    _write_yaml(
+        default_cfg, {"hydra": {"sweeper": {"storage": db_url, "n_trials": 2}}}
+    )
+    _write_yaml(
+        stage_cfg, {"hydra": {"sweeper": {"storage": db_url, "n_trials": 2}}}
+    )
 
     for study_name in ("study_left", "study_right"):
         study = optuna.create_study(
@@ -184,10 +209,16 @@ def test_progress_bar_main_integration_reads_dvc_and_optuna_db(tmp_path, monkeyp
 def test_progress_bar_main_raises_for_unknown_stage(tmp_path):
     dvc_file = tmp_path / "dvc.yaml"
     default_cfg = tmp_path / "config" / "default.yaml"
-    _write_yaml(dvc_file, {"stages": {"known": {"cmd": "deckard optimize --multirun"}}})
+    _write_yaml(
+        dvc_file, {"stages": {"known": {"cmd": "deckard optimize --multirun"}}}
+    )
     _write_yaml(
         default_cfg,
-        {"hydra": {"sweeper": {"storage": "sqlite:///x.sqlite3", "n_trials": 1}}},
+        {
+            "hydra": {
+                "sweeper": {"storage": "sqlite:///x.sqlite3", "n_trials": 1}
+            }
+        },
     )
 
     with pytest.raises(KeyError, match="Stage 'missing' was not found"):

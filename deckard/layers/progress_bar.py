@@ -102,7 +102,9 @@ def _extract_stage_config_name(stage_conf: dict) -> Optional[str]:
     return None
 
 
-def _resolve_hydra_config_for_stage(stage_conf: dict, hydra_cfg_file: str) -> str:
+def _resolve_hydra_config_for_stage(
+    stage_conf: dict, hydra_cfg_file: str
+) -> str:
     """Resolve per-stage Hydra config file using --config-name (extension optional)."""
     default_cfg = Path(hydra_cfg_file)
     default_cfg_dir = default_cfg.parent
@@ -150,11 +152,15 @@ def _collect_storage_finished_counts(optuna_db: str, end_states: set) -> tuple:
         if not study_name:
             continue
 
-        study = optuna.study.load_study(storage=optuna_db, study_name=study_name)
+        study = optuna.study.load_study(
+            storage=optuna_db, study_name=study_name
+        )
         study_df = study.trials_dataframe()
 
         if "state" in study_df.columns:
-            finished_counts.append(int(study_df["state"].isin(end_states).sum()))
+            finished_counts.append(
+                int(study_df["state"].isin(end_states).sum())
+            )
 
         for trial in study.get_trials(deepcopy=False):
             dt = getattr(trial, "datetime_start", None)
@@ -335,7 +341,9 @@ def _get_hydra_sweeper_config(hydra_cfg_file: str) -> tuple:
         loaded_cfg = yaml.safe_load(f) or {}
 
     if not isinstance(loaded_cfg, dict):
-        raise ValueError(f"Expected mapping at root of Hydra config: {cfg_path}")
+        raise ValueError(
+            f"Expected mapping at root of Hydra config: {cfg_path}"
+        )
 
     raw_cfg = loaded_cfg
 
@@ -373,7 +381,9 @@ def _get_hydra_sweeper_config(hydra_cfg_file: str) -> tuple:
     defaults = resolved_cfg.get("defaults", [])
     is_grid_sampler = "GridSampler" in sampler_target or "grid" in str(defaults)
     if is_grid_sampler:
-        grid_n_trials = _calculate_grid_search_n_trials(sweeper.get("params", {}))
+        grid_n_trials = _calculate_grid_search_n_trials(
+            sweeper.get("params", {})
+        )
         if grid_n_trials is not None:
             n_trials = grid_n_trials
         else:
@@ -435,7 +445,9 @@ def progress_bar_main(
             }
 
         storage_requirements[storage]["expected_studies"] += studies_count
-        storage_requirements[storage]["expected_trials"] += studies_count * n_trials
+        storage_requirements[storage]["expected_trials"] += (
+            studies_count * n_trials
+        )
         storage_requirements[storage]["required_trials"].extend(
             [n_trials] * studies_count,
         )
@@ -464,15 +476,19 @@ def progress_bar_main(
         earliest = None
 
         for storage, req in storage_requirements.items():
-            finished_counts, storage_earliest = _collect_storage_finished_counts(
-                storage,
-                end_states,
+            finished_counts, storage_earliest = (
+                _collect_storage_finished_counts(
+                    storage,
+                    end_states,
+                )
             )
             storage_completed_studies = _count_completed_studies(
                 observed_finished_counts=finished_counts,
                 required_trials=req["required_trials"],
             )
-            storage_completed_trials = min(sum(finished_counts), req["expected_trials"])
+            storage_completed_trials = min(
+                sum(finished_counts), req["expected_trials"]
+            )
 
             total_completed_studies += min(
                 storage_completed_studies,
@@ -539,7 +555,9 @@ def progress_bar_main(
 
     return {
         "storages": list(storage_requirements.keys()),
-        "start_time": db_start_time.isoformat() if db_start_time is not None else None,
+        "start_time": (
+            db_start_time.isoformat() if db_start_time is not None else None
+        ),
         "expected_studies": expected_studies,
         "expected_trials": expected_total_trials,
         "completed_studies": prev_complete_studies,

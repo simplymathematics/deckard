@@ -16,23 +16,33 @@ from pathlib import Path
 from hydra.utils import instantiate
 
 from ..data import DataConfig, DataPipelineConfig
+from ..model import ModelConfig
 
 try:
     from ..data import FairlearnDataConfig
 except ImportError:  # pragma: no cover
     FairlearnDataConfig = None
+from ..model.defend import DefensePipelineConfig
+from ..attack import AttackConfig
+from ..score import ScorerDictConfig
+from ..file import FileConfig, data_files, model_files, attack_files
+from ..utils import ConfigBase, coerce_config
 
-from ..model import ModelConfig
+try:
+    from ..data import AnjanaDataConfig
+except ImportError:  # pragma: no cover
+    AnjanaDataConfig = None
+
 
 try:
     from ..model import FairlearnModelConfig
 except ImportError:  # pragma: no cover
     FairlearnModelConfig = None
-from ..model.defend import DefensePipelineConfig
-from ..attack import AttackConfig
-from ..score import ScorerDictConfig
-from ..file import FileConfig, data_files, model_files, attack_files
-from ..utils import ConfigBase, coerce_config, resolve_torch_device
+try:
+    from ..model import AnjanaModelConfig
+except ImportError:  # pragma: no cover
+    AnjanaModelConfig = None
+
 
 logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -83,7 +93,9 @@ def _file_resolver(arg: str):
             if isinstance(cur, dict) and p in cur:
                 cur = cur[p]
             else:
-                raise KeyError(f"file resolver: key '{key_part}' not found in {path}")
+                raise KeyError(
+                    f"file resolver: key '{key_part}' not found in {path}"
+                )
         data = cur
     data = OmegaConf.create(data)
     # Return as an OmegaConf node so structured content is preserved
@@ -91,7 +103,9 @@ def _file_resolver(arg: str):
 
 
 # Register resolver with OmegaConf (Hydra will pick up this plugin module automatically)
-OmegaConf.register_new_resolver("file", _file_resolver, replace=True, use_cache=True)
+OmegaConf.register_new_resolver(
+    "file", _file_resolver, replace=True, use_cache=True
+)
 
 
 def _merge_resolver(*args):
@@ -120,6 +134,14 @@ class DataConfigResolutionMixin:
         "fairness_pipeline_step_name",
         "fairness_pipeline_step",
     }
+    _anjana_keys = {
+        "anjana_defense",
+        "quasi_identifiers",
+        "identifiers",
+        "sensitive_attribute",
+        "hierarchies",
+        "hierarchy_interval_sizes",
+    }
 
     def _data_to_dict(self, data_obj) -> dict:
         if isinstance(data_obj, DictConfig):
@@ -137,6 +159,12 @@ class DataConfigResolutionMixin:
         return data_dict
 
     def _select_data_cls(self, data_dict: dict):
+        if any(key in data_dict for key in self._anjana_keys):
+            if AnjanaDataConfig is None:
+                raise ImportError(
+                    "AnjanaDataConfig requires optional anjana dependencies. Install deckard[anjana] to enable anjana data configs.",
+                )
+            return AnjanaDataConfig
         if any(key in data_dict for key in self._fairness_keys):
             if FairlearnDataConfig is None:
                 raise ImportError(
@@ -206,72 +234,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         return text.lower()
 
     def _reconcile_component_devices(self):
-        if self.library != "pytorch":
-            return
-
-        exp_device = self._canonical_device(getattr(self, "device", None))
-        data_device = self._canonical_device(getattr(self.data, "device", None))
-        model_device = (
-            self._canonical_device(getattr(self.model, "device", None))
-            if self.model is not None
-            else None
-        )
-        attack_device = (
-            self._canonical_device(getattr(self.attack, "device", None))
-            if self.attack is not None
-            else None
-        )
-
-        raw_values = [exp_device, data_device, model_device, attack_device]
-        strong_values = {v for v in raw_values if v not in {None, "", "cpu"}}
-        if len(strong_values) > 1:
-            raise AssertionError(
-                "Experiment, data, model, and attack devices must match. "
-                f"Got experiment={exp_device}, data={data_device}, model={model_device}, attack={attack_device}",
-            )
-
-        if exp_device is not None:
-            unified_device = exp_device
-        elif len(strong_values) == 1:
-            unified_device = next(iter(strong_values))
-        elif model_device is not None:
-            unified_device = model_device
-        elif attack_device is not None:
-            unified_device = attack_device
-        elif data_device is not None:
-            unified_device = data_device
-        else:
-            unified_device = str(resolve_torch_device(None))
-
-        self.device = unified_device
-        setattr(self.data, "device", unified_device)
-        if self.model is not None:
-            setattr(self.model, "device", unified_device)
-            if hasattr(self.model, "_resolve_torch_device") and callable(
-                getattr(self.model, "_resolve_torch_device"),
-            ):
-                self.model.device = self.model._resolve_torch_device(self.model.device)
-        if self.attack is not None:
-            setattr(self.attack, "device", unified_device)
-
-        final_exp = self._canonical_device(self.device)
-        final_data = self._canonical_device(getattr(self.data, "device", None))
-        final_model = (
-            self._canonical_device(getattr(self.model, "device", None))
-            if self.model is not None
-            else final_exp
-        )
-        final_attack = (
-            self._canonical_device(getattr(self.attack, "device", None))
-            if self.attack is not None
-            else final_exp
-        )
-        if not (final_exp == final_data == final_model == final_attack):
-            raise AssertionError(
-                "Experiment, data, model, and attack devices must be identical after reconciliation. "
-                f"Got experiment={final_exp}, data={final_data}, model={final_model}, attack={final_attack}",
-            )
-        logger.info("Unified pytorch device across components: %s", final_exp)
+        """No-op in the base class. Overridden by TorchExperimentConfig."""
+        pass
 
     def _resolve_score_modes(self) -> list[str]:
         if self.score_modes is not None:
@@ -290,8 +254,13 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
     def _compute_val_predictions(self):
         if self.model is None:
-            raise ValueError("Validation scoring requires a model, but model is None")
-        if getattr(self.data, "X_val", None) is None or getattr(self.data, "y_val", None) is None:
+            raise ValueError(
+                "Validation scoring requires a model, but model is None"
+            )
+        if (
+            getattr(self.data, "X_val", None) is None
+            or getattr(self.data, "y_val", None) is None
+        ):
             raise ValueError(
                 "Validation scoring requested but validation split is unavailable. "
                 "Set data.val_size (or use a sampler that produces validation indices).",
@@ -304,12 +273,16 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
     def _ensure_mode_predictions(self, mode: str):
         if self.model is None:
-            raise ValueError(f"{mode} scoring requires a model, but model is None")
+            raise ValueError(
+                f"{mode} scoring requires a model, but model is None"
+            )
         if not hasattr(self.model, "_predict"):
             raise ValueError(f"{mode} scoring requires model._predict")
         if mode == "train":
             if getattr(self.model, "training_predictions", None) is None:
-                self.model.training_predictions = self.model._predict(self.data.X_train)
+                self.model.training_predictions = self.model._predict(
+                    self.data.X_train
+                )
             return
         if mode == "test":
             if getattr(self.model, "predictions", None) is None:
@@ -342,6 +315,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             return scorer_obj
         # List of scorer specs → merge all into one ScorerDictConfig
         from omegaconf import ListConfig
+
         if isinstance(scorer_obj, (list, ListConfig)):
             return ScorerDictConfig.merge(list(scorer_obj))
         scorer_obj = coerce_config(scorer_obj)
@@ -389,12 +363,10 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 logger.warning(
                     "Invalid device specified for TensorFlow, using default device.",
                 )
-        elif self.library == "pytorch":
-            torch_device = resolve_torch_device(device)
-            self.torch_device = torch_device
-            self.device = str(torch_device)
         else:
-            logger.info("Device selection not supported for library: %s", self.library)
+            logger.info(
+                "Device selection not supported for library: %s", self.library
+            )
 
     def __post_init__(self):
         if not hasattr(self, "score_dict") or self.score_dict is None:
@@ -445,7 +417,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     model_dict = self.model
                     self.model = ModelConfig(**model_dict)
                 else:
-                    raise ValueError(f"Unsupported type for model: {type(self.model)}")
+                    raise ValueError(
+                        f"Unsupported type for model: {type(self.model)}"
+                    )
             assert isinstance(
                 self.model,
                 ModelConfig,
@@ -475,6 +449,30 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                         probability=self.model.probability,
                         alias=self.model.alias,
                         defense=self.model.defense,
+                        plugins=self.model.plugins,
+                        scorer=self.model.scorer,
+                        data=self.data,
+                    )
+                else:
+                    self.model.data = self.data
+            elif AnjanaDataConfig is not None and isinstance(
+                self.data,
+                AnjanaDataConfig,
+            ):
+                if AnjanaModelConfig is None:
+                    raise ImportError(
+                        "AnjanaModelConfig requires optional anjana dependencies. Install deckard[anjana] to enable anjana model configs.",
+                    )
+                if not isinstance(self.model, AnjanaModelConfig):
+                    self.model = AnjanaModelConfig(
+                        model_type=self.model.model_type,
+                        classifier=self.model.classifier,
+                        model_params=self.model.model_params,
+                        probability=self.model.probability,
+                        alias=self.model.alias,
+                        defense=self.model.defense,
+                        plugins=self.model.plugins,
+                        scorer=self.model.scorer,
                         data=self.data,
                     )
                 else:
@@ -490,7 +488,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 elif isinstance(self.attack, ConfigBase):
                     attack_dict = self.attack.to_dict()
                 elif isinstance(self.attack, dict):
-                    attack_dict = OmegaConf.to_container(OmegaConf.create(self.attack))
+                    attack_dict = OmegaConf.to_container(
+                        OmegaConf.create(self.attack)
+                    )
                 else:
                     raise ValueError(
                         f"Unsupported type for attack: {type(self.attack)}",
@@ -550,8 +550,12 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             if isinstance(score_cfg, dict) and any(
                 key in score_cfg for key in ["data", "model", "experiment"]
             ):
-                self.data_scorer = self._coerce_scorer_config(score_cfg.get("data"))
-                self.model_scorer = self._coerce_scorer_config(score_cfg.get("model"))
+                self.data_scorer = self._coerce_scorer_config(
+                    score_cfg.get("data")
+                )
+                self.model_scorer = self._coerce_scorer_config(
+                    score_cfg.get("model")
+                )
                 self.experiment_scorer = self._coerce_scorer_config(
                     score_cfg.get("experiment"),
                 )
@@ -606,7 +610,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 [
                     str(getattr(conf, attr))
                     for attr in dir(conf)
-                    if not attr.startswith("_") and not callable(getattr(conf, attr))
+                    if not attr.startswith("_")
+                    and not callable(getattr(conf, attr))
                 ],
             )
         return hashlib.md5(to_string.encode()).hexdigest()
@@ -702,7 +707,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         return scores
 
     @staticmethod
-    def _aggregate_repeated_scores(per_run_scores: list, suffix: str = "fold") -> dict:
+    def _aggregate_repeated_scores(
+        per_run_scores: list, suffix: str = "fold"
+    ) -> dict:
         """Merge per-run score dicts into a single dict.
 
         For each key that is numeric in every run, the top-level value is the
@@ -755,10 +762,14 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         # Get file paths
         file_dict = self.files._get_file_dict()
         data_file_outputs = {
-            file: getattr(self.files, file) for file in data_files if file in file_dict
+            file: getattr(self.files, file)
+            for file in data_files
+            if file in file_dict
         }
         model_file_outputs = {
-            file: getattr(self.files, file) for file in model_files if file in file_dict
+            file: getattr(self.files, file)
+            for file in model_files
+            if file in file_dict
         }
         attack_file_outputs = {
             file: getattr(self.files, file)
@@ -782,9 +793,10 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             else:
                 self.data(**data_file_outputs)
 
-        assert hasattr(self.data, "X_train") or hasattr(self.data, "_X"), (
-            "data must be loaded before running the pipeline"
-        )
+        assert hasattr(self.data, "X_train") or hasattr(
+            self.data,
+            "_X",
+        ), "data must be loaded before running the pipeline"
 
         n_repeats, run_suffix = self._detect_n_repeats()
 
@@ -792,7 +804,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             # ------------------------------------------------------------------
             # Repeated split evaluation: run one pipeline pass per split/fold
             # ------------------------------------------------------------------
-            logger.info(f"Running {n_repeats} repeated {run_suffix} evaluations.")
+            logger.info(
+                f"Running {n_repeats} repeated {run_suffix} evaluations."
+            )
             per_run_scores: list = []
             for run_idx in range(n_repeats):
                 logger.info(f"  {run_suffix.title()} {run_idx + 1}/{n_repeats}")
@@ -800,9 +814,18 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 self.data.fold = run_idx
                 self.data.data_sample_time = None
                 for attr in (
-                    "train_indices", "test_indices", "val_indices",
-                    "X_train", "y_train", "X_test", "y_test",
-                    "X_val", "y_val", "train_n", "test_n", "val_n",
+                    "train_indices",
+                    "test_indices",
+                    "val_indices",
+                    "X_train",
+                    "y_train",
+                    "X_test",
+                    "y_test",
+                    "X_val",
+                    "y_val",
+                    "train_n",
+                    "test_n",
+                    "val_n",
                 ):
                     setattr(self.data, attr, None)
                 self.data.score_dict = {}
@@ -824,22 +847,29 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             # ------------------------------------------------------------------
             # Single-pass (non-fold) pipeline
             # ------------------------------------------------------------------
-            assert hasattr(self.data, "X_train"), (
-                "data must return an object with X_train attribute"
+            assert hasattr(
+                self.data,
+                "X_train",
+            ), "data must return an object with X_train attribute"
+            assert hasattr(
+                self.data,
+                "y_train",
+            ), "data must return an object with y_train attribute"
+            assert hasattr(
+                self.data,
+                "X_test",
+            ), "data must return an object with X_test attribute"
+            assert hasattr(
+                self.data,
+                "y_test",
+            ), "data must return an object with y_test attribute"
+            assert hasattr(
+                self.data,
+                "score_dict",
+            ), "data must have score_dict attribute after loading"
+            scores = self._run_single_pipeline(
+                model_file_outputs, attack_file_outputs
             )
-            assert hasattr(self.data, "y_train"), (
-                "data must return an object with y_train attribute"
-            )
-            assert hasattr(self.data, "X_test"), (
-                "data must return an object with X_test attribute"
-            )
-            assert hasattr(self.data, "y_test"), (
-                "data must return an object with y_test attribute"
-            )
-            assert hasattr(self.data, "score_dict"), (
-                "data must have score_dict attribute after loading"
-            )
-            scores = self._run_single_pipeline(model_file_outputs, attack_file_outputs)
             custom_scores = self._run_experiment_scorer_modes(
                 score_file=file_dict.get("score_file", None),
             )
@@ -848,7 +878,10 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             if self.model is None:
                 self.model = None
 
-        if "score_file" in file_dict and not Path(file_dict["score_file"]).exists():
+        if (
+            "score_file" in file_dict
+            and not Path(file_dict["score_file"]).exists()
+        ):
             self.save_scores(scores, file_dict["score_file"])
         elif "score_file" in file_dict:
             old_scores = self.load_scores(file_dict["score_file"])

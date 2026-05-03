@@ -51,12 +51,16 @@ class TestYellowbrickPlots(unittest.TestCase):
             save_path=f"{self.temp_dir}/{plot_type}_dataconfig.png",
         )
         plot_cfg()
-        self.assertTrue(Path(f"{self.temp_dir}/{plot_type}_dataconfig.png").exists())
+        self.assertTrue(
+            Path(f"{self.temp_dir}/{plot_type}_dataconfig.png").exists()
+        )
 
     @classmethod
     def setUpClass(cls):
         this_file = Path(__file__)
-        config_dir = this_file.parent.parent.parent / "examples" / "sklearn" / "config"
+        config_dir = (
+            this_file.parent.parent.parent / "examples" / "sklearn" / "config"
+        )
         config_dir = Path(config_dir).resolve().as_posix() + "/"
         cls.classification_data_config = config_dir + "data/classification.yaml"
         cls.classification_model_config = config_dir + "model/logistic.yaml"
@@ -90,7 +94,9 @@ class TestYellowbrickPlots(unittest.TestCase):
             save_path=f"{self.temp_dir}/{plot_type}_regression.png",
         )
         plot_cfg()
-        self.assertTrue(Path(f"{self.temp_dir}/{plot_type}_regression.png").exists())
+        self.assertTrue(
+            Path(f"{self.temp_dir}/{plot_type}_regression.png").exists()
+        )
 
     def test_one_clustering_plot(self):
         cluster_files = FileConfig(data_file="", model_file="")
@@ -112,7 +118,9 @@ class TestYellowbrickPlots(unittest.TestCase):
             save_path=f"{self.temp_dir}/{plot_type}_clustering.png",
         )
         plot_cfg()
-        self.assertTrue(Path(f"{self.temp_dir}/{plot_type}_clustering.png").exists())
+        self.assertTrue(
+            Path(f"{self.temp_dir}/{plot_type}_clustering.png").exists()
+        )
 
     def test_clustering_plots(self):
         cluster_data_file = f"{self.temp_dir}/data/cluster_data.pkl"
@@ -140,7 +148,8 @@ class TestYellowbrickPlots(unittest.TestCase):
                         plot_type=plot_type,
                         features="all",
                         classes="all",
-                        title=plot_type.replace("_", " ").title() + " (Clustering)",
+                        title=plot_type.replace("_", " ").title()
+                        + " (Clustering)",
                         save_path=filepath,
                     )
                     plot_cfg()
@@ -224,7 +233,9 @@ class TestYellowbrickPlots(unittest.TestCase):
         )
         from deckard.model import ModelConfig
 
-        model = ModelConfig(model_type="sklearn.linear_model.LogisticRegression")
+        model = ModelConfig(
+            model_type="sklearn.linear_model.LogisticRegression"
+        )
         files = FileConfig(
             data_file=f"{self.temp_dir}/data/rc_single.pkl",
             model_file=f"{self.temp_dir}/models/rc_single.pkl",
@@ -282,7 +293,9 @@ class TestYellowbrickPlots(unittest.TestCase):
                 "_ensure_experiment_prepared",
                 return_value={},
             ),
-            patch.object(YellowbrickConfigList, "_set_plot_dict", return_value=None),
+            patch.object(
+                YellowbrickConfigList, "_set_plot_dict", return_value=None
+            ),
         ):
             plot_cfg()
 

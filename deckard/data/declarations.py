@@ -3,7 +3,6 @@
 from ..utils import safe_store
 from .sample import register_sampler_configs
 
-
 # Static data options mirrored from examples/sklearn/config/data.
 DATA_ADULT = {
     "dataset_name": "adult",
@@ -76,4 +75,3 @@ try:
     register_sampler_configs()
 except Exception:
     pass
-

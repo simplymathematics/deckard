@@ -35,7 +35,9 @@ class SeabornPlotConfig(ConfigBase):
     y: str
     kwargs: dict = field(default_factory=dict)
     rc_config: dict = field(default_factory=dict)
-    plot_type: Literal["scatter", "line", "hist", "cat", "bar", "heatmap"] = "scatter"
+    plot_type: Literal["scatter", "line", "hist", "cat", "bar", "heatmap"] = (
+        "scatter"
+    )
     data_file: Optional[str] = None
     title: Optional[str] = None
     xlabel: Optional[str] = None
@@ -56,11 +58,17 @@ class SeabornPlotConfig(ConfigBase):
         if self.data is not None:
             data = self.data.copy()
         else:
-            assert Path(self.data_file).exists(), f"File: {self.data_file} not found."
+            assert Path(
+                self.data_file
+            ).exists(), f"File: {self.data_file} not found."
             data = load_data(self.data_file)
         # Validate columns are in data
-        assert self.x in data.columns, f"x value: {self.x} is not a column of the data."
-        assert self.y in data.columns, f"y value: {self.y} is not a column of the data."
+        assert (
+            self.x in data.columns
+        ), f"x value: {self.x} is not a column of the data."
+        assert (
+            self.y in data.columns
+        ), f"y value: {self.y} is not a column of the data."
         if self.hue:
             assert (
                 self.hue in data.columns
@@ -135,7 +143,9 @@ class SeabornPlotConfigList(ConfigBase):
 
     def __post_init__(self):
         # Validate self.data_file
-        assert Path(self.data_file).exists(), f"File: {self.data_file} not found."
+        assert Path(
+            self.data_file
+        ).exists(), f"File: {self.data_file} not found."
 
     def __iter__(self):
         return iter(self.plots)

@@ -48,7 +48,9 @@ def get_torch_model_device(model):
 
 def build_torch_art_model(model, data):
     if not HAS_TORCH:
-        raise ImportError("Torch support requires optional dependency deckard[torch]")
+        raise ImportError(
+            "Torch support requires optional dependency deckard[torch]"
+        )
 
     from art.estimators.classification import PyTorchClassifier
 
@@ -66,7 +68,9 @@ def build_torch_art_model(model, data):
     nb_classes = len(np.unique(np.asarray(data.y_train).flatten()))
     art_model = model
     target_device = get_torch_model_device(model)
-    device_type = "gpu" if getattr(target_device, "type", "cpu") == "cuda" else "cpu"
+    device_type = (
+        "gpu" if getattr(target_device, "type", "cpu") == "cuda" else "cpu"
+    )
 
     estimator = PyTorchClassifier(
         model=art_model,
@@ -95,7 +99,9 @@ def build_torch_art_model(model, data):
 
 def collect_subset_from_dataloader(loader, n):
     if not HAS_TORCH:
-        raise ImportError("Torch support requires optional dependency deckard[torch]")
+        raise ImportError(
+            "Torch support requires optional dependency deckard[torch]"
+        )
     if not is_dataloader(loader):
         raise TypeError(f"Expected DataLoader, got {type(loader)}")
 

@@ -2,7 +2,6 @@
 
 from ..utils import safe_store
 
-
 PLOT_DEFAULT = {
     "backend": "yellowbrick",
     "plot_type": "roc_auc",

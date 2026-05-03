@@ -60,7 +60,8 @@ def _auto_torch_device_from_backends(torch_module):
     backends = set(_torch_compiler_backends(torch_module))
     cuda_available = bool(torch_module.cuda.is_available())
     mps_available = bool(
-        hasattr(torch_module.backends, "mps") and torch_module.backends.mps.is_available(),
+        hasattr(torch_module.backends, "mps")
+        and torch_module.backends.mps.is_available(),
     )
 
     cuda_preferred = {
@@ -106,10 +107,19 @@ def resolve_torch_device(requested_device: Any = None):
         return requested_device
 
     if isinstance(requested_device, int):
-        if requested_device >= 0 and torch.cuda.is_available() and requested_device < torch.cuda.device_count():
+        if (
+            requested_device >= 0
+            and torch.cuda.is_available()
+            and requested_device < torch.cuda.device_count()
+        ):
             return torch.device(f"cuda:{requested_device}")
-        logger.warning("Invalid CUDA index %s; falling back to CPU", requested_device)
-        return torch.device("cpu")
+        fallback = _auto_torch_device_from_backends(torch)
+        logger.warning(
+            "Invalid CUDA index %s; falling back to best available device %s",
+            requested_device,
+            fallback,
+        )
+        return fallback
 
     requested_text = ""
     if requested_device is not None:
@@ -120,30 +130,51 @@ def resolve_torch_device(requested_device: Any = None):
     if requested_text in {"gpu", "cuda"}:
         if torch.cuda.is_available():
             return torch.device("cuda:0")
-        logger.warning("GPU requested but CUDA unavailable; falling back to CPU")
-        return torch.device("cpu")
+        fallback = _auto_torch_device_from_backends(torch)
+        logger.warning(
+            "GPU requested but CUDA unavailable; falling back to best available device %s",
+            fallback,
+        )
+        return fallback
     if requested_text.startswith("cuda"):
         if not torch.cuda.is_available():
-            logger.warning("CUDA requested but unavailable; falling back to CPU")
-            return torch.device("cpu")
+            fallback = _auto_torch_device_from_backends(torch)
+            logger.warning(
+                "CUDA requested but unavailable; falling back to best available device %s",
+                fallback,
+            )
+            return fallback
         try:
             return torch.device(requested_text)
         except (TypeError, ValueError):
-            logger.warning("Invalid CUDA device '%s'; falling back to CPU", requested_text)
-            return torch.device("cpu")
+            fallback = _auto_torch_device_from_backends(torch)
+            logger.warning(
+                "Invalid CUDA device '%s'; falling back to best available device %s",
+                requested_text,
+                fallback,
+            )
+            return fallback
     if requested_text.startswith("mps"):
         mps_available = bool(
-            hasattr(torch.backends, "mps") and torch.backends.mps.is_available(),
+            hasattr(torch.backends, "mps")
+            and torch.backends.mps.is_available(),
         )
         if not mps_available:
-            logger.warning("MPS requested but unavailable; falling back to CPU")
-            return torch.device("cpu")
+            fallback = _auto_torch_device_from_backends(torch)
+            logger.warning(
+                "MPS requested but unavailable; falling back to best available device %s",
+                fallback,
+            )
+            return fallback
         return torch.device("mps")
 
     try:
         return torch.device(requested_text)
     except (TypeError, ValueError):
-        logger.warning("Invalid torch device '%s'; falling back to auto device", requested_text)
+        logger.warning(
+            "Invalid torch device '%s'; falling back to auto device",
+            requested_text,
+        )
         return _auto_torch_device_from_backends(torch)
 
 
@@ -210,7 +241,7 @@ def merge_list_of_dicts(items) -> dict:
             item = OmegaConf.to_container(item, resolve=True)
         if not isinstance(item, dict):
             raise TypeError(
-                f"merge_list_of_dicts: each element must be a dict, got {type(item)}"
+                f"merge_list_of_dicts: each element must be a dict, got {type(item)}",
             )
         merged.update(item)
     return merged
@@ -490,7 +521,9 @@ class ConfigBase:
             raise ValueError(
                 f"Unsupported file type {score_path.suffix}. Supported types: {supported_filtypes}",
             )
-        assert Path(score_path).exists(), f"Failed to save scores to {score_path}"
+        assert Path(
+            score_path
+        ).exists(), f"Failed to save scores to {score_path}"
         logger.info(f"Scores saved to {score_path}")
 
     def save_data(
@@ -685,9 +718,13 @@ class ConfigBase:
             The path to the file where the instance will be saved.
         """
         if Path(filepath).exists():
-            raise ValueError(f"File {filepath} already exists. Will not overwrite.")
+            raise ValueError(
+                f"File {filepath} already exists. Will not overwrite."
+            )
         self.save_object(self, filepath)
-        logger.info(f"Instance of {self.__class__.__name__} saved to {filepath}")
+        logger.info(
+            f"Instance of {self.__class__.__name__} saved to {filepath}"
+        )
 
     def load(self, filepath: str) -> "ConfigBase":
         """
@@ -706,8 +743,12 @@ class ConfigBase:
         assert Path(filepath).exists(), f"File {filepath} does not exist."
         obj = self.load_object(filepath)
         if not isinstance(obj, self.__class__):
-            raise TypeError(f"Loaded object is not of type {self.__class__.__name__}")
-        logger.info(f"Instance of {self.__class__.__name__} loaded from {filepath}")
+            raise TypeError(
+                f"Loaded object is not of type {self.__class__.__name__}"
+            )
+        logger.info(
+            f"Instance of {self.__class__.__name__} loaded from {filepath}"
+        )
         # Update the current instance's __dict__ with the loaded object's __dict__
         self.__dict__.update(obj.__dict__)
         return self
@@ -729,7 +770,9 @@ class ConfigBase:
         """
         config = OmegaConf.to_container(OmegaConf.load(filepath), resolve=True)
         if not isinstance(config, dict):
-            raise TypeError(f"Loaded config is not a dictionary from {filepath}")
+            raise TypeError(
+                f"Loaded config is not a dictionary from {filepath}"
+            )
         instance = instantiate(config)
         logger.info(
             f"Instance of {instance.__class__.__name__} created from {filepath}",
@@ -783,7 +826,9 @@ class ConfigBase:
         for base in reversed(self.__class__.mro()):
             fields = getattr(base, "__dataclass_fields__", {})
             for name in fields:
-                if name.startswith("_") and not (for_hash and name == "_target_"):
+                if name.startswith("_") and not (
+                    for_hash and name == "_target_"
+                ):
                     continue
                 if for_hash and not self._is_hash_field(name):
                     continue
@@ -792,7 +837,9 @@ class ConfigBase:
                     if isinstance(value, ConfigBase):
                         dict_[name] = value.to_dict(for_hash=for_hash)
                     elif OmegaConf.is_config(value):
-                        dict_[name] = OmegaConf.to_container(value, resolve=True)
+                        dict_[name] = OmegaConf.to_container(
+                            value, resolve=True
+                        )
                     else:
                         dict_[name] = value
 
@@ -1048,12 +1095,22 @@ def _extract_param_help_from_docstring(docstring: str) -> dict[str, str]:
                     i += 2
                     continue
         else:
-            if stripped in {"Returns", "Raises", "Notes", "Examples", "See Also"}:
+            if stripped in {
+                "Returns",
+                "Raises",
+                "Notes",
+                "Examples",
+                "See Also",
+            }:
                 _flush_current()
                 break
 
             # Parameter declaration line: "name : type" or "name: type"
-            if stripped and not lines[i].startswith((" ", "\t")) and (":" in stripped):
+            if (
+                stripped
+                and not lines[i].startswith((" ", "\t"))
+                and (":" in stripped)
+            ):
                 _flush_current()
                 current_name = stripped.split(":", 1)[0].strip()
             elif current_name is not None:

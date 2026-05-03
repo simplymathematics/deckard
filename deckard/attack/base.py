@@ -36,6 +36,15 @@ from .pytorch import (
 
 logger = logging.getLogger(__name__)
 
+
+def _sensitive_slice(sensitive, n):
+    """Return the first *n* rows of *sensitive*, or None if unavailable."""
+    if sensitive is None:
+        return None
+    arr = np.asarray(sensitive)
+    return arr[:n]
+
+
 if TYPE_CHECKING:
     from ..score.attack import AttackScorerConfig
 
@@ -77,7 +86,10 @@ class SensitiveFeaturesWrapper(BaseEstimator):
         return proba
 
     def get_params(self, deep=True):
-        return {"estimator": self.estimator, "sensitive_features": self._sensitive}
+        return {
+            "estimator": self.estimator,
+            "sensitive_features": self._sensitive,
+        }
 
     def set_params(self, **params):
         if "estimator" in params:
@@ -227,7 +239,9 @@ class AttackConfig(ConfigBase):
         initializes it as an empty dictionary.
         """
         self._target_ = "deckard.attack.AttackConfig"
-        attack_scorer_cls = resolve_class("deckard.score.attack.AttackScorerConfig")
+        attack_scorer_cls = resolve_class(
+            "deckard.score.attack.AttackScorerConfig"
+        )
         if self.scorer is None:
             self.scorer = attack_scorer_cls()
         elif isinstance(self.scorer, dict):
@@ -272,11 +286,16 @@ class AttackConfig(ConfigBase):
         """Infer task type from model first, then data config as fallback."""
         if isinstance(model, ModelConfig) and model.classifier is not None:
             return bool(model.classifier)
-        if isinstance(model, RegressorMixin) and not isinstance(model, ClassifierMixin):
+        if isinstance(model, RegressorMixin) and not isinstance(
+            model, ClassifierMixin
+        ):
             return False
         if isinstance(model, ClassifierMixin):
             return True
-        if hasattr(data, "classifier") and getattr(data, "classifier") is not None:
+        if (
+            hasattr(data, "classifier")
+            and getattr(data, "classifier") is not None
+        ):
             return bool(getattr(data, "classifier"))
         return None
 
@@ -329,7 +348,12 @@ class AttackConfig(ConfigBase):
         attack_subtype = self.attack_subtype or ""
 
         # Validate attack type
-        if attack_type not in ["evasion", "poisoning", "extraction", "inference"]:
+        if attack_type not in [
+            "evasion",
+            "poisoning",
+            "extraction",
+            "inference",
+        ]:
             raise ValueError(f"Unsupported attack type: {attack_type}")
         attack_class = resolve_class(self.attack_type)
         if art_model is None:
@@ -491,9 +515,11 @@ class AttackConfig(ConfigBase):
 
         self._validate_attack_task_compatibility(data, model)
 
-        attack, art_model, attack_type, attack_subtype = self._initialize_attack(
-            model,
-            data,
+        attack, art_model, attack_type, attack_subtype = (
+            self._initialize_attack(
+                model,
+                data,
+            )
         )
         # Execute the attack based on type and subtype
         if attack_type == "evasion":
@@ -524,7 +550,9 @@ class AttackConfig(ConfigBase):
                         f"Unsupported inference attack subtype: {attack_subtype}",
                     )
         else:
-            raise NotImplementedError(f"Attack type {attack_type} not implemented yet.")
+            raise NotImplementedError(
+                f"Attack type {attack_type} not implemented yet."
+            )
         assert isinstance(scores, dict), "Scores should be a dictionary"
         assert isinstance(
             self.attack_time,
@@ -733,9 +761,13 @@ class AttackConfig(ConfigBase):
             return True
         return False
 
-    def _score_attack_legacy(self, ben_pred_labels, adv_pred_labels, y_test_numeric):
+    def _score_attack_legacy(
+        self, ben_pred_labels, adv_pred_labels, y_test_numeric
+    ):
         """Backward-compatible alias retained for older call sites."""
-        return self._score_attack(ben_pred_labels, adv_pred_labels, y_test_numeric)
+        return self._score_attack(
+            ben_pred_labels, adv_pred_labels, y_test_numeric
+        )
 
     def _evade(self, data, art_model, attack):
         """
@@ -781,13 +813,17 @@ class AttackConfig(ConfigBase):
                 (list, np.ndarray),
             ), f"Expected labels to be a list of np.ndarray. Got {type(y_subset)}"
         ben_preds = art_model.predict(x_subset)
-        is_regression = self._is_regression_prediction_output(y_subset, ben_preds)
+        is_regression = self._is_regression_prediction_output(
+            y_subset, ben_preds
+        )
         if is_regression:
             ben_pred_labels = np.asarray(ben_preds).reshape(-1)
         else:
             ben_pred_labels = np.asarray(ben_preds).argmax(axis=1)
         if is_tensor(ben_pred_labels):
-            ben_pred_labels = tensor_to_numpy(ben_pred_labels, dtype=ART_NUMPY_DTYPE)
+            ben_pred_labels = tensor_to_numpy(
+                ben_pred_labels, dtype=ART_NUMPY_DTYPE
+            )
         if "AdversarialPatch" in str(type(attack)):
             # Special handling for AdversarialPatch attack
             patches = attack.generate(x=x_subset, y=ben_pred_labels)
@@ -809,7 +845,9 @@ class AttackConfig(ConfigBase):
             X_test_adv = attack.generate(x=x_subset)
         end_time = time.process_time()
         self.attack_time = end_time - start_time
-        logger.info(f"Evasion attack took {self.attack_time} seconds for {n} samples")
+        logger.info(
+            f"Evasion attack took {self.attack_time} seconds for {n} samples"
+        )
         start_time = time.process_time()
         adv_pred = art_model.predict(X_test_adv)
         self.predictions = adv_pred
@@ -833,7 +871,9 @@ class AttackConfig(ConfigBase):
             if is_regression:
                 y_test_numeric = y_subset.iloc[:, 0].astype(float).values
             else:
-                y_test_numeric = y_subset.iloc[:, 0].astype("category").cat.codes
+                y_test_numeric = (
+                    y_subset.iloc[:, 0].astype("category").cat.codes
+                )
         elif isinstance(y_subset, np.ndarray):
             y_test_numeric = np.asarray(y_subset).reshape(-1)
         elif is_tensor(y_subset):
@@ -848,6 +888,10 @@ class AttackConfig(ConfigBase):
             y_pred=adv_pred_labels,
             ben_pred_labels=ben_pred_labels,
             is_classification=not is_regression,
+            sensitive_features=_sensitive_slice(
+                getattr(data, "_sensitive_test", None),
+                n,
+            ),
         )
         logger.info(
             f"Attack scoring took {self.attack_score_time} seconds for {len(adv_pred_labels)} samples and {len(self.score_dict)} scores.",
@@ -866,7 +910,9 @@ class AttackConfig(ConfigBase):
         else:
             x_ = data.X_train
             y_ = data.y_train
-        if isinstance(x_, (pd.Series, np.ndarray, pd.DataFrame)) or is_tensor(x_):
+        if isinstance(x_, (pd.Series, np.ndarray, pd.DataFrame)) or is_tensor(
+            x_
+        ):
             x_subset = x_[:n]
             y_subset = y_[:n]
         elif is_dataloader(x_):
@@ -1030,6 +1076,10 @@ class AttackConfig(ConfigBase):
         )
         # Determine if the target is categorical or continuous
         is_classification = not attack._is_continuous
+        sensitive_attribute = _sensitive_slice(
+            getattr(data, "_sensitive_train", None),
+            self.attack_size,
+        )
         score_dict = self._score(
             attack_kind="attribute",
             y_true=target,
@@ -1037,6 +1087,7 @@ class AttackConfig(ConfigBase):
             targeted_attribute=targeted_attribute_string,
             is_classification=is_classification,
             attack_generation_time=self.attack_time,
+            sensitive_features=sensitive_attribute,
         )
         self.score_dict = {**self.score_dict, **score_dict}
         for score in self.score_dict:
@@ -1093,7 +1144,9 @@ class AttackConfig(ConfigBase):
             )
         except AxisError:
             # Fallback: ensure y is strictly 2D one-hot to avoid axis=1 errors
-            safe_y_data = pd.get_dummies(np.asarray(y_train_values).reshape(-1)).values
+            safe_y_data = pd.get_dummies(
+                np.asarray(y_train_values).reshape(-1)
+            ).values
             attack.fit(
                 x=data.X_train.copy().values,
                 y=safe_y_data,
@@ -1105,9 +1158,22 @@ class AttackConfig(ConfigBase):
         logger.info(
             f"Membership inference attack training took {self.attack_time} seconds for {self.attack_size} samples",
         )
-        big_X = np.vstack((data.X_train.copy().values, data.X_test.copy().values))
-        big_y = np.hstack((data.y_train.copy().values, data.y_test.copy().values))
+        big_X = np.vstack(
+            (data.X_train.copy().values, data.X_test.copy().values)
+        )
+        big_y = np.hstack(
+            (data.y_train.copy().values, data.y_test.copy().values)
+        )
         labels = np.array([1] * len(data.X_train) + [0] * len(data.X_test))
+        # Build combined sensitive-feature array aligned with big_X (train then test).
+        sensitive_train = getattr(data, "_sensitive_train", None)
+        sensitive_test = getattr(data, "_sensitive_test", None)
+        if sensitive_train is not None and sensitive_test is not None:
+            big_sensitive = np.concatenate(
+                [np.asarray(sensitive_train), np.asarray(sensitive_test)],
+            )
+        else:
+            big_sensitive = None
         # Randomly sample self.attack_size indices from big_X, big_y, and labels
         n = self.attack_size
         indices = np.arange(len(big_X))
@@ -1115,6 +1181,9 @@ class AttackConfig(ConfigBase):
         big_X = big_X[indices]
         big_y = big_y[indices]
         labels = labels[indices]
+        sensitive_membership = (
+            big_sensitive[indices] if big_sensitive is not None else None
+        )
         start_time = time.process_time()
         inferred = attack.infer(
             x=big_X,
@@ -1162,6 +1231,7 @@ class AttackConfig(ConfigBase):
             attack_kind="membership",
             y_true=labels,
             y_pred=inferred,
+            sensitive_features=sensitive_membership,
         )
         self.score_dict = {**self.score_dict, **score_dict}
         for score in self.score_dict:

@@ -12,6 +12,32 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from deckard.attack import AttackConfig
 
 
+class TinyData:
+    rng = np.random.default_rng(11)
+    X_train = pd.DataFrame(
+        {
+            "feature": rng.normal(size=40),
+            "sensitive": rng.integers(0, 2, size=40),
+            "other": rng.normal(size=40),
+        },
+    )
+    y_train = pd.Series(
+        (X_train["feature"] + X_train["other"] > 0).astype(int),
+        name="target",
+    )
+    X_test = pd.DataFrame(
+        {
+            "feature": rng.normal(size=24),
+            "sensitive": rng.integers(0, 2, size=24),
+            "other": rng.normal(size=24),
+        },
+    )
+    y_test = pd.Series(
+        (X_test["feature"] + X_test["other"] > 0).astype(int),
+        name="target",
+    )
+
+
 class TestAttackConfig(unittest.TestCase):
     def setUp(self):
         self.attack_params = {}
@@ -43,7 +69,9 @@ class TestAttackConfig(unittest.TestCase):
         ben_pred_labels = [0, 1, 0]
         adv_pred_labels = [0, 0, 0]
         y_test_numeric = [0, 1, 0]
-        self.attack._score_attack(ben_pred_labels, adv_pred_labels, y_test_numeric)
+        self.attack._score_attack(
+            ben_pred_labels, adv_pred_labels, y_test_numeric
+        )
         metrics = self.attack.score_dict
         self.assertIn("evasion_success", metrics)
 
@@ -88,7 +116,12 @@ class TestAttackConfig(unittest.TestCase):
             patch.object(
                 AttackConfig,
                 "_initialize_attack",
-                return_value=(object(), object(), "inference", "membership_inference"),
+                return_value=(
+                    object(),
+                    object(),
+                    "inference",
+                    "membership_inference",
+                ),
             ),
             patch.object(
                 AttackConfig,
@@ -118,9 +151,16 @@ class TestAttackConfig(unittest.TestCase):
             patch.object(
                 AttackConfig,
                 "_initialize_attack",
-                return_value=(object(), object(), "inference", "attribute_inference"),
+                return_value=(
+                    object(),
+                    object(),
+                    "inference",
+                    "attribute_inference",
+                ),
             ),
-            patch.object(AttackConfig, "_infer_attribute", side_effect=_fake_attribute),
+            patch.object(
+                AttackConfig, "_infer_attribute", side_effect=_fake_attribute
+            ),
         ):
             result = attack(object(), object())
 
@@ -136,7 +176,12 @@ class TestAttackConfig(unittest.TestCase):
         with patch.object(
             AttackConfig,
             "_initialize_attack",
-            return_value=(object(), object(), "inference", "attribute_inference"),
+            return_value=(
+                object(),
+                object(),
+                "inference",
+                "attribute_inference",
+            ),
         ):
             with self.assertRaises(AssertionError):
                 attack(object(), object())
@@ -193,7 +238,9 @@ class TestAttackConfig(unittest.TestCase):
         with patch.object(
             AttackConfig,
             "_initialize_attack",
-            side_effect=AssertionError("_initialize_attack should not be called"),
+            side_effect=AssertionError(
+                "_initialize_attack should not be called"
+            ),
         ):
             with self.assertRaises(ValueError):
                 attack(data, model)
@@ -247,28 +294,13 @@ class TestAttackConfig(unittest.TestCase):
         self.assertGreaterEqual(scores["attack_size"], 1)
 
     def test_real_membership_inference_attack_executes(self):
-        class TinyData:
-            pass
-
-        rng = np.random.default_rng(7)
-        X_train = pd.DataFrame(
-            rng.normal(size=(30, 4)),
-            columns=["f1", "f2", "f3", "f4"],
-        )
-        y_train = pd.Series(rng.integers(0, 2, size=(30,)), name="target")
-        X_test = pd.DataFrame(
-            rng.normal(size=(20, 4)),
-            columns=["f1", "f2", "f3", "f4"],
-        )
-        y_test = pd.Series(rng.integers(0, 2, size=(20,)), name="target")
 
         data = TinyData()
-        data.X_train = X_train
-        data.y_train = y_train
-        data.X_test = X_test
-        data.y_test = y_test
 
-        model = LogisticRegression(max_iter=200).fit(X_train.values, y_train.values)
+        model = LogisticRegression(max_iter=200).fit(
+            data.X_train.values,
+            data.y_train.values,
+        )
         attack = AttackConfig(
             attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             attack_params={},
@@ -280,40 +312,13 @@ class TestAttackConfig(unittest.TestCase):
         self.assertIn("attack_score_time", scores)
 
     def test_real_attribute_inference_attack_executes(self):
-        class TinyData:
-            pass
-
-        rng = np.random.default_rng(11)
-        X_train = pd.DataFrame(
-            {
-                "feature": rng.normal(size=40),
-                "sensitive": rng.integers(0, 2, size=40),
-                "other": rng.normal(size=40),
-            },
-        )
-        y_train = pd.Series(
-            (X_train["feature"] + X_train["other"] > 0).astype(int),
-            name="target",
-        )
-        X_test = pd.DataFrame(
-            {
-                "feature": rng.normal(size=24),
-                "sensitive": rng.integers(0, 2, size=24),
-                "other": rng.normal(size=24),
-            },
-        )
-        y_test = pd.Series(
-            (X_test["feature"] + X_test["other"] > 0).astype(int),
-            name="target",
-        )
 
         data = TinyData()
-        data.X_train = X_train
-        data.y_train = y_train
-        data.X_test = X_test
-        data.y_test = y_test
 
-        model = LogisticRegression(max_iter=200).fit(X_train.values, y_train.values)
+        model = LogisticRegression(max_iter=200).fit(
+            data.X_train.values,
+            data.y_train.values,
+        )
         attack = AttackConfig(
             attack_type="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
             targeted_attribute=["sensitive"],
@@ -335,29 +340,173 @@ class TestAttackConfig(unittest.TestCase):
             attack_type="art.attacks.evasion.FastGradientMethod",
             attack_params={},
         )
+        data = TinyData()
+
+        model = LogisticRegression(max_iter=200).fit(
+            data.X_train.values,
+            data.y_train.values,
+        )
+        model = model
         original_hash = hash(attack)
-        cls = attack.__class__
-        original_call = cls.__call__
-
-        def fake_call(self, data, model):
-            self.attack_time = 0.1
-            self.attack_prediction_time = 0.05
-            self.attack_score_time = 0.02
-            self._random_runtime_field = {"seen": True}
-            if hasattr(self, "score_dict") and isinstance(self.score_dict, dict):
-                self.score_dict["runtime"] = 1
-            return {"ok": 1}
-
-        setattr(cls, "__call__", fake_call)
-        try:
-            attack.execute_without_mercy()
-        finally:
-            setattr(cls, "__call__", original_call)
-
+        attack(data, model)
         self.assertEqual(
             original_hash,
             hash(attack),
             msg="Hash changed after call for AttackConfig",
+        )
+
+
+class TestFairlearnAttackScorer(unittest.TestCase):
+    """Unit tests for FairlearnAttackScorerConfig per-group attack metrics."""
+
+    @pytest.fixture(autouse=True)
+    def _skip_if_no_fairlearn(self):
+        pytest.importorskip("fairlearn")
+
+    def _make_data_with_sensitive(self):
+        data = TinyData()
+        data._sensitive_train = pd.Series(
+            [
+                "group_a" if i % 2 == 0 else "group_b"
+                for i in range(len(data.X_train))
+            ],
+            name="sensitive",
+        )
+        data._sensitive_test = pd.Series(
+            [
+                "group_a" if i % 2 == 0 else "group_b"
+                for i in range(len(data.X_test))
+            ],
+            name="sensitive",
+        )
+        return data
+
+    def test_fairlearn_attack_scorer_instantiates(self):
+        from deckard.score.attack import FairlearnAttackScorerConfig
+        from deckard.score.fairness import FairlearnScoreDictConfig
+
+        scorer = FairlearnAttackScorerConfig()
+        self.assertIsInstance(scorer.evasion, FairlearnScoreDictConfig)
+        self.assertIsInstance(
+            scorer.membership_inference, FairlearnScoreDictConfig
+        )
+        self.assertIsInstance(
+            scorer.attribute_inference, FairlearnScoreDictConfig
+        )
+
+    def test_score_evasion_with_sensitive_features_produces_group_metrics(self):
+        from deckard.score.attack import FairlearnAttackScorerConfig
+
+        scorer = FairlearnAttackScorerConfig()
+        rng = np.random.default_rng(1)
+        n = 20
+        y_true = rng.integers(0, 2, n)
+        y_pred = rng.integers(0, 2, n)
+        sensitive = np.array(["a" if i % 2 == 0 else "b" for i in range(n)])
+        result = scorer.score_evasion(
+            ben_pred_labels=y_true,
+            adv_pred_labels=y_pred,
+            y_true=y_true,
+            attack_size=n,
+            is_classification=True,
+            sensitive_features=sensitive,
+        )
+        group_keys = [k for k in result if "_accuracy" in k or "_f1" in k]
+        self.assertTrue(
+            len(group_keys) > 0,
+            f"No group metrics found in {list(result)}",
+        )
+
+    def test_score_membership_with_sensitive_features_produces_group_metrics(
+        self,
+    ):
+        from deckard.score.attack import FairlearnAttackScorerConfig
+
+        scorer = FairlearnAttackScorerConfig()
+        rng = np.random.default_rng(2)
+        n = 20
+        labels = rng.integers(0, 2, n)
+        inferred = rng.integers(0, 2, n)
+        sensitive = np.array(["a" if i % 2 == 0 else "b" for i in range(n)])
+        result = scorer.score_membership(
+            labels=labels,
+            inferred=inferred,
+            attack_size=n,
+            sensitive_features=sensitive,
+        )
+        group_keys = [k for k in result if "membership_inference" in k]
+        self.assertTrue(
+            len(group_keys) > 0,
+            f"No membership_inference metrics found in {list(result)}",
+        )
+
+    def test_score_attribute_with_sensitive_features_produces_group_metrics(
+        self,
+    ):
+        from deckard.score.attack import FairlearnAttackScorerConfig
+
+        scorer = FairlearnAttackScorerConfig()
+        rng = np.random.default_rng(3)
+        n = 20
+        target = rng.integers(0, 3, n)
+        inferred = rng.integers(0, 3, n)
+        sensitive = np.array(["a" if i % 2 == 0 else "b" for i in range(n)])
+        result = scorer.score_attribute(
+            target=target,
+            inferred=inferred,
+            attack_size=n,
+            targeted_attribute="age",
+            is_classification=True,
+            sensitive_features=sensitive,
+        )
+        group_keys = [k for k in result if "inferred_age" in k]
+        self.assertTrue(
+            len(group_keys) > 0,
+            f"No inferred_age metrics found in {list(result)}",
+        )
+
+    def test_evasion_attack_with_fairlearn_scorer_end_to_end(self):
+        from deckard.score.attack import FairlearnAttackScorerConfig
+
+        pytest.importorskip("art")
+        data = self._make_data_with_sensitive()
+        model = LogisticRegression(max_iter=200).fit(
+            data.X_train.values,
+            data.y_train.values,
+        )
+        attack = AttackConfig(
+            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_params={"eps": 0.1},
+            attack_size=10,
+            scorer=FairlearnAttackScorerConfig(),
+        )
+        scores = attack(data, model)
+        group_keys = [k for k in scores if "_accuracy" in k or "_f1" in k]
+        self.assertTrue(
+            len(group_keys) > 0,
+            f"Expected per-group evasion metrics, got keys: {list(scores)}",
+        )
+
+    def test_membership_inference_with_fairlearn_scorer_end_to_end(self):
+        from deckard.score.attack import FairlearnAttackScorerConfig
+
+        pytest.importorskip("art")
+        data = self._make_data_with_sensitive()
+        model = LogisticRegression(max_iter=200).fit(
+            data.X_train.values,
+            data.y_train.values,
+        )
+        attack = AttackConfig(
+            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            attack_params={},
+            attack_size=20,
+            scorer=FairlearnAttackScorerConfig(),
+        )
+        scores = attack(data, model)
+        group_keys = [k for k in scores if "membership_inference" in k]
+        self.assertTrue(
+            len(group_keys) > 0,
+            f"Expected per-group membership metrics, got keys: {list(scores)}",
         )
 
 

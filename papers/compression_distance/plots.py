@@ -4,7 +4,9 @@ import seaborn as sns
 from pathlib import Path
 
 # Set seaborn theme to paper using times new roman font
-sns.set_theme(context="paper", style="whitegrid", font="Times New Roman", font_scale=2)
+sns.set_theme(
+    context="paper", style="whitegrid", font="Times New Roman", font_scale=2
+)
 if __name__ == "__main__":
     input_file = "output/combined/plots/search_merged.csv"
     output_file = "output/combined/plots/search_averaged.csv"
@@ -67,7 +69,9 @@ if __name__ == "__main__":
                 assert (
                     f"{col}_mean" in group.columns
                 ), f"{col}_mean not in group columns"
-                assert f"{col}_std" in group.columns, f"{col}_std not in group columns"
+                assert (
+                    f"{col}_std" in group.columns
+                ), f"{col}_std not in group columns"
                 group = group.drop(col, axis=1)
                 # group = group.head(1)
             new_df = pd.concat([new_df, group])
@@ -198,7 +202,9 @@ if __name__ == "__main__":
     # Move legend outside of the plot and to the right
     train_time_graph._legend.set_bbox_to_anchor((1, 0.5))
     train_time_graph.tight_layout()
-    train_time_graph.savefig("output/combined/plots/train_time_vs_algorithm.pdf")
+    train_time_graph.savefig(
+        "output/combined/plots/train_time_vs_algorithm.pdf"
+    )
 
     sns.set_theme(
         context="paper",
@@ -219,7 +225,9 @@ if __name__ == "__main__":
         col="Model",
         col_order=["KNN", "Logistic", "SVC"],
     )
-    pred_time_graph.set_axis_labels("Metric", "Prediction Time per Sample (seconds)")
+    pred_time_graph.set_axis_labels(
+        "Metric", "Prediction Time per Sample (seconds)"
+    )
     pred_time_graph.set_titles("{col_name} - {row_name}")
     # Change legend title
     pred_time_graph._legend.set_title("Algorithm")
@@ -231,7 +239,9 @@ if __name__ == "__main__":
     pred_time_graph.tight_layout()
     pred_time_graph.savefig("output/combined/plots/pred_time_vs_algorithm.pdf")
 
-    refit_df = pd.read_csv("output/combined/plots/refit_merged.csv", index_col=0)
+    refit_df = pd.read_csv(
+        "output/combined/plots/refit_merged.csv", index_col=0
+    )
     refit_df["Algorithm"] = refit_df["algorithm"]
     refit_df["accuracy"] = refit_df["accuracy"] * 100
     refit_df.dropna(inplace=True, subset=["accuracy"])
@@ -247,7 +257,14 @@ if __name__ == "__main__":
         col_order=["KNN", "Logistic", "SVC"],
         row_order=["DDoS", "KDD NSL", "SMS Spam", "Truthseeker"],
         hue_order=["Vanilla", "Assumed", "Enforced", "Average"],
-        style_order=["GZIP", "BZ2", "Brotli", "Hamming", "Ratio", "Levenshtein"],
+        style_order=[
+            "GZIP",
+            "BZ2",
+            "Brotli",
+            "Hamming",
+            "Ratio",
+            "Levenshtein",
+        ],
     )
 
     for ax in acc_graph.axes.flat:

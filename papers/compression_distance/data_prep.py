@@ -25,7 +25,9 @@ def undersample(df, target, n_samples=10000):
     keys = y.value_counts().keys()
     values = [n_samples // n_classes] * len(keys)
     sampling_strategy = dict(zip(keys, values))
-    rus = RandomUnderSampler(random_state=0, sampling_strategy=sampling_strategy)
+    rus = RandomUnderSampler(
+        random_state=0, sampling_strategy=sampling_strategy
+    )
     X_resampled, y_resampled = rus.fit_resample(X, y)
     df_resampled = pd.concat([X_resampled, y_resampled], axis=1)
     return df_resampled
@@ -84,7 +86,9 @@ if __name__ == "__main__":
     labels = range(len(counts))
     if plot is True:
         # Plot the counts
-        plt.simple_bar(labels, counts, title="Truthseeker Label Counts", width=50)
+        plt.simple_bar(
+            labels, counts, title="Truthseeker Label Counts", width=50
+        )
         plt.show()
     else:
         logger.info("Label counts for Truthseeker: {}".format(counts))

@@ -88,7 +88,9 @@ def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def parse_studies(optuna_db: str, schema: Union[str, dict[str, Any]]) -> pd.DataFrame:
+def parse_studies(
+    optuna_db: str, schema: Union[str, dict[str, Any]]
+) -> pd.DataFrame:
     """Load and merge all studies from an Optuna storage into one dataframe."""
     studies = optuna.study.get_all_study_summaries(storage=optuna_db)
     assert len(studies) > 0, f"No studies found in {optuna_db}"
@@ -130,9 +132,7 @@ def compile_results_main(
             schema = str(Path(schema).absolute())
             assert Path(
                 schema,
-            ).is_file(), (
-                f"Schema must be a dictionary or a valid file. Got {schema.absolute()}."
-            )
+            ).is_file(), f"Schema must be a dictionary or a valid file. Got {schema.absolute()}."
     else:
         schema = {}
     output_path = Path(output_file)

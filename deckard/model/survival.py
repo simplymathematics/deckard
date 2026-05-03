@@ -97,7 +97,9 @@ class SurvivalModelConfig(ModelConfig):
         if not hasattr(self, "_target_") or self._target_ is None:
             self._target_ = "deckard.model.SurvivalModelConfig"
         if self.classifier in ["classifier", True]:
-            self.classifier = False  # Survival models are always regression-like
+            self.classifier = (
+                False  # Survival models are always regression-like
+            )
         elif self.classifier in ["regressor", False]:
             self.classifier = False
         else:
@@ -149,7 +151,10 @@ class SurvivalModelConfig(ModelConfig):
             mtype=self.survival_model,
             kwargs=kwargs,
         )
-        fit_kwargs = {"duration_col": self.duration_col, "event_col": self.event_col}
+        fit_kwargs = {
+            "duration_col": self.duration_col,
+            "event_col": self.event_col,
+        }
         if self.survival_model != "aalen":
             start = df[self.duration_col].min()
             end = df[self.duration_col].max()
@@ -203,7 +208,9 @@ class SurvivalModelConfig(ModelConfig):
             Dictionary with calibration metrics (ici, e50, concordance).
         """
         if getattr(self, "scorer", None) is not None:
-            return self.scorer(y_true=y_true, y_pred=y_pred, mode=None, data=y_true)
+            return self.scorer(
+                y_true=y_true, y_pred=y_pred, mode=None, data=y_true
+            )
 
         scores = {}
 
@@ -215,7 +222,10 @@ class SurvivalModelConfig(ModelConfig):
             logger.warning(f"Could not compute concordance: {e}")
 
         # Compute calibration metrics
-        if self.duration_col in y_true.columns and self.event_col in y_true.columns:
+        if (
+            self.duration_col in y_true.columns
+            and self.event_col in y_true.columns
+        ):
             try:
                 _, ici, e50 = self.survival_probability_calibration(
                     model=y_pred,
@@ -239,7 +249,9 @@ class SurvivalModelConfig(ModelConfig):
         color: str = "red",
         return_curve: bool = False,
         plot: bool = True,
-    ) -> Union[tuple[Any, float, float], tuple[Any, float, float, pd.DataFrame]]:
+    ) -> Union[
+        tuple[Any, float, float], tuple[Any, float, float, pd.DataFrame]
+    ]:
         """Compute survival calibration metrics and optionally render curve."""
         if ax is None:
             _, ax = plt.subplots()
@@ -248,7 +260,9 @@ class SurvivalModelConfig(ModelConfig):
         event_col = model.event_col
         calibration_df = df.copy()
         for col in calibration_df.columns:
-            calibration_df[col] = pd.to_numeric(calibration_df[col], errors="raise")
+            calibration_df[col] = pd.to_numeric(
+                calibration_df[col], errors="raise"
+            )
         calibration_df = calibration_df.dropna()
 
         predictions_at_t0 = np.clip(
@@ -311,7 +325,9 @@ class SurvivalModelConfig(ModelConfig):
                         regressors=regressors,
                     )
             except Exception as error:
-                logger.error("Could not fit CRC model for calibration: %s", error)
+                logger.error(
+                    "Could not fit CRC model for calibration: %s", error
+                )
                 if return_curve:
                     curve = pd.DataFrame(
                         {"predicted": predictions_at_t0, "observed": np.nan},
@@ -343,7 +359,10 @@ class SurvivalModelConfig(ModelConfig):
         try:
             deltas = (
                 (
-                    1 - crc.predict_survival_function(prediction_df, times=[self.t0])
+                    1
+                    - crc.predict_survival_function(
+                        prediction_df, times=[self.t0]
+                    )
                 ).T.squeeze()
                 - predictions_at_t0
             ).abs()
@@ -378,7 +397,9 @@ class SurvivalModelConfig(ModelConfig):
             subset = subset[subset[col] != 1e10]
 
         if len(dummy_dict) > 0:
-            available_dummy_cols = [c for c in dummy_dict.keys() if c in subset.columns]
+            available_dummy_cols = [
+                c for c in dummy_dict.keys() if c in subset.columns
+            ]
             dummies = pd.get_dummies(
                 subset[available_dummy_cols],
                 prefix={k: dummy_dict[k] for k in available_dummy_cols},
@@ -393,7 +414,9 @@ class SurvivalModelConfig(ModelConfig):
                 col for col in cleaned.columns if cleaned[col].dtype == "object"
             ]
             if len(object_cols) > 0:
-                dummies = pd.get_dummies(cleaned[object_cols], prefix="", prefix_sep="")
+                dummies = pd.get_dummies(
+                    cleaned[object_cols], prefix="", prefix_sep=""
+                )
                 cleaned = cleaned.drop(columns=object_cols)
                 cleaned = pd.concat([cleaned, dummies], axis=1)
             cleaned = cleaned.astype(float)
@@ -448,7 +471,10 @@ class SurvivalModelConfig(ModelConfig):
                 pass
 
             # Optionally compute ICI/E50 if needed
-            if self.duration_col in X_test.columns and self.event_col in X_test.columns:
+            if (
+                self.duration_col in X_test.columns
+                and self.event_col in X_test.columns
+            ):
                 try:
                     old_t0 = self.t0
                     self.t0 = t0_for_model

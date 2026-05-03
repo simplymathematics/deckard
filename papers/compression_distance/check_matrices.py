@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
-sns.set_theme(context="paper", style="whitegrid", font="Times New Roman", font_scale=2)
+sns.set_theme(
+    context="paper", style="whitegrid", font="Times New Roman", font_scale=2
+)
 
 
 def check_symmetry_identity(matrix: np.ndarray) -> bool:
@@ -120,7 +122,9 @@ def extract_metadata_from_filename(file: Path) -> dict:
     logger.info(f"dataset: {dataset}")
     logger.info(f"metric: {metric}")
     logger.info(f"Algorithm: {algorithm}")
-    test_or_train, training_samples, test_samples, random_state = filename.split("-")
+    test_or_train, training_samples, test_samples, random_state = (
+        filename.split("-")
+    )
     return {
         "working_directory": wd,
         "dataset": dataset,
@@ -162,7 +166,12 @@ def get_results_for_file(file):
 
 
 def plot_results(df: pd.DataFrame, results_plot: Path):
-    value_vars = ["symmetry", "non_negative", "triangle_inequality", "zero_identity"]
+    value_vars = [
+        "symmetry",
+        "non_negative",
+        "triangle_inequality",
+        "zero_identity",
+    ]
 
     id_vars = [c for c in df.columns if c not in value_vars]
     df = pd.melt(df, id_vars=id_vars, value_vars=value_vars)
@@ -278,4 +287,6 @@ if __name__ == "__main__":
     # Read the results file
     df = pd.read_csv(Path(args.results_folder) / Path(args.results_file))
     # Plot the results
-    plot_results(df, results_plot=Path(args.results_folder) / Path(args.results_plot))
+    plot_results(
+        df, results_plot=Path(args.results_folder) / Path(args.results_plot)
+    )

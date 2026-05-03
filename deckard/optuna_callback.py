@@ -32,7 +32,9 @@ class OptunaStudyDumpCallback(Callback):
         Path(db_folder).mkdir(parents=True, exist_ok=True)
         # Set metric names
         if isinstance(metric_names, ListConfig):
-            self.metric_names = OmegaConf.to_container(metric_names, resolve=True)
+            self.metric_names = OmegaConf.to_container(
+                metric_names, resolve=True
+            )
         elif isinstance(metric_names, list):
             self.metric_names = metric_names
         else:

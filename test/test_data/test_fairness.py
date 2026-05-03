@@ -10,7 +10,9 @@ from deckard.data.fairness import FairlearnDataConfig  # NOQA E402
 class TestFairlearnDataConfigInit:
     def test_init_without_sensitive_columns_raises_error(self):
         """Test that FairlearnDataConfig raises ValueError when sensitive_columns is None."""
-        with pytest.raises(ValueError, match="sensitive_columns must be specified"):
+        with pytest.raises(
+            ValueError, match="sensitive_columns must be specified"
+        ):
             FairlearnDataConfig(
                 sensitive_columns=None,
             )
@@ -40,7 +42,10 @@ class TestFairlearnDataConfigInit:
             ],
         )
         assert isinstance(config.fairness_defense, dict)
-        assert config.fairness_defense["name"] == "fairlearn.preprocessing.CorrelationRemover"
+        assert (
+            config.fairness_defense["name"]
+            == "fairlearn.preprocessing.CorrelationRemover"
+        )
         assert config.fairness_defense["alpha"] == 0.25
         assert config.fairness_defense["step_name"] == "fairness_pre"
 
@@ -49,7 +54,10 @@ class TestFairlearnDataConfigInit:
         config = FairlearnDataConfig(
             sensitive_columns="gender",
             fairness_defense=[
-                {"name": "fairlearn.preprocessing.CorrelationRemover", "alpha": 0.1},
+                {
+                    "name": "fairlearn.preprocessing.CorrelationRemover",
+                    "alpha": 0.1,
+                },
                 {"alpha": 0.4},
             ],
         )
@@ -58,7 +66,9 @@ class TestFairlearnDataConfigInit:
 
 class TestLoadData:
     @patch("deckard.data.base.DataConfig._load_data")
-    def test_load_data_validates_sensitive_columns(self, mock_super_load, capfd):
+    def test_load_data_validates_sensitive_columns(
+        self, mock_super_load, capfd
+    ):
         """Test that _load_data validates configured sensitive columns."""
         df = pd.DataFrame(
             {
@@ -130,7 +140,9 @@ class TestScore:
         config._y = pd.Series([0, 1, 0, 1])
         config.classifier = True
 
-        with patch.object(config, "_classification_feature_scores", return_value={}):
+        with patch.object(
+            config, "_classification_feature_scores", return_value={}
+        ):
             scores = config._score()
 
         assert isinstance(scores, dict)
@@ -139,7 +151,10 @@ class TestScore:
 
 class TestComputeClassCounts:
     @patch("deckard.data.fairness.FairlearnDataConfig.__post_init__")
-    def test_sensitive_labels_from_frame_returns_dict_compatible_values(self, mock_post_init):
+    def test_sensitive_labels_from_frame_returns_dict_compatible_values(
+        self,
+        mock_post_init,
+    ):
         """Test sensitive label generation from configured sensitive columns."""
         df = pd.DataFrame({"gender": ["M", "F", "M", "F"]})
 
@@ -157,7 +172,9 @@ class TestComputeClassCounts:
 
 class TestClassificationFeatureScoresForGroup:
     @patch("deckard.data.fairness.FairlearnDataConfig.__post_init__")
-    def test_classification_scores_contains_required_metrics(self, mock_post_init):
+    def test_classification_scores_contains_required_metrics(
+        self, mock_post_init
+    ):
         """Test that classification scores include all required metrics."""
         X = pd.DataFrame(
             {

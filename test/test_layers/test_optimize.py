@@ -129,7 +129,9 @@ def test_create_study_without_directions(monkeypatch):
         calls.update(kwargs)
         return object()
 
-    monkeypatch.setattr(optimize_module.optuna, "create_study", fake_create_study)
+    monkeypatch.setattr(
+        optimize_module.optuna, "create_study", fake_create_study
+    )
 
     optimize_module.create_study("study", "sqlite:///db.sqlite3", [], [])
 
@@ -147,7 +149,9 @@ def test_create_study_with_directions(monkeypatch):
         calls.update(kwargs)
         return object()
 
-    monkeypatch.setattr(optimize_module.optuna, "create_study", fake_create_study)
+    monkeypatch.setattr(
+        optimize_module.optuna, "create_study", fake_create_study
+    )
 
     optimize_module.create_study(
         "study",
@@ -171,7 +175,9 @@ def test_create_study_filters_diff_direction_for_optuna(monkeypatch):
         calls.update(kwargs)
         return object()
 
-    monkeypatch.setattr(optimize_module.optuna, "create_study", fake_create_study)
+    monkeypatch.setattr(
+        optimize_module.optuna, "create_study", fake_create_study
+    )
 
     optimize_module.create_study(
         "study",
@@ -195,7 +201,9 @@ def test_create_study_allows_only_diff_directions(monkeypatch):
         calls.update(kwargs)
         return object()
 
-    monkeypatch.setattr(optimize_module.optuna, "create_study", fake_create_study)
+    monkeypatch.setattr(
+        optimize_module.optuna, "create_study", fake_create_study
+    )
 
     optimize_module.create_study(
         "study",
@@ -216,7 +224,9 @@ def test_create_study_requires_matching_directions_and_optimizers():
         AssertionError,
         match="Length of directions must match length of optimizers",
     ):
-        optimize_module.create_study("study", "sqlite:///db.sqlite3", ["minimize"], [])
+        optimize_module.create_study(
+            "study", "sqlite:///db.sqlite3", ["minimize"], []
+        )
 
 
 def test_hydra_optuna_callback_sets_up_study(monkeypatch):
@@ -375,7 +385,10 @@ def test_hydra_optuna_callback_on_compose_config_sets_experiment_and_files(
 ):
     hydra_cfg = SimpleNamespace(
         mode="RunMode.MULTIRUN",
-        sweeper={"storage": "sqlite:///study.sqlite3", "study_name": "demo-study"},
+        sweeper={
+            "storage": "sqlite:///study.sqlite3",
+            "study_name": "demo-study",
+        },
         sweep=SimpleNamespace(dir=str(tmp_path), subdir="run_3"),
         job=SimpleNamespace(name="optimize"),
     )
@@ -399,7 +412,9 @@ def test_hydra_optuna_callback_on_compose_config_sets_experiment_and_files(
     assert cfg.files.error_file == str(tmp_path / "run_3" / "error.log")
 
 
-def test_hydra_optuna_callback_on_job_start_writes_params_file(monkeypatch, tmp_path):
+def test_hydra_optuna_callback_on_job_start_writes_params_file(
+    monkeypatch, tmp_path
+):
     hydra_cfg = SimpleNamespace(mode="RunMode.MULTIRUN")
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
 
@@ -422,7 +437,9 @@ def test_hydra_optuna_callback_on_job_start_writes_params_file(monkeypatch, tmp_
     assert "name: demo" in (tmp_path / "params.yaml").read_text()
 
 
-def test_hydra_optuna_callback_on_job_end_writes_score_file(monkeypatch, tmp_path):
+def test_hydra_optuna_callback_on_job_end_writes_score_file(
+    monkeypatch, tmp_path
+):
     hydra_cfg = SimpleNamespace(mode="RunMode.MULTIRUN")
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
 
@@ -441,7 +458,9 @@ def test_hydra_optuna_callback_on_job_end_writes_score_file(monkeypatch, tmp_pat
 
     callback.on_job_end(
         cfg,
-        job_return=SimpleNamespace(return_value={"loss": 0.25, "accuracy": 0.9}),
+        job_return=SimpleNamespace(
+            return_value={"loss": 0.25, "accuracy": 0.9}
+        ),
     )
 
     assert json.loads((tmp_path / "scores.json").read_text()) == {
@@ -559,7 +578,9 @@ def test_optimize_main_uses_multirun_path(monkeypatch):
     monkeypatch.setattr(optimize_module, "ConfigBase", DummyBase)
     monkeypatch.setattr(optimize_module, "ExperimentConfig", DummyExperiment)
     monkeypatch.setattr(optimize_module, "instantiate", fake_instantiate)
-    monkeypatch.setattr(optimize_module, "optimize_multirun", fake_optimize_multirun)
+    monkeypatch.setattr(
+        optimize_module, "optimize_multirun", fake_optimize_multirun
+    )
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
 
     result = optimize_module.optimize_main(OmegaConf.create({"name": "demo"}))
@@ -570,7 +591,9 @@ def test_optimize_main_uses_multirun_path(monkeypatch):
     assert isinstance(captured["multirun_cfg"], str)
     assert "name: demo" in captured["multirun_cfg"]
     assert "experiment_name:" in captured["multirun_cfg"]
-    assert captured["cfg"]["experiment_name"] == optimize_module.hash_conf_values(
+    assert captured["cfg"][
+        "experiment_name"
+    ] == optimize_module.hash_conf_values(
         _root_={"name": "demo"},
     )
 
@@ -583,7 +606,10 @@ def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):
     y = torch.randint(0, 2, (48,))
     dataset = torch.utils.data.TensorDataset(X, y)
 
-    monkeypatch.setattr("deckard.data.pytorch.load_class", lambda *_args, **_kwargs: dataset)
+    monkeypatch.setattr(
+        "deckard.data.pytorch.load_class",
+        lambda *_args, **_kwargs: dataset,
+    )
 
     cfg = OmegaConf.create(
         {
@@ -609,7 +635,7 @@ def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):
             },
             "attack": None,
             "files": {"_target_": "deckard.file.FileConfig"},
-        }
+        },
     )
 
     scores = optimize_module.optimize_main(cfg)

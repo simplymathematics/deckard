@@ -14,9 +14,15 @@ import numpy as np
 import torch
 
 # Sklearn imports
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+)
 
 # ART imports
+from art.config import ART_NUMPY_DTYPE
 from art.estimators.classification import PyTorchClassifier
 from art.estimators.regression import PyTorchRegressor
 
@@ -38,13 +44,19 @@ def initialize_criterion(criterion_spec):
             criterion_spec = f"torch.nn.{criterion_spec}"
         return load_class(criterion_spec)
     elif isinstance(criterion_spec, (dict, DictConfig)):
-        criterion_name = criterion_spec.get("name") or criterion_spec.get("_target_")
+        criterion_name = criterion_spec.get("name") or criterion_spec.get(
+            "_target_"
+        )
         criterion_params = {
-            k: v for k, v in criterion_spec.items() if k not in ["name", "_target_"]
+            k: v
+            for k, v in criterion_spec.items()
+            if k not in ["name", "_target_"]
         }
         return load_class(criterion_name, **criterion_params)
     else:
-        raise ValueError(f"criterion must be str or dict, got {type(criterion_spec)}")
+        raise ValueError(
+            f"criterion must be str or dict, got {type(criterion_spec)}"
+        )
 
 
 def initialize_optimizer(optimizer_spec, model_params):
@@ -54,7 +66,9 @@ def initialize_optimizer(optimizer_spec, model_params):
             optimizer_spec = f"torch.optim.{optimizer_spec}"
         return load_class(optimizer_spec, model_params)
     elif isinstance(optimizer_spec, (dict, DictConfig)):
-        optimizer_name = optimizer_spec.get("name") or optimizer_spec.get("_target_")
+        optimizer_name = optimizer_spec.get("name") or optimizer_spec.get(
+            "_target_"
+        )
         if (
             isinstance(optimizer_name, str)
             and "." not in optimizer_name
@@ -62,12 +76,16 @@ def initialize_optimizer(optimizer_spec, model_params):
         ):
             optimizer_name = f"torch.optim.{optimizer_name}"
         optimizer_params = {
-            k: v for k, v in optimizer_spec.items() if k not in ["name", "_target_"]
+            k: v
+            for k, v in optimizer_spec.items()
+            if k not in ["name", "_target_"]
         }
         optimizer_params["params"] = model_params
         return load_class(optimizer_name, **optimizer_params)
     else:
-        raise ValueError(f"optimizer must be str or dict, got {type(optimizer_spec)}")
+        raise ValueError(
+            f"optimizer must be str or dict, got {type(optimizer_spec)}"
+        )
 
 
 @dataclass(eq=False)
@@ -101,7 +119,10 @@ class PytorchModelConfig(ModelConfig):
 
     def __post_init__(self):
         """Initialize model using load_class, following parent pattern."""
-        if isinstance(self.scorer, str) and self.scorer.lower() in {"auto", "default"}:
+        if isinstance(self.scorer, str) and self.scorer.lower() in {
+            "auto",
+            "default",
+        }:
             scorer_cls = (
                 "deckard.score.base.DefaultPytorchClassifierConfig"
                 if self.classifier
@@ -125,13 +146,17 @@ class PytorchModelConfig(ModelConfig):
         if self.device.type == "cuda":
             return "gpu"
         if self.device.type == "mps":
-            logger.info("ART device_type has no native MPS option; overriding ART internal device directly")
+            logger.info(
+                "ART device_type has no native MPS option; overriding ART internal device directly",
+            )
             return "cpu"
         return "cpu"
 
     def _model_for_art(self):
         if self._model is None:
             raise ValueError("Model not initialized")
+        if isinstance(self._model, (PyTorchClassifier, PyTorchRegressor)):
+            return self._model
         if self.device.type == "mps":
             # Keep training model on MPS while giving ART a CPU-compatible copy.
             model_copy = copy.deepcopy(self._model)
@@ -146,15 +171,16 @@ class PytorchModelConfig(ModelConfig):
         if self.device.type == "cuda" and not torch.cuda.is_available():
             target_device = torch.device("cpu")
         if self.device.type == "mps":
-            mps_available = bool(
-                hasattr(torch.backends, "mps") and torch.backends.mps.is_available(),
-            )
-            if not mps_available:
-                target_device = torch.device("cpu")
+            # ART preprocessors often materialize float64 tensors, which MPS cannot run.
+            # Keep the wrapped ART estimator on CPU while the training model itself can still
+            # use MPS through the separate copy returned by _model_for_art().
+            target_device = torch.device("cpu")
 
         if hasattr(art_estimator, "_device"):
             art_estimator._device = target_device
-        if hasattr(art_estimator, "_model") and hasattr(art_estimator._model, "to"):
+        if hasattr(art_estimator, "_model") and hasattr(
+            art_estimator._model, "to"
+        ):
             art_estimator._model = art_estimator._model.to(target_device)
 
         preprocessing = getattr(art_estimator, "preprocessing", None)
@@ -164,6 +190,35 @@ class PytorchModelConfig(ModelConfig):
         for op in getattr(art_estimator, "preprocessing_operations", []) or []:
             if hasattr(op, "_device"):
                 op._device = target_device
+
+        # Some ART preprocessors (e.g., FeatureSqueezing) can promote arrays to float64.
+        # Force ART preprocessing outputs back to ART_NUMPY_DTYPE before torch forward.
+        if not getattr(art_estimator, "_deckard_dtype_wrapped", False):
+            original_apply_preprocessing = getattr(
+                art_estimator,
+                "_apply_preprocessing",
+                None,
+            )
+            if callable(original_apply_preprocessing):
+
+                def _dtype_safe_apply_preprocessing(*args, **kwargs):
+                    result = original_apply_preprocessing(*args, **kwargs)
+                    if isinstance(result, tuple) and len(result) >= 1:
+                        x_out = result[0]
+                        if isinstance(x_out, np.ndarray) and np.issubdtype(
+                            x_out.dtype,
+                            np.floating,
+                        ):
+                            x_out = x_out.astype(ART_NUMPY_DTYPE, copy=False)
+                        if len(result) == 1:
+                            return (x_out,)
+                        return (x_out, *result[1:])
+                    return result
+
+                art_estimator._apply_preprocessing = (
+                    _dtype_safe_apply_preprocessing
+                )
+                art_estimator._deckard_dtype_wrapped = True
 
         return art_estimator
 
@@ -179,7 +234,9 @@ class PytorchModelConfig(ModelConfig):
 
         # Move model to device
         self._model = self._model.to(self.device)
-        logger.info(f"Initialized model {self.model_type} on device {self.device}")
+        logger.info(
+            f"Initialized model {self.model_type} on device {self.device}"
+        )
 
     def get_model(self):
         """Return the underlying PyTorch model."""
@@ -194,7 +251,9 @@ class PytorchModelConfig(ModelConfig):
         path = Path(filepath)
         path.parent.mkdir(parents=True, exist_ok=True)
         if path.exists():
-            raise ValueError(f"File {filepath} already exists. Will not overwrite.")
+            raise ValueError(
+                f"File {filepath} already exists. Will not overwrite."
+            )
 
         payload = {
             "model_type": self.model_type,
@@ -246,7 +305,9 @@ class PytorchModelConfig(ModelConfig):
             self.checkpoint_records,
         )
         self.training_time = payload.get("training_time", self.training_time)
-        self.prediction_time = payload.get("prediction_time", self.prediction_time)
+        self.prediction_time = payload.get(
+            "prediction_time", self.prediction_time
+        )
         self.training_n = payload.get("training_n", self.training_n)
         self.prediction_n = payload.get("prediction_n", self.prediction_n)
 
@@ -288,7 +349,9 @@ class PytorchModelConfig(ModelConfig):
                     "checkpoint_dir must be provided when checkpointing is enabled without a model_file",
                 )
             model_path = Path(model_file)
-            checkpoint_dir = model_path.parent / f"{model_path.stem}_checkpoints"
+            checkpoint_dir = (
+                model_path.parent / f"{model_path.stem}_checkpoints"
+            )
         checkpoint_dir = Path(checkpoint_dir)
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
@@ -299,7 +362,9 @@ class PytorchModelConfig(ModelConfig):
             elif self.alias not in {None, ""}:
                 checkpoint_prefix = self.alias
             else:
-                checkpoint_prefix = str(self.model_type).split(":")[-1].split(".")[-1]
+                checkpoint_prefix = (
+                    str(self.model_type).split(":")[-1].split(".")[-1]
+                )
 
         return {
             "every": every,
@@ -341,7 +406,9 @@ class PytorchModelConfig(ModelConfig):
     def _score_checkpoint_snapshot(self, snapshot, data):
         # Copy over epoch metrics from our score_dict if they exist
         if "epochs" in self.score_dict:
-            snapshot.score_dict["epochs"] = copy.deepcopy(self.score_dict["epochs"])
+            snapshot.score_dict["epochs"] = copy.deepcopy(
+                self.score_dict["epochs"]
+            )
         checkpoint_stage = None
         if snapshot.defense is not None:
             defense_pipeline = snapshot._require_defense_pipeline()
@@ -357,18 +424,32 @@ class PytorchModelConfig(ModelConfig):
         except ValueError as exc:
             if "predict_proba" not in str(exc):
                 raise
-            if checkpoint_stage == "before_predict" and snapshot.defense is not None:
+            if (
+                checkpoint_stage == "before_predict"
+                and snapshot.defense is not None
+            ):
                 snapshot._model = snapshot._apply_defense(data)
             train_pred = snapshot._predict(data.X_train)
             test_pred = snapshot._predict(data.X_test)
             if snapshot.classifier:
-                train_scores = snapshot._classification_scores(data.y_train, train_pred)
-                test_scores = snapshot._classification_scores(data.y_test, test_pred)
+                train_scores = snapshot._classification_scores(
+                    data.y_train, train_pred
+                )
+                test_scores = snapshot._classification_scores(
+                    data.y_test, test_pred
+                )
             else:
-                train_scores = snapshot._regression_scores(data.y_train, train_pred)
-                test_scores = snapshot._regression_scores(data.y_test, test_pred)
+                train_scores = snapshot._regression_scores(
+                    data.y_train, train_pred
+                )
+                test_scores = snapshot._regression_scores(
+                    data.y_test, test_pred
+                )
             snapshot.score_dict.update(
-                {f"training_{key}": value for key, value in train_scores.items()},
+                {
+                    f"training_{key}": value
+                    for key, value in train_scores.items()
+                },
             )
             snapshot.score_dict.update(test_scores)
         return dict(snapshot.score_dict or {})
@@ -405,14 +486,27 @@ class PytorchModelConfig(ModelConfig):
         epoch_entry["timings"]["adversarial_score_time"] = attack_time
 
     @staticmethod
-    def _checkpoint_file(path_dir: Path, prefix: str, epoch_index: int, suffix: str) -> Path:
+    def _checkpoint_file(
+        path_dir: Path,
+        prefix: str,
+        epoch_index: int,
+        suffix: str,
+    ) -> Path:
         # Standardized format: <prefix>_<epoch><suffix>
         return path_dir / f"{prefix}_{epoch_index}{suffix}"
 
-    def _persist_checkpoint(self, epoch_index: int, data, checkpoint_cfg, elapsed_time: float):
+    def _persist_checkpoint(
+        self,
+        epoch_index: int,
+        data,
+        checkpoint_cfg,
+        elapsed_time: float,
+    ):
         snapshot = self._build_checkpoint_snapshot()
         snapshot.training_time = elapsed_time
-        snapshot.training_n = len(data.y_train) if data is not None else self.training_n
+        snapshot.training_n = (
+            len(data.y_train) if data is not None else self.training_n
+        )
 
         model_path = self._checkpoint_file(
             checkpoint_cfg["dir"],
@@ -444,23 +538,34 @@ class PytorchModelConfig(ModelConfig):
 
         self.checkpoint_records.append(record)
 
-    def _run_training_epochs(self, X, y, *, criterion, optimizer, batch_size, epochs, batch_losses, epoch_offset=0):
+    def _run_training_epochs(
+        self,
+        X,
+        y,
+        *,
+        criterion,
+        optimizer,
+        batch_size,
+        epochs,
+        batch_losses,
+        epoch_offset=0,
+    ):
         """Run training epochs and track per-epoch metrics.
-        
+
         Args:
             epoch_offset: Starting epoch number (for logging and metrics)
-        
+
         Returns:
             dict mapping epoch numbers to their metrics
         """
         self._model.train()
         epoch_metrics = {}
-        
+
         for epoch_num in range(epochs):
             epoch_idx = epoch_offset + epoch_num + 1
             epoch_start = time.process_time()
             epoch_losses = []
-            
+
             for i in range(0, len(X), batch_size):
                 batch_X = X[i : i + batch_size].to(self.device)  # noqa E203
                 batch_y = y[i : i + batch_size].to(self.device)  # noqa E203
@@ -473,21 +578,79 @@ class PytorchModelConfig(ModelConfig):
                 epoch_losses.append(loss_val)
                 loss.backward()
                 optimizer.step()
-            
+
             epoch_time = time.process_time() - epoch_start
-            epoch_loss_mean = float(np.mean(epoch_losses)) if epoch_losses else None
-            
+            epoch_loss_mean = (
+                float(np.mean(epoch_losses)) if epoch_losses else None
+            )
+
             epoch_metrics[epoch_idx] = {
                 "loss": epoch_loss_mean,
                 "time": epoch_time,
                 "batches": len(epoch_losses),
             }
-            
-            logger.info(f"Epoch {epoch_idx}/{epoch_offset + epochs}: loss={epoch_loss_mean:.6f}, time={epoch_time:.3f}s")
-        
+
+            logger.info(
+                f"Epoch {epoch_idx}/{epoch_offset + epochs}: loss={epoch_loss_mean:.6f}, time={epoch_time:.3f}s",
+            )
+
         return epoch_metrics
 
+    def _apply_defense(self, data):
+        """Override to pre-wrap with a properly configured PyTorchClassifier/Regressor.
+
+        The base-class defense pipeline receives the raw ``torch.nn.Module`` as
+        ``estimator``.  For PyTorch models we instead pass a fully-configured
+        ART wrapper (built via :meth:`get_art_model`) so that any preprocessor
+        or postprocessor defenses attach to the correct ART estimator and
+        benefit from the model's criterion, optimizer, and device settings.
+        """
+        if self.defense is None:
+            return self._model
+
+        if self._model is None:
+            raise ValueError(
+                "PytorchModelConfig must have a fitted model before applying defense",
+            )
+
+        # Build the ART wrapper using this model's criterion/optimizer config.
+        art_estimator = self.get_art_model(data)
+
+        defense_pipeline = self._require_defense_pipeline()
+        if defense_pipeline is None:
+            return art_estimator
+
+        stage = defense_pipeline.resolve_stage(
+            default_stage="post_fit_pre_predict",
+            model=self,
+            data=data,
+        )
+        defended_estimator = defense_pipeline.apply(
+            estimator=art_estimator,
+            data=data,
+            stage=stage,
+        )
+        self.defense_application_time = getattr(
+            defense_pipeline,
+            "defense_application_time",
+            None,
+        )
+        if getattr(defense_pipeline, "score_dict", None):
+            if self.score_dict is None:
+                self.score_dict = {}
+            self.score_dict.update(defense_pipeline.score_dict)
+        # Re-apply device overrides so any newly created preprocessing ops are
+        # placed on the correct device (particularly important for MPS).
+        if isinstance(
+            defended_estimator, (PyTorchClassifier, PyTorchRegressor)
+        ):
+            defended_estimator = self._override_art_internal_device(
+                defended_estimator
+            )
+        return defended_estimator
+
     def _load_or_train_model(self, data, model_file, times):
+        self._validate_torch_data(data)
         self._checkpoint_context = {
             "data": data,
             "model_file": model_file,
@@ -498,6 +661,26 @@ class PytorchModelConfig(ModelConfig):
         finally:
             self._checkpoint_context = None
 
+    def _validate_torch_data(self, data) -> None:
+        """Raise TypeError if data contains non-torch tensors/DataLoaders."""
+        from torch.utils.data import DataLoader as _DL
+
+        bad_attrs = []
+        for attr in ("X_train", "X_test", "y_train", "y_test"):
+            value = getattr(data, attr, None)
+            if value is None:
+                continue
+            if not isinstance(value, (torch.Tensor, _DL)):
+                bad_attrs.append(f"{attr}: {type(value).__name__}")
+
+        if bad_attrs:
+            raise TypeError(
+                "PytorchModelConfig requires torch.Tensor or DataLoader inputs, "
+                f"but received non-torch types for: {', '.join(bad_attrs)}. "
+                "Use PytorchDataConfig (or another torch-compatible data config) "
+                "to produce torch tensors before passing data to a torch model.",
+            )
+
     def _train(self, X: torch.Tensor, y: torch.Tensor):
         """Train the PyTorch model with per-epoch logging and metrics tracking."""
         if self._model is None:
@@ -507,13 +690,15 @@ class PytorchModelConfig(ModelConfig):
         logger.info(f"Starting training with {len(y)} samples")
 
         criterion = initialize_criterion(self.criterion)
-        optimizer = initialize_optimizer(self.optimizer, self._model.parameters())
+        optimizer = initialize_optimizer(
+            self.optimizer, self._model.parameters()
+        )
 
         nb_epochs = self.fit_params.get("nb_epochs", 1)
         batch_size = self.fit_params.get("batch_size", 32)
         batch_losses = []
         self.checkpoint_records = []
-        
+
         # Initialize score_dict with epochs subdictionary
         if self.score_dict is None:
             self.score_dict = {}
@@ -530,9 +715,11 @@ class PytorchModelConfig(ModelConfig):
         logger.info(
             "Training for %s epochs%s",
             nb_epochs,
-            f" with checkpointing every {checkpoint_cfg['every']} epochs"
-            if checkpoint_cfg is not None
-            else " without checkpointing",
+            (
+                f" with checkpointing every {checkpoint_cfg['every']} epochs"
+                if checkpoint_cfg is not None
+                else " without checkpointing"
+            ),
         )
 
         for epoch_index in range(1, nb_epochs + 1):
@@ -574,15 +761,17 @@ class PytorchModelConfig(ModelConfig):
         end_time = time.process_time()
         self.training_time = end_time - start_time
         self.training_n = len(y)
-        
+
         # Compute final loss from all batches
         final_loss = float(np.mean(batch_losses)) if batch_losses else None
         self.score_dict["optimizer_loss"] = final_loss
         self.score_dict["training_time"] = self.training_time
-        
+
         if len(self.checkpoint_records) > 0:
-            self.score_dict["checkpoints"] = copy.deepcopy(self.checkpoint_records)
-        
+            self.score_dict["checkpoints"] = copy.deepcopy(
+                self.checkpoint_records
+            )
+
         logger.info(
             "Training completed: loss=%0.6f, time=%0.2fs, epochs=%s",
             final_loss if final_loss is not None else float("nan"),
@@ -600,14 +789,22 @@ class PytorchModelConfig(ModelConfig):
             if isinstance(X, torch.utils.data.DataLoader):
                 x_batches = []
                 for batch in X:
-                    batch_x = batch[0] if isinstance(batch, (tuple, list)) else batch
+                    batch_x = (
+                        batch[0] if isinstance(batch, (tuple, list)) else batch
+                    )
                     x_batches.append(batch_x)
                 if len(x_batches) == 0:
                     return torch.empty(0)
                 x_tensor = torch.cat(x_batches, dim=0)
             else:
                 x_tensor = X
-            x_np = x_tensor.detach().cpu().numpy() if isinstance(x_tensor, torch.Tensor) else np.asarray(x_tensor)
+            x_np = (
+                x_tensor.detach().cpu().numpy()
+                if isinstance(x_tensor, torch.Tensor)
+                else np.asarray(x_tensor)
+            )
+            if np.issubdtype(x_np.dtype, np.floating):
+                x_np = x_np.astype(ART_NUMPY_DTYPE, copy=False)
             y_pred = self._model.predict(x_np)
             return torch.as_tensor(y_pred)
 
@@ -633,7 +830,9 @@ class PytorchModelConfig(ModelConfig):
 
     def _classification_scores(self, y_true, y_pred) -> dict:
         """Compute classification scores from predictions."""
-        y_true_np = y_true.cpu().numpy() if isinstance(y_true, torch.Tensor) else y_true
+        y_true_np = (
+            y_true.cpu().numpy() if isinstance(y_true, torch.Tensor) else y_true
+        )
 
         if isinstance(y_pred, torch.Tensor):
             if y_pred.ndim > 1:
@@ -654,18 +853,26 @@ class PytorchModelConfig(ModelConfig):
                 ),
             ),
             "recall": float(
-                recall_score(y_true_np, y_pred_np, average="weighted", zero_division=0),
+                recall_score(
+                    y_true_np, y_pred_np, average="weighted", zero_division=0
+                ),
             ),
             "f1": float(
-                f1_score(y_true_np, y_pred_np, average="weighted", zero_division=0),
+                f1_score(
+                    y_true_np, y_pred_np, average="weighted", zero_division=0
+                ),
             ),
         }
         return scores
 
     def _regression_scores(self, y_true, y_pred) -> dict:
         """Compute regression scores from predictions."""
-        y_true_np = y_true.cpu().numpy() if isinstance(y_true, torch.Tensor) else y_true
-        y_pred_np = y_pred.cpu().numpy() if isinstance(y_pred, torch.Tensor) else y_pred
+        y_true_np = (
+            y_true.cpu().numpy() if isinstance(y_true, torch.Tensor) else y_true
+        )
+        y_pred_np = (
+            y_pred.cpu().numpy() if isinstance(y_pred, torch.Tensor) else y_pred
+        )
 
         mse = float(np.mean((y_true_np - y_pred_np) ** 2))
         rmse = float(np.sqrt(mse))
@@ -696,6 +903,8 @@ class PytorchModelConfig(ModelConfig):
 
         nb_classes = len(torch.unique(data.y_train))
         art_model = self._model_for_art()
+        if isinstance(art_model, (PyTorchClassifier, PyTorchRegressor)):
+            return self._override_art_internal_device(art_model)
         art_device_type = self._resolve_art_device_type()
         if self.classifier:
             estimator = PyTorchClassifier(
@@ -708,6 +917,7 @@ class PytorchModelConfig(ModelConfig):
                 input_shape=input_shape,
                 nb_classes=nb_classes,
                 clip_values=clip_values,
+                preprocessing=None,
                 device_type=art_device_type,
             )
             return self._override_art_internal_device(estimator)
@@ -722,6 +932,7 @@ class PytorchModelConfig(ModelConfig):
                 input_shape=input_shape,
                 nb_classes=nb_classes,
                 clip_values=clip_values,
+                preprocessing=None,
                 device_type=art_device_type,
             )
             return self._override_art_internal_device(estimator)

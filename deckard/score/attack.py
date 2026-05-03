@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 import time
-from typing import Dict, Literal, Union
+from typing import Any, Dict, Literal, Union
 
 from sklearn.metrics import accuracy_score
 
@@ -17,13 +17,16 @@ __all__ = [
     "DefaultAttributeInferenceAttackScorerConfig",
     "DefaultAttributeInferenceRegressionAttackScorerConfig",
     "AttackScorerConfig",
+    "FairlearnAttackScorerConfig",
 ]
 
 
 def evasion_success_score(y_true, y_pred, ben_pred_labels=None, **kwargs):
     """Compute evasion success as one minus benign/adversarial agreement."""
     if ben_pred_labels is None:
-        raise ValueError("ben_pred_labels are required for evasion_success scoring")
+        raise ValueError(
+            "ben_pred_labels are required for evasion_success scoring"
+        )
     return float(1 - accuracy_score(ben_pred_labels, y_pred))
 
 
@@ -249,6 +252,7 @@ class AttackScorerConfig(ConfigBase):
         is_classification: Union[bool, None] = None,
         targeted_attribute: Union[str, None] = None,
         attack_generation_time=None,
+        sensitive_features=None,
     ):
         if attack_kind == "evasion":
             if is_classification is None:
@@ -259,12 +263,14 @@ class AttackScorerConfig(ConfigBase):
                 y_true=y_true,
                 attack_size=attack_size,
                 is_classification=is_classification,
+                sensitive_features=sensitive_features,
             )
         if attack_kind == "membership":
             return self.score_membership(
                 labels=y_true,
                 inferred=y_pred,
                 attack_size=attack_size,
+                sensitive_features=sensitive_features,
             )
         if attack_kind == "attribute":
             if targeted_attribute is None:
@@ -282,6 +288,7 @@ class AttackScorerConfig(ConfigBase):
                 targeted_attribute=targeted_attribute,
                 is_classification=is_classification,
                 attack_generation_time=attack_generation_time,
+                sensitive_features=sensitive_features,
             )
         raise ValueError(f"Unsupported attack scoring kind: {attack_kind}")
 
@@ -292,12 +299,15 @@ class AttackScorerConfig(ConfigBase):
         y_true,
         attack_size: int,
         is_classification: bool = True,
+        sensitive_features=None,
     ):
         start_time = time.process_time()
         profile = self.evasion if is_classification else self.evasion_regression
         score_kwargs = {}
         if is_classification:
             score_kwargs["ben_pred_labels"] = ben_pred_labels
+        if sensitive_features is not None:
+            score_kwargs["sensitive_features"] = sensitive_features
         score_dict = self._score_with_profile(
             profile=profile,
             y_true=y_true,
@@ -311,14 +321,24 @@ class AttackScorerConfig(ConfigBase):
         score_dict["attack_score_time"] = attack_score_time
         return score_dict
 
-    def score_membership(self, labels, inferred, attack_size: int):
+    def score_membership(
+        self,
+        labels,
+        inferred,
+        attack_size: int,
+        sensitive_features=None,
+    ):
         start_time = time.process_time()
+        score_kwargs = {}
+        if sensitive_features is not None:
+            score_kwargs["sensitive_features"] = sensitive_features
         score_dict = self._score_with_profile(
             profile=self.membership_inference,
             y_true=labels,
             y_pred=inferred,
             prefix="membership_inference",
             n_samples=len(labels),
+            **score_kwargs,
         )
         attack_score_time = time.process_time() - start_time
         score_dict["attack_size"] = attack_size
@@ -333,9 +353,13 @@ class AttackScorerConfig(ConfigBase):
         targeted_attribute: str,
         is_classification: bool,
         attack_generation_time=None,
+        sensitive_features=None,
     ):
         prefix = f"inferred_{targeted_attribute}"
         start_time = time.process_time()
+        score_kwargs = {}
+        if sensitive_features is not None:
+            score_kwargs["sensitive_features"] = sensitive_features
         if is_classification:
             score_dict = self._score_with_profile(
                 profile=self.attribute_inference,
@@ -343,6 +367,7 @@ class AttackScorerConfig(ConfigBase):
                 y_pred=inferred,
                 prefix=prefix,
                 n_samples=len(target),
+                **score_kwargs,
             )
         else:
             score_dict = self._score_with_profile(
@@ -351,6 +376,7 @@ class AttackScorerConfig(ConfigBase):
                 y_pred=inferred,
                 prefix=prefix,
                 n_samples=len(target),
+                **score_kwargs,
             )
         attack_score_time = time.process_time() - start_time
         score_dict["attack_size"] = attack_size
@@ -379,4 +405,169 @@ safe_store(
     group="attack_scorers",
     name="attribute-inference",
     node=DefaultAttributeInferenceAttackScorerConfig,
+)
+
+
+@dataclass(eq=False)
+class FairlearnEvasionAttackScorerConfig:
+    """Per-sensitive-group evasion scorer (classification) via MetricFrame."""
+
+    group_scorers: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "accuracy": ScorerConfig(
+                score_name="accuracy",
+                score_function="sklearn.metrics.accuracy_score",
+            ),
+            "f1": ScorerConfig(
+                score_name="f1",
+                score_function="sklearn.metrics.f1_score",
+                score_params={"average": "weighted", "zero_division": 0},
+            ),
+        },
+    )
+
+
+@dataclass(eq=False)
+class FairlearnMembershipInferenceAttackScorerConfig:
+    """Per-sensitive-group membership inference scorer via MetricFrame."""
+
+    group_scorers: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "accuracy": ScorerConfig(
+                score_name="accuracy",
+                score_function="sklearn.metrics.accuracy_score",
+            ),
+            "f1": ScorerConfig(
+                score_name="f1",
+                score_function="sklearn.metrics.f1_score",
+                score_params={"average": "weighted", "zero_division": 0},
+            ),
+        },
+    )
+
+
+@dataclass(eq=False)
+class FairlearnAttributeInferenceAttackScorerConfig:
+    """Per-sensitive-group attribute inference scorer (classification) via MetricFrame."""
+
+    group_scorers: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "accuracy": ScorerConfig(
+                score_name="accuracy",
+                score_function="sklearn.metrics.accuracy_score",
+            ),
+            "f1": ScorerConfig(
+                score_name="f1",
+                score_function="sklearn.metrics.f1_score",
+                score_params={"average": "weighted", "zero_division": 0},
+            ),
+        },
+    )
+
+
+@dataclass(eq=False)
+class FairlearnAttributeInferenceRegressionAttackScorerConfig:
+    """Per-sensitive-group attribute inference scorer (regression) via MetricFrame."""
+
+    group_scorers: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "mse": ScorerConfig(
+                score_name="mse",
+                score_function="sklearn.metrics.mean_squared_error",
+                greater_is_better=False,
+            ),
+            "mae": ScorerConfig(
+                score_name="mae",
+                score_function="sklearn.metrics.mean_absolute_error",
+                greater_is_better=False,
+            ),
+        },
+    )
+
+
+@dataclass(eq=False)
+class FairlearnAttackScorerConfig(AttackScorerConfig):
+    """AttackScorerConfig that computes attack metrics stratified by sensitive group.
+
+    Uses :class:`~deckard.score.fairness.FairlearnScoreDictConfig` profiles for
+    each attack type so that metrics (accuracy, f1, mse, …) are computed
+    per sensitive group via ``fairlearn.metrics.MetricFrame``.
+
+    Sensitive features must be passed at attack-call time.  In practice,
+    :class:`~deckard.attack.base.AttackConfig` injects them automatically
+    when the data object exposes ``_sensitive_test`` / ``_sensitive_train``
+    (i.e. the data object is a
+    :class:`~deckard.data.fairness.FairlearnDataConfig`).
+    """
+
+    evasion: Union[ScorerDictConfig, dict, None] = None
+    evasion_regression: Union[ScorerDictConfig, dict, None] = None
+    membership_inference: Union[ScorerDictConfig, dict, None] = None
+    attribute_inference: Union[ScorerDictConfig, dict, None] = None
+    attribute_inference_regression: Union[ScorerDictConfig, dict, None] = None
+
+    def __post_init__(self):
+        from .fairness import FairlearnScoreDictConfig
+
+        def _fairlearn_profile(
+            field_val, default_group_scorers, base_scorers=None
+        ):
+            """Return a FairlearnScoreDictConfig, merging any user-supplied overrides."""
+            if field_val is None:
+                return FairlearnScoreDictConfig(
+                    scorers=base_scorers or {},
+                    group_scorers=default_group_scorers,
+                    include_group_by_group=True,
+                    include_group_overall=True,
+                    group_reduction="difference",
+                )
+            if isinstance(field_val, FairlearnScoreDictConfig):
+                return field_val
+            # Fall back to base-class coercion for plain ScorerDictConfig
+            return self._coerce_profile(field_val, ScorerDictConfig)
+
+        evasion_group = FairlearnEvasionAttackScorerConfig().group_scorers
+        membership_group = (
+            FairlearnMembershipInferenceAttackScorerConfig().group_scorers
+        )
+        attribute_group = (
+            FairlearnAttributeInferenceAttackScorerConfig().group_scorers
+        )
+        attribute_reg_group = (
+            FairlearnAttributeInferenceRegressionAttackScorerConfig().group_scorers
+        )
+        evasion_success = {
+            "success": ScorerConfig(
+                score_name="success",
+                score_function="deckard.score.attack.evasion_success_score",
+            ),
+        }
+
+        self.evasion = _fairlearn_profile(
+            self.evasion,
+            evasion_group,
+            base_scorers=evasion_success,
+        )
+        self.evasion_regression = _fairlearn_profile(
+            self.evasion_regression,
+            FairlearnAttributeInferenceRegressionAttackScorerConfig().group_scorers,
+        )
+        self.membership_inference = _fairlearn_profile(
+            self.membership_inference,
+            membership_group,
+        )
+        self.attribute_inference = _fairlearn_profile(
+            self.attribute_inference,
+            attribute_group,
+        )
+        self.attribute_inference_regression = _fairlearn_profile(
+            self.attribute_inference_regression,
+            attribute_reg_group,
+        )
+
+
+safe_store(
+    group="attack_scorers",
+    name="fairlearn-attack",
+    node=FairlearnAttackScorerConfig,
 )

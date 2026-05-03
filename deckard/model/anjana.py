@@ -13,6 +13,11 @@ class AnjanaModelConfig(ModelConfig):
     data: Union[AnjanaDataConfig, None] = None
 
     def __post_init__(self):
-        if isinstance(self.scorer, str) and self.scorer.lower() in {"auto", "default"}:
-            self.scorer = load_class("deckard.score.anjana.DefaultAnjanaModelScoreConfig")
+        if isinstance(self.scorer, str) and self.scorer.lower() in {
+            "auto",
+            "default",
+        }:
+            self.scorer = load_class(
+                "deckard.score.anjana.DefaultAnjanaModelScoreConfig",
+            )
         super().__post_init__()

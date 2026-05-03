@@ -36,7 +36,11 @@ from sklearn.linear_model import LogisticRegression
 from Levenshtein import distance, ratio, hamming, jaro, jaro_winkler, seqratio
 import pandas as pd
 from multiprocessing import cpu_count
-from sklearn.model_selection import StratifiedKFold, cross_validate, GridSearchCV
+from sklearn.model_selection import (
+    StratifiedKFold,
+    cross_validate,
+    GridSearchCV,
+)
 from joblib import Parallel, delayed
 from typing import Literal
 
@@ -193,7 +197,9 @@ def distance_helper(
             )
     else:
         print(f"Modified: {modified}, Symmetric: {symmetric}")
-        print(f"type modified: {type(modified)}, type symmetric: {type(symmetric)}")
+        print(
+            f"type modified: {type(modified)}, type symmetric: {type(symmetric)}"
+        )
         raise ValueError(f"Expected {modified} and {symmetric} to be boolean")
     return result
 
@@ -203,7 +209,9 @@ def ncd(
     x2,
     cx1=None,
     cx2=None,
-    method: Literal["gzip", "lzma", "bz2", "zstd", "pkl", "brotli", None] = "gzip",
+    method: Literal[
+        "gzip", "lzma", "bz2", "zstd", "pkl", "brotli", None
+    ] = "gzip",
 ) -> float:
     """
     Calculate the normalized compression distance between two objects treated as strings.
@@ -215,7 +223,9 @@ def ncd(
     """
 
     compressor_len = (
-        compressors[method] if method in compressors.keys() else compressors["gzip"]
+        compressors[method]
+        if method in compressors.keys()
+        else compressors["gzip"]
     )
     x1 = str(x1) if not isinstance(x1, str) else x1
     x2 = str(x2) if not isinstance(x2, str) else x2
@@ -375,7 +385,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             np.ndarray: The distance matrix of size (len(x1), len(x2))
         """
         n_jobs = self.n_jobs
-        logger.info(f"Calculating rectangular distance matrix with {n_jobs} jobs")
+        logger.info(
+            f"Calculating rectangular distance matrix with {n_jobs} jobs"
+        )
         matrix_ = np.zeros((len(x1), len(x2)))
         Cx1 = Cx1 if Cx1 is not None else [None] * len(x1)
         Cx2 = Cx2 if Cx2 is not None else [None] * len(x2)
@@ -383,7 +395,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         if n_jobs == -1:
             n_jobs = cpu_count()
         else:
-            assert isinstance(n_jobs, int), f"Expected {n_jobs} to be an integer"
+            assert isinstance(
+                n_jobs, int
+            ), f"Expected {n_jobs} to be an integer"
             assert n_jobs > 0, f"Expected {n_jobs} > 0 or -1"
             assert n_jobs <= cpu_count(), f"Expected {n_jobs} <= {cpu_count()}"
         for i in range(len(x1)):
@@ -431,7 +445,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             np.ndarray: The distance matrix of size (len(x1), len(x2))
         """
         n_jobs = self.n_jobs
-        logger.info(f"Calculating lower triangular distance matrix with {n_jobs} jobs")
+        logger.info(
+            f"Calculating lower triangular distance matrix with {n_jobs} jobs"
+        )
         # assert len(x1) == len(x2), f"Expected {len(x1)} == {len(x2)}"
         matrix_ = np.zeros((len(x1), len(x2)))
         list_ = []
@@ -441,7 +457,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         if n_jobs == -1:
             n_jobs = cpu_count()
         else:
-            assert isinstance(n_jobs, int), f"Expected {n_jobs} to be an integer"
+            assert isinstance(
+                n_jobs, int
+            ), f"Expected {n_jobs} to be an integer"
             assert n_jobs > 0, f"Expected {n_jobs} > 0 or -1"
             assert n_jobs <= cpu_count(), f"Expected {n_jobs} <= {cpu_count()}"
         # Create a list of tuples to pass to the parallel function
@@ -491,7 +509,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         Cx2=None,
     ):
         n_jobs = self.n_jobs
-        logger.info(f"Calculating upper triangular distance matrix with {n_jobs} jobs")
+        logger.info(
+            f"Calculating upper triangular distance matrix with {n_jobs} jobs"
+        )
         matrix_ = np.zeros((len(x1), len(x2)))
         Cx1 = Cx1 if Cx1 is not None else [None] * len(x1)
         Cx2 = Cx2 if Cx2 is not None else [None] * len(x2)
@@ -575,7 +595,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             self.distance_matrix_train is not None
             and Path(self.distance_matrix_train).exists()
         ):
-            distance_matrix = self._load_distance_matrix(self.distance_matrix_train)
+            distance_matrix = self._load_distance_matrix(
+                self.distance_matrix_train
+            )
         else:
             distance_matrix = self._calculate_training_distance_matrix(
                 X1,
@@ -594,7 +616,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         ), f"Expected len(y) == {distance_matrix.shape[0]}"
         if self.distance_matrix_train is not None:
             # Save the distance matrix
-            self._save_distance_matrix(self.distance_matrix_train, distance_matrix)
+            self._save_distance_matrix(
+                self.distance_matrix_train, distance_matrix
+            )
         return distance_matrix
 
     def _prepare_anchor(self):
@@ -634,7 +658,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         # length of the list `X` is equal to the length of the list `y`. If the lengths are not equal,
         # it will raise an AssertionError with a message indicating the expected and actual lengths.
         # assert len(X) == len(y), f"Expected {len(X)} == {len(y)}"
-        logger.debug(f"Fitting with X of shape {X.shape} and y of shape {y.shape}")
+        logger.debug(
+            f"Fitting with X of shape {X.shape} and y of shape {y.shape}"
+        )
         self.X_ = np.array(X) if not isinstance(X, np.ndarray) else X
         self.X_ = np.array([str(x) for x in self.X_])
         y = np.array(y) if not isinstance(y, np.ndarray) else y
@@ -655,7 +681,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
 
         self._train_matrix = self._prepare_training_matrix()
         if self.transform is not None:
-            self._train_matrix = transform_dict[self.transform](self._train_matrix)
+            self._train_matrix = transform_dict[self.transform](
+                self._train_matrix
+            )
         self.clf_ = self.clf_.fit(self._train_matrix, self.y_)
         return self
 
@@ -674,7 +702,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             self.distance_matrix_test is not None
             and Path(self.distance_matrix_test).exists()
         ):
-            distance_matrix = self._load_distance_matrix(self.distance_matrix_test)
+            distance_matrix = self._load_distance_matrix(
+                self.distance_matrix_test
+            )
         else:
             if self.metric in compressors.keys():
                 compressor = compressors[self.metric]
@@ -706,7 +736,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 )
         if self.distance_matrix_test is not None:
             # Save the distance matrix
-            self._save_distance_matrix(self.distance_matrix_test, distance_matrix)
+            self._save_distance_matrix(
+                self.distance_matrix_test, distance_matrix
+            )
         if self.transform is not None:
             distance_matrix = transform_dict[self.transform](distance_matrix)
         y_pred = self.clf_.predict(distance_matrix)
@@ -1014,7 +1046,9 @@ def load_data(dataset, precompressed):
             f"Dataset {dataset} not found. Options are: 20newsgroups, kdd_nsl, make_classification, truthseeker, sms-spam, ddos.",
         )
     if precompressed is True:
-        X = pd.DataFrame(X).applymap(lambda x: len(gzip.compress(str(x).encode())))
+        X = pd.DataFrame(X).applymap(
+            lambda x: len(gzip.compress(str(x).encode()))
+        )
     else:
         X = pd.DataFrame(X).applymap(str)
     X = np.array(X)
@@ -1200,7 +1234,9 @@ def grid_search_main(args: argparse.Namespace):
     params.pop("grid_search")
     model_type = params.pop("model_type")
     optimizer = params.pop("optimizer")
-    skf = StratifiedKFold(n_splits=n_splits, random_state=random_state, shuffle=True)
+    skf = StratifiedKFold(
+        n_splits=n_splits, random_state=random_state, shuffle=True
+    )
     n_jobs = params.pop("n_jobs", cpu_count())
     model = supported_models[model_type](n_jobs=1)
     # Assume that kwarg_args contains the hyperparameters to search
@@ -1315,7 +1351,9 @@ if __name__ == "__main__":
     elif args.grid_search is True:
         # pop grid_search from the arguments
         args.grid_search = None
-        assert args.cross_validate is False, f"Expected {args.cross_validate} is None"
+        assert (
+            args.cross_validate is False
+        ), f"Expected {args.cross_validate} is None"
         grid_search_main(args)
     else:
         main(args)

@@ -4,6 +4,7 @@ import pandas as pd
 from pathlib import Path
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
+from unittest.mock import patch
 
 import numpy as np
 from deckard.data import DataConfig, DataPipelineConfig
@@ -19,18 +20,31 @@ except ImportError:
 class TestDataPipelineConfigListMerge(unittest.TestCase):
     """DataPipelineConfig should accept a list of step-dicts and merge them."""
 
-    steps_a = {"imputer": {"name": "sklearn.impute.SimpleImputer", "strategy": "mean"}}
+    steps_a = {
+        "imputer": {"name": "sklearn.impute.SimpleImputer", "strategy": "mean"}
+    }
     steps_b = {"scaler": {"name": "sklearn.preprocessing.StandardScaler"}}
-    steps_override = {"imputer": {"name": "sklearn.impute.SimpleImputer", "strategy": "median"}}
+    steps_override = {
+        "imputer": {
+            "name": "sklearn.impute.SimpleImputer",
+            "strategy": "median",
+        },
+    }
 
     def test_list_of_two_dicts_merges_steps(self):
-        cfg = DataPipelineConfig(dataset_name="make_classification", pipeline=[self.steps_a, self.steps_b])
+        cfg = DataPipelineConfig(
+            dataset_name="make_classification",
+            pipeline=[self.steps_a, self.steps_b],
+        )
         self.assertIsInstance(cfg.pipeline, dict)
         self.assertIn("imputer", cfg.pipeline)
         self.assertIn("scaler", cfg.pipeline)
 
     def test_list_later_entry_wins_on_key_conflict(self):
-        cfg = DataPipelineConfig(dataset_name="make_classification", pipeline=[self.steps_a, self.steps_override])
+        cfg = DataPipelineConfig(
+            dataset_name="make_classification",
+            pipeline=[self.steps_a, self.steps_override],
+        )
         self.assertEqual(cfg.pipeline["imputer"]["strategy"], "median")
 
     def test_single_dict_still_works(self):
@@ -44,13 +58,38 @@ class TestDataPipelineConfigListMerge(unittest.TestCase):
 class TestDataPipelineConfig(unittest.TestCase):
     def setUp(self):
         self.pipeline_config_dict = {
-            "imputer": {"name": "sklearn.impute.SimpleImputer", "strategy": "mean"},
+            "imputer": {
+                "name": "sklearn.impute.SimpleImputer",
+                "strategy": "mean",
+            },
             "scaler": {"name": "sklearn.preprocessing.StandardScaler"},
         }
         self.X_train = pd.DataFrame(
             {
-                "feature1": [1.0, 2.0, np.nan, 4.0, 5.0, 1.0, 2.0, np.nan, 4.0, 5.0],
-                "feature2": [np.nan, 1.0, 2.0, 3.0, 4.0, np.nan, 1.0, 2.0, 3.0, 4.0],
+                "feature1": [
+                    1.0,
+                    2.0,
+                    np.nan,
+                    4.0,
+                    5.0,
+                    1.0,
+                    2.0,
+                    np.nan,
+                    4.0,
+                    5.0,
+                ],
+                "feature2": [
+                    np.nan,
+                    1.0,
+                    2.0,
+                    3.0,
+                    4.0,
+                    np.nan,
+                    1.0,
+                    2.0,
+                    3.0,
+                    4.0,
+                ],
             },
         )
         self.y_train = pd.Series([0, 1, 0, 1, 0, 0, 1, 0, 1, 0])
@@ -67,7 +106,10 @@ class TestDataPipelineConfig(unittest.TestCase):
                 "strategy": "mean",
                 "dtype": "num",
             },
-            "scaler": {"name": "sklearn.preprocessing.StandardScaler", "dtype": "num"},
+            "scaler": {
+                "name": "sklearn.preprocessing.StandardScaler",
+                "dtype": "num",
+            },
         }
 
     def test_pipelineconfig_initialization(self):
@@ -157,6 +199,30 @@ class TestDataConfig(unittest.TestCase):
         self.assertEqual(len(X_test), len(y_test))
         total = len(X_train) + len(X_test)
         self.assertEqual(total, 100)
+
+    def test_private_max_samples_caps_loaded_dataset(self):
+        with patch.dict("os.environ", {"DECKARD_TEST_MAX_SAMPLES": "40"}):
+            cfg = DataConfig(
+                dataset_name="make_classification",
+                data_params={
+                    "n_samples": 300,
+                    "n_features": 5,
+                    "n_informative": 2,
+                    "n_redundant": 0,
+                    "random_state": 42,
+                    "n_clusters_per_class": 1,
+                },
+                test_size=0.25,
+                random_state=42,
+                stratify=True,
+                classifier=True,
+            )
+
+            cfg()
+
+        self.assertEqual(len(cfg._X), 40)
+        self.assertEqual(len(cfg._y), 40)
+        self.assertEqual(len(cfg.X_train) + len(cfg.X_test), 40)
 
     def test_scorer_none_skips_data_scoring(self):
         cfg = DataConfig(
@@ -277,7 +343,9 @@ class TestDataConfig(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             csv_path = Path(tmpdirname) / "test.csv"
-            pd.DataFrame({"a": [1, 2], "b": [3, 4]}).to_csv(csv_path, index=False)
+            pd.DataFrame({"a": [1, 2], "b": [3, 4]}).to_csv(
+                csv_path, index=False
+            )
             cfg = DataConfig(dataset_name=str(csv_path), data_params={})
             with self.assertRaises(ValueError):
                 cfg._load_data()
@@ -406,23 +474,7 @@ class TestDataConfig(unittest.TestCase):
     def test_hash_stable_after_call_for_data_config(self):
         cfg = self.basic_config()
         original_hash = hash(cfg)
-        cls = cfg.__class__
-        original_call = cls.__call__
-
-        def fake_call(self):
-            self.data_load_time = 0.5
-            self.data_sample_time = 0.1
-            self._random_runtime_field = {"seen": True}
-            if hasattr(self, "score_dict") and isinstance(self.score_dict, dict):
-                self.score_dict["runtime"] = 1
-            return {"ok": 1}
-
-        setattr(cls, "__call__", fake_call)
-        try:
-            cfg.execute_without_mercy()
-        finally:
-            setattr(cls, "__call__", original_call)
-
+        cfg()
         self.assertEqual(
             original_hash,
             hash(cfg),

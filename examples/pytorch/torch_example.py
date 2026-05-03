@@ -43,7 +43,8 @@ class ResNet18(nn.Module):
 
     def __hash__(self):
         model_params = b"".join(
-            p.detach().cpu().numpy().tobytes() for p in self.backbone.parameters()
+            p.detach().cpu().numpy().tobytes()
+            for p in self.backbone.parameters()
         )
         return int(
             hash_conf_values(
