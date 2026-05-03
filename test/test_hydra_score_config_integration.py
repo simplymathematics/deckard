@@ -9,7 +9,7 @@ from omegaconf import OmegaConf
 
 from deckard.score import ScorerDictConfig
 
-CONFIG_DIR = Path(__file__).resolve().parent / "config"
+CONFIG_DIR = Path(__file__).resolve().parents[1] / "examples" / "sklearn" / "config"
 
 
 def _compose(config_name: str, overrides: list[str] | None = None):

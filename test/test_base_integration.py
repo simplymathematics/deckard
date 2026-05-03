@@ -824,3 +824,43 @@ def test_cli_full_experiment_composition():
     scores = experiment()
     assert "accuracy" in scores
     assert any(key.startswith("evasion_") for key in scores)
+
+
+def test_cli_experiment_tuning_mode_emits_validation_scores():
+    """Test CLI-style composition with ExperimentConfig tuning mode validation scoring."""
+
+    config_dir = Path(__file__).resolve().parents[1] / "examples" / "sklearn" / "config"
+    with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
+        cfg = compose(
+            config_name="default",
+            overrides=[
+                "data=classification",
+                "data.data_params.n_samples=200",
+                "+data.val_size=0.1",
+                "model=logistic",
+                "model.model_params.max_iter=10",
+                "score=classification",
+            ],
+        )
+
+    data_dict = OmegaConf.to_container(cfg.data, resolve=True)
+    if "pipeline" in data_dict:
+        data = DataPipelineConfig(**data_dict)
+    else:
+        data = DataConfig(**data_dict)
+
+    model_dict = OmegaConf.to_container(cfg.model, resolve=True)
+    model = ModelConfig(**model_dict)
+
+    score_dict = OmegaConf.to_container(cfg.score, resolve=True)
+    experiment = ExperimentConfig(
+        data=data,
+        model=model,
+        score={"experiment": score_dict},
+        evaluation_mode="tuning",
+        experiment_name="tuning-validation-integration",
+    )
+
+    scores = experiment()
+    assert "validation_accuracy" in scores
+    assert "training_accuracy" not in scores

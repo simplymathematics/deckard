@@ -190,6 +190,70 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
     random_state: int = 42
     library: Literal["sklearn", "tensorflow", "pytorch"] = "sklearn"
     classifier: Union[str, bool] = True
+    evaluation_mode: Literal["standard", "tuning", "report"] = "standard"
+    score_modes: Union[list[str], None] = None
+
+    def _resolve_score_modes(self) -> list[str]:
+        if self.score_modes is not None:
+            return list(self.score_modes)
+        if self.evaluation_mode == "tuning":
+            return ["val"]
+        if self.evaluation_mode == "report":
+            return ["train", "test", "val"]
+        return ["train"]
+
+    @staticmethod
+    def _normalize_mode_score_keys(mode: str, mode_scores: dict) -> dict:
+        if mode == "val":
+            return {f"validation_{k}": v for k, v in mode_scores.items()}
+        return mode_scores
+
+    def _compute_val_predictions(self):
+        if self.model is None:
+            raise ValueError("Validation scoring requires a model, but model is None")
+        if getattr(self.data, "X_val", None) is None or getattr(self.data, "y_val", None) is None:
+            raise ValueError(
+                "Validation scoring requested but validation split is unavailable. "
+                "Set data.val_size (or use a sampler that produces validation indices).",
+            )
+        if not hasattr(self.model, "_predict"):
+            raise ValueError("Validation scoring requires model._predict")
+        val_predictions = self.model._predict(self.data.X_val)
+        self.model.val_predictions = val_predictions
+        return val_predictions
+
+    def _ensure_mode_predictions(self, mode: str):
+        if self.model is None:
+            raise ValueError(f"{mode} scoring requires a model, but model is None")
+        if not hasattr(self.model, "_predict"):
+            raise ValueError(f"{mode} scoring requires model._predict")
+        if mode == "train":
+            if getattr(self.model, "training_predictions", None) is None:
+                self.model.training_predictions = self.model._predict(self.data.X_train)
+            return
+        if mode == "test":
+            if getattr(self.model, "predictions", None) is None:
+                self.model.predictions = self.model._predict(self.data.X_test)
+            return
+        if mode == "val":
+            self._compute_val_predictions()
+            return
+
+    def _run_experiment_scorer_modes(self, score_file=None) -> dict:
+        if self.score is None:
+            return {}
+        out = {}
+        for mode in self._resolve_score_modes():
+            self._ensure_mode_predictions(mode)
+            mode_scores = self.score(
+                data=self.data,
+                model=self.model,
+                attack=self.attack,
+                mode=mode,
+                score_file=None,
+            )
+            out.update(self._normalize_mode_score_keys(mode, mode_scores))
+        return out
 
     def _coerce_scorer_config(self, scorer_obj: Any):
         if scorer_obj is None:
@@ -481,61 +545,38 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             )
         return hashlib.md5(to_string.encode()).hexdigest()
 
-    def __call__(
+    def _detect_n_repeats(self) -> tuple[int, str]:
+        """Return repeated-evaluation count and key suffix for sampler-driven runs.
+
+        Returns
+        -------
+        tuple[int, str]
+            ``(n_splits, "fold")`` for ``KFoldSampler``,
+            ``(n_splits, "split")`` for ``ShuffleSampler``,
+            and ``(1, "fold")`` for all other samplers.
+        """
+        from ..data.sample import KFoldSampler, ShuffleSampler
+
+        sampler = self.data._resolve_sample()
+        if isinstance(sampler, KFoldSampler):
+            return sampler.n_splits, "fold"
+        if isinstance(sampler, ShuffleSampler):
+            return sampler.n_splits, "split"
+        return 1, "fold"
+
+    def _run_single_pipeline(
         self,
-    ):
-        # Initialize Scores
+        model_file_outputs: dict,
+        attack_file_outputs: dict,
+    ) -> dict:
+        """Run model training, optional attack, and optional custom scoring for the
+        current state of ``self.data`` (already loaded and sampled).
+
+        Returns the accumulated score dict for this pipeline pass.
+        """
         scores = {}
-        # Set random seed
-        self.set_random_seed()
-        # Set device
-        if self.library not in ["sklearn"]:
-            self.set_device()
-        # Get file paths
-        file_dict = self.files._get_file_dict()
-        data_file_outputs = {
-            file: getattr(self.files, file) for file in data_files if file in file_dict
-        }
-        model_file_outputs = {
-            file: getattr(self.files, file) for file in model_files if file in file_dict
-        }
-        attack_file_outputs = {
-            file: getattr(self.files, file)
-            for file in attack_files
-            if file in file_dict
-        }
-        if (
-            "data_file" in data_file_outputs
-            and Path(
-                data_file_outputs["data_file"],
-            ).exists()
-        ):
-            self.data = self.load_object(
-                data_file_outputs["data_file"],
-            )
-        else:
-            self.data(**data_file_outputs)
-        assert hasattr(
-            self.data,
-            "X_train",
-        ), "data must return an object with X_train attribute"
-        assert hasattr(
-            self.data,
-            "y_train",
-        ), "data must return an object with y_train attribute"
-        assert hasattr(
-            self.data,
-            "X_test",
-        ), "data must return an object with X_test attribute"
-        assert hasattr(
-            self.data,
-            "y_test",
-        ), "data must return an object with y_test attribute"
-        assert hasattr(
-            self.data,
-            "score_dict",
-        ), "data must have score_dict attribute after loading"
         scores.update(**self.data.score_dict)
+
         if self.model:
             self.model(data=self.data, **model_file_outputs)
             assert hasattr(
@@ -553,7 +594,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             scores.update(**self.model.score_dict)
         else:
             logger.info("No model config provided, skipping model training.")
-            self.model = None
+
         if self.attack:
             try:
                 self.attack(
@@ -579,16 +620,160 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 raise
         else:
             logger.info("No attack config provided, skipping attack.")
-        if self.score:
-            custom_scores = self.score(
-                data=self.data,
-                model=self.model,
-                attack=self.attack,
-                mode="train",
+
+        custom_scores = self._run_experiment_scorer_modes(score_file=None)
+        if custom_scores:
+            scores = {**scores, **custom_scores}
+
+        return scores
+
+    @staticmethod
+    def _aggregate_repeated_scores(per_run_scores: list, suffix: str = "fold") -> dict:
+        """Merge per-run score dicts into a single dict.
+
+        For each key that is numeric in every run, the top-level value is the
+        mean across runs and per-run values are stored under
+        ``{key}_{suffix}_{i}``. Non-numeric values use the last run's value for
+        the top-level key.
+
+        Parameters
+        ----------
+        per_run_scores : list of dict
+            One score dict per repeated run, in order.
+
+        suffix : str, default "fold"
+            Suffix used for per-run keys (e.g., ``fold`` or ``split``).
+
+        Returns
+        -------
+        dict
+        """
+        if not per_run_scores:
+            return {}
+        aggregated = {}
+        all_keys = set().union(*per_run_scores)
+        for key in all_keys:
+            values = [run.get(key) for run in per_run_scores]
+            # Store per-fold values under qualified keys
+            for i, v in enumerate(values):
+                aggregated[f"{key}_{suffix}_{i}"] = v
+            # Attempt numeric average for the top-level key
+            try:
+                numeric = [float(v) for v in values if v is not None]
+                if numeric:
+                    aggregated[key] = float(np.mean(numeric))
+                else:
+                    aggregated[key] = values[-1]
+            except (TypeError, ValueError):
+                aggregated[key] = values[-1]
+        return aggregated
+
+    def __call__(
+        self,
+    ):
+        # Initialize Scores
+        scores = {}
+        # Set random seed
+        self.set_random_seed()
+        # Set device
+        if self.library not in ["sklearn"]:
+            self.set_device()
+        # Get file paths
+        file_dict = self.files._get_file_dict()
+        data_file_outputs = {
+            file: getattr(self.files, file) for file in data_files if file in file_dict
+        }
+        model_file_outputs = {
+            file: getattr(self.files, file) for file in model_files if file in file_dict
+        }
+        attack_file_outputs = {
+            file: getattr(self.files, file)
+            for file in attack_files
+            if file in file_dict
+        }
+
+        # ------------------------------------------------------------------
+        # Data loading (always done once; sampling may repeat per fold)
+        # ------------------------------------------------------------------
+        if (
+            "data_file" in data_file_outputs
+            and Path(data_file_outputs["data_file"]).exists()
+        ):
+            self.data = self.load_object(data_file_outputs["data_file"])
+        else:
+            # Load raw data only (no sample yet when evaluating repeated splits)
+            n_repeats, _ = self._detect_n_repeats()
+            if n_repeats > 1:
+                self.data._load_data()
+            else:
+                self.data(**data_file_outputs)
+
+        assert hasattr(self.data, "X_train") or hasattr(self.data, "_X"), (
+            "data must be loaded before running the pipeline"
+        )
+
+        n_repeats, run_suffix = self._detect_n_repeats()
+
+        if n_repeats > 1:
+            # ------------------------------------------------------------------
+            # Repeated split evaluation: run one pipeline pass per split/fold
+            # ------------------------------------------------------------------
+            logger.info(f"Running {n_repeats} repeated {run_suffix} evaluations.")
+            per_run_scores: list = []
+            for run_idx in range(n_repeats):
+                logger.info(f"  {run_suffix.title()} {run_idx + 1}/{n_repeats}")
+                # Reset sampling state so _sample() runs fresh for this run
+                self.data.fold = run_idx
+                self.data.data_sample_time = None
+                for attr in (
+                    "train_indices", "test_indices", "val_indices",
+                    "X_train", "y_train", "X_test", "y_test",
+                    "X_val", "y_val", "train_n", "test_n", "val_n",
+                ):
+                    setattr(self.data, attr, None)
+                self.data.score_dict = {}
+                self.data._sample()
+                self.data.score_dict.update(
+                    data_load_time=self.data.data_load_time,
+                    data_sample_time=self.data.data_sample_time,
+                    train_n=self.data.train_n,
+                    test_n=self.data.test_n,
+                )
+                fold_scores = self._run_single_pipeline(
+                    model_file_outputs,
+                    attack_file_outputs,
+                )
+                per_run_scores.append(fold_scores)
+
+            scores = self._aggregate_repeated_scores(per_run_scores, run_suffix)
+        else:
+            # ------------------------------------------------------------------
+            # Single-pass (non-fold) pipeline
+            # ------------------------------------------------------------------
+            assert hasattr(self.data, "X_train"), (
+                "data must return an object with X_train attribute"
+            )
+            assert hasattr(self.data, "y_train"), (
+                "data must return an object with y_train attribute"
+            )
+            assert hasattr(self.data, "X_test"), (
+                "data must return an object with X_test attribute"
+            )
+            assert hasattr(self.data, "y_test"), (
+                "data must return an object with y_test attribute"
+            )
+            assert hasattr(self.data, "score_dict"), (
+                "data must have score_dict attribute after loading"
+            )
+            scores = self._run_single_pipeline(model_file_outputs, attack_file_outputs)
+            custom_scores = self._run_experiment_scorer_modes(
                 score_file=file_dict.get("score_file", None),
             )
-            scores = {**scores, **custom_scores}
-            # TODO: override existing score functions
+            if custom_scores:
+                scores = {**scores, **custom_scores}
+            if self.model is None:
+                self.model = None
+
         if "score_file" in file_dict and not Path(file_dict["score_file"]).exists():
             self.save_scores(scores, file_dict["score_file"])
         elif "score_file" in file_dict:

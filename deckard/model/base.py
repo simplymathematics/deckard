@@ -729,10 +729,6 @@ class ModelConfig(ConfigBase):
         if y_pred_arr.ndim != 2:
             return y_pred
 
-        # Explicitly preserve matrix outputs when probability mode is enabled.
-        if bool(self.probability):
-            return y_pred
-
         if y_pred_arr.shape[1] == 1:
             binary_scores = y_pred_arr.reshape(-1)
             threshold = 0.5

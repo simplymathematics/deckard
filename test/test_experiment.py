@@ -7,6 +7,7 @@ from deckard.data import DataConfig, DataPipelineConfig, FairlearnDataConfig
 from deckard.model import ModelConfig, FairlearnModelConfig
 from deckard.model.defend import DefensePipelineConfig
 from deckard.attack import AttackConfig
+from deckard.score import DefaultClassifierConfig
 
 # from deckard.score import ScorerDictConfig  # Removed unused import
 from deckard.file import FileConfig
@@ -175,6 +176,171 @@ class TestExperimentConfig(unittest.TestCase):
         self.assertIsInstance(exp.model, FairlearnModelConfig)
         self.assertIsInstance(exp.model.defense, DefensePipelineConfig)
         self.assertIs(exp.model.data, exp.data)
+
+
+class TestKFoldExperiment(unittest.TestCase):
+    """ExperimentConfig should loop over all folds when sample='fold'."""
+
+    N_FOLDS = 3
+
+    def _make_exp(self):
+        from deckard.data.sample import KFoldSampler
+
+        return ExperimentConfig(
+            data=DataConfig(
+                dataset_name="make_classification",
+                data_params={
+                    "n_samples": 120,
+                    "n_features": 6,
+                    "n_informative": 4,
+                    "n_redundant": 2,
+                    "random_state": 0,
+                    "n_clusters_per_class": 1,
+                },
+                test_size=0.2,
+                random_state=42,
+                classifier=True,
+                sample=KFoldSampler(n_splits=self.N_FOLDS),
+            ),
+            model=ModelConfig(
+                model_type="sklearn.ensemble.RandomForestClassifier",
+                classifier=True,
+                model_params={"n_estimators": 5, "random_state": 0},
+            ),
+            attack=None,
+            files=FileConfig(),
+        )
+
+    def test_per_fold_keys_present(self):
+        exp = self._make_exp()
+        scores = exp()
+        for k in range(self.N_FOLDS):
+            self.assertIn(f"accuracy_fold_{k}", scores, f"missing accuracy_fold_{k}")
+
+    def test_mean_key_present(self):
+        exp = self._make_exp()
+        scores = exp()
+        self.assertIn("accuracy", scores)
+
+    def test_mean_equals_average_of_folds(self):
+        exp = self._make_exp()
+        scores = exp()
+        fold_accs = [scores[f"accuracy_fold_{k}"] for k in range(self.N_FOLDS)]
+        self.assertAlmostEqual(scores["accuracy"], float(np.mean(fold_accs)), places=10)
+
+    def test_correct_number_of_folds_run(self):
+        exp = self._make_exp()
+        scores = exp()
+        fold_keys = [k for k in scores if k.endswith(f"_fold_{self.N_FOLDS - 1}")]
+        self.assertGreater(len(fold_keys), 0)
+
+
+class TestShuffleExperiment(unittest.TestCase):
+    """ExperimentConfig should loop over all shuffle splits when sample='shuffle'."""
+
+    N_SPLITS = 3
+
+    def _make_exp(self):
+        from deckard.data.sample import ShuffleSampler
+
+        return ExperimentConfig(
+            data=DataConfig(
+                dataset_name="make_classification",
+                data_params={
+                    "n_samples": 120,
+                    "n_features": 6,
+                    "n_informative": 4,
+                    "n_redundant": 2,
+                    "random_state": 0,
+                    "n_clusters_per_class": 1,
+                },
+                test_size=0.2,
+                val_size=0.1,
+                random_state=42,
+                classifier=True,
+                sample=ShuffleSampler(n_splits=self.N_SPLITS),
+            ),
+            model=ModelConfig(
+                model_type="sklearn.ensemble.RandomForestClassifier",
+                classifier=True,
+                model_params={"n_estimators": 5, "random_state": 0},
+            ),
+            attack=None,
+            files=FileConfig(),
+        )
+
+    def test_per_split_keys_present(self):
+        exp = self._make_exp()
+        scores = exp()
+        for k in range(self.N_SPLITS):
+            self.assertIn(f"accuracy_split_{k}", scores, f"missing accuracy_split_{k}")
+
+    def test_mean_key_present(self):
+        exp = self._make_exp()
+        scores = exp()
+        self.assertIn("accuracy", scores)
+
+    def test_mean_equals_average_of_splits(self):
+        exp = self._make_exp()
+        scores = exp()
+        split_accs = [scores[f"accuracy_split_{k}"] for k in range(self.N_SPLITS)]
+        self.assertAlmostEqual(scores["accuracy"], float(np.mean(split_accs)), places=10)
+
+    def test_correct_number_of_splits_run(self):
+        exp = self._make_exp()
+        scores = exp()
+        split_keys = [k for k in scores if k.endswith(f"_split_{self.N_SPLITS - 1}")]
+        self.assertGreater(len(split_keys), 0)
+
+
+class TestExperimentValidationScoring(unittest.TestCase):
+    def _make_exp(self, *, val_size=0.1, evaluation_mode="tuning"):
+        return ExperimentConfig(
+            data=DataConfig(
+                dataset_name="make_classification",
+                data_params={
+                    "n_samples": 120,
+                    "n_features": 6,
+                    "n_informative": 4,
+                    "n_redundant": 2,
+                    "random_state": 0,
+                    "n_clusters_per_class": 1,
+                },
+                test_size=0.2,
+                val_size=val_size,
+                random_state=42,
+                classifier=True,
+                sample="split",
+            ),
+            model=ModelConfig(
+                model_type="sklearn.ensemble.RandomForestClassifier",
+                classifier=True,
+                model_params={"n_estimators": 5, "random_state": 0},
+            ),
+            score={"experiment": DefaultClassifierConfig()},
+            attack=None,
+            files=FileConfig(),
+            experiment_name="validation-scoring-test",
+            evaluation_mode=evaluation_mode,
+        )
+
+    def test_tuning_mode_emits_validation_scores(self):
+        exp = self._make_exp(evaluation_mode="tuning")
+        scores = exp()
+        self.assertIn("validation_accuracy", scores)
+        self.assertNotIn("training_accuracy", scores)
+
+    def test_report_mode_emits_train_test_and_validation_scores(self):
+        exp = self._make_exp(evaluation_mode="report")
+        scores = exp()
+        self.assertIn("training_accuracy", scores)
+        self.assertIn("accuracy", scores)
+        self.assertIn("validation_accuracy", scores)
+
+    def test_tuning_mode_without_validation_split_raises(self):
+        exp = self._make_exp(val_size=None, evaluation_mode="tuning")
+        with self.assertRaises(ValueError):
+            exp()
 
 
 class TestSurvivalExperimentConfig(unittest.TestCase):
