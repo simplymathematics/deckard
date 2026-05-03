@@ -200,8 +200,7 @@ def test_pytorch_fairness_defense_receives_sensitive_features():
                 {
                     "X_shape": X.shape if hasattr(X, "shape") else len(X),
                     "y_shape": y.shape if hasattr(y, "shape") else len(y),
-                    "sensitive_features_provided": sensitive_features
-                    is not None,
+                    "sensitive_features_provided": sensitive_features is not None,
                     "kwargs": kwargs,
                 },
             )

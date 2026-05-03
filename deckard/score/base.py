@@ -81,10 +81,7 @@ class ScorerConfig:
             raise ValueError(
                 f"Probability scorer '{self.score_name}' requires numeric probabilities",
             )
-        if (
-            np.nanmin(y_pred_arr) < -1e-12
-            or np.nanmax(y_pred_arr) > 1.0 + 1e-12
-        ):
+        if np.nanmin(y_pred_arr) < -1e-12 or np.nanmax(y_pred_arr) > 1.0 + 1e-12:
             raise ValueError(
                 f"Probability scorer '{self.score_name}' requires values in [0, 1]",
             )

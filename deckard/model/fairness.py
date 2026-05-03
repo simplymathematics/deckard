@@ -159,9 +159,7 @@ class _FairnessBehaviorMixin:
             fit_method,
         ):
             sensitive_arg = (
-                sensitive.to_numpy()
-                if hasattr(sensitive, "to_numpy")
-                else sensitive
+                sensitive.to_numpy() if hasattr(sensitive, "to_numpy") else sensitive
             )
             fit_method(
                 data.X_train,
@@ -209,10 +207,7 @@ class _FairnessBehaviorMixin:
                 return spec.get_model()
             except Exception:
                 pass
-        if (
-            hasattr(spec, "_model")
-            and getattr(spec, "_model", None) is not None
-        ):
+        if hasattr(spec, "_model") and getattr(spec, "_model", None) is not None:
             return getattr(spec, "_model")
         if isinstance(spec, dict):
             if "model_type" in spec:
@@ -531,10 +526,7 @@ class _FairnessBehaviorMixin:
             if y_pred_arr.shape[1] == 1:
                 binary_scores = y_pred_arr.reshape(-1)
                 threshold = 0.5
-                if (
-                    np.nanmin(binary_scores) < 0.0
-                    or np.nanmax(binary_scores) > 1.0
-                ):
+                if np.nanmin(binary_scores) < 0.0 or np.nanmax(binary_scores) > 1.0:
                     threshold = 0.0
                 if len(classes) == 2 and np.issubdtype(
                     np.asarray(classes).dtype,
@@ -604,9 +596,7 @@ class _FairnessBehaviorMixin:
             for _, sensitive_df in score_df.groupby("sensitive", sort=False):
                 sensitive_accuracies.append(
                     float(
-                        (
-                            sensitive_df["y_true"] == sensitive_df["y_pred"]
-                        ).mean(),
+                        (sensitive_df["y_true"] == sensitive_df["y_pred"]).mean(),
                     ),
                 )
             if sensitive_accuracies:

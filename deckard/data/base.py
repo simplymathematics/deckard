@@ -275,15 +275,9 @@ class DataConfig(ConfigBase):
                     self.train_size = None
                 else:
                     raise ValueError("test_size must be a float or int")
-        self.data_params = (
-            self.data_params if self.data_params is not None else {}
-        )
-        self.drop = (
-            [] if not hasattr(self, "drop") or self.drop is None else self.drop
-        )
-        self.keep = (
-            [] if not hasattr(self, "keep") or self.keep is None else self.keep
-        )
+        self.data_params = self.data_params if self.data_params is not None else {}
+        self.drop = [] if not hasattr(self, "drop") or self.drop is None else self.drop
+        self.keep = [] if not hasattr(self, "keep") or self.keep is None else self.keep
         for attr in [
             "data_load_time",
             "data_sample_time",
@@ -982,9 +976,7 @@ class DataConfig(ConfigBase):
         elif len(self.keep) == 1:
             data = data[self.keep[0]]
         for del_col in self.drop:
-            assert (
-                len(self.keep) == 0
-            ), "Cannot specify both keep and drop columns"
+            assert len(self.keep) == 0, "Cannot specify both keep and drop columns"
             if del_col in data.columns:
                 data = data.drop(columns=del_col)
         self._X = data
@@ -1047,9 +1039,7 @@ class DataConfig(ConfigBase):
                     f"Mutual information could not be computed: {e}. Skipping mutual_info_classif scoring.",
                 )
             try:
-                scores["f_classif"] = f_classif(self.X_train, self.y_train)[
-                    0
-                ].tolist()
+                scores["f_classif"] = f_classif(self.X_train, self.y_train)[0].tolist()
             except ValueError as e:
                 logger.warning(
                     f"ANOVA F-value could not be computed: {e}. Skipping f_classif scoring.",
@@ -1079,9 +1069,7 @@ class DataConfig(ConfigBase):
             A pandas Series representing the empirical CDF values corresponding to the input data.
         """
         sorted_data = data.sort_values().reset_index(drop=True)
-        cdf_values = (
-            sorted_data.rank(method="first") / len(sorted_data)
-        ).values
+        cdf_values = (sorted_data.rank(method="first") / len(sorted_data)).values
         cdf_series = pd.Series(cdf_values, index=sorted_data.index)
         return cdf_series
 
@@ -1105,9 +1093,7 @@ class DataConfig(ConfigBase):
             self.y_train,
             random_state=self.random_state,
         ).tolist()
-        scores["f_regression"] = f_regression(self.X_train, self.y_train)[
-            0
-        ].tolist()
+        scores["f_regression"] = f_regression(self.X_train, self.y_train)[0].tolist()
         scores["r_regression"] = r_regression(
             self.X_train,
             self.y_train,
@@ -1171,10 +1157,7 @@ class DataConfig(ConfigBase):
             logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
         time_dict = {"data_load_time": self.data_load_time}
         # Sample data if not already sampled
-        if (
-            not hasattr(self, "data_sample_time")
-            or self.data_sample_time is None
-        ):
+        if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
             # Sample data
             self._sample()
         time_dict["data_sample_time"] = (self.data_sample_time,)
@@ -1387,10 +1370,7 @@ class DataPipelineConfig(DataConfig):
             self.pipeline_transform_n = X_test.shape[0]
             return X_train, X_test, y_train, y_test
 
-        if (
-            not hasattr(self, "pipeline_fit_time")
-            or self.pipeline_fit_time is None
-        ):
+        if not hasattr(self, "pipeline_fit_time") or self.pipeline_fit_time is None:
             logger.info("Fitting data pipeline to training data")
             # Fit and transform the training data
             start = time.process_time()
@@ -1552,24 +1532,19 @@ class DataPipelineConfig(DataConfig):
         time_dict = {"data_load_time": self.data_load_time}
         X_pipeline, y_pipeline = self._init_pipeline()
 
-        if (
-            not hasattr(self, "data_sample_time")
-            or self.data_sample_time is None
-        ):
+        if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
             self._sample()
         time_dict["data_sample_time"] = (self.data_sample_time,)
         logger.info(
             f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
         )
         # Fit X pipeline
-        self.X_train, self.X_test, self.y_train, self.y_test = (
-            self._fit_transform_X(
-                self.X_train,
-                self.X_test,
-                self.y_train,
-                self.y_test,
-                X_pipeline,
-            )
+        self.X_train, self.X_test, self.y_train, self.y_test = self._fit_transform_X(
+            self.X_train,
+            self.X_test,
+            self.y_train,
+            self.y_test,
+            X_pipeline,
         )
         # Fit y pipeline
         if y_pipeline is not None:

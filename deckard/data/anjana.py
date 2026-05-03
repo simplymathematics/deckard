@@ -119,9 +119,7 @@ class AnjanaDataConfig(DataPipelineConfig):
             if interval_sizes is not None
             else (self.hierarchy_interval_sizes or {})
         )
-        replacement = (
-            self.hierarchy_fill_value if fill_value is None else fill_value
-        )
+        replacement = self.hierarchy_fill_value if fill_value is None else fill_value
         hierarchies: Dict[str, Dict[int, Any]] = {}
         for col in qids:
             if col not in source.columns:
@@ -131,9 +129,7 @@ class AnjanaDataConfig(DataPipelineConfig):
             series = source[col]
             levels: Dict[int, Any] = {0: series.to_numpy(copy=True)}
             configured = (
-                interval_cfg.get(col)
-                if isinstance(interval_cfg, dict)
-                else None
+                interval_cfg.get(col) if isinstance(interval_cfg, dict) else None
             )
             if configured is not None:
                 configured_levels = (
@@ -351,14 +347,10 @@ class AnjanaDataConfig(DataPipelineConfig):
                 f"AnjanaDataConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
         y_true = (
-            self.y_train
-            if getattr(self, "y_train", None) is not None
-            else self._y
+            self.y_train if getattr(self, "y_train", None) is not None else self._y
         )
         y_pred = (
-            self.X_train
-            if getattr(self, "X_train", None) is not None
-            else self._X
+            self.X_train if getattr(self, "X_train", None) is not None else self._X
         )
         anjana_scores = self.scorer(
             y_true=y_true,

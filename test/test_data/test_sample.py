@@ -98,9 +98,7 @@ class TestGetStratifyCol(unittest.TestCase):
     def test_stratify_column_name(self):
         cfg = _make_clf_config(stratify=False)
         # Add a column to _X so we can use it
-        cfg._X["strat_col"] = np.tile([0, 1], len(cfg._X) // 2 + 1)[
-            : len(cfg._X)
-        ]
+        cfg._X["strat_col"] = np.tile([0, 1], len(cfg._X) // 2 + 1)[: len(cfg._X)]
         cfg.stratify = "strat_col"
         col = cfg._get_stratify_col()
         self.assertIsInstance(col, pd.Series)

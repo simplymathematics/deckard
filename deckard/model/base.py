@@ -380,9 +380,7 @@ class ModelConfig(ConfigBase):
         else:
             init_params = {
                 "input_shape": data.X_train.shape[1:],
-                "nb_classes": (
-                    len(set(data.y_train)) if self.classifier else None
-                ),
+                "nb_classes": (len(set(data.y_train)) if self.classifier else None),
             }
         if "preprocessing" not in init_params:
             init_params["preprocessing"] = None
@@ -522,12 +520,8 @@ class ModelConfig(ConfigBase):
             if y_pred_array.ndim == 2 and y_pred_array.shape[1] > 1:
                 row_sums = np.sum(y_pred_array, axis=1)
                 invalid_matrix = (
-                    np.isfinite(y_pred_array).all()
-                    and np.allclose(y_pred_array, 1.0)
-                ) or (
-                    np.isfinite(row_sums).all()
-                    and np.all(row_sums > 1.0 + 1e-8)
-                )
+                    np.isfinite(y_pred_array).all() and np.allclose(y_pred_array, 1.0)
+                ) or (np.isfinite(row_sums).all() and np.all(row_sums > 1.0 + 1e-8))
                 if invalid_matrix:
                     base_model = getattr(self._model, "model", None)
                     if base_model is not None and hasattr(
@@ -607,10 +601,7 @@ class ModelConfig(ConfigBase):
                 # Handle binary models that emit a single score/probability column.
                 binary_scores = y_pred_arr.reshape(-1)
                 threshold = 0.5
-                if (
-                    np.nanmin(binary_scores) < 0.0
-                    or np.nanmax(binary_scores) > 1.0
-                ):
+                if np.nanmin(binary_scores) < 0.0 or np.nanmax(binary_scores) > 1.0:
                     threshold = 0.0
                 classes = np.unique(y_true_arr[~pd.isna(y_true_arr)])
                 if len(classes) == 2 and np.issubdtype(
@@ -892,10 +883,7 @@ class ModelConfig(ConfigBase):
             times["training_n"] = len(self.training_predictions)
 
         # Load the predictions if provided
-        if (
-            test_predictions_file is not None
-            and Path(test_predictions_file).exists()
-        ):
+        if test_predictions_file is not None and Path(test_predictions_file).exists():
             self.predictions = self._load_predictions(test_predictions_file)
             assert (
                 self.prediction_time is not None
@@ -926,9 +914,7 @@ class ModelConfig(ConfigBase):
         times = {}
         if score_file is not None and Path(score_file).exists():
             new_score_dict = self.load_scores(score_file)
-            old_score_dict = (
-                self.score_dict if self.score_dict is not None else {}
-            )
+            old_score_dict = self.score_dict if self.score_dict is not None else {}
             # Update old_score_dict with new_score_dict
             score_dict = {**old_score_dict, **new_score_dict}
             # pop keys ending with _time and add to times dict
@@ -1041,8 +1027,7 @@ class ModelConfig(ConfigBase):
             times,
             persist_training_predictions=train_predictions_file is not None,
             persist_test_predictions=test_predictions_file is not None,
-            persist_training_probabilities=training_probabilities_file
-            is not None,
+            persist_training_probabilities=training_probabilities_file is not None,
             persist_test_probabilities=test_probabilities_file is not None,
         )
         hook_outputs = self._run_plugin_hook(
@@ -1081,10 +1066,7 @@ class ModelConfig(ConfigBase):
                 self.training_probabilities,
                 training_probabilities_file,
             )
-        if (
-            test_probabilities_file is not None
-            and self.probabilities is not None
-        ):
+        if test_probabilities_file is not None and self.probabilities is not None:
             self.save_data(self.probabilities, test_probabilities_file)
         if score_file is not None:
             self.save_scores(self.score_dict, score_file)
@@ -1158,9 +1140,7 @@ class ModelConfig(ConfigBase):
                     None,
                 )
                 if self.defense_application_time is not None:
-                    times["defense_application_time"] = (
-                        self.defense_application_time
-                    )
+                    times["defense_application_time"] = self.defense_application_time
                 if getattr(defense_pipeline, "score_dict", None):
                     if self.score_dict is None:
                         self.score_dict = {}
@@ -1178,20 +1158,16 @@ class ModelConfig(ConfigBase):
             times["training_prediction_time"] = self.training_prediction_time
             times["training_n"] = len(train_predictions)
             if persist_training_predictions:
-                self.training_predictions = (
-                    self._decode_predictions_for_persistence(
-                        train_predictions,
-                        y_true=data.y_train,
-                    )
+                self.training_predictions = self._decode_predictions_for_persistence(
+                    train_predictions,
+                    y_true=data.y_train,
                 )
             if persist_training_probabilities and self.classifier:
                 try:
                     if hasattr(self._model, "predict_proba"):
                         try:
-                            self.training_probabilities = (
-                                self._model.predict_proba(
-                                    data.X_train,
-                                )
+                            self.training_probabilities = self._model.predict_proba(
+                                data.X_train,
                             )
                         except TypeError as e:
                             if "loop of ufunc does not support argument" in str(
@@ -1233,8 +1209,7 @@ class ModelConfig(ConfigBase):
                 self.training_score_time = time.process_time() - start
                 # Prefix training scores with 'train_'
                 train_scores = {
-                    f"training_{key}": value
-                    for key, value in train_scores.items()
+                    f"training_{key}": value for key, value in train_scores.items()
                 }
                 if "training_loss_curve" in train_scores:
                     del train_scores["training_loss_curve"]
@@ -1271,21 +1246,15 @@ class ModelConfig(ConfigBase):
                                     data.X_test,
                                 )
                             except TypeError as e:
-                                if (
-                                    "loop of ufunc does not support argument"
-                                    in str(
-                                        e,
-                                    )
-                                    or "can't convert" in str(e)
-                                ):
+                                if "loop of ufunc does not support argument" in str(
+                                    e,
+                                ) or "can't convert" in str(e):
                                     X_array = np.array(
                                         data.X_test,
                                         dtype=ART_NUMPY_DTYPE,
                                     )
-                                    self.probabilities = (
-                                        self._model.predict_proba(
-                                            X_array,
-                                        )
+                                    self.probabilities = self._model.predict_proba(
+                                        X_array,
                                     )
                                 else:
                                     raise e
@@ -1446,7 +1415,5 @@ class ModelConfig(ConfigBase):
             if stage == "post_fit_pre_predict":
                 self._model = self._apply_defense(data)
                 if getattr(self, "defense_application_time", None) is not None:
-                    times["defense_application_time"] = (
-                        self.defense_application_time
-                    )
+                    times["defense_application_time"] = self.defense_application_time
         return times

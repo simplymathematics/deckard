@@ -58,9 +58,7 @@ class TestYellowbrickPlots(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         this_file = Path(__file__)
-        config_dir = (
-            this_file.parent.parent.parent / "examples" / "sklearn" / "config"
-        )
+        config_dir = this_file.parent.parent.parent / "examples" / "sklearn" / "config"
         config_dir = Path(config_dir).resolve().as_posix() + "/"
         cls.classification_data_config = config_dir + "data/classification.yaml"
         cls.classification_model_config = config_dir + "model/logistic.yaml"
@@ -148,8 +146,7 @@ class TestYellowbrickPlots(unittest.TestCase):
                         plot_type=plot_type,
                         features="all",
                         classes="all",
-                        title=plot_type.replace("_", " ").title()
-                        + " (Clustering)",
+                        title=plot_type.replace("_", " ").title() + " (Clustering)",
                         save_path=filepath,
                     )
                     plot_cfg()

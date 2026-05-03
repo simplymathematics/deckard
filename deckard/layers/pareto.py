@@ -273,9 +273,7 @@ def pareto_main(
     ]
     trial_df = _coerce_objective_columns_numeric(trial_df, objective_columns)
 
-    direction_list = [
-        _normalize_direction(d) for d in _parse_csv_arg(directions)
-    ]
+    direction_list = [_normalize_direction(d) for d in _parse_csv_arg(directions)]
     if len(direction_list) == 0:
         direction_list = _infer_directions_for_objectives(
             study=study,
@@ -299,9 +297,7 @@ def pareto_main(
         column = objective_columns[0]
         ascending = direction_list[0] == "minimize"
         selected = (
-            trial_df.sort_values(by=column, ascending=ascending)
-            .head(top_k)
-            .copy()
+            trial_df.sort_values(by=column, ascending=ascending).head(top_k).copy()
         )
         selected["_selection_type"] = "single_objective"
     else:

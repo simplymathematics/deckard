@@ -96,9 +96,7 @@ def multirun_call(args):
         else [args.metric_names]
     )
     directions = (
-        args.directions
-        if isinstance(args.directions, list)
-        else [args.directions]
+        args.directions if isinstance(args.directions, list) else [args.directions]
     )
     output_file = args.output_file
     if output_file is not None:

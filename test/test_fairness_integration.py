@@ -127,10 +127,7 @@ def test_fairlearn_group_scorers_list_later_wins_on_conflict():
         ],
     )
 
-    assert (
-        scorer.group_scorers["mse"].score_function.__name__
-        == "mean_absolute_error"
-    )
+    assert scorer.group_scorers["mse"].score_function.__name__ == "mean_absolute_error"
 
 
 def test_fairness_defense_config_apply_to_trained_model():

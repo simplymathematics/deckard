@@ -532,9 +532,7 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
         membership_group = (
             FairlearnMembershipInferenceAttackScorerConfig().group_scorers
         )
-        attribute_group = (
-            FairlearnAttributeInferenceAttackScorerConfig().group_scorers
-        )
+        attribute_group = FairlearnAttributeInferenceAttackScorerConfig().group_scorers
         attribute_reg_group = (
             FairlearnAttributeInferenceRegressionAttackScorerConfig().group_scorers
         )

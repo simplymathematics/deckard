@@ -35,9 +35,7 @@ class SeabornPlotConfig(ConfigBase):
     y: str
     kwargs: dict = field(default_factory=dict)
     rc_config: dict = field(default_factory=dict)
-    plot_type: Literal["scatter", "line", "hist", "cat", "bar", "heatmap"] = (
-        "scatter"
-    )
+    plot_type: Literal["scatter", "line", "hist", "cat", "bar", "heatmap"] = "scatter"
     data_file: Optional[str] = None
     title: Optional[str] = None
     xlabel: Optional[str] = None

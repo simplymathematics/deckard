@@ -100,9 +100,7 @@ def test_survival_cli_in_examples_sklearn(
         f"STDOUT:\n{completed.stdout}\nSTDERR:\n{completed.stderr}"
     )
 
-    expected_plot = (
-        examples_dir / "plots" / "survival" / f"{survival_model}_aft.pdf"
-    )
+    expected_plot = examples_dir / "plots" / "survival" / f"{survival_model}_aft.pdf"
     expected_table = examples_dir / "plots" / "survival" / "aft_comparison.csv"
     assert expected_plot.exists()
     assert expected_table.exists()
@@ -117,9 +115,7 @@ def test_survival_cli_in_examples_sklearn(
 # Hash stability and persistence (Python API level, no lifelines runtime needed)
 # ---------------------------------------------------------------------------
 
-lifelines_installed = (
-    __import__("importlib").util.find_spec("lifelines") is not None
-)
+lifelines_installed = __import__("importlib").util.find_spec("lifelines") is not None
 
 
 @pytest.mark.skipif(

@@ -154,9 +154,7 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
         Union[ScorerConfig, ScorerDictConfig, Dict[str, Any], str, Callable],
     ] = field(default_factory=dict)
     group_reduction: Literal["difference", "ratio", "none"] = "difference"
-    group_reduction_method: Literal["between_groups", "to_overall"] = (
-        "between_groups"
-    )
+    group_reduction_method: Literal["between_groups", "to_overall"] = "between_groups"
     include_group_overall: bool = False
     include_group_by_group: bool = True
     control_features: Any = None
@@ -237,8 +235,7 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
             # MetricFrame expects nested sample params when metrics is a dict.
             if not sample_param_keys.issubset(set(metrics_keys)):
                 sample_params = {
-                    metric_name: dict(sample_params)
-                    for metric_name in metrics_keys
+                    metric_name: dict(sample_params) for metric_name in metrics_keys
                 }
         metrics = {
             key: (

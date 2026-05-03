@@ -97,9 +97,7 @@ class SurvivalModelConfig(ModelConfig):
         if not hasattr(self, "_target_") or self._target_ is None:
             self._target_ = "deckard.model.SurvivalModelConfig"
         if self.classifier in ["classifier", True]:
-            self.classifier = (
-                False  # Survival models are always regression-like
-            )
+            self.classifier = False  # Survival models are always regression-like
         elif self.classifier in ["regressor", False]:
             self.classifier = False
         else:
@@ -225,10 +223,7 @@ class SurvivalModelConfig(ModelConfig):
             logger.warning(f"Could not compute concordance: {e}")
 
         # Compute calibration metrics
-        if (
-            self.duration_col in y_true.columns
-            and self.event_col in y_true.columns
-        ):
+        if self.duration_col in y_true.columns and self.event_col in y_true.columns:
             try:
                 _, ici, e50 = self.survival_probability_calibration(
                     model=y_pred,

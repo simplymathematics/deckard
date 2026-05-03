@@ -121,9 +121,7 @@ class TestShuffleExperiment(unittest.TestCase):
     def test_mean_equals_average_of_splits(self):
         exp = self._make_exp()
         scores = exp()
-        split_accs = [
-            scores[f"accuracy_split_{k}"] for k in range(self.N_SPLITS)
-        ]
+        split_accs = [scores[f"accuracy_split_{k}"] for k in range(self.N_SPLITS)]
         self.assertAlmostEqual(
             scores["accuracy"],
             float(np.mean(split_accs)),

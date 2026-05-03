@@ -293,10 +293,7 @@ class AttackConfig(ConfigBase):
             return False
         if isinstance(model, ClassifierMixin):
             return True
-        if (
-            hasattr(data, "classifier")
-            and getattr(data, "classifier") is not None
-        ):
+        if hasattr(data, "classifier") and getattr(data, "classifier") is not None:
             return bool(getattr(data, "classifier"))
         return None
 
@@ -516,11 +513,9 @@ class AttackConfig(ConfigBase):
 
         self._validate_attack_task_compatibility(data, model)
 
-        attack, art_model, attack_type, attack_subtype = (
-            self._initialize_attack(
-                model,
-                data,
-            )
+        attack, art_model, attack_type, attack_subtype = self._initialize_attack(
+            model,
+            data,
         )
         # Execute the attack based on type and subtype
         if attack_type == "evasion":
@@ -879,9 +874,7 @@ class AttackConfig(ConfigBase):
             if is_regression:
                 y_test_numeric = y_subset.iloc[:, 0].astype(float).values
             else:
-                y_test_numeric = (
-                    y_subset.iloc[:, 0].astype("category").cat.codes
-                )
+                y_test_numeric = y_subset.iloc[:, 0].astype("category").cat.codes
         elif isinstance(y_subset, np.ndarray):
             y_test_numeric = np.asarray(y_subset).reshape(-1)
         elif is_tensor(y_subset):

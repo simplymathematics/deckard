@@ -177,14 +177,10 @@ class FairlearnDataConfig(DataPipelineConfig):
                 f"FairlearnDataConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
         y_true = (
-            self.y_train
-            if getattr(self, "y_train", None) is not None
-            else self._y
+            self.y_train if getattr(self, "y_train", None) is not None else self._y
         )
         y_pred = (
-            self.X_train
-            if getattr(self, "X_train", None) is not None
-            else self._X
+            self.X_train if getattr(self, "X_train", None) is not None else self._X
         )
         if isinstance(y_pred, pd.DataFrame):
             non_numeric = y_pred.select_dtypes(exclude=["number"]).columns

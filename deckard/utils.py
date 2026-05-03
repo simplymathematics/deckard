@@ -156,8 +156,7 @@ def resolve_torch_device(requested_device: Any = None):
             return fallback
     if requested_text.startswith("mps"):
         mps_available = bool(
-            hasattr(torch.backends, "mps")
-            and torch.backends.mps.is_available(),
+            hasattr(torch.backends, "mps") and torch.backends.mps.is_available(),
         )
         if not mps_available:
             fallback = _auto_torch_device_from_backends(torch)
@@ -826,9 +825,7 @@ class ConfigBase:
         for base in reversed(self.__class__.mro()):
             fields = getattr(base, "__dataclass_fields__", {})
             for name in fields:
-                if name.startswith("_") and not (
-                    for_hash and name == "_target_"
-                ):
+                if name.startswith("_") and not (for_hash and name == "_target_"):
                     continue
                 if for_hash and not self._is_hash_field(name):
                     continue
@@ -1107,11 +1104,7 @@ def _extract_param_help_from_docstring(docstring: str) -> dict[str, str]:
                 break
 
             # Parameter declaration line: "name : type" or "name: type"
-            if (
-                stripped
-                and not lines[i].startswith((" ", "\t"))
-                and (":" in stripped)
-            ):
+            if stripped and not lines[i].startswith((" ", "\t")) and (":" in stripped):
                 _flush_current()
                 current_name = stripped.split(":", 1)[0].strip()
             elif current_name is not None:

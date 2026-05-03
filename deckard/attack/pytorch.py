@@ -68,9 +68,7 @@ def build_torch_art_model(model, data):
     nb_classes = len(np.unique(np.asarray(data.y_train).flatten()))
     art_model = model
     target_device = get_torch_model_device(model)
-    device_type = (
-        "gpu" if getattr(target_device, "type", "cpu") == "cuda" else "cpu"
-    )
+    device_type = "gpu" if getattr(target_device, "type", "cpu") == "cuda" else "cpu"
 
     estimator = PyTorchClassifier(
         model=art_model,

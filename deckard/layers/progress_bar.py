@@ -447,9 +447,7 @@ def progress_bar_main(
             }
 
         storage_requirements[storage]["expected_studies"] += studies_count
-        storage_requirements[storage]["expected_trials"] += (
-            studies_count * n_trials
-        )
+        storage_requirements[storage]["expected_trials"] += studies_count * n_trials
         storage_requirements[storage]["required_trials"].extend(
             [n_trials] * studies_count,
         )
@@ -478,11 +476,9 @@ def progress_bar_main(
         earliest = None
 
         for storage, req in storage_requirements.items():
-            finished_counts, storage_earliest = (
-                _collect_storage_finished_counts(
-                    storage,
-                    end_states,
-                )
+            finished_counts, storage_earliest = _collect_storage_finished_counts(
+                storage,
+                end_states,
             )
             storage_completed_studies = _count_completed_studies(
                 observed_finished_counts=finished_counts,

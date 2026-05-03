@@ -614,8 +614,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 [
                     str(getattr(conf, attr))
                     for attr in dir(conf)
-                    if not attr.startswith("_")
-                    and not callable(getattr(conf, attr))
+                    if not attr.startswith("_") and not callable(getattr(conf, attr))
                 ],
             )
         return hashlib.md5(to_string.encode()).hexdigest()
@@ -767,9 +766,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         # Get file paths
         file_dict = self.files._get_file_dict()
         data_file_outputs = {
-            file: getattr(self.files, file)
-            for file in data_files
-            if file in file_dict
+            file: getattr(self.files, file) for file in data_files if file in file_dict
         }
         model_file_outputs = {
             file: getattr(self.files, file)
@@ -884,10 +881,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             if self.model is None:
                 self.model = None
 
-        if (
-            "score_file" in file_dict
-            and not Path(file_dict["score_file"]).exists()
-        ):
+        if "score_file" in file_dict and not Path(file_dict["score_file"]).exists():
             self.save_scores(scores, file_dict["score_file"])
         elif "score_file" in file_dict:
             old_scores = self.load_scores(file_dict["score_file"])

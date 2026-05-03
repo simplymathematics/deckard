@@ -48,9 +48,7 @@ def initialize_criterion(criterion_spec):
             "_target_",
         )
         criterion_params = {
-            k: v
-            for k, v in criterion_spec.items()
-            if k not in ["name", "_target_"]
+            k: v for k, v in criterion_spec.items() if k not in ["name", "_target_"]
         }
         return load_class(criterion_name, **criterion_params)
     else:
@@ -76,9 +74,7 @@ def initialize_optimizer(optimizer_spec, model_params):
         ):
             optimizer_name = f"torch.optim.{optimizer_name}"
         optimizer_params = {
-            k: v
-            for k, v in optimizer_spec.items()
-            if k not in ["name", "_target_"]
+            k: v for k, v in optimizer_spec.items() if k not in ["name", "_target_"]
         }
         optimizer_params["params"] = model_params
         return load_class(optimizer_name, **optimizer_params)
@@ -216,9 +212,7 @@ class PytorchModelConfig(ModelConfig):
                         return (x_out, *result[1:])
                     return result
 
-                art_estimator._apply_preprocessing = (
-                    _dtype_safe_apply_preprocessing
-                )
+                art_estimator._apply_preprocessing = _dtype_safe_apply_preprocessing
                 art_estimator._deckard_dtype_wrapped = True
 
         return art_estimator
@@ -351,9 +345,7 @@ class PytorchModelConfig(ModelConfig):
                     "checkpoint_dir must be provided when checkpointing is enabled without a model_file",
                 )
             model_path = Path(model_file)
-            checkpoint_dir = (
-                model_path.parent / f"{model_path.stem}_checkpoints"
-            )
+            checkpoint_dir = model_path.parent / f"{model_path.stem}_checkpoints"
         checkpoint_dir = Path(checkpoint_dir)
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
@@ -364,9 +356,7 @@ class PytorchModelConfig(ModelConfig):
             elif self.alias not in {None, ""}:
                 checkpoint_prefix = self.alias
             else:
-                checkpoint_prefix = (
-                    str(self.model_type).split(":")[-1].split(".")[-1]
-                )
+                checkpoint_prefix = str(self.model_type).split(":")[-1].split(".")[-1]
 
         return {
             "every": every,
@@ -426,10 +416,7 @@ class PytorchModelConfig(ModelConfig):
         except ValueError as exc:
             if "predict_proba" not in str(exc):
                 raise
-            if (
-                checkpoint_stage == "before_predict"
-                and snapshot.defense is not None
-            ):
+            if checkpoint_stage == "before_predict" and snapshot.defense is not None:
                 snapshot._model = snapshot._apply_defense(data)
             train_pred = snapshot._predict(data.X_train)
             test_pred = snapshot._predict(data.X_test)
@@ -452,10 +439,7 @@ class PytorchModelConfig(ModelConfig):
                     test_pred,
                 )
             snapshot.score_dict.update(
-                {
-                    f"training_{key}": value
-                    for key, value in train_scores.items()
-                },
+                {f"training_{key}": value for key, value in train_scores.items()},
             )
             snapshot.score_dict.update(test_scores)
         return dict(snapshot.score_dict or {})
@@ -586,9 +570,7 @@ class PytorchModelConfig(ModelConfig):
                 optimizer.step()
 
             epoch_time = time.process_time() - epoch_start
-            epoch_loss_mean = (
-                float(np.mean(epoch_losses)) if epoch_losses else None
-            )
+            epoch_loss_mean = float(np.mean(epoch_losses)) if epoch_losses else None
 
             epoch_metrics[epoch_idx] = {
                 "loss": epoch_loss_mean,
@@ -797,9 +779,7 @@ class PytorchModelConfig(ModelConfig):
             if isinstance(X, torch.utils.data.DataLoader):
                 x_batches = []
                 for batch in X:
-                    batch_x = (
-                        batch[0] if isinstance(batch, (tuple, list)) else batch
-                    )
+                    batch_x = batch[0] if isinstance(batch, (tuple, list)) else batch
                     x_batches.append(batch_x)
                 if len(x_batches) == 0:
                     return torch.empty(0)

@@ -127,9 +127,7 @@ class TestMode3AuxiliaryAttackData:
             attack_params={"eps": 0.2},
             attack_size=100,
         )
-        assert (
-            attack_cfg.attack_type == "art.attacks.evasion.FastGradientMethod"
-        )
+        assert attack_cfg.attack_type == "art.attacks.evasion.FastGradientMethod"
         assert attack_cfg.attack_size == 100
 
     def test_mode3_attack_failure_computation(self):
@@ -220,9 +218,7 @@ class TestModeInteroperability:
                 config.is_optuna_db(),
             ]
             # Exactly one should be True
-            assert (
-                sum(checks) == 1
-            ), f"Config {config.mode} failed mutual exclusivity"
+            assert sum(checks) == 1, f"Config {config.mode} failed mutual exclusivity"
 
     def test_mode_transitions(self):
         """Verify we can transition between different mode configs."""

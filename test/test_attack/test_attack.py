@@ -370,17 +370,11 @@ class TestFairlearnAttackScorer(unittest.TestCase):
     def _make_data_with_sensitive(self):
         data = TinyData()
         data._sensitive_train = pd.Series(
-            [
-                "group_a" if i % 2 == 0 else "group_b"
-                for i in range(len(data.X_train))
-            ],
+            ["group_a" if i % 2 == 0 else "group_b" for i in range(len(data.X_train))],
             name="sensitive",
         )
         data._sensitive_test = pd.Series(
-            [
-                "group_a" if i % 2 == 0 else "group_b"
-                for i in range(len(data.X_test))
-            ],
+            ["group_a" if i % 2 == 0 else "group_b" for i in range(len(data.X_test))],
             name="sensitive",
         )
         return data

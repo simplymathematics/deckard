@@ -606,9 +606,7 @@ def test_optimize_main_uses_multirun_path(monkeypatch):
     assert isinstance(captured["multirun_cfg"], str)
     assert "name: demo" in captured["multirun_cfg"]
     assert "experiment_name:" in captured["multirun_cfg"]
-    assert captured["cfg"][
-        "experiment_name"
-    ] == optimize_module.hash_conf_values(
+    assert captured["cfg"]["experiment_name"] == optimize_module.hash_conf_values(
         _root_={"name": "demo"},
     )
 

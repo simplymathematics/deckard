@@ -51,9 +51,7 @@ def old_ncd(
     """
 
     metric_len = (
-        compressors[method]
-        if method in compressors.keys()
-        else compressors["gzip"]
+        compressors[method] if method in compressors.keys() else compressors["gzip"]
     )
     Cx1 = metric_len(x1) if cx1 is None else cx1
     Cx2 = metric_len(x2) if cx2 is None else cx2
@@ -635,9 +633,7 @@ def checkpoint_results(args, *dfs):
 def plot_identity_violations(args, big_df):
     big_df["i"] = big_df["i"].astype(int)
     big_df["Percent Violations"] = big_df["Percent Violations"] * 100
-    big_df["Percent Violations"] = (
-        big_df["Percent Violations"].round(2).astype(float)
-    )
+    big_df["Percent Violations"] = big_df["Percent Violations"].round(2).astype(float)
     # Replace the underscore in "Iterate", "Algorithm" with a space
     big_df["Iterate"] = big_df["Iterate"].str.replace("_", " ")
     big_df["Algorithm"] = big_df["Algorithm"].str.replace("_", " ")

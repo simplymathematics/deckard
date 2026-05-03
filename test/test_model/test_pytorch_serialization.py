@@ -75,10 +75,7 @@ def test_pytorch_model_training_records_optimizer_loss_and_serializes_it():
         )
         loaded.load(str(model_path))
 
-        assert (
-            loaded.score_dict["optimizer_loss"]
-            == cfg.score_dict["optimizer_loss"]
-        )
+        assert loaded.score_dict["optimizer_loss"] == cfg.score_dict["optimizer_loss"]
         assert "epochs" in loaded.score_dict
         assert len(loaded.score_dict["epochs"]) == 2
 

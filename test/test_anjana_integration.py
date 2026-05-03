@@ -265,6 +265,4 @@ def test_wrapper_defenses_reordered_last_with_warning(caplog):
         pipeline.apply(estimator=object(), data=object())
 
     assert call_order == ["data", "art"]
-    assert any(
-        "automatically reordered" in rec.message for rec in caplog.records
-    )
+    assert any("automatically reordered" in rec.message for rec in caplog.records)

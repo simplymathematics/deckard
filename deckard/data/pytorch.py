@@ -71,9 +71,7 @@ class PytorchDataConfig(DataConfig):
         if isinstance(sensitive_item, (list, tuple)):
             return tuple(sensitive_item)
         if isinstance(sensitive_item, dict):
-            return tuple(
-                (k, sensitive_item[k]) for k in sorted(sensitive_item.keys())
-            )
+            return tuple((k, sensitive_item[k]) for k in sorted(sensitive_item.keys()))
         return sensitive_item
 
     def __post_init__(self):
@@ -188,11 +186,7 @@ class PytorchDataConfig(DataConfig):
 
                 X_list = [_coerce_tensor(s[0]) for s in samples]
                 y_list = [
-                    (
-                        s[1]
-                        if isinstance(s[1], (int, Tensor))
-                        else _coerce_tensor(s[1])
-                    )
+                    (s[1] if isinstance(s[1], (int, Tensor)) else _coerce_tensor(s[1]))
                     for s in samples
                 ]
                 if len(samples[0]) >= 3:
@@ -224,8 +218,7 @@ class PytorchDataConfig(DataConfig):
                 raw_sensitive = getattr(full_dataset, "_sensitive")
                 if raw_sensitive is not None:
                     sensitive_values = [
-                        self._normalize_sensitive_item(v)
-                        for v in list(raw_sensitive)
+                        self._normalize_sensitive_item(v) for v in list(raw_sensitive)
                     ]
 
             if len(sensitive_values) > 0:
@@ -721,9 +714,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         if len(train_sensitive_batches) > 0 or len(test_sensitive_batches) > 0:
             self._sensitive_train = train_sensitive_batches
             self._sensitive_test = test_sensitive_batches
-            self._sensitive_all = (
-                train_sensitive_batches + test_sensitive_batches
-            )
+            self._sensitive_all = train_sensitive_batches + test_sensitive_batches
 
         end = time.process_time()
         self.data_sample_time = end - start

@@ -131,7 +131,7 @@ all  = [
 ]
 
 [tool.black]
-line-length = 80
+line-length = 87
 target-version = ['py310']
 include = 'deckard/.*\.py'
 
@@ -139,7 +139,7 @@ include = 'deckard/.*\.py'
 deckard = "deckard.__main__:main"
 
 [tool.flake8]
-max-line-length = 80
+max-line-length = 87
 exclude = [
   "__pycache__",
   "*.egg-info",

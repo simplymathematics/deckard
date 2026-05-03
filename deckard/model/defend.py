@@ -123,9 +123,7 @@ class _DefenseBehaviorMixin:
         self.defense_prediction_time = None
         self.defense_scoring_time = None
         self.defense_params = self.defense_params or {}
-        self._apply_fit = (
-            True  # Whether to apply fit during defense application
-        )
+        self._apply_fit = True  # Whether to apply fit during defense application
 
     def __hash__(self):
         return super().__hash__()
@@ -402,9 +400,7 @@ class _DefenseBehaviorMixin:
                     f"Could not parse defense type from defense name {self.defense_name}",
                 )
         if module_name is not None and len(module_name.split(".")) >= 4:
-            defense_subtype = module_name.split(".")[
-                3
-            ]  # e.g., 'FeatureSqueezing'
+            defense_subtype = module_name.split(".")[3]  # e.g., 'FeatureSqueezing'
         else:
             defense_subtype = None
         if defense_type is not None:
@@ -464,11 +460,8 @@ class _DefenseBehaviorMixin:
                     ),
                     "input_shape": input_shape,
                     "nb_classes": nb_classes,
-                    "clip_values": getattr(self, "clip_values", None)
-                    or (0.0, 1.0),
-                    "device_type": (
-                        "gpu" if torch.cuda.is_available() else "cpu"
-                    ),
+                    "clip_values": getattr(self, "clip_values", None) or (0.0, 1.0),
+                    "device_type": ("gpu" if torch.cuda.is_available() else "cpu"),
                 }
             else:
                 art_class = PyTorchRegressor
@@ -480,11 +473,8 @@ class _DefenseBehaviorMixin:
                     ),
                     "input_shape": input_shape,
                     "nb_classes": None,
-                    "clip_values": getattr(self, "clip_values", None)
-                    or (0.0, 1.0),
-                    "device_type": (
-                        "gpu" if torch.cuda.is_available() else "cpu"
-                    ),
+                    "clip_values": getattr(self, "clip_values", None) or (0.0, 1.0),
+                    "device_type": ("gpu" if torch.cuda.is_available() else "cpu"),
                 }
             if "preprocessing" not in init_params:
                 init_params["preprocessing"] = None
@@ -505,9 +495,7 @@ class _DefenseBehaviorMixin:
         else:
             init_params = {
                 "input_shape": data.X_train.shape[1:],
-                "nb_classes": (
-                    len(set(data.y_train)) if self.classifier else None
-                ),
+                "nb_classes": (len(set(data.y_train)) if self.classifier else None),
             }
         if "preprocessing" not in init_params:
             init_params["preprocessing"] = None

@@ -98,9 +98,7 @@ def _resolve_plot_args_from_cfg(cfg: Any) -> Dict[str, Any]:
     """Resolve plot settings from Hydra cfg using `plot` block first, top-level as fallback."""
     cfg_dict = _cfg_to_dict(cfg)
     plot_block = (
-        cfg_dict.get("plot", {})
-        if isinstance(cfg_dict.get("plot"), dict)
-        else {}
+        cfg_dict.get("plot", {}) if isinstance(cfg_dict.get("plot"), dict) else {}
     )
 
     resolved = dict(PLOT_MAIN_DEFAULTS)
@@ -138,9 +136,7 @@ def _extract_experiment_cfg_from_hydra_cfg(cfg: Any) -> Dict[str, Any]:
 def _resolve_experiment_config_path(cfg: Any) -> str:
     cfg_dict = _cfg_to_dict(cfg)
     plot_block = (
-        cfg_dict.get("plot", {})
-        if isinstance(cfg_dict.get("plot"), dict)
-        else {}
+        cfg_dict.get("plot", {}) if isinstance(cfg_dict.get("plot"), dict) else {}
     )
     if isinstance(plot_block.get("experiment_config"), str):
         return plot_block["experiment_config"]
@@ -152,9 +148,7 @@ def _resolve_experiment_config_path(cfg: Any) -> str:
 def _resolve_data_file(cfg: Any) -> str:
     cfg_dict = _cfg_to_dict(cfg)
     plot_block = (
-        cfg_dict.get("plot", {})
-        if isinstance(cfg_dict.get("plot"), dict)
-        else {}
+        cfg_dict.get("plot", {}) if isinstance(cfg_dict.get("plot"), dict) else {}
     )
     if isinstance(plot_block.get("data_file"), str):
         return plot_block["data_file"]
@@ -175,9 +169,7 @@ def _extract_backend(
 ) -> str:
     cfg_dict = _cfg_to_dict(cfg)
     plot_block = (
-        cfg_dict.get("plot", {})
-        if isinstance(cfg_dict.get("plot"), dict)
-        else {}
+        cfg_dict.get("plot", {}) if isinstance(cfg_dict.get("plot"), dict) else {}
     )
     backend = plot_block.get("backend", cfg_dict.get("backend", "auto"))
     if backend not in {"auto", "yellowbrick", "seaborn"}:
@@ -313,15 +305,11 @@ def plot_main(cfg: Any) -> dict:
         if plot_type:
             default_folder = Path(plot_folder) if plot_folder else Path.cwd()
             output_path = (
-                Path(plot_file)
-                if plot_file
-                else default_folder / f"{plot_type}.png"
+                Path(plot_file) if plot_file else default_folder / f"{plot_type}.png"
             )
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
-            single_title = (
-                title if title else plot_type.replace("_", " ").title()
-            )
+            single_title = title if title else plot_type.replace("_", " ").title()
             cfg = YellowbrickPlotConfig(
                 experiment=exp_obj,
                 plot_type=plot_type,

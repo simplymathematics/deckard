@@ -341,9 +341,7 @@ class YellowbrickPlotConfig(ConfigBase):
         if attack:
             X_attack, y_attack = (
                 self.experiment.attack.attack,
-                self.experiment.data.y_train[
-                    : self.experiment.attack.attack_size
-                ],
+                self.experiment.data.y_train[: self.experiment.attack.attack_size],
             )
             return X_attack, y_attack, classes, features
         if not test:

@@ -230,9 +230,7 @@ def test_base_data_model_attack_end_to_end(
     data_cfg = _load_or_skip(data_cfg)
     model_cfg = _train_model_or_skip(model_cfg, data_cfg)
 
-    attack_model = (
-        model_cfg.get_model() if attack_model_from_model else model_cfg
-    )
+    attack_model = model_cfg.get_model() if attack_model_from_model else model_cfg
     attack_scores = attack_cfg(data=data_cfg, model=attack_model)
 
     assert attack_cfg.attack is not None

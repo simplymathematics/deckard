@@ -125,9 +125,7 @@ def extract_metadata_from_filename(file: Path) -> dict:
     logger.info(f"dataset: {dataset}")
     logger.info(f"metric: {metric}")
     logger.info(f"Algorithm: {algorithm}")
-    test_or_train, training_samples, test_samples, random_state = (
-        filename.split("-")
-    )
+    test_or_train, training_samples, test_samples, random_state = filename.split("-")
     return {
         "working_directory": wd,
         "dataset": dataset,

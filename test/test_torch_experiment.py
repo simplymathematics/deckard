@@ -328,9 +328,7 @@ def test_art_last_ordering_no_warning_when_already_last(caplog):
         except Exception:
             pass
 
-    reorder_warnings = [
-        r for r in caplog.records if "reorder" in r.message.lower()
-    ]
+    reorder_warnings = [r for r in caplog.records if "reorder" in r.message.lower()]
     assert len(reorder_warnings) == 0
 
 
@@ -471,6 +469,4 @@ def test_deckard_optimize_subcommand_help_in_pytorch_dir():
         timeout=60,
         env=env,
     )
-    assert (
-        result.returncode == 0
-    ), f"deckard optimize --help failed:\n{result.stderr}"
+    assert result.returncode == 0, f"deckard optimize --help failed:\n{result.stderr}"

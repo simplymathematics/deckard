@@ -109,10 +109,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
             attack_size = output.at[row_index, "attack_size"]
             if not pd.isna(attack_size):
                 return float(attack_size)
-        if (
-            "attack_size" in output.columns
-            and output["attack_size"].notna().all()
-        ):
+        if "attack_size" in output.columns and output["attack_size"].notna().all():
             unique_sizes = output["attack_size"].dropna().unique()
             if len(unique_sizes) == 1:
                 return float(unique_sizes[0])
@@ -138,10 +135,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
     ) -> pd.DataFrame:
         """Optionally derive ben/adv failure counts from attack-specific accuracy metrics."""
         output = data.copy()
-        if (
-            benign_metric in output.columns
-            and "ben_failures" not in output.columns
-        ):
+        if benign_metric in output.columns and "ben_failures" not in output.columns:
             if "attack_size" in output.columns:
                 attack_sizes = output["attack_size"].fillna(
                     self._resolve_attack_size(
@@ -161,16 +155,13 @@ class SurvivalExperimentConfig(ExperimentConfig):
             output["ben_failures"] = attack_sizes * (1 - output[benign_metric])
 
         attack_label_col = self._get_attack_label_column(output)
-        attack_kind = (
-            attack_config.attack_kind if attack_config is not None else None
-        )
+        attack_kind = attack_config.attack_kind if attack_config is not None else None
 
         if attack_label_col is not None:
             adv_failures = pd.Series(np.nan, index=output.index, dtype=float)
             for row_index, attack_label in output[attack_label_col].items():
                 row_kind = (
-                    self._infer_attack_kind_from_label(attack_label)
-                    or attack_kind
+                    self._infer_attack_kind_from_label(attack_label) or attack_kind
                 )
                 for metric in self._candidate_attack_metrics_for_kind(row_kind):
                     if metric not in output.columns or pd.isna(
@@ -178,16 +169,14 @@ class SurvivalExperimentConfig(ExperimentConfig):
                     ):
                         continue
                     value = output.at[row_index, metric]
-                    adv_failures.at[row_index] = (
-                        self._failure_count_from_metric(
-                            value=value,
-                            metric=metric,
-                            attack_size=self._resolve_attack_size(
-                                output,
-                                row_index=row_index,
-                                attack_config=attack_config,
-                            ),
-                        )
+                    adv_failures.at[row_index] = self._failure_count_from_metric(
+                        value=value,
+                        metric=metric,
+                        attack_size=self._resolve_attack_size(
+                            output,
+                            row_index=row_index,
+                            attack_config=attack_config,
+                        ),
                     )
                     break
             if adv_failures.notna().any():

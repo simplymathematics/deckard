@@ -196,9 +196,7 @@ def calculate_lower_triangular_distance_matrix(
 ):
     n = len(X)
     m = len(Y)
-    assert (
-        m == n
-    ), "Lower triangular matrix can only be calculated for square matrices"
+    assert m == n, "Lower triangular matrix can only be calculated for square matrices"
     if metric in compressors:
         Cx = [compressors[metric](x) for x in X]
         Cy = [compressors[metric](y) for y in Y]
@@ -260,9 +258,7 @@ def calculate_upper_triangular_distance_matrix(
 ):
     n = len(X)
     m = len(Y)
-    assert (
-        m == n
-    ), "Upper triangular matrix can only be calculated for square matrices"
+    assert m == n, "Upper triangular matrix can only be calculated for square matrices"
     if metric in compressors:
         Cx = [compressors[metric](x) for x in X]
         Cy = [compressors[metric](y) for y in Y]
@@ -366,14 +362,10 @@ class StringDistanceTransformer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         X = np.array([str(x) for x in X])
         if self.lower_triangle:
-            self.calculate_fit_matrix = (
-                calculate_lower_triangular_distance_matrix
-            )
+            self.calculate_fit_matrix = calculate_lower_triangular_distance_matrix
             self.lower_triangle = True
         elif self.upper_triangle:
-            self.calculate_fit_matrix = (
-                calculate_upper_triangular_distance_matrix
-            )
+            self.calculate_fit_matrix = calculate_upper_triangular_distance_matrix
             self.upper_triangle = True
         else:
             self.calculate_fit_matrix = calculate_rectangular_distance_matrix

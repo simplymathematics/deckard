@@ -518,9 +518,7 @@ def test_art_defense_reordered_last_with_warning(caplog):
         pipeline.apply(estimator=object(), data=object())
 
     assert call_order == ["fairness", "art"]
-    assert any(
-        "automatically reordered" in rec.message for rec in caplog.records
-    )
+    assert any("automatically reordered" in rec.message for rec in caplog.records)
 
 
 # ---------------------------------------------------------------------------
@@ -654,9 +652,7 @@ def test_anjana_data_config_hash_stable_after_load(monkeypatch):
     h_before = hash(cfg)
     cfg()
     h_after = hash(cfg)
-    assert (
-        h_before == h_after
-    ), "AnjanaDataConfig hash must not change after loading"
+    assert h_before == h_after, "AnjanaDataConfig hash must not change after loading"
 
 
 def test_anjana_experiment_hash_stable_after_execution(monkeypatch):
@@ -689,9 +685,7 @@ def test_anjana_experiment_hash_stable_after_execution(monkeypatch):
     h_before = hash(exp)
     exp()
     h_after = hash(exp)
-    assert (
-        h_before == h_after
-    ), "ExperimentConfig hash must not change after execution"
+    assert h_before == h_after, "ExperimentConfig hash must not change after execution"
 
 
 # ---------------------------------------------------------------------------
@@ -767,6 +761,4 @@ def test_deckard_optimize_subcommand_help_in_sklearn_dir():
         timeout=60,
         env=env,
     )
-    assert (
-        result.returncode == 0
-    ), f"deckard optimize --help failed:\n{result.stderr}"
+    assert result.returncode == 0, f"deckard optimize --help failed:\n{result.stderr}"

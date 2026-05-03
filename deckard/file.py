@@ -40,12 +40,7 @@ attack_files = [
 ]
 other_files = ["score_file", "params_file"]
 all_files = (
-    data_files
-    + model_files
-    + defense_files
-    + log_files
-    + attack_files
-    + other_files
+    data_files + model_files + defense_files + log_files + attack_files + other_files
 )
 
 __all__ = [

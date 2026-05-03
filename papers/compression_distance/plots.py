@@ -72,9 +72,7 @@ if __name__ == "__main__":
                 assert (
                     f"{col}_mean" in group.columns
                 ), f"{col}_mean not in group columns"
-                assert (
-                    f"{col}_std" in group.columns
-                ), f"{col}_std not in group columns"
+                assert f"{col}_std" in group.columns, f"{col}_std not in group columns"
                 group = group.drop(col, axis=1)
                 # group = group.head(1)
             new_df = pd.concat([new_df, group])

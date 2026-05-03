@@ -140,9 +140,7 @@ def _get_sweeper_cfg(hydra_cfg):
 def _assert_multirun_sweeper(hydra_cfg):
     sweeper = _get_sweeper_cfg(hydra_cfg)
     assert sweeper is not None, "Sweeper must be specified in multirun mode."
-    assert (
-        "storage" in sweeper
-    ), "Storage must be specified in the sweeper config."
+    assert "storage" in sweeper, "Storage must be specified in the sweeper config."
     assert (
         "study_name" in sweeper
     ), "Study name must be specified in the sweeper config."

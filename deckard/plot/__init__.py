@@ -99,9 +99,7 @@ class PlotConfig(ConfigBase):
                     "Seaborn plotting requires optional dependency deckard[seaborn]",
                 )
             config_cls = (
-                SeabornPlotConfigList
-                if "plots" in self.kwargs
-                else SeabornPlotConfig
+                SeabornPlotConfigList if "plots" in self.kwargs else SeabornPlotConfig
             )
 
         self.config = config_cls(**self.kwargs)

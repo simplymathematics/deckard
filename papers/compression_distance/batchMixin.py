@@ -41,9 +41,7 @@ class BatchedMixin:
             X, y = args
             X_test = kwargs.pop("X_test", None)
             y_test = kwargs.pop("y_test", None)
-            log_file = (
-                self.training_log if hasattr(self, "training_log") else None
-            )
+            log_file = self.training_log if hasattr(self, "training_log") else None
             for i in tqdm(
                 range(self.nb_epoch),
                 desc="Epochs",
@@ -169,12 +167,8 @@ class BatchedMixin:
                 n_batches = 1
             for i in range(n_batches):
                 if append is True:
-                    new_X = X[
-                        i * self.batch_size : (i + 1) * self.batch_size
-                    ]  # noqa
-                    new_y = y[
-                        i * self.batch_size : (i + 1) * self.batch_size
-                    ]  # noqa
+                    new_X = X[i * self.batch_size : (i + 1) * self.batch_size]  # noqa
+                    new_y = y[i * self.batch_size : (i + 1) * self.batch_size]  # noqa
                     indices = func(
                         X=new_X,
                         y=new_y,

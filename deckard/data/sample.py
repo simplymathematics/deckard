@@ -85,9 +85,7 @@ class SplitSampler(BaseSampler):
                 stratify=stratify_col if stratify_col is not None else None,
             )
             stratify_sub = (
-                stratify_col.iloc[train_test_idx]
-                if stratify_col is not None
-                else None
+                stratify_col.iloc[train_test_idx] if stratify_col is not None else None
             )
             train_idx, test_idx = train_test_split(
                 train_test_idx,
@@ -162,9 +160,7 @@ class KFoldSampler(BaseSampler):
 
         # Stratification for the inner train/test split
         stratify_sub = (
-            stratify_col.iloc[train_val_idx]
-            if stratify_col is not None
-            else None
+            stratify_col.iloc[train_val_idx] if stratify_col is not None else None
         )
 
         train_idx, test_idx = train_test_split(
@@ -230,9 +226,7 @@ class ShuffleSampler(BaseSampler):
 
         # Stratification for the inner train/test split
         stratify_sub = (
-            stratify_col.iloc[train_test_idx]
-            if stratify_col is not None
-            else None
+            stratify_col.iloc[train_test_idx] if stratify_col is not None else None
         )
 
         train_idx, test_idx = train_test_split(

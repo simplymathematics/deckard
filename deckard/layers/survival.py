@@ -372,9 +372,7 @@ def survival_main(
         data_spec = {
             "dataset_name": normalized_data_spec,
             "target": (
-                None
-                if _is_lifelines_dataset_name(normalized_data_spec)
-                else target
+                None if _is_lifelines_dataset_name(normalized_data_spec) else target
             ),
             "classifier": False,
             "stratify": False,
@@ -525,9 +523,7 @@ def survival_main(
 
     if dataset is None:
         dataset = (
-            Path(attack_optuna_db).stem
-            if attack_optuna_db is not None
-            else data_name
+            Path(attack_optuna_db).stem if attack_optuna_db is not None else data_name
         )
 
     survival_config = (

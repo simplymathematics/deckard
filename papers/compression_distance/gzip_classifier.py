@@ -229,9 +229,7 @@ def ncd(
     """
 
     compressor_len = (
-        compressors[method]
-        if method in compressors.keys()
-        else compressors["gzip"]
+        compressors[method] if method in compressors.keys() else compressors["gzip"]
     )
     x1 = str(x1) if not isinstance(x1, str) else x1
     x2 = str(x2) if not isinstance(x2, str) else x2
@@ -1363,9 +1361,7 @@ if __name__ == "__main__":
     elif args.grid_search is True:
         # pop grid_search from the arguments
         args.grid_search = None
-        assert (
-            args.cross_validate is False
-        ), f"Expected {args.cross_validate} is None"
+        assert args.cross_validate is False, f"Expected {args.cross_validate} is None"
         grid_search_main(args)
     else:
         main(args)
