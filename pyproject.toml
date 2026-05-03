@@ -42,6 +42,10 @@ fairlearn = [
     "fairlearn",
 ]
 
+anjana = [
+    "anjana @ git+https://github.com/IFCA-Advanced-Computing/anjana.git",
+]
+
 yellowbrick = [
     "yellowbrick",
 ]
@@ -97,6 +101,7 @@ all  = [
     "seaborn",
     "yellowbrick",
     "fairlearn",
+    "anjana @ git+https://github.com/IFCA-Advanced-Computing/anjana.git",
     "lifelines",
     "matplotlib",
     "dvc",

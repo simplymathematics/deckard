@@ -31,6 +31,11 @@ except ImportError:  # pragma: no cover
     logger.debug("Fairlearn not found. Fairlearn model configs are unavailable.")
 
 try:
+    from .anjana import AnjanaModelConfig
+except ImportError:  # pragma: no cover
+    logger.debug("Anjana not found. Anjana model configs are unavailable.")
+
+try:
     import torch
     from .pytorch import PytorchModelConfig
 except ImportError:
@@ -46,5 +51,7 @@ if "FairlearnDefenseConfig" in globals():
             "FairlearnModelConfig",
         ],
     )
+if "AnjanaModelConfig" in globals():
+    __all__.extend(["AnjanaModelConfig"])
 if "PytorchModelConfig" in globals():
     __all__.extend(["PytorchModelConfig"])

@@ -59,6 +59,17 @@ except ImportError:  # pragma: no cover - optional dependency
     logger.debug("Fairlearn not found. Fairness score configs are unavailable.")
 
 try:
+    from .anjana import (  # noqa: E402
+        DefaultAnjanaDataScoreConfig,
+        DefaultAnjanaModelScoreConfig,
+        anjana_k_anonymity_score,
+        anjana_l_diversity_score,
+        anjana_t_closeness_score,
+    )
+except ImportError:  # pragma: no cover - optional dependency
+    logger.debug("Anjana not found. Anjana score configs are unavailable.")
+
+try:
     from .survival import (  # noqa: E402
         DefaultLifelinesConfig,
         survival_aic_score,
@@ -124,6 +135,17 @@ if "DefaultFairlearnConfig" in globals():
             "fairness_group_mean_prediction_difference",
             "fairness_group_mae_difference",
             "fairness_group_mse_difference",
+        ]
+    )
+
+if "DefaultAnjanaDataScoreConfig" in globals():
+    __all__.extend(
+        [
+            "DefaultAnjanaDataScoreConfig",
+            "DefaultAnjanaModelScoreConfig",
+            "anjana_k_anonymity_score",
+            "anjana_l_diversity_score",
+            "anjana_t_closeness_score",
         ]
     )
 

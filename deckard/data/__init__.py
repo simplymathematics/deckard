@@ -27,6 +27,11 @@ except ImportError:  # pragma: no cover
     logger.debug("Fairlearn not found. FairlearnDataConfig is unavailable.")
 
 try:
+    from .anjana import AnjanaDataConfig
+except ImportError:  # pragma: no cover
+    logger.debug("Anjana not found. AnjanaDataConfig is unavailable.")
+
+try:
     import torch
     from .pytorch import PytorchDataConfig, PytorchCustomDataConfig
 except ImportError:
@@ -45,5 +50,7 @@ __all__ = [
 
 if "FairlearnDataConfig" in globals():
     __all__.append("FairlearnDataConfig")
+if "AnjanaDataConfig" in globals():
+    __all__.append("AnjanaDataConfig")
 if "PytorchDataConfig" in globals():
     __all__.extend(["PytorchDataConfig", "PytorchCustomDataConfig"])
