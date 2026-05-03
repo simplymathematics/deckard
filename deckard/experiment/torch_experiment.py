@@ -1,16 +1,10 @@
 """PyTorch-specific experiment orchestration for Deckard.
 
-This module provides :class:`TorchExperimentConfig`, a strict subclass of
-:class:`ExperimentConfig` that:
-
-- Hardcodes ``library = "pytorch"``
-- Requires :class:`~deckard.data.pytorch.PytorchDataConfig` (or a subclass) for data
-- Requires :class:`~deckard.model.pytorch.PytorchModelConfig` (or a subclass) for model
-- Accepts ART :class:`~art.estimators.classification.PyTorchClassifier` and
-  :class:`~art.estimators.regression.PyTorchRegressor` wrappers when defenses/attacks
-  are applied to the model
-- Owns all device-reconciliation and device-setting logic for PyTorch (that
-  logic has been removed from the base :class:`ExperimentConfig`)
+Provides TorchExperimentConfig, a PyTorch-specific orchestration layer that
+enforces PyTorch backend consistency across all components: data, model, attack,
+and device handling. The library parameter is hardcoded to "pytorch", and all
+components must be PyTorch-compatible subclasses of the base config objects.
+Supports ART PyTorchClassifier and PyTorchRegressor wrappers for defenses.
 """
 
 import logging
@@ -25,13 +19,13 @@ logger = logging.getLogger(__name__)
 class TorchExperimentConfig(ExperimentConfig):
     """Experiment configuration for PyTorch models.
 
-    Enforces that:
-    * ``data`` is a :class:`~deckard.data.pytorch.PytorchDataConfig` instance.
-    * ``model`` is a :class:`~deckard.model.pytorch.PytorchModelConfig` instance.
-    * ``library`` is always ``"pytorch"`` — the field is present only for
-      serialisation compatibility; it cannot be overridden.
+    Enforces:
 
-    Device reconciliation and PyTorch-specific ``set_device`` logic live here
+    * ``data`` is a :class:`~deckard.data.pytorch.PytorchDataConfig` instance
+    * ``model`` is a :class:`~deckard.model.pytorch.PytorchModelConfig` instance
+    * ``library`` is always ``"pytorch"`` (serialization compatibility field only)
+
+    Device reconciliation and PyTorch-specific device-setting logic live here
     rather than in the base :class:`ExperimentConfig`.
     """
 

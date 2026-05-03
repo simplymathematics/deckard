@@ -19,8 +19,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Data" href="data.html" />
-    <link rel="prev" title="Experiment" href="experiment.html" /> 
+    <link rel="next" title="Utils" href="utils.html" />
+    <link rel="prev" title="Layers" href="layers.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,6 +45,32 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="score.html">Score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="layers.html">Layers</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">File</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.file.FileConfig"><code class="docutils literal notranslate"><span class="pre">FileConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.file.FileConfig.generate_file_hash"><code class="docutils literal notranslate"><span class="pre">FileConfig.generate_file_hash()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.file.FileConfig.get_hydra_job_num"><code class="docutils literal notranslate"><span class="pre">FileConfig.get_hydra_job_num()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#see-also">See also</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">File</a><ul>
@@ -72,6 +98,11 @@
 <li class="toctree-l2"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="anjana.html">Anjana Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 </li>
 </ul>
@@ -90,7 +121,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">deckard</a></li>
       <li class="breadcrumb-item active">File</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/file.rst.txt" rel="nofollow"> View page source</a>
@@ -192,8 +222,8 @@ output naming (for example in Hydra multirun contexts).</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="experiment.html" class="btn btn-neutral float-left" title="Experiment" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="data.html" class="btn btn-neutral float-right" title="Data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="layers.html" class="btn btn-neutral float-left" title="Layers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="utils.html" class="btn btn-neutral float-right" title="Utils" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

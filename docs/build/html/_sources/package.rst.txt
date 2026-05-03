@@ -86,7 +86,7 @@ Use the package through module entrypoints or the top-level CLI router:
 Examples And Prior Work
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-The [examples](../../examples) directory contains reproducible experiment
+The ``examples/`` directory contains reproducible experiment
 pipelines used for attack/defense studies, retraining workflows, survival-analysis
 based evaluations, and platform/power analyses.
 
@@ -109,8 +109,7 @@ Typical workflow composition includes:
 5. **Attack Execution** — Execute evasion or inference attacks via :class:`~deckard.attack.AttackConfig` with attack-specific scoring and metric aggregation.
 6. **Scoring & Artifact Persistence** — Normalize metrics via :class:`~deckard.score.ScorerDictConfig` and persist results via :class:`~deckard.file.FileConfig`.
 
-By standardizing these stages, Deckard reduces ambiguity in experiment setup
-and makes comparative benchmarking easier.
+By standardizing these stages, Deckard reduces ambiguity in experiment setup and makes comparative benchmarking easier.
 
 Reproducibility And Auditability
 --------------------------------
@@ -172,6 +171,40 @@ Deckard supports `Adversarial Robustness Toolbox (ART) <https://github.com/Trust
 
 :class:`deckard.data.DataPipelineConfig` wraps sklearn's :class:`~sklearn.pipeline.Pipeline` with timing instrumentation and optional normalization. Empty pipelines skip fitting entirely for efficiency.
 
+Trustworthiness Metrics & Defenses
+----------------------------------
+
+Deckard treats fairness, privacy, and adversarial robustness as first-class evaluation concerns:
+
+**Fairness & Group-Aware Analysis**:
+
+Evaluate model behavior across sensitive groups using :mod:`deckard.data.fairness`,
+:mod:`deckard.model.fairness`, and :mod:`deckard.score.fairness`. These modules
+integrate fairlearn for disparate impact, equalized odds, and demographic parity
+measurement. Use :class:`~deckard.score.attack.FairlearnAttackScorerConfig` to
+measure how adversarial robustness varies across groups.
+
+**Privacy & Anonymization**:
+
+Quantify privacy-utility tradeoffs via :mod:`deckard.data.anjana` and
+:mod:`deckard.score.anjana`. Configure anonymization strategies (suppression,
+bucketing, noise, generalization) and measure information loss, privacy
+guarantees, and accuracy impact.
+
+**Adversarial Robustness & Attacks**:
+
+Execute evasion, membership inference, and attribute inference attacks via
+:class:`~deckard.attack.AttackConfig` with full ART integration. Chain defenses
+using :class:`~deckard.model.DefensePipelineConfig`. Measure attack success
+rates, defense effectiveness, and certified robustness bounds. Combine with
+fairness analysis for group-aware robustness metrics.
+
+**Custom Scorers**:
+
+All metric types (fairness, privacy, attack, standard) integrate through
+:class:`deckard.score.ScorerDictConfig` for unified scoring interface. Define
+custom metrics or wrap scikit-learn, numpy, or domain-specific scoring functions.
+
 Extensions And Optional Backends
 ----------------------------------
 
@@ -180,29 +213,34 @@ Deckard maintains a modular, plugin-based architecture using Hydra's ``ConfigSto
 **Data Extensions**:
 
 - :mod:`deckard.data.fairness` — :class:`~deckard.data.fairness.FairlearnDataConfig` for group-aware sampling and fairness metrics (fairlearn integration)
-- :mod:`deckard.data.pytorch` — :class:`~deckard.data.pytorch.PyTorchDataConfig` for PyTorch dataset and DataLoader integration
+- :mod:`deckard.data.anjana` — :class:`~deckard.data.anjana.AnjanaDataConfig` for anonymization-aware data workflows
+- :mod:`deckard.data.pytorch` — :class:`~deckard.data.pytorch.PytorchDataConfig` for PyTorch dataset and DataLoader integration
 - :mod:`deckard.data.survival` — :class:`~deckard.data.survival.LifelinesDataConfig` for survival analysis with lifelines datasets and auxiliary models
 - :mod:`deckard.data.sample` — :class:`~deckard.data.sample.SplitSampler`, :class:`~deckard.data.sample.KFoldSampler`, :class:`~deckard.data.sample.ShuffleSampler` for robust sampling strategies
 
 **Model Extensions**:
 
 - :mod:`deckard.model.fairness` — :class:`~deckard.model.fairness.FairlearnModelConfig` for fairness-aware model fitting and fairlearn defense wrappers
-- :mod:`deckard.model.pytorch` — :class:`~deckard.model.pytorch.PyTorchModelConfig` for PyTorch-native model training and prediction
-- :mod:`deckard.model.survival` — :class:`~deckard.model.survival.LifelinesModelConfig` for survival models with lifelines estimators
+- :mod:`deckard.model.anjana` — :class:`~deckard.model.anjana.AnjanaModelConfig` for anonymization-aware model paths
+- :mod:`deckard.model.pytorch` — :class:`~deckard.model.pytorch.PytorchModelConfig` for PyTorch-native model training and prediction
+- :mod:`deckard.model.survival` — :class:`~deckard.model.survival.SurvivalModelConfig` for survival models with lifelines estimators
 - :mod:`deckard.model.defend` — :class:`~deckard.model.defend.DefenseConfig` and :class:`~deckard.model.defend.DefensePipelineConfig` for ART defense application
 
 **Scoring Extensions**:
 
-- :mod:`deckard.score.fairness` — fairness metrics (disparate impact, equalized odds, etc.) via :class:`~deckard.score.fairness.FairnessScoreConfig`
-- :mod:`deckard.score.survival` — survival metrics (concordance, AIC, BIC) via :class:`~deckard.score.survival.SurvivalScoreConfig`
-- :mod:`deckard.score.attack` — attack-specific metrics with attack kind–aware routing via :class:`~deckard.score.attack.AttackScorerConfig`
-- :mod:`deckard.score.data` — data inspection metrics (distributions, imbalance) via :class:`~deckard.score.data.DataScoreConfig`
+- :mod:`deckard.score.fairness` — fairness metrics via :class:`~deckard.score.fairness.FairlearnScoreDictConfig` and default fairlearn scorer profiles
+- :mod:`deckard.score.anjana` — anonymization metrics via :class:`~deckard.score.anjana.DefaultAnjanaDataScoreConfig` and :class:`~deckard.score.anjana.DefaultAnjanaModelScoreConfig`
+- :mod:`deckard.score.survival` — survival metrics (concordance, AIC, BIC) via :class:`~deckard.score.survival.DefaultLifelinesConfig`
+- :mod:`deckard.score.attack` — attack-specific metrics with attack kind-aware routing via :class:`~deckard.score.attack.AttackScorerConfig`
+- :mod:`deckard.score.attack` — fairness-stratified attack scoring via :class:`~deckard.score.attack.FairlearnAttackScorerConfig`
+- :mod:`deckard.score.data` — data inspection metrics (distributions, imbalance) via :class:`~deckard.score.data.DefaultDataClassificationConfig` and :class:`~deckard.score.data.DefaultDataRegressionConfig`
 
 **Other Extensions**:
 
 - :mod:`deckard.attack` — evasion, membership inference, and attribute inference attacks
 - :mod:`deckard.plot` — visualization (seaborn, yellowbrick, survival curves)
 - :mod:`deckard.layers` — advanced workflows (Optuna integration, multi-run optimization)
+- :mod:`deckard.experiment.torch_experiment` — PyTorch-focused experiment orchestration
 - :mod:`deckard.experiment.survival` — survival-specific experiment orchestration
 
 Troubleshooting
@@ -215,6 +253,11 @@ Troubleshooting
 See also
 ~~~~~~~~
 
-* :doc:`experiment`
-* :doc:`modules`
-* :doc:`utils`
+* :doc:`modules` — complete API documentation tree
+* :doc:`pytorch` — PyTorch integration guide
+* :doc:`anjana` — anonymization support
+* :doc:`lifelines` — survival analysis
+* :doc:`seaborn` — statistical visualization
+* :doc:`yellowbrick` — model interpretability
+* :doc:`experiment` — experiment orchestration
+* :doc:`utils` — utility functions

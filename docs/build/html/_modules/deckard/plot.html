@@ -42,6 +42,15 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../package.html">Package Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../score.html">Score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plot.html">Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../layers.html">Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../file.html">File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../modules.html">deckard</a></li>
 </ul>
 
@@ -83,7 +92,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigBase</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..experiment</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentConfig</span>
+
+<span class="c1"># Import declarations to register static plot configs with ConfigStore.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">declarations</span>  <span class="c1"># noqa: F401</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.seaborn_plots</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -95,21 +108,26 @@
     <span class="n">SeabornPlotConfigList</span> <span class="o">=</span> <span class="kc">None</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">lifelines</span>  <span class="c1"># noqa: F401</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">.survival</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurvivalSeabornPlotConfigList</span><span class="p">,</span> <span class="n">SurvivalSeabornPlotterConfig</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.survival</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">SurvivalSeabornPlotConfigList</span><span class="p">,</span>
+        <span class="n">SurvivalSeabornPlotterConfig</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">_</span> <span class="o">=</span> <span class="p">(</span><span class="n">SurvivalSeabornPlotConfigList</span><span class="p">,</span> <span class="n">SurvivalSeabornPlotterConfig</span><span class="p">)</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Lifelines not found. Survival plotting configs are unavailable.&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+        <span class="s2">&quot;Lifelines not found. Survival plotting configs are unavailable.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">SurvivalSeabornPlotConfigList</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">SurvivalSeabornPlotterConfig</span> <span class="o">=</span> <span class="kc">None</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.yellowbrick_plots</span><span class="w"> </span><span class="kn">import</span> <span class="n">YellowbrickConfigList</span><span class="p">,</span> <span class="n">YellowbrickPlotConfig</span>
+
+    <span class="n">_</span> <span class="o">=</span> <span class="p">(</span><span class="n">YellowbrickConfigList</span><span class="p">,</span> <span class="n">YellowbrickPlotConfig</span><span class="p">)</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
     <span class="n">YellowbrickConfigList</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">YellowbrickPlotConfig</span> <span class="o">=</span> <span class="kc">None</span>
-
-
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="PlotConfig">
@@ -141,7 +159,9 @@
         <span class="n">has_data_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data_file&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
         <span class="k">if</span> <span class="n">has_experiment</span> <span class="ow">and</span> <span class="n">has_data_file</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Provide either &#39;experiment&#39; or &#39;data_file&#39;, not both.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Provide either &#39;experiment&#39; or &#39;data_file&#39;, not both.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">has_experiment</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">has_data_file</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;Missing required source key: provide &#39;experiment&#39; or &#39;data_file&#39;.&quot;</span><span class="p">,</span>

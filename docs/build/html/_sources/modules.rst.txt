@@ -14,4 +14,14 @@ deckard
    score
    utils
    layers
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Extensions:
+
+   pytorch
+   anjana
+   lifelines
+   seaborn
+   yellowbrick
    

@@ -19,8 +19,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Score" href="score.html" />
-    <link rel="prev" title="Attack" href="attack.html" /> 
+    <link rel="next" title="Layers" href="layers.html" />
+    <link rel="prev" title="Experiment" href="experiment.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,6 +45,129 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="score.html">Score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiment</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Plot</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#plotting-apis">Plotting APIs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.plot.PlotConfig"><code class="docutils literal notranslate"><span class="pre">PlotConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.PlotConfig.config"><code class="docutils literal notranslate"><span class="pre">PlotConfig.config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.PlotConfig.kwargs"><code class="docutils literal notranslate"><span class="pre">PlotConfig.kwargs</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.data"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.data_file"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.data_file</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.hue"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.hue</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.kwargs"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.kwargs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.legend_title"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.legend_title</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.plot_file"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.plot_file</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.plot_type"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.plot_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.rc_config"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.rc_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.style"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.style</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.title"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.title</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.x"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.x</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.xlabel"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.xlabel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.xscale"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.xscale</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.y"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.y</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.ylabel"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.ylabel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig.yscale"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig.yscale</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.plot.SeabornPlotConfigList"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfigList</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfigList.data_file"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfigList.data_file</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfigList.plots"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfigList.plots</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotConfigList"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotConfigList.add_model_plots"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList.add_model_plots()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotConfigList.models"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList.models</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotConfigList.orchestrate_survival_models"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList.orchestrate_survival_models()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotConfigList.plots_by_model"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList.plots_by_model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotConfigList.render_all"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList.render_all()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotConfigList.runtime_data"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList.runtime_data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotConfigList.t0s"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList.t0s</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotterConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotterConfig.build_calibration_plot"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig.build_calibration_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotterConfig.build_coefficients_plot"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig.build_coefficients_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotterConfig.calibration_file"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig.calibration_file</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotterConfig.calibration_title"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig.calibration_title</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotterConfig.coefficients_file"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig.coefficients_file</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotterConfig.coefficients_title"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig.coefficients_title</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotterConfig.plot_aft"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig.plot_aft()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotterConfig.plot_partial_effects"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig.plot_partial_effects()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotterConfig.plot_qq"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig.plot_qq()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotterConfig.plot_summary"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig.plot_summary()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.plot.YellowbrickConfigList"><code class="docutils literal notranslate"><span class="pre">YellowbrickConfigList</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickConfigList.experiment"><code class="docutils literal notranslate"><span class="pre">YellowbrickConfigList.experiment</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickConfigList.plot_folder"><code class="docutils literal notranslate"><span class="pre">YellowbrickConfigList.plot_folder</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickConfigList.plots"><code class="docutils literal notranslate"><span class="pre">YellowbrickConfigList.plots</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickConfigList.rc_config"><code class="docutils literal notranslate"><span class="pre">YellowbrickConfigList.rc_config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.classes"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.classes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.experiment"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.experiment</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.features"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.features</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.parse_cv"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.parse_cv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.parse_range"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.parse_range()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.plot_params"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.plot_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.plot_type"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.plot_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.rc_config"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.rc_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.save_path"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.save_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.show"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.show()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.title"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.title</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.visualize"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.visualize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.visualize_classifiers"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.visualize_classifiers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.visualize_clusters"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.visualize_clusters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.visualize_features"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.visualize_features()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.visualize_model_selection"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.visualize_model_selection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.visualize_regressors"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.visualize_regressors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig.visualize_targets"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.visualize_targets()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#survival-plot-extension">Survival Plot Extension</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.plot.survival.SurvivalSeabornPlotConfigList"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.survival.SurvivalSeabornPlotConfigList.add_model_plots"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList.add_model_plots()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.survival.SurvivalSeabornPlotConfigList.orchestrate_survival_models"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList.orchestrate_survival_models()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.survival.SurvivalSeabornPlotConfigList.render_all"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList.render_all()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.plot.survival.SurvivalSeabornPlotterConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.plot.yellowbrick_plots.YellowbrickConfigList"><code class="docutils literal notranslate"><span class="pre">YellowbrickConfigList</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.visualize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize_features"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.visualize_features()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#yellowbrick-examples-smoke-tested">Yellowbrick Examples (Smoke-Tested)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#yellowbrick-experimentconfig">Yellowbrick + ExperimentConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#seaborn-support">Seaborn Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#see-also">See also</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="layers.html">Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="file.html">File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="file.html">File</a></li>
@@ -71,6 +194,9 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#yellowbrick-examples-smoke-tested">Yellowbrick Examples (Smoke-Tested)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#yellowbrick-experimentconfig">Yellowbrick + ExperimentConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#seaborn-support">Seaborn Support</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
 </ul>
 </li>
@@ -84,6 +210,11 @@
 <li class="toctree-l2"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="anjana.html">Anjana Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 </li>
 </ul>
@@ -102,7 +233,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">deckard</a></li>
       <li class="breadcrumb-item active">Plot</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/plot.rst.txt" rel="nofollow"> View page source</a>
@@ -610,6 +740,129 @@ the plot again.</p>
 </section>
 <section id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<section id="yellowbrick-examples-smoke-tested">
+<h3>Yellowbrick Examples (Smoke-Tested)<a class="headerlink" href="#yellowbrick-examples-smoke-tested" title="Link to this heading"></a></h3>
+<p>Deckard ships a broad set of Yellowbrick plot presets under
+<code class="docutils literal notranslate"><span class="pre">examples/sklearn/config/plot</span></code>. These are designed to be selected through
+Hydra’s <code class="docutils literal notranslate"><span class="pre">plot=&lt;name&gt;</span></code> override when running from
+<code class="docutils literal notranslate"><span class="pre">examples/sklearn/config/default.yaml</span></code>.</p>
+<p>Frequently used examples include:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">plot=roc_auc</span></code> (<code class="docutils literal notranslate"><span class="pre">roc_auc.yaml</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plot=precision_recall_curve</span></code> (<code class="docutils literal notranslate"><span class="pre">precision_recall_curve.yaml</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plot=classfication_report</span></code> (<code class="docutils literal notranslate"><span class="pre">classfication_report.yaml</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plot=class_balance</span></code> (<code class="docutils literal notranslate"><span class="pre">class_balance.yaml</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plot=feature_importances</span></code> / <code class="docutils literal notranslate"><span class="pre">plot=feature_correlation</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plot=learning_curve</span></code> / <code class="docutils literal notranslate"><span class="pre">plot=validation_curve</span></code></p></li>
+</ul>
+<p>Example commands:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># ROC-AUC visualization</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-path<span class="w"> </span>examples/sklearn/config<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-name<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="nv">plot</span><span class="o">=</span>roc_auc
+
+<span class="c1"># Classification report visualization</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-path<span class="w"> </span>examples/sklearn/config<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-name<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="nv">plot</span><span class="o">=</span>classfication_report
+
+<span class="c1"># Learning-curve visualization</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-path<span class="w"> </span>examples/sklearn/config<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-name<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="nv">plot</span><span class="o">=</span>learning_curve
+</pre></div>
+</div>
+</section>
+<section id="yellowbrick-experimentconfig">
+<h3>Yellowbrick + ExperimentConfig<a class="headerlink" href="#yellowbrick-experimentconfig" title="Link to this heading"></a></h3>
+<p>Yellowbrick plotting is experiment-oriented. In practice, a
+<a class="reference internal" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig" title="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.plot.yellowbrick_plots.YellowbrickPlotConfig</span></code></a> receives an
+<code class="docutils literal notranslate"><span class="pre">experiment</span></code> payload (or a <code class="docutils literal notranslate"><span class="pre">YellowbrickConfigList</span></code> of multiple plots), then
+uses that <a class="reference internal" href="experiment.html#deckard.experiment.ExperimentConfig" title="deckard.experiment.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.experiment.ExperimentConfig</span></code></a> object to ensure model and
+dataset artifacts are prepared before rendering visual diagnostics.</p>
+<p>The default plot config in <code class="docutils literal notranslate"><span class="pre">examples/sklearn/config/plot/default.yaml</span></code> shows
+the expected shape:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">yellowbrick</span>
+<span class="nt">plot_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">roc_auc</span>
+<span class="nt">experiment</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">data</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${data}</span>
+<span class="w">  </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${model}</span>
+<span class="w">  </span><span class="nt">defense</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${defense}</span>
+<span class="w">  </span><span class="nt">attack</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${attack}</span>
+<span class="w">  </span><span class="nt">files</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${files}</span>
+<span class="w">  </span><span class="nt">experiment_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${experiment_name}</span>
+</pre></div>
+</div>
+<p>Base programmatic example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.plot</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlotConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.experiment</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.file</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileConfig</span>
+
+<span class="n">exp</span> <span class="o">=</span> <span class="n">ExperimentConfig</span><span class="p">(</span>
+   <span class="n">data</span><span class="o">=</span><span class="n">DataConfig</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;adult&quot;</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+   <span class="n">model</span><span class="o">=</span><span class="n">ModelConfig</span><span class="p">(</span>
+      <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;sklearn.ensemble.RandomForestClassifier&quot;</span><span class="p">,</span>
+      <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+   <span class="p">),</span>
+   <span class="n">files</span><span class="o">=</span><span class="n">FileConfig</span><span class="p">(),</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">plot_cfg</span> <span class="o">=</span> <span class="n">PlotConfig</span><span class="p">(</span>
+   <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;yellowbrick&quot;</span><span class="p">,</span>
+   <span class="n">plot_type</span><span class="o">=</span><span class="s2">&quot;roc_auc&quot;</span><span class="p">,</span>
+   <span class="n">experiment</span><span class="o">=</span><span class="n">exp</span><span class="p">,</span>
+   <span class="n">plot_folder</span><span class="o">=</span><span class="s2">&quot;plots&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">plot_cfg</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Attack support status for Yellowbrick: attack visualizers are not currently
+supported in the Yellowbrick plotting path. Yellowbrick plots operate on model
+and dataset experiment outputs; attack-specific plots should be treated as a
+future extension.</p>
+</section>
+<section id="seaborn-support">
+<h3>Seaborn Support<a class="headerlink" href="#seaborn-support" title="Link to this heading"></a></h3>
+<p>Seaborn plotting is supported through
+<a class="reference internal" href="#deckard.plot.SeabornPlotConfig" title="deckard.plot.seaborn_plots.SeabornPlotConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.plot.seaborn_plots.SeabornPlotConfig</span></code></a> and
+<a class="reference internal" href="#deckard.plot.PlotConfig" title="deckard.plot.PlotConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.plot.PlotConfig</span></code></a> when <code class="docutils literal notranslate"><span class="pre">backend=seaborn</span></code> is selected.</p>
+<p>Unlike Yellowbrick presets, Seaborn plots are usually configured by specifying
+<code class="docutils literal notranslate"><span class="pre">plot_type</span></code> (<code class="docutils literal notranslate"><span class="pre">scatter</span></code>, <code class="docutils literal notranslate"><span class="pre">line</span></code>, <code class="docutils literal notranslate"><span class="pre">hist</span></code>, <code class="docutils literal notranslate"><span class="pre">cat</span></code>, <code class="docutils literal notranslate"><span class="pre">bar</span></code>, <code class="docutils literal notranslate"><span class="pre">heatmap</span></code>),
+<code class="docutils literal notranslate"><span class="pre">x</span></code>/<code class="docutils literal notranslate"><span class="pre">y</span></code> columns, and a <code class="docutils literal notranslate"><span class="pre">data_file</span></code>.</p>
+<p>Programmatic Seaborn example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.plot</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlotConfig</span>
+
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">PlotConfig</span><span class="p">(</span>
+   <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;seaborn&quot;</span><span class="p">,</span>
+   <span class="n">plot_type</span><span class="o">=</span><span class="s2">&quot;scatter&quot;</span><span class="p">,</span>
+   <span class="n">data_file</span><span class="o">=</span><span class="s2">&quot;outputs/scores.csv&quot;</span><span class="p">,</span>
+   <span class="n">x</span><span class="o">=</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span>
+   <span class="n">y</span><span class="o">=</span><span class="s2">&quot;evasion_accuracy&quot;</span><span class="p">,</span>
+   <span class="n">hue</span><span class="o">=</span><span class="s2">&quot;defense_alias&quot;</span><span class="p">,</span>
+   <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Accuracy vs Evasion Accuracy&quot;</span><span class="p">,</span>
+   <span class="n">plot_file</span><span class="o">=</span><span class="s2">&quot;plots/scatter_accuracy_vs_evasion.png&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">cfg</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>You can also define a Seaborn plot directly in YAML:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">seaborn</span>
+<span class="nt">plot_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scatter</span>
+<span class="nt">data_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">outputs/scores.csv</span>
+<span class="nt">x</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">accuracy</span>
+<span class="nt">y</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">evasion_accuracy</span>
+<span class="nt">hue</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">defense_alias</span>
+<span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Accuracy vs Evasion Accuracy</span>
+<span class="nt">plot_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">plots/scatter_accuracy_vs_evasion.png</span>
+</pre></div>
+</div>
+</section>
 <section id="programmatic-example">
 <h3>Programmatic example<a class="headerlink" href="#programmatic-example" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.plot</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlotConfig</span>
@@ -630,15 +883,27 @@ experiment context lazily before rendering to avoid repeated setup.</p>
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
 <ul class="simple">
 <li><p>Confirm plotting dependencies are installed for the selected backend.</p></li>
+<li><dl class="simple">
+<dt>For Yellowbrick presets, ensure the selected <code class="docutils literal notranslate"><span class="pre">plot=&lt;name&gt;</span></code> exists under</dt><dd><p><code class="docutils literal notranslate"><span class="pre">examples/sklearn/config/plot</span></code>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>For Seaborn, ensure <code class="docutils literal notranslate"><span class="pre">data_file</span></code> exists and that <code class="docutils literal notranslate"><span class="pre">x</span></code>/<code class="docutils literal notranslate"><span class="pre">y</span></code>/<code class="docutils literal notranslate"><span class="pre">hue</span></code> columns</dt><dd><p>are present in that dataset.</p>
+</dd>
+</dl>
+</li>
 <li><p>Verify input score/data files exist and are in expected schema.</p></li>
 <li><p>Use explicit output paths to avoid confusion in multirun directories.</p></li>
 </ul>
 <section id="see-also">
 <h3>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><a class="reference internal" href="layers.html"><span class="doc">Layers</span></a></p></li>
-<li><p><a class="reference internal" href="experiment.html"><span class="doc">Experiment</span></a></p></li>
-<li><p><a class="reference internal" href="score.html"><span class="doc">Score</span></a></p></li>
+<li><p><a class="reference internal" href="experiment.html"><span class="doc">Experiment</span></a> — experiment orchestration and result generation</p></li>
+<li><p><a class="reference internal" href="score.html"><span class="doc">Score</span></a> — scoring framework that produces plotting data</p></li>
+<li><p><a class="reference internal" href="seaborn.html"><span class="doc">Seaborn Visualization</span></a> — statistical visualization with Seaborn</p></li>
+<li><p><a class="reference internal" href="yellowbrick.html"><span class="doc">Yellowbrick Visualization</span></a> — model interpretability visualizations</p></li>
+<li><p><a class="reference internal" href="layers.html"><span class="doc">Layers</span></a> — advanced workflows</p></li>
 </ul>
 </section>
 </section>
@@ -648,8 +913,8 @@ experiment context lazily before rendering to avoid repeated setup.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="attack.html" class="btn btn-neutral float-left" title="Attack" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="score.html" class="btn btn-neutral float-right" title="Score" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="experiment.html" class="btn btn-neutral float-left" title="Experiment" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="layers.html" class="btn btn-neutral float-right" title="Layers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -8,6 +8,16 @@ entrypoints for end-to-end experiment execution.
    :members:
    :show-inheritance:
 
+Torch Extension
+---------------
+
+PyTorch-specific experiment orchestration is available via
+:class:`deckard.experiment.torch_experiment.TorchExperimentConfig` in the
+optional :mod:`deckard.experiment.torch_experiment` module.
+
+Use this extension when you need PyTorch model/data orchestration while keeping
+the same high-level experiment lifecycle as :class:`deckard.experiment.ExperimentConfig`.
+
 Survival Extension
 ------------------
 
@@ -29,6 +39,12 @@ The experiment layer coordinates the full Deckard workflow by composing:
 - score aggregation and file outputs via :mod:`deckard.file`
 
 It is the primary integration point for reproducible end-to-end runs.
+
+Available experiment entrypoints:
+
+- :class:`deckard.experiment.ExperimentConfig` (default)
+- :class:`deckard.experiment.torch_experiment.TorchExperimentConfig` (PyTorch)
+- :class:`deckard.experiment.survival.SurvivalExperimentConfig` (survival)
 
 Usage
 -----
@@ -54,6 +70,16 @@ Run an experiment from the project root:
       attack.attack_type=art.attacks.evasion.FastGradientMethod \
       attack.attack_params.eps=0.1 \
       model.defense.defenses[0].defense_name=art.defences.preprocessor.FeatureSqueezing
+
+   # PyTorch example config
+   python -m deckard optimize \
+      --config-path examples/pytorch/config \
+      --config-name torch_default
+
+   # Fairness-focused sklearn config
+   python -m deckard optimize \
+      --config-path examples/sklearn/config \
+      --config-name fairness-default
 
 Programmatic example
 ~~~~~~~~~~~~~~~~~~~~
@@ -140,9 +166,11 @@ Troubleshooting
 See also
 ~~~~~~~~
 
-* :doc:`data`
-* :doc:`model`
-* :doc:`attack`
-* :doc:`file`
-* :doc:`score`
-* :doc:`utils`
+* :doc:`data` — data configuration and loading
+* :doc:`model` — model configuration and training
+* :doc:`attack` — attack configuration
+* :doc:`file` — result serialization
+* :doc:`score` — scoring framework
+* :doc:`pytorch` — PyTorch experiment orchestration
+* :doc:`lifelines` — survival experiment orchestration
+* :doc:`utils` — utility functions

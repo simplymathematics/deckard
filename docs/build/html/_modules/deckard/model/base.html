@@ -42,6 +42,15 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../package.html">Package Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../score.html">Score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../plot.html">Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../layers.html">Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../file.html">File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
 </ul>
 
@@ -240,10 +249,10 @@
     <span class="n">alias</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">defense</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">plugins</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">scorer</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="s2">&quot;ScorerDictConfig&quot;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">AUTO_SCORER</span>
+    <span class="n">scorer</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">AUTO_SCORER</span>
 
     <span class="c1"># Runtime/model state fields</span>
-    <span class="n">_model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BaseEstimator</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_model</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">score_dict</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">training_time</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">prediction_time</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -258,7 +267,11 @@
     <span class="n">training_probabilities</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">probabilities</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_target_</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">_plugin_objects</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_plugin_objects</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">_defense_pipeline</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -357,8 +370,7 @@
             <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;model_params must be a dict if model does not have get_params method. Got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_params</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="s2">&quot;predict_proba&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">probability</span> <span class="o">=</span> <span class="kc">True</span>
-    
-        
+
     <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">()</span>
 
@@ -367,7 +379,9 @@
             <span class="n">spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">plugin_spec</span><span class="p">)</span>
             <span class="n">class_path</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;_target_&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">class_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Plugin dict must include &#39;name&#39; or &#39;_target_&#39;&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Plugin dict must include &#39;name&#39; or &#39;_target_&#39;&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="k">return</span> <span class="n">load_class</span><span class="p">(</span><span class="n">class_path</span><span class="p">,</span> <span class="o">**</span><span class="n">spec</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plugin_spec</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -382,7 +396,9 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plugin_objects</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">plugin_specs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plugin_specs</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;plugins must be a list, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">plugin_specs</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;plugins must be a list, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">plugin_specs</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_plugin_objects</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_instantiate_plugin</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">plugin_specs</span>
             <span class="p">]</span>
@@ -434,8 +450,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">defense</span> <span class="o">=</span> <span class="n">DefensePipelineConfig</span><span class="o">.</span><span class="n">coerce</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_defense_pipeline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_defense_pipeline</span>
-    
-    
+
     <span class="k">def</span><span class="w"> </span><span class="nf">get_art_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
 
         <span class="n">art_class</span> <span class="o">=</span> <span class="p">(</span>
@@ -448,7 +463,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">init_params</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">&quot;input_shape&quot;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
-                <span class="s2">&quot;nb_classes&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">y_train</span><span class="p">))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;nb_classes&quot;</span><span class="p">:</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">y_train</span><span class="p">))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
             <span class="p">}</span>
         <span class="k">if</span> <span class="s2">&quot;preprocessing&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">init_params</span><span class="p">:</span>
             <span class="n">init_params</span><span class="p">[</span><span class="s2">&quot;preprocessing&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -598,7 +613,10 @@
                 <span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">row_sums</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">row_sums</span> <span class="o">&gt;</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">))</span>
                 <span class="k">if</span> <span class="n">invalid_matrix</span><span class="p">:</span>
                     <span class="n">base_model</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">base_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">base_model</span><span class="p">,</span> <span class="s2">&quot;predict&quot;</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">base_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span>
+                        <span class="n">base_model</span><span class="p">,</span>
+                        <span class="s2">&quot;predict&quot;</span><span class="p">,</span>
+                    <span class="p">):</span>
                         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                             <span class="s2">&quot;Detected invalid classifier prediction matrix from wrapped model; &quot;</span>
                             <span class="s2">&quot;falling back to underlying estimator predictions.&quot;</span><span class="p">,</span>
@@ -631,7 +649,11 @@
 
         <span class="k">return</span> <span class="n">y_proba</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_classification_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_classification_scores</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">y_true</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
+        <span class="n">y_pred</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes classification metrics including accuracy, precision, recall, and F1-score.</span>
 
@@ -652,7 +674,9 @@
 <span class="sd">            AssertionError: If y_true and y_pred do not have the same length.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Ensure that y_true and y_pred have the same length</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_pred</span><span class="p">),</span> <span class="s2">&quot;y_true and y_pred must have the same length&quot;</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="n">y_pred</span><span class="p">,</span>
+        <span class="p">),</span> <span class="s2">&quot;y_true and y_pred must have the same length&quot;</span>
         <span class="c1"># Ensure that y_true.shape and y_pred.shape are compatible</span>
         <span class="n">y_true_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span>
         <span class="n">y_pred_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
@@ -676,7 +700,11 @@
                     <span class="n">sorted_classes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">classes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
                     <span class="n">low_label</span> <span class="o">=</span> <span class="n">sorted_classes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                     <span class="n">high_label</span> <span class="o">=</span> <span class="n">sorted_classes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-                    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">binary_scores</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">high_label</span><span class="p">,</span> <span class="n">low_label</span><span class="p">)</span>
+                    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                        <span class="n">binary_scores</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">,</span>
+                        <span class="n">high_label</span><span class="p">,</span>
+                        <span class="n">low_label</span><span class="p">,</span>
+                    <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">y_pred</span> <span class="o">=</span> <span class="p">(</span><span class="n">binary_scores</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
@@ -704,7 +732,12 @@
                 <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
                 <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">recall</span> <span class="o">=</span> <span class="n">recall_score</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">recall</span> <span class="o">=</span> <span class="n">recall_score</span><span class="p">(</span>
+                <span class="n">y_true</span><span class="p">,</span>
+                <span class="n">y_pred</span><span class="p">,</span>
+                <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
+                <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="n">f1</span> <span class="o">=</span> <span class="n">f1_score</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -749,7 +782,9 @@
 <span class="sd">            AssertionError: If y_true and y_pred do not have the same length.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Ensure that y_true and y_pred have the same length</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_pred</span><span class="p">),</span> <span class="s2">&quot;y_true and y_pred must have the same length&quot;</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="n">y_pred</span><span class="p">,</span>
+        <span class="p">),</span> <span class="s2">&quot;y_true and y_pred must have the same length&quot;</span>
         <span class="n">mse</span> <span class="o">=</span> <span class="p">((</span><span class="n">y_true</span> <span class="o">-</span> <span class="n">y_pred</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
         <span class="n">rmse</span> <span class="o">=</span> <span class="n">mse</span><span class="o">**</span><span class="mf">0.5</span>
         <span class="n">mae</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y_true</span> <span class="o">-</span> <span class="n">y_pred</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
@@ -770,7 +805,13 @@
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">scores</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_score</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">y_true</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
+        <span class="n">y_pred</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
+        <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute and log performance scores for classification or regression.</span>
 
@@ -797,7 +838,11 @@
                 <span class="sa">f</span><span class="s2">&quot;ModelConfig.scorer must be callable or None, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="n">scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="p">(</span><span class="n">y_true</span><span class="o">=</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="o">=</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">round_scores</span><span class="p">(</span><span class="n">scores</span><span class="o">=</span><span class="n">scores</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">y_true</span><span class="p">),</span> <span class="n">logger_obj</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">round_scores</span><span class="p">(</span>
+            <span class="n">scores</span><span class="o">=</span><span class="n">scores</span><span class="p">,</span>
+            <span class="n">n_samples</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">y_true</span><span class="p">),</span>
+            <span class="n">logger_obj</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_decode_predictions_for_persistence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Persist classifier outputs with explicit probability-vs-label behavior.&quot;&quot;&quot;</span>
@@ -807,10 +852,6 @@
         <span class="k">if</span> <span class="n">y_pred_arr</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">y_pred</span>
         <span class="k">if</span> <span class="n">y_pred_arr</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">y_pred</span>
-
-        <span class="c1"># Explicitly preserve matrix outputs when probability mode is enabled.</span>
-        <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">probability</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">y_pred</span>
 
         <span class="k">if</span> <span class="n">y_pred_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -828,7 +869,11 @@
                     <span class="n">sorted_classes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">classes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
                     <span class="n">low_label</span> <span class="o">=</span> <span class="n">sorted_classes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                     <span class="n">high_label</span> <span class="o">=</span> <span class="n">sorted_classes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-                    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">binary_scores</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">high_label</span><span class="p">,</span> <span class="n">low_label</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                        <span class="n">binary_scores</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">,</span>
+                        <span class="n">high_label</span><span class="p">,</span>
+                        <span class="n">low_label</span><span class="p">,</span>
+                    <span class="p">)</span>
             <span class="k">return</span> <span class="p">(</span><span class="n">binary_scores</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">y_pred_arr</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -852,7 +897,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">predictions</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span>
+            <span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Loaded predictions are not in a valid format&quot;</span><span class="p">)</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Predictions loaded from </span><span class="si">{</span><span class="n">filepath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
@@ -910,7 +958,10 @@
 <span class="sd">            If training or prediction time is not set when corresponding predictions are loaded.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Load the training predictions if provided</span>
-        <span class="k">if</span> <span class="n">train_predictions_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">train_predictions_file</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">train_predictions_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">train_predictions_file</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">training_predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_predictions</span><span class="p">(</span>
                 <span class="n">train_predictions_file</span><span class="p">,</span>
             <span class="p">)</span>
@@ -1086,7 +1137,10 @@
             <span class="n">test_probabilities_file</span><span class="o">=</span><span class="n">test_probabilities_file</span><span class="p">,</span>
             <span class="n">score_file</span><span class="o">=</span><span class="n">score_file</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="n">train_predictions_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_predictions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">train_predictions_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_predictions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">save_data</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">training_predictions</span><span class="p">,</span>
                 <span class="n">train_predictions_file</span><span class="p">,</span>
@@ -1097,7 +1151,10 @@
             <span class="n">training_probabilities_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_probabilities</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">save_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">training_probabilities</span><span class="p">,</span> <span class="n">training_probabilities_file</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_data</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">training_probabilities</span><span class="p">,</span>
+                <span class="n">training_probabilities_file</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">if</span> <span class="n">test_probabilities_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">probabilities</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">save_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">probabilities</span><span class="p">,</span> <span class="n">test_probabilities_file</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">score_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1205,14 +1262,21 @@
                             <span class="k">if</span> <span class="s2">&quot;loop of ufunc does not support argument&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span>
                                 <span class="n">e</span><span class="p">,</span>
                             <span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;can&#39;t convert&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
-                                <span class="n">X_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ART_NUMPY_DTYPE</span><span class="p">)</span>
-                                <span class="bp">self</span><span class="o">.</span><span class="n">training_probabilities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span>
-                                    <span class="n">X_array</span><span class="p">,</span>
+                                <span class="n">X_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                                    <span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span>
+                                    <span class="n">dtype</span><span class="o">=</span><span class="n">ART_NUMPY_DTYPE</span><span class="p">,</span>
+                                <span class="p">)</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">training_probabilities</span> <span class="o">=</span> <span class="p">(</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span>
+                                        <span class="n">X_array</span><span class="p">,</span>
+                                    <span class="p">)</span>
                                 <span class="p">)</span>
                             <span class="k">else</span><span class="p">:</span>
                                 <span class="k">raise</span> <span class="n">e</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">training_probabilities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">training_probabilities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict</span><span class="p">(</span>
+                            <span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span>
+                        <span class="p">)</span>
                 <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                         <span class="s2">&quot;Skipping training probability persistence: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -1351,7 +1415,11 @@
                 <span class="n">wrapped</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">estimator</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">wrapped</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">wrapped</span> <span class="ow">is</span> <span class="n">estimator</span><span class="p">:</span>
                     <span class="k">continue</span>
-                <span class="k">if</span> <span class="n">_is_model_fitted</span><span class="p">(</span><span class="n">wrapped</span><span class="p">,</span> <span class="n">X_sample</span><span class="o">=</span><span class="n">X_sample</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="n">depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">_is_model_fitted</span><span class="p">(</span>
+                    <span class="n">wrapped</span><span class="p">,</span>
+                    <span class="n">X_sample</span><span class="o">=</span><span class="n">X_sample</span><span class="p">,</span>
+                    <span class="n">depth</span><span class="o">=</span><span class="n">depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">):</span>
                     <span class="k">return</span> <span class="kc">True</span>
 
             <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;is_fitted_&quot;</span><span class="p">,</span> <span class="s2">&quot;fitted&quot;</span><span class="p">,</span> <span class="s2">&quot;_is_fitted&quot;</span><span class="p">]:</span>
@@ -1382,7 +1450,9 @@
                 <span class="p">)</span>
             <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span>  <span class="c1"># Model and/or filepath provided</span>
                 <span class="k">if</span> <span class="n">model_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">model_file</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model file </span><span class="si">{</span><span class="n">model_file</span><span class="si">}</span><span class="s2"> exists. Loading model.&quot;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Model file </span><span class="si">{</span><span class="n">model_file</span><span class="si">}</span><span class="s2"> exists. Loading model.&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
                     <span class="bp">self</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_file</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">_is_model_fitted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="n">X_sample</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="p">):</span>
                         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Model loaded and is fitted.&quot;</span><span class="p">)</span>
@@ -1390,7 +1460,9 @@
                         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                             <span class="s2">&quot;Loaded model is not fitted. Training a new model.&quot;</span><span class="p">,</span>
                         <span class="p">)</span>
-                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training model on </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">y_train</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples...&quot;</span><span class="p">)</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Training model on </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">y_train</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples...&quot;</span><span class="p">,</span>
+                        <span class="p">)</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">_train</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">y_train</span><span class="p">)</span>
                         <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span>
                             <span class="bp">self</span><span class="p">,</span>
@@ -1403,7 +1475,9 @@
                         <span class="c1"># Save the newly trained mode</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="c1"># train the model if no model exists at the filepath</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training model on </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">y_train</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples...&quot;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Training model on </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">y_train</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples...&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
                     <span class="n">model_is_fitted</span> <span class="o">=</span> <span class="n">_is_model_fitted</span><span class="p">(</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span>
                         <span class="n">X_sample</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span>

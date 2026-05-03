@@ -47,6 +47,7 @@
 <li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Model</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.model.AnjanaModelConfig"><code class="docutils literal notranslate"><span class="pre">AnjanaModelConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.model.DefenseConfig"><code class="docutils literal notranslate"><span class="pre">DefenseConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.model.DefensePipelineConfig"><code class="docutils literal notranslate"><span class="pre">DefensePipelineConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.model.FairlearnDefenseConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnDefenseConfig</span></code></a><ul>
@@ -69,6 +70,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#deckard.model.PytorchModelConfig.classifier"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.classifier</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.model.PytorchModelConfig.get_art_model"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.get_art_model()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.model.PytorchModelConfig.get_model"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.get_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.PytorchModelConfig.load"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.load()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.PytorchModelConfig.save"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.save()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#extensions">Extensions</a><ul>
@@ -107,6 +110,11 @@
 <li class="toctree-l3"><a class="reference internal" href="#regression-example">Regression example</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#custom-configuration">Custom configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#defense-pipelines">Defense Pipelines</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#defense-chains-in-config-files">Defense Chains in Config Files</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pytorch-support-examples">PyTorch Support Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fairlearn-model-support">Fairlearn Model Support</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#legacy-single-defense-format">Legacy Single-Defense Format</a></li>
 </ul>
 </li>
@@ -115,7 +123,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#internals">Internals</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#timing-and-logging">Timing and logging</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#scoring">Scoring</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#persistence">Persistence</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#persistence">Persistence</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pre-trained-torch-models">Pre-trained torch models</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
@@ -136,6 +147,7 @@
 <li class="toctree-l2"><a class="reference internal" href="file.html">File</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html">Data</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Model</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.AnjanaModelConfig"><code class="docutils literal notranslate"><span class="pre">AnjanaModelConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.model.DefenseConfig"><code class="docutils literal notranslate"><span class="pre">DefenseConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.model.DefensePipelineConfig"><code class="docutils literal notranslate"><span class="pre">DefensePipelineConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.model.FairlearnDefenseConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnDefenseConfig</span></code></a><ul>
@@ -158,6 +170,8 @@
 <li class="toctree-l4"><a class="reference internal" href="#deckard.model.PytorchModelConfig.classifier"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.classifier</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.model.PytorchModelConfig.get_art_model"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.get_art_model()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.model.PytorchModelConfig.get_model"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.get_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.PytorchModelConfig.load"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.load()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.PytorchModelConfig.save"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig.save()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#extensions">Extensions</a><ul>
@@ -179,6 +193,8 @@
 <li class="toctree-l4"><a class="reference internal" href="#regression-example">Regression example</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#custom-configuration">Custom configuration</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#defense-pipelines">Defense Pipelines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pytorch-support-examples">PyTorch Support Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fairlearn-model-support">Fairlearn Model Support</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#internals">Internals</a><ul>
@@ -198,6 +214,11 @@
 <li class="toctree-l2"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="anjana.html">Anjana Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 </li>
 </ul>
@@ -236,6 +257,13 @@ and integration with the <a class="reference internal" href="data.html#module-de
 <p>The <a class="reference internal" href="#module-deckard.model" title="deckard.model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.model</span></code></a> package exposes the standard model pipeline together
 with optional fairness-aware and PyTorch-backed variants when those optional
 dependencies are installed.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.model.AnjanaModelConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.model.</span></span><span class="sig-name descname"><span class="pre">AnjanaModelConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_prediction_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_score_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_score_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_application_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_predictions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_probabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_defense_pipeline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/anjana.html#AnjanaModelConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.AnjanaModelConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.model.ModelConfig" title="deckard.model.base.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelConfig</span></code></a></p>
+<p>ANJANA-aware model config for data anonymization scoring.</p>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.model.DefenseConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.model.</span></span><span class="sig-name descname"><span class="pre">DefenseConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_values=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_model=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/defend.html#DefenseConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.DefenseConfig" title="Link to this definition"></a></dt>
@@ -443,7 +471,7 @@ test_scores = model_config(data, train=False, score=True)</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.model.PytorchModelConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.model.</span></span><span class="sig-name descname"><span class="pre">PytorchModelConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type='torch.nn.Linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_model=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_application_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_probabilities=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probabilities=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_defense_pipeline=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library='pytorch'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion='torch.nn.CrossEntropyLoss'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer='torch.optim.SGD'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_values=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_seed=42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels_first=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/pytorch.html#PytorchModelConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.PytorchModelConfig" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.model.</span></span><span class="sig-name descname"><span class="pre">PytorchModelConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type='torch.nn.Linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_model=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_application_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_probabilities=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probabilities=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_defense_pipeline=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library='pytorch'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion='torch.nn.CrossEntropyLoss'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer='torch.optim.SGD'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_values=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_seed=42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels_first=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_records=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_checkpoint_context=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_epoch_attack=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/pytorch.html#PytorchModelConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.PytorchModelConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#deckard.model.ModelConfig" title="deckard.model.base.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelConfig</span></code></a></p>
 <p>Configuration for PyTorch models using load_class for generic instantiation.</p>
 <dl class="py attribute">
@@ -500,6 +528,28 @@ test_scores = model_config(data, train=False, score=True)</p>
 <dd><p>Return the underlying PyTorch model.</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.model.PytorchModelConfig.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/pytorch.html#PytorchModelConfig.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.PytorchModelConfig.load" title="Link to this definition"></a></dt>
+<dd><p>Load PyTorch model state and config metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#deckard.model.pytorch.PytorchModelConfig" title="deckard.model.pytorch.PytorchModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PytorchModelConfig</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.model.PytorchModelConfig.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/pytorch.html#PytorchModelConfig.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.PytorchModelConfig.save" title="Link to this definition"></a></dt>
+<dd><p>Serialize PyTorch model state and config metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <section id="extensions">
@@ -546,7 +596,7 @@ group-sensitive fitting, scoring, and fairlearn defense wrappers.</p>
 scoring through a <code class="docutils literal notranslate"><span class="pre">ModelConfig</span></code>-compatible API.</p>
 <dl class="py class" id="module-deckard.model.pytorch">
 <dt class="sig sig-object py" id="deckard.model.pytorch.PytorchModelConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.model.pytorch.</span></span><span class="sig-name descname"><span class="pre">PytorchModelConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type='torch.nn.Linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_model=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_application_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_probabilities=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probabilities=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_defense_pipeline=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library='pytorch'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion='torch.nn.CrossEntropyLoss'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer='torch.optim.SGD'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_values=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_seed=42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels_first=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/pytorch.html#PytorchModelConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.pytorch.PytorchModelConfig" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.model.pytorch.</span></span><span class="sig-name descname"><span class="pre">PytorchModelConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type='torch.nn.Linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_model=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_application_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_probabilities=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probabilities=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_defense_pipeline=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library='pytorch'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion='torch.nn.CrossEntropyLoss'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer='torch.optim.SGD'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_values=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_seed=42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels_first=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_records=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_checkpoint_context=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_epoch_attack=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/pytorch.html#PytorchModelConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.pytorch.PytorchModelConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#deckard.model.ModelConfig" title="deckard.model.base.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelConfig</span></code></a></p>
 <p>Configuration for PyTorch models using load_class for generic instantiation.</p>
 <dl class="py attribute">
@@ -601,6 +651,28 @@ scoring through a <code class="docutils literal notranslate"><span class="pre">M
 <dt class="sig sig-object py" id="deckard.model.pytorch.PytorchModelConfig.get_model">
 <span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/pytorch.html#PytorchModelConfig.get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.pytorch.PytorchModelConfig.get_model" title="Link to this definition"></a></dt>
 <dd><p>Return the underlying PyTorch model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.model.pytorch.PytorchModelConfig.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/pytorch.html#PytorchModelConfig.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.pytorch.PytorchModelConfig.load" title="Link to this definition"></a></dt>
+<dd><p>Load PyTorch model state and config metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#deckard.model.pytorch.PytorchModelConfig" title="deckard.model.pytorch.PytorchModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PytorchModelConfig</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.model.pytorch.PytorchModelConfig.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/pytorch.html#PytorchModelConfig.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.pytorch.PytorchModelConfig.save" title="Link to this definition"></a></dt>
+<dd><p>Serialize PyTorch model state and config metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -907,6 +979,62 @@ python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> 
 <span class="w">           </span><span class="nt">sigma</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
 </pre></div>
 </div>
+<section id="defense-chains-in-config-files">
+<h4>Defense Chains in Config Files<a class="headerlink" href="#defense-chains-in-config-files" title="Link to this heading"></a></h4>
+<p>You can build reproducible defense chains by composing entries from
+<code class="docutils literal notranslate"><span class="pre">examples/sklearn/config/defense</span></code> (for scikit-learn workflows) or
+<code class="docutils literal notranslate"><span class="pre">examples/pytorch/config/defense</span></code> (for PyTorch workflows).</p>
+<p>For example, the following chain applies an ART preprocessor first and then an
+ART postprocessor:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">defense</span><span class="p">:</span>
+<span class="w">   </span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deckard.model.DefensePipelineConfig</span>
+<span class="w">   </span><span class="nt">defenses</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">defense_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">art.defences.preprocessor.FeatureSqueezing</span>
+<span class="w">        </span><span class="nt">defense_params</span><span class="p">:</span>
+<span class="w">           </span><span class="nt">bit_depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">           </span><span class="nt">clip_values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">255</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">defense_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">art.defences.postprocessor.GaussianNoise</span>
+<span class="w">        </span><span class="nt">defense_params</span><span class="p">:</span>
+<span class="w">           </span><span class="nt">scale</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2</span>
+<span class="w">           </span><span class="nt">apply_predict</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<p>Fairlearn defenses are also supported in pipeline form, including wrappers like
+<code class="docutils literal notranslate"><span class="pre">fairlearn.reductions.ExponentiatedGradient</span></code> and
+<code class="docutils literal notranslate"><span class="pre">fairlearn.postprocessing.ThresholdOptimizer</span></code>.</p>
+</section>
+</section>
+<section id="pytorch-support-examples">
+<h3>PyTorch Support Examples<a class="headerlink" href="#pytorch-support-examples" title="Link to this heading"></a></h3>
+<p>PyTorch model workflows are configured through
+<code class="docutils literal notranslate"><span class="pre">examples/pytorch/config/torch_default.yaml</span></code> with model settings in
+<code class="docutils literal notranslate"><span class="pre">examples/pytorch/config/model/default.yaml</span></code>.</p>
+<p>Example command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-path<span class="w"> </span>examples/pytorch/config<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-name<span class="w"> </span>torch_default
+</pre></div>
+</div>
+<p>This uses <a class="reference internal" href="#deckard.model.pytorch.PytorchModelConfig" title="deckard.model.pytorch.PytorchModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.model.pytorch.PytorchModelConfig</span></code></a> and supports:</p>
+<ul class="simple">
+<li><p>configurable optimizer/criterion</p></li>
+<li><p>ART-compatible wrapping for attack evaluation</p></li>
+<li><p>optional fairness defenses (for example,
+<code class="docutils literal notranslate"><span class="pre">examples/pytorch/config/defense/fairlearn-adversarial-classifier.yaml</span></code>)</p></li>
+</ul>
+</section>
+<section id="fairlearn-model-support">
+<h3>Fairlearn Model Support<a class="headerlink" href="#fairlearn-model-support" title="Link to this heading"></a></h3>
+<p>Deckard’s fairness model extension supports fairlearn-backed defenses and model
+wrappers in both sklearn and PyTorch-centered workflows.</p>
+<p>Common fairlearn defense chain usage:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-path<span class="w"> </span>examples/sklearn/config<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-name<span class="w"> </span>fairness-default<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="nv">defense</span><span class="o">=</span>fairlearn-exponentiated-gradient<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="nv">score</span><span class="o">=</span>fairness-classification
+</pre></div>
+</div>
 <section id="legacy-single-defense-format">
 <h4>Legacy Single-Defense Format<a class="headerlink" href="#legacy-single-defense-format" title="Link to this heading"></a></h4>
 <p><a class="reference internal" href="#deckard.model.DefensePipelineConfig" title="deckard.model.DefensePipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefensePipelineConfig</span></code></a> automatically converts legacy single-defense YAML configurations:</p>
@@ -943,7 +1071,65 @@ and log via Python’s <code class="docutils literal notranslate"><span class="p
 </section>
 <section id="persistence">
 <h3>Persistence<a class="headerlink" href="#persistence" title="Link to this heading"></a></h3>
-<p>Models are saved and loaded using <code class="docutils literal notranslate"><span class="pre">pickle</span></code> via <code class="docutils literal notranslate"><span class="pre">_save_model()</span></code> and <code class="docutils literal notranslate"><span class="pre">_load_model()</span></code>.</p>
+<p>Use the public model persistence interfaces:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">model.save(filepath)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model.load(filepath)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model(data,</span> <span class="pre">model_file=...)</span></code> for automatic load-or-train behavior</p></li>
+</ul>
+<p>For scikit-learn-backed <a class="reference internal" href="#deckard.model.ModelConfig" title="deckard.model.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelConfig</span></code></a>, persisted models
+use the framework’s object serialization path via the config base save/load
+machinery.</p>
+<p>For <a class="reference internal" href="#deckard.model.pytorch.PytorchModelConfig" title="deckard.model.pytorch.PytorchModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PytorchModelConfig</span></code></a>, persistence is explicit
+and torch-native:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">save</span></code> writes a checkpoint payload with model metadata plus
+<code class="docutils literal notranslate"><span class="pre">state_dict</span></code> using <code class="docutils literal notranslate"><span class="pre">torch.save</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">load</span></code> restores metadata and calls <code class="docutils literal notranslate"><span class="pre">load_state_dict</span></code>.</p></li>
+</ul>
+<p>Public API example (automatic load-or-train):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(</span>
+   <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;sklearn.linear_model.LogisticRegression&quot;</span><span class="p">,</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1"># If model_file exists, it is loaded. Otherwise, the model is trained and saved.</span>
+<span class="n">scores</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">model_file</span><span class="o">=</span><span class="s2">&quot;outputs/models/logreg.pkl&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Public API example (PyTorch save/load):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model.pytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">PytorchModelConfig</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">PytorchModelConfig</span><span class="p">(</span>
+   <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;torch_example.py:ResNet18&quot;</span><span class="p">,</span>
+   <span class="n">model_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;num_channels&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;num_classes&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;outputs/models/torch_resnet18.pt&quot;</span><span class="p">)</span>
+
+<span class="n">reloaded</span> <span class="o">=</span> <span class="n">PytorchModelConfig</span><span class="p">(</span>
+   <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;torch_example.py:ResNet18&quot;</span><span class="p">,</span>
+   <span class="n">model_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;num_channels&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;num_classes&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
+   <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">reloaded</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;outputs/models/torch_resnet18.pt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="pre-trained-torch-models">
+<h4>Pre-trained torch models<a class="headerlink" href="#pre-trained-torch-models" title="Link to this heading"></a></h4>
+<p>There are two supported patterns:</p>
+<ol class="arabic simple">
+<li><p>Load a previously saved Deckard PyTorch checkpoint via <code class="docutils literal notranslate"><span class="pre">load(filepath)</span></code>.</p></li>
+<li><p>Point <code class="docutils literal notranslate"><span class="pre">model_type</span></code> to a custom constructor/class that returns an already
+initialized <code class="docutils literal notranslate"><span class="pre">nn.Module</span></code> (for example, one that internally loads external
+pre-trained weights), then run normal Deckard training/evaluation.</p></li>
+</ol>
+<p>If you want inference-only behavior from a pre-trained checkpoint, load it via
+<code class="docutils literal notranslate"><span class="pre">load</span></code> and then call the model with <code class="docutils literal notranslate"><span class="pre">model_file</span></code>/prediction outputs as
+needed, without requiring private methods.</p>
+</section>
 </section>
 </section>
 <section id="troubleshooting">
@@ -958,10 +1144,14 @@ and log via Python’s <code class="docutils literal notranslate"><span class="p
 <section id="see-also">
 <h3>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><a class="reference internal" href="data.html"><span class="doc">Data</span></a></p></li>
-<li><p><a class="reference internal" href="attack.html"><span class="doc">Attack</span></a></p></li>
-<li><p><a class="reference internal" href="experiment.html"><span class="doc">Experiment</span></a></p></li>
-<li><p><a class="reference internal" href="utils.html"><span class="doc">Utils</span></a></p></li>
+<li><p><a class="reference internal" href="data.html"><span class="doc">Data</span></a> — data configuration and loading</p></li>
+<li><p><a class="reference internal" href="experiment.html"><span class="doc">Experiment</span></a> — experiment orchestration</p></li>
+<li><p><a class="reference internal" href="attack.html"><span class="doc">Attack</span></a> — attack configuration</p></li>
+<li><p><a class="reference internal" href="score.html"><span class="doc">Score</span></a> — scoring framework</p></li>
+<li><p><a class="reference internal" href="pytorch.html"><span class="doc">PyTorch Integration</span></a> — PyTorch model integration</p></li>
+<li><p><a class="reference internal" href="anjana.html"><span class="doc">Anjana Integration</span></a> — anonymization-aware models</p></li>
+<li><p><a class="reference internal" href="lifelines.html"><span class="doc">Lifelines Integration</span></a> — survival model configuration</p></li>
+<li><p><a class="reference internal" href="utils.html"><span class="doc">Utils</span></a> — utility functions</p></li>
 </ul>
 </section>
 </section>

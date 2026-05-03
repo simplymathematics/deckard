@@ -42,6 +42,15 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../package.html">Package Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../score.html">Score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../plot.html">Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../layers.html">Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../file.html">File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
 </ul>
 
@@ -121,7 +130,9 @@
                 <span class="sa">f</span><span class="s2">&quot;Expected model to resolve to ModelConfig, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration_col</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;duration_col must be provided for survival experiments&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;duration_col must be provided for survival experiments&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_attack_label_column</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -152,7 +163,9 @@
         <span class="k">return</span> <span class="s2">&quot;evasion&quot;</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_candidate_attack_metrics_for_kind</span><span class="p">(</span><span class="n">attack_kind</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_candidate_attack_metrics_for_kind</span><span class="p">(</span>
+        <span class="n">attack_kind</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return candidate metrics for a given attack kind.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">attack_kind</span> <span class="o">==</span> <span class="s2">&quot;evasion&quot;</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;evasion_success&quot;</span><span class="p">,</span> <span class="s2">&quot;evasion_accuracy&quot;</span><span class="p">]</span>
@@ -210,11 +223,17 @@
         <span class="k">if</span> <span class="n">benign_metric</span> <span class="ow">in</span> <span class="n">output</span><span class="o">.</span><span class="n">columns</span> <span class="ow">and</span> <span class="s2">&quot;ben_failures&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">output</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="k">if</span> <span class="s2">&quot;attack_size&quot;</span> <span class="ow">in</span> <span class="n">output</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
                 <span class="n">attack_sizes</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="s2">&quot;attack_size&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_attack_size</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">attack_config</span><span class="o">=</span><span class="n">attack_config</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_attack_size</span><span class="p">(</span>
+                        <span class="n">output</span><span class="p">,</span>
+                        <span class="n">attack_config</span><span class="o">=</span><span class="n">attack_config</span><span class="p">,</span>
+                    <span class="p">),</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">attack_sizes</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_attack_size</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">attack_config</span><span class="o">=</span><span class="n">attack_config</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_attack_size</span><span class="p">(</span>
+                        <span class="n">output</span><span class="p">,</span>
+                        <span class="n">attack_config</span><span class="o">=</span><span class="n">attack_config</span><span class="p">,</span>
+                    <span class="p">),</span>
                     <span class="n">index</span><span class="o">=</span><span class="n">output</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
                     <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
                 <span class="p">)</span>
@@ -231,7 +250,7 @@
                 <span class="p">)</span>
                 <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_candidate_attack_metrics_for_kind</span><span class="p">(</span><span class="n">row_kind</span><span class="p">):</span>
                     <span class="k">if</span> <span class="n">metric</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">output</span><span class="o">.</span><span class="n">columns</span> <span class="ow">or</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span>
-                        <span class="n">output</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">row_index</span><span class="p">,</span> <span class="n">metric</span><span class="p">]</span>
+                        <span class="n">output</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">row_index</span><span class="p">,</span> <span class="n">metric</span><span class="p">],</span>
                     <span class="p">):</span>
                         <span class="k">continue</span>
                     <span class="n">value</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">row_index</span><span class="p">,</span> <span class="n">metric</span><span class="p">]</span>
@@ -253,11 +272,17 @@
             <span class="k">if</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">output</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
                 <span class="k">if</span> <span class="s2">&quot;attack_size&quot;</span> <span class="ow">in</span> <span class="n">output</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
                     <span class="n">attack_sizes</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="s2">&quot;attack_size&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_attack_size</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">attack_config</span><span class="o">=</span><span class="n">attack_config</span><span class="p">),</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_attack_size</span><span class="p">(</span>
+                            <span class="n">output</span><span class="p">,</span>
+                            <span class="n">attack_config</span><span class="o">=</span><span class="n">attack_config</span><span class="p">,</span>
+                        <span class="p">),</span>
                     <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">attack_sizes</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_attack_size</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">attack_config</span><span class="o">=</span><span class="n">attack_config</span><span class="p">),</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_attack_size</span><span class="p">(</span>
+                            <span class="n">output</span><span class="p">,</span>
+                            <span class="n">attack_config</span><span class="o">=</span><span class="n">attack_config</span><span class="p">,</span>
+                        <span class="p">),</span>
                         <span class="n">index</span><span class="o">=</span><span class="n">output</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
                         <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
                     <span class="p">)</span>
@@ -315,9 +340,14 @@
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="k">pass</span>
 
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration_col</span> <span class="ow">in</span> <span class="n">X_test</span><span class="o">.</span><span class="n">columns</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_col</span> <span class="ow">in</span> <span class="n">X_test</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">duration_col</span> <span class="ow">in</span> <span class="n">X_test</span><span class="o">.</span><span class="n">columns</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_col</span> <span class="ow">in</span> <span class="n">X_test</span><span class="o">.</span><span class="n">columns</span>
+            <span class="p">):</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="kn">from</span><span class="w"> </span><span class="nn">deckard.layers.survival</span><span class="w"> </span><span class="kn">import</span> <span class="n">survival_probability_calibration</span>
+                    <span class="kn">from</span><span class="w"> </span><span class="nn">deckard.layers.survival</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+                        <span class="n">survival_probability_calibration</span><span class="p">,</span>
+                    <span class="p">)</span>
 
                     <span class="n">calibration</span> <span class="o">=</span> <span class="n">survival_probability_calibration</span><span class="p">(</span>
                         <span class="n">fitter</span><span class="o">=</span><span class="n">fitter</span><span class="p">,</span>

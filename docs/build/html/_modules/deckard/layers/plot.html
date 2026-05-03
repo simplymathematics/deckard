@@ -42,6 +42,15 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../package.html">Package Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../score.html">Score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../plot.html">Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../layers.html">Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../file.html">File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
 </ul>
 
@@ -115,7 +124,9 @@
 
     <span class="n">raw_cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cfg_path</span><span class="p">),</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Experiment config must resolve to a dictionary: </span><span class="si">{</span><span class="n">cfg_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Experiment config must resolve to a dictionary: </span><span class="si">{</span><span class="n">cfg_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="k">return</span> <span class="n">raw_cfg</span>
 
 
@@ -349,7 +360,9 @@
         <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;yellowbrick&quot;</span> <span class="ow">and</span> <span class="n">plots_file</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;plot.plots_file is only supported for seaborn backend.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;plot.plots_file is only supported for seaborn backend.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;yellowbrick&quot;</span><span class="p">:</span>
         <span class="n">exp_cfg</span> <span class="o">=</span> <span class="p">(</span>
@@ -439,7 +452,9 @@
 
     <span class="k">if</span> <span class="n">plot_type</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">y</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;seaborn single-plot mode requires plot.x and plot.y&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;seaborn single-plot mode requires plot.x and plot.y&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="n">cfg</span> <span class="o">=</span> <span class="n">SeabornPlotConfig</span><span class="p">(</span>
             <span class="n">data_file</span><span class="o">=</span><span class="n">data_file</span><span class="p">,</span>
             <span class="n">plot_type</span><span class="o">=</span><span class="n">plot_type</span><span class="p">,</span>
@@ -474,7 +489,9 @@
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loaded</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
         <span class="n">plot_specs</span> <span class="o">=</span> <span class="n">loaded</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;plots_file must contain a list or a dict with key &#39;plots&#39;.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;plots_file must contain a list or a dict with key &#39;plots&#39;.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="n">plot_cfgs</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">plot_specs</span><span class="p">:</span>

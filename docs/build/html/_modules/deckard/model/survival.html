@@ -42,6 +42,15 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../package.html">Package Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../score.html">Score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../plot.html">Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../layers.html">Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../file.html">File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
 </ul>
 
@@ -225,7 +234,10 @@
             <span class="n">mtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">survival_model</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">fit_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;duration_col&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration_col</span><span class="p">,</span> <span class="s2">&quot;event_col&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_col</span><span class="p">}</span>
+        <span class="n">fit_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;duration_col&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration_col</span><span class="p">,</span>
+            <span class="s2">&quot;event_col&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_col</span><span class="p">,</span>
+        <span class="p">}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">survival_model</span> <span class="o">!=</span> <span class="s2">&quot;aalen&quot;</span><span class="p">:</span>
             <span class="n">start</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">duration_col</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
             <span class="n">end</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">duration_col</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
@@ -280,7 +292,12 @@
 <span class="sd">            Dictionary with calibration metrics (ici, e50, concordance).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;scorer&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="p">(</span><span class="n">y_true</span><span class="o">=</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="o">=</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">y_true</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="p">(</span>
+                <span class="n">y_true</span><span class="o">=</span><span class="n">y_true</span><span class="p">,</span>
+                <span class="n">y_pred</span><span class="o">=</span><span class="n">y_pred</span><span class="p">,</span>
+                <span class="n">mode</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">y_true</span><span class="p">,</span>
+            <span class="p">)</span>
 
         <span class="n">scores</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -318,7 +335,10 @@
         <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;red&quot;</span><span class="p">,</span>
         <span class="n">return_curve</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span>
+    <span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute survival calibration metrics and optionally render curve.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
@@ -327,7 +347,10 @@
         <span class="n">event_col</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">event_col</span>
         <span class="n">calibration_df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">calibration_df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="n">calibration_df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">calibration_df</span><span class="p">[</span><span class="n">col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;raise&quot;</span><span class="p">)</span>
+            <span class="n">calibration_df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span>
+                <span class="n">calibration_df</span><span class="p">[</span><span class="n">col</span><span class="p">],</span>
+                <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;raise&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="n">calibration_df</span> <span class="o">=</span> <span class="n">calibration_df</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
 
         <span class="n">predictions_at_t0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
@@ -390,7 +413,10 @@
                         <span class="n">regressors</span><span class="o">=</span><span class="n">regressors</span><span class="p">,</span>
                     <span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Could not fit CRC model for calibration: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s2">&quot;Could not fit CRC model for calibration: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">error</span><span class="p">,</span>
+                <span class="p">)</span>
                 <span class="k">if</span> <span class="n">return_curve</span><span class="p">:</span>
                     <span class="n">curve</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
                         <span class="p">{</span><span class="s2">&quot;predicted&quot;</span><span class="p">:</span> <span class="n">predictions_at_t0</span><span class="p">,</span> <span class="s2">&quot;observed&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">},</span>
@@ -422,7 +448,11 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">deltas</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="p">(</span>
-                    <span class="mi">1</span> <span class="o">-</span> <span class="n">crc</span><span class="o">.</span><span class="n">predict_survival_function</span><span class="p">(</span><span class="n">prediction_df</span><span class="p">,</span> <span class="n">times</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">t0</span><span class="p">])</span>
+                    <span class="mi">1</span>
+                    <span class="o">-</span> <span class="n">crc</span><span class="o">.</span><span class="n">predict_survival_function</span><span class="p">(</span>
+                        <span class="n">prediction_df</span><span class="p">,</span>
+                        <span class="n">times</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">t0</span><span class="p">],</span>
+                    <span class="p">)</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
                 <span class="o">-</span> <span class="n">predictions_at_t0</span>
             <span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
@@ -460,7 +490,9 @@
             <span class="n">subset</span> <span class="o">=</span> <span class="n">subset</span><span class="p">[</span><span class="n">subset</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">!=</span> <span class="mf">1e10</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dummy_dict</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">available_dummy_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">dummy_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">subset</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+            <span class="n">available_dummy_cols</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">dummy_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">subset</span><span class="o">.</span><span class="n">columns</span>
+            <span class="p">]</span>
             <span class="n">dummies</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span>
                 <span class="n">subset</span><span class="p">[</span><span class="n">available_dummy_cols</span><span class="p">],</span>
                 <span class="n">prefix</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">dummy_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">available_dummy_cols</span><span class="p">},</span>
@@ -475,7 +507,11 @@
                 <span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">cleaned</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s2">&quot;object&quot;</span>
             <span class="p">]</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">object_cols</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">dummies</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">cleaned</span><span class="p">[</span><span class="n">object_cols</span><span class="p">],</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">prefix_sep</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+                <span class="n">dummies</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span>
+                    <span class="n">cleaned</span><span class="p">[</span><span class="n">object_cols</span><span class="p">],</span>
+                    <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="n">prefix_sep</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
                 <span class="n">cleaned</span> <span class="o">=</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">object_cols</span><span class="p">)</span>
                 <span class="n">cleaned</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">cleaned</span><span class="p">,</span> <span class="n">dummies</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
             <span class="n">cleaned</span> <span class="o">=</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
@@ -533,7 +569,10 @@
                 <span class="k">pass</span>
 
             <span class="c1"># Optionally compute ICI/E50 if needed</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration_col</span> <span class="ow">in</span> <span class="n">X_test</span><span class="o">.</span><span class="n">columns</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_col</span> <span class="ow">in</span> <span class="n">X_test</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">duration_col</span> <span class="ow">in</span> <span class="n">X_test</span><span class="o">.</span><span class="n">columns</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_col</span> <span class="ow">in</span> <span class="n">X_test</span><span class="o">.</span><span class="n">columns</span>
+            <span class="p">):</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">old_t0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t0</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">t0</span> <span class="o">=</span> <span class="n">t0_for_model</span>

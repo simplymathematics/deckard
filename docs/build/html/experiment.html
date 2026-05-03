@@ -59,6 +59,11 @@
 <li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.SurvivalExperimentConfig.make_survival_model_table"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig.make_survival_model_table()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.experiment.TorchExperimentConfig"><code class="docutils literal notranslate"><span class="pre">TorchExperimentConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.TorchExperimentConfig.set_device"><code class="docutils literal notranslate"><span class="pre">TorchExperimentConfig.set_device()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#torch-extension">Torch Extension</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#survival-extension">Survival Extension</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.survival.SurvivalExperimentConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.survival.SurvivalExperimentConfig.calculate_failures_under_attack"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig.calculate_failures_under_attack()</span></code></a></li>
@@ -95,6 +100,11 @@
 <li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.SurvivalExperimentConfig.make_survival_model_table"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig.make_survival_model_table()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.TorchExperimentConfig"><code class="docutils literal notranslate"><span class="pre">TorchExperimentConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.TorchExperimentConfig.set_device"><code class="docutils literal notranslate"><span class="pre">TorchExperimentConfig.set_device()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#torch-extension">Torch Extension</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#survival-extension">Survival Extension</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.survival.SurvivalExperimentConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig</span></code></a></li>
 </ul>
@@ -120,6 +130,11 @@
 <li class="toctree-l2"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="anjana.html">Anjana Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 </li>
 </ul>
@@ -204,6 +219,40 @@ For TensorFlow, configures GPU/CPU usage.
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.experiment.TorchExperimentConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.experiment.</span></span><span class="sig-name descname"><span class="pre">TorchExperimentConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment/torch_experiment.html#TorchExperimentConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.TorchExperimentConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.experiment.ExperimentConfig" title="deckard.experiment.base.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentConfig</span></code></a></p>
+<p>Experiment configuration for PyTorch models.</p>
+<p>Enforces:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">data</span></code> is a <a class="reference internal" href="data.html#deckard.data.pytorch.PytorchDataConfig" title="deckard.data.pytorch.PytorchDataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PytorchDataConfig</span></code></a> instance</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model</span></code> is a <a class="reference internal" href="model.html#deckard.model.pytorch.PytorchModelConfig" title="deckard.model.pytorch.PytorchModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PytorchModelConfig</span></code></a> instance</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">library</span></code> is always <code class="docutils literal notranslate"><span class="pre">&quot;pytorch&quot;</span></code> (serialization compatibility field only)</p></li>
+</ul>
+<p>Device reconciliation and PyTorch-specific device-setting logic live here
+rather than in the base <a class="reference internal" href="#deckard.experiment.ExperimentConfig" title="deckard.experiment.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentConfig</span></code></a>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.experiment.TorchExperimentConfig.set_device">
+<span class="sig-name descname"><span class="pre">set_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment/torch_experiment.html#TorchExperimentConfig.set_device"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.TorchExperimentConfig.set_device" title="Link to this definition"></a></dt>
+<dd><p>Configure the PyTorch device for this experiment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<section id="torch-extension">
+<h2>Torch Extension<a class="headerlink" href="#torch-extension" title="Link to this heading"></a></h2>
+<p>PyTorch-specific experiment orchestration is available via
+<a class="reference internal" href="#deckard.experiment.TorchExperimentConfig" title="deckard.experiment.torch_experiment.TorchExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.experiment.torch_experiment.TorchExperimentConfig</span></code></a> in the
+optional <code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.experiment.torch_experiment</span></code> module.</p>
+<p>Use this extension when you need PyTorch model/data orchestration while keeping
+the same high-level experiment lifecycle as <a class="reference internal" href="#deckard.experiment.ExperimentConfig" title="deckard.experiment.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.experiment.ExperimentConfig</span></code></a>.</p>
+</section>
 <section id="survival-extension">
 <h2>Survival Extension<a class="headerlink" href="#survival-extension" title="Link to this heading"></a></h2>
 <p>Survival-specific experiment orchestration is split into a dedicated optional
@@ -251,6 +300,12 @@ experiment module so survival workflows can be treated as an optional extension.
 <li><p>score aggregation and file outputs via <a class="reference internal" href="file.html#module-deckard.file" title="deckard.file"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.file</span></code></a></p></li>
 </ul>
 <p>It is the primary integration point for reproducible end-to-end runs.</p>
+<p>Available experiment entrypoints:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#deckard.experiment.ExperimentConfig" title="deckard.experiment.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.experiment.ExperimentConfig</span></code></a> (default)</p></li>
+<li><p><a class="reference internal" href="#deckard.experiment.TorchExperimentConfig" title="deckard.experiment.torch_experiment.TorchExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.experiment.torch_experiment.TorchExperimentConfig</span></code></a> (PyTorch)</p></li>
+<li><p><a class="reference internal" href="#deckard.experiment.survival.SurvivalExperimentConfig" title="deckard.experiment.survival.SurvivalExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.experiment.survival.SurvivalExperimentConfig</span></code></a> (survival)</p></li>
+</ul>
 </section>
 <section id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
@@ -271,6 +326,16 @@ python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> 
 <span class="w">   </span>attack.attack_type<span class="o">=</span>art.attacks.evasion.FastGradientMethod<span class="w"> </span><span class="se">\</span>
 <span class="w">   </span>attack.attack_params.eps<span class="o">=</span><span class="m">0</span>.1<span class="w"> </span><span class="se">\</span>
 <span class="w">   </span>model.defense.defenses<span class="o">[</span><span class="m">0</span><span class="o">]</span>.defense_name<span class="o">=</span>art.defences.preprocessor.FeatureSqueezing
+
+<span class="c1"># PyTorch example config</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-path<span class="w"> </span>examples/pytorch/config<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-name<span class="w"> </span>torch_default
+
+<span class="c1"># Fairness-focused sklearn config</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-path<span class="w"> </span>examples/sklearn/config<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-name<span class="w"> </span>fairness-default
 </pre></div>
 </div>
 </section>
@@ -357,12 +422,14 @@ normalizes outputs for downstream scoring/serialization.</p>
 <section id="see-also">
 <h3>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><a class="reference internal" href="data.html"><span class="doc">Data</span></a></p></li>
-<li><p><a class="reference internal" href="model.html"><span class="doc">Model</span></a></p></li>
-<li><p><a class="reference internal" href="attack.html"><span class="doc">Attack</span></a></p></li>
-<li><p><a class="reference internal" href="file.html"><span class="doc">File</span></a></p></li>
-<li><p><a class="reference internal" href="score.html"><span class="doc">Score</span></a></p></li>
-<li><p><a class="reference internal" href="utils.html"><span class="doc">Utils</span></a></p></li>
+<li><p><a class="reference internal" href="data.html"><span class="doc">Data</span></a> — data configuration and loading</p></li>
+<li><p><a class="reference internal" href="model.html"><span class="doc">Model</span></a> — model configuration and training</p></li>
+<li><p><a class="reference internal" href="attack.html"><span class="doc">Attack</span></a> — attack configuration</p></li>
+<li><p><a class="reference internal" href="file.html"><span class="doc">File</span></a> — result serialization</p></li>
+<li><p><a class="reference internal" href="score.html"><span class="doc">Score</span></a> — scoring framework</p></li>
+<li><p><a class="reference internal" href="pytorch.html"><span class="doc">PyTorch Integration</span></a> — PyTorch experiment orchestration</p></li>
+<li><p><a class="reference internal" href="lifelines.html"><span class="doc">Lifelines Integration</span></a> — survival experiment orchestration</p></li>
+<li><p><a class="reference internal" href="utils.html"><span class="doc">Utils</span></a> — utility functions</p></li>
 </ul>
 </section>
 </section>

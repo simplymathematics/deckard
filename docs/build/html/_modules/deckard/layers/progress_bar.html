@@ -42,6 +42,15 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../package.html">Package Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../score.html">Score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../plot.html">Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../layers.html">Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../file.html">File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
 </ul>
 
@@ -174,7 +183,10 @@
     <span class="k">return</span> <span class="kc">None</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_hydra_config_for_stage</span><span class="p">(</span><span class="n">stage_conf</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">hydra_cfg_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_hydra_config_for_stage</span><span class="p">(</span>
+    <span class="n">stage_conf</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">hydra_cfg_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve per-stage Hydra config file using --config-name (extension optional).&quot;&quot;&quot;</span>
     <span class="n">default_cfg</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">hydra_cfg_file</span><span class="p">)</span>
     <span class="n">default_cfg_dir</span> <span class="o">=</span> <span class="n">default_cfg</span><span class="o">.</span><span class="n">parent</span>
@@ -222,11 +234,16 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">study_name</span><span class="p">:</span>
             <span class="k">continue</span>
 
-        <span class="n">study</span> <span class="o">=</span> <span class="n">optuna</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">load_study</span><span class="p">(</span><span class="n">storage</span><span class="o">=</span><span class="n">optuna_db</span><span class="p">,</span> <span class="n">study_name</span><span class="o">=</span><span class="n">study_name</span><span class="p">)</span>
+        <span class="n">study</span> <span class="o">=</span> <span class="n">optuna</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">load_study</span><span class="p">(</span>
+            <span class="n">storage</span><span class="o">=</span><span class="n">optuna_db</span><span class="p">,</span>
+            <span class="n">study_name</span><span class="o">=</span><span class="n">study_name</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">study_df</span> <span class="o">=</span> <span class="n">study</span><span class="o">.</span><span class="n">trials_dataframe</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="s2">&quot;state&quot;</span> <span class="ow">in</span> <span class="n">study_df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="n">finished_counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">study_df</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">end_states</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+            <span class="n">finished_counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="nb">int</span><span class="p">(</span><span class="n">study_df</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">end_states</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+            <span class="p">)</span>
 
         <span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="n">study</span><span class="o">.</span><span class="n">get_trials</span><span class="p">(</span><span class="n">deepcopy</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
             <span class="n">dt</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">trial</span><span class="p">,</span> <span class="s2">&quot;datetime_start&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -407,7 +424,9 @@
         <span class="n">loaded_cfg</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loaded_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected mapping at root of Hydra config: </span><span class="si">{</span><span class="n">cfg_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Expected mapping at root of Hydra config: </span><span class="si">{</span><span class="n">cfg_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="n">raw_cfg</span> <span class="o">=</span> <span class="n">loaded_cfg</span>
 
@@ -445,7 +464,9 @@
     <span class="n">defaults</span> <span class="o">=</span> <span class="n">resolved_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;defaults&quot;</span><span class="p">,</span> <span class="p">[])</span>
     <span class="n">is_grid_sampler</span> <span class="o">=</span> <span class="s2">&quot;GridSampler&quot;</span> <span class="ow">in</span> <span class="n">sampler_target</span> <span class="ow">or</span> <span class="s2">&quot;grid&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">defaults</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">is_grid_sampler</span><span class="p">:</span>
-        <span class="n">grid_n_trials</span> <span class="o">=</span> <span class="n">_calculate_grid_search_n_trials</span><span class="p">(</span><span class="n">sweeper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;params&quot;</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="n">grid_n_trials</span> <span class="o">=</span> <span class="n">_calculate_grid_search_n_trials</span><span class="p">(</span>
+            <span class="n">sweeper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;params&quot;</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">grid_n_trials</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">n_trials</span> <span class="o">=</span> <span class="n">grid_n_trials</span>
         <span class="k">else</span><span class="p">:</span>
@@ -546,7 +567,10 @@
                 <span class="n">observed_finished_counts</span><span class="o">=</span><span class="n">finished_counts</span><span class="p">,</span>
                 <span class="n">required_trials</span><span class="o">=</span><span class="n">req</span><span class="p">[</span><span class="s2">&quot;required_trials&quot;</span><span class="p">],</span>
             <span class="p">)</span>
-            <span class="n">storage_completed_trials</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">finished_counts</span><span class="p">),</span> <span class="n">req</span><span class="p">[</span><span class="s2">&quot;expected_trials&quot;</span><span class="p">])</span>
+            <span class="n">storage_completed_trials</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="nb">sum</span><span class="p">(</span><span class="n">finished_counts</span><span class="p">),</span>
+                <span class="n">req</span><span class="p">[</span><span class="s2">&quot;expected_trials&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
 
             <span class="n">total_completed_studies</span> <span class="o">+=</span> <span class="nb">min</span><span class="p">(</span>
                 <span class="n">storage_completed_studies</span><span class="p">,</span>
@@ -613,7 +637,9 @@
 
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">&quot;storages&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">storage_requirements</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
-        <span class="s2">&quot;start_time&quot;</span><span class="p">:</span> <span class="n">db_start_time</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="k">if</span> <span class="n">db_start_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">&quot;start_time&quot;</span><span class="p">:</span> <span class="p">(</span>
+            <span class="n">db_start_time</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="k">if</span> <span class="n">db_start_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">),</span>
         <span class="s2">&quot;expected_studies&quot;</span><span class="p">:</span> <span class="n">expected_studies</span><span class="p">,</span>
         <span class="s2">&quot;expected_trials&quot;</span><span class="p">:</span> <span class="n">expected_total_trials</span><span class="p">,</span>
         <span class="s2">&quot;completed_studies&quot;</span><span class="p">:</span> <span class="n">prev_complete_studies</span><span class="p">,</span>

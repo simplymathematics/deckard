@@ -254,6 +254,72 @@ Example YAML configuration (``configs/model/defended.yaml``):
            defense_params:
               sigma: 0.1
 
+Defense Chains in Config Files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can build reproducible defense chains by composing entries from
+``examples/sklearn/config/defense`` (for scikit-learn workflows) or
+``examples/pytorch/config/defense`` (for PyTorch workflows).
+
+For example, the following chain applies an ART preprocessor first and then an
+ART postprocessor:
+
+.. code-block:: yaml
+
+   defense:
+      _target_: deckard.model.DefensePipelineConfig
+      defenses:
+         - defense_name: art.defences.preprocessor.FeatureSqueezing
+           defense_params:
+              bit_depth: 8
+              clip_values: [0, 255]
+         - defense_name: art.defences.postprocessor.GaussianNoise
+           defense_params:
+              scale: 0.2
+              apply_predict: true
+
+Fairlearn defenses are also supported in pipeline form, including wrappers like
+``fairlearn.reductions.ExponentiatedGradient`` and
+``fairlearn.postprocessing.ThresholdOptimizer``.
+
+PyTorch Support Examples
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+PyTorch model workflows are configured through
+``examples/pytorch/config/torch_default.yaml`` with model settings in
+``examples/pytorch/config/model/default.yaml``.
+
+Example command:
+
+.. code-block:: bash
+
+   python -m deckard optimize \
+      --config-path examples/pytorch/config \
+      --config-name torch_default
+
+This uses :class:`deckard.model.pytorch.PytorchModelConfig` and supports:
+
+- configurable optimizer/criterion
+- ART-compatible wrapping for attack evaluation
+- optional fairness defenses (for example,
+  ``examples/pytorch/config/defense/fairlearn-adversarial-classifier.yaml``)
+
+Fairlearn Model Support
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Deckard's fairness model extension supports fairlearn-backed defenses and model
+wrappers in both sklearn and PyTorch-centered workflows.
+
+Common fairlearn defense chain usage:
+
+.. code-block:: bash
+
+   python -m deckard optimize \
+      --config-path examples/sklearn/config \
+      --config-name fairness-default \
+      defense=fairlearn-exponentiated-gradient \
+      score=fairness-classification
+
 Legacy Single-Defense Format
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -289,7 +355,70 @@ Scoring
 
 Persistence
 ~~~~~~~~~~~
-Models are saved and loaded using ``pickle`` via ``_save_model()`` and ``_load_model()``.
+Use the public model persistence interfaces:
+
+- ``model.save(filepath)``
+- ``model.load(filepath)``
+- ``model(data, model_file=...)`` for automatic load-or-train behavior
+
+For scikit-learn-backed :class:`~deckard.model.ModelConfig`, persisted models
+use the framework's object serialization path via the config base save/load
+machinery.
+
+For :class:`~deckard.model.pytorch.PytorchModelConfig`, persistence is explicit
+and torch-native:
+
+- ``save`` writes a checkpoint payload with model metadata plus
+  ``state_dict`` using ``torch.save``.
+- ``load`` restores metadata and calls ``load_state_dict``.
+
+Public API example (automatic load-or-train):
+
+.. code-block:: python
+
+   from deckard.model import ModelConfig
+
+   model = ModelConfig(
+      model_type="sklearn.linear_model.LogisticRegression",
+      classifier=True,
+   )
+   # If model_file exists, it is loaded. Otherwise, the model is trained and saved.
+   scores = model(data, model_file="outputs/models/logreg.pkl")
+
+Public API example (PyTorch save/load):
+
+.. code-block:: python
+
+   from deckard.model.pytorch import PytorchModelConfig
+
+   model = PytorchModelConfig(
+      model_type="torch_example.py:ResNet18",
+      model_params={"num_channels": 1, "num_classes": 10},
+      classifier=True,
+   )
+   model(data)
+   model.save("outputs/models/torch_resnet18.pt")
+
+   reloaded = PytorchModelConfig(
+      model_type="torch_example.py:ResNet18",
+      model_params={"num_channels": 1, "num_classes": 10},
+      classifier=True,
+   )
+   reloaded.load("outputs/models/torch_resnet18.pt")
+
+Pre-trained torch models
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+There are two supported patterns:
+
+1. Load a previously saved Deckard PyTorch checkpoint via ``load(filepath)``.
+2. Point ``model_type`` to a custom constructor/class that returns an already
+   initialized ``nn.Module`` (for example, one that internally loads external
+   pre-trained weights), then run normal Deckard training/evaluation.
+
+If you want inference-only behavior from a pre-trained checkpoint, load it via
+``load`` and then call the model with ``model_file``/prediction outputs as
+needed, without requiring private methods.
 
 Troubleshooting
 ---------------
@@ -303,7 +432,11 @@ Troubleshooting
 
 See also
 ~~~~~~~~
-* :doc:`data`
-* :doc:`attack`
-* :doc:`experiment`
-* :doc:`utils`
+* :doc:`data` — data configuration and loading
+* :doc:`experiment` — experiment orchestration
+* :doc:`attack` — attack configuration
+* :doc:`score` — scoring framework
+* :doc:`pytorch` — PyTorch model integration
+* :doc:`anjana` — anonymization-aware models
+* :doc:`lifelines` — survival model configuration
+* :doc:`utils` — utility functions

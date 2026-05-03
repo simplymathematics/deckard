@@ -315,6 +315,88 @@ CLI examples:
    # Disable sampling (use no sampler)
    python -m deckard optimize --config-name experiment sample=none
 
+DataConfig Sampling Examples (Repository Configs)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Deckard includes ready-to-run sampling examples in
+``examples/sklearn/config/data`` and ``examples/sklearn/config/sample``.
+
+Key files:
+
+- ``data/digits-kfold.yaml`` with ``sample: fold``
+- ``data/digits-shuffle.yaml`` with ``sample: shuffle``
+- ``data/digits-split.yaml`` with explicit ``val_size``
+- ``sample/kfold.yaml`` defining :class:`deckard.data.sample.KFoldSampler`
+- ``sample/shuffle.yaml`` defining :class:`deckard.data.sample.ShuffleSampler`
+
+Example commands:
+
+.. code-block:: bash
+
+   # K-fold sampling path
+   python -m deckard optimize \
+      --config-path examples/sklearn/config \
+      --config-name default \
+      data=digits-kfold \
+      sample=kfold
+
+   # Shuffle-split sampling path
+   python -m deckard optimize \
+      --config-path examples/sklearn/config \
+      --config-name default \
+      data=digits-shuffle \
+      sample=shuffle
+
+   # Deterministic train/test/val split
+   python -m deckard optimize \
+      --config-path examples/sklearn/config \
+      --config-name default \
+      data=digits-split \
+      sample=split
+
+Fairlearn Data Support
+~~~~~~~~~~~~~~~~~~~~~~
+
+Fairlearn-aware data configs use
+:class:`deckard.data.fairness.FairlearnDataConfig` with explicit
+``sensitive_columns`` and optional fairness preprocessing defenses.
+
+Repository examples:
+
+- ``examples/sklearn/config/data/fair-adult.yaml``
+- ``examples/pytorch/config/data/fairlearn_celeba.yaml``
+
+The sklearn fair-adult example demonstrates correlation-remover preprocessing:
+
+.. code-block:: yaml
+
+   _target_: deckard.data.FairlearnDataConfig
+   dataset_name: adult
+   sensitive_columns: [sex]
+   fairness_defense:
+      step_name: fairness_correlation_remover
+      name: fairlearn.preprocessing.CorrelationRemover
+
+PyTorch Data Support
+~~~~~~~~~~~~~~~~~~~~
+
+PyTorch data workflows use :class:`deckard.data.pytorch.PytorchDataConfig`.
+
+Repository examples:
+
+- ``examples/pytorch/config/data/torch_mnist.yaml``
+- ``examples/pytorch/config/data/torch_cifar10.yaml``
+- ``examples/pytorch/config/data/fairlearn_celeba.yaml``
+
+Example command:
+
+.. code-block:: bash
+
+   python -m deckard optimize \
+      --config-path examples/pytorch/config \
+      --config-name torch_default \
+      data=torch_mnist
+
 Internals
 ---------
 
@@ -334,7 +416,11 @@ If you encounter issues with dataset loading, ensure that:
 
 See also
 ~~~~~~~~
-* :doc:`attack`
-* :doc:`model`
-* :doc:`experiment`
-* :doc:`utils`
+* :doc:`model` — model configuration and training
+* :doc:`experiment` — experiment orchestration
+* :doc:`attack` — attack configuration
+* :doc:`score` — scoring framework
+* :doc:`pytorch` — PyTorch data integration
+* :doc:`anjana` — anonymization-aware data
+* :doc:`lifelines` — survival analysis data configuration
+* :doc:`utils` — utility functions

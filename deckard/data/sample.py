@@ -3,23 +3,23 @@
 Each sampler is a callable dataclass that accepts a ``DataConfig`` instance and
 returns ``(train_idx, test_idx, val_idx)`` as numpy arrays of integer indices.
 
-Samplers
---------
-- :class:`BaseSampler`     – abstract interface (raises ``NotImplementedError``)
-- :class:`SplitSampler`    – deterministic 3-way train / test / val split
-- :class:`KFoldSampler`    – cross-validation with disjoint validation folds
-- :class:`ShuffleSampler`  – repeated random (Monte-Carlo) splits
+Available samplers:
 
-Hydra ConfigStore
------------------
+* :class:`BaseSampler` – abstract interface (raises ``NotImplementedError``)
+* :class:`SplitSampler` – deterministic 3-way train/test/val split
+* :class:`KFoldSampler` – cross-validation with disjoint validation folds
+* :class:`ShuffleSampler` – repeated random (Monte-Carlo) splits
+
+Hydra ConfigStore registration:
+
 Calling :func:`register_sampler_configs` registers structured-config defaults for
-all three concrete samplers under the ``sample`` Hydra config group.  The defaults
-are registered with names ``split``, ``kfold``, and ``shuffle``.  A ``none``
-entry (empty config / no sampler) is also registered so you can opt out explicitly.
+all three concrete samplers under the ``sample`` Hydra config group. Defaults
+are registered with names ``split``, ``kfold``, and ``shuffle``. A ``none``
+entry (empty config / no sampler) is also registered for opt-out.
 
 Example CLI usage::
 
-    python -m deckard data=adult sample=kfold
+    python -m deckard data=adult data@sample=kfold
 
 """
 
@@ -63,13 +63,11 @@ class SplitSampler(BaseSampler):
     """Standard 3-way stratified split: train / test / val.
 
     The dataset is first split into a *val* set (controlled by
-    ``cfg.val_size``) and a remaining *train+test* pool.  The pool is then
+    ``cfg.val_size``) and a remaining *train+test* pool. The pool is then
     split into *train* and *test* portions according to ``cfg.test_size``.
 
-    Parameters
-    ----------
-    (none – all parameters are read from the ``DataConfig`` passed to
-    :meth:`__call__`)
+    Note: All parameters are read from the ``DataConfig`` passed to
+    :meth:`__call__`. There are no constructor parameters.
     """
 
     def __call__(self, cfg) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:

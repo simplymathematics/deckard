@@ -42,6 +42,15 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../package.html">Package Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../score.html">Score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../plot.html">Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../layers.html">Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../file.html">File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
 </ul>
 
@@ -109,7 +118,10 @@
 
 <div class="viewcode-block" id="SurvivalSeabornPlotterConfig.build_coefficients_plot">
 <a class="viewcode-back" href="../../../plot.html#deckard.plot.SurvivalSeabornPlotterConfig.build_coefficients_plot">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">build_coefficients_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">summary</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SeabornPlotConfig</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_coefficients_plot</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">summary</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SeabornPlotConfig</span><span class="p">:</span>
         <span class="n">summary_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">summary</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">summary_df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="p">):</span>
             <span class="n">summary_df</span><span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">summary_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
@@ -134,7 +146,10 @@
 
 <div class="viewcode-block" id="SurvivalSeabornPlotterConfig.build_calibration_plot">
 <a class="viewcode-back" href="../../../plot.html#deckard.plot.SurvivalSeabornPlotterConfig.build_calibration_plot">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">build_calibration_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calibration</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SeabornPlotConfig</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_calibration_plot</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">calibration</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SeabornPlotConfig</span><span class="p">:</span>
         <span class="n">calibration_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">calibration</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">SeabornPlotConfig</span><span class="p">(</span>
             <span class="n">plot_type</span><span class="o">=</span><span class="s2">&quot;line&quot;</span><span class="p">,</span>
@@ -225,7 +240,9 @@
             <span class="n">summary</span> <span class="o">=</span> <span class="n">summary</span><span class="p">[</span><span class="n">summary</span><span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;Intercept&quot;</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="n">replacement_dict</span><span class="p">:</span>
-            <span class="n">summary</span><span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">summary</span><span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">replacement_dict</span><span class="p">)</span>
+            <span class="n">summary</span><span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">summary</span><span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                <span class="n">replacement_dict</span><span class="p">,</span>
+            <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">dummy_dict</span><span class="p">:</span>
             <span class="n">summary</span><span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">summary</span><span class="p">[</span><span class="s2">&quot;covariate&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">dummy_dict</span><span class="p">)</span>

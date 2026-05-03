@@ -256,7 +256,7 @@ Common Yellowbrick visualizers supported in Deckard context:
 Export Formats
 ~~~~~~~~~~~~~~
 
-Yellowbrick supports multiple output formats via ``poof(outpath=...)`:
+Yellowbrick supports multiple output formats via ``poof(outpath=...)``
 
 - **PNG** (.png): raster format, good for presentations
 - **PDF** (.pdf): vector format, suitable for publications

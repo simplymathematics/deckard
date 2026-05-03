@@ -50,6 +50,8 @@
 <li class="toctree-l1"><a class="reference internal" href="attack.html">Attack</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Score</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.AttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">AttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultAnjanaDataScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAnjanaDataScoreConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultAnjanaModelScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAnjanaModelScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultAttributeInferenceAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceAttackScorerConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultAttributeInferenceRegressionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceRegressionAttackScorerConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultClassifierConfig"><code class="docutils literal notranslate"><span class="pre">DefaultClassifierConfig</span></code></a></li>
@@ -62,10 +64,16 @@
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultFairlearnRegressionConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnRegressionConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultLifelinesConfig"><code class="docutils literal notranslate"><span class="pre">DefaultLifelinesConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultMembershipInferenceAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultMembershipInferenceAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultPytorchClassifierConfig"><code class="docutils literal notranslate"><span class="pre">DefaultPytorchClassifierConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultPytorchRegressorConfig"><code class="docutils literal notranslate"><span class="pre">DefaultPytorchRegressorConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultRegressorConfig"><code class="docutils literal notranslate"><span class="pre">DefaultRegressorConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.FairlearnAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnAttackScorerConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.FairlearnScoreDictConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnScoreDictConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.ScorerConfig"><code class="docutils literal notranslate"><span class="pre">ScorerConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#deckard.score.ScorerDictConfig"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.ScorerDictConfig"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.ScorerDictConfig.merge"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig.merge()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.fairness_demographic_parity_difference"><code class="docutils literal notranslate"><span class="pre">fairness_demographic_parity_difference()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.fairness_equalized_odds_difference"><code class="docutils literal notranslate"><span class="pre">fairness_equalized_odds_difference()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.fairness_group_mae_difference"><code class="docutils literal notranslate"><span class="pre">fairness_group_mae_difference()</span></code></a></li>
@@ -79,6 +87,9 @@
 <li class="toctree-l3"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#model-and-data-scoring">Model and data scoring</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#attack-scoring">Attack scoring</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fairness-scoring-examples">Fairness Scoring Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#attack-fairlearn-metricframe">Attack + Fairlearn MetricFrame</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anjana-scoring-examples">Anjana Scoring Examples</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#hydra-configstore-examples">Hydra ConfigStore examples</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#direct-scorerdictconfig-usage">Direct ScorerDictConfig Usage</a></li>
 </ul>
@@ -104,6 +115,8 @@
 <li class="toctree-l2"><a class="reference internal" href="plot.html">Plot</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Score</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.AttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">AttackScorerConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultAnjanaDataScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAnjanaDataScoreConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultAnjanaModelScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAnjanaModelScoreConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultAttributeInferenceAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceAttackScorerConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultAttributeInferenceRegressionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceRegressionAttackScorerConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultClassifierConfig"><code class="docutils literal notranslate"><span class="pre">DefaultClassifierConfig</span></code></a></li>
@@ -116,10 +129,16 @@
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultFairlearnRegressionConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnRegressionConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultLifelinesConfig"><code class="docutils literal notranslate"><span class="pre">DefaultLifelinesConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultMembershipInferenceAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultMembershipInferenceAttackScorerConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultPytorchClassifierConfig"><code class="docutils literal notranslate"><span class="pre">DefaultPytorchClassifierConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultPytorchRegressorConfig"><code class="docutils literal notranslate"><span class="pre">DefaultPytorchRegressorConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultRegressorConfig"><code class="docutils literal notranslate"><span class="pre">DefaultRegressorConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.FairlearnAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnAttackScorerConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.FairlearnScoreDictConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnScoreDictConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.ScorerConfig"><code class="docutils literal notranslate"><span class="pre">ScorerConfig</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#deckard.score.ScorerDictConfig"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.ScorerDictConfig"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.score.ScorerDictConfig.merge"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig.merge()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.fairness_demographic_parity_difference"><code class="docutils literal notranslate"><span class="pre">fairness_demographic_parity_difference()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.fairness_equalized_odds_difference"><code class="docutils literal notranslate"><span class="pre">fairness_equalized_odds_difference()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.fairness_group_mae_difference"><code class="docutils literal notranslate"><span class="pre">fairness_group_mae_difference()</span></code></a></li>
@@ -133,6 +152,9 @@
 <li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#model-and-data-scoring">Model and data scoring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#attack-scoring">Attack scoring</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fairness-scoring-examples">Fairness Scoring Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#attack-fairlearn-metricframe">Attack + Fairlearn MetricFrame</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#anjana-scoring-examples">Anjana Scoring Examples</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#hydra-configstore-examples">Hydra ConfigStore examples</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#direct-scorerdictconfig-usage">Direct ScorerDictConfig Usage</a></li>
 </ul>
@@ -146,6 +168,11 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="anjana.html">Anjana Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 </li>
 </ul>
@@ -184,6 +211,18 @@ model, attack, and experiment pipelines.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">AttackScorerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evasion=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evasion_regression=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">membership_inference=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute_inference=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute_inference_regression=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/attack.html#AttackScorerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.AttackScorerConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
 <p>Owns all attack scoring logic and profile-specific scorer configs.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.DefaultAnjanaDataScoreConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultAnjanaDataScoreConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/anjana.html#DefaultAnjanaDataScoreConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultAnjanaDataScoreConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.DefaultAnjanaModelScoreConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultAnjanaModelScoreConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/anjana.html#DefaultAnjanaModelScoreConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultAnjanaModelScoreConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
 </dd></dl>
 
 <dl class="py class">
@@ -269,9 +308,41 @@ model, attack, and experiment pipelines.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.DefaultPytorchClassifierConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultPytorchClassifierConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#DefaultPytorchClassifierConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultPytorchClassifierConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<p>Default classifier scorers for PyTorch models.</p>
+<p>PyTorch model wrappers often expose logits but not <code class="docutils literal notranslate"><span class="pre">predict_proba</span></code>. This
+default avoids probability-required metrics so automatic scoring works out
+of the box.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.DefaultPytorchRegressorConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultPytorchRegressorConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#DefaultPytorchRegressorConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultPytorchRegressorConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<p>Default regressor scorers for PyTorch models.</p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultRegressorConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultRegressorConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#DefaultRegressorConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultRegressorConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.FairlearnAttackScorerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">FairlearnAttackScorerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evasion=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evasion_regression=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">membership_inference=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute_inference=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute_inference_regression=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/attack.html#FairlearnAttackScorerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.FairlearnAttackScorerConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.AttackScorerConfig" title="deckard.score.attack.AttackScorerConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">AttackScorerConfig</span></code></a></p>
+<p>AttackScorerConfig that computes attack metrics stratified by sensitive group.</p>
+<p>Uses <a class="reference internal" href="#deckard.score.FairlearnScoreDictConfig" title="deckard.score.fairness.FairlearnScoreDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FairlearnScoreDictConfig</span></code></a> profiles for
+each attack type so that metrics (accuracy, f1, mse, …) are computed
+per sensitive group via <code class="docutils literal notranslate"><span class="pre">fairlearn.metrics.MetricFrame</span></code>.</p>
+<p>Sensitive features must be passed at attack-call time.  In practice,
+<a class="reference internal" href="attack.html#deckard.attack.AttackConfig" title="deckard.attack.base.AttackConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code></a> injects them automatically
+when the data object exposes <code class="docutils literal notranslate"><span class="pre">_sensitive_test</span></code> / <code class="docutils literal notranslate"><span class="pre">_sensitive_train</span></code>
+(i.e. the data object is a
+<a class="reference internal" href="data.html#deckard.data.fairness.FairlearnDataConfig" title="deckard.data.fairness.FairlearnDataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FairlearnDataConfig</span></code></a>).</p>
 </dd></dl>
 
 <dl class="py class">
@@ -296,6 +367,15 @@ first via <code class="docutils literal notranslate"><span class="pre">ScorerDic
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">ScorerDictConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#ScorerDictConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.ScorerDictConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
 <p>Container of named ScorerConfig instances.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.score.ScorerDictConfig.merge">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#ScorerDictConfig.merge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.ScorerDictConfig.merge" title="Link to this definition"></a></dt>
+<dd><p>Merge a list of scorer specs into a single ScorerDictConfig.</p>
+<p>Each element of <em>items</em> may be a <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a>, a dict
+with a <code class="docutils literal notranslate"><span class="pre">scorers</span></code> key, or a bare scorers dict (name → scorer spec).
+Later entries win on duplicate scorer names.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py function">
@@ -531,6 +611,65 @@ set. Deckard passes the attack-specific prediction values to that generic
 profile and prefixes the output keys so they remain unambiguous in merged score
 dicts.</p>
 </section>
+<section id="fairness-scoring-examples">
+<h3>Fairness Scoring Examples<a class="headerlink" href="#fairness-scoring-examples" title="Link to this heading"></a></h3>
+<p>Fairness score profiles are available in
+<code class="docutils literal notranslate"><span class="pre">examples/sklearn/config/score/fairness-classification.yaml</span></code> and
+<code class="docutils literal notranslate"><span class="pre">examples/sklearn/config/score/fairness-regression.yaml</span></code>.</p>
+<p>Classification fairness command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-path<span class="w"> </span>examples/sklearn/config<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-name<span class="w"> </span>fairness-default<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="nv">score</span><span class="o">=</span>fairness-classification
+</pre></div>
+</div>
+<p>Regression fairness command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-path<span class="w"> </span>examples/sklearn/config<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-name<span class="w"> </span>fairness-default<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="nv">score</span><span class="o">=</span>fairness-regression
+</pre></div>
+</div>
+<p>These profiles include metrics such as:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">demographic_parity_difference</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">equalized_odds_difference</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">group_mean_prediction_difference</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">group_mae_difference</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">group_mse_difference</span></code></p></li>
+</ul>
+</section>
+<section id="attack-fairlearn-metricframe">
+<h3>Attack + Fairlearn MetricFrame<a class="headerlink" href="#attack-fairlearn-metricframe" title="Link to this heading"></a></h3>
+<p>For attack evaluations across sensitive groups, Deckard supports
+<code class="docutils literal notranslate"><span class="pre">FairlearnAttackScorerConfig</span></code>. This computes group-level attack metrics
+through fairlearn’s <code class="docutils literal notranslate"><span class="pre">MetricFrame</span></code> for evasion, membership inference, and
+attribute inference outputs.</p>
+<p>Programmatic example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.score.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">FairlearnAttackScorerConfig</span>
+
+<span class="n">attack_scorer</span> <span class="o">=</span> <span class="n">FairlearnAttackScorerConfig</span><span class="p">()</span>
+<span class="c1"># Pass as AttackConfig(..., scorer=attack_scorer)</span>
+</pre></div>
+</div>
+</section>
+<section id="anjana-scoring-examples">
+<h3>Anjana Scoring Examples<a class="headerlink" href="#anjana-scoring-examples" title="Link to this heading"></a></h3>
+<p>Anjana scoring functions are available under <code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.score.anjana</span></code> and
+can be attached through <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.score.ScorerDictConfig</span></code></a>.</p>
+<p>Example scorer declaration:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">scorers</span><span class="p">:</span>
+<span class="w">   </span><span class="nt">k_anonymity</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">score_function</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deckard.score.anjana.anjana_k_anonymity_score</span>
+<span class="w">   </span><span class="nt">l_diversity</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">score_function</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deckard.score.anjana.anjana_l_diversity_score</span>
+<span class="w">   </span><span class="nt">t_closeness</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">score_function</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deckard.score.anjana.anjana_t_closeness_score</span>
+</pre></div>
+</div>
+<p>This is useful when evaluating anonymization quality jointly with predictive
+metrics and fairness/attack metrics in the same experiment run.</p>
+</section>
 <section id="hydra-configstore-examples">
 <h3>Hydra ConfigStore examples<a class="headerlink" href="#hydra-configstore-examples" title="Link to this heading"></a></h3>
 <p>You can select canonical scorer profiles directly from Hydra’s config store.
@@ -712,9 +851,12 @@ misleading values. Match the scorer profile to the task type.</p>
 <section id="see-also">
 <h3>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><a class="reference internal" href="model.html"><span class="doc">Model</span></a></p></li>
-<li><p><a class="reference internal" href="attack.html"><span class="doc">Attack</span></a></p></li>
-<li><p><a class="reference internal" href="experiment.html"><span class="doc">Experiment</span></a></p></li>
+<li><p><a class="reference internal" href="model.html"><span class="doc">Model</span></a> — model configuration and evaluation</p></li>
+<li><p><a class="reference internal" href="data.html"><span class="doc">Data</span></a> — data configuration</p></li>
+<li><p><a class="reference internal" href="attack.html"><span class="doc">Attack</span></a> — attack scoring</p></li>
+<li><p><a class="reference internal" href="experiment.html"><span class="doc">Experiment</span></a> — experiment orchestration</p></li>
+<li><p><a class="reference internal" href="lifelines.html"><span class="doc">Lifelines Integration</span></a> — survival-specific metrics</p></li>
+<li><p><a class="reference internal" href="anjana.html"><span class="doc">Anjana Integration</span></a> — anonymization metrics</p></li>
 </ul>
 </section>
 </section>
