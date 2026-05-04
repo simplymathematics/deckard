@@ -342,6 +342,62 @@ class TestPoisoningExperimentIntegration(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, msg=result.stderr)
 
+    def test_single_pass_with_attack_runs_experiment_scorer_once(self):
+        exp = ExperimentConfig(
+            data=DataConfig(
+                dataset_name="make_classification",
+                data_params={
+                    "n_samples": 80,
+                    "n_features": 6,
+                    "n_informative": 4,
+                    "n_redundant": 2,
+                    "random_state": 0,
+                    "n_clusters_per_class": 1,
+                },
+                train_size=60,
+                test_size=20,
+                random_state=42,
+                classifier=True,
+                sample="split",
+            ),
+            model=ModelConfig(
+                model_type="sklearn.ensemble.RandomForestClassifier",
+                classifier=True,
+                model_params={"n_estimators": 5, "random_state": 0},
+            ),
+            attack=AttackConfig(
+                attack_type="art.attacks.evasion.FastGradientMethod",
+                attack_params={"eps": 0.1},
+                attack_size=10,
+            ),
+            score={"experiment": DefaultClassifierConfig()},
+            files=FileConfig(),
+            experiment_name="single-pass-scorer-call-count",
+            evaluation_mode="standard",
+        )
+
+        with (
+            patch.object(
+                AttackConfig,
+                "__call__",
+                autospec=True,
+                side_effect=lambda self, data, model, **kwargs: {
+                    "evasion_accuracy": 0.5,
+                    "attack_generation_time": 0.01,
+                    "attack_prediction_time": 0.01,
+                    "attack_score_time": 0.01,
+                },
+            ),
+            patch.object(
+                ExperimentConfig,
+                "_run_experiment_scorer_modes",
+                autospec=True,
+                wraps=ExperimentConfig._run_experiment_scorer_modes,
+            ) as mocked_run_modes,
+        ):
+            _ = exp()
+
+        assert mocked_run_modes.call_count == 1
 
 if __name__ == "__main__":
     unittest.main()

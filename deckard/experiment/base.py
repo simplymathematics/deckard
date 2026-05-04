@@ -873,11 +873,6 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 model_file_outputs,
                 attack_file_outputs,
             )
-            custom_scores = self._run_experiment_scorer_modes(
-                score_file=file_dict.get("score_file", None),
-            )
-            if custom_scores:
-                scores = {**scores, **custom_scores}
             if self.model is None:
                 self.model = None
 
