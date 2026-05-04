@@ -54,6 +54,49 @@ Deckard addresses this by providing:
 This reduces engineering friction so researchers can focus on methodology
 instead of ad-hoc pipeline glue code.
 
+Trustworthiness Metrics & Defenses
+----------------------------------
+
+Deckard treats fairness, privacy, and adversarial robustness as first-class evaluation concerns:
+
+**Fairness & Group-Aware Analysis**:
+
+Evaluate model behavior across sensitive groups using :mod:`deckard.data.fairness`,
+:mod:`deckard.model.fairness`, and :mod:`deckard.score.fairness`. These modules
+integrate fairlearn for disparate impact, equalized odds, and demographic parity
+measurement. Use :class:`~deckard.score.attack.FairlearnAttackScorerConfig` to
+measure how adversarial robustness varies across groups.
+
+**Privacy & Anonymization**:
+
+Quantify privacy-utility tradeoffs via :mod:`deckard.data.anjana` and
+:mod:`deckard.score.anjana`. Configure anonymization strategies (suppression,
+bucketing, noise, generalization) and measure information loss, privacy
+guarantees, and accuracy impact.
+
+**Adversarial Robustness & Attacks**:
+
+Execute evasion, membership inference, and attribute inference attacks via
+:class:`~deckard.attack.AttackConfig` with full ART integration. Chain defenses
+using :class:`~deckard.model.DefensePipelineConfig`. Measure attack success
+rates, defense effectiveness, and certified robustness bounds. Combine with
+fairness analysis for group-aware robustness metrics.
+
+**Survival & Failure Modeling**:
+
+Model time-to-event outcomes for both raw data processes and ML pipeline
+failures using :mod:`deckard.data.survival`, :mod:`deckard.model.survival`, and
+:mod:`deckard.score.survival`. This supports benign failure analysis (natural
+performance degradation or operational failures) and adversarial failure
+analysis (attack-induced failure events) within the same reproducible workflow.
+
+**Custom Scorers**:
+
+All metric types (fairness, privacy, attack, standard) integrate through
+:class:`deckard.score.ScorerDictConfig` for unified scoring interface. Define
+custom metrics or wrap scikit-learn, numpy, or domain-specific scoring functions.
+
+
 Usage
 -----
 
@@ -171,39 +214,7 @@ Deckard supports `Adversarial Robustness Toolbox (ART) <https://github.com/Trust
 
 :class:`deckard.data.DataPipelineConfig` wraps sklearn's :class:`~sklearn.pipeline.Pipeline` with timing instrumentation and optional normalization. Empty pipelines skip fitting entirely for efficiency.
 
-Trustworthiness Metrics & Defenses
-----------------------------------
 
-Deckard treats fairness, privacy, and adversarial robustness as first-class evaluation concerns:
-
-**Fairness & Group-Aware Analysis**:
-
-Evaluate model behavior across sensitive groups using :mod:`deckard.data.fairness`,
-:mod:`deckard.model.fairness`, and :mod:`deckard.score.fairness`. These modules
-integrate fairlearn for disparate impact, equalized odds, and demographic parity
-measurement. Use :class:`~deckard.score.attack.FairlearnAttackScorerConfig` to
-measure how adversarial robustness varies across groups.
-
-**Privacy & Anonymization**:
-
-Quantify privacy-utility tradeoffs via :mod:`deckard.data.anjana` and
-:mod:`deckard.score.anjana`. Configure anonymization strategies (suppression,
-bucketing, noise, generalization) and measure information loss, privacy
-guarantees, and accuracy impact.
-
-**Adversarial Robustness & Attacks**:
-
-Execute evasion, membership inference, and attribute inference attacks via
-:class:`~deckard.attack.AttackConfig` with full ART integration. Chain defenses
-using :class:`~deckard.model.DefensePipelineConfig`. Measure attack success
-rates, defense effectiveness, and certified robustness bounds. Combine with
-fairness analysis for group-aware robustness metrics.
-
-**Custom Scorers**:
-
-All metric types (fairness, privacy, attack, standard) integrate through
-:class:`deckard.score.ScorerDictConfig` for unified scoring interface. Define
-custom metrics or wrap scikit-learn, numpy, or domain-specific scoring functions.
 
 Extensions And Optional Backends
 ----------------------------------
@@ -220,7 +231,7 @@ Deckard maintains a modular, plugin-based architecture using Hydra's ``ConfigSto
 
 **Model Extensions**:
 
-- :mod:`deckard.model.fairness` — :class:`~deckard.model.fairness.FairlearnModelConfig` for fairness-aware model fitting and fairlearn defense wrappers
+- :mod:`deckard.model.fairness` — :class:`~deckard.model.fairness.FairlearnModelConfig` for sklearn fairness-aware model fitting and :class:`~deckard.model.fairness.FairlearnPytorchModelConfig` for PyTorch fairness models with fairlearn defense wrappers
 - :mod:`deckard.model.anjana` — :class:`~deckard.model.anjana.AnjanaModelConfig` for anonymization-aware model paths
 - :mod:`deckard.model.pytorch` — :class:`~deckard.model.pytorch.PytorchModelConfig` for PyTorch-native model training and prediction
 - :mod:`deckard.model.survival` — :class:`~deckard.model.survival.SurvivalModelConfig` for survival models with lifelines estimators

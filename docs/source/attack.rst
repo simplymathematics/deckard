@@ -2,8 +2,8 @@ Attack
 =============
 
 The :mod:`deckard.attack` module contains the :class:`~deckard.attack.AttackConfig` dataclass and helper
-functions for running evasion and inference attacks against scikit-learn
-estimators using the Adversarial Robustness Toolbox (ART).
+functions for running evasion, poisoning, extraction, and inference attacks
+using the Adversarial Robustness Toolbox (ART).
 
 .. automodule:: deckard.attack
    :members:
@@ -24,19 +24,94 @@ adversarial attacks. It supports:
 
 Supported Attacks
 -----------------
-Currently supports a selection of attacks from ART, including:
-Evasion Attacks:
-- HopSkipJump
-- BoundaryAttack
-- AutoProjectedGradientDescent
-Membership Inference Attacks:
-- MembershipInferenceBlackBox
-- MembershipInferenceBaseline
-Attribute Inference Attacks:
-- AttributeInferenceBaseline
-- AttributeInferenceBlackBox
+Deckard supports ART attacks across the following families:
 
-(Extendable to other attacks in future versions.)
+- **Evasion attacks** (for example: ``FastGradientMethod``, ``HopSkipJump``,
+   ``BoundaryAttack``, ``AutoProjectedGradientDescent``)
+- **Poisoning attacks** (for example: ``GradientMatchingAttack``)
+- **Extraction attacks** (for example: ART extraction attacks against neural
+   classifiers)
+- **Inference attacks**:
+
+   - Membership inference (for example: ``MembershipInferenceBlackBox``,
+      ``MembershipInferenceBaseline``)
+   - Attribute inference (for example: ``AttributeInferenceBaseline``,
+      ``AttributeInferenceBlackBox``)
+
+(Extendable to additional ART attack classes in future versions.)
+
+Attack Types And Metrics
+------------------------
+The output score dictionary depends on the attack family and task type. Metric
+keys are prefixed to make results easy to group in downstream analysis.
+
+**Evasion (classification)**
+
+- Prefix: ``evasion_``
+- Default metrics: ``evasion_accuracy``, ``evasion_precision``,
+   ``evasion_recall``, ``evasion_f1-score``, ``evasion_success``
+- ``evasion_success`` is computed as $1 - \text{accuracy}(\text{benign preds}, \text{adversarial preds})$
+
+**Evasion (regression)**
+
+- Prefix: ``evasion_``
+- Default metrics: ``evasion_mse``, ``evasion_mae``, ``evasion_r2``
+
+**Membership inference**
+
+- Prefix: ``membership_inference_``
+- Default metrics: ``membership_inference_accuracy``,
+   ``membership_inference_precision``, ``membership_inference_recall``,
+   ``membership_inference_f1``
+
+**Attribute inference (classification target attribute)**
+
+- Prefix: ``inferred_<targeted_attribute>_``
+- Default metrics: ``inferred_<targeted_attribute>_accuracy``,
+   ``inferred_<targeted_attribute>_precision``,
+   ``inferred_<targeted_attribute>_recall``,
+   ``inferred_<targeted_attribute>_f1``
+
+**Attribute inference (regression target attribute)**
+
+- Prefix: ``inferred_<targeted_attribute>_``
+- Default metrics: ``inferred_<targeted_attribute>_mse``,
+   ``inferred_<targeted_attribute>_mae``,
+   ``inferred_<targeted_attribute>_r2``
+
+**Poisoning**
+
+- Compares model quality before and after poisoned retraining on the selected
+   evaluation split
+- Metric keys are emitted with both ``benign_`` and ``poisoned_`` prefixes,
+   for example: ``benign_accuracy``, ``poisoned_accuracy``
+- Additional poisoning metadata includes:
+
+   - ``poison_attack_target_class``
+   - ``poison_attack_source_class``
+   - ``poison_trigger_index``
+   - ``poison_trigger_predicted_class``
+   - ``poison_trigger_success``
+   - ``poison_mode``
+
+**Extraction**
+
+- Compares victim and extracted models on the selected evaluation split
+- Metric keys are emitted with ``benign_`` and ``extracted_`` prefixes,
+   for example: ``benign_accuracy``, ``extracted_accuracy``
+- Additional extraction metadata includes ``extraction_mode``
+
+**Common fields across attacks**
+
+- ``attack_size``
+- ``attack_generation_time``
+- ``attack_prediction_time``
+- ``attack_score_time``
+
+Fairness-stratified attack scoring is available via
+:class:`~deckard.score.attack.FairlearnAttackScorerConfig`, which computes
+per-group metrics (for example, by sensitive feature) in addition to overall
+attack metrics.
 
 Usage
 -----

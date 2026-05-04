@@ -58,9 +58,11 @@ Overview
 Supported frameworks
 ~~~~~~~~~~~~~~~~~~~~
 Currently supports:
-- **scikit-learn**
 
-(Extendable to other frameworks in future versions.)
+- **scikit-learn** — via :class:`~deckard.model.ModelConfig`
+- **PyTorch** — via :class:`~deckard.model.pytorch.PytorchModelConfig`
+- **Fairlearn (sklearn)** — via :class:`~deckard.model.fairness.FairlearnModelConfig`
+- **Fairlearn (PyTorch)** — via :class:`~deckard.model.fairness.FairlearnPytorchModelConfig`
 
 Usage
 -----
@@ -107,13 +109,24 @@ To use :class:`~deckard.model.ModelConfig` from Python:
          "n_clusters_per_class": 1,
          "n_classes": 2,
          "random_state": 7,
-      },
-      train_size=30,
-      test_size=10,
-      random_state=42,
-      stratify=True,
-      classifier=True,
-   )
+
+      The fairness extension provides fairness-aware model behavior, including
+      group-sensitive fitting, scoring, and fairlearn defense wrappers.
+
+      Two concrete classes are provided:
+
+      - :class:`~deckard.model.fairness.FairlearnModelConfig` — for sklearn models;
+         inherits :class:`~deckard.model.ModelConfig` and adds fairness-aware scoring
+         and fairlearn defense support.
+      - :class:`~deckard.model.fairness.FairlearnPytorchModelConfig` — for PyTorch
+         models; inherits :class:`~deckard.model.pytorch.PytorchModelConfig` directly
+         so all torch training, device management, ART wrapping, and checkpointing
+         comes for free, with fairness-aware scoring layered on top via
+         ``_FairnessBehaviorMixin``.
+
+      .. automodule:: deckard.model.fairness
+          :members:
+          :show-inheritance:
    data()
 
    model = ModelConfig(

@@ -25,7 +25,10 @@ Key Features
 - **Device reconciliation**: automatic CPU/CUDA/MPS device selection and validation
 - **ART integration**: PyTorch models wrap as ART estimators for attack/defense
 - **Fairness support**: compatible with :mod:`deckard.data.fairness` and attack
-  stratification by sensitive features
+- **Fairness support**: :class:`~deckard.model.fairness.FairlearnPytorchModelConfig`
+  inherits :class:`~deckard.model.pytorch.PytorchModelConfig` directly and adds
+  fairness-aware scoring; compatible with :mod:`deckard.data.fairness` and
+  attack stratification by sensitive features
 - **Survival analysis**: optional integration with lifelines-based survival experiments
 - **Standard scorers**: classification, regression, and attack metrics via
   :class:`deckard.score.DefaultClassifierConfig`, etc.
@@ -152,12 +155,10 @@ Programmatic examples
    model = PytorchModelConfig(
        model_type="__main__.SimpleCNN",
        classifier=True,
-       device="auto",
-       optimizer_type="torch.optim.Adam",
-       optimizer_params={"lr": 0.001},
-       epochs=10,
-       batch_size=32,
-       scorer=DefaultClassifierConfig(),
+      device=None,  # auto-selected: cuda > mps > cpu
+      criterion="CrossEntropyLoss",
+      optimizer={"name": "Adam", "lr": 0.001},
+      fit_params={"nb_epochs": 10, "batch_size": 32},
    )
 
    # Run experiment
@@ -213,15 +214,26 @@ Configuration
 Key configuration options for :class:`~deckard.model.pytorch.PytorchModelConfig`:
 
 - **model_type** (str): fully qualified import path to :class:`torch.nn.Module`
-- **device** (str): "cpu", "cuda", "mps", or "auto" for automatic selection
-- **optimizer_type** (str): e.g., "torch.optim.Adam", "torch.optim.SGD"
-- **optimizer_params** (dict): keyword arguments for optimizer constructor
-- **loss_fn_type** (str): e.g., "torch.nn.CrossEntropyLoss"
-- **epochs** (int): number of training epochs
-- **batch_size** (int): batch size for training/evaluation
-- **scheduler_type** (str, optional): e.g., "torch.optim.lr_scheduler.StepLR"
-- **early_stopping_patience** (int, optional): epochs to wait before stopping if
-  validation loss plateaus
+  (e.g. ``"torch.nn.Linear"`` or ``"torchvision.models.resnet18"``)
+- **model_params** (dict): keyword arguments forwarded to the module constructor
+- **device** (str or None): ``"cpu"``, ``"cuda"``, ``"mps"``, or ``None``
+  for automatic selection via :func:`~deckard.utils.resolve_torch_device`
+- **criterion** (str or dict): loss function — string shorthand
+  (e.g. ``"CrossEntropyLoss"``) or fully qualified path
+  (e.g. ``"torch.nn.CrossEntropyLoss"``), or a dict with a ``name`` key
+- **optimizer** (str or dict): optimizer — string shorthand (e.g. ``"SGD"``),
+  fully qualified path (e.g. ``"torch.optim.Adam"``), or a dict with ``name``
+  and any keyword arguments (e.g. ``{"name": "Adam", "lr": 0.001}``)
+- **fit_params** (dict): training hyperparameters:
+
+  - ``nb_epochs`` (int): number of training epochs
+  - ``batch_size`` (int): batch size for training
+  - ``checkpoint_every_epochs`` (int, optional): save a checkpoint every N epochs
+  - ``checkpoint_dir`` (str, optional): directory for checkpoint files
+
+- **classifier** (bool): ``True`` for classification, ``False`` for regression
+- **clip_values** (tuple or None): ``(min, max)`` clipping range for ART wrapper
+- **random_seed** (int): seed for reproducibility
 
 Device Management
 ~~~~~~~~~~~~~~~~~
