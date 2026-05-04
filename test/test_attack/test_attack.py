@@ -77,6 +77,50 @@ class TestAttackConfig(unittest.TestCase):
         metrics = self.attack.score_dict
         self.assertIn("evasion_success", metrics)
 
+    def test_evade_includes_benign_scores(self):
+        attack = AttackConfig(
+            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_size=6,
+        )
+
+        class _TinyData:
+            X_test = np.array(
+                [
+                    [0.0, 0.0],
+                    [0.2, 0.1],
+                    [0.9, 0.7],
+                    [0.8, 0.9],
+                    [0.1, 0.3],
+                    [0.7, 0.6],
+                ],
+            )
+            y_test = np.array([0, 0, 1, 1, 0, 1])
+
+        class _FakeArtModel:
+            def predict(self, x):
+                x = np.asarray(x)
+                p1 = (x[:, 0] > 0.5).astype(float)
+                p0 = 1.0 - p1
+                return np.column_stack([p0, p1])
+
+        class _FakeEvasionAttack:
+            def generate(self, x):
+                x = np.asarray(x).copy()
+                x[:, 0] = 1.0 - x[:, 0]
+                return x
+
+        result = attack._evade(
+            data=_TinyData(),
+            art_model=_FakeArtModel(),
+            attack=_FakeEvasionAttack(),
+        )
+
+        self.assertIn("benign_accuracy", result)
+        self.assertIn("benign_precision", result)
+        self.assertIn("benign_recall", result)
+        self.assertIn("benign_f1", result)
+        self.assertIn("evasion_success", result)
+
     def test_poison_attack_metrics(self):
         attack = AttackConfig(
             attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",

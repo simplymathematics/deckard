@@ -51,11 +51,16 @@ keys are prefixed to make results easy to group in downstream analysis.
 - Default metrics: ``evasion_accuracy``, ``evasion_precision``,
    ``evasion_recall``, ``evasion_f1-score``, ``evasion_success``
 - ``evasion_success`` is computed as $1 - \text{accuracy}(\text{benign preds}, \text{adversarial preds})$
+- Baseline metrics are also emitted with ``benign_`` prefix for consistency,
+   for example: ``benign_accuracy``, ``benign_precision``, ``benign_recall``,
+   ``benign_f1``
 
 **Evasion (regression)**
 
 - Prefix: ``evasion_``
 - Default metrics: ``evasion_mse``, ``evasion_mae``, ``evasion_r2``
+- Baseline metrics are also emitted with ``benign_`` prefix, for example:
+   ``benign_mse``, ``benign_mae``, ``benign_r2``
 
 **Membership inference**
 

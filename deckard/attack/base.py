@@ -26,7 +26,11 @@ from omegaconf import DictConfig, OmegaConf, ListConfig
 
 from ..model import ModelConfig
 from ..model.defend import sklearn_dict
-from ..score.base import DefaultClassifierConfig, ScorerDictConfig
+from ..score.base import (
+    DefaultClassifierConfig,
+    DefaultRegressorConfig,
+    ScorerDictConfig,
+)
 from ..utils import ConfigBase, resolve_class, resolve_torch_device
 from .torch_utils import (
     build_torch_art_model,
@@ -1050,6 +1054,27 @@ class AttackConfig(ConfigBase):
             y_subset,
             is_regression=is_regression,
         )
+        if is_regression:
+            benign_scorer = DefaultRegressorConfig()
+            benign_scores = benign_scorer(
+                y_true=y_test_numeric,
+                y_pred=ben_pred_labels,
+                mode=None,
+            )
+        else:
+            full_classifier = DefaultClassifierConfig()
+            label_only = {
+                name: scorer
+                for name, scorer in full_classifier.scorers.items()
+                if not scorer.needs_proba
+            }
+            benign_scorer = ScorerDictConfig(scorers=label_only)
+            benign_scores = benign_scorer(
+                y_true=y_test_numeric,
+                y_pred=ben_pred_labels,
+                mode=None,
+            )
+
         score_dict = self._score(
             attack_kind="evasion",
             y_true=y_test_numeric,
@@ -1064,7 +1089,8 @@ class AttackConfig(ConfigBase):
         logger.info(
             f"Attack scoring took {self.attack_score_time} seconds for {len(adv_pred_labels)} samples and {len(self.score_dict)} scores.",
         )
-        self.score_dict = {**self.score_dict, **score_dict}
+        prefixed_benign = {f"benign_{k}": v for k, v in benign_scores.items()}
+        self.score_dict = {**self.score_dict, **prefixed_benign, **score_dict}
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
         self.attack = adv_pred
