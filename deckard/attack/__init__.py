@@ -5,8 +5,9 @@ This subpackage exposes the attack-side configuration objects used by
 """
 
 from .base import AttackConfig, SensitiveFeaturesWrapper
+from .pytorch import PytorchAttackConfig
 
 # Import declarations to register example configs with ConfigStore
 from . import declarations  # noqa: F401
 
-__all__ = ["AttackConfig", "SensitiveFeaturesWrapper"]
+__all__ = ["AttackConfig", "PytorchAttackConfig", "SensitiveFeaturesWrapper"]

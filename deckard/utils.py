@@ -688,7 +688,12 @@ class ConfigBase:
             pickle.dump(obj, f)
         logger.info(f"Object saved to {filepath}")
 
-    def load_object(self, filepath: str) -> Any:
+    def load_object(
+        self,
+        filepath: str,
+        ignore_corrupt: bool = False,
+        delete_corrupt: bool = False,
+    ) -> Any:
         """
         Loads a Serializable object from a file using pickle.
 
@@ -701,9 +706,28 @@ class ConfigBase:
         -------
         Any
             The loaded object.
+
+        Parameters
+        ----------
+        ignore_corrupt : bool, optional
+            If True, return None when a known pickle corruption/loading error occurs.
+        delete_corrupt : bool, optional
+            If True and a known pickle corruption/loading error occurs, delete the file.
         """
-        with open(filepath, "rb") as f:
-            obj = pickle.load(f)
+        try:
+            with open(filepath, "rb") as f:
+                obj = pickle.load(f)
+        except (EOFError, pickle.UnpicklingError, AttributeError, OSError) as exc:
+            if delete_corrupt:
+                Path(filepath).unlink(missing_ok=True)
+            if ignore_corrupt:
+                logger.warning(
+                    "Failed to load cached object %s (%s).",
+                    filepath,
+                    exc,
+                )
+                return None
+            raise
         logger.info(f"Object loaded from {filepath}")
         return obj
 

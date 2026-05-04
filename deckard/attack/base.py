@@ -1,4 +1,5 @@
 # Standard library imports
+import copy
 import pickle
 import time
 import logging
@@ -8,7 +9,7 @@ import pandas as pd
 
 # Typing imports
 from dataclasses import dataclass, field
-from typing import Optional, Union, TYPE_CHECKING
+from typing import Literal, Optional, Union, TYPE_CHECKING
 
 # Sklearn and numpy imports
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
@@ -19,13 +20,15 @@ from numpy.exceptions import AxisError
 
 # ART imports
 from art.config import ART_NUMPY_DTYPE
+from art.estimators.classification.classifier import ClassifierNeuralNetwork
 
 from omegaconf import DictConfig, OmegaConf, ListConfig
 
 from ..model import ModelConfig
 from ..model.defend import sklearn_dict
+from ..score.base import DefaultClassifierConfig, ScorerDictConfig
 from ..utils import ConfigBase, resolve_class, resolve_torch_device
-from .pytorch import (
+from .torch_utils import (
     build_torch_art_model,
     collect_subset_from_dataloader,
     is_dataloader,
@@ -213,6 +216,7 @@ class AttackConfig(ConfigBase):
     scorer: Union["AttackScorerConfig", None] = None
     alias: Union[str, None] = None
     device: Union[str, None] = None
+    mode: Literal["test", "val"] = "test"
 
     # Runtime state fields
     attack_time: Union[float, None] = None
@@ -246,7 +250,29 @@ class AttackConfig(ConfigBase):
             self.scorer = attack_scorer_cls()
         elif isinstance(self.scorer, dict):
             self.scorer = attack_scorer_cls(**self.scorer)
+        self._validate_poisoning_params()
         self.device = str(resolve_torch_device(self.device))
+
+    def _validate_poisoning_params(self):
+        """Validate poisoning-specific configuration parameters."""
+        attack_type = (self.attack_family or "").lower()
+        if attack_type != "poisoning":
+            return
+
+        required_keys = ("class_source", "class_target")
+        missing_keys = [k for k in required_keys if k not in self.attack_params]
+        if missing_keys:
+            raise ValueError(
+                "Poisoning attacks require attack_params to include "
+                f"{required_keys}. Missing: {tuple(missing_keys)}",
+            )
+
+        class_source = int(self.attack_params["class_source"])
+        class_target = int(self.attack_params["class_target"])
+        if class_source == class_target:
+            raise ValueError(
+                "Poisoning attacks require class_source and class_target to differ.",
+            )
 
     def _parse_attack_path(self) -> tuple[str, str]:
         parts = (self.attack_type or "").split("attacks.")[-1].split(".")
@@ -353,6 +379,10 @@ class AttackConfig(ConfigBase):
             "inference",
         ]:
             raise ValueError(f"Unsupported attack type: {attack_type}")
+
+        if attack_type == "poisoning":
+            self._validate_poisoning_params()
+
         attack_class = resolve_class(self.attack_type)
         if art_model is None:
             if isinstance(model, tuple(supported_models)):
@@ -456,7 +486,18 @@ class AttackConfig(ConfigBase):
                     f"attack_model must be a ModelConfig instance. Got {type(attack_model)}",
                 )
             self.attack_params["attack_model"] = attack_model
-        attack = attack_class(art_model, **self.attack_params)
+        attack_init_params = copy.deepcopy(self.attack_params)
+        if attack_type == "poisoning":
+            # Internal orchestration fields are not constructor args for ART attacks.
+            for key in (
+                "class_source",
+                "class_target",
+                "trigger_index",
+                "poison_fit_params",
+                "num_workers",
+            ):
+                attack_init_params.pop(key, None)
+        attack = attack_class(art_model, **attack_init_params)
         self._attack_type = attack_type
         self._attack_subtype = attack_subtype
         return attack, art_model, attack_type, attack_subtype
@@ -502,12 +543,26 @@ class AttackConfig(ConfigBase):
             If the output scores or timing variables are not of the expected types.
         """
         if attack_file is not None and Path(attack_file).exists():
-            self = self.load_object(attack_file)
+            loaded_self = self.load_object(
+                attack_file,
+                ignore_corrupt=True,
+                delete_corrupt=True,
+            )
+            if loaded_self is not None:
+                self = loaded_self
         if (
             attack_predictions_file is not None
             and Path(attack_predictions_file).exists()
         ):
-            self.attack_predictions = self.load_object(attack_predictions_file)
+            try:
+                self.attack_predictions = self.load_data(attack_predictions_file)
+            except (ValueError, OSError) as exc:
+                logger.warning(
+                    "Failed to load cached attack predictions %s (%s). Recomputing predictions.",
+                    attack_predictions_file,
+                    exc,
+                )
+                Path(attack_predictions_file).unlink(missing_ok=True)
         if score_file is not None and Path(score_file).exists():
             self.score_dict = self.load_scores(score_file)
 
@@ -521,9 +576,17 @@ class AttackConfig(ConfigBase):
         if attack_type == "evasion":
             scores = self._evade(data, art_model, attack)
         elif attack_type == "poisoning":
-            raise NotImplementedError("Poisoning attack not implemented yet.")
+            scores = self._poison(
+                data=data,
+                art_model=art_model,
+                attack=attack,
+            )
         elif attack_type == "extraction":
-            raise NotImplementedError("Extraction attack not implemented yet.")
+            scores = self._extract(
+                data=data,
+                art_model=art_model,
+                attack=attack,
+            )
         elif attack_type == "inference":
             match attack_subtype:
                 case "membership_inference":
@@ -572,9 +635,17 @@ class AttackConfig(ConfigBase):
 
         # Save attack, predictions, and scores if file paths are provided
         if attack_file is not None and not Path(attack_file).exists():
-            self.save_object(self, attack_file)
+            try:
+                self.save_object(self, attack_file)
+            except (pickle.PicklingError, AttributeError, TypeError) as exc:
+                logger.warning(
+                    "Failed to cache attack object %s (%s). Continuing without cache.",
+                    attack_file,
+                    exc,
+                )
+                Path(attack_file).unlink(missing_ok=True)
         if attack_predictions_file is not None:
-            self.save_object(self.attack_predictions, attack_predictions_file)
+            self.save_data(self.attack_predictions, attack_predictions_file)
         if score_file is not None:
             self.save_scores(self.score_dict, score_file)
         return score_dict
@@ -757,6 +828,126 @@ class AttackConfig(ConfigBase):
             return True
         return False
 
+    @staticmethod
+    def _to_numpy_array(value, dtype=None, flatten: bool = False) -> np.ndarray:
+        """Normalize array-like inputs (tensor/pandas/list/ndarray) to numpy arrays."""
+        if is_tensor(value):
+            arr = tensor_to_numpy(value, dtype=dtype)
+        elif isinstance(value, pd.DataFrame):
+            arr = value.values
+            if dtype is not None:
+                arr = arr.astype(dtype)
+        elif isinstance(value, pd.Series):
+            arr = value.values
+            if dtype is not None:
+                arr = arr.astype(dtype)
+        elif isinstance(value, np.ndarray):
+            arr = value.astype(dtype) if dtype is not None else value
+        else:
+            arr = np.asarray(value, dtype=dtype)
+
+        arr = np.asarray(arr)
+        return arr.reshape(-1) if flatten else arr
+
+    def _prepare_features_for_attack(self, value):
+        """Prepare feature inputs for attack APIs.
+
+        Subclasses can override this to preserve framework-native tensors.
+        """
+        if is_tensor(value):
+            return tensor_to_numpy(value, dtype=ART_NUMPY_DTYPE)
+        if isinstance(value, pd.DataFrame):
+            return value.values
+        if isinstance(value, pd.Series):
+            return value.values
+        return value
+
+    def _prepare_labels_for_attack(self, value):
+        """Prepare label inputs for attack APIs.
+
+        Subclasses can override this to preserve framework-native tensors.
+        """
+        if is_tensor(value):
+            return tensor_to_numpy(value, dtype=ART_NUMPY_DTYPE)
+        if isinstance(value, pd.DataFrame):
+            return value.values
+        if isinstance(value, pd.Series):
+            return value.values
+        return value
+
+    @classmethod
+    def _prediction_to_labels(cls, predictions, is_regression: bool = False):
+        """Convert model/attack prediction outputs into score-ready labels."""
+        arr = cls._to_numpy_array(predictions)
+        if is_regression:
+            return arr.reshape(-1)
+        return cls._labels_from_classifier_predictions(arr)
+
+    @classmethod
+    def _normalize_ground_truth(cls, y_true, is_regression: bool = False):
+        """Normalize y_true into a consistent 1D numpy representation."""
+        if isinstance(y_true, pd.Series):
+            if is_regression:
+                return y_true.astype(float).values
+            return y_true.astype("category").cat.codes.values
+        if isinstance(y_true, pd.DataFrame):
+            series = y_true.iloc[:, 0]
+            if is_regression:
+                return series.astype(float).values
+            return series.astype("category").cat.codes.values
+        arr = cls._to_numpy_array(y_true)
+        if not is_regression and arr.ndim == 2 and arr.shape[1] > 1:
+            return np.argmax(arr, axis=1)
+        return arr.reshape(-1)
+
+    @classmethod
+    def _target_to_class_labels(cls, y) -> np.ndarray:
+        """Convert labels/targets to 1D class-index labels."""
+        arr = cls._to_numpy_array(y)
+        if arr.ndim == 1:
+            return arr.astype(int)
+        if arr.ndim == 2 and arr.shape[1] == 1:
+            return arr.reshape(-1).astype(int)
+        if arr.ndim == 2 and arr.shape[1] > 1:
+            return np.argmax(arr, axis=1).astype(int)
+        raise ValueError(f"Unsupported target shape for class labels: {arr.shape}")
+
+    @staticmethod
+    def _one_hot_encode(labels, nb_classes: int) -> np.ndarray:
+        """One-hot encode class-index labels using ART default dtype."""
+        labels = np.asarray(labels).reshape(-1).astype(int)
+        one_hot = np.zeros((len(labels), int(nb_classes)), dtype=ART_NUMPY_DTYPE)
+        one_hot[np.arange(len(labels)), labels] = 1.0
+        return one_hot
+
+    @classmethod
+    def _normalize_inferred_output(cls, inferred, reference=None):
+        """Normalize inferred outputs and align dimensions with reference labels."""
+        arr = cls._to_numpy_array(inferred)
+        if reference is None:
+            return arr
+        ref = cls._to_numpy_array(reference)
+        if ref.ndim > arr.ndim:
+            return pd.get_dummies(arr).values
+        if arr.ndim > ref.ndim:
+            return np.argmax(arr, axis=1)
+        return arr
+
+    @staticmethod
+    def _select_extraction_scorer(benign_pred, extracted_pred):
+        """Use full classifier metrics when probabilities are available, else label-only metrics."""
+        preds = [np.asarray(benign_pred), np.asarray(extracted_pred)]
+        has_probabilities = any(pred.ndim == 2 and pred.shape[1] > 1 for pred in preds)
+        if has_probabilities:
+            return DefaultClassifierConfig(), True
+        full_classifier = DefaultClassifierConfig()
+        label_only = {
+            name: scorer
+            for name, scorer in full_classifier.scorers.items()
+            if not scorer.needs_proba
+        }
+        return ScorerDictConfig(scorers=label_only), False
+
     def _score_attack_legacy(
         self,
         ben_pred_labels,
@@ -797,31 +988,21 @@ class AttackConfig(ConfigBase):
         """
         start_time = time.process_time()
         n, x_subset, y_subset = self.get_attack_subset(data)
-        if is_tensor(x_subset):
-            x_subset = tensor_to_numpy(x_subset, dtype=ART_NUMPY_DTYPE)
-        elif isinstance(x_subset, pd.DataFrame):
-            x_subset = x_subset.values
-        else:
-            # x_subset = x_subset.astype(ART_NUMPY_DTYPE)
-            pass
-        if is_tensor(y_subset):
-            y_subset = tensor_to_numpy(y_subset, dtype=ART_NUMPY_DTYPE)
-        elif isinstance(y_subset, pd.Series):
-            y_subset = y_subset.values
-        else:
-            assert isinstance(
-                y_subset,
-                (list, np.ndarray),
-            ), f"Expected labels to be a list of np.ndarray. Got {type(y_subset)}"
+        x_subset = self._prepare_features_for_attack(x_subset)
+        y_subset = self._prepare_labels_for_attack(y_subset)
+        if not isinstance(y_subset, (list, np.ndarray)) and not is_tensor(y_subset):
+            raise TypeError(
+                f"Expected labels to be a list, numpy array, or tensor. Got {type(y_subset)}",
+            )
         ben_preds = art_model.predict(x_subset)
         is_regression = self._is_regression_prediction_output(
             y_subset,
             ben_preds,
         )
-        if is_regression:
-            ben_pred_labels = np.asarray(ben_preds).reshape(-1)
-        else:
-            ben_pred_labels = np.asarray(ben_preds).argmax(axis=1)
+        ben_pred_labels = self._prediction_to_labels(
+            ben_preds,
+            is_regression=is_regression,
+        )
         if is_tensor(ben_pred_labels):
             ben_pred_labels = tensor_to_numpy(
                 ben_pred_labels,
@@ -861,28 +1042,14 @@ class AttackConfig(ConfigBase):
         logger.info(
             f"Adversarial prediction took {self.attack_prediction_time} seconds for {n} samples",
         )
-        if is_regression:
-            adv_pred_labels = np.asarray(adv_pred).reshape(-1)
-        else:
-            adv_pred_labels = np.asarray(adv_pred).argmax(axis=1)
-        if isinstance(y_subset, pd.Series):
-            if is_regression:
-                y_test_numeric = y_subset.astype(float).values
-            else:
-                y_test_numeric = y_subset.astype("category").cat.codes
-        elif isinstance(y_subset, pd.DataFrame):
-            if is_regression:
-                y_test_numeric = y_subset.iloc[:, 0].astype(float).values
-            else:
-                y_test_numeric = y_subset.iloc[:, 0].astype("category").cat.codes
-        elif isinstance(y_subset, np.ndarray):
-            y_test_numeric = np.asarray(y_subset).reshape(-1)
-        elif is_tensor(y_subset):
-            y_test_numeric = tensor_to_numpy(y_subset).reshape(-1)
-        else:
-            raise TypeError(
-                f"Unsupported type for y_subset: {type(y_subset)}",
-            )
+        adv_pred_labels = self._prediction_to_labels(
+            adv_pred,
+            is_regression=is_regression,
+        )
+        y_test_numeric = self._normalize_ground_truth(
+            y_subset,
+            is_regression=is_regression,
+        )
         score_dict = self._score(
             attack_kind="evasion",
             y_true=y_test_numeric,
@@ -1023,12 +1190,10 @@ class AttackConfig(ConfigBase):
             f"Attribute inference attack training took {attack_time} seconds for {self.attack_size} samples",
         )
         self.attack_time = attack_time
-        preds = np.array(
-            [np.argmax(arr) for arr in art_model.predict(X_test_subset)],
-        ).reshape(
-            -1,
-            1,
-        )
+        preds = self._prediction_to_labels(
+            art_model.predict(X_test_subset),
+            is_regression=False,
+        ).reshape(-1, 1)
         assert isinstance(
             preds,
             np.ndarray,
@@ -1063,20 +1228,19 @@ class AttackConfig(ConfigBase):
             values=possible_values,
         )
         end_time = time.process_time()
-        if isinstance(inferred, list):
-            inferred = np.array(inferred)
-        elif isinstance(inferred, pd.Series):
-            inferred = inferred.values
-        elif isinstance(inferred, np.ndarray):
-            pass
+        # Determine if the target is categorical or continuous
+        is_classification = not attack._is_continuous
+        inferred = self._normalize_inferred_output(inferred)
+        if is_classification:
+            inferred = self._prediction_to_labels(inferred, is_regression=False)
+            target = self._normalize_ground_truth(target, is_regression=False)
         else:
-            raise ValueError(f"Unsupported inferred type: {type(inferred)}")
+            inferred = self._prediction_to_labels(inferred, is_regression=True)
+            target = self._normalize_ground_truth(target, is_regression=True)
         self.attack_prediction_time = end_time - start_time
         logger.info(
             f"Attribute inference attack scoring took {self.attack_score_time} seconds for {self.attack_size} samples",
         )
-        # Determine if the target is categorical or continuous
-        is_classification = not attack._is_continuous
         sensitive_attribute = _sensitive_slice(
             getattr(data, "_sensitive_train", None),
             self.attack_size,
@@ -1125,11 +1289,8 @@ class AttackConfig(ConfigBase):
             If the inferred membership type is unsupported or its length does not match the number of samples.
         """
         start_time = time.process_time()
-        y_train_values = (
-            data.y_train.copy().values
-            if hasattr(data.y_train, "values")
-            else np.asarray(data.y_train)
-        )
+        y_train_raw = self._prepare_labels_for_attack(getattr(data, "y_train"))
+        y_train_values = self._to_numpy_array(y_train_raw)
         if y_train_values.ndim == 1:
             # Transform labels into one-hot encoding for attacks expecting 2D y
             y_data = pd.get_dummies(y_train_values).values
@@ -1139,9 +1300,9 @@ class AttackConfig(ConfigBase):
             y_data = y_train_values
         try:
             attack.fit(
-                x=data.X_train.copy().values,
+                x=self._prepare_features_for_attack(getattr(data, "X_train")),
                 y=y_data,
-                test_x=data.X_test.copy().values,
+                test_x=self._prepare_features_for_attack(getattr(data, "X_test")),
             )
         except AxisError:
             # Fallback: ensure y is strictly 2D one-hot to avoid axis=1 errors
@@ -1149,9 +1310,9 @@ class AttackConfig(ConfigBase):
                 np.asarray(y_train_values).reshape(-1),
             ).values
             attack.fit(
-                x=data.X_train.copy().values,
+                x=self._prepare_features_for_attack(getattr(data, "X_train")),
                 y=safe_y_data,
-                test_x=data.X_test.copy().values,
+                test_x=self._prepare_features_for_attack(getattr(data, "X_test")),
             )
         end_time = time.process_time()
         self.attack_time = time.process_time() - start_time
@@ -1159,11 +1320,23 @@ class AttackConfig(ConfigBase):
         logger.info(
             f"Membership inference attack training took {self.attack_time} seconds for {self.attack_size} samples",
         )
+        x_train = self._prepare_features_for_attack(getattr(data, "X_train"))
+        x_test = self._prepare_features_for_attack(getattr(data, "X_test"))
         big_X = np.vstack(
-            (data.X_train.copy().values, data.X_test.copy().values),
+            (
+                self._to_numpy_array(x_train),
+                self._to_numpy_array(x_test),
+            ),
         )
         big_y = np.hstack(
-            (data.y_train.copy().values, data.y_test.copy().values),
+            (
+                self._to_numpy_array(
+                    self._prepare_labels_for_attack(getattr(data, "y_train")),
+                ),
+                self._to_numpy_array(
+                    self._prepare_labels_for_attack(getattr(data, "y_test")),
+                ),
+            ),
         )
         labels = np.array([1] * len(data.X_train) + [0] * len(data.X_test))
         # Build combined sensitive-feature array aligned with big_X (train then test).
@@ -1195,20 +1368,14 @@ class AttackConfig(ConfigBase):
         logger.info(
             f"Membership inference attack took {self.attack_time} seconds for {self.attack_size} samples",
         )
-        if isinstance(inferred, (list, np.ndarray)):
-            inferred = np.array(inferred)
-        elif isinstance(inferred, pd.Series):
-            inferred = inferred
-        else:
-            raise ValueError(f"Unsupported inferred type: {type(inferred)}")
+        inferred = self._normalize_inferred_output(inferred)
         assert (
             len(inferred) == n
         ), f"Length of inferred {len(inferred)} does not match number of samples {self.attack_size}"
         start_time = time.process_time()
-        if isinstance(inferred, (pd.Series, pd.DataFrame, np.ndarray)):
-            inferred = inferred.astype(int)
-        elif is_tensor(inferred):
-            inferred = tensor_to_numpy(inferred).astype(int)
+        inferred = self._normalize_inferred_output(inferred, reference=labels)
+        inferred = self._prediction_to_labels(inferred, is_regression=False)
+        labels = self._normalize_ground_truth(labels, is_regression=False)
         logger.info(
             f"Membership inference prediction took {self.attack_prediction_time} seconds for {self.attack_size} samples",
         )
@@ -1220,12 +1387,6 @@ class AttackConfig(ConfigBase):
             f"Membership inference attack prediction took {self.attack_prediction_time} seconds for {self.attack_size} samples",
         )
         start_time = time.process_time()
-        if labels.ndim > inferred.ndim:
-            inferred = pd.get_dummies(inferred).values
-        elif inferred.ndim > labels.ndim:
-            inferred = np.argmax(inferred, axis=1)
-        else:
-            pass
         self.predictions = inferred
         self.labels
         score_dict = self._score(
@@ -1243,17 +1404,331 @@ class AttackConfig(ConfigBase):
         self.attack = inferred
         return self.score_dict
 
-    def _poison(self):
-        """
-        Not implemented yet.
-        """
-        raise NotImplementedError("Poisoning attack not implemented yet.")
+    def _poison(self, data, art_model, attack):
+        """Execute a poisoning attack and score benign vs poisoned model accuracy."""
+        class_source = int(self.attack_params["class_source"])
+        class_target = int(self.attack_params["class_target"])
+        trigger_index = int(self.attack_params.get("trigger_index", 0))
+        poison_fit_params = self.attack_params.get("poison_fit_params", {})
 
-    def _extract(self):
-        """
-        Not implemented yet.
-        """
-        raise NotImplementedError("Extraction attack not implemented yet.")
+        # ART GradientMatching on macOS can fail with spawned DataLoader workers;
+        # force CPU and single-worker loaders for deterministic smoke/integration runs.
+        attack_name = type(attack).__name__.lower()
+        if "gradientmatchingattack" in attack_name:
+            try:
+                import torch
+
+                art_device = getattr(art_model, "_device", None)
+                if getattr(art_device, "type", None) == "mps":
+                    if hasattr(art_model, "_model") and hasattr(
+                        art_model._model,
+                        "to",
+                    ):
+                        art_model._model = art_model._model.to(torch.device("cpu"))
+                    if hasattr(art_model, "_device"):
+                        art_model._device = torch.device("cpu")
+            except ImportError:
+                pass
+
+        x_train = self._to_numpy_array(
+            self._prepare_features_for_attack(getattr(data, "X_train")),
+            dtype=ART_NUMPY_DTYPE,
+        )
+        y_train_raw = self._to_numpy_array(
+            self._prepare_labels_for_attack(getattr(data, "y_train")),
+        )
+
+        mode_used, x_eval_raw, y_eval_raw = self._resolve_eval_split(data)
+        x_eval = self._to_numpy_array(
+            self._prepare_features_for_attack(x_eval_raw),
+            dtype=ART_NUMPY_DTYPE,
+        )
+        y_eval = self._normalize_ground_truth(y_eval_raw, is_regression=False)
+        y_eval_class = self._target_to_class_labels(y_eval_raw)
+
+        source_indices = np.where(y_eval_class == class_source)[0]
+        if len(source_indices) == 0:
+            fallback_source = int(y_eval_class[0])
+            logger.warning(
+                "No samples for class_source=%s on %s split; using first available class=%s",
+                class_source,
+                mode_used,
+                fallback_source,
+            )
+            class_source = fallback_source
+            source_indices = np.where(y_eval_class == class_source)[0]
+
+        trigger_pos = trigger_index if trigger_index < len(source_indices) else 0
+        trigger_idx = int(source_indices[trigger_pos])
+        x_trigger = x_eval[trigger_idx : trigger_idx + 1]
+
+        nb_classes = getattr(art_model, "nb_classes", None)
+        if nb_classes is None or int(nb_classes) <= 0:
+            nb_classes = int(np.max(y_eval_class)) + 1
+        y_trigger = self._one_hot_encode([class_target], nb_classes=int(nb_classes))
+
+        if y_train_raw.ndim == 1 or (
+            y_train_raw.ndim == 2 and y_train_raw.shape[1] == 1
+        ):
+            y_train_for_poison = self._one_hot_encode(
+                y_train_raw.reshape(-1),
+                nb_classes,
+            )
+        else:
+            y_train_for_poison = y_train_raw
+
+        start_time = time.process_time()
+        patched_torch_utils_data = None
+        patched_dataloader = None
+        try:
+            if "gradientmatchingattack" in attack_name:
+                import torch.utils.data as torch_utils_data
+
+                patched_torch_utils_data = torch_utils_data
+                patched_dataloader = torch_utils_data.DataLoader
+
+                def _single_worker_loader(*args, **kwargs):
+                    kwargs["num_workers"] = 0
+                    return patched_dataloader(*args, **kwargs)
+
+                torch_utils_data.DataLoader = _single_worker_loader
+
+            x_poison, y_poison = attack.poison(
+                x_trigger,
+                y_trigger,
+                x_train,
+                y_train_for_poison,
+            )
+        finally:
+            if patched_torch_utils_data is not None and patched_dataloader is not None:
+                patched_torch_utils_data.DataLoader = patched_dataloader
+        self.attack_time = time.process_time() - start_time
+        logger.info(
+            f"Poison generation took {self.attack_time} seconds for {len(x_poison)} training samples",
+        )
+
+        start_time = time.process_time()
+        benign_pred = art_model.predict(x_eval)
+        art_model.fit(x_poison, y_poison, **poison_fit_params)
+        poisoned_pred = art_model.predict(x_eval)
+        self.attack_prediction_time = time.process_time() - start_time
+        logger.info(
+            f"Poisoned model fit + prediction took {self.attack_prediction_time} seconds on {mode_used} split",
+        )
+
+        benign_labels = self._prediction_to_labels(benign_pred, is_regression=False)
+        poisoned_labels = self._prediction_to_labels(
+            poisoned_pred,
+            is_regression=False,
+        )
+
+        start_time = time.process_time()
+        full_classifier = DefaultClassifierConfig()
+        label_only = {
+            name: scorer
+            for name, scorer in full_classifier.scorers.items()
+            if not scorer.needs_proba
+        }
+        classifier_scorer = ScorerDictConfig(scorers=label_only)
+        benign_kwargs = {
+            "y_true": y_eval,
+            "y_pred": benign_labels,
+            "mode": None,
+        }
+        poisoned_kwargs = {
+            "y_true": y_eval,
+            "y_pred": poisoned_labels,
+            "mode": None,
+        }
+
+        benign_scores = classifier_scorer(
+            y_true=y_eval,
+            **{k: v for k, v in benign_kwargs.items() if k != "y_true"},
+        )
+        poisoned_scores = classifier_scorer(
+            y_true=y_eval,
+            **{k: v for k, v in poisoned_kwargs.items() if k != "y_true"},
+        )
+
+        trigger_pred = art_model.predict(x_trigger)
+        trigger_label = int(self._labels_from_classifier_predictions(trigger_pred)[0])
+        self.attack_score_time = time.process_time() - start_time
+
+        self.predictions = poisoned_labels
+        self.labels = y_eval
+        self.attack_predictions = poisoned_pred
+        self.attack = art_model
+        self.score_dict = {
+            **self.score_dict,
+            **{f"benign_{k}": v for k, v in benign_scores.items()},
+            **{f"poisoned_{k}": v for k, v in poisoned_scores.items()},
+            "poison_attack_target_class": class_target,
+            "poison_attack_source_class": class_source,
+            "poison_trigger_index": trigger_idx,
+            "poison_trigger_predicted_class": trigger_label,
+            "poison_trigger_success": int(trigger_label == class_target),
+            "attack_size": len(x_poison),
+            "poison_mode": mode_used,
+        }
+        return self.score_dict
+
+    @staticmethod
+    def _is_nn_art_classifier(art_model) -> bool:
+        """Return True when the ART estimator appears to be a neural classifier."""
+        if isinstance(art_model, ClassifierNeuralNetwork):
+            return True
+        class_name = type(art_model).__name__.lower()
+        if any(
+            token in class_name
+            for token in (
+                "pytorchclassifier",
+                "kerasclassifier",
+                "tensorflowv2classifier",
+            )
+        ):
+            return True
+        model_obj = getattr(art_model, "_model", None)
+        if model_obj is None:
+            model_obj = getattr(art_model, "model", None)
+        return bool(model_obj is not None and is_torch_model(model_obj))
+
+    @staticmethod
+    def _labels_from_classifier_predictions(predictions):
+        preds = np.asarray(predictions)
+        if preds.ndim == 1:
+            # Binary classifiers can expose scores/probabilities as a single vector.
+            if preds.dtype.kind == "f":
+                return (preds >= 0.5).astype(int)
+            return preds.astype(int)
+        if preds.ndim == 2:
+            if preds.shape[1] == 1:
+                return (preds.reshape(-1) >= 0.5).astype(int)
+            return np.argmax(preds, axis=1)
+        raise ValueError(
+            f"Unsupported prediction shape for classifier output: {preds.shape}",
+        )
+
+    def _resolve_eval_split(self, data):
+        requested_mode = str(self.mode or "test").lower()
+        if requested_mode not in {"test", "val"}:
+            raise ValueError(
+                f"Unsupported attack mode '{self.mode}'. Expected 'test' or 'val'.",
+            )
+
+        if requested_mode == "val":
+            X_val = getattr(data, "X_val", None)
+            y_val = getattr(data, "y_val", None)
+            if X_val is not None and y_val is not None:
+                return "val", X_val, y_val
+            logger.warning(
+                "Attack mode='val' requested but validation split is unavailable; falling back to test split.",
+            )
+
+        X_test = getattr(data, "X_test", None)
+        y_test = getattr(data, "y_test", None)
+        if X_test is None or y_test is None:
+            raise ValueError(
+                "Extraction attacks require test features/labels (or val when mode='val').",
+            )
+        return "test", X_test, y_test
+
+    def _extract(self, data, art_model, attack):
+        """Execute a model extraction attack and score victim vs extracted classifiers."""
+        task_is_classification = self._infer_task_is_classification(
+            data,
+            model=art_model,
+        )
+        if task_is_classification is False:
+            raise ValueError(
+                "Extraction attacks are only supported for classification tasks.",
+            )
+        if not self._is_nn_art_classifier(art_model):
+            raise ValueError(
+                "Extraction attacks currently require a neural-network ART classifier (e.g., PyTorchClassifier).",
+            )
+
+        n, x_query, _ = self.get_attack_subset(data, test=False)
+        x_query = self._prepare_features_for_attack(x_query)
+
+        mode_used, x_eval, y_eval = self._resolve_eval_split(data)
+        x_eval = self._prepare_features_for_attack(x_eval)
+        y_eval = self._normalize_ground_truth(y_eval, is_regression=False)
+
+        thieved_classifier = copy.deepcopy(art_model)
+        thieved_model = getattr(thieved_classifier, "_model", None)
+        if thieved_model is not None and hasattr(thieved_model, "apply"):
+
+            def _reset_module_weights(module):
+                reset_fn = getattr(module, "reset_parameters", None)
+                if callable(reset_fn):
+                    reset_fn()
+
+            thieved_model.apply(_reset_module_weights)
+
+        start_time = time.process_time()
+        extracted_classifier = attack.extract(
+            x=x_query,
+            thieved_classifier=thieved_classifier,
+        )
+        self.attack_time = time.process_time() - start_time
+        logger.info(
+            f"Extraction attack training took {self.attack_time} seconds for {n} query samples",
+        )
+
+        start_time = time.process_time()
+        benign_pred = art_model.predict(x_eval)
+        extracted_pred = extracted_classifier.predict(x_eval)
+        self.attack_prediction_time = time.process_time() - start_time
+        logger.info(
+            f"Extraction prediction took {self.attack_prediction_time} seconds on {mode_used} split",
+        )
+
+        benign_labels = self._labels_from_classifier_predictions(benign_pred)
+        extracted_labels = self._labels_from_classifier_predictions(extracted_pred)
+
+        start_time = time.process_time()
+        classification_scorer, use_proba_metrics = self._select_extraction_scorer(
+            benign_pred,
+            extracted_pred,
+        )
+        benign_kwargs = {
+            "y_true": y_eval,
+            "y_pred": benign_labels,
+            "mode": None,
+        }
+        extracted_kwargs = {
+            "y_true": y_eval,
+            "y_pred": extracted_labels,
+            "mode": None,
+        }
+        if use_proba_metrics:
+            benign_kwargs["y_proba"] = self._to_numpy_array(benign_pred)
+            extracted_kwargs["y_proba"] = self._to_numpy_array(extracted_pred)
+
+        benign_scores = classification_scorer(
+            y_true=y_eval,
+            **{k: v for k, v in benign_kwargs.items() if k != "y_true"},
+        )
+        extracted_scores = classification_scorer(
+            y_true=y_eval,
+            **{k: v for k, v in extracted_kwargs.items() if k != "y_true"},
+        )
+        self.attack_score_time = time.process_time() - start_time
+
+        prefixed_benign = {f"benign_{k}": v for k, v in benign_scores.items()}
+        prefixed_extracted = {f"extracted_{k}": v for k, v in extracted_scores.items()}
+        self.predictions = extracted_labels
+        self.labels = y_eval
+        self.attack_predictions = extracted_pred
+        self.attack = extracted_classifier
+        self.score_dict = {
+            **self.score_dict,
+            **prefixed_benign,
+            **prefixed_extracted,
+            "attack_size": n,
+            "extraction_mode": mode_used,
+        }
+        return self.score_dict
 
     def _save(self, filepath: Union[str, Path]):
         """

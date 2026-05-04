@@ -77,6 +77,83 @@ class TestAttackConfig(unittest.TestCase):
         metrics = self.attack.score_dict
         self.assertIn("evasion_success", metrics)
 
+    def test_poison_attack_metrics(self):
+        attack = AttackConfig(
+            attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+            attack_params={"class_source": 0, "class_target": 1},
+            attack_size=6,
+        )
+
+        class _TinyData:
+            X_train = np.array(
+                [
+                    [0.0, 0.1],
+                    [1.0, 0.2],
+                    [0.2, 1.0],
+                    [0.9, 0.8],
+                    [0.1, 0.3],
+                    [0.8, 0.7],
+                ],
+            )
+            y_train = np.array([0, 1, 0, 1, 0, 1])
+            X_test = np.array(
+                [
+                    [0.0, 0.0],
+                    [1.0, 0.1],
+                    [0.2, 0.9],
+                    [0.7, 0.8],
+                ],
+            )
+            y_test = np.array([0, 1, 0, 1])
+            classifier = True
+
+        class _FakeArtModel:
+            def __init__(self):
+                self.nb_classes = 2
+                self._poisoned = False
+
+            def predict(self, X):
+                x = np.asarray(X)
+                p1 = (x[:, 0] > 0.5).astype(float)
+                if self._poisoned:
+                    p1 = 1.0 - p1
+                p0 = 1.0 - p1
+                return np.column_stack([p0, p1])
+
+            def fit(self, x, y, **kwargs):
+                _ = x
+                _ = y
+                _ = kwargs
+                self._poisoned = True
+                return self
+
+        class _FakePoisonAttack:
+            def poison(self, x_trigger, y_trigger, x_train, y_train):
+                _ = x_trigger
+                _ = y_trigger
+                return np.asarray(x_train), np.asarray(y_train)
+
+        data = _TinyData()
+        art_model = _FakeArtModel()
+        poison_attack = _FakePoisonAttack()
+
+        with patch.object(
+            AttackConfig,
+            "_initialize_attack",
+            return_value=(
+                poison_attack,
+                art_model,
+                "poisoning",
+                "gradient_matching_attack",
+            ),
+        ):
+            result = attack(data, object())
+
+        self.assertIn("benign_accuracy", result)
+        self.assertIn("poisoned_accuracy", result)
+        self.assertIn("poison_trigger_success", result)
+        self.assertIn("attack_generation_time", result)
+
     def test_call_attack(self):
         # Mock attack internals to verify call flow without requiring a specific ART estimator.
         data = object()
@@ -203,31 +280,107 @@ class TestAttackConfig(unittest.TestCase):
             with self.assertRaises(ValueError):
                 attack(object(), object())
 
-    def test_call_poisoning_not_implemented(self):
-        attack = AttackConfig(
-            attack_type="art.attacks.poisoning.PoisoningAttackBackdoor",
-            attack_params={},
-        )
-        with patch.object(
-            AttackConfig,
-            "_initialize_attack",
-            return_value=(object(), object(), "poisoning", "any"),
-        ):
-            with self.assertRaises(NotImplementedError):
-                attack(object(), object())
+    def test_call_poisoning_requires_source_and_target_classes(self):
+        with self.assertRaises(ValueError):
+            AttackConfig(
+                attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+                attack_params={},
+            )
 
-    def test_call_extraction_not_implemented(self):
+    def test_call_extraction_requires_classification_task(self):
         attack = AttackConfig(
             attack_type="art.attacks.extraction.CopycatCNN",
             attack_params={},
         )
+
+        class _TinyData:
+            classifier = False
+
         with patch.object(
             AttackConfig,
             "_initialize_attack",
             return_value=(object(), object(), "extraction", "any"),
         ):
-            with self.assertRaises(NotImplementedError):
-                attack(object(), object())
+            with self.assertRaises(ValueError):
+                attack(_TinyData(), object())
+
+    def test_call_extraction_requires_nn_classifier(self):
+        attack = AttackConfig(
+            attack_type="art.attacks.extraction.CopycatCNN",
+            attack_params={},
+        )
+
+        class _TinyData:
+            classifier = True
+
+        with patch.object(
+            AttackConfig,
+            "_initialize_attack",
+            return_value=(object(), object(), "extraction", "any"),
+        ):
+            with self.assertRaises(ValueError):
+                attack(_TinyData(), object())
+
+    def test_call_extraction_scores_victim_and_extracted_classifiers(self):
+        attack = AttackConfig(
+            attack_type="art.attacks.extraction.CopycatCNN",
+            attack_params={},
+            attack_size=4,
+            mode="test",
+        )
+
+        class _TinyData:
+            classifier = True
+
+            X_train = np.array(
+                [
+                    [0.0, 1.0],
+                    [1.0, 0.0],
+                    [0.1, 0.9],
+                    [0.9, 0.1],
+                ],
+            )
+            y_train = np.array([0, 1, 0, 1])
+            X_test = np.array(
+                [
+                    [0.0, 1.0],
+                    [1.0, 0.0],
+                    [0.2, 0.8],
+                    [0.8, 0.2],
+                ],
+            )
+            y_test = np.array([0, 1, 0, 1])
+
+        class PyTorchClassifierStub:
+            _model = None
+
+            def predict(self, X):
+                X = np.asarray(X)
+                p1 = (X[:, 0] > X[:, 1]).astype(float)
+                p0 = 1.0 - p1
+                return np.column_stack([p0, p1])
+
+        class _FakeExtractionAttack:
+            def extract(self, x, thieved_classifier=None, **kwargs):
+                _ = x
+                _ = kwargs
+                return thieved_classifier
+
+        data = _TinyData()
+        art_model = PyTorchClassifierStub()
+        extraction_attack = _FakeExtractionAttack()
+
+        with patch.object(
+            AttackConfig,
+            "_initialize_attack",
+            return_value=(extraction_attack, art_model, "extraction", "any"),
+        ):
+            result = attack(data, object())
+
+        self.assertIn("benign_accuracy", result)
+        self.assertIn("extracted_accuracy", result)
+        self.assertIn("extraction_mode", result)
+        self.assertEqual(result["extraction_mode"], "test")
 
     def test_call_rejects_regression_evasion_early(self):
         class TinyData:

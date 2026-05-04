@@ -1,7 +1,7 @@
 import inspect
 import time
-from dataclasses import dataclass
-from typing import Any, Optional, Union, cast
+from dataclasses import dataclass, field
+from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -17,6 +17,7 @@ from sklearn.metrics import (
 
 from .base import ModelConfig, logger
 from .defend import DefenseConfig
+from .pytorch import PytorchModelConfig
 from ..data.fairness import FairlearnDataConfig
 from ..utils import ConfigBase, load_class, resolve_class, resolve_torch_device
 
@@ -32,6 +33,17 @@ class _FairnessBehaviorMixin:
     classifier: bool = False
     probability: bool = False
     fit_params: Any = None
+
+    def _is_torch_module_model(self) -> bool:
+        model_obj = getattr(self, "_model", None)
+        if model_obj is None:
+            return False
+        try:
+            import torch
+
+            return isinstance(model_obj, torch.nn.Module)
+        except ImportError:
+            return False
 
     def _resolve_runtime_sensitive_source(self, split: str):
         if split == "train":
@@ -651,32 +663,12 @@ class _FairnessBehaviorMixin:
             mode=mode,
         )
 
-    def _score(
-        self,
-        y_true: pd.Series,
-        y_pred: pd.Series,
-        mode: str = "test",
-        **kwargs,
-    ) -> dict:
-        """Thin wrapper: delegate all scoring to configured scorer dict."""
-        return ModelConfig._score(
-            cast(ModelConfig, self),
-            y_true,
-            y_pred,
-            mode=mode,
-            **kwargs,
-        )
-
     def _classification_scores(
         self,
         y_true: pd.Series,
         y_pred: pd.Series,
     ) -> dict:
-        scores = ModelConfig._classification_scores(
-            cast(ModelConfig, self),
-            y_true,
-            y_pred,
-        )
+        scores = super()._classification_scores(y_true, y_pred)
         scores.update(
             self._compute_sensitive_fairness_scores(
                 y_true,
@@ -687,11 +679,7 @@ class _FairnessBehaviorMixin:
         return scores
 
     def _regression_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
-        scores = ModelConfig._regression_scores(
-            cast(ModelConfig, self),
-            y_true,
-            y_pred,
-        )
+        scores = super()._regression_scores(y_true, y_pred)
         scores.update(
             self._compute_sensitive_fairness_scores(
                 y_true,
@@ -704,9 +692,31 @@ class _FairnessBehaviorMixin:
 
 @dataclass(eq=False)
 class FairlearnModelConfig(_FairnessBehaviorMixin, ModelConfig):
-    """Fairness-aware model config for standard model workflows."""
+    """Fairness-aware model config for sklearn models.
+
+    Inherits sklearn training/prediction from ModelConfig and adds
+    fairness-aware scoring and defense support via _FairnessBehaviorMixin.
+    """
 
     data: Union[FairlearnDataConfig, None] = None
+    fit_params: dict = field(default_factory=dict)
+
+
+@dataclass(eq=False)
+class FairlearnPytorchModelConfig(_FairnessBehaviorMixin, PytorchModelConfig):
+    """Fairness-aware model config for PyTorch models.
+
+    Inherits all torch training/prediction/defense from PytorchModelConfig
+    and adds fairness-aware scoring via _FairnessBehaviorMixin.
+    """
+
+    data: Union[FairlearnDataConfig, None] = None
+
+    def _train(self, X, y):
+        return PytorchModelConfig._train(self, X, y)
+
+    def _predict(self, X):
+        return PytorchModelConfig._predict(self, X)
 
 
 @dataclass(eq=False)

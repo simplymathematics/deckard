@@ -1,4 +1,9 @@
 import unittest
+import subprocess
+import sys
+import os
+from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 
@@ -8,6 +13,28 @@ from deckard.experiment import ExperimentConfig, SurvivalExperimentConfig
 from deckard.file import FileConfig
 from deckard.model import ModelConfig
 from deckard.score import DefaultClassifierConfig
+from deckard.attack.base import resolve_class as base_resolve_class
+
+
+class DummyPoisonAttack:
+    """Simple local attack used to exercise poisoning integration flow."""
+
+    def __init__(self, classifier, **kwargs):
+        self.classifier = classifier
+        self.kwargs = kwargs
+
+    def poison(self, x_trigger, y_trigger, x_train, y_train):
+        _ = x_trigger
+        y_target = int(np.argmax(np.asarray(y_trigger), axis=1)[0])
+        x_poison = np.asarray(x_train).copy()
+        y_poison = np.asarray(y_train).copy()
+        if y_poison.ndim == 2 and y_poison.shape[1] > 1:
+            y_poison[0] = 0
+            y_poison[0, y_target] = 1
+        else:
+            y_poison = y_poison.reshape(-1)
+            y_poison[0] = y_target
+        return x_poison, y_poison
 
 
 class TestKFoldExperiment(unittest.TestCase):
@@ -240,6 +267,80 @@ class TestSurvivalExperimentConfig(unittest.TestCase):
         )
         self.assertIsInstance(config, SurvivalExperimentConfig)
         self.assertEqual(config.survival_model, "cox")
+
+
+class TestPoisoningExperimentIntegration(unittest.TestCase):
+    def test_poisoning_experiment_emits_benign_and_poisoned_accuracy(self):
+        exp = ExperimentConfig(
+            data=DataConfig(
+                dataset_name="make_classification",
+                data_params={
+                    "n_samples": 120,
+                    "n_features": 8,
+                    "n_informative": 6,
+                    "n_redundant": 2,
+                    "random_state": 4,
+                },
+                test_size=0.2,
+                random_state=4,
+                classifier=True,
+            ),
+            model=ModelConfig(
+                model_type="sklearn.linear_model.LogisticRegression",
+                classifier=True,
+                model_params={"max_iter": 150},
+            ),
+            attack=AttackConfig(
+                attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+                attack_params={"class_source": 0, "class_target": 1},
+                attack_size=20,
+            ),
+            files=FileConfig(),
+        )
+
+        with patch(
+            "deckard.attack.base.resolve_class",
+            wraps=base_resolve_class,
+        ) as mocked_resolve:
+
+            def _resolve(name):
+                if (
+                    name
+                    == "art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack"
+                ):
+                    return DummyPoisonAttack
+                return base_resolve_class(name)
+
+            mocked_resolve.side_effect = _resolve
+            scores = exp()
+
+        self.assertIn("benign_accuracy", scores)
+        self.assertIn("poisoned_accuracy", scores)
+
+    def test_deckard_optimize_help_smoke(self):
+        examples_dir = Path(__file__).resolve().parents[1] / "examples" / "sklearn"
+        rc_path = examples_dir / ".deckard_rc"
+        env = os.environ.copy()
+        for raw_line in rc_path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or not line.startswith("export "):
+                continue
+            kv = line[len("export ") :]
+            if "=" not in kv:
+                continue
+            key, value = kv.split("=", 1)
+            env[key.strip()] = value.strip().strip('"').strip("'")
+
+        result = subprocess.run(
+            [sys.executable, "-m", "deckard", "optimize", "--help"],
+            cwd=str(examples_dir),
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
 
 
 if __name__ == "__main__":

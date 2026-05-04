@@ -28,9 +28,10 @@ try:
     from .fairness import (
         FairlearnDefenseConfig,
         FairlearnModelConfig,
+        FairlearnPytorchModelConfig,
     )
 
-    _ = (FairlearnDefenseConfig, FairlearnModelConfig)
+    _ = (FairlearnDefenseConfig, FairlearnModelConfig, FairlearnPytorchModelConfig)
 except ImportError:  # pragma: no cover
     logger.debug(
         "Fairlearn not found. Fairlearn model configs are unavailable.",

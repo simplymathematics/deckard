@@ -1,0 +1,11 @@
+attack_type : "art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack"
+attack_params : 
+  percent_poison: .05
+  max_trials: 1
+  max_epochs: 1
+  epsilon: .01
+  class_source: 0
+  class_target: 1
+attack_size : 10
+_target_ : deckard.attack.AttackConfig
+alias: carlini_l0

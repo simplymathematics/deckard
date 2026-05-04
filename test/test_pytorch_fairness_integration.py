@@ -6,14 +6,16 @@ and sensitive features from fairlearn_celeba.yaml dataset config.
 
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from deckard.data import PytorchDataConfig
 from deckard.model import (
     DefensePipelineConfig,
-    FairlearnModelConfig,
+    FairlearnPytorchModelConfig,
     PytorchModelConfig,
 )
+from deckard.score.attack import FairlearnAttackScorerConfig
 
 torch = pytest.importorskip("torch")
 pytest.importorskip("fairlearn")
@@ -106,7 +108,7 @@ def test_pytorch_fairness_data_loads_with_sensitive_features():
 
 
 def test_pytorch_model_with_fairness_defense_instantiation():
-    """Test that FairlearnModelConfig can instantiate a torch model."""
+    """Test that FairlearnPytorchModelConfig can instantiate a torch model."""
     data = _torch_fairness_data()
 
     # Flatten image tensors so a linear torch model can consume them.
@@ -115,7 +117,7 @@ def test_pytorch_model_with_fairness_defense_instantiation():
     data.X_test = data._X_test.reshape(data._X_test.shape[0], -1)
     data.y_test = data._y_test
 
-    model = FairlearnModelConfig(
+    model = FairlearnPytorchModelConfig(
         model_type="torch.nn.Linear",
         classifier=True,
         model_params={"in_features": 3 * 32 * 32, "out_features": 2},
@@ -158,22 +160,18 @@ def test_pytorch_model_training_with_fairness_style_data():
 def test_pytorch_fairness_model_fit_and_score():
     """Test that PyTorch model with fairness defense can fit and produce scores."""
     data = _torch_fairness_data()
-
-    # Flatten images for sklearn Linear model
-    data._X_train = data._X_train.reshape(data._X_train.shape[0], -1)
-    data._X_test = data._X_test.reshape(data._X_test.shape[0], -1)
-
-    # Set data attributes that the model expects
-    data.X_train = data._X_train
+    data.X_train = data._X_train.reshape(data._X_train.shape[0], -1)
     data.y_train = data._y_train
-    data.X_test = data._X_test
+    data.X_test = data._X_test.reshape(data._X_test.shape[0], -1)
     data.y_test = data._y_test
 
-    model = FairlearnModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+    model = PytorchModelConfig(
+        model_type="torch.nn.Linear",
+        model_params={"in_features": 3 * 32 * 32, "out_features": 2},
         classifier=True,
-        model_params={"max_iter": 25},
-        data=data,
+        fit_params={"nb_epochs": 1, "batch_size": 8},
+        criterion="CrossEntropyLoss",
+        optimizer={"name": "SGD", "lr": 0.01},
     )
 
     # Execute the config to trigger training
@@ -225,7 +223,7 @@ def test_pytorch_fairness_defense_receives_sensitive_features():
         defenses=[defense],
     )
 
-    model = FairlearnModelConfig(
+    model = FairlearnPytorchModelConfig(
         model_type="torch.nn.Linear",
         model_params={"in_features": 100, "out_features": 2},
         classifier=True,
@@ -317,7 +315,6 @@ def test_torch_pipeline_applies_fairlearn_and_art_style_defense_steps_in_order()
         optimizer={"name": "SGD", "lr": 0.01},
         defense=defense_cfg,
     )
-
     model(data)
 
     assert calls[:2] == ["fairlearn", "art"]
@@ -326,18 +323,17 @@ def test_torch_pipeline_applies_fairlearn_and_art_style_defense_steps_in_order()
 
 
 def test_pytorch_fairness_model_serialization_with_defense():
-    """Test that PyTorch fairness model config can be created and preserved."""
+    """Test that FairlearnPytorchModelConfig can be created and preserved."""
     data = _torch_fairness_data()
 
-    model = FairlearnModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+    model = FairlearnPytorchModelConfig(
+        model_type="torch.nn.Linear",
+        model_params={"in_features": 100, "out_features": 2},
         classifier=True,
-        model_params={"max_iter": 25},
         data=data,
     )
 
-    assert model.model_type == "sklearn.linear_model.LogisticRegression"
-    assert model.model_params["max_iter"] == 25
+    assert model.model_type == "torch.nn.Linear"
     assert model.classifier is True
 
 
@@ -349,6 +345,67 @@ def test_deckard_rc_environment_loading():
     assert "DECKARD_DEFAULT_CONFIG_FILE" in env_vars
     assert env_vars["DECKARD_CONFIG_DIR"] == "./config"
     assert env_vars["DECKARD_DEFAULT_CONFIG_FILE"] == "torch_default.yaml"
+
+
+def test_pytorch_fairlearn_attack_scorer_metric_frame_evasion_group_accuracy_keys():
+    scorer = FairlearnAttackScorerConfig()
+    y_true = np.array([0, 1, 0, 1])
+    adv_pred = np.array([0, 1, 1, 1])
+    ben_pred = np.array([0, 1, 0, 1])
+    sensitive = np.array(["A", "A", "B", "B"])
+
+    scores = scorer.score_evasion(
+        ben_pred_labels=ben_pred,
+        adv_pred_labels=adv_pred,
+        y_true=y_true,
+        attack_size=4,
+        sensitive_features=sensitive,
+    )
+
+    assert "evasion_A_accuracy" in scores
+    assert "evasion_B_accuracy" in scores
+    assert "evasion_accuracy_overall" in scores
+    assert "evasion_accuracy_difference" in scores
+
+
+def test_pytorch_fairlearn_attack_scorer_metric_frame_membership_group_accuracy_keys():
+    scorer = FairlearnAttackScorerConfig()
+    labels = np.array([1, 1, 0, 0])
+    inferred = np.array([1, 0, 0, 0])
+    sensitive = np.array(["A", "A", "B", "B"])
+
+    scores = scorer.score_membership(
+        labels=labels,
+        inferred=inferred,
+        attack_size=4,
+        sensitive_features=sensitive,
+    )
+
+    assert "membership_inference_A_accuracy" in scores
+    assert "membership_inference_B_accuracy" in scores
+    assert "membership_inference_accuracy_overall" in scores
+    assert "membership_inference_accuracy_difference" in scores
+
+
+def test_pytorch_fairlearn_attack_scorer_metric_frame_attribute_group_accuracy_keys():
+    scorer = FairlearnAttackScorerConfig()
+    target = np.array([1, 0, 1, 0])
+    inferred = np.array([1, 1, 1, 0])
+    sensitive = np.array(["A", "A", "B", "B"])
+
+    scores = scorer.score_attribute(
+        target=target,
+        inferred=inferred,
+        attack_size=4,
+        targeted_attribute="age",
+        is_classification=True,
+        sensitive_features=sensitive,
+    )
+
+    assert "inferred_age_A_accuracy" in scores
+    assert "inferred_age_B_accuracy" in scores
+    assert "inferred_age_accuracy_overall" in scores
+    assert "inferred_age_accuracy_difference" in scores
 
 
 if __name__ == "__main__":

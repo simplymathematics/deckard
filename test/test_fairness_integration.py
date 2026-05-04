@@ -1,6 +1,7 @@
 import tempfile
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from deckard.attack import AttackConfig
@@ -12,6 +13,7 @@ from deckard.model import (
     FairlearnModelConfig,
     ModelConfig,
 )
+from deckard.score.attack import FairlearnAttackScorerConfig
 from deckard.score import FairlearnScoreDictConfig, ScorerConfig
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier
 from fairlearn.reductions import ExponentiatedGradient
@@ -279,6 +281,67 @@ def test_adult_fairness_data_model_with_and_without_attack(
 
     assert any(key.startswith("evasion_") for key in scores)
     assert "attack_score_time" in scores
+
+
+def test_fairlearn_attack_scorer_metric_frame_evasion_group_accuracy_keys():
+    scorer = FairlearnAttackScorerConfig()
+    y_true = np.array([0, 1, 0, 1])
+    adv_pred = np.array([0, 1, 1, 1])
+    ben_pred = np.array([0, 1, 0, 1])
+    sensitive = np.array(["A", "A", "B", "B"])
+
+    scores = scorer.score_evasion(
+        ben_pred_labels=ben_pred,
+        adv_pred_labels=adv_pred,
+        y_true=y_true,
+        attack_size=4,
+        sensitive_features=sensitive,
+    )
+
+    assert "evasion_A_accuracy" in scores
+    assert "evasion_B_accuracy" in scores
+    assert "evasion_accuracy_overall" in scores
+    assert "evasion_accuracy_difference" in scores
+
+
+def test_fairlearn_attack_scorer_metric_frame_membership_group_accuracy_keys():
+    scorer = FairlearnAttackScorerConfig()
+    labels = np.array([1, 1, 0, 0])
+    inferred = np.array([1, 0, 0, 0])
+    sensitive = np.array(["A", "A", "B", "B"])
+
+    scores = scorer.score_membership(
+        labels=labels,
+        inferred=inferred,
+        attack_size=4,
+        sensitive_features=sensitive,
+    )
+
+    assert "membership_inference_A_accuracy" in scores
+    assert "membership_inference_B_accuracy" in scores
+    assert "membership_inference_accuracy_overall" in scores
+    assert "membership_inference_accuracy_difference" in scores
+
+
+def test_fairlearn_attack_scorer_metric_frame_attribute_group_accuracy_keys():
+    scorer = FairlearnAttackScorerConfig()
+    target = np.array([1, 0, 1, 0])
+    inferred = np.array([1, 1, 1, 0])
+    sensitive = np.array(["A", "A", "B", "B"])
+
+    scores = scorer.score_attribute(
+        target=target,
+        inferred=inferred,
+        attack_size=4,
+        targeted_attribute="age",
+        is_classification=True,
+        sensitive_features=sensitive,
+    )
+
+    assert "inferred_age_A_accuracy" in scores
+    assert "inferred_age_B_accuracy" in scores
+    assert "inferred_age_accuracy_overall" in scores
+    assert "inferred_age_accuracy_difference" in scores
 
 
 # ---------------------------------------------------------------------------
