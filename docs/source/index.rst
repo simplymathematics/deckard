@@ -17,6 +17,7 @@ Use the sections below to explore the different modules.
    data
    model
    attack
+   detector
    score
    experiment
    plot

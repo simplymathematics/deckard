@@ -36,6 +36,7 @@ The experiment layer coordinates the full Deckard workflow by composing:
 - data loading and sampling via :mod:`deckard.data`
 - model training/evaluation via :mod:`deckard.model`
 - optional attack execution via :mod:`deckard.attack`
+- optional detector execution via :mod:`deckard.detector`
 - score aggregation and file outputs via :mod:`deckard.file`
 
 It is the primary integration point for reproducible end-to-end runs.
@@ -149,6 +150,30 @@ Use the experiment config directly in Python with explicit configurations:
    print(f"  Data shape: {data.X_train.shape}")
    print(f"  Model accuracy: {scores.get('accuracy', 'N/A')}")
    print(f"  Attack success: {scores.get('evasion_success_rate', 'N/A')}")
+
+Detector phase
+~~~~~~~~~~~~~~
+
+Detector configs can be attached to ``ExperimentConfig.detector`` to train and
+evaluate an auxiliary detector after attack generation:
+
+.. code-block:: python
+
+   from deckard.detector import DetectorConfig
+
+   detector = DetectorConfig(
+      detector_type="art.defences.detector.evasion.BinaryInputDetector",
+      detector_model={
+         "model_type": "sklearn.linear_model.LogisticRegression",
+         "classifier": True,
+         "model_params": {"max_iter": 50},
+      },
+      fit_params={"batch_size": 16, "nb_epochs": 1, "split": "test"},
+   )
+
+   cfg = ExperimentConfig(data=data, model=model, attack=attack, detector=detector)
+   scores = cfg()
+   print(scores["detector_accuracy"])
 
 Internals
 ---------

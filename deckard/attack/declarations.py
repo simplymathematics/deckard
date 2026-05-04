@@ -87,6 +87,17 @@ ATTACK_MODEL_INVERSION = {
     "alias": "model_inversion",
 }
 
+ATTACK_DATABASE_RECONSTRUCTION = {
+    "attack_type": "art.attacks.inference.reconstruction.DatabaseReconstruction",
+    "attack_size": 1,
+    "attack_params": {
+        "split": "train",
+        "missing_index": -1,
+    },
+    "_target_": "deckard.attack.AttackConfig",
+    "alias": "database_reconstruction",
+}
+
 ATTACK_ZOO = {
     "attack_type": "art.attacks.evasion.ZooAttack",
     "attack_params": {
@@ -110,6 +121,11 @@ ATTACK_ZOO = {
 
 
 safe_store(group="attack", name="attribute-bb", node=ATTACK_ATTRIBUTE_BB)
+safe_store(
+    group="attack",
+    name="database-reconstruction",
+    node=ATTACK_DATABASE_RECONSTRUCTION,
+)
 safe_store(group="attack", name="model-inversion", node=ATTACK_MODEL_INVERSION)
 safe_store(group="attack", name="boundary", node=ATTACK_BOUNDARY)
 safe_store(group="attack", name="fgm", node=ATTACK_FGM)
@@ -121,6 +137,11 @@ safe_store(
     group="search/attacks",
     name="attribute-bb",
     node=ATTACK_ATTRIBUTE_BB,
+)
+safe_store(
+    group="search/attacks",
+    name="database-reconstruction",
+    node=ATTACK_DATABASE_RECONSTRUCTION,
 )
 safe_store(
     group="search/attacks",

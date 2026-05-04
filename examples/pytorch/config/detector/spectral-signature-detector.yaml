@@ -1,0 +1,13 @@
+detector_type: art.defences.detector.poison.SpectralSignatureDefense
+detector_params:
+  expected_pp_poison: 0.2
+  batch_size: 16
+fit_params:
+  split: train
+detector_model:
+  model_type: sklearn.linear_model.LogisticRegression
+  classifier: true
+  model_params:
+    max_iter: 100
+alias: spectral-signature-detector
+_target_: deckard.detector.DetectorConfig

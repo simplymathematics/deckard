@@ -111,24 +111,61 @@ class DetectorConfig(ConfigBase):
 
         backend = self._build_detector_backend(x_train=x, y_train=y)
         detector_cls = resolve_class(self.detector_type)
+        fit_kwargs = {k: v for k, v in self.fit_params.items() if k != "split"}
+        # Detector constructors differ between evasion and poisoning detectors.
         try:
             detector = detector_cls(detector=backend, **self.detector_params)
         except TypeError:
-            detector = detector_cls(backend, **self.detector_params)
+            try:
+                detector = detector_cls(
+                    classifier=backend,
+                    x_train=x,
+                    y_train=y,
+                    **self.detector_params,
+                )
+            except TypeError:
+                detector = detector_cls(backend, **self.detector_params)
 
-        fit_kwargs = {k: v for k, v in self.fit_params.items() if k != "split"}
-        start = time.process_time()
-        detector.fit(x, y, **fit_kwargs)
-        self.detector_training_time = time.process_time() - start
+        y_pred = None
+        if hasattr(detector, "fit") and callable(getattr(detector, "fit")):
+            start = time.process_time()
+            detector.fit(x, y, **fit_kwargs)
+            self.detector_training_time = time.process_time() - start
 
         start = time.process_time()
-        _, is_adversarial = detector.detect(
-            x,
-            batch_size=int(fit_kwargs.get("batch_size", 128)),
-        )
+        if hasattr(detector, "detect") and callable(getattr(detector, "detect")):
+            _, is_adversarial = detector.detect(
+                x,
+                batch_size=int(fit_kwargs.get("batch_size", 128)),
+            )
+            y_pred = self._to_numpy(is_adversarial).reshape(-1).astype(int)
+        elif hasattr(detector, "detect_poison") and callable(
+            getattr(detector, "detect_poison"),
+        ):
+            _, is_clean = detector.detect_poison(**fit_kwargs)
+            is_clean_arr = np.asarray(is_clean)
+            if is_clean_arr.ndim == 1 and len(is_clean_arr) == len(y):
+                clean_mask = is_clean_arr.astype(int)
+            elif is_clean_arr.ndim == 1 and len(is_clean_arr) < len(y):
+                # Some ART poison detectors can return suspected-poison indices.
+                clean_mask = np.ones(len(y), dtype=int)
+                poison_idx = is_clean_arr.astype(int)
+                poison_idx = poison_idx[(poison_idx >= 0) & (poison_idx < len(y))]
+                clean_mask[poison_idx] = 0
+            else:
+                raise ValueError(
+                    "Unsupported detect_poison output shape "
+                    f"for detector {self.detector_type}: {is_clean_arr.shape}",
+                )
+            y_pred = 1 - clean_mask.reshape(-1)
+        else:
+            raise AttributeError(
+                f"Detector {self.detector_type} exposes neither detect() nor detect_poison().",
+            )
         self.detector_detection_time = time.process_time() - start
 
-        y_pred = self._to_numpy(is_adversarial).reshape(-1).astype(int)
+        if y_pred is None:
+            raise RuntimeError("Detector prediction output was not produced.")
         y_true = y.reshape(-1).astype(int)
 
         self.detector = detector
@@ -143,7 +180,7 @@ class DetectorConfig(ConfigBase):
             "detector_n": int(len(y_true)),
             "detector_clean_n": int(n),
             "detector_adversarial_n": int(n),
-            "detector_training_time": float(self.detector_training_time),
+            "detector_training_time": float(self.detector_training_time or 0.0),
             "detector_detection_time": float(self.detector_detection_time),
         }
         return self.score_dict

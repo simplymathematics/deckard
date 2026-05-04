@@ -1,0 +1,7 @@
+attack_type: art.attacks.inference.reconstruction.DatabaseReconstruction
+attack_size: 1
+attack_params:
+  split: train
+  missing_index: -1
+_target_: deckard.attack.AttackConfig
+alias: database_reconstruction

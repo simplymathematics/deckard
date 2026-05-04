@@ -451,6 +451,14 @@ def adult_base_model(adult_base_data):
             ),
             "inferred_age_",
         ),
+        (
+            lambda model: AttackConfig(
+                attack_type="art.attacks.inference.reconstruction.DatabaseReconstruction",
+                attack_params={"split": "train", "missing_index": 0},
+                attack_size=1,
+            ),
+            "database_reconstruction_",
+        ),
     ],
 )
 def test_adult_all_attack_types_base(
@@ -783,6 +791,41 @@ def test_cli_attack_composition_fgm():
     assert any(key.startswith("evasion_") for key in scores)
 
 
+def test_cli_attack_composition_database_reconstruction_smoke():
+    """Smoke test CLI-style config composition with database reconstruction attack."""
+
+    config_dir = (
+        Path(__file__).resolve().parents[1] / "examples" / "sklearn" / "config"
+    )
+    with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
+        cfg = compose(
+            config_name="default",
+            overrides=[
+                "data=classification",
+                "model=logistic",
+                "attack=database-reconstruction",
+                "score=classification",
+            ],
+        )
+
+    data_dict = OmegaConf.to_container(cfg.data, resolve=True)
+    if "pipeline" in data_dict:
+        data = DataPipelineConfig(**data_dict)
+    else:
+        data = DataConfig(**data_dict)
+    _load_or_skip(data)
+
+    model_dict = OmegaConf.to_container(cfg.model, resolve=True)
+    model = ModelConfig(**model_dict)
+    _train_model_or_skip(model, data)
+
+    attack_dict = OmegaConf.to_container(cfg.attack, resolve=True)
+    attack = AttackConfig(**attack_dict)
+
+    scores = attack(data=data, model=model)
+    assert any(key.startswith("database_reconstruction_") for key in scores)
+
+
 def test_cli_full_experiment_composition():
     """Test CLI-style config composition for full experiment."""
 
@@ -821,6 +864,44 @@ def test_cli_full_experiment_composition():
     scores = experiment()
     assert "accuracy" in scores
     assert any(key.startswith("evasion_") for key in scores)
+
+
+def test_cli_full_experiment_composition_database_reconstruction_end_to_end():
+    """End-to-end CLI-style composition for experiment with database reconstruction attack."""
+
+    config_dir = (
+        Path(__file__).resolve().parents[1] / "examples" / "sklearn" / "config"
+    )
+    with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
+        cfg = compose(
+            config_name="default",
+            overrides=[
+                "data=classification",
+                "data.data_params.n_samples=100",
+                "model=logistic",
+                "model.model_params.max_iter=25",
+                "attack=database-reconstruction",
+                "defense=baseline",
+                "score=classification",
+            ],
+        )
+
+    data_dict = OmegaConf.to_container(cfg.data, resolve=True)
+    if "pipeline" in data_dict:
+        data = DataPipelineConfig(**data_dict)
+    else:
+        data = DataConfig(**data_dict)
+
+    model_dict = OmegaConf.to_container(cfg.model, resolve=True)
+    model = ModelConfig(**model_dict)
+
+    attack_dict = OmegaConf.to_container(cfg.attack, resolve=True)
+    attack = AttackConfig(**attack_dict)
+
+    experiment = ExperimentConfig(data=data, model=model, attack=attack)
+    scores = experiment()
+    assert "accuracy" in scores
+    assert any(key.startswith("database_reconstruction_") for key in scores)
 
 
 def test_cli_experiment_tuning_mode_emits_validation_scores():

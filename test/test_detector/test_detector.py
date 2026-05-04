@@ -23,15 +23,25 @@ class _FakeBinaryInputDetector:
         return {"mock": True}, preds
 
 
-def _make_data_and_attack(n=8, d=4):
+class _TinyNet:
+    def __init__(self, nn, in_features=8, hidden=16, out_features=2):
+        self.model = nn.Sequential(
+            nn.Linear(in_features, hidden),
+            nn.ReLU(),
+            nn.Linear(hidden, out_features),
+        )
+
+
+def _make_data_and_attack(n=8, d=4, seed=0):
+    rng = np.random.default_rng(seed)
     data = SimpleNamespace(
-        X_train=np.random.rand(n, d).astype(np.float32),
-        y_train=np.random.randint(0, 2, size=(n,)),
-        X_test=np.random.rand(n, d).astype(np.float32),
-        y_test=np.random.randint(0, 2, size=(n,)),
+        X_train=rng.random((n, d), dtype=np.float32),
+        y_train=rng.integers(0, 2, size=(n,)),
+        X_test=rng.random((n, d), dtype=np.float32),
+        y_test=rng.integers(0, 2, size=(n,)),
     )
     attack = SimpleNamespace(
-        attack_predictions=np.random.rand(n, d).astype(np.float32),
+        attack_predictions=rng.random((n, d), dtype=np.float32),
     )
     return data, attack
 
@@ -45,11 +55,8 @@ def test_detector_requires_attack_predictions():
             "model_params": {"max_iter": 20},
         },
     )
-    try:
+    with pytest.raises(ValueError):
         detector(data=data, model=None, attack=SimpleNamespace(attack_predictions=None))
-        assert False, "Expected ValueError for missing attack_predictions"
-    except ValueError:
-        assert True
 
 
 def test_detector_runs_and_emits_scores_with_mock_detector():
@@ -84,16 +91,7 @@ def test_real_art_evasion_binary_input_detector_executes():
     BinaryInputDetector = pytest.importorskip(
         "art.defences.detector.evasion",
     ).BinaryInputDetector
-
-    class TinyNet(nn.Module):
-        def __init__(self):
-            super().__init__()
-            self.fc1 = nn.Linear(8, 16)
-            self.relu = nn.ReLU()
-            self.fc2 = nn.Linear(16, 2)
-
-        def forward(self, x):
-            return self.fc2(self.relu(self.fc1(x)))
+    torch.manual_seed(42)
 
     X, y = make_classification(
         n_samples=120,
@@ -106,9 +104,9 @@ def test_real_art_evasion_binary_input_detector_executes():
     X = X.astype(np.float32)
     y = y.astype(np.int64)
     X_train, X_test = X[:80], X[80:]
-    y_train, y_test = y[:80], y[80:]
+    y_train = y[:80]
 
-    victim_model = TinyNet()
+    victim_model = _TinyNet(nn).model
     victim = PyTorchClassifier(
         model=victim_model,
         loss=nn.CrossEntropyLoss(),
@@ -121,8 +119,9 @@ def test_real_art_evasion_binary_input_detector_executes():
 
     attack = FastGradientMethod(estimator=victim, eps=0.2)
     X_adv = attack.generate(X_test)
+    assert np.any(np.abs(X_adv - X_test) > 1e-8)
 
-    detector_model = TinyNet()
+    detector_model = _TinyNet(nn).model
     detector_backend = PyTorchClassifier(
         model=detector_model,
         loss=nn.CrossEntropyLoss(),
@@ -162,16 +161,7 @@ def test_real_art_poisoning_detector_executes():
     SpectralSignatureDefense = pytest.importorskip(
         "art.defences.detector.poison",
     ).SpectralSignatureDefense
-
-    class TinyNet(nn.Module):
-        def __init__(self):
-            super().__init__()
-            self.fc1 = nn.Linear(8, 16)
-            self.relu = nn.ReLU()
-            self.fc2 = nn.Linear(16, 2)
-
-        def forward(self, x):
-            return self.fc2(self.relu(self.fc1(x)))
+    torch.manual_seed(7)
 
     X, y = make_classification(
         n_samples=100,
@@ -193,11 +183,12 @@ def test_real_art_poisoning_detector_executes():
         X_train[poison_idx],
         y=(1 - y_train[poison_idx]),
     )
+    assert len(X_poison) == len(poison_idx)
 
     X_mix = np.vstack([X_train, X_poison]).astype(np.float32)
     y_mix = np.concatenate([y_train, y_poison.astype(np.int64)])
 
-    model = TinyNet()
+    model = _TinyNet(nn).model
     classifier = PyTorchClassifier(
         model=model,
         loss=nn.CrossEntropyLoss(),
@@ -217,6 +208,7 @@ def test_real_art_poisoning_detector_executes():
     )
     report, is_clean = detector.detect_poison()
 
-    is_clean = np.asarray(is_clean).reshape(-1)
+    is_clean = np.asarray(is_clean).reshape(-1).astype(int)
     assert isinstance(report, dict)
     assert len(is_clean) == len(X_mix)
+    assert np.all((is_clean == 0) | (is_clean == 1))

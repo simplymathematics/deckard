@@ -65,6 +65,18 @@ class TestAttackConfig(unittest.TestCase):
         config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
         return AttackConfig(**config)
 
+    def _load_pytorch_database_reconstruction_config(self):
+        config_path = (
+            Path(__file__).resolve().parents[2]
+            / "examples"
+            / "pytorch"
+            / "config"
+            / "attack"
+            / "database-reconstruction.yaml"
+        )
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        return AttackConfig(**config)
+
     def test_post_init(self):
         self.assertTrue(hasattr(self.attack, "attack_type"))
         self.assertTrue(hasattr(self.attack, "attack_params"))
@@ -304,7 +316,7 @@ class TestAttackConfig(unittest.TestCase):
 
         self.assertIn("inferred_age_accuracy", result)
         self.assertIn("attack_prediction_time", result)
-        
+
 
     def test_infer_model_inversion_scores_reconstruction(self):
         attack = self._load_pytorch_model_inversion_config()
@@ -384,6 +396,93 @@ class TestAttackConfig(unittest.TestCase):
         self.assertIn("model_inversion_mse", result)
         self.assertIn("model_inversion_mae", result)
         self.assertIn("model_inversion_num_targets", result)
+        self.assertIn("attack_generation_time", result)
+        self.assertIn("attack_prediction_time", result)
+        self.assertIn("attack_score_time", result)
+
+    def test_infer_database_reconstruction_scores_reconstruction(self):
+        attack = self._load_pytorch_database_reconstruction_config()
+        attack.attack_params["split"] = "train"
+        attack.attack_params["missing_index"] = 1
+
+        class _TinyData:
+            X_train = np.array(
+                [
+                    [0.0, 0.2, 0.1],
+                    [0.4, 0.5, 0.6],
+                    [0.8, 0.7, 0.9],
+                    [0.2, 0.3, 0.1],
+                ],
+                dtype=np.float32,
+            )
+            y_train = np.array([0, 1, 1, 0], dtype=np.int64)
+
+        class _FakeDatabaseReconstructionAttack:
+            def reconstruct(self, x, y=None, **kwargs):
+                _ = kwargs
+                x = np.asarray(x, dtype=np.float32)
+                y = np.asarray(y) if y is not None else np.array([0])
+                x_guess = x[:1] + 0.01
+                y_guess = np.array([int(y[0])], dtype=np.int64)
+                return x_guess, y_guess
+
+        scores = attack._infer_database_reconstruction(
+            data=_TinyData(),
+            attack=_FakeDatabaseReconstructionAttack(),
+        )
+
+        self.assertIn("database_reconstruction_feature_mse", scores)
+        self.assertIn("database_reconstruction_feature_mae", scores)
+        self.assertIn("database_reconstruction_num_features", scores)
+        self.assertIn("database_reconstruction_missing_index", scores)
+        self.assertGreaterEqual(scores["database_reconstruction_feature_mse"], 0.0)
+
+    def test_call_database_reconstruction_executes_real_infer_database_reconstruction(self):
+        attack = self._load_pytorch_database_reconstruction_config()
+        attack.attack_params["split"] = "train"
+        attack.attack_params["missing_index"] = 0
+
+        class _TinyData:
+            X_train = np.array(
+                [
+                    [0.0, 0.2],
+                    [0.1, 0.3],
+                    [0.8, 0.7],
+                    [0.9, 0.6],
+                ],
+                dtype=np.float32,
+            )
+            y_train = np.array([0, 0, 1, 1], dtype=np.int64)
+
+        class _FakeDatabaseReconstructionAttack:
+            def __init__(self):
+                self.reconstruct_calls = 0
+
+            def reconstruct(self, x, y=None, **kwargs):
+                _ = kwargs
+                self.reconstruct_calls += 1
+                x = np.asarray(x, dtype=np.float32)
+                y = np.asarray(y) if y is not None else np.array([0])
+                return x[:1], np.array([int(y[0])], dtype=np.int64)
+
+        fake_attack = _FakeDatabaseReconstructionAttack()
+
+        with patch.object(
+            AttackConfig,
+            "_initialize_attack",
+            return_value=(
+                fake_attack,
+                object(),
+                "inference",
+                "reconstruction",
+            ),
+        ):
+            result = attack(_TinyData(), object())
+
+        self.assertEqual(fake_attack.reconstruct_calls, 1)
+        self.assertIn("database_reconstruction_feature_mse", result)
+        self.assertIn("database_reconstruction_feature_mae", result)
+        self.assertIn("database_reconstruction_num_features", result)
         self.assertIn("attack_generation_time", result)
         self.assertIn("attack_prediction_time", result)
         self.assertIn("attack_score_time", result)
@@ -671,6 +770,24 @@ class TestAttackConfig(unittest.TestCase):
         self.assertIn("model_inversion_mse", scores)
         self.assertIn("model_inversion_mae", scores)
         self.assertIn("model_inversion_num_targets", scores)
+        self.assertIn("attack_score_time", scores)
+
+    def test_real_database_reconstruction_attack_executes(self):
+        data = TinyData()
+        model = LogisticRegression(max_iter=200).fit(
+            data.X_train.values,
+            data.y_train.values,
+        )
+        attack = AttackConfig(
+            attack_type="art.attacks.inference.reconstruction.DatabaseReconstruction",
+            attack_params={"split": "train", "missing_index": 0},
+            attack_size=1,
+        )
+
+        scores = attack(data, model)
+        self.assertIn("database_reconstruction_feature_mse", scores)
+        self.assertIn("database_reconstruction_feature_mae", scores)
+        self.assertIn("database_reconstruction_num_features", scores)
         self.assertIn("attack_score_time", scores)
 
     def test_hash_stable_after_call_for_attack_config(self):

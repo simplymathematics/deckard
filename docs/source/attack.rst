@@ -38,6 +38,7 @@ Deckard supports ART attacks across the following families:
    - Attribute inference (for example: ``AttributeInferenceBaseline``,
       ``AttributeInferenceBlackBox``)
    - Model inversion (for example: ``MIFace``)
+   - Database reconstruction (for example: ``DatabaseReconstruction``)
 
 (Extendable to additional ART attack classes in future versions.)
 
@@ -92,6 +93,20 @@ keys are prefixed to make results easy to group in downstream analysis.
    ``model_inversion_num_targets``
 - ``model_inversion_mse`` and ``model_inversion_mae`` compare reconstructed
    samples to per-class prototype means from the selected split.
+
+**Database reconstruction**
+
+- Prefix: ``database_reconstruction_``
+- Default summary metrics: ``database_reconstruction_feature_mse``,
+   ``database_reconstruction_feature_mae``,
+   ``database_reconstruction_num_features``,
+   ``database_reconstruction_num_known_rows``,
+   ``database_reconstruction_missing_index``
+- Optional label metrics (when reconstructed labels are returned):
+   ``database_reconstruction_label_accuracy`` (classification) or
+   ``database_reconstruction_label_mae`` (regression)
+- Reconstructs one held-out row from a selected split (``train`` or ``test``)
+   using the known rows and labels from that split.
 
 **Poisoning**
 
@@ -327,6 +342,32 @@ To run an ART model inversion attack (for example ``MIFace``):
 
    scores = inversion_attack(data=data, model=model)
    print(scores["model_inversion_mse"], scores["model_inversion_num_targets"])
+
+Database Reconstruction Attack
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To run ART database reconstruction against a trained estimator:
+
+.. code-block:: python
+
+   from deckard.attack import AttackConfig
+
+   reconstruction_attack = AttackConfig(
+      attack_type="art.attacks.inference.reconstruction.DatabaseReconstruction",
+      attack_size=1,
+      attack_params={
+         "split": "train",
+         "missing_index": 0,
+      },
+   )
+
+   scores = reconstruction_attack(data=data, model=model)
+   print(scores["database_reconstruction_feature_mse"])
+
+YAML config shortcuts are available at:
+
+- ``examples/sklearn/config/attack/database-reconstruction.yaml``
+- ``examples/pytorch/config/attack/database-reconstruction.yaml``
 
 CLI Examples
 ~~~~~~~~~~~~

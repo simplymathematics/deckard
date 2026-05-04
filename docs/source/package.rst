@@ -45,7 +45,8 @@ Deckard addresses this by providing:
 - integrated result collection for comparison and reporting
 - ``hydra`` integration for command line configuration
 - ``optuna`` integration for search space sampling, experiment pruning, and multi-objective optimization.
-- **Defense pipelines** that chain ART-based defenses (preprocessors, postprocessors, detectors, trainers).
+- **Defense pipelines** that chain ART-based defenses (preprocessors, postprocessors, trainers).
+- **Detector phase** for auxiliary adversarial/poison detection models executed after attacks.
 - **Data sampling strategies** (split, k-fold, shuffle) for robust evaluation.
 - **Scorer dictionaries** for unified metric management across data, model, and attack components.
 - Numerous extensions for attacking, defending, and measuring various ML metrics (fairness, survival, PyTorch).
@@ -150,7 +151,8 @@ Typical workflow composition includes:
 3. **Model Training & Evaluation** — Train models via :class:`~deckard.model.ModelConfig` with configurable scorer profiles for classification, regression, fairness, and survival tasks.
 4. **Optional Defenses** — Apply adversarial robustness defenses via :class:`~deckard.model.DefensePipelineConfig` that chain ART-based preprocessing and postprocessing defenses.
 5. **Attack Execution** — Execute evasion or inference attacks via :class:`~deckard.attack.AttackConfig` with attack-specific scoring and metric aggregation.
-6. **Scoring & Artifact Persistence** — Normalize metrics via :class:`~deckard.score.ScorerDictConfig` and persist results via :class:`~deckard.file.FileConfig`.
+6. **Optional Detector Execution** — Train/evaluate auxiliary clean-vs-adversarial detectors via :class:`~deckard.detector.DetectorConfig`.
+7. **Scoring & Artifact Persistence** — Normalize metrics via :class:`~deckard.score.ScorerDictConfig` and persist results via :class:`~deckard.file.FileConfig`.
 
 By standardizing these stages, Deckard reduces ambiguity in experiment setup and makes comparative benchmarking easier.
 
@@ -192,7 +194,8 @@ workflow: Data, Model, Attack, Experiment, File, and ScorerDict objects.
 - :class:`deckard.data.DataConfig` — loads, preprocesses, and splits datasets
 - :class:`deckard.data.DataPipelineConfig` — configurable sklearn pipelines for feature preprocessing
 - :class:`deckard.model.ModelConfig` — instantiates and trains scikit-learn models
-- :class:`deckard.model.DefensePipelineConfig` — chains ART defenses (preprocessors, postprocessors, detectors)
+- :class:`deckard.model.DefensePipelineConfig` — chains ART defenses (preprocessors, postprocessors, trainers)
+- :class:`deckard.detector.DetectorConfig` — auxiliary detector training/evaluation phase
 - :class:`deckard.attack.AttackConfig` — executes ART evasion and inference attacks
 - :class:`deckard.experiment.ExperimentConfig` — orchestrates end-to-end workflows
 - :class:`deckard.file.FileConfig` — manages result serialization and artifact tracking
@@ -204,7 +207,7 @@ Deckard supports `Adversarial Robustness Toolbox (ART) <https://github.com/Trust
 
 **Scoring Architecture**:
 
-:class:`deckard.score.ScorerDictConfig` normalizes metric definitions into callable maps, supporting classification, regression, fairness, and attack-specific scoring. Attack scoring routes outputs through attack-kind–aware profiles (evasion, membership, attribute) and prefixes metric names automatically.
+:class:`deckard.score.ScorerDictConfig` normalizes metric definitions into callable maps, supporting classification, regression, fairness, and attack-specific scoring. Attack scoring routes outputs through attack-kind-aware profiles (evasion, membership, attribute, model inversion, database reconstruction) and prefixes metric names automatically.
 
 **Sampling Architecture**:
 
