@@ -7,6 +7,7 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 import pytest
+import yaml
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from deckard.attack import AttackConfig
@@ -51,6 +52,18 @@ class TestAttackConfig(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
+
+    def _load_pytorch_model_inversion_config(self):
+        config_path = (
+            Path(__file__).resolve().parents[2]
+            / "examples"
+            / "pytorch"
+            / "config"
+            / "attack"
+            / "model-inversion.yaml"
+        )
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        return AttackConfig(**config)
 
     def test_post_init(self):
         self.assertTrue(hasattr(self.attack, "attack_type"))
@@ -291,6 +304,89 @@ class TestAttackConfig(unittest.TestCase):
 
         self.assertIn("inferred_age_accuracy", result)
         self.assertIn("attack_prediction_time", result)
+        
+
+    def test_infer_model_inversion_scores_reconstruction(self):
+        attack = self._load_pytorch_model_inversion_config()
+        attack.attack_size = 2
+        attack.attack_params["split"] = "test"
+
+        class _TinyData:
+            X_test = np.array(
+                [
+                    [0.0, 0.2],
+                    [0.1, 0.3],
+                    [0.8, 0.7],
+                    [0.9, 0.6],
+                ],
+                dtype=np.float32,
+            )
+            y_test = np.array([0, 0, 1, 1], dtype=np.int64)
+
+        class _FakeModelInversionAttack:
+            def infer(self, x, y):
+                y = np.asarray(y).reshape(-1, 1).astype(np.float32)
+                return np.asarray(x, dtype=np.float32) + (0.05 * y)
+
+        scores = attack._infer_model_inversion(
+            data=_TinyData(),
+            attack=_FakeModelInversionAttack(),
+        )
+
+        self.assertIn("model_inversion_mse", scores)
+        self.assertIn("model_inversion_mae", scores)
+        self.assertIn("model_inversion_num_targets", scores)
+        self.assertEqual(scores["model_inversion_num_targets"], 2)
+        self.assertGreaterEqual(scores["model_inversion_mse"], 0.0)
+
+    def test_call_model_inversion_executes_real_infer_model_inversion(self):
+        attack = self._load_pytorch_model_inversion_config()
+        attack.attack_size = 2
+        attack.attack_params["split"] = "test"
+        attack.attack_params["targets"] = [0, 1]
+
+        class _TinyData:
+            X_test = np.array(
+                [
+                    [0.0, 0.2],
+                    [0.1, 0.3],
+                    [0.8, 0.7],
+                    [0.9, 0.6],
+                ],
+                dtype=np.float32,
+            )
+            y_test = np.array([0, 0, 1, 1], dtype=np.int64)
+
+        class _FakeModelInversionAttack:
+            def __init__(self):
+                self.infer_calls = 0
+
+            def infer(self, x, y):
+                self.infer_calls += 1
+                y = np.asarray(y).reshape(-1, 1).astype(np.float32)
+                return np.asarray(x, dtype=np.float32) + (0.05 * y)
+
+        fake_attack = _FakeModelInversionAttack()
+
+        with patch.object(
+            AttackConfig,
+            "_initialize_attack",
+            return_value=(
+                fake_attack,
+                object(),
+                "inference",
+                "model_inversion",
+            ),
+        ):
+            result = attack(_TinyData(), object())
+
+        self.assertEqual(fake_attack.infer_calls, 1)
+        self.assertIn("model_inversion_mse", result)
+        self.assertIn("model_inversion_mae", result)
+        self.assertIn("model_inversion_num_targets", result)
+        self.assertIn("attack_generation_time", result)
+        self.assertIn("attack_prediction_time", result)
+        self.assertIn("attack_score_time", result)
 
     def test_call_attribute_inference_requires_targeted_attribute(self):
         attack = AttackConfig(
@@ -535,6 +631,47 @@ class TestAttackConfig(unittest.TestCase):
         self.assertIn("attack_score_time", scores)
         inferred_keys = [k for k in scores.keys() if k.startswith("inferred_")]
         self.assertTrue(len(inferred_keys) > 0)
+
+    def test_real_model_inversion_attack_executes(self):
+        torch = pytest.importorskip("torch")
+        nn = pytest.importorskip("torch.nn")
+
+        class TinyLinear(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.linear = nn.Linear(3, 2)
+
+            def forward(self, x):
+                return self.linear(x)
+
+        class TinyData:
+            pass
+
+        rng = np.random.default_rng(7)
+        X_train = torch.tensor(rng.normal(size=(20, 3)), dtype=torch.float32)
+        y_train = torch.tensor(rng.integers(0, 2, size=(20,)), dtype=torch.long)
+        X_test = torch.tensor(rng.normal(size=(12, 3)), dtype=torch.float32)
+        y_test = torch.tensor(rng.integers(0, 2, size=(12,)), dtype=torch.long)
+
+        data = TinyData()
+        data.X_train = X_train
+        data.y_train = y_train
+        data.X_test = X_test
+        data.y_test = y_test
+
+        model = TinyLinear()
+        attack = self._load_pytorch_model_inversion_config()
+        attack.attack_size = 2
+        attack.attack_params["max_iter"] = 2
+        attack.attack_params.pop("initialization", None)
+        attack.attack_params.pop("split", None)
+        attack.attack_params.pop("targets", None)
+
+        scores = attack(data, model)
+        self.assertIn("model_inversion_mse", scores)
+        self.assertIn("model_inversion_mae", scores)
+        self.assertIn("model_inversion_num_targets", scores)
+        self.assertIn("attack_score_time", scores)
 
     def test_hash_stable_after_call_for_attack_config(self):
         attack = AttackConfig(

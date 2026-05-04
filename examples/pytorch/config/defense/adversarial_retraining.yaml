@@ -1,0 +1,8 @@
+defense_name: art.defences.trainer.AdversarialTrainerMadryPGD
+defense_params:
+    nb_epochs: 1
+    batch_size: 8
+    eps: 0.2
+    eps_step: 0.1
+    max_iter: 1
+    num_random_init: 1

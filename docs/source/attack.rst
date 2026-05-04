@@ -37,6 +37,7 @@ Deckard supports ART attacks across the following families:
       ``MembershipInferenceBaseline``)
    - Attribute inference (for example: ``AttributeInferenceBaseline``,
       ``AttributeInferenceBlackBox``)
+   - Model inversion (for example: ``MIFace``)
 
 (Extendable to additional ART attack classes in future versions.)
 
@@ -83,6 +84,14 @@ keys are prefixed to make results easy to group in downstream analysis.
 - Default metrics: ``inferred_<targeted_attribute>_mse``,
    ``inferred_<targeted_attribute>_mae``,
    ``inferred_<targeted_attribute>_r2``
+
+**Model inversion**
+
+- Prefix: ``model_inversion_``
+- Default summary metrics: ``model_inversion_mse``, ``model_inversion_mae``,
+   ``model_inversion_num_targets``
+- ``model_inversion_mse`` and ``model_inversion_mae`` compare reconstructed
+   samples to per-class prototype means from the selected split.
 
 **Poisoning**
 
@@ -295,6 +304,29 @@ To execute an attribute inference attack against a trained model:
 
    scores = attribute_attack(data=data, model=model)
    print([k for k in scores if k.startswith("inferred_")])
+
+Model Inversion Attack
+~~~~~~~~~~~~~~~~~~~~~~
+
+To run an ART model inversion attack (for example ``MIFace``):
+
+.. code-block:: python
+
+   from deckard.attack import AttackConfig
+
+   inversion_attack = AttackConfig(
+      attack_type="art.attacks.inference.model_inversion.mi_face.MIFace",
+      attack_size=10,
+      attack_params={
+         "max_iter": 200,
+         "threshold": 1.0,
+         "initialization": "average",  # zeros|ones|random|average
+         "split": "test",
+      },
+   )
+
+   scores = inversion_attack(data=data, model=model)
+   print(scores["model_inversion_mse"], scores["model_inversion_num_targets"])
 
 CLI Examples
 ~~~~~~~~~~~~

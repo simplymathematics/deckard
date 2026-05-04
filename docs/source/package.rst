@@ -76,7 +76,7 @@ guarantees, and accuracy impact.
 
 **Adversarial Robustness & Attacks**:
 
-Execute evasion, membership inference, and attribute inference attacks via
+Execute evasion, membership inference, attribute inference, and model inversion attacks via
 :class:`~deckard.attack.AttackConfig` with full ART integration. Chain defenses
 using :class:`~deckard.model.DefensePipelineConfig`. Measure attack success
 rates, defense effectiveness, and certified robustness bounds. Combine with

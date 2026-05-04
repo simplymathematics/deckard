@@ -24,6 +24,7 @@ except ImportError:  # pragma: no cover
     FairlearnDataConfig = None
 from ..model.defend import DefensePipelineConfig
 from ..attack import AttackConfig
+from ..detector import DetectorConfig
 from ..score import ScorerDictConfig
 from ..file import FileConfig, data_files, model_files, attack_files
 from ..utils import ConfigBase, coerce_config
@@ -216,6 +217,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
     model: ModelConfig = None
     defense: DefensePipelineConfig = None
     attack: AttackConfig = None
+    detector: DetectorConfig = None
     files: FileConfig = None
     score: ScorerDictConfig = None
     random_state: int = 42
@@ -508,6 +510,45 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 AttackConfig,
             ), "attack must be an instance of AttackConfig"
             self.attack.__post_init__()
+        if self.detector is not None:
+            if isinstance(self.detector, DetectorConfig):
+                pass
+            elif callable(getattr(self.detector, "__call__", None)):
+                # Allow custom detector runtime objects in tests/extensions.
+                pass
+            else:
+                if isinstance(self.detector, DictConfig):
+                    detector_dict = OmegaConf.to_container(
+                        self.detector,
+                        resolve=True,
+                    )
+                elif isinstance(self.detector, str):
+                    detector_dict = DetectorConfig.from_yaml(self.detector).to_dict()
+                elif isinstance(self.detector, ConfigBase):
+                    detector_dict = self.detector.to_dict()
+                elif isinstance(self.detector, dict):
+                    detector_dict = OmegaConf.to_container(
+                        OmegaConf.create(self.detector),
+                        resolve=True,
+                    )
+                else:
+                    raise ValueError(
+                        f"Unsupported type for detector: {type(self.detector)}",
+                    )
+                if "_target_" not in detector_dict:
+                    self.detector = DetectorConfig(**detector_dict)
+                else:
+                    self.detector = instantiate(self.detector)
+            assert isinstance(
+                self.detector,
+                DetectorConfig,
+            ) or callable(getattr(self.detector, "__call__", None)), (
+                "detector must be a DetectorConfig or callable detector runtime"
+            )
+            if hasattr(self.detector, "__post_init__") and callable(
+                getattr(self.detector, "__post_init__"),
+            ):
+                self.detector.__post_init__()
         # Set experiment name if not provided
         if self.experiment_name in [None, "", "{hash}", "*"]:
             config_list = [self.data]
@@ -515,6 +556,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 config_list.append(self.model)
             if self.attack:
                 config_list.append(self.attack)
+            if self.detector and isinstance(self.detector, ConfigBase):
+                config_list.append(self.detector)
             if self.score:
                 config_list.append(self.score)
             self.experiment_name = self._hash_from_list(config_list)
@@ -702,6 +745,24 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 raise
         else:
             logger.info("No attack config provided, skipping attack.")
+
+        if self.detector:
+            if self.attack is None:
+                raise ValueError(
+                    "Detector phase requires an attack configuration/output.",
+                )
+            self.detector(
+                data=self.data,
+                model=self.model,
+                attack=self.attack,
+            )
+            assert hasattr(
+                self.detector,
+                "score_dict",
+            ), "detector must have score_dict attribute after execution"
+            scores.update(**self.detector.score_dict)
+        else:
+            logger.info("No detector config provided, skipping detector phase.")
 
         custom_scores = self._run_experiment_scorer_modes(score_file=None)
         if custom_scores:

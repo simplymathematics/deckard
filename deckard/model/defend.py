@@ -321,11 +321,45 @@ class _DefenseBehaviorMixin:
                 assert defense_class is not None
                 match defense_subtype:
                     case "evasion":
-                        defense = defense_class(**(self.defense_params or {}))
-                        defended_estimator = defense(
-                            self.get_model(),
-                            **init_params,
+                        # BinaryInputDetector expects a neural-network ART classifier.
+                        if not _is_torch_model_instance(base_estimator) and not isinstance(
+                            self._model,
+                            (PyTorchClassifier, PyTorchRegressor),
+                        ):
+                            raise ValueError(
+                                "Evasion detector defenses only support neural-network models. "
+                                f"Got base estimator type {type(base_estimator)}.",
+                            )
+
+                        detector_classifier = self._build_art_wrapper(
+                            art_class=art_class,
+                            base_estimator=base_estimator,
+                            init_params=init_params,
+                            preprocessing_defences=existing_preprocessors,
+                            postprocessing_defences=existing_postprocessors,
                         )
+
+                        detector_params = dict(self.defense_params or {})
+                        # ART detector constructors differ across versions; support
+                        # both keyword and positional first-argument forms.
+                        try:
+                            defense = defense_class(
+                                detector=detector_classifier,
+                                **detector_params,
+                            )
+                        except TypeError:
+                            defense = defense_class(
+                                detector_classifier,
+                                **detector_params,
+                            )
+
+                        # Keep estimator interface stable for normal model runtime.
+                        setattr(
+                            detector_classifier,
+                            "_deckard_evasion_detector",
+                            defense,
+                        )
+                        defended_estimator = detector_classifier
                     case "poison":
                         defense = defense_class(**(self.defense_params or {}))
                         defended_estimator = defense(
@@ -339,8 +373,43 @@ class _DefenseBehaviorMixin:
                 # Overwrite the _score method to handle each
             case "trainer":
                 assert defense_class is not None
-                defense = defense_class(**(self.defense_params or {}))
-                defended_estimator = defense(self._model, **init_params)
+                trainer_params = dict(self.defense_params or {})
+
+                # Adversarial retraining defenses currently require torch-backed
+                # ART estimators (e.g., PyTorchClassifier).
+                if not _is_torch_model_instance(base_estimator) and not isinstance(
+                    self._model,
+                    (PyTorchClassifier, PyTorchRegressor),
+                ):
+                    raise ValueError(
+                        "Retraining trainer defenses only support neural-network models. "
+                        f"Got base estimator type {type(base_estimator)}.",
+                    )
+
+                trainer_classifier = self._build_art_wrapper(
+                    art_class=art_class,
+                    base_estimator=base_estimator,
+                    init_params=init_params,
+                    preprocessing_defences=existing_preprocessors,
+                    postprocessing_defences=existing_postprocessors,
+                )
+
+                # ART trainer constructors differ across versions; support both
+                # classifier keyword and positional first argument.
+                try:
+                    defense = defense_class(
+                        classifier=trainer_classifier,
+                        **trainer_params,
+                    )
+                except TypeError:
+                    defense = defense_class(trainer_classifier, **trainer_params)
+
+                # Trainer defenses configure adversarial training on top of an ART
+                # classifier wrapper; fitting remains owned by the model runtime.
+                if hasattr(defense, "get_classifier"):
+                    defended_estimator = defense.get_classifier()
+                else:
+                    defended_estimator = trainer_classifier
             case "transformer":
                 assert defense_class is not None
                 defense = defense_class(**(self.defense_params or {}))
@@ -791,6 +860,20 @@ class DefensePipelineConfig(ConfigBase):
             pass
         return False
 
+    def _is_retraining_defense(self, defense_obj) -> bool:
+        defense_name = getattr(defense_obj, "defense_name", None)
+        if not isinstance(defense_name, str):
+            return False
+        lowered = defense_name.lower()
+        return (
+            ".trainer." in lowered
+            and (
+                "adversarialtrainer" in lowered
+                or "retraining" in lowered
+                or "madry" in lowered
+            )
+        )
+
     def apply(
         self,
         estimator: BaseEstimator,
@@ -840,6 +923,36 @@ class DefensePipelineConfig(ConfigBase):
                     ],
                 )
                 defense_chain = data_defenses + wrapper_defenses
+
+        retraining_defenses = [
+            d for d in defense_chain if self._is_retraining_defense(d)
+        ]
+        if retraining_defenses:
+            non_retraining_defenses = [
+                d for d in defense_chain if not self._is_retraining_defense(d)
+            ]
+            first_retraining_idx = next(
+                i
+                for i, d in enumerate(defense_chain)
+                if self._is_retraining_defense(d)
+            )
+            last_non_retraining_idx = max(
+                (
+                    i
+                    for i, d in enumerate(defense_chain)
+                    if not self._is_retraining_defense(d)
+                ),
+                default=-1,
+            )
+            if first_retraining_idx < last_non_retraining_idx:
+                warning_msg = (
+                    "Adversarial retraining defenses must run last in the defense chain. "
+                    "Deckard will automatically move retraining defenses to the end."
+                )
+                logger.warning(warning_msg)
+                warnings.warn(warning_msg, RuntimeWarning, stacklevel=2)
+                defense_chain = non_retraining_defenses + retraining_defenses
+
         self._run_plugin_hook(
             "before_apply_defense",
             estimator=estimator,

@@ -1,0 +1,9 @@
+attack_type: art.attacks.inference.model_inversion.mi_face.MIFace
+attack_size: 10
+attack_params:
+  max_iter: 200
+  threshold: 1.0
+  initialization: average
+  split: test
+_target_: deckard.attack.AttackConfig
+alias: model_inversion

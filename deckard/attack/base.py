@@ -608,6 +608,11 @@ class AttackConfig(ConfigBase):
                         attack,
                         targeted_attribute=self.targeted_attribute,
                     )
+                case "model_inversion":
+                    scores = self._infer_model_inversion(
+                        data=data,
+                        attack=attack,
+                    )
                 case _:
                     raise ValueError(
                         f"Unsupported inference attack subtype: {attack_subtype}",
@@ -1428,6 +1433,131 @@ class AttackConfig(ConfigBase):
             f"Membership inference attack scoring took {self.attack_score_time} seconds for {self.attack_size} samples",
         )
         self.attack = inferred
+        return self.score_dict
+
+    def _infer_model_inversion(self, data, attack):
+        """Run a model inversion attack and score reconstruction quality.
+
+        This method supports ART model inversion attacks such as
+        ``art.attacks.inference.model_inversion.mi_face.MIFace``. Targets are
+        inferred from labels in the selected split unless explicitly provided
+        via ``attack_params['targets']``.
+        """
+
+        split = str(self.attack_params.get("split", "test")).lower()
+        if split not in {"train", "test"}:
+            raise ValueError(
+                f"Unsupported model inversion split '{split}'. Expected 'train' or 'test'.",
+            )
+
+        x_source = getattr(data, "X_train" if split == "train" else "X_test")
+        y_source = getattr(data, "y_train" if split == "train" else "y_test")
+        x_source = self._to_numpy_array(
+            self._prepare_features_for_attack(x_source),
+            dtype=ART_NUMPY_DTYPE,
+        )
+        y_source = self._normalize_ground_truth(y_source, is_regression=False)
+
+        if len(x_source) == 0:
+            raise ValueError("Model inversion requires at least one source sample.")
+
+        targets_param = self.attack_params.get("targets", None)
+        if targets_param is None:
+            target_labels = np.unique(y_source.astype(int))
+        else:
+            target_labels = np.asarray(targets_param).reshape(-1).astype(int)
+
+        if len(target_labels) == 0:
+            raise ValueError("Model inversion requires at least one target label.")
+
+        if self.attack_size is not None and int(self.attack_size) > 0:
+            target_labels = target_labels[: int(self.attack_size)]
+
+        init_samples = self.attack_params.get("x_init", None)
+        if init_samples is None:
+            init_mode = str(
+                self.attack_params.get("initialization", "average"),
+            ).lower()
+            sample_shape = tuple(x_source.shape[1:])
+            if init_mode == "zeros":
+                init_samples = np.zeros(
+                    (len(target_labels),) + sample_shape,
+                    dtype=ART_NUMPY_DTYPE,
+                )
+            elif init_mode == "ones":
+                init_samples = np.ones(
+                    (len(target_labels),) + sample_shape,
+                    dtype=ART_NUMPY_DTYPE,
+                )
+            elif init_mode == "random":
+                init_samples = np.random.uniform(
+                    low=0.0,
+                    high=1.0,
+                    size=(len(target_labels),) + sample_shape,
+                ).astype(ART_NUMPY_DTYPE)
+            elif init_mode == "average":
+                avg = np.mean(x_source, axis=0)
+                init_samples = np.repeat(
+                    avg[None, ...],
+                    repeats=len(target_labels),
+                    axis=0,
+                ).astype(ART_NUMPY_DTYPE)
+            else:
+                raise ValueError(
+                    "Unsupported model inversion initialization "
+                    f"'{init_mode}'. Use one of: zeros, ones, random, average.",
+                )
+        else:
+            init_samples = self._to_numpy_array(init_samples, dtype=ART_NUMPY_DTYPE)
+
+        if len(init_samples) != len(target_labels):
+            raise ValueError(
+                "Length mismatch between model inversion initial samples and targets: "
+                f"len(x_init)={len(init_samples)} len(targets)={len(target_labels)}",
+            )
+
+        start_time = time.process_time()
+        try:
+            inferred = attack.infer(x=init_samples, y=target_labels)
+        except TypeError:
+            # Some ART versions accept positional infer signature.
+            inferred = attack.infer(init_samples, target_labels)
+        self.attack_time = time.process_time() - start_time
+
+        self.attack_prediction_time = 0.0
+
+        start_time = time.process_time()
+        inferred_arr = self._to_numpy_array(inferred, dtype=ART_NUMPY_DTYPE)
+        inferred_flat = inferred_arr.reshape(len(target_labels), -1)
+
+        fallback_proto = np.mean(x_source, axis=0).reshape(-1)
+        prototypes = []
+        for label in target_labels:
+            class_mask = y_source.astype(int) == int(label)
+            if np.any(class_mask):
+                class_mean = np.mean(x_source[class_mask], axis=0).reshape(-1)
+                prototypes.append(class_mean)
+            else:
+                prototypes.append(fallback_proto)
+        proto_arr = np.asarray(prototypes, dtype=ART_NUMPY_DTYPE)
+
+        mse = float(np.mean((inferred_flat - proto_arr) ** 2))
+        mae = float(np.mean(np.abs(inferred_flat - proto_arr)))
+        self.attack_score_time = time.process_time() - start_time
+
+        self.predictions = inferred_arr
+        self.labels = target_labels
+        self.attack_predictions = inferred_arr
+        self.attack = inferred_arr
+
+        self.score_dict = {
+            **self.score_dict,
+            "model_inversion_mse": mse,
+            "model_inversion_mae": mae,
+            "model_inversion_num_targets": int(len(target_labels)),
+            "attack_size": int(len(target_labels)),
+            "attack_score_time": float(self.attack_score_time),
+        }
         return self.score_dict
 
     def _poison(self, data, art_model, attack):

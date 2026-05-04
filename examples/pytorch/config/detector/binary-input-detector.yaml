@@ -1,0 +1,13 @@
+detector_type: art.defences.detector.evasion.BinaryInputDetector
+detector_params: {}
+fit_params:
+  batch_size: 16
+  nb_epochs: 1
+  split: test
+detector_model:
+  model_type: sklearn.linear_model.LogisticRegression
+  classifier: true
+  model_params:
+    max_iter: 50
+alias: binary-input-detector
+_target_: deckard.detector.DetectorConfig

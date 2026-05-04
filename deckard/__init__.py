@@ -39,6 +39,7 @@ from .data import DataConfig  # noqa E402
 from .model import ModelConfig  # noqa E402
 from .model.defend import DefenseConfig  # noqa E402
 from .attack import AttackConfig  # noqa E402
+from .detector import DetectorConfig  # noqa E402
 from .experiment import ExperimentConfig  # noqa E402
 
 try:
@@ -159,6 +160,7 @@ __all__ = [
     "DataConfig",
     "ModelConfig",
     "AttackConfig",
+    "DetectorConfig",
     "ExperimentConfig",
     "DefenseConfig",
     "FileConfig",

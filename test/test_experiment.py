@@ -206,6 +206,59 @@ class TestExperimentValidationScoring(unittest.TestCase):
             exp()
 
 
+class _FakeDetector:
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+        self.score_dict = {}
+
+    def __post_init__(self):
+        return None
+
+    def __call__(self, data, model, attack):
+        _ = data, model, attack
+        self.score_dict = {"detector_accuracy": 0.75, "detector_n": 10}
+        return self.score_dict
+
+
+class TestExperimentDetectorPhase(unittest.TestCase):
+    def test_detector_phase_runs_after_attack(self):
+        exp = ExperimentConfig(
+            data=DataConfig(
+                dataset_name="make_classification",
+                data_params={
+                    "n_samples": 60,
+                    "n_features": 6,
+                    "n_informative": 4,
+                    "n_redundant": 0,
+                    "n_classes": 2,
+                    "random_state": 7,
+                },
+                train_size=40,
+                test_size=20,
+                random_state=7,
+                stratify=True,
+                classifier=True,
+            ),
+            model=ModelConfig(
+                model_type="sklearn.linear_model.LogisticRegression",
+                classifier=True,
+                model_params={"max_iter": 30},
+            ),
+            attack=AttackConfig(
+                attack_type="art.attacks.evasion.FastGradientMethod",
+                attack_params={"eps": 0.1},
+                attack_size=10,
+            ),
+            detector=_FakeDetector(),
+            files=FileConfig(),
+        )
+
+        scores = exp()
+
+        self.assertIn("detector_accuracy", scores)
+        self.assertIn("detector_n", scores)
+
+
 class TestSurvivalExperimentConfig(unittest.TestCase):
     def test_allows_survival_only_config_without_attack(self):
         config = SurvivalExperimentConfig(

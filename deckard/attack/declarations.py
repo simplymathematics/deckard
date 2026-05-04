@@ -74,6 +74,19 @@ ATTACK_ATTRIBUTE_BB = {
     "alias": "attribute_bb",
 }
 
+ATTACK_MODEL_INVERSION = {
+    "attack_type": "art.attacks.inference.model_inversion.mi_face.MIFace",
+    "attack_size": 10,
+    "attack_params": {
+        "max_iter": 200,
+        "threshold": 1.0,
+        "initialization": "average",
+        "split": "test",
+    },
+    "_target_": "deckard.attack.AttackConfig",
+    "alias": "model_inversion",
+}
+
 ATTACK_ZOO = {
     "attack_type": "art.attacks.evasion.ZooAttack",
     "attack_params": {
@@ -97,6 +110,7 @@ ATTACK_ZOO = {
 
 
 safe_store(group="attack", name="attribute-bb", node=ATTACK_ATTRIBUTE_BB)
+safe_store(group="attack", name="model-inversion", node=ATTACK_MODEL_INVERSION)
 safe_store(group="attack", name="boundary", node=ATTACK_BOUNDARY)
 safe_store(group="attack", name="fgm", node=ATTACK_FGM)
 safe_store(group="attack", name="hsj", node=ATTACK_HSJ)
@@ -107,6 +121,11 @@ safe_store(
     group="search/attacks",
     name="attribute-bb",
     node=ATTACK_ATTRIBUTE_BB,
+)
+safe_store(
+    group="search/attacks",
+    name="model-inversion",
+    node=ATTACK_MODEL_INVERSION,
 )
 safe_store(group="search/attacks", name="boundary", node=ATTACK_BOUNDARY)
 safe_store(group="search/attacks", name="fgm", node=ATTACK_FGM)
