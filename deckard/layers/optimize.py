@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import yaml
 import optuna
-from typing import Any
+from typing import Any, cast
 from hydra.experimental.callback import Callback as HydraCallback
 
 from omegaconf import OmegaConf, DictConfig, ListConfig
@@ -52,11 +52,18 @@ class OptunaStudyCallback(HydraCallback):
 
     def on_compose_config(self, config: DictConfig, **kwargs: Any) -> None:
         """Prepare per-job naming and output paths for multirun composition."""
-        if not _is_multirun_mode(HydraConfig.get()):
-            return
         hydra_cfg = HydraConfig.get()
-        _assert_multirun_sweeper(hydra_cfg)
-        _prepare_multirun_cfg(config, hydra_cfg, include_file_paths=True)
+        _normalize_mode_cfg(config, hydra_cfg, include_file_paths=True)
+
+    def on_run_start(self, config: DictConfig, **kwargs: Any) -> None:
+        """Validate and normalize run-mode config early in the Hydra lifecycle."""
+        hydra_cfg = HydraConfig.get()
+        _normalize_mode_cfg(config, hydra_cfg, include_file_paths=False)
+
+    def on_run_end(self, config: DictConfig, **kwargs: Any) -> None:
+        """No-op run hook kept for parity with multirun lifecycle wiring."""
+        _ = config
+        _ = kwargs
 
     def on_multirun_end(self, config: DictConfig, **kwargs: Any) -> None:
         """Ensure metric names remain attached after the multirun completes."""
@@ -70,8 +77,6 @@ class OptunaStudyCallback(HydraCallback):
 
     def on_job_start(self, config: DictConfig, **kwargs: Any) -> None:
         """Persist the per-job parameter snapshot before execution."""
-        if not _is_multirun_mode(HydraConfig.get()):
-            return
         files_cfg = getattr(config, "files", None)
         if files_cfg is None:
             return
@@ -96,8 +101,7 @@ class OptunaStudyCallback(HydraCallback):
         **kwargs: Any,
     ) -> None:
         """Persist per-job score payload after execution when available."""
-        if not _is_multirun_mode(HydraConfig.get()):
-            return
+        hydra_cfg = HydraConfig.get()
         files_cfg = getattr(config, "files", None)
         if files_cfg is None:
             return
@@ -111,6 +115,15 @@ class OptunaStudyCallback(HydraCallback):
         )
         if score_payload is None:
             return
+
+        _sync_multirun_trial_attributes(
+            hydra_cfg=hydra_cfg,
+            score_payload=score_payload,
+            optimizers=getattr(config, "optimizers", self.optimizers),
+            directions=getattr(config, "directions", self.directions),
+            experiment_name=getattr(config, "experiment_name", ""),
+            trial_number=_get_hydra_job_identifier(hydra_cfg),
+        )
 
         score_path = Path(str(score_file))
         score_path.parent.mkdir(parents=True, exist_ok=True)
@@ -128,6 +141,10 @@ def _ensure_experiment_hash(value) -> str:
 
 def _is_multirun_mode(hydra_cfg) -> bool:
     return str(getattr(hydra_cfg, "mode", "")) == "RunMode.MULTIRUN"
+
+
+def _is_run_mode(hydra_cfg) -> bool:
+    return str(getattr(hydra_cfg, "mode", "")) == "RunMode.RUN"
 
 
 def _get_sweeper_cfg(hydra_cfg):
@@ -156,6 +173,12 @@ def _resolve_multirun_paths(hydra_cfg) -> dict:
     }
 
 
+def _get_hydra_job_identifier(hydra_cfg):
+    """Return Hydra's stable job id for trial/attribute synchronization."""
+    job_cfg = getattr(hydra_cfg, "job", None)
+    return getattr(job_cfg, "id", None)
+
+
 def _prepare_multirun_cfg(cfg, hydra_cfg, include_file_paths: bool = False):
     explicit_name = cfg.get("experiment_name", None)
     if explicit_name is None or str(explicit_name).strip() == "":
@@ -177,6 +200,21 @@ def _prepare_multirun_cfg(cfg, hydra_cfg, include_file_paths: bool = False):
     return cfg
 
 
+def _normalize_mode_cfg(cfg, hydra_cfg, include_file_paths: bool = False):
+    """Normalize config shape for run/multirun while keeping mode deltas explicit."""
+    if _is_multirun_mode(hydra_cfg):
+        _assert_multirun_sweeper(hydra_cfg)
+        return _prepare_multirun_cfg(
+            cfg,
+            hydra_cfg,
+            include_file_paths=include_file_paths,
+        )
+    # In single-run mode Hydra still composes an explicit config; no sweeper needed.
+    if _is_run_mode(hydra_cfg):
+        return cfg
+    return cfg
+
+
 def _extract_scores_from_job_end_kwargs(
     job_return=None,
     kwargs: dict | None = None,
@@ -195,6 +233,45 @@ def _extract_scores_from_job_end_kwargs(
     if isinstance(score_payload, DictConfig):
         score_payload = OmegaConf.to_container(score_payload, resolve=True)
     return score_payload
+
+
+def _sync_multirun_trial_attributes(
+    hydra_cfg,
+    score_payload,
+    optimizers,
+    directions,
+    experiment_name,
+    trial_number=None,
+) -> None:
+    """Sync non-optimized scores as trial attributes for the current multirun trial."""
+    if not _is_multirun_mode(hydra_cfg):
+        return
+    if not isinstance(score_payload, dict):
+        return
+
+    sweeper = _get_sweeper_cfg(hydra_cfg)
+    if not isinstance(sweeper, dict):
+        return
+    storage = sweeper.get("storage")
+    study_name = sweeper.get("study_name")
+    if not storage or not study_name:
+        return
+
+    _, attrs = filter_scores(
+        score_payload,
+        list(optimizers or []),
+        list(directions or []),
+    )
+    if not attrs:
+        return
+
+    study = optuna.study.load_study(storage=storage, study_name=study_name)
+    set_trial_attributes(
+        study=study,
+        attrs=attrs,
+        experiment_name=str(experiment_name),
+        trial_number=trial_number,
+    )
 
 
 def optimize_multirun(
@@ -232,7 +309,11 @@ def optimize_multirun(
         "directions",
     ), "conf_obj must have directions attribute in multirun mode."
     files = conf_obj.files._get_file_dict()
-    if not files.get("params_file") or not files.get("score_file"):
+    if (
+        not files.get("params_file")
+        or not files.get("score_file")
+        or not files.get("log_file")
+    ):
         conf_obj = prepare_multirun_file_paths(hydra_cfg, conf_obj)
         files = conf_obj.files._get_file_dict()
     scores = conf_obj.execute_without_mercy()
@@ -241,6 +322,14 @@ def optimize_multirun(
     directions = getattr(conf_obj, "directions", [])
     filtered_scores, _ = filter_scores(scores, optimizers, directions)
     _assert_multirun_sweeper(hydra_cfg)
+    _sync_multirun_trial_attributes(
+        hydra_cfg=hydra_cfg,
+        score_payload=scores,
+        optimizers=optimizers,
+        directions=directions,
+        experiment_name=getattr(conf_obj, "experiment_name", ""),
+        trial_number=_get_hydra_job_identifier(hydra_cfg),
+    )
 
     return filtered_scores
 
@@ -251,9 +340,12 @@ def set_study_attributes(
 ) -> None:
     """Attach user attributes to an Optuna study."""
     if isinstance(attrs, DictConfig):
-        attrs = dict(attrs)
+        attrs_container = OmegaConf.to_container(attrs, resolve=True)
+        attrs = cast(dict[str, Any], attrs_container)
+    if not isinstance(attrs, dict):
+        raise TypeError(f"attrs must be dict-like. Got {type(attrs)}")
     for k, v in attrs.items():
-        study.set_user_attr(key=k, value=v)
+        study.set_user_attr(key=str(k), value=v)
 
 
 def optimize_main(
@@ -286,13 +378,11 @@ def optimize_main(
         dict,
     ), f"cfg must resolve to a dictionary. Got {type(cfg_dict)}"
 
-    if _is_multirun_mode(hydra_cfg):
-        _assert_multirun_sweeper(hydra_cfg)
-        cfg_dict = _prepare_multirun_cfg(
-            cfg_dict,
-            hydra_cfg,
-            include_file_paths=False,
-        )
+    cfg_dict = _normalize_mode_cfg(
+        cfg_dict,
+        hydra_cfg,
+        include_file_paths=False,
+    )
 
     # Optimize layer always executes an ExperimentConfig payload.
     # Some config compositions can leak a root `_target_` from global search
@@ -447,7 +537,12 @@ def set_study_metric_names(
         study.set_metric_names(optimizers)
 
 
-def set_trial_attributes(study, attrs, experiment_name: str) -> None:
+def set_trial_attributes(
+    study,
+    attrs,
+    experiment_name: str,
+    trial_number: int | None = None,
+) -> None:
     """Persist per-trial user attributes for the trial matching an experiment hash."""
     if isinstance(attrs, DictConfig):
         attrs = OmegaConf.to_container(attrs, resolve=True)
@@ -468,6 +563,19 @@ def set_trial_attributes(study, attrs, experiment_name: str) -> None:
         ),
         None,
     )
+
+    if trial is None and trial_number is not None:
+        trial = next(
+            (
+                t
+                for t in trials
+                if str(getattr(t, "number", None)) == str(trial_number)
+            ),
+            None,
+        )
+
+    if trial is None and len(trials) == 1:
+        trial = trials[0]
 
     if trial is None:
         logger.warning(
@@ -500,8 +608,15 @@ def set_trial_attributes(study, attrs, experiment_name: str) -> None:
             )
 
 
-def save_params_file(cfg: dict[str, Any], files: dict[str, str]) -> DictConfig:
+def save_params_file(
+    cfg: dict[str, Any] | DictConfig,
+    files: dict[str, str],
+) -> DictConfig:
     """Persist run parameters to ``files['params_file']`` and return DictConfig."""
+    if isinstance(cfg, DictConfig):
+        cfg_container = OmegaConf.to_container(cfg, resolve=False)
+        cfg = cast(dict[str, Any], cfg_container)
+    assert isinstance(cfg, dict), f"cfg must be dict-like. Got {type(cfg)}"
     _ = cfg.pop("params", None)
     if "params_file" in files:
         cfg = OmegaConf.create(cfg)

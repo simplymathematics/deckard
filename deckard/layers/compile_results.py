@@ -79,7 +79,7 @@ def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
         elif col.startswith("user_attrs_"):
             col = col[11:]
             clean_cols.append(col)
-        elif col.startswith("++") or col.startswith("~~"):
+        elif col.startswith("++") or col.startswith("~"):
             col = col[2:]
             clean_cols.append(col)
         else:
