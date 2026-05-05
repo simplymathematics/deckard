@@ -28,6 +28,9 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "ConfigBase",
+    "normalize_config_token",
+    "is_null_config_value",
+    "is_default_config_value",
     "normalize_for_hash",
     "hash_conf_values",
     "data_supported_filetypes",
@@ -44,6 +47,37 @@ __all__ = [
     "merge_list_of_dicts",
     "resolve_torch_device",
 ]
+
+
+NULL_CONFIG_TOKENS = frozenset({"none", "null", "n/a"})
+DEFAULT_CONFIG_TOKENS = frozenset({"auto", "default", "best"})
+
+
+def normalize_config_token(value: Any) -> str | None:
+    """Normalize a config token to lower-case text for keyword matching."""
+    if value is None:
+        return None
+    return str(value).strip().lower()
+
+
+def is_null_config_value(value: Any, *, allow_empty: bool = True) -> bool:
+    """Return True when *value* represents an explicit null-like config token."""
+    token = normalize_config_token(value)
+    if token is None:
+        return True
+    if allow_empty and token == "":
+        return True
+    return token in NULL_CONFIG_TOKENS
+
+
+def is_default_config_value(value: Any, *, include_best: bool = True) -> bool:
+    """Return True when *value* requests default/auto config behavior."""
+    token = normalize_config_token(value)
+    if token is None:
+        return False
+    if include_best:
+        return token in DEFAULT_CONFIG_TOKENS
+    return token in {"auto", "default"}
 
 
 def _torch_compiler_backends(torch_module) -> list[str]:
@@ -125,7 +159,10 @@ def resolve_torch_device(requested_device: Any = None):
     if requested_device is not None:
         requested_text = str(requested_device).strip().lower()
 
-    if requested_text in {"", "none", "null", "auto", "best", "default"}:
+    if is_null_config_value(requested_device) or is_default_config_value(
+        requested_device,
+        include_best=True,
+    ):
         return _auto_torch_device_from_backends(torch)
     if requested_text in {"gpu", "cuda"}:
         if torch.cuda.is_available():
@@ -146,7 +183,7 @@ def resolve_torch_device(requested_device: Any = None):
             return fallback
         try:
             return torch.device(requested_text)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, RuntimeError):
             fallback = _auto_torch_device_from_backends(torch)
             logger.warning(
                 "Invalid CUDA device '%s'; falling back to best available device %s",
@@ -169,7 +206,7 @@ def resolve_torch_device(requested_device: Any = None):
 
     try:
         return torch.device(requested_text)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, RuntimeError):
         logger.warning(
             "Invalid torch device '%s'; falling back to auto device",
             requested_text,
@@ -306,6 +343,9 @@ def _canonicalize_for_hash(value):
     if OmegaConf.is_config(value):
         value = OmegaConf.to_container(value, resolve=True)
 
+    if isinstance(value, type):
+        return f"{value.__module__}.{value.__qualname__}"
+
     if isinstance(value, dict):
         return {
             str(k): _canonicalize_for_hash(v)
@@ -343,10 +383,9 @@ def _canonicalize_for_hash(value):
             for k, v in value.__dict__.items()
             if not k.startswith("_") and not callable(v)
         }
+        if not public_attrs:
+            return str(value)
         return _canonicalize_for_hash(public_attrs)
-
-    if isinstance(value, type):
-        return f"{value.__module__}.{value.__qualname__}"
 
     return str(value)
 
@@ -991,7 +1030,14 @@ def load_data(filepath: str, **kwargs) -> pd.DataFrame:
         case ".csv":
             data = pd.read_csv(filepath, **kwargs)
         case ".json":
-            data = pd.read_json(filepath, orient="records", **kwargs)
+            json_kwargs = {"orient": "records", **kwargs}
+            if "lines" not in json_kwargs:
+                try:
+                    data = pd.read_json(filepath, lines=True, **json_kwargs)
+                except ValueError:
+                    data = pd.read_json(filepath, **json_kwargs)
+            else:
+                data = pd.read_json(filepath, **json_kwargs)
         case ".xlsx":
             data = pd.read_excel(filepath, **kwargs)
         case ".parquet":

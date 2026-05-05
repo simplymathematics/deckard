@@ -37,6 +37,8 @@ from scipy.sparse import csr_matrix
 from ..utils import (
     ConfigBase,
     data_supported_filetypes,
+    is_default_config_value,
+    is_null_config_value,
     load_class,
     coerce_to_list,
     merge_list_of_dicts,
@@ -343,16 +345,9 @@ class DataConfig(ConfigBase):
 
     def __post_init__(self):
         self._validate_init()
-        if isinstance(self.scorer, str) and self.scorer.lower() in {
-            "none",
-            "null",
-            "n/a",
-        }:
+        if is_null_config_value(self.scorer):
             self.scorer = None
-        if isinstance(self.scorer, str) and self.scorer.lower() in {
-            AUTO_SCORER,
-            "default",
-        }:
+        if is_default_config_value(self.scorer, include_best=False):
             scorer_cls = (
                 "deckard.score.data.DefaultDataClassificationConfig"
                 if self.classifier
@@ -1237,16 +1232,9 @@ class DataPipelineConfig(DataConfig):
             self.classifier = False
         else:
             self.classifier = None
-        if isinstance(self.scorer, str) and self.scorer.lower() in {
-            "none",
-            "null",
-            "n/a",
-        }:
+        if is_null_config_value(self.scorer):
             self.scorer = None
-        if isinstance(self.scorer, str) and self.scorer.lower() in {
-            AUTO_SCORER,
-            "default",
-        }:
+        if is_default_config_value(self.scorer, include_best=False):
             scorer_cls = (
                 "deckard.score.data.DefaultDataClassificationConfig"
                 if self.classifier

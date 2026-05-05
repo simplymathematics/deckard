@@ -31,7 +31,14 @@ from ..score.base import (
     DefaultRegressorConfig,
     ScorerDictConfig,
 )
-from ..utils import ConfigBase, resolve_class, resolve_torch_device
+from ..utils import (
+    ConfigBase,
+    is_default_config_value,
+    is_null_config_value,
+    load_class,
+    resolve_class,
+    resolve_torch_device,
+)
 from .torch_utils import (
     build_torch_art_model,
     collect_subset_from_dataloader,
@@ -250,10 +257,33 @@ class AttackConfig(ConfigBase):
         attack_scorer_cls = resolve_class(
             "deckard.score.attack.AttackScorerConfig",
         )
+        # Coerce user-specified scorer, if provided
+        if isinstance(self.scorer, str):
+            if is_null_config_value(self.scorer):
+                self.scorer = None
+            elif is_default_config_value(self.scorer, include_best=False):
+                self.scorer = attack_scorer_cls()
+            else:
+                self.scorer = load_class(self.scorer)
+        elif isinstance(self.scorer, DictConfig):
+            self.scorer = OmegaConf.to_container(self.scorer, resolve=True)
+        # Otherwise, handle expected input values
         if self.scorer is None:
             self.scorer = attack_scorer_cls()
         elif isinstance(self.scorer, dict):
-            self.scorer = attack_scorer_cls(**self.scorer)
+            scorer_spec = dict(self.scorer)
+            scorer_target = scorer_spec.pop("_target_", scorer_spec.pop("name", None))
+            if scorer_target is None:
+                self.scorer = attack_scorer_cls(**scorer_spec)
+            else:
+                self.scorer = load_class(scorer_target, **scorer_spec)
+        elif isinstance(self.scorer, type):
+            self.scorer = self.scorer()
+
+        if not hasattr(self.scorer, "_score"):
+            raise TypeError(
+                "AttackConfig scorer must expose a '_score' method.",
+            )
         self._validate_poisoning_params()
         self.device = str(resolve_torch_device(self.device))
 
