@@ -1,4 +1,10 @@
+import sys
+from pathlib import Path
+
 import pytest
+
+# Make test-local helpers importable regardless of --import-mode
+sys.path.insert(0, str(Path(__file__).parent))
 
 
 @pytest.fixture(autouse=True)
