@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Any, Mapping, Optional, Union
 
 import matplotlib
-import numpy as np
 import pandas as pd
 import yaml
 from lifelines.fitters import RegressionFitter
@@ -403,7 +402,10 @@ def survival_main(
             data_spec.get("dataset_name", data_spec.get("alias", "dataset")),
         )
     else:
-        data_name = Path(str(data_spec)).stem
+        raise TypeError(
+            f"Unsupported data_spec type {type(data_spec).__name__!r}. "
+            "Expected a file path string, DataConfig, or a mapping."
+        )
 
     resolved_survival_model = survival_model
     if resolved_survival_model is None:
@@ -427,7 +429,11 @@ def survival_main(
             if isinstance(nested_model, str):
                 resolved_survival_model = nested_model
     if resolved_survival_model is None:
-        resolved_survival_model = "weibull"
+        raise ValueError(
+            "Could not resolve survival model name. Pass 'survival_model' explicitly, "
+            "or set 'model' to a string or a mapping with a 'survival_model', 'model', "
+            "'model_type', or 'alias' key."
+        )
 
     experiment = None
     attack_cfg: Optional[AttackConfig] = (
@@ -473,27 +479,12 @@ def survival_main(
         if data_cfg.y is not None and target not in loaded_data.columns:
             loaded_data[target] = data_cfg.y.values
 
-    # Normalize common lifelines column names into the requested target/duration pair.
-    if duration_col not in loaded_data.columns:
-        for candidate in ["T", "time", "t", "duration", "right"]:
-            if candidate in loaded_data.columns:
-                duration_col = candidate
-                break
-    if target not in loaded_data.columns:
-        for candidate in ["E", "status", "event"]:
-            if candidate in loaded_data.columns:
-                target = candidate
-                break
-    if target not in loaded_data.columns and "right" in loaded_data.columns:
-        loaded_data[target] = np.isfinite(loaded_data["right"]).astype(int)
-        duration_col = "right"
-        if "left" in loaded_data.columns:
-            loaded_data[duration_col] = loaded_data["right"].where(
-                np.isfinite(loaded_data["right"]),
-                loaded_data["left"],
-            )
-
     loaded_data.columns = loaded_data.columns.str.strip()
+    if duration_col not in loaded_data.columns:
+        raise ValueError(
+            f"duration_col {duration_col!r} not found in data. "
+            f"Available columns: {list(loaded_data.columns)}"
+        )
     for col, value in fillna.items():
         if col not in loaded_data.columns:
             raise ValueError(f"{col} not found in input data")
@@ -504,6 +495,12 @@ def survival_main(
             loaded_data,
             attack_config=attack_cfg,
             benign_metric=config.get("failure_metric", "accuracy"),
+        )
+
+    if target not in loaded_data.columns:
+        raise ValueError(
+            f"target {target!r} not found in data. "
+            f"Available columns: {list(loaded_data.columns)}"
         )
 
     if target not in covariates:
@@ -562,10 +559,7 @@ def survival_main(
             raise ValueError(
                 "Runtime survival split unavailable for auxiliary model",
             )
-        try:
-            model_scores = aux_model(runtime_data)
-        except Exception as error:
-            logger.warning("Aux model evaluation failed: %s", error)
+        model_scores = aux_model(runtime_data)
 
     return {
         "aft_table": run_results["table"],
