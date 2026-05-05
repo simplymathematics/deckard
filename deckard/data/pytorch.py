@@ -726,7 +726,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             scores = self.load_scores(score_file)
         else:
             scores = {}
-        if not hasattr(self, "X_"):
+        if not hasattr(self, "_X") or self._X is None:
             self._load_data()
         if not hasattr(self, "X_train"):
             self._sample()
