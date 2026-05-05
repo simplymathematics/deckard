@@ -14,6 +14,14 @@ EXAMPLES_SKLEARN_DIR = ROOT / "examples" / "sklearn"
 DECKARD_RC_PATH = EXAMPLES_SKLEARN_DIR / ".deckard_rc"
 
 
+DURATION_COL_BY_DATASET = {
+    "diabetes": "right",
+    "leukemia": "t",
+    "lung": "time",
+    "lifelines_diabetes": "right",
+}
+
+
 @pytest.mark.skipif(
     __import__("importlib").util.find_spec("lifelines") is None,
     reason="lifelines is required for survival integration tests",
@@ -36,6 +44,7 @@ def test_survival_cli_in_examples_sklearn(
     examples_dir = EXAMPLES_SKLEARN_DIR
     env = make_runtime_env(DECKARD_RC_PATH)
     env["DECKARD_DEFAULT_CONFIG_FILE"] = "survival.yaml"
+    duration_col = DURATION_COL_BY_DATASET[dataset_name]
 
     deckard_cli = shutil.which("deckard")
     if deckard_cli is not None:
@@ -55,6 +64,7 @@ def test_survival_cli_in_examples_sklearn(
             deckard_cli,
             "survival",
             f"data={dataset_name}",
+            f"duration_col={duration_col}",
             f"model={survival_model}",
             "score=survival",
         ]
@@ -65,6 +75,7 @@ def test_survival_cli_in_examples_sklearn(
             "deckard",
             "survival",
             f"data={dataset_name}",
+            f"duration_col={duration_col}",
             f"model={survival_model}",
             "score=survival",
         ]
