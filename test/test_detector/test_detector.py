@@ -19,7 +19,9 @@ class _FakeBinaryInputDetector:
     def detect(self, x, batch_size=128, **kwargs):
         _ = batch_size, kwargs
         n = len(x) // 2
-        preds = np.concatenate([np.zeros(n, dtype=int), np.ones(len(x) - n, dtype=int)])
+        preds = np.concatenate(
+            [np.zeros(n, dtype=int), np.ones(len(x) - n, dtype=int)],
+        )
         return {"mock": True}, preds
 
 
@@ -56,7 +58,11 @@ def test_detector_requires_attack_predictions():
         },
     )
     with pytest.raises(ValueError):
-        detector(data=data, model=None, attack=SimpleNamespace(attack_predictions=None))
+        detector(
+            data=data,
+            model=None,
+            attack=SimpleNamespace(attack_predictions=None),
+        )
 
 
 def test_detector_runs_and_emits_scores_with_mock_detector():
@@ -70,7 +76,10 @@ def test_detector_runs_and_emits_scores_with_mock_detector():
         fit_params={"batch_size": 4},
     )
 
-    with patch("deckard.detector.base.resolve_class", return_value=_FakeBinaryInputDetector):
+    with patch(
+        "deckard.detector.base.resolve_class",
+        return_value=_FakeBinaryInputDetector,
+    ):
         scores = detector(data=data, model=None, attack=attack)
 
     assert "detector_accuracy" in scores

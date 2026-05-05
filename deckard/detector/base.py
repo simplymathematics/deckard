@@ -1,7 +1,7 @@
 import time
 from dataclasses import dataclass, field
 from types import SimpleNamespace
-from typing import Any, Union
+from typing import Union
 
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
@@ -58,7 +58,9 @@ class DetectorConfig(ConfigBase):
 
     def _build_detector_dataset(self, data, attack):
         if attack is None:
-            raise ValueError("DetectorConfig requires an attack object to build labels.")
+            raise ValueError(
+                "DetectorConfig requires an attack object to build labels.",
+            )
         x_adv = getattr(attack, "attack_predictions", None)
         if x_adv is None:
             raise ValueError(
@@ -75,7 +77,9 @@ class DetectorConfig(ConfigBase):
 
         n = int(min(len(x_clean), len(x_adv)))
         if n <= 0:
-            raise ValueError("Detector dataset must contain at least one clean and one adversarial sample.")
+            raise ValueError(
+                "Detector dataset must contain at least one clean and one adversarial sample.",
+            )
 
         x_clean = x_clean[:n]
         x_adv = x_adv[:n]

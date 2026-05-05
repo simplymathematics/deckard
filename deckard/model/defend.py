@@ -322,7 +322,9 @@ class _DefenseBehaviorMixin:
                 match defense_subtype:
                     case "evasion":
                         # BinaryInputDetector expects a neural-network ART classifier.
-                        if not _is_torch_model_instance(base_estimator) and not isinstance(
+                        if not _is_torch_model_instance(
+                            base_estimator,
+                        ) and not isinstance(
                             self._model,
                             (PyTorchClassifier, PyTorchRegressor),
                         ):
@@ -412,12 +414,60 @@ class _DefenseBehaviorMixin:
                     defended_estimator = trainer_classifier
             case "transformer":
                 assert defense_class is not None
-                defense = defense_class(**(self.defense_params or {}))
-                defended_estimator = defense(
-                    self._model,
-                    input_transformations=[defense],
-                    **init_params,
-                )
+                transformer_params = dict(self.defense_params or {})
+                match defense_subtype:
+                    case "evasion" | "poisoning":
+                        # ART transformer defenses (e.g., DefensiveDistillation,
+                        # NeuralCleanse) wrap/class-transform neural ART classifiers.
+                        if not _is_torch_model_instance(
+                            base_estimator,
+                        ) and not isinstance(
+                            self._model,
+                            (PyTorchClassifier, PyTorchRegressor),
+                        ):
+                            raise ValueError(
+                                "Transformer defenses only support neural-network models. "
+                                f"Got base estimator type {type(base_estimator)}.",
+                            )
+
+                        transformer_classifier = self._build_art_wrapper(
+                            art_class=art_class,
+                            base_estimator=base_estimator,
+                            init_params=init_params,
+                            preprocessing_defences=existing_preprocessors,
+                            postprocessing_defences=existing_postprocessors,
+                        )
+
+                        try:
+                            defense = defense_class(
+                                classifier=transformer_classifier,
+                                **transformer_params,
+                            )
+                        except TypeError:
+                            try:
+                                defense = defense_class(
+                                    transformer_classifier,
+                                    **transformer_params,
+                                )
+                            except NotImplementedError as exc:
+                                raise ValueError(
+                                    "Transformer defense initialization failed for the current "
+                                    "ART classifier backend. Ensure the estimator type is "
+                                    "supported by the selected defense.",
+                                ) from exc
+                        except NotImplementedError as exc:
+                            raise ValueError(
+                                "Transformer defense initialization failed for the current "
+                                "ART classifier backend. Ensure the estimator type is "
+                                "supported by the selected defense.",
+                            ) from exc
+
+                        if hasattr(defense, "get_classifier"):
+                            defended_estimator = defense.get_classifier()
+                        else:
+                            defended_estimator = transformer_classifier
+                    case _:
+                        raise ValueError(f"Unknown transformer subtype: {defense_subtype}")
             case "regularizer":
                 raise NotImplementedError(
                     "Regularizer defenses are not implemented yet.",
@@ -865,13 +915,10 @@ class DefensePipelineConfig(ConfigBase):
         if not isinstance(defense_name, str):
             return False
         lowered = defense_name.lower()
-        return (
-            ".trainer." in lowered
-            and (
-                "adversarialtrainer" in lowered
-                or "retraining" in lowered
-                or "madry" in lowered
-            )
+        return ".trainer." in lowered and (
+            "adversarialtrainer" in lowered
+            or "retraining" in lowered
+            or "madry" in lowered
         )
 
     def apply(

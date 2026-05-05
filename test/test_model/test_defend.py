@@ -408,3 +408,136 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
         self.assertIsInstance(defended, PyTorchClassifier)
         self.assertTrue(hasattr(defended, "_deckard_evasion_detector"))
         self.assertIsNotNone(defense.defense_application_time)
+
+    def test_transformer_defense_name_parses_supported_subtype(self):
+        defense = DefenseConfig(
+            defense_name="art.defences.transformer.evasion.DefensiveDistillation",
+            defense_params={"batch_size": 8, "nb_epochs": 1},
+        )
+        defense_type, defense_subtype, _ = defense.parse_defense_name()
+
+        self.assertEqual(defense_type, "transformer")
+        self.assertEqual(defense_subtype, "evasion")
+
+    def test_defensive_distillation_rejects_non_neural_network_models(self):
+        data = DummyDataConfig(
+            X_train=pd.DataFrame(np.random.rand(20, 4)),
+            y_train=pd.Series(np.random.randint(0, 2, size=20)),
+            X_test=pd.DataFrame(np.random.rand(8, 4)),
+            y_test=pd.Series(np.random.randint(0, 2, size=8)),
+        )
+        model = ModelConfig(
+            model_type="sklearn.linear_model.LogisticRegression",
+            classifier=True,
+            model_params={"max_iter": 20},
+        )
+        model._train(data.X_train, data.y_train)
+        defense = DefenseConfig(
+            defense_name="art.defences.transformer.evasion.DefensiveDistillation",
+            defense_params={"batch_size": 8, "nb_epochs": 1},
+        )
+
+        with self.assertRaises(ValueError):
+            defense.apply_to(estimator=model.get_model(), data=data)
+
+    def test_neural_cleanse_rejects_non_neural_network_models(self):
+        data = DummyDataConfig(
+            X_train=pd.DataFrame(np.random.rand(20, 4)),
+            y_train=pd.Series(np.random.randint(0, 2, size=20)),
+            X_test=pd.DataFrame(np.random.rand(8, 4)),
+            y_test=pd.Series(np.random.randint(0, 2, size=8)),
+        )
+        model = ModelConfig(
+            model_type="sklearn.linear_model.LogisticRegression",
+            classifier=True,
+            model_params={"max_iter": 20},
+        )
+        model._train(data.X_train, data.y_train)
+        defense = DefenseConfig(
+            defense_name="art.defences.transformer.poisoning.NeuralCleanse",
+            defense_params={},
+        )
+
+        with self.assertRaises(ValueError):
+            defense.apply_to(estimator=model.get_model(), data=data)
+
+    def test_real_defensive_distillation_executes_with_pytorch_model(self):
+        torch = pytest.importorskip("torch")
+        nn = pytest.importorskip("torch.nn")
+
+        class TinyLinear(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.linear = nn.Linear(3, 2)
+
+            def forward(self, x):
+                return self.linear(x)
+
+        data = SimpleNamespace(
+            X_train=torch.rand(16, 3, dtype=torch.float32),
+            y_train=torch.randint(0, 2, (16,), dtype=torch.long),
+            X_test=torch.rand(8, 3, dtype=torch.float32),
+            y_test=torch.randint(0, 2, (8,), dtype=torch.long),
+        )
+
+        config_path = (
+            Path(__file__).resolve().parents[2]
+            / "examples"
+            / "pytorch"
+            / "config"
+            / "defense"
+            / "defensive_distillation.yaml"
+        )
+        defense_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        defense = DefenseConfig(
+            model_type="torch.nn.Linear",
+            classifier=True,
+            model_params={"in_features": 3, "out_features": 2},
+            **defense_cfg,
+        )
+
+        defended = defense.apply_to(estimator=TinyLinear(), data=data)
+
+        self.assertTrue(hasattr(defended, "predict"))
+        self.assertTrue(hasattr(defended, "model"))
+        self.assertIsNotNone(defense.defense_application_time)
+
+    def test_real_neural_cleanse_reports_backend_incompatibility_for_pytorch_model(
+        self,
+    ):
+        torch = pytest.importorskip("torch")
+        nn = pytest.importorskip("torch.nn")
+
+        class TinyLinear(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.linear = nn.Linear(3, 2)
+
+            def forward(self, x):
+                return self.linear(x)
+
+        data = SimpleNamespace(
+            X_train=torch.rand(16, 3, dtype=torch.float32),
+            y_train=torch.randint(0, 2, (16,), dtype=torch.long),
+            X_test=torch.rand(8, 3, dtype=torch.float32),
+            y_test=torch.randint(0, 2, (8,), dtype=torch.long),
+        )
+
+        config_path = (
+            Path(__file__).resolve().parents[2]
+            / "examples"
+            / "pytorch"
+            / "config"
+            / "defense"
+            / "neural_cleanse.yaml"
+        )
+        defense_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        defense = DefenseConfig(
+            model_type="torch.nn.Linear",
+            classifier=True,
+            model_params={"in_features": 3, "out_features": 2},
+            **defense_cfg,
+        )
+
+        with self.assertRaises(ValueError):
+            defense.apply_to(estimator=TinyLinear(), data=data)

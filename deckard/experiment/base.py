@@ -542,9 +542,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             assert isinstance(
                 self.detector,
                 DetectorConfig,
-            ) or callable(getattr(self.detector, "__call__", None)), (
-                "detector must be a DetectorConfig or callable detector runtime"
-            )
+            ) or callable(
+                getattr(self.detector, "__call__", None),
+            ), "detector must be a DetectorConfig or callable detector runtime"
             if hasattr(self.detector, "__post_init__") and callable(
                 getattr(self.detector, "__post_init__"),
             ):

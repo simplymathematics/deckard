@@ -203,7 +203,7 @@ workflow: Data, Model, Attack, Experiment, File, and ScorerDict objects.
 
 **Defense Architecture**:
 
-Deckard supports `Adversarial Robustness Toolbox (ART) <https://github.com/Trusted-AI/adversarial-robustness-toolbox>`_ defenses by wrapping scikit-learn models as ART estimators. :class:`deckard.model.DefensePipelineConfig` composes multiple defenses into a chain, accumulating preprocessors and postprocessors into a single ART wrapper for efficient ensemble application.
+Deckard supports `Adversarial Robustness Toolbox (ART) <https://github.com/Trusted-AI/adversarial-robustness-toolbox>`_ defenses by wrapping estimators as ART models. :class:`deckard.model.DefensePipelineConfig` composes multiple defenses into a chain, supporting preprocessors, postprocessors, trainers, and transformer-style defenses while preserving stable estimator interfaces for downstream attack and scoring stages.
 
 **Scoring Architecture**:
 

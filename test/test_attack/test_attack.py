@@ -317,7 +317,6 @@ class TestAttackConfig(unittest.TestCase):
         self.assertIn("inferred_age_accuracy", result)
         self.assertIn("attack_prediction_time", result)
 
-
     def test_infer_model_inversion_scores_reconstruction(self):
         attack = self._load_pytorch_model_inversion_config()
         attack.attack_size = 2
@@ -437,7 +436,9 @@ class TestAttackConfig(unittest.TestCase):
         self.assertIn("database_reconstruction_missing_index", scores)
         self.assertGreaterEqual(scores["database_reconstruction_feature_mse"], 0.0)
 
-    def test_call_database_reconstruction_executes_real_infer_database_reconstruction(self):
+    def test_call_database_reconstruction_executes_real_infer_database_reconstruction(
+        self,
+    ):
         attack = self._load_pytorch_database_reconstruction_config()
         attack.attack_params["split"] = "train"
         attack.attack_params["missing_index"] = 0

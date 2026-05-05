@@ -237,6 +237,27 @@ to chain multiple ART-based defenses:
    defended_estimator = defense_pipeline.apply_to_trained_model(data=data, model=model)
    print(f"Defense applied in {defense_pipeline.defense_application_time:.4f}s")
 
+Transformer Defenses (Torch-backed)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Deckard also supports ART transformer defenses that wrap neural ART
+classifiers, including:
+
+- ``art.defences.transformer.evasion.DefensiveDistillation``
+- ``art.defences.transformer.poisoning.NeuralCleanse``
+
+Example configuration snippets are available in:
+
+- ``examples/pytorch/config/defense/defensive_distillation.yaml``
+- ``examples/pytorch/config/defense/neural_cleanse.yaml``
+
+Important backend notes:
+
+- Transformer defenses are only valid for neural-network model pipelines.
+- ART ``NeuralCleanse`` currently supports Keras classifier backends; when
+   used with unsupported ART backends (for example PyTorch wrappers), Deckard
+   raises a clear ``ValueError`` during defense initialization.
+
 CLI example:
 
 .. code-block:: bash
