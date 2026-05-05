@@ -111,13 +111,13 @@ class FairlearnDataConfig(DataPipelineConfig):
     def _load_data(self):
         super()._load_data()
         assert hasattr(self, "_X"), RuntimeError(
-            "self.X_ not found while loading FairlearnDataConfig",
+            "self._X not found while loading FairlearnDataConfig",
         )
         assert hasattr(self, "_y"), RuntimeError(
-            "self.y_ not found while loading FairlearnDataConfig",
+            "self._y not found while loading FairlearnDataConfig",
         )
         assert isinstance(self._X, pd.DataFrame), ValueError(
-            "Expected a dataframe for self.X_",
+            "Expected a dataframe for self._X",
         )
         if self.sensitive_columns is None:
             raise ValueError("sensitive_columns must be configured")
