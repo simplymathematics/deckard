@@ -53,32 +53,42 @@ class LifelinesDataConfig(DataConfig):
     optuna_schema: Optional[Union[str, dict]] = None
     optuna_query: Optional[str] = None
 
+    def _validate_native_mode(self) -> None:
+        if self.duration_col in [None, ""]:
+            raise ValueError("duration_col required for NATIVE mode")
+        if self.event_col in [None, ""]:
+            raise ValueError("event_col required for NATIVE mode")
+
+    def _validate_auxiliary_model_mode(self) -> None:
+        if self.benign_metric in [None, ""]:
+            raise ValueError(
+                "benign_metric required for AUXILIARY_MODEL mode",
+            )
+
+    def _validate_auxiliary_attack_mode(self) -> None:
+        if self.attack_config is None:
+            raise ValueError(
+                "attack_config required for AUXILIARY_ATTACK mode",
+            )
+
+    def _validate_optuna_db_mode(self) -> None:
+        if self.optuna_db is None:
+            raise ValueError("optuna_db path required for OPTUNA_DB mode")
+
+    def _validate_mode_requirements(self) -> None:
+        if self.mode == LifelinesDataMode.NATIVE:
+            self._validate_native_mode()
+        elif self.mode == LifelinesDataMode.AUXILIARY_MODEL:
+            self._validate_auxiliary_model_mode()
+        elif self.mode == LifelinesDataMode.AUXILIARY_ATTACK:
+            self._validate_auxiliary_attack_mode()
+        elif self.mode == LifelinesDataMode.OPTUNA_DB:
+            self._validate_optuna_db_mode()
+
     def __post_init__(self):
         """Validate mode-specific requirements."""
         super().__post_init__()
-
-        # Validate mode-specific parameters
-        if self.mode == LifelinesDataMode.NATIVE:
-            if self.duration_col in [None, ""]:
-                raise ValueError("duration_col required for NATIVE mode")
-            if self.event_col in [None, ""]:
-                raise ValueError("event_col required for NATIVE mode")
-
-        elif self.mode == LifelinesDataMode.AUXILIARY_MODEL:
-            if self.benign_metric in [None, ""]:
-                raise ValueError(
-                    "benign_metric required for AUXILIARY_MODEL mode",
-                )
-
-        elif self.mode == LifelinesDataMode.AUXILIARY_ATTACK:
-            if self.attack_config is None:
-                raise ValueError(
-                    "attack_config required for AUXILIARY_ATTACK mode",
-                )
-
-        elif self.mode == LifelinesDataMode.OPTUNA_DB:
-            if self.optuna_db is None:
-                raise ValueError("optuna_db path required for OPTUNA_DB mode")
+        self._validate_mode_requirements()
 
     @classmethod
     def from_data_and_model(

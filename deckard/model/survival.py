@@ -66,16 +66,15 @@ class SurvivalModelConfig(ModelConfig):
     t0 : float
         Time point for calibration scoring.
     """
-
+    classifier = False # Survival Models are always regression models. Auxilary models may not be.
     duration_col: str = "T"
     event_col: str = "E"
     survival_model: str = "weibull"
     t0: float = 0.35
+    
+    
 
-    def __post_init__(self):
-        """Initialize SurvivalModelConfig without loading a model through Hydra."""
-        # Skip ModelConfig's __post_init__ which tries to load a model
-        # Initialize survival-specific attributes
+    def _initialize_runtime_fields(self) -> None:
         if not hasattr(self, "score_dict") or self.score_dict is None:
             self.score_dict = {}
         for attr in [
@@ -94,14 +93,17 @@ class SurvivalModelConfig(ModelConfig):
         ]:
             if not hasattr(self, attr):
                 setattr(self, attr, None)
+
+    def _initialize_target(self) -> None:
         if not hasattr(self, "_target_") or self._target_ is None:
             self._target_ = "deckard.model.SurvivalModelConfig"
-        if self.classifier in ["classifier", True]:
-            self.classifier = False  # Survival models are always regression-like
-        elif self.classifier in ["regressor", False]:
-            self.classifier = False
-        else:
-            self.classifier = False
+
+
+    def __post_init__(self):
+        """Initialize SurvivalModelConfig without loading a model through Hydra."""
+        # Skip ModelConfig's __post_init__ which tries to load a model.
+        self._initialize_runtime_fields()
+        self._initialize_target()
 
     @staticmethod
     def _initialize_aft_fitter(mtype: str, kwargs: dict) -> RegressionFitter:

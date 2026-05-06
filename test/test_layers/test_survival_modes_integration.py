@@ -6,6 +6,7 @@ import pytest
 from deckard.attack import AttackConfig
 from deckard.data import DataConfig
 from deckard.data.survival import LifelinesDataConfig, LifelinesDataMode
+from deckard.experiment.declarations import LIFELINES_DATASETS, SURVIVAL_MODELS
 from deckard.experiment import SurvivalExperimentConfig
 from deckard.layers.survival import survival_main
 
@@ -18,13 +19,18 @@ class TestMode1NativeSurvivalData:
         output_folder = tmp_path / "mode1_output"
         output_folder.mkdir()
 
-        result = survival_main(
-            data="lifelines_diabetes",
-            model="weibull",
-            plots_folder=str(output_folder),
-            duration_col="right",
-            target="E",  # event column
-        )
+        cfg = {
+            "survival": {
+                "data": dict(LIFELINES_DATASETS["diabetes"]),
+                "model": SURVIVAL_MODELS["weibull"],
+                "plots_folder": str(output_folder),
+                "duration_col": "right",
+                "target": "E",
+                "event_col": "E",
+                "classifier": False,
+            },
+        }
+        result = survival_main(cfg=cfg)
 
         # Verify result structure - matches what survival_main returns
         assert "aft_table" in result or "models" in result
@@ -41,6 +47,8 @@ class TestMode1NativeSurvivalData:
         )
         config = SurvivalExperimentConfig(
             data=base_config,
+            model="weibull",
+            target="E",
             duration_col="T",
             event_col="E",
             classifier=False,
@@ -76,6 +84,8 @@ class TestMode2AuxiliaryModelData:
         )
         survival_config = SurvivalExperimentConfig(
             data=base_config,
+            model="weibull",
+            target="accuracy",
             duration_col="target",
             event_col="accuracy",
             classifier=False,
