@@ -1058,8 +1058,7 @@ class ModelConfig(ConfigBase):
             )
         if test_probabilities_file is not None and self.probabilities is not None:
             self.save_data(self.probabilities, test_probabilities_file)
-        if score_file is not None:
-            self.save_scores(self.score_dict, score_file)
+        self.score_dict = self.merge_and_persist_scores(self.score_dict, score_file)
         hook_outputs = self._run_plugin_hook(
             "after_persist",
             data=data,

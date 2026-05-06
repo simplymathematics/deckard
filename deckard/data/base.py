@@ -1140,7 +1140,7 @@ class DataConfig(ConfigBase):
             If train or test indices are not set after sampling.
         """
         save_flag = self._prepare_data_file(data_file=data_file)
-        scores = self.read_or_initialize_scores(score_file)
+        scores = dict(getattr(self, "score_dict", {}) or {})
         # Load data if not already loaded
         if not hasattr(self, "data_load_time") or self.data_load_time is None:
             self._load_data()
@@ -1180,8 +1180,7 @@ class DataConfig(ConfigBase):
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
 
-        if score_file is not None and not Path(score_file).exists():
-            self.save_scores(all_scores, score_file)
+        all_scores = self.merge_and_persist_scores(all_scores, score_file)
         if save_flag:
             self.save(data_file)
         return self.score_dict
