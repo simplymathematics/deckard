@@ -2,11 +2,16 @@ import unittest
 from unittest.mock import Mock, patch
 import pytest
 
-pytest.importorskip("seaborn")
-pytest.importorskip("yellowbrick")
-
-from deckard.plot import PlotConfig  # noqa E402
-from deckard.utils import ConfigBase  # noqa E402
+try:
+    import seaborn  # noqa: F401
+    import yellowbrick  # noqa: F401
+    from deckard.plot import PlotConfig
+    from deckard.utils import ConfigBase
+except Exception:
+    pytest.skip(
+        "seaborn and yellowbrick are required for plot init tests",
+        allow_module_level=True,
+    )
 
 
 class TestPlotConfig(unittest.TestCase):

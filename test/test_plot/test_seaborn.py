@@ -9,12 +9,14 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 
-pytest.importorskip("seaborn")
-
-from deckard.plot.seaborn_plots import (  # NOQA E402
-    SeabornPlotConfig,
-    SeabornPlotConfigList,
-)  # NOQA E402
+try:
+    import seaborn  # noqa: F401
+    from deckard.plot.seaborn_plots import (
+        SeabornPlotConfig,
+        SeabornPlotConfigList,
+    )
+except Exception:
+    pytest.skip("seaborn is required for seaborn plot tests", allow_module_level=True)
 
 
 matplotlib.use("Agg")

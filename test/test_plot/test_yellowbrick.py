@@ -5,19 +5,25 @@ import shutil
 from unittest.mock import patch
 from omegaconf import OmegaConf
 import pytest
-from deckard.experiment import ExperimentConfig
-from deckard.file import FileConfig
 from sklearn.datasets import make_classification
 
-pytest.importorskip("yellowbrick")
-from deckard.plot.yellowbrick_plots import (  # NOQA E402
-    YellowbrickConfigList,
-    YellowbrickPlotConfig,
-    model_selection_viz_types,
-    cluster_viz_types,
-)
-from deckard.data import DataConfig  # noqa 402
-from deckard.model import ModelConfig  # noqa 402
+try:
+    import yellowbrick  # noqa: F401
+    from deckard.data import DataConfig
+    from deckard.experiment import ExperimentConfig
+    from deckard.file import FileConfig
+    from deckard.model import ModelConfig
+    from deckard.plot.yellowbrick_plots import (
+        YellowbrickConfigList,
+        YellowbrickPlotConfig,
+        model_selection_viz_types,
+        cluster_viz_types,
+    )
+except Exception:
+    pytest.skip(
+        "yellowbrick is required for yellowbrick plot tests",
+        allow_module_level=True,
+    )
 
 expensive_viz_types = [
     "manifold",
