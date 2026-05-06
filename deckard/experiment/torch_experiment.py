@@ -13,6 +13,16 @@ from typing import Any, Union
 from .base import ExperimentConfig
 from ..utils import is_default_config_value, is_null_config_value, resolve_torch_device
 
+try:
+    from ..data.pytorch import PytorchDataConfig
+except ImportError:  # pragma: no cover
+    PytorchDataConfig = None
+
+try:
+    from ..model.pytorch import PytorchModelConfig
+except ImportError:  # pragma: no cover
+    PytorchModelConfig = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -180,13 +190,11 @@ class TorchExperimentConfig(ExperimentConfig):
 
     def _enforce_torch_data(self) -> None:
         """Raise TypeError when data is not a PytorchDataConfig."""
-        try:
-            from ..data.pytorch import PytorchDataConfig
-        except ImportError as exc:  # pragma: no cover
+        if PytorchDataConfig is None:
             raise ImportError(
                 "TorchExperimentConfig requires the optional pytorch data dependency. "
                 "Install deckard[torch] to enable it.",
-            ) from exc
+            )
 
         if not isinstance(self.data, PytorchDataConfig):
             raise TypeError(
@@ -200,13 +208,11 @@ class TorchExperimentConfig(ExperimentConfig):
         if self.model is None:
             return  # model-less experiments are allowed
 
-        try:
-            from ..model.pytorch import PytorchModelConfig
-        except ImportError as exc:  # pragma: no cover
+        if PytorchModelConfig is None:
             raise ImportError(
                 "TorchExperimentConfig requires the optional pytorch model dependency. "
                 "Install deckard[torch] to enable it.",
-            ) from exc
+            )
 
         if not isinstance(self.model, PytorchModelConfig):
             raise TypeError(
