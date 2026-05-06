@@ -74,10 +74,10 @@ class PytorchDataConfig(DataConfig):
             return tuple((k, sensitive_item[k]) for k in sorted(sensitive_item.keys()))
         return sensitive_item
 
-    def __post_init__(self):
-        super().__post_init__()
+    def _initialize_torch_device(self) -> None:
         self.device = str(resolve_torch_device(self.device))
 
+    def _validate_pytorch_dataset_constraints(self) -> None:
         assert (
             self.target is None
         ), f"Target variable should not be set for PyTorch datasets. Got {self.target}."
@@ -87,9 +87,6 @@ class PytorchDataConfig(DataConfig):
         assert (
             len(self.keep) == 0
         ), f"Keep columns should not be set for PyTorch datasets. Got {self.keep}."
-
-        if self.data_dir is None:
-            self.data_dir = tempfile.gettempdir()
         assert (
             self.train_size is not None and self.train_size > 0
         ), "train_size must be specified for PyTorch datasets."
@@ -97,10 +94,11 @@ class PytorchDataConfig(DataConfig):
             self.test_size is not None and self.test_size > 0
         ), "test_size must be specified for PyTorch datasets."
 
-        # Normalize data_params
+    def _initialize_data_params(self) -> None:
+        if self.data_dir is None:
+            self.data_dir = tempfile.gettempdir()
         if self.data_params is None:
             self.data_params = {}
-        # Only inject torchvision-style root automatically.
         if (
             "root" not in self.data_params
             and isinstance(self.dataset_name, str)
@@ -112,9 +110,17 @@ class PytorchDataConfig(DataConfig):
         ):
             self.data_params["root"] = self.data_dir
 
+    def _initialize_timing_fields(self) -> None:
         self.data_load_time = None
         self.data_sample_time = None
         self.data_score_time = None
+
+    def __post_init__(self):
+        super().__post_init__()
+        self._initialize_torch_device()
+        self._validate_pytorch_dataset_constraints()
+        self._initialize_data_params()
+        self._initialize_timing_fields()
 
     def __hash__(self):
         return super().__hash__()
@@ -541,10 +547,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         return super().__hash__()
 
     def __post_init__(self):
-
-        self.data_load_time = None
-        self.data_sample_time = None
-        self.data_score_time = None
+        self._initialize_timing_fields()
         if not self.data_params:
             self.data_params = {}
         if not hasattr(self, "shuffle"):
