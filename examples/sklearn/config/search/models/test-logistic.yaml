@@ -1,0 +1,6 @@
+# @package _global_
+# Minimal search space for test runs — no parameter sweeping.
+hydra:
+  sweeper:
+    params: {}
+model_alias: test_logistic

@@ -1,0 +1,14 @@
+dataset_name: make_classification
+data_params:
+  n_samples: 80
+  n_features: 8
+  n_informative: 4
+  n_redundant: 2
+  n_classes: 2
+  random_state: 42
+test_size: 0.2
+random_state: 42
+sample: split
+
+classifier: True
+alias: test_classification
