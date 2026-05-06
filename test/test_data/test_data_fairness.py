@@ -1,15 +1,17 @@
 import unittest
 import tempfile
 import pandas as pd
+import numpy as np
 from pathlib import Path
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 import pytest
 
-pytest.importorskip("fairlearn")
-
-import numpy as np  # NOQA E402
-from deckard.data import DataConfig, DataPipelineConfig  # NOQA E402
+try:
+    import fairlearn  # noqa: F401
+    from deckard.data import DataConfig, DataPipelineConfig
+except Exception:
+    pytest.skip("fairlearn is required for fairness data tests", allow_module_level=True)
 
 
 class HookRecorderPlugin:

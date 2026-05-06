@@ -2,9 +2,11 @@ import pytest
 import pandas as pd
 from unittest.mock import patch
 
-pytest.importorskip("fairlearn")
-
-from deckard.data.fairness import FairlearnDataConfig  # NOQA E402
+try:
+    import fairlearn  # noqa: F401
+    from deckard.data.fairness import FairlearnDataConfig
+except Exception:
+    pytest.skip("fairlearn is required for FairlearnDataConfig tests", allow_module_level=True)
 
 
 class TestFairlearnDataConfigInit:

@@ -41,6 +41,88 @@ class TensorWithDatasetSensitiveAttr(Dataset):
         return self.X[idx], self.y[idx]
 
 
+class ArrayFallbackSample:
+    def __init__(self, values):
+        self.values = values
+
+    def __array__(self, dtype=None):
+        import numpy as np
+
+        return np.asarray(self.values, dtype=dtype)
+
+
+class ArrayFallbackDataset(Dataset):
+    def __init__(self):
+        self.samples = [
+            (ArrayFallbackSample([[0, 255], [128, 64]]), [0, 1])
+            for _ in range(4)
+        ]
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        return self.samples[idx]
+
+
+class IntImageDataset(Dataset):
+    def __init__(self):
+        self.samples = [
+            (torch.tensor([[1, 2], [3, 4]], dtype=torch.int64), 1)
+            for _ in range(6)
+        ]
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        return self.samples[idx]
+
+
+class InvalidSampleDataset(Dataset):
+    def __len__(self):
+        return 2
+
+    def __getitem__(self, idx):
+        return torch.tensor([idx])
+
+
+class MismatchedSensitiveDataset(Dataset):
+    def __init__(self, X, y):
+        self.X = X
+        self.y = y
+        self._sensitive = [0]
+
+    def __len__(self):
+        return len(self.y)
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.y[idx]
+
+
+class SensitiveBatchDataset(Dataset):
+    def __init__(self, n=6):
+        self.X = torch.randn(n, 4)
+        self.y = torch.randint(0, 2, (n,))
+
+    def __len__(self):
+        return len(self.y)
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.y[idx], torch.tensor([idx % 2, (idx + 1) % 2])
+
+
+class InvalidBatchDataset(Dataset):
+    def __init__(self, n=4):
+        self.values = [torch.tensor([i]) for i in range(n)]
+
+    def __len__(self):
+        return len(self.values)
+
+    def __getitem__(self, idx):
+        return self.values[idx]
+
+
 class TestPytorchDataConfig(unittest.TestCase):
 
     def setUp(self):
@@ -193,6 +275,465 @@ class TestPytorchDataConfig(unittest.TestCase):
 
         self.assertTrue(len(loaded) > 0)
         self.assertIn("class_counts", loaded)
+
+    def test_regression_score_produces_cdfs(self):
+        X = torch.randn(80, 4)
+        y = torch.randn(80)
+        cfg = PytorchDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            data_dir=self.temp_dir,
+            train_size=50,
+            test_size=30,
+            classifier=False,
+            data_params={"_args_": [X, y]},
+        )
+        cfg._load_data()
+        cfg._sample()
+        scores = cfg._score()
+        self.assertIn("y_train_cdf", scores)
+        self.assertIn("y_test_cdf", scores)
+
+    def test_call_with_score_file_saves_json(self):
+        score_path = str(Path(self.temp_dir) / "pytorch_scores.json")
+        scores = self.config(score_file=score_path)
+        self.assertTrue(Path(score_path).exists())
+        self.assertIn("data_load_time", scores)
+
+    def test_float_train_test_sizes(self):
+        X = torch.randn(100, 4)
+        y = torch.randint(0, 2, (100,))
+        cfg = PytorchDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            data_dir=self.temp_dir,
+            train_size=0.7,
+            test_size=0.2,
+            data_params={"_args_": [X, y]},
+        )
+        cfg._load_data()
+        cfg._sample()
+        self.assertEqual(len(cfg.X_train), 70)
+        self.assertEqual(len(cfg.X_test), 20)
+
+    def test_train_test_exceed_total_raises(self):
+        X = torch.randn(100, 4)
+        y = torch.randint(0, 2, (100,))
+        cfg = PytorchDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            data_dir=self.temp_dir,
+            train_size=70,
+            test_size=70,
+            data_params={"_args_": [X, y]},
+        )
+        cfg._load_data()
+        with self.assertRaises(ValueError):
+            cfg._sample()
+
+    def test_invalid_stratify_raises(self):
+        X = torch.randn(80, 4)
+        y = torch.randint(0, 2, (80,))
+        cfg = PytorchDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            data_dir=self.temp_dir,
+            train_size=50,
+            test_size=30,
+            stratify="column_name",
+            data_params={"_args_": [X, y]},
+        )
+        cfg._load_data()
+        with self.assertRaises(ValueError):
+            cfg._sample()
+
+    def test_normalize_sensitive_item_variants(self):
+        cfg = self.config
+        # tensor scalar
+        t_scalar = torch.tensor(3)
+        self.assertEqual(cfg._normalize_sensitive_item(t_scalar), 3)
+        # tensor vector
+        t_vec = torch.tensor([1, 2])
+        self.assertEqual(cfg._normalize_sensitive_item(t_vec), (1, 2))
+        # numpy scalar
+        import numpy as np
+
+        arr_scalar = np.array(5)
+        self.assertEqual(cfg._normalize_sensitive_item(arr_scalar), 5)
+        # numpy vector
+        arr_vec = np.array([1, 2])
+        self.assertEqual(cfg._normalize_sensitive_item(arr_vec), (1, 2))
+        # list
+        self.assertEqual(cfg._normalize_sensitive_item([1, 2]), (1, 2))
+        # dict
+        result = cfg._normalize_sensitive_item({"b": 2, "a": 1})
+        self.assertEqual(result, (("a", 1), ("b", 2)))
+        # passthrough for str
+        self.assertEqual(cfg._normalize_sensitive_item("hello"), "hello")
+
+    def test_post_init_normalizes_data_dir_and_torchvision_root(self):
+        cfg = PytorchDataConfig(
+            dataset_name="mnist",
+            data_dir=None,
+            train_size=4,
+            test_size=2,
+            data_params=None,
+        )
+
+        self.assertIsInstance(cfg.data_dir, str)
+        self.assertEqual(cfg.data_params["root"], cfg.data_dir)
+
+    def test_load_data_alias_and_numpy_fallback_paths(self):
+        cfg = PytorchDataConfig(
+            dataset_name="torch_mnist",
+            data_dir=self.temp_dir,
+            train_size=2,
+            test_size=2,
+            data_params={"batch_size": 8, "_args_": ["ignored"]},
+        )
+
+        seen = {}
+
+        def fake_load_class(name, **kwargs):
+            seen["name"] = name
+            seen["kwargs"] = kwargs
+            return ArrayFallbackDataset()
+
+        with patch("deckard.data.pytorch.load_class", side_effect=fake_load_class):
+            cfg._load_data()
+
+        self.assertEqual(seen["name"], "torchvision.datasets.MNIST")
+        self.assertNotIn("batch_size", seen["kwargs"])
+        self.assertEqual(tuple(cfg._X.shape), (4, 1, 2, 2))
+        self.assertTrue(torch.is_floating_point(cfg._X))
+        self.assertEqual(tuple(cfg._y.shape), (4, 2))
+
+    def test_load_data_converts_nonfloating_tensor_inputs(self):
+        cfg = PytorchDataConfig(
+            dataset_name="dummy.dataset",
+            data_dir=self.temp_dir,
+            train_size=3,
+            test_size=2,
+            data_params={},
+        )
+
+        with patch("deckard.data.pytorch.load_class", return_value=IntImageDataset()):
+            cfg._load_data()
+
+        self.assertEqual(tuple(cfg._X.shape), (6, 1, 2, 2))
+        self.assertEqual(cfg._X.dtype, torch.float32)
+
+    def test_load_data_rejects_invalid_samples_and_mismatched_sensitive_lengths(self):
+        cfg = PytorchDataConfig(
+            dataset_name="dummy.dataset",
+            data_dir=self.temp_dir,
+            train_size=1,
+            test_size=1,
+            data_params={},
+        )
+
+        with patch("deckard.data.pytorch.load_class", return_value=InvalidSampleDataset()):
+            with self.assertRaises(ValueError):
+                cfg._load_data()
+
+        X = torch.randn(4, 2)
+        y = torch.randint(0, 2, (4,))
+        bad_sensitive = MismatchedSensitiveDataset(X, y)
+        with patch("deckard.data.pytorch.load_class", return_value=bad_sensitive):
+            with self.assertRaises(ValueError):
+                cfg._load_data()
+
+    def test_sample_requires_loaded_data_and_supports_derived_split_sizes(self):
+        cfg = PytorchDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            data_dir=self.temp_dir,
+            train_size=6,
+            test_size=2,
+            data_params={"_args_": [torch.randn(10, 3), torch.randint(0, 2, (10,))]},
+        )
+
+        with self.assertRaises(ValueError):
+            cfg._sample()
+
+        cfg._load_data()
+        cfg.train_size = None
+        cfg.test_size = 0.2
+        cfg._sample()
+        self.assertEqual(len(cfg.X_train), 8)
+        self.assertEqual(len(cfg.X_test), 2)
+
+        cfg.test_size = None
+        cfg.train_size = 0.5
+        cfg.data_sample_time = None
+        cfg._sample()
+        self.assertEqual(len(cfg.X_train), 5)
+        self.assertEqual(len(cfg.X_test), 5)
+
+        cfg.train_size = None
+        cfg.test_size = None
+        cfg.data_sample_time = None
+        with self.assertRaises(ValueError):
+            cfg._sample()
+
+    def test_regression_feature_scores_return_empty_when_already_cached(self):
+        X = torch.randn(10, 2)
+        y = torch.randn(10)
+        cfg = PytorchDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            data_dir=self.temp_dir,
+            train_size=6,
+            test_size=4,
+            classifier=False,
+            data_params={"_args_": [X, y]},
+        )
+        cfg._load_data()
+        cfg._sample()
+        cfg.score_dict = {"y_test_cdf": [0.5]}
+
+        self.assertEqual(cfg._regression_feature_scores(), {})
+
+    def test_call_accepts_existing_data_and_score_paths(self):
+        data_path = Path(self.temp_dir) / "existing_data.pkl"
+        score_path = Path(self.temp_dir) / "existing_scores.json"
+        data_path.write_text("cached")
+        score_path.write_text("cached")
+
+        with patch.object(self.config, "load_scores", return_value={"cached": 1}) as load_scores:
+            with patch.object(self.config, "save_scores") as save_scores:
+                scores = self.config(data_file=str(data_path), score_file=str(score_path))
+
+        load_scores.assert_not_called()
+        save_scores.assert_called_once()
+        self.assertIn("data_load_time", scores)
+
+
+class TestPytorchCustomDataConfig(unittest.TestCase):
+    """Tests for PytorchCustomDataConfig — covers DataLoader-based loading paths."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.temp_dir = Path(tempfile.mkdtemp())
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.temp_dir, ignore_errors=True)
+
+    def _make_simple_dataset(self, n=40):
+        """Return a simple TensorDataset to use as both train and test."""
+        X = torch.randn(n, 4)
+        y = torch.randint(0, 2, (n,))
+        return torch.utils.data.TensorDataset(X, y)
+
+    def test_load_data_creates_dataloaders(self):
+        from deckard.data.pytorch import PytorchCustomDataConfig
+
+        ds = self._make_simple_dataset()
+
+        cfg = PytorchCustomDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            dataset=ds,
+            data_dir=str(self.temp_dir),
+            train_size=20,
+            test_size=10,
+            data_params={"batch_size": 4},
+            val=False,
+        )
+
+        with patch.object(cfg, "_as_dataset", side_effect=[ds, ds]):
+            cfg._load_data()
+
+        self.assertIsNotNone(cfg.data_load_time)
+        self.assertIsInstance(cfg._X, tuple)
+        self.assertEqual(len(cfg._X), 2)
+
+    def test_sample_creates_train_test_loaders(self):
+        from deckard.data.pytorch import PytorchCustomDataConfig
+
+        ds_train = self._make_simple_dataset(40)
+        ds_test = self._make_simple_dataset(20)
+
+        cfg = PytorchCustomDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            dataset="dummy",
+            data_dir=str(self.temp_dir),
+            train_size=40,
+            test_size=20,
+            data_params={"batch_size": 8},
+            val=False,
+        )
+        # Manually inject _X to simulate _load_data output
+        cfg._X = (ds_train, ds_test)
+        cfg._y = (ds_train, ds_test)
+        cfg.data_load_time = 0.0
+        cfg.data_sample_time = None
+
+        cfg._sample()
+
+        from torch.utils.data import DataLoader
+
+        self.assertIsInstance(cfg.X_train, DataLoader)
+        self.assertIsInstance(cfg.X_test, DataLoader)
+        self.assertIsInstance(cfg.y_train, torch.Tensor)
+        self.assertIsInstance(cfg.y_test, torch.Tensor)
+
+    def test_truncate_dataset(self):
+        from deckard.data.pytorch import PytorchCustomDataConfig
+
+        ds = self._make_simple_dataset(40)
+        cfg = PytorchCustomDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            dataset="dummy",
+            data_dir=str(self.temp_dir),
+            train_size=10,
+            test_size=10,
+            data_params={},
+        )
+        subset = cfg._truncate_dataset(ds, 10)
+        self.assertEqual(len(subset), 10)
+
+    def test_as_dataset_with_string_raises_on_invalid(self):
+        from deckard.data.pytorch import PytorchCustomDataConfig
+
+        cfg = PytorchCustomDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            dataset="not.a.real.Dataset",
+            data_dir=str(self.temp_dir),
+            train_size=10,
+            test_size=10,
+            data_params={},
+        )
+        with self.assertRaises(Exception):
+            cfg._as_dataset("not.a.real.Dataset", split="train", transform=None)
+
+    def test_as_dataset_with_invalid_type_raises(self):
+        from deckard.data.pytorch import PytorchCustomDataConfig
+
+        cfg = PytorchCustomDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            dataset="dummy",
+            data_dir=str(self.temp_dir),
+            train_size=10,
+            test_size=10,
+            data_params={},
+        )
+        with self.assertRaises(TypeError):
+            cfg._as_dataset(12345, split="train", transform=None)
+
+    def test_custom_config_post_init_and_hash_defaults(self):
+        from deckard.data.pytorch import PytorchCustomDataConfig
+
+        cfg = PytorchCustomDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            dataset="dummy",
+            data_dir=str(self.temp_dir),
+            train_size=4,
+            test_size=2,
+            data_params=None,
+        )
+
+        self.assertEqual(cfg.data_params, {})
+        self.assertTrue(cfg.shuffle)
+        self.assertEqual(hash(cfg), hash(cfg))
+
+    def test_custom_load_data_handles_callable_transforms_and_default_lengths(self):
+        from deckard.data.pytorch import PytorchCustomDataConfig
+
+        train_ds = self._make_simple_dataset(7)
+        test_ds = self._make_simple_dataset(5)
+        train_transform = lambda value: value
+        test_transform = lambda value: value
+
+        cfg = PytorchCustomDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            dataset="dummy",
+            data_dir=str(self.temp_dir),
+            train_size=None,
+            test_size=None,
+            train_transform=train_transform,
+            test_transform=test_transform,
+            val=True,
+            data_params={},
+        )
+
+        with patch.object(cfg, "_as_dataset", side_effect=[train_ds, test_ds]) as as_dataset:
+            cfg._load_data()
+
+        self.assertEqual(cfg.train_n, 7)
+        self.assertEqual(cfg.test_n, 5)
+        self.assertIs(cfg.train_transform, train_transform)
+        self.assertIs(cfg.test_transform, test_transform)
+        self.assertEqual(as_dataset.call_args_list[1].kwargs["split"], "test")
+
+    def test_custom_sample_handles_sensitive_batches_and_invalid_batch_shapes(self):
+        from deckard.data.pytorch import PytorchCustomDataConfig
+
+        cfg = PytorchCustomDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            dataset="dummy",
+            data_dir=str(self.temp_dir),
+            train_size=6,
+            test_size=4,
+            data_params={"batch_size": 2},
+        )
+        cfg._X = (SensitiveBatchDataset(6), SensitiveBatchDataset(4))
+        cfg._y = cfg._X
+        cfg._sample()
+
+        self.assertEqual(len(cfg._sensitive_train), 6)
+        self.assertEqual(len(cfg._sensitive_test), 4)
+        self.assertEqual(len(cfg._sensitive_all), 10)
+
+        bad_cfg = PytorchCustomDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            dataset="dummy",
+            data_dir=str(self.temp_dir),
+            train_size=4,
+            test_size=4,
+            data_params={"batch_size": 2},
+        )
+        bad_cfg._X = (InvalidBatchDataset(4), InvalidBatchDataset(4))
+        bad_cfg._y = bad_cfg._X
+
+        with self.assertRaises(ValueError):
+            bad_cfg._sample()
+
+    def test_custom_call_uses_cached_paths_and_persists_outputs(self):
+        from deckard.data.pytorch import PytorchCustomDataConfig
+        import json
+
+        data_path = Path(self.temp_dir) / "custom_data.pkl"
+        score_path = Path(self.temp_dir) / "custom_scores.json"
+        data_path.write_text("cached")
+        score_path.write_text(json.dumps({"cached": 1}))
+
+        cfg = PytorchCustomDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            dataset="dummy",
+            data_dir=str(self.temp_dir),
+            train_size=4,
+            test_size=2,
+            data_params={},
+        )
+
+        cached = self._make_simple_dataset(6)
+        loaded = PytorchCustomDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            dataset="dummy",
+            data_dir=str(self.temp_dir),
+            train_size=4,
+            test_size=2,
+            data_params={},
+        )
+        loaded._X = (cached, cached)
+        loaded._y = (cached, cached)
+        loaded.X_train = object()
+        loaded.score_dict = {"existing": 1}
+
+        with patch.object(cfg, "load_object", return_value=loaded) as load_object:
+            with patch.object(loaded, "save_scores") as save_scores:
+                with patch.object(loaded, "save_object") as save_object:
+                    scores = cfg(data_file=str(data_path), score_file=str(score_path))
+
+        load_object.assert_called_once()
+        save_scores.assert_called_once()
+        save_object.assert_called_once()
+        self.assertEqual(scores, {"cached": 1})
 
 
 if __name__ == "__main__":
