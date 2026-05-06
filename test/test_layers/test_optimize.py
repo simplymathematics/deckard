@@ -264,6 +264,11 @@ def test_hydra_optuna_callback_sets_up_study(monkeypatch):
         return study
 
     monkeypatch.setattr(optimize_module, "create_study", fake_create_study)
+    monkeypatch.setattr(
+        optimize_module.HydraConfig,
+        "get",
+        lambda: SimpleNamespace(mode="RunMode.MULTIRUN", sweeper=None),
+    )
 
     callback = optimize_module.OptunaStudyCallback(
         study_name="demo-study",
@@ -360,11 +365,8 @@ def test_prepare_multirun_file_paths_updates_conf_and_files(tmp_path):
     assert conf.files.post_init_calls == 1
 
 
-def test_optimize_multirun_relies_on_callback_for_params_and_scores(
-    monkeypatch,
-    tmp_path,
-):
-    class MultirunConf:
+def test_execute_runtime_object_executes_without_mercy_once(tmp_path):
+    class RuntimeConf:
         def __init__(self):
             self.files = DummyFiles(tmp_path)
             self.optimizers = ["loss"]
@@ -374,32 +376,29 @@ def test_optimize_multirun_relies_on_callback_for_params_and_scores(
         def execute_without_mercy(self):
             return {"loss": 0.25, "accuracy": 0.9}
 
-    conf = MultirunConf()
-    hydra_cfg = OmegaConf.create(
-        {
-            "sweeper": {
-                "storage": "sqlite:///study.sqlite3",
-                "study_name": "demo-study",
-            },
-            "job": {"id": 0},
-        },
-    )
+    conf = RuntimeConf()
+    result = optimize_module.OptunaStudyCallback.execute_runtime_object(conf)
 
-    monkeypatch.setattr(
-        optimize_module,
-        "prepare_multirun_file_paths",
-        lambda hydra_cfg, conf_obj: conf_obj,
-    )
-
-    result = optimize_module.optimize_multirun(
-        {"foo": "bar"},
-        hydra_cfg,
-        conf,
-    )
-
-    assert result == 0.25
+    assert result == {"loss": 0.25, "accuracy": 0.9}
     assert not (tmp_path / "scores.json").exists()
     assert not (tmp_path / "params.yaml").exists()
+
+
+def test_execute_runtime_object_rejects_non_mapping_payload(tmp_path):
+    class RuntimeConf:
+        def __init__(self):
+            self.files = DummyFiles(tmp_path)
+            self.optimizers = ["loss"]
+            self.directions = ["minimize"]
+            self.experiment_name = "security_classification_linear_hsj"
+
+        def execute_without_mercy(self):
+            return 0.2
+
+    conf = RuntimeConf()
+    with pytest.raises(TypeError, match="must return a dict-like score payload"):
+        optimize_module.OptunaStudyCallback.execute_runtime_object(conf)
+
 
 
 def test_hydra_optuna_callback_on_compose_config_sets_experiment_and_files(
@@ -435,27 +434,30 @@ def test_hydra_optuna_callback_on_compose_config_sets_experiment_and_files(
     assert cfg.files.error_file == str(tmp_path / "run_3" / "error.log")
 
 
-def test_hydra_optuna_callback_on_job_start_writes_params_file(
+def test_hydra_optuna_callback_on_compose_config_writes_params_file(
     monkeypatch,
     tmp_path,
 ):
     hydra_cfg = SimpleNamespace(mode="RunMode.MULTIRUN")
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
+    monkeypatch.setattr(optimize_module, "_normalize_mode_cfg", lambda cfg, h, **kw: cfg)
+    monkeypatch.setattr(optimize_module, "_seed_experiment_uuid_for_current_trial", lambda **kw: None)
 
+    params_file = str(tmp_path / "params.yaml")
     callback = optimize_module.OptunaStudyCallback(
         study_name="demo-study",
         storage="sqlite:///study.sqlite3",
         directions=["minimize"],
         optimizers=["loss"],
+        params_file=params_file,
     )
     cfg = OmegaConf.create(
         {
             "name": "demo",
-            "files": {"params_file": str(tmp_path / "params.yaml")},
         },
     )
 
-    callback.on_job_start(cfg)
+    callback.on_compose_config(cfg)
 
     assert (tmp_path / "params.yaml").exists()
     assert "name: demo" in (tmp_path / "params.yaml").read_text()
@@ -473,11 +475,13 @@ def test_hydra_optuna_callback_on_job_end_writes_score_file(
         storage="sqlite:///study.sqlite3",
         directions=["minimize"],
         optimizers=["loss"],
+        score_file=str(tmp_path / "scores.json"),
     )
+    # Simulate on_compose_config having resolved the score_file
+    callback._resolved_score_file = str(tmp_path / "scores.json")
     cfg = OmegaConf.create(
         {
             "name": "demo",
-            "files": {"score_file": str(tmp_path / "scores.json")},
         },
     )
 
@@ -517,14 +521,16 @@ def test_hydra_optuna_callback_on_job_end_syncs_trial_attributes(
         storage="sqlite:///study.sqlite3",
         directions=["minimize"],
         optimizers=["loss"],
+        score_file=str(tmp_path / "scores.json"),
     )
+    # Simulate on_compose_config having resolved the score_file
+    callback._resolved_score_file = str(tmp_path / "scores.json")
     cfg = OmegaConf.create(
         {
             "name": "demo",
             "experiment_name": "security_classification_linear_hsj",
             "optimizers": ["loss"],
             "directions": ["minimize"],
-            "files": {"score_file": str(tmp_path / "scores.json")},
         },
     )
 
@@ -579,6 +585,97 @@ def test_hydra_optuna_callback_on_job_end_returns_without_score_file(monkeypatch
         OmegaConf.create({"name": "demo", "files": {}}),
         job_return=SimpleNamespace(return_value={"loss": 0.5}),
     )
+
+
+def test_hydra_optuna_callback_on_compose_config_uses_constructor_params_file(
+    monkeypatch,
+    tmp_path,
+):
+    hydra_cfg = SimpleNamespace(
+        mode="RunMode.RUN",
+        runtime=SimpleNamespace(output_dir=str(tmp_path)),
+        job=SimpleNamespace(name="__main__"),
+    )
+    monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
+    monkeypatch.setattr(optimize_module, "_normalize_mode_cfg", lambda cfg, h, **kw: cfg)
+    monkeypatch.setattr(optimize_module, "_seed_experiment_uuid_for_current_trial", lambda **kw: None)
+
+    params_file = str(tmp_path / "params.yaml")
+    callback = optimize_module.OptunaStudyCallback(
+        study_name="demo-study",
+        storage="sqlite:///study.sqlite3",
+        directions=["minimize"],
+        optimizers=["loss"],
+        params_file=params_file,
+    )
+    cfg = OmegaConf.create({"name": "demo"})
+
+    callback.on_compose_config(cfg)
+
+    params_path = tmp_path / "params.yaml"
+    assert params_path.exists()
+    assert "name: demo" in params_path.read_text()
+
+
+def test_hydra_optuna_callback_on_compose_config_resolves_single_run_paths_from_hydra_run_dir(
+    monkeypatch,
+    tmp_path,
+):
+    hydra_cfg = SimpleNamespace(
+        mode="RunMode.RUN",
+        run=SimpleNamespace(dir=str(tmp_path / "run_dir")),
+        job=SimpleNamespace(name="optimize"),
+    )
+    monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
+
+    callback = optimize_module.OptunaStudyCallback(
+        study_name="demo-study",
+        storage="sqlite:///study.sqlite3",
+        directions=["minimize"],
+        optimizers=["loss"],
+    )
+    cfg = OmegaConf.create({"name": "demo", "files": {}})
+
+    callback.on_compose_config(cfg)
+
+    run_dir = tmp_path / "run_dir"
+    assert cfg.files.log_file == str(run_dir / "optimize.log")
+    assert cfg.files.score_file == str(run_dir / "scores.json")
+    assert cfg.files.params_file == str(run_dir / "params.yaml")
+    assert cfg.files.error_file == str(run_dir / "error.log")
+    assert (run_dir / "params.yaml").exists()
+
+
+def test_hydra_optuna_callback_on_job_end_uses_constructor_score_file(
+    monkeypatch,
+    tmp_path,
+):
+    hydra_cfg = SimpleNamespace(
+        mode="RunMode.RUN",
+        runtime=SimpleNamespace(output_dir=str(tmp_path)),
+        job=SimpleNamespace(name="__main__"),
+    )
+    monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
+
+    callback = optimize_module.OptunaStudyCallback(
+        study_name="demo-study",
+        storage="sqlite:///study.sqlite3",
+        directions=["minimize"],
+        optimizers=["loss"],
+        score_file=str(tmp_path / "scores.json"),
+    )
+    # Simulate on_compose_config having resolved the score_file
+    callback._resolved_score_file = str(tmp_path / "scores.json")
+    cfg = OmegaConf.create({"name": "demo"})
+
+    callback.on_job_end(
+        cfg,
+        job_return=SimpleNamespace(return_value={"loss": 0.25, "accuracy": 0.9}),
+    )
+
+    score_path = tmp_path / "scores.json"
+    assert score_path.exists()
+    assert json.loads(score_path.read_text()) == {"loss": 0.25, "accuracy": 0.9}
 
 
 def test_set_trial_attributes_persists_all_attrs_via_storage():
@@ -839,25 +936,21 @@ def test_optimize_main_executes_conf_object_in_single_run(monkeypatch):
     assert captured["cfg"]["_target_"] == "deckard.ExperimentConfig"
 
 
-def test_optimize_main_uses_multirun_path(monkeypatch):
+def test_optimize_main_executes_once_in_multirun(monkeypatch):
     class DummyBase:
         pass
 
     class DummyExperiment(DummyBase):
-        pass
+        def execute_without_mercy(self):
+            captured["calls"] += 1
+            return {"best": 0.1, "aux": 3.0}
 
     conf_obj = DummyExperiment()
-    captured = {}
+    captured = {"calls": 0}
 
     def fake_instantiate(cfg):
         captured["cfg"] = cfg
         return conf_obj
-
-    def fake_optimize_multirun(cfg, hydra_cfg, obj):
-        captured["multirun_cfg"] = cfg
-        captured["hydra_cfg"] = hydra_cfg
-        captured["conf_obj"] = obj
-        return {"best": 0.1}
 
     hydra_cfg = SimpleNamespace(
         mode="RunMode.MULTIRUN",
@@ -867,24 +960,14 @@ def test_optimize_main_uses_multirun_path(monkeypatch):
     monkeypatch.setattr(optimize_module, "ConfigBase", DummyBase)
     monkeypatch.setattr(optimize_module, "ExperimentConfig", DummyExperiment)
     monkeypatch.setattr(optimize_module, "instantiate", fake_instantiate)
-    monkeypatch.setattr(
-        optimize_module,
-        "optimize_multirun",
-        fake_optimize_multirun,
-    )
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
 
     result = optimize_module.optimize_main(OmegaConf.create({"name": "demo"}))
 
-    assert result == {"best": 0.1}
-    assert captured["conf_obj"] is conf_obj
-    assert captured["hydra_cfg"] is hydra_cfg
-    assert isinstance(captured["multirun_cfg"], str)
-    assert "name: demo" in captured["multirun_cfg"]
-    assert "experiment_name:" in captured["multirun_cfg"]
-    assert captured["cfg"]["experiment_name"] == optimize_module.hash_conf_values(
-        _root_={"name": "demo"},
-    )
+    assert result == {"best": 0.1, "aux": 3.0}
+    assert captured["calls"] == 1
+    assert isinstance(captured["cfg"], dict)
+    assert captured["cfg"]["name"] == "demo"
 
 
 def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):
@@ -956,6 +1039,7 @@ def test_callback_run_hooks_and_multirun_end_paths(monkeypatch):
     callback.on_run_start(OmegaConf.create({"name": "demo"}))
     callback.on_run_end(OmegaConf.create({"name": "demo"}))
 
+    calls.clear()
     callback.study = None
     callback.on_multirun_end(OmegaConf.create({"name": "demo"}))
     assert calls == []
@@ -1076,9 +1160,9 @@ def test_optimize_main_rejects_non_mapping_cfg(monkeypatch):
     not DECKARD_RC_PATH.exists(),
     reason="examples/sklearn/.deckard_rc not found",
 )
-def test_deckard_optimize_multirun_cli_smoke(tmp_path):
-    study_name = f"optimize_multirun_{uuid4().hex[:8]}"
-    storage = f"sqlite:///{(tmp_path / 'optimize_multirun.db').as_posix()}"
+def test_deckard_optimize_hydra_multirun_cli_smoke(tmp_path):
+    study_name = f"optimize_hydra_multirun_{uuid4().hex[:8]}"
+    storage = f"sqlite:///{(tmp_path / 'optimize_hydra_multirun.db').as_posix()}"
     cmd = [
         sys.executable,
         "-m",
@@ -1305,7 +1389,7 @@ def test_sync_multirun_trial_attributes_missing_sweeper_values_and_empty_attrs()
     )
 
 
-def test_optimize_multirun_calls_prepare_paths_when_missing_files(monkeypatch):
+def test_execute_runtime_object_keeps_file_resolution_callback_owned(monkeypatch):
     conf = DummyConf()
     conf.files.log_file = ""
     conf.files.score_file = ""
@@ -1315,28 +1399,9 @@ def test_optimize_multirun_calls_prepare_paths_when_missing_files(monkeypatch):
     conf.directions = ["minimize"]
     conf.execute_without_mercy = lambda: {"loss": 0.2, "accuracy": 0.9}
 
-    called = {"prepare": 0}
+    result = optimize_module.OptunaStudyCallback.execute_runtime_object(conf)
 
-    def fake_prepare(hydra_cfg, conf_obj):
-        _ = hydra_cfg
-        called["prepare"] += 1
-        conf_obj.files.log_file = "log"
-        conf_obj.files.score_file = "score"
-        conf_obj.files.params_file = "params"
-        return conf_obj
-
-    monkeypatch.setattr(optimize_module, "prepare_multirun_file_paths", fake_prepare)
-    monkeypatch.setattr(optimize_module, "_assert_multirun_sweeper", lambda _cfg: None)
-    monkeypatch.setattr(optimize_module, "_sync_multirun_trial_attributes", lambda **kwargs: None)
-
-    result = optimize_module.optimize_multirun(
-        cfg={},
-        hydra_cfg=OmegaConf.create({"sweeper": {"storage": "x", "study_name": "y"}}),
-        conf_obj=conf,
-    )
-
-    assert called["prepare"] == 1
-    assert result == 0.2
+    assert result == {"loss": 0.2, "accuracy": 0.9}
 
 
 def test_set_study_attributes_type_error():

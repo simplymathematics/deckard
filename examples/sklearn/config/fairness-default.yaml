@@ -43,8 +43,31 @@ hydra:
     n_jobs: 1
   callbacks:
     deckard_optuna:
+      # OptunaStudyCallback is a Hydra callback used by both single-run and
+      # --multirun executions.
+      #
+      # Single-run mode (no --multirun):
+      #   - Hydra's Optuna sweeper is not active.
+      #   - No Optuna study/trials are created by this callback.
+      #   - The callback still composes run files (e.g. params/score paths).
+      #
+      # Multirun mode (--multirun):
+      #   - Hydra's Optuna sweeper is active.
+      #   - study_name/storage are read from hydra.sweeper at runtime and used to
+      #     create/load the Optuna study.
+      #
+      # study_name and storage are intentionally omitted from this callback block;
+      # they can still be passed explicitly to the constructor for programmatic use.
+      #
+      # directions and optimizers drive both study creation and metric naming:
+      #   - directions: per-metric optimization direction ("minimize" or "maximize");
+      #     "diff" is treated as a non-directional delta metric and excluded from
+      #     the Optuna metric names list.
+      #   - optimizers: metric names corresponding to each direction.
+      #
+      # File paths (directory, log_file, params_file, error_file, score_file) are
+      # also optional; when omitted they are resolved from hydra.sweep.dir/subdir
+      # and hydra.job.name at on_compose_config time.
       _target_: deckard.layers.optimize.OptunaStudyCallback
-      storage: ${hydra.sweeper.storage}
-      study_name: ${hydra.sweeper.study_name}
       directions: ${directions}
       optimizers: ${optimizers}

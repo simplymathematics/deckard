@@ -1,5 +1,5 @@
 _target_: deckard.model.ModelConfig
-# Use fully-qualified fitter classes for consistent user-supplied survival model behavior.
+# Keep model_type fully-qualified so custom/user-defined fitters can be imported reliably.
 model_type: lifelines.fitters.weibull_aft_fitter.WeibullAFTFitter
 classifier: false
 model_params: {}

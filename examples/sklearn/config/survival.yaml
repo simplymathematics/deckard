@@ -5,7 +5,16 @@ defaults:
   - score: survival
 
 plots_folder: plots/survival
+# SurvivalExperimentConfig required fields:
+# - data (from defaults)
+# - model (from defaults)
+# - target
+# - event_col
+# - duration_col
 target: E
+# Required by SurvivalExperimentConfig; event/censoring indicator column.
+event_col: E
+# Required by SurvivalExperimentConfig; event duration/time column.
 duration_col: T
 dataset: ${data.alias}
 calculate_attack_failures: false
@@ -25,6 +34,7 @@ labels:
   ylabel: ''
 
 survival_model_params:
+  # Passed to the selected lifelines fitter constructor.
   penalizer: 0.01
 
 t0: 10.0

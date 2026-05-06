@@ -28,22 +28,43 @@ class OptunaStudyCallback(HydraCallback):
 
     def __init__(
         self,
-        study_name: str,
-        storage: str,
         directions: list,
         optimizers: list,
+        study_name: str | None = None,
+        storage: str | None = None,
+        directory: str | None = None,
+        log_file: str | None = None,
+        params_file: str | None = None,
+        error_file: str | None = None,
+        score_file: str | None = None,
     ):
         self.study_name = study_name
         self.storage = storage
         self.directions = directions
         self.optimizers = optimizers
         self.study = None
+        self._directory = directory
+        self._log_file = log_file
+        self._params_file = params_file
+        self._error_file = error_file
+        self._score_file = score_file
+        # Resolved per-job paths set during on_compose_config
+        self._resolved_params_file: str | None = None
+        self._resolved_score_file: str | None = None
+        self._resolved_log_file: str | None = None
+        self._resolved_error_file: str | None = None
 
     def on_multirun_start(self, config: DictConfig, **kwargs: Any) -> None:
         """Create the Optuna study and initialize objective metric names."""
+        hydra_cfg = HydraConfig.get()
+        sweeper = _get_sweeper_cfg(hydra_cfg)
+        study_name = self.study_name or (sweeper.get("study_name") if isinstance(sweeper, dict) else None)
+        storage = self.storage or (sweeper.get("storage") if isinstance(sweeper, dict) else None)
+        if study_name is None or storage is None:
+            raise ValueError("study_name and storage must be provided for multirun study setup")
         self.study = create_study(
-            study_name=self.study_name,
-            storage=self.storage,
+            study_name=study_name,
+            storage=storage,
             directions=self.directions,
             optimizers=self.optimizers,
         )
@@ -54,7 +75,7 @@ class OptunaStudyCallback(HydraCallback):
         )
 
     def on_compose_config(self, config: DictConfig, **kwargs: Any) -> None:
-        """Prepare per-job naming and output paths for multirun composition."""
+        """Prepare per-job naming, output paths, and persist params.yaml."""
         hydra_cfg = HydraConfig.get()
         _normalize_mode_cfg(config, hydra_cfg, include_file_paths=True)
         _seed_experiment_uuid_for_current_trial(
@@ -62,10 +83,62 @@ class OptunaStudyCallback(HydraCallback):
             experiment_name=getattr(config, "experiment_name", ""),
         )
 
+        # Resolve per-job file paths: constructor params take priority, then
+        # Hydra output directories (single-run and multirun), then no-op.
+        hydra_paths = _resolve_multirun_paths(hydra_cfg)
+
+        def _resolve(attr_val: str | None, key: str) -> str | None:
+            if attr_val is not None:
+                return attr_val
+            return hydra_paths.get(key)
+
+        self._resolved_log_file = _resolve(self._log_file, "log_file")
+        self._resolved_params_file = _resolve(self._params_file, "params_file")
+        self._resolved_error_file = _resolve(self._error_file, "error_file")
+        self._resolved_score_file = _resolve(self._score_file, "score_file")
+
+        # Propagate resolved paths into cfg.files so downstream code sees them.
+        files_cfg = getattr(config, "files", None)
+        resolved = {
+            "log_file": self._resolved_log_file,
+            "params_file": self._resolved_params_file,
+            "error_file": self._resolved_error_file,
+            "score_file": self._resolved_score_file,
+        }
+        for k, v in resolved.items():
+            if v is None:
+                continue
+            if isinstance(files_cfg, DictConfig):
+                files_cfg[k] = v
+            elif isinstance(files_cfg, dict):
+                files_cfg[k] = v
+            else:
+                try:
+                    config["files"] = {k: v for k, v in resolved.items() if v is not None}
+                    break
+                except Exception:
+                    pass
+
+        # Write params.yaml now that paths are resolved.
+        if self._resolved_params_file:
+            params_path = Path(str(self._resolved_params_file))
+            params_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(params_path, "w") as f:
+                yaml.dump(
+                    OmegaConf.to_container(config, resolve=False),
+                    f,
+                    indent=4,
+                )
+
     def on_run_start(self, config: DictConfig, **kwargs: Any) -> None:
         """Validate and normalize run-mode config early in the Hydra lifecycle."""
         hydra_cfg = HydraConfig.get()
         _normalize_mode_cfg(config, hydra_cfg, include_file_paths=False)
+        set_study_metric_names(
+            study=self.study,
+            optimizers=self.optimizers,
+            directions=self.directions,
+        )
 
     def on_run_end(self, config: DictConfig, **kwargs: Any) -> None:
         """No-op run hook kept for parity with multirun lifecycle wiring."""
@@ -83,28 +156,13 @@ class OptunaStudyCallback(HydraCallback):
         )
 
     def on_job_start(self, config: DictConfig, **kwargs: Any) -> None:
-        """Persist the per-job parameter snapshot before execution."""
+        """Seed experiment UUID for the current trial before execution."""
         hydra_cfg = HydraConfig.get()
         _seed_experiment_uuid_for_current_trial(
             hydra_cfg=hydra_cfg,
             experiment_name=getattr(config, "experiment_name", ""),
         )
-        files_cfg = getattr(config, "files", None)
-        if files_cfg is None:
-            return
-        params_file = files_cfg.get("params_file", None)
-        if not params_file:
-            return
-
-        params_path = Path(str(params_file))
-        params_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(params_path, "w") as f:
-            yaml.dump(
-                OmegaConf.to_container(config, resolve=False),
-                f,
-                indent=4,
-            )
-        return
+        _ = kwargs
 
     def on_job_end(
         self,
@@ -114,37 +172,84 @@ class OptunaStudyCallback(HydraCallback):
     ) -> None:
         """Persist per-job score payload after execution when available."""
         hydra_cfg = HydraConfig.get()
-        files_cfg = getattr(config, "files", None)
-        if files_cfg is None:
-            return
-        score_file = files_cfg.get("score_file", None)
+        score_file = self._resolved_score_file
+        if not score_file:
+            score_file = _resolve_multirun_paths(hydra_cfg).get("score_file")
+            self._resolved_score_file = score_file
         if not score_file:
             return
-
-        score_payload = _extract_scores_from_job_end_kwargs(
+        job_return_payload = _extract_scores_from_job_end_kwargs(
             job_return=job_return,
             kwargs=kwargs,
         )
-        if score_payload is None:
+
+        score_payload_dict: dict[str, Any] = {}
+        if isinstance(job_return_payload, dict):
+            score_payload_dict.update({str(k): v for k, v in job_return_payload.items()})
+
+        # If Hydra sweeper wraps return values, recover the raw score payload that
+        # optimize_main stashes onto config from ConfigBase.__call__.
+        config_payload = None
+        if isinstance(config, DictConfig):
+            config_payload = config.get("_deckard_score_payload", None)
+        elif isinstance(config, dict):
+            config_payload = config.get("_deckard_score_payload", None)
+        if isinstance(config_payload, DictConfig):
+            config_payload = OmegaConf.to_container(config_payload, resolve=True)
+        if isinstance(config_payload, dict):
+            score_payload_dict.update({str(k): v for k, v in config_payload.items()})
+
+        if not score_payload_dict:
             return
         score_payload = _inject_experiment_name(
-            score_payload,
+            score_payload_dict,
             getattr(config, "experiment_name", ""),
         )
-
+        if not isinstance(score_payload, dict):
+            return
+        score_payload_dict = {str(k): v for k, v in score_payload.items()}
+        optimizers = list(getattr(config, "optimizers", self.optimizers) or [])
+        directions = list(getattr(config, "directions", self.directions) or [])
+        if optimizers:
+            _, attrs = filter_scores(
+                score_payload_dict,
+                optimizers,
+                directions,
+                emit_logs=False,
+            )
+        else:
+            attrs = dict(score_payload_dict)
         _sync_multirun_trial_attributes(
             hydra_cfg=hydra_cfg,
-            score_payload=score_payload,
-            optimizers=getattr(config, "optimizers", self.optimizers),
-            directions=getattr(config, "directions", self.directions),
+            score_payload=score_payload_dict,
+            optimizers=optimizers,
+            directions=directions,
             experiment_name=getattr(config, "experiment_name", ""),
+            attrs=attrs,
         )
-
         score_path = Path(str(score_file))
         score_path.parent.mkdir(parents=True, exist_ok=True)
         with open(score_path, "w") as f:
-            json.dump(score_payload, f, indent=4)
+            json.dump(score_payload_dict, f, indent=4)
         return
+
+    @staticmethod
+    def execute_runtime_object(conf_obj: Any) -> dict[str, Any]:
+        """Execute runtime object once and normalize its score payload to a dict."""
+        if callable(conf_obj):
+            scores = conf_obj()
+        elif hasattr(conf_obj, "execute_without_mercy") and callable(
+            getattr(conf_obj, "execute_without_mercy"),
+        ):
+            scores = conf_obj.execute_without_mercy()
+        else:
+            raise TypeError("conf_obj must be callable or implement execute_without_mercy")
+
+        if isinstance(scores, DictConfig):
+            scores = OmegaConf.to_container(scores, resolve=True)
+        if not isinstance(scores, dict):
+            raise TypeError(f"Runtime object must return a dict-like score payload. Got {type(scores)}")
+        return {str(k): v for k, v in scores.items()}
 
 
 def _ensure_experiment_hash(value) -> str:
@@ -178,14 +283,51 @@ def _assert_multirun_sweeper(hydra_cfg):
     ), "Study name must be specified in the sweeper config."
 
 
-def _resolve_multirun_paths(hydra_cfg) -> dict:
+def _resolve_multirun_sweep_paths(hydra_cfg) -> dict:
     log_dir = Path(hydra_cfg.sweep.dir, hydra_cfg.sweep.subdir)
+    # TODO: Ensure that data/model/attack *_file names are hashes if they exist in the cfg.files dict. 
+    # data_file: data/${hash:${data}}.pkl
+    # model_file: model/${hash:${data},${model}$}.pkl
+    # attack_file: attack/${hash:${data},${model},${attack}}.pkl
+    # predictions and probabilities files should follow the same hashing convention to avoid unintended collisions and allow artifact storage
     return {
         "log_file": (log_dir / f"{hydra_cfg.job.name}.log").as_posix(),
         "score_file": (log_dir / "scores.json").as_posix(),
         "params_file": (log_dir / "params.yaml").as_posix(),
         "error_file": (log_dir / "error.log").as_posix(),
     }
+
+
+def _resolve_run_paths(hydra_cfg) -> dict[str, str]:
+    run_dir = Path(hydra_cfg.run.dir)
+    job_name = getattr(getattr(hydra_cfg, "job", None), "name", "run")
+    return {
+        "log_file": (run_dir / f"{job_name}.log").as_posix(),
+        "score_file": (run_dir / "scores.json").as_posix(),
+        "params_file": (run_dir / "params.yaml").as_posix(),
+        "error_file": (run_dir / "error.log").as_posix(),
+    }
+
+
+def _resolve_multirun_paths(hydra_cfg) -> dict[str, str]:
+    """Resolve output paths from Hydra run.dir or sweep.dir/sweep.subdir."""
+    has_multirun_paths = (
+        hasattr(hydra_cfg, "sweep")
+        and hasattr(hydra_cfg, "job")
+        and getattr(getattr(hydra_cfg, "sweep", None), "dir", None) is not None
+        and getattr(getattr(hydra_cfg, "sweep", None), "subdir", None) is not None
+        and getattr(getattr(hydra_cfg, "job", None), "name", None) is not None
+    )
+    if has_multirun_paths:
+        return _resolve_multirun_sweep_paths(hydra_cfg)
+
+    has_run_paths = (
+        hasattr(hydra_cfg, "run")
+        and getattr(getattr(hydra_cfg, "run", None), "dir", None) is not None
+    )
+    if has_run_paths:
+        return _resolve_run_paths(hydra_cfg)
+    return {}
 
 
 def _get_hydra_job_identifier(hydra_cfg):
@@ -285,13 +427,19 @@ def _overwrite_frozen_trial_user_attr(study, trial_id: int, key: str, value: Any
 def _prepare_multirun_cfg(cfg, hydra_cfg, include_file_paths: bool = False):
     explicit_name = cfg.get("experiment_name", None)
     if explicit_name is None or str(explicit_name).strip() == "":
-        cfg["experiment_name"] = hash_conf_values(_root_=cfg)
+        cfg["experiment_name"] = _ensure_experiment_hash(hash_conf_values(_root_=cfg))
     else:
         cfg["experiment_name"] = _ensure_experiment_hash(explicit_name)
-    cfg["experiment_name"] = _ensure_experiment_hash(cfg.get("experiment_name"))
 
-    if include_file_paths:
-        file_paths = _resolve_multirun_paths(hydra_cfg)
+    if (
+        include_file_paths
+        and hasattr(hydra_cfg, "sweep")
+        and hasattr(hydra_cfg, "job")
+        and getattr(getattr(hydra_cfg, "sweep", None), "dir", None) is not None
+        and getattr(getattr(hydra_cfg, "sweep", None), "subdir", None) is not None
+        and getattr(getattr(hydra_cfg, "job", None), "name", None) is not None
+    ):
+        file_paths = _resolve_multirun_sweep_paths(hydra_cfg)
         files_cfg = cfg.get("files")
         if isinstance(files_cfg, DictConfig):
             for k, v in file_paths.items():
@@ -312,7 +460,6 @@ def _normalize_mode_cfg(cfg, hydra_cfg, include_file_paths: bool = False):
             hydra_cfg,
             include_file_paths=include_file_paths,
         )
-    # In single-run mode Hydra still composes an explicit config; no sweeper needed.
     if _is_run_mode(hydra_cfg):
         return cfg
     return cfg
@@ -341,14 +488,14 @@ def _extract_scores_from_job_end_kwargs(
 def _sync_multirun_trial_attributes(
     hydra_cfg,
     score_payload,
-    optimizers,
-    directions,
     experiment_name,
+    optimizers=None,
+    directions=None,
+    attrs=None,
 ) -> None:
     """Sync non-optimized scores as trial attributes for the current multirun trial."""
     if not isinstance(score_payload, dict):
         return
-    score_payload = _inject_experiment_name(score_payload, experiment_name)
 
     sweeper = _get_sweeper_cfg(hydra_cfg)
     if not isinstance(sweeper, dict):
@@ -358,11 +505,15 @@ def _sync_multirun_trial_attributes(
     if not storage or not study_name:
         return
 
-    _, attrs = filter_scores(
-        score_payload,
-        list(optimizers or []),
-        list(directions or []),
-    )
+
+
+    if attrs is None:
+        _, attrs = filter_scores(
+            score_payload,
+            list(optimizers or []),
+            list(directions or []),
+            emit_logs=False,
+        )
     if not attrs:
         return
 
@@ -384,65 +535,6 @@ def _sync_multirun_trial_attributes(
     )
 
 
-def optimize_multirun(
-    cfg: Any,
-    hydra_cfg,
-    conf_obj: ExperimentConfig,
-) -> dict[str, Any]:
-    """
-    Handles optimization in multirun mode.
-
-    Parameters
-    ----------
-    cfg : ConfigBase
-        The validated configuration object.
-    hydra_cfg : HydraConfig
-        The Hydra configuration object.
-    conf_obj : ExperimentConfig
-        The experiment conf_obj instance.
-
-    Returns
-    -------
-    dict
-        The filtered optimization scores.
-    """
-    assert hasattr(
-        conf_obj,
-        "files",
-    ), "conf_obj must have files attribute in multirun mode."
-    assert hasattr(
-        conf_obj,
-        "optimizers",
-    ), "conf_obj must have optimizers attribute in multirun mode."
-    assert hasattr(
-        conf_obj,
-        "directions",
-    ), "conf_obj must have directions attribute in multirun mode."
-    files = conf_obj.files._get_file_dict()
-    if (
-        not files.get("params_file")
-        or not files.get("score_file")
-        or not files.get("log_file")
-    ):
-        conf_obj = prepare_multirun_file_paths(hydra_cfg, conf_obj)
-        files = conf_obj.files._get_file_dict()
-    scores = conf_obj.execute_without_mercy()
-    # Filter scores according to the optimizer. Directions pass +/- infinit
-    optimizers = getattr(conf_obj, "optimizers", [])
-    directions = getattr(conf_obj, "directions", [])
-    filtered_scores, _ = filter_scores(scores, optimizers, directions)
-    _assert_multirun_sweeper(hydra_cfg)
-    _sync_multirun_trial_attributes(
-        hydra_cfg=hydra_cfg,
-        score_payload=scores,
-        optimizers=optimizers,
-        directions=directions,
-        experiment_name=getattr(conf_obj, "experiment_name", ""),
-    )
-
-    return filtered_scores
-
-
 def set_study_attributes(
     study: optuna.study.Study,
     attrs: dict[str, Any] | DictConfig,
@@ -459,8 +551,8 @@ def set_study_attributes(
 
 def optimize_main(
     cfg: Any,
-) -> dict | tuple[dict, ConfigBase]:
-    """Run the optimize layer entrypoint for single-run or Hydra multirun modes.
+) -> dict[str, Any]:
+    """Run the optimize layer entrypoint and return an unfiltered score dictionary.
 
     Parameters
     ----------
@@ -471,45 +563,62 @@ def optimize_main(
 
     Returns
     -------
-    dict | tuple[dict, ConfigBase]
-        Optimization results produced by the instantiated configuration object
-        (single-run) or by :func:`optimize_multirun` (multirun).
+    dict[str, Any]
+        Unfiltered score payload produced by the instantiated runtime object.
     """
     hydra_cfg = HydraConfig.get()
-    if isinstance(cfg, DictConfig):
-        cfg_dict = OmegaConf.to_container(cfg, resolve=False)
-    elif isinstance(cfg, dict):
-        cfg_dict = dict(cfg)
-    else:
-        cfg_dict = OmegaConf.to_container(OmegaConf.create(cfg), resolve=False)
+    cfg_dict = _coerce_cfg_to_dict(cfg)
     assert isinstance(
         cfg_dict,
         dict,
     ), f"cfg must resolve to a dictionary. Got {type(cfg_dict)}"
 
-    cfg_dict = _normalize_mode_cfg(
-        cfg_dict,
-        hydra_cfg,
-        include_file_paths=False,
-    )
+    # Path/file enforcement for multirun is now callback-owned in on_compose_config.
+    _ = hydra_cfg
 
     # Optimize layer always executes an ExperimentConfig payload.
     # Some config compositions can leak a root `_target_` from global search
     # overrides; force the correct root target to avoid mis-instantiation.
     cfg_dict["_target_"] = "deckard.ExperimentConfig"
-    cfg_yaml = OmegaConf.to_yaml(cfg_dict)
 
     conf_obj = instantiate(cfg_dict)
     assert isinstance(
         conf_obj,
         ConfigBase,
     ), f"conf_obj must be an instance of ConfigBase. Got {type(conf_obj)}"
-    if _is_multirun_mode(hydra_cfg):
-        assert isinstance(conf_obj, ExperimentConfig)
-        scores = optimize_multirun(cfg_yaml, hydra_cfg, conf_obj)
-    else:
-        scores = conf_obj()
+    scores = OptunaStudyCallback.execute_runtime_object(conf_obj)
+
+    # Preserve raw runtime payload for callback hooks even when sweepers wrap
+    # return values for objective extraction.
+    try:
+        if isinstance(cfg, DictConfig):
+            cfg["_deckard_score_payload"] = dict(scores)
+        elif isinstance(cfg, dict):
+            cfg["_deckard_score_payload"] = dict(scores)
+    except Exception:
+        pass
+
     return scores
+
+
+def _coerce_cfg_to_dict(cfg: Any) -> dict[str, Any]:
+    """Normalize incoming optimize config payload to a mutable dictionary."""
+    if isinstance(cfg, DictConfig):
+        cfg_container = OmegaConf.to_container(cfg, resolve=False)
+        if not isinstance(cfg_container, dict):
+            raise AssertionError(
+                f"cfg must resolve to a dictionary. Got {type(cfg_container)}",
+            )
+        return {str(k): v for k, v in cfg_container.items()}
+    if isinstance(cfg, dict):
+        return dict(cfg)
+
+    cfg_container = OmegaConf.to_container(OmegaConf.create(cfg), resolve=False)
+    if not isinstance(cfg_container, dict):
+        raise AssertionError(
+            f"cfg must resolve to a dictionary. Got {type(cfg_container)}",
+        )
+    return {str(k): v for k, v in cfg_container.items()}
 
 
 def prepare_multirun_file_paths(
@@ -525,7 +634,15 @@ def prepare_multirun_file_paths(
             conf_obj.experiment_name = hash_conf_values(str(conf_obj))
     else:
         conf_obj.experiment_name = _ensure_experiment_hash(current_name)
-    conf_obj.__post_init__()
+    if not isinstance(conf_obj, ExperimentConfig) and hasattr(
+        conf_obj,
+        "__post_init__",
+    ) and callable(getattr(conf_obj, "__post_init__")):
+        conf_obj.__post_init__()
+    if conf_obj.files is None:
+        from ..file import FileConfig
+
+        conf_obj.files = FileConfig()
     # Set up log, score, and params file paths
     log_dir = Path(hydra_cfg.sweep.dir, hydra_cfg.sweep.subdir)
     log_file = log_dir / f"{hydra_cfg.job.name}.log"
@@ -537,7 +654,19 @@ def prepare_multirun_file_paths(
     conf_obj.files.score_file = score_file.as_posix()
     conf_obj.files.params_file = params_file.as_posix()
     conf_obj.files.error_file = error_file.as_posix()
-    conf_obj.files.__post_init__()
+    if hasattr(conf_obj.files, "_get_file_dict") and hasattr(
+        conf_obj.files,
+        "_resolve_paths",
+    ):
+        conf_obj.files._file_dict = conf_obj.files._get_file_dict()
+        conf_obj.files._resolve_paths()
+        conf_obj.files._file_dict = conf_obj.files._get_file_dict()
+        for key, value in conf_obj.files._file_dict.items():
+            setattr(conf_obj.files, key, value)
+    elif hasattr(conf_obj.files, "__post_init__") and callable(
+        getattr(conf_obj.files, "__post_init__"),
+    ):
+        conf_obj.files.__post_init__()
     return conf_obj
 
 
@@ -621,9 +750,9 @@ def _filter_optuna_objectives(directions, optimizers):
 
 
 def set_study_metric_names(
-    study,
-    optimizers: list[str] | tuple[str, ...] | ListConfig | str,
-    directions: list[str] | tuple[str, ...] | ListConfig | None = None,
+    study: Any,
+    optimizers: Any,
+    directions: Any = None,
 ) -> None:
     """Set Optuna metric names using optimizer keys after direction filtering."""
     if isinstance(optimizers, ListConfig):
@@ -647,10 +776,10 @@ def set_study_metric_names(
 
 
 def set_trial_attributes(
-    study,
-    attrs,
+    study: Any,
+    attrs: Any,
     experiment_name: str,
-    trial_number=None,
+    trial_number: Any = None,
 ) -> None:
     """Persist per-trial user attributes for one unambiguous target trial."""
     if isinstance(attrs, DictConfig):
@@ -671,22 +800,24 @@ def set_trial_attributes(
 
     selected_trial = None
     if trial_number is not None:
-        selected_trial = next(
-            (t for t in trials if str(getattr(t, "number", None)) == str(trial_number)),
-            None,
-        )
-
-    if selected_trial is None and trial_number is None and len(trials) == 1:
+        trial_number_str = str(trial_number)
+        for trial in trials:
+            if str(getattr(trial, "number", None)) == trial_number_str:
+                selected_trial = trial
+                break
+    elif len(trials) == 1:
         selected_trial = trials[0]
-
-    if selected_trial is None and trial_number is None:
-        matching = [
-            t
-            for t in trials
-            if getattr(t, "user_attrs", {}).get("experiment_name") == exp_uuid
-        ]
-        if len(matching) == 1:
-            selected_trial = matching[0]
+    else:
+        unique_match = None
+        match_count = 0
+        for trial in trials:
+            if getattr(trial, "user_attrs", {}).get("experiment_name") == exp_uuid:
+                unique_match = trial
+                match_count += 1
+                if match_count > 1:
+                    unique_match = None
+                    break
+        selected_trial = unique_match
 
     if selected_trial is None:
         logger.warning(
@@ -743,6 +874,7 @@ def filter_scores(
     scores: dict[str, Any],
     optimizers: list[str],
     directions: list[str],
+    emit_logs: bool = True,
 ) -> tuple[Any, dict[str, Any]]:
     """
     Overview
@@ -824,8 +956,9 @@ def filter_scores(
     values = tuple(values)
     if isinstance(values, (tuple, list)) and len(values) == 1:
         values = values[0]
-    logger.info(f"Optimization values: {values}")
-    logger.info(f"Experiment attributes: {attributes}")
+    if emit_logs:
+        logger.info(f"Optimization values: {values}")
+        logger.info(f"Experiment attributes: {attributes}")
     return values, attributes
 
 
