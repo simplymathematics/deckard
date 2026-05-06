@@ -3,13 +3,18 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+import numpy as np
 import torch
+from torch.utils.data import DataLoader, TensorDataset
 
 from deckard.model.defend import DefensePipelineConfig
+from deckard.model import pytorch as pytorch_module
 
 PytorchModelConfig = pytest.importorskip(
     "deckard.model.pytorch",
 ).PytorchModelConfig
+initialize_criterion = pytorch_module.initialize_criterion
+initialize_optimizer = pytorch_module.initialize_optimizer
 
 
 def test_pytorch_model_config_save_and_load_roundtrip():
@@ -68,16 +73,135 @@ def test_pytorch_model_training_records_optimizer_loss_and_serializes_it():
         model_path = Path(tmpdir) / "torch_model_with_loss.pkl"
         cfg.save(str(model_path))
 
-        loaded = PytorchModelConfig(
-            model_type="torch.nn.Linear",
-            model_params={"in_features": 4, "out_features": 2},
-            classifier=True,
-        )
-        loaded.load(str(model_path))
 
-        assert loaded.score_dict["optimizer_loss"] == cfg.score_dict["optimizer_loss"]
-        assert "epochs" in loaded.score_dict
-        assert len(loaded.score_dict["epochs"]) == 2
+def test_initialize_criterion_and_optimizer_support_variants(monkeypatch):
+    calls = []
+
+    def _fake_load_class(name, *args, **kwargs):
+        calls.append((name, args, kwargs))
+        return {"name": name, "args": args, "kwargs": kwargs}
+
+    monkeypatch.setattr(pytorch_module, "load_class", _fake_load_class)
+
+    criterion = initialize_criterion("CrossEntropyLoss")
+    assert criterion["name"] == "torch.nn.CrossEntropyLoss"
+
+    criterion_cfg = initialize_criterion({"name": "torch.nn.MSELoss", "reduction": "sum"})
+    assert criterion_cfg["kwargs"]["reduction"] == "sum"
+
+    with pytest.raises(ValueError, match="criterion must be str or dict"):
+        initialize_criterion(123)
+
+    model = torch.nn.Linear(4, 2)
+    optimizer = initialize_optimizer("SGD", model.parameters())
+    assert optimizer["name"] == "torch.optim.SGD"
+
+    optimizer_cfg = initialize_optimizer({"name": "Adam", "lr": 0.01}, model.parameters())
+    assert optimizer_cfg["name"] == "torch.optim.Adam"
+    assert "params" in optimizer_cfg["kwargs"]
+
+    with pytest.raises(ValueError, match="optimizer must be str or dict"):
+        initialize_optimizer(123, model.parameters())
+
+
+def test_pytorch_device_and_art_helpers():
+    cfg = PytorchModelConfig(
+        model_type="torch.nn.Linear",
+        model_params={"in_features": 4, "out_features": 2},
+        classifier=True,
+    )
+
+    cfg.device = torch.device("cuda")
+    assert cfg._resolve_art_device_type() == "gpu"
+
+    cfg.device = torch.device("mps")
+    assert cfg._resolve_art_device_type() == "cpu"
+
+    cfg._model = None
+    with pytest.raises(ValueError, match="Model not initialized"):
+        cfg._model_for_art()
+
+    cfg._model = torch.nn.Linear(4, 2)
+    cfg.device = torch.device("cpu")
+    assert cfg._model_for_art() is cfg._model
+
+    class _DummyEstimator:
+        def __init__(self):
+            self._device = None
+            self._model = torch.nn.Linear(4, 2)
+            self.preprocessing = SimpleNamespace(_device=None)
+            self.preprocessing_operations = [SimpleNamespace(_device=None)]
+
+            def _apply(*args, **kwargs):
+                _ = args, kwargs
+                return (np.array([[1.0]], dtype=np.float64),)
+
+            self._apply_preprocessing = _apply
+
+    est = _DummyEstimator()
+    cfg.device = torch.device("mps")
+    wrapped = cfg._override_art_internal_device(est)
+    assert str(wrapped._device) == "cpu"
+    out = wrapped._apply_preprocessing(np.array([[1.0]], dtype=np.float64))
+    assert out[0].dtype == pytorch_module.ART_NUMPY_DTYPE
+
+    cfg.device = SimpleNamespace(type="xla")
+    assert cfg._override_art_internal_device(est) is est
+
+
+def test_checkpoint_config_and_data_validation_paths():
+    cfg = PytorchModelConfig(
+        model_type="torch.nn.Linear",
+        model_params={"in_features": 4, "out_features": 2},
+        classifier=True,
+    )
+
+    cfg.fit_params = {"checkpoint_every_epochs": "abc"}
+    with pytest.raises(ValueError, match="must be an integer"):
+        cfg._resolve_checkpoint_config()
+
+    cfg.fit_params = {"checkpoint_every_epochs": 1}
+    with pytest.raises(ValueError, match="checkpoint_dir must be provided"):
+        cfg._resolve_checkpoint_config(model_file=None)
+
+    cfg.fit_params = {"checkpoint_every_epochs": 1, "checkpoint_include_final": "no"}
+    checkpoint_cfg = cfg._resolve_checkpoint_config(model_file="/tmp/model.pkl")
+    assert checkpoint_cfg["every"] == 1
+    assert checkpoint_cfg["prefix"] == "model"
+    assert checkpoint_cfg["include_final"] is False
+
+    bad_data = SimpleNamespace(
+        X_train=np.array([[1.0]]),
+        y_train=torch.tensor([1]),
+        X_test=torch.tensor([[1.0]]),
+        y_test=torch.tensor([1]),
+    )
+    with pytest.raises(TypeError, match="requires torch.Tensor or DataLoader"):
+        cfg._validate_torch_data(bad_data)
+
+
+def test_predict_path_for_art_wrapper_and_empty_loader():
+    cfg = PytorchModelConfig(
+        model_type="torch.nn.Linear",
+        model_params={"in_features": 4, "out_features": 2},
+        classifier=True,
+    )
+
+    class _ArtLikeModel:
+        def predict(self, x):
+            x = np.asarray(x)
+            return np.column_stack([1.0 - x[:, 0], x[:, 0]])
+
+    cfg._model = _ArtLikeModel()
+
+    empty_loader = DataLoader(TensorDataset(torch.empty((0, 4))), batch_size=2)
+    out_empty = cfg._predict(empty_loader)
+    assert out_empty.numel() == 0
+
+    x = torch.tensor([[0.2, 0.1, 0.0, 0.0], [0.8, 0.1, 0.0, 0.0]], dtype=torch.float32)
+    out = cfg._predict(x)
+    assert isinstance(out, torch.Tensor)
+    assert out.shape[0] == 2
 
 
 class _StagePlugin:
@@ -189,6 +313,98 @@ def test_pytorch_model_checkpointing_preserves_post_fit_defense_stage():
         # Per-epoch benign scoring now applies defense each epoch, in addition to
         # checkpoint evaluation and final post-fit defense application.
         assert len(defense.calls) == 9
+
+
+def test_score_checkpoint_snapshot_predict_proba_fallback_classification():
+    cfg = PytorchModelConfig(
+        model_type="torch.nn.Linear",
+        model_params={"in_features": 4, "out_features": 2},
+        classifier=True,
+    )
+    cfg.score_dict = {"epochs": {1: {"loss": 0.1}}}
+
+    snapshot = SimpleNamespace(
+        defense=None,
+        classifier=True,
+        score_dict={},
+        _evaluate_and_score=lambda data, times={}: (_ for _ in ()).throw(ValueError("predict_proba unavailable")),
+        _predict=lambda X: torch.zeros(len(X), dtype=torch.long),
+        _classification_scores=lambda y_true, y_pred: {"accuracy": 0.5},
+        _regression_scores=lambda y_true, y_pred: {"mse": 1.0},
+    )
+
+    data = SimpleNamespace(
+        X_train=torch.randn(4, 4),
+        y_train=torch.randint(0, 2, (4,)),
+        X_test=torch.randn(2, 4),
+        y_test=torch.randint(0, 2, (2,)),
+    )
+
+    scores = cfg._score_checkpoint_snapshot(snapshot, data)
+
+    assert "training_accuracy" in scores
+    assert "accuracy" in scores
+    assert "epochs" in scores
+
+
+def test_score_checkpoint_snapshot_predict_proba_fallback_regression():
+    cfg = PytorchModelConfig(
+        model_type="torch.nn.Linear",
+        model_params={"in_features": 4, "out_features": 1},
+        classifier=False,
+    )
+    cfg.score_dict = {}
+
+    snapshot = SimpleNamespace(
+        defense=None,
+        classifier=False,
+        score_dict={},
+        _evaluate_and_score=lambda data, times={}: (_ for _ in ()).throw(ValueError("predict_proba missing")),
+        _predict=lambda X: torch.zeros(len(X), dtype=torch.float32),
+        _classification_scores=lambda y_true, y_pred: {"accuracy": 0.5},
+        _regression_scores=lambda y_true, y_pred: {"mse": 0.25},
+    )
+
+    data = SimpleNamespace(
+        X_train=torch.randn(4, 4),
+        y_train=torch.randn(4),
+        X_test=torch.randn(2, 4),
+        y_test=torch.randn(2),
+    )
+
+    scores = cfg._score_checkpoint_snapshot(snapshot, data)
+
+    assert "training_mse" in scores
+    assert "mse" in scores
+
+
+def test_pytorch_score_helpers_classification_and_regression():
+    cls_cfg = PytorchModelConfig(
+        model_type="torch.nn.Linear",
+        model_params={"in_features": 4, "out_features": 2},
+        classifier=True,
+    )
+    y_true_cls = torch.tensor([0, 1, 1, 0], dtype=torch.long)
+    y_pred_logits = torch.tensor(
+        [[0.8, 0.2], [0.1, 0.9], [0.2, 0.8], [0.7, 0.3]],
+        dtype=torch.float32,
+    )
+    cls_scores = cls_cfg._classification_scores(y_true_cls, y_pred_logits)
+    assert set(cls_scores.keys()) == {"accuracy", "precision", "recall", "f1"}
+
+    # Also cover the non-tensor y_pred path.
+    cls_scores_np = cls_cfg._classification_scores(y_true_cls, np.array([0, 1, 1, 0]))
+    assert cls_scores_np["accuracy"] == pytest.approx(1.0)
+
+    reg_cfg = PytorchModelConfig(
+        model_type="torch.nn.Linear",
+        model_params={"in_features": 4, "out_features": 1},
+        classifier=False,
+    )
+    y_true_reg = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
+    y_pred_reg = torch.tensor([1.5, 2.5, 2.0], dtype=torch.float32)
+    reg_scores = reg_cfg._regression_scores(y_true_reg, y_pred_reg)
+    assert set(reg_scores.keys()) == {"mse", "rmse", "mae"}
 
 
 def test_pytorch_model_with_adam_optimizer():
@@ -548,3 +764,66 @@ def test_pytorch_model_hash_stable_after_load_roundtrip_runtime_mutation():
         loaded.prediction_time = 5.0
 
         assert hash(loaded) == original_hash
+
+
+def test_pytorch_model_get_model_save_load_error_paths():
+    cfg = PytorchModelConfig(
+        model_type="torch.nn.Linear",
+        model_params={"in_features": 4, "out_features": 2},
+        classifier=True,
+    )
+
+    cfg._model = None
+    with pytest.raises(ValueError, match="Model not initialized"):
+        cfg.get_model()
+    with pytest.raises(ValueError, match="Model not initialized"):
+        cfg.save("/tmp/should_not_exist.pkl")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        missing = Path(tmpdir) / "missing.pkl"
+        with pytest.raises(FileNotFoundError):
+            cfg.load(str(missing))
+
+        bad = Path(tmpdir) / "bad.pkl"
+        torch.save({"not_state_dict": 1}, bad)
+        with pytest.raises(TypeError, match="Unsupported serialized payload"):
+            cfg.load(str(bad))
+
+
+def test_pytorch_save_refuses_to_overwrite_existing_file():
+    cfg = PytorchModelConfig(
+        model_type="torch.nn.Linear",
+        model_params={"in_features": 4, "out_features": 2},
+        classifier=True,
+    )
+    cfg._model = torch.nn.Linear(4, 2)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        out = Path(tmpdir) / "model.pkl"
+        out.write_text("exists")
+        with pytest.raises(ValueError, match="already exists"):
+            cfg.save(str(out))
+
+
+def test_pytorch_score_epoch_snapshot_with_none_data_returns_early():
+    cfg = PytorchModelConfig(
+        model_type="torch.nn.Linear",
+        model_params={"in_features": 4, "out_features": 2},
+        classifier=True,
+    )
+    cfg.score_dict = {"epochs": {}}
+    assert cfg._score_epoch_snapshot(epoch_index=1, data=None) is None
+
+
+def test_pytorch_coerce_bool_and_checkpoint_non_positive_branch():
+    cfg = PytorchModelConfig(
+        model_type="torch.nn.Linear",
+        model_params={"in_features": 4, "out_features": 2},
+        classifier=True,
+    )
+
+    assert cfg._coerce_bool(None, True) is True
+    assert cfg._coerce_bool(2, False) is True
+
+    cfg.fit_params = {"checkpoint_every_epochs": -1}
+    assert cfg._resolve_checkpoint_config(model_file=None) is None
