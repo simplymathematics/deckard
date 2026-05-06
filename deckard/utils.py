@@ -47,6 +47,8 @@ __all__ = [
     "create_parser_from_function",
     "round_scores",
     "coerce_to_list",
+    "split_comma_separated_tokens",
+    "normalize_hydra_list_overrides",
     "merge_list_of_dicts",
     "merge_scores_with_collision_suffix",
     "resolve_torch_device",
@@ -251,6 +253,49 @@ def coerce_to_list(items: Union[list, Any]) -> list:
     if isinstance(items, (list, ListConfig)):
         return list(items)
     raise TypeError(f"Expected list or ListConfig, got {type(items)}")
+
+
+def split_comma_separated_tokens(value: Any) -> list[str]:
+    """Split a comma-separated string into trimmed, non-empty tokens."""
+    if value is None:
+        return []
+    return [item.strip() for item in str(value).split(",") if item.strip() != ""]
+
+
+def normalize_hydra_list_overrides(
+    overrides: list[str],
+    *,
+    keys: tuple[str, ...] = ("score",),
+) -> list[str]:
+    """Rewrite comma-separated Hydra override values into list syntax.
+
+    Example: ``score=a,b`` becomes ``score=[a,b]``.
+    Existing bracketed list syntax is preserved unchanged.
+    """
+    normalized: list[str] = []
+    normalized_keys = {str(key).strip() for key in keys}
+    for token in overrides:
+        if not isinstance(token, str) or "=" not in token:
+            normalized.append(token)
+            continue
+
+        key, value = token.split("=", 1)
+        if key not in normalized_keys:
+            normalized.append(token)
+            continue
+
+        stripped = value.strip()
+        if "," not in stripped:
+            normalized.append(token)
+            continue
+        if stripped.startswith("[") and stripped.endswith("]"):
+            normalized.append(token)
+            continue
+
+        items = split_comma_separated_tokens(stripped)
+        normalized.append(f"{key}=[{','.join(items)}]")
+
+    return normalized
 
 
 def merge_list_of_dicts(items: Iterable) -> dict:
