@@ -34,7 +34,8 @@ def test_classification_score_group_executes_end_to_end():
 
     y_true = [1, 0, 1, 1]
     y_pred = [1, 0, 0, 1]
-    scores = scorer(y_true=y_true, y_pred=y_pred, mode=None)
+    y_proba = [0.9, 0.1, 0.3, 0.8]
+    scores = scorer(y_true=y_true, y_pred=y_pred, y_proba=y_proba, mode=None)
 
     assert "accuracy" in scores
     assert "precision" in scores
@@ -125,7 +126,12 @@ def test_scorer_dict_config_hash_stable_after_scoring():
     cfg = _compose("default", overrides=["score=classification"])
     scorer = ScorerDictConfig(**OmegaConf.to_container(cfg.score, resolve=True))
     original_hash = hash(scorer)
-    scorer(y_true=[1, 0, 1, 1], y_pred=[1, 0, 0, 1], mode=None)
+    scorer(
+        y_true=[1, 0, 1, 1],
+        y_pred=[1, 0, 0, 1],
+        y_proba=[0.9, 0.1, 0.3, 0.8],
+        mode=None,
+    )
     scorer.score_dict["extra"] = 42
     assert hash(scorer) == original_hash
 
@@ -141,7 +147,12 @@ def test_scorer_dict_config_equal_content_produces_equal_hash():
 def test_scorer_dict_config_scores_persist_and_reload():
     cfg = _compose("default", overrides=["score=classification"])
     scorer = ScorerDictConfig(**OmegaConf.to_container(cfg.score, resolve=True))
-    scores = scorer(y_true=[1, 0, 1, 1], y_pred=[1, 0, 0, 1], mode=None)
+    scores = scorer(
+        y_true=[1, 0, 1, 1],
+        y_pred=[1, 0, 0, 1],
+        y_proba=[0.9, 0.1, 0.3, 0.8],
+        mode=None,
+    )
     with tempfile.TemporaryDirectory() as td:
         path = Path(td) / "scorer_scores.json"
         scorer.save_scores(scores, path)

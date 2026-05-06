@@ -12,6 +12,7 @@ from omegaconf import DictConfig, ListConfig, OmegaConf
 import os
 import yaml
 import numpy as np
+import pandas as pd
 from pathlib import Path
 from types import SimpleNamespace
 from hydra.utils import instantiate
@@ -32,10 +33,23 @@ from ..utils import (
     ConfigBase,
     coerce_config,
     coerce_to_list,
+    instantiate_config,
     is_default_config_value,
     load_class,
     merge_scores_with_collision_suffix,
 )
+from ..score.base import coerce_scorer_config
+from ..data.sample import KFoldSampler, ShuffleSampler
+
+try:
+    import tensorflow as tf
+except ImportError:  # pragma: no cover
+    tf = None
+
+try:
+    import torch
+except ImportError:  # pragma: no cover
+    torch = None
 
 try:
     from ..data import AnjanaDataConfig
@@ -194,18 +208,22 @@ class DataConfigResolutionMixin:
         if isinstance(self.data, DataConfig):
             return self.data
 
-        if hasattr(self.data, "_target_"):
-            resolved = instantiate(self.data)
-            if not isinstance(resolved, DataConfig):
+        if hasattr(self.data, "_target_") and not isinstance(self.data, (dict, DictConfig, str, ConfigBase)):
+            data_obj = instantiate(self.data)
+            if not isinstance(data_obj, DataConfig):
                 raise TypeError(
-                    f"Resolved data target must be DataConfig-compatible, got {type(resolved)}",
+                    f"Object of type: {type(data_obj)} is not a DataConfig object.",
                 )
-            return resolved
+            return data_obj
 
         data_dict = self._data_to_dict(self.data)
         data_cls = self._select_data_cls(data_dict)
         logger.info("Resolved data config class: %s", data_cls.__name__)
-        data_obj = data_cls(**data_dict)
+        data_obj = instantiate_config(
+            data_dict,
+            data_cls,
+            default_target=f"{data_cls.__module__}.{data_cls.__name__}",
+        )
         assert isinstance(data_obj, DataConfig), ValueError(
             f"Object of type: {type(data_obj)} is not a DataConfig object.",
         )
@@ -322,8 +340,6 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         return out
 
     def _coerce_scorer_config(self, scorer_obj, scope: str = "model"):
-        from ..score.base import coerce_scorer_config
-
         classifier = self.classifier
         if scope == "data" and getattr(self, "data", None) is not None:
             classifier = self.data.classifier
@@ -347,39 +363,19 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         return coerce_scorer_config(scorer_obj, default_factory=default_factory)
 
     def _coerce_single_attack(self, attack_obj: Any) -> AttackConfig:
-        if isinstance(attack_obj, AttackConfig):
-            attack_cfg = attack_obj
-        else:
-            if isinstance(attack_obj, DictConfig):
-                attack_dict = OmegaConf.to_container(attack_obj, resolve=True)
-            elif isinstance(attack_obj, str):
-                attack_dict = coerce_config(attack_obj)
-            elif isinstance(attack_obj, ConfigBase):
-                attack_dict = attack_obj.to_dict()
-            elif isinstance(attack_obj, dict):
-                attack_dict = OmegaConf.to_container(
-                    OmegaConf.create(attack_obj),
-                    resolve=True,
-                )
-            else:
-                raise ValueError(
-                    f"Unsupported type for attack: {type(attack_obj)}",
-                )
-
-            if not isinstance(attack_dict, dict):
-                raise ValueError(
-                    f"Attack config must resolve to dict-like data. Got {type(attack_dict)}",
-                )
-            if "_target_" not in attack_dict:
-                attack_cfg = AttackConfig(**attack_dict)
-            else:
-                attack_cfg = instantiate(attack_dict)
+        try:
+            attack_cfg = instantiate_config(
+                attack_obj,
+                AttackConfig,
+                default_target="deckard.attack.AttackConfig",
+            )
+        except TypeError as exc:
+            raise ValueError(f"Unsupported type for attack: {type(attack_obj)}") from exc
 
         assert isinstance(
             attack_cfg,
             AttackConfig,
         ), "attack must be an instance of AttackConfig"
-        attack_cfg.__post_init__()
         return attack_cfg
 
     def _normalize_attack_chain(self, attack_obj: Any) -> list[AttackConfig]:
@@ -456,8 +452,6 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             return None
 
         try:
-            import pandas as pd
-
             if all(isinstance(value, pd.DataFrame) for value in predictions):
                 return pd.concat(predictions, axis=0, ignore_index=True)
         except Exception:
@@ -498,7 +492,10 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         """
 
         if self.library == "tensorflow":
-            import tensorflow as tf
+            if tf is None:
+                raise ImportError(
+                    "TensorFlow support is unavailable. Install tensorflow to use library='tensorflow'.",
+                )
 
             gpus = tf.config.list_physical_devices("GPU")
             if device == "cpu":
@@ -531,199 +528,111 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 self.library,
             )
 
-    def __post_init__(self) -> None:
-        if not hasattr(self, "score_dict") or self.score_dict is None:
-            self.score_dict = {}
-        if not hasattr(self, "_target_") or self._target_ is None:
-            self._target_ = "deckard.experiment.ExperimentConfig"
-        # Set random seed
-        self.set_random_seed()
-        # Validate and initialize data config
+    def _initialize_data_and_classifier(self) -> None:
+        """Resolve data config and enforce experiment/data classifier consistency."""
         self.data = self._resolve_data_config()
-
         assert isinstance(
             self.data,
             DataConfig,
         ), f"data must be an instance of DataConfig. Got {type(self.data)}"
-        self.data.__post_init__()
         if not hasattr(self, "classifier"):
             self.classifier = self.data.classifier
         else:
             assert (
                 self.classifier == self.data.classifier
             ), f"classifier in experiment must match data.classifier. Got {self.classifier} vs {self.data.classifier}"
+
+    def _initialize_defense(self) -> None:
+        """Normalize defense config when configured."""
         if self.defense is not None:
             self.defense = DefensePipelineConfig.coerce(self.defense)
             assert isinstance(
                 self.defense,
                 DefensePipelineConfig,
             ), "defense must be an instance of DefensePipelineConfig"
-            self.defense.__post_init__()
-        if self.model is not None:
-            if self.defense is not None:
-                self.model.defense = self.defense
-            if isinstance(self.model, ModelConfig):
-                pass
-            else:
-                if hasattr(self.model, "_target_"):
-                    self.model = instantiate(self.model)
-                elif isinstance(self.model, DictConfig):
-                    model_dict = OmegaConf.to_container(self.model)
-                    self.model = ModelConfig(**model_dict)
-                elif isinstance(self.model, str):
-                    model_dict = coerce_config(self.model)
-                    self.model = ModelConfig(**model_dict)
-                elif isinstance(self.model, ConfigBase):
-                    model_dict = self.model.to_dict()
-                    self.model = ModelConfig(**model_dict)
-                elif isinstance(self.model, dict):
-                    model_dict = self.model
-                    self.model = ModelConfig(**model_dict)
-                else:
-                    raise ValueError(
-                        f"Unsupported type for model: {type(self.model)}",
-                    )
-            assert isinstance(
+
+    def _coerce_model(self) -> None:
+        """Normalize model config and enforce model/classifier consistency."""
+        if self.model is None:
+            return
+
+        try:
+            self.model = self.coerce_component(
                 self.model,
                 ModelConfig,
-            ), "model must be an instance of ModelConfig"
+                default_target="deckard.model.ModelConfig",
+                overrides={"defense": self.defense} if self.defense is not None else None,
+            )
+        except TypeError as exc:
+            raise ValueError(f"Unsupported type for model: {type(self.model)}") from exc
 
-            self.model.__post_init__()
-            if self.classifier is None:
-                self.classifier = self.model.classifier
-            else:
-                assert (
-                    self.classifier == self.model.classifier
-                ), f"classifier in experiment must match model.classifier. Got {self.classifier} vs {self.model.classifier}"
-
-            if FairlearnDataConfig is not None and isinstance(
-                self.data,
-                FairlearnDataConfig,
-            ):
-                if FairlearnModelConfig is None:
-                    raise ImportError(
-                        "FairlearnModelConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn model configs.",
-                    )
-                if not isinstance(self.model, FairlearnModelConfig):
-                    self.model = FairlearnModelConfig(
-                        model_type=self.model.model_type,
-                        classifier=self.model.classifier,
-                        model_params=self.model.model_params,
-                        probability=self.model.probability,
-                        alias=self.model.alias,
-                        defense=self.model.defense,
-                        plugins=self.model.plugins,
-                        scorer=self.model.scorer,
-                        data=self.data,
-                    )
-                else:
-                    self.model.data = self.data
-            elif AnjanaDataConfig is not None and isinstance(
-                self.data,
-                AnjanaDataConfig,
-            ):
-                if AnjanaModelConfig is None:
-                    raise ImportError(
-                        "AnjanaModelConfig requires optional anjana dependencies. Install deckard[anjana] to enable anjana model configs.",
-                    )
-                if not isinstance(self.model, AnjanaModelConfig):
-                    self.model = AnjanaModelConfig(
-                        model_type=self.model.model_type,
-                        classifier=self.model.classifier,
-                        model_params=self.model.model_params,
-                        probability=self.model.probability,
-                        alias=self.model.alias,
-                        defense=self.model.defense,
-                        plugins=self.model.plugins,
-                        scorer=self.model.scorer,
-                        data=self.data,
-                    )
-                else:
-                    self.model.data = self.data
-        self._attack_chain = self._normalize_attack_chain(self.attack)
-        self._validate_multi_attack_aliases(self._attack_chain)
-        if len(self._attack_chain) > 0:
-            # Preserve backward compatibility for single-attack call sites.
-            self.attack = self._attack_chain[0]
-        else:
-            self.attack = None
-        if self.detector is not None:
-            if isinstance(self.detector, DetectorConfig):
-                pass
-            elif callable(getattr(self.detector, "__call__", None)):
-                # Allow custom detector runtime objects in tests/extensions.
-                pass
-            else:
-                if isinstance(self.detector, DictConfig):
-                    detector_dict = OmegaConf.to_container(
-                        self.detector,
-                        resolve=True,
-                    )
-                elif isinstance(self.detector, str):
-                    detector_dict = DetectorConfig.from_yaml(self.detector).to_dict()
-                elif isinstance(self.detector, ConfigBase):
-                    detector_dict = self.detector.to_dict()
-                elif isinstance(self.detector, dict):
-                    detector_dict = OmegaConf.to_container(
-                        OmegaConf.create(self.detector),
-                        resolve=True,
-                    )
-                else:
-                    raise ValueError(
-                        f"Unsupported type for detector: {type(self.detector)}",
-                    )
-                if "_target_" not in detector_dict:
-                    self.detector = DetectorConfig(**detector_dict)
-                else:
-                    self.detector = instantiate(self.detector)
-            assert isinstance(
-                self.detector,
-                DetectorConfig,
-            ) or callable(
-                getattr(self.detector, "__call__", None),
-            ), "detector must be a DetectorConfig or callable detector runtime"
-            if hasattr(self.detector, "__post_init__") and callable(
-                getattr(self.detector, "__post_init__"),
-            ):
-                self.detector.__post_init__()
-        # Set experiment name if not provided
-        if self.experiment_name in [None, "", "{hash}", "*"]:
-            config_list = [self.data]
-            if self.model:
-                config_list.append(self.model)
-            if len(self._attack_chain) > 0:
-                config_list.extend(self._attack_chain)
-            if self.detector and isinstance(self.detector, ConfigBase):
-                config_list.append(self.detector)
-            if self.score:
-                config_list.append(self.score)
-            self.experiment_name = self._hash_from_list(config_list)
-        # Initialize FileConfig, ensuring experiment_name is set
-        if self.files is None:
-            self.files = FileConfig()
-        elif isinstance(self.files, FileConfig):
-            self.files.__post_init__()
-        elif isinstance(self.files, ConfigBase):
-            file_dict = self.files.to_dict()
-            self.files = FileConfig(**file_dict)
-        elif isinstance(self.files, DictConfig):
-            file_dict = OmegaConf.to_container(self.files)
-            self.files = FileConfig(**file_dict)
-        elif isinstance(self.files, str):
-            file_dict = FileConfig.from_yaml(self.files).to_dict()
-            self.files = FileConfig(**file_dict)
-        elif isinstance(self.files, dict):
-            file_dict = self.files
-            self.files = FileConfig(**file_dict)
-        else:
-            raise ValueError(f"Unsupported type for files: {type(self.files)}")
+        if self.defense is not None:
+            self.model.defense = self.defense
         assert isinstance(
-            self.files,
-            FileConfig,
-        ), "file must be an instance of FileConfig"
-        self.files.__post_init__()
+            self.model,
+            ModelConfig,
+        ), "model must be an instance of ModelConfig"
+        if self.classifier is None:
+            self.classifier = self.model.classifier
+        else:
+            assert (
+                self.classifier == self.model.classifier
+            ), f"classifier in experiment must match model.classifier. Got {self.classifier} vs {self.model.classifier}"
 
-        # Set scorers
+    def _specialize_model_for_data(self) -> None:
+        """Swap/attach model subtype for fairness or anjana data configs."""
+        if self.model is None:
+            return
+
+        if FairlearnDataConfig is not None and isinstance(
+            self.data,
+            FairlearnDataConfig,
+        ):
+            if FairlearnModelConfig is None:
+                raise ImportError(
+                    "FairlearnModelConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn model configs.",
+                )
+            if not isinstance(self.model, FairlearnModelConfig):
+                self.model = FairlearnModelConfig(
+                    model_type=self.model.model_type,
+                    classifier=self.model.classifier,
+                    model_params=self.model.model_params,
+                    probability=self.model.probability,
+                    alias=self.model.alias,
+                    defense=self.model.defense,
+                    plugins=self.model.plugins,
+                    scorer=self.model.scorer,
+                    data=self.data,
+                )
+            else:
+                self.model.data = self.data
+            return
+
+        if AnjanaDataConfig is not None and isinstance(
+            self.data,
+            AnjanaDataConfig,
+        ):
+            if AnjanaModelConfig is None:
+                raise ImportError(
+                    "AnjanaModelConfig requires optional anjana dependencies. Install deckard[anjana] to enable anjana model configs.",
+                )
+            if not isinstance(self.model, AnjanaModelConfig):
+                self.model = AnjanaModelConfig(
+                    model_type=self.model.model_type,
+                    classifier=self.model.classifier,
+                    model_params=self.model.model_params,
+                    probability=self.model.probability,
+                    alias=self.model.alias,
+                    defense=self.model.defense,
+                    plugins=self.model.plugins,
+                    scorer=self.model.scorer,
+                    data=self.data,
+                )
+            else:
+                self.model.data = self.data
+
+    def _initialize_component_scorers(self) -> None:
+        """Coerce configured scorers and attach them to data/model components."""
         self.data_scorer = None
         self.model_scorer = None
         self.experiment_scorer = None
@@ -771,6 +680,85 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         # Keep `score` as experiment-level scorer only.
         self.score = self.experiment_scorer
 
+    def _initialize_attack_chain(self) -> None:
+        """Normalize configured attacks and establish primary attack view."""
+        self._attack_chain = self._normalize_attack_chain(self.attack)
+        self._validate_multi_attack_aliases(self._attack_chain)
+        if len(self._attack_chain) > 0:
+            # Preserve backward compatibility for single-attack call sites.
+            self.attack = self._attack_chain[0]
+        else:
+            self.attack = None
+
+    def _initialize_detector(self) -> None:
+        """Normalize detector config while preserving callable detector passthrough."""
+        if self.detector is None:
+            return
+
+        try:
+            self.detector = self.coerce_component(
+                self.detector,
+                DetectorConfig,
+                default_target="deckard.detector.DetectorConfig",
+                allow_passthrough=lambda obj: callable(getattr(obj, "__call__", None)),
+            )
+        except TypeError as exc:
+            raise ValueError(
+                f"Unsupported type for detector: {type(self.detector)}",
+            ) from exc
+        assert isinstance(
+            self.detector,
+            DetectorConfig,
+        ) or callable(
+            getattr(self.detector, "__call__", None),
+        ), "detector must be a DetectorConfig or callable detector runtime"
+
+    def _initialize_files(self) -> None:
+        """Normalize file config and ensure a FileConfig instance is available."""
+        if self.files is None:
+            self.files = FileConfig()
+        else:
+            try:
+                self.files = self.coerce_component(
+                    self.files,
+                    FileConfig,
+                    default_target="deckard.file.FileConfig",
+                )
+            except TypeError as exc:
+                raise ValueError(f"Unsupported type for files: {type(self.files)}") from exc
+        assert isinstance(
+            self.files,
+            FileConfig,
+        ), "file must be an instance of FileConfig"
+
+    def __post_init__(self) -> None:
+        if not hasattr(self, "score_dict") or self.score_dict is None:
+            self.score_dict = {}
+        if not hasattr(self, "_target_") or self._target_ is None:
+            self._target_ = "deckard.experiment.ExperimentConfig"
+        # Set random seed
+        self.set_random_seed()
+        self._initialize_data_and_classifier()
+        self._initialize_defense()
+        self._coerce_model()
+        self._specialize_model_for_data()
+        self._initialize_attack_chain()
+        self._initialize_detector()
+        # Set experiment name if not provided
+        if self.experiment_name in [None, "", "{hash}", "*"]:
+            config_list = [self.data]
+            if self.model:
+                config_list.append(self.model)
+            if len(self._attack_chain) > 0:
+                config_list.extend(self._attack_chain)
+            if self.detector and isinstance(self.detector, ConfigBase):
+                config_list.append(self.detector)
+            if self.score:
+                config_list.append(self.score)
+            self.experiment_name = self._hash_from_list(config_list)
+        self._initialize_files()
+        self._initialize_component_scorers()
+
         # Reconcile and enforce a single device across experiment/data/model.
         self._reconcile_component_devices()
         if self.library not in ["sklearn"]:
@@ -780,11 +768,17 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         if self.library in ["sklearn"]:
             np.random.seed(self.random_state)
         elif self.library in ["tensorflow"]:
-            import tensorflow as tf
+            if tf is None:
+                raise ImportError(
+                    "TensorFlow support is unavailable. Install tensorflow to use library='tensorflow'.",
+                )
 
             tf.random.set_seed(self.random_state)
         elif self.library in ["pytorch"]:
-            import torch
+            if torch is None:
+                raise ImportError(
+                    "PyTorch support is unavailable. Install torch to use library='pytorch'.",
+                )
 
             torch.manual_seed(self.random_state)
         else:
@@ -832,8 +826,6 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             ``(n_splits, "split")`` for ``ShuffleSampler``,
             and ``(1, "fold")`` for all other samplers.
         """
-        from ..data.sample import KFoldSampler, ShuffleSampler
-
         sampler = self.data._resolve_sample()
         if isinstance(sampler, KFoldSampler):
             return sampler.n_splits, "fold"
@@ -1115,12 +1107,11 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             if self.model is None:
                 self.model = None
 
-        if "score_file" in file_dict and not Path(file_dict["score_file"]).exists():
-            self.save_scores(scores, file_dict["score_file"])
-        elif "score_file" in file_dict:
-            old_scores = self.load_scores(file_dict["score_file"])
-            new_scores = {**old_scores, **scores}
-            self.save_scores(new_scores, file_dict["score_file"])
+        if "score_file" in file_dict:
+            scores = self.merge_and_persist_scores(
+                scores,
+                file_dict["score_file"],
+            )
         else:
             logger.info("No score_file specified, skipping score saving.")
         return scores

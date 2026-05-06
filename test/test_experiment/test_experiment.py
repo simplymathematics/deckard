@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import numpy as np
+import pytest
 from omegaconf import DictConfig, OmegaConf
 
 from deckard.attack import AttackConfig
@@ -269,41 +270,42 @@ class TestSurvivalExperimentConfig(unittest.TestCase):
     def test_allows_survival_only_config_without_attack(self):
         config = SurvivalExperimentConfig(
             data=DataConfig(dataset_name="make_regression", classifier=False),
-            model=None,
+            model="cox",
+            target="E",
             classifier=False,
-            survival_model="cox",
             duration_col="T",
             event_col="E",
         )
         self.assertIsInstance(config, SurvivalExperimentConfig)
-        self.assertIsNone(config.model)
+        self.assertEqual(config.model, "cox")
 
-    def test_requires_model_config_when_attack_present(self):
+    def test_requires_attack_when_aux_model_present(self):
         with self.assertRaises(ValueError):
             SurvivalExperimentConfig(
                 data=DataConfig(
                     dataset_name="make_regression",
                     classifier=False,
                 ),
-                model=None,
+                model="cox",
+                target="E",
                 classifier=False,
-                survival_model="cox",
+                aux_model=ModelConfig(
+                    model_type="sklearn.linear_model.LogisticRegression",
+                    classifier=True,
+                    model_params={"max_iter": 10},
+                ),
                 duration_col="T",
                 event_col="E",
-                attack=AttackConfig(
-                    attack_type="art.attacks.evasion.HopSkipJump",
-                ),
             )
 
     def test_requires_data_config(self):
         with self.assertRaises(ValueError):
             SurvivalExperimentConfig(
                 data=None,
-                model=ModelConfig(
-                    model_type="sklearn.linear_model.LogisticRegression",
-                    classifier=True,
-                    model_params={"max_iter": 10},
-                ),
+                model="cox",
+                target="E",
+                duration_col="T",
+                event_col="E",
                 classifier=False,
             )
 
@@ -314,18 +316,14 @@ class TestSurvivalExperimentConfig(unittest.TestCase):
                 classifier=False,
                 target=None,
             ),
-            model=ModelConfig(
-                model_type="sklearn.linear_model.LinearRegression",
-                classifier=False,
-                model_params={},
-            ),
+            model="cox",
+            target="E",
             classifier=False,
-            survival_model="cox",
             duration_col="T",
             event_col="E",
         )
         self.assertIsInstance(config, SurvivalExperimentConfig)
-        self.assertEqual(config.survival_model, "cox")
+        self.assertEqual(config.model, "cox")
 
 
 class TestPoisoningExperimentIntegration(unittest.TestCase):
@@ -1426,8 +1424,7 @@ class TestSetDeviceTensorflow(unittest.TestCase):
         )
 
     def test_set_device_tensorflow_cpu(self):
-        if not self.has_tf:
-            self.skipTest("TensorFlow not available")
+        pytest.importorskip("tensorflow")
         exp = self._make_exp()
         exp.set_device("cpu")  # Should not raise
 
@@ -1438,6 +1435,7 @@ class TestSetDeviceTensorflow(unittest.TestCase):
         exp.set_device("cpu")  # Should not raise
 
     def test_set_device_tensorflow_gpu_without_devices(self):
+        pytest.importorskip("tensorflow")
         exp = ExperimentConfig.__new__(ExperimentConfig)
         exp.library = "tensorflow"
         fake_tf = SimpleNamespace(
@@ -1453,6 +1451,7 @@ class TestSetDeviceTensorflow(unittest.TestCase):
             exp.set_device("gpu")
 
     def test_set_device_tensorflow_gpu_index_runtime_error(self):
+        pytest.importorskip("tensorflow")
         exp = ExperimentConfig.__new__(ExperimentConfig)
         exp.library = "tensorflow"
         fake_gpu = object()

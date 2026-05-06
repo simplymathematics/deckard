@@ -611,9 +611,6 @@ class AttackConfig(ConfigBase):
                     exc,
                 )
                 Path(attack_predictions_file).unlink(missing_ok=True)
-        if score_file is not None and Path(score_file).exists():
-            self.score_dict = self.load_scores(score_file)
-
         self._validate_attack_task_compatibility(data, model)
 
         attack, art_model, attack_type, attack_subtype = self._initialize_attack(
@@ -704,8 +701,7 @@ class AttackConfig(ConfigBase):
                 Path(attack_file).unlink(missing_ok=True)
         if attack_predictions_file is not None:
             self.save_data(self.attack_predictions, attack_predictions_file)
-        if score_file is not None:
-            self.save_scores(self.score_dict, score_file)
+        self.score_dict = self.merge_and_persist_scores(self.score_dict, score_file)
         return score_dict
 
     def _get_benign_preds(self, data, art_model, train=False):

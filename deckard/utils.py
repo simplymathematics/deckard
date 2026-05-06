@@ -19,7 +19,7 @@ import hashlib
 
 from pathlib import Path
 from typing import Iterable, Optional, Union, Any
-from dataclasses import dataclass, field
+from dataclasses import MISSING, dataclass, field
 from hydra.utils import instantiate, get_class
 from hydra.core.config_store import ConfigStore
 from omegaconf import DictConfig, OmegaConf
@@ -42,6 +42,8 @@ __all__ = [
     "load_class",
     "safe_store",
     "coerce_config",
+    "prepare_instantiation_dict",
+    "instantiate_config",
     "create_parser_from_function",
     "round_scores",
     "coerce_to_list",
@@ -354,6 +356,57 @@ def coerce_config(config_obj: Any) -> Any:
     return config_obj
 
 
+def prepare_instantiation_dict(
+    config_obj: Any,
+    *,
+    default_target: Optional[str] = None,
+) -> dict[str, Any]:
+    """Normalize config-like input into an instantiation dictionary.
+
+    When ``default_target`` is provided and the resulting mapping lacks a
+    ``_target_`` key, the target is injected so Hydra can instantiate the
+    canonical config class while still allowing user-specified overrides.
+    """
+    config_obj = coerce_config(config_obj)
+    if not isinstance(config_obj, dict):
+        raise TypeError(
+            "Config must resolve to a dict-like object for instantiation. "
+            f"Got {type(config_obj)}",
+        )
+    spec = dict(config_obj)
+    if default_target is not None and "_target_" not in spec:
+        spec["_target_"] = default_target
+    return spec
+
+
+def instantiate_config(
+    config_obj: Any,
+    expected_type: type,
+    *,
+    default_target: Optional[str] = None,
+) -> Any:
+    """Instantiate one config object, injecting a default Hydra target when needed."""
+    if config_obj is None:
+        return None
+    if isinstance(config_obj, expected_type):
+        return config_obj
+
+    if default_target is None:
+        default_target = f"{expected_type.__module__}.{expected_type.__name__}"
+
+    spec = prepare_instantiation_dict(
+        config_obj,
+        default_target=default_target,
+    )
+    instance = instantiate(spec)
+    if not isinstance(instance, expected_type):
+        raise TypeError(
+            f"Expected instantiated config to be {expected_type.__name__}, "
+            f"got {type(instance)}",
+        )
+    return instance
+
+
 def round_scores(scores: dict, n_samples: int, logger_obj: Optional[logging.Logger] = None) -> dict:
     """Round numeric score values using a sample-size-aware precision rule.
 
@@ -523,20 +576,95 @@ class ConfigBase:
 
         # Initialize args attribute
         self.args = args if args else ()
-        #  Set attributes from args and kwds
+
+        dataclass_fields = self.__dataclass_fields__
+        init_fields = [
+            field_name
+            for field_name, dataclass_field in dataclass_fields.items()
+            if dataclass_field.init
+        ]
+
+        # Seed dataclass defaults/default_factories before applying user values.
+        for field_name, dataclass_field in dataclass_fields.items():
+            if dataclass_field.default is not MISSING:
+                setattr(self, field_name, dataclass_field.default)
+            elif dataclass_field.default_factory is not MISSING:
+                setattr(self, field_name, dataclass_field.default_factory())
+
+        if len(args) > len(init_fields):
+            raise TypeError(
+                f"Expected at most {len(init_fields)} positional arguments, got {len(args)}",
+            )
+
         for i, arg in enumerate(args):
-            setattr(self, list(self.__dataclass_fields__.keys())[i], arg)
+            setattr(self, init_fields[i], arg)
         for k, v in kwds.items():
             setattr(self, k, v)
-        # Call post init
+
+        self._before_post_init()
         self.__post_init__()
+        self._after_post_init()
+
+    def __post_init__(self):
+        pass
+
+    def _before_post_init(self) -> None:
+        """Hook for subclasses that need pre-normalization before __post_init__."""
+
+    def _after_post_init(self) -> None:
+        """Finalize common lifecycle state after __post_init__."""
         # Freeze hash at configuration time so runtime attributes added during
         # execution cannot alter experiment identity.
         self._hash_payload = self.to_dict(for_hash=True)
         self._hash_value = hash_conf_values(self._hash_payload)
 
-    def __post_init__(self):
-        pass
+    def coerce_component(
+        self,
+        component: Any,
+        expected_type: type,
+        *,
+        default_target: Optional[str] = None,
+        overrides: Optional[dict[str, Any]] = None,
+        allow_passthrough: Optional[Any] = None,
+    ) -> Any:
+        """Instantiate/normalize a config component to ``expected_type``.
+
+        Parameters
+        ----------
+        component : Any
+            Config-like object, runtime object, or expected config instance.
+        expected_type : type
+            The required config class.
+        default_target : str, optional
+            Hydra target path used when input lacks ``_target_``.
+        overrides : dict, optional
+            Key/value pairs injected into the normalized instantiation spec.
+        allow_passthrough : callable, optional
+            If provided and returns ``True`` for *component*, bypasses coercion.
+        """
+        if component is None:
+            return None
+
+        if isinstance(component, expected_type):
+            return component
+
+        if allow_passthrough is not None and allow_passthrough(component):
+            return component
+
+        if default_target is None:
+            default_target = f"{expected_type.__module__}.{expected_type.__name__}"
+
+        spec = prepare_instantiation_dict(component, default_target=default_target)
+        if overrides:
+            spec.update(overrides)
+
+        instance = instantiate(spec)
+        if not isinstance(instance, expected_type):
+            raise TypeError(
+                f"Expected instantiated config to be {expected_type.__name__}, "
+                f"got {type(instance)}",
+            )
+        return instance
 
     def __call__(self):
         raise NotImplementedError("This is an abstract base class.")
@@ -674,6 +802,27 @@ class ConfigBase:
             else:
                 scores = {}
         return scores
+
+    def merge_and_persist_scores(
+        self,
+        new_scores: dict,
+        score_file: Optional[str],
+    ) -> dict:
+        """Merge score payload with on-disk scores and persist only when needed."""
+        if score_file is None:
+            return new_scores
+
+        score_path = Path(score_file)
+        score_path.parent.mkdir(parents=True, exist_ok=True)
+
+        existing_scores: dict = {}
+        if score_path.exists():
+            existing_scores = self.load_scores(score_file)
+
+        merged_scores = {**existing_scores, **new_scores}
+        if (not score_path.exists()) or merged_scores != existing_scores:
+            self.save_scores(merged_scores, score_file)
+        return merged_scores
 
     def get_call_params(self) -> dict:
         """

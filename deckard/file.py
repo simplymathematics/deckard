@@ -126,6 +126,8 @@ class FileConfig(ConfigBase):
     )
 
     def __post_init__(self) -> None:
+        super().__post_init__()
+        if self.replace is None:
             self.replace = {}
         elif not isinstance(self.replace, dict):
             self.replace = dict(self.replace)

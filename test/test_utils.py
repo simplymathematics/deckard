@@ -436,8 +436,10 @@ class TestUtilsAdditional(unittest.TestCase):
                 csv_scores = cfg.load_scores(str(csv_path))
                 xlsx_scores = cfg.load_scores(str(xlsx_path))
 
-        self.assertIsInstance(csv_scores, pd.DataFrame)
-        self.assertIsInstance(xlsx_scores, pd.DataFrame)
+        self.assertIsInstance(csv_scores, dict)
+        self.assertIsInstance(xlsx_scores, dict)
+        self.assertIn("acc", csv_scores)
+        self.assertIn("acc", xlsx_scores)
 
     def test_load_scores_unsupported_extension_raises(self):
         cfg = BaseConfig()
@@ -575,9 +577,11 @@ class TestUtilsAdditional(unittest.TestCase):
                 restored.load(str(Path(td) / "missing.pkl"))
 
     def test_from_yaml_from_dict_and_to_yaml_paths(self):
+        target_a = f"{__name__}.TypeAConfig"
+        target_b = f"{__name__}.TypeBConfig"
         with tempfile.TemporaryDirectory() as td:
             yaml_path = Path(td) / "config.yaml"
-            yaml_path.write_text("_target_: test.test_utils.TypeAConfig\nscore_dict: {}\n")
+            yaml_path.write_text(f"_target_: {target_a}\nscore_dict: {{}}\n")
             loaded = BaseConfig.from_yaml(str(yaml_path))
             self.assertIsInstance(loaded, TypeAConfig)
 
@@ -586,7 +590,7 @@ class TestUtilsAdditional(unittest.TestCase):
             with self.assertRaises(TypeError):
                 BaseConfig.from_yaml(str(bad_yaml_path))
 
-        loaded = BaseConfig.from_dict({"_target_": "test.test_utils.TypeBConfig", "score_dict": {}})
+        loaded = BaseConfig.from_dict({"_target_": target_b, "score_dict": {}})
         self.assertIsInstance(loaded, TypeBConfig)
         self.assertIn("score_dict", BaseConfig(score_dict={"x": 1}).to_yaml())
 

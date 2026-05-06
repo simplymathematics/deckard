@@ -8,6 +8,9 @@ import logging
 
 from .base import ExperimentConfig
 
+# Import declarations to register survival ConfigStore nodes.
+from . import declarations  # noqa: F401
+
 logger = logging.getLogger(__name__)
 
 try:
