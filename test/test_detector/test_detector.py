@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
+from omegaconf import OmegaConf
 from sklearn.datasets import make_classification
 
 from deckard.detector import DetectorConfig
@@ -221,3 +222,158 @@ def test_real_art_poisoning_detector_executes():
     assert isinstance(report, dict)
     assert len(is_clean) == len(X_mix)
     assert np.all((is_clean == 0) | (is_clean == 1))
+
+
+def test_detector_model_coercion_dictconfig_and_invalid_type():
+    cfg = DetectorConfig(
+        detector_model=OmegaConf.create(
+            {
+                "model_type": "sklearn.linear_model.LogisticRegression",
+                "classifier": True,
+                "model_params": {"max_iter": 10},
+            },
+        ),
+    )
+    assert cfg.detector_model is not None
+
+    with pytest.raises(TypeError, match="Unsupported detector_model type"):
+        DetectorConfig(detector_model=123)
+
+
+def test_detector_model_coercion_from_yaml_string(monkeypatch):
+    class _DummyLoaded:
+        def to_dict(self):
+            return {
+                "model_type": "sklearn.linear_model.LogisticRegression",
+                "classifier": True,
+                "model_params": {"max_iter": 10},
+            }
+
+    monkeypatch.setattr(
+        "deckard.detector.base.ModelConfig.from_yaml",
+        lambda _path: _DummyLoaded(),
+    )
+
+    cfg = DetectorConfig(detector_model="fake.yaml")
+    assert cfg.detector_model is not None
+
+
+def test_detector_build_dataset_split_and_size_validation():
+    data, attack = _make_data_and_attack(n=4, d=3)
+    cfg = DetectorConfig(
+        detector_model={
+            "model_type": "sklearn.linear_model.LogisticRegression",
+            "classifier": True,
+            "model_params": {"max_iter": 10},
+        },
+        fit_params={"split": "invalid"},
+    )
+
+    with pytest.raises(ValueError, match="Unsupported detector split"):
+        cfg._build_detector_dataset(data, attack)
+
+    empty_attack = SimpleNamespace(attack_predictions=np.empty((0, 3), dtype=np.float32))
+    cfg.fit_params = {"split": "test"}
+    with pytest.raises(ValueError, match="must contain at least one"):
+        cfg._build_detector_dataset(data, empty_attack)
+
+
+def test_detector_build_backend_requires_detector_model():
+    cfg = DetectorConfig(detector_model=None)
+    with pytest.raises(ValueError, match="requires detector_model"):
+        cfg._build_detector_backend(
+            x_train=np.zeros((2, 2), dtype=np.float32),
+            y_train=np.array([0, 1]),
+        )
+
+
+def test_detector_constructor_fallback_and_detect_poison_indices(monkeypatch):
+    class _FallbackPoisonDetector:
+        def __init__(self, classifier, x_train, y_train, **kwargs):
+            _ = classifier, x_train, y_train, kwargs
+
+        def fit(self, x, y, **kwargs):
+            _ = x, y, kwargs
+
+        def detect_poison(self, **kwargs):
+            _ = kwargs
+            # Return poison indices, not full-length clean mask.
+            return {"mock": True}, np.array([0, 2])
+
+    data, attack = _make_data_and_attack(n=4, d=2)
+    cfg = DetectorConfig(
+        detector_model={
+            "model_type": "sklearn.linear_model.LogisticRegression",
+            "classifier": True,
+            "model_params": {"max_iter": 10},
+        },
+        fit_params={"split": "test"},
+    )
+
+    monkeypatch.setattr(
+        "deckard.detector.base.resolve_class",
+        lambda _name: _FallbackPoisonDetector,
+    )
+    monkeypatch.setattr(
+        DetectorConfig,
+        "_build_detector_backend",
+        lambda self, x_train, y_train: object(),
+    )
+
+    scores = cfg(data=data, model=None, attack=attack)
+    assert scores["detector_n"] == 8
+    assert "detector_accuracy" in scores
+
+
+def test_detector_detect_poison_invalid_shape_raises(monkeypatch):
+    class _BadPoisonDetector:
+        def __init__(self, classifier, x_train, y_train, **kwargs):
+            _ = classifier, x_train, y_train, kwargs
+
+        def detect_poison(self, **kwargs):
+            _ = kwargs
+            return {"mock": True}, np.ones((2, 2), dtype=int)
+
+    data, attack = _make_data_and_attack(n=3, d=2)
+    cfg = DetectorConfig(
+        detector_model={
+            "model_type": "sklearn.linear_model.LogisticRegression",
+            "classifier": True,
+            "model_params": {"max_iter": 10},
+        },
+    )
+
+    monkeypatch.setattr("deckard.detector.base.resolve_class", lambda _name: _BadPoisonDetector)
+    monkeypatch.setattr(
+        DetectorConfig,
+        "_build_detector_backend",
+        lambda self, x_train, y_train: object(),
+    )
+
+    with pytest.raises(ValueError, match="Unsupported detect_poison output shape"):
+        cfg(data=data, model=None, attack=attack)
+
+
+def test_detector_raises_when_backend_has_no_detection_api(monkeypatch):
+    class _NoDetectDetector:
+        def __init__(self, detector, **kwargs):
+            _ = detector, kwargs
+
+    data, attack = _make_data_and_attack(n=3, d=2)
+    cfg = DetectorConfig(
+        detector_model={
+            "model_type": "sklearn.linear_model.LogisticRegression",
+            "classifier": True,
+            "model_params": {"max_iter": 10},
+        },
+    )
+
+    monkeypatch.setattr("deckard.detector.base.resolve_class", lambda _name: _NoDetectDetector)
+    monkeypatch.setattr(
+        DetectorConfig,
+        "_build_detector_backend",
+        lambda self, x_train, y_train: object(),
+    )
+
+    with pytest.raises(AttributeError, match="exposes neither detect\(\) nor detect_poison\(\)"):
+        cfg(data=data, model=None, attack=attack)
