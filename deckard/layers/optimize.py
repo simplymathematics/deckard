@@ -6,6 +6,9 @@ import yaml
 import optuna
 from typing import Any, cast
 from hydra.experimental.callback import Callback as HydraCallback
+from optuna.storages._rdb import models as _optuna_rdb_models
+from optuna.storages._rdb.storage import _create_scoped_session as _optuna_scoped_session
+
 
 from omegaconf import OmegaConf, DictConfig, ListConfig
 from hydra.utils import instantiate
@@ -54,6 +57,10 @@ class OptunaStudyCallback(HydraCallback):
         """Prepare per-job naming and output paths for multirun composition."""
         hydra_cfg = HydraConfig.get()
         _normalize_mode_cfg(config, hydra_cfg, include_file_paths=True)
+        _seed_experiment_uuid_for_current_trial(
+            hydra_cfg=hydra_cfg,
+            experiment_name=getattr(config, "experiment_name", ""),
+        )
 
     def on_run_start(self, config: DictConfig, **kwargs: Any) -> None:
         """Validate and normalize run-mode config early in the Hydra lifecycle."""
@@ -77,6 +84,11 @@ class OptunaStudyCallback(HydraCallback):
 
     def on_job_start(self, config: DictConfig, **kwargs: Any) -> None:
         """Persist the per-job parameter snapshot before execution."""
+        hydra_cfg = HydraConfig.get()
+        _seed_experiment_uuid_for_current_trial(
+            hydra_cfg=hydra_cfg,
+            experiment_name=getattr(config, "experiment_name", ""),
+        )
         files_cfg = getattr(config, "files", None)
         if files_cfg is None:
             return
@@ -115,6 +127,10 @@ class OptunaStudyCallback(HydraCallback):
         )
         if score_payload is None:
             return
+        score_payload = _inject_experiment_name(
+            score_payload,
+            getattr(config, "experiment_name", ""),
+        )
 
         _sync_multirun_trial_attributes(
             hydra_cfg=hydra_cfg,
@@ -122,7 +138,6 @@ class OptunaStudyCallback(HydraCallback):
             optimizers=getattr(config, "optimizers", self.optimizers),
             directions=getattr(config, "directions", self.directions),
             experiment_name=getattr(config, "experiment_name", ""),
-            trial_number=_get_hydra_job_identifier(hydra_cfg),
         )
 
         score_path = Path(str(score_file))
@@ -176,7 +191,95 @@ def _resolve_multirun_paths(hydra_cfg) -> dict:
 def _get_hydra_job_identifier(hydra_cfg):
     """Return Hydra's stable job id for trial/attribute synchronization."""
     job_cfg = getattr(hydra_cfg, "job", None)
-    return getattr(job_cfg, "id", None)
+    job_id = getattr(job_cfg, "id", None)
+    if job_id is None:
+        return None
+    job_id_str = str(job_id)
+    if job_id_str.isdigit():
+        return job_id_str
+
+    # Joblib launcher can emit ids like '__main___0'; Optuna trial numbers use
+    # the trailing numeric index, so normalize to that when available.
+    trial_suffix = job_id_str.rsplit("_", 1)[-1]
+    if trial_suffix.isdigit():
+        return trial_suffix
+    return job_id
+
+
+def _seed_experiment_uuid_for_current_trial(hydra_cfg, experiment_name) -> None:
+    """Attach experiment UUID to the currently executing Optuna trial."""
+    sweeper = _get_sweeper_cfg(hydra_cfg)
+    if not isinstance(sweeper, dict):
+        return
+
+    storage = sweeper.get("storage")
+    study_name = sweeper.get("study_name")
+    trial_number = _get_hydra_job_identifier(hydra_cfg)
+    if not storage or not study_name or trial_number is None:
+        return
+
+    study = optuna.study.load_study(storage=storage, study_name=study_name)
+    exp_uuid = _ensure_experiment_hash(experiment_name)
+    trials = list(study.get_trials(deepcopy=False))
+    selected_trial = next(
+        (t for t in trials if str(getattr(t, "number", None)) == str(trial_number)),
+        None,
+    )
+    if selected_trial is None:
+        return
+
+    trial_id = getattr(selected_trial, "_trial_id", getattr(selected_trial, "trial_id", None))
+    if trial_id is None or not hasattr(study, "_storage"):
+        return
+    study._storage.set_trial_user_attr(trial_id, "experiment_name", exp_uuid)
+
+
+def _inject_experiment_name(score_payload, experiment_name):
+    if not isinstance(score_payload, dict):
+        return score_payload
+    exp = str(experiment_name).strip()
+    if not exp:
+        return score_payload
+    exp_uuid = _ensure_experiment_hash(exp)
+    return {**score_payload, "experiment_name": exp_uuid}
+
+
+def _overwrite_frozen_trial_user_attr(study, trial_id: int, key: str, value: Any) -> bool:
+    """Bypass Optuna's finished-trial mutability guard for RDB-backed studies."""
+    storage = getattr(study, "_storage", None)
+    backend = getattr(storage, "_backend", None)
+    if (
+        backend is None
+        or _optuna_rdb_models is None
+        or _optuna_scoped_session is None
+        or not hasattr(backend, "scoped_session")
+    ):
+        return False
+
+    try:
+        with _optuna_scoped_session(backend.scoped_session, True) as session:
+            trial_model = _optuna_rdb_models.TrialModel.find_or_raise_by_id(trial_id, session)
+            attribute = _optuna_rdb_models.TrialUserAttributeModel.find_by_trial_and_key(
+                trial_model,
+                key,
+                session,
+            )
+            value_json = json.dumps(value)
+            if attribute is None:
+                attribute = _optuna_rdb_models.TrialUserAttributeModel(
+                    trial_id=trial_id,
+                    key=key,
+                    value_json=value_json,
+                )
+                session.add(attribute)
+            else:
+                attribute.value_json = value_json
+    except Exception:
+        return False
+    return True
+
+
+
 
 
 def _prepare_multirun_cfg(cfg, hydra_cfg, include_file_paths: bool = False):
@@ -241,13 +344,11 @@ def _sync_multirun_trial_attributes(
     optimizers,
     directions,
     experiment_name,
-    trial_number=None,
 ) -> None:
     """Sync non-optimized scores as trial attributes for the current multirun trial."""
-    if not _is_multirun_mode(hydra_cfg):
-        return
     if not isinstance(score_payload, dict):
         return
+    score_payload = _inject_experiment_name(score_payload, experiment_name)
 
     sweeper = _get_sweeper_cfg(hydra_cfg)
     if not isinstance(sweeper, dict):
@@ -265,12 +366,21 @@ def _sync_multirun_trial_attributes(
     if not attrs:
         return
 
-    study = optuna.study.load_study(storage=storage, study_name=study_name)
+    try:
+        study = optuna.study.load_study(storage=storage, study_name=study_name)
+    except KeyError:
+        logger.warning(
+            "Skipping trial attribute sync: study '%s' not found in storage '%s'.",
+            study_name,
+            storage,
+        )
+        return
+
     set_trial_attributes(
         study=study,
         attrs=attrs,
         experiment_name=str(experiment_name),
-        trial_number=trial_number,
+        trial_number=_get_hydra_job_identifier(hydra_cfg),
     )
 
 
@@ -328,7 +438,6 @@ def optimize_multirun(
         optimizers=optimizers,
         directions=directions,
         experiment_name=getattr(conf_obj, "experiment_name", ""),
-        trial_number=_get_hydra_job_identifier(hydra_cfg),
     )
 
     return filtered_scores
@@ -541,9 +650,9 @@ def set_trial_attributes(
     study,
     attrs,
     experiment_name: str,
-    trial_number: int | None = None,
+    trial_number=None,
 ) -> None:
-    """Persist per-trial user attributes for the trial matching an experiment hash."""
+    """Persist per-trial user attributes for one unambiguous target trial."""
     if isinstance(attrs, DictConfig):
         attrs = OmegaConf.to_container(attrs, resolve=True)
 
@@ -554,53 +663,54 @@ def set_trial_attributes(
         raise TypeError(f"attrs must be a dict-like object. Got {type(attrs)}")
 
     exp_uuid = _ensure_experiment_hash(experiment_name)
-    trials = study.get_trials(deepcopy=False)
-    trial = next(
-        (
-            t
-            for t in trials
-            if getattr(t, "user_attrs", {}).get("experiment_name") == exp_uuid
-        ),
-        None,
-    )
+    attrs = {**attrs, "experiment_name": exp_uuid}
+    trials = list(study.get_trials(deepcopy=False))
+    if not trials:
+        logger.warning("Skipping trial attribute sync: no trials found in study '%s'.", study.study_name)
+        return
 
-    if trial is None and trial_number is not None:
-        trial = next(
-            (
-                t
-                for t in trials
-                if str(getattr(t, "number", None)) == str(trial_number)
-            ),
+    selected_trial = None
+    if trial_number is not None:
+        selected_trial = next(
+            (t for t in trials if str(getattr(t, "number", None)) == str(trial_number)),
             None,
         )
 
-    if trial is None and len(trials) == 1:
-        trial = trials[0]
+    if selected_trial is None and trial_number is None and len(trials) == 1:
+        selected_trial = trials[0]
 
-    if trial is None:
+    if selected_trial is None and trial_number is None:
+        matching = [
+            t
+            for t in trials
+            if getattr(t, "user_attrs", {}).get("experiment_name") == exp_uuid
+        ]
+        if len(matching) == 1:
+            selected_trial = matching[0]
+
+    if selected_trial is None:
         logger.warning(
-            "Skipping trial attribute sync: trial with experiment_name=%s not found in study '%s'.",
-            exp_uuid,
+            "Skipping trial attribute sync: target trial not found in study '%s' (trial_number=%s).",
             study.study_name,
+            trial_number,
         )
         return
 
-    # `study.get_trials()` returns FrozenTrial objects; write attrs through storage.
-    trial_id = getattr(trial, "_trial_id", None)
+    trial_id = getattr(selected_trial, "_trial_id", None)
     if trial_id is None:
-        trial_id = getattr(trial, "trial_id", None)
-
-    if exp_uuid is not None:
-        attrs = {**attrs, "experiment_name": exp_uuid}
+        trial_id = getattr(selected_trial, "trial_id", None)
 
     for k, v in attrs.items():
         if isinstance(v, (DictConfig, ListConfig)):
             v = OmegaConf.to_container(v, resolve=True)
         if trial_id is not None and hasattr(study, "_storage"):
-            study._storage.set_trial_user_attr(trial_id, k, v)
-        elif hasattr(trial, "set_user_attr"):
-            # Fallback for tests/mocks that expose mutable trial helpers.
-            trial.set_user_attr(k, v)
+            try:
+                study._storage.set_trial_user_attr(trial_id, k, v)
+            except optuna.exceptions.UpdateFinishedTrialError:
+                if not _overwrite_frozen_trial_user_attr(study, trial_id, k, v):
+                    raise
+        elif hasattr(selected_trial, "set_user_attr"):
+            selected_trial.set_user_attr(k, v)
         else:
             raise RuntimeError(
                 f"Unable to set trial attribute '{k}' for experiment_name={exp_uuid}; "
