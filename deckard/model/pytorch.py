@@ -231,7 +231,7 @@ class PytorchModelConfig(ModelConfig):
             f"Initialized model {self.model_type} on device {self.device}",
         )
 
-    def get_model(self):
+    def get_model(self) -> Any:
         """Return the underlying PyTorch model."""
         if self._model is None:
             raise ValueError("Model not initialized")
@@ -877,7 +877,7 @@ class PytorchModelConfig(ModelConfig):
         }
         return scores
 
-    def get_art_model(self, data: DataConfig):
+    def get_art_model(self, data: "DataConfig") -> Any:
         """Get ART-compatible model wrapper for adversarial robustness."""
         if self.clip_values is None or len(self.clip_values) == 0:
             clip_values = (0.0, 1.0)

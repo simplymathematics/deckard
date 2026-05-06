@@ -23,6 +23,10 @@ The toolkit includes support for multiple classes of evasion and inference
 attacks, as well as fairness-oriented metrics and defenses, and is designed to
 be easily extended with additional model, data, metric, and attack components.
 
+Experiment configs support both single-attack and multi-attack workflows.
+Multi-attack workflows reuse the same ``attack`` field by accepting a list of
+attack definitions with required aliases for collision-safe metric naming.
+
 In practice, Deckard is used both as:
 
 - a backend for large-scale automated evaluation and benchmarking
@@ -136,6 +140,13 @@ based evaluations, and platform/power analyses.
 
 These examples are intended as executable references for adapting Deckard to
 new model families and experimental questions.
+
+Example coverage includes:
+
+- attack presets across evasion, inference, inversion, and reconstruction
+- scorer profiles for classification, regression, fairness, survival, and
+   attack-specific metrics
+- plotting presets for Yellowbrick diagnostics and Seaborn score visualizations
 
 Experiment Management
 ---------------------

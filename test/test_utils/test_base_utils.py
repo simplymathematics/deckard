@@ -25,6 +25,7 @@ from deckard.utils import (
     load_class,
     load_data,
     merge_list_of_dicts,
+    merge_scores_with_collision_suffix,
     resolve_class,
     resolve_torch_device,
     safe_store,
@@ -603,6 +604,33 @@ class TestCoerceHelpers(unittest.TestCase):
             result = coerce_config(str(p))
             self.assertIsInstance(result, dict)
             self.assertEqual(result["a"], 1)
+
+    def test_merge_scores_with_collision_suffix_keeps_unique_keys(self):
+        result = merge_scores_with_collision_suffix(
+            {"accuracy": 0.8},
+            {"latency": 1.2},
+            alias="hsj",
+        )
+        self.assertEqual(result["accuracy"], 0.8)
+        self.assertEqual(result["latency"], 1.2)
+
+    def test_merge_scores_with_collision_suffix_uses_alias_for_collisions(self):
+        result = merge_scores_with_collision_suffix(
+            {"evasion_accuracy": 0.6},
+            {"evasion_accuracy": 0.4, "attack_generation_time": 2.0},
+            alias="fgm",
+        )
+        self.assertEqual(result["evasion_accuracy"], 0.6)
+        self.assertEqual(result["evasion_accuracy_fgm"], 0.4)
+        self.assertEqual(result["attack_generation_time"], 2.0)
+
+    def test_merge_scores_with_collision_suffix_without_alias_overwrites(self):
+        result = merge_scores_with_collision_suffix(
+            {"evasion_accuracy": 0.6},
+            {"evasion_accuracy": 0.4},
+            alias=None,
+        )
+        self.assertEqual(result["evasion_accuracy"], 0.4)
 
 
 # ── ConfigBase – save/load scores ────────────────────────────────────────────

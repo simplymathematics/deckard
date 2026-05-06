@@ -125,7 +125,7 @@ class _DefenseBehaviorMixin:
         self.defense_params = self.defense_params or {}
         self._apply_fit = True  # Whether to apply fit during defense application
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return super().__hash__()
 
     def _freeze_defense_value(self, value):
@@ -221,9 +221,9 @@ class _DefenseBehaviorMixin:
 
     def apply_to(
         self,
-        estimator: Union[BaseEstimator, None],
-        data,
-    ) -> BaseEstimator:
+        estimator: Union["BaseEstimator", None],
+        data: Any,
+    ) -> "BaseEstimator":
         """Apply this defense to a pre-fitted estimator."""
         if estimator is None:
             raise ValueError(
@@ -235,7 +235,7 @@ class _DefenseBehaviorMixin:
             model_cfg._model = estimator
         return self.apply_defense(data)
 
-    def apply_defense(self, data) -> BaseEstimator:
+    def apply_defense(self, data: Any) -> "BaseEstimator":
         """Apply the specified defense to the model's estimator.
 
         Returns
@@ -503,7 +503,7 @@ class _DefenseBehaviorMixin:
             model_cfg._model = defended_estimator
         return defended_estimator
 
-    def parse_defense_name(self):
+    def parse_defense_name(self) -> tuple:
         if self.defense_name is not None and len(self.defense_name) > 0:
             module_name, class_name = self.defense_name.rsplit(".", 1)
         else:
@@ -538,7 +538,7 @@ class _DefenseBehaviorMixin:
 
         return defense_type, defense_subtype, defense_class
 
-    def get_art_class(self, data):
+    def get_art_class(self, data: Any):
         if (
             _is_torch_model_instance(getattr(self, "_model", None))
             or (
@@ -660,7 +660,7 @@ class DefensePipelineConfig(ConfigBase):
             self._target_ = "deckard.model.DefensePipelineConfig"
         self.defenses = self.normalize_defenses(self.defenses)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return super().__hash__()
 
     @classmethod
@@ -691,7 +691,7 @@ class DefensePipelineConfig(ConfigBase):
         return any(key in defense_spec for key in legacy_keys)
 
     @classmethod
-    def coerce(cls, defense_config: Any):
+    def coerce(cls, defense_config: Any) -> "DefensePipelineConfig":
         if defense_config is None or isinstance(defense_config, cls):
             return defense_config
 
@@ -849,7 +849,7 @@ class DefensePipelineConfig(ConfigBase):
         ):
             defense_obj.probability = True
 
-    def normalize_defenses(self, defenses) -> list:
+    def normalize_defenses(self, defenses: Any) -> list:
         if defenses is None:
             return []
         if isinstance(defenses, (tuple, list)):
@@ -861,7 +861,7 @@ class DefensePipelineConfig(ConfigBase):
     def resolve_stage(
         self,
         default_stage: str = "post_fit_pre_predict",
-        **context,
+        **context: Any,
     ) -> str:
         stage = default_stage
         hook_outputs = self._run_plugin_hook(
@@ -1105,5 +1105,5 @@ class DefenseConfig(_DefenseBehaviorMixin, ConfigBase):
         compare=False,
     )
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return super().__hash__()

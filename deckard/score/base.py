@@ -130,7 +130,7 @@ class ScorerConfig:
 
         return np.argmax(y_pred_arr, axis=1)
 
-    def __call__(self, y_true, y_pred, swap: bool = False, **kwargs):
+    def __call__(self, y_true: Any, y_pred: Any, swap: bool = False, **kwargs: Any) -> Any:
         if swap:
             y_true, y_pred = y_pred, y_true
         y_true = to_numpy_if_torch(y_true)

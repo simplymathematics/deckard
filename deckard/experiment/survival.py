@@ -30,7 +30,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
     duration_col = "T"
     event_col = "E"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.data is None:
             raise ValueError("SurvivalExperimentConfig requires a data config")

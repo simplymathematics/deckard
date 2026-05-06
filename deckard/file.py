@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 import time
 import hashlib
 import logging
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 
 from .utils import ConfigBase, safe_store
@@ -125,9 +125,7 @@ class FileConfig(ConfigBase):
         default_factory=dict,
     )
 
-    def __post_init__(self):
-        super().__post_init__()
-        if self.replace is None:
+    def __post_init__(self) -> None:
             self.replace = {}
         elif not isinstance(self.replace, dict):
             self.replace = dict(self.replace)
@@ -211,7 +209,7 @@ class FileConfig(ConfigBase):
                 file_dict[file_attr] = file_path
         return file_dict
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         for path in self._file_dict:
             yield path
 
@@ -223,5 +221,5 @@ class FileConfig(ConfigBase):
                 count += 1
         return count
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return super().__hash__()

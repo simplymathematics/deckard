@@ -179,6 +179,25 @@ set. Deckard passes the attack-specific prediction values to that generic
 profile and prefixes the output keys so they remain unambiguous in merged score
 dicts.
 
+Multi-attack score key behavior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When ``ExperimentConfig.attack`` is configured as a list, Deckard merges the
+per-attack score dictionaries in order.
+
+- Non-colliding keys are preserved as-is.
+- Only colliding keys are suffixed with ``_<attack.alias>``.
+- Aliases are required for multi-attack runs.
+
+Example:
+
+- ``evasion_accuracy`` from the first attack remains ``evasion_accuracy``
+- a colliding ``evasion_accuracy`` from alias ``hsj`` becomes
+   ``evasion_accuracy_hsj``
+
+This naming behavior keeps backward compatibility for single-attack workflows
+while preserving all metrics in multi-attack experiments.
+
 Fairness Scoring Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -285,6 +304,26 @@ Example CLI overrides:
    python -m deckard optimize --config-name survival score=survival
    python -m deckard optimize --config-name experiment data=fair-adult score=fairness-classification
    python -m deckard optimize --config-name experiment data=fair-adult score=fairness-regression
+
+Examples with attack scorer profiles:
+
+.. code-block:: bash
+
+   python -m deckard optimize \
+      --config-path examples/sklearn/config \
+      --config-name attack-default \
+      score=attack-classification \
+      attack=fgm
+
+   python -m deckard optimize \
+      --config-path examples/sklearn/config \
+      --config-name attribute-inference-default \
+      score=attribute-inference
+
+   python -m deckard optimize \
+      --config-path examples/sklearn/config \
+      --config-name inference-default \
+      score=membership-inference
 
 You can also override nested scorer definitions inline when you only need one
 or two metrics:
@@ -400,8 +439,7 @@ Troubleshooting
 - If evasion scoring is configured with regression metrics for a classification
    attack, or vice versa, the resulting metric calculations may fail or produce
    misleading values. Match the scorer profile to the task type.
-- If repeated imports happen during tests, duplicate config-store registration
-   is expected and handled by :func:`deckard.score.safe_store`.
+
 
 See also
 ~~~~~~~~

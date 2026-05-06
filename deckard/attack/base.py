@@ -9,7 +9,7 @@ import pandas as pd
 
 # Typing imports
 from dataclasses import dataclass, field
-from typing import Literal, Optional, Union, TYPE_CHECKING
+from typing import Any, Literal, Optional, Union, TYPE_CHECKING
 
 # Sklearn and numpy imports
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
@@ -75,15 +75,15 @@ class SensitiveFeaturesWrapper(BaseEstimator):
         self.estimator = estimator
         self._sensitive = np.asarray(sensitive_features)
 
-    def fit(self, X, y, **kwargs):
+    def fit(self, X: Any, y: Any, **kwargs: Any) -> Any:
         return self.estimator.fit(X, y, **kwargs)
 
-    def predict(self, X):
+    def predict(self, X: Any) -> Any:
         n = len(X)
         sf = self._sensitive[:n]
         return self.estimator.predict(X, sensitive_features=sf)
 
-    def predict_proba(self, X):
+    def predict_proba(self, X: Any) -> Any:
         n = len(X)
         sf = self._sensitive[:n]
         if hasattr(self.estimator, "predict_proba"):
@@ -99,13 +99,13 @@ class SensitiveFeaturesWrapper(BaseEstimator):
             proba[i, idx] = 1.0
         return proba
 
-    def get_params(self, deep=True):
+    def get_params(self, deep: bool = True) -> dict:
         return {
             "estimator": self.estimator,
             "sensitive_features": self._sensitive,
         }
 
-    def set_params(self, **params):
+    def set_params(self, **params: Any) -> "SensitiveFeaturesWrapper":
         if "estimator" in params:
             self.estimator = params["estimator"]
         if "sensitive_features" in params:
@@ -1150,7 +1150,7 @@ class AttackConfig(ConfigBase):
         self.attack = adv_pred
         return self.score_dict
 
-    def get_attack_subset(self, data, test=True):
+    def get_attack_subset(self, data: Any, test: bool = True) -> tuple:
         n = self.attack_size
         if test is True:
             x_ = data.X_test

@@ -725,7 +725,7 @@ class FairlearnDefenseConfig(_FairnessBehaviorMixin, DefenseConfig):
 
     data: Union[FairlearnDataConfig, None] = None
 
-    def apply_defense(self, data) -> BaseEstimator:
+    def apply_defense(self, data: Any) -> "BaseEstimator":
         defense_name, _ = self._resolve_fairness_defense_spec()
         if not defense_name or not defense_name.startswith("fairlearn."):
             return super().apply_defense(data)

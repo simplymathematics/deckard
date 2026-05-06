@@ -1515,9 +1515,6 @@ class DataPipelineConfig(DataConfig):
         if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
             self._sample()
         time_dict["data_sample_time"] = (self.data_sample_time,)
-        logger.info(
-            f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
-        )
         # Fit X pipeline
         self.X_train, self.X_test, self.y_train, self.y_test = self._fit_transform_X(
             self.X_train,
@@ -1526,6 +1523,28 @@ class DataPipelineConfig(DataConfig):
             self.y_test,
             X_pipeline,
         )
+        # Apply fitted pipeline to validation set when present
+        if getattr(self, "X_val", None) is not None and X_pipeline.steps:
+            if isinstance(self.X_val, pd.DataFrame):
+                val_cols = self.X_val.columns
+            elif isinstance(self.X_val, pd.Series):
+                val_cols = [self.X_val.name]
+            else:
+                val_cols = [f"feature_{i}" for i in range(self.X_val.shape[1])]
+            X_val_transformed = X_pipeline.transform(self.X_val)
+            from scipy.sparse import issparse
+            if issparse(X_val_transformed):
+                X_val_transformed = X_val_transformed.toarray()
+            try:
+                val_cols_out = list(X_pipeline.get_feature_names_out(val_cols))
+            except AttributeError:
+                n_features = X_val_transformed.shape[1]
+                val_cols_out = (
+                    list(val_cols)
+                    if len(val_cols) == n_features
+                    else [f"feature_{i}" for i in range(n_features)]
+                )
+            self.X_val = pd.DataFrame(X_val_transformed, columns=val_cols_out)
         # Fit y pipeline
         if y_pipeline is not None:
             self.X_train, self.X_test, self.y_train, self.y_test = (
@@ -1545,6 +1564,17 @@ class DataPipelineConfig(DataConfig):
             "pipeline_transform_time": self.pipeline_transform_time,
             "pipeline_transform_n": self.pipeline_transform_n,
         }
+        if getattr(self, "val_n", None) is not None:
+            time_dict["val_n"] = self.val_n
+        if getattr(self, "X_val", None) is not None:
+            logger.info(
+                f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}, "
+                f"Val set size: {len(self.X_val)}",
+            )
+        else:
+            logger.info(
+                f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
+            )
         self.score_dict.update(**time_dict)
         data_scores = self._score()
         all_scores = {**scores, **data_scores, **time_dict}

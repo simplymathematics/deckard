@@ -47,7 +47,12 @@ def _resolve_sensitive_features(data, y_true, mode="test"):
     return sensitive
 
 
-def fairness_demographic_parity_difference(y_true, y_pred, data=None, **kwargs):
+def fairness_demographic_parity_difference(
+    y_true: Any,
+    y_pred: Any,
+    data: Any = None,
+    **kwargs: Any,
+) -> float:
     """Compute demographic parity difference for fairness-aware configurations."""
     try:
         from fairlearn.metrics import demographic_parity_difference
@@ -75,7 +80,12 @@ def fairness_demographic_parity_difference(y_true, y_pred, data=None, **kwargs):
     )
 
 
-def fairness_equalized_odds_difference(y_true, y_pred, data=None, **kwargs):
+def fairness_equalized_odds_difference(
+    y_true: Any,
+    y_pred: Any,
+    data: Any = None,
+    **kwargs: Any,
+) -> float:
     """Compute equalized odds difference for fairness-aware configurations."""
     try:
         from fairlearn.metrics import equalized_odds_difference
@@ -227,6 +237,7 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
                 "Fairness scorer requires optional dependency deckard[fairlearn]",
             )
         scorer_kwargs = scorer_kwargs or {}
+        scorer_kwargs_dict: Dict[str, Any] = dict(scorer_kwargs)
         metrics_keys = list(
             cast(Dict[str, ScorerConfig], self.group_scorers).keys(),
         )
@@ -243,7 +254,7 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
                     y_true=yt,
                     y_pred=yp,
                     **sample_kwargs,
-                    **scorer_kwargs,
+                    **scorer_kwargs_dict,
                 )
             )
             for key, scorer in cast(
@@ -391,11 +402,11 @@ def _group_metric_difference(y_true, y_pred, sensitive_features, metric_fn):
 
 
 def fairness_group_mean_prediction_difference(
-    y_true,
-    y_pred,
-    data=None,
-    **kwargs,
-):
+    y_true: Any,
+    y_pred: Any,
+    data: Any = None,
+    **kwargs: Any,
+) -> float:
     """Compute disparity in mean prediction across sensitive groups."""
     sensitive_features = _resolve_sensitive_from_kwargs_or_data(
         y_true=y_true,
@@ -418,7 +429,12 @@ def fairness_group_mean_prediction_difference(
     return float(max(means) - min(means))
 
 
-def fairness_group_mae_difference(y_true, y_pred, data=None, **kwargs):
+def fairness_group_mae_difference(
+    y_true: Any,
+    y_pred: Any,
+    data: Any = None,
+    **kwargs: Any,
+) -> float:
     """Compute disparity in MAE across sensitive groups."""
     from sklearn.metrics import mean_absolute_error
 
@@ -435,7 +451,12 @@ def fairness_group_mae_difference(y_true, y_pred, data=None, **kwargs):
     )
 
 
-def fairness_group_mse_difference(y_true, y_pred, data=None, **kwargs):
+def fairness_group_mse_difference(
+    y_true: Any,
+    y_pred: Any,
+    data: Any = None,
+    **kwargs: Any,
+) -> float:
     """Compute disparity in MSE across sensitive groups."""
     from sklearn.metrics import mean_squared_error
 

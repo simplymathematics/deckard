@@ -32,6 +32,19 @@ Key Features
 - **Survival curves**: plotting and visualization of survival functions
 - **PyTorch integration**: optional deep learning survival models via extension
 
+Score Types Available
+~~~~~~~~~~~~~~~~~~~~~
+
+The default survival scorer profile is
+:class:`deckard.score.survival.DefaultLifelinesConfig` and includes:
+
+- ``concordance`` via ``survival_concordance_score``
+- ``aic`` via ``survival_aic_score``
+- ``bic`` via ``survival_bic_score``
+
+These are also provided in the sklearn example score profile at
+``examples/sklearn/config/score/survival.yaml``.
+
 Survival Data
 ~~~~~~~~~~~~~
 
@@ -43,6 +56,28 @@ The :class:`~deckard.data.survival.LifelinesDataConfig` extends
 - **auxiliary_model_config** (ModelConfig, optional): model to predict event
   times/status for inference attacks
 - **stratify_by** (str, optional): column for stratified cross-validation
+
+Survival data mode support is explicit in
+:class:`deckard.data.survival.LifelinesDataConfig`:
+
+- ``native``: dataset already has duration/event columns
+- ``auxiliary_model``: derive failure events from a benign model metric
+- ``auxiliary_attack``: derive failures from attack outputs
+- ``optuna_db``: treat Optuna study outputs as time-to-event data
+
+Data pipeline and sampling support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Because ``LifelinesDataConfig`` extends ``DataConfig`` (through the Deckard data
+stack), survival workflows can still use the standard data pipeline and sampler
+interfaces:
+
+- preprocessing pipelines from ``deckard.data.DataPipelineConfig``
+- split/k-fold/shuffle samplers via ``examples/sklearn/config/sample``
+- train/test/validation flow from core data config fields
+
+This lets users mix survival-specific fields (duration/event/mode) with normal
+Deckard preprocessing and split strategies.
 
 Survival Models
 ~~~~~~~~~~~~~~~
@@ -65,6 +100,24 @@ The :mod:`deckard.score.survival` module provides:
 - **AIC**, **BIC**: model selection criteria
 - **median_survival_time**: group-wise survival time estimates
 - **survival_at_time_t**: proportion surviving at specific timepoints
+
+When using :class:`deckard.model.survival.SurvivalModelConfig` without a custom
+scorer override, model scoring still emits calibration-oriented metrics (for
+example ``concordance``, ``ici``, ``e50``) where available.
+
+Defenses in survival workflows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Survival models can use Deckard's defense pipeline from
+:class:`deckard.model.defend.DefensePipelineConfig` just like other model types.
+Supported defense families include ART preprocessors, postprocessors,
+detectors, and trainers.
+
+Typical usage pattern:
+
+- choose a survival model (for example ``lifelines.CoxPHFitter``)
+- attach ``model.defense`` entries from ``examples/sklearn/config/defense``
+- evaluate robustness with survival scores and optional attacks in the same run
 
 Usage
 -----

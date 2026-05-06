@@ -42,6 +42,32 @@ Deckard supports ART attacks across the following families:
 
 (Extendable to additional ART attack classes in future versions.)
 
+Preset Catalog (examples/sklearn)
+---------------------------------
+
+Deckard ships ready-to-run attack presets in ``examples/sklearn/config/attack``
+and search-space definitions in ``examples/sklearn/config/search/attacks``.
+
+Common presets include:
+
+- ``boundary``
+- ``fgm``
+- ``hsj``
+- ``membership``
+- ``attribute-bb``
+- ``model-inversion``
+- ``database-reconstruction``
+- ``zoo``
+
+Example command selecting a preset:
+
+.. code-block:: bash
+
+   python -m deckard optimize \
+      --config-path examples/sklearn/config \
+      --config-name default \
+      attack=hsj
+
 Attack Types And Metrics
 ------------------------
 The output score dictionary depends on the attack family and task type. Metric
@@ -198,11 +224,48 @@ You can also use the API programmatically:
       attack_type="art.attacks.evasion.FastGradientMethod",
       attack_params={"eps": 0.1},
       attack_size=20,
+      alias="fgm",
    )
 
    # run the attack against the trained model
    scores = attack_cfg(data=data, model=model)
    print([k for k in scores if k.startswith("evasion_")])
+
+Multi-attack with ExperimentConfig
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To execute several attacks in one experiment, pass a list to the same
+``attack`` field on :class:`deckard.experiment.ExperimentConfig`.
+
+.. code-block:: python
+
+   from deckard.experiment import ExperimentConfig
+
+   cfg = ExperimentConfig(
+      data=data,
+      model=model,
+      attack=[
+         AttackConfig(
+            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_params={"eps": 0.05},
+            attack_size=20,
+            alias="fgm",
+         ),
+         AttackConfig(
+            attack_type="art.attacks.evasion.HopSkipJump",
+            attack_params={"max_iter": 5, "verbose": False},
+            attack_size=20,
+            alias="hsj",
+         ),
+      ],
+   )
+   scores = cfg()
+
+   # First key keeps original name; colliding keys use alias suffix.
+   print(scores.get("evasion_accuracy"))
+   print(scores.get("evasion_accuracy_hsj"))
+
+For multi-attack runs, each attack must define a unique non-empty alias.
 
 BoundaryAttack example
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -368,6 +431,46 @@ YAML config shortcuts are available at:
 
 - ``examples/sklearn/config/attack/database-reconstruction.yaml``
 - ``examples/pytorch/config/attack/database-reconstruction.yaml``
+
+Poisoning Attack
+~~~~~~~~~~~~~~~~
+
+Poisoning attacks retrain/evaluate the model on poisoned data and report both
+``benign_`` and ``poisoned_`` metric sets.
+
+.. code-block:: python
+
+   poisoning_attack = AttackConfig(
+      attack_type="art.attacks.poisoning.GradientMatchingAttack",
+      attack_params={
+         "epsilon": 0.05,
+      },
+      attack_size=10,
+   )
+
+   scores = poisoning_attack(data=data, model=model)
+   print(scores.get("benign_accuracy"), scores.get("poisoned_accuracy"))
+
+Extraction Attack
+~~~~~~~~~~~~~~~~~
+
+Extraction attacks compare victim and extracted model quality on the selected
+evaluation split.
+
+.. code-block:: python
+
+   extraction_attack = AttackConfig(
+      attack_type="art.attacks.extraction.CopycatCNN",
+      attack_params={
+         "batch_size_fit": 16,
+         "batch_size_query": 16,
+         "nb_epochs": 2,
+      },
+      attack_size=20,
+   )
+
+   scores = extraction_attack(data=data, model=model)
+   print(scores.get("benign_accuracy"), scores.get("extracted_accuracy"))
 
 CLI Examples
 ~~~~~~~~~~~~

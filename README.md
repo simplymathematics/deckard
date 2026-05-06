@@ -1,6 +1,16 @@
 # Deckard
 
-Deckard is a Python application designed to [briefly describe purpose]. This README provides installation instructions for Windows, macOS, and Linux using both `pyenv` and Python's built-in `venv`.
+Deckard is a declarative ML evaluation framework for reproducible experiments
+across:
+
+- data preparation and sampling
+- model training and evaluation
+- adversarial attacks and defenses
+- fairness and privacy scoring
+- experiment optimization and plotting
+
+Deckard uses Hydra/OmegaConf for configuration composition and supports Optuna
+for multirun optimization.
 
 ## Prerequisites
 
@@ -76,7 +86,43 @@ This command installs the project's dependencies in "editable" mode. Editable mo
 
 ## Usage
 
-See [docs/README.md](docs/README.md) for detailed documentation.
+Run from the repository root:
+
+```bash
+python -m deckard --help
+python -m deckard optimize --help
+python -m deckard plot --help
+```
+
+Quick example:
+
+```bash
+python -m deckard optimize --config-name experiment \
+	data.dataset_name=make_classification \
+	model.model_type=sklearn.ensemble.RandomForestClassifier \
+	attack.attack_type=art.attacks.evasion.FastGradientMethod \
+	attack.attack_params.eps=0.1
+```
+
+Multi-attack example (single `attack` field with list syntax):
+
+```bash
+python -m deckard optimize --config-name experiment \
+	'+attack=[{"attack_type":"art.attacks.evasion.FastGradientMethod","attack_params":{"eps":0.05},"attack_size":20,"alias":"fgm"},{"attack_type":"art.attacks.evasion.HopSkipJump","attack_params":{"max_iter":5},"attack_size":20,"alias":"hsj"}]'
+```
+
+In multi-attack runs, aliases are required and colliding metric keys are
+suffixed with `_<alias>`.
+
+See [docs/README.md](docs/README.md) for full documentation.
+
+### Example Configs
+
+Sklearn examples include reusable presets for attacks, scorers, and plots:
+
+- Attacks: [examples/sklearn/config/attack](examples/sklearn/config/attack)
+- Scorers: [examples/sklearn/config/score](examples/sklearn/config/score)
+- Plots: [examples/sklearn/config/plot](examples/sklearn/config/plot)
 
 ## Papers
 

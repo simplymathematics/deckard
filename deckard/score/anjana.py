@@ -1,7 +1,7 @@
 """ANJANA-specific scoring helpers and default scorer configuration."""
 
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Any, Dict
 
 import pandas as pd
 
@@ -45,7 +45,40 @@ def _resolve_frame_and_context(data=None, y_pred=None, **kwargs):
     return frame, quasi_ident, sens_att
 
 
-def anjana_k_anonymity_score(y_true=None, y_pred=None, data=None, **kwargs):
+def anjana_k_anonymity_score(
+    y_true: Any = None,
+    y_pred: Any = None,
+    data: Any = None,
+    **kwargs: Any,
+) -> float:
+    """Compute k-anonymity score for an anonymized dataset.
+
+    Parameters
+    ----------
+    y_true : array-like, optional
+        Ground-truth labels (unused; present for scorer interface compatibility).
+    y_pred : pd.DataFrame, optional
+        The (possibly anonymized) feature matrix.  When provided as a DataFrame
+        it is used directly; otherwise the function falls back to ``data._X``.
+    data : AnjanaDataConfig, optional
+        Data configuration carrying ``quasi_identifiers`` and
+        ``sensitive_attribute``.
+    **kwargs
+        Forwarded to :func:`_resolve_frame_and_context`; supports
+        ``quasi_ident`` and ``sens_att`` overrides.
+
+    Returns
+    -------
+    float
+        The k-anonymity value of the dataset.
+
+    Raises
+    ------
+    ImportError
+        If ``pycanon`` is not installed.
+    ValueError
+        If no quasi-identifier columns are available.
+    """
     try:
         from pycanon import anonymity as pycanon_anonymity
     except ImportError as exc:  # pragma: no cover
@@ -61,7 +94,39 @@ def anjana_k_anonymity_score(y_true=None, y_pred=None, data=None, **kwargs):
     return float(pycanon_anonymity.k_anonymity(frame, quasi_ident))
 
 
-def anjana_l_diversity_score(y_true=None, y_pred=None, data=None, **kwargs):
+def anjana_l_diversity_score(
+    y_true: Any = None,
+    y_pred: Any = None,
+    data: Any = None,
+    **kwargs: Any,
+) -> float:
+    """Compute l-diversity score for an anonymized dataset.
+
+    Parameters
+    ----------
+    y_true : array-like, optional
+        Ground-truth labels (unused; present for scorer interface compatibility).
+    y_pred : pd.DataFrame, optional
+        The (possibly anonymized) feature matrix.
+    data : AnjanaDataConfig, optional
+        Data configuration carrying ``quasi_identifiers`` and
+        ``sensitive_attribute``.
+    **kwargs
+        Forwarded to :func:`_resolve_frame_and_context`; supports
+        ``quasi_ident`` and ``sens_att`` overrides.
+
+    Returns
+    -------
+    float
+        The l-diversity value of the dataset.
+
+    Raises
+    ------
+    ImportError
+        If ``pycanon`` is not installed.
+    ValueError
+        If no quasi-identifier columns or sensitive attribute is available.
+    """
     try:
         from pycanon import anonymity as pycanon_anonymity
     except ImportError as exc:  # pragma: no cover
@@ -81,7 +146,39 @@ def anjana_l_diversity_score(y_true=None, y_pred=None, data=None, **kwargs):
     return float(pycanon_anonymity.l_diversity(frame, quasi_ident, [sens_att]))
 
 
-def anjana_t_closeness_score(y_true=None, y_pred=None, data=None, **kwargs):
+def anjana_t_closeness_score(
+    y_true: Any = None,
+    y_pred: Any = None,
+    data: Any = None,
+    **kwargs: Any,
+) -> float:
+    """Compute t-closeness score for an anonymized dataset.
+
+    Parameters
+    ----------
+    y_true : array-like, optional
+        Ground-truth labels (unused; present for scorer interface compatibility).
+    y_pred : pd.DataFrame, optional
+        The (possibly anonymized) feature matrix.
+    data : AnjanaDataConfig, optional
+        Data configuration carrying ``quasi_identifiers`` and
+        ``sensitive_attribute``.
+    **kwargs
+        Forwarded to :func:`_resolve_frame_and_context`; supports
+        ``quasi_ident`` and ``sens_att`` overrides.
+
+    Returns
+    -------
+    float
+        The t-closeness value of the dataset.
+
+    Raises
+    ------
+    ImportError
+        If ``pycanon`` is not installed.
+    ValueError
+        If no quasi-identifier columns or sensitive attribute is available.
+    """
     try:
         from pycanon import anonymity as pycanon_anonymity
     except ImportError as exc:  # pragma: no cover

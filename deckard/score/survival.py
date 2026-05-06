@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 import math
-from typing import Dict
+from typing import Any, Dict, Union
 
 from .base import ScorerConfig, ScorerDictConfig, safe_store
 
@@ -14,7 +14,7 @@ __all__ = [
 ]
 
 
-def survival_concordance_score(y_true, y_pred, **kwargs):
+def survival_concordance_score(y_true: Any, y_pred: Any, **kwargs: Any) -> float:
     """Return survival concordance from a fitted lifelines model when available."""
     if hasattr(y_pred, "concordance_index_"):
         return float(y_pred.concordance_index_)
@@ -23,7 +23,7 @@ def survival_concordance_score(y_true, y_pred, **kwargs):
     )
 
 
-def survival_aic_score(y_true, y_pred, **kwargs):
+def survival_aic_score(y_true: Any, y_pred: Any, **kwargs: Any) -> float:
     """Return survival AIC from a fitted lifelines model when available."""
     if hasattr(y_pred, "AIC_"):
         return float(y_pred.AIC_)
@@ -42,7 +42,7 @@ def survival_aic_score(y_true, y_pred, **kwargs):
     )
 
 
-def survival_bic_score(y_true, y_pred, **kwargs):
+def survival_bic_score(y_true: Any, y_pred: Any, **kwargs: Any) -> float:
     """Return survival BIC from a fitted lifelines model when available."""
     if hasattr(y_pred, "BIC_"):
         return float(y_pred.BIC_)
@@ -74,7 +74,7 @@ def survival_bic_score(y_true, y_pred, **kwargs):
 class DefaultLifelinesConfig(ScorerDictConfig):
     """Default scorer set for survival workflows."""
 
-    scorers: Dict[str, ScorerConfig] = field(
+    scorers: Dict[str, Union[ScorerConfig, Dict[str, Any]]] = field(
         default_factory=lambda: {
             "concordance": ScorerConfig(
                 score_name="concordance",

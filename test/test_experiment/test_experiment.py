@@ -1143,6 +1143,57 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
         )
         self.assertIsInstance(exp.attack, AttackConfig)
 
+    def test_multi_attack_requires_aliases(self):
+        with self.assertRaises(ValueError):
+            ExperimentConfig(
+                data=self._data(),
+                model=ModelConfig(
+                    model_type="sklearn.tree.DecisionTreeClassifier",
+                    classifier=True,
+                    model_params={"max_depth": 2},
+                ),
+                attack=[
+                    {
+                        "attack_type": "art.attacks.evasion.FastGradientMethod",
+                        "attack_params": {"eps": 0.1},
+                        "attack_size": 5,
+                    },
+                    {
+                        "attack_type": "art.attacks.evasion.FastGradientMethod",
+                        "attack_params": {"eps": 0.2},
+                        "attack_size": 5,
+                    },
+                ],
+                files=FileConfig(),
+            )
+
+    def test_multi_attack_sets_primary_attack_and_chain(self):
+        exp = ExperimentConfig(
+            data=self._data(),
+            model=ModelConfig(
+                model_type="sklearn.tree.DecisionTreeClassifier",
+                classifier=True,
+                model_params={"max_depth": 2},
+            ),
+            attack=[
+                {
+                    "attack_type": "art.attacks.evasion.FastGradientMethod",
+                    "attack_params": {"eps": 0.1},
+                    "attack_size": 5,
+                    "alias": "fgm_a",
+                },
+                {
+                    "attack_type": "art.attacks.evasion.FastGradientMethod",
+                    "attack_params": {"eps": 0.2},
+                    "attack_size": 5,
+                    "alias": "fgm_b",
+                },
+            ],
+            files=FileConfig(),
+        )
+        self.assertEqual(len(exp._attack_chain), 2)
+        self.assertEqual(exp.attack.alias, "fgm_a")
+
     def test_score_as_scorer_dict_config(self):
         """Cover scorer config path where score is ScorerDictConfig."""
         from deckard.score import ScorerDictConfig, ScorerConfig
@@ -1459,6 +1510,51 @@ class TestRunSinglePipelineBranches(unittest.TestCase):
         exp._run_experiment_scorer_modes = lambda score_file=None: {}
         with self.assertRaises(AssertionError):
             exp._run_single_pipeline({}, {})
+
+    def test_multi_attack_scores_suffix_collisions_and_combines_detector_inputs(self):
+        class _Attack:
+            def __init__(self, alias, score_dict, predictions):
+                self.alias = alias
+                self.score_dict = score_dict
+                self.attack_predictions = predictions
+
+            def __call__(self, **_kwargs):
+                self.attack = object()
+                return self.score_dict
+
+        class _Detector:
+            def __call__(self, **kwargs):
+                attack_obj = kwargs["attack"]
+                self.score_dict = {
+                    "detector_n": int(len(attack_obj.attack_predictions)),
+                }
+
+        exp = ExperimentConfig.__new__(ExperimentConfig)
+        exp.data = SimpleNamespace(score_dict={})
+        exp.model = None
+        exp._run_experiment_scorer_modes = lambda score_file=None: {}
+        exp._attack_chain = [
+            _Attack(
+                "atk_a",
+                {"evasion_accuracy": 0.5, "attack_generation_time": 1.0},
+                np.array([[1.0], [2.0]]),
+            ),
+            _Attack(
+                "atk_b",
+                {"evasion_accuracy": 0.4, "attack_generation_time": 2.0},
+                np.array([[3.0], [4.0], [5.0]]),
+            ),
+        ]
+        exp.attack = exp._attack_chain[0]
+        exp.detector = _Detector()
+
+        scores = exp._run_single_pipeline({}, {})
+
+        self.assertEqual(scores["evasion_accuracy"], 0.5)
+        self.assertEqual(scores["evasion_accuracy_atk_b"], 0.4)
+        self.assertEqual(scores["attack_generation_time"], 1.0)
+        self.assertEqual(scores["attack_generation_time_atk_b"], 2.0)
+        self.assertEqual(scores["detector_n"], 5)
 
 
 class TestExperimentBranchEdges(unittest.TestCase):

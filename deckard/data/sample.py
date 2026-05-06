@@ -24,7 +24,7 @@ Example CLI usage::
 """
 
 from dataclasses import dataclass
-from typing import Tuple
+from typing import TYPE_CHECKING, Tuple
 
 import numpy as np
 
@@ -35,6 +35,9 @@ from sklearn.model_selection import (
     StratifiedShuffleSplit,
     train_test_split,
 )
+from hydra.core.config_store import ConfigStore
+if TYPE_CHECKING:
+    from .base import DataConfig
 
 # =========================================================
 # Base interface
@@ -49,7 +52,7 @@ class BaseSampler:
     ``(train_idx, test_idx, val_idx)`` triple of integer numpy arrays.
     """
 
-    def __call__(self, config) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def __call__(self, config: "DataConfig") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         raise NotImplementedError
 
 
@@ -70,7 +73,8 @@ class SplitSampler(BaseSampler):
     :meth:`__call__`. There are no constructor parameters.
     """
 
-    def __call__(self, cfg) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def __call__(self, cfg: "DataConfig") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        assert cfg._X is not None, "Data must be loaded before sampling"
         indices = np.arange(len(cfg._X))
         stratify_col = cfg._get_stratify_col()
 
@@ -128,7 +132,8 @@ class KFoldSampler(BaseSampler):
     n_splits: int = 5
     shuffle: bool = True
 
-    def __call__(self, cfg) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def __call__(self, cfg: "DataConfig") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        assert cfg._X is not None, "Data must be loaded before sampling"
         indices = np.arange(len(cfg._X))
         stratify_col = cfg._get_stratify_col()
 
@@ -191,10 +196,11 @@ class ShuffleSampler(BaseSampler):
 
     n_splits: int = 5
 
-    def __call__(self, cfg) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def __call__(self, cfg: "DataConfig") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         if cfg.val_size is None:
             raise ValueError("val_size must be set for ShuffleSampler")
 
+        assert cfg._X is not None, "Data must be loaded before sampling"
         indices = np.arange(len(cfg._X))
         stratify_col = cfg._get_stratify_col()
 
@@ -294,10 +300,6 @@ def register_sampler_configs() -> None:
     When a sampler is selected, the config is placed under ``data.sample``
     via the ``@data.sample`` package override.
     """
-    try:
-        from hydra.core.config_store import ConfigStore
-    except ImportError:  # pragma: no cover
-        return
 
     cs = ConfigStore.instance()
     cs.store(

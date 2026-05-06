@@ -50,6 +50,17 @@ Available experiment entrypoints:
 Usage
 -----
 
+Multi-Attack Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``ExperimentConfig.attack`` accepts either a single attack spec or a list of
+attack specs.
+
+- Single attack: unchanged behavior.
+- Multi-attack: each configured attack must set a unique, non-empty ``alias``.
+- Score keys: only colliding keys are suffixed as ``_<alias>``.
+- Detector: receives pooled attack samples from all configured attacks.
+
 Command-line example
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -71,6 +82,10 @@ Run an experiment from the project root:
       attack.attack_type=art.attacks.evasion.FastGradientMethod \
       attack.attack_params.eps=0.1 \
       model.defense.defenses[0].defense_name=art.defences.preprocessor.FeatureSqueezing
+
+   # Multi-attack using list syntax on the same attack field
+   python -m deckard optimize --config-name experiment \
+      '+attack=[{"attack_type":"art.attacks.evasion.FastGradientMethod","attack_params":{"eps":0.05},"attack_size":20,"alias":"fgm"},{"attack_type":"art.attacks.evasion.HopSkipJump","attack_params":{"max_iter":5},"attack_size":20,"alias":"hsj"}]'
 
    # PyTorch example config
    python -m deckard optimize \
@@ -140,6 +155,7 @@ Use the experiment config directly in Python with explicit configurations:
       attack_type="art.attacks.evasion.FastGradientMethod",
       attack_params={"eps": 0.15},
       attack_size=50,
+      alias="fgm",
    )
 
    # Compose the full experiment
@@ -150,6 +166,31 @@ Use the experiment config directly in Python with explicit configurations:
    print(f"  Data shape: {data.X_train.shape}")
    print(f"  Model accuracy: {scores.get('accuracy', 'N/A')}")
    print(f"  Attack success: {scores.get('evasion_success_rate', 'N/A')}")
+
+Multi-attack programmatic example
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   attacks = [
+      AttackConfig(
+         attack_type="art.attacks.evasion.FastGradientMethod",
+         attack_params={"eps": 0.05},
+         attack_size=25,
+         alias="fgm",
+      ),
+      AttackConfig(
+         attack_type="art.attacks.evasion.HopSkipJump",
+         attack_params={"max_iter": 5, "verbose": False},
+         attack_size=25,
+         alias="hsj",
+      ),
+   ]
+
+   cfg = ExperimentConfig(data=data, model=model, attack=attacks, detector=detector)
+   scores = cfg()
+   print(scores.get("evasion_accuracy"))
+   print(scores.get("evasion_accuracy_hsj"))
 
 Detector phase
 ~~~~~~~~~~~~~~
@@ -174,6 +215,9 @@ evaluate an auxiliary detector after attack generation:
    cfg = ExperimentConfig(data=data, model=model, attack=attack, detector=detector)
    scores = cfg()
    print(scores["detector_accuracy"])
+
+With multiple attacks, detector inputs are pooled across all attack outputs and
+evaluated as one adversarial sample set.
 
 Internals
 ---------

@@ -332,6 +332,15 @@ class AnjanaDataConfig(DataPipelineConfig):
             self._sensitive_all,
             "full-data sampling",
         )
+        # Compute sensitive labels for the validation split when present.
+        if getattr(self, "X_val", None) is not None:
+            self._sensitive_val = self._sensitive_labels_from_frame(self.X_val)
+            self._sensitive_val = self._validate_sensitive_runtime(
+                self._sensitive_val,
+                "val sampling",
+            )
+        else:
+            self._sensitive_val = None
 
     def _score(self) -> dict:
         if is_default_config_value(self.scorer, include_best=False):

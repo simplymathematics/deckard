@@ -278,7 +278,7 @@ class ModelConfig(ConfigBase):
         if hasattr(self._model, "predict_proba"):
             self.probability = True
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return super().__hash__()
 
     def _instantiate_plugin(self, plugin_spec: Any):
@@ -358,7 +358,7 @@ class ModelConfig(ConfigBase):
         self._defense_pipeline = self.defense
         return self._defense_pipeline
 
-    def get_art_class(self, data):
+    def get_art_class(self, data: Any):
 
         art_class = (
             classifier_dict[self.model_type.split(".")[-1]]
@@ -376,7 +376,7 @@ class ModelConfig(ConfigBase):
             init_params["preprocessing"] = None
         return art_class, init_params
 
-    def get_art_model(self, data: DataConfig):
+    def get_art_model(self, data: "DataConfig") -> Any:
         """Get the ART model estimator.
 
         Parameters

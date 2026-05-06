@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Union
 import pandas as pd
 from omegaconf import DictConfig, ListConfig
 
-from .base import DataPipelineConfig
+from .base import DataConfig, DataPipelineConfig
 from ..utils import coerce_to_list, is_default_config_value, load_class, merge_list_of_dicts
 
 @dataclass(eq=False)
@@ -32,8 +32,31 @@ class FairlearnDataConfig(DataPipelineConfig):
         elif isinstance(self.sensitive_columns, str):
             self.sensitive_columns = [self.sensitive_columns]
 
-    def _sensitive_labels_from_frame(self, frame: pd.DataFrame) -> pd.Series:
-        """Build a single sensitive-feature label series for fairlearn APIs."""
+    def _sensitive_labels_from_frame(self, frame: Optional[Union[pd.DataFrame, pd.Series]]) -> pd.Series:
+        """Build a single sensitive-feature label series for fairlearn APIs.
+
+        Parameters
+        ----------
+        frame : pd.DataFrame or pd.Series
+            The feature matrix (post-split) from which to extract sensitive columns.
+
+        Returns
+        -------
+        pd.Series
+            A series of sensitive-feature labels aligned with *frame*.
+
+        Raises
+        ------
+        ValueError
+            If *frame* is ``None``, ``sensitive_columns`` is not configured, or the
+            column is not found in *frame*.
+        """
+        if frame is None:
+            raise ValueError(
+                "_sensitive_labels_from_frame: frame must not be None",
+            )
+        if not isinstance(frame, pd.DataFrame):
+            frame = pd.DataFrame(frame)
         cols = self.sensitive_columns
         if isinstance(cols, str):
             cols = [cols]
@@ -49,6 +72,25 @@ class FairlearnDataConfig(DataPipelineConfig):
         sensitive: pd.Series,
         context: str,
     ) -> pd.Series:
+        """Validate a sensitive-feature series at runtime.
+
+        Parameters
+        ----------
+        sensitive : pd.Series
+            The candidate sensitive-feature labels to validate.
+        context : str
+            A short descriptor (e.g. ``'train sampling'``) used in error messages.
+
+        Returns
+        -------
+        pd.Series
+            The validated series (unchanged when valid).
+
+        Raises
+        ------
+        ValueError
+            If the series is empty, all-null, or all-blank.
+        """
         sensitive_series = pd.Series(sensitive)
         if len(sensitive_series) == 0:
             raise ValueError(f"Sensitive features are empty during {context}")
@@ -107,7 +149,7 @@ class FairlearnDataConfig(DataPipelineConfig):
 
         self.pipeline = {step_name: step_config, **self.pipeline}
 
-    def _load_data(self):
+    def _load_data(self) -> None:
         super()._load_data()
         assert hasattr(self, "_X"), RuntimeError(
             "self._X not found while loading FairlearnDataConfig",
@@ -122,7 +164,6 @@ class FairlearnDataConfig(DataPipelineConfig):
             raise ValueError("sensitive_columns must be configured")
         for col in self.sensitive_columns:
             assert col in self._X.columns
-        return self
 
     def _init_pipeline(self):
         self._inject_fairness_defense_step()

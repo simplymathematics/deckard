@@ -21,7 +21,12 @@ __all__ = [
 ]
 
 
-def evasion_success_score(y_true, y_pred, ben_pred_labels=None, **kwargs):
+def evasion_success_score(
+    y_true: Any,
+    y_pred: Any,
+    ben_pred_labels: Any = None,
+    **kwargs: Any,
+) -> float:
     """Compute evasion success as one minus benign/adversarial agreement."""
     if ben_pred_labels is None:
         raise ValueError(

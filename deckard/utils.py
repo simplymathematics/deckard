@@ -12,12 +12,13 @@ import pandas as pd
 import pickle
 import json
 import importlib
+import importlib.util
 import sys
 import traceback
 import hashlib
 
 from pathlib import Path
-from typing import Union, Any
+from typing import Iterable, Optional, Union, Any
 from dataclasses import dataclass, field
 from hydra.utils import instantiate, get_class
 from hydra.core.config_store import ConfigStore
@@ -45,6 +46,7 @@ __all__ = [
     "round_scores",
     "coerce_to_list",
     "merge_list_of_dicts",
+    "merge_scores_with_collision_suffix",
     "resolve_torch_device",
 ]
 
@@ -129,7 +131,7 @@ def _auto_torch_device_from_backends(torch_module):
     return torch_module.device("cpu")
 
 
-def resolve_torch_device(requested_device: Any = None):
+def resolve_torch_device(requested_device: Any = None) -> Any:
     try:
         import torch
     except ImportError:
@@ -214,7 +216,7 @@ def resolve_torch_device(requested_device: Any = None):
         return _auto_torch_device_from_backends(torch)
 
 
-def safe_store(group: str, name: str, node) -> None:
+def safe_store(group: str, name: str, node: Any) -> None:
     """Register a Hydra config node while tolerating duplicate registrations."""
     cs = ConfigStore.instance()
     try:
@@ -224,7 +226,7 @@ def safe_store(group: str, name: str, node) -> None:
         pass
 
 
-def coerce_to_list(items) -> list:
+def coerce_to_list(items: Union[list, Any]) -> list:
     """Normalize a ``list`` or OmegaConf ``ListConfig`` to a plain Python list.
 
     Parameters
@@ -249,7 +251,7 @@ def coerce_to_list(items) -> list:
     raise TypeError(f"Expected list or ListConfig, got {type(items)}")
 
 
-def merge_list_of_dicts(items) -> dict:
+def merge_list_of_dicts(items: Iterable) -> dict:
     """Merge a sequence of dict-like items into a single ``dict``.
 
     Each element of *items* may be a plain ``dict`` or an OmegaConf
@@ -283,6 +285,50 @@ def merge_list_of_dicts(items) -> dict:
     return merged
 
 
+def merge_scores_with_collision_suffix(
+    base_scores: dict,
+    incoming_scores: dict,
+    *,
+    alias: Optional[str] = None,
+) -> dict:
+    """Merge score dictionaries while preserving existing keys.
+
+    Behavior
+    --------
+    - Non-colliding keys are copied as-is.
+    - Colliding keys are only suffixed when ``alias`` is provided.
+    - If ``alias`` is ``None``, incoming collisions receive an underscore and an increment (e.g._1 for the 2nd key of the same name).
+    """
+    if not isinstance(base_scores, dict):
+        raise TypeError(f"base_scores must be a dict, got {type(base_scores)}")
+    if not isinstance(incoming_scores, dict):
+        raise TypeError(
+            f"incoming_scores must be a dict, got {type(incoming_scores)}",
+        )
+
+    merged = dict(base_scores)
+    for key, value in incoming_scores.items():
+        if key not in merged:
+            merged[key] = value
+            continue
+
+        if alias is None:
+            merged[key] = value
+            continue
+
+        candidate = f"{key}_{alias}"
+        if candidate not in merged:
+            merged[candidate] = value
+            continue
+
+        disambiguation_index = 2
+        while f"{candidate}_{disambiguation_index}" in merged:
+            disambiguation_index += 1
+        merged[f"{candidate}_{disambiguation_index}"] = value
+
+    return merged
+
+
 def coerce_config(config_obj: Any) -> Any:
     """Coerce config-like objects into plain Python structures when possible.
 
@@ -308,7 +354,7 @@ def coerce_config(config_obj: Any) -> Any:
     return config_obj
 
 
-def round_scores(scores: dict, n_samples: int, logger_obj=None) -> dict:
+def round_scores(scores: dict, n_samples: int, logger_obj: Optional[logging.Logger] = None) -> dict:
     """Round numeric score values using a sample-size-aware precision rule.
 
     The number of decimal places is derived from ``log10(n_samples) + 1`` and
@@ -390,7 +436,7 @@ def _canonicalize_for_hash(value):
     return str(value)
 
 
-def normalize_for_hash(value, root=None):
+def normalize_for_hash(value: Any, root: Optional[Any] = None) -> Any:
     """Normalize values for stable hashing.
 
     Mirrors resolver behavior:
@@ -522,8 +568,8 @@ class ConfigBase:
     def save_scores(
         self,
         scores: Union[dict, pd.Series],
-        filepath: Union[str, None] = None,
-    ):
+        filepath: Optional[str] = None,
+    ) -> None:
         """
         Saves the scores dictionary to a CSV file if a filepath is provided.
 
@@ -567,8 +613,8 @@ class ConfigBase:
     def save_data(
         self,
         data: pd.DataFrame,
-        filepath: Union[str, None] = None,
-        **kwargs,
+        filepath: Optional[str] = None,
+        **kwargs: Any,
     ) -> None:
         supported_filetypes = [
             ".csv",
@@ -606,7 +652,7 @@ class ConfigBase:
         assert Path(data_path).exists(), f"Failed to save data to {data_path}"
         logger.info(f"Data saved to {data_path}")
 
-    def read_or_initialize_scores(self, score_file):
+    def read_or_initialize_scores(self, score_file: Optional[str]) -> dict:
         """Return merged scores from disk and memory, or initialize output location.
 
         This is the canonical entrypoint for score-file reads in ConfigBase.
@@ -673,24 +719,29 @@ class ConfigBase:
         score_path = Path(filepath)
         assert score_path.exists(), f"File {filepath} does not exist."
         supported_filetypes = [".csv", ".json", ".xlsx"]
+        scores: dict
         if score_path.suffix in supported_filetypes:
             match score_path.suffix:
                 case ".csv":
-                    scores = pd.read_csv(score_path)
+                    scores = pd.read_csv(score_path).to_dict(orient="records")[0] if len(pd.read_csv(score_path)) == 1 else pd.read_csv(score_path).to_dict()
                 case ".json":
                     with open(score_path, "r") as f:
-                        scores = json.load(f)
-
-                    if "files" in scores:
-                        files = scores.pop("files")
-                    if "params" in scores:
-                        params = scores.pop("params")
-                    if "files" in locals():
+                        raw = json.load(f)
+                    if not isinstance(raw, dict):
+                        raw = {"data": raw}
+                    files = raw.pop("files", None)
+                    params = raw.pop("params", None)
+                    scores = raw
+                    if files is not None:
                         scores["files"] = files
-                    if "params" in locals():
+                    if params is not None:
                         scores["params"] = params
                 case ".xlsx":
-                    scores = pd.read_excel(score_path)
+                    scores = pd.read_excel(score_path).to_dict()
+                case _:
+                    raise ValueError(
+                        f"Unsupported file type {score_path.suffix}. Supported types: {supported_filetypes}",
+                    )
         else:
             raise ValueError(
                 f"Unsupported file type {score_path.suffix}. Supported types: {supported_filetypes}",
@@ -921,7 +972,7 @@ class ConfigBase:
 
         return dict_
 
-    def execute_without_mercy(self):
+    def execute_without_mercy(self) -> dict:
         # Get log_file from logger
         log_file = next(
             (
@@ -1053,12 +1104,12 @@ def load_data(filepath: str, **kwargs) -> pd.DataFrame:
 
 
 def import_class_from_file(
-    file_path: str,
+    file_path: Union[str, Path],
     class_name: str,
-    *args,
+    *args: Any,
     instantiate_class: bool = True,
-    **kwargs,
-):
+    **kwargs: Any,
+) -> Any:
     """Import a class from a Python file path and optionally instantiate it."""
     file_path = Path(file_path).resolve()
 
@@ -1080,7 +1131,7 @@ def import_class_from_file(
     return cls(*args, **kwargs)
 
 
-def resolve_class(cls: str):
+def resolve_class(cls: str) -> Any:
     """Resolve a class path into a class object without instantiating it.
 
     Supports dotted module paths (Hydra-style) and ``file.py:ClassName`` paths.
@@ -1111,7 +1162,7 @@ def resolve_class(cls: str):
         return get_class(cls)
 
 
-def load_class(cls, *args, **kwargs):
+def load_class(cls: Union[str, type], *args: Any, **kwargs: Any) -> Any:
     """Instantiate a class from a class object, dotted import path, or file path."""
     if isinstance(cls, type):
         return cls(*args, **kwargs)
@@ -1187,10 +1238,10 @@ def _extract_param_help_from_docstring(docstring: str) -> dict[str, str]:
 
 
 def create_parser_from_function(
-    func,
-    parser=None,
-    exclude=None,
-    **kwargs,
+    func: Any,
+    parser: Optional[argparse.ArgumentParser] = None,
+    exclude: Optional[list] = None,
+    **kwargs: Any,
 ) -> argparse.ArgumentParser:
     """
     Creates an argparse.ArgumentParser from a function's signature.

@@ -1,4 +1,5 @@
 import logging
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -16,19 +17,19 @@ except ImportError:  # pragma: no cover
     HAS_TORCH = False
 
 
-def is_torch_model(model) -> bool:
+def is_torch_model(model: Any) -> bool:
     return HAS_TORCH and isinstance(model, torch.nn.Module)
 
 
-def is_tensor(value) -> bool:
+def is_tensor(value: Any) -> bool:
     return HAS_TORCH and isinstance(value, Tensor)
 
 
-def is_dataloader(value) -> bool:
+def is_dataloader(value: Any) -> bool:
     return HAS_TORCH and isinstance(value, DataLoader)
 
 
-def tensor_to_numpy(value, dtype=None):
+def tensor_to_numpy(value: Any, dtype: Optional[Any] = None) -> Any:
     if not is_tensor(value):
         return value
     arr = value.detach().cpu().numpy()
@@ -37,7 +38,7 @@ def tensor_to_numpy(value, dtype=None):
     return arr
 
 
-def get_torch_model_device(model):
+def get_torch_model_device(model: Any) -> Any:
     if not is_torch_model(model):
         return torch.device("cpu")
     first_param = next(model.parameters(), None)
@@ -46,7 +47,7 @@ def get_torch_model_device(model):
     return getattr(first_param, "device", torch.device("cpu"))
 
 
-def build_torch_art_model(model, data):
+def build_torch_art_model(model: Any, data: Any) -> Any:
     if not HAS_TORCH:
         raise ImportError(
             "Torch support requires optional dependency deckard[torch]",

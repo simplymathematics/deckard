@@ -29,6 +29,25 @@ Key Features
 - **ART compatibility**: work alongside standard ART attacks and defenses
 - **Flexible backends**: support sklearn, PyTorch, and custom model types
 
+Score Types Available
+~~~~~~~~~~~~~~~~~~~~~
+
+Anjana scoring in Deckard is provided by :mod:`deckard.score.anjana` with the
+default scorer profiles:
+
+- :class:`deckard.score.anjana.DefaultAnjanaDataScoreConfig`
+- :class:`deckard.score.anjana.DefaultAnjanaModelScoreConfig`
+
+These include:
+
+- ``k_anonymity``
+- ``l_diversity``
+- ``t_closeness``
+
+The scorers operate on pandas DataFrame-backed data and can resolve context
+from ``y_pred`` or from ``data._X`` together with quasi-identifier and
+sensitive-attribute configuration.
+
 Data Configuration
 ~~~~~~~~~~~~~~~~~~~
 
@@ -40,6 +59,18 @@ The :class:`~deckard.data.anjana.AnjanaDataConfig` extends
 - Track original vs. anonymized dataset statistics
 - Optional validation dataset for privacy measurement
 
+Data pipeline and preprocessing support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``AnjanaDataConfig`` extends ``DataPipelineConfig``, so it keeps standard
+Deckard pipeline capabilities while adding anonymization/fairness hooks:
+
+- configurable preprocessing pipeline steps from core data config
+- optional ANJANA defense transform via ``anjana_defense`` callable config
+- optional fairlearn-style preprocessing insertion via ``fairness_defense``
+- hierarchy generation support for quasi-identifiers
+- standard split/k-fold/shuffle sampling through the base data stack
+
 Model Configuration
 ~~~~~~~~~~~~~~~~~~~
 
@@ -50,6 +81,11 @@ The :class:`~deckard.model.anjana.AnjanaModelConfig` supports:
 - Privacy-utility tradeoff analysis
 - Integration with privacy-aware loss functions
 - Checkpoint management for utility tracking
+
+``AnjanaModelConfig`` wraps ``ModelConfig`` behavior and can still use Deckard's
+general model defenses via ``model.defense`` (ART preprocessors,
+postprocessors, trainers, and detector pipelines) where compatible with the
+selected backend/model.
 
 Scoring and Metrics
 ~~~~~~~~~~~~~~~~~~~
@@ -234,6 +270,18 @@ For :class:`~deckard.model.anjana.AnjanaModelConfig`:
 - **base_model_config** (ModelConfig, optional): base model to extend
 - **track_utility** (bool): compute accuracy on original vs. anonymized data
 - **privacy_loss_weight** (float): optional weighting in composite loss function
+
+Defense options for users
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Anjana workflows can layer three defense categories:
+
+- data-level anonymization defenses (``anjana_defense``)
+- fairness preprocessing defenses (``fairness_defense``)
+- model-level ART defenses via ``model.defense`` / defense pipelines
+
+This allows privacy transformation and adversarial defense composition in a
+single experiment.
 
 Interpretation
 ~~~~~~~~~~~~~~

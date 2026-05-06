@@ -55,14 +55,14 @@ def fit_aft(
 
 
 def survival_probability_calibration(
-    model: RegressionFitter,
-    df: pd.DataFrame,
+    model: "RegressionFitter",
+    df: "pd.DataFrame",
     t0: float,
-    ax=None,
+    ax: Any = None,
     color: str = "red",
     return_curve: bool = False,
     plot: bool = True,
-) -> Union[tuple[Any, float, float], tuple[Any, float, float, pd.DataFrame]]:
+) -> Any:
     """Compute survival calibration metrics and optionally render a calibration curve."""
     config = SurvivalModelConfig(
         model_type="lifelines",

@@ -8,11 +8,12 @@ import logging
 import warnings
 import hashlib
 from typing import List, Union, Literal, Any
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, ListConfig, OmegaConf
 import os
 import yaml
 import numpy as np
 from pathlib import Path
+from types import SimpleNamespace
 from hydra.utils import instantiate
 
 from ..data import DataConfig, DataPipelineConfig
@@ -27,7 +28,14 @@ from ..attack import AttackConfig
 from ..detector import DetectorConfig
 from ..score import ScorerDictConfig
 from ..file import FileConfig, data_files, model_files, attack_files
-from ..utils import ConfigBase, coerce_config, is_default_config_value, load_class
+from ..utils import (
+    ConfigBase,
+    coerce_config,
+    coerce_to_list,
+    is_default_config_value,
+    load_class,
+    merge_scores_with_collision_suffix,
+)
 
 try:
     from ..data import AnjanaDataConfig
@@ -338,6 +346,149 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
         return coerce_scorer_config(scorer_obj, default_factory=default_factory)
 
+    def _coerce_single_attack(self, attack_obj: Any) -> AttackConfig:
+        if isinstance(attack_obj, AttackConfig):
+            attack_cfg = attack_obj
+        else:
+            if isinstance(attack_obj, DictConfig):
+                attack_dict = OmegaConf.to_container(attack_obj, resolve=True)
+            elif isinstance(attack_obj, str):
+                attack_dict = coerce_config(attack_obj)
+            elif isinstance(attack_obj, ConfigBase):
+                attack_dict = attack_obj.to_dict()
+            elif isinstance(attack_obj, dict):
+                attack_dict = OmegaConf.to_container(
+                    OmegaConf.create(attack_obj),
+                    resolve=True,
+                )
+            else:
+                raise ValueError(
+                    f"Unsupported type for attack: {type(attack_obj)}",
+                )
+
+            if not isinstance(attack_dict, dict):
+                raise ValueError(
+                    f"Attack config must resolve to dict-like data. Got {type(attack_dict)}",
+                )
+            if "_target_" not in attack_dict:
+                attack_cfg = AttackConfig(**attack_dict)
+            else:
+                attack_cfg = instantiate(attack_dict)
+
+        assert isinstance(
+            attack_cfg,
+            AttackConfig,
+        ), "attack must be an instance of AttackConfig"
+        attack_cfg.__post_init__()
+        return attack_cfg
+
+    def _normalize_attack_chain(self, attack_obj: Any) -> list[AttackConfig]:
+        if attack_obj is None:
+            return []
+
+        if isinstance(attack_obj, (list, tuple, ListConfig)):
+            raw_items = coerce_to_list(attack_obj)
+        else:
+            coerced = coerce_config(attack_obj)
+            if isinstance(coerced, (list, tuple, ListConfig)):
+                raw_items = coerce_to_list(coerced)
+            else:
+                raw_items = [attack_obj]
+
+        return [self._coerce_single_attack(item) for item in raw_items]
+
+    def _validate_multi_attack_aliases(self, attack_chain: list[AttackConfig]) -> None:
+        if len(attack_chain) <= 1:
+            return
+
+        seen_aliases: set[str] = set()
+        for attack_cfg in attack_chain:
+            alias = str(getattr(attack_cfg, "alias", "")).strip()
+            if alias == "":
+                raise ValueError(
+                    "Multi-attack experiments require attack.alias for each configured attack.",
+                )
+            if alias in seen_aliases:
+                raise ValueError(
+                    f"Duplicate attack.alias detected in multi-attack experiment: '{alias}'.",
+                )
+            seen_aliases.add(alias)
+
+    @staticmethod
+    def _suffix_file_path_with_alias(file_path: str, alias: str) -> str:
+        path = Path(file_path)
+        return path.with_name(f"{path.stem}_{alias}{path.suffix}").as_posix()
+
+    def _build_attack_file_outputs_for_run(
+        self,
+        base_outputs: dict,
+        attack_cfg: AttackConfig,
+        *,
+        multi_attack: bool,
+    ) -> dict:
+        outputs = dict(base_outputs)
+        if not multi_attack:
+            return outputs
+
+        alias = str(attack_cfg.alias).strip()
+        for key in ("attack_file", "attack_predictions_file"):
+            path = outputs.get(key)
+            if path is None or str(path).strip() == "":
+                continue
+            outputs[key] = self._suffix_file_path_with_alias(str(path), alias)
+
+        # Avoid per-attack score-file clobbering; ExperimentConfig writes the final merged score file.
+        outputs["score_file"] = None
+        return outputs
+
+    @staticmethod
+    def _combine_attack_predictions(attack_chain: list[AttackConfig]):
+        predictions = []
+        for attack_cfg in attack_chain:
+            value = getattr(attack_cfg, "attack_predictions", None)
+            if value is None:
+                continue
+            if hasattr(value, "detach") and hasattr(value, "cpu"):
+                value = value.detach().cpu().numpy()
+            predictions.append(value)
+
+        if len(predictions) == 0:
+            return None
+
+        try:
+            import pandas as pd
+
+            if all(isinstance(value, pd.DataFrame) for value in predictions):
+                return pd.concat(predictions, axis=0, ignore_index=True)
+        except Exception:
+            pass
+
+        try:
+            return np.concatenate([np.asarray(value) for value in predictions], axis=0)
+        except Exception:
+            flattened = []
+            for value in predictions:
+                arr = np.asarray(value)
+                if arr.ndim == 0:
+                    flattened.append(arr.item())
+                else:
+                    flattened.extend(list(arr))
+            return np.asarray(flattened)
+
+    def _build_detector_attack_view(self, attack_chain: list[AttackConfig]):
+        if len(attack_chain) == 1:
+            return attack_chain[0]
+
+        combined_predictions = self._combine_attack_predictions(attack_chain)
+        if combined_predictions is None:
+            raise ValueError(
+                "Detector phase requires at least one attack prediction in multi-attack mode.",
+            )
+        return SimpleNamespace(
+            attack_predictions=combined_predictions,
+            attacks=attack_chain,
+        )
+
     def set_device(self, device: Union[str, int] = "cpu"):
         """
         Set the computation device for the experiment based on the selected library.
@@ -380,7 +531,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 self.library,
             )
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not hasattr(self, "score_dict") or self.score_dict is None:
             self.score_dict = {}
         if not hasattr(self, "_target_") or self._target_ is None:
@@ -489,33 +640,13 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     )
                 else:
                     self.model.data = self.data
-        if self.attack is not None:
-            if isinstance(self.attack, AttackConfig):
-                pass
-            else:
-                if isinstance(self.attack, DictConfig):
-                    attack_dict = OmegaConf.to_container(self.attack)
-                elif isinstance(self.attack, str):
-                    attack_dict = coerce_config(self.attack)
-                elif isinstance(self.attack, ConfigBase):
-                    attack_dict = self.attack.to_dict()
-                elif isinstance(self.attack, dict):
-                    attack_dict = OmegaConf.to_container(
-                        OmegaConf.create(self.attack),
-                    )
-                else:
-                    raise ValueError(
-                        f"Unsupported type for attack: {type(self.attack)}",
-                    )
-                if "_target_" not in attack_dict:
-                    self.attack = AttackConfig(**attack_dict)
-                else:
-                    self.attack = instantiate(self.attack)
-            assert isinstance(
-                self.attack,
-                AttackConfig,
-            ), "attack must be an instance of AttackConfig"
-            self.attack.__post_init__()
+        self._attack_chain = self._normalize_attack_chain(self.attack)
+        self._validate_multi_attack_aliases(self._attack_chain)
+        if len(self._attack_chain) > 0:
+            # Preserve backward compatibility for single-attack call sites.
+            self.attack = self._attack_chain[0]
+        else:
+            self.attack = None
         if self.detector is not None:
             if isinstance(self.detector, DetectorConfig):
                 pass
@@ -560,8 +691,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             config_list = [self.data]
             if self.model:
                 config_list.append(self.model)
-            if self.attack:
-                config_list.append(self.attack)
+            if len(self._attack_chain) > 0:
+                config_list.extend(self._attack_chain)
             if self.detector and isinstance(self.detector, ConfigBase):
                 config_list.append(self.detector)
             if self.score:
@@ -645,7 +776,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         if self.library not in ["sklearn"]:
             self.set_device(self.device if self.device is not None else "cpu")
 
-    def set_random_seed(self):
+    def set_random_seed(self) -> None:
         if self.library in ["sklearn"]:
             np.random.seed(self.random_state)
         elif self.library in ["tensorflow"]:
@@ -749,26 +880,43 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         else:
             logger.info("No model config provided, skipping model training.")
 
-        if self.attack:
+        attack_chain = getattr(self, "_attack_chain", None)
+        if attack_chain is None:
+            attack_chain = [self.attack] if self.attack is not None else []
+
+        if len(attack_chain) > 0:
+            multi_attack = len(attack_chain) > 1
             try:
-                self.attack(
-                    data=self.data,
-                    model=self.model,
-                    **attack_file_outputs,
-                )
-                assert hasattr(
-                    self.attack,
-                    "attack",
-                ), "attack must have attack attribute after training"
-                assert hasattr(
-                    self.attack,
-                    "attack_predictions",
-                ), "attack must have a predictions attribute after training"
-                assert hasattr(
-                    self.attack,
-                    "score_dict",
-                ), "attack must have score_dict attribute after training"
-                scores.update(**self.attack.score_dict)
+                for attack_cfg in attack_chain:
+                    run_outputs = self._build_attack_file_outputs_for_run(
+                        attack_file_outputs,
+                        attack_cfg,
+                        multi_attack=multi_attack,
+                    )
+                    attack_cfg(
+                        data=self.data,
+                        model=self.model,
+                        **run_outputs,
+                    )
+                    assert hasattr(
+                        attack_cfg,
+                        "attack",
+                    ), "attack must have attack attribute after training"
+                    assert hasattr(
+                        attack_cfg,
+                        "attack_predictions",
+                    ), "attack must have a predictions attribute after training"
+                    assert hasattr(
+                        attack_cfg,
+                        "score_dict",
+                    ), "attack must have score_dict attribute after training"
+                    scores = merge_scores_with_collision_suffix(
+                        scores,
+                        attack_cfg.score_dict,
+                        alias=attack_cfg.alias if multi_attack else None,
+                    )
+
+                self.attack = attack_chain[0]
             except ValueError as e:
                 logger.debug(e)
                 raise
@@ -776,14 +924,15 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             logger.info("No attack config provided, skipping attack.")
 
         if self.detector:
-            if self.attack is None:
+            if len(attack_chain) == 0:
                 raise ValueError(
                     "Detector phase requires an attack configuration/output.",
                 )
+            detector_attack = self._build_detector_attack_view(attack_chain)
             self.detector(
                 data=self.data,
                 model=self.model,
-                attack=self.attack,
+                attack=detector_attack,
             )
             assert hasattr(
                 self.detector,
@@ -845,7 +994,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
     def __call__(
         self,
-    ):
+    ) -> dict:
         # Initialize Scores
         scores = {}
         # Set random seed

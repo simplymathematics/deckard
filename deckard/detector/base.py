@@ -1,7 +1,7 @@
 import time
 from dataclasses import dataclass, field
 from types import SimpleNamespace
-from typing import Union
+from typing import Any, Union
 
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
@@ -109,7 +109,7 @@ class DetectorConfig(ConfigBase):
         )
         return detector_model_cfg.get_art_model(data_stub)
 
-    def __call__(self, data, model=None, attack=None):
+    def __call__(self, data: Any, model: Any = None, attack: Any = None) -> dict:
         _ = model
         x, y, n = self._build_detector_dataset(data=data, attack=attack)
 

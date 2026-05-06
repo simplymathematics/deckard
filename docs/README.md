@@ -6,8 +6,11 @@ references and usage guides for core modules such as:
 - [deckard.data](../deckard/data/__init__.py)
 - [deckard.model](../deckard/model/__init__.py)
 - [deckard.attack](../deckard/attack/__init__.py)
+- [deckard.detector](../deckard/detector/__init__.py)
 - [deckard.layers](../deckard/layers/__init__.py)
-- [deckard.score](../deckard/score.py)
+- [deckard.score](../deckard/score/__init__.py)
+- [deckard.experiment](../deckard/experiment/__init__.py)
+- [deckard.plot](../deckard/plot/__init__.py)
 
 ## Directory Structure
 
@@ -18,18 +21,29 @@ docs/
 |- README.md
 |- build/
 `- source/
+	|- package.rst
 	|- conf.py
 	|- index.rst
 	|- modules.rst
 	|- attack.rst
 	|- data.rst
+	|- detector.rst
 	|- experiment.rst
 	|- file.rst
 	|- layers.rst
+	|- lifelines.rst
 	|- model.rst
+	|- pytorch.rst
 	|- plot.rst
 	|- score.rst
+	|- seaborn.rst
 	`- utils.rst
+
+Related runnable example configs live under:
+
+- [examples/sklearn/config/attack](../examples/sklearn/config/attack)
+- [examples/sklearn/config/score](../examples/sklearn/config/score)
+- [examples/sklearn/config/plot](../examples/sklearn/config/plot)
 ```
 
 ## Prerequisites
