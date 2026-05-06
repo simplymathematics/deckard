@@ -9,6 +9,7 @@ from sklearn.preprocessing import FunctionTransformer
 
 import deckard.data.base as data_base
 from deckard.data.base import DataConfig, DataPipelineConfig
+from deckard.score.base import ScorerDictConfig
 
 
 def _basic_data_config(**overrides):
@@ -83,7 +84,7 @@ def test_post_init_normalizes_scorer_string_and_dict(monkeypatch):
     assert auto_cfg.scorer is sentinel
 
     dict_cfg = _basic_data_config(scorer=OmegaConf.create({"scorers": {}}))
-    assert isinstance(dict_cfg.scorer, data_base.ScorerDictConfig)
+    assert isinstance(dict_cfg.scorer, ScorerDictConfig)
 
 
 def test_plugin_instantiation_and_hook_paths(monkeypatch):
