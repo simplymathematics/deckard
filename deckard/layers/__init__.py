@@ -11,6 +11,10 @@ from .compile_results import compile_results_main, compile_results_parser
 from .progress_bar import progress_bar_main, progress_bar_parser
 from .plot import plot_main, plot_parser
 from .optimize import optimize_main, hydra_parser
+from .rerun_failed_studies import (
+    rerun_failed_studies_main,
+    rerun_failed_studies_parser,
+)
 
 try:
     from .survival import survival_main, survival_parser
@@ -27,6 +31,10 @@ layer_dict: dict[str, list[Callable[..., object]]] = {
     "progress_bar": [progress_bar_parser, progress_bar_main],
     "plot": [plot_parser, plot_main],
     "optimize": [hydra_parser, optimize_main],
+    "rerun_failed_studies": [
+        rerun_failed_studies_parser,
+        rerun_failed_studies_main,
+    ],
 }
 
 if survival_parser is not None and survival_main is not None:
@@ -44,6 +52,8 @@ __all__ = [
     "plot_parser",
     "optimize_main",
     "hydra_parser",
+    "rerun_failed_studies_main",
+    "rerun_failed_studies_parser",
     "layer_dict",
     "SUPPORTED_LAYERS",
 ]
