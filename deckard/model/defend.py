@@ -30,7 +30,7 @@ from art.estimators.classification import PyTorchClassifier
 from art.estimators.regression import PyTorchRegressor
 from ..data import DataConfig
 from .base import ModelConfig
-from ..utils import ConfigBase, coerce_config, resolve_class, coerce_to_list
+from ..utils import ConfigBase, coerce_config, resolve_class, coerce_to_list, is_null_config_value
 
 warnings.filterwarnings("ignore", category=UserWarning)
 logger = logging.getLogger(__name__)
@@ -104,7 +104,7 @@ class _DefenseBehaviorMixin:
         return self._model_config
 
     def __post_init__(self):
-        if self.model_type not in [None, "", "None", "null", "Null", "NULL"]:
+        if not is_null_config_value(self.model_type, allow_empty=True):
             model_cfg = self._get_model_config()
             self.classifier = model_cfg.classifier
             self.model_params = model_cfg.model_params
@@ -599,7 +599,8 @@ class _DefenseBehaviorMixin:
                 init_params["preprocessing"] = None
             return art_class, init_params
 
-        if self.model_type in [None, "", "None", "null", "Null", "NULL"]:
+        from ..utils import is_null_config_value
+        if is_null_config_value(self.model_type, allow_empty=True):
             raise ValueError(
                 "model_type must be set before creating an ART defense estimator",
             )
@@ -799,6 +800,7 @@ class DefensePipelineConfig(ConfigBase):
 
     def _inherit_model_context(self, defense_obj, estimator) -> None:
         base_estimator = getattr(estimator, "model", estimator)
+        from ..utils import is_null_config_value
         blank_values = {None, "", "None", "null", "Null", "NULL"}
 
         if (

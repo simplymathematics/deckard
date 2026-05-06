@@ -27,7 +27,7 @@ from ..attack import AttackConfig
 from ..detector import DetectorConfig
 from ..score import ScorerDictConfig
 from ..file import FileConfig, data_files, model_files, attack_files
-from ..utils import ConfigBase, coerce_config
+from ..utils import ConfigBase, coerce_config, is_default_config_value, load_class
 
 try:
     from ..data import AnjanaDataConfig
@@ -313,24 +313,30 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             out.update(self._normalize_mode_score_keys(mode, mode_scores))
         return out
 
-    def _coerce_scorer_config(self, scorer_obj: Any):
-        if scorer_obj is None:
-            return None
-        if isinstance(scorer_obj, ScorerDictConfig):
-            return scorer_obj
-        # List of scorer specs → merge all into one ScorerDictConfig
-        from omegaconf import ListConfig
+    def _coerce_scorer_config(self, scorer_obj, scope: str = "model"):
+        from ..score.base import coerce_scorer_config
 
-        if isinstance(scorer_obj, (list, ListConfig)):
-            return ScorerDictConfig.merge(list(scorer_obj))
-        scorer_obj = coerce_config(scorer_obj)
-        if isinstance(scorer_obj, str):
-            scorer_obj = ScorerDictConfig.from_yaml(scorer_obj).to_dict()
-        if isinstance(scorer_obj, dict):
-            if "scorers" in scorer_obj:
-                return ScorerDictConfig(**scorer_obj)
-            return ScorerDictConfig(scorers=scorer_obj)
-        raise ValueError(f"Unsupported scorer config type: {type(scorer_obj)}")
+        classifier = self.classifier
+        if scope == "data" and getattr(self, "data", None) is not None:
+            classifier = self.data.classifier
+        elif scope in ["model", "experiment"] and getattr(self, "model", None) is not None:
+            classifier = self.model.classifier
+
+        default_factory = None
+        if scope == "data":
+            default_factory = lambda: load_class(
+                "deckard.score.data.DefaultDataClassificationConfig"
+                if classifier
+                else "deckard.score.data.DefaultDataRegressionConfig"
+            )
+        elif scope in ["model", "experiment"]:
+            default_factory = lambda: load_class(
+                "deckard.score.base.DefaultClassifierConfig"
+                if classifier
+                else "deckard.score.base.DefaultRegressorConfig"
+            )
+
+        return coerce_scorer_config(scorer_obj, default_factory=default_factory)
 
     def set_device(self, device: Union[str, int] = "cpu"):
         """
@@ -414,7 +420,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     model_dict = OmegaConf.to_container(self.model)
                     self.model = ModelConfig(**model_dict)
                 elif isinstance(self.model, str):
-                    model_dict = ModelConfig.from_yaml(self.model).to_dict()
+                    model_dict = coerce_config(self.model)
                     self.model = ModelConfig(**model_dict)
                 elif isinstance(self.model, ConfigBase):
                     model_dict = self.model.to_dict()
@@ -490,7 +496,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 if isinstance(self.attack, DictConfig):
                     attack_dict = OmegaConf.to_container(self.attack)
                 elif isinstance(self.attack, str):
-                    attack_dict = AttackConfig.from_yaml(self.attack).to_dict()
+                    attack_dict = coerce_config(self.attack)
                 elif isinstance(self.attack, ConfigBase):
                     attack_dict = self.attack.to_dict()
                 elif isinstance(self.attack, dict):
@@ -599,16 +605,31 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             ):
                 self.data_scorer = self._coerce_scorer_config(
                     score_cfg.get("data"),
+                    scope="data",
                 )
                 self.model_scorer = self._coerce_scorer_config(
                     score_cfg.get("model"),
+                    scope="model",
                 )
                 self.experiment_scorer = self._coerce_scorer_config(
                     score_cfg.get("experiment"),
+                    scope="experiment",
+                )
+            elif is_default_config_value(score_cfg, include_best=True):
+                self.data_scorer = self._coerce_scorer_config(
+                    score_cfg,
+                    scope="data",
+                )
+                self.model_scorer = self._coerce_scorer_config(
+                    score_cfg,
+                    scope="model",
                 )
             else:
                 # Backward-compatible shorthand: a single score config targets model scoring.
-                self.model_scorer = self._coerce_scorer_config(score_cfg)
+                self.model_scorer = self._coerce_scorer_config(
+                    score_cfg,
+                    scope="model",
+                )
 
         # Attach component scorers so DataConfig/ModelConfig execute runtime-configured scoring.
         if self.data_scorer is not None:
@@ -638,7 +659,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         else:
             raise ValueError(f"Unsupported library: {self.library}")
 
-    def _hash_from_list(self, config_list: List[ConfigBase]) -> str:
+    def _hash_from_list(self, config_list: List[Any]) -> str:
         """
         Generate a hash string from a list of ConfigBase objects.
         The hash is generated by concatenating the string representations of the configurations
@@ -648,19 +669,27 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         Returns:
             str: The generated hash string.
         """
+        hash_parts = []
         for conf in config_list:
+            normalized = coerce_config(conf)
+            if isinstance(normalized, (dict, list, tuple, str, int, float, bool)) or normalized is None:
+                hash_parts.append(str(normalized))
+                continue
+
             assert isinstance(
                 conf,
                 ConfigBase,
-            ), "All items in config_list must be instances of ConfigBase"
-            to_string = "".join(
-                [
-                    str(getattr(conf, attr))
-                    for attr in dir(conf)
-                    if not attr.startswith("_") and not callable(getattr(conf, attr))
-                ],
+            ), "All items in config_list must be ConfigBase or config-like values"
+            hash_parts.append(
+                "".join(
+                    [
+                        str(getattr(conf, attr))
+                        for attr in dir(conf)
+                        if not attr.startswith("_") and not callable(getattr(conf, attr))
+                    ],
+                ),
             )
-        return hashlib.md5(to_string.encode()).hexdigest()
+        return hashlib.md5("".join(hash_parts).encode()).hexdigest()
 
     def _detect_n_repeats(self) -> tuple[int, str]:
         """Return repeated-evaluation count and key suffix for sampler-driven runs.

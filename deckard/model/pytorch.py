@@ -115,10 +115,8 @@ class PytorchModelConfig(ModelConfig):
 
     def __post_init__(self):
         """Initialize model using load_class, following parent pattern."""
-        if isinstance(self.scorer, str) and self.scorer.lower() in {
-            "auto",
-            "default",
-        }:
+        from ..utils import is_default_config_value
+        if is_default_config_value(self.scorer, include_best=False):
             scorer_cls = (
                 "deckard.score.base.DefaultPytorchClassifierConfig"
                 if self.classifier

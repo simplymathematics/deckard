@@ -37,13 +37,11 @@ from scipy.sparse import csr_matrix
 from ..utils import (
     ConfigBase,
     data_supported_filetypes,
-    is_default_config_value,
-    is_null_config_value,
     load_class,
     coerce_to_list,
     merge_list_of_dicts,
 )
-from ..score.base import ScorerDictConfig
+from ..score.base import coerce_scorer_config as _coerce_scorer_config
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -345,17 +343,14 @@ class DataConfig(ConfigBase):
 
     def __post_init__(self):
         self._validate_init()
-        if is_null_config_value(self.scorer):
-            self.scorer = None
-        if is_default_config_value(self.scorer, include_best=False):
-            scorer_cls = (
+        self.scorer = _coerce_scorer_config(
+            self.scorer,
+            default_factory=lambda: load_class(
                 "deckard.score.data.DefaultDataClassificationConfig"
                 if self.classifier
                 else "deckard.score.data.DefaultDataRegressionConfig"
-            )
-            self.scorer = load_class(scorer_cls)
-        elif isinstance(self.scorer, (dict, DictConfig)):
-            self.scorer = ScorerDictConfig(**self.scorer)
+            ),
+        )
 
     @property
     def X(self):
@@ -1232,17 +1227,14 @@ class DataPipelineConfig(DataConfig):
             self.classifier = False
         else:
             self.classifier = None
-        if is_null_config_value(self.scorer):
-            self.scorer = None
-        if is_default_config_value(self.scorer, include_best=False):
-            scorer_cls = (
+        self.scorer = _coerce_scorer_config(
+            self.scorer,
+            default_factory=lambda: load_class(
                 "deckard.score.data.DefaultDataClassificationConfig"
                 if self.classifier
                 else "deckard.score.data.DefaultDataRegressionConfig"
-            )
-            self.scorer = load_class(scorer_cls)
-        elif isinstance(self.scorer, (dict, DictConfig)):
-            self.scorer = ScorerDictConfig(**self.scorer)
+            ),
+        )
 
     def _init_pipeline(self):
         if not isinstance(self.pipeline, (dict, DictConfig)):

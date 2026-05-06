@@ -7,10 +7,13 @@ from pathlib import Path
 from typing import Any, Dict, Literal, Union
 
 import numpy as np
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf, ListConfig
 
 from ..utils import (
     ConfigBase,
+    coerce_config,
+    is_default_config_value,
+    is_null_config_value,
     resolve_class,
     safe_store,
     merge_list_of_dicts,
@@ -173,6 +176,18 @@ class ScorerDictConfig(ConfigBase):
                 scorer = value
             elif isinstance(value, dict):
                 scorer_data = dict(value)
+                scorer = ScorerConfig(
+                    score_name=scorer_data.pop("score_name", key),
+                    score_function=scorer_data.pop("score_function"),
+                    score_params=scorer_data.pop("score_params", {}),
+                    greater_is_better=scorer_data.pop(
+                        "greater_is_better",
+                        True,
+                    ),
+                    needs_proba=scorer_data.pop("needs_proba", False),
+                )
+            elif isinstance(value, DictConfig):
+                scorer_data = dict(OmegaConf.to_container(value, resolve=True))
                 scorer = ScorerConfig(
                     score_name=scorer_data.pop("score_name", key),
                     score_function=scorer_data.pop("score_function"),
@@ -356,6 +371,46 @@ class ScorerDictConfig(ConfigBase):
         if score_file is not None:
             self.save_scores(results, score_file)
         return results
+
+
+def coerce_scorer_config(scorer_obj, *, default_factory=None):
+    """Unified scorer coercion for DataConfig, ModelConfig, and ExperimentConfig.
+
+    Converts any scorer spec into a :class:`ScorerDictConfig` (or ``None``).
+
+    Parameters
+    ----------
+    scorer_obj:
+        The raw scorer value from a config field.
+    default_factory:
+        A zero-argument callable that returns the default scorer when
+        *scorer_obj* is a default token (``"auto"``, ``"default"``,
+        ``"best"``).  If ``None``, default tokens are treated as null
+        (returns ``None``).
+    """
+
+    if is_null_config_value(scorer_obj):
+        return None
+    if is_default_config_value(scorer_obj, include_best=True):
+        if default_factory is not None:
+            return default_factory()
+        return None
+    # Specialized configs may provide ready-to-use scorer runtime objects
+    # (e.g., custom scorer classes instantiated via load_class).
+    if callable(scorer_obj):
+        return scorer_obj
+    if isinstance(scorer_obj, ScorerDictConfig):
+        return scorer_obj
+    if isinstance(scorer_obj, (list, ListConfig)):
+        return ScorerDictConfig.merge(list(scorer_obj))
+    scorer_obj = coerce_config(scorer_obj)  # DictConfig→dict, ConfigBase→dict, YAML file→dict
+    if isinstance(scorer_obj, str):
+        scorer_obj = ScorerDictConfig.from_yaml(scorer_obj).to_dict()
+    if isinstance(scorer_obj, dict):
+        if "scorers" in scorer_obj:
+            return ScorerDictConfig(**scorer_obj)
+        return ScorerDictConfig(scorers=scorer_obj)
+    raise ValueError(f"Unsupported scorer config type: {type(scorer_obj)}")
 
 
 def build_scorer(cfg: ScorerConfig):

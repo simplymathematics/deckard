@@ -8,6 +8,7 @@ from omegaconf import DictConfig, ListConfig
 from .base import DataPipelineConfig
 from ..utils import (
     coerce_to_list,
+    is_default_config_value,
     load_class,
     merge_list_of_dicts,
     resolve_class,
@@ -333,10 +334,7 @@ class AnjanaDataConfig(DataPipelineConfig):
         )
 
     def _score(self) -> dict:
-        if isinstance(self.scorer, str) and self.scorer.lower() in {
-            "auto",
-            "default",
-        }:
+        if is_default_config_value(self.scorer, include_best=False):
             self.scorer = load_class(
                 "deckard.score.anjana.DefaultAnjanaDataScoreConfig",
             )

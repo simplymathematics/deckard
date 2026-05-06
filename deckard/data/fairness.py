@@ -5,8 +5,7 @@ import pandas as pd
 from omegaconf import DictConfig, ListConfig
 
 from .base import DataPipelineConfig
-from ..utils import coerce_to_list, load_class, merge_list_of_dicts
-
+from ..utils import coerce_to_list, is_default_config_value, load_class, merge_list_of_dicts
 
 @dataclass(eq=False)
 class FairlearnDataConfig(DataPipelineConfig):
@@ -160,10 +159,7 @@ class FairlearnDataConfig(DataPipelineConfig):
 
     def _score(self) -> dict:
         """Thin wrapper that delegates fairness dataset scoring to ``self.scorer``."""
-        if isinstance(self.scorer, str) and self.scorer.lower() in {
-            "auto",
-            "default",
-        }:
+        if is_default_config_value(self.scorer, include_best=False):
             scorer_cls = (
                 "deckard.score.data.DefaultDataClassificationConfig"
                 if self.classifier

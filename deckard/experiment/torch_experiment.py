@@ -11,7 +11,7 @@ import logging
 from typing import Any, Union
 
 from .base import ExperimentConfig
-from ..utils import resolve_torch_device
+from ..utils import is_default_config_value, is_null_config_value, resolve_torch_device
 
 logger = logging.getLogger(__name__)
 
@@ -38,18 +38,15 @@ class TorchExperimentConfig(ExperimentConfig):
 
     @staticmethod
     def _canonical_device(device_value: Any) -> Union[str, None]:
+        if is_null_config_value(device_value, allow_empty=True) or is_default_config_value(
+            device_value,
+            include_best=True,
+        ):
+            return None
         if device_value is None:
             return None
         text = str(device_value).strip()
-        if not text or text.lower() in {
-            "none",
-            "null",
-            "auto",
-            "best",
-            "default",
-        }:
-            return None
-        return text.lower()
+        return text.lower() if text else None
 
     def _reconcile_component_devices(self) -> None:
         """Ensure all PyTorch components share a single device."""

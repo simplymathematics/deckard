@@ -40,7 +40,7 @@ from art.estimators.regression import PyTorchRegressor
 from art.config import ART_NUMPY_DTYPE
 
 from ..data import DataConfig
-from ..score.base import ScorerDictConfig
+from ..score.base import ScorerDictConfig, coerce_scorer_config as _coerce_scorer_config
 from ..utils import ConfigBase, load_class, round_scores
 
 art_model_types = tuple(
@@ -247,24 +247,14 @@ class ModelConfig(ConfigBase):
             self.classifier = False
         else:
             self.classifier = None
-        if isinstance(self.scorer, str) and self.scorer.lower() in {
-            "none",
-            "null",
-            "n/a",
-        }:
-            self.scorer = None
-        if isinstance(self.scorer, str) and self.scorer.lower() in {
-            AUTO_SCORER,
-            "default",
-        }:
-            scorer_cls = (
+        self.scorer = _coerce_scorer_config(
+            self.scorer,
+            default_factory=lambda: load_class(
                 "deckard.score.base.DefaultClassifierConfig"
                 if self.classifier
                 else "deckard.score.base.DefaultRegressorConfig"
-            )
-            self.scorer = load_class(scorer_cls)
-        elif isinstance(self.scorer, (dict, DictConfig)):
-            self.scorer = ScorerDictConfig(**self.scorer)
+            ),
+        )
         if self.plugins is None:
             self.plugins = []
         if self.defense is not None:
