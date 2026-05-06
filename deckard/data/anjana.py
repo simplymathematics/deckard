@@ -29,36 +29,60 @@ class AnjanaDataConfig(DataPipelineConfig):
     hierarchy_interval_sizes: Optional[Dict[str, Union[int, list]]] = None
     hierarchy_fill_value: str = "*"
 
-    def __post_init__(self):
-        super().__post_init__()
-        self._validate_init()
+    @staticmethod
+    def _normalize_optional_list(value: Optional[Union[str, list, ListConfig]]) -> Optional[list]:
+        if value is None:
+            return None
+        if isinstance(value, ListConfig):
+            return list(value)
+        if isinstance(value, str):
+            return [value]
+        if isinstance(value, list):
+            return list(value)
+        raise TypeError(f"Expected optional list-like value, got {type(value)}")
 
-        if isinstance(self.anjana_defense, (list, ListConfig)):
-            self.anjana_defense = merge_list_of_dicts(
-                coerce_to_list(self.anjana_defense),
-            )
-        if isinstance(self.fairness_defense, (list, ListConfig)):
-            self.fairness_defense = merge_list_of_dicts(
-                coerce_to_list(self.fairness_defense),
-            )
+    @staticmethod
+    def _normalize_optional_mapping_or_steps(
+        value: Union[None, bool, Dict[str, Any], list, ListConfig],
+        *,
+        field_name: str,
+    ) -> Union[None, bool, Dict[str, Any]]:
+        if isinstance(value, (list, ListConfig)):
+            return merge_list_of_dicts(coerce_to_list(value))
+        if value in [None, False, True]:
+            return value
+        if isinstance(value, DictConfig):
+            return dict(value)
+        if isinstance(value, dict):
+            return dict(value)
+        raise TypeError(
+            f"{field_name} must be None, bool, dict/DictConfig, or list/ListConfig. Got {type(value)}",
+        )
 
-        if isinstance(self.identifiers, ListConfig):
-            self.identifiers = list(self.identifiers)
-        elif isinstance(self.identifiers, str):
-            self.identifiers = [self.identifiers]
-
-        if isinstance(self.quasi_identifiers, ListConfig):
-            self.quasi_identifiers = list(self.quasi_identifiers)
-        elif isinstance(self.quasi_identifiers, str):
-            self.quasi_identifiers = [self.quasi_identifiers]
-
-        if isinstance(self.sensitive_columns, ListConfig):
-            self.sensitive_columns = list(self.sensitive_columns)
-        elif isinstance(self.sensitive_columns, str):
-            self.sensitive_columns = [self.sensitive_columns]
-
+    def _before_post_init(self) -> None:
+        self.anjana_defense = self._normalize_optional_mapping_or_steps(
+            self.anjana_defense,
+            field_name="anjana_defense",
+        )
+        self.fairness_defense = self._normalize_optional_mapping_or_steps(
+            self.fairness_defense,
+            field_name="fairness_defense",
+        )
+        self.identifiers = self._normalize_optional_list(self.identifiers)
+        self.quasi_identifiers = self._normalize_optional_list(self.quasi_identifiers)
+        self.sensitive_columns = self._normalize_optional_list(self.sensitive_columns)
         if isinstance(self.hierarchy_interval_sizes, DictConfig):
             self.hierarchy_interval_sizes = dict(self.hierarchy_interval_sizes)
+
+    def __post_init__(self):
+        # Support test patterns that call __post_init__ directly on bare instances.
+        self._before_post_init()
+        if is_default_config_value(self.scorer, include_best=False):
+            self.scorer = load_class(
+                "deckard.score.anjana.DefaultAnjanaScoreConfig",
+            )
+        super().__post_init__()
+        self._validate_init()
 
     @staticmethod
     def _format_interval_label(lower, upper) -> str:
@@ -345,7 +369,7 @@ class AnjanaDataConfig(DataPipelineConfig):
     def _score(self) -> dict:
         if is_default_config_value(self.scorer, include_best=False):
             self.scorer = load_class(
-                "deckard.score.anjana.DefaultAnjanaDataScoreConfig",
+                "deckard.score.anjana.DefaultAnjanaScoreConfig",
             )
         if self.scorer is None:
             return {}
@@ -359,10 +383,31 @@ class AnjanaDataConfig(DataPipelineConfig):
         y_pred = (
             self.X_train if getattr(self, "X_train", None) is not None else self._X
         )
-        anjana_scores = self.scorer(
+        raw_scores = self.scorer(
             y_true=y_true,
             y_pred=y_pred,
             mode=None,
             data=self,
         )
-        return {"anjana_scores": anjana_scores}
+        if not isinstance(raw_scores, dict):
+            return {"anjana_scores": raw_scores}
+
+        anjana_metric_keys = {
+            "k_anonymity",
+            "l_diversity",
+            "t_closeness",
+        }
+        anjana_scores = {
+            key: value
+            for key, value in raw_scores.items()
+            if key in anjana_metric_keys
+        }
+        non_anjana_scores = {
+            key: value
+            for key, value in raw_scores.items()
+            if key not in anjana_metric_keys
+        }
+        output = dict(non_anjana_scores)
+        if len(anjana_scores) > 0:
+            output["anjana_scores"] = anjana_scores
+        return output

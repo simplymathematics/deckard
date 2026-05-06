@@ -11,12 +11,13 @@ __all__ = [
     "anjana_k_anonymity_score",
     "anjana_l_diversity_score",
     "anjana_t_closeness_score",
+    "DefaultAnjanaScoreConfig",
     "DefaultAnjanaDataScoreConfig",
     "DefaultAnjanaModelScoreConfig",
 ]
 
 
-def _resolve_frame_and_context(data=None, y_pred=None, **kwargs):
+def _resolve_frame_and_context(data=None, y_pred=None, y_true=None, **kwargs):
     frame = None
     if isinstance(y_pred, pd.DataFrame):
         frame = y_pred
@@ -38,6 +39,13 @@ def _resolve_frame_and_context(data=None, y_pred=None, **kwargs):
         "sens_att",
         getattr(data, "sensitive_attribute", None),
     )
+
+    if isinstance(sens_att, str) and sens_att not in frame.columns and y_true is not None:
+        frame = frame.copy()
+        labels = pd.Series(y_true).reset_index(drop=True)
+        if len(labels) == len(frame):
+            frame[sens_att] = labels
+
     if isinstance(quasi_ident, str):
         quasi_ident = [quasi_ident]
     if not isinstance(quasi_ident, list) or len(quasi_ident) == 0:
@@ -89,6 +97,7 @@ def anjana_k_anonymity_score(
     frame, quasi_ident, _ = _resolve_frame_and_context(
         data=data,
         y_pred=y_pred,
+        y_true=y_true,
         **kwargs,
     )
     return float(pycanon_anonymity.k_anonymity(frame, quasi_ident))
@@ -137,6 +146,7 @@ def anjana_l_diversity_score(
     frame, quasi_ident, sens_att = _resolve_frame_and_context(
         data=data,
         y_pred=y_pred,
+        y_true=y_true,
         **kwargs,
     )
     if sens_att is None:
@@ -189,6 +199,7 @@ def anjana_t_closeness_score(
     frame, quasi_ident, sens_att = _resolve_frame_and_context(
         data=data,
         y_pred=y_pred,
+        y_true=y_true,
         **kwargs,
     )
     if sens_att is None:
@@ -199,7 +210,7 @@ def anjana_t_closeness_score(
 
 
 @dataclass(eq=False)
-class DefaultAnjanaDataScoreConfig(ScorerDictConfig):
+class DefaultAnjanaScoreConfig(ScorerDictConfig):
     scorers: Dict[str, ScorerConfig] = field(
         default_factory=lambda: {
             "k_anonymity": ScorerConfig(
@@ -222,28 +233,16 @@ class DefaultAnjanaDataScoreConfig(ScorerDictConfig):
 
 
 @dataclass(eq=False)
-class DefaultAnjanaModelScoreConfig(ScorerDictConfig):
-    scorers: Dict[str, ScorerConfig] = field(
-        default_factory=lambda: {
-            "k_anonymity": ScorerConfig(
-                score_name="k_anonymity",
-                score_function=anjana_k_anonymity_score,
-                greater_is_better=True,
-            ),
-            "l_diversity": ScorerConfig(
-                score_name="l_diversity",
-                score_function=anjana_l_diversity_score,
-                greater_is_better=True,
-            ),
-            "t_closeness": ScorerConfig(
-                score_name="t_closeness",
-                score_function=anjana_t_closeness_score,
-                greater_is_better=True,
-            ),
-        },
-    )
+class DefaultAnjanaDataScoreConfig(DefaultAnjanaScoreConfig):
+    pass
 
 
+@dataclass(eq=False)
+class DefaultAnjanaModelScoreConfig(DefaultAnjanaScoreConfig):
+    pass
+
+
+safe_store(group="score", name="anjana", node=DefaultAnjanaScoreConfig)
 safe_store(group="score", name="anjana_data", node=DefaultAnjanaDataScoreConfig)
 safe_store(
     group="score",

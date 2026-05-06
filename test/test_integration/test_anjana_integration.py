@@ -1,9 +1,10 @@
 """Integration and runtime tests for Anjana chains in examples/sklearn."""
-
+import json
 import subprocess
 import sys
 from pathlib import Path
 import uuid
+import importlib.util
 
 import optuna
 import pandas as pd
@@ -22,7 +23,66 @@ DECKARD_RC_PATH = EXAMPLES_SKLEARN_DIR / ".deckard_rc"
 
 
 def _runtime_env() -> dict[str, str]:
-    return make_runtime_env(DECKARD_RC_PATH)
+    env = make_runtime_env(DECKARD_RC_PATH)
+    env.setdefault("DECKARD_TEST_MAX_SAMPLES", "200")
+    return env
+
+
+def _run_optimize_and_load_scores(
+    overrides: list[str],
+    *,
+    timeout: int = 300,
+) -> tuple[dict, subprocess.CompletedProcess]:
+    experiment_override = [
+        item for item in overrides if isinstance(item, str) and item.startswith("experiment_name=")
+    ]
+    assert len(experiment_override) == 1
+    experiment_name = experiment_override[0].split("=", 1)[1]
+
+    score_override = f"+files={{score_file:outputs/logs/{experiment_name}/scores.json}}"
+    has_score_override = any(
+        isinstance(item, str) and "score_file" in item and item.startswith(("files", "+files"))
+        for item in overrides
+    )
+    final_overrides = list(overrides)
+    if not has_score_override:
+        final_overrides.append(score_override)
+
+    cmd = [sys.executable, "-m", "deckard", "optimize", *final_overrides]
+    result = subprocess.run(
+        cmd,
+        cwd=str(EXAMPLES_SKLEARN_DIR),
+        env=_runtime_env(),
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        check=False,
+    )
+    assert (
+        result.returncode == 0
+    ), f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+
+    score_file = EXAMPLES_SKLEARN_DIR / "outputs" / "logs" / experiment_name / "scores.json"
+    if not score_file.exists():
+        candidates = sorted(
+            EXAMPLES_SKLEARN_DIR.glob("outputs/logs/**/scores.json"),
+            key=lambda path: path.stat().st_mtime,
+            reverse=True,
+        )
+        assert len(candidates) > 0, "Expected at least one scores.json artifact"
+        matched = None
+        for candidate in candidates:
+            try:
+                with candidate.open("r") as handle:
+                    payload = json.load(handle)
+                if payload.get("experiment_name") == experiment_name:
+                    matched = candidate
+                    break
+            except Exception:
+                continue
+        score_file = matched if matched is not None else candidates[0]
+    with score_file.open("r") as handle:
+        return json.load(handle), result
 
 
 def _make_anjana_data(n=40, monkeypatch=None, defense=None):
@@ -60,6 +120,26 @@ def _make_anjana_data(n=40, monkeypatch=None, defense=None):
             lambda _: _stub_k_anon,
         )
     return cfg
+
+
+def _assert_anjana_privacy_scores(scores: dict) -> None:
+    anjana_metrics = {
+        "k_anonymity",
+        "l_diversity",
+        "t_closeness",
+    }
+
+    nested = scores.get("anjana_scores")
+    if isinstance(nested, dict):
+        assert anjana_metrics.issubset(set(nested.keys()))
+        return
+
+    flattened_keys = {key for key in scores if key in anjana_metrics}
+    assert anjana_metrics.issubset(flattened_keys), (
+        "Expected Anjana-specific privacy metrics in scores (k_anonymity, "
+        "l_diversity, t_closeness), "
+        f"but found keys: {sorted(scores.keys())}"
+    )
 
 
 @pytest.mark.skipif(
@@ -181,7 +261,7 @@ def test_joblib_launcher_syncs_scores_and_attrs_sklearn(tmp_path):
     not DECKARD_RC_PATH.exists(),
     reason="examples/sklearn/.deckard_rc not found",
 )
-def test_deckard_optimize_multirun_syncs_optuna_trial_attrs_sklearn(tmp_path):
+def test_deckard_optimize_hydra_multirun_syncs_optuna_trial_attrs_sklearn(tmp_path):
     study_name = f"callback_cov_{uuid.uuid4().hex[:8]}"
     db_path = tmp_path / "callback_cov.db"
     storage = f"sqlite:///{db_path}"
@@ -221,8 +301,11 @@ def test_deckard_optimize_multirun_syncs_optuna_trial_attrs_sklearn(tmp_path):
 
     attrs = trials[0].user_attrs
     assert "experiment_name" in attrs
-    # Non-objective metrics should be synced as trial attributes.
-    assert any(k.startswith("benign_") or k.endswith("_time") for k in attrs)
+    assert any(k.startswith("benign_") for k in attrs)
+    assert any(k.startswith("evasion_") for k in attrs)
+    assert any(k.endswith("_time") for k in attrs)
+    assert ("training_n" in attrs or "train_n" in attrs)
+    assert "attack_size" in attrs
 
 
 def test_anjana_attack_chain_type_and_scores(monkeypatch):
@@ -267,6 +350,7 @@ def test_anjana_attack_chain_type_and_scores(monkeypatch):
     scores = exp()
 
     assert isinstance(exp.data.X_train, pd.DataFrame)
+    _assert_anjana_privacy_scores(scores)
     assert "accuracy" in scores
     assert "evasion_accuracy" in scores
 
@@ -326,6 +410,7 @@ def test_anjana_fairness_and_art_chain_type_and_transform(monkeypatch):
     assert len(exp.data._X) == 30
     assert len(exp.data.X_train) + len(exp.data.X_test) == 30
     assert hasattr(exp.data, "_sensitive_train")
+    _assert_anjana_privacy_scores(scores)
     assert "accuracy" in scores
 
 
@@ -361,3 +446,136 @@ def test_wrapper_defenses_reordered_last_with_warning(caplog):
 
     assert call_order == ["data", "art"]
     assert any("automatically reordered" in rec.message for rec in caplog.records)
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(
+    not DECKARD_RC_PATH.exists(),
+    reason="examples/sklearn/.deckard_rc not found",
+)
+@pytest.mark.skipif(
+    importlib.util.find_spec("pycanon") is None,
+    reason="pycanon is required for Anjana scorer integration",
+)
+def test_cli_score_chain_without_model_or_attack_sklearn():
+    experiment_name = f"anjana_chain_nomodel_{uuid.uuid4().hex[:8]}"
+    scores, _ = _run_optimize_and_load_scores(
+        [
+            "data=test-classification",
+            "+data.quasi_identifiers=[feature_0,feature_1]",
+            "+data.sensitive_attribute=target",
+            "+data.sensitive_columns=[feature_0]",
+            "score=classification,anjana",
+            "~model",
+            "~defense",
+            "~attack",
+            "~search/models",
+            "~search/defenses",
+            "~search/attacks",
+            "model_alias=no_model",
+            "defense_alias=no_defense",
+            "attack_alias=no_attack",
+            f"experiment_name={experiment_name}",
+        ],
+    )
+
+    assert "num_classes" in scores
+    _assert_anjana_privacy_scores(scores)
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(
+    not DECKARD_RC_PATH.exists(),
+    reason="examples/sklearn/.deckard_rc not found",
+)
+@pytest.mark.skipif(
+    importlib.util.find_spec("pycanon") is None,
+    reason="pycanon is required for Anjana scorer integration",
+)
+def test_cli_score_chain_with_model_without_attack_sklearn():
+    experiment_name = f"anjana_chain_model_{uuid.uuid4().hex[:8]}"
+    scores, _ = _run_optimize_and_load_scores(
+        [
+            "data=test-classification",
+            "model=test-logistic",
+            "~attack",
+            "~search/attacks",
+            "attack_alias=no_attack",
+            "+data.quasi_identifiers=[feature_0,feature_1]",
+            "+data.sensitive_attribute=target",
+            "+data.sensitive_columns=[feature_0]",
+            "score=classification,anjana",
+            f"experiment_name={experiment_name}",
+        ],
+    )
+
+    assert "accuracy" in scores
+    _assert_anjana_privacy_scores(scores)
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(
+    not DECKARD_RC_PATH.exists(),
+    reason="examples/sklearn/.deckard_rc not found",
+)
+@pytest.mark.skipif(
+    importlib.util.find_spec("pycanon") is None,
+    reason="pycanon is required for Anjana scorer integration",
+)
+def test_cli_score_chain_data_anjana_evasion_sklearn():
+    experiment_name = f"anjana_chain_attack_{uuid.uuid4().hex[:8]}"
+    scores, _ = _run_optimize_and_load_scores(
+        [
+            "data=test-classification",
+            "model=test-logistic",
+            "attack=boundary",
+            "defense=class-labels",
+            "+data.quasi_identifiers=[feature_0,feature_1]",
+            "+data.sensitive_attribute=target",
+            "+data.sensitive_columns=[feature_0]",
+            "score=data-classification,anjana,evasion-classification",
+            f"experiment_name={experiment_name}",
+        ],
+        timeout=420,
+    )
+
+    assert "num_classes" in scores
+    assert "evasion_accuracy" in scores
+    _assert_anjana_privacy_scores(scores)
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(
+    not DECKARD_RC_PATH.exists(),
+    reason="examples/sklearn/.deckard_rc not found",
+)
+@pytest.mark.skipif(
+    importlib.util.find_spec("pycanon") is None,
+    reason="pycanon is required for Anjana scorer integration",
+)
+@pytest.mark.skipif(
+    importlib.util.find_spec("fairlearn") is None,
+    reason="fairlearn is required for fairness scorer chain integration",
+)
+def test_cli_score_chain_with_fairness_sklearn():
+    experiment_name = f"anjana_chain_fair_{uuid.uuid4().hex[:8]}"
+    scores, _ = _run_optimize_and_load_scores(
+        [
+            "data=test-classification",
+            "model=test-logistic",
+            "attack=boundary",
+            "defense=class-labels",
+            "+data.quasi_identifiers=[feature_0,feature_1]",
+            "+data.sensitive_attribute=target",
+            "+data.sensitive_columns=[feature_0]",
+            "score=classification,anjana,evasion-classification,fairness-classification",
+            f"experiment_name={experiment_name}",
+        ],
+        timeout=420,
+    )
+
+    assert "accuracy" in scores
+    assert "evasion_accuracy" in scores
+    assert "demographic_parity_difference" in scores
+    assert "equalized_odds_difference" in scores
+    _assert_anjana_privacy_scores(scores)
