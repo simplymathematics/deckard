@@ -54,6 +54,30 @@ python -m pip install -e .
 
 This command installs the project's dependencies in "editable" mode. Editable mode (`-e .`) allows you to modify the source code and have changes reflected immediately without needing to reinstall the package. The `-m` flag tells Python to run the `pip` module as a script, ensuring you use the correct version of `pip` for your environment.
 
+## Repository layout:
+
+```
+.
+├── build <- exists after installation, contains the build files for the `deckard` executable.
+├── coverage.sh <- Script for tracking test coverage and test timing measurments.
+├── deckard <- Source directory
+├── develop.md <- Documentation for developers
+├── Dockerfile <- A docker environment for testing and deployment
+├── docs <- The documentation 
+├── examples <- Examples for each framework and optional extensions.
+├── LICENSE  <- The software license file
+├── notebooks <- Examples, but as Jupyter Notebooks
+├── papers <- Published papers that use deckard
+├── pyproject.toml <- python spec file for this package
+├── README.md <- This file
+├── setup.sh
+└── test
+```
+
 ## Usage
 
 See [docs/README.md](docs/README.md) for detailed documentation.
+
+## Papers
+
+## Examples

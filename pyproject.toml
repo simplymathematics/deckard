@@ -34,6 +34,10 @@ build-backend = "setuptools.build_meta"
 packages = ["deckard"]
 
 [project.optional-dependencies]
+
+# -------------------------
+# Core research stacks
+# -------------------------
 lifelines = [
     "lifelines",
 ]
@@ -44,6 +48,7 @@ fairlearn = [
 
 anjana = [
     "anjana @ git+https://github.com/IFCA-Advanced-Computing/anjana.git",
+    "pycanon",
 ]
 
 yellowbrick = [
@@ -54,14 +59,27 @@ seaborn = [
     "seaborn",
 ]
 
+torch = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "torchaudio>=2.0.0",
+    "cma",
+]
+
+# -------------------------
+# Documentation stack
+# -------------------------
 docs = [
     "sphinx",
     "sphinx-autodoc-typehints",
     "sphinx-rtd-theme",
     "myst-parser",
-    "nbsphinx"
+    "nbsphinx",
 ]
 
+# -------------------------
+# Development / testing
+# -------------------------
 test = [
     "pytest",
     "pytest-cov",
@@ -71,17 +89,24 @@ test = [
     "mypy",
     "pre-commit",
     "pandas",
-    "numpy"
-]
+    "numpy",
 
-torch = [
+    # explicitly include core optional stacks (no composition syntax in TOML)
+    "lifelines",
+    "fairlearn",
+    "anjana @ git+https://github.com/IFCA-Advanced-Computing/anjana.git",
+    "pycanon",
+    "yellowbrick",
+    "seaborn",
     "torch>=2.0.0",
     "torchvision>=0.15.0",
     "torchaudio>=2.0.0",
     "cma",
 ]
 
-# Linting
+# -------------------------
+# Lint-only stack
+# -------------------------
 lint = [
     "flake8",
     "black",
@@ -91,9 +116,11 @@ lint = [
     "flake8-pyproject",
 ]
 
-
-# All extras
-all  = [
+# -------------------------
+# Convenience meta-extras
+# (fully expanded, no references)
+# -------------------------
+all = [
     "pandas",
     "scikit-learn",
     "hydra-core",
@@ -107,14 +134,20 @@ all  = [
     "matplotlib",
     "dvc",
     "optuna",
+    "optuna-dashboard",
+    "hydra-joblib-launcher",
+    "hydra-optuna-sweeper @ git+https://github.com/simplymathematics/hydra-optuna-sweeper.git",
     "paretoset",
     "ipykernel",
     "kagglehub",
+    "cma",
+
     "sphinx",
     "sphinx-autodoc-typehints",
     "sphinx-rtd-theme",
     "myst-parser",
     "nbsphinx",
+
     "pytest",
     "pytest-cov",
     "flake8",
@@ -122,14 +155,11 @@ all  = [
     "isort",
     "mypy",
     "pre-commit",
+
     "torch>=2.0.0",
     "torchvision>=0.15.0",
     "torchaudio>=2.0.0",
-    "cma",
-    "lifelines",
-
 ]
-
 [tool.black]
 line-length = 87
 target-version = ['py310']
@@ -151,6 +181,9 @@ exclude = [
 ]
 
 [tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
 filterwarnings = [
         "ignore::UserWarning",
         "ignore::RuntimeWarning",
@@ -158,4 +191,20 @@ filterwarnings = [
         "ignore::DeprecationWarning",
         "ignore::FutureWarning",
         "ignore::matplotlib.MatplotlibDeprecationWarning"
+]
+
+[tool.coverage.run]
+source = ["deckard"]
+omit = [
+    "*/__pycache__/*",
+    "*/build/*",
+    "deckard/optuna_callback.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
 ]
