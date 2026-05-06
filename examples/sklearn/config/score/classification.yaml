@@ -18,5 +18,6 @@ scorers:
       zero_division: 0
   log_loss:
     score_function: sklearn.metrics.log_loss
+    needs_proba: true
     score_params:
       labels: null
