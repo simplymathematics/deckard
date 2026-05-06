@@ -22,7 +22,7 @@ class TestMode1NativeSurvivalData:
             data="lifelines_diabetes",
             model="weibull",
             plots_folder=str(output_folder),
-            duration_col="T",
+            duration_col="right",
             target="E",  # event column
         )
 
