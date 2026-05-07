@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, Literal, Union
 
 import numpy as np
+from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf, ListConfig
 
 from ..utils import (
@@ -22,6 +23,63 @@ from ..utils import (
 from .pytorch import to_numpy_if_torch
 
 logger = logging.getLogger(__name__)
+
+
+class _DataScorerMarker:
+    """Mixin that marks a ScorerDictConfig as operating on data rather than model predictions.
+
+    Inherit this class alongside ``ScorerDictConfig`` to signal that the scorer
+    should be routed to ``data.scorer`` (rather than ``model.scorer``) when used
+    in a score chain via :class:`~deckard.experiment.ExperimentConfig`.
+    """
+
+
+class _AttackProfileScorer:
+    """Mixin that marks a ScorerDictConfig as an attack profile scorer.
+
+    Subclasses must set ``_profile_attr`` to the :class:`AttackScorerConfig`
+    attribute name (e.g. ``"evasion"``).  When used in a score chain, the scorer
+    is applied to ``attack.scorer.<_profile_attr>`` rather than the model scorer.
+    """
+
+    _profile_attr: str = "evasion"
+
+
+def _resolve_yt_yp(mode, data, model, attack, y_pred, y_true):
+    """Resolve y_true and y_pred from mode + context when not explicitly provided.
+
+    This mirrors the resolution logic inside ``ScorerDictConfig.__call__`` so that
+    mixin overrides (e.g. ``_FairnessScorerMixin``) can access the resolved values
+    after delegating to ``super().__call__()``.
+    """
+    if y_pred is not None:
+        return y_true, y_pred
+    if mode == "test":
+        if data is not None:
+            y_true = getattr(data, "y_test", y_true)
+        if model is not None:
+            y_pred = getattr(model, "test_predictions", None) or getattr(model, "predictions", None)
+    elif mode == "train":
+        if data is not None:
+            y_true = getattr(data, "y_train", y_true)
+        if model is not None:
+            y_pred = getattr(model, "training_predictions", None)
+    elif mode == "attack":
+        if data is not None and attack is not None:
+            y_true = getattr(data, "y_test", y_true)[: getattr(attack, "attack_size", None)]
+        if attack is not None:
+            y_pred = getattr(attack, "attack_predictions", None)
+    elif mode == "val":
+        if data is not None:
+            y_true = getattr(data, "y_val", y_true)
+        if model is not None:
+            y_pred = getattr(model, "val_predictions", None)
+    elif mode == "attack-val":
+        if data is not None:
+            y_true = getattr(data, "y_val", y_true)
+        if attack is not None:
+            y_pred = getattr(attack, "attack_predictions", None)
+    return y_true, y_pred
 
 
 @dataclass
@@ -222,7 +280,7 @@ class ScorerDictConfig(ConfigBase):
         """Merge a list of scorer specs into a single ScorerDictConfig.
 
         Each element of *items* may be a :class:`ScorerDictConfig`, a dict
-        with a ``scorers`` key, or a bare scorers dict (name → scorer spec).
+        with a ``scorers`` key, or a bare scorers dict (name -> scorer spec).
         Later entries win on duplicate scorer names.
         """
         merged_scorers: dict = {}
@@ -403,10 +461,13 @@ def coerce_scorer_config(scorer_obj, *, default_factory=None):
         return scorer_obj
     if isinstance(scorer_obj, (list, ListConfig)):
         return ScorerDictConfig.merge(list(scorer_obj))
-    scorer_obj = coerce_config(scorer_obj)  # DictConfig→dict, ConfigBase→dict, YAML file→dict
+    scorer_obj = coerce_config(scorer_obj)  # DictConfig->dict, ConfigBase->dict, YAML file->dict
     if isinstance(scorer_obj, str):
         scorer_obj = ScorerDictConfig.from_yaml(scorer_obj).to_dict()
     if isinstance(scorer_obj, dict):
+        if "_target_" in scorer_obj:
+            # Preserve concrete type info (e.g. _DataScorerMarker, _AttackProfileScorer)
+            return instantiate(scorer_obj)
         if "scorers" in scorer_obj:
             return ScorerDictConfig(**scorer_obj)
         return ScorerDictConfig(scorers=scorer_obj)
@@ -555,6 +616,9 @@ safe_store(
 
 __all__ = [
     "safe_store",
+    "_DataScorerMarker",
+    "_AttackProfileScorer",
+    "_resolve_yt_yp",
     "ScorerConfig",
     "ScorerDictConfig",
     "DefaultClassifierConfig",

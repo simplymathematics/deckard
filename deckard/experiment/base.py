@@ -35,10 +35,11 @@ from ..utils import (
     coerce_to_list,
     instantiate_config,
     is_default_config_value,
-    load_class,
+    is_null_config_value,
     merge_scores_with_collision_suffix,
+    split_comma_separated_tokens,
 )
-from ..score.base import coerce_scorer_config
+from ..score.base import coerce_scorer_config, _DataScorerMarker, _AttackProfileScorer
 from ..data.sample import KFoldSampler, ShuffleSampler
 
 try:
@@ -61,10 +62,6 @@ try:
     from ..model import FairlearnModelConfig
 except ImportError:  # pragma: no cover
     FairlearnModelConfig = None
-try:
-    from ..model import AnjanaModelConfig
-except ImportError:  # pragma: no cover
-    AnjanaModelConfig = None
 
 
 logger = logging.getLogger(__name__)
@@ -339,28 +336,118 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             out.update(self._normalize_mode_score_keys(mode, mode_scores))
         return out
 
-    def _coerce_scorer_config(self, scorer_obj, scope: str = "model"):
-        classifier = self.classifier
-        if scope == "data" and getattr(self, "data", None) is not None:
-            classifier = self.data.classifier
-        elif scope in ["model", "experiment"] and getattr(self, "model", None) is not None:
-            classifier = self.model.classifier
+    def _apply_attack_profile_scorer(self, scorer) -> None:
+        """Apply an _AttackProfileScorer to the configured attack chain."""
+        attack_chain = getattr(self, "_attack_chain", [])
+        profile_attr = getattr(scorer, "_profile_attr", "evasion")
+        for attack_cfg in attack_chain:
+            if hasattr(attack_cfg, "scorer") and attack_cfg.scorer is not None:
+                setattr(attack_cfg.scorer, profile_attr, scorer)
 
-        default_factory = None
+    def _route_scorer_to_scope(self, scope: str, scorer) -> None:
+        """Attach *scorer* to the component identified by *scope*.
+
+        Extend this method (or add a new ``elif`` branch) to support additional
+        components (e.g. ``"detector"`` once detector scoring is formalised).
+        """
+        if scorer is None:
+            return
         if scope == "data":
-            default_factory = lambda: load_class(
-                "deckard.score.data.DefaultDataClassificationConfig"
-                if classifier
-                else "deckard.score.data.DefaultDataRegressionConfig"
+            self.data.scorer = scorer
+        elif scope == "model":
+            if self.model is not None:
+                self.model.scorer = scorer
+        elif scope == "attack":
+            self._apply_attack_profile_scorer(scorer)
+        elif scope == "detector":
+            if self.detector is not None and hasattr(self.detector, "scorer"):
+                self.detector.scorer = scorer
+        elif scope == "experiment":
+            self.score = scorer
+
+    def _initialize_component_scorers(self) -> None:
+        """Route the experiment-level ``score`` config to data/model/attack components.
+
+        Routing rules (applied after Hydra config resolution):
+
+        **Scoped dict** (Hydra ``@`` package syntax)::
+
+            +score@score.data=data-classification
+            +score@score.model=classification
+            +score@score.attack=evasion-classification
+
+        Produces ``score: {data: {...}, model: {...}, attack: {...}}``.
+        Each sub-key is routed directly to its component via
+        :meth:`_route_scorer_to_scope` without any type-inference.
+
+        **Single config** (type-based fallback)::
+
+            score=classification              # → model.scorer
+            score=data-classification        # → data.scorer (_DataScorerMarker)
+            score=evasion-classification     # → attack scorer (_AttackProfileScorer)
+
+        **Null / auto / default** → components self-configure from their own defaults.
+        """
+        score_cfg = self.score
+
+        # Null / auto → let each component self-configure.
+        if score_cfg is None or is_null_config_value(score_cfg) or is_default_config_value(score_cfg):
+            self.score = None
+            return
+
+        plain = OmegaConf.to_container(score_cfg, resolve=True) if isinstance(score_cfg, DictConfig) else (dict(score_cfg) if isinstance(score_cfg, dict) else None)
+
+        if isinstance(plain, dict):
+            # Auto-configure sentinel (from score/auto.yaml).
+            if plain.get("_auto_configure"):
+                self.score = None
+                return
+
+            # Scoped dict: keys are component names produced by Hydra @ package syntax
+            # or by passing {"data": scorer, "model": scorer, ...} directly.
+            _SCOPE_KEYS = {"data", "model", "attack", "detector", "experiment"}
+            if any(k in _SCOPE_KEYS for k in plain):
+                for scope in _SCOPE_KEYS:
+                    if scope in plain:
+                        self._route_scorer_to_scope(scope, coerce_scorer_config(plain[scope]))
+                # experiment scope sets self.score; all others clear it
+                if "experiment" not in plain:
+                    self.score = None
+                return
+
+        # Normalise to a list for type-based routing (single config or comma string).
+        if isinstance(score_cfg, (list, ListConfig)):
+            items = list(coerce_to_list(score_cfg))
+        elif isinstance(score_cfg, str) and "," in score_cfg:
+            items = split_comma_separated_tokens(score_cfg)
+        else:
+            items = [score_cfg]
+
+        data_scorers: list = []
+        model_scorers: list = []
+
+        for item in items:
+            scorer = coerce_scorer_config(item)
+            if scorer is None:
+                continue
+            if isinstance(scorer, _AttackProfileScorer):
+                self._apply_attack_profile_scorer(scorer)
+            elif isinstance(scorer, _DataScorerMarker):
+                data_scorers.append(scorer)
+            else:
+                model_scorers.append(scorer)
+
+        if data_scorers:
+            self.data.scorer = (
+                ScorerDictConfig.merge(data_scorers) if len(data_scorers) > 1 else data_scorers[0]
             )
-        elif scope in ["model", "experiment"]:
-            default_factory = lambda: load_class(
-                "deckard.score.base.DefaultClassifierConfig"
-                if classifier
-                else "deckard.score.base.DefaultRegressorConfig"
+        if model_scorers and self.model is not None:
+            self.model.scorer = (
+                ScorerDictConfig.merge(model_scorers) if len(model_scorers) > 1 else model_scorers[0]
             )
 
-        return coerce_scorer_config(scorer_obj, default_factory=default_factory)
+        # Score chain fully routed; no experiment-level scorer needed.
+        self.score = None
 
     def _coerce_single_attack(self, attack_obj: Any) -> AttackConfig:
         try:
@@ -580,7 +667,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             ), f"classifier in experiment must match model.classifier. Got {self.classifier} vs {self.model.classifier}"
 
     def _specialize_model_for_data(self) -> None:
-        """Swap/attach model subtype for fairness or anjana data configs."""
+        """Swap/attach model subtype for fairness data configs."""
         if self.model is None:
             return
 
@@ -607,78 +694,6 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             else:
                 self.model.data = self.data
             return
-
-        if AnjanaDataConfig is not None and isinstance(
-            self.data,
-            AnjanaDataConfig,
-        ):
-            if AnjanaModelConfig is None:
-                raise ImportError(
-                    "AnjanaModelConfig requires optional anjana dependencies. Install deckard[anjana] to enable anjana model configs.",
-                )
-            if not isinstance(self.model, AnjanaModelConfig):
-                self.model = AnjanaModelConfig(
-                    model_type=self.model.model_type,
-                    classifier=self.model.classifier,
-                    model_params=self.model.model_params,
-                    probability=self.model.probability,
-                    alias=self.model.alias,
-                    defense=self.model.defense,
-                    plugins=self.model.plugins,
-                    scorer=self.model.scorer,
-                    data=self.data,
-                )
-            else:
-                self.model.data = self.data
-
-    def _initialize_component_scorers(self) -> None:
-        """Coerce configured scorers and attach them to data/model components."""
-        self.data_scorer = None
-        self.model_scorer = None
-        self.experiment_scorer = None
-        if self.score is not None:
-            score_cfg = self.score
-            if isinstance(score_cfg, DictConfig):
-                score_cfg = OmegaConf.to_container(score_cfg, resolve=True)
-            if isinstance(score_cfg, dict) and any(
-                key in score_cfg for key in ["data", "model", "experiment"]
-            ):
-                self.data_scorer = self._coerce_scorer_config(
-                    score_cfg.get("data"),
-                    scope="data",
-                )
-                self.model_scorer = self._coerce_scorer_config(
-                    score_cfg.get("model"),
-                    scope="model",
-                )
-                self.experiment_scorer = self._coerce_scorer_config(
-                    score_cfg.get("experiment"),
-                    scope="experiment",
-                )
-            elif is_default_config_value(score_cfg, include_best=True):
-                self.data_scorer = self._coerce_scorer_config(
-                    score_cfg,
-                    scope="data",
-                )
-                self.model_scorer = self._coerce_scorer_config(
-                    score_cfg,
-                    scope="model",
-                )
-            else:
-                # Backward-compatible shorthand: a single score config targets model scoring.
-                self.model_scorer = self._coerce_scorer_config(
-                    score_cfg,
-                    scope="model",
-                )
-
-        # Attach component scorers so DataConfig/ModelConfig execute runtime-configured scoring.
-        if self.data_scorer is not None:
-            self.data.scorer = self.data_scorer
-        if self.model is not None and self.model_scorer is not None:
-            self.model.scorer = self.model_scorer
-
-        # Keep `score` as experiment-level scorer only.
-        self.score = self.experiment_scorer
 
     def _initialize_attack_chain(self) -> None:
         """Normalize configured attacks and establish primary attack view."""

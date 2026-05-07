@@ -1015,7 +1015,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
         )
 
     def test_model_as_str_yaml(self):
-        """Cover branch: isinstance(self.model, str) → ModelConfig.from_yaml(...)"""
+        """Cover branch: isinstance(self.model, str) -> ModelConfig.from_yaml(...)"""
         with tempfile.TemporaryDirectory() as td:
             yaml_path = Path(td) / "model.yaml"
             yaml_path.write_text(
@@ -1032,7 +1032,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
         self.assertIsInstance(exp.model, ModelConfig)
 
     def test_model_as_config_base_subclass(self):
-        """Cover branch: isinstance(self.model, ConfigBase) → model_dict = model.to_dict()"""
+        """Cover branch: isinstance(self.model, ConfigBase) -> model_dict = model.to_dict()"""
 
         class AltModel(ModelConfig):
             pass
@@ -1097,7 +1097,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
         self.assertIsInstance(exp.model, ModelConfig)
 
     def test_attack_as_str_yaml(self):
-        """Cover branch: isinstance(self.attack, str) → AttackConfig.from_yaml"""
+        """Cover branch: isinstance(self.attack, str) -> AttackConfig.from_yaml"""
         with tempfile.TemporaryDirectory() as td:
             yaml_path = Path(td) / "attack.yaml"
             yaml_path.write_text(
@@ -1214,9 +1214,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
             score=scorer,
             files=FileConfig(),
         )
-        self.assertIsNotNone(exp.model_scorer)
-
-    def test_attack_invalid_type_raises(self):
+        self.assertIsNotNone(exp.model.scorer)
         with self.assertRaises(ValueError):
             ExperimentConfig(
                 data=self._data(),
@@ -1295,10 +1293,10 @@ class TestCoerceScorerConfig(unittest.TestCase):
             files=FileConfig(),
         )
         # experiment scorer is set from the scorer_spec dict
-        self.assertIsNotNone(exp.experiment_scorer)
+        self.assertIsNotNone(exp.score)
         # data and model auto scorers should be attached too
-        self.assertIsNotNone(exp.data_scorer)
-        self.assertIsNotNone(exp.model_scorer)
+        self.assertIsNotNone(exp.data.scorer)
+        self.assertIsNotNone(exp.model.scorer)
 
     def test_score_auto_shorthand_applies_data_and_model_defaults(self):
         exp = ExperimentConfig(
@@ -1311,9 +1309,9 @@ class TestCoerceScorerConfig(unittest.TestCase):
             score="auto",
             files=FileConfig(),
         )
-        self.assertIsNotNone(exp.data_scorer)
-        self.assertIsNotNone(exp.model_scorer)
-        self.assertIsNone(exp.experiment_scorer)
+        self.assertIsNotNone(exp.data.scorer)
+        self.assertIsNotNone(exp.model.scorer)
+        self.assertIsNone(exp.score)
 
 
 class TestRunSinglePipelineBranchesExtra(unittest.TestCase):

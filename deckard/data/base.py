@@ -432,7 +432,7 @@ class DataConfig(ConfigBase):
         """Instantiate and return the sampler object.
 
         Accepts:
-        - ``"split"`` / ``"fold"`` / ``"shuffle"`` → corresponding sampler class
+        - ``"split"`` / ``"fold"`` / ``"shuffle"`` -> corresponding sampler class
         - An already-instantiated sampler object (returned as-is)
         - A plain :class:`dict` or OmegaConf :class:`~omegaconf.DictConfig` with a
           ``name`` or ``_target_`` key pointing to the sampler class
