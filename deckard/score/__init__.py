@@ -73,6 +73,7 @@ except ImportError:  # pragma: no cover - optional dependency
 
 try:
     from .anjana import (  # noqa: E402
+        DefaultAnjanaScoreConfig,
         DefaultAnjanaDataScoreConfig,
         DefaultAnjanaModelScoreConfig,
         anjana_k_anonymity_score,
@@ -81,6 +82,7 @@ try:
     )
 
     _ = (
+        DefaultAnjanaScoreConfig,
         DefaultAnjanaDataScoreConfig,
         DefaultAnjanaModelScoreConfig,
         anjana_k_anonymity_score,
@@ -178,6 +180,7 @@ if "DefaultFairlearnConfig" in globals():
 if "DefaultAnjanaDataScoreConfig" in globals():
     __all__.extend(
         [
+            "DefaultAnjanaScoreConfig",
             "DefaultAnjanaDataScoreConfig",
             "DefaultAnjanaModelScoreConfig",
             "anjana_k_anonymity_score",

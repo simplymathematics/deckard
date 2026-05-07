@@ -79,7 +79,7 @@ class TestCleanColumnNames(unittest.TestCase):
         self.assertIn("model", result.columns)
 
     def test_tilde_prefix_stripped(self):
-        # source uses col[2:] strip; "~~experiment" → "experiment"
+        # source uses col[2:] strip; "~~experiment" -> "experiment"
         df = pd.DataFrame({"~~experiment": ["run1"]})
         result = clean_column_names(df)
         self.assertIn("experiment", result.columns)

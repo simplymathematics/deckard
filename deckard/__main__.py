@@ -11,9 +11,9 @@ from pathlib import Path
 
 
 from . import DECKARD_CONFIG_DIR, DECKARD_DEFAULT_CONFIG_FILE
+from .utils import normalize_hydra_list_overrides
 
 from .layers import SUPPORTED_LAYERS, layer_dict
-from .experiment import ExperimentConfig  # NOQA F401
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -168,7 +168,10 @@ def generate_hydra_main(layer):
         list,
     ):
         # get_args_parser may parse Hydra key=value arguments into `overrides`.
-        forwarded_overrides = parsed_args.overrides
+        forwarded_overrides = normalize_hydra_list_overrides(
+            parsed_args.overrides,
+            keys=("score",),
+        )
     forwarded_control_args = _forward_hydra_control_args(parsed_args)
     sys.argv = [
         sys.argv[0],

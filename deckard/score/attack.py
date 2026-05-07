@@ -7,7 +7,7 @@ from typing import Any, Dict, Literal, Union
 from sklearn.metrics import accuracy_score
 
 from ..utils import ConfigBase, coerce_config, round_scores
-from .base import ScorerConfig, ScorerDictConfig, safe_store
+from .base import ScorerConfig, ScorerDictConfig, _AttackProfileScorer, safe_store
 
 __all__ = [
     "evasion_success_score",
@@ -36,8 +36,10 @@ def evasion_success_score(
 
 
 @dataclass(eq=False)
-class DefaultEvasionAttackScorerConfig(ScorerDictConfig):
+class DefaultEvasionAttackScorerConfig(_AttackProfileScorer, ScorerDictConfig):
     """Default scorer set for evasion attack evaluation."""
+
+    _profile_attr = "evasion"
 
     scorers: Dict[str, ScorerConfig] = field(
         default_factory=lambda: {
@@ -69,8 +71,10 @@ class DefaultEvasionAttackScorerConfig(ScorerDictConfig):
 
 
 @dataclass(eq=False)
-class DefaultEvasionRegressionAttackScorerConfig(ScorerDictConfig):
+class DefaultEvasionRegressionAttackScorerConfig(_AttackProfileScorer, ScorerDictConfig):
     """Default scorer set for evasion attacks against regression models."""
+
+    _profile_attr = "evasion_regression"
 
     scorers: Dict[str, ScorerConfig] = field(
         default_factory=lambda: {
@@ -93,9 +97,11 @@ class DefaultEvasionRegressionAttackScorerConfig(ScorerDictConfig):
 
 
 @dataclass(eq=False)
-class DefaultMembershipInferenceAttackScorerConfig(ScorerDictConfig):
+class DefaultMembershipInferenceAttackScorerConfig(_AttackProfileScorer, ScorerDictConfig):
     """Default scorer set for membership inference attack evaluation."""
 
+    _profile_attr = "membership_inference"
+
     scorers: Dict[str, ScorerConfig] = field(
         default_factory=lambda: {
             "accuracy": ScorerConfig(
@@ -122,9 +128,11 @@ class DefaultMembershipInferenceAttackScorerConfig(ScorerDictConfig):
 
 
 @dataclass(eq=False)
-class DefaultAttributeInferenceAttackScorerConfig(ScorerDictConfig):
+class DefaultAttributeInferenceAttackScorerConfig(_AttackProfileScorer, ScorerDictConfig):
     """Default scorer set for categorical attribute inference evaluation."""
 
+    _profile_attr = "attribute_inference"
+
     scorers: Dict[str, ScorerConfig] = field(
         default_factory=lambda: {
             "accuracy": ScorerConfig(
@@ -151,8 +159,10 @@ class DefaultAttributeInferenceAttackScorerConfig(ScorerDictConfig):
 
 
 @dataclass(eq=False)
-class DefaultAttributeInferenceRegressionAttackScorerConfig(ScorerDictConfig):
+class DefaultAttributeInferenceRegressionAttackScorerConfig(_AttackProfileScorer, ScorerDictConfig):
     """Default scorer set for continuous attribute inference evaluation."""
+
+    _profile_attr = "attribute_inference_regression"
 
     scorers: Dict[str, ScorerConfig] = field(
         default_factory=lambda: {
@@ -410,6 +420,18 @@ safe_store(
     group="attack_scorers",
     name="attribute-inference",
     node=DefaultAttributeInferenceAttackScorerConfig,
+)
+
+# Score-chain aliases for attack profile routing in ExperimentConfig.
+safe_store(
+    group="score",
+    name="evasion-classification",
+    node={"_deckard_attack_profile": "evasion-classification"},
+)
+safe_store(
+    group="score",
+    name="evasion-regression",
+    node={"_deckard_attack_profile": "evasion-regression"},
 )
 
 
