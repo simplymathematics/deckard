@@ -1,7 +1,7 @@
 import time
 from dataclasses import dataclass, field
 from types import SimpleNamespace
-from typing import Any, Union
+from typing import Union
 
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
@@ -9,6 +9,7 @@ from omegaconf import DictConfig, OmegaConf
 from ..model import ModelConfig
 from ..score.base import (
     DefaultModelScoreConfig,
+    ScorerConfig,
     ScorerDictConfig,
     _TaskAwareScorerMixin,
     coerce_scorer_config,
@@ -21,9 +22,14 @@ class DetectorScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     """Task-aware scorer config for detector outputs."""
 
     classifier: Union[bool, str, None] = None
-    scorers: dict = field(default_factory=dict)
+    scorers: dict[str, Union[ScorerConfig, dict[str, object]]] = field(
+        default_factory=dict,
+    )
 
-    def _build_default_scorers(self, classifier: bool) -> dict:
+    def _build_default_scorers(
+        self,
+        classifier: bool,
+    ) -> dict[str, Union[ScorerConfig, dict[str, object]]]:
         shared_defaults = DefaultModelScoreConfig(classifier=classifier).scorers
         if classifier:
             # Detector scoring uses class-label outputs; keep the label metrics subset.
@@ -42,14 +48,19 @@ class DetectorConfig(ConfigBase):
     """Auxiliary detector runtime for adversarial-vs-clean detection tasks."""
 
     detector_type: str = "art.defences.detector.evasion.BinaryInputDetector"
-    detector_params: dict = field(default_factory=dict)
-    fit_params: dict = field(default_factory=dict)
+    detector_params: dict[str, object] = field(default_factory=dict)
+    fit_params: dict[str, object] = field(default_factory=dict)
     detector_model: Union[ModelConfig, dict, str, None] = None
-    scorer: Union[DetectorScorerConfig, ScorerDictConfig, dict, None] = None
+    scorer: Union[
+        DetectorScorerConfig,
+        ScorerDictConfig,
+        dict[str, object],
+        None,
+    ] = None
     alias: str = field(default_factory=str)
 
     detector: Union[object, None] = None
-    score_dict: dict = field(default_factory=dict)
+    score_dict: dict[str, float | int] = field(default_factory=dict)
     detector_training_time: Union[float, None] = None
     detector_detection_time: Union[float, None] = None
     _target_: Union[str, None] = None
@@ -63,13 +74,21 @@ class DetectorConfig(ConfigBase):
         self.detector_model = self._coerce_detector_model(self.detector_model)
         self.scorer = self._coerce_scorer(self.scorer)
 
-    def _coerce_detector_model(self, value):
+    def _coerce_detector_model(
+        self,
+        value: Union[ModelConfig, dict[str, object], str, None],
+    ) -> Union[ModelConfig, None]:
         if value is None:
             return None
         if isinstance(value, ModelConfig):
             return value
         if isinstance(value, DictConfig):
-            value = OmegaConf.to_container(value, resolve=True)
+            raw_value = OmegaConf.to_container(value, resolve=True)
+            if not isinstance(raw_value, dict):
+                raise TypeError(
+                    f"detector_model DictConfig must resolve to a dictionary, got {type(raw_value)}",
+                )
+            value = dict(raw_value)
         if isinstance(value, str):
             value = ModelConfig.from_yaml(value).to_dict()
         else:
@@ -79,13 +98,15 @@ class DetectorConfig(ConfigBase):
         raise TypeError(f"Unsupported detector_model type: {type(value)}")
 
     @staticmethod
-    def _to_numpy(value) -> np.ndarray:
+    def _to_numpy(value: object) -> np.ndarray:
         if hasattr(value, "detach") and hasattr(value, "cpu"):
             value = value.detach().cpu().numpy()
         return np.asarray(value)
 
     @staticmethod
-    def _coerce_scorer(value):
+    def _coerce_scorer(
+        value: Union[DetectorScorerConfig, ScorerDictConfig, dict[str, object], None],
+    ) -> ScorerDictConfig:
         scorer = coerce_scorer_config(
             value,
             default_factory=lambda: DetectorScorerConfig(classifier=True),
@@ -96,7 +117,11 @@ class DetectorConfig(ConfigBase):
             return scorer
         raise TypeError(f"Unsupported detector scorer type: {type(value)}")
 
-    def _build_detector_dataset(self, data, attack):
+    def _build_detector_dataset(
+        self,
+        data: object,
+        attack: object,
+    ) -> tuple[np.ndarray, np.ndarray, int]:
         if attack is None:
             raise ValueError(
                 "DetectorConfig requires an attack object to build labels.",
@@ -130,7 +155,11 @@ class DetectorConfig(ConfigBase):
         y = np.concatenate([y_clean, y_adv], axis=0)
         return x, y, n
 
-    def _build_detector_backend(self, x_train, y_train):
+    def _build_detector_backend(
+        self,
+        x_train: np.ndarray,
+        y_train: np.ndarray,
+    ) -> object:
         if self.detector_model is None:
             raise ValueError(
                 "DetectorConfig requires detector_model to train auxiliary detector.",
@@ -149,7 +178,12 @@ class DetectorConfig(ConfigBase):
         )
         return detector_model_cfg.get_art_model(data_stub)
 
-    def __call__(self, data: Any, model: Any = None, attack: Any = None) -> dict:
+    def __call__(
+        self,
+        data: object,
+        model: object = None,
+        attack: object = None,
+    ) -> dict[str, float | int]:
         _ = model
         x, y, n = self._build_detector_dataset(data=data, attack=attack)
 
