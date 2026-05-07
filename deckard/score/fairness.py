@@ -12,10 +12,20 @@ try:
 except ImportError:  # pragma: no cover
     MetricFrame = None
 
-from .base import ScorerConfig, ScorerDictConfig, safe_store
+try:
+    from fairlearn.metrics import (
+        demographic_parity_difference,
+        equalized_odds_difference,
+    )
+except ImportError:  # pragma: no cover
+    demographic_parity_difference = None
+    equalized_odds_difference = None
+
+from .base import ScorerConfig, ScorerDictConfig, _resolve_yt_yp, safe_store
 from ..utils import coerce_to_list, merge_list_of_dicts
 
 __all__ = [
+    "_FairnessScorerMixin",
     "fairness_demographic_parity_difference",
     "fairness_equalized_odds_difference",
     "fairness_group_mean_prediction_difference",
@@ -54,12 +64,10 @@ def fairness_demographic_parity_difference(
     **kwargs: Any,
 ) -> float:
     """Compute demographic parity difference for fairness-aware configurations."""
-    try:
-        from fairlearn.metrics import demographic_parity_difference
-    except ImportError as exc:  # pragma: no cover
+    if demographic_parity_difference is None:
         raise ImportError(
             "Fairness scorer requires optional dependency deckard[fairlearn]",
-        ) from exc
+        )
 
     sensitive_features = kwargs.get("sensitive_features")
     if sensitive_features is None:
@@ -87,12 +95,10 @@ def fairness_equalized_odds_difference(
     **kwargs: Any,
 ) -> float:
     """Compute equalized odds difference for fairness-aware configurations."""
-    try:
-        from fairlearn.metrics import equalized_odds_difference
-    except ImportError as exc:  # pragma: no cover
+    if equalized_odds_difference is None:
         raise ImportError(
             "Fairness scorer requires optional dependency deckard[fairlearn]",
-        ) from exc
+        )
 
     sensitive_features = kwargs.get("sensitive_features")
     if sensitive_features is None:
@@ -150,73 +156,76 @@ def _series_like_to_float_dict(values) -> dict:
     return {"value": float(values)}
 
 
-@dataclass(eq=False)
-class FairlearnScoreDictConfig(ScorerDictConfig):
-    """ScorerDictConfig variant that computes fairness metrics through MetricFrame.
+class _FairnessScorerMixin:
+    """Mixin that adds MetricFrame group scoring to any :class:`ScorerDictConfig` subclass.
 
-    Use ``group_scorers`` to provide configurable metric callables evaluated per
-    sensitive group. Standard ``scorers`` are still supported and are evaluated
-    first via ``ScorerDictConfig``.
+    Override ``__call__`` to first run the base scorer (via ``super().__call__()``),
+    then compute per-group metrics using MetricFrame and merge them into the
+    results dict.
+
+    The concrete class **must** declare these attributes as dataclass fields:
+
+    * ``group_scorers`` – dict of scorer callables run inside MetricFrame.
+    * ``group_reduction`` – ``"difference"`` | ``"ratio"`` | ``"none"``.
+    * ``group_reduction_method`` – ``"between_groups"`` | ``"to_overall"``.
+    * ``include_group_overall`` – whether to include the overall aggregate.
+    * ``include_group_by_group`` – whether to include per-group values.
+    * ``control_features``, ``sample_params``, ``n_boot``, ``ci_quantiles``,
+      ``random_state`` – forwarded to MetricFrame as-is.
+
+    Composition example::
+
+        @dataclass(eq=False)
+        class FairnessClassifier(_FairnessScorerMixin, DefaultClassifierConfig):
+            group_scorers: dict = field(default_factory=lambda: { ... })
+            group_reduction: str = "difference"
+            ...
+            def __post_init__(self):
+                super().__post_init__()
+                self._normalize_group_scorers_input()
+                self._coerce_group_scorers()
     """
 
-    group_scorers: Dict[
-        str,
-        Union[ScorerConfig, ScorerDictConfig, Dict[str, Any], str, Callable],
-    ] = field(default_factory=dict)
-    group_reduction: Literal["difference", "ratio", "none"] = "difference"
-    group_reduction_method: Literal["between_groups", "to_overall"] = "between_groups"
-    include_group_overall: bool = False
-    include_group_by_group: bool = True
-    control_features: Any = None
-    sample_params: Union[Dict[str, Any], None] = None
-    n_boot: Union[int, None] = None
-    ci_quantiles: Union[list[float], None] = None
-    random_state: Any = None
+    def _normalize_group_scorers_input(self) -> None:
+        if not isinstance(self.group_scorers, (list, ListConfig)):
+            return
+        merged_group_scorers: dict = {}
+        for item in coerce_to_list(self.group_scorers):
+            plain = merge_list_of_dicts([item])
+            if "group_scorers" in plain:
+                nested = plain["group_scorers"]
+                if not isinstance(nested, dict):
+                    raise TypeError(
+                        "group_scorers wrapper must contain a dict under 'group_scorers'",
+                    )
+                merged_group_scorers.update(nested)
+            else:
+                merged_group_scorers.update(plain)
+        self.group_scorers = merged_group_scorers
 
-    def __post_init__(self):
-        super().__post_init__()
-        if isinstance(self.group_scorers, (list, ListConfig)):
-            merged_group_scorers: dict = {}
-            for item in coerce_to_list(self.group_scorers):
-                plain = merge_list_of_dicts([item])
-                if "group_scorers" in plain:
-                    nested = plain["group_scorers"]
-                    if not isinstance(nested, dict):
-                        raise TypeError(
-                            "group_scorers wrapper must contain a dict under 'group_scorers'",
-                        )
-                    merged_group_scorers.update(nested)
-                else:
-                    merged_group_scorers.update(plain)
-            self.group_scorers = merged_group_scorers
+    def _coerce_group_scorers(self) -> None:
         normalized = {}
         for key, value in self.group_scorers.items():
             if isinstance(value, ScorerConfig):
-                scorer = value
-                normalized[key] = scorer
+                normalized[key] = value
             elif isinstance(value, ScorerDictConfig):
                 for nested_key, nested_scorer in value.get_callables().items():
                     normalized[f"{key}_{nested_key}"] = nested_scorer
             elif isinstance(value, dict):
                 scorer_data = dict(value)
-                scorer = ScorerConfig(
+                normalized[key] = ScorerConfig(
                     score_name=scorer_data.pop("score_name", key),
                     score_function=scorer_data.pop("score_function"),
                     score_params=scorer_data.pop("score_params", {}),
-                    greater_is_better=scorer_data.pop(
-                        "greater_is_better",
-                        True,
-                    ),
+                    greater_is_better=scorer_data.pop("greater_is_better", True),
                     needs_proba=scorer_data.pop("needs_proba", False),
                 )
-                normalized[key] = scorer
             elif isinstance(value, str) or callable(value):
-                scorer = ScorerConfig(score_name=key, score_function=value)
-                normalized[key] = scorer
+                normalized[key] = ScorerConfig(score_name=key, score_function=value)
             else:
                 raise TypeError(
-                    "Value for key '{key}' must be ScorerConfig, ScorerDictConfig, dict, str, or callable. "
-                    f"Got {type(value)}",
+                    f"Value for key '{key}' must be ScorerConfig, ScorerDictConfig, dict, "
+                    f"str, or callable.  Got {type(value)}",
                 )
         self.group_scorers = normalized
 
@@ -238,12 +247,9 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
             )
         scorer_kwargs = scorer_kwargs or {}
         scorer_kwargs_dict: Dict[str, Any] = dict(scorer_kwargs)
-        metrics_keys = list(
-            cast(Dict[str, ScorerConfig], self.group_scorers).keys(),
-        )
+        metrics_keys = list(cast(Dict[str, ScorerConfig], self.group_scorers).keys())
         if isinstance(sample_params, dict):
             sample_param_keys = set(sample_params.keys())
-            # MetricFrame expects nested sample params when metrics is a dict.
             if not sample_param_keys.issubset(set(metrics_keys)):
                 sample_params = {
                     metric_name: dict(sample_params) for metric_name in metrics_keys
@@ -257,10 +263,7 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
                     **scorer_kwargs_dict,
                 )
             )
-            for key, scorer in cast(
-                Dict[str, ScorerConfig],
-                self.group_scorers,
-            ).items()
+            for key, scorer in cast(Dict[str, ScorerConfig], self.group_scorers).items()
         }
         return MetricFrame(
             metrics=metrics,
@@ -276,14 +279,7 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
 
     def __call__(
         self,
-        mode: Literal[
-            "test",
-            "train",
-            "attack",
-            "val",
-            "attack-val",
-            None,
-        ] = "test",
+        mode: Literal["test", "train", "attack", "val", "attack-val", None] = "test",
         data=None,
         model=None,
         attack=None,
@@ -292,6 +288,7 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
         score_file=None,
         **kwargs,
     ) -> Dict[str, Any]:
+        # Step 1: run base ScorerDictConfig scorers (model/data predictions).
         results = super().__call__(
             mode=mode,
             data=data,
@@ -305,27 +302,33 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
         if not self.group_scorers:
             return results
 
+        # Step 2: resolve y_true/y_pred for MetricFrame (may have been None above).
+        resolved_y_true, resolved_y_pred = _resolve_yt_yp(
+            mode, data, model, attack, y_pred, y_true,
+        )
+
+        # Step 3: resolve sensitive features.
         resolved_mode = "test" if mode is None else mode
         sensitive_features = kwargs.get("sensitive_features")
         if sensitive_features is None:
             sensitive_features = _resolve_sensitive_features(
                 data,
-                y_true,
+                resolved_y_true,
                 mode=resolved_mode,
             )
         if sensitive_features is None:
-            raise ValueError(
-                "sensitive_features are required for fairness scoring",
-            )
+            raise ValueError("sensitive_features are required for fairness scoring")
 
+        # Step 4: build MetricFrame and populate results.
         control_features = kwargs.pop("control_features", self.control_features)
         sample_params = kwargs.pop("sample_params", self.sample_params)
         n_boot = kwargs.pop("n_boot", self.n_boot)
         ci_quantiles = kwargs.pop("ci_quantiles", self.ci_quantiles)
         random_state = kwargs.pop("random_state", self.random_state)
+
         metric_frame = self._build_metric_frame(
-            y_true=y_true,
-            y_pred=y_pred,
+            y_true=resolved_y_true,
+            y_pred=resolved_y_pred,
             sensitive_features=sensitive_features,
             scorer_kwargs=kwargs,
             control_features=control_features,
@@ -352,24 +355,16 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
 
         if self.include_group_by_group:
             results.update(
-                _flatten_metric_frame_by_group(
-                    pd.DataFrame(metric_frame.by_group),
-                ),
+                _flatten_metric_frame_by_group(pd.DataFrame(metric_frame.by_group)),
             )
 
         if self.group_reduction == "difference":
-            reduced = metric_frame.difference(
-                method=self.group_reduction_method,
-            )
-            for metric_name, value in _series_like_to_float_dict(
-                reduced,
-            ).items():
+            reduced = metric_frame.difference(method=self.group_reduction_method)
+            for metric_name, value in _series_like_to_float_dict(reduced).items():
                 results[f"{metric_name}_difference"] = value
         elif self.group_reduction == "ratio":
             reduced = metric_frame.ratio(method=self.group_reduction_method)
-            for metric_name, value in _series_like_to_float_dict(
-                reduced,
-            ).items():
+            for metric_name, value in _series_like_to_float_dict(reduced).items():
                 results[f"{metric_name}_ratio"] = value
         elif self.group_reduction != "none":
             raise ValueError(
@@ -377,6 +372,36 @@ class FairlearnScoreDictConfig(ScorerDictConfig):
             )
 
         return results
+
+
+@dataclass(eq=False)
+class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
+    """ScorerDictConfig variant that computes fairness metrics through MetricFrame.
+
+    Composes ``_FairnessScorerMixin`` (group scoring) with ``ScorerDictConfig``
+    (standard scorer evaluation).  Use ``group_scorers`` to provide configurable
+    metric callables evaluated per sensitive group via MetricFrame.  Standard
+    ``scorers`` are still evaluated first.
+    """
+
+    group_scorers: Dict[
+        str,
+        Union[ScorerConfig, ScorerDictConfig, Dict[str, Any], str, Callable],
+    ] = field(default_factory=dict)
+    group_reduction: Literal["difference", "ratio", "none"] = "difference"
+    group_reduction_method: Literal["between_groups", "to_overall"] = "between_groups"
+    include_group_overall: bool = False
+    include_group_by_group: bool = True
+    control_features: Any = None
+    sample_params: Union[Dict[str, Any], None] = None
+    n_boot: Union[int, None] = None
+    ci_quantiles: Union[list[float], None] = None
+    random_state: Any = None
+
+    def __post_init__(self):
+        super().__post_init__()
+        self._normalize_group_scorers_input()
+        self._coerce_group_scorers()
 
 
 def _group_metric_difference(y_true, y_pred, sensitive_features, metric_fn):

@@ -149,7 +149,7 @@ class FairlearnDataConfig(DataPipelineConfig):
 
         self.pipeline = {step_name: step_config, **self.pipeline}
 
-    def _load_data(self) -> None:
+    def _load_data(self) -> Any:
         super()._load_data()
         assert hasattr(self, "_X"), RuntimeError(
             "self._X not found while loading FairlearnDataConfig",
@@ -164,6 +164,7 @@ class FairlearnDataConfig(DataPipelineConfig):
             raise ValueError("sensitive_columns must be configured")
         for col in self.sensitive_columns:
             assert col in self._X.columns
+        return self
 
     def _init_pipeline(self):
         self._inject_fairness_defense_step()

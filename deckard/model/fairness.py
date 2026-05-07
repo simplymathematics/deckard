@@ -34,16 +34,23 @@ class _FairnessBehaviorMixin:
     probability: bool = False
     fit_params: Any = None
 
+    @staticmethod
+    def _resolve_torch_modules():
+        try:
+            torch_module = __import__("torch")
+            nn_module = torch_module.nn
+        except ImportError:
+            return None, None
+        return torch_module, nn_module
+
     def _is_torch_module_model(self) -> bool:
         model_obj = getattr(self, "_model", None)
         if model_obj is None:
             return False
-        try:
-            import torch
-
-            return isinstance(model_obj, torch.nn.Module)
-        except ImportError:
+        torch_module, _ = self._resolve_torch_modules()
+        if torch_module is None:
             return False
+        return isinstance(model_obj, torch_module.nn.Module)
 
     def _resolve_runtime_sensitive_source(self, split: str):
         if split == "train":
@@ -191,12 +198,11 @@ class _FairnessBehaviorMixin:
     def _move_torch_model_to_device(self, model_obj, requested_device):
         if requested_device is None:
             return model_obj
-        try:
-            import torch
-        except ImportError:
+        torch_module, _ = self._resolve_torch_modules()
+        if torch_module is None:
             return model_obj
 
-        if not isinstance(model_obj, torch.nn.Module):
+        if not isinstance(model_obj, torch_module.nn.Module):
             return model_obj
 
         try:
@@ -263,10 +269,8 @@ class _FairnessBehaviorMixin:
 
     def _adapt_binary_torch_predictor(self, predictor_model, data):
         """Fairlearn binary classification expects a single-score predictor output."""
-        try:
-            import torch
-            import torch.nn as nn
-        except ImportError:
+        torch_module, nn_module = self._resolve_torch_modules()
+        if torch_module is None or nn_module is None:
             return predictor_model
 
         if not hasattr(predictor_model, "forward"):
@@ -276,7 +280,7 @@ class _FairnessBehaviorMixin:
         if y_train is None:
             return predictor_model
 
-        if isinstance(y_train, torch.Tensor):
+        if isinstance(y_train, torch_module.Tensor):
             y_values = y_train.detach().cpu().numpy()
         else:
             y_values = np.asarray(y_train)
@@ -288,10 +292,10 @@ class _FairnessBehaviorMixin:
             if num_classes == 2:
                 return True
             x_train = getattr(data, "X_train", None)
-            if not isinstance(x_train, torch.Tensor) or len(x_train) == 0:
+            if not isinstance(x_train, torch_module.Tensor) or len(x_train) == 0:
                 return False
             try:
-                with torch.no_grad():
+                with torch_module.no_grad():
                     sample = x_train[:1]
                     device = next(model.parameters()).device
                     out = model(sample.to(device))
@@ -302,7 +306,7 @@ class _FairnessBehaviorMixin:
         if not _needs_wrap(predictor_model):
             return predictor_model
 
-        class _BinaryLogitAdapter(nn.Module):
+        class _BinaryLogitAdapter(nn_module.Module):
             def __init__(self, base_model):
                 super().__init__()
                 self.base_model = base_model
