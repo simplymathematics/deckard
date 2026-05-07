@@ -115,9 +115,23 @@ detectors, and trainers.
 
 Typical usage pattern:
 
-- choose a survival model (for example ``lifelines.CoxPHFitter``)
+- choose a survival model (for example ``lifelines.fitters.coxph_fitter.CoxPHFitter``)
 - attach ``model.defense`` entries from ``examples/sklearn/config/defense``
 - evaluate robustness with survival scores and optional attacks in the same run
+
+Survival experiment contract
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``SurvivalExperimentConfig`` requires these fields at construction time:
+
+- ``data``
+- ``model`` (string model name/alias, for example ``cox`` or ``weibull``)
+- ``target``
+- ``event_col``
+- ``duration_col``
+
+In YAML configs, ``model_type`` should be a fully-qualified import path so
+custom user-provided regression fitters can be imported reliably.
 
 Usage
 -----
@@ -133,7 +147,7 @@ Command-line examples
       data=survival \
       data.dataset_name=rossi \
       model=survival \
-      model.model_type=lifelines.KaplanMeierFitter \
+    model.model_type=lifelines.fitters.kaplan_meier_fitter.KaplanMeierFitter \
       score.model=survival
 
 **Survival with Cox proportional hazards:**
@@ -144,7 +158,7 @@ Command-line examples
       data=survival \
       data.dataset_name=rossi \
       model=survival \
-      model.model_type=lifelines.CoxPHFitter \
+    model.model_type=lifelines.fitters.coxph_fitter.CoxPHFitter \
       score.model=survival
 
 **Survival with attack evaluation:**
@@ -155,7 +169,7 @@ Command-line examples
       data=survival \
       data.dataset_name=rossi \
       model=survival \
-      model.model_type=lifelines.CoxPHFitter \
+    model.model_type=lifelines.fitters.coxph_fitter.CoxPHFitter \
       attack.attack_type=art.attacks.evasion.FastGradientMethod \
       attack.attack_params.eps=0.1 \
       score.model=survival
@@ -191,8 +205,14 @@ Programmatic examples
        scorer=DefaultLifelinesConfig(),
    )
 
-   # Run survival experiment
-   cfg = SurvivalExperimentConfig(data=data, model=model)
+     # Run survival experiment
+     cfg = SurvivalExperimentConfig(
+       data=data,
+       model="cox",
+       target="arrest",
+       event_col="arrest",
+       duration_col="week",
+     )
    scores = cfg()
 
    print("Concordance Index:", scores.get("concordance_index"))
@@ -247,7 +267,13 @@ Programmatic examples
        scorer=DefaultLifelinesConfig(),
    )
 
-   cfg = SurvivalExperimentConfig(data=data, model=model)
+     cfg = SurvivalExperimentConfig(
+       data=data,
+       model="cox",
+       target="arrest",
+       event_col="arrest",
+       duration_col="week",
+     )
    scores = cfg()
 
    # Access stratified concordance
@@ -271,7 +297,10 @@ Programmatic examples
    # Evaluate robustness of survival model
    cfg = SurvivalExperimentConfig(
        data=data,
-       model=model,
+       model="cox",
+       target="arrest",
+       event_col="arrest",
+       duration_col="week",
        attack=attack,
    )
    scores = cfg()
@@ -293,8 +322,9 @@ Key configuration options for :class:`~deckard.data.survival.LifelinesDataConfig
 
 For :class:`~deckard.model.survival.SurvivalModelConfig`:
 
-- **model_type** (str): lifelines estimator (KaplanMeierFitter, CoxPHFitter,
-  WeibullAFTFitter, etc.)
+- **model_type** (str): fully-qualified estimator import path (for example
+  ``lifelines.fitters.coxph_fitter.CoxPHFitter`` or
+  ``lifelines.fitters.weibull_aft_fitter.WeibullAFTFitter``)
 - **duration_col** (str): column name for durations
 - **event_col** (str): column name for events
 - **penalizer** (float, optional): regularization strength for Cox models

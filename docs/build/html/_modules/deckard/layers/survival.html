@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../data.html">Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../model.html">Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../detector.html">Detector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../score.html">Score</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../plot.html">Plot</a></li>
@@ -52,6 +53,14 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../file.html">File</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Extensions:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../anjana.html">Anjana Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 
         </div>
@@ -79,583 +88,262 @@
            <div itemprop="articleBody">
              
   <h1>Source code for deckard.layers.survival</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">OmegaConf</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">lifelines.fitters</span><span class="w"> </span><span class="kn">import</span> <span class="n">RegressionFitter</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">..attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttackConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..data.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">_lifelines_dataset_loaders</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..experiment</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurvivalExperimentConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..model.survival</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurvivalModelConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.compile_results</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_studies</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..plot.survival</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">SurvivalSeabornPlotterConfig</span><span class="p">,</span>
     <span class="n">SurvivalSeabornPlotConfigList</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_parser_from_function</span>
-
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_parser_from_function</span><span class="p">,</span> <span class="n">instantiate_config</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;survival_main&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;run_survival_model_experiment&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;render_all_survival_model_plots&quot;</span><span class="p">,</span>
     <span class="s2">&quot;survival_parser&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">fit_aft</span><span class="p">(</span>
-    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
-    <span class="n">event_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">duration_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">mtype</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">summary_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">folder</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RegressionFitter</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fit a survival model and optionally persist its summary.&quot;&quot;&quot;</span>
-    <span class="n">config</span> <span class="o">=</span> <span class="n">SurvivalModelConfig</span><span class="p">(</span>
-        <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;lifelines&quot;</span><span class="p">,</span>
-        <span class="n">classifier</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">survival_model</span><span class="o">=</span><span class="n">mtype</span><span class="p">,</span>
-        <span class="n">duration_col</span><span class="o">=</span><span class="n">duration_col</span><span class="p">,</span>
-        <span class="n">event_col</span><span class="o">=</span><span class="n">event_col</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">config</span><span class="o">.</span><span class="n">fit_aft</span><span class="p">(</span>
-        <span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
-        <span class="n">summary_file</span><span class="o">=</span><span class="n">summary_file</span><span class="p">,</span>
-        <span class="n">folder</span><span class="o">=</span><span class="n">folder</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-    <span class="p">)</span>
+<div class="viewcode-block" id="survival_main">
+<a class="viewcode-back" href="../../../layers.html#deckard.layers.survival_main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">survival_main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run survival workflow from Hydra-parsed config.</span>
+
+<span class="sd">    Routes to either plot-only rendering or full experiment based on config.</span>
+<span class="sd">    All parameters come from Hydra instantiation, no runtime parameters.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cfg: DictConfig or dict containing survival experiment configuration.</span>
+<span class="sd">             Should have a &#39;survival&#39; section where values resolve via</span>
+<span class="sd">             instantiation to:</span>
+<span class="sd">             - data: required DataConfig</span>
+<span class="sd">             - model: required survival fitter name (e.g. weibull, cox)</span>
+<span class="sd">             - target: required event column name</span>
+<span class="sd">             - duration_col: required duration column name</span>
+<span class="sd">             - aux_model: optional, auxiliary model for attacks</span>
+<span class="sd">             - attack: optional, attack config</span>
+<span class="sd">             - plot or model_config with plot specs: optional, enables plot-only mode</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict with aft_table, model_scores, and models (or plot results if plot mode)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">cfg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;survival_main requires a Hydra config (cfg)&quot;</span><span class="p">)</span>
+    
+    <span class="n">cfg_dict</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">)</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    
+    <span class="c1"># Extract survival section from Hydra config</span>
+    <span class="n">survival_cfg</span> <span class="o">=</span> <span class="n">cfg_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;survival&quot;</span><span class="p">,</span> <span class="n">cfg_dict</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">survival_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Hydra config must contain &#39;survival&#39; section&quot;</span><span class="p">)</span>
+
+    <span class="n">_validate_raw_data_model_specs</span><span class="p">(</span><span class="n">survival_cfg</span><span class="p">)</span>
+    <span class="n">survival_cfg</span> <span class="o">=</span> <span class="n">_coerce_survival_model_spec</span><span class="p">(</span><span class="n">survival_cfg</span><span class="p">)</span>
+    
+    <span class="c1"># Check if this is plot-only mode (has plot specifications)</span>
+    <span class="n">has_plot_spec</span> <span class="o">=</span> <span class="n">_has_plot_specification</span><span class="p">(</span><span class="n">survival_cfg</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">has_plot_spec</span><span class="p">:</span>
+        <span class="c1"># Plot-only mode: instantiate plotter config and render</span>
+        <span class="k">return</span> <span class="n">_run_plot_mode</span><span class="p">(</span><span class="n">survival_cfg</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Experiment mode: instantiate experiment config and run</span>
+        <span class="k">return</span> <span class="n">_run_experiment_mode</span><span class="p">(</span><span class="n">survival_cfg</span><span class="p">,</span> <span class="n">cfg_dict</span><span class="p">)</span></div>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">survival_probability_calibration</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">:</span> <span class="n">RegressionFitter</span><span class="p">,</span>
-    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
-    <span class="n">t0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;red&quot;</span><span class="p">,</span>
-    <span class="n">return_curve</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute survival calibration metrics and optionally render a calibration curve.&quot;&quot;&quot;</span>
-    <span class="n">config</span> <span class="o">=</span> <span class="n">SurvivalModelConfig</span><span class="p">(</span>
-        <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;lifelines&quot;</span><span class="p">,</span>
-        <span class="n">classifier</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">duration_col</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">duration_col</span><span class="p">,</span>
-        <span class="n">event_col</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">event_col</span><span class="p">,</span>
-        <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">config</span><span class="o">.</span><span class="n">survival_probability_calibration</span><span class="p">(</span>
-        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-        <span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
-        <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
-        <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
-        <span class="n">return_curve</span><span class="o">=</span><span class="n">return_curve</span><span class="p">,</span>
-        <span class="n">plot</span><span class="o">=</span><span class="n">plot</span><span class="p">,</span>
-    <span class="p">)</span>
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_raw_data_model_specs</span><span class="p">(</span><span class="n">survival_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">data_spec</span> <span class="o">=</span> <span class="n">survival_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
+    <span class="n">model_spec</span> <span class="o">=</span> <span class="n">survival_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">)</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">clean_data_for_aft</span><span class="p">(</span>
-    <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
-    <span class="n">covariate_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
-    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;adv_failure_rate&quot;</span><span class="p">,</span>
-    <span class="n">dummy_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Clean and encode tabular data for AFT-style survival fitting.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">SurvivalModelConfig</span><span class="o">.</span><span class="n">clean_data_for_aft</span><span class="p">(</span>
-        <span class="n">data</span><span class="p">,</span>
-        <span class="n">covariate_list</span><span class="p">,</span>
-        <span class="n">target</span><span class="p">,</span>
-        <span class="n">dummy_dict</span><span class="p">,</span>
-    <span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">run_survival_model_experiment</span><span class="p">(</span>
-    <span class="n">mtype</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-    <span class="n">X_train</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
-    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">duration_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">t0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">X_test</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">dummy_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">folder</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">RegressionFitter</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fit one survival model variant and render its configured plots.&quot;&quot;&quot;</span>
-    <span class="n">dummy_dict</span> <span class="o">=</span> <span class="n">dummy_dict</span> <span class="ow">or</span> <span class="p">{}</span>
-    <span class="n">config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">config</span> <span class="ow">or</span> <span class="p">{})</span>
-    <span class="n">plotter</span> <span class="o">=</span> <span class="n">SurvivalSeabornPlotterConfig</span><span class="p">()</span>
-    <span class="n">plots</span> <span class="o">=</span> <span class="p">[]</span>
-
-    <span class="n">plot_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;plot&quot;</span><span class="p">,</span> <span class="p">{}))</span>
-    <span class="n">label_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;labels&quot;</span><span class="p">,</span> <span class="p">{}))</span>
-    <span class="n">partial_effect_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;partial_effect&quot;</span><span class="p">,</span> <span class="p">[]))</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="p">{}))</span>
-    <span class="n">model_config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-
-    <span class="n">aft</span> <span class="o">=</span> <span class="n">fit_aft</span><span class="p">(</span>
-        <span class="n">summary_file</span><span class="o">=</span><span class="n">plot_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;summary_file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mtype</span><span class="si">}</span><span class="s2">_summary.csv&quot;</span><span class="p">),</span>
-        <span class="n">folder</span><span class="o">=</span><span class="n">folder</span><span class="p">,</span>
-        <span class="n">df</span><span class="o">=</span><span class="n">X_train</span><span class="p">,</span>
-        <span class="n">event_col</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
-        <span class="n">duration_col</span><span class="o">=</span><span class="n">duration_col</span><span class="p">,</span>
-        <span class="n">mtype</span><span class="o">=</span><span class="n">mtype</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">model_config</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">aft_plot</span> <span class="o">=</span> <span class="n">plotter</span><span class="o">.</span><span class="n">plot_aft</span><span class="p">(</span>
-        <span class="n">aft</span><span class="o">=</span><span class="n">aft</span><span class="p">,</span>
-        <span class="n">title</span><span class="o">=</span><span class="n">plot_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="n">mtype</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()),</span>
-        <span class="n">file</span><span class="o">=</span><span class="n">plot_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mtype</span><span class="si">}</span><span class="s2">_aft.pdf&quot;</span><span class="p">),</span>
-        <span class="n">xlabel</span><span class="o">=</span><span class="n">label_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;xlabel&quot;</span><span class="p">,</span> <span class="s2">&quot;log(theta)&quot;</span><span class="p">),</span>
-        <span class="n">ylabel</span><span class="o">=</span><span class="n">label_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;ylabel&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-        <span class="n">replacement_dict</span><span class="o">=</span><span class="n">label_dict</span><span class="p">,</span>
-        <span class="n">dummy_dict</span><span class="o">=</span><span class="n">dummy_dict</span><span class="p">,</span>
-        <span class="n">folder</span><span class="o">=</span><span class="n">folder</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">plots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aft_plot</span><span class="p">)</span>
-
-    <span class="n">qq_plot</span> <span class="o">=</span> <span class="n">plotter</span><span class="o">.</span><span class="n">plot_qq</span><span class="p">(</span>
-        <span class="n">aft</span><span class="o">=</span><span class="n">aft</span><span class="p">,</span>
-        <span class="n">X_train</span><span class="o">=</span><span class="n">X_train</span><span class="p">,</span>
-        <span class="n">X_test</span><span class="o">=</span><span class="n">X_test</span><span class="p">,</span>
-        <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span>
-        <span class="n">title</span><span class="o">=</span><span class="n">plot_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="s2">&quot;qq_title&quot;</span><span class="p">,</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mtype</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2"> Calibration&quot;</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="n">file</span><span class="o">=</span><span class="n">plot_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;qq_file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mtype</span><span class="si">}</span><span class="s2">_qq.pdf&quot;</span><span class="p">),</span>
-        <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Predicted Probability&quot;</span><span class="p">,</span>
-        <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Observed Probability&quot;</span><span class="p">,</span>
-        <span class="n">calibration_fn</span><span class="o">=</span><span class="k">lambda</span> <span class="n">model</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="n">frame_test</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">survival_probability_calibration</span><span class="p">(</span>
-                    <span class="n">model</span><span class="p">,</span>
-                    <span class="n">frame</span><span class="p">,</span>
-                    <span class="n">t0</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span>
-                    <span class="n">return_curve</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                <span class="p">)[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;train&quot;</span><span class="p">),</span>
-                <span class="o">*</span><span class="p">(</span>
-                    <span class="p">[</span>
-                        <span class="n">survival_probability_calibration</span><span class="p">(</span>
-                            <span class="n">model</span><span class="p">,</span>
-                            <span class="n">frame_test</span><span class="p">,</span>
-                            <span class="n">t0</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span>
-                            <span class="n">return_curve</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                            <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                        <span class="p">)[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">),</span>
-                    <span class="p">]</span>
-                    <span class="k">if</span> <span class="n">frame_test</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                    <span class="k">else</span> <span class="p">[]</span>
-                <span class="p">),</span>
-            <span class="p">],</span>
-            <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="n">folder</span><span class="o">=</span><span class="n">folder</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">plots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">qq_plot</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">plot_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;summary_plot&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">summary_plot</span> <span class="o">=</span> <span class="n">plotter</span><span class="o">.</span><span class="n">plot_summary</span><span class="p">(</span>
-            <span class="n">aft</span><span class="o">=</span><span class="n">aft</span><span class="p">,</span>
-            <span class="n">title</span><span class="o">=</span><span class="n">plot_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="s2">&quot;summary_title&quot;</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mtype</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2"> P-values&quot;</span><span class="p">,</span>
-            <span class="p">),</span>
-            <span class="n">file</span><span class="o">=</span><span class="n">plot_dict</span><span class="p">[</span><span class="s2">&quot;summary_plot&quot;</span><span class="p">],</span>
-            <span class="n">xlabel</span><span class="o">=</span><span class="n">label_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;summary_xlabel&quot;</span><span class="p">,</span> <span class="s2">&quot;Covariate&quot;</span><span class="p">),</span>
-            <span class="n">ylabel</span><span class="o">=</span><span class="n">label_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;summary_ylabel&quot;</span><span class="p">,</span> <span class="s2">&quot;p-value&quot;</span><span class="p">),</span>
-            <span class="n">replacement_dict</span><span class="o">=</span><span class="n">label_dict</span><span class="p">,</span>
-            <span class="n">dummy_dict</span><span class="o">=</span><span class="p">{},</span>
-            <span class="n">folder</span><span class="o">=</span><span class="n">folder</span><span class="p">,</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_spec</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;survival.data must be a DataConfig object or instantiable mapping, not a string&quot;</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">plots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">summary_plot</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">partial_effect_dict</span> <span class="ow">in</span> <span class="n">partial_effect_list</span><span class="p">:</span>
-        <span class="n">effect_config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">partial_effect_dict</span><span class="p">)</span>
-        <span class="n">file</span> <span class="o">=</span> <span class="n">effect_config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;file&quot;</span><span class="p">,</span> <span class="s2">&quot;partial_effects.pdf&quot;</span><span class="p">)</span>
-        <span class="n">partial_effect_plot</span> <span class="o">=</span> <span class="n">plotter</span><span class="o">.</span><span class="n">plot_partial_effects</span><span class="p">(</span>
-            <span class="n">aft</span><span class="o">=</span><span class="n">aft</span><span class="p">,</span>
-            <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">,</span>
-            <span class="n">folder</span><span class="o">=</span><span class="n">folder</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">effect_config</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">plots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">partial_effect_plot</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">aft</span><span class="p">,</span> <span class="n">plots</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">render_all_survival_model_plots</span><span class="p">(</span>
-    <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-    <span class="n">duration_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
-    <span class="n">dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">test_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
-    <span class="n">folder</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
-    <span class="n">dummy_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run all configured survival model variants and collect outputs.&quot;&quot;&quot;</span>
-    <span class="n">plot_config_list</span> <span class="o">=</span> <span class="n">SurvivalSeabornPlotConfigList</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">plot_config_list</span><span class="o">.</span><span class="n">orchestrate_survival_models</span><span class="p">(</span>
-        <span class="n">model_config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
-        <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
-        <span class="n">duration_col</span><span class="o">=</span><span class="n">duration_col</span><span class="p">,</span>
-        <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
-        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
-        <span class="n">test_size</span><span class="o">=</span><span class="n">test_size</span><span class="p">,</span>
-        <span class="n">folder</span><span class="o">=</span><span class="n">folder</span><span class="p">,</span>
-        <span class="n">dummy_dict</span><span class="o">=</span><span class="n">dummy_dict</span> <span class="ow">or</span> <span class="p">{},</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_spec</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">model_spec</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;survival.model must be a non-empty survival model string&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_spec</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+        <span class="s2">&quot;survival.model must be a survival model string or model config mapping&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_load_optuna_frame</span><span class="p">(</span>
-    <span class="n">optuna_db</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">query</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="n">frame</span> <span class="o">=</span> <span class="n">parse_studies</span><span class="p">(</span><span class="n">optuna_db</span><span class="o">=</span><span class="n">optuna_db</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">schema</span> <span class="ow">or</span> <span class="p">{})</span>
-    <span class="k">if</span> <span class="n">query</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">frame</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_coerce_survival_model_spec</span><span class="p">(</span><span class="n">survival_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize `survival.model` to a survival-model string.</span>
+
+<span class="sd">    Accepts either a direct model string (preferred) or a mapping from Hydra</span>
+<span class="sd">    model group configs where the alias/model_type carries the fitter name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_model_alias_placeholders</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$</span><span class="si">{model.alias}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">model_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="n">k</span><span class="p">:</span> <span class="n">_resolve_model_alias_placeholders</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">model_name</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">_resolve_model_alias_placeholders</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">model_name</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_model_name</span><span class="p">(</span><span class="n">candidate</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">candidate</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">text</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;survival.model value cannot be blank&quot;</span><span class="p">)</span>
+        <span class="n">short</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">lowered</span> <span class="o">=</span> <span class="n">short</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">aliases</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;cox&quot;</span><span class="p">:</span> <span class="s2">&quot;cox&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;coxph&quot;</span><span class="p">:</span> <span class="s2">&quot;cox&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;coxphfitter&quot;</span><span class="p">:</span> <span class="s2">&quot;cox&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;weibull&quot;</span><span class="p">:</span> <span class="s2">&quot;weibull&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;weibullaft&quot;</span><span class="p">:</span> <span class="s2">&quot;weibull&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;weibullaftfitter&quot;</span><span class="p">:</span> <span class="s2">&quot;weibull&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;loglogistic&quot;</span><span class="p">:</span> <span class="s2">&quot;log-logistic&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;loglogisticaftfitter&quot;</span><span class="p">:</span> <span class="s2">&quot;log-logistic&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;lognormal&quot;</span><span class="p">:</span> <span class="s2">&quot;log-normal&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;lognormalaftfitter&quot;</span><span class="p">:</span> <span class="s2">&quot;log-normal&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;aalen&quot;</span><span class="p">:</span> <span class="s2">&quot;aalen&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;aalenadditive&quot;</span><span class="p">:</span> <span class="s2">&quot;aalen&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;aalenadditivefitter&quot;</span><span class="p">:</span> <span class="s2">&quot;aalen&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;gammaph&quot;</span><span class="p">:</span> <span class="s2">&quot;gamma&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;generalizedgamma&quot;</span><span class="p">:</span> <span class="s2">&quot;gamma&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;generalizedgammaregressionfitter&quot;</span><span class="p">:</span> <span class="s2">&quot;gamma&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;exponential&quot;</span><span class="p">:</span> <span class="s2">&quot;exponential&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;exponentialfitter&quot;</span><span class="p">:</span> <span class="s2">&quot;exponential&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">normalized</span> <span class="o">=</span> <span class="n">lowered</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">aliases</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">normalized</span><span class="p">,</span> <span class="n">lowered</span><span class="p">)</span>
+
+    <span class="n">model_spec</span> <span class="o">=</span> <span class="n">survival_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_spec</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">normalized</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">survival_cfg</span><span class="p">)</span>
+        <span class="n">normalized</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_normalize_model_name</span><span class="p">(</span><span class="n">model_spec</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">normalized</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_spec</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">survival_cfg</span>
+
+    <span class="n">candidate</span> <span class="o">=</span> <span class="n">model_spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;alias&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">model_spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;survival_model&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">model_spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model_type&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="n">candidate</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;No attack results found in </span><span class="si">{</span><span class="n">optuna_db</span><span class="si">}</span><span class="s2"> after applying filters&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Could not resolve survival model string from survival.model mapping. &quot;</span>
+            <span class="s2">&quot;Provide &#39;alias&#39;, &#39;survival_model&#39;, or &#39;model_type&#39;.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="n">normalized</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">survival_cfg</span><span class="p">)</span>
+    <span class="n">model_name</span> <span class="o">=</span> <span class="n">_normalize_model_name</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+    <span class="n">normalized</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_name</span>
+    <span class="k">if</span> <span class="s2">&quot;plot&quot;</span> <span class="ow">in</span> <span class="n">normalized</span><span class="p">:</span>
+        <span class="n">normalized</span><span class="p">[</span><span class="s2">&quot;plot&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_resolve_model_alias_placeholders</span><span class="p">(</span><span class="n">normalized</span><span class="p">[</span><span class="s2">&quot;plot&quot;</span><span class="p">],</span> <span class="n">model_name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">normalized</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_experiment_config_types</span><span class="p">(</span><span class="n">experiment_config</span><span class="p">:</span> <span class="n">SurvivalExperimentConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">experiment_config</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">DataConfig</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;survival.data must resolve to a DataConfig instance via Hydra instantiation&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">experiment_config</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;survival.model must resolve to a survival model string&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_plot_dataframe</span><span class="p">(</span><span class="n">experiment_config</span><span class="p">:</span> <span class="n">SurvivalExperimentConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="n">data_cfg</span> <span class="o">=</span> <span class="n">experiment_config</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">if</span> <span class="n">data_cfg</span><span class="o">.</span><span class="n">X</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">data_cfg</span><span class="o">.</span><span class="n">_load_data</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">data_cfg</span><span class="o">.</span><span class="n">X</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;DataConfig did not load features for plot mode&quot;</span><span class="p">)</span>
+
+    <span class="n">frame</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">data_cfg</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_cfg</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data_cfg</span><span class="o">.</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">data_cfg</span><span class="o">.</span><span class="n">y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">experiment_config</span><span class="o">.</span><span class="n">target</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">frame</span><span class="p">[</span><span class="n">experiment_config</span><span class="o">.</span><span class="n">target</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_cfg</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="k">if</span> <span class="n">experiment_config</span><span class="o">.</span><span class="n">duration_col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;duration_col </span><span class="si">{</span><span class="n">experiment_config</span><span class="o">.</span><span class="n">duration_col</span><span class="si">!r}</span><span class="s2"> not found in loaded data&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">experiment_config</span><span class="o">.</span><span class="n">target</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;target </span><span class="si">{</span><span class="n">experiment_config</span><span class="o">.</span><span class="n">target</span><span class="si">!r}</span><span class="s2"> not found in loaded data&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">frame</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">calculate_failures_under_attack</span><span class="p">(</span>
-    <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
-    <span class="n">attack_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AttackConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">benign_metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;accuracy&quot;</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optionally derive ben/adv failure counts from attack-specific accuracy metrics.&quot;&quot;&quot;</span>
-    <span class="n">config</span> <span class="o">=</span> <span class="n">SurvivalExperimentConfig</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">DataConfig</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;toy&quot;</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">config</span><span class="o">.</span><span class="n">calculate_failures_under_attack</span><span class="p">(</span>
-        <span class="n">data</span><span class="p">,</span>
-        <span class="n">attack_config</span><span class="p">,</span>
-        <span class="n">benign_metric</span><span class="p">,</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_has_plot_specification</span><span class="p">(</span><span class="n">survival_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if config contains plot specifications.&quot;&quot;&quot;</span>
+    <span class="c1"># Plot-only mode is enabled when model_config contains explicit per-model</span>
+    <span class="c1"># plot entries (or when an explicit flag is provided).</span>
+    <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">survival_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot_only&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="c1"># Check for model_config with plot sub-configs.</span>
+    <span class="n">model_cfg</span> <span class="o">=</span> <span class="n">survival_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model_config&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">model_type</span><span class="p">,</span> <span class="n">model_spec</span> <span class="ow">in</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_spec</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;plot&quot;</span> <span class="ow">in</span> <span class="n">model_spec</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+    
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_run_plot_mode</span><span class="p">(</span><span class="n">survival_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run plot-only rendering mode.&quot;&quot;&quot;</span>
+    <span class="c1"># Create survival config first and enforce typed inputs.</span>
+    <span class="n">experiment_config</span> <span class="o">=</span> <span class="n">instantiate_config</span><span class="p">(</span>
+        <span class="n">survival_cfg</span><span class="p">,</span>
+        <span class="n">SurvivalExperimentConfig</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">_validate_experiment_config_types</span><span class="p">(</span><span class="n">experiment_config</span><span class="p">)</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">survival_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model_config&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_config</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">model_config</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;plot mode requires model_config dict with plot specifications&quot;</span>
+        <span class="p">)</span>
+    
+    <span class="c1"># Instantiate plotter config list (handles single or multiple models)</span>
+    <span class="n">plotter_config</span> <span class="o">=</span> <span class="n">instantiate_config</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">&quot;model_config&quot;</span><span class="p">:</span> <span class="n">model_config</span><span class="p">,</span> <span class="o">**</span><span class="n">survival_cfg</span><span class="p">},</span>
+        <span class="n">SurvivalSeabornPlotConfigList</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">plot_data</span> <span class="o">=</span> <span class="n">_load_plot_dataframe</span><span class="p">(</span><span class="n">experiment_config</span><span class="p">)</span>
+
+    <span class="c1"># Call plotter with the config</span>
+    <span class="k">return</span> <span class="n">plotter_config</span><span class="p">(</span>
+        <span class="n">model_config</span><span class="o">=</span><span class="n">model_config</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">plot_data</span><span class="p">,</span>
+        <span class="n">survival_config</span><span class="o">=</span><span class="n">experiment_config</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">survival_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dataset&quot;</span><span class="p">),</span>
+        <span class="n">test_size</span><span class="o">=</span><span class="n">survival_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;test_size&quot;</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">),</span>
+        <span class="n">folder</span><span class="o">=</span><span class="n">survival_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plots_folder&quot;</span><span class="p">,</span> <span class="s2">&quot;plots/survival&quot;</span><span class="p">),</span>
+        <span class="n">dummy_dict</span><span class="o">=</span><span class="n">survival_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dummies&quot;</span><span class="p">,</span> <span class="p">{}),</span>
     <span class="p">)</span>
 
 
-<div class="viewcode-block" id="survival_main">
-<a class="viewcode-back" href="../../../layers.html#deckard.layers.survival_main">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">survival_main</span><span class="p">(</span>
-    <span class="n">data</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;lung&quot;</span><span class="p">,</span>
-    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;weibull&quot;</span><span class="p">,</span>
-    <span class="n">plots_folder</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;plots/survival&quot;</span><span class="p">,</span>
-    <span class="n">config_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;E&quot;</span><span class="p">,</span>
-    <span class="n">duration_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;T&quot;</span><span class="p">,</span>
-    <span class="n">dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">model_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">survival_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">attack</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">AttackConfig</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">calculate_attack_failures</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">data_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">attack_optuna_db</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">attack_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">attack_query</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run survival model experiments from config and persist plots and summary tables.</span>
-
-<span class="sd">    Supports both modern `data`/`model` arguments and legacy `data_file` usage.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-    <span class="n">matplotlib</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s2">&quot;font&quot;</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s2">&quot;family&quot;</span><span class="p">:</span> <span class="s2">&quot;Times New Roman&quot;</span><span class="p">,</span> <span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="mi">22</span><span class="p">})</span>
-
-    <span class="n">output_folder</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">plots_folder</span><span class="p">)</span>
-    <span class="n">output_folder</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="n">config</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">if</span> <span class="n">config_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">with</span> <span class="n">Path</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
-            <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
-
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
-        <span class="n">cfg_block</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;survival&quot;</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg_block</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
-            <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">cfg_block</span><span class="p">))</span>
-
-    <span class="k">if</span> <span class="p">(</span><span class="n">data</span> <span class="o">==</span> <span class="s2">&quot;lung&quot;</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">))</span> <span class="ow">and</span> <span class="s2">&quot;data&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">model</span> <span class="o">==</span> <span class="s2">&quot;weibull&quot;</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">))</span> <span class="ow">and</span> <span class="s2">&quot;model&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">plots_folder</span> <span class="o">==</span> <span class="s2">&quot;plots/survival&quot;</span> <span class="ow">and</span> <span class="s2">&quot;plots_folder&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="n">plots_folder</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;plots_folder&quot;</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">target</span> <span class="o">==</span> <span class="s2">&quot;E&quot;</span> <span class="ow">and</span> <span class="s2">&quot;target&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="n">target</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;target&quot;</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">duration_col</span> <span class="o">==</span> <span class="s2">&quot;T&quot;</span> <span class="ow">and</span> <span class="s2">&quot;duration_col&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="n">duration_col</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;duration_col&quot;</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;dataset&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="n">dataset</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;dataset&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">model_config</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;model_config&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="n">model_config</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;model_config&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">survival_model</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;survival_model&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="n">survival_model</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;survival_model&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">attack</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;attack&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="n">attack</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;attack&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">data_file</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;data_file&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="n">data_file</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;data_file&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">attack_optuna_db</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;attack_optuna_db&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="n">attack_optuna_db</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;attack_optuna_db&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">attack_schema</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;attack_schema&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="n">attack_schema</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;attack_schema&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">attack_query</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;attack_query&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="n">attack_query</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;attack_query&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">calculate_attack_failures</span> <span class="ow">and</span> <span class="s2">&quot;calculate_attack_failures&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="n">calculate_attack_failures</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span>
-            <span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;calculate_attack_failures&quot;</span><span class="p">),</span>
-        <span class="p">)</span>
-
-    <span class="n">output_folder</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">plots_folder</span><span class="p">)</span>
-    <span class="n">output_folder</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="n">test_size</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;test_size&quot;</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">))</span>
-    <span class="n">random_state</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;random_state&quot;</span><span class="p">,</span> <span class="mi">42</span><span class="p">))</span>
-    <span class="n">fillna</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;fillna&quot;</span><span class="p">,</span> <span class="p">{}))</span>
-    <span class="n">dummies</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;dummies&quot;</span><span class="p">,</span> <span class="p">{}))</span>
-    <span class="n">covariates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;covariates&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">duration_col</span><span class="p">,</span> <span class="n">target</span><span class="p">]))</span>
-    <span class="n">data_spec</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">DataConfig</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">data_file</span> <span class="k">if</span> <span class="n">data_file</span> <span class="k">else</span> <span class="n">data</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_run_experiment_mode</span><span class="p">(</span><span class="n">survival_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">full_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run full experiment mode.&quot;&quot;&quot;</span>
+    <span class="c1"># Instantiate SurvivalExperimentConfig from Hydra config</span>
+    <span class="n">experiment_config</span> <span class="o">=</span> <span class="n">instantiate_config</span><span class="p">(</span>
+        <span class="n">survival_cfg</span><span class="p">,</span>
+        <span class="n">SurvivalExperimentConfig</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">lifelines_dataset_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">_lifelines_dataset_loaders</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">_validate_experiment_config_types</span><span class="p">(</span><span class="n">experiment_config</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_is_lifelines_dataset_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">lifelines_dataset_names</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;lifelines.&quot;</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;lifelines.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">lifelines_dataset_names</span>
-        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;lifelines_&quot;</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;lifelines_&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">lifelines_dataset_names</span>
-        <span class="k">return</span> <span class="kc">False</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_survival_dataset_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">lifelines_dataset_names</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;lifelines.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">return</span> <span class="n">name</span>
-
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_spec</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="n">normalized_data_spec</span> <span class="o">=</span> <span class="n">_normalize_survival_dataset_name</span><span class="p">(</span><span class="n">data_spec</span><span class="p">)</span>
-        <span class="n">data_name</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">Path</span><span class="p">(</span><span class="n">normalized_data_spec</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span>
-            <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">normalized_data_spec</span><span class="p">)</span><span class="o">.</span><span class="n">suffix</span>
-            <span class="k">else</span> <span class="n">normalized_data_spec</span>
-        <span class="p">)</span>
-        <span class="n">data_spec</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;dataset_name&quot;</span><span class="p">:</span> <span class="n">normalized_data_spec</span><span class="p">,</span>
-            <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="p">(</span>
-                <span class="kc">None</span> <span class="k">if</span> <span class="n">_is_lifelines_dataset_name</span><span class="p">(</span><span class="n">normalized_data_spec</span><span class="p">)</span> <span class="k">else</span> <span class="n">target</span>
-            <span class="p">),</span>
-            <span class="s2">&quot;classifier&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-            <span class="s2">&quot;stratify&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-            <span class="s2">&quot;test_size&quot;</span><span class="p">:</span> <span class="n">test_size</span><span class="p">,</span>
-            <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="n">random_state</span><span class="p">,</span>
-        <span class="p">}</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_spec</span><span class="p">,</span> <span class="n">DataConfig</span><span class="p">):</span>
-        <span class="n">data_spec</span><span class="o">.</span><span class="n">dataset_name</span> <span class="o">=</span> <span class="n">_normalize_survival_dataset_name</span><span class="p">(</span>
-            <span class="nb">str</span><span class="p">(</span><span class="n">data_spec</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">_is_lifelines_dataset_name</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">data_spec</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">)):</span>
-            <span class="n">data_spec</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">data_name</span> <span class="o">=</span> <span class="n">data_spec</span><span class="o">.</span><span class="n">dataset_name</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_spec</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
-        <span class="n">data_spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">data_spec</span><span class="p">)</span>
-        <span class="n">dataset_name_value</span> <span class="o">=</span> <span class="n">data_spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="s2">&quot;dataset_name&quot;</span><span class="p">,</span>
-            <span class="n">data_spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;alias&quot;</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">dataset_name_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">normalized_data_spec</span> <span class="o">=</span> <span class="n">_normalize_survival_dataset_name</span><span class="p">(</span>
-                <span class="nb">str</span><span class="p">(</span><span class="n">dataset_name_value</span><span class="p">),</span>
-            <span class="p">)</span>
-            <span class="n">data_spec</span><span class="p">[</span><span class="s2">&quot;dataset_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">normalized_data_spec</span>
-            <span class="k">if</span> <span class="n">_is_lifelines_dataset_name</span><span class="p">(</span><span class="n">normalized_data_spec</span><span class="p">):</span>
-                <span class="n">data_spec</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">data_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span>
-            <span class="n">data_spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dataset_name&quot;</span><span class="p">,</span> <span class="n">data_spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;alias&quot;</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">)),</span>
-        <span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">data_name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">data_spec</span><span class="p">))</span><span class="o">.</span><span class="n">stem</span>
-
-    <span class="n">resolved_survival_model</span> <span class="o">=</span> <span class="n">survival_model</span>
-    <span class="k">if</span> <span class="n">resolved_survival_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">resolved_survival_model</span> <span class="o">=</span> <span class="n">model</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
-            <span class="n">explicit_model_name</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">model</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;survival_model&quot;</span><span class="p">)</span>
-                <span class="ow">or</span> <span class="n">model</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">)</span>
-                <span class="ow">or</span> <span class="n">model</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model_type&quot;</span><span class="p">)</span>
-                <span class="ow">or</span> <span class="n">model</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;alias&quot;</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">explicit_model_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                <span class="n">resolved_survival_model</span> <span class="o">=</span> <span class="n">explicit_model_name</span>
-    <span class="k">if</span> <span class="n">resolved_survival_model</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
-        <span class="n">cfg_model</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg_model</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">resolved_survival_model</span> <span class="o">=</span> <span class="n">cfg_model</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;survival&quot;</span><span class="p">),</span> <span class="n">Mapping</span><span class="p">):</span>
-            <span class="n">nested_model</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;survival&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nested_model</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                <span class="n">resolved_survival_model</span> <span class="o">=</span> <span class="n">nested_model</span>
-    <span class="k">if</span> <span class="n">resolved_survival_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">resolved_survival_model</span> <span class="o">=</span> <span class="s2">&quot;weibull&quot;</span>
-
-    <span class="n">experiment</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">attack_cfg</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AttackConfig</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">attack</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attack</span><span class="p">,</span> <span class="n">AttackConfig</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="p">)</span>
-    <span class="n">aux_model</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">attack_optuna_db</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">loaded_data</span> <span class="o">=</span> <span class="n">_load_optuna_frame</span><span class="p">(</span>
-            <span class="n">optuna_db</span><span class="o">=</span><span class="n">attack_optuna_db</span><span class="p">,</span>
-            <span class="n">schema</span><span class="o">=</span><span class="n">attack_schema</span><span class="p">,</span>
-            <span class="n">query</span><span class="o">=</span><span class="n">attack_query</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">aux_model_spec</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="n">attack</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">aux_model_spec</span> <span class="o">=</span> <span class="n">model_config</span> <span class="k">if</span> <span class="n">model_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">model</span>
-        <span class="n">experiment</span> <span class="o">=</span> <span class="n">SurvivalExperimentConfig</span><span class="p">(</span>
-            <span class="n">data</span><span class="o">=</span><span class="n">data_spec</span><span class="p">,</span>
-            <span class="n">model</span><span class="o">=</span><span class="n">aux_model_spec</span><span class="p">,</span>
-            <span class="n">attack</span><span class="o">=</span><span class="n">attack</span><span class="p">,</span>
-            <span class="n">survival_model</span><span class="o">=</span><span class="n">resolved_survival_model</span><span class="p">,</span>
-            <span class="n">duration_col</span><span class="o">=</span><span class="n">duration_col</span><span class="p">,</span>
-            <span class="n">event_col</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
-            <span class="n">classifier</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">library</span><span class="o">=</span><span class="s2">&quot;sklearn&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">attack_cfg</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">attack</span>
-        <span class="n">aux_model</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model</span> <span class="k">if</span> <span class="n">experiment</span><span class="o">.</span><span class="n">attack</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
-
-        <span class="n">data_cfg</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">data</span>
-        <span class="k">if</span> <span class="n">data_cfg</span><span class="o">.</span><span class="n">X</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">data_cfg</span><span class="o">.</span><span class="n">_load_data</span><span class="p">()</span>
-        <span class="n">loaded_frame</span> <span class="o">=</span> <span class="n">data_cfg</span><span class="o">.</span><span class="n">X</span>
-        <span class="k">if</span> <span class="n">loaded_frame</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;DataConfig did not load features for survival experiment&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="n">loaded_data</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">loaded_frame</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loaded_frame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span>
-            <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">loaded_frame</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">data_cfg</span><span class="o">.</span><span class="n">y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">target</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loaded_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="n">loaded_data</span><span class="p">[</span><span class="n">target</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_cfg</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">values</span>
-
-    <span class="c1"># Normalize common lifelines column names into the requested target/duration pair.</span>
-    <span class="k">if</span> <span class="n">duration_col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loaded_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;duration&quot;</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">loaded_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="n">duration_col</span> <span class="o">=</span> <span class="n">candidate</span>
-                <span class="k">break</span>
-    <span class="k">if</span> <span class="n">target</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loaded_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;event&quot;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">loaded_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="n">target</span> <span class="o">=</span> <span class="n">candidate</span>
-                <span class="k">break</span>
-    <span class="k">if</span> <span class="n">target</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loaded_data</span><span class="o">.</span><span class="n">columns</span> <span class="ow">and</span> <span class="s2">&quot;right&quot;</span> <span class="ow">in</span> <span class="n">loaded_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-        <span class="n">loaded_data</span><span class="p">[</span><span class="n">target</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">loaded_data</span><span class="p">[</span><span class="s2">&quot;right&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">duration_col</span> <span class="o">=</span> <span class="s2">&quot;right&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;left&quot;</span> <span class="ow">in</span> <span class="n">loaded_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="n">loaded_data</span><span class="p">[</span><span class="n">duration_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded_data</span><span class="p">[</span><span class="s2">&quot;right&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">loaded_data</span><span class="p">[</span><span class="s2">&quot;right&quot;</span><span class="p">]),</span>
-                <span class="n">loaded_data</span><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">],</span>
-            <span class="p">)</span>
-
-    <span class="n">loaded_data</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">loaded_data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">fillna</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loaded_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2"> not found in input data&quot;</span><span class="p">)</span>
-        <span class="n">loaded_data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded_data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">calculate_attack_failures</span> <span class="ow">or</span> <span class="n">target</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;ben_failures&quot;</span><span class="p">,</span> <span class="s2">&quot;adv_failures&quot;</span><span class="p">}:</span>
-        <span class="n">loaded_data</span> <span class="o">=</span> <span class="n">calculate_failures_under_attack</span><span class="p">(</span>
-            <span class="n">loaded_data</span><span class="p">,</span>
-            <span class="n">attack_config</span><span class="o">=</span><span class="n">attack_cfg</span><span class="p">,</span>
-            <span class="n">benign_metric</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;failure_metric&quot;</span><span class="p">,</span> <span class="s2">&quot;accuracy&quot;</span><span class="p">),</span>
-        <span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">target</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">covariates</span><span class="p">:</span>
-        <span class="n">covariates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">duration_col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">covariates</span><span class="p">:</span>
-        <span class="n">covariates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">duration_col</span><span class="p">)</span>
-
-    <span class="n">cleaned</span> <span class="o">=</span> <span class="n">clean_data_for_aft</span><span class="p">(</span>
-        <span class="n">loaded_data</span><span class="p">,</span>
-        <span class="n">covariates</span><span class="p">,</span>
-        <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
-        <span class="n">dummy_dict</span><span class="o">=</span><span class="n">dummies</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">duration_col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">duration_col</span><span class="si">}</span><span class="s2"> not in cleaned columns&quot;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">dataset</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">Path</span><span class="p">(</span><span class="n">attack_optuna_db</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span> <span class="k">if</span> <span class="n">attack_optuna_db</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">data_name</span>
-        <span class="p">)</span>
-
-    <span class="n">survival_config</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">config</span>
-        <span class="k">if</span> <span class="n">resolved_survival_model</span> <span class="ow">in</span> <span class="n">config</span>
-        <span class="k">else</span> <span class="p">{</span>
-            <span class="n">resolved_survival_model</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;t0&quot;</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;t0&quot;</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">),</span>
-                <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;survival_model_params&quot;</span><span class="p">,</span> <span class="p">{}),</span>
-                <span class="s2">&quot;plot&quot;</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot&quot;</span><span class="p">,</span> <span class="p">{}),</span>
-                <span class="s2">&quot;labels&quot;</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;labels&quot;</span><span class="p">,</span> <span class="p">{}),</span>
-            <span class="p">},</span>
-        <span class="p">}</span>
-    <span class="p">)</span>
-
-    <span class="n">run_results</span> <span class="o">=</span> <span class="n">render_all_survival_model_plots</span><span class="p">(</span>
-        <span class="n">config</span><span class="o">=</span><span class="n">survival_config</span><span class="p">,</span>
-        <span class="n">duration_col</span><span class="o">=</span><span class="n">duration_col</span><span class="p">,</span>
-        <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
-        <span class="n">data</span><span class="o">=</span><span class="n">cleaned</span><span class="p">,</span>
-        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
-        <span class="n">test_size</span><span class="o">=</span><span class="n">test_size</span><span class="p">,</span>
-        <span class="n">folder</span><span class="o">=</span><span class="n">output_folder</span><span class="o">.</span><span class="n">as_posix</span><span class="p">(),</span>
-        <span class="n">dummy_dict</span><span class="o">=</span><span class="n">dummies</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">model_scores</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">aux_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">runtime_data</span> <span class="o">=</span> <span class="n">run_results</span><span class="p">[</span><span class="s2">&quot;runtime_data&quot;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">runtime_data</span><span class="o">.</span><span class="n">X_train</span> <span class="ow">is</span> <span class="kc">None</span>
-            <span class="ow">or</span> <span class="n">runtime_data</span><span class="o">.</span><span class="n">X_test</span> <span class="ow">is</span> <span class="kc">None</span>
-            <span class="ow">or</span> <span class="n">runtime_data</span><span class="o">.</span><span class="n">y_train</span> <span class="ow">is</span> <span class="kc">None</span>
-            <span class="ow">or</span> <span class="n">runtime_data</span><span class="o">.</span><span class="n">y_test</span> <span class="ow">is</span> <span class="kc">None</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Runtime survival split unavailable for auxiliary model&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">model_scores</span> <span class="o">=</span> <span class="n">aux_model</span><span class="p">(</span><span class="n">runtime_data</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Aux model evaluation failed: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;aft_table&quot;</span><span class="p">:</span> <span class="n">run_results</span><span class="p">[</span><span class="s2">&quot;table&quot;</span><span class="p">],</span>
-        <span class="s2">&quot;model_scores&quot;</span><span class="p">:</span> <span class="n">model_scores</span><span class="p">,</span>
-        <span class="s2">&quot;models&quot;</span><span class="p">:</span> <span class="n">run_results</span><span class="p">[</span><span class="s2">&quot;models&quot;</span><span class="p">],</span>
-    <span class="p">}</span></div>
-
+    <span class="n">_</span> <span class="o">=</span> <span class="n">full_cfg</span>
+    <span class="k">return</span> <span class="n">experiment_config</span><span class="p">()</span>
 
 
 <span class="n">survival_parser</span> <span class="o">=</span> <span class="n">create_parser_from_function</span><span class="p">(</span><span class="n">survival_main</span><span class="p">)</span>

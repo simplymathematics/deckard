@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Experiment" href="experiment.html" />
-    <link rel="prev" title="Attack" href="attack.html" /> 
+    <link rel="prev" title="Detector" href="detector.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -48,24 +48,33 @@
 <li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="detector.html">Detector</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Score</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.AttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">AttackScorerConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultAnjanaDataScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAnjanaDataScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultAnjanaModelScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAnjanaModelScoreConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultAnjanaScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAnjanaScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultAttributeInferenceAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceAttackScorerConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultAttributeInferenceRegressionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceRegressionAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultAttributeInferenceScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultClassifierConfig"><code class="docutils literal notranslate"><span class="pre">DefaultClassifierConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultDataClassificationConfig"><code class="docutils literal notranslate"><span class="pre">DefaultDataClassificationConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultDataRegressionConfig"><code class="docutils literal notranslate"><span class="pre">DefaultDataRegressionConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultDataScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultDataScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultEvasionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultEvasionAttackScorerConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultEvasionRegressionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultEvasionRegressionAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultEvasionScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultEvasionScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultFairlearnClassificationConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnClassificationConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultFairlearnConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultFairlearnRegressionConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnRegressionConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultFairlearnScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultLifelinesConfig"><code class="docutils literal notranslate"><span class="pre">DefaultLifelinesConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultMembershipInferenceAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultMembershipInferenceAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultMembershipInferenceScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultMembershipInferenceScoreConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultModelScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultModelScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultPytorchClassifierConfig"><code class="docutils literal notranslate"><span class="pre">DefaultPytorchClassifierConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultPytorchRegressorConfig"><code class="docutils literal notranslate"><span class="pre">DefaultPytorchRegressorConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultPytorchScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultPytorchScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.DefaultRegressorConfig"><code class="docutils literal notranslate"><span class="pre">DefaultRegressorConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.FairlearnAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnAttackScorerConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.FairlearnScoreDictConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnScoreDictConfig</span></code></a></li>
@@ -74,6 +83,16 @@
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.ScorerDictConfig.merge"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig.merge()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.anjana_k_anonymity_score"><code class="docutils literal notranslate"><span class="pre">anjana_k_anonymity_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.anjana_l_diversity_score"><code class="docutils literal notranslate"><span class="pre">anjana_l_diversity_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.anjana_t_closeness_score"><code class="docutils literal notranslate"><span class="pre">anjana_t_closeness_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.data_class_count_max_score"><code class="docutils literal notranslate"><span class="pre">data_class_count_max_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.data_class_count_min_score"><code class="docutils literal notranslate"><span class="pre">data_class_count_min_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.data_class_imbalance_ratio_score"><code class="docutils literal notranslate"><span class="pre">data_class_imbalance_ratio_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.data_empirical_cdf_function_score"><code class="docutils literal notranslate"><span class="pre">data_empirical_cdf_function_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.data_mutual_information_max_score"><code class="docutils literal notranslate"><span class="pre">data_mutual_information_max_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.data_mutual_information_mean_score"><code class="docutils literal notranslate"><span class="pre">data_mutual_information_mean_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.score.data_num_classes_score"><code class="docutils literal notranslate"><span class="pre">data_num_classes_score()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.fairness_demographic_parity_difference"><code class="docutils literal notranslate"><span class="pre">fairness_demographic_parity_difference()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.fairness_equalized_odds_difference"><code class="docutils literal notranslate"><span class="pre">fairness_equalized_odds_difference()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.score.fairness_group_mae_difference"><code class="docutils literal notranslate"><span class="pre">fairness_group_mae_difference()</span></code></a></li>
@@ -87,6 +106,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#model-and-data-scoring">Model and data scoring</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#attack-scoring">Attack scoring</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multi-attack-score-key-behavior">Multi-attack score key behavior</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#fairness-scoring-examples">Fairness Scoring Examples</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#attack-fairlearn-metricframe">Attack + Fairlearn MetricFrame</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#anjana-scoring-examples">Anjana Scoring Examples</a></li>
@@ -117,20 +137,28 @@
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.AttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">AttackScorerConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultAnjanaDataScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAnjanaDataScoreConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultAnjanaModelScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAnjanaModelScoreConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultAnjanaScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAnjanaScoreConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultAttributeInferenceAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceAttackScorerConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultAttributeInferenceRegressionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceRegressionAttackScorerConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultAttributeInferenceScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceScoreConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultClassifierConfig"><code class="docutils literal notranslate"><span class="pre">DefaultClassifierConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultDataClassificationConfig"><code class="docutils literal notranslate"><span class="pre">DefaultDataClassificationConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultDataRegressionConfig"><code class="docutils literal notranslate"><span class="pre">DefaultDataRegressionConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultDataScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultDataScoreConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultEvasionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultEvasionAttackScorerConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultEvasionRegressionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultEvasionRegressionAttackScorerConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultEvasionScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultEvasionScoreConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultFairlearnClassificationConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnClassificationConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultFairlearnConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultFairlearnRegressionConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnRegressionConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultFairlearnScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnScoreConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultLifelinesConfig"><code class="docutils literal notranslate"><span class="pre">DefaultLifelinesConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultMembershipInferenceAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultMembershipInferenceAttackScorerConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultMembershipInferenceScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultMembershipInferenceScoreConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultModelScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultModelScoreConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultPytorchClassifierConfig"><code class="docutils literal notranslate"><span class="pre">DefaultPytorchClassifierConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultPytorchRegressorConfig"><code class="docutils literal notranslate"><span class="pre">DefaultPytorchRegressorConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultPytorchScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultPytorchScoreConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultRegressorConfig"><code class="docutils literal notranslate"><span class="pre">DefaultRegressorConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.FairlearnAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnAttackScorerConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.FairlearnScoreDictConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnScoreDictConfig</span></code></a></li>
@@ -139,6 +167,16 @@
 <li class="toctree-l4"><a class="reference internal" href="#deckard.score.ScorerDictConfig.merge"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig.merge()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.anjana_k_anonymity_score"><code class="docutils literal notranslate"><span class="pre">anjana_k_anonymity_score()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.anjana_l_diversity_score"><code class="docutils literal notranslate"><span class="pre">anjana_l_diversity_score()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.anjana_t_closeness_score"><code class="docutils literal notranslate"><span class="pre">anjana_t_closeness_score()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.data_class_count_max_score"><code class="docutils literal notranslate"><span class="pre">data_class_count_max_score()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.data_class_count_min_score"><code class="docutils literal notranslate"><span class="pre">data_class_count_min_score()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.data_class_imbalance_ratio_score"><code class="docutils literal notranslate"><span class="pre">data_class_imbalance_ratio_score()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.data_empirical_cdf_function_score"><code class="docutils literal notranslate"><span class="pre">data_empirical_cdf_function_score()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.data_mutual_information_max_score"><code class="docutils literal notranslate"><span class="pre">data_mutual_information_max_score()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.data_mutual_information_mean_score"><code class="docutils literal notranslate"><span class="pre">data_mutual_information_mean_score()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.score.data_num_classes_score"><code class="docutils literal notranslate"><span class="pre">data_num_classes_score()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.fairness_demographic_parity_difference"><code class="docutils literal notranslate"><span class="pre">fairness_demographic_parity_difference()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.fairness_equalized_odds_difference"><code class="docutils literal notranslate"><span class="pre">fairness_equalized_odds_difference()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.fairness_group_mae_difference"><code class="docutils literal notranslate"><span class="pre">fairness_group_mae_difference()</span></code></a></li>
@@ -152,6 +190,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#model-and-data-scoring">Model and data scoring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#attack-scoring">Attack scoring</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#multi-attack-score-key-behavior">Multi-attack score key behavior</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#fairness-scoring-examples">Fairness Scoring Examples</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#attack-fairlearn-metricframe">Attack + Fairlearn MetricFrame</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#anjana-scoring-examples">Anjana Scoring Examples</a></li>
@@ -175,6 +214,14 @@
 <li class="toctree-l2"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Extensions:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="anjana.html">Anjana Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 
         </div>
@@ -216,81 +263,115 @@ model, attack, and experiment pipelines.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultAnjanaDataScoreConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultAnjanaDataScoreConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/anjana.html#DefaultAnjanaDataScoreConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultAnjanaDataScoreConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.DefaultAnjanaScoreConfig" title="deckard.score.anjana.DefaultAnjanaScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultAnjanaScoreConfig</span></code></a></p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultAnjanaModelScoreConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultAnjanaModelScoreConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/anjana.html#DefaultAnjanaModelScoreConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultAnjanaModelScoreConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.DefaultAnjanaScoreConfig" title="deckard.score.anjana.DefaultAnjanaScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultAnjanaScoreConfig</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.DefaultAnjanaScoreConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultAnjanaScoreConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/anjana.html#DefaultAnjanaScoreConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultAnjanaScoreConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_AnjanaScorerMixin</span></code>, <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultAttributeInferenceAttackScorerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultAttributeInferenceAttackScorerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/attack.html#DefaultAttributeInferenceAttackScorerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultAttributeInferenceAttackScorerConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultAttributeInferenceAttackScorerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/attack.html#DefaultAttributeInferenceAttackScorerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultAttributeInferenceAttackScorerConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.DefaultAttributeInferenceScoreConfig" title="deckard.score.attack.DefaultAttributeInferenceScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultAttributeInferenceScoreConfig</span></code></a></p>
 <p>Default scorer set for categorical attribute inference evaluation.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultAttributeInferenceRegressionAttackScorerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultAttributeInferenceRegressionAttackScorerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/attack.html#DefaultAttributeInferenceRegressionAttackScorerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultAttributeInferenceRegressionAttackScorerConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultAttributeInferenceRegressionAttackScorerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/attack.html#DefaultAttributeInferenceRegressionAttackScorerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultAttributeInferenceRegressionAttackScorerConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.DefaultAttributeInferenceScoreConfig" title="deckard.score.attack.DefaultAttributeInferenceScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultAttributeInferenceScoreConfig</span></code></a></p>
 <p>Default scorer set for continuous attribute inference evaluation.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.DefaultAttributeInferenceScoreConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultAttributeInferenceScoreConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/attack.html#DefaultAttributeInferenceScoreConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultAttributeInferenceScoreConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_TaskAwareScorerMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">_AttackProfileScorer</span></code>, <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<p>Default attribute-inference scorer family with optional task selection.</p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultClassifierConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultClassifierConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#DefaultClassifierConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultClassifierConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultClassifierConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#DefaultClassifierConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultClassifierConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.DefaultModelScoreConfig" title="deckard.score.base.DefaultModelScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultModelScoreConfig</span></code></a></p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultDataClassificationConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultDataClassificationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/data.html#DefaultDataClassificationConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultDataClassificationConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultDataClassificationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/data.html#DefaultDataClassificationConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultDataClassificationConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.DefaultDataScoreConfig" title="deckard.score.data.DefaultDataScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultDataScoreConfig</span></code></a></p>
 <p>Default dataset-analysis scorers for classification datasets.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultDataRegressionConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultDataRegressionConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/data.html#DefaultDataRegressionConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultDataRegressionConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultDataRegressionConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/data.html#DefaultDataRegressionConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultDataRegressionConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.DefaultDataScoreConfig" title="deckard.score.data.DefaultDataScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultDataScoreConfig</span></code></a></p>
 <p>Default dataset-analysis scorers for regression datasets.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.DefaultDataScoreConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultDataScoreConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/data.html#DefaultDataScoreConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultDataScoreConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_DataScorerMarker</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">_TaskAwareScorerMixin</span></code>, <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<p>Default data-analysis scorer family with optional task inheritance.</p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultEvasionAttackScorerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultEvasionAttackScorerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/attack.html#DefaultEvasionAttackScorerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultEvasionAttackScorerConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultEvasionAttackScorerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/attack.html#DefaultEvasionAttackScorerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultEvasionAttackScorerConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.DefaultEvasionScoreConfig" title="deckard.score.attack.DefaultEvasionScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultEvasionScoreConfig</span></code></a></p>
 <p>Default scorer set for evasion attack evaluation.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultEvasionRegressionAttackScorerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultEvasionRegressionAttackScorerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/attack.html#DefaultEvasionRegressionAttackScorerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultEvasionRegressionAttackScorerConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultEvasionRegressionAttackScorerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/attack.html#DefaultEvasionRegressionAttackScorerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultEvasionRegressionAttackScorerConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.DefaultEvasionScoreConfig" title="deckard.score.attack.DefaultEvasionScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultEvasionScoreConfig</span></code></a></p>
 <p>Default scorer set for evasion attacks against regression models.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.DefaultEvasionScoreConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultEvasionScoreConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/attack.html#DefaultEvasionScoreConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultEvasionScoreConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_TaskAwareScorerMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">_AttackProfileScorer</span></code>, <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<p>Default evasion scorer family with optional task selection.</p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultFairlearnClassificationConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultFairlearnClassificationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_reduction='difference'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_reduction_method='between_groups'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_group_overall=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_group_by_group=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_features=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_boot=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci_quantiles=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/fairness.html#DefaultFairlearnClassificationConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultFairlearnClassificationConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.FairlearnScoreDictConfig" title="deckard.score.fairness.FairlearnScoreDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FairlearnScoreDictConfig</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultFairlearnClassificationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_reduction='difference'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_reduction_method='between_groups'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_group_overall=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_group_by_group=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_features=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_boot=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci_quantiles=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/fairness.html#DefaultFairlearnClassificationConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultFairlearnClassificationConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.DefaultFairlearnScoreConfig" title="deckard.score.fairness.DefaultFairlearnScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultFairlearnScoreConfig</span></code></a></p>
 <p>Default scorer set for classification fairness workflows.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="deckard.score.DefaultFairlearnConfig">
 <span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultFairlearnConfig</span></span><a class="headerlink" href="#deckard.score.DefaultFairlearnConfig" title="Link to this definition"></a></dt>
-<dd><p>alias of <a class="reference internal" href="#deckard.score.DefaultFairlearnClassificationConfig" title="deckard.score.fairness.DefaultFairlearnClassificationConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultFairlearnClassificationConfig</span></code></a></p>
+<dd><p>alias of <a class="reference internal" href="#deckard.score.DefaultFairlearnScoreConfig" title="deckard.score.fairness.DefaultFairlearnScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultFairlearnScoreConfig</span></code></a></p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultFairlearnRegressionConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultFairlearnRegressionConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_reduction='difference'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_reduction_method='between_groups'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_group_overall=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_group_by_group=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_features=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_boot=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci_quantiles=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/fairness.html#DefaultFairlearnRegressionConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultFairlearnRegressionConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.FairlearnScoreDictConfig" title="deckard.score.fairness.FairlearnScoreDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FairlearnScoreDictConfig</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultFairlearnRegressionConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_reduction='difference'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_reduction_method='between_groups'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_group_overall=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_group_by_group=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_features=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_boot=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci_quantiles=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/fairness.html#DefaultFairlearnRegressionConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultFairlearnRegressionConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.DefaultFairlearnScoreConfig" title="deckard.score.fairness.DefaultFairlearnScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultFairlearnScoreConfig</span></code></a></p>
 <p>Default scorer set for regression fairness workflows.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.DefaultFairlearnScoreConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultFairlearnScoreConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_reduction='difference'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_reduction_method='between_groups'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_group_overall=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_group_by_group=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_features=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_boot=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci_quantiles=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/fairness.html#DefaultFairlearnScoreConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultFairlearnScoreConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_TaskAwareScorerMixin</span></code>, <a class="reference internal" href="#deckard.score.FairlearnScoreDictConfig" title="deckard.score.fairness.FairlearnScoreDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FairlearnScoreDictConfig</span></code></a></p>
+<p>Default fairness scorer family with optional task inheritance.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -302,15 +383,31 @@ model, attack, and experiment pipelines.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultMembershipInferenceAttackScorerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultMembershipInferenceAttackScorerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/attack.html#DefaultMembershipInferenceAttackScorerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultMembershipInferenceAttackScorerConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultMembershipInferenceAttackScorerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/attack.html#DefaultMembershipInferenceAttackScorerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultMembershipInferenceAttackScorerConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.DefaultMembershipInferenceScoreConfig" title="deckard.score.attack.DefaultMembershipInferenceScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultMembershipInferenceScoreConfig</span></code></a></p>
 <p>Default scorer set for membership inference attack evaluation.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.DefaultMembershipInferenceScoreConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultMembershipInferenceScoreConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/attack.html#DefaultMembershipInferenceScoreConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultMembershipInferenceScoreConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_TaskAwareScorerMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">_AttackProfileScorer</span></code>, <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<p>Default membership-inference scorer family.</p>
+<p>Membership inference is always treated as a classification-style scoring
+problem, so the default is fixed to <code class="docutils literal notranslate"><span class="pre">classifier=True</span></code>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.DefaultModelScoreConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultModelScoreConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#DefaultModelScoreConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultModelScoreConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_TaskAwareScorerMixin</span></code>, <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<p>Default model scorer family with optional task inheritance.</p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultPytorchClassifierConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultPytorchClassifierConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#DefaultPytorchClassifierConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultPytorchClassifierConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultPytorchClassifierConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#DefaultPytorchClassifierConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultPytorchClassifierConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.DefaultPytorchScoreConfig" title="deckard.score.base.DefaultPytorchScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultPytorchScoreConfig</span></code></a></p>
 <p>Default classifier scorers for PyTorch models.</p>
 <p>PyTorch model wrappers often expose logits but not <code class="docutils literal notranslate"><span class="pre">predict_proba</span></code>. This
 default avoids probability-required metrics so automatic scoring works out
@@ -319,15 +416,22 @@ of the box.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultPytorchRegressorConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultPytorchRegressorConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#DefaultPytorchRegressorConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultPytorchRegressorConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultPytorchRegressorConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#DefaultPytorchRegressorConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultPytorchRegressorConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.DefaultPytorchScoreConfig" title="deckard.score.base.DefaultPytorchScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultPytorchScoreConfig</span></code></a></p>
 <p>Default regressor scorers for PyTorch models.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="deckard.score.DefaultPytorchScoreConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultPytorchScoreConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#DefaultPytorchScoreConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultPytorchScoreConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_TaskAwareScorerMixin</span></code>, <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<p>Default PyTorch scorer family with optional task inheritance.</p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.DefaultRegressorConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultRegressorConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#DefaultRegressorConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultRegressorConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">DefaultRegressorConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#DefaultRegressorConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.DefaultRegressorConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.score.DefaultModelScoreConfig" title="deckard.score.base.DefaultModelScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultModelScoreConfig</span></code></a></p>
 </dd></dl>
 
 <dl class="py class">
@@ -348,11 +452,12 @@ when the data object exposes <code class="docutils literal notranslate"><span cl
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.score.FairlearnScoreDictConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">FairlearnScoreDictConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_scorers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_reduction='difference'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_reduction_method='between_groups'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_group_overall=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_group_by_group=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_features=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_boot=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ci_quantiles=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/fairness.html#FairlearnScoreDictConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.FairlearnScoreDictConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_FairnessScorerMixin</span></code>, <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.base.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></p>
 <p>ScorerDictConfig variant that computes fairness metrics through MetricFrame.</p>
-<p>Use <code class="docutils literal notranslate"><span class="pre">group_scorers</span></code> to provide configurable metric callables evaluated per
-sensitive group. Standard <code class="docutils literal notranslate"><span class="pre">scorers</span></code> are still supported and are evaluated
-first via <code class="docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code>.</p>
+<p>Composes <code class="docutils literal notranslate"><span class="pre">_FairnessScorerMixin</span></code> (group scoring) with <code class="docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code>
+(standard scorer evaluation).  Use <code class="docutils literal notranslate"><span class="pre">group_scorers</span></code> to provide configurable
+metric callables evaluated per sensitive group via MetricFrame.  Standard
+<code class="docutils literal notranslate"><span class="pre">scorers</span></code> are still evaluated first.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -372,58 +477,352 @@ first via <code class="docutils literal notranslate"><span class="pre">ScorerDic
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/base.html#ScorerDictConfig.merge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.ScorerDictConfig.merge" title="Link to this definition"></a></dt>
 <dd><p>Merge a list of scorer specs into a single ScorerDictConfig.</p>
 <p>Each element of <em>items</em> may be a <a class="reference internal" href="#deckard.score.ScorerDictConfig" title="deckard.score.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a>, a dict
-with a <code class="docutils literal notranslate"><span class="pre">scorers</span></code> key, or a bare scorers dict (name → scorer spec).
+with a <code class="docutils literal notranslate"><span class="pre">scorers</span></code> key, or a bare scorers dict (name -&gt; scorer spec).
 Later entries win on duplicate scorer names.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="deckard.score.anjana_k_anonymity_score">
+<span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">anjana_k_anonymity_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/anjana.html#anjana_k_anonymity_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.anjana_k_anonymity_score" title="Link to this definition"></a></dt>
+<dd><p>Compute k-anonymity score for an anonymized dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>array-like</em><em>, </em><em>optional</em>) – Ground-truth labels (unused; present for scorer interface compatibility).</p></li>
+<li><p><strong>y_pred</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) – The (possibly anonymized) feature matrix.  When provided as a DataFrame
+it is used directly; otherwise the function falls back to <code class="docutils literal notranslate"><span class="pre">data._X</span></code>.</p></li>
+<li><p><strong>data</strong> (<a class="reference internal" href="data.html#deckard.data.AnjanaDataConfig" title="deckard.data.AnjanaDataConfig"><em>AnjanaDataConfig</em></a><em>, </em><em>optional</em>) – Data configuration carrying <code class="docutils literal notranslate"><span class="pre">quasi_identifiers</span></code> and
+<code class="docutils literal notranslate"><span class="pre">sensitive_attribute</span></code>.</p></li>
+<li><p><strong>**kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></span>) – Forwarded to <code class="xref py py-func docutils literal notranslate"><span class="pre">_resolve_frame_and_context()</span></code>; supports
+<code class="docutils literal notranslate"><span class="pre">quasi_ident</span></code> and <code class="docutils literal notranslate"><span class="pre">sens_att</span></code> overrides.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The k-anonymity value of the dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ImportError</strong> – If <code class="docutils literal notranslate"><span class="pre">pycanon</span></code> is not installed.</p></li>
+<li><p><strong>ValueError</strong> – If no quasi-identifier columns are available.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.score.anjana_l_diversity_score">
+<span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">anjana_l_diversity_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/anjana.html#anjana_l_diversity_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.anjana_l_diversity_score" title="Link to this definition"></a></dt>
+<dd><p>Compute l-diversity score for an anonymized dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>array-like</em><em>, </em><em>optional</em>) – Ground-truth labels (unused; present for scorer interface compatibility).</p></li>
+<li><p><strong>y_pred</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) – The (possibly anonymized) feature matrix.</p></li>
+<li><p><strong>data</strong> (<a class="reference internal" href="data.html#deckard.data.AnjanaDataConfig" title="deckard.data.AnjanaDataConfig"><em>AnjanaDataConfig</em></a><em>, </em><em>optional</em>) – Data configuration carrying <code class="docutils literal notranslate"><span class="pre">quasi_identifiers</span></code> and
+<code class="docutils literal notranslate"><span class="pre">sensitive_attribute</span></code>.</p></li>
+<li><p><strong>**kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></span>) – Forwarded to <code class="xref py py-func docutils literal notranslate"><span class="pre">_resolve_frame_and_context()</span></code>; supports
+<code class="docutils literal notranslate"><span class="pre">quasi_ident</span></code> and <code class="docutils literal notranslate"><span class="pre">sens_att</span></code> overrides.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The l-diversity value of the dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ImportError</strong> – If <code class="docutils literal notranslate"><span class="pre">pycanon</span></code> is not installed.</p></li>
+<li><p><strong>ValueError</strong> – If no quasi-identifier columns or sensitive attribute is available.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.score.anjana_t_closeness_score">
+<span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">anjana_t_closeness_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/anjana.html#anjana_t_closeness_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.anjana_t_closeness_score" title="Link to this definition"></a></dt>
+<dd><p>Compute t-closeness score for an anonymized dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>array-like</em><em>, </em><em>optional</em>) – Ground-truth labels (unused; present for scorer interface compatibility).</p></li>
+<li><p><strong>y_pred</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) – The (possibly anonymized) feature matrix.</p></li>
+<li><p><strong>data</strong> (<a class="reference internal" href="data.html#deckard.data.AnjanaDataConfig" title="deckard.data.AnjanaDataConfig"><em>AnjanaDataConfig</em></a><em>, </em><em>optional</em>) – Data configuration carrying <code class="docutils literal notranslate"><span class="pre">quasi_identifiers</span></code> and
+<code class="docutils literal notranslate"><span class="pre">sensitive_attribute</span></code>.</p></li>
+<li><p><strong>**kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></span>) – Forwarded to <code class="xref py py-func docutils literal notranslate"><span class="pre">_resolve_frame_and_context()</span></code>; supports
+<code class="docutils literal notranslate"><span class="pre">quasi_ident</span></code> and <code class="docutils literal notranslate"><span class="pre">sens_att</span></code> overrides.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The t-closeness value of the dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ImportError</strong> – If <code class="docutils literal notranslate"><span class="pre">pycanon</span></code> is not installed.</p></li>
+<li><p><strong>ValueError</strong> – If no quasi-identifier columns or sensitive attribute is available.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.score.data_class_count_max_score">
+<span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">data_class_count_max_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/data.html#data_class_count_max_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.data_class_count_max_score" title="Link to this definition"></a></dt>
+<dd><p>Return the count of the most-frequent class in <code class="docutils literal notranslate"><span class="pre">y_true</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>array-like</em>) – Ground-truth target labels.</p></li>
+<li><p><strong>y_pred</strong> (<em>array-like</em>) – Predicted values (unused; present for scorer interface compatibility).</p></li>
+<li><p><strong>**kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></span>) – Additional keyword arguments (unused).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sample count of the most common class, or 0 when <code class="docutils literal notranslate"><span class="pre">y_true</span></code> is empty.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.score.data_class_count_min_score">
+<span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">data_class_count_min_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/data.html#data_class_count_min_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.data_class_count_min_score" title="Link to this definition"></a></dt>
+<dd><p>Return the count of the least-frequent class in <code class="docutils literal notranslate"><span class="pre">y_true</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>array-like</em>) – Ground-truth target labels.</p></li>
+<li><p><strong>y_pred</strong> (<em>array-like</em>) – Predicted values (unused; present for scorer interface compatibility).</p></li>
+<li><p><strong>**kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></span>) – Additional keyword arguments (unused).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sample count of the rarest class, or 0 when <code class="docutils literal notranslate"><span class="pre">y_true</span></code> is empty.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.score.data_class_imbalance_ratio_score">
+<span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">data_class_imbalance_ratio_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/data.html#data_class_imbalance_ratio_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.data_class_imbalance_ratio_score" title="Link to this definition"></a></dt>
+<dd><p>Return the ratio of the most-frequent to the least-frequent class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>array-like</em>) – Ground-truth target labels.</p></li>
+<li><p><strong>y_pred</strong> (<em>array-like</em>) – Predicted values (unused; present for scorer interface compatibility).</p></li>
+<li><p><strong>**kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></span>) – Additional keyword arguments (unused).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">max_count</span> <span class="pre">/</span> <span class="pre">min_count</span></code>.  Returns <code class="docutils literal notranslate"><span class="pre">0.0</span></code> when <code class="docutils literal notranslate"><span class="pre">y_true</span></code> is empty
+and <code class="docutils literal notranslate"><span class="pre">float('inf')</span></code> when the minority class has zero samples.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.score.data_empirical_cdf_function_score">
+<span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">data_empirical_cdf_function_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/data.html#data_empirical_cdf_function_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.data_empirical_cdf_function_score" title="Link to this definition"></a></dt>
+<dd><p>Return an empirical CDF function fitted to the reference vector.</p>
+<p>The returned callable accepts an array of query values and returns the
+fraction of reference samples that are less than or equal to each query
+value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>array-like</em>) – Ground-truth values used as the reference unless <code class="docutils literal notranslate"><span class="pre">reference</span></code> or
+<code class="docutils literal notranslate"><span class="pre">reference_column</span></code> is provided in <em>kwargs</em>.</p></li>
+<li><p><strong>y_pred</strong> (<em>array-like</em><em> or </em><em>pd.DataFrame</em>) – Feature matrix (used only when resolving <code class="docutils literal notranslate"><span class="pre">reference_column</span></code>).</p></li>
+<li><p><strong>**kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></span>) – Forwarded to <code class="xref py py-func docutils literal notranslate"><span class="pre">_resolve_reference_vector()</span></code>.  Accepts
+<code class="docutils literal notranslate"><span class="pre">reference</span></code> and <code class="docutils literal notranslate"><span class="pre">reference_column</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An ECDF function <code class="docutils literal notranslate"><span class="pre">ecdf(x)</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code> with the same signature
+as <code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.stats.ecdf</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>callable</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the resolved reference vector is empty after dropping NaN values.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.score.data_mutual_information_max_score">
+<span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">data_mutual_information_max_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/data.html#data_mutual_information_max_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.data_mutual_information_max_score" title="Link to this definition"></a></dt>
+<dd><p>Return the maximum mutual information between any single feature and the reference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>array-like</em>) – Ground-truth labels used as the reference vector unless <code class="docutils literal notranslate"><span class="pre">reference</span></code>
+or <code class="docutils literal notranslate"><span class="pre">reference_column</span></code> is supplied in <em>kwargs</em>.</p></li>
+<li><p><strong>y_pred</strong> (<em>array-like</em><em> or </em><em>pd.DataFrame</em>) – Feature matrix.  Non-DataFrame inputs are coerced automatically.</p></li>
+<li><p><strong>**kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></span>) – Forwarded to <code class="xref py py-func docutils literal notranslate"><span class="pre">_feature_mutual_information_vector()</span></code>.  Accepts
+<code class="docutils literal notranslate"><span class="pre">reference</span></code>, <code class="docutils literal notranslate"><span class="pre">reference_column</span></code>, <code class="docutils literal notranslate"><span class="pre">random_state</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">discrete_reference</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Maximum mutual information value across all feature columns.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.score.data_mutual_information_mean_score">
+<span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">data_mutual_information_mean_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/data.html#data_mutual_information_mean_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.data_mutual_information_mean_score" title="Link to this definition"></a></dt>
+<dd><p>Return the mean mutual information between features and the reference vector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>array-like</em>) – Ground-truth labels used as the reference vector unless <code class="docutils literal notranslate"><span class="pre">reference</span></code>
+or <code class="docutils literal notranslate"><span class="pre">reference_column</span></code> is supplied in <em>kwargs</em>.</p></li>
+<li><p><strong>y_pred</strong> (<em>array-like</em><em> or </em><em>pd.DataFrame</em>) – Feature matrix.  Non-DataFrame inputs are coerced automatically.</p></li>
+<li><p><strong>**kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></span>) – Forwarded to <code class="xref py py-func docutils literal notranslate"><span class="pre">_feature_mutual_information_vector()</span></code>.  Accepts
+<code class="docutils literal notranslate"><span class="pre">reference</span></code>, <code class="docutils literal notranslate"><span class="pre">reference_column</span></code>, <code class="docutils literal notranslate"><span class="pre">random_state</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">discrete_reference</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mean mutual information across all feature columns.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.score.data_num_classes_score">
+<span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">data_num_classes_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/data.html#data_num_classes_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.data_num_classes_score" title="Link to this definition"></a></dt>
+<dd><p>Count the number of unique classes in <code class="docutils literal notranslate"><span class="pre">y_true</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>array-like</em>) – Ground-truth target labels.</p></li>
+<li><p><strong>y_pred</strong> (<em>array-like</em>) – Predicted values (unused; present for scorer interface compatibility).</p></li>
+<li><p><strong>**kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></span>) – Additional keyword arguments (unused).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Number of distinct classes in <code class="docutils literal notranslate"><span class="pre">y_true</span></code> including NaN if present.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="deckard.score.fairness_demographic_parity_difference">
 <span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">fairness_demographic_parity_difference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/fairness.html#fairness_demographic_parity_difference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.fairness_demographic_parity_difference" title="Link to this definition"></a></dt>
 <dd><p>Compute demographic parity difference for fairness-aware configurations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="deckard.score.fairness_equalized_odds_difference">
 <span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">fairness_equalized_odds_difference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/fairness.html#fairness_equalized_odds_difference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.fairness_equalized_odds_difference" title="Link to this definition"></a></dt>
 <dd><p>Compute equalized odds difference for fairness-aware configurations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="deckard.score.fairness_group_mae_difference">
 <span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">fairness_group_mae_difference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/fairness.html#fairness_group_mae_difference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.fairness_group_mae_difference" title="Link to this definition"></a></dt>
 <dd><p>Compute disparity in MAE across sensitive groups.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="deckard.score.fairness_group_mean_prediction_difference">
 <span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">fairness_group_mean_prediction_difference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/fairness.html#fairness_group_mean_prediction_difference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.fairness_group_mean_prediction_difference" title="Link to this definition"></a></dt>
 <dd><p>Compute disparity in mean prediction across sensitive groups.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="deckard.score.fairness_group_mse_difference">
 <span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">fairness_group_mse_difference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/fairness.html#fairness_group_mse_difference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.fairness_group_mse_difference" title="Link to this definition"></a></dt>
 <dd><p>Compute disparity in MSE across sensitive groups.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="deckard.score.survival_aic_score">
 <span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">survival_aic_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/survival.html#survival_aic_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.survival_aic_score" title="Link to this definition"></a></dt>
 <dd><p>Return survival AIC from a fitted lifelines model when available.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="deckard.score.survival_bic_score">
 <span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">survival_bic_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/survival.html#survival_bic_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.survival_bic_score" title="Link to this definition"></a></dt>
 <dd><p>Return survival BIC from a fitted lifelines model when available.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="deckard.score.survival_concordance_score">
 <span class="sig-prename descclassname"><span class="pre">deckard.score.</span></span><span class="sig-name descname"><span class="pre">survival_concordance_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/score/survival.html#survival_concordance_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.score.survival_concordance_score" title="Link to this definition"></a></dt>
 <dd><p>Return survival concordance from a fitted lifelines model when available.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <section id="overview">
@@ -532,10 +931,15 @@ import-time registration attempts in tests and repeated imports.</p>
 </section>
 <section id="model-and-data-scoring">
 <h3>Model and data scoring<a class="headerlink" href="#model-and-data-scoring" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="#deckard.score.DefaultClassifierConfig" title="deckard.score.DefaultClassifierConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultClassifierConfig</span></code></a> applies to model predictions.
+Use <a class="reference internal" href="#deckard.score.DefaultDataScoreConfig" title="deckard.score.DefaultDataScoreConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultDataScoreConfig</span></code></a> (or leave <code class="docutils literal notranslate"><span class="pre">scorer</span></code> unset to
+auto-select) when you want data-level statistics on the dataset itself.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">deckard.score</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultClassifierConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.score.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultDataScoreConfig</span>
 
+<span class="c1"># Data scorer computes dataset statistics (class counts, imbalance, etc.)</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">DataConfig</span><span class="p">(</span>
    <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;make_classification&quot;</span><span class="p">,</span>
    <span class="n">data_params</span><span class="o">=</span><span class="p">{</span>
@@ -552,10 +956,11 @@ import-time registration attempts in tests and repeated imports.</p>
    <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
    <span class="n">stratify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
    <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-   <span class="n">scorer</span><span class="o">=</span><span class="n">DefaultClassifierConfig</span><span class="p">(),</span>
+   <span class="n">scorer</span><span class="o">=</span><span class="n">DefaultDataScoreConfig</span><span class="p">(),</span>
 <span class="p">)</span>
 <span class="n">data</span><span class="p">()</span>
 
+<span class="c1"># Model scorer computes prediction metrics (accuracy, precision, recall, etc.)</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(</span>
    <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;sklearn.linear_model.LogisticRegression&quot;</span><span class="p">,</span>
    <span class="n">classifier</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -610,6 +1015,27 @@ import-time registration attempts in tests and repeated imports.</p>
 set. Deckard passes the attack-specific prediction values to that generic
 profile and prefixes the output keys so they remain unambiguous in merged score
 dicts.</p>
+</section>
+<section id="multi-attack-score-key-behavior">
+<h3>Multi-attack score key behavior<a class="headerlink" href="#multi-attack-score-key-behavior" title="Link to this heading"></a></h3>
+<p>When <code class="docutils literal notranslate"><span class="pre">ExperimentConfig.attack</span></code> is configured as a list, Deckard merges the
+per-attack score dictionaries in order.</p>
+<ul class="simple">
+<li><p>Non-colliding keys are preserved as-is.</p></li>
+<li><p>Only colliding keys are suffixed with <code class="docutils literal notranslate"><span class="pre">_&lt;attack.alias&gt;</span></code>.</p></li>
+<li><p>Aliases are required for multi-attack runs.</p></li>
+</ul>
+<p>Example:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">evasion_accuracy</span></code> from the first attack remains <code class="docutils literal notranslate"><span class="pre">evasion_accuracy</span></code></p></li>
+<li><dl class="simple">
+<dt>a colliding <code class="docutils literal notranslate"><span class="pre">evasion_accuracy</span></code> from alias <code class="docutils literal notranslate"><span class="pre">hsj</span></code> becomes</dt><dd><p><code class="docutils literal notranslate"><span class="pre">evasion_accuracy_hsj</span></code></p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>This naming behavior keeps backward compatibility for single-attack workflows
+while preserving all metrics in multi-attack experiments.</p>
 </section>
 <section id="fairness-scoring-examples">
 <h3>Fairness Scoring Examples<a class="headerlink" href="#fairness-scoring-examples" title="Link to this heading"></a></h3>
@@ -698,6 +1124,24 @@ python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> 
 python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>survival<span class="w"> </span><span class="nv">score</span><span class="o">=</span>survival
 python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span><span class="nv">data</span><span class="o">=</span>fair-adult<span class="w"> </span><span class="nv">score</span><span class="o">=</span>fairness-classification
 python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span><span class="nv">data</span><span class="o">=</span>fair-adult<span class="w"> </span><span class="nv">score</span><span class="o">=</span>fairness-regression
+</pre></div>
+</div>
+<p>Examples with attack scorer profiles:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-path<span class="w"> </span>examples/sklearn/config<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-name<span class="w"> </span>attack-default<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="nv">score</span><span class="o">=</span>attack-classification<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="nv">attack</span><span class="o">=</span>fgm
+
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-path<span class="w"> </span>examples/sklearn/config<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-name<span class="w"> </span>attribute-inference-default<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="nv">score</span><span class="o">=</span>attribute-inference
+
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-path<span class="w"> </span>examples/sklearn/config<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-name<span class="w"> </span>inference-default<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="nv">score</span><span class="o">=</span>membership-inference
 </pre></div>
 </div>
 <p>You can also override nested scorer definitions inline when you only need one
@@ -842,11 +1286,6 @@ misleading values. Match the scorer profile to the task type.</p>
 </dd>
 </dl>
 </li>
-<li><dl class="simple">
-<dt>If repeated imports happen during tests, duplicate config-store registration</dt><dd><p>is expected and handled by <code class="xref py py-func docutils literal notranslate"><span class="pre">deckard.score.safe_store()</span></code>.</p>
-</dd>
-</dl>
-</li>
 </ul>
 <section id="see-also">
 <h3>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h3>
@@ -866,7 +1305,7 @@ misleading values. Match the scorer profile to the task type.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="attack.html" class="btn btn-neutral float-left" title="Attack" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="detector.html" class="btn btn-neutral float-left" title="Detector" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="experiment.html" class="btn btn-neutral float-right" title="Experiment" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

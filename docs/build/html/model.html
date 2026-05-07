@@ -78,6 +78,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#fairness-extension">Fairness Extension</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.model.fairness.FairlearnDefenseConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnDefenseConfig</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.model.fairness.FairlearnModelConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnModelConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.fairness.FairlearnPytorchModelConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnPytorchModelConfig</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#torch-extension">Torch Extension</a><ul>
@@ -110,6 +111,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#regression-example">Regression example</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#custom-configuration">Custom configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#defense-pipelines">Defense Pipelines</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#transformer-defenses-torch-backed">Transformer Defenses (Torch-backed)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#defense-chains-in-config-files">Defense Chains in Config Files</a></li>
 </ul>
 </li>
@@ -136,6 +138,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="detector.html">Detector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot.html">Plot</a></li>
@@ -222,6 +225,14 @@
 </ul>
 </li>
 </ul>
+<p class="caption" role="heading"><span class="caption-text">Extensions:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="anjana.html">Anjana Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
+</ul>
 
         </div>
       </div>
@@ -304,9 +315,11 @@ dependencies are installed.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.model.FairlearnModelConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.model.</span></span><span class="sig-name descname"><span class="pre">FairlearnModelConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_prediction_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_score_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_score_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_application_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_predictions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_probabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_defense_pipeline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/fairness.html#FairlearnModelConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.FairlearnModelConfig" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.model.</span></span><span class="sig-name descname"><span class="pre">FairlearnModelConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_model=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_application_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_probabilities=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probabilities=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_defense_pipeline=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_params=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/fairness.html#FairlearnModelConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.FairlearnModelConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_FairnessBehaviorMixin</span></code>, <a class="reference internal" href="#deckard.model.ModelConfig" title="deckard.model.base.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelConfig</span></code></a></p>
-<p>Fairness-aware model config for standard model workflows.</p>
+<p>Fairness-aware model config for sklearn models.</p>
+<p>Inherits sklearn training/prediction from ModelConfig and adds
+fairness-aware scoring and defense support via _FairnessBehaviorMixin.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -520,12 +533,22 @@ test_scores = model_config(data, train=False, score=True)</p>
 <dt class="sig sig-object py" id="deckard.model.PytorchModelConfig.get_art_model">
 <span class="sig-name descname"><span class="pre">get_art_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/pytorch.html#PytorchModelConfig.get_art_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.PytorchModelConfig.get_art_model" title="Link to this definition"></a></dt>
 <dd><p>Get ART-compatible model wrapper for adversarial robustness.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="deckard.model.PytorchModelConfig.get_model">
 <span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/pytorch.html#PytorchModelConfig.get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.PytorchModelConfig.get_model" title="Link to this definition"></a></dt>
 <dd><p>Return the underlying PyTorch model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -584,9 +607,20 @@ group-sensitive fitting, scoring, and fairlearn defense wrappers.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.model.fairness.FairlearnModelConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.model.fairness.</span></span><span class="sig-name descname"><span class="pre">FairlearnModelConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_prediction_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_score_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_score_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_application_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_predictions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_probabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_defense_pipeline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/fairness.html#FairlearnModelConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.fairness.FairlearnModelConfig" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.model.fairness.</span></span><span class="sig-name descname"><span class="pre">FairlearnModelConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_model=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_application_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_probabilities=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probabilities=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_defense_pipeline=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_params=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/fairness.html#FairlearnModelConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.fairness.FairlearnModelConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_FairnessBehaviorMixin</span></code>, <a class="reference internal" href="#deckard.model.ModelConfig" title="deckard.model.base.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelConfig</span></code></a></p>
-<p>Fairness-aware model config for standard model workflows.</p>
+<p>Fairness-aware model config for sklearn models.</p>
+<p>Inherits sklearn training/prediction from ModelConfig and adds
+fairness-aware scoring and defense support via _FairnessBehaviorMixin.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.model.fairness.FairlearnPytorchModelConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.model.fairness.</span></span><span class="sig-name descname"><span class="pre">FairlearnPytorchModelConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type='torch.nn.Linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_model=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_application_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_probabilities=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probabilities=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_defense_pipeline=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">library='pytorch'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion='torch.nn.CrossEntropyLoss'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer='torch.optim.SGD'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_values=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_seed=42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels_first=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_records=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_checkpoint_context=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_epoch_attack=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/fairness.html#FairlearnPytorchModelConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.fairness.FairlearnPytorchModelConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_FairnessBehaviorMixin</span></code>, <a class="reference internal" href="#deckard.model.pytorch.PytorchModelConfig" title="deckard.model.pytorch.PytorchModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PytorchModelConfig</span></code></a></p>
+<p>Fairness-aware model config for PyTorch models.</p>
+<p>Inherits all torch training/prediction/defense from PytorchModelConfig
+and adds fairness-aware scoring via _FairnessBehaviorMixin.</p>
 </dd></dl>
 
 </section>
@@ -645,12 +679,22 @@ scoring through a <code class="docutils literal notranslate"><span class="pre">M
 <dt class="sig sig-object py" id="deckard.model.pytorch.PytorchModelConfig.get_art_model">
 <span class="sig-name descname"><span class="pre">get_art_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/pytorch.html#PytorchModelConfig.get_art_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.pytorch.PytorchModelConfig.get_art_model" title="Link to this definition"></a></dt>
 <dd><p>Get ART-compatible model wrapper for adversarial robustness.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="deckard.model.pytorch.PytorchModelConfig.get_model">
 <span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model/pytorch.html#PytorchModelConfig.get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.pytorch.PytorchModelConfig.get_model" title="Link to this definition"></a></dt>
 <dd><p>Return the underlying PyTorch model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -799,9 +843,13 @@ generation.</p>
 </ul>
 <section id="supported-frameworks">
 <h3>Supported frameworks<a class="headerlink" href="#supported-frameworks" title="Link to this heading"></a></h3>
-<p>Currently supports:
-- <strong>scikit-learn</strong></p>
-<p>(Extendable to other frameworks in future versions.)</p>
+<p>Currently supports:</p>
+<ul class="simple">
+<li><p><strong>scikit-learn</strong> — via <a class="reference internal" href="#deckard.model.ModelConfig" title="deckard.model.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelConfig</span></code></a></p></li>
+<li><p><strong>PyTorch</strong> — via <a class="reference internal" href="#deckard.model.pytorch.PytorchModelConfig" title="deckard.model.pytorch.PytorchModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PytorchModelConfig</span></code></a></p></li>
+<li><p><strong>Fairlearn (sklearn)</strong> — via <a class="reference internal" href="#deckard.model.fairness.FairlearnModelConfig" title="deckard.model.fairness.FairlearnModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FairlearnModelConfig</span></code></a></p></li>
+<li><p><strong>Fairlearn (PyTorch)</strong> — via <a class="reference internal" href="#deckard.model.fairness.FairlearnPytorchModelConfig" title="deckard.model.fairness.FairlearnPytorchModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FairlearnPytorchModelConfig</span></code></a></p></li>
+</ul>
 </section>
 </section>
 <section id="usage">
@@ -857,7 +905,6 @@ python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> 
 <span class="p">)</span>
 
 <span class="n">scores</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Scores: </span><span class="si">{</span><span class="n">scores</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -953,6 +1000,29 @@ to chain multiple ART-based defenses:</p>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Defense applied in </span><span class="si">{</span><span class="n">defense_pipeline</span><span class="o">.</span><span class="n">defense_application_time</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<section id="transformer-defenses-torch-backed">
+<h4>Transformer Defenses (Torch-backed)<a class="headerlink" href="#transformer-defenses-torch-backed" title="Link to this heading"></a></h4>
+<p>Deckard also supports ART transformer defenses that wrap neural ART
+classifiers, including:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">art.defences.transformer.evasion.DefensiveDistillation</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">art.defences.transformer.poisoning.NeuralCleanse</span></code></p></li>
+</ul>
+<p>Example configuration snippets are available in:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">examples/pytorch/config/defense/defensive_distillation.yaml</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">examples/pytorch/config/defense/neural_cleanse.yaml</span></code></p></li>
+</ul>
+<p>Important backend notes:</p>
+<ul class="simple">
+<li><p>Transformer defenses are only valid for neural-network model pipelines.</p></li>
+<li><dl class="simple">
+<dt>ART <code class="docutils literal notranslate"><span class="pre">NeuralCleanse</span></code> currently supports Keras classifier backends; when</dt><dd><p>used with unsupported ART backends (for example PyTorch wrappers), Deckard
+raises a clear <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> during defense initialization.</p>
+</dd>
+</dl>
+</li>
+</ul>
 <p>CLI example:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Apply defenses via YAML config</span>
 python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span><span class="se">\</span>
@@ -979,6 +1049,7 @@ python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> 
 <span class="w">           </span><span class="nt">sigma</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
 </pre></div>
 </div>
+</section>
 <section id="defense-chains-in-config-files">
 <h4>Defense Chains in Config Files<a class="headerlink" href="#defense-chains-in-config-files" title="Link to this heading"></a></h4>
 <p>You can build reproducible defense chains by composing entries from

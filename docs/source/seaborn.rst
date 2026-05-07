@@ -1,272 +1,231 @@
 Seaborn Visualization
 =====================
 
-Deckard provides native support for statistical visualization through Seaborn
-integration in the :mod:`deckard.plot.seaborn_plots` module. This enables
-publication-quality plots for model performance, fairness metrics, and attack
-analysis.
+Deckard provides statistical visualization through Seaborn via the
+:class:`deckard.plot.seaborn_plots.SeabornPlotConfig` class. The Seaborn
+backend is designed for **multi-run aggregation plots** — visualizing compiled
+results across many experiment runs stored in a tabular data file (CSV,
+Parquet, etc.).
 
 .. _seaborn-overview:
 
 Overview
 --------
 
-The :mod:`deckard.plot.seaborn_plots` module wraps common Seaborn plotting
-functions with Deckard-aware data handling:
+The :mod:`deckard.plot.seaborn_plots` module provides:
 
-- **Classification metrics**: confusion matrices, ROC curves, precision-recall
-- **Regression metrics**: residual plots, prediction vs. actual
-- **Fairness analysis**: group-wise metric comparisons via fairlearn integration
-- **Attack analysis**: evasion success rates, membership inference accuracy
-- **Customization**: matplotlib-based styling with theme support
+- :class:`~deckard.plot.seaborn_plots.SeabornPlotConfig` — single-plot
+  configuration with x/y columns, plot type, and optional hue/style
+- :class:`~deckard.plot.seaborn_plots.SeabornPlotConfigList` — ordered list of
+  SeabornPlotConfig instances sharing a common ``data_file``
 
-Seaborn plots integrate seamlessly with :class:`deckard.experiment.ExperimentConfig`
-output and :class:`deckard.file.FileConfig` artifact storage.
+These configs are intended for post-hoc visualization of compiled experiment
+results rather than single-run diagnostics.
 
-Key Features
-~~~~~~~~~~~~
+Supported plot types
+~~~~~~~~~~~~~~~~~~~~
 
-- **Score-driven plotting**: generate plots directly from scored experiment output
-- **Group-aware visualization**: compare metrics across sensitive attributes
-  (fairness groups)
-- **Multi-run aggregation**: plot results across multiple experiment runs
-- **Export formats**: save as PNG, PDF, SVG with publication quality
-- **Customizable themes**: switch between Seaborn palettes (darkgrid, whitegrid,
-  dark, white, ticks)
+The ``plot_type`` field accepts:
 
-Plot Types
-~~~~~~~~~~
-
-Common Seaborn-based plots include:
-
-- **confusionmatrix**: heatmap of predicted vs. actual classes
-- **rocauc**: receiver operating characteristic curve
-- **precisionrecall**: precision vs. recall curve
-- **residuals**: regression residual distribution
-- **fairness_comparison**: group-wise metric barplot with error bars
-- **attack_success**: membership/attribute inference success rates by group
-- **training_history**: loss/accuracy curves across epochs
+- ``scatter`` — scatter plot (``seaborn.scatterplot``)
+- ``line`` — line plot (``seaborn.lineplot``)
+- ``hist`` — histogram (``seaborn.histplot``)
+- ``cat`` — categorical plot (``seaborn.catplot``)
+- ``bar`` — bar plot (``seaborn.barplot``)
+- ``heatmap`` — heatmap (``seaborn.heatmap``)
 
 Usage
 -----
 
+Seaborn mode requires a tabular data file produced by the
+``compile_results`` layer. Run ``compile_results`` first, then invoke the
+``plot`` layer with ``backend=seaborn`` (or let the auto-detector choose
+when you supply ``data_file``).
+
 Command-line examples
 ~~~~~~~~~~~~~~~~~~~~~
 
-**Plot model performance with Seaborn:**
+**Compile results then plot accuracy vs. epsilon:**
 
 .. code-block:: bash
 
-   # Run experiment and save scores
-   python -m deckard optimize --config-name experiment \
-      data.dataset_name=make_classification \
-      model.model_type=sklearn.ensemble.RandomForestClassifier \
-      file.output_dir=/tmp/exp1
+   # 1. Run multiple experiments (e.g. via Hydra multirun)
+   python -m deckard optimize \
+      --config-path examples/sklearn/config \
+      --config-name attack-default \
+      --multirun attack.attack_params.eps=0.01,0.05,0.1,0.2
 
-   # Generate confusion matrix plot
+   # 2. Compile results into a single CSV
+   python -m deckard compile_results \
+      --config-path examples/sklearn/config \
+      --output_file results.csv
+
+   # 3. Plot with Seaborn backend
    python -m deckard plot \
-      --config-name seaborn-plot \
-      plot.plot_type=confusionmatrix \
-      plot.input_file=/tmp/exp1/scores.pkl \
-      plot.output_file=/tmp/exp1/confusion_matrix.png
+      --config-path examples/sklearn/config \
+      --config-name default \
+      plot.backend=seaborn \
+      plot.data_file=results.csv \
+      plot.x=attack.attack_params.eps \
+      plot.y=evasion_accuracy \
+      plot.plot_type=scatter \
+      plot.title="Evasion Accuracy vs Epsilon" \
+      plot.plot_file=plots/evasion_vs_eps.png
 
-**Plot fairness metrics:**
+**Line plot with hue grouping:**
 
 .. code-block:: bash
 
-   python -m deckard optimize --config-name experiment \
-      data=fairness \
-      data.sensitive_feature=gender \
-      model.model_type=sklearn.ensemble.RandomForestClassifier
-
    python -m deckard plot \
-      --config-name seaborn-plot \
-      plot.plot_type=fairness_comparison \
-      plot.group_by=gender \
-      plot.metrics=[accuracy,precision,recall] \
-      plot.output_file=/tmp/fairness_comparison.png
-
-**Plot attack results:**
-
-.. code-block:: bash
-
-   python -m deckard optimize --config-name experiment \
-      data.dataset_name=make_classification \
-      model.model_type=sklearn.ensemble.RandomForestClassifier \
-      attack.attack_type=art.attacks.evasion.FastGradientMethod
-
-   python -m deckard plot \
-      --config-name seaborn-plot \
-      plot.plot_type=attack_success \
-      plot.input_file=/tmp/exp1/scores.pkl \
-      plot.output_file=/tmp/exp1/attack_results.png
+      --config-path examples/sklearn/config \
+      --config-name default \
+      plot.backend=seaborn \
+      plot.data_file=results.csv \
+      plot.x=attack.attack_params.eps \
+      plot.y=evasion_accuracy \
+      plot.plot_type=line \
+      plot.hue=model.model_type \
+      plot.plot_file=plots/accuracy_by_model.png
 
 Programmatic examples
 ~~~~~~~~~~~~~~~~~~~~~
 
-**Generate confusion matrix:**
+**Single scatter plot from compiled results:**
 
 .. code-block:: python
-
-   import matplotlib.pyplot as plt
-   from deckard.plot.seaborn_plots import confusion_matrix_plot
-   from deckard.experiment import ExperimentConfig
-   from deckard.data import DataConfig
-   from deckard.model import ModelConfig
-   from deckard.score import DefaultClassifierConfig
-
-   # Run experiment
-   data = DataConfig(
-       dataset_name="make_classification",
-       data_params={"n_samples": 200, "n_features": 10},
-       classifier=True,
-       scorer=DefaultClassifierConfig(),
-   )
-   model = ModelConfig(
-       model_type="sklearn.ensemble.RandomForestClassifier",
-       classifier=True,
-       scorer=DefaultClassifierConfig(),
-   )
-   cfg = ExperimentConfig(data=data, model=model)
-   scores = cfg()
-
-   # Plot confusion matrix
-   plt.figure(figsize=(8, 6))
-   confusion_matrix_plot(scores["predictions"], scores["y_test"])
-   plt.title("Model Performance: Confusion Matrix")
-   plt.tight_layout()
-   plt.savefig("confusion_matrix.png", dpi=300)
-   plt.close()
-
-**Plot fairness comparison with group breakdown:**
-
-.. code-block:: python
-
-   import matplotlib.pyplot as plt
-   import seaborn as sns
-   from deckard.data.fairness import FairlearnDataConfig
-   from deckard.score.fairness import FairlearnScoreDictConfig
-
-   # Assume scores dict has "fairness_group_metrics" with {group: {metric: value}}
-   fairness_scores = scores.get("fairness_group_metrics", {})
-
-   # Prepare data for Seaborn barplot
-   groups = []
-   metrics_list = []
-   values = []
-   for group, metrics in fairness_scores.items():
-       for metric, value in metrics.items():
-           groups.append(group)
-           metrics_list.append(metric)
-           values.append(value)
 
    import pandas as pd
+   from deckard.plot.seaborn_plots import SeabornPlotConfig
+
+   # Create or load a compiled results file
    df = pd.DataFrame({
-       "Group": groups,
-       "Metric": metrics_list,
-       "Value": values,
+       "eps": [0.01, 0.05, 0.1, 0.2, 0.01, 0.05, 0.1, 0.2],
+       "evasion_accuracy": [0.90, 0.75, 0.55, 0.30, 0.88, 0.72, 0.50, 0.25],
+       "model": ["LogReg"] * 4 + ["RF"] * 4,
    })
+   df.to_csv("/tmp/results.csv", index=False)
 
-   plt.figure(figsize=(10, 6))
-   sns.barplot(data=df, x="Metric", y="Value", hue="Group)
-   plt.title("Fairness Metrics by Group")
-   plt.ylabel("Metric Value")
-   plt.tight_layout()
-   plt.savefig("fairness_comparison.png", dpi=300)
-   plt.close()
+   plot = SeabornPlotConfig(
+       x="eps",
+       y="evasion_accuracy",
+       plot_type="scatter",
+       data_file="/tmp/results.csv",
+       hue="model",
+       title="Evasion Accuracy vs Perturbation Budget",
+       xlabel="Epsilon",
+       ylabel="Accuracy",
+       plot_file="/tmp/evasion_scatter.png",
+   )
+   plot()
 
-**Plot ROC curve:**
+**Bar plot comparing models:**
 
 .. code-block:: python
 
-   import matplotlib.pyplot as plt
-   from sklearn.metrics import roc_curve, auc
-   from deckard.plot.seaborn_plots import roc_plot
+   from deckard.plot.seaborn_plots import SeabornPlotConfig
 
-   # Extract predictions and labels from scores
-   y_true = scores["y_test"]
-   y_pred = scores["y_pred_proba"][:, 1]  # positive class probability
+   plot = SeabornPlotConfig(
+       x="model",
+       y="accuracy",
+       plot_type="bar",
+       data_file="/tmp/results.csv",
+       title="Model Accuracy Comparison",
+       xlabel="Model Type",
+       ylabel="Accuracy",
+       plot_file="/tmp/model_comparison.png",
+   )
+   plot()
 
-   fpr, tpr, thresholds = roc_curve(y_true, y_pred)
-   roc_auc = auc(fpr, tpr)
+**Plot list from the same results file:**
 
-   plt.figure(figsize=(8, 6))
-   plt.plot(fpr, tpr, label=f"ROC (AUC = {roc_auc:.3f})")
-   plt.plot([0, 1], [0, 1], "k--", label="Random Classifier")
-   plt.xlabel("False Positive Rate")
-   plt.ylabel("True Positive Rate")
-   plt.title("Receiver Operating Characteristic")
-   plt.legend()
-   plt.tight_layout()
-   plt.savefig("roc_curve.png", dpi=300)
-   plt.close()
+.. code-block:: python
 
-Configuration
-~~~~~~~~~~~~~
+   from deckard.plot.seaborn_plots import SeabornPlotConfig, SeabornPlotConfigList
 
-Key configuration options for Seaborn plots:
+   plots = SeabornPlotConfigList(
+       data_file="/tmp/results.csv",
+       plots=[
+           SeabornPlotConfig(
+               x="eps",
+               y="evasion_accuracy",
+               plot_type="line",
+               data_file="/tmp/results.csv",
+               hue="model",
+               title="Evasion Accuracy",
+               plot_file="/tmp/evasion_line.png",
+           ),
+           SeabornPlotConfig(
+               x="eps",
+               y="accuracy",
+               plot_type="scatter",
+               data_file="/tmp/results.csv",
+               hue="model",
+               title="Benign Accuracy",
+               plot_file="/tmp/benign_scatter.png",
+           ),
+       ],
+   )
+   plots()
 
-- **plot_type** (str): plot style (confusionmatrix, rocauc, residuals, etc.)
-- **input_file** (str): path to scored experiment output (.pkl, .json)
-- **output_file** (str): path to save plot image
-- **figure_size** (tuple): matplotlib figure size (width, height)
-- **dpi** (int): resolution for saved image (default: 300)
-- **palette** (str): Seaborn color palette (Set2, husl, dark, pastel, etc.)
-- **style** (str): Seaborn style (darkgrid, whitegrid, dark, white, ticks)
-- **group_by** (str): column name for grouping (e.g., sensitive feature for fairness)
-- **metrics** (list): specific metrics to plot
-- **show_legend** (bool): include legend on plot
-- **title** (str): custom plot title
-- **xlabel**, **ylabel** (str): axis labels
+Configuration reference
+~~~~~~~~~~~~~~~~~~~~~~~
 
-Export Formats
-~~~~~~~~~~~~~~
+Key fields of :class:`~deckard.plot.seaborn_plots.SeabornPlotConfig`:
 
-Seaborn plots support multiple output formats:
-
-- **PNG** (.png): raster format, good for presentations and web
-- **PDF** (.pdf): vector format, suitable for papers and publications
-- **SVG** (.svg): scalable vector, editable in design tools
-- **EPS** (.eps): encapsulated PostScript, legacy publication format
-
-Use the **dpi** parameter to control raster resolution; higher DPI produces
-sharper images but larger file sizes.
+- **x** (str, required): column name to use as the x-axis
+- **y** (str, required): column name to use as the y-axis
+- **data_file** (str): path to compiled results file (CSV / Parquet / etc.);
+  mutually exclusive with ``data``
+- **data** (pd.DataFrame): in-memory DataFrame; mutually exclusive with
+  ``data_file``
+- **plot_type** (str): one of ``scatter``, ``line``, ``hist``, ``cat``,
+  ``bar``, ``heatmap``
+- **hue** (str, optional): column name for color grouping
+- **style** (str, optional): column name for style grouping (scatter/line only)
+- **title** (str, optional): plot title
+- **xlabel** / **ylabel** (str, optional): axis labels
+- **xscale** / **yscale** (str, optional): axis scale (``log``, ``linear``, …)
+- **legend_title** (str, optional): title for the legend
+- **plot_file** (str, optional): path to save the output image
+- **rc_config** (dict): matplotlib rcParams overrides
+- **kwargs** (dict): extra keyword arguments forwarded to the Seaborn plotter
 
 Styling
 ~~~~~~~
 
-Customize Seaborn aesthetics:
+Pass matplotlib rcParams via the ``rc_config`` field:
 
 .. code-block:: python
 
-   import seaborn as sns
-
-   # Set style for all plots
-   sns.set_style("whitegrid")  # clean background with gridlines
-   sns.set_palette("Set2")  # colorblind-friendly palette
-
-   # Or specify per-plot via plot config
-   plot_config = {
-       "style": "whitegrid",
-       "palette": "husl",
-       "figure_size": (12, 8),
-   }
+   plot = SeabornPlotConfig(
+       x="eps",
+       y="evasion_accuracy",
+       plot_type="scatter",
+       data_file="/tmp/results.csv",
+       rc_config={
+           "figure.figsize": [10, 6],
+           "axes.titlesize": 14,
+           "axes.labelsize": 12,
+       },
+       plot_file="/tmp/styled_plot.png",
+   )
+   plot()
 
 Troubleshooting
 ~~~~~~~~~~~~~~~
 
-- **Import error**: ensure seaborn is installed via ``pip install "deckard[plot]"``
-- **Empty plots**: verify input_file contains valid score dictionary with expected
-  keys
-- **File not found**: check output_file directory exists and is writable
-- **Poor figure quality**: increase dpi parameter or use PDF/SVG format
-- **Legend crowded**: reduce figure_size or use ``show_legend=False``
+- **AssertionError on column names**: verify that ``x``, ``y``, ``hue``, and
+  ``style`` match column names in the data file exactly.
+- **File not found**: ensure ``data_file`` path exists before constructing
+  ``SeabornPlotConfig``; directories for ``plot_file`` are created automatically.
+- **Import error**: install the optional plotting dependencies with
+  ``pip install "deckard[plot]"``.
 
 See also
 ~~~~~~~~
 
-* :doc:`plot` — general plotting documentation including seaborn support
-* :doc:`data` — data configuration for plotting input
-* :doc:`score` — scoring framework that produces plotting data
-* :doc:`experiment` — experiment orchestration that generates scores
-* :doc:`yellowbrick` — alternative visualization framework
+* :doc:`plot` — general plotting documentation
+* :doc:`yellowbrick` — single-run diagnostics (ROC, confusion matrix, etc.)
+* :doc:`layers` — CLI layer registry (compile_results, plot)
+* :doc:`experiment` — experiment orchestration that produces scored outputs
+

@@ -98,12 +98,18 @@ Programmatic example
 Model and data scoring
 ~~~~~~~~~~~~~~~~~~~~~~
 
+:class:`~deckard.score.DefaultClassifierConfig` applies to model predictions.
+Use :class:`~deckard.score.DefaultDataScoreConfig` (or leave ``scorer`` unset to
+auto-select) when you want data-level statistics on the dataset itself.
+
 .. code-block:: python
 
    from deckard.data import DataConfig
    from deckard.model import ModelConfig
    from deckard.score import DefaultClassifierConfig
+   from deckard.score.data import DefaultDataScoreConfig
 
+   # Data scorer computes dataset statistics (class counts, imbalance, etc.)
    data = DataConfig(
       dataset_name="make_classification",
       data_params={
@@ -120,10 +126,11 @@ Model and data scoring
       random_state=42,
       stratify=True,
       classifier=True,
-      scorer=DefaultClassifierConfig(),
+      scorer=DefaultDataScoreConfig(),
    )
    data()
 
+   # Model scorer computes prediction metrics (accuracy, precision, recall, etc.)
    model = ModelConfig(
       model_type="sklearn.linear_model.LogisticRegression",
       classifier=True,

@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Score" href="score.html" />
+    <link rel="next" title="Detector" href="detector.html" />
     <link rel="prev" title="Model" href="model.html" /> 
 </head>
 
@@ -80,6 +80,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#deckard.attack.AttackConfig._save"><code class="docutils literal notranslate"><span class="pre">AttackConfig._save()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.attack.PytorchAttackConfig"><code class="docutils literal notranslate"><span class="pre">PytorchAttackConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.attack.SensitiveFeaturesWrapper"><code class="docutils literal notranslate"><span class="pre">SensitiveFeaturesWrapper</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.attack.SensitiveFeaturesWrapper.get_params"><code class="docutils literal notranslate"><span class="pre">SensitiveFeaturesWrapper.get_params()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.attack.SensitiveFeaturesWrapper.set_params"><code class="docutils literal notranslate"><span class="pre">SensitiveFeaturesWrapper.set_params()</span></code></a></li>
@@ -87,13 +88,20 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#supported-attacks">Supported Attacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#preset-catalog-examples-sklearn">Preset Catalog (examples/sklearn)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#attack-types-and-metrics">Attack Types And Metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#command-line-example">Command-line example</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#programmatic-example">Programmatic example:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multi-attack-with-experimentconfig">Multi-attack with ExperimentConfig</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#boundaryattack-example">BoundaryAttack example</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#custom-configuration">Custom Configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#membership-inference-attack">Membership Inference Attack</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#attribute-inference-attack">Attribute Inference Attack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#model-inversion-attack">Model Inversion Attack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#database-reconstruction-attack">Database Reconstruction Attack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#poisoning-attack">Poisoning Attack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#extraction-attack">Extraction Attack</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#cli-examples">CLI Examples</a></li>
 </ul>
 </li>
@@ -107,6 +115,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="detector.html">Detector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot.html">Plot</a></li>
@@ -151,6 +160,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#deckard.attack.AttackConfig._save"><code class="docutils literal notranslate"><span class="pre">AttackConfig._save()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.attack.PytorchAttackConfig"><code class="docutils literal notranslate"><span class="pre">PytorchAttackConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.attack.SensitiveFeaturesWrapper"><code class="docutils literal notranslate"><span class="pre">SensitiveFeaturesWrapper</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.attack.SensitiveFeaturesWrapper.get_params"><code class="docutils literal notranslate"><span class="pre">SensitiveFeaturesWrapper.get_params()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.attack.SensitiveFeaturesWrapper.set_params"><code class="docutils literal notranslate"><span class="pre">SensitiveFeaturesWrapper.set_params()</span></code></a></li>
@@ -158,13 +168,20 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#supported-attacks">Supported Attacks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#preset-catalog-examples-sklearn">Preset Catalog (examples/sklearn)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#attack-types-and-metrics">Attack Types And Metrics</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#command-line-example">Command-line example</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#multi-attack-with-experimentconfig">Multi-attack with ExperimentConfig</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#boundaryattack-example">BoundaryAttack example</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#custom-configuration">Custom Configuration</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#membership-inference-attack">Membership Inference Attack</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#attribute-inference-attack">Attribute Inference Attack</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model-inversion-attack">Model Inversion Attack</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#database-reconstruction-attack">Database Reconstruction Attack</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#poisoning-attack">Poisoning Attack</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extraction-attack">Extraction Attack</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#cli-examples">CLI Examples</a></li>
 </ul>
 </li>
@@ -189,6 +206,14 @@
 <li class="toctree-l2"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Extensions:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="anjana.html">Anjana Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 
         </div>
@@ -218,14 +243,14 @@
   <section id="attack">
 <h1>Attack<a class="headerlink" href="#attack" title="Link to this heading"></a></h1>
 <p>The <a class="reference internal" href="#module-deckard.attack" title="deckard.attack"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.attack</span></code></a> module contains the <a class="reference internal" href="#deckard.attack.AttackConfig" title="deckard.attack.AttackConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code></a> dataclass and helper
-functions for running evasion and inference attacks against scikit-learn
-estimators using the Adversarial Robustness Toolbox (ART).</p>
+functions for running evasion, poisoning, extraction, and inference attacks
+using the Adversarial Robustness Toolbox (ART).</p>
 <p id="module-deckard.attack">Public attack configuration exports.</p>
 <p>This subpackage exposes the attack-side configuration objects used by
 <code class="docutils literal notranslate"><span class="pre">ExperimentConfig</span></code> and direct Python callers.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.attack.AttackConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.attack.</span></span><span class="sig-name descname"><span class="pre">AttackConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_type='art.attacks.evasion.HopSkipJump'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_size=1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targeted_attribute=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_index=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_subtype=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.attack.</span></span><span class="sig-name descname"><span class="pre">AttackConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_type='art.attacks.evasion.HopSkipJump'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_size=1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targeted_attribute=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode='test'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_index=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_subtype=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#AttackConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.AttackConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
 <p>Configuration and execution class for adversarial attacks on machine learning models.
 This class provides a unified interface for configuring, executing, and scoring various types of adversarial attacks,
@@ -503,6 +528,15 @@ and the Adversarial Robustness Toolbox (ART), and provides detailed logging and 
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="deckard.attack.PytorchAttackConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.attack.</span></span><span class="sig-name descname"><span class="pre">PytorchAttackConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_type='art.attacks.evasion.HopSkipJump'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_size=1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targeted_attribute=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scorer=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode='test'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_prediction_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_score_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_index=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_attack_subtype=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/pytorch.html#PytorchAttackConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.PytorchAttackConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.attack.AttackConfig" title="deckard.attack.base.AttackConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code></a></p>
+<p>Attack config variant that preserves torch tensors for attack execution.</p>
+<p>Scoring still uses the base normalization path (numpy arrays), but attack
+method calls keep tensor inputs when the upstream data pipeline is torch-native.</p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="deckard.attack.SensitiveFeaturesWrapper">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.attack.</span></span><span class="sig-name descname"><span class="pre">SensitiveFeaturesWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">estimator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensitive_features</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/attack/base.html#SensitiveFeaturesWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.attack.SensitiveFeaturesWrapper" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEstimator</span></code></p>
@@ -567,18 +601,207 @@ adversarial attacks. It supports:</p>
 </section>
 <section id="supported-attacks">
 <h2>Supported Attacks<a class="headerlink" href="#supported-attacks" title="Link to this heading"></a></h2>
-<p>Currently supports a selection of attacks from ART, including:
-Evasion Attacks:
-- HopSkipJump
-- BoundaryAttack
-- AutoProjectedGradientDescent
-Membership Inference Attacks:
-- MembershipInferenceBlackBox
-- MembershipInferenceBaseline
-Attribute Inference Attacks:
-- AttributeInferenceBaseline
-- AttributeInferenceBlackBox</p>
-<p>(Extendable to other attacks in future versions.)</p>
+<p>Deckard supports ART attacks across the following families:</p>
+<ul>
+<li><dl class="simple">
+<dt><strong>Evasion attacks</strong> (for example: <code class="docutils literal notranslate"><span class="pre">FastGradientMethod</span></code>, <code class="docutils literal notranslate"><span class="pre">HopSkipJump</span></code>,</dt><dd><p><code class="docutils literal notranslate"><span class="pre">BoundaryAttack</span></code>, <code class="docutils literal notranslate"><span class="pre">AutoProjectedGradientDescent</span></code>)</p>
+</dd>
+</dl>
+</li>
+<li><p><strong>Poisoning attacks</strong> (for example: <code class="docutils literal notranslate"><span class="pre">GradientMatchingAttack</span></code>)</p></li>
+<li><dl class="simple">
+<dt><strong>Extraction attacks</strong> (for example: ART extraction attacks against neural</dt><dd><p>classifiers)</p>
+</dd>
+</dl>
+</li>
+<li><p><strong>Inference attacks</strong>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="simple">
+<dt>Membership inference (for example: <code class="docutils literal notranslate"><span class="pre">MembershipInferenceBlackBox</span></code>,</dt><dd><p><code class="docutils literal notranslate"><span class="pre">MembershipInferenceBaseline</span></code>)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Attribute inference (for example: <code class="docutils literal notranslate"><span class="pre">AttributeInferenceBaseline</span></code>,</dt><dd><p><code class="docutils literal notranslate"><span class="pre">AttributeInferenceBlackBox</span></code>)</p>
+</dd>
+</dl>
+</li>
+<li><p>Model inversion (for example: <code class="docutils literal notranslate"><span class="pre">MIFace</span></code>)</p></li>
+<li><p>Database reconstruction (for example: <code class="docutils literal notranslate"><span class="pre">DatabaseReconstruction</span></code>)</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<p>(Extendable to additional ART attack classes in future versions.)</p>
+</section>
+<section id="preset-catalog-examples-sklearn">
+<h2>Preset Catalog (examples/sklearn)<a class="headerlink" href="#preset-catalog-examples-sklearn" title="Link to this heading"></a></h2>
+<p>Deckard ships ready-to-run attack presets in <code class="docutils literal notranslate"><span class="pre">examples/sklearn/config/attack</span></code>
+and search-space definitions in <code class="docutils literal notranslate"><span class="pre">examples/sklearn/config/search/attacks</span></code>.</p>
+<p>Common presets include:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">boundary</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fgm</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hsj</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">membership</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">attribute-bb</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model-inversion</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">database-reconstruction</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">zoo</span></code></p></li>
+</ul>
+<p>Example command selecting a preset:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-path<span class="w"> </span>examples/sklearn/config<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--config-name<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="nv">attack</span><span class="o">=</span>hsj
+</pre></div>
+</div>
+</section>
+<section id="attack-types-and-metrics">
+<h2>Attack Types And Metrics<a class="headerlink" href="#attack-types-and-metrics" title="Link to this heading"></a></h2>
+<p>The output score dictionary depends on the attack family and task type. Metric
+keys are prefixed to make results easy to group in downstream analysis.</p>
+<p><strong>Evasion (classification)</strong></p>
+<ul class="simple">
+<li><p>Prefix: <code class="docutils literal notranslate"><span class="pre">evasion_</span></code></p></li>
+<li><dl class="simple">
+<dt>Default metrics: <code class="docutils literal notranslate"><span class="pre">evasion_accuracy</span></code>, <code class="docutils literal notranslate"><span class="pre">evasion_precision</span></code>,</dt><dd><p><code class="docutils literal notranslate"><span class="pre">evasion_recall</span></code>, <code class="docutils literal notranslate"><span class="pre">evasion_f1-score</span></code>, <code class="docutils literal notranslate"><span class="pre">evasion_success</span></code></p>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">evasion_success</span></code> is computed as $1 - text{accuracy}(text{benign preds}, text{adversarial preds})$</p></li>
+<li><dl class="simple">
+<dt>Baseline metrics are also emitted with <code class="docutils literal notranslate"><span class="pre">benign_</span></code> prefix for consistency,</dt><dd><p>for example: <code class="docutils literal notranslate"><span class="pre">benign_accuracy</span></code>, <code class="docutils literal notranslate"><span class="pre">benign_precision</span></code>, <code class="docutils literal notranslate"><span class="pre">benign_recall</span></code>,
+<code class="docutils literal notranslate"><span class="pre">benign_f1</span></code></p>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Evasion (regression)</strong></p>
+<ul class="simple">
+<li><p>Prefix: <code class="docutils literal notranslate"><span class="pre">evasion_</span></code></p></li>
+<li><p>Default metrics: <code class="docutils literal notranslate"><span class="pre">evasion_mse</span></code>, <code class="docutils literal notranslate"><span class="pre">evasion_mae</span></code>, <code class="docutils literal notranslate"><span class="pre">evasion_r2</span></code></p></li>
+<li><dl class="simple">
+<dt>Baseline metrics are also emitted with <code class="docutils literal notranslate"><span class="pre">benign_</span></code> prefix, for example:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">benign_mse</span></code>, <code class="docutils literal notranslate"><span class="pre">benign_mae</span></code>, <code class="docutils literal notranslate"><span class="pre">benign_r2</span></code></p>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Membership inference</strong></p>
+<ul class="simple">
+<li><p>Prefix: <code class="docutils literal notranslate"><span class="pre">membership_inference_</span></code></p></li>
+<li><dl class="simple">
+<dt>Default metrics: <code class="docutils literal notranslate"><span class="pre">membership_inference_accuracy</span></code>,</dt><dd><p><code class="docutils literal notranslate"><span class="pre">membership_inference_precision</span></code>, <code class="docutils literal notranslate"><span class="pre">membership_inference_recall</span></code>,
+<code class="docutils literal notranslate"><span class="pre">membership_inference_f1</span></code></p>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Attribute inference (classification target attribute)</strong></p>
+<ul class="simple">
+<li><p>Prefix: <code class="docutils literal notranslate"><span class="pre">inferred_&lt;targeted_attribute&gt;_</span></code></p></li>
+<li><dl class="simple">
+<dt>Default metrics: <code class="docutils literal notranslate"><span class="pre">inferred_&lt;targeted_attribute&gt;_accuracy</span></code>,</dt><dd><p><code class="docutils literal notranslate"><span class="pre">inferred_&lt;targeted_attribute&gt;_precision</span></code>,
+<code class="docutils literal notranslate"><span class="pre">inferred_&lt;targeted_attribute&gt;_recall</span></code>,
+<code class="docutils literal notranslate"><span class="pre">inferred_&lt;targeted_attribute&gt;_f1</span></code></p>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Attribute inference (regression target attribute)</strong></p>
+<ul class="simple">
+<li><p>Prefix: <code class="docutils literal notranslate"><span class="pre">inferred_&lt;targeted_attribute&gt;_</span></code></p></li>
+<li><dl class="simple">
+<dt>Default metrics: <code class="docutils literal notranslate"><span class="pre">inferred_&lt;targeted_attribute&gt;_mse</span></code>,</dt><dd><p><code class="docutils literal notranslate"><span class="pre">inferred_&lt;targeted_attribute&gt;_mae</span></code>,
+<code class="docutils literal notranslate"><span class="pre">inferred_&lt;targeted_attribute&gt;_r2</span></code></p>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Model inversion</strong></p>
+<ul class="simple">
+<li><p>Prefix: <code class="docutils literal notranslate"><span class="pre">model_inversion_</span></code></p></li>
+<li><dl class="simple">
+<dt>Default summary metrics: <code class="docutils literal notranslate"><span class="pre">model_inversion_mse</span></code>, <code class="docutils literal notranslate"><span class="pre">model_inversion_mae</span></code>,</dt><dd><p><code class="docutils literal notranslate"><span class="pre">model_inversion_num_targets</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">model_inversion_mse</span></code> and <code class="docutils literal notranslate"><span class="pre">model_inversion_mae</span></code> compare reconstructed</dt><dd><p>samples to per-class prototype means from the selected split.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Database reconstruction</strong></p>
+<ul class="simple">
+<li><p>Prefix: <code class="docutils literal notranslate"><span class="pre">database_reconstruction_</span></code></p></li>
+<li><dl class="simple">
+<dt>Default summary metrics: <code class="docutils literal notranslate"><span class="pre">database_reconstruction_feature_mse</span></code>,</dt><dd><p><code class="docutils literal notranslate"><span class="pre">database_reconstruction_feature_mae</span></code>,
+<code class="docutils literal notranslate"><span class="pre">database_reconstruction_num_features</span></code>,
+<code class="docutils literal notranslate"><span class="pre">database_reconstruction_num_known_rows</span></code>,
+<code class="docutils literal notranslate"><span class="pre">database_reconstruction_missing_index</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Optional label metrics (when reconstructed labels are returned):</dt><dd><p><code class="docutils literal notranslate"><span class="pre">database_reconstruction_label_accuracy</span></code> (classification) or
+<code class="docutils literal notranslate"><span class="pre">database_reconstruction_label_mae</span></code> (regression)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Reconstructs one held-out row from a selected split (<code class="docutils literal notranslate"><span class="pre">train</span></code> or <code class="docutils literal notranslate"><span class="pre">test</span></code>)</dt><dd><p>using the known rows and labels from that split.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Poisoning</strong></p>
+<ul>
+<li><dl class="simple">
+<dt>Compares model quality before and after poisoned retraining on the selected</dt><dd><p>evaluation split</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Metric keys are emitted with both <code class="docutils literal notranslate"><span class="pre">benign_</span></code> and <code class="docutils literal notranslate"><span class="pre">poisoned_</span></code> prefixes,</dt><dd><p>for example: <code class="docutils literal notranslate"><span class="pre">benign_accuracy</span></code>, <code class="docutils literal notranslate"><span class="pre">poisoned_accuracy</span></code></p>
+</dd>
+</dl>
+</li>
+<li><p>Additional poisoning metadata includes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">poison_attack_target_class</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">poison_attack_source_class</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">poison_trigger_index</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">poison_trigger_predicted_class</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">poison_trigger_success</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">poison_mode</span></code></p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<p><strong>Extraction</strong></p>
+<ul class="simple">
+<li><p>Compares victim and extracted models on the selected evaluation split</p></li>
+<li><dl class="simple">
+<dt>Metric keys are emitted with <code class="docutils literal notranslate"><span class="pre">benign_</span></code> and <code class="docutils literal notranslate"><span class="pre">extracted_</span></code> prefixes,</dt><dd><p>for example: <code class="docutils literal notranslate"><span class="pre">benign_accuracy</span></code>, <code class="docutils literal notranslate"><span class="pre">extracted_accuracy</span></code></p>
+</dd>
+</dl>
+</li>
+<li><p>Additional extraction metadata includes <code class="docutils literal notranslate"><span class="pre">extraction_mode</span></code></p></li>
+</ul>
+<p><strong>Common fields across attacks</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">attack_size</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">attack_generation_time</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">attack_prediction_time</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">attack_score_time</span></code></p></li>
+</ul>
+<p>Fairness-stratified attack scoring is available via
+<a class="reference internal" href="score.html#deckard.score.FairlearnAttackScorerConfig" title="deckard.score.attack.FairlearnAttackScorerConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FairlearnAttackScorerConfig</span></code></a>, which computes
+per-group metrics (for example, by sensitive feature) in addition to overall
+attack metrics.</p>
 </section>
 <section id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
@@ -630,6 +853,7 @@ python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> 
    <span class="n">attack_type</span><span class="o">=</span><span class="s2">&quot;art.attacks.evasion.FastGradientMethod&quot;</span><span class="p">,</span>
    <span class="n">attack_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;eps&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">},</span>
    <span class="n">attack_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+   <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;fgm&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="c1"># run the attack against the trained model</span>
@@ -637,6 +861,39 @@ python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> 
 <span class="nb">print</span><span class="p">([</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">scores</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;evasion_&quot;</span><span class="p">)])</span>
 </pre></div>
 </div>
+</section>
+<section id="multi-attack-with-experimentconfig">
+<h3>Multi-attack with ExperimentConfig<a class="headerlink" href="#multi-attack-with-experimentconfig" title="Link to this heading"></a></h3>
+<p>To execute several attacks in one experiment, pass a list to the same
+<code class="docutils literal notranslate"><span class="pre">attack</span></code> field on <a class="reference internal" href="experiment.html#deckard.experiment.ExperimentConfig" title="deckard.experiment.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.experiment.ExperimentConfig</span></code></a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.experiment</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentConfig</span>
+
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">ExperimentConfig</span><span class="p">(</span>
+   <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+   <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+   <span class="n">attack</span><span class="o">=</span><span class="p">[</span>
+      <span class="n">AttackConfig</span><span class="p">(</span>
+         <span class="n">attack_type</span><span class="o">=</span><span class="s2">&quot;art.attacks.evasion.FastGradientMethod&quot;</span><span class="p">,</span>
+         <span class="n">attack_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;eps&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">},</span>
+         <span class="n">attack_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+         <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;fgm&quot;</span><span class="p">,</span>
+      <span class="p">),</span>
+      <span class="n">AttackConfig</span><span class="p">(</span>
+         <span class="n">attack_type</span><span class="o">=</span><span class="s2">&quot;art.attacks.evasion.HopSkipJump&quot;</span><span class="p">,</span>
+         <span class="n">attack_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;verbose&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+         <span class="n">attack_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+         <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;hsj&quot;</span><span class="p">,</span>
+      <span class="p">),</span>
+   <span class="p">],</span>
+<span class="p">)</span>
+<span class="n">scores</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">()</span>
+
+<span class="c1"># First key keeps original name; colliding keys use alias suffix.</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;evasion_accuracy&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;evasion_accuracy_hsj&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>For multi-attack runs, each attack must define a unique non-empty alias.</p>
 </section>
 <section id="boundaryattack-example">
 <h3>BoundaryAttack example<a class="headerlink" href="#boundaryattack-example" title="Link to this heading"></a></h3>
@@ -745,6 +1002,87 @@ Example minimal YAML (<cite>blackbox_evasion.yaml</cite>):</p>
 </pre></div>
 </div>
 </section>
+<section id="model-inversion-attack">
+<h3>Model Inversion Attack<a class="headerlink" href="#model-inversion-attack" title="Link to this heading"></a></h3>
+<p>To run an ART model inversion attack (for example <code class="docutils literal notranslate"><span class="pre">MIFace</span></code>):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttackConfig</span>
+
+<span class="n">inversion_attack</span> <span class="o">=</span> <span class="n">AttackConfig</span><span class="p">(</span>
+   <span class="n">attack_type</span><span class="o">=</span><span class="s2">&quot;art.attacks.inference.model_inversion.mi_face.MIFace&quot;</span><span class="p">,</span>
+   <span class="n">attack_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+   <span class="n">attack_params</span><span class="o">=</span><span class="p">{</span>
+      <span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>
+      <span class="s2">&quot;threshold&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+      <span class="s2">&quot;initialization&quot;</span><span class="p">:</span> <span class="s2">&quot;average&quot;</span><span class="p">,</span>  <span class="c1"># zeros|ones|random|average</span>
+      <span class="s2">&quot;split&quot;</span><span class="p">:</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span>
+   <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">scores</span> <span class="o">=</span> <span class="n">inversion_attack</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scores</span><span class="p">[</span><span class="s2">&quot;model_inversion_mse&quot;</span><span class="p">],</span> <span class="n">scores</span><span class="p">[</span><span class="s2">&quot;model_inversion_num_targets&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<section id="database-reconstruction-attack">
+<h3>Database Reconstruction Attack<a class="headerlink" href="#database-reconstruction-attack" title="Link to this heading"></a></h3>
+<p>To run ART database reconstruction against a trained estimator:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttackConfig</span>
+
+<span class="n">reconstruction_attack</span> <span class="o">=</span> <span class="n">AttackConfig</span><span class="p">(</span>
+   <span class="n">attack_type</span><span class="o">=</span><span class="s2">&quot;art.attacks.inference.reconstruction.DatabaseReconstruction&quot;</span><span class="p">,</span>
+   <span class="n">attack_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+   <span class="n">attack_params</span><span class="o">=</span><span class="p">{</span>
+      <span class="s2">&quot;split&quot;</span><span class="p">:</span> <span class="s2">&quot;train&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;missing_index&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+   <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">scores</span> <span class="o">=</span> <span class="n">reconstruction_attack</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scores</span><span class="p">[</span><span class="s2">&quot;database_reconstruction_feature_mse&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>YAML config shortcuts are available at:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">examples/sklearn/config/attack/database-reconstruction.yaml</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">examples/pytorch/config/attack/database-reconstruction.yaml</span></code></p></li>
+</ul>
+</section>
+<section id="poisoning-attack">
+<h3>Poisoning Attack<a class="headerlink" href="#poisoning-attack" title="Link to this heading"></a></h3>
+<p>Poisoning attacks retrain/evaluate the model on poisoned data and report both
+<code class="docutils literal notranslate"><span class="pre">benign_</span></code> and <code class="docutils literal notranslate"><span class="pre">poisoned_</span></code> metric sets.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">poisoning_attack</span> <span class="o">=</span> <span class="n">AttackConfig</span><span class="p">(</span>
+   <span class="n">attack_type</span><span class="o">=</span><span class="s2">&quot;art.attacks.poisoning.GradientMatchingAttack&quot;</span><span class="p">,</span>
+   <span class="n">attack_params</span><span class="o">=</span><span class="p">{</span>
+      <span class="s2">&quot;epsilon&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">,</span>
+   <span class="p">},</span>
+   <span class="n">attack_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">scores</span> <span class="o">=</span> <span class="n">poisoning_attack</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;benign_accuracy&quot;</span><span class="p">),</span> <span class="n">scores</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;poisoned_accuracy&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="extraction-attack">
+<h3>Extraction Attack<a class="headerlink" href="#extraction-attack" title="Link to this heading"></a></h3>
+<p>Extraction attacks compare victim and extracted model quality on the selected
+evaluation split.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">extraction_attack</span> <span class="o">=</span> <span class="n">AttackConfig</span><span class="p">(</span>
+   <span class="n">attack_type</span><span class="o">=</span><span class="s2">&quot;art.attacks.extraction.CopycatCNN&quot;</span><span class="p">,</span>
+   <span class="n">attack_params</span><span class="o">=</span><span class="p">{</span>
+      <span class="s2">&quot;batch_size_fit&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+      <span class="s2">&quot;batch_size_query&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+      <span class="s2">&quot;nb_epochs&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+   <span class="p">},</span>
+   <span class="n">attack_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">scores</span> <span class="o">=</span> <span class="n">extraction_attack</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;benign_accuracy&quot;</span><span class="p">),</span> <span class="n">scores</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;extracted_accuracy&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
 <section id="cli-examples">
 <h3>CLI Examples<a class="headerlink" href="#cli-examples" title="Link to this heading"></a></h3>
 <p>Run attacks directly from the terminal:</p>
@@ -805,7 +1143,7 @@ using Python’s built-in <cite>logging</cite> module.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="model.html" class="btn btn-neutral float-left" title="Model" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="score.html" class="btn btn-neutral float-right" title="Score" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="detector.html" class="btn btn-neutral float-right" title="Detector" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

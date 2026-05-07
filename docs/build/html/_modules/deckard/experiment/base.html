@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../data.html">Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../model.html">Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../detector.html">Detector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../score.html">Score</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../plot.html">Plot</a></li>
@@ -52,6 +53,14 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../file.html">File</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Extensions:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../anjana.html">Anjana Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 
         </div>
@@ -89,11 +98,13 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Any</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">OmegaConf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">,</span> <span class="n">OmegaConf</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleNamespace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydra.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">instantiate</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span><span class="p">,</span> <span class="n">DataPipelineConfig</span>
@@ -105,9 +116,31 @@
     <span class="n">FairlearnDataConfig</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..model.defend</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefensePipelineConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttackConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..detector</span><span class="w"> </span><span class="kn">import</span> <span class="n">DetectorConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..score</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScorerDictConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..file</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileConfig</span><span class="p">,</span> <span class="n">data_files</span><span class="p">,</span> <span class="n">model_files</span><span class="p">,</span> <span class="n">attack_files</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigBase</span><span class="p">,</span> <span class="n">coerce_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ConfigBase</span><span class="p">,</span>
+    <span class="n">coerce_config</span><span class="p">,</span>
+    <span class="n">coerce_to_list</span><span class="p">,</span>
+    <span class="n">instantiate_config</span><span class="p">,</span>
+    <span class="n">is_default_config_value</span><span class="p">,</span>
+    <span class="n">is_null_config_value</span><span class="p">,</span>
+    <span class="n">merge_scores_with_collision_suffix</span><span class="p">,</span>
+    <span class="n">split_comma_separated_tokens</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..score.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">coerce_scorer_config</span><span class="p">,</span> <span class="n">_DataScorerMarker</span><span class="p">,</span> <span class="n">_AttackProfileScorer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..data.sample</span><span class="w"> </span><span class="kn">import</span> <span class="n">KFoldSampler</span><span class="p">,</span> <span class="n">ShuffleSampler</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tf</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+    <span class="n">tf</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+    <span class="n">torch</span> <span class="o">=</span> <span class="kc">None</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">..data</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnjanaDataConfig</span>
@@ -119,10 +152,6 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">..model</span><span class="w"> </span><span class="kn">import</span> <span class="n">FairlearnModelConfig</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
     <span class="n">FairlearnModelConfig</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">..model</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnjanaModelConfig</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-    <span class="n">AnjanaModelConfig</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -266,18 +295,22 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">DataConfig</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
 
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;_target_&quot;</span><span class="p">):</span>
-            <span class="n">resolved</span> <span class="o">=</span> <span class="n">instantiate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resolved</span><span class="p">,</span> <span class="n">DataConfig</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;_target_&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ConfigBase</span><span class="p">)):</span>
+            <span class="n">data_obj</span> <span class="o">=</span> <span class="n">instantiate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_obj</span><span class="p">,</span> <span class="n">DataConfig</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Resolved data target must be DataConfig-compatible, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">resolved</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Object of type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data_obj</span><span class="p">)</span><span class="si">}</span><span class="s2"> is not a DataConfig object.&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
-            <span class="k">return</span> <span class="n">resolved</span>
+            <span class="k">return</span> <span class="n">data_obj</span>
 
         <span class="n">data_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
         <span class="n">data_cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_select_data_cls</span><span class="p">(</span><span class="n">data_dict</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Resolved data config class: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">data_cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-        <span class="n">data_obj</span> <span class="o">=</span> <span class="n">data_cls</span><span class="p">(</span><span class="o">**</span><span class="n">data_dict</span><span class="p">)</span>
+        <span class="n">data_obj</span> <span class="o">=</span> <span class="n">instantiate_config</span><span class="p">(</span>
+            <span class="n">data_dict</span><span class="p">,</span>
+            <span class="n">data_cls</span><span class="p">,</span>
+            <span class="n">default_target</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_cls</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">data_cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_obj</span><span class="p">,</span> <span class="n">DataConfig</span><span class="p">),</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Object of type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data_obj</span><span class="p">)</span><span class="si">}</span><span class="s2"> is not a DataConfig object.&quot;</span><span class="p">,</span>
         <span class="p">)</span>
@@ -299,6 +332,7 @@
     <span class="n">model</span><span class="p">:</span> <span class="n">ModelConfig</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">defense</span><span class="p">:</span> <span class="n">DefensePipelineConfig</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">attack</span><span class="p">:</span> <span class="n">AttackConfig</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">detector</span><span class="p">:</span> <span class="n">DetectorConfig</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">files</span><span class="p">:</span> <span class="n">FileConfig</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">score</span><span class="p">:</span> <span class="n">ScorerDictConfig</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">random_state</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span>
@@ -394,24 +428,239 @@
             <span class="n">out</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_normalize_mode_score_keys</span><span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="n">mode_scores</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">out</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_coerce_scorer_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scorer_obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">scorer_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scorer_obj</span><span class="p">,</span> <span class="n">ScorerDictConfig</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">scorer_obj</span>
-        <span class="c1"># List of scorer specs → merge all into one ScorerDictConfig</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">ListConfig</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_attack_profile_scorer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scorer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply an _AttackProfileScorer to the configured attack chain.&quot;&quot;&quot;</span>
+        <span class="n">attack_chain</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_attack_chain&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">profile_attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">scorer</span><span class="p">,</span> <span class="s2">&quot;_profile_attr&quot;</span><span class="p">,</span> <span class="s2">&quot;evasion&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">attack_cfg</span> <span class="ow">in</span> <span class="n">attack_chain</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">attack_cfg</span><span class="p">,</span> <span class="s2">&quot;scorer&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">attack_cfg</span><span class="o">.</span><span class="n">scorer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">attack_cfg</span><span class="o">.</span><span class="n">scorer</span><span class="p">,</span> <span class="n">profile_attr</span><span class="p">,</span> <span class="n">scorer</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scorer_obj</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
-            <span class="k">return</span> <span class="n">ScorerDictConfig</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">scorer_obj</span><span class="p">))</span>
-        <span class="n">scorer_obj</span> <span class="o">=</span> <span class="n">coerce_config</span><span class="p">(</span><span class="n">scorer_obj</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scorer_obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">scorer_obj</span> <span class="o">=</span> <span class="n">ScorerDictConfig</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="n">scorer_obj</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scorer_obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">if</span> <span class="s2">&quot;scorers&quot;</span> <span class="ow">in</span> <span class="n">scorer_obj</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">ScorerDictConfig</span><span class="p">(</span><span class="o">**</span><span class="n">scorer_obj</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">ScorerDictConfig</span><span class="p">(</span><span class="n">scorers</span><span class="o">=</span><span class="n">scorer_obj</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported scorer config type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">scorer_obj</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_route_scorer_to_scope</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">scorer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach *scorer* to the component identified by *scope*.</span>
+
+<span class="sd">        Extend this method (or add a new ``elif`` branch) to support additional</span>
+<span class="sd">        components (e.g. ``&quot;detector&quot;`` once detector scoring is formalised).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">scorer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">scope</span> <span class="o">==</span> <span class="s2">&quot;data&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">scorer</span> <span class="o">=</span> <span class="n">scorer</span>
+        <span class="k">elif</span> <span class="n">scope</span> <span class="o">==</span> <span class="s2">&quot;model&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">scorer</span> <span class="o">=</span> <span class="n">scorer</span>
+        <span class="k">elif</span> <span class="n">scope</span> <span class="o">==</span> <span class="s2">&quot;attack&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_attack_profile_scorer</span><span class="p">(</span><span class="n">scorer</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">scope</span> <span class="o">==</span> <span class="s2">&quot;detector&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">detector</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">,</span> <span class="s2">&quot;scorer&quot;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="o">.</span><span class="n">scorer</span> <span class="o">=</span> <span class="n">scorer</span>
+        <span class="k">elif</span> <span class="n">scope</span> <span class="o">==</span> <span class="s2">&quot;experiment&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="n">scorer</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_component_scorers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Route the experiment-level ``score`` config to data/model/attack components.</span>
+
+<span class="sd">        Routing rules (applied after Hydra config resolution):</span>
+
+<span class="sd">        **Scoped dict** (Hydra ``@`` package syntax)::</span>
+
+<span class="sd">            +score@score.data=data-classification</span>
+<span class="sd">            +score@score.model=classification</span>
+<span class="sd">            +score@score.attack=evasion-classification</span>
+
+<span class="sd">        Produces ``score: {data: {...}, model: {...}, attack: {...}}``.</span>
+<span class="sd">        Each sub-key is routed directly to its component via</span>
+<span class="sd">        :meth:`_route_scorer_to_scope` without any type-inference.</span>
+
+<span class="sd">        **Single config** (type-based fallback)::</span>
+
+<span class="sd">            score=classification              # → model.scorer</span>
+<span class="sd">            score=data-classification        # → data.scorer (_DataScorerMarker)</span>
+<span class="sd">            score=evasion-classification     # → attack scorer (_AttackProfileScorer)</span>
+
+<span class="sd">        **Null / auto / default** → components self-configure from their own defaults.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">score_cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">score</span>
+
+        <span class="c1"># Null / auto → let each component self-configure.</span>
+        <span class="k">if</span> <span class="n">score_cfg</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">is_null_config_value</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">)</span> <span class="ow">or</span> <span class="n">is_default_config_value</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">return</span>
+
+        <span class="n">plain</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plain</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="c1"># Auto-configure sentinel (from score/auto.yaml).</span>
+            <span class="k">if</span> <span class="n">plain</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_auto_configure&quot;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">return</span>
+
+            <span class="c1"># Scoped dict: keys are component names produced by Hydra @ package syntax</span>
+            <span class="c1"># or by passing {&quot;data&quot;: scorer, &quot;model&quot;: scorer, ...} directly.</span>
+            <span class="n">_SCOPE_KEYS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;attack&quot;</span><span class="p">,</span> <span class="s2">&quot;detector&quot;</span><span class="p">,</span> <span class="s2">&quot;experiment&quot;</span><span class="p">}</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">k</span> <span class="ow">in</span> <span class="n">_SCOPE_KEYS</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">plain</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">scope</span> <span class="ow">in</span> <span class="n">_SCOPE_KEYS</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">scope</span> <span class="ow">in</span> <span class="n">plain</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_route_scorer_to_scope</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">coerce_scorer_config</span><span class="p">(</span><span class="n">plain</span><span class="p">[</span><span class="n">scope</span><span class="p">]))</span>
+                <span class="c1"># experiment scope sets self.score; all others clear it</span>
+                <span class="k">if</span> <span class="s2">&quot;experiment&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">plain</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">return</span>
+
+        <span class="c1"># Normalise to a list for type-based routing (single config or comma string).</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">coerce_to_list</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="n">score_cfg</span><span class="p">:</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="n">split_comma_separated_tokens</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="n">score_cfg</span><span class="p">]</span>
+
+        <span class="n">data_scorers</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">model_scorers</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+            <span class="n">scorer</span> <span class="o">=</span> <span class="n">coerce_scorer_config</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">scorer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scorer</span><span class="p">,</span> <span class="n">_AttackProfileScorer</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_apply_attack_profile_scorer</span><span class="p">(</span><span class="n">scorer</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scorer</span><span class="p">,</span> <span class="n">_DataScorerMarker</span><span class="p">):</span>
+                <span class="n">data_scorers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">scorer</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">model_scorers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">scorer</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">data_scorers</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">scorer</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">ScorerDictConfig</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">data_scorers</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_scorers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">data_scorers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">model_scorers</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">scorer</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">ScorerDictConfig</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">model_scorers</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">model_scorers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">model_scorers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Score chain fully routed; no experiment-level scorer needed.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_coerce_single_attack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attack_obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AttackConfig</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">attack_cfg</span> <span class="o">=</span> <span class="n">instantiate_config</span><span class="p">(</span>
+                <span class="n">attack_obj</span><span class="p">,</span>
+                <span class="n">AttackConfig</span><span class="p">,</span>
+                <span class="n">default_target</span><span class="o">=</span><span class="s2">&quot;deckard.attack.AttackConfig&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported type for attack: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">attack_obj</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">attack_cfg</span><span class="p">,</span>
+            <span class="n">AttackConfig</span><span class="p">,</span>
+        <span class="p">),</span> <span class="s2">&quot;attack must be an instance of AttackConfig&quot;</span>
+        <span class="k">return</span> <span class="n">attack_cfg</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_attack_chain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attack_obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">AttackConfig</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">attack_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attack_obj</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
+            <span class="n">raw_items</span> <span class="o">=</span> <span class="n">coerce_to_list</span><span class="p">(</span><span class="n">attack_obj</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">coerced</span> <span class="o">=</span> <span class="n">coerce_config</span><span class="p">(</span><span class="n">attack_obj</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coerced</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
+                <span class="n">raw_items</span> <span class="o">=</span> <span class="n">coerce_to_list</span><span class="p">(</span><span class="n">coerced</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">raw_items</span> <span class="o">=</span> <span class="p">[</span><span class="n">attack_obj</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_coerce_single_attack</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">raw_items</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_multi_attack_aliases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attack_chain</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AttackConfig</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">attack_chain</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">seen_aliases</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">attack_cfg</span> <span class="ow">in</span> <span class="n">attack_chain</span><span class="p">:</span>
+            <span class="n">alias</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">attack_cfg</span><span class="p">,</span> <span class="s2">&quot;alias&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">alias</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Multi-attack experiments require attack.alias for each configured attack.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">seen_aliases</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Duplicate attack.alias detected in multi-attack experiment: &#39;</span><span class="si">{</span><span class="n">alias</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="n">seen_aliases</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">alias</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_suffix_file_path_with_alias</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">alias</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">alias</span><span class="si">}{</span><span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_attack_file_outputs_for_run</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">base_outputs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">attack_cfg</span><span class="p">:</span> <span class="n">AttackConfig</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">multi_attack</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">base_outputs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">multi_attack</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">outputs</span>
+
+        <span class="n">alias</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">attack_cfg</span><span class="o">.</span><span class="n">alias</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;attack_file&quot;</span><span class="p">,</span> <span class="s2">&quot;attack_predictions_file&quot;</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">outputs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_suffix_file_path_with_alias</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">alias</span><span class="p">)</span>
+
+        <span class="c1"># Avoid per-attack score-file clobbering; ExperimentConfig writes the final merged score file.</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s2">&quot;score_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">outputs</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_combine_attack_predictions</span><span class="p">(</span><span class="n">attack_chain</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AttackConfig</span><span class="p">]):</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">attack_cfg</span> <span class="ow">in</span> <span class="n">attack_chain</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">attack_cfg</span><span class="p">,</span> <span class="s2">&quot;attack_predictions&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;detach&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;cpu&quot;</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="n">predictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">predictions</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">predictions</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">flattened</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">predictions</span><span class="p">:</span>
+                <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">arr</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">flattened</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">flattened</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">arr</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">flattened</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_detector_attack_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attack_chain</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AttackConfig</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">attack_chain</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">attack_chain</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">combined_predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_combine_attack_predictions</span><span class="p">(</span><span class="n">attack_chain</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">combined_predictions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Detector phase requires at least one attack prediction in multi-attack mode.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">SimpleNamespace</span><span class="p">(</span>
+            <span class="n">attack_predictions</span><span class="o">=</span><span class="n">combined_predictions</span><span class="p">,</span>
+            <span class="n">attacks</span><span class="o">=</span><span class="n">attack_chain</span><span class="p">,</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="ExperimentConfig.set_device">
 <a class="viewcode-back" href="../../../package.html#deckard.experiment.ExperimentConfig.set_device">[docs]</a>
@@ -424,7 +673,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">library</span> <span class="o">==</span> <span class="s2">&quot;tensorflow&quot;</span><span class="p">:</span>
-            <span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tf</span>
+            <span class="k">if</span> <span class="n">tf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                    <span class="s2">&quot;TensorFlow support is unavailable. Install tensorflow to use library=&#39;tensorflow&#39;.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
 
             <span class="n">gpus</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">list_physical_devices</span><span class="p">(</span><span class="s2">&quot;GPU&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">device</span> <span class="o">==</span> <span class="s2">&quot;cpu&quot;</span><span class="p">:</span>
@@ -458,230 +710,191 @@
             <span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;score_dict&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_target_&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="o">=</span> <span class="s2">&quot;deckard.experiment.ExperimentConfig&quot;</span>
-        <span class="c1"># Set random seed</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_random_seed</span><span class="p">()</span>
-        <span class="c1"># Validate and initialize data config</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_data_and_classifier</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve data config and enforce experiment/data classifier consistency.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_data_config</span><span class="p">()</span>
-
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
             <span class="n">DataConfig</span><span class="p">,</span>
         <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;data must be an instance of DataConfig. Got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;classifier&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">classifier</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">assert</span> <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">classifier</span>
             <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;classifier in experiment must match data.classifier. Got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">classifier</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">classifier</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_defense</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize defense config when configured.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">defense</span> <span class="o">=</span> <span class="n">DefensePipelineConfig</span><span class="o">.</span><span class="n">coerce</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense</span><span class="p">)</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">defense</span><span class="p">,</span>
                 <span class="n">DefensePipelineConfig</span><span class="p">,</span>
             <span class="p">),</span> <span class="s2">&quot;defense must be an instance of DefensePipelineConfig&quot;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">defense</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">defense</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelConfig</span><span class="p">):</span>
-                <span class="k">pass</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;_target_&quot;</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">instantiate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">):</span>
-                    <span class="n">model_dict</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(</span><span class="o">**</span><span class="n">model_dict</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                    <span class="n">model_dict</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(</span><span class="o">**</span><span class="n">model_dict</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">ConfigBase</span><span class="p">):</span>
-                    <span class="n">model_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(</span><span class="o">**</span><span class="n">model_dict</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                    <span class="n">model_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(</span><span class="o">**</span><span class="n">model_dict</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Unsupported type for model: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                    <span class="p">)</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_coerce_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize model config and enforce model/classifier consistency.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coerce_component</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
                 <span class="n">ModelConfig</span><span class="p">,</span>
-            <span class="p">),</span> <span class="s2">&quot;model must be an instance of ModelConfig&quot;</span>
+                <span class="n">default_target</span><span class="o">=</span><span class="s2">&quot;deckard.model.ModelConfig&quot;</span><span class="p">,</span>
+                <span class="n">overrides</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;defense&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense</span><span class="p">}</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported type for model: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">classifier</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">classifier</span>
-                <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;classifier in experiment must match model.classifier. Got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">classifier</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">classifier</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">defense</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">ModelConfig</span><span class="p">,</span>
+        <span class="p">),</span> <span class="s2">&quot;model must be an instance of ModelConfig&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">classifier</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">classifier</span>
+            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;classifier in experiment must match model.classifier. Got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">classifier</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">classifier</span><span class="si">}</span><span class="s2">&quot;</span>
 
-            <span class="k">if</span> <span class="n">FairlearnDataConfig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-                <span class="n">FairlearnDataConfig</span><span class="p">,</span>
-            <span class="p">):</span>
-                <span class="k">if</span> <span class="n">FairlearnModelConfig</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-                        <span class="s2">&quot;FairlearnModelConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn model configs.&quot;</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">FairlearnModelConfig</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">FairlearnModelConfig</span><span class="p">(</span>
-                        <span class="n">model_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">model_type</span><span class="p">,</span>
-                        <span class="n">classifier</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">classifier</span><span class="p">,</span>
-                        <span class="n">model_params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">model_params</span><span class="p">,</span>
-                        <span class="n">probability</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">probability</span><span class="p">,</span>
-                        <span class="n">alias</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">alias</span><span class="p">,</span>
-                        <span class="n">defense</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">defense</span><span class="p">,</span>
-                        <span class="n">plugins</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">plugins</span><span class="p">,</span>
-                        <span class="n">scorer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">scorer</span><span class="p">,</span>
-                        <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
-            <span class="k">elif</span> <span class="n">AnjanaDataConfig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-                <span class="n">AnjanaDataConfig</span><span class="p">,</span>
-            <span class="p">):</span>
-                <span class="k">if</span> <span class="n">AnjanaModelConfig</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-                        <span class="s2">&quot;AnjanaModelConfig requires optional anjana dependencies. Install deckard[anjana] to enable anjana model configs.&quot;</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">AnjanaModelConfig</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">AnjanaModelConfig</span><span class="p">(</span>
-                        <span class="n">model_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">model_type</span><span class="p">,</span>
-                        <span class="n">classifier</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">classifier</span><span class="p">,</span>
-                        <span class="n">model_params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">model_params</span><span class="p">,</span>
-                        <span class="n">probability</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">probability</span><span class="p">,</span>
-                        <span class="n">alias</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">alias</span><span class="p">,</span>
-                        <span class="n">defense</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">defense</span><span class="p">,</span>
-                        <span class="n">plugins</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">plugins</span><span class="p">,</span>
-                        <span class="n">scorer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">scorer</span><span class="p">,</span>
-                        <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">,</span> <span class="n">AttackConfig</span><span class="p">):</span>
-                <span class="k">pass</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_specialize_model_for_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Swap/attach model subtype for fairness data configs.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">FairlearnDataConfig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">FairlearnDataConfig</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">FairlearnModelConfig</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                    <span class="s2">&quot;FairlearnModelConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn model configs.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">FairlearnModelConfig</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">FairlearnModelConfig</span><span class="p">(</span>
+                    <span class="n">model_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">model_type</span><span class="p">,</span>
+                    <span class="n">classifier</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">classifier</span><span class="p">,</span>
+                    <span class="n">model_params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">model_params</span><span class="p">,</span>
+                    <span class="n">probability</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">probability</span><span class="p">,</span>
+                    <span class="n">alias</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">alias</span><span class="p">,</span>
+                    <span class="n">defense</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">defense</span><span class="p">,</span>
+                    <span class="n">plugins</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">plugins</span><span class="p">,</span>
+                    <span class="n">scorer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">scorer</span><span class="p">,</span>
+                    <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">):</span>
-                    <span class="n">attack_dict</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                    <span class="n">attack_dict</span> <span class="o">=</span> <span class="n">AttackConfig</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">,</span> <span class="n">ConfigBase</span><span class="p">):</span>
-                    <span class="n">attack_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                    <span class="n">attack_dict</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span>
-                        <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">),</span>
-                    <span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Unsupported type for attack: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="k">if</span> <span class="s2">&quot;_target_&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">attack_dict</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">=</span> <span class="n">AttackConfig</span><span class="p">(</span><span class="o">**</span><span class="n">attack_dict</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">=</span> <span class="n">instantiate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">)</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">,</span>
-                <span class="n">AttackConfig</span><span class="p">,</span>
-            <span class="p">),</span> <span class="s2">&quot;attack must be an instance of AttackConfig&quot;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+            <span class="k">return</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_attack_chain</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize configured attacks and establish primary attack view.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attack_chain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_attack_chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_multi_attack_aliases</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attack_chain</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attack_chain</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Preserve backward compatibility for single-attack call sites.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attack_chain</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_detector</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize detector config while preserving callable detector passthrough.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">detector</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coerce_component</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">,</span>
+                <span class="n">DetectorConfig</span><span class="p">,</span>
+                <span class="n">default_target</span><span class="o">=</span><span class="s2">&quot;deckard.detector.DetectorConfig&quot;</span><span class="p">,</span>
+                <span class="n">allow_passthrough</span><span class="o">=</span><span class="k">lambda</span> <span class="n">obj</span><span class="p">:</span> <span class="nb">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;__call__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unsupported type for detector: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">,</span>
+            <span class="n">DetectorConfig</span><span class="p">,</span>
+        <span class="p">)</span> <span class="ow">or</span> <span class="nb">callable</span><span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">,</span> <span class="s2">&quot;__call__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">),</span> <span class="s2">&quot;detector must be a DetectorConfig or callable detector runtime&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_files</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize file config and ensure a FileConfig instance is available.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="n">FileConfig</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coerce_component</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">,</span>
+                    <span class="n">FileConfig</span><span class="p">,</span>
+                    <span class="n">default_target</span><span class="o">=</span><span class="s2">&quot;deckard.file.FileConfig&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported type for files: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">,</span>
+            <span class="n">FileConfig</span><span class="p">,</span>
+        <span class="p">),</span> <span class="s2">&quot;file must be an instance of FileConfig&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;score_dict&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_target_&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="o">=</span> <span class="s2">&quot;deckard.experiment.ExperimentConfig&quot;</span>
+        <span class="c1"># Set random seed</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_random_seed</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_data_and_classifier</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_defense</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coerce_model</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_specialize_model_for_data</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_attack_chain</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_detector</span><span class="p">()</span>
         <span class="c1"># Set experiment name if not provided</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment_name</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{hash}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">]:</span>
             <span class="n">config_list</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">]</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">:</span>
                 <span class="n">config_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">:</span>
-                <span class="n">config_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attack_chain</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">config_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attack_chain</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">detector</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">,</span> <span class="n">ConfigBase</span><span class="p">):</span>
+                <span class="n">config_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">score</span><span class="p">:</span>
                 <span class="n">config_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">score</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">experiment_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hash_from_list</span><span class="p">(</span><span class="n">config_list</span><span class="p">)</span>
-        <span class="c1"># Initialize FileConfig, ensuring experiment_name is set</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="n">FileConfig</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">,</span> <span class="n">FileConfig</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">,</span> <span class="n">ConfigBase</span><span class="p">):</span>
-            <span class="n">file_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="n">FileConfig</span><span class="p">(</span><span class="o">**</span><span class="n">file_dict</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">):</span>
-            <span class="n">file_dict</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="n">FileConfig</span><span class="p">(</span><span class="o">**</span><span class="n">file_dict</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">file_dict</span> <span class="o">=</span> <span class="n">FileConfig</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="n">FileConfig</span><span class="p">(</span><span class="o">**</span><span class="n">file_dict</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="n">file_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="n">FileConfig</span><span class="p">(</span><span class="o">**</span><span class="n">file_dict</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported type for files: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">,</span>
-            <span class="n">FileConfig</span><span class="p">,</span>
-        <span class="p">),</span> <span class="s2">&quot;file must be an instance of FileConfig&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
-
-        <span class="c1"># Set scorers</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data_scorer</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model_scorer</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">experiment_scorer</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">score_cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">score</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">):</span>
-                <span class="n">score_cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span>
-                <span class="n">key</span> <span class="ow">in</span> <span class="n">score_cfg</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;experiment&quot;</span><span class="p">]</span>
-            <span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">data_scorer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coerce_scorer_config</span><span class="p">(</span>
-                    <span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">),</span>
-                <span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">model_scorer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coerce_scorer_config</span><span class="p">(</span>
-                    <span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">),</span>
-                <span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">experiment_scorer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coerce_scorer_config</span><span class="p">(</span>
-                    <span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;experiment&quot;</span><span class="p">),</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Backward-compatible shorthand: a single score config targets model scoring.</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">model_scorer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coerce_scorer_config</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">)</span>
-
-        <span class="c1"># Attach component scorers so DataConfig/ModelConfig execute runtime-configured scoring.</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_scorer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">scorer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_scorer</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_scorer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">scorer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_scorer</span>
-
-        <span class="c1"># Keep `score` as experiment-level scorer only.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment_scorer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_files</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_component_scorers</span><span class="p">()</span>
 
         <span class="c1"># Reconcile and enforce a single device across experiment/data/model.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_reconcile_component_devices</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">library</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;sklearn&quot;</span><span class="p">]:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_device</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">set_random_seed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_random_seed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">library</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;sklearn&quot;</span><span class="p">]:</span>
             <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">library</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;tensorflow&quot;</span><span class="p">]:</span>
-            <span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tf</span>
+            <span class="k">if</span> <span class="n">tf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                    <span class="s2">&quot;TensorFlow support is unavailable. Install tensorflow to use library=&#39;tensorflow&#39;.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
 
             <span class="n">tf</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">set_seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">library</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;pytorch&quot;</span><span class="p">]:</span>
-            <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+            <span class="k">if</span> <span class="n">torch</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                    <span class="s2">&quot;PyTorch support is unavailable. Install torch to use library=&#39;pytorch&#39;.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
 
             <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported library: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">library</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_hash_from_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ConfigBase</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_hash_from_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate a hash string from a list of ConfigBase objects.</span>
 <span class="sd">        The hash is generated by concatenating the string representations of the configurations</span>
@@ -691,19 +904,27 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            str: The generated hash string.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">hash_parts</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">conf</span> <span class="ow">in</span> <span class="n">config_list</span><span class="p">:</span>
+            <span class="n">normalized</span> <span class="o">=</span> <span class="n">coerce_config</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">normalized</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">))</span> <span class="ow">or</span> <span class="n">normalized</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">hash_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">normalized</span><span class="p">))</span>
+                <span class="k">continue</span>
+
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
                 <span class="n">conf</span><span class="p">,</span>
                 <span class="n">ConfigBase</span><span class="p">,</span>
-            <span class="p">),</span> <span class="s2">&quot;All items in config_list must be instances of ConfigBase&quot;</span>
-            <span class="n">to_string</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="p">[</span>
-                    <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span> <span class="n">attr</span><span class="p">))</span>
-                    <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">attr</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span> <span class="n">attr</span><span class="p">))</span>
-                <span class="p">],</span>
+            <span class="p">),</span> <span class="s2">&quot;All items in config_list must be ConfigBase or config-like values&quot;</span>
+            <span class="n">hash_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span> <span class="n">attr</span><span class="p">))</span>
+                        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">attr</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span> <span class="n">attr</span><span class="p">))</span>
+                    <span class="p">],</span>
+                <span class="p">),</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="n">to_string</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">hash_parts</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_detect_n_repeats</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return repeated-evaluation count and key suffix for sampler-driven runs.</span>
@@ -715,8 +936,6 @@
 <span class="sd">            ``(n_splits, &quot;split&quot;)`` for ``ShuffleSampler``,</span>
 <span class="sd">            and ``(1, &quot;fold&quot;)`` for all other samplers.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">..data.sample</span><span class="w"> </span><span class="kn">import</span> <span class="n">KFoldSampler</span><span class="p">,</span> <span class="n">ShuffleSampler</span>
-
         <span class="n">sampler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">_resolve_sample</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sampler</span><span class="p">,</span> <span class="n">KFoldSampler</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">sampler</span><span class="o">.</span><span class="n">n_splits</span><span class="p">,</span> <span class="s2">&quot;fold&quot;</span>
@@ -763,31 +982,67 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No model config provided, skipping model training.&quot;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">:</span>
+        <span class="n">attack_chain</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_attack_chain&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">attack_chain</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">attack_chain</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">attack_chain</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">multi_attack</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">attack_chain</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">(</span>
-                    <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-                    <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
-                    <span class="o">**</span><span class="n">attack_file_outputs</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">,</span>
-                    <span class="s2">&quot;attack&quot;</span><span class="p">,</span>
-                <span class="p">),</span> <span class="s2">&quot;attack must have attack attribute after training&quot;</span>
-                <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">,</span>
-                    <span class="s2">&quot;attack_predictions&quot;</span><span class="p">,</span>
-                <span class="p">),</span> <span class="s2">&quot;attack must have a predictions attribute after training&quot;</span>
-                <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="p">,</span>
-                    <span class="s2">&quot;score_dict&quot;</span><span class="p">,</span>
-                <span class="p">),</span> <span class="s2">&quot;attack must have score_dict attribute after training&quot;</span>
-                <span class="n">scores</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span><span class="o">.</span><span class="n">score_dict</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">attack_cfg</span> <span class="ow">in</span> <span class="n">attack_chain</span><span class="p">:</span>
+                    <span class="n">run_outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_attack_file_outputs_for_run</span><span class="p">(</span>
+                        <span class="n">attack_file_outputs</span><span class="p">,</span>
+                        <span class="n">attack_cfg</span><span class="p">,</span>
+                        <span class="n">multi_attack</span><span class="o">=</span><span class="n">multi_attack</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">attack_cfg</span><span class="p">(</span>
+                        <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                        <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">run_outputs</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span>
+                        <span class="n">attack_cfg</span><span class="p">,</span>
+                        <span class="s2">&quot;attack&quot;</span><span class="p">,</span>
+                    <span class="p">),</span> <span class="s2">&quot;attack must have attack attribute after training&quot;</span>
+                    <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span>
+                        <span class="n">attack_cfg</span><span class="p">,</span>
+                        <span class="s2">&quot;attack_predictions&quot;</span><span class="p">,</span>
+                    <span class="p">),</span> <span class="s2">&quot;attack must have a predictions attribute after training&quot;</span>
+                    <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span>
+                        <span class="n">attack_cfg</span><span class="p">,</span>
+                        <span class="s2">&quot;score_dict&quot;</span><span class="p">,</span>
+                    <span class="p">),</span> <span class="s2">&quot;attack must have score_dict attribute after training&quot;</span>
+                    <span class="n">scores</span> <span class="o">=</span> <span class="n">merge_scores_with_collision_suffix</span><span class="p">(</span>
+                        <span class="n">scores</span><span class="p">,</span>
+                        <span class="n">attack_cfg</span><span class="o">.</span><span class="n">score_dict</span><span class="p">,</span>
+                        <span class="n">alias</span><span class="o">=</span><span class="n">attack_cfg</span><span class="o">.</span><span class="n">alias</span> <span class="k">if</span> <span class="n">multi_attack</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">=</span> <span class="n">attack_chain</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
                 <span class="k">raise</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No attack config provided, skipping attack.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">attack_chain</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Detector phase requires an attack configuration/output.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="n">detector_attack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_detector_attack_view</span><span class="p">(</span><span class="n">attack_chain</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">(</span>
+                <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">attack</span><span class="o">=</span><span class="n">detector_attack</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">,</span>
+                <span class="s2">&quot;score_dict&quot;</span><span class="p">,</span>
+            <span class="p">),</span> <span class="s2">&quot;detector must have score_dict attribute after execution&quot;</span>
+            <span class="n">scores</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="o">.</span><span class="n">score_dict</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No detector config provided, skipping detector phase.&quot;</span><span class="p">)</span>
 
         <span class="n">custom_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_experiment_scorer_modes</span><span class="p">(</span><span class="n">score_file</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">custom_scores</span><span class="p">:</span>
@@ -841,7 +1096,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-    <span class="p">):</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="c1"># Initialize Scores</span>
         <span class="n">scores</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="c1"># Set random seed</span>
@@ -959,20 +1214,14 @@
                 <span class="n">model_file_outputs</span><span class="p">,</span>
                 <span class="n">attack_file_outputs</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">custom_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_experiment_scorer_modes</span><span class="p">(</span>
-                <span class="n">score_file</span><span class="o">=</span><span class="n">file_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;score_file&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="p">)</span>
-            <span class="k">if</span> <span class="n">custom_scores</span><span class="p">:</span>
-                <span class="n">scores</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">scores</span><span class="p">,</span> <span class="o">**</span><span class="n">custom_scores</span><span class="p">}</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="k">if</span> <span class="s2">&quot;score_file&quot;</span> <span class="ow">in</span> <span class="n">file_dict</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">file_dict</span><span class="p">[</span><span class="s2">&quot;score_file&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">save_scores</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">file_dict</span><span class="p">[</span><span class="s2">&quot;score_file&quot;</span><span class="p">])</span>
-        <span class="k">elif</span> <span class="s2">&quot;score_file&quot;</span> <span class="ow">in</span> <span class="n">file_dict</span><span class="p">:</span>
-            <span class="n">old_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_scores</span><span class="p">(</span><span class="n">file_dict</span><span class="p">[</span><span class="s2">&quot;score_file&quot;</span><span class="p">])</span>
-            <span class="n">new_scores</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">old_scores</span><span class="p">,</span> <span class="o">**</span><span class="n">scores</span><span class="p">}</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">save_scores</span><span class="p">(</span><span class="n">new_scores</span><span class="p">,</span> <span class="n">file_dict</span><span class="p">[</span><span class="s2">&quot;score_file&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="s2">&quot;score_file&quot;</span> <span class="ow">in</span> <span class="n">file_dict</span><span class="p">:</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merge_and_persist_scores</span><span class="p">(</span>
+                <span class="n">scores</span><span class="p">,</span>
+                <span class="n">file_dict</span><span class="p">[</span><span class="s2">&quot;score_file&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No score_file specified, skipping score saving.&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">scores</span></div>

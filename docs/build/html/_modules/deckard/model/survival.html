@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../data.html">Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../model.html">Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../detector.html">Detector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../score.html">Score</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../plot.html">Plot</a></li>
@@ -52,6 +53,14 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../file.html">File</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Extensions:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../anjana.html">Anjana Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 
         </div>
@@ -149,16 +158,15 @@
 <span class="sd">    t0 : float</span>
 <span class="sd">        Time point for calibration scoring.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
+    <span class="n">classifier</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Survival Models are always regression models. Auxilary models may not be.</span>
     <span class="n">duration_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;T&quot;</span>
     <span class="n">event_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;E&quot;</span>
     <span class="n">survival_model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;weibull&quot;</span>
     <span class="n">t0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.35</span>
+    
+    
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize SurvivalModelConfig without loading a model through Hydra.&quot;&quot;&quot;</span>
-        <span class="c1"># Skip ModelConfig&#39;s __post_init__ which tries to load a model</span>
-        <span class="c1"># Initialize survival-specific attributes</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_runtime_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;score_dict&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">[</span>
@@ -177,14 +185,19 @@
         <span class="p">]:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
                 <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_target</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_target_&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="o">=</span> <span class="s2">&quot;deckard.model.SurvivalModelConfig&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;classifier&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">]:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Survival models are always regression-like</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;regressor&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">]:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize SurvivalModelConfig without loading a model through Hydra.&quot;&quot;&quot;</span>
+        <span class="c1"># Survival models are always regression models regardless of what was passed.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="c1"># Skip ModelConfig&#39;s __post_init__ which tries to load a model.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_runtime_fields</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_target</span><span class="p">()</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_aft_fitter</span><span class="p">(</span><span class="n">mtype</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RegressionFitter</span><span class="p">:</span>

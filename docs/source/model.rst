@@ -109,24 +109,13 @@ To use :class:`~deckard.model.ModelConfig` from Python:
          "n_clusters_per_class": 1,
          "n_classes": 2,
          "random_state": 7,
-
-      The fairness extension provides fairness-aware model behavior, including
-      group-sensitive fitting, scoring, and fairlearn defense wrappers.
-
-      Two concrete classes are provided:
-
-      - :class:`~deckard.model.fairness.FairlearnModelConfig` — for sklearn models;
-         inherits :class:`~deckard.model.ModelConfig` and adds fairness-aware scoring
-         and fairlearn defense support.
-      - :class:`~deckard.model.fairness.FairlearnPytorchModelConfig` — for PyTorch
-         models; inherits :class:`~deckard.model.pytorch.PytorchModelConfig` directly
-         so all torch training, device management, ART wrapping, and checkpointing
-         comes for free, with fairness-aware scoring layered on top via
-         ``_FairnessBehaviorMixin``.
-
-      .. automodule:: deckard.model.fairness
-          :members:
-          :show-inheritance:
+      },
+      train_size=30,
+      test_size=10,
+      random_state=42,
+      stratify=True,
+      classifier=True,
+   )
    data()
 
    model = ModelConfig(
@@ -136,7 +125,6 @@ To use :class:`~deckard.model.ModelConfig` from Python:
    )
 
    scores = model(data)
-
    print(f"Scores: {scores}")
 
 Regression example

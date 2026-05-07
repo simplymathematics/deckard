@@ -25,3 +25,13 @@ Use the sections below to explore the different modules.
    file
    utils
    modules
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Extensions:
+
+   pytorch
+   lifelines
+   anjana
+   seaborn
+   yellowbrick

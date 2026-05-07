@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../data.html">Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../model.html">Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../detector.html">Detector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../score.html">Score</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot.html">Plot</a></li>
@@ -52,6 +53,14 @@
 <li class="toctree-l1"><a class="reference internal" href="../../file.html">File</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../modules.html">deckard</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Extensions:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../anjana.html">Anjana Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 
         </div>
@@ -93,13 +102,14 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib.util</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Any</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">MISSING</span><span class="p">,</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydra.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">instantiate</span><span class="p">,</span> <span class="n">get_class</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydra.core.config_store</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigStore</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">OmegaConf</span>
@@ -109,6 +119,9 @@
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;ConfigBase&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;normalize_config_token&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;is_null_config_value&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;is_default_config_value&quot;</span><span class="p">,</span>
     <span class="s2">&quot;normalize_for_hash&quot;</span><span class="p">,</span>
     <span class="s2">&quot;hash_conf_values&quot;</span><span class="p">,</span>
     <span class="s2">&quot;data_supported_filetypes&quot;</span><span class="p">,</span>
@@ -119,12 +132,57 @@
     <span class="s2">&quot;load_class&quot;</span><span class="p">,</span>
     <span class="s2">&quot;safe_store&quot;</span><span class="p">,</span>
     <span class="s2">&quot;coerce_config&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;prepare_instantiation_dict&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;instantiate_config&quot;</span><span class="p">,</span>
     <span class="s2">&quot;create_parser_from_function&quot;</span><span class="p">,</span>
     <span class="s2">&quot;round_scores&quot;</span><span class="p">,</span>
     <span class="s2">&quot;coerce_to_list&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;split_comma_separated_tokens&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;normalize_hydra_list_overrides&quot;</span><span class="p">,</span>
     <span class="s2">&quot;merge_list_of_dicts&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;merge_scores_with_collision_suffix&quot;</span><span class="p">,</span>
     <span class="s2">&quot;resolve_torch_device&quot;</span><span class="p">,</span>
 <span class="p">]</span>
+
+
+<span class="n">NULL_CONFIG_TOKENS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="s2">&quot;null&quot;</span><span class="p">,</span> <span class="s2">&quot;n/a&quot;</span><span class="p">})</span>
+<span class="n">DEFAULT_CONFIG_TOKENS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="s2">&quot;best&quot;</span><span class="p">})</span>
+
+
+<div class="viewcode-block" id="normalize_config_token">
+<a class="viewcode-back" href="../../utils.html#deckard.utils.normalize_config_token">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_config_token</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize a config token to lower-case text for keyword matching.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="is_null_config_value">
+<a class="viewcode-back" href="../../utils.html#deckard.utils.is_null_config_value">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_null_config_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">allow_empty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True when *value* represents an explicit null-like config token.&quot;&quot;&quot;</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">normalize_config_token</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">token</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="n">allow_empty</span> <span class="ow">and</span> <span class="n">token</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">NULL_CONFIG_TOKENS</span></div>
+
+
+
+<div class="viewcode-block" id="is_default_config_value">
+<a class="viewcode-back" href="../../utils.html#deckard.utils.is_default_config_value">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_default_config_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">include_best</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True when *value* requests default/auto config behavior.&quot;&quot;&quot;</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">normalize_config_token</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">token</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">include_best</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">DEFAULT_CONFIG_TOKENS</span>
+    <span class="k">return</span> <span class="n">token</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="s2">&quot;default&quot;</span><span class="p">}</span></div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_torch_compiler_backends</span><span class="p">(</span><span class="n">torch_module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -176,7 +234,7 @@
     <span class="k">return</span> <span class="n">torch_module</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">resolve_torch_device</span><span class="p">(</span><span class="n">requested_device</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_torch_device</span><span class="p">(</span><span class="n">requested_device</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
@@ -206,7 +264,10 @@
     <span class="k">if</span> <span class="n">requested_device</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">requested_text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">requested_device</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
-    <span class="k">if</span> <span class="n">requested_text</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="s2">&quot;null&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="s2">&quot;best&quot;</span><span class="p">,</span> <span class="s2">&quot;default&quot;</span><span class="p">}:</span>
+    <span class="k">if</span> <span class="n">is_null_config_value</span><span class="p">(</span><span class="n">requested_device</span><span class="p">)</span> <span class="ow">or</span> <span class="n">is_default_config_value</span><span class="p">(</span>
+        <span class="n">requested_device</span><span class="p">,</span>
+        <span class="n">include_best</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="k">return</span> <span class="n">_auto_torch_device_from_backends</span><span class="p">(</span><span class="n">torch</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">requested_text</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;gpu&quot;</span><span class="p">,</span> <span class="s2">&quot;cuda&quot;</span><span class="p">}:</span>
         <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
@@ -227,7 +288,7 @@
             <span class="k">return</span> <span class="n">fallback</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="n">requested_text</span><span class="p">)</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">):</span>
             <span class="n">fallback</span> <span class="o">=</span> <span class="n">_auto_torch_device_from_backends</span><span class="p">(</span><span class="n">torch</span><span class="p">)</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                 <span class="s2">&quot;Invalid CUDA device &#39;</span><span class="si">%s</span><span class="s2">&#39;; falling back to best available device </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -250,7 +311,7 @@
 
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="n">requested_text</span><span class="p">)</span>
-    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">):</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
             <span class="s2">&quot;Invalid torch device &#39;</span><span class="si">%s</span><span class="s2">&#39;; falling back to auto device&quot;</span><span class="p">,</span>
             <span class="n">requested_text</span><span class="p">,</span>
@@ -260,7 +321,7 @@
 
 <div class="viewcode-block" id="safe_store">
 <a class="viewcode-back" href="../../utils.html#deckard.utils.safe_store">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">safe_store</span><span class="p">(</span><span class="n">group</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">safe_store</span><span class="p">(</span><span class="n">group</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a Hydra config node while tolerating duplicate registrations.&quot;&quot;&quot;</span>
     <span class="n">cs</span> <span class="o">=</span> <span class="n">ConfigStore</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
     <span class="k">try</span><span class="p">:</span>
@@ -273,7 +334,7 @@
 
 <div class="viewcode-block" id="coerce_to_list">
 <a class="viewcode-back" href="../../utils.html#deckard.utils.coerce_to_list">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">coerce_to_list</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">coerce_to_list</span><span class="p">(</span><span class="n">items</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize a ``list`` or OmegaConf ``ListConfig`` to a plain Python list.</span>
 
 <span class="sd">    Parameters</span>
@@ -299,9 +360,58 @@
 
 
 
+<div class="viewcode-block" id="split_comma_separated_tokens">
+<a class="viewcode-back" href="../../utils.html#deckard.utils.split_comma_separated_tokens">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">split_comma_separated_tokens</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split a comma-separated string into trimmed, non-empty tokens.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="normalize_hydra_list_overrides">
+<a class="viewcode-back" href="../../utils.html#deckard.utils.normalize_hydra_list_overrides">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_hydra_list_overrides</span><span class="p">(</span>
+    <span class="n">overrides</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">keys</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">,),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rewrite comma-separated Hydra override values into list syntax.</span>
+
+<span class="sd">    Example: ``score=a,b`` becomes ``score=[a,b]``.</span>
+<span class="sd">    Existing bracketed list syntax is preserved unchanged.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">normalized</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">normalized_keys</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">overrides</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;=&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">token</span><span class="p">:</span>
+            <span class="n">normalized</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">normalized_keys</span><span class="p">:</span>
+            <span class="n">normalized</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="n">stripped</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">&quot;,&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">stripped</span><span class="p">:</span>
+            <span class="n">normalized</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">stripped</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">stripped</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">):</span>
+            <span class="n">normalized</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="n">items</span> <span class="o">=</span> <span class="n">split_comma_separated_tokens</span><span class="p">(</span><span class="n">stripped</span><span class="p">)</span>
+        <span class="n">normalized</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">=[</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">items</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">normalized</span></div>
+
+
+
 <div class="viewcode-block" id="merge_list_of_dicts">
 <a class="viewcode-back" href="../../utils.html#deckard.utils.merge_list_of_dicts">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">merge_list_of_dicts</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">merge_list_of_dicts</span><span class="p">(</span><span class="n">items</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge a sequence of dict-like items into a single ``dict``.</span>
 
 <span class="sd">    Each element of *items* may be a plain ``dict`` or an OmegaConf</span>
@@ -336,6 +446,53 @@
 
 
 
+<div class="viewcode-block" id="merge_scores_with_collision_suffix">
+<a class="viewcode-back" href="../../utils.html#deckard.utils.merge_scores_with_collision_suffix">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">merge_scores_with_collision_suffix</span><span class="p">(</span>
+    <span class="n">base_scores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">incoming_scores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">alias</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge score dictionaries while preserving existing keys.</span>
+
+<span class="sd">    Behavior</span>
+<span class="sd">    --------</span>
+<span class="sd">    - Non-colliding keys are copied as-is.</span>
+<span class="sd">    - Colliding keys are only suffixed when ``alias`` is provided.</span>
+<span class="sd">    - If ``alias`` is ``None``, incoming collisions receive an underscore and an increment (e.g._1 for the 2nd key of the same name).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base_scores</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;base_scores must be a dict, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">base_scores</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">incoming_scores</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;incoming_scores must be a dict, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">incoming_scores</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">merged</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">base_scores</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">incoming_scores</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">merged</span><span class="p">:</span>
+            <span class="n">merged</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">alias</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">merged</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">continue</span>
+
+        <span class="n">candidate</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">alias</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="n">candidate</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">merged</span><span class="p">:</span>
+            <span class="n">merged</span><span class="p">[</span><span class="n">candidate</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">continue</span>
+
+        <span class="n">disambiguation_index</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">while</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">candidate</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">disambiguation_index</span><span class="si">}</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="n">merged</span><span class="p">:</span>
+            <span class="n">disambiguation_index</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">merged</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">candidate</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">disambiguation_index</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">return</span> <span class="n">merged</span></div>
+
+
+
 <div class="viewcode-block" id="coerce_config">
 <a class="viewcode-back" href="../../utils.html#deckard.utils.coerce_config">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">coerce_config</span><span class="p">(</span><span class="n">config_obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
@@ -364,9 +521,66 @@
 
 
 
+<div class="viewcode-block" id="prepare_instantiation_dict">
+<a class="viewcode-back" href="../../utils.html#deckard.utils.prepare_instantiation_dict">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">prepare_instantiation_dict</span><span class="p">(</span>
+    <span class="n">config_obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">default_target</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize config-like input into an instantiation dictionary.</span>
+
+<span class="sd">    When ``default_target`` is provided and the resulting mapping lacks a</span>
+<span class="sd">    ``_target_`` key, the target is injected so Hydra can instantiate the</span>
+<span class="sd">    canonical config class while still allowing user-specified overrides.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">config_obj</span> <span class="o">=</span> <span class="n">coerce_config</span><span class="p">(</span><span class="n">config_obj</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config_obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;Config must resolve to a dict-like object for instantiation. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">config_obj</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">config_obj</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">default_target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;_target_&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">:</span>
+        <span class="n">spec</span><span class="p">[</span><span class="s2">&quot;_target_&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">default_target</span>
+    <span class="k">return</span> <span class="n">spec</span></div>
+
+
+
+<div class="viewcode-block" id="instantiate_config">
+<a class="viewcode-back" href="../../utils.html#deckard.utils.instantiate_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">instantiate_config</span><span class="p">(</span>
+    <span class="n">config_obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">expected_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">default_target</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Instantiate one config object, injecting a default Hydra target when needed.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">config_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config_obj</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">config_obj</span>
+
+    <span class="k">if</span> <span class="n">default_target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">default_target</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">expected_type</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">expected_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">prepare_instantiation_dict</span><span class="p">(</span>
+        <span class="n">config_obj</span><span class="p">,</span>
+        <span class="n">default_target</span><span class="o">=</span><span class="n">default_target</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">instance</span> <span class="o">=</span> <span class="n">instantiate</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Expected instantiated config to be </span><span class="si">{</span><span class="n">expected_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">instance</span></div>
+
+
+
 <div class="viewcode-block" id="round_scores">
 <a class="viewcode-back" href="../../utils.html#deckard.utils.round_scores">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">round_scores</span><span class="p">(</span><span class="n">scores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">logger_obj</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">round_scores</span><span class="p">(</span><span class="n">scores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">logger_obj</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Round numeric score values using a sample-size-aware precision rule.</span>
 
 <span class="sd">    The number of decimal places is derived from ``log10(n_samples) + 1`` and</span>
@@ -401,6 +615,9 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert arbitrary values into a stable, JSON-serializable structure.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">is_config</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">&quot;</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span>
@@ -439,17 +656,16 @@
             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
         <span class="p">}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">public_attrs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_canonicalize_for_hash</span><span class="p">(</span><span class="n">public_attrs</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">&quot;</span>
 
     <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="normalize_for_hash">
 <a class="viewcode-back" href="../../utils.html#deckard.utils.normalize_for_hash">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">normalize_for_hash</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_for_hash</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize values for stable hashing.</span>
 
 <span class="sd">    Mirrors resolver behavior:</span>
@@ -542,20 +758,98 @@
 
         <span class="c1"># Initialize args attribute</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="p">()</span>
-        <span class="c1">#  Set attributes from args and kwds</span>
+
+        <span class="n">dataclass_fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dataclass_fields__</span>
+        <span class="n">init_fields</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">field_name</span>
+            <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">dataclass_field</span> <span class="ow">in</span> <span class="n">dataclass_fields</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">dataclass_field</span><span class="o">.</span><span class="n">init</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Seed dataclass defaults/default_factories before applying user values.</span>
+        <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">dataclass_field</span> <span class="ow">in</span> <span class="n">dataclass_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">dataclass_field</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">MISSING</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">dataclass_field</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">dataclass_field</span><span class="o">.</span><span class="n">default_factory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">MISSING</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">dataclass_field</span><span class="o">.</span><span class="n">default_factory</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">init_fields</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Expected at most </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">init_fields</span><span class="p">)</span><span class="si">}</span><span class="s2"> positional arguments, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__dataclass_fields__</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="n">i</span><span class="p">],</span> <span class="n">arg</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_fields</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">arg</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwds</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
-        <span class="c1"># Call post init</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_before_post_init</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_after_post_init</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_before_post_init</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook for subclasses that need pre-normalization before __post_init__.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_after_post_init</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Finalize common lifecycle state after __post_init__.&quot;&quot;&quot;</span>
         <span class="c1"># Freeze hash at configuration time so runtime attributes added during</span>
         <span class="c1"># execution cannot alter experiment identity.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_hash_payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">for_hash</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_hash_value</span> <span class="o">=</span> <span class="n">hash_conf_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hash_payload</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
+<div class="viewcode-block" id="ConfigBase.coerce_component">
+<a class="viewcode-back" href="../../utils.html#deckard.utils.ConfigBase.coerce_component">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coerce_component</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">component</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">expected_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">default_target</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">overrides</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">allow_passthrough</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instantiate/normalize a config component to ``expected_type``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        component : Any</span>
+<span class="sd">            Config-like object, runtime object, or expected config instance.</span>
+<span class="sd">        expected_type : type</span>
+<span class="sd">            The required config class.</span>
+<span class="sd">        default_target : str, optional</span>
+<span class="sd">            Hydra target path used when input lacks ``_target_``.</span>
+<span class="sd">        overrides : dict, optional</span>
+<span class="sd">            Key/value pairs injected into the normalized instantiation spec.</span>
+<span class="sd">        allow_passthrough : callable, optional</span>
+<span class="sd">            If provided and returns ``True`` for *component*, bypasses coercion.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">component</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">component</span>
+
+        <span class="k">if</span> <span class="n">allow_passthrough</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">allow_passthrough</span><span class="p">(</span><span class="n">component</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">component</span>
+
+        <span class="k">if</span> <span class="n">default_target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">default_target</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">expected_type</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">expected_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">prepare_instantiation_dict</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="n">default_target</span><span class="o">=</span><span class="n">default_target</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">overrides</span><span class="p">:</span>
+            <span class="n">spec</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>
+
+        <span class="n">instance</span> <span class="o">=</span> <span class="n">instantiate</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Expected instantiated config to be </span><span class="si">{</span><span class="n">expected_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">instance</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;This is an abstract base class.&quot;</span><span class="p">)</span>
@@ -589,8 +883,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">save_scores</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">scores</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span>
-        <span class="n">filepath</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">):</span>
+        <span class="n">filepath</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Saves the scores dictionary to a CSV file if a filepath is provided.</span>
 
@@ -635,8 +929,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">save_data</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
-        <span class="n">filepath</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="n">filepath</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">supported_filetypes</span> <span class="o">=</span> <span class="p">[</span>
             <span class="s2">&quot;.csv&quot;</span><span class="p">,</span>
@@ -676,7 +970,7 @@
 
 <div class="viewcode-block" id="ConfigBase.read_or_initialize_scores">
 <a class="viewcode-back" href="../../utils.html#deckard.utils.ConfigBase.read_or_initialize_scores">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">read_or_initialize_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">score_file</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_or_initialize_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">score_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return merged scores from disk and memory, or initialize output location.</span>
 
 <span class="sd">        This is the canonical entrypoint for score-file reads in ConfigBase.</span>
@@ -698,6 +992,30 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">scores</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">return</span> <span class="n">scores</span></div>
+
+
+<div class="viewcode-block" id="ConfigBase.merge_and_persist_scores">
+<a class="viewcode-back" href="../../utils.html#deckard.utils.ConfigBase.merge_and_persist_scores">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">merge_and_persist_scores</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">new_scores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">score_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Merge score payload with on-disk scores and persist only when needed.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">score_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">new_scores</span>
+
+        <span class="n">score_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">score_file</span><span class="p">)</span>
+        <span class="n">score_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">existing_scores</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">score_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">existing_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_scores</span><span class="p">(</span><span class="n">score_file</span><span class="p">)</span>
+
+        <span class="n">merged_scores</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">existing_scores</span><span class="p">,</span> <span class="o">**</span><span class="n">new_scores</span><span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">score_path</span><span class="o">.</span><span class="n">exists</span><span class="p">())</span> <span class="ow">or</span> <span class="n">merged_scores</span> <span class="o">!=</span> <span class="n">existing_scores</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_scores</span><span class="p">(</span><span class="n">merged_scores</span><span class="p">,</span> <span class="n">score_file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">merged_scores</span></div>
 
 
 <div class="viewcode-block" id="ConfigBase.get_call_params">
@@ -749,24 +1067,29 @@
         <span class="n">score_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">score_path</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span> <span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">filepath</span><span class="si">}</span><span class="s2"> does not exist.&quot;</span>
         <span class="n">supported_filetypes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;.json&quot;</span><span class="p">,</span> <span class="s2">&quot;.xlsx&quot;</span><span class="p">]</span>
+        <span class="n">scores</span><span class="p">:</span> <span class="nb">dict</span>
         <span class="k">if</span> <span class="n">score_path</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="n">supported_filetypes</span><span class="p">:</span>
             <span class="k">match</span> <span class="n">score_path</span><span class="o">.</span><span class="n">suffix</span><span class="p">:</span>
                 <span class="k">case</span> <span class="s2">&quot;.csv&quot;</span><span class="p">:</span>
-                    <span class="n">scores</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">score_path</span><span class="p">)</span>
+                    <span class="n">scores</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">score_path</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;records&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">score_path</span><span class="p">))</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">score_path</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
                 <span class="k">case</span> <span class="s2">&quot;.json&quot;</span><span class="p">:</span>
                     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">score_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                        <span class="n">scores</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-
-                    <span class="k">if</span> <span class="s2">&quot;files&quot;</span> <span class="ow">in</span> <span class="n">scores</span><span class="p">:</span>
-                        <span class="n">files</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;files&quot;</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="s2">&quot;params&quot;</span> <span class="ow">in</span> <span class="n">scores</span><span class="p">:</span>
-                        <span class="n">params</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;params&quot;</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="s2">&quot;files&quot;</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">():</span>
+                        <span class="n">raw</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                        <span class="n">raw</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">raw</span><span class="p">}</span>
+                    <span class="n">files</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;files&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="n">params</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;params&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="n">scores</span> <span class="o">=</span> <span class="n">raw</span>
+                    <span class="k">if</span> <span class="n">files</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="n">scores</span><span class="p">[</span><span class="s2">&quot;files&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">files</span>
-                    <span class="k">if</span> <span class="s2">&quot;params&quot;</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">params</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="n">scores</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">params</span>
                 <span class="k">case</span> <span class="s2">&quot;.xlsx&quot;</span><span class="p">:</span>
-                    <span class="n">scores</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">score_path</span><span class="p">)</span>
+                    <span class="n">scores</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">score_path</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Unsupported file type </span><span class="si">{</span><span class="n">score_path</span><span class="o">.</span><span class="n">suffix</span><span class="si">}</span><span class="s2">. Supported types: </span><span class="si">{</span><span class="n">supported_filetypes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Unsupported file type </span><span class="si">{</span><span class="n">score_path</span><span class="o">.</span><span class="n">suffix</span><span class="si">}</span><span class="s2">. Supported types: </span><span class="si">{</span><span class="n">supported_filetypes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -809,7 +1132,12 @@
 
 <div class="viewcode-block" id="ConfigBase.load_object">
 <a class="viewcode-back" href="../../utils.html#deckard.utils.ConfigBase.load_object">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">load_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_object</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ignore_corrupt</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">delete_corrupt</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Loads a Serializable object from a file using pickle.</span>
 
@@ -822,9 +1150,28 @@
 <span class="sd">        -------</span>
 <span class="sd">        Any</span>
 <span class="sd">            The loaded object.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ignore_corrupt : bool, optional</span>
+<span class="sd">            If True, return None when a known pickle corruption/loading error occurs.</span>
+<span class="sd">        delete_corrupt : bool, optional</span>
+<span class="sd">            If True and a known pickle corruption/loading error occurs, delete the file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">obj</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">EOFError</span><span class="p">,</span> <span class="n">pickle</span><span class="o">.</span><span class="n">UnpicklingError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">delete_corrupt</span><span class="p">:</span>
+                <span class="n">Path</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ignore_corrupt</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Failed to load cached object </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">).&quot;</span><span class="p">,</span>
+                    <span class="n">filepath</span><span class="p">,</span>
+                    <span class="n">exc</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">raise</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Object loaded from </span><span class="si">{</span><span class="n">filepath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">obj</span></div>
 
@@ -998,7 +1345,7 @@
         <span class="k">return</span> <span class="n">dict_</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">execute_without_mercy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute_without_mercy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="c1"># Get log_file from logger</span>
         <span class="n">log_file</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
             <span class="p">(</span>
@@ -1113,7 +1460,14 @@
         <span class="k">case</span> <span class="s2">&quot;.csv&quot;</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">case</span> <span class="s2">&quot;.json&quot;</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;records&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">json_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;orient&quot;</span><span class="p">:</span> <span class="s2">&quot;records&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">}</span>
+            <span class="k">if</span> <span class="s2">&quot;lines&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">json_kwargs</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">json_kwargs</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="o">**</span><span class="n">json_kwargs</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="o">**</span><span class="n">json_kwargs</span><span class="p">)</span>
         <span class="k">case</span> <span class="s2">&quot;.xlsx&quot;</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">case</span> <span class="s2">&quot;.parquet&quot;</span><span class="p">:</span>
@@ -1132,12 +1486,12 @@
 <div class="viewcode-block" id="import_class_from_file">
 <a class="viewcode-back" href="../../utils.html#deckard.utils.import_class_from_file">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">import_class_from_file</span><span class="p">(</span>
-    <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">file_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">class_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">instantiate_class</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-<span class="p">):</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Import a class from a Python file path and optionally instantiate it.&quot;&quot;&quot;</span>
     <span class="n">file_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
 
@@ -1162,7 +1516,7 @@
 
 <div class="viewcode-block" id="resolve_class">
 <a class="viewcode-back" href="../../utils.html#deckard.utils.resolve_class">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">resolve_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve a class path into a class object without instantiating it.</span>
 
 <span class="sd">    Supports dotted module paths (Hydra-style) and ``file.py:ClassName`` paths.</span>
@@ -1196,7 +1550,7 @@
 
 <div class="viewcode-block" id="load_class">
 <a class="viewcode-back" href="../../utils.html#deckard.utils.load_class">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">load_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Instantiate a class from a class object, dotted import path, or file path.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -1275,10 +1629,10 @@
 <div class="viewcode-block" id="create_parser_from_function">
 <a class="viewcode-back" href="../../utils.html#deckard.utils.create_parser_from_function">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_parser_from_function</span><span class="p">(</span>
-    <span class="n">func</span><span class="p">,</span>
-    <span class="n">parser</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">exclude</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="n">func</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">parser</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates an argparse.ArgumentParser from a function&#39;s signature.</span>

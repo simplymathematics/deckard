@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../data.html">Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../model.html">Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../detector.html">Detector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../score.html">Score</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../plot.html">Plot</a></li>
@@ -52,6 +53,14 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../file.html">File</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Extensions:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../anjana.html">Anjana Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 
         </div>
@@ -111,7 +120,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">art.estimators.regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">PyTorchRegressor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigBase</span><span class="p">,</span> <span class="n">coerce_config</span><span class="p">,</span> <span class="n">resolve_class</span><span class="p">,</span> <span class="n">coerce_to_list</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigBase</span><span class="p">,</span> <span class="n">coerce_config</span><span class="p">,</span> <span class="n">resolve_class</span><span class="p">,</span> <span class="n">coerce_to_list</span><span class="p">,</span> <span class="n">is_null_config_value</span>
 
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">UserWarning</span><span class="p">)</span>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -185,7 +194,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_config</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="s2">&quot;null&quot;</span><span class="p">,</span> <span class="s2">&quot;Null&quot;</span><span class="p">,</span> <span class="s2">&quot;NULL&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_null_config_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_type</span><span class="p">,</span> <span class="n">allow_empty</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
             <span class="n">model_cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_model_config</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">classifier</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model_params</span> <span class="o">=</span> <span class="n">model_cfg</span><span class="o">.</span><span class="n">model_params</span>
@@ -206,7 +215,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_apply_fit</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Whether to apply fit during defense application</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_freeze_defense_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
@@ -302,9 +311,9 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">apply_to</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">estimator</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BaseEstimator</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
-        <span class="n">data</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseEstimator</span><span class="p">:</span>
+        <span class="n">estimator</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="s2">&quot;BaseEstimator&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;BaseEstimator&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply this defense to a pre-fitted estimator.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">estimator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -316,7 +325,7 @@
             <span class="n">model_cfg</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">estimator</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_defense</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">apply_defense</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseEstimator</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_defense</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;BaseEstimator&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply the specified defense to the model&#39;s estimator.</span>
 
 <span class="sd">        Returns</span>
@@ -402,11 +411,47 @@
                 <span class="k">assert</span> <span class="n">defense_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                 <span class="k">match</span> <span class="n">defense_subtype</span><span class="p">:</span>
                     <span class="k">case</span> <span class="s2">&quot;evasion&quot;</span><span class="p">:</span>
-                        <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span><span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="ow">or</span> <span class="p">{}))</span>
-                        <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">defense</span><span class="p">(</span>
-                            <span class="bp">self</span><span class="o">.</span><span class="n">get_model</span><span class="p">(),</span>
-                            <span class="o">**</span><span class="n">init_params</span><span class="p">,</span>
+                        <span class="c1"># BinaryInputDetector expects a neural-network ART classifier.</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_torch_model_instance</span><span class="p">(</span>
+                            <span class="n">base_estimator</span><span class="p">,</span>
+                        <span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span>
+                            <span class="p">(</span><span class="n">PyTorchClassifier</span><span class="p">,</span> <span class="n">PyTorchRegressor</span><span class="p">),</span>
+                        <span class="p">):</span>
+                            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                                <span class="s2">&quot;Evasion detector defenses only support neural-network models. &quot;</span>
+                                <span class="sa">f</span><span class="s2">&quot;Got base estimator type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">base_estimator</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+                            <span class="p">)</span>
+
+                        <span class="n">detector_classifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_art_wrapper</span><span class="p">(</span>
+                            <span class="n">art_class</span><span class="o">=</span><span class="n">art_class</span><span class="p">,</span>
+                            <span class="n">base_estimator</span><span class="o">=</span><span class="n">base_estimator</span><span class="p">,</span>
+                            <span class="n">init_params</span><span class="o">=</span><span class="n">init_params</span><span class="p">,</span>
+                            <span class="n">preprocessing_defences</span><span class="o">=</span><span class="n">existing_preprocessors</span><span class="p">,</span>
+                            <span class="n">postprocessing_defences</span><span class="o">=</span><span class="n">existing_postprocessors</span><span class="p">,</span>
                         <span class="p">)</span>
+
+                        <span class="n">detector_params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="ow">or</span> <span class="p">{})</span>
+                        <span class="c1"># ART detector constructors differ across versions; support</span>
+                        <span class="c1"># both keyword and positional first-argument forms.</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span>
+                                <span class="n">detector</span><span class="o">=</span><span class="n">detector_classifier</span><span class="p">,</span>
+                                <span class="o">**</span><span class="n">detector_params</span><span class="p">,</span>
+                            <span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                            <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span>
+                                <span class="n">detector_classifier</span><span class="p">,</span>
+                                <span class="o">**</span><span class="n">detector_params</span><span class="p">,</span>
+                            <span class="p">)</span>
+
+                        <span class="c1"># Keep estimator interface stable for normal model runtime.</span>
+                        <span class="nb">setattr</span><span class="p">(</span>
+                            <span class="n">detector_classifier</span><span class="p">,</span>
+                            <span class="s2">&quot;_deckard_evasion_detector&quot;</span><span class="p">,</span>
+                            <span class="n">defense</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">detector_classifier</span>
                     <span class="k">case</span> <span class="s2">&quot;poison&quot;</span><span class="p">:</span>
                         <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span><span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="ow">or</span> <span class="p">{}))</span>
                         <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">defense</span><span class="p">(</span>
@@ -420,16 +465,99 @@
                 <span class="c1"># Overwrite the _score method to handle each</span>
             <span class="k">case</span> <span class="s2">&quot;trainer&quot;</span><span class="p">:</span>
                 <span class="k">assert</span> <span class="n">defense_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span><span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="ow">or</span> <span class="p">{}))</span>
-                <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">defense</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="o">**</span><span class="n">init_params</span><span class="p">)</span>
+                <span class="n">trainer_params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="ow">or</span> <span class="p">{})</span>
+
+                <span class="c1"># Adversarial retraining defenses currently require torch-backed</span>
+                <span class="c1"># ART estimators (e.g., PyTorchClassifier).</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_torch_model_instance</span><span class="p">(</span><span class="n">base_estimator</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">PyTorchClassifier</span><span class="p">,</span> <span class="n">PyTorchRegressor</span><span class="p">),</span>
+                <span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;Retraining trainer defenses only support neural-network models. &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;Got base estimator type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">base_estimator</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                <span class="n">trainer_classifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_art_wrapper</span><span class="p">(</span>
+                    <span class="n">art_class</span><span class="o">=</span><span class="n">art_class</span><span class="p">,</span>
+                    <span class="n">base_estimator</span><span class="o">=</span><span class="n">base_estimator</span><span class="p">,</span>
+                    <span class="n">init_params</span><span class="o">=</span><span class="n">init_params</span><span class="p">,</span>
+                    <span class="n">preprocessing_defences</span><span class="o">=</span><span class="n">existing_preprocessors</span><span class="p">,</span>
+                    <span class="n">postprocessing_defences</span><span class="o">=</span><span class="n">existing_postprocessors</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="c1"># ART trainer constructors differ across versions; support both</span>
+                <span class="c1"># classifier keyword and positional first argument.</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span>
+                        <span class="n">classifier</span><span class="o">=</span><span class="n">trainer_classifier</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">trainer_params</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                    <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span><span class="n">trainer_classifier</span><span class="p">,</span> <span class="o">**</span><span class="n">trainer_params</span><span class="p">)</span>
+
+                <span class="c1"># Trainer defenses configure adversarial training on top of an ART</span>
+                <span class="c1"># classifier wrapper; fitting remains owned by the model runtime.</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">defense</span><span class="p">,</span> <span class="s2">&quot;get_classifier&quot;</span><span class="p">):</span>
+                    <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">defense</span><span class="o">.</span><span class="n">get_classifier</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">trainer_classifier</span>
             <span class="k">case</span> <span class="s2">&quot;transformer&quot;</span><span class="p">:</span>
                 <span class="k">assert</span> <span class="n">defense_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span><span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="ow">or</span> <span class="p">{}))</span>
-                <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">defense</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span>
-                    <span class="n">input_transformations</span><span class="o">=</span><span class="p">[</span><span class="n">defense</span><span class="p">],</span>
-                    <span class="o">**</span><span class="n">init_params</span><span class="p">,</span>
-                <span class="p">)</span>
+                <span class="n">transformer_params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_params</span> <span class="ow">or</span> <span class="p">{})</span>
+                <span class="k">match</span> <span class="n">defense_subtype</span><span class="p">:</span>
+                    <span class="k">case</span> <span class="s2">&quot;evasion&quot;</span> <span class="o">|</span> <span class="s2">&quot;poisoning&quot;</span><span class="p">:</span>
+                        <span class="c1"># ART transformer defenses (e.g., DefensiveDistillation,</span>
+                        <span class="c1"># NeuralCleanse) wrap/class-transform neural ART classifiers.</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_torch_model_instance</span><span class="p">(</span>
+                            <span class="n">base_estimator</span><span class="p">,</span>
+                        <span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span>
+                            <span class="p">(</span><span class="n">PyTorchClassifier</span><span class="p">,</span> <span class="n">PyTorchRegressor</span><span class="p">),</span>
+                        <span class="p">):</span>
+                            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                                <span class="s2">&quot;Transformer defenses only support neural-network models. &quot;</span>
+                                <span class="sa">f</span><span class="s2">&quot;Got base estimator type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">base_estimator</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+                            <span class="p">)</span>
+
+                        <span class="n">transformer_classifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_art_wrapper</span><span class="p">(</span>
+                            <span class="n">art_class</span><span class="o">=</span><span class="n">art_class</span><span class="p">,</span>
+                            <span class="n">base_estimator</span><span class="o">=</span><span class="n">base_estimator</span><span class="p">,</span>
+                            <span class="n">init_params</span><span class="o">=</span><span class="n">init_params</span><span class="p">,</span>
+                            <span class="n">preprocessing_defences</span><span class="o">=</span><span class="n">existing_preprocessors</span><span class="p">,</span>
+                            <span class="n">postprocessing_defences</span><span class="o">=</span><span class="n">existing_postprocessors</span><span class="p">,</span>
+                        <span class="p">)</span>
+
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span>
+                                <span class="n">classifier</span><span class="o">=</span><span class="n">transformer_classifier</span><span class="p">,</span>
+                                <span class="o">**</span><span class="n">transformer_params</span><span class="p">,</span>
+                            <span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                            <span class="k">try</span><span class="p">:</span>
+                                <span class="n">defense</span> <span class="o">=</span> <span class="n">defense_class</span><span class="p">(</span>
+                                    <span class="n">transformer_classifier</span><span class="p">,</span>
+                                    <span class="o">**</span><span class="n">transformer_params</span><span class="p">,</span>
+                                <span class="p">)</span>
+                            <span class="k">except</span> <span class="ne">NotImplementedError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                                    <span class="s2">&quot;Transformer defense initialization failed for the current &quot;</span>
+                                    <span class="s2">&quot;ART classifier backend. Ensure the estimator type is &quot;</span>
+                                    <span class="s2">&quot;supported by the selected defense.&quot;</span><span class="p">,</span>
+                                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+                        <span class="k">except</span> <span class="ne">NotImplementedError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                                <span class="s2">&quot;Transformer defense initialization failed for the current &quot;</span>
+                                <span class="s2">&quot;ART classifier backend. Ensure the estimator type is &quot;</span>
+                                <span class="s2">&quot;supported by the selected defense.&quot;</span><span class="p">,</span>
+                            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+                        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">defense</span><span class="p">,</span> <span class="s2">&quot;get_classifier&quot;</span><span class="p">):</span>
+                            <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">defense</span><span class="o">.</span><span class="n">get_classifier</span><span class="p">()</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">defended_estimator</span> <span class="o">=</span> <span class="n">transformer_classifier</span>
+                    <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown transformer subtype: </span><span class="si">{</span><span class="n">defense_subtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">case</span> <span class="s2">&quot;regularizer&quot;</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
                     <span class="s2">&quot;Regularizer defenses are not implemented yet.&quot;</span><span class="p">,</span>
@@ -465,7 +593,7 @@
             <span class="n">model_cfg</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">defended_estimator</span>
         <span class="k">return</span> <span class="n">defended_estimator</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">parse_defense_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse_defense_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defense_name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">module_name</span><span class="p">,</span> <span class="n">class_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -500,7 +628,7 @@
 
         <span class="k">return</span> <span class="n">defense_type</span><span class="p">,</span> <span class="n">defense_subtype</span><span class="p">,</span> <span class="n">defense_class</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_art_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_art_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">_is_torch_model_instance</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_model&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
             <span class="ow">or</span> <span class="p">(</span>
@@ -561,7 +689,8 @@
                 <span class="n">init_params</span><span class="p">[</span><span class="s2">&quot;preprocessing&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">return</span> <span class="n">art_class</span><span class="p">,</span> <span class="n">init_params</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_type</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="s2">&quot;null&quot;</span><span class="p">,</span> <span class="s2">&quot;Null&quot;</span><span class="p">,</span> <span class="s2">&quot;NULL&quot;</span><span class="p">]:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_null_config_value</span>
+        <span class="k">if</span> <span class="n">is_null_config_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_type</span><span class="p">,</span> <span class="n">allow_empty</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;model_type must be set before creating an ART defense estimator&quot;</span><span class="p">,</span>
             <span class="p">)</span>
@@ -623,7 +752,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="o">=</span> <span class="s2">&quot;deckard.model.DefensePipelineConfig&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">defenses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize_defenses</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defenses</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">()</span>
 
     <span class="nd">@classmethod</span>
@@ -654,7 +783,7 @@
         <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">key</span> <span class="ow">in</span> <span class="n">defense_spec</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">legacy_keys</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">coerce</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">defense_config</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coerce</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">defense_config</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DefensePipelineConfig&quot;</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">defense_config</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">defense_config</span><span class="p">,</span> <span class="bp">cls</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">defense_config</span>
 
@@ -663,7 +792,7 @@
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">defense_config</span><span class="p">,</span> <span class="s2">&quot;apply_to&quot;</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">defenses</span><span class="o">=</span><span class="p">[</span><span class="n">defense_config</span><span class="p">])</span>
 
-        <span class="c1"># List of defense specs → chain them all inside one pipeline</span>
+        <span class="c1"># List of defense specs -&gt; chain them all inside one pipeline</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">defense_config</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">defenses</span><span class="o">=</span><span class="n">coerce_to_list</span><span class="p">(</span><span class="n">defense_config</span><span class="p">))</span>
 
@@ -763,6 +892,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_inherit_model_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">defense_obj</span><span class="p">,</span> <span class="n">estimator</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">base_estimator</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">estimator</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="n">estimator</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_null_config_value</span>
         <span class="n">blank_values</span> <span class="o">=</span> <span class="p">{</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="s2">&quot;null&quot;</span><span class="p">,</span> <span class="s2">&quot;Null&quot;</span><span class="p">,</span> <span class="s2">&quot;NULL&quot;</span><span class="p">}</span>
 
         <span class="k">if</span> <span class="p">(</span>
@@ -811,7 +941,7 @@
         <span class="p">):</span>
             <span class="n">defense_obj</span><span class="o">.</span><span class="n">probability</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">normalize_defenses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">defenses</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">normalize_defenses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">defenses</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">defenses</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">defenses</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
@@ -823,7 +953,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">resolve_stage</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">default_stage</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;post_fit_pre_predict&quot;</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">context</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">context</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">stage</span> <span class="o">=</span> <span class="n">default_stage</span>
         <span class="n">hook_outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_plugin_hook</span><span class="p">(</span>
@@ -874,6 +1004,17 @@
             <span class="k">pass</span>
         <span class="k">return</span> <span class="kc">False</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_retraining_defense</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">defense_obj</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">defense_name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">defense_obj</span><span class="p">,</span> <span class="s2">&quot;defense_name&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">defense_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">lowered</span> <span class="o">=</span> <span class="n">defense_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">return</span> <span class="s2">&quot;.trainer.&quot;</span> <span class="ow">in</span> <span class="n">lowered</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="s2">&quot;adversarialtrainer&quot;</span> <span class="ow">in</span> <span class="n">lowered</span>
+            <span class="ow">or</span> <span class="s2">&quot;retraining&quot;</span> <span class="ow">in</span> <span class="n">lowered</span>
+            <span class="ow">or</span> <span class="s2">&quot;madry&quot;</span> <span class="ow">in</span> <span class="n">lowered</span>
+        <span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">estimator</span><span class="p">:</span> <span class="n">BaseEstimator</span><span class="p">,</span>
@@ -923,6 +1064,36 @@
                     <span class="p">],</span>
                 <span class="p">)</span>
                 <span class="n">defense_chain</span> <span class="o">=</span> <span class="n">data_defenses</span> <span class="o">+</span> <span class="n">wrapper_defenses</span>
+
+        <span class="n">retraining_defenses</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">defense_chain</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_retraining_defense</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">retraining_defenses</span><span class="p">:</span>
+            <span class="n">non_retraining_defenses</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">defense_chain</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_retraining_defense</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">first_retraining_idx</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                <span class="n">i</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">defense_chain</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_retraining_defense</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">last_non_retraining_idx</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">i</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">defense_chain</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_retraining_defense</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+                <span class="p">),</span>
+                <span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">first_retraining_idx</span> <span class="o">&lt;</span> <span class="n">last_non_retraining_idx</span><span class="p">:</span>
+                <span class="n">warning_msg</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">&quot;Adversarial retraining defenses must run last in the defense chain. &quot;</span>
+                    <span class="s2">&quot;Deckard will automatically move retraining defenses to the end.&quot;</span>
+                <span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">warning_msg</span><span class="p">)</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">warning_msg</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">defense_chain</span> <span class="o">=</span> <span class="n">non_retraining_defenses</span> <span class="o">+</span> <span class="n">retraining_defenses</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_run_plugin_hook</span><span class="p">(</span>
             <span class="s2">&quot;before_apply_defense&quot;</span><span class="p">,</span>
             <span class="n">estimator</span><span class="o">=</span><span class="n">estimator</span><span class="p">,</span>
@@ -1029,7 +1200,7 @@
         <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">()</span></div>
 
 </pre></div>

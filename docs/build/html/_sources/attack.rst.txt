@@ -2,8 +2,8 @@ Attack
 =============
 
 The :mod:`deckard.attack` module contains the :class:`~deckard.attack.AttackConfig` dataclass and helper
-functions for running evasion and inference attacks against scikit-learn
-estimators using the Adversarial Robustness Toolbox (ART).
+functions for running evasion, poisoning, extraction, and inference attacks
+using the Adversarial Robustness Toolbox (ART).
 
 .. automodule:: deckard.attack
    :members:
@@ -24,19 +24,149 @@ adversarial attacks. It supports:
 
 Supported Attacks
 -----------------
-Currently supports a selection of attacks from ART, including:
-Evasion Attacks:
-- HopSkipJump
-- BoundaryAttack
-- AutoProjectedGradientDescent
-Membership Inference Attacks:
-- MembershipInferenceBlackBox
-- MembershipInferenceBaseline
-Attribute Inference Attacks:
-- AttributeInferenceBaseline
-- AttributeInferenceBlackBox
+Deckard supports ART attacks across the following families:
 
-(Extendable to other attacks in future versions.)
+- **Evasion attacks** (for example: ``FastGradientMethod``, ``HopSkipJump``,
+   ``BoundaryAttack``, ``AutoProjectedGradientDescent``)
+- **Poisoning attacks** (for example: ``GradientMatchingAttack``)
+- **Extraction attacks** (for example: ART extraction attacks against neural
+   classifiers)
+- **Inference attacks**:
+
+   - Membership inference (for example: ``MembershipInferenceBlackBox``,
+      ``MembershipInferenceBaseline``)
+   - Attribute inference (for example: ``AttributeInferenceBaseline``,
+      ``AttributeInferenceBlackBox``)
+   - Model inversion (for example: ``MIFace``)
+   - Database reconstruction (for example: ``DatabaseReconstruction``)
+
+(Extendable to additional ART attack classes in future versions.)
+
+Preset Catalog (examples/sklearn)
+---------------------------------
+
+Deckard ships ready-to-run attack presets in ``examples/sklearn/config/attack``
+and search-space definitions in ``examples/sklearn/config/search/attacks``.
+
+Common presets include:
+
+- ``boundary``
+- ``fgm``
+- ``hsj``
+- ``membership``
+- ``attribute-bb``
+- ``model-inversion``
+- ``database-reconstruction``
+- ``zoo``
+
+Example command selecting a preset:
+
+.. code-block:: bash
+
+   python -m deckard optimize \
+      --config-path examples/sklearn/config \
+      --config-name default \
+      attack=hsj
+
+Attack Types And Metrics
+------------------------
+The output score dictionary depends on the attack family and task type. Metric
+keys are prefixed to make results easy to group in downstream analysis.
+
+**Evasion (classification)**
+
+- Prefix: ``evasion_``
+- Default metrics: ``evasion_accuracy``, ``evasion_precision``,
+   ``evasion_recall``, ``evasion_f1-score``, ``evasion_success``
+- ``evasion_success`` is computed as $1 - \text{accuracy}(\text{benign preds}, \text{adversarial preds})$
+- Baseline metrics are also emitted with ``benign_`` prefix for consistency,
+   for example: ``benign_accuracy``, ``benign_precision``, ``benign_recall``,
+   ``benign_f1``
+
+**Evasion (regression)**
+
+- Prefix: ``evasion_``
+- Default metrics: ``evasion_mse``, ``evasion_mae``, ``evasion_r2``
+- Baseline metrics are also emitted with ``benign_`` prefix, for example:
+   ``benign_mse``, ``benign_mae``, ``benign_r2``
+
+**Membership inference**
+
+- Prefix: ``membership_inference_``
+- Default metrics: ``membership_inference_accuracy``,
+   ``membership_inference_precision``, ``membership_inference_recall``,
+   ``membership_inference_f1``
+
+**Attribute inference (classification target attribute)**
+
+- Prefix: ``inferred_<targeted_attribute>_``
+- Default metrics: ``inferred_<targeted_attribute>_accuracy``,
+   ``inferred_<targeted_attribute>_precision``,
+   ``inferred_<targeted_attribute>_recall``,
+   ``inferred_<targeted_attribute>_f1``
+
+**Attribute inference (regression target attribute)**
+
+- Prefix: ``inferred_<targeted_attribute>_``
+- Default metrics: ``inferred_<targeted_attribute>_mse``,
+   ``inferred_<targeted_attribute>_mae``,
+   ``inferred_<targeted_attribute>_r2``
+
+**Model inversion**
+
+- Prefix: ``model_inversion_``
+- Default summary metrics: ``model_inversion_mse``, ``model_inversion_mae``,
+   ``model_inversion_num_targets``
+- ``model_inversion_mse`` and ``model_inversion_mae`` compare reconstructed
+   samples to per-class prototype means from the selected split.
+
+**Database reconstruction**
+
+- Prefix: ``database_reconstruction_``
+- Default summary metrics: ``database_reconstruction_feature_mse``,
+   ``database_reconstruction_feature_mae``,
+   ``database_reconstruction_num_features``,
+   ``database_reconstruction_num_known_rows``,
+   ``database_reconstruction_missing_index``
+- Optional label metrics (when reconstructed labels are returned):
+   ``database_reconstruction_label_accuracy`` (classification) or
+   ``database_reconstruction_label_mae`` (regression)
+- Reconstructs one held-out row from a selected split (``train`` or ``test``)
+   using the known rows and labels from that split.
+
+**Poisoning**
+
+- Compares model quality before and after poisoned retraining on the selected
+   evaluation split
+- Metric keys are emitted with both ``benign_`` and ``poisoned_`` prefixes,
+   for example: ``benign_accuracy``, ``poisoned_accuracy``
+- Additional poisoning metadata includes:
+
+   - ``poison_attack_target_class``
+   - ``poison_attack_source_class``
+   - ``poison_trigger_index``
+   - ``poison_trigger_predicted_class``
+   - ``poison_trigger_success``
+   - ``poison_mode``
+
+**Extraction**
+
+- Compares victim and extracted models on the selected evaluation split
+- Metric keys are emitted with ``benign_`` and ``extracted_`` prefixes,
+   for example: ``benign_accuracy``, ``extracted_accuracy``
+- Additional extraction metadata includes ``extraction_mode``
+
+**Common fields across attacks**
+
+- ``attack_size``
+- ``attack_generation_time``
+- ``attack_prediction_time``
+- ``attack_score_time``
+
+Fairness-stratified attack scoring is available via
+:class:`~deckard.score.attack.FairlearnAttackScorerConfig`, which computes
+per-group metrics (for example, by sensitive feature) in addition to overall
+attack metrics.
 
 Usage
 -----
@@ -94,11 +224,48 @@ You can also use the API programmatically:
       attack_type="art.attacks.evasion.FastGradientMethod",
       attack_params={"eps": 0.1},
       attack_size=20,
+      alias="fgm",
    )
 
    # run the attack against the trained model
    scores = attack_cfg(data=data, model=model)
    print([k for k in scores if k.startswith("evasion_")])
+
+Multi-attack with ExperimentConfig
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To execute several attacks in one experiment, pass a list to the same
+``attack`` field on :class:`deckard.experiment.ExperimentConfig`.
+
+.. code-block:: python
+
+   from deckard.experiment import ExperimentConfig
+
+   cfg = ExperimentConfig(
+      data=data,
+      model=model,
+      attack=[
+         AttackConfig(
+            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_params={"eps": 0.05},
+            attack_size=20,
+            alias="fgm",
+         ),
+         AttackConfig(
+            attack_type="art.attacks.evasion.HopSkipJump",
+            attack_params={"max_iter": 5, "verbose": False},
+            attack_size=20,
+            alias="hsj",
+         ),
+      ],
+   )
+   scores = cfg()
+
+   # First key keeps original name; colliding keys use alias suffix.
+   print(scores.get("evasion_accuracy"))
+   print(scores.get("evasion_accuracy_hsj"))
+
+For multi-attack runs, each attack must define a unique non-empty alias.
 
 BoundaryAttack example
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -215,6 +382,95 @@ To execute an attribute inference attack against a trained model:
 
    scores = attribute_attack(data=data, model=model)
    print([k for k in scores if k.startswith("inferred_")])
+
+Model Inversion Attack
+~~~~~~~~~~~~~~~~~~~~~~
+
+To run an ART model inversion attack (for example ``MIFace``):
+
+.. code-block:: python
+
+   from deckard.attack import AttackConfig
+
+   inversion_attack = AttackConfig(
+      attack_type="art.attacks.inference.model_inversion.mi_face.MIFace",
+      attack_size=10,
+      attack_params={
+         "max_iter": 200,
+         "threshold": 1.0,
+         "initialization": "average",  # zeros|ones|random|average
+         "split": "test",
+      },
+   )
+
+   scores = inversion_attack(data=data, model=model)
+   print(scores["model_inversion_mse"], scores["model_inversion_num_targets"])
+
+Database Reconstruction Attack
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To run ART database reconstruction against a trained estimator:
+
+.. code-block:: python
+
+   from deckard.attack import AttackConfig
+
+   reconstruction_attack = AttackConfig(
+      attack_type="art.attacks.inference.reconstruction.DatabaseReconstruction",
+      attack_size=1,
+      attack_params={
+         "split": "train",
+         "missing_index": 0,
+      },
+   )
+
+   scores = reconstruction_attack(data=data, model=model)
+   print(scores["database_reconstruction_feature_mse"])
+
+YAML config shortcuts are available at:
+
+- ``examples/sklearn/config/attack/database-reconstruction.yaml``
+- ``examples/pytorch/config/attack/database-reconstruction.yaml``
+
+Poisoning Attack
+~~~~~~~~~~~~~~~~
+
+Poisoning attacks retrain/evaluate the model on poisoned data and report both
+``benign_`` and ``poisoned_`` metric sets.
+
+.. code-block:: python
+
+   poisoning_attack = AttackConfig(
+      attack_type="art.attacks.poisoning.GradientMatchingAttack",
+      attack_params={
+         "epsilon": 0.05,
+      },
+      attack_size=10,
+   )
+
+   scores = poisoning_attack(data=data, model=model)
+   print(scores.get("benign_accuracy"), scores.get("poisoned_accuracy"))
+
+Extraction Attack
+~~~~~~~~~~~~~~~~~
+
+Extraction attacks compare victim and extracted model quality on the selected
+evaluation split.
+
+.. code-block:: python
+
+   extraction_attack = AttackConfig(
+      attack_type="art.attacks.extraction.CopycatCNN",
+      attack_params={
+         "batch_size_fit": 16,
+         "batch_size_query": 16,
+         "nb_epochs": 2,
+      },
+      attack_size=20,
+   )
+
+   scores = extraction_attack(data=data, model=model)
+   print(scores.get("benign_accuracy"), scores.get("extracted_accuracy"))
 
 CLI Examples
 ~~~~~~~~~~~~

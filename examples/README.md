@@ -156,7 +156,7 @@ This example is a full experimental pipeline integrating:
 - structured logging and artifact tracking
 - extensive visualization suite
 
-It represents a complete Deckard research workflow from configuration → execution → evaluation → analysis.
+It represents a complete Deckard research workflow from configuration -> execution -> evaluation -> analysis.
 
 # See also:
 

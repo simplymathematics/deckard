@@ -48,6 +48,7 @@
 <li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="detector.html">Detector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Plot</a><ul>
@@ -102,6 +103,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotterConfig.plot_partial_effects"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig.plot_partial_effects()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotterConfig.plot_qq"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig.plot_qq()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotterConfig.plot_summary"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig.plot_summary()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SurvivalSeabornPlotterConfig.run_survival_model_experiment"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig.run_survival_model_experiment()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.plot.YellowbrickConfigList"><code class="docutils literal notranslate"><span class="pre">YellowbrickConfigList</span></code></a><ul>
@@ -136,12 +138,13 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#survival-plot-extension">Survival Plot Extension</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.plot.survival.SurvivalSeabornPlotConfigList"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.survival.SurvivalSeabornPlotConfigList.add_model_plots"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList.add_model_plots()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.plot.survival.SurvivalSeabornPlotConfigList.orchestrate_survival_models"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList.orchestrate_survival_models()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.survival.SurvivalSeabornPlotConfigList.render_all"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotConfigList.render_all()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#deckard.plot.survival.SurvivalSeabornPlotterConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.plot.survival.SurvivalSeabornPlotterConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.plot.survival.SurvivalSeabornPlotterConfig.run_survival_model_experiment"><code class="docutils literal notranslate"><span class="pre">SurvivalSeabornPlotterConfig.run_survival_model_experiment()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.plot.yellowbrick_plots.YellowbrickConfigList"><code class="docutils literal notranslate"><span class="pre">YellowbrickConfigList</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig.visualize()</span></code></a></li>
@@ -154,6 +157,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#yellowbrick-examples-smoke-tested">Yellowbrick Examples (Smoke-Tested)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#yellowbrick-experimentconfig">Yellowbrick + ExperimentConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plotting-attack-scorer-outputs-with-seaborn">Plotting attack/scorer outputs with Seaborn</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#seaborn-support">Seaborn Support</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
 </ul>
@@ -196,6 +200,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#yellowbrick-examples-smoke-tested">Yellowbrick Examples (Smoke-Tested)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#yellowbrick-experimentconfig">Yellowbrick + ExperimentConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#plotting-attack-scorer-outputs-with-seaborn">Plotting attack/scorer outputs with Seaborn</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#seaborn-support">Seaborn Support</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
 </ul>
@@ -217,6 +222,14 @@
 <li class="toctree-l2"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Extensions:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="anjana.html">Anjana Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 
         </div>
@@ -387,8 +400,7 @@ to determine the data source, then creates the appropriate plot config.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="deckard.plot.SurvivalSeabornPlotConfigList.add_model_plots">
 <span class="sig-name descname"><span class="pre">add_model_plots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.35</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/survival.html#SurvivalSeabornPlotConfigList.add_model_plots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.SurvivalSeabornPlotConfigList.add_model_plots" title="Link to this definition"></a></dt>
-<dd><p>Add plots for a single model variant.</p>
-<dl class="field-list simple">
+<dd><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
 </dd>
@@ -402,8 +414,8 @@ to determine the data source, then creates the appropriate plot config.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="deckard.plot.SurvivalSeabornPlotConfigList.orchestrate_survival_models">
-<span class="sig-name descname"><span class="pre">orchestrate_survival_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dummy_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/survival.html#SurvivalSeabornPlotConfigList.orchestrate_survival_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.SurvivalSeabornPlotConfigList.orchestrate_survival_models" title="Link to this definition"></a></dt>
-<dd><p>Orchestrate all survival model experiments: fit, plot, collect results.</p>
+<span class="sig-name descname"><span class="pre">orchestrate_survival_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">survival_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dummy_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/survival.html#SurvivalSeabornPlotConfigList.orchestrate_survival_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.SurvivalSeabornPlotConfigList.orchestrate_survival_models" title="Link to this definition"></a></dt>
+<dd><p>Backward-compatible alias for multi-model survival rendering.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span></p>
@@ -419,8 +431,7 @@ to determine the data source, then creates the appropriate plot config.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="deckard.plot.SurvivalSeabornPlotConfigList.render_all">
 <span class="sig-name descname"><span class="pre">render_all</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/survival.html#SurvivalSeabornPlotConfigList.render_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.SurvivalSeabornPlotConfigList.render_all" title="Link to this definition"></a></dt>
-<dd><p>Render all collected plots and return results.</p>
-<dl class="field-list simple">
+<dd><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span></p>
 </dd>
@@ -503,6 +514,17 @@ to determine the data source, then creates the appropriate plot config.</p>
 <dt class="sig sig-object py" id="deckard.plot.SurvivalSeabornPlotterConfig.plot_summary">
 <span class="sig-name descname"><span class="pre">plot_summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aft</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlabel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylabel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacement_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dummy_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filetype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.pdf'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/survival.html#SurvivalSeabornPlotterConfig.plot_summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.SurvivalSeabornPlotterConfig.plot_summary" title="Link to this definition"></a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.plot.SurvivalSeabornPlotterConfig.run_survival_model_experiment">
+<span class="sig-name descname"><span class="pre">run_survival_model_experiment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dummy_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/survival.html#SurvivalSeabornPlotterConfig.run_survival_model_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.SurvivalSeabornPlotterConfig.run_survival_model_experiment" title="Link to this definition"></a></dt>
+<dd><p>Backward-compatible alias for single-model survival rendering.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -651,31 +673,9 @@ the plot again.</p>
 <dd><p>Bases: <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
 <p>Container for multiple survival model plots from SurvivalSeabornPlotterConfig.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="deckard.plot.survival.SurvivalSeabornPlotConfigList.add_model_plots">
-<span class="sig-name descname"><span class="pre">add_model_plots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.35</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/survival.html#SurvivalSeabornPlotConfigList.add_model_plots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.survival.SurvivalSeabornPlotConfigList.add_model_plots" title="Link to this definition"></a></dt>
-<dd><p>Add plots for a single model variant.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="deckard.plot.survival.SurvivalSeabornPlotConfigList.orchestrate_survival_models">
-<span class="sig-name descname"><span class="pre">orchestrate_survival_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dummy_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/survival.html#SurvivalSeabornPlotConfigList.orchestrate_survival_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.survival.SurvivalSeabornPlotConfigList.orchestrate_survival_models" title="Link to this definition"></a></dt>
-<dd><p>Orchestrate all survival model experiments: fit, plot, collect results.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="deckard.plot.survival.SurvivalSeabornPlotConfigList.render_all">
-<span class="sig-name descname"><span class="pre">render_all</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/survival.html#SurvivalSeabornPlotConfigList.render_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.survival.SurvivalSeabornPlotConfigList.render_all" title="Link to this definition"></a></dt>
-<dd><p>Render all collected plots and return results.</p>
+<span class="sig-name descname"><span class="pre">orchestrate_survival_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">survival_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dummy_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/survival.html#SurvivalSeabornPlotConfigList.orchestrate_survival_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.survival.SurvivalSeabornPlotConfigList.orchestrate_survival_models" title="Link to this definition"></a></dt>
+<dd><p>Backward-compatible alias for multi-model survival rendering.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span></p>
@@ -690,6 +690,17 @@ the plot again.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.plot.survival.</span></span><span class="sig-name descname"><span class="pre">SurvivalSeabornPlotterConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coefficients_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_file=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coefficients_title='Covariate</span> <span class="pre">P-values'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_title='Survival</span> <span class="pre">Calibration'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/survival.html#SurvivalSeabornPlotterConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.survival.SurvivalSeabornPlotterConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
 <p>Factory for seaborn plot configs commonly used in survival model reporting.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.plot.survival.SurvivalSeabornPlotterConfig.run_survival_model_experiment">
+<span class="sig-name descname"><span class="pre">run_survival_model_experiment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dummy_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/survival.html#SurvivalSeabornPlotterConfig.run_survival_model_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.survival.SurvivalSeabornPlotterConfig.run_survival_model_experiment" title="Link to this definition"></a></dt>
+<dd><p>Backward-compatible alias for single-model survival rendering.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <p id="module-deckard.plot.yellowbrick_plots">Yellowbrick plotting configs built on top of prepared experiment state.</p>
@@ -754,6 +765,8 @@ Hydra’s <code class="docutils literal notranslate"><span class="pre">plot=&lt;
 <li><p><code class="docutils literal notranslate"><span class="pre">plot=class_balance</span></code> (<code class="docutils literal notranslate"><span class="pre">class_balance.yaml</span></code>)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">plot=feature_importances</span></code> / <code class="docutils literal notranslate"><span class="pre">plot=feature_correlation</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">plot=learning_curve</span></code> / <code class="docutils literal notranslate"><span class="pre">plot=validation_curve</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plot=confusion_matrix</span></code> / <code class="docutils literal notranslate"><span class="pre">plot=discrimination_threshold</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plot=residuals</span></code> / <code class="docutils literal notranslate"><span class="pre">plot=prediction_error</span></code></p></li>
 </ul>
 <p>Example commands:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># ROC-AUC visualization</span>
@@ -826,6 +839,34 @@ the expected shape:</p>
 supported in the Yellowbrick plotting path. Yellowbrick plots operate on model
 and dataset experiment outputs; attack-specific plots should be treated as a
 future extension.</p>
+</section>
+<section id="plotting-attack-scorer-outputs-with-seaborn">
+<h3>Plotting attack/scorer outputs with Seaborn<a class="headerlink" href="#plotting-attack-scorer-outputs-with-seaborn" title="Link to this heading"></a></h3>
+<p>Attack, fairness, and custom scorer outputs are best visualized through the
+Seaborn backend using the score artifact generated by an experiment run.</p>
+<p>Multi-attack runs can include both unsuffixed and alias-suffixed metric keys,
+for example <code class="docutils literal notranslate"><span class="pre">evasion_accuracy</span></code> and <code class="docutils literal notranslate"><span class="pre">evasion_accuracy_hsj</span></code>. These can be
+plotted directly as separate series.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">seaborn</span>
+<span class="nt">plot_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">line</span>
+<span class="nt">data_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">outputs/scores.csv</span>
+<span class="nt">x</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">run_id</span>
+<span class="nt">y</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">evasion_accuracy</span>
+<span class="nt">hue</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">attack_alias</span>
+<span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Evasion Accuracy By Attack</span>
+<span class="nt">plot_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">plots/evasion_accuracy_by_attack.png</span>
+</pre></div>
+</div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">seaborn</span>
+<span class="nt">plot_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scatter</span>
+<span class="nt">data_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">outputs/scores.csv</span>
+<span class="nt">x</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">accuracy</span>
+<span class="nt">y</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">evasion_accuracy_hsj</span>
+<span class="nt">hue</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">defense_alias</span>
+<span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Benign vs HSJ Accuracy</span>
+<span class="nt">plot_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">plots/benign_vs_hsj_accuracy.png</span>
+</pre></div>
+</div>
 </section>
 <section id="seaborn-support">
 <h3>Seaborn Support<a class="headerlink" href="#seaborn-support" title="Link to this heading"></a></h3>

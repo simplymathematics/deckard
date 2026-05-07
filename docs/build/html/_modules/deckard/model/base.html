@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../data.html">Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../model.html">Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../detector.html">Detector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../score.html">Score</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../plot.html">Plot</a></li>
@@ -52,6 +53,14 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../file.html">File</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Extensions:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../anjana.html">Anjana Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 
         </div>
@@ -121,7 +130,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">art.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">ART_NUMPY_DTYPE</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..score.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScorerDictConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..score.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScorerDictConfig</span><span class="p">,</span> <span class="n">coerce_scorer_config</span> <span class="k">as</span> <span class="n">_coerce_scorer_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigBase</span><span class="p">,</span> <span class="n">load_class</span><span class="p">,</span> <span class="n">round_scores</span>
 
 <span class="n">art_model_types</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
@@ -330,24 +339,14 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">{</span>
-            <span class="s2">&quot;none&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;null&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;n/a&quot;</span><span class="p">,</span>
-        <span class="p">}:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">{</span>
-            <span class="n">AUTO_SCORER</span><span class="p">,</span>
-            <span class="s2">&quot;default&quot;</span><span class="p">,</span>
-        <span class="p">}:</span>
-            <span class="n">scorer_cls</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span> <span class="o">=</span> <span class="n">_coerce_scorer_config</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="p">,</span>
+            <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">load_class</span><span class="p">(</span>
                 <span class="s2">&quot;deckard.score.base.DefaultClassifierConfig&quot;</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span>
                 <span class="k">else</span> <span class="s2">&quot;deckard.score.base.DefaultRegressorConfig&quot;</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span> <span class="o">=</span> <span class="n">load_class</span><span class="p">(</span><span class="n">scorer_cls</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">)):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span> <span class="o">=</span> <span class="n">ScorerDictConfig</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="p">)</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -371,7 +370,7 @@
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="s2">&quot;predict_proba&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">probability</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_instantiate_plugin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin_spec</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
@@ -451,7 +450,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_defense_pipeline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defense</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_defense_pipeline</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_art_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_art_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
 
         <span class="n">art_class</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">classifier_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model_type</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
@@ -471,7 +470,7 @@
 
 <div class="viewcode-block" id="ModelConfig.get_art_model">
 <a class="viewcode-back" href="../../../package.html#deckard.model.ModelConfig.get_art_model">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_art_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">DataConfig</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_art_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="s2">&quot;DataConfig&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the ART model estimator.</span>
 
 <span class="sd">        Parameters</span>
@@ -1157,8 +1156,7 @@
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">test_probabilities_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">probabilities</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">save_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">probabilities</span><span class="p">,</span> <span class="n">test_probabilities_file</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">score_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">save_scores</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">,</span> <span class="n">score_file</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merge_and_persist_scores</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="p">,</span> <span class="n">score_file</span><span class="p">)</span>
         <span class="n">hook_outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_plugin_hook</span><span class="p">(</span>
             <span class="s2">&quot;after_persist&quot;</span><span class="p">,</span>
             <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>

@@ -47,6 +47,7 @@
 <li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="detector.html">Detector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot.html">Plot</a></li>
@@ -54,6 +55,14 @@
 <li class="toctree-l1"><a class="reference internal" href="file.html">File</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">deckard</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Extensions:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="anjana.html">Anjana Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 
         </div>
@@ -90,12 +99,12 @@ Use the sections below to explore the different modules.</p>
 <li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="package.html#summary">Summary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="package.html#statement-of-need">Statement Of Need</a></li>
+<li class="toctree-l2"><a class="reference internal" href="package.html#trustworthiness-metrics-defenses">Trustworthiness Metrics &amp; Defenses</a></li>
 <li class="toctree-l2"><a class="reference internal" href="package.html#usage">Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="package.html#experiment-management">Experiment Management</a></li>
 <li class="toctree-l2"><a class="reference internal" href="package.html#reproducibility-and-auditability">Reproducibility And Auditability</a></li>
 <li class="toctree-l2"><a class="reference internal" href="package.html#parallel-and-distributed-design">Parallel And Distributed Design</a></li>
 <li class="toctree-l2"><a class="reference internal" href="package.html#internals-and-architecture">Internals And Architecture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="package.html#trustworthiness-metrics-defenses">Trustworthiness Metrics &amp; Defenses</a></li>
 <li class="toctree-l2"><a class="reference internal" href="package.html#extensions-and-optional-backends">Extensions And Optional Backends</a></li>
 <li class="toctree-l2"><a class="reference internal" href="package.html#troubleshooting">Troubleshooting</a></li>
 </ul>
@@ -140,37 +149,66 @@ Use the sections below to explore the different modules.</p>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="attack.html">Attack</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="attack.html#deckard.attack.AttackConfig"><code class="docutils literal notranslate"><span class="pre">AttackConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="attack.html#deckard.attack.PytorchAttackConfig"><code class="docutils literal notranslate"><span class="pre">PytorchAttackConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html#deckard.attack.SensitiveFeaturesWrapper"><code class="docutils literal notranslate"><span class="pre">SensitiveFeaturesWrapper</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html#supported-attacks">Supported Attacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="attack.html#preset-catalog-examples-sklearn">Preset Catalog (examples/sklearn)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="attack.html#attack-types-and-metrics">Attack Types And Metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html#usage">Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html#internals">Internals</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="detector.html">Detector</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="detector.html#deckard.detector.DetectorConfig"><code class="docutils literal notranslate"><span class="pre">DetectorConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="detector.html#deckard.detector.DetectorScorerConfig"><code class="docutils literal notranslate"><span class="pre">DetectorScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="detector.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="detector.html#supported-detector-families">Supported detector families</a></li>
+<li class="toctree-l2"><a class="reference internal" href="detector.html#configuration-examples">Configuration examples</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="score.html">Score</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.AttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">AttackScorerConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultAnjanaDataScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAnjanaDataScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultAnjanaModelScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAnjanaModelScoreConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultAnjanaScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAnjanaScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultAttributeInferenceAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceAttackScorerConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultAttributeInferenceRegressionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceRegressionAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultAttributeInferenceScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultAttributeInferenceScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultClassifierConfig"><code class="docutils literal notranslate"><span class="pre">DefaultClassifierConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultDataClassificationConfig"><code class="docutils literal notranslate"><span class="pre">DefaultDataClassificationConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultDataRegressionConfig"><code class="docutils literal notranslate"><span class="pre">DefaultDataRegressionConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultDataScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultDataScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultEvasionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultEvasionAttackScorerConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultEvasionRegressionAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultEvasionRegressionAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultEvasionScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultEvasionScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultFairlearnClassificationConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnClassificationConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultFairlearnConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultFairlearnRegressionConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnRegressionConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultFairlearnScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultFairlearnScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultLifelinesConfig"><code class="docutils literal notranslate"><span class="pre">DefaultLifelinesConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultMembershipInferenceAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">DefaultMembershipInferenceAttackScorerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultMembershipInferenceScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultMembershipInferenceScoreConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultModelScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultModelScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultPytorchClassifierConfig"><code class="docutils literal notranslate"><span class="pre">DefaultPytorchClassifierConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultPytorchRegressorConfig"><code class="docutils literal notranslate"><span class="pre">DefaultPytorchRegressorConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultPytorchScoreConfig"><code class="docutils literal notranslate"><span class="pre">DefaultPytorchScoreConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultRegressorConfig"><code class="docutils literal notranslate"><span class="pre">DefaultRegressorConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.FairlearnAttackScorerConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnAttackScorerConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.FairlearnScoreDictConfig"><code class="docutils literal notranslate"><span class="pre">FairlearnScoreDictConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.ScorerConfig"><code class="docutils literal notranslate"><span class="pre">ScorerConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.ScorerDictConfig"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.anjana_k_anonymity_score"><code class="docutils literal notranslate"><span class="pre">anjana_k_anonymity_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.anjana_l_diversity_score"><code class="docutils literal notranslate"><span class="pre">anjana_l_diversity_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.anjana_t_closeness_score"><code class="docutils literal notranslate"><span class="pre">anjana_t_closeness_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.data_class_count_max_score"><code class="docutils literal notranslate"><span class="pre">data_class_count_max_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.data_class_count_min_score"><code class="docutils literal notranslate"><span class="pre">data_class_count_min_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.data_class_imbalance_ratio_score"><code class="docutils literal notranslate"><span class="pre">data_class_imbalance_ratio_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.data_empirical_cdf_function_score"><code class="docutils literal notranslate"><span class="pre">data_empirical_cdf_function_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.data_mutual_information_max_score"><code class="docutils literal notranslate"><span class="pre">data_mutual_information_max_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.data_mutual_information_mean_score"><code class="docutils literal notranslate"><span class="pre">data_mutual_information_mean_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.data_num_classes_score"><code class="docutils literal notranslate"><span class="pre">data_num_classes_score()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.fairness_demographic_parity_difference"><code class="docutils literal notranslate"><span class="pre">fairness_demographic_parity_difference()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.fairness_equalized_odds_difference"><code class="docutils literal notranslate"><span class="pre">fairness_equalized_odds_difference()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.fairness_group_mae_difference"><code class="docutils literal notranslate"><span class="pre">fairness_group_mae_difference()</span></code></a></li>
@@ -213,6 +251,7 @@ Use the sections below to explore the different modules.</p>
 <li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.optimize_main"><code class="docutils literal notranslate"><span class="pre">optimize_main()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.plot_main"><code class="docutils literal notranslate"><span class="pre">plot_main()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.progress_bar_main"><code class="docutils literal notranslate"><span class="pre">progress_bar_main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.rerun_failed_studies_main"><code class="docutils literal notranslate"><span class="pre">rerun_failed_studies_main()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.survival_main"><code class="docutils literal notranslate"><span class="pre">survival_main()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html#usage">Usage</a></li>
@@ -235,14 +274,22 @@ Use the sections below to explore the different modules.</p>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.create_parser_from_function"><code class="docutils literal notranslate"><span class="pre">create_parser_from_function()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.hash_conf_values"><code class="docutils literal notranslate"><span class="pre">hash_conf_values()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.import_class_from_file"><code class="docutils literal notranslate"><span class="pre">import_class_from_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.instantiate_config"><code class="docutils literal notranslate"><span class="pre">instantiate_config()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.is_default_config_value"><code class="docutils literal notranslate"><span class="pre">is_default_config_value()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.is_null_config_value"><code class="docutils literal notranslate"><span class="pre">is_null_config_value()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.load_class"><code class="docutils literal notranslate"><span class="pre">load_class()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.load_data"><code class="docutils literal notranslate"><span class="pre">load_data()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.merge_list_of_dicts"><code class="docutils literal notranslate"><span class="pre">merge_list_of_dicts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.merge_scores_with_collision_suffix"><code class="docutils literal notranslate"><span class="pre">merge_scores_with_collision_suffix()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.normalize_config_token"><code class="docutils literal notranslate"><span class="pre">normalize_config_token()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.normalize_for_hash"><code class="docutils literal notranslate"><span class="pre">normalize_for_hash()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.normalize_hydra_list_overrides"><code class="docutils literal notranslate"><span class="pre">normalize_hydra_list_overrides()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.prepare_instantiation_dict"><code class="docutils literal notranslate"><span class="pre">prepare_instantiation_dict()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.resolve_class"><code class="docutils literal notranslate"><span class="pre">resolve_class()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.round_scores"><code class="docutils literal notranslate"><span class="pre">round_scores()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.safe_store"><code class="docutils literal notranslate"><span class="pre">safe_store()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.save_data"><code class="docutils literal notranslate"><span class="pre">save_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.split_comma_separated_tokens"><code class="docutils literal notranslate"><span class="pre">split_comma_separated_tokens()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#usage">Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#internals">Internals</a></li>
@@ -264,6 +311,36 @@ Use the sections below to explore the different modules.</p>
 <li class="toctree-l2"><a class="reference internal" href="lifelines.html">Lifelines Integration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="seaborn.html">Seaborn Visualization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Extensions:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pytorch.html">PyTorch Integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pytorch.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch.html#usage">Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="lifelines.html">Lifelines Integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lifelines.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifelines.html#usage">Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="anjana.html">Anjana Integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="anjana.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="anjana.html#usage">Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="seaborn.html">Seaborn Visualization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="seaborn.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seaborn.html#usage">Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="yellowbrick.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="yellowbrick.html#usage">Usage</a></li>
 </ul>
 </li>
 </ul>

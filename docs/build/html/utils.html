@@ -48,6 +48,7 @@
 <li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="attack.html">Attack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="detector.html">Detector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot.html">Plot</a></li>
@@ -55,12 +56,14 @@
 <li class="toctree-l1"><a class="reference internal" href="file.html">File</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Utils</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.utils.ConfigBase"><code class="docutils literal notranslate"><span class="pre">ConfigBase</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.ConfigBase.coerce_component"><code class="docutils literal notranslate"><span class="pre">ConfigBase.coerce_component()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.ConfigBase.from_dict"><code class="docutils literal notranslate"><span class="pre">ConfigBase.from_dict()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.ConfigBase.from_yaml"><code class="docutils literal notranslate"><span class="pre">ConfigBase.from_yaml()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.ConfigBase.get_call_params"><code class="docutils literal notranslate"><span class="pre">ConfigBase.get_call_params()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.ConfigBase.load"><code class="docutils literal notranslate"><span class="pre">ConfigBase.load()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.ConfigBase.load_object"><code class="docutils literal notranslate"><span class="pre">ConfigBase.load_object()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.ConfigBase.load_scores"><code class="docutils literal notranslate"><span class="pre">ConfigBase.load_scores()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.ConfigBase.merge_and_persist_scores"><code class="docutils literal notranslate"><span class="pre">ConfigBase.merge_and_persist_scores()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.ConfigBase.read_or_initialize_scores"><code class="docutils literal notranslate"><span class="pre">ConfigBase.read_or_initialize_scores()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.ConfigBase.save"><code class="docutils literal notranslate"><span class="pre">ConfigBase.save()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.ConfigBase.save_object"><code class="docutils literal notranslate"><span class="pre">ConfigBase.save_object()</span></code></a></li>
@@ -74,14 +77,22 @@
 <li class="toctree-l2"><a class="reference internal" href="#deckard.utils.create_parser_from_function"><code class="docutils literal notranslate"><span class="pre">create_parser_from_function()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.utils.hash_conf_values"><code class="docutils literal notranslate"><span class="pre">hash_conf_values()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.utils.import_class_from_file"><code class="docutils literal notranslate"><span class="pre">import_class_from_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.utils.instantiate_config"><code class="docutils literal notranslate"><span class="pre">instantiate_config()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.utils.is_default_config_value"><code class="docutils literal notranslate"><span class="pre">is_default_config_value()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.utils.is_null_config_value"><code class="docutils literal notranslate"><span class="pre">is_null_config_value()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.utils.load_class"><code class="docutils literal notranslate"><span class="pre">load_class()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.utils.load_data"><code class="docutils literal notranslate"><span class="pre">load_data()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.utils.merge_list_of_dicts"><code class="docutils literal notranslate"><span class="pre">merge_list_of_dicts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.utils.merge_scores_with_collision_suffix"><code class="docutils literal notranslate"><span class="pre">merge_scores_with_collision_suffix()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.utils.normalize_config_token"><code class="docutils literal notranslate"><span class="pre">normalize_config_token()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.utils.normalize_for_hash"><code class="docutils literal notranslate"><span class="pre">normalize_for_hash()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.utils.normalize_hydra_list_overrides"><code class="docutils literal notranslate"><span class="pre">normalize_hydra_list_overrides()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.utils.prepare_instantiation_dict"><code class="docutils literal notranslate"><span class="pre">prepare_instantiation_dict()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.utils.resolve_class"><code class="docutils literal notranslate"><span class="pre">resolve_class()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.utils.round_scores"><code class="docutils literal notranslate"><span class="pre">round_scores()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.utils.safe_store"><code class="docutils literal notranslate"><span class="pre">safe_store()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deckard.utils.save_data"><code class="docutils literal notranslate"><span class="pre">save_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deckard.utils.split_comma_separated_tokens"><code class="docutils literal notranslate"><span class="pre">split_comma_separated_tokens()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
@@ -105,12 +116,14 @@
 <li class="toctree-l2"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Utils</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.ConfigBase"><code class="docutils literal notranslate"><span class="pre">ConfigBase</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.coerce_component"><code class="docutils literal notranslate"><span class="pre">ConfigBase.coerce_component()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.from_dict"><code class="docutils literal notranslate"><span class="pre">ConfigBase.from_dict()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.from_yaml"><code class="docutils literal notranslate"><span class="pre">ConfigBase.from_yaml()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.get_call_params"><code class="docutils literal notranslate"><span class="pre">ConfigBase.get_call_params()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.load"><code class="docutils literal notranslate"><span class="pre">ConfigBase.load()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.load_object"><code class="docutils literal notranslate"><span class="pre">ConfigBase.load_object()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.load_scores"><code class="docutils literal notranslate"><span class="pre">ConfigBase.load_scores()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.merge_and_persist_scores"><code class="docutils literal notranslate"><span class="pre">ConfigBase.merge_and_persist_scores()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.read_or_initialize_scores"><code class="docutils literal notranslate"><span class="pre">ConfigBase.read_or_initialize_scores()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.save"><code class="docutils literal notranslate"><span class="pre">ConfigBase.save()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.utils.ConfigBase.save_object"><code class="docutils literal notranslate"><span class="pre">ConfigBase.save_object()</span></code></a></li>
@@ -124,14 +137,22 @@
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.create_parser_from_function"><code class="docutils literal notranslate"><span class="pre">create_parser_from_function()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.hash_conf_values"><code class="docutils literal notranslate"><span class="pre">hash_conf_values()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.import_class_from_file"><code class="docutils literal notranslate"><span class="pre">import_class_from_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.instantiate_config"><code class="docutils literal notranslate"><span class="pre">instantiate_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.is_default_config_value"><code class="docutils literal notranslate"><span class="pre">is_default_config_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.is_null_config_value"><code class="docutils literal notranslate"><span class="pre">is_null_config_value()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.load_class"><code class="docutils literal notranslate"><span class="pre">load_class()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.load_data"><code class="docutils literal notranslate"><span class="pre">load_data()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.merge_list_of_dicts"><code class="docutils literal notranslate"><span class="pre">merge_list_of_dicts()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.merge_scores_with_collision_suffix"><code class="docutils literal notranslate"><span class="pre">merge_scores_with_collision_suffix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.normalize_config_token"><code class="docutils literal notranslate"><span class="pre">normalize_config_token()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.normalize_for_hash"><code class="docutils literal notranslate"><span class="pre">normalize_for_hash()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.normalize_hydra_list_overrides"><code class="docutils literal notranslate"><span class="pre">normalize_hydra_list_overrides()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.prepare_instantiation_dict"><code class="docutils literal notranslate"><span class="pre">prepare_instantiation_dict()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.resolve_class"><code class="docutils literal notranslate"><span class="pre">resolve_class()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.round_scores"><code class="docutils literal notranslate"><span class="pre">round_scores()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.safe_store"><code class="docutils literal notranslate"><span class="pre">safe_store()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.utils.save_data"><code class="docutils literal notranslate"><span class="pre">save_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.utils.split_comma_separated_tokens"><code class="docutils literal notranslate"><span class="pre">split_comma_separated_tokens()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
@@ -153,6 +174,14 @@
 <li class="toctree-l2"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Extensions:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pytorch.html">PyTorch Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lifelines.html">Lifelines Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="anjana.html">Anjana Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="seaborn.html">Seaborn Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="yellowbrick.html">Yellowbrick Visualization</a></li>
 </ul>
 
         </div>
@@ -196,6 +225,26 @@ functions for dynamically resolving and instantiating classes.</p>
 <p><code class="docutils literal notranslate"><span class="pre">ConfigBase</span></code> provides a common lifecycle for config dataclasses: argument
 hydration, post-init hooks, stable hashing based on configuration state, and
 serialization helpers used throughout Deckard.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.coerce_component">
+<span class="sig-name descname"><span class="pre">coerce_component</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">component</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_type</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overrides</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_passthrough</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.coerce_component"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.coerce_component" title="Link to this definition"></a></dt>
+<dd><p>Instantiate/normalize a config component to <code class="docutils literal notranslate"><span class="pre">expected_type</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>component</strong> (<em>Any</em>) – Config-like object, runtime object, or expected config instance.</p></li>
+<li><p><strong>expected_type</strong> (<em>type</em>) – The required config class.</p></li>
+<li><p><strong>default_target</strong> (<em>str</em><em>, </em><em>optional</em>) – Hydra target path used when input lacks <code class="docutils literal notranslate"><span class="pre">_target_</span></code>.</p></li>
+<li><p><strong>overrides</strong> (<em>dict</em><em>, </em><em>optional</em>) – Key/value pairs injected into the normalized instantiation spec.</p></li>
+<li><p><strong>allow_passthrough</strong> (<em>callable</em><em>, </em><em>optional</em>) – If provided and returns <code class="docutils literal notranslate"><span class="pre">True</span></code> for <em>component</em>, bypasses coercion.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="deckard.utils.ConfigBase.from_dict">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.from_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.from_dict" title="Link to this definition"></a></dt>
@@ -263,11 +312,15 @@ serialization helpers used throughout Deckard.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="deckard.utils.ConfigBase.load_object">
-<span class="sig-name descname"><span class="pre">load_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.load_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.load_object" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">load_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_corrupt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delete_corrupt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.load_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.load_object" title="Link to this definition"></a></dt>
 <dd><p>Loads a Serializable object from a file using pickle.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – The path to the file from which the object will be loaded.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filepath</strong> (<em>str</em>) – The path to the file from which the object will be loaded.</p></li>
+<li><p><strong>ignore_corrupt</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return None when a known pickle corruption/loading error occurs.</p></li>
+<li><p><strong>delete_corrupt</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True and a known pickle corruption/loading error occurs, delete the file.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The loaded object.</p>
@@ -299,10 +352,26 @@ serialization helpers used throughout Deckard.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="deckard.utils.ConfigBase.merge_and_persist_scores">
+<span class="sig-name descname"><span class="pre">merge_and_persist_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.merge_and_persist_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.merge_and_persist_scores" title="Link to this definition"></a></dt>
+<dd><p>Merge score payload with on-disk scores and persist only when needed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="deckard.utils.ConfigBase.read_or_initialize_scores">
 <span class="sig-name descname"><span class="pre">read_or_initialize_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#ConfigBase.read_or_initialize_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.ConfigBase.read_or_initialize_scores" title="Link to this definition"></a></dt>
 <dd><p>Return merged scores from disk and memory, or initialize output location.</p>
 <p>This is the canonical entrypoint for score-file reads in ConfigBase.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -352,6 +421,9 @@ serialization helpers used throughout Deckard.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – If the file extension is not supported. Supported types are .csv, .json, and .xlsx.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -407,7 +479,7 @@ serialization helpers used throughout Deckard.</p>
 <dd><p>Normalize a <code class="docutils literal notranslate"><span class="pre">list</span></code> or OmegaConf <code class="docutils literal notranslate"><span class="pre">ListConfig</span></code> to a plain Python list.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>items</strong> – A <code class="docutils literal notranslate"><span class="pre">list</span></code> or OmegaConf <code class="docutils literal notranslate"><span class="pre">ListConfig</span></code>.</p>
+<dd class="field-odd"><p><strong>items</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</span>) – A <code class="docutils literal notranslate"><span class="pre">list</span></code> or OmegaConf <code class="docutils literal notranslate"><span class="pre">ListConfig</span></code>.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A plain Python list whose elements are the same objects as <em>items</em>.</p>
@@ -431,7 +503,7 @@ serialization helpers used throughout Deckard.</p>
 <li><p><strong>func</strong> (<em>callable</em>) – The function to create the parser from.</p></li>
 <li><p><strong>parser</strong> (<em>argparse.ArgumentParser</em><em>, </em><em>optional</em>) – An existing parser to add arguments to. If None, a new parser is created.</p></li>
 <li><p><strong>exclude</strong> (<em>list</em><em>, </em><em>optional</em>) – List of parameter names to exclude from the parser.</p></li>
-<li><p><strong>**kwargs</strong> – Additional keyword arguments to pass to the ArgumentParser constructor if a new parser is created.</p></li>
+<li><p><strong>**kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>) – Additional keyword arguments to pass to the ArgumentParser constructor if a new parser is created.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
@@ -465,12 +537,55 @@ serialization helpers used throughout Deckard.</p>
 <dt class="sig sig-object py" id="deckard.utils.import_class_from_file">
 <span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">import_class_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instantiate_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#import_class_from_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.import_class_from_file" title="Link to this definition"></a></dt>
 <dd><p>Import a class from a Python file path and optionally instantiate it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.instantiate_config">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">instantiate_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_type</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#instantiate_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.instantiate_config" title="Link to this definition"></a></dt>
+<dd><p>Instantiate one config object, injecting a default Hydra target when needed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.is_default_config_value">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">is_default_config_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_best</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#is_default_config_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.is_default_config_value" title="Link to this definition"></a></dt>
+<dd><p>Return True when <em>value</em> requests default/auto config behavior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.is_null_config_value">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">is_null_config_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_empty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#is_null_config_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.is_null_config_value" title="Link to this definition"></a></dt>
+<dd><p>Return True when <em>value</em> represents an explicit null-like config token.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="deckard.utils.load_class">
 <span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">load_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#load_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.load_class" title="Link to this definition"></a></dt>
 <dd><p>Instantiate a class from a class object, dotted import path, or file path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -508,7 +623,7 @@ serialization helpers used throughout Deckard.</p>
 before merging.  When two elements share a key, the later element wins.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>items</strong> – An iterable of <code class="docutils literal notranslate"><span class="pre">dict</span></code> / <code class="docutils literal notranslate"><span class="pre">DictConfig</span></code> objects.</p>
+<dd class="field-odd"><p><strong>items</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></span>) – An iterable of <code class="docutils literal notranslate"><span class="pre">dict</span></code> / <code class="docutils literal notranslate"><span class="pre">DictConfig</span></code> objects.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A single merged plain-Python <code class="docutils literal notranslate"><span class="pre">dict</span></code>.</p>
@@ -523,12 +638,74 @@ before merging.  When two elements share a key, the later element wins.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.merge_scores_with_collision_suffix">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">merge_scores_with_collision_suffix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">incoming_scores</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#merge_scores_with_collision_suffix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.merge_scores_with_collision_suffix" title="Link to this definition"></a></dt>
+<dd><p>Merge score dictionaries while preserving existing keys.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span></p>
+</dd>
+</dl>
+<section id="behavior">
+<h2>Behavior<a class="headerlink" href="#behavior" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Non-colliding keys are copied as-is.</p></li>
+<li><p>Colliding keys are only suffixed when <code class="docutils literal notranslate"><span class="pre">alias</span></code> is provided.</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">alias</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>, incoming collisions receive an underscore and an increment (e.g._1 for the 2nd key of the same name).</p></li>
+</ul>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.normalize_config_token">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">normalize_config_token</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#normalize_config_token"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.normalize_config_token" title="Link to this definition"></a></dt>
+<dd><p>Normalize a config token to lower-case text for keyword matching.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="deckard.utils.normalize_for_hash">
 <span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">normalize_for_hash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#normalize_for_hash"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.normalize_for_hash" title="Link to this definition"></a></dt>
 <dd><p>Normalize values for stable hashing.</p>
 <p>Mirrors resolver behavior:
 - Optional key-path lookup when <cite>value</cite> is a string and <cite>root</cite> is provided.
 - OmegaConf nodes resolved to plain Python containers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.normalize_hydra_list_overrides">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">normalize_hydra_list_overrides</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overrides</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('score',)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#normalize_hydra_list_overrides"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.normalize_hydra_list_overrides" title="Link to this definition"></a></dt>
+<dd><p>Rewrite comma-separated Hydra override values into list syntax.</p>
+<p>Example: <code class="docutils literal notranslate"><span class="pre">score=a,b</span></code> becomes <code class="docutils literal notranslate"><span class="pre">score=[a,b]</span></code>.
+Existing bracketed list syntax is preserved unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.prepare_instantiation_dict">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">prepare_instantiation_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_obj</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#prepare_instantiation_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.prepare_instantiation_dict" title="Link to this definition"></a></dt>
+<dd><p>Normalize config-like input into an instantiation dictionary.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">default_target</span></code> is provided and the resulting mapping lacks a
+<code class="docutils literal notranslate"><span class="pre">_target_</span></code> key, the target is injected so Hydra can instantiate the
+canonical config class while still allowing user-specified overrides.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -536,6 +713,11 @@ before merging.  When two elements share a key, the later element wins.</p>
 <span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">resolve_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#resolve_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.resolve_class" title="Link to this definition"></a></dt>
 <dd><p>Resolve a class path into a class object without instantiating it.</p>
 <p>Supports dotted module paths (Hydra-style) and <code class="docutils literal notranslate"><span class="pre">file.py:ClassName</span></code> paths.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -569,6 +751,17 @@ clamped to at least one decimal place.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.utils.split_comma_separated_tokens">
+<span class="sig-prename descclassname"><span class="pre">deckard.utils.</span></span><span class="sig-name descname"><span class="pre">split_comma_separated_tokens</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/utils.html#split_comma_separated_tokens"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.utils.split_comma_separated_tokens" title="Link to this definition"></a></dt>
+<dd><p>Split a comma-separated string into trimmed, non-empty tokens.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span></p>
 </dd>
 </dl>
 </dd></dl>
