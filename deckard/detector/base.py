@@ -5,10 +5,36 @@ from typing import Any, Union
 
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 from ..model import ModelConfig
+from ..score.base import (
+    DefaultModelScoreConfig,
+    ScorerDictConfig,
+    _TaskAwareScorerMixin,
+    coerce_scorer_config,
+)
 from ..utils import ConfigBase, coerce_config, resolve_class
+
+
+@dataclass(eq=False)
+class DetectorScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
+    """Task-aware scorer config for detector outputs."""
+
+    classifier: Union[bool, str, None] = None
+    scorers: dict = field(default_factory=dict)
+
+    def _build_default_scorers(self, classifier: bool) -> dict:
+        shared_defaults = DefaultModelScoreConfig(classifier=classifier).scorers
+        if classifier:
+            # Detector scoring uses class-label outputs; keep the label metrics subset.
+            keys = ("accuracy", "precision", "recall", "f1")
+            return {k: shared_defaults[k] for k in keys if k in shared_defaults}
+        keys = ("mse", "mae", "r2")
+        return {k: shared_defaults[k] for k in keys if k in shared_defaults}
+
+    def __post_init__(self):
+        self._initialize_task_aware_scorers(default=True)
+        super().__post_init__()
 
 
 @dataclass(eq=False)
@@ -19,6 +45,7 @@ class DetectorConfig(ConfigBase):
     detector_params: dict = field(default_factory=dict)
     fit_params: dict = field(default_factory=dict)
     detector_model: Union[ModelConfig, dict, str, None] = None
+    scorer: Union[DetectorScorerConfig, ScorerDictConfig, dict, None] = None
     alias: str = field(default_factory=str)
 
     detector: Union[object, None] = None
@@ -34,6 +61,7 @@ class DetectorConfig(ConfigBase):
         self.fit_params = self.fit_params or {}
         self.score_dict = self.score_dict or {}
         self.detector_model = self._coerce_detector_model(self.detector_model)
+        self.scorer = self._coerce_scorer(self.scorer)
 
     def _coerce_detector_model(self, value):
         if value is None:
@@ -55,6 +83,18 @@ class DetectorConfig(ConfigBase):
         if hasattr(value, "detach") and hasattr(value, "cpu"):
             value = value.detach().cpu().numpy()
         return np.asarray(value)
+
+    @staticmethod
+    def _coerce_scorer(value):
+        scorer = coerce_scorer_config(
+            value,
+            default_factory=lambda: DetectorScorerConfig(classifier=True),
+        )
+        if scorer is None:
+            return DetectorScorerConfig(classifier=True)
+        if isinstance(scorer, ScorerDictConfig):
+            return scorer
+        raise TypeError(f"Unsupported detector scorer type: {type(value)}")
 
     def _build_detector_dataset(self, data, attack):
         if attack is None:
@@ -173,14 +213,22 @@ class DetectorConfig(ConfigBase):
         y_true = y.reshape(-1).astype(int)
 
         self.detector = detector
+        metric_scores = self.scorer(
+            mode=None,
+            y_true=y_true,
+            y_pred=y_pred,
+            data=data,
+            model=model,
+            attack=attack,
+        )
+        prefixed_scores = {}
+        for key, value in metric_scores.items():
+            score_key = key if str(key).startswith("detector_") else f"detector_{key}"
+            prefixed_scores[score_key] = float(value)
+
         self.score_dict = {
             **self.score_dict,
-            "detector_accuracy": float(accuracy_score(y_true, y_pred)),
-            "detector_precision": float(
-                precision_score(y_true, y_pred, zero_division=0),
-            ),
-            "detector_recall": float(recall_score(y_true, y_pred, zero_division=0)),
-            "detector_f1": float(f1_score(y_true, y_pred, zero_division=0)),
+            **prefixed_scores,
             "detector_n": int(len(y_true)),
             "detector_clean_n": int(n),
             "detector_adversarial_n": int(n),

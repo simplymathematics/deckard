@@ -466,7 +466,6 @@ def test_cli_score_chain_without_model_or_attack_sklearn():
             "+data.sensitive_attribute=target",
             "+data.sensitive_columns=[feature_0]",
             "~score",
-            "+score@score.data=data-classification",
             "+score@score.data=anjana",
             "~model",
             "~defense",
@@ -481,7 +480,6 @@ def test_cli_score_chain_without_model_or_attack_sklearn():
         ],
     )
 
-    assert "num_classes" in scores
     _assert_anjana_privacy_scores(scores)
 
 
@@ -538,7 +536,6 @@ def test_cli_score_chain_data_anjana_evasion_sklearn():
             "+data.sensitive_attribute=target",
             "+data.sensitive_columns=[feature_0]",
             "~score",
-            "+score@score.data=data-classification",
             "+score@score.data=anjana",
             "+score@score.attack=evasion-classification",
             f"experiment_name={experiment_name}",
@@ -546,7 +543,6 @@ def test_cli_score_chain_data_anjana_evasion_sklearn():
         timeout=420,
     )
 
-    assert "num_classes" in scores
     assert "evasion_accuracy" in scores
     _assert_anjana_privacy_scores(scores)
 

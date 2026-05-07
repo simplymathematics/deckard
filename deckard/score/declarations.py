@@ -2,24 +2,24 @@
 
 from pathlib import Path
 from omegaconf import OmegaConf
-from .base import DefaultClassifierConfig, DefaultRegressorConfig, safe_store
-from .data import DefaultDataClassificationConfig, DefaultDataRegressionConfig
+from .base import DefaultModelScoreConfig, safe_store
+from .data import DefaultDataScoreConfig
 
 
 class DefaultClassifierDict:
-    scorers = DefaultClassifierConfig()
+    scorers = DefaultModelScoreConfig(classifier=True)
 
 
 class DefaultRegressorDict:
-    scorers = DefaultRegressorConfig()
+    scorers = DefaultModelScoreConfig(classifier=False)
 
 
 class DefaultDataClassificationDict:
-    scorers = DefaultDataClassificationConfig()
+    scorers = DefaultDataScoreConfig(classifier=True)
 
 
 class DefaultDataRegressionDict:
-    scorers = DefaultDataRegressionConfig()
+    scorers = DefaultDataScoreConfig(classifier=False)
 
 
 def _load_example_score_configs():

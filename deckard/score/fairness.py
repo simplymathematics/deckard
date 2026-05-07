@@ -21,7 +21,13 @@ except ImportError:  # pragma: no cover
     demographic_parity_difference = None
     equalized_odds_difference = None
 
-from .base import ScorerConfig, ScorerDictConfig, _resolve_yt_yp, safe_store
+from .base import (
+    ScorerConfig,
+    ScorerDictConfig,
+    _TaskAwareScorerMixin,
+    _resolve_yt_yp,
+    safe_store,
+)
 from ..utils import coerce_to_list, merge_list_of_dicts
 
 __all__ = [
@@ -32,6 +38,7 @@ __all__ = [
     "fairness_group_mae_difference",
     "fairness_group_mse_difference",
     "FairlearnScoreDictConfig",
+    "DefaultFairlearnScoreConfig",
     "DefaultFairlearnClassificationConfig",
     "DefaultFairlearnRegressionConfig",
     "DefaultFairlearnConfig",
@@ -499,31 +506,27 @@ def fairness_group_mse_difference(
 
 
 @dataclass(eq=False)
-class DefaultFairlearnClassificationConfig(FairlearnScoreDictConfig):
-    """Default scorer set for classification fairness workflows."""
+class DefaultFairlearnScoreConfig(_TaskAwareScorerMixin, FairlearnScoreDictConfig):
+    """Default fairness scorer family with optional task inheritance."""
 
-    scorers: Dict[str, Union[ScorerConfig, Dict[str, Any]]] = field(
-        default_factory=lambda: {
-            "demographic_parity_difference": ScorerConfig(
-                score_name="demographic_parity_difference",
-                score_function="deckard.score.fairness.fairness_demographic_parity_difference",
-                greater_is_better=False,
-            ),
-            "equalized_odds_difference": ScorerConfig(
-                score_name="equalized_odds_difference",
-                score_function="deckard.score.fairness.fairness_equalized_odds_difference",
-                greater_is_better=False,
-            ),
-        },
-    )
+    classifier: Union[bool, str, None] = None
+    scorers: Dict[str, Union[ScorerConfig, Dict[str, Any]]] = field(default_factory=dict)
 
-
-@dataclass(eq=False)
-class DefaultFairlearnRegressionConfig(FairlearnScoreDictConfig):
-    """Default scorer set for regression fairness workflows."""
-
-    scorers: Dict[str, Union[ScorerConfig, Dict[str, Any]]] = field(
-        default_factory=lambda: {
+    def _build_default_scorers(self, classifier: bool) -> Dict[str, Union[ScorerConfig, Dict[str, Any]]]:
+        if classifier:
+            return {
+                "demographic_parity_difference": ScorerConfig(
+                    score_name="demographic_parity_difference",
+                    score_function="deckard.score.fairness.fairness_demographic_parity_difference",
+                    greater_is_better=False,
+                ),
+                "equalized_odds_difference": ScorerConfig(
+                    score_name="equalized_odds_difference",
+                    score_function="deckard.score.fairness.fairness_equalized_odds_difference",
+                    greater_is_better=False,
+                ),
+            }
+        return {
             "group_mean_prediction_difference": ScorerConfig(
                 score_name="group_mean_prediction_difference",
                 score_function="deckard.score.fairness.fairness_group_mean_prediction_difference",
@@ -539,20 +542,37 @@ class DefaultFairlearnRegressionConfig(FairlearnScoreDictConfig):
                 score_function="deckard.score.fairness.fairness_group_mse_difference",
                 greater_is_better=False,
             ),
-        },
-    )
+        }
+
+    def __post_init__(self):
+        self._initialize_task_aware_scorers(default=True)
+        super().__post_init__()
 
 
-DefaultFairlearnConfig = DefaultFairlearnClassificationConfig
+@dataclass(eq=False)
+class DefaultFairlearnClassificationConfig(DefaultFairlearnScoreConfig):
+    """Default scorer set for classification fairness workflows."""
+
+    classifier: Union[bool, str, None] = True
+
+
+@dataclass(eq=False)
+class DefaultFairlearnRegressionConfig(DefaultFairlearnScoreConfig):
+    """Default scorer set for regression fairness workflows."""
+
+    classifier: Union[bool, str, None] = False
+
+
+DefaultFairlearnConfig = DefaultFairlearnScoreConfig
 
 
 safe_store(
     group="score",
     name="fairlearn-classification",
-    node=DefaultFairlearnClassificationConfig,
+    node={"_target_": "deckard.score.fairness.DefaultFairlearnScoreConfig", "classifier": True},
 )
 safe_store(
     group="score",
     name="fairlearn-regression",
-    node=DefaultFairlearnRegressionConfig,
+    node={"_target_": "deckard.score.fairness.DefaultFairlearnScoreConfig", "classifier": False},
 )

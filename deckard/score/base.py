@@ -45,6 +45,101 @@ class _AttackProfileScorer:
     _profile_attr: str = "evasion"
 
 
+def _normalize_classifier_flag(classifier):
+    """Normalize classifier/regressor aliases to ``True`` / ``False`` / ``None``."""
+    if classifier in ["classifier", True]:
+        return True
+    if classifier in ["regressor", False]:
+        return False
+    return None
+
+
+class _TaskAwareScorerMixin:
+    """Mixin for scorer configs whose defaults depend on task type.
+
+    API
+    ---
+    ``classifier``
+        Optional explicit task selector. Accepted values are ``True``, ``False``,
+        ``"classifier"``, ``"regressor"``, or ``None``.
+
+    ``resolve_classifier(...)``
+        Resolve the effective task from explicit config first, then runtime
+        attack/model/data context, finally a caller-supplied default.
+
+    ``_build_default_scorers(classifier)``
+        Subclasses must return the default scorer mapping for the resolved task.
+
+    ``_initialize_task_aware_scorers()``
+        Populate ``self.scorers`` from ``_build_default_scorers`` when the user
+        did not provide an explicit scorer mapping.
+    """
+
+    classifier: Union[bool, str, None] = None
+
+    def _normalize_classifier(self) -> None:
+        self.classifier = _normalize_classifier_flag(getattr(self, "classifier", None))
+
+    def resolve_classifier(
+        self,
+        *,
+        data=None,
+        model=None,
+        attack=None,
+        default: Union[bool, None] = None,
+    ) -> bool:
+        """Resolve the effective task type for this scorer config.
+
+        Precedence is:
+        1. explicit ``self.classifier``
+        2. attack-derived runtime context
+        3. ``model.classifier``
+        4. ``data.classifier``
+        5. explicit ``default``
+        """
+        explicit = _normalize_classifier_flag(getattr(self, "classifier", None))
+        if explicit is not None:
+            return explicit
+
+        if attack is not None:
+            attack_classifier = _normalize_classifier_flag(
+                getattr(attack, "classifier", None),
+            )
+            if attack_classifier is not None:
+                return attack_classifier
+            if hasattr(attack, "_is_continuous"):
+                return not bool(getattr(attack, "_is_continuous"))
+
+        model_classifier = _normalize_classifier_flag(
+            getattr(model, "classifier", None),
+        )
+        if model_classifier is not None:
+            return model_classifier
+
+        data_classifier = _normalize_classifier_flag(
+            getattr(data, "classifier", None),
+        )
+        if data_classifier is not None:
+            return data_classifier
+
+        if default is not None:
+            return default
+        raise ValueError(
+            "Unable to resolve classifier/regression task for scorer config; "
+            "set classifier explicitly or provide model/data/attack context.",
+        )
+
+    def _build_default_scorers(self, classifier: bool) -> Dict[str, "ScorerConfig"]:
+        raise NotImplementedError()
+
+    def _initialize_task_aware_scorers(self, *, default: Union[bool, None] = None) -> None:
+        self._normalize_classifier()
+        if getattr(self, "scorers", None):
+            return
+        classifier = self.resolve_classifier(default=default)
+        self.scorers = self._build_default_scorers(classifier=classifier)
+
+
 def _resolve_yt_yp(mode, data, model, attack, y_pred, y_true):
     """Resolve y_true and y_pred from mode + context when not explicitly provided.
 
@@ -469,7 +564,22 @@ def coerce_scorer_config(scorer_obj, *, default_factory=None):
             # Preserve concrete type info (e.g. _DataScorerMarker, _AttackProfileScorer)
             return instantiate(scorer_obj)
         if "scorers" in scorer_obj:
-            return ScorerDictConfig(**scorer_obj)
+            try:
+                return ScorerDictConfig(**scorer_obj)
+            except TypeError:
+                # Some structured task-aware scorer objects may be converted to
+                # dicts without `_target_` (e.g. contain `classifier` + `scorers`).
+                # In that case keep the scorer payload and drop task metadata.
+                fallback = dict(scorer_obj)
+                fallback.pop("classifier", None)
+                if "group_scorers" in fallback:
+                    try:
+                        from .fairness import FairlearnScoreDictConfig
+
+                        return FairlearnScoreDictConfig(**fallback)
+                    except Exception:
+                        pass
+                return ScorerDictConfig(scorers=fallback.get("scorers", {}))
         return ScorerDictConfig(scorers=scorer_obj)
     raise ValueError(f"Unsupported scorer config type: {type(scorer_obj)}")
 
@@ -482,68 +592,134 @@ def build_scorer_dict(cfg: ScorerDictConfig):
     return cfg if isinstance(cfg, ScorerDictConfig) else ScorerDictConfig(**cfg)
 
 
-@dataclass(eq=False)
-class DefaultClassifierConfig(ScorerDictConfig):
-    scorers: Dict[str, ScorerConfig] = field(
-        default_factory=lambda: {
-            "accuracy": ScorerConfig(
-                score_name="accuracy",
-                score_function="sklearn.metrics.accuracy_score",
-            ),
-            "precision": ScorerConfig(
-                score_name="precision",
-                score_function="sklearn.metrics.precision_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-            "recall": ScorerConfig(
-                score_name="recall",
-                score_function="sklearn.metrics.recall_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-            "f1": ScorerConfig(
-                score_name="f1",
-                score_function="sklearn.metrics.f1_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-            "roc_auc": ScorerConfig(
-                score_name="roc_auc",
-                score_function="sklearn.metrics.roc_auc_score",
-                score_params={"average": "weighted", "multi_class": "ovr"},
-                needs_proba=True,
-            ),
-            "log_loss": ScorerConfig(
-                score_name="log_loss",
-                score_function="sklearn.metrics.log_loss",
-                needs_proba=True,
-            ),
-        },
-    )
+def _default_classification_scorers() -> Dict[str, ScorerConfig]:
+    return {
+        "accuracy": ScorerConfig(
+            score_name="accuracy",
+            score_function="sklearn.metrics.accuracy_score",
+        ),
+        "precision": ScorerConfig(
+            score_name="precision",
+            score_function="sklearn.metrics.precision_score",
+            score_params={"average": "weighted", "zero_division": 0},
+        ),
+        "recall": ScorerConfig(
+            score_name="recall",
+            score_function="sklearn.metrics.recall_score",
+            score_params={"average": "weighted", "zero_division": 0},
+        ),
+        "f1": ScorerConfig(
+            score_name="f1",
+            score_function="sklearn.metrics.f1_score",
+            score_params={"average": "weighted", "zero_division": 0},
+        ),
+        "roc_auc": ScorerConfig(
+            score_name="roc_auc",
+            score_function="sklearn.metrics.roc_auc_score",
+            score_params={"average": "weighted", "multi_class": "ovr"},
+            needs_proba=True,
+        ),
+        "log_loss": ScorerConfig(
+            score_name="log_loss",
+            score_function="sklearn.metrics.log_loss",
+            needs_proba=True,
+        ),
+    }
+
+
+def _default_regression_scorers() -> Dict[str, ScorerConfig]:
+    return {
+        "mse": ScorerConfig(
+            score_name="mse",
+            score_function="sklearn.metrics.mean_squared_error",
+            greater_is_better=False,
+        ),
+        "mae": ScorerConfig(
+            score_name="mae",
+            score_function="sklearn.metrics.mean_absolute_error",
+            greater_is_better=False,
+        ),
+        "r2": ScorerConfig(
+            score_name="r2",
+            score_function="sklearn.metrics.r2_score",
+        ),
+    }
+
+
+def _default_pytorch_classification_scorers() -> Dict[str, ScorerConfig]:
+    return {
+        "accuracy": ScorerConfig(
+            score_name="accuracy",
+            score_function="sklearn.metrics.accuracy_score",
+        ),
+        "precision": ScorerConfig(
+            score_name="precision",
+            score_function="sklearn.metrics.precision_score",
+            score_params={"average": "weighted", "zero_division": 0},
+        ),
+        "recall": ScorerConfig(
+            score_name="recall",
+            score_function="sklearn.metrics.recall_score",
+            score_params={"average": "weighted", "zero_division": 0},
+        ),
+        "f1": ScorerConfig(
+            score_name="f1",
+            score_function="sklearn.metrics.f1_score",
+            score_params={"average": "weighted", "zero_division": 0},
+        ),
+    }
 
 
 @dataclass(eq=False)
-class DefaultRegressorConfig(ScorerDictConfig):
-    scorers: Dict[str, ScorerConfig] = field(
-        default_factory=lambda: {
-            "mse": ScorerConfig(
-                score_name="mse",
-                score_function="sklearn.metrics.mean_squared_error",
-                greater_is_better=False,
-            ),
-            "mae": ScorerConfig(
-                score_name="mae",
-                score_function="sklearn.metrics.mean_absolute_error",
-                greater_is_better=False,
-            ),
-            "r2": ScorerConfig(
-                score_name="r2",
-                score_function="sklearn.metrics.r2_score",
-            ),
-        },
-    )
+class DefaultModelScoreConfig(_TaskAwareScorerMixin, ScorerDictConfig):
+    """Default model scorer family with optional task inheritance."""
+
+    classifier: Union[bool, str, None] = None
+    scorers: Dict[str, ScorerConfig] = field(default_factory=dict)
+
+    def _build_default_scorers(self, classifier: bool) -> Dict[str, ScorerConfig]:
+        return (
+            _default_classification_scorers()
+            if classifier
+            else _default_regression_scorers()
+        )
+
+    def __post_init__(self):
+        self._initialize_task_aware_scorers(default=True)
+        super().__post_init__()
 
 
 @dataclass(eq=False)
-class DefaultPytorchClassifierConfig(ScorerDictConfig):
+class DefaultClassifierConfig(DefaultModelScoreConfig):
+    classifier: Union[bool, str, None] = True
+
+
+@dataclass(eq=False)
+class DefaultRegressorConfig(DefaultModelScoreConfig):
+    classifier: Union[bool, str, None] = False
+
+
+@dataclass(eq=False)
+class DefaultPytorchScoreConfig(_TaskAwareScorerMixin, ScorerDictConfig):
+    """Default PyTorch scorer family with optional task inheritance."""
+
+    classifier: Union[bool, str, None] = None
+    scorers: Dict[str, ScorerConfig] = field(default_factory=dict)
+
+    def _build_default_scorers(self, classifier: bool) -> Dict[str, ScorerConfig]:
+        return (
+            _default_pytorch_classification_scorers()
+            if classifier
+            else _default_regression_scorers()
+        )
+
+    def __post_init__(self):
+        self._initialize_task_aware_scorers(default=True)
+        super().__post_init__()
+
+
+@dataclass(eq=False)
+class DefaultPytorchClassifierConfig(DefaultPytorchScoreConfig):
     """Default classifier scorers for PyTorch models.
 
     PyTorch model wrappers often expose logits but not ``predict_proba``. This
@@ -551,66 +727,35 @@ class DefaultPytorchClassifierConfig(ScorerDictConfig):
     of the box.
     """
 
-    scorers: Dict[str, ScorerConfig] = field(
-        default_factory=lambda: {
-            "accuracy": ScorerConfig(
-                score_name="accuracy",
-                score_function="sklearn.metrics.accuracy_score",
-            ),
-            "precision": ScorerConfig(
-                score_name="precision",
-                score_function="sklearn.metrics.precision_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-            "recall": ScorerConfig(
-                score_name="recall",
-                score_function="sklearn.metrics.recall_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-            "f1": ScorerConfig(
-                score_name="f1",
-                score_function="sklearn.metrics.f1_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-        },
-    )
+    classifier: Union[bool, str, None] = True
 
 
 @dataclass(eq=False)
-class DefaultPytorchRegressorConfig(ScorerDictConfig):
+class DefaultPytorchRegressorConfig(DefaultPytorchScoreConfig):
     """Default regressor scorers for PyTorch models."""
 
-    scorers: Dict[str, ScorerConfig] = field(
-        default_factory=lambda: {
-            "mse": ScorerConfig(
-                score_name="mse",
-                score_function="sklearn.metrics.mean_squared_error",
-                greater_is_better=False,
-            ),
-            "mae": ScorerConfig(
-                score_name="mae",
-                score_function="sklearn.metrics.mean_absolute_error",
-                greater_is_better=False,
-            ),
-            "r2": ScorerConfig(
-                score_name="r2",
-                score_function="sklearn.metrics.r2_score",
-            ),
-        },
-    )
+    classifier: Union[bool, str, None] = False
 
 
-safe_store(group="score", name="classification", node=DefaultClassifierConfig)
-safe_store(group="score", name="regression", node=DefaultRegressorConfig)
+safe_store(
+    group="score",
+    name="classification",
+    node={"_target_": "deckard.score.base.DefaultModelScoreConfig", "classifier": True},
+)
+safe_store(
+    group="score",
+    name="regression",
+    node={"_target_": "deckard.score.base.DefaultModelScoreConfig", "classifier": False},
+)
 safe_store(
     group="score",
     name="pytorch_classification",
-    node=DefaultPytorchClassifierConfig,
+    node={"_target_": "deckard.score.base.DefaultPytorchScoreConfig", "classifier": True},
 )
 safe_store(
     group="score",
     name="pytorch_regression",
-    node=DefaultPytorchRegressorConfig,
+    node={"_target_": "deckard.score.base.DefaultPytorchScoreConfig", "classifier": False},
 )
 
 
@@ -618,11 +763,14 @@ __all__ = [
     "safe_store",
     "_DataScorerMarker",
     "_AttackProfileScorer",
+    "_TaskAwareScorerMixin",
     "_resolve_yt_yp",
     "ScorerConfig",
     "ScorerDictConfig",
+    "DefaultModelScoreConfig",
     "DefaultClassifierConfig",
     "DefaultRegressorConfig",
+    "DefaultPytorchScoreConfig",
     "DefaultPytorchClassifierConfig",
     "DefaultPytorchRegressorConfig",
     "build_scorer",

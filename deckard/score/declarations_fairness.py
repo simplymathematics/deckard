@@ -2,9 +2,8 @@
 
 from .base import safe_store
 from .fairness import (
-    DefaultFairlearnClassificationConfig,
     DefaultFairlearnConfig,
-    DefaultFairlearnRegressionConfig,
+    DefaultFairlearnScoreConfig,
 )
 
 
@@ -13,20 +12,20 @@ class DefaultFairlearnDict:
 
 
 class DefaultFairlearnClassificationDict:
-    scorers = DefaultFairlearnClassificationConfig()
+    scorers = DefaultFairlearnScoreConfig(classifier=True)
 
 
 class DefaultFairlearnRegressionDict:
-    scorers = DefaultFairlearnRegressionConfig()
+    scorers = DefaultFairlearnScoreConfig(classifier=False)
 
 
 safe_store(
     group="score",
     name="fairlearn-classification",
-    node=DefaultFairlearnClassificationConfig,
+    node={"_target_": "deckard.score.fairness.DefaultFairlearnScoreConfig", "classifier": True},
 )
 safe_store(
     group="score",
     name="fairlearn-regression",
-    node=DefaultFairlearnRegressionConfig,
+    node={"_target_": "deckard.score.fairness.DefaultFairlearnScoreConfig", "classifier": False},
 )

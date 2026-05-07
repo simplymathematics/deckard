@@ -3,7 +3,9 @@
 import logging
 
 from .base import (  # noqa: F401
+    DefaultModelScoreConfig,
     DefaultClassifierConfig,
+    DefaultPytorchScoreConfig,
     DefaultPytorchClassifierConfig,
     DefaultPytorchRegressorConfig,
     DefaultRegressorConfig,
@@ -11,19 +13,22 @@ from .base import (  # noqa: F401
     ScorerDictConfig,
     build_scorer,
     build_scorer_dict,
-    safe_store,
 )
 
 from .attack import (  # noqa: E402
     AttackScorerConfig,
     FairlearnAttackScorerConfig,
+    DefaultEvasionScoreConfig,
     DefaultEvasionAttackScorerConfig,
     DefaultEvasionRegressionAttackScorerConfig,
+    DefaultMembershipInferenceScoreConfig,
     DefaultMembershipInferenceAttackScorerConfig,
+    DefaultAttributeInferenceScoreConfig,
     DefaultAttributeInferenceAttackScorerConfig,
     DefaultAttributeInferenceRegressionAttackScorerConfig,
 )
 from .data import (  # noqa: E402
+    DefaultDataScoreConfig,
     DefaultDataClassificationConfig,
     DefaultDataRegressionConfig,
     data_num_classes_score,
@@ -48,6 +53,7 @@ try:
     from .fairness import (  # noqa: E402
         DefaultFairlearnClassificationConfig,
         DefaultFairlearnConfig,
+        DefaultFairlearnScoreConfig,
         DefaultFairlearnRegressionConfig,
         FairlearnScoreDictConfig,
         fairness_demographic_parity_difference,
@@ -60,6 +66,7 @@ try:
     _ = (
         DefaultFairlearnClassificationConfig,
         DefaultFairlearnConfig,
+        DefaultFairlearnScoreConfig,
         DefaultFairlearnRegressionConfig,
         FairlearnScoreDictConfig,
         fairness_demographic_parity_difference,
@@ -131,17 +138,23 @@ if "DefaultLifelinesConfig" in globals():
 __all__ = [
     "ScorerConfig",
     "ScorerDictConfig",
+    "DefaultModelScoreConfig",
     "DefaultClassifierConfig",
+    "DefaultPytorchScoreConfig",
     "DefaultPytorchClassifierConfig",
     "DefaultPytorchRegressorConfig",
     "DefaultRegressorConfig",
     "AttackScorerConfig",
     "FairlearnAttackScorerConfig",
+    "DefaultEvasionScoreConfig",
     "DefaultEvasionAttackScorerConfig",
     "DefaultEvasionRegressionAttackScorerConfig",
+    "DefaultMembershipInferenceScoreConfig",
     "DefaultMembershipInferenceAttackScorerConfig",
+    "DefaultAttributeInferenceScoreConfig",
     "DefaultAttributeInferenceAttackScorerConfig",
     "DefaultAttributeInferenceRegressionAttackScorerConfig",
+    "DefaultDataScoreConfig",
     "DefaultClassifierDict",
     "DefaultRegressorDict",
     "DefaultDataClassificationConfig",
@@ -164,6 +177,7 @@ if "DefaultFairlearnConfig" in globals():
         [
             "DefaultFairlearnClassificationConfig",
             "DefaultFairlearnConfig",
+            "DefaultFairlearnScoreConfig",
             "DefaultFairlearnRegressionConfig",
             "FairlearnScoreDictConfig",
             "DefaultFairlearnDict",

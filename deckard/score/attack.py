@@ -6,14 +6,24 @@ from typing import Any, Dict, Literal, Union
 
 from sklearn.metrics import accuracy_score
 
-from ..utils import ConfigBase, coerce_config, round_scores
-from .base import ScorerConfig, ScorerDictConfig, _AttackProfileScorer, safe_store
+from ..utils import ConfigBase,round_scores
+from .base import (
+    ScorerConfig,
+    ScorerDictConfig,
+    _AttackProfileScorer,
+    _TaskAwareScorerMixin,
+    coerce_scorer_config,
+    safe_store,
+)
 
 __all__ = [
     "evasion_success_score",
+    "DefaultEvasionScoreConfig",
     "DefaultEvasionAttackScorerConfig",
     "DefaultEvasionRegressionAttackScorerConfig",
+    "DefaultMembershipInferenceScoreConfig",
     "DefaultMembershipInferenceAttackScorerConfig",
+    "DefaultAttributeInferenceScoreConfig",
     "DefaultAttributeInferenceAttackScorerConfig",
     "DefaultAttributeInferenceRegressionAttackScorerConfig",
     "AttackScorerConfig",
@@ -36,48 +46,155 @@ def evasion_success_score(
 
 
 @dataclass(eq=False)
-class DefaultEvasionAttackScorerConfig(_AttackProfileScorer, ScorerDictConfig):
-    """Default scorer set for evasion attack evaluation."""
+class DefaultEvasionScoreConfig(_TaskAwareScorerMixin, _AttackProfileScorer, ScorerDictConfig):
+    """Default evasion scorer family with optional task selection."""
 
     _profile_attr = "evasion"
+    classifier: Union[bool, str, None] = None
+    scorers: Dict[str, ScorerConfig] = field(default_factory=dict)
 
-    scorers: Dict[str, ScorerConfig] = field(
-        default_factory=lambda: {
-            "accuracy": ScorerConfig(
-                score_name="accuracy",
-                score_function="sklearn.metrics.accuracy_score",
+    def _build_default_scorers(self, classifier: bool) -> Dict[str, ScorerConfig]:
+        if classifier:
+            return {
+                "accuracy": ScorerConfig(
+                    score_name="accuracy",
+                    score_function="sklearn.metrics.accuracy_score",
+                ),
+                "precision": ScorerConfig(
+                    score_name="precision",
+                    score_function="sklearn.metrics.precision_score",
+                    score_params={"average": "weighted", "zero_division": 0},
+                ),
+                "recall": ScorerConfig(
+                    score_name="recall",
+                    score_function="sklearn.metrics.recall_score",
+                    score_params={"average": "weighted", "zero_division": 0},
+                ),
+                "f1-score": ScorerConfig(
+                    score_name="f1-score",
+                    score_function="sklearn.metrics.f1_score",
+                    score_params={"average": "weighted", "zero_division": 0},
+                ),
+                "success": ScorerConfig(
+                    score_name="success",
+                    score_function="deckard.score.attack.evasion_success_score",
+                ),
+            }
+        return {
+            "mse": ScorerConfig(
+                score_name="mse",
+                score_function="sklearn.metrics.mean_squared_error",
+                greater_is_better=False,
             ),
-            "precision": ScorerConfig(
-                score_name="precision",
-                score_function="sklearn.metrics.precision_score",
-                score_params={"average": "weighted", "zero_division": 0},
+            "mae": ScorerConfig(
+                score_name="mae",
+                score_function="sklearn.metrics.mean_absolute_error",
+                greater_is_better=False,
             ),
-            "recall": ScorerConfig(
-                score_name="recall",
-                score_function="sklearn.metrics.recall_score",
-                score_params={"average": "weighted", "zero_division": 0},
+            "r2": ScorerConfig(
+                score_name="r2",
+                score_function="sklearn.metrics.r2_score",
             ),
-            "f1-score": ScorerConfig(
-                score_name="f1-score",
-                score_function="sklearn.metrics.f1_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-            "success": ScorerConfig(
-                score_name="success",
-                score_function="deckard.score.attack.evasion_success_score",
-            ),
-        },
-    )
+        }
+
+    def __post_init__(self):
+        self._initialize_task_aware_scorers(default=True)
+        super().__post_init__()
 
 
 @dataclass(eq=False)
-class DefaultEvasionRegressionAttackScorerConfig(_AttackProfileScorer, ScorerDictConfig):
+class DefaultEvasionAttackScorerConfig(DefaultEvasionScoreConfig):
+    """Default scorer set for evasion attack evaluation."""
+
+    classifier: Union[bool, str, None] = True
+
+
+@dataclass(eq=False)
+class DefaultEvasionRegressionAttackScorerConfig(DefaultEvasionScoreConfig):
     """Default scorer set for evasion attacks against regression models."""
 
     _profile_attr = "evasion_regression"
+    classifier: Union[bool, str, None] = False
 
-    scorers: Dict[str, ScorerConfig] = field(
-        default_factory=lambda: {
+
+@dataclass(eq=False)
+class DefaultMembershipInferenceScoreConfig(_TaskAwareScorerMixin, _AttackProfileScorer, ScorerDictConfig):
+    """Default membership-inference scorer family.
+
+    Membership inference is always treated as a classification-style scoring
+    problem, so the default is fixed to ``classifier=True``.
+    """
+
+    _profile_attr = "membership_inference"
+    classifier: Union[bool, str, None] = True
+    scorers: Dict[str, ScorerConfig] = field(default_factory=dict)
+
+    def _build_default_scorers(self, classifier: bool) -> Dict[str, ScorerConfig]:
+        _ = classifier
+        return {
+            "accuracy": ScorerConfig(
+                score_name="accuracy",
+                score_function="sklearn.metrics.accuracy_score",
+            ),
+            "precision": ScorerConfig(
+                score_name="precision",
+                score_function="sklearn.metrics.precision_score",
+                score_params={"average": "weighted", "zero_division": 0},
+            ),
+            "recall": ScorerConfig(
+                score_name="recall",
+                score_function="sklearn.metrics.recall_score",
+                score_params={"average": "weighted", "zero_division": 0},
+            ),
+            "f1": ScorerConfig(
+                score_name="f1",
+                score_function="sklearn.metrics.f1_score",
+                score_params={"average": "weighted", "zero_division": 0},
+            ),
+        }
+
+    def __post_init__(self):
+        self._initialize_task_aware_scorers(default=True)
+        super().__post_init__()
+
+
+@dataclass(eq=False)
+class DefaultMembershipInferenceAttackScorerConfig(DefaultMembershipInferenceScoreConfig):
+    """Default scorer set for membership inference attack evaluation."""
+
+
+@dataclass(eq=False)
+class DefaultAttributeInferenceScoreConfig(_TaskAwareScorerMixin, _AttackProfileScorer, ScorerDictConfig):
+    """Default attribute-inference scorer family with optional task selection."""
+
+    _profile_attr = "attribute_inference"
+    classifier: Union[bool, str, None] = None
+    scorers: Dict[str, ScorerConfig] = field(default_factory=dict)
+
+    def _build_default_scorers(self, classifier: bool) -> Dict[str, ScorerConfig]:
+        if classifier:
+            return {
+                "accuracy": ScorerConfig(
+                    score_name="accuracy",
+                    score_function="sklearn.metrics.accuracy_score",
+                ),
+                "precision": ScorerConfig(
+                    score_name="precision",
+                    score_function="sklearn.metrics.precision_score",
+                    score_params={"average": "weighted", "zero_division": 0},
+                ),
+                "recall": ScorerConfig(
+                    score_name="recall",
+                    score_function="sklearn.metrics.recall_score",
+                    score_params={"average": "weighted", "zero_division": 0},
+                ),
+                "f1": ScorerConfig(
+                    score_name="f1",
+                    score_function="sklearn.metrics.f1_score",
+                    score_params={"average": "weighted", "zero_division": 0},
+                ),
+            }
+        return {
             "mse": ScorerConfig(
                 score_name="mse",
                 score_function="sklearn.metrics.mean_squared_error",
@@ -92,98 +209,26 @@ class DefaultEvasionRegressionAttackScorerConfig(_AttackProfileScorer, ScorerDic
                 score_name="r2",
                 score_function="sklearn.metrics.r2_score",
             ),
-        },
-    )
+        }
+
+    def __post_init__(self):
+        self._initialize_task_aware_scorers(default=True)
+        super().__post_init__()
 
 
 @dataclass(eq=False)
-class DefaultMembershipInferenceAttackScorerConfig(_AttackProfileScorer, ScorerDictConfig):
-    """Default scorer set for membership inference attack evaluation."""
-
-    _profile_attr = "membership_inference"
-
-    scorers: Dict[str, ScorerConfig] = field(
-        default_factory=lambda: {
-            "accuracy": ScorerConfig(
-                score_name="accuracy",
-                score_function="sklearn.metrics.accuracy_score",
-            ),
-            "precision": ScorerConfig(
-                score_name="precision",
-                score_function="sklearn.metrics.precision_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-            "recall": ScorerConfig(
-                score_name="recall",
-                score_function="sklearn.metrics.recall_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-            "f1": ScorerConfig(
-                score_name="f1",
-                score_function="sklearn.metrics.f1_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-        },
-    )
-
-
-@dataclass(eq=False)
-class DefaultAttributeInferenceAttackScorerConfig(_AttackProfileScorer, ScorerDictConfig):
+class DefaultAttributeInferenceAttackScorerConfig(DefaultAttributeInferenceScoreConfig):
     """Default scorer set for categorical attribute inference evaluation."""
 
-    _profile_attr = "attribute_inference"
-
-    scorers: Dict[str, ScorerConfig] = field(
-        default_factory=lambda: {
-            "accuracy": ScorerConfig(
-                score_name="accuracy",
-                score_function="sklearn.metrics.accuracy_score",
-            ),
-            "precision": ScorerConfig(
-                score_name="precision",
-                score_function="sklearn.metrics.precision_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-            "recall": ScorerConfig(
-                score_name="recall",
-                score_function="sklearn.metrics.recall_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-            "f1": ScorerConfig(
-                score_name="f1",
-                score_function="sklearn.metrics.f1_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-        },
-    )
+    classifier: Union[bool, str, None] = True
 
 
 @dataclass(eq=False)
-class DefaultAttributeInferenceRegressionAttackScorerConfig(_AttackProfileScorer, ScorerDictConfig):
+class DefaultAttributeInferenceRegressionAttackScorerConfig(DefaultAttributeInferenceScoreConfig):
     """Default scorer set for continuous attribute inference evaluation."""
 
     _profile_attr = "attribute_inference_regression"
-
-    scorers: Dict[str, ScorerConfig] = field(
-        default_factory=lambda: {
-            "mse": ScorerConfig(
-                score_name="mse",
-                score_function="sklearn.metrics.mean_squared_error",
-                greater_is_better=False,
-            ),
-            "mae": ScorerConfig(
-                score_name="mae",
-                score_function="sklearn.metrics.mean_absolute_error",
-                greater_is_better=False,
-            ),
-            "r2": ScorerConfig(
-                score_name="r2",
-                score_function="sklearn.metrics.r2_score",
-            ),
-        },
-    )
-
-
+    classifier: Union[bool, str, None] = False
 @dataclass(eq=False)
 class AttackScorerConfig(ConfigBase):
     """Owns all attack scoring logic and profile-specific scorer configs."""
@@ -218,15 +263,19 @@ class AttackScorerConfig(ConfigBase):
 
     @staticmethod
     def _coerce_profile(profile, default_cls):
-        if profile is None:
+        try:
+            coerced = coerce_scorer_config(
+                profile,
+                default_factory=default_cls,
+            )
+        except ValueError as exc:
+            raise TypeError(
+                f"Unsupported scorer profile type: {type(profile)}",
+            ) from exc
+        if coerced is None:
             return default_cls()
-        profile = coerce_config(profile)
-        if isinstance(profile, ScorerDictConfig):
-            return profile
-        if isinstance(profile, dict):
-            if "scorers" in profile:
-                return ScorerDictConfig(**profile)
-            return ScorerDictConfig(scorers=profile)
+        if isinstance(coerced, ScorerDictConfig):
+            return coerced
         raise TypeError(f"Unsupported scorer profile type: {type(profile)}")
 
     @staticmethod

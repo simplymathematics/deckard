@@ -15,7 +15,13 @@ from sklearn.feature_selection import (
     mutual_info_regression,
 )
 
-from .base import ScorerConfig, ScorerDictConfig, _DataScorerMarker, safe_store
+from .base import (
+    ScorerConfig,
+    ScorerDictConfig,
+    _DataScorerMarker,
+    _TaskAwareScorerMixin,
+    safe_store,
+)
 
 
 def _coerce_features_dataframe(y_pred) -> pd.DataFrame:
@@ -282,46 +288,42 @@ def data_empirical_cdf_function_score(y_true: Any, y_pred: Any, **kwargs: Any) -
 
 
 @dataclass(eq=False)
-class DefaultDataClassificationConfig(_DataScorerMarker, ScorerDictConfig):
-    """Default dataset-analysis scorers for classification datasets."""
+class DefaultDataScoreConfig(_DataScorerMarker, _TaskAwareScorerMixin, ScorerDictConfig):
+    """Default data-analysis scorer family with optional task inheritance."""
 
-    scorers: Dict[str, Union[ScorerConfig, Dict[str, Any]]] = field(
-        default_factory=lambda: {
-            "num_classes": ScorerConfig(
-                score_name="num_classes",
-                score_function="deckard.score.data.data_num_classes_score",
-            ),
-            "class_count_min": ScorerConfig(
-                score_name="class_count_min",
-                score_function="deckard.score.data.data_class_count_min_score",
-            ),
-            "class_count_max": ScorerConfig(
-                score_name="class_count_max",
-                score_function="deckard.score.data.data_class_count_max_score",
-            ),
-            "class_imbalance_ratio": ScorerConfig(
-                score_name="class_imbalance_ratio",
-                score_function="deckard.score.data.data_class_imbalance_ratio_score",
-                greater_is_better=False,
-            ),
-            "mutual_information_mean": ScorerConfig(
-                score_name="mutual_information_mean",
-                score_function="deckard.score.data.data_mutual_information_mean_score",
-            ),
-            "mutual_information_max": ScorerConfig(
-                score_name="mutual_information_max",
-                score_function="deckard.score.data.data_mutual_information_max_score",
-            ),
-        },
-    )
+    classifier: Union[bool, str, None] = None
+    scorers: Dict[str, Union[ScorerConfig, Dict[str, Any]]] = field(default_factory=dict)
 
-
-@dataclass(eq=False)
-class DefaultDataRegressionConfig(_DataScorerMarker, ScorerDictConfig):
-    """Default dataset-analysis scorers for regression datasets."""
-
-    scorers: Dict[str, Union[ScorerConfig, Dict[str, Any]]] = field(
-        default_factory=lambda: {
+    def _build_default_scorers(self, classifier: bool) -> Dict[str, Union[ScorerConfig, Dict[str, Any]]]:
+        if classifier:
+            return {
+                "num_classes": ScorerConfig(
+                    score_name="num_classes",
+                    score_function="deckard.score.data.data_num_classes_score",
+                ),
+                "class_count_min": ScorerConfig(
+                    score_name="class_count_min",
+                    score_function="deckard.score.data.data_class_count_min_score",
+                ),
+                "class_count_max": ScorerConfig(
+                    score_name="class_count_max",
+                    score_function="deckard.score.data.data_class_count_max_score",
+                ),
+                "class_imbalance_ratio": ScorerConfig(
+                    score_name="class_imbalance_ratio",
+                    score_function="deckard.score.data.data_class_imbalance_ratio_score",
+                    greater_is_better=False,
+                ),
+                "mutual_information_mean": ScorerConfig(
+                    score_name="mutual_information_mean",
+                    score_function="deckard.score.data.data_mutual_information_mean_score",
+                ),
+                "mutual_information_max": ScorerConfig(
+                    score_name="mutual_information_max",
+                    score_function="deckard.score.data.data_mutual_information_max_score",
+                ),
+            }
+        return {
             "mutual_information_mean": ScorerConfig(
                 score_name="mutual_information_mean",
                 score_function="deckard.score.data.data_mutual_information_mean_score",
@@ -334,19 +336,36 @@ class DefaultDataRegressionConfig(_DataScorerMarker, ScorerDictConfig):
                 score_name="empirical_cdf",
                 score_function="deckard.score.data.data_empirical_cdf_function_score",
             ),
-        },
-    )
+        }
+
+    def __post_init__(self):
+        self._initialize_task_aware_scorers(default=True)
+        super().__post_init__()
+
+
+@dataclass(eq=False)
+class DefaultDataClassificationConfig(DefaultDataScoreConfig):
+    """Default dataset-analysis scorers for classification datasets."""
+
+    classifier: Union[bool, str, None] = True
+
+
+@dataclass(eq=False)
+class DefaultDataRegressionConfig(DefaultDataScoreConfig):
+    """Default dataset-analysis scorers for regression datasets."""
+
+    classifier: Union[bool, str, None] = False
 
 
 safe_store(
     group="score",
     name="data-classification",
-    node=DefaultDataClassificationConfig,
+    node={"_target_": "deckard.score.data.DefaultDataScoreConfig", "classifier": True},
 )
 safe_store(
     group="score",
     name="data-regression",
-    node=DefaultDataRegressionConfig,
+    node={"_target_": "deckard.score.data.DefaultDataScoreConfig", "classifier": False},
 )
 
 
@@ -358,6 +377,7 @@ __all__ = [
     "data_mutual_information_mean_score",
     "data_mutual_information_max_score",
     "data_empirical_cdf_function_score",
+    "DefaultDataScoreConfig",
     "DefaultDataClassificationConfig",
     "DefaultDataRegressionConfig",
 ]
