@@ -700,7 +700,7 @@ class DefensePipelineConfig(ConfigBase):
         if hasattr(defense_config, "apply_to"):
             return cls(defenses=[defense_config])
 
-        # List of defense specs → chain them all inside one pipeline
+        # List of defense specs -> chain them all inside one pipeline
         if isinstance(defense_config, (list, ListConfig)):
             return cls(defenses=coerce_to_list(defense_config))
 

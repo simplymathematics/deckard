@@ -101,6 +101,8 @@ class SurvivalModelConfig(ModelConfig):
 
     def __post_init__(self):
         """Initialize SurvivalModelConfig without loading a model through Hydra."""
+        # Survival models are always regression models regardless of what was passed.
+        self.classifier = False
         # Skip ModelConfig's __post_init__ which tries to load a model.
         self._initialize_runtime_fields()
         self._initialize_target()

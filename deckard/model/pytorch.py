@@ -12,6 +12,7 @@ import numpy as np
 
 # Torch imports
 import torch
+from torch.utils.data import DataLoader as TorchDataLoader
 
 # Sklearn imports
 from sklearn.metrics import (
@@ -28,7 +29,7 @@ from art.estimators.regression import PyTorchRegressor
 
 from . import ModelConfig
 from ..data import DataConfig
-from ..utils import load_class, resolve_torch_device
+from ..utils import is_default_config_value, load_class, resolve_torch_device
 
 logger = logging.getLogger(__name__)
 
@@ -113,22 +114,27 @@ class PytorchModelConfig(ModelConfig):
     _checkpoint_context: Any = field(default=None, repr=False, compare=False)
     _epoch_attack: Any = field(default=None, repr=False, compare=False)
 
-    def __post_init__(self):
-        """Initialize model using load_class, following parent pattern."""
-        from ..utils import is_default_config_value
-        if is_default_config_value(self.scorer, include_best=False):
-            scorer_cls = (
-                "deckard.score.base.DefaultPytorchClassifierConfig"
-                if self.classifier
-                else "deckard.score.base.DefaultPytorchRegressorConfig"
-            )
-            self.scorer = load_class(scorer_cls)
+    def _initialize_default_scorer(self) -> None:
+        if not is_default_config_value(self.scorer, include_best=False):
+            return
+        scorer_cls = (
+            "deckard.score.base.DefaultPytorchClassifierConfig"
+            if self.classifier
+            else "deckard.score.base.DefaultPytorchRegressorConfig"
+        )
+        self.scorer = load_class(scorer_cls)
 
+    def _initialize_torch_seed_and_device(self) -> None:
         self.device = self._resolve_torch_device(self.device)
 
         torch.manual_seed(self.random_seed)
         if self.device.type == "cuda":
             torch.cuda.manual_seed_all(self.random_seed)
+
+    def __post_init__(self):
+        """Initialize model using load_class, following parent pattern."""
+        self._initialize_default_scorer()
+        self._initialize_torch_seed_and_device()
 
         # Call parent __post_init__ for shared initialization
         super().__post_init__()
@@ -650,14 +656,12 @@ class PytorchModelConfig(ModelConfig):
 
     def _validate_torch_data(self, data) -> None:
         """Raise TypeError if data contains non-torch tensors/DataLoaders."""
-        from torch.utils.data import DataLoader as _DL
-
         bad_attrs = []
         for attr in ("X_train", "X_test", "y_train", "y_test"):
             value = getattr(data, attr, None)
             if value is None:
                 continue
-            if not isinstance(value, (torch.Tensor, _DL)):
+            if not isinstance(value, (torch.Tensor, TorchDataLoader)):
                 bad_attrs.append(f"{attr}: {type(value).__name__}")
 
         if bad_attrs:
