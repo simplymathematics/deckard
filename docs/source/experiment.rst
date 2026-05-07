@@ -61,6 +61,44 @@ attack specs.
 - Score keys: only colliding keys are suffixed as ``_<alias>``.
 - Detector: receives pooled attack samples from all configured attacks.
 
+Scoring Mode Policy
+~~~~~~~~~~~~~~~~~~~
+
+``ExperimentConfig`` supports split-aware scoring orchestration through:
+
+- ``evaluation_mode``: high-level policy (``standard``, ``tuning``, ``report``)
+- ``score_mode``: one explicit mode
+- ``score_modes``: ordered list of modes to evaluate
+
+Supported score modes are:
+
+- ``pre-sample``
+- ``train``
+- ``test``
+- ``val``
+
+If no explicit score mode is set, defaults are:
+
+- ``evaluation_mode=tuning`` -> ``test``
+- ``evaluation_mode=report`` -> ``val``
+- otherwise -> ``test``
+
+Mode permutations by scorer type
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When ``ExperimentConfig.score`` is a data-profile scorer, all supported modes
+can be evaluated, including ``pre-sample``. Mode inputs are routed directly
+from data splits/full dataset.
+
+When ``ExperimentConfig.score`` is not a data-profile scorer (for example,
+model prediction metrics), ``pre-sample`` is rejected because that mode is
+reserved for full-dataset diagnostics.
+
+Mode-specific output key normalization:
+
+- ``val`` metrics are prefixed with ``validation_``
+- ``pre-sample`` metrics are prefixed with ``presample_``
+
 Command-line example
 ~~~~~~~~~~~~~~~~~~~~
 

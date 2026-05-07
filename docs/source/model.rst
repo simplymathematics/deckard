@@ -55,6 +55,18 @@ Overview
 * Hydra/YAML configuration for reproducibility and experiment management
 * CLI support for one-line model training and testing
 
+Model scoring mode
+~~~~~~~~~~~~~~~~~~
+
+``ModelConfig`` supports split-aware scoring with ``score_mode`` set to one of:
+
+- ``train``
+- ``test``
+- ``val``
+
+The experiment layer can propagate this mode automatically so model scoring is
+performed on the active split selected by experiment scoring policy.
+
 Supported frameworks
 ~~~~~~~~~~~~~~~~~~~~
 Currently supports:

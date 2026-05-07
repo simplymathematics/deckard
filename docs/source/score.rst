@@ -140,6 +140,27 @@ auto-select) when you want data-level statistics on the dataset itself.
    scores = model(data)
    print(scores["accuracy"])
 
+Score Modes and Routing
+~~~~~~~~~~~~~~~~~~~~~~~
+
+``ScorerDictConfig`` resolves ``y_true`` and ``y_pred`` from runtime context
+using a mode-aware policy.
+
+Supported modes include:
+
+- ``train``: uses ``data.y_train`` and model training predictions.
+- ``test``: uses ``data.y_test`` and model test predictions.
+- ``val``: uses ``data.y_val`` and model validation predictions.
+- ``attack`` / ``attack-val``: uses attack outputs and attack-aligned labels.
+- ``pre-sample``: uses the full pre-split dataset (``data._X`` and
+   ``data._y``) for dataset diagnostics.
+
+For attack modes, label routing prefers ``attack.attacked_labels`` when
+available, with split labels used as fallback when needed.
+
+``pre-sample`` is intended for dataset diagnostics only. Metrics requiring
+probability inputs (``needs_proba=True``) are rejected in this mode.
+
 Attack scoring
 ~~~~~~~~~~~~~~
 
@@ -418,7 +439,7 @@ Important attack-scoring details:
 - ``score_evasion`` chooses between classification and regression evasion
    profiles based on the detected task type.
 - ``score_membership`` evaluates inferred membership labels against the attack
-   labels.
+   labels (``attack.attacked_labels``).
 - ``score_attribute`` chooses categorical vs regression attribute profiles and
    prefixes metrics with the targeted attribute name.
 - All attack score dicts add ``attack_size`` and ``attack_score_time``; some

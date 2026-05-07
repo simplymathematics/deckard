@@ -78,6 +78,21 @@ Overview
 It also supports **reproducible splits** via `train_test_split` with optional stratification,
 timing instrumentation, and hashing for config tracking.
 
+Data scoring mode
+~~~~~~~~~~~~~~~~~
+
+``DataConfig`` supports mode-aware dataset scoring via ``score_mode`` with
+values:
+
+- ``train``
+- ``test``
+- ``val``
+- ``pre-sample``
+
+``pre-sample`` runs data diagnostics against the full dataset before split
+selection (``_X`` / ``_y``), while split modes run diagnostics on the selected
+partition.
+
 Usage
 -----
 

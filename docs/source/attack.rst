@@ -163,6 +163,20 @@ keys are prefixed to make results easy to group in downstream analysis.
 - ``attack_prediction_time``
 - ``attack_score_time``
 
+Canonical Runtime Output Fields
+-------------------------------
+
+Runtime attack outputs use a canonical naming contract:
+
+- ``attack``: raw attack artifact/result object returned by the backend attack.
+- ``attack_predictions``: predictions or inferred outputs produced by the attack
+   and consumed by scoring.
+- ``attacked_labels``: ground-truth labels aligned with
+   ``attack_predictions`` for score computation.
+
+These field names are shared by attack execution and scorer routing to keep
+attack score aggregation consistent across attack families and scoring modes.
+
 Fairness-stratified attack scoring is available via
 :class:`~deckard.score.attack.FairlearnAttackScorerConfig`, which computes
 per-group metrics (for example, by sensitive feature) in addition to overall
