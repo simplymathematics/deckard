@@ -15,7 +15,7 @@ from sklearn.feature_selection import (
     mutual_info_regression,
 )
 
-from .base import ScorerConfig, ScorerDictConfig, safe_store
+from .base import ScorerConfig, ScorerDictConfig, _DataScorerMarker, safe_store
 
 
 def _coerce_features_dataframe(y_pred) -> pd.DataFrame:
@@ -282,7 +282,7 @@ def data_empirical_cdf_function_score(y_true: Any, y_pred: Any, **kwargs: Any) -
 
 
 @dataclass(eq=False)
-class DefaultDataClassificationConfig(ScorerDictConfig):
+class DefaultDataClassificationConfig(_DataScorerMarker, ScorerDictConfig):
     """Default dataset-analysis scorers for classification datasets."""
 
     scorers: Dict[str, Union[ScorerConfig, Dict[str, Any]]] = field(
@@ -317,7 +317,7 @@ class DefaultDataClassificationConfig(ScorerDictConfig):
 
 
 @dataclass(eq=False)
-class DefaultDataRegressionConfig(ScorerDictConfig):
+class DefaultDataRegressionConfig(_DataScorerMarker, ScorerDictConfig):
     """Default dataset-analysis scorers for regression datasets."""
 
     scorers: Dict[str, Union[ScorerConfig, Dict[str, Any]]] = field(

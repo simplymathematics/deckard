@@ -1,0 +1,15 @@
+_target_: deckard.score.data.DefaultDataClassificationConfig
+scorers:
+  num_classes:
+    score_function: deckard.score.data.data_num_classes_score
+  class_count_min:
+    score_function: deckard.score.data.data_class_count_min_score
+  class_count_max:
+    score_function: deckard.score.data.data_class_count_max_score
+  class_imbalance_ratio:
+    score_function: deckard.score.data.data_class_imbalance_ratio_score
+    greater_is_better: false
+  mutual_information_mean:
+    score_function: deckard.score.data.data_mutual_information_mean_score
+  mutual_information_max:
+    score_function: deckard.score.data.data_mutual_information_max_score
