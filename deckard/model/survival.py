@@ -256,8 +256,9 @@ class SurvivalModelConfig(ModelConfig):
         tuple[Any, float, float, pd.DataFrame],
     ]:
         """Compute survival calibration metrics and optionally render curve."""
-        if ax is None:
-            _, ax = plt.subplots()
+        if plot:
+            if not ax:
+                _, ax = plt.subplots()
 
         duration_col = model.duration_col
         event_col = model.event_col
