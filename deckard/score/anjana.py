@@ -1,11 +1,12 @@
 """ANJANA-specific scoring helpers and default scorer configuration."""
 
 from dataclasses import dataclass, field
-from typing import Any, Dict
+from typing import Any, cast
 
 import pandas as pd
 
 from .base import ScorerConfig, ScorerDictConfig, _DataScorerMarker, safe_store
+from ..data import DataConfig
 
 __all__ = [
     "anjana_k_anonymity_score",
@@ -17,8 +18,12 @@ __all__ = [
     "DefaultAnjanaModelScoreConfig",
 ]
 
-
-def _resolve_frame_and_context(data=None, y_pred=None, y_true=None, **kwargs):
+def _resolve_frame_and_context(
+    data: DataConfig | None = None,
+    y_pred: Any | None = None,
+    y_true: Any | None = None,
+    **kwargs: Any,
+) -> tuple[pd.DataFrame, list[str], str | None]:
     frame = None
     if isinstance(y_pred, pd.DataFrame):
         frame = y_pred
@@ -43,21 +48,25 @@ def _resolve_frame_and_context(data=None, y_pred=None, y_true=None, **kwargs):
 
     if isinstance(sens_att, str) and sens_att not in frame.columns and y_true is not None:
         frame = frame.copy()
-        labels = pd.Series(y_true).reset_index(drop=True)
+        labels = pd.Series(cast(Any, y_true)).reset_index(drop=True)
         if len(labels) == len(frame):
             frame[sens_att] = labels
+
+    if sens_att is not None and not isinstance(sens_att, str):
+        sens_att = str(sens_att)
 
     if isinstance(quasi_ident, str):
         quasi_ident = [quasi_ident]
     if not isinstance(quasi_ident, list) or len(quasi_ident) == 0:
         raise ValueError("ANJANA scorers require quasi_ident identifiers")
-    return frame, quasi_ident, sens_att
+    quasi_ident = [str(identifier) for identifier in quasi_ident]
+    return cast(pd.DataFrame, frame), quasi_ident, sens_att
 
 
 def anjana_k_anonymity_score(
     y_true: Any = None,
     y_pred: Any = None,
-    data: Any = None,
+    data: DataConfig | None = None,
     **kwargs: Any,
 ) -> float:
     """Compute k-anonymity score for an anonymized dataset.
@@ -107,7 +116,7 @@ def anjana_k_anonymity_score(
 def anjana_l_diversity_score(
     y_true: Any = None,
     y_pred: Any = None,
-    data: Any = None,
+    data: DataConfig | None = None,
     **kwargs: Any,
 ) -> float:
     """Compute l-diversity score for an anonymized dataset.
@@ -160,7 +169,7 @@ def anjana_l_diversity_score(
 def anjana_t_closeness_score(
     y_true: Any = None,
     y_pred: Any = None,
-    data: Any = None,
+    data: DataConfig | None = None,
     **kwargs: Any,
 ) -> float:
     """Compute t-closeness score for an anonymized dataset.
@@ -223,7 +232,7 @@ class _AnjanaScorerMixin(_DataScorerMarker):
 
 @dataclass(eq=False)
 class DefaultAnjanaScoreConfig(_AnjanaScorerMixin, ScorerDictConfig):
-    scorers: Dict[str, ScorerConfig] = field(
+    scorers: dict[str, ScorerConfig] = field(
         default_factory=lambda: {
             "k_anonymity": ScorerConfig(
                 score_name="anjana.anonymity.k_anonymity",

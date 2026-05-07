@@ -4,7 +4,8 @@ from dataclasses import dataclass, field
 import inspect
 import logging
 from pathlib import Path
-from typing import Any, Dict, Literal, Union
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Literal, Union, cast
 
 import numpy as np
 from hydra.utils import instantiate
@@ -20,9 +21,16 @@ from ..utils import (
     merge_list_of_dicts,
     load_class,
 )
+if TYPE_CHECKING:
+    from ..data import DataConfig
+
 from .pytorch import to_numpy_if_torch
 
 logger = logging.getLogger(__name__)
+
+MetricScalar = Union[float, int, np.floating, np.integer]
+MetricResult = Union[MetricScalar, np.ndarray]
+ScoreFunction = Callable[..., MetricResult]
 
 
 class _DataScorerMarker:
@@ -45,7 +53,7 @@ class _AttackProfileScorer:
     _profile_attr: str = "evasion"
 
 
-def _normalize_classifier_flag(classifier):
+def _normalize_classifier_flag(classifier: Union[bool, str, None]) -> Union[bool, None]:
     """Normalize classifier/regressor aliases to ``True`` / ``False`` / ``None``."""
     if classifier in ["classifier", True]:
         return True
@@ -83,9 +91,9 @@ class _TaskAwareScorerMixin:
     def resolve_classifier(
         self,
         *,
-        data=None,
-        model=None,
-        attack=None,
+        data: "DataConfig | None" = None,
+        model: Any = None,
+        attack: Any = None,
         default: Union[bool, None] = None,
     ) -> bool:
         """Resolve the effective task type for this scorer config.
@@ -129,7 +137,7 @@ class _TaskAwareScorerMixin:
             "set classifier explicitly or provide model/data/attack context.",
         )
 
-    def _build_default_scorers(self, classifier: bool) -> Dict[str, "ScorerConfig"]:
+    def _build_default_scorers(self, classifier: bool) -> dict[str, "ScorerConfig"]:
         raise NotImplementedError()
 
     def _initialize_task_aware_scorers(self, *, default: Union[bool, None] = None) -> None:
@@ -140,7 +148,14 @@ class _TaskAwareScorerMixin:
         self.scorers = self._build_default_scorers(classifier=classifier)
 
 
-def _resolve_yt_yp(mode, data, model, attack, y_pred, y_true):
+def _resolve_yt_yp(
+    mode: Union[Literal["test", "train", "attack", "val", "attack-val"], None],
+    data: "DataConfig | None",
+    model: Any,
+    attack: Any,
+    y_pred: Any,
+    y_true: Any,
+) -> tuple[Any, Any]:
     """Resolve y_true and y_pred from mode + context when not explicitly provided.
 
     This mirrors the resolution logic inside ``ScorerDictConfig.__call__`` so that
@@ -161,7 +176,9 @@ def _resolve_yt_yp(mode, data, model, attack, y_pred, y_true):
             y_pred = getattr(model, "training_predictions", None)
     elif mode == "attack":
         if data is not None and attack is not None:
-            y_true = getattr(data, "y_test", y_true)[: getattr(attack, "attack_size", None)]
+            y_test = np.asarray(getattr(data, "y_test", y_true))
+            attack_size = getattr(attack, "attack_size", None)
+            y_true = y_test[:attack_size] if attack_size is not None else y_test
         if attack is not None:
             y_pred = getattr(attack, "attack_predictions", None)
     elif mode == "val":
@@ -183,7 +200,7 @@ class ScorerConfig:
 
     score_name: str
     score_function: Any
-    score_params: Dict[str, Any] = field(default_factory=dict)
+    score_params: dict[str, Any] = field(default_factory=dict)
     greater_is_better: bool = True
     needs_proba: bool = False
 
@@ -194,7 +211,7 @@ class ScorerConfig:
                 resolve=True,
             )
         if isinstance(self.score_function, dict):
-            score_fn_spec = dict(self.score_function)
+            score_fn_spec = {str(k): v for k, v in dict(self.score_function).items()}
             target = score_fn_spec.pop(
                 "_target_",
                 score_fn_spec.pop("name", None),
@@ -283,7 +300,13 @@ class ScorerConfig:
 
         return np.argmax(y_pred_arr, axis=1)
 
-    def __call__(self, y_true: Any, y_pred: Any, swap: bool = False, **kwargs: Any) -> Any:
+    def __call__(
+        self,
+        y_true: Any,
+        y_pred: Any,
+        swap: bool = False,
+        **kwargs: Any,
+    ) -> MetricResult:
         if swap:
             y_true, y_pred = y_pred, y_true
         y_true = to_numpy_if_torch(y_true)
@@ -293,7 +316,13 @@ class ScorerConfig:
             y_pred=y_pred,
         )
         params = {**self.score_params, **kwargs}
-        signature = inspect.signature(self.score_function)
+        score_function = self.score_function
+        if not callable(score_function):
+            raise TypeError(
+                "score_function must be callable after ScorerConfig initialization",
+            )
+
+        signature = inspect.signature(score_function)
         accepts_var_kwargs = any(
             param.kind == inspect.Parameter.VAR_KEYWORD
             for param in signature.parameters.values()
@@ -311,14 +340,14 @@ class ScorerConfig:
             accepted.discard("y_true")
             accepted.discard("y_pred")
             params = {k: v for k, v in params.items() if k in accepted}
-        return self.score_function(y_true, y_pred, **params)
+        return cast(MetricResult, score_function(y_true, y_pred, **params))
 
 
 @dataclass(eq=False)
 class ScorerDictConfig(ConfigBase):
     """Container of named ScorerConfig instances."""
 
-    scorers: Dict[str, Union[ScorerConfig, Dict[str, Any]]] = field(
+    scorers: dict[str, ScorerConfig] = field(
         default_factory=dict,
     )
 
@@ -329,27 +358,44 @@ class ScorerDictConfig(ConfigBase):
                 scorer = value
             elif isinstance(value, dict):
                 scorer_data = dict(value)
+                raw_score_name = scorer_data.pop("score_name", key)
+                raw_score_params = scorer_data.pop("score_params", {})
+                if not isinstance(raw_score_params, dict):
+                    raise TypeError(
+                        f"score_params for '{key}' must be a dictionary, got {type(raw_score_params)}",
+                    )
                 scorer = ScorerConfig(
-                    score_name=scorer_data.pop("score_name", key),
+                    score_name=str(raw_score_name),
                     score_function=scorer_data.pop("score_function"),
-                    score_params=scorer_data.pop("score_params", {}),
-                    greater_is_better=scorer_data.pop(
+                    score_params=dict(raw_score_params),
+                    greater_is_better=bool(scorer_data.pop(
                         "greater_is_better",
                         True,
-                    ),
-                    needs_proba=scorer_data.pop("needs_proba", False),
+                    )),
+                    needs_proba=bool(scorer_data.pop("needs_proba", False)),
                 )
             elif isinstance(value, DictConfig):
-                scorer_data = dict(OmegaConf.to_container(value, resolve=True))
+                raw_value = OmegaConf.to_container(value, resolve=True)
+                if not isinstance(raw_value, dict):
+                    raise TypeError(
+                        f"DictConfig scorer entry '{key}' must resolve to a dictionary, got {type(raw_value)}",
+                    )
+                scorer_data = dict(raw_value)
+                raw_score_name = scorer_data.pop("score_name", key)
+                raw_score_params = scorer_data.pop("score_params", {})
+                if not isinstance(raw_score_params, dict):
+                    raise TypeError(
+                        f"score_params for '{key}' must be a dictionary, got {type(raw_score_params)}",
+                    )
                 scorer = ScorerConfig(
-                    score_name=scorer_data.pop("score_name", key),
+                    score_name=str(raw_score_name),
                     score_function=scorer_data.pop("score_function"),
-                    score_params=scorer_data.pop("score_params", {}),
-                    greater_is_better=scorer_data.pop(
+                    score_params=dict(raw_score_params),
+                    greater_is_better=bool(scorer_data.pop(
                         "greater_is_better",
                         True,
-                    ),
-                    needs_proba=scorer_data.pop("needs_proba", False),
+                    )),
+                    needs_proba=bool(scorer_data.pop("needs_proba", False)),
                 )
             else:
                 raise TypeError(
@@ -421,11 +467,16 @@ class ScorerDictConfig(ConfigBase):
             raise ValueError(
                 "Probability-required scorer configured but model does not expose predict_proba",
             )
+        predict_proba = getattr(estimator, "predict_proba")
+        if not callable(predict_proba):
+            raise ValueError(
+                "Probability-required scorer configured but predict_proba is not callable",
+            )
 
         try:
-            return estimator.predict_proba(X)
+            return predict_proba(X)
         except TypeError:
-            return estimator.predict_proba(np.asarray(X, dtype=float))
+            return predict_proba(np.asarray(X, dtype=float))
 
     def __call__(
         self,
@@ -437,14 +488,14 @@ class ScorerDictConfig(ConfigBase):
             "attack-val",
             None,
         ] = "test",
-        data=None,
-        model=None,
-        attack=None,
+        data: "DataConfig | None" = None,
+        model: Any = None,
+        attack: Any = None,
         y_pred=None,
         y_true=None,
         score_file=None,
-        **kwargs,
-    ) -> Dict[str, Any]:
+        **kwargs: Any,
+    ) -> dict[str, Any]:
         results = {}
         if score_file is not None and Path(score_file).exists():
             results = self.load_scores(score_file)
@@ -456,20 +507,28 @@ class ScorerDictConfig(ConfigBase):
                 )
         else:
             if mode == "test":
+                assert data is not None
                 y_true = data.y_test
                 y_pred = getattr(model, "test_predictions", None)
                 if y_pred is None:
                     y_pred = getattr(model, "predictions", None)
             elif mode == "train":
+                assert data is not None and model is not None
                 y_true = data.y_train
                 y_pred = model.training_predictions
             elif mode == "attack":
-                y_true = data.y_test[: attack.attack_size]
+                assert data is not None and attack is not None
+                y_test = getattr(data, "y_test", None)
+                if y_test is None:
+                    raise ValueError("attack mode requires data.y_test")
+                y_true = y_test[: attack.attack_size]
                 y_pred = attack.attack_predictions
             elif mode == "val":
+                assert data is not None and model is not None
                 y_true = data.y_val
                 y_pred = model.val_predictions
             elif mode == "attack-val":
+                assert data is not None and attack is not None
                 y_true = data.y_val
                 y_pred = attack.attack_predictions
             elif y_true is None:
@@ -592,7 +651,7 @@ def build_scorer_dict(cfg: ScorerDictConfig):
     return cfg if isinstance(cfg, ScorerDictConfig) else ScorerDictConfig(**cfg)
 
 
-def _default_classification_scorers() -> Dict[str, ScorerConfig]:
+def _default_classification_scorers() -> dict[str, ScorerConfig]:
     return {
         "accuracy": ScorerConfig(
             score_name="accuracy",
@@ -627,7 +686,7 @@ def _default_classification_scorers() -> Dict[str, ScorerConfig]:
     }
 
 
-def _default_regression_scorers() -> Dict[str, ScorerConfig]:
+def _default_regression_scorers() -> dict[str, ScorerConfig]:
     return {
         "mse": ScorerConfig(
             score_name="mse",
@@ -646,7 +705,7 @@ def _default_regression_scorers() -> Dict[str, ScorerConfig]:
     }
 
 
-def _default_pytorch_classification_scorers() -> Dict[str, ScorerConfig]:
+def _default_pytorch_classification_scorers() -> dict[str, ScorerConfig]:
     return {
         "accuracy": ScorerConfig(
             score_name="accuracy",
@@ -675,9 +734,9 @@ class DefaultModelScoreConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     """Default model scorer family with optional task inheritance."""
 
     classifier: Union[bool, str, None] = None
-    scorers: Dict[str, ScorerConfig] = field(default_factory=dict)
+    scorers: dict[str, ScorerConfig] = field(default_factory=dict)
 
-    def _build_default_scorers(self, classifier: bool) -> Dict[str, ScorerConfig]:
+    def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
         return (
             _default_classification_scorers()
             if classifier
@@ -704,9 +763,9 @@ class DefaultPytorchScoreConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     """Default PyTorch scorer family with optional task inheritance."""
 
     classifier: Union[bool, str, None] = None
-    scorers: Dict[str, ScorerConfig] = field(default_factory=dict)
+    scorers: dict[str, ScorerConfig] = field(default_factory=dict)
 
-    def _build_default_scorers(self, classifier: bool) -> Dict[str, ScorerConfig]:
+    def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
         return (
             _default_pytorch_classification_scorers()
             if classifier

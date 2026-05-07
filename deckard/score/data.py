@@ -6,7 +6,8 @@ reference-column overrides so analysis can target a non-label column.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Union
+from collections.abc import Callable, Sequence
+from typing import Any, Union
 
 import numpy as np
 import pandas as pd
@@ -23,8 +24,12 @@ from .base import (
     safe_store,
 )
 
+LabelVector = Union[np.ndarray, pd.Series, Sequence[Union[int, float, str, bool]]]
+FeatureMatrix = Union[np.ndarray, pd.Series, pd.DataFrame, Sequence[Sequence[float]]]
+KwargMap = dict[str, Any]
 
-def _coerce_features_dataframe(y_pred) -> pd.DataFrame:
+
+def _coerce_features_dataframe(y_pred: FeatureMatrix) -> pd.DataFrame:
     if isinstance(y_pred, pd.DataFrame):
         return y_pred
     if isinstance(y_pred, pd.Series):
@@ -38,7 +43,11 @@ def _coerce_features_dataframe(y_pred) -> pd.DataFrame:
     )
 
 
-def _resolve_reference_vector(y_true, X: pd.DataFrame, **kwargs):
+def _resolve_reference_vector(
+    y_true: LabelVector,
+    X: pd.DataFrame,
+    **kwargs: Any,
+) -> tuple[np.ndarray, pd.DataFrame]:
     reference = kwargs.get("reference", None)
     if reference is not None:
         return np.asarray(reference), X
@@ -72,7 +81,11 @@ def _is_discrete_reference(values: np.ndarray) -> bool:
     return False
 
 
-def _feature_mutual_information_vector(y_true, y_pred, **kwargs) -> np.ndarray:
+def _feature_mutual_information_vector(
+    y_true: LabelVector,
+    y_pred: FeatureMatrix,
+    **kwargs: Any,
+) -> np.ndarray:
     X = _coerce_features_dataframe(y_pred)
     reference, X = _resolve_reference_vector(y_true=y_true, X=X, **kwargs)
     if X.shape[1] == 0:
@@ -92,7 +105,11 @@ def _feature_mutual_information_vector(y_true, y_pred, **kwargs) -> np.ndarray:
     return np.asarray(mi, dtype=float)
 
 
-def data_num_classes_score(y_true: Any, y_pred: Any, **kwargs: Any) -> int:
+def data_num_classes_score(
+    y_true: LabelVector,
+    y_pred: FeatureMatrix,
+    **kwargs: Any,
+) -> int:
     """Count the number of unique classes in ``y_true``.
 
     Parameters
@@ -113,7 +130,11 @@ def data_num_classes_score(y_true: Any, y_pred: Any, **kwargs: Any) -> int:
     return int(pd.Series(y_true).nunique(dropna=False))
 
 
-def data_class_count_min_score(y_true: Any, y_pred: Any, **kwargs: Any) -> int:
+def data_class_count_min_score(
+    y_true: LabelVector,
+    y_pred: FeatureMatrix,
+    **kwargs: Any,
+) -> int:
     """Return the count of the least-frequent class in ``y_true``.
 
     Parameters
@@ -135,7 +156,11 @@ def data_class_count_min_score(y_true: Any, y_pred: Any, **kwargs: Any) -> int:
     return int(counts.min()) if len(counts) else 0
 
 
-def data_class_count_max_score(y_true: Any, y_pred: Any, **kwargs: Any) -> int:
+def data_class_count_max_score(
+    y_true: LabelVector,
+    y_pred: FeatureMatrix,
+    **kwargs: Any,
+) -> int:
     """Return the count of the most-frequent class in ``y_true``.
 
     Parameters
@@ -157,7 +182,11 @@ def data_class_count_max_score(y_true: Any, y_pred: Any, **kwargs: Any) -> int:
     return int(counts.max()) if len(counts) else 0
 
 
-def data_class_imbalance_ratio_score(y_true: Any, y_pred: Any, **kwargs: Any) -> float:
+def data_class_imbalance_ratio_score(
+    y_true: LabelVector,
+    y_pred: FeatureMatrix,
+    **kwargs: Any,
+) -> float:
     """Return the ratio of the most-frequent to the least-frequent class.
 
     Parameters
@@ -186,7 +215,11 @@ def data_class_imbalance_ratio_score(y_true: Any, y_pred: Any, **kwargs: Any) ->
     return max_count / min_count
 
 
-def data_mutual_information_mean_score(y_true: Any, y_pred: Any, **kwargs: Any) -> float:
+def data_mutual_information_mean_score(
+    y_true: LabelVector,
+    y_pred: FeatureMatrix,
+    **kwargs: Any,
+) -> float:
     """Return the mean mutual information between features and the reference vector.
 
     Parameters
@@ -214,7 +247,11 @@ def data_mutual_information_mean_score(y_true: Any, y_pred: Any, **kwargs: Any) 
     return float(np.mean(mi))
 
 
-def data_mutual_information_max_score(y_true: Any, y_pred: Any, **kwargs: Any) -> float:
+def data_mutual_information_max_score(
+    y_true: LabelVector,
+    y_pred: FeatureMatrix,
+    **kwargs: Any,
+) -> float:
     """Return the maximum mutual information between any single feature and the reference.
 
     Parameters
@@ -242,7 +279,11 @@ def data_mutual_information_max_score(y_true: Any, y_pred: Any, **kwargs: Any) -
     return float(np.max(mi))
 
 
-def data_empirical_cdf_function_score(y_true: Any, y_pred: Any, **kwargs: Any) -> Callable:
+def data_empirical_cdf_function_score(
+    y_true: LabelVector,
+    y_pred: FeatureMatrix,
+    **kwargs: Any,
+) -> Callable[[np.ndarray], np.ndarray]:
     """Return an empirical CDF function fitted to the reference vector.
 
     The returned callable accepts an array of query values and returns the
@@ -292,9 +333,12 @@ class DefaultDataScoreConfig(_DataScorerMarker, _TaskAwareScorerMixin, ScorerDic
     """Default data-analysis scorer family with optional task inheritance."""
 
     classifier: Union[bool, str, None] = None
-    scorers: Dict[str, Union[ScorerConfig, Dict[str, Any]]] = field(default_factory=dict)
+    scorers: dict[str, Union[ScorerConfig, KwargMap]] = field(default_factory=dict)
 
-    def _build_default_scorers(self, classifier: bool) -> Dict[str, Union[ScorerConfig, Dict[str, Any]]]:
+    def _build_default_scorers(
+        self,
+        classifier: bool,
+    ) -> dict[str, Union[ScorerConfig, KwargMap]]:
         if classifier:
             return {
                 "num_classes": ScorerConfig(

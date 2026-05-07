@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 import math
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 from .base import ScorerConfig, ScorerDictConfig, safe_store
 
@@ -74,7 +74,7 @@ def survival_bic_score(y_true: Any, y_pred: Any, **kwargs: Any) -> float:
 class DefaultLifelinesConfig(ScorerDictConfig):
     """Default scorer set for survival workflows."""
 
-    scorers: Dict[str, Union[ScorerConfig, Dict[str, Any]]] = field(
+    scorers: dict[str, Union[ScorerConfig, dict[str, Any]]] = field(
         default_factory=lambda: {
             "concordance": ScorerConfig(
                 score_name="concordance",

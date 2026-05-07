@@ -1015,10 +1015,10 @@ class ModelConfig(ConfigBase):
         times = self._evaluate_and_score(
             data,
             times,
-            persist_training_predictions=train_predictions_file is not None,
-            persist_test_predictions=test_predictions_file is not None,
-            persist_training_probabilities=training_probabilities_file is not None,
-            persist_test_probabilities=test_probabilities_file is not None,
+            persist_training_predictions=True,
+            persist_test_predictions=True,
+            persist_training_probabilities=True,
+            persist_test_probabilities=True,
         )
         hook_outputs = self._run_plugin_hook(
             "after_evaluate",

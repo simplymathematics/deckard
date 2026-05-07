@@ -217,9 +217,9 @@ Means:
 
 Generated artifacts:
 
-- `build/coverage.txt` → coverage report
-- `build/timing.txt` → test execution durations
-- `build/error.log` → captured failures
+- `build/coverage.txt` -> coverage report
+- `build/timing.txt` -> test execution durations
+- `build/error.log` -> captured failures
 
 ---
 

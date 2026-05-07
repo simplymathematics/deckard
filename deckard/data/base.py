@@ -41,7 +41,6 @@ from ..utils import (
     coerce_to_list,
     merge_list_of_dicts,
 )
-from ..score.base import coerce_scorer_config as _coerce_scorer_config
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -49,6 +48,13 @@ logger = logging.getLogger(__name__)
 
 AUTO_SCORER = "auto"
 DECKARD_TEST_MAX_SAMPLES_ENV = "DECKARD_TEST_MAX_SAMPLES"
+
+
+def _coerce_scorer_config(*args, **kwargs):
+    """Lazy import scorer coercion to avoid data<->score import cycles at module import time."""
+    from ..score.base import coerce_scorer_config as _coerce
+
+    return _coerce(*args, **kwargs)
 
 
 def _discover_lifelines_dataset_loaders() -> dict:

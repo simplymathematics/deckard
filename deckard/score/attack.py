@@ -2,11 +2,11 @@
 
 from dataclasses import dataclass, field
 import time
-from typing import Any, Dict, Literal, Union
+from typing import Any, Literal, Union
 
 from sklearn.metrics import accuracy_score
 
-from ..utils import ConfigBase,round_scores
+from ..utils import ConfigBase, round_scores
 from .base import (
     ScorerConfig,
     ScorerDictConfig,
@@ -51,9 +51,9 @@ class DefaultEvasionScoreConfig(_TaskAwareScorerMixin, _AttackProfileScorer, Sco
 
     _profile_attr = "evasion"
     classifier: Union[bool, str, None] = None
-    scorers: Dict[str, ScorerConfig] = field(default_factory=dict)
+    scorers: dict[str, ScorerConfig] = field(default_factory=dict)
 
-    def _build_default_scorers(self, classifier: bool) -> Dict[str, ScorerConfig]:
+    def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
         if classifier:
             return {
                 "accuracy": ScorerConfig(
@@ -127,9 +127,9 @@ class DefaultMembershipInferenceScoreConfig(_TaskAwareScorerMixin, _AttackProfil
 
     _profile_attr = "membership_inference"
     classifier: Union[bool, str, None] = True
-    scorers: Dict[str, ScorerConfig] = field(default_factory=dict)
+    scorers: dict[str, ScorerConfig] = field(default_factory=dict)
 
-    def _build_default_scorers(self, classifier: bool) -> Dict[str, ScorerConfig]:
+    def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
         _ = classifier
         return {
             "accuracy": ScorerConfig(
@@ -169,9 +169,9 @@ class DefaultAttributeInferenceScoreConfig(_TaskAwareScorerMixin, _AttackProfile
 
     _profile_attr = "attribute_inference"
     classifier: Union[bool, str, None] = None
-    scorers: Dict[str, ScorerConfig] = field(default_factory=dict)
+    scorers: dict[str, ScorerConfig] = field(default_factory=dict)
 
-    def _build_default_scorers(self, classifier: bool) -> Dict[str, ScorerConfig]:
+    def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
         if classifier:
             return {
                 "accuracy": ScorerConfig(
@@ -488,7 +488,7 @@ safe_store(
 class FairlearnEvasionAttackScorerConfig:
     """Per-sensitive-group evasion scorer (classification) via MetricFrame."""
 
-    group_scorers: Dict[str, Any] = field(
+    group_scorers: dict[str, Any] = field(
         default_factory=lambda: {
             "accuracy": ScorerConfig(
                 score_name="accuracy",
@@ -507,7 +507,7 @@ class FairlearnEvasionAttackScorerConfig:
 class FairlearnMembershipInferenceAttackScorerConfig:
     """Per-sensitive-group membership inference scorer via MetricFrame."""
 
-    group_scorers: Dict[str, Any] = field(
+    group_scorers: dict[str, Any] = field(
         default_factory=lambda: {
             "accuracy": ScorerConfig(
                 score_name="accuracy",
@@ -526,7 +526,7 @@ class FairlearnMembershipInferenceAttackScorerConfig:
 class FairlearnAttributeInferenceAttackScorerConfig:
     """Per-sensitive-group attribute inference scorer (classification) via MetricFrame."""
 
-    group_scorers: Dict[str, Any] = field(
+    group_scorers: dict[str, Any] = field(
         default_factory=lambda: {
             "accuracy": ScorerConfig(
                 score_name="accuracy",
@@ -545,7 +545,7 @@ class FairlearnAttributeInferenceAttackScorerConfig:
 class FairlearnAttributeInferenceRegressionAttackScorerConfig:
     """Per-sensitive-group attribute inference scorer (regression) via MetricFrame."""
 
-    group_scorers: Dict[str, Any] = field(
+    group_scorers: dict[str, Any] = field(
         default_factory=lambda: {
             "mse": ScorerConfig(
                 score_name="mse",
