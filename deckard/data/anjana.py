@@ -369,7 +369,7 @@ class AnjanaDataConfig(DataPipelineConfig):
     def _score(self) -> dict:
         if is_default_config_value(self.scorer, include_best=False):
             self.scorer = load_class(
-                "deckard.score.anjana.DefaultAnjanaScoreConfig",
+                "deckard.score.anjana.DefaultAnjanaDataScoreConfig",
             )
         if self.scorer is None:
             return {}
@@ -389,25 +389,4 @@ class AnjanaDataConfig(DataPipelineConfig):
             mode=None,
             data=self,
         )
-        if not isinstance(raw_scores, dict):
-            return {"anjana_scores": raw_scores}
-
-        anjana_metric_keys = {
-            "k_anonymity",
-            "l_diversity",
-            "t_closeness",
-        }
-        anjana_scores = {
-            key: value
-            for key, value in raw_scores.items()
-            if key in anjana_metric_keys
-        }
-        non_anjana_scores = {
-            key: value
-            for key, value in raw_scores.items()
-            if key not in anjana_metric_keys
-        }
-        output = dict(non_anjana_scores)
-        if len(anjana_scores) > 0:
-            output["anjana_scores"] = anjana_scores
-        return output
+        return {"anjana_scores": raw_scores}

@@ -5,12 +5,13 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from .base import ScorerConfig, ScorerDictConfig, safe_store
+from .base import ScorerConfig, ScorerDictConfig, _DataScorerMarker, safe_store
 
 __all__ = [
     "anjana_k_anonymity_score",
     "anjana_l_diversity_score",
     "anjana_t_closeness_score",
+    "_AnjanaScorerMixin",
     "DefaultAnjanaScoreConfig",
     "DefaultAnjanaDataScoreConfig",
     "DefaultAnjanaModelScoreConfig",
@@ -209,8 +210,19 @@ def anjana_t_closeness_score(
     return float(pycanon_anonymity.t_closeness(frame, quasi_ident, [sens_att]))
 
 
+class _AnjanaScorerMixin(_DataScorerMarker):
+    """Marker mixin for ANJANA privacy scorers.
+
+    Inherits :class:`_DataScorerMarker` so that
+    ``_initialize_component_scorers`` routes these scorers to ``data.scorer``.
+    Subclass this to add ANJANA-specific call-time behaviour; the
+    ``"anjana_scores"`` output wrapping is enforced by the data layer
+    (:meth:`AnjanaDataConfig._score`).
+    """
+
+
 @dataclass(eq=False)
-class DefaultAnjanaScoreConfig(ScorerDictConfig):
+class DefaultAnjanaScoreConfig(_AnjanaScorerMixin, ScorerDictConfig):
     scorers: Dict[str, ScorerConfig] = field(
         default_factory=lambda: {
             "k_anonymity": ScorerConfig(
