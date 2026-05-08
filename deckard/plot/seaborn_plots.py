@@ -88,29 +88,52 @@ class SeabornPlotConfig(ConfigBase):
         )
         plotter = plotter_map[self.plot_type]
 
-        if ax is None:
+        if ax is None and self.plot_type != "cat":
             _, ax = plt.subplots()
 
         if self.rc_config:
             plt.rcParams.update(self.rc_config)
 
-        plot_kwargs = {
-            "data": self.data,
-            "x": self.x,
-            "y": self.y,
-            **self.kwargs,
-        }
-        if self.hue is not None:
-            plot_kwargs["hue"] = self.hue
-        if self.style is not None and self.plot_type in ["scatter", "line"]:
-            plot_kwargs["style"] = self.style
+        if self.plot_type == "heatmap":
+            plot_kwargs = {
+                "data": self.data,
+                **self.kwargs,
+            }
+        else:
+            plot_kwargs = {
+                "data": self.data,
+                "x": self.x,
+                "y": self.y,
+                **self.kwargs,
+            }
+            if self.hue is not None:
+                plot_kwargs["hue"] = self.hue
+            if self.style is not None and self.plot_type in ["scatter", "line"]:
+                plot_kwargs["style"] = self.style
 
-        try:
-            graph = plotter(ax=ax, **plot_kwargs)
-        except TypeError:
+        if self.plot_type == "cat":
             graph = plotter(**plot_kwargs)
             if hasattr(graph, "ax"):
                 ax = graph.ax
+            elif hasattr(graph, "axes"):
+                axes = graph.axes
+                if axes is not None:
+                    ax = axes.flat[0] if hasattr(axes, "flat") else axes[0]
+            elif hasattr(graph, "figure") and graph.figure.axes:
+                ax = graph.figure.axes[0]
+        else:
+            try:
+                graph = plotter(ax=ax, **plot_kwargs)
+            except TypeError:
+                graph = plotter(**plot_kwargs)
+                if hasattr(graph, "ax"):
+                    ax = graph.ax
+                elif hasattr(graph, "axes"):
+                    axes = graph.axes
+                    if axes is not None:
+                        ax = axes.flat[0] if hasattr(axes, "flat") else axes[0]
+                elif hasattr(graph, "figure") and graph.figure.axes:
+                    ax = graph.figure.axes[0]
 
         if self.title:
             ax.set_title(self.title)
