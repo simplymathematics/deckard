@@ -169,10 +169,6 @@ class SeabornPlotConfigList(ConfigBase):
                 logger.debug(
                     f"Failed to render plot_type: {cfg.plot_type} with error: {e}",
                 )
-        if self.file is not None:
-            Path(self.file).parent.mkdir(parents=True, exist_ok=True)
-            plt.savefig(self.file)
-            logger.info(f"Yellowbrick plots saved to {self.file}")
         if fig is not None:
             plt.close(fig)
         return axes

@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.model_selection import (
     KFold,
     TimeSeriesSplit,
@@ -141,6 +142,76 @@ all_viz_objects = [
 ]
 logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=UserWarning)
+
+
+class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
+    """Expose Deckard model configs with a sklearn-like inference interface.
+
+    Yellowbrick classifier visualizers expect estimators that implement sklearn
+    conventions (``fit``, ``score``, and ``predict_proba``/``decision_function``).
+    PyTorch-backed Deckard models are not sklearn estimators, so this adapter
+    bridges that API using the model config's existing prediction path.
+    """
+
+    def __init__(self, model_config: Any, classifier: bool = True):
+        self.model_config = model_config
+        self._estimator_type = "classifier" if classifier else "regressor"
+        self.classes_ = None
+
+    @staticmethod
+    def _to_numpy(value: Any) -> np.ndarray:
+        if isinstance(value, np.ndarray):
+            return value
+        if hasattr(value, "detach") and hasattr(value, "cpu"):
+            return value.detach().cpu().numpy()
+        if hasattr(value, "cpu") and hasattr(value, "numpy"):
+            return value.cpu().numpy()
+        if hasattr(value, "numpy"):
+            return value.numpy()
+        return np.asarray(value)
+
+    def fit(self, X, y=None, **kwargs):
+        # Experiment preparation performs model fitting already.
+        if y is not None and self._estimator_type == "classifier":
+            y_arr = self._to_numpy(y).reshape(-1)
+            self.classes_ = np.unique(y_arr)
+        return self
+
+    def _predict_raw(self, X) -> np.ndarray:
+        raw = self.model_config._predict(X)
+        return self._to_numpy(raw)
+
+    def predict_proba(self, X) -> np.ndarray:
+        raw = self._predict_raw(X)
+        if raw.ndim == 1:
+            logits = raw.astype(float)
+            probs_pos = 1.0 / (1.0 + np.exp(-logits))
+            return np.vstack([1.0 - probs_pos, probs_pos]).T
+        if raw.ndim == 2:
+            row_sums = raw.sum(axis=1)
+            if np.all(raw >= 0.0) and np.allclose(row_sums, 1.0, atol=1e-4):
+                return raw
+            shifted = raw - np.max(raw, axis=1, keepdims=True)
+            exp_vals = np.exp(shifted)
+            return exp_vals / np.sum(exp_vals, axis=1, keepdims=True)
+        raise ValueError(
+            f"Unsupported prediction shape for predict_proba: {raw.shape}",
+        )
+
+    def predict(self, X) -> np.ndarray:
+        raw = self._predict_raw(X)
+        if raw.ndim == 1:
+            return (raw > 0.0).astype(int)
+        if raw.ndim == 2:
+            return np.argmax(raw, axis=1)
+        raise ValueError(f"Unsupported prediction shape for predict: {raw.shape}")
+
+    def score(self, X, y) -> float:
+        y_true = self._to_numpy(y).reshape(-1)
+        y_pred = self.predict(X).reshape(-1)
+        if y_true.shape[0] == 0:
+            return 0.0
+        return float(np.mean(y_true == y_pred))
 
 
 @dataclass(kw_only=True)
@@ -351,7 +422,22 @@ class YellowbrickPlotConfig(ConfigBase):
 
     def _get_plot_model(self):
         """Return the instantiated estimator for Yellowbrick visualizers."""
-        return self.experiment.model.get_model()
+        estimator = self.experiment.model.get_model()
+
+        if self.plot_type in classifier_viz_types:
+            has_classifier_api = all(
+                hasattr(estimator, attr) for attr in ("fit", "predict", "score")
+            ) and (
+                hasattr(estimator, "predict_proba")
+                or hasattr(estimator, "decision_function")
+            )
+            if not has_classifier_api:
+                return _YellowbrickModelAdapter(
+                    self.experiment.model,
+                    classifier=True,
+                )
+
+        return estimator
 
     def visualize_features(self, ax=None):
         """Generates and saves the Yellowbrick data plot."""
