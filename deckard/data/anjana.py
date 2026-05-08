@@ -1,3 +1,4 @@
+import inspect
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Union
 
@@ -296,12 +297,12 @@ class AnjanaDataConfig(DataPipelineConfig):
         frame = self._build_anjana_frame()
         call_kwargs = dict(defense_cfg)
         call_kwargs.setdefault("data", frame)
-        if self.identifiers is not None:
-            call_kwargs.setdefault("ident", self.identifiers)
+        call_kwargs.setdefault("ident", self.identifiers or [])
         if self.quasi_identifiers is not None:
             call_kwargs.setdefault("quasi_ident", self.quasi_identifiers)
         if self.sensitive_attribute is not None:
             call_kwargs.setdefault("sens_att", self.sensitive_attribute)
+        call_kwargs.setdefault("supp_level", 100)
         if self.hierarchies is not None:
             call_kwargs.setdefault("hierarchies", self.hierarchies)
         elif self.quasi_identifiers is not None:
@@ -309,6 +310,29 @@ class AnjanaDataConfig(DataPipelineConfig):
                 "hierarchies",
                 self.generate_anjana_hierarchy_dict(frame=frame),
             )
+
+        # ANJANA defenses expose different signatures; keep only supported kwargs
+        # unless the callable accepts arbitrary keyword arguments.
+        signature = inspect.signature(defense_fn)
+        supports_var_kwargs = any(
+            p.kind == inspect.Parameter.VAR_KEYWORD
+            for p in signature.parameters.values()
+        )
+        if not supports_var_kwargs:
+            accepted = {
+                name
+                for name, p in signature.parameters.items()
+                if p.kind
+                in {
+                    inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                    inspect.Parameter.KEYWORD_ONLY,
+                }
+            }
+            call_kwargs = {
+                key: value
+                for key, value in call_kwargs.items()
+                if key in accepted
+            }
 
         transformed = defense_fn(**call_kwargs)
         if not isinstance(transformed, pd.DataFrame):
@@ -389,4 +413,8 @@ class AnjanaDataConfig(DataPipelineConfig):
             mode=None,
             data=self,
         )
-        return {"anjana_scores": raw_scores}
+        if not isinstance(raw_scores, dict):
+            raise TypeError(
+                f"AnjanaDataConfig.scorer must return a dict, got {type(raw_scores)}",
+            )
+        return dict(raw_scores)
