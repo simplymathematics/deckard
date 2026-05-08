@@ -155,11 +155,9 @@ class AttackConfig(ConfigBase):
     attack : object, optional
         Stores the result of the attack.
     attack_predictions : list, optional
-        Stores the predictions made by the attack.
-    predictions : object, optional
-        Predicted labels or scores produced by the attack routine.
-    labels : object, optional
-        Labels aligned with ``predictions`` for scoring.
+        Attack output persisted for scoring (canonical name).
+    attacked_labels : object, optional
+        Target labels aligned with ``attack_predictions`` for scoring.
     target_index : int, optional
         Cached column index for ``targeted_attribute``.
     _attack_type : str, optional
@@ -235,8 +233,7 @@ class AttackConfig(ConfigBase):
     attack_score_time: Union[float, None] = None
     attack: Union[object, None] = None
     attack_predictions: Union[object, None] = None
-    predictions: Union[object, None] = None
-    labels: Union[object, None] = None
+    attacked_labels: Union[object, None] = None
     target_index: Union[int, None] = None
     _attack_type: Union[str, None] = None
     _attack_subtype: Union[str, None] = None
@@ -291,6 +288,9 @@ class AttackConfig(ConfigBase):
         """Validate poisoning-specific configuration parameters."""
         attack_type = (self.attack_family or "").lower()
         if attack_type != "poisoning":
+            return
+
+        if str(self.attack_type).endswith("PoisoningAttackSVM"):
             return
 
         required_keys = ("class_source", "class_target")
@@ -531,6 +531,11 @@ class AttackConfig(ConfigBase):
                 "num_workers",
             ):
                 attack_init_params.pop(key, None)
+            if self._is_poisoning_svm_attack(attack_class):
+                self._ensure_poisoning_svm_clip_values(art_model, data)
+                attack_init_params.update(
+                    self._build_poisoning_svm_init_params(data),
+                )
         if attack_type == "inference" and attack_subtype == "model_inversion":
             for key in (
                 "split",
@@ -549,6 +554,39 @@ class AttackConfig(ConfigBase):
         self._attack_type = attack_type
         self._attack_subtype = attack_subtype
         return attack, art_model, attack_type, attack_subtype
+
+    @staticmethod
+    def _is_poisoning_svm_attack(attack_class) -> bool:
+        return "PoisoningAttackSVM" in getattr(attack_class, "__name__", "")
+
+    def _build_poisoning_svm_init_params(self, data) -> dict:
+        y_train = self._target_to_class_labels(getattr(data, "y_train"))
+        x_val = getattr(data, "X_val", None)
+        y_val = getattr(data, "y_val", None)
+        if x_val is None or y_val is None:
+            x_val = getattr(data, "X_test")
+            y_val = getattr(data, "y_test")
+        nb_classes = int(np.max(y_train)) + 1
+        return {
+            "x_train": self._prepare_features_for_art(getattr(data, "X_train")),
+            "y_train": self._one_hot_encode(y_train, nb_classes=nb_classes),
+            "x_val": self._prepare_features_for_art(x_val),
+            "y_val": self._one_hot_encode(
+                self._target_to_class_labels(y_val),
+                nb_classes=nb_classes,
+            ),
+        }
+
+    def _ensure_poisoning_svm_clip_values(self, art_model, data) -> None:
+        if getattr(art_model, "clip_values", None) is not None:
+            return
+        x_train = self._prepare_features_for_art(getattr(data, "X_train"))
+        lower = float(np.min(x_train))
+        upper = float(np.max(x_train))
+        if hasattr(art_model, "_clip_values"):
+            art_model._clip_values = (lower, upper)
+        else:
+            art_model.clip_values = (lower, upper)
 
     def __call__(
         self,
@@ -732,11 +770,15 @@ class AttackConfig(ConfigBase):
         """
         n = self.attack_size
         if train is True:
-            ben_preds = art_model.predict(data.X_test)
+            ben_preds = art_model.predict(
+                self._prepare_features_for_art(data.X_test),
+            )
             ben_pred_labels = ben_preds.argmax(axis=1)
             n, X_subset, y_subset = self.get_attack_subset(data, test=True)
         else:
-            ben_preds = art_model.predict(data.X_train)
+            ben_preds = art_model.predict(
+                self._prepare_features_for_art(data.X_train),
+            )
             ben_preds = tensor_to_numpy(ben_preds, dtype=ART_NUMPY_DTYPE)
             ben_pred_labels = ben_preds.argmax(axis=1)
             n, X_subset, y_subset = self.get_attack_subset(data, test=False)
@@ -929,6 +971,19 @@ class AttackConfig(ConfigBase):
             return value.values
         return value
 
+    def _prepare_features_for_art(self, value):
+        """Prepare feature inputs specifically for ART model/attack boundaries."""
+        prepared = self._prepare_features_for_attack(value)
+        arr = self._to_numpy_array(prepared)
+        if np.issubdtype(arr.dtype, np.floating):
+            arr = arr.astype(ART_NUMPY_DTYPE, copy=False)
+        return arr
+
+    def _prepare_labels_for_art(self, value):
+        """Prepare labels specifically for ART model/attack boundaries."""
+        prepared = self._prepare_labels_for_attack(value)
+        return self._to_numpy_array(prepared)
+
     @classmethod
     def _prediction_to_labels(cls, predictions, is_regression: bool = False):
         """Convert model/attack prediction outputs into score-ready labels."""
@@ -988,10 +1043,25 @@ class AttackConfig(ConfigBase):
         return arr
 
     @staticmethod
+    def _looks_like_probabilities(pred) -> bool:
+        pred = np.asarray(pred)
+        if pred.ndim != 2 or pred.shape[1] <= 1:
+            return False
+        if not np.all(np.isfinite(pred)):
+            return False
+        if np.min(pred) < -1e-12 or np.max(pred) > 1.0 + 1e-12:
+            return False
+        row_sums = pred.sum(axis=1)
+        return np.allclose(row_sums, 1.0, atol=1e-4)
+
+    @staticmethod
     def _select_extraction_scorer(benign_pred, extracted_pred):
         """Use full classifier metrics when probabilities are available, else label-only metrics."""
         preds = [np.asarray(benign_pred), np.asarray(extracted_pred)]
-        has_probabilities = any(pred.ndim == 2 and pred.shape[1] > 1 for pred in preds)
+        has_probabilities = all(
+            AttackConfig._looks_like_probabilities(pred)
+            for pred in preds
+        )
         if has_probabilities:
             return DefaultClassifierConfig(), True
         full_classifier = DefaultClassifierConfig()
@@ -1044,11 +1114,12 @@ class AttackConfig(ConfigBase):
         n, x_subset, y_subset = self.get_attack_subset(data)
         x_subset = self._prepare_features_for_attack(x_subset)
         y_subset = self._prepare_labels_for_attack(y_subset)
+        x_subset_art = self._prepare_features_for_art(x_subset)
         if not isinstance(y_subset, (list, np.ndarray)) and not is_tensor(y_subset):
             raise TypeError(
                 f"Expected labels to be a list, numpy array, or tensor. Got {type(y_subset)}",
             )
-        ben_preds = art_model.predict(x_subset)
+        ben_preds = art_model.predict(x_subset_art)
         is_regression = self._is_regression_prediction_output(
             y_subset,
             ben_preds,
@@ -1064,9 +1135,9 @@ class AttackConfig(ConfigBase):
             )
         if "AdversarialPatch" in str(type(attack)):
             # Special handling for AdversarialPatch attack
-            patches = attack.generate(x=x_subset, y=ben_pred_labels)
+            patches = attack.generate(x=x_subset_art, y=ben_pred_labels)
             # Caclulate the scale of the patch, relative to the input size
-            input_shape = x_subset[0].shape[
+            input_shape = x_subset_art[0].shape[
                 1:
             ]  # Exclude batch dimension, channel dimension
             patch_shape = patches[0].shape[
@@ -1078,9 +1149,9 @@ class AttackConfig(ConfigBase):
                 patch_shape[0] / input_shape[0],
                 patch_shape[1] / input_shape[1],
             )
-            X_test_adv = attack.apply_patch(x_subset, scale=scale)
+            X_test_adv = attack.apply_patch(x_subset_art, scale=scale)
         else:
-            X_test_adv = attack.generate(x=x_subset)
+            X_test_adv = attack.generate(x=x_subset_art)
         end_time = time.process_time()
         self.attack_time = end_time - start_time
         logger.info(
@@ -1088,8 +1159,8 @@ class AttackConfig(ConfigBase):
         )
         start_time = time.process_time()
         adv_pred = art_model.predict(X_test_adv)
-        self.predictions = adv_pred
-        self.labels = y_subset
+        self.attack_predictions = adv_pred
+        self.attacked_labels = y_subset
         # adv_pred_labels = adv_pred.argmax(axis=1)
         end_time = time.process_time()
         self.attack_prediction_time = end_time - start_time
@@ -1290,8 +1361,6 @@ class AttackConfig(ConfigBase):
         logger.info(
             f"Possible values for targeted attribute '{targeted_attribute}': {possible_values}",
         )
-        self.predictions = preds
-        self.labels = target
         start_time = time.process_time()
         preds = np.array(preds, dtype=ART_NUMPY_DTYPE)
         X_test_subset_without_feature = np.array(
@@ -1334,6 +1403,8 @@ class AttackConfig(ConfigBase):
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
         self.attack = inferred
+        self.attack_predictions = inferred
+        self.attacked_labels = target
         return self.score_dict
 
     def _infer_membership(self, data, attack):
@@ -1376,9 +1447,9 @@ class AttackConfig(ConfigBase):
             y_data = y_train_values
         try:
             attack.fit(
-                x=self._prepare_features_for_attack(getattr(data, "X_train")),
+                x=self._prepare_features_for_art(getattr(data, "X_train")),
                 y=y_data,
-                test_x=self._prepare_features_for_attack(getattr(data, "X_test")),
+                test_x=self._prepare_features_for_art(getattr(data, "X_test")),
             )
         except AxisError:
             # Fallback: ensure y is strictly 2D one-hot to avoid axis=1 errors
@@ -1386,9 +1457,9 @@ class AttackConfig(ConfigBase):
                 np.asarray(y_train_values).reshape(-1),
             ).values
             attack.fit(
-                x=self._prepare_features_for_attack(getattr(data, "X_train")),
+                x=self._prepare_features_for_art(getattr(data, "X_train")),
                 y=safe_y_data,
-                test_x=self._prepare_features_for_attack(getattr(data, "X_test")),
+                test_x=self._prepare_features_for_art(getattr(data, "X_test")),
             )
         end_time = time.process_time()
         self.attack_time = time.process_time() - start_time
@@ -1396,8 +1467,8 @@ class AttackConfig(ConfigBase):
         logger.info(
             f"Membership inference attack training took {self.attack_time} seconds for {self.attack_size} samples",
         )
-        x_train = self._prepare_features_for_attack(getattr(data, "X_train"))
-        x_test = self._prepare_features_for_attack(getattr(data, "X_test"))
+        x_train = self._prepare_features_for_art(getattr(data, "X_train"))
+        x_test = self._prepare_features_for_art(getattr(data, "X_test"))
         big_X = np.vstack(
             (
                 self._to_numpy_array(x_train),
@@ -1455,16 +1526,15 @@ class AttackConfig(ConfigBase):
         logger.info(
             f"Membership inference prediction took {self.attack_prediction_time} seconds for {self.attack_size} samples",
         )
-        self.predictions = inferred
-        self.labels = labels
+        self.attack_predictions = inferred
+        self.attacked_labels = labels
         end_time = time.process_time()
         self.attack_prediction_time = end_time - start_time
         logger.info(
             f"Membership inference attack prediction took {self.attack_prediction_time} seconds for {self.attack_size} samples",
         )
         start_time = time.process_time()
-        self.predictions = inferred
-        self.labels
+        self.attack_predictions = inferred
         score_dict = self._score(
             attack_kind="membership",
             y_true=labels,
@@ -1590,9 +1660,8 @@ class AttackConfig(ConfigBase):
         mae = float(np.mean(np.abs(inferred_flat - proto_arr)))
         self.attack_score_time = time.process_time() - start_time
 
-        self.predictions = inferred_arr
-        self.labels = target_labels
         self.attack_predictions = inferred_arr
+        self.attacked_labels = target_labels
         self.attack = inferred_arr
 
         self.score_dict = {
@@ -1700,9 +1769,8 @@ class AttackConfig(ConfigBase):
 
         self.attack_score_time = time.process_time() - start_time
 
-        self.predictions = x_reconstructed
-        self.labels = x_true_missing
         self.attack_predictions = x_reconstructed
+        self.attacked_labels = x_true_missing
         self.attack = x_reconstructed
 
         self.score_dict = {
@@ -1720,6 +1788,10 @@ class AttackConfig(ConfigBase):
 
     def _poison(self, data, art_model, attack):
         """Execute a poisoning attack and score benign vs poisoned model accuracy."""
+        attack_name = type(attack).__name__.lower()
+        if "poisoningattacksvm" in attack_name:
+            return self._poison_svm(data=data, art_model=art_model, attack=attack)
+
         class_source = int(self.attack_params["class_source"])
         class_target = int(self.attack_params["class_target"])
         trigger_index = int(self.attack_params.get("trigger_index", 0))
@@ -1727,7 +1799,6 @@ class AttackConfig(ConfigBase):
 
         # ART GradientMatching on macOS can fail with spawned DataLoader workers;
         # force CPU and single-worker loaders for deterministic smoke/integration runs.
-        attack_name = type(attack).__name__.lower()
         if "gradientmatchingattack" in attack_name:
             try:
                 import torch
@@ -1868,9 +1939,8 @@ class AttackConfig(ConfigBase):
         trigger_label = int(self._labels_from_classifier_predictions(trigger_pred)[0])
         self.attack_score_time = time.process_time() - start_time
 
-        self.predictions = poisoned_labels
-        self.labels = y_eval
         self.attack_predictions = poisoned_pred
+        self.attacked_labels = y_eval
         self.attack = art_model
         self.score_dict = {
             **self.score_dict,
@@ -1883,6 +1953,79 @@ class AttackConfig(ConfigBase):
             "poison_trigger_success": int(trigger_label == class_target),
             "attack_size": len(x_poison),
             "poison_mode": mode_used,
+        }
+        return self.score_dict
+
+    def _poison_svm(self, data, art_model, attack):
+        """Execute an ART PoisoningAttackSVM attack and score benign vs poisoned model accuracy."""
+        poison_fit_params = self.attack_params.get("poison_fit_params", {})
+
+        x_train = self._to_numpy_array(
+            self._prepare_features_for_attack(getattr(data, "X_train")),
+            dtype=ART_NUMPY_DTYPE,
+        )
+        y_train_class = self._target_to_class_labels(getattr(data, "y_train"))
+
+        mode_used, x_eval_raw, y_eval_raw = self._resolve_eval_split(data)
+        x_eval = self._to_numpy_array(
+            self._prepare_features_for_attack(x_eval_raw),
+            dtype=ART_NUMPY_DTYPE,
+        )
+        y_eval = self._normalize_ground_truth(y_eval_raw, is_regression=False)
+        y_eval_class = self._target_to_class_labels(y_eval_raw)
+
+        nb_classes = int(max(np.max(y_train_class), np.max(y_eval_class))) + 1
+        y_train_for_poison = self._one_hot_encode(y_train_class, nb_classes)
+
+        n = min(int(self.attack_size), len(x_eval))
+        x_seed = x_eval[:n]
+        target_labels = (y_eval_class[:n] + 1) % nb_classes
+        y_seed = self._one_hot_encode(target_labels, nb_classes)
+
+        start_time = time.process_time()
+        x_adv, y_adv = attack.poison(x_seed, y_seed)
+        self.attack_time = time.process_time() - start_time
+        logger.info(
+            f"SVM poison generation took {self.attack_time} seconds for {len(x_adv)} generated points",
+        )
+
+        x_poison = np.vstack([x_train, x_adv])
+        y_poison = np.vstack([y_train_for_poison, y_adv])
+
+        start_time = time.process_time()
+        benign_pred = art_model.predict(x_eval)
+        art_model.fit(x_poison, y_poison, **poison_fit_params)
+        poisoned_pred = art_model.predict(x_eval)
+        self.attack_prediction_time = time.process_time() - start_time
+        logger.info(
+            f"SVM poisoned model fit + prediction took {self.attack_prediction_time} seconds on {mode_used} split",
+        )
+
+        benign_labels = self._prediction_to_labels(benign_pred, is_regression=False)
+        poisoned_labels = self._prediction_to_labels(poisoned_pred, is_regression=False)
+
+        start_time = time.process_time()
+        full_classifier = DefaultClassifierConfig()
+        label_only = {
+            name: scorer
+            for name, scorer in full_classifier.scorers.items()
+            if not scorer.needs_proba
+        }
+        classifier_scorer = ScorerDictConfig(scorers=label_only)
+        benign_scores = classifier_scorer(y_true=y_eval, y_pred=benign_labels, mode=None)
+        poisoned_scores = classifier_scorer(y_true=y_eval, y_pred=poisoned_labels, mode=None)
+        self.attack_score_time = time.process_time() - start_time
+
+        self.attack_predictions = poisoned_pred
+        self.attacked_labels = y_eval
+        self.attack = art_model
+        self.score_dict = {
+            **self.score_dict,
+            **{f"benign_{k}": v for k, v in benign_scores.items()},
+            **{f"poisoned_{k}": v for k, v in poisoned_scores.items()},
+            "poisoning_attack_points": int(len(x_adv)),
+            "poison_mode": mode_used,
+            "attack_size": int(len(x_adv)),
         }
         return self.score_dict
 
@@ -1962,10 +2105,10 @@ class AttackConfig(ConfigBase):
             )
 
         n, x_query, _ = self.get_attack_subset(data, test=False)
-        x_query = self._prepare_features_for_attack(x_query)
+        x_query = self._prepare_features_for_art(x_query)
 
         mode_used, x_eval, y_eval = self._resolve_eval_split(data)
-        x_eval = self._prepare_features_for_attack(x_eval)
+        x_eval = self._prepare_features_for_art(x_eval)
         y_eval = self._normalize_ground_truth(y_eval, is_regression=False)
 
         thieved_classifier = copy.deepcopy(art_model)
@@ -2031,9 +2174,8 @@ class AttackConfig(ConfigBase):
 
         prefixed_benign = {f"benign_{k}": v for k, v in benign_scores.items()}
         prefixed_extracted = {f"extracted_{k}": v for k, v in extracted_scores.items()}
-        self.predictions = extracted_labels
-        self.labels = y_eval
         self.attack_predictions = extracted_pred
+        self.attacked_labels = y_eval
         self.attack = extracted_classifier
         self.score_dict = {
             **self.score_dict,
