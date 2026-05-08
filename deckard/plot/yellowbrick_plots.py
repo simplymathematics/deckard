@@ -214,6 +214,27 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
         return float(np.mean(y_true == y_pred))
 
 
+def _named_classifier_adapter(model_config: Any) -> _YellowbrickModelAdapter:
+    """Return a classifier adapter whose class name mirrors the wrapped model.
+
+    Yellowbrick derives default titles from ``estimator.__class__.__name__``.
+    Preserve the wrapped model name so titles stay user-facing.
+    """
+    model_name = "Model"
+    try:
+        model_obj = model_config.get_model()
+        model_name = type(model_obj).__name__ or model_name
+    except Exception:
+        pass
+
+    adapter_type = type(
+        model_name,
+        (_YellowbrickModelAdapter,),
+        {},
+    )
+    return adapter_type(model_config=model_config, classifier=True)
+
+
 @dataclass(kw_only=True)
 class YellowbrickPlotConfig(ConfigBase):
     """Render a single Yellowbrick plot from composed experiment configuration.
@@ -227,6 +248,7 @@ class YellowbrickPlotConfig(ConfigBase):
 
     # Plot-specific parameters
     plot_type: str
+    clustering: bool = False
     features: Union[List[str], Literal["all"]] = "all"
     classes: Union[List[str], Literal["all"]] = "all"
     title: str = "Yellowbrick Plot"
@@ -318,18 +340,10 @@ class YellowbrickPlotConfig(ConfigBase):
                     "mutual_info_classif",
                     "f_classif",
                 ]
-            elif classifier_flag is False:
-                score_priority = [
-                    "mutual_info_regression",
-                    "f_regression",
-                    "r_regression",
-                ]
             else:
                 score_priority = [
-                    "mutual_info_classif",
                     "mutual_info_regression",
                     "f_regression",
-                    "f_classif",
                     "r_regression",
                 ]
 
@@ -432,10 +446,7 @@ class YellowbrickPlotConfig(ConfigBase):
                 or hasattr(estimator, "decision_function")
             )
             if not has_classifier_api:
-                return _YellowbrickModelAdapter(
-                    self.experiment.model,
-                    classifier=True,
-                )
+                return _named_classifier_adapter(self.experiment.model)
 
         return estimator
 
@@ -758,7 +769,23 @@ class YellowbrickPlotConfig(ConfigBase):
             tuple(all_viz_objects),
         ), "Visualizer is not a recognized Yellowbrick visualizer"
 
-        visualizer.show(outpath=self.save_path)
+        # Yellowbrick applies default titles in finalize(); run finalize first,
+        # then enforce any user-specified title before saving.
+        if hasattr(visualizer, "finalize"):
+            visualizer.finalize()
+
+        if getattr(self, "title", None):
+            if hasattr(visualizer, "ax") and visualizer.ax is not None:
+                visualizer.ax.set_title(self.title)
+            elif hasattr(visualizer, "axes") and visualizer.axes is not None:
+                try:
+                    axes = np.ravel(visualizer.axes)
+                    if axes.size > 0 and axes[0] is not None:
+                        axes[0].set_title(self.title)
+                except Exception:
+                    pass
+
+        plt.savefig(self.save_path)
 
     def __len__(self):
         return 1
@@ -786,6 +813,7 @@ class YellowbrickConfigList(ConfigBase):
         Literal["all"],
         List[str],
     ] = "all"
+    clustering: bool = False
     plot_folder: Optional[str] = None
     rc_config: Dict[str, Any] = field(default_factory=dict)
 
@@ -823,6 +851,7 @@ class YellowbrickConfigList(ConfigBase):
             "features": "all",
             "classes": "all",
             "plot_type": plot_type,
+            "clustering": self.clustering,
             "title": plot_type.replace("_", " ").title(),
             "save_path": (plot_folder / f"{plot_type}.png").as_posix(),
             "rc_config": self.rc_config,
@@ -881,12 +910,12 @@ class YellowbrickConfigList(ConfigBase):
                 data_plots += feature_viz_types + target_viz_types
             if self.experiment.model is not None:
                 model_plots = list(model_selection_viz_types)
-                if self.experiment.model.classifier is True:
-                    model_plots += classifier_viz_types
-                elif self.experiment.model.classifier is False:
-                    model_plots += regressor_viz_types
-                elif self.experiment.model.classifier is None:
+                if self.clustering:
                     model_plots += cluster_viz_types
+                elif self.experiment.model.classifier is True:
+                    model_plots += classifier_viz_types
+                else:
+                    model_plots += regressor_viz_types
                 if self.experiment.attack is not None:
                     logger.debug(
                         "Plotting attacks with yellowbick isn't supported (yet).",

@@ -170,5 +170,5 @@ class SeabornPlotConfigList(ConfigBase):
                     f"Failed to render plot_type: {cfg.plot_type} with error: {e}",
                 )
         if fig is not None:
-            plt.close(fig)
+            fig.tight_layout()
         return axes
