@@ -118,7 +118,7 @@ class SplitSampler(BaseSampler):
 class KFoldSampler(BaseSampler):
     """Cross-validation sampler with disjoint validation folds.
 
-    The val set is the fold selected by ``cfg.fold``; the remaining data is
+    The val set is the split selected by ``cfg.split``; the remaining data is
     split into train and test portions according to ``cfg.test_size``.
 
     Parameters
@@ -153,13 +153,13 @@ class KFoldSampler(BaseSampler):
             )
             splits = list(splitter.split(indices))
 
-        fold = cfg.fold if cfg.fold is not None else 0
-        if fold >= len(splits):
+        split = cfg.split if cfg.split is not None else 0
+        if split >= len(splits):
             raise ValueError(
-                f"fold={fold} out of range for n_splits={self.n_splits}",
+                f"split={split} out of range for n_splits={self.n_splits}",
             )
 
-        train_val_idx, val_idx = splits[fold]
+        train_val_idx, val_idx = splits[split]
 
         # Stratification for the inner train/test split
         stratify_sub = (
@@ -220,13 +220,13 @@ class ShuffleSampler(BaseSampler):
             )
             splits = list(splitter.split(indices))
 
-        fold = cfg.fold if cfg.fold is not None else 0
-        if fold >= len(splits):
+        split = cfg.split if cfg.split is not None else 0
+        if split >= len(splits):
             raise ValueError(
-                f"fold={fold} out of range for n_splits={self.n_splits}",
+                f"split={split} out of range for n_splits={self.n_splits}",
             )
 
-        train_test_idx, val_idx = splits[fold]
+        train_test_idx, val_idx = splits[split]
 
         # Stratification for the inner train/test split
         stratify_sub = (
