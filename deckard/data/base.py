@@ -7,7 +7,7 @@ import importlib
 from pathlib import Path
 
 from dataclasses import dataclass, field
-from typing import Any, Tuple, Union
+from typing import Any, Literal, Tuple, Union
 from omegaconf import DictConfig
 
 import numpy as np
@@ -78,6 +78,27 @@ def _lifelines_dataset_loaders() -> dict:
     return _discover_lifelines_dataset_loaders()
 
 
+def _discover_yellowbrick_dataset_loaders() -> dict:
+    """Discover yellowbrick dataset loader functions when yellowbrick is installed."""
+    try:
+        yellowbrick_datasets = importlib.import_module("yellowbrick.datasets")
+    except ImportError:
+        return {}
+    dataset_map = {}
+    for attr in dir(yellowbrick_datasets):
+        if not attr.startswith("load_"):
+            continue
+        loader = getattr(yellowbrick_datasets, attr)
+        if callable(loader):
+            dataset_name = attr.replace("load_", "", 1)
+            dataset_map[dataset_name] = loader
+    return dataset_map
+
+
+def _yellowbrick_dataset_loaders() -> dict:
+    return _discover_yellowbrick_dataset_loaders()
+
+
 @dataclass(eq=False)
 class DataConfig(ConfigBase):
     """
@@ -97,8 +118,9 @@ class DataConfig(ConfigBase):
         Proportion or count of samples to include in the validation split when a
         ``sample`` is provided (e.g. :class:`~deckard.data.sample.SplitSampler` or
         :class:`~deckard.data.sample.ShuffleSampler`).  Unused in legacy mode.
-    fold : Union[int, None]
-        Which fold to use as the validation set when ``sample`` performs cross-validation
+    split : Union[int, None]
+        Which split index to use as the validation set when ``sample`` performs
+        cross-validation or shuffle splitting
         (e.g. :class:`~deckard.data.sample.KFoldSampler` or
         :class:`~deckard.data.sample.ShuffleSampler`).  Defaults to ``0``.
     sample : Union[callable, dict, None]
@@ -225,17 +247,18 @@ class DataConfig(ConfigBase):
     test_size: Union[float, int, None] = None
     train_size: Union[float, int, None] = None
     val_size: Union[float, int, None] = None
-    fold: Union[int, None] = None
+    split: Union[int, None] = None
     sample: Union[str, Any] = "split"
     random_state: int = 42
     stratify: Union[None, str, bool] = True
-    classifier: Union[bool, None, str] = True
+    classifier: Union[bool, str] = True
     target: Union[str, None] = None
     drop: list = None
     keep: list = None
     plugins: list = field(default_factory=list)
     alias: Union[str, None] = None
     scorer: Any = AUTO_SCORER
+    score_mode: Literal["train", "test", "val", "pre-sample"] = "train"
 
     # Runtime state fields
     score_dict: dict = field(init=False, repr=True)
@@ -438,7 +461,7 @@ class DataConfig(ConfigBase):
         """Instantiate and return the sampler object.
 
         Accepts:
-        - ``"split"`` / ``"fold"`` / ``"shuffle"`` -> corresponding sampler class
+        - ``"split"`` / ``"kfold"`` / ``"shuffle"`` -> corresponding sampler class
         - An already-instantiated sampler object (returned as-is)
         - A plain :class:`dict` or OmegaConf :class:`~omegaconf.DictConfig` with a
           ``name`` or ``_target_`` key pointing to the sampler class
@@ -452,7 +475,7 @@ class DataConfig(ConfigBase):
 
         _SAMPLER_ALIASES = {
             "split": SplitSampler,
-            "fold": KFoldSampler,
+            "kfold": KFoldSampler,
             "shuffle": ShuffleSampler,
         }
 
@@ -524,23 +547,54 @@ class DataConfig(ConfigBase):
         """
         start_time = time.process_time()
         adult = fetch_openml(name=self.dataset_name, version=2, as_frame=True)
-        df = adult.frame
-        X = df.drop(columns="class")
-        y = df["class"].cat.rename_categories({"<=50K": 0, ">50K": 1})
-        y = y.astype(int)
-        # Replace Male/Female with 1/0
-        sex = X.pop("sex")
-        # Convert appropriate columns to categorical or numeric types
-        X["age"] = X["age"].astype(int)
-        X["education-num"] = X["education-num"].astype(int)
-        X["hours-per-week"] = X["hours-per-week"].astype(int)
-        X["capital-gain"] = X["capital-gain"].astype(int)
-        X["capital-loss"] = X["capital-loss"].astype(int)
-        X["race"] = X["race"].astype("category")
-        X["native-country"] = X["native-country"].astype("category")
-        X = pd.get_dummies(X, drop_first=True)
-        X["sex"] = sex.cat.rename_categories({"Male": 0, "Female": 1})
-        # Convert categorical variables to numeric using one-hot encoding
+        frame = adult.frame.copy() if getattr(adult, "frame", None) is not None else None
+        if frame is None:
+            frame = pd.DataFrame(adult.data).copy()
+            target_source = pd.Series(adult.target, name="class")
+        else:
+            target_source = frame.pop("class") if "class" in frame.columns else pd.Series(adult.target, name="class")
+
+        
+
+        y_raw = pd.Series(target_source, name="target").copy()
+        if pd.api.types.is_numeric_dtype(y_raw):
+            y = y_raw.astype(int)
+        else:
+            y = _encode_binary_series(
+                y_raw.astype(str),
+                {"<=50K": 0, ">50K": 1},
+            )
+
+        X = frame
+        if "sex" not in X.columns:
+            raise ValueError("Adult dataset must include a 'sex' column")
+
+        sex = self._encode_binary_series(
+            X.pop("sex").astype(str),
+            {"Male": 0, "Female": 1},
+        )
+
+        for column in [
+            "age",
+            "education-num",
+            "hours-per-week",
+            "capital-gain",
+            "capital-loss",
+            "fnlwgt",
+        ]:
+            if column in X.columns:
+                X[column] = pd.to_numeric(X[column], errors="coerce")
+
+        categorical_columns = X.select_dtypes(include=["object", "category"]).columns.tolist()
+        X = pd.get_dummies(
+            X,
+            columns=categorical_columns,
+            drop_first=True,
+            dummy_na=True,
+            dtype=int,
+        )
+        X["sex"] = sex.astype(int)
+
         end_time = time.process_time()
         self.data_load_time = end_time - start_time
         self._X = X
@@ -555,7 +609,18 @@ class DataConfig(ConfigBase):
         ), f"Expected Series got {type(self._y)}"
         self._X = self._X.apply(pd.to_numeric, errors="coerce")
         return self
-
+    def _encode_binary_series(self, series: pd.Series, mapping: dict[str, int]) -> pd.Series:
+            encoded = series.map(mapping)
+            if encoded.isna().any():
+                unique_values = [value for value in series.dropna().unique().tolist() if value != "nan"]
+                if len(unique_values) != 2:
+                    raise ValueError(
+                        f"Expected a binary series, found values {sorted(unique_values)}",
+                    )
+                fallback_mapping = {value: idx for idx, value in enumerate(sorted(unique_values))}
+                encoded = series.map(fallback_mapping)
+            return encoded.astype(int)
+        
     def _make_classification_data(
         self,
         n_samples=1000,
@@ -846,6 +911,53 @@ class DataConfig(ConfigBase):
         self._y = pd.Series(y)
         return self
 
+    def _load_yellowbrick_dataset(self, dataset_name: str, **loader_params):
+        """Load a yellowbrick dataset into DataConfig feature/target fields."""
+        yellowbrick_datasets = _yellowbrick_dataset_loaders()
+        if not yellowbrick_datasets:
+            raise ImportError(
+                "Yellowbrick datasets require optional dependency deckard[yellowbrick]",
+            )
+        if dataset_name not in yellowbrick_datasets:
+            raise NotImplementedError(
+                f"Yellowbrick dataset {dataset_name} not found. Supported: {sorted(yellowbrick_datasets.keys())}",
+            )
+
+        start_time = time.process_time()
+        loader = yellowbrick_datasets[dataset_name]
+        dataset = loader(**loader_params)
+
+        if hasattr(dataset, "to_data") and callable(getattr(dataset, "to_data")):
+            dataset = dataset.to_data()
+
+        if isinstance(dataset, tuple) and len(dataset) == 2:
+            X, y = dataset
+        elif isinstance(dataset, pd.DataFrame):
+            candidate_target = self.target
+            if candidate_target is None:
+                for candidate in ["target", "y", "label", "class"]:
+                    if candidate in dataset.columns:
+                        candidate_target = candidate
+                        break
+            if candidate_target is None or candidate_target not in dataset.columns:
+                candidate_target = "target"
+                dataset[candidate_target] = 0
+            y = dataset.pop(candidate_target)
+            X = dataset
+        elif hasattr(dataset, "data") and hasattr(dataset, "target"):
+            X = dataset.data
+            y = dataset.target
+        else:
+            raise TypeError(
+                f"Unsupported Yellowbrick dataset output type: {type(dataset)}",
+            )
+
+        end_time = time.process_time()
+        self.data_load_time = end_time - start_time
+        self._X = pd.DataFrame(X)
+        self._y = pd.Series(y)
+        return self
+
     def _load_data(self):
         """
         Loads dataset based on the provided dataset name or file type.
@@ -913,6 +1025,28 @@ class DataConfig(ConfigBase):
             if dataset_name not in supported_datasets:
                 supported_datasets[dataset_name] = (
                     lambda _name=dataset_name, **params: self._load_lifelines_dataset(
+                        _name,
+                        **params,
+                    )
+                )
+        for dataset_name in _yellowbrick_dataset_loaders().keys():
+            supported_datasets.setdefault(
+                f"yellowbrick_{dataset_name}",
+                lambda _name=dataset_name, **params: self._load_yellowbrick_dataset(
+                    _name,
+                    **params,
+                ),
+            )
+            supported_datasets.setdefault(
+                f"yellowbrick.{dataset_name}",
+                lambda _name=dataset_name, **params: self._load_yellowbrick_dataset(
+                    _name,
+                    **params,
+                ),
+            )
+            if dataset_name not in supported_datasets:
+                supported_datasets[dataset_name] = (
+                    lambda _name=dataset_name, **params: self._load_yellowbrick_dataset(
                         _name,
                         **params,
                     )
@@ -988,10 +1122,33 @@ class DataConfig(ConfigBase):
                 f"DataConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
 
+        mode = str(getattr(self, "score_mode", "train") or "train").lower()
+        if mode == "pre-sample":
+            y_true = getattr(self, "_y", None)
+            y_pred = getattr(self, "_X", None)
+            scorer_mode = "pre-sample"
+        elif mode == "test":
+            y_true = self.y_test
+            y_pred = self.X_test
+            scorer_mode = "test"
+        elif mode == "val":
+            y_true = self.y_val
+            y_pred = self.X_val
+            scorer_mode = "val"
+        else:
+            y_true = self.y_train
+            y_pred = self.X_train
+            scorer_mode = "train"
+
+        if y_true is None or y_pred is None:
+            raise ValueError(
+                f"Data scoring mode '{mode}' requested but required data split is unavailable.",
+            )
+
         result_dict = self.scorer(
-            y_true=self.y_train,
-            y_pred=self.X_train,
-            mode=None,
+            y_true=y_true,
+            y_pred=y_pred,
+            mode=scorer_mode,
             data=self,
         )
         plugin_scores = self._run_plugin_hook("after_score", scores=result_dict)
@@ -1231,7 +1388,9 @@ class DataPipelineConfig(DataConfig):
         elif self.classifier in ["regressor", False]:
             self.classifier = False
         else:
-            self.classifier = None
+            raise ValueError(
+                f"classifier must be boolean or one of ['classifier', 'regressor'], got {self.classifier}",
+            )
         self.scorer = _coerce_scorer_config(
             self.scorer,
             default_factory=lambda: load_class(
