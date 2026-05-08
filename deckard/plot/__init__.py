@@ -1,6 +1,6 @@
 """Public plotting configuration exports.
 
-``PlotConfig`` is the stable wrapper entrypoint for Deckard plotting from Python.
+``PlotConfig`` is the stable wrapper entrypoint for deckard plotting from Python.
 It dispatches to seaborn-backed or yellowbrick-backed concrete plot config
 implementations depending on the provided inputs and installed optional
 dependencies.

@@ -145,11 +145,11 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 
 class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
-    """Expose Deckard model configs with a sklearn-like inference interface.
+    """Expose deckard model configs with a sklearn-like inference interface.
 
     Yellowbrick classifier visualizers expect estimators that implement sklearn
     conventions (``fit``, ``score``, and ``predict_proba``/``decision_function``).
-    PyTorch-backed Deckard models are not sklearn estimators, so this adapter
+    PyTorch-backed deckard models are not sklearn estimators, so this adapter
     bridges that API using the model config's existing prediction path.
     """
 

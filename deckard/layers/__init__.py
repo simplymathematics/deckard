@@ -1,4 +1,4 @@
-"""CLI layer registry for Deckard subcommands.
+"""CLI layer registry for deckard subcommands.
 
 The :mod:`deckard.layers` package exposes the parser/main-function pairs used by
 the top-level ``deckard`` CLI router.

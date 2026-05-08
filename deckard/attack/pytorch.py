@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from art.config import ART_NUMPY_DTYPE
+from ..score.attack import AttackScorerConfig  # noqa: F401
 from .base import AttackConfig
 from .torch_utils import is_tensor, tensor_to_numpy
 

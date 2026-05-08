@@ -1,7 +1,7 @@
-"""Public package entrypoint for Deckard.
+"""Public package entrypoint for deckard.
 
 This module configures warning filters, registers the OmegaConf resolvers used
-throughout Deckard configs, and re-exports the primary configuration objects
+throughout deckard configs, and re-exports the primary configuration objects
 that make up the supported public API:
 
 - ``DataConfig`` and related data configuration classes
@@ -76,7 +76,7 @@ def _load_yaml_file(path: Path):
 
 
 def _file_resolver(arg: str):
-    """Resolve ``${file:...}`` OmegaConf interpolations relative to Deckard config.
+    """Resolve ``${file:...}`` OmegaConf interpolations relative to deckard config.
 
     Supported forms::
 

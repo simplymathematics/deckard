@@ -10,4 +10,8 @@ from .pytorch import PytorchAttackConfig
 # Import declarations to register example configs with ConfigStore
 from . import declarations  # noqa: F401
 
-__all__ = ["AttackConfig", "PytorchAttackConfig", "SensitiveFeaturesWrapper"]
+__all__ = [
+	"AttackConfig",
+	"PytorchAttackConfig",
+	"SensitiveFeaturesWrapper",
+]

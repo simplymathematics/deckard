@@ -1,4 +1,4 @@
-"""Experiment orchestration primitives for Deckard's Python API.
+"""Experiment orchestration primitives for deckard's Python API.
 
 This module contains the base experiment configuration object that ties data,
 model, defense, attack, files, and scorers into a single executable unit.
@@ -234,7 +234,7 @@ class DataConfigResolutionMixin:
 
 
 class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
-    """Compose and execute a complete Deckard experiment.
+    """Compose and execute a complete deckard experiment.
 
     An experiment coordinates data loading, optional defense application, model
     training or loading, adversarial attack execution, scoring, and artifact

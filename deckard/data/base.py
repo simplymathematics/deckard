@@ -324,6 +324,7 @@ class DataConfig(ConfigBase):
             "train_n",
             "test_n",
             "val_n",
+            "split",
         ]:
             if not hasattr(self, attr):
                 setattr(self, attr, None)
@@ -560,7 +561,7 @@ class DataConfig(ConfigBase):
         if pd.api.types.is_numeric_dtype(y_raw):
             y = y_raw.astype(int)
         else:
-            y = _encode_binary_series(
+            y = self._encode_binary_series(
                 y_raw.astype(str),
                 {"<=50K": 0, ">50K": 1},
             )

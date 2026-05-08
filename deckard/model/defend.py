@@ -996,7 +996,7 @@ class DefensePipelineConfig(ConfigBase):
             if first_retraining_idx < last_non_retraining_idx:
                 warning_msg = (
                     "Adversarial retraining defenses must run last in the defense chain. "
-                    "Deckard will automatically move retraining defenses to the end."
+                    "deckard will automatically move retraining defenses to the end."
                 )
                 logger.warning(warning_msg)
                 warnings.warn(warning_msg, RuntimeWarning, stacklevel=2)

@@ -1,4 +1,4 @@
-"""Shared utility layer for Deckard's public Python API.
+"""Shared utility layer for deckard's public Python API.
 
 This module contains the base configuration protocol used across the project,
 stable hashing helpers for config identity, file IO helpers, and utility
@@ -583,11 +583,11 @@ data_supported_filetypes = [
 
 @dataclass
 class ConfigBase:
-    """Base class for Deckard configuration objects.
+    """Base class for deckard configuration objects.
 
     ``ConfigBase`` provides a common lifecycle for config dataclasses: argument
     hydration, post-init hooks, stable hashing based on configuration state, and
-    serialization helpers used throughout Deckard.
+    serialization helpers used throughout deckard.
     """
 
     # _target_: str = "deckard.utils.ConfigBase"
@@ -1197,7 +1197,7 @@ def save_data(
     filepath: Union[str, None] = None,
     **kwargs,
 ) -> None:
-    """Persist tabular data to one of Deckard's supported file formats."""
+    """Persist tabular data to one of deckard's supported file formats."""
     supported_filetypes = [
         ".csv",
         ".parquet",

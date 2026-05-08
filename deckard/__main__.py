@@ -84,7 +84,7 @@ def get_configuration_paths():
     ).as_posix()
     working_dir = os.getcwd()
     logger.info(f"Current working directory: {working_dir}")
-    logger.info("Starting Deckard with Hydra configuration.")
+    logger.info("Starting deckard with Hydra configuration.")
     logger.info(f"Config directory: {Path(config_dir).resolve()}")
     if not Path(config_dir).is_absolute():
         config_dir = os.path.relpath(config_dir, working_dir)
@@ -101,7 +101,7 @@ def _build_router() -> argparse.ArgumentParser:
     """Minimal routing parser: recognises the subcommand name and passes everything else through."""
     parser = argparse.ArgumentParser(
         prog="deckard",
-        description="Deckard command-line interface",
+        description="deckard command-line interface",
     )
     subs = parser.add_subparsers(dest="module", metavar="MODULE", required=True)
     for name in layer_dict:

@@ -1,7 +1,7 @@
-"""File path configuration utilities for Deckard experiments.
+"""File path configuration utilities for deckard experiments.
 
 ``FileConfig`` centralizes the paths used to persist datasets, models,
-predictions, attack outputs, parameters, scores, and logs across the Deckard
+predictions, attack outputs, parameters, scores, and logs across the deckard
 pipeline.
 """
 
@@ -66,7 +66,7 @@ safe_store(group="files", name="default", node=FILES_DEFAULT)
 
 @dataclass(eq=False)
 class FileConfig(ConfigBase):
-    """Configuration object for Deckard artifact and log file paths."""
+    """Configuration object for deckard artifact and log file paths."""
 
     data_file: str = field(
         default_factory=str,

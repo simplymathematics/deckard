@@ -1,4 +1,4 @@
-"""PyTorch-specific experiment orchestration for Deckard.
+"""PyTorch-specific experiment orchestration for deckard.
 
 Provides TorchExperimentConfig, a PyTorch-specific orchestration layer that
 enforces PyTorch backend consistency across all components: data, model, attack,

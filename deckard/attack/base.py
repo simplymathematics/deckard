@@ -59,8 +59,7 @@ def _sensitive_slice(sensitive, n):
     return arr[:n]
 
 
-if TYPE_CHECKING:
-    from ..score.attack import AttackScorerConfig
+from ..score.attack import AttackScorerConfig
 
 
 class SensitiveFeaturesWrapper(BaseEstimator):
