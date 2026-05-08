@@ -1,6 +1,6 @@
 # Security Experiments (Unified)
 
-This folder consolidates the legacy experiment sets into one modern Deckard configuration layout:
+This folder consolidates the legacy experiment sets into one modern deckard configuration layout:
 
 - Legacy `classification/` -> `config/data/classification.yaml`
 - Legacy `kdd-nsl/` -> `config/data/kdd-nsl.yaml`

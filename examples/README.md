@@ -1,6 +1,6 @@
-# `examples/sklearn/` — End-to-end Deckard experiment (Scikit-learn pipeline)
+# `examples/sklearn/` — End-to-end deckard experiment (Scikit-learn pipeline)
 
-This example demonstrates a full Deckard workflow using a scikit-learn-compatible experiment setup, including training, adversarial evaluation, fairness analysis, and visualization generation. It is a fully reproducible experiment workspace rather than a minimal tutorial.
+This example demonstrates a full deckard workflow using a scikit-learn-compatible experiment setup, including training, adversarial evaluation, fairness analysis, and visualization generation. It is a fully reproducible experiment workspace rather than a minimal tutorial.
 
 ---
 
@@ -156,11 +156,11 @@ This example is a full experimental pipeline integrating:
 - structured logging and artifact tracking
 - extensive visualization suite
 
-It represents a complete Deckard research workflow from configuration -> execution -> evaluation -> analysis.
+It represents a complete deckard research workflow from configuration -> execution -> evaluation -> analysis.
 
 # See also:
 
 [Installation help](../README.md)  
-[Full Documentation](../docs/README.md)
+[Full Documentation](../docs/build_docs.md)
 [Developer Documentation](../develop.md)
 [Jupyter Notebook Examples](../notebooks/README.md)
