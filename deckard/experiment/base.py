@@ -59,9 +59,15 @@ except ImportError:  # pragma: no cover
 
 
 try:
-    from ..model import FairlearnModelConfig
+    from ..model import FairlearnModelConfig, FairlearnPytorchModelConfig
 except ImportError:  # pragma: no cover
     FairlearnModelConfig = None
+    FairlearnPytorchModelConfig = None
+
+try:
+    from ..model import PytorchModelConfig
+except ImportError:  # pragma: no cover
+    PytorchModelConfig = None
 
 
 logger = logging.getLogger(__name__)
@@ -248,6 +254,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
     device: Any = None
     classifier: Union[str, bool] = True
     evaluation_mode: Literal["standard", "tuning", "report"] = "standard"
+    score_mode: Union[Literal["train", "test", "val", "pre-sample"], None] = None
     score_modes: Union[list[str], None] = None
 
     @staticmethod
@@ -267,17 +274,137 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
     def _resolve_score_modes(self) -> list[str]:
         if self.score_modes is not None:
-            return list(self.score_modes)
-        if self.evaluation_mode == "tuning":
-            return ["val"]
-        if self.evaluation_mode == "report":
-            return ["train", "test", "val"]
-        return ["train"]
+            raw_modes = list(self.score_modes)
+        elif self.score_mode is not None:
+            raw_modes = [self.score_mode]
+        elif self.evaluation_mode == "tuning":
+            raw_modes = ["test"]
+        elif self.evaluation_mode == "report":
+            raw_modes = ["val"]
+        else:
+            raw_modes = ["test"]
+
+        allowed = {"pre-sample", "train", "test", "val"}
+        modes = []
+        for raw_mode in raw_modes:
+            mode = str(raw_mode).strip().lower()
+            if mode not in allowed:
+                raise ValueError(
+                    f"Unsupported score mode '{raw_mode}'. Expected one of: {sorted(allowed)}.",
+                )
+            modes.append(mode)
+        return modes
+
+    def _resolve_data_mode_inputs(self, mode: str) -> tuple[Any, Any]:
+        if mode == "pre-sample":
+            y_true = getattr(self.data, "_y", None)
+            y_pred = getattr(self.data, "_X", None)
+        elif mode == "train":
+            y_true = getattr(self.data, "y_train", None)
+            y_pred = getattr(self.data, "X_train", None)
+        elif mode == "test":
+            y_true = getattr(self.data, "y_test", None)
+            y_pred = getattr(self.data, "X_test", None)
+        elif mode == "val":
+            y_true = getattr(self.data, "y_val", None)
+            y_pred = getattr(self.data, "X_val", None)
+        else:
+            raise ValueError(f"Unsupported data scoring mode '{mode}'")
+
+        if y_true is None or y_pred is None:
+            raise ValueError(
+                f"Scoring mode '{mode}' requested but required dataset split is unavailable.",
+            )
+        return y_true, y_pred
+
+    @staticmethod
+    def _apply_runtime_data_split_overrides(loaded_data: Any, configured_data: Any) -> None:
+        """Apply split-related runtime config from *configured_data* to *loaded_data*."""
+        if loaded_data is None or configured_data is None:
+            return
+        for attr in (
+            "sample",
+            "fold",
+            "val_size",
+            "train_size",
+            "test_size",
+            "stratify",
+            "random_state",
+        ):
+            if hasattr(configured_data, attr):
+                setattr(loaded_data, attr, getattr(configured_data, attr))
+
+    def _ensure_active_mode_split_available(self) -> None:
+        """Ensure required split exists for the active model score mode."""
+        active_mode = self._resolve_component_score_mode()
+        if active_mode != "val":
+            return
+
+        has_val = (
+            getattr(self.data, "X_val", None) is not None
+            and getattr(self.data, "y_val", None) is not None
+        )
+        if has_val:
+            return
+
+        can_resample = (
+            hasattr(self.data, "_sample")
+            and getattr(self.data, "_X", None) is not None
+            and getattr(self.data, "_y", None) is not None
+        )
+        if can_resample:
+            self.data.data_sample_time = None
+            for attr in (
+                "train_indices",
+                "test_indices",
+                "val_indices",
+                "X_train",
+                "y_train",
+                "X_test",
+                "y_test",
+                "X_val",
+                "y_val",
+                "train_n",
+                "test_n",
+                "val_n",
+            ):
+                setattr(self.data, attr, None)
+            self.data._sample()
+
+        if (
+            getattr(self.data, "X_val", None) is None
+            or getattr(self.data, "y_val", None) is None
+        ):
+            raise ValueError(
+                "score_mode='val' requires validation data (X_val/y_val), but no validation split is available.",
+            )
+
+    def _resolve_component_score_mode(self) -> Literal["train", "test", "val", "pre-sample"]:
+        for mode in self._resolve_score_modes():
+            if mode in {"test", "val", "train", "pre-sample"}:
+                return mode
+        return "test"
+
+    def _propagate_score_mode(self) -> Literal["train", "test", "val", "pre-sample"]:
+        active_mode = self._resolve_component_score_mode()
+        if self.data is not None and hasattr(self.data, "score_mode"):
+            self.data.score_mode = active_mode
+        if self.model is not None and hasattr(self.model, "score_mode") and active_mode in {"train", "test", "val"}:
+            self.model.score_mode = active_mode
+        attack_chain = getattr(self, "_attack_chain", None)
+        if attack_chain is None:
+            attack_chain = [self.attack] if self.attack is not None else []
+        for attack_cfg in attack_chain:
+            if attack_cfg is not None and hasattr(attack_cfg, "mode") and active_mode in {"test", "val"}:
+                attack_cfg.mode = active_mode
+        return active_mode
 
     @staticmethod
     def _normalize_mode_score_keys(mode: str, mode_scores: dict) -> dict:
         if mode == "val":
             return {f"validation_{k}": v for k, v in mode_scores.items()}
+        if mode == "pre-sample":
+            return {f"presample_{k}": v for k, v in mode_scores.items()}
         return mode_scores
 
     def _compute_val_predictions(self):
@@ -300,6 +427,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         return val_predictions
 
     def _ensure_mode_predictions(self, mode: str):
+        if mode == "pre-sample":
+            return
         if self.model is None:
             raise ValueError(
                 f"{mode} scoring requires a model, but model is None",
@@ -324,15 +453,32 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         if self.score is None:
             return {}
         out = {}
+        scorer_is_data_profile = isinstance(self.score, _DataScorerMarker)
         for mode in self._resolve_score_modes():
-            self._ensure_mode_predictions(mode)
-            mode_scores = self.score(
-                data=self.data,
-                model=self.model,
-                attack=self.attack,
-                mode=mode,
-                score_file=None,
-            )
+            if scorer_is_data_profile:
+                y_true, y_pred = self._resolve_data_mode_inputs(mode)
+                mode_scores = self.score(
+                    data=self.data,
+                    model=self.model,
+                    attack=self.attack,
+                    mode=mode,
+                    y_true=y_true,
+                    y_pred=y_pred,
+                    score_file=None,
+                )
+            else:
+                if mode == "pre-sample":
+                    raise ValueError(
+                        "pre-sample mode is only supported for data-profile experiment scorers.",
+                    )
+                self._ensure_mode_predictions(mode)
+                mode_scores = self.score(
+                    data=self.data,
+                    model=self.model,
+                    attack=self.attack,
+                    mode=mode,
+                    score_file=None,
+                )
             out.update(self._normalize_mode_score_keys(mode, mode_scores))
         return out
 
@@ -622,12 +768,17 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             self.data,
             DataConfig,
         ), f"data must be an instance of DataConfig. Got {type(self.data)}"
-        if not hasattr(self, "classifier"):
-            self.classifier = self.data.classifier
+        if self.classifier in ["classifier", True]:
+            self.classifier = True
+        elif self.classifier in ["regressor", False]:
+            self.classifier = False
         else:
-            assert (
-                self.classifier == self.data.classifier
-            ), f"classifier in experiment must match data.classifier. Got {self.classifier} vs {self.data.classifier}"
+            raise ValueError(
+                f"classifier in experiment must be boolean or one of ['classifier', 'regressor'], got {self.classifier}",
+            )
+        assert (
+            self.classifier == self.data.classifier
+        ), f"classifier in experiment must match data.classifier. Got {self.classifier} vs {self.data.classifier}"
 
     def _initialize_defense(self) -> None:
         """Normalize defense config when configured."""
@@ -659,12 +810,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             self.model,
             ModelConfig,
         ), "model must be an instance of ModelConfig"
-        if self.classifier is None:
-            self.classifier = self.model.classifier
-        else:
-            assert (
-                self.classifier == self.model.classifier
-            ), f"classifier in experiment must match model.classifier. Got {self.classifier} vs {self.model.classifier}"
+        assert (
+            self.classifier == self.model.classifier
+        ), f"classifier in experiment must match model.classifier. Got {self.classifier} vs {self.model.classifier}"
 
     def _specialize_model_for_data(self) -> None:
         """Swap/attach model subtype for fairness data configs."""
@@ -679,8 +827,27 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 raise ImportError(
                     "FairlearnModelConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn model configs.",
                 )
-            if not isinstance(self.model, FairlearnModelConfig):
-                self.model = FairlearnModelConfig(
+
+            is_torch_model = (
+                PytorchModelConfig is not None
+                and isinstance(self.model, PytorchModelConfig)
+            )
+            target_model_cls = FairlearnPytorchModelConfig if is_torch_model else FairlearnModelConfig
+
+            if target_model_cls is FairlearnPytorchModelConfig and target_model_cls is None:
+                raise ImportError(
+                    "FairlearnPytorchModelConfig requires optional fairness and torch dependencies. "
+                    "Install deckard[fairlearn,torch] to enable fairness-aware pytorch model configs.",
+                )
+
+            fairness_types = tuple(
+                cfg
+                for cfg in (FairlearnModelConfig, FairlearnPytorchModelConfig)
+                if cfg is not None
+            )
+
+            if not isinstance(self.model, fairness_types):
+                self.model = target_model_cls(
                     model_type=self.model.model_type,
                     classifier=self.model.classifier,
                     model_params=self.model.model_params,
@@ -860,6 +1027,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         """
         scores = {}
         scores.update(**self.data.score_dict)
+        self._propagate_score_mode()
 
         if self.model:
             if hasattr(self.model, "set_epoch_attack") and callable(
@@ -1032,7 +1200,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             "data_file" in data_file_outputs
             and Path(data_file_outputs["data_file"]).exists()
         ):
+            configured_data = self.data
             self.data = self.load_object(data_file_outputs["data_file"])
+            self._apply_runtime_data_split_overrides(self.data, configured_data)
         else:
             # Load raw data only (no sample yet when evaluating repeated splits)
             n_repeats, _ = self._detect_n_repeats()
@@ -1045,6 +1215,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             self.data,
             "_X",
         ), "data must be loaded before running the pipeline"
+
+        self._ensure_active_mode_split_available()
 
         n_repeats, run_suffix = self._detect_n_repeats()
 
@@ -1059,7 +1231,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             for run_idx in range(n_repeats):
                 logger.info(f"  {run_suffix.title()} {run_idx + 1}/{n_repeats}")
                 # Reset sampling state so _sample() runs fresh for this run
-                self.data.fold = run_idx
+                self.data.split = run_idx
                 self.data.data_sample_time = None
                 for attr in (
                     "train_indices",

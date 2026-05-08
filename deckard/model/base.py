@@ -1,6 +1,6 @@
 import time
 import logging
-from typing import Any, Union
+from typing import Any, Literal, Union
 from pathlib import Path
 from dataclasses import dataclass, field
 from omegaconf import DictConfig
@@ -160,29 +160,35 @@ class ModelConfig(ConfigBase):
 
     # Configuration fields
     model_type: Union[str, None] = None
-    classifier: Union[bool, None, str] = True
+    classifier: Union[bool, str] = True
     model_params: dict = None
     probability: bool = False
     alias: Union[str, None] = None
     defense: Any = None
     plugins: Union[list, None] = None
     scorer: Any = AUTO_SCORER
+    score_mode: Literal["train", "test", "val"] = "test"
 
     # Runtime/model state fields
     _model: Any = None
     score_dict: dict = None
     training_time: Union[float, None] = None
     prediction_time: Union[float, None] = None
+    val_prediction_time: Union[float, None] = None
     training_prediction_time: Union[float, None] = None
     training_score_time: Union[float, None] = None
     prediction_score_time: Union[float, None] = None
+    val_score_time: Union[float, None] = None
     defense_application_time: Union[float, None] = None
     training_n: Union[int, None] = None
     prediction_n: Union[int, None] = None
+    val_n: Union[int, None] = None
     training_predictions: Any = None
     predictions: Any = None
+    val_predictions: Any = None
     training_probabilities: Any = None
     probabilities: Any = None
+    val_probabilities: Any = None
     _target_: Union[str, None] = None
     _plugin_objects: Union[list, None] = field(
         default=None,
@@ -213,16 +219,21 @@ class ModelConfig(ConfigBase):
         for attr in [
             "training_time",
             "prediction_time",
+            "val_prediction_time",
             "training_prediction_time",
             "training_score_time",
             "prediction_score_time",
+            "val_score_time",
             "defense_application_time",
             "training_n",
             "prediction_n",
+            "val_n",
             "training_predictions",
             "predictions",
+            "val_predictions",
             "training_probabilities",
             "probabilities",
+            "val_probabilities",
         ]:
             if not hasattr(self, attr):
                 setattr(self, attr, None)
@@ -246,7 +257,9 @@ class ModelConfig(ConfigBase):
         elif self.classifier in ["regressor", False]:
             self.classifier = False
         else:
-            self.classifier = None
+            raise ValueError(
+                f"classifier must be boolean or one of ['classifier', 'regressor'], got {self.classifier}",
+            )
         self.scorer = _coerce_scorer_config(
             self.scorer,
             default_factory=lambda: load_class(
@@ -332,16 +345,21 @@ class ModelConfig(ConfigBase):
             "score_dict",
             "training_predictions",
             "predictions",
+            "val_predictions",
             "training_probabilities",
             "probabilities",
+            "val_probabilities",
             "training_time",
             "prediction_time",
+            "val_prediction_time",
             "training_prediction_time",
             "training_score_time",
             "prediction_score_time",
+            "val_score_time",
             "defense_application_time",
             "training_n",
             "prediction_n",
+            "val_n",
         ]
         for attr in runtime_fields:
             setattr(target, attr, getattr(self, attr, None))
@@ -745,6 +763,95 @@ class ModelConfig(ConfigBase):
             logger_obj=logger,
         )
 
+    def _canonical_score_mode(self) -> Literal["train", "test", "val"]:
+        mode = str(getattr(self, "score_mode", "test") or "test").lower()
+        if mode not in {"train", "test", "val"}:
+            raise ValueError(
+                f"Unsupported ModelConfig score_mode '{self.score_mode}'. Expected one of: train, test, val.",
+            )
+        return mode
+
+    @staticmethod
+    def _mode_score_prefix(mode: str) -> str:
+        if mode == "train":
+            return "training_"
+        if mode == "val":
+            return "validation_"
+        return ""
+
+    def _mode_runtime_names(self, mode: str) -> dict:
+        if mode == "train":
+            return {
+                "predictions_attr": "training_predictions",
+                "probabilities_attr": "training_probabilities",
+                "prediction_time_attr": "training_prediction_time",
+                "score_time_attr": "training_score_time",
+                "n_attr": "training_n",
+                "time_key": "training_prediction_time",
+                "score_time_key": "training_score_time",
+                "n_key": "training_n",
+            }
+        if mode == "val":
+            return {
+                "predictions_attr": "val_predictions",
+                "probabilities_attr": "val_probabilities",
+                "prediction_time_attr": "val_prediction_time",
+                "score_time_attr": "val_score_time",
+                "n_attr": "val_n",
+                "time_key": "validation_prediction_time",
+                "score_time_key": "validation_score_time",
+                "n_key": "validation_n",
+            }
+        return {
+            "predictions_attr": "predictions",
+            "probabilities_attr": "probabilities",
+            "prediction_time_attr": "prediction_time",
+            "score_time_attr": "prediction_score_time",
+            "n_attr": "prediction_n",
+            "time_key": "prediction_time",
+            "score_time_key": "prediction_score_time",
+            "n_key": "prediction_n",
+        }
+
+    def _mode_split_data(self, data: DataConfig, mode: str):
+        if mode == "train":
+            return data.X_train, data.y_train
+        if mode == "val":
+            if data.X_val is None or data.y_val is None:
+                can_resample = (
+                    hasattr(data, "_sample")
+                    and getattr(data, "_X", None) is not None
+                    and getattr(data, "_y", None) is not None
+                )
+                if can_resample:
+                    data.data_sample_time = None
+                    for attr in (
+                        "train_indices",
+                        "test_indices",
+                        "val_indices",
+                        "X_train",
+                        "y_train",
+                        "X_test",
+                        "y_test",
+                        "X_val",
+                        "y_val",
+                        "train_n",
+                        "test_n",
+                        "val_n",
+                    ):
+                        setattr(data, attr, None)
+                    data._sample()
+            if data.X_val is None or data.y_val is None:
+                raise ValueError(
+                    "ModelConfig score_mode='val' requires data.X_val and data.y_val.",
+                )
+            return data.X_val, data.y_val
+        if data.X_test is None or data.y_test is None:
+            raise ValueError(
+                "ModelConfig score_mode='test' requires data.X_test and data.y_test.",
+            )
+        return data.X_test, data.y_test
+
     def _decode_predictions_for_persistence(self, y_pred, y_true=None):
         """Persist classifier outputs with explicit probability-vs-label behavior."""
         if not self.classifier:
@@ -1110,6 +1217,8 @@ class ModelConfig(ConfigBase):
         - Score metrics are prefixed with 'train_' for training scores.
         - The method updates `self.score_dict` with all computed scores and timing information.
         """
+        if times is None:
+            times = {}
         if self.defense is not None and self._model is not None:
             defense_pipeline = self._require_defense_pipeline()
             stage = defense_pipeline.resolve_stage(
@@ -1135,149 +1244,148 @@ class ModelConfig(ConfigBase):
                         self.score_dict = {}
                     self.score_dict.update(defense_pipeline.score_dict)
 
-        # Compute predictions transiently for scoring unless already provided.
-        if self.training_predictions is not None:
-            train_predictions = self.training_predictions
-            times["training_n"] = len(train_predictions)
+        if persist_training_predictions and self.training_predictions is None:
+            train_predictions = self._predict(data.X_train)
+            self.training_predictions = self._decode_predictions_for_persistence(
+                train_predictions,
+                y_true=data.y_train,
+            )
+            self.training_n = len(train_predictions)
+            times.setdefault("training_n", self.training_n)
+
+        if (
+            persist_training_probabilities
+            and self.classifier
+            and self.training_probabilities is None
+        ):
+            try:
+                if hasattr(self._model, "predict_proba"):
+                    try:
+                        self.training_probabilities = self._model.predict_proba(
+                            data.X_train,
+                        )
+                    except TypeError as e:
+                        if "loop of ufunc does not support argument" in str(
+                            e,
+                        ) or "can't convert" in str(e):
+                            X_array = np.array(
+                                data.X_train,
+                                dtype=ART_NUMPY_DTYPE,
+                            )
+                            self.training_probabilities = self._model.predict_proba(
+                                X_array,
+                            )
+                        else:
+                            raise e
+                else:
+                    self.training_probabilities = self._predict(data.X_train)
+            except ValueError as e:
+                logger.warning(
+                    "Skipping training probability persistence: %s",
+                    e,
+                )
+                self.training_probabilities = None
+
+        score_mode = self._canonical_score_mode()
+
+        X_mode, y_mode = self._mode_split_data(data, score_mode)
+        names = self._mode_runtime_names(score_mode)
+        predictions_attr = names["predictions_attr"]
+        probabilities_attr = names["probabilities_attr"]
+        prediction_time_attr = names["prediction_time_attr"]
+        score_time_attr = names["score_time_attr"]
+        n_attr = names["n_attr"]
+
+        cached_predictions = getattr(self, predictions_attr, None)
+        if cached_predictions is not None:
+            mode_predictions = cached_predictions
+            times[names["n_key"]] = len(mode_predictions)
         else:
             start_time = time.process_time()
-            train_predictions = self._predict(data.X_train)
+            mode_predictions = self._predict(X_mode)
             end_time = time.process_time()
-            self.training_prediction_time = end_time - start_time
-            times["training_prediction_time"] = self.training_prediction_time
-            times["training_n"] = len(train_predictions)
-            if persist_training_predictions:
-                self.training_predictions = self._decode_predictions_for_persistence(
-                    train_predictions,
-                    y_true=data.y_train,
+            prediction_time = end_time - start_time
+            setattr(self, prediction_time_attr, prediction_time)
+            setattr(self, n_attr, len(mode_predictions))
+            times[names["time_key"]] = prediction_time
+            times[names["n_key"]] = len(mode_predictions)
+
+            if score_mode == "train":
+                should_persist_predictions = persist_training_predictions
+                should_persist_probabilities = persist_training_probabilities
+            else:
+                should_persist_predictions = persist_test_predictions
+                should_persist_probabilities = persist_test_probabilities
+
+            if should_persist_predictions:
+                setattr(
+                    self,
+                    predictions_attr,
+                    self._decode_predictions_for_persistence(
+                        mode_predictions,
+                        y_true=y_mode,
+                    ),
                 )
-            if persist_training_probabilities and self.classifier:
+
+            if should_persist_probabilities and self.classifier:
                 try:
                     if hasattr(self._model, "predict_proba"):
                         try:
-                            self.training_probabilities = self._model.predict_proba(
-                                data.X_train,
-                            )
+                            probabilities = self._model.predict_proba(X_mode)
                         except TypeError as e:
                             if "loop of ufunc does not support argument" in str(
                                 e,
                             ) or "can't convert" in str(e):
                                 X_array = np.array(
-                                    data.X_train,
+                                    X_mode,
                                     dtype=ART_NUMPY_DTYPE,
                                 )
-                                self.training_probabilities = (
-                                    self._model.predict_proba(
-                                        X_array,
-                                    )
-                                )
+                                probabilities = self._model.predict_proba(X_array)
                             else:
                                 raise e
                     else:
-                        self.training_probabilities = self._predict(
-                            data.X_train,
-                        )
+                        probabilities = self._predict(X_mode)
+                    setattr(self, probabilities_attr, probabilities)
                 except ValueError as e:
                     logger.warning(
-                        "Skipping training probability persistence: %s",
+                        "Skipping %s probability persistence: %s",
+                        score_mode,
                         e,
                     )
-                    self.training_probabilities = None
+                    setattr(self, probabilities_attr, None)
 
-        # Score training predictions from current run.
-        if train_predictions is not None:
-            if self.scorer is not None:
-                start = time.process_time()
-                train_scores = self._score(
-                    data.y_train,
-                    train_predictions,
-                    mode="train",
-                    data=data,
-                    model=self,
-                )
-                self.training_score_time = time.process_time() - start
-                # Prefix training scores with 'train_'
-                train_scores = {
-                    f"training_{key}": value for key, value in train_scores.items()
-                }
-                if "training_loss_curve" in train_scores:
-                    del train_scores["training_loss_curve"]
-                if self.score_dict is None:
-                    self.score_dict = {}
-                self.score_dict.update(train_scores)
-                times["training_score_time"] = self.training_score_time
-                logger.info(
-                    f"Training scores computed in {self.training_score_time:.2f} seconds",
-                )
-        else:
-            raise ValueError("Training predictions not available for scoring.")
-        if self.predictions is not None:
-            test_predictions = self.predictions
-            times["prediction_n"] = len(test_predictions)
-        else:
-            if data.X_test is not None:
-                start_time = time.process_time()
-                test_predictions = self._predict(data.X_test)
-                end_time = time.process_time()
-                self.prediction_time = end_time - start_time
-                times["prediction_time"] = self.prediction_time
-                times["prediction_n"] = len(test_predictions)
-                if persist_test_predictions:
-                    self.predictions = self._decode_predictions_for_persistence(
-                        test_predictions,
-                        y_true=data.y_test,
-                    )
-                if persist_test_probabilities and self.classifier:
-                    try:
-                        if hasattr(self._model, "predict_proba"):
-                            try:
-                                self.probabilities = self._model.predict_proba(
-                                    data.X_test,
-                                )
-                            except TypeError as e:
-                                if "loop of ufunc does not support argument" in str(
-                                    e,
-                                ) or "can't convert" in str(e):
-                                    X_array = np.array(
-                                        data.X_test,
-                                        dtype=ART_NUMPY_DTYPE,
-                                    )
-                                    self.probabilities = self._model.predict_proba(
-                                        X_array,
-                                    )
-                                else:
-                                    raise e
-                        else:
-                            self.probabilities = self._predict(data.X_test)
-                    except ValueError as e:
-                        logger.warning(
-                            "Skipping test probability persistence: %s",
-                            e,
-                        )
-                        self.probabilities = None
-            else:
-                raise ValueError("No test data available for prediction.")
-        # Score test predictions from current run.
-        if data.y_test is not None and test_predictions is not None:
-            if self.scorer is not None:
-                start = time.process_time()
-                test_scores = self._score(
-                    data.y_test,
-                    test_predictions,
-                    mode="test",
-                    data=data,
-                    model=self,
-                )
-                if self.score_dict is None:
-                    self.score_dict = {}
-                self.score_dict = {**self.score_dict, **test_scores}
-                self.prediction_score_time = time.process_time() - start
-                times["prediction_score_time"] = self.prediction_score_time
-                logger.info(
-                    f"Prediction scores computed in {self.prediction_score_time:.2f} seconds",
-                )
-        else:
-            raise ValueError("No test labels available for scoring.")
+        if y_mode is None or mode_predictions is None:
+            raise ValueError(f"No labels or predictions available for {score_mode} scoring.")
+
+        if self.scorer is not None:
+            start = time.process_time()
+            mode_scores = self._score(
+                y_mode,
+                mode_predictions,
+                mode=score_mode,
+                data=data,
+                model=self,
+            )
+            score_time = time.process_time() - start
+            setattr(self, score_time_attr, score_time)
+            times[names["score_time_key"]] = score_time
+
+            prefix = self._mode_score_prefix(score_mode)
+            if prefix:
+                mode_scores = {f"{prefix}{key}": value for key, value in mode_scores.items()}
+                loss_curve_key = f"{prefix}loss_curve"
+                if loss_curve_key in mode_scores:
+                    del mode_scores[loss_curve_key]
+
+            if self.score_dict is None:
+                self.score_dict = {}
+            self.score_dict.update(mode_scores)
+            logger.info(
+                "%s scores computed in %.2f seconds",
+                score_mode.title(),
+                score_time,
+            )
+
         self.score_dict.update(times)
 
     def _load_or_train_model(self, data, model_file, times):
