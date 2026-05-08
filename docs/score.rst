@@ -15,7 +15,7 @@ The score layer provides configurable scorer wrappers so data/model/attack
 components can use a consistent scoring interface without hard-coding metric
 implementations.
 
-Deckard now treats scoring as a runtime-configured layer rather than a fixed
+deckard now treats scoring as a runtime-configured layer rather than a fixed
 set of metrics embedded inside each pipeline component.
 
 - :class:`deckard.score.ScorerConfig` wraps a single metric callable.
@@ -35,7 +35,7 @@ Attack scoring is now profile-based and attack-kind-aware:
 - Attribute inference attacks use attribute scorer profiles and prefix outputs
    with ``inferred_<attribute>_``.
 - Generic :class:`deckard.score.ScorerDictConfig` instances can be supplied to
-   attack scorer profiles; Deckard will route the correct ``y_true`` and
+   attack scorer profiles; deckard will route the correct ``y_true`` and
    ``y_pred`` values for the active attack kind and then prefix the resulting
    metric names.
 
@@ -60,40 +60,11 @@ Usage
 Programmatic example
 ~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: python
+.. seealso::
 
-   from deckard.score import ScorerConfig, ScorerDictConfig
-
-   scorers = ScorerDictConfig(
-      scorers={
-         "accuracy": ScorerConfig(
-            score_name="accuracy",
-            score_function="sklearn.metrics.accuracy_score",
-         ),
-         "precision": ScorerConfig(
-            score_name="precision",
-            score_function="sklearn.metrics.precision_score",
-            score_params={"average": "weighted", "zero_division": 0},
-         ),
-         "recall": ScorerConfig(
-            score_name="recall",
-            score_function="sklearn.metrics.recall_score",
-            score_params={"average": "weighted", "zero_division": 0},
-         ),
-         "f1": ScorerConfig(
-            score_name="f1",
-            score_function="sklearn.metrics.f1_score",
-            score_params={"average": "weighted", "zero_division": 0},
-         ),
-         "log_loss": ScorerConfig(
-            score_name="log_loss",
-            score_function="sklearn.metrics.log_loss",
-            score_params={"labels": None},
-         ),
-      }
-   )
-   callables = scorers.get_callables()
-   print(sorted(callables.keys()))
+   Fully-executed programmatic examples — including ``ScorerDictConfig``,
+   model scoring, attack scoring, and fairness scoring — are available in
+   the :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>` notebook.
 
 Model and data scoring
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -101,44 +72,7 @@ Model and data scoring
 :class:`~deckard.score.DefaultClassifierConfig` applies to model predictions.
 Use :class:`~deckard.score.DefaultDataScoreConfig` (or leave ``scorer`` unset to
 auto-select) when you want data-level statistics on the dataset itself.
-
-.. code-block:: python
-
-   from deckard.data import DataConfig
-   from deckard.model import ModelConfig
-   from deckard.score import DefaultClassifierConfig
-   from deckard.score.data import DefaultDataScoreConfig
-
-   # Data scorer computes dataset statistics (class counts, imbalance, etc.)
-   data = DataConfig(
-      dataset_name="make_classification",
-      data_params={
-         "n_samples": 40,
-         "n_features": 10,
-         "n_informative": 4,
-         "n_redundant": 0,
-         "n_clusters_per_class": 1,
-         "n_classes": 2,
-         "random_state": 7,
-      },
-      train_size=30,
-      test_size=10,
-      random_state=42,
-      stratify=True,
-      classifier=True,
-      scorer=DefaultDataScoreConfig(),
-   )
-   data()
-
-   # Model scorer computes prediction metrics (accuracy, precision, recall, etc.)
-   model = ModelConfig(
-      model_type="sklearn.linear_model.LogisticRegression",
-      classifier=True,
-      scorer=DefaultClassifierConfig(),
-      model_params={"max_iter": 25},
-   )
-   scores = model(data)
-   print(scores["accuracy"])
+See the :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>` notebook for executed examples of both.
 
 Score Modes and Routing
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -164,53 +98,20 @@ probability inputs (``needs_proba=True``) are rejected in this mode.
 Attack scoring
 ~~~~~~~~~~~~~~
 
-.. code-block:: python
+.. seealso::
 
-   from deckard.attack import AttackConfig
-   from deckard.data import DataConfig
-   from deckard.model import ModelConfig
-   from deckard.score import DefaultClassifierConfig
-   from deckard.score.attack import AttackScorerConfig
-
-   # Setup data and model
-   data = DataConfig(
-      dataset_name="make_classification",
-      data_params={"n_samples": 60, "n_features": 10, "n_informative": 5, "random_state": 42},
-      train_size=40,
-      test_size=20,
-      classifier=True,
-   )
-   data()
-
-   model = ModelConfig(
-      model_type="sklearn.linear_model.LogisticRegression",
-      classifier=True,
-      model_params={"max_iter": 50},
-   )
-   model(data)
-
-   # Configure attack with evasion scorer profile
-   attack = AttackConfig(
-      attack_type="art.attacks.evasion.FastGradientMethod",
-      attack_params={"eps": 0.1},
-      attack_size=20,
-      scorer=AttackScorerConfig(
-         evasion=DefaultClassifierConfig(),
-      ),
-   )
-
-   attack_scores = attack(data=data, model=model)
-   print(sorted(k for k in attack_scores if k.startswith("evasion_")))
+   See the :doc:`notebooks/art_attacks.ipynb </notebooks/art_attacks>` notebook for a fully-executed attack
+   scoring example with rendered score output.
 
 In this example the evasion scorer profile reuses the generic classifier scorer
-set. Deckard passes the attack-specific prediction values to that generic
+set. deckard passes the attack-specific prediction values to that generic
 profile and prefixes the output keys so they remain unambiguous in merged score
 dicts.
 
 Multi-attack score key behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When ``ExperimentConfig.attack`` is configured as a list, Deckard merges the
+When ``ExperimentConfig.attack`` is configured as a list, deckard merges the
 per-attack score dictionaries in order.
 
 - Non-colliding keys are preserved as-is.
@@ -230,8 +131,8 @@ Fairness Scoring Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Fairness score profiles are available in
-``examples/sklearn/config/score/fairness-classification.yaml`` and
-``examples/sklearn/config/score/fairness-regression.yaml``.
+`examples/sklearn/config/score/fairness-classification.yaml <../examples/sklearn/config/score/fairness-classification.yaml>`_ and
+`examples/sklearn/config/score/fairness-regression.yaml <../examples/sklearn/config/score/fairness-regression.yaml>`_.
 
 Classification fairness command:
 
@@ -262,19 +163,15 @@ These profiles include metrics such as:
 Attack + Fairlearn MetricFrame
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For attack evaluations across sensitive groups, Deckard supports
+For attack evaluations across sensitive groups, deckard supports
 ``FairlearnAttackScorerConfig``. This computes group-level attack metrics
 through fairlearn's ``MetricFrame`` for evasion, membership inference, and
 attribute inference outputs.
 
 Programmatic example:
 
-.. code-block:: python
-
-   from deckard.score.attack import FairlearnAttackScorerConfig
-
-   attack_scorer = FairlearnAttackScorerConfig()
-   # Pass as AttackConfig(..., scorer=attack_scorer)
+See the :doc:`notebooks/fairlearn.ipynb </notebooks/fairlearn>` notebook for an executed example using
+``FairlearnAttackScorerConfig``.
 
 Anjana Scoring Examples
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -370,50 +267,19 @@ separate canonical Hydra store alias for
 Direct ScorerDictConfig Usage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can also instantiate :class:`deckard.score.ScorerDictConfig` directly 
-for fine-grained metric customization:
+You can also instantiate :class:`deckard.score.ScorerDictConfig` directly
+for fine-grained metric customization. See the :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
+notebook for a fully-executed example with rendered metric output.
 
 .. code-block:: python
 
-   from deckard.score import ScorerConfig, ScorerDictConfig
-
-   # Define custom metrics with parameters
-   custom_scorers = ScorerDictConfig(
-      scorers={
-         "accuracy": ScorerConfig(
-            score_name="accuracy",
-            score_function="sklearn.metrics.accuracy_score",
-         ),
-         "f1_macro": ScorerConfig(
-            score_name="f1_macro",
-            score_function="sklearn.metrics.f1_score",
-            score_params={"average": "macro", "zero_division": 0},
-         ),
-         "precision_weighted": ScorerConfig(
-            score_name="precision_weighted",
-            score_function="sklearn.metrics.precision_score",
-            score_params={"average": "weighted", "zero_division": 0},
-         ),
-         "roc_auc": ScorerConfig(
-            score_name="roc_auc",
-            score_function="sklearn.metrics.roc_auc_score",
-            score_params={"multi_class": "ovr", "average": "weighted"},
-         ),
-      }
-   )
-
-   # Use custom scorers in model evaluation
-   callables = custom_scorers.get_callables()
-   y_true = [0, 1, 0, 1, 1, 0]
-   y_pred = [0, 1, 1, 1, 0, 0]
-   
    results = {}
    for scorer_name, scorer_fn in callables.items():
       try:
          results[scorer_name] = scorer_fn(y_true=y_true, y_pred=y_pred)
       except Exception as e:
          print(f"Scorer {scorer_name} failed: {e}")
-   
+
    print(f"Results: {results}")
 
 Internals
@@ -457,7 +323,7 @@ Troubleshooting
 - Check expected prediction shape/type for selected metrics.
 - Confirm task type (classifier/regressor) matches the active default scorer set.
 - If a metric needs extra keyword arguments, ensure the callable accepts them;
-   Deckard drops unsupported keyword arguments based on the metric signature.
+   deckard drops unsupported keyword arguments based on the metric signature.
 - If Hydra overrides appear to be ignored, verify that you are targeting the
    correct store group: ``scorers/...`` for model/data/fairness/survival and
    ``attack_scorers/...`` for attack profiles.

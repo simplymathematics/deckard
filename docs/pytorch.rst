@@ -1,9 +1,9 @@
 PyTorch Integration
 ===================
 
-Deckard provides native support for PyTorch models, data, and experiments through
+deckard provides native support for PyTorch models, data, and experiments through
 the optional PyTorch extension modules. This integration enables seamless use of
-PyTorch-based workflows within the Deckard framework.
+PyTorch-based workflows within the deckard framework.
 
 .. _pytorch-overview:
 
@@ -16,7 +16,7 @@ The PyTorch integration consists of three main extension modules:
 - :mod:`deckard.model.pytorch` — PyTorch model training and evaluation
 - :mod:`deckard.experiment.torch_experiment` — end-to-end PyTorch experiment orchestration
 
-These modules are fully integrated with Deckard's attack, defense, and scoring
+These modules are fully integrated with deckard's attack, defense, and scoring
 pipelines, allowing adversarial robustness studies on PyTorch models.
 
 Key Features
@@ -117,96 +117,11 @@ Command-line examples
 Programmatic examples
 ~~~~~~~~~~~~~~~~~~~~~
 
-**Basic PyTorch experiment:**
+.. seealso::
 
-.. code-block:: python
-
-   from deckard.data.pytorch import PytorchDataConfig
-   from deckard.model.pytorch import PytorchModelConfig
-   from deckard.experiment.torch_experiment import TorchExperimentConfig
-   from deckard.score import DefaultClassifierConfig
-   import torch
-   import torch.nn as nn
-
-   # Define a simple PyTorch model
-   class SimpleCNN(nn.Module):
-       def __init__(self, num_classes=10):
-           super().__init__()
-           self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
-           self.fc = nn.Linear(32 * 32 * 32, num_classes)
-
-       def forward(self, x):
-           x = torch.relu(self.conv1(x))
-           x = x.view(x.size(0), -1)
-           return self.fc(x)
-
-   # Configure data
-   data = PytorchDataConfig(
-       dataset_name="CIFAR10",
-       train_size=45000,
-       test_size=5000,
-       val_size=5000,
-       device="auto",
-       classifier=True,
-       scorer=DefaultClassifierConfig(),
-   )
-
-   # Configure model
-   model = PytorchModelConfig(
-       model_type="__main__.SimpleCNN",
-       classifier=True,
-      device=None,  # auto-selected: cuda > mps > cpu
-      criterion="CrossEntropyLoss",
-      optimizer={"name": "Adam", "lr": 0.001},
-      fit_params={"nb_epochs": 10, "batch_size": 32},
-   )
-
-   # Run experiment
-   cfg = TorchExperimentConfig(data=data, model=model)
-   scores = cfg()
-   print("Accuracy:", scores.get("accuracy"))
-
-**PyTorch with attacks and fairness:**
-
-.. code-block:: python
-
-   from deckard.attack import AttackConfig
-   from deckard.data.fairness import FairlearnDataConfig
-   from deckard.score.attack import FairlearnAttackScorerConfig
-
-   # Fairness-aware data with PyTorch backend
-   data = FairlearnDataConfig(
-       base_data_config=PytorchDataConfig(
-           dataset_name="CIFAR10",
-           train_size=40000,
-           test_size=5000,
-           val_size=5000,
-           device="auto",
-           classifier=True,
-           scorer=DefaultClassifierConfig(),
-       ),
-       sensitive_feature="gender",  # attribute column name
-   )
-
-   # Attack configuration
-   attack = AttackConfig(
-       attack_type="art.attacks.evasion.FastGradientMethod",
-       attack_params={"eps": 0.1},
-   )
-
-   # Fairness-stratified attack scoring
-   attack_scorer = FairlearnAttackScorerConfig(
-       attack_kind="evasion",
-       scorers={"success_rate": "sklearn.metrics.accuracy_score"},
-   )
-
-   # Orchestrate
-   cfg = TorchExperimentConfig(
-       data=data,
-       model=model,
-       attack=attack,
-   )
-   scores = cfg()
+   Fully-executed programmatic examples — including basic PyTorch experiments,
+   ART attacks, and fairness-aware evaluation — are available in the
+   :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>` notebook.
 
 Configuration
 ~~~~~~~~~~~~~
@@ -214,7 +129,9 @@ Configuration
 Key configuration options for :class:`~deckard.model.pytorch.PytorchModelConfig`:
 
 - **model_type** (str): fully qualified import path to :class:`torch.nn.Module`
-  (e.g. ``"torch.nn.Linear"`` or ``"torchvision.models.resnet18"``)
+  or a file target in ``path/to/file.py:ClassName`` form
+  (e.g. ``"torch.nn.Linear"``, ``"torchvision.models.resnet18"``, or
+  ``"../../examples/pytorch/torch_example.py:ResNet18"``)
 - **model_params** (dict): keyword arguments forwarded to the module constructor
 - **device** (str or None): ``"cpu"``, ``"cuda"``, ``"mps"``, or ``None``
   for automatic selection via :func:`~deckard.utils.resolve_torch_device`

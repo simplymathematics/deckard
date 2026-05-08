@@ -43,10 +43,10 @@ Usage
 Yellowbrick Examples (Smoke-Tested)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Deckard ships a broad set of Yellowbrick plot presets under
-``examples/sklearn/config/plot``. These are designed to be selected through
+deckard ships a broad set of Yellowbrick plot presets under
+`examples/sklearn/config/plot <../examples/sklearn/config/plot>`_. These are designed to be selected through
 Hydra's ``plot=<name>`` override when running from
-``examples/sklearn/config/default.yaml``.
+`examples/sklearn/config/default.yaml <../examples/sklearn/config/default.yaml>`_.
 
 Frequently used examples include:
 
@@ -90,7 +90,7 @@ Yellowbrick plotting is experiment-oriented. In practice, a
 uses that :class:`deckard.experiment.ExperimentConfig` object to ensure model and
 dataset artifacts are prepared before rendering visual diagnostics.
 
-The default plot config in ``examples/sklearn/config/plot/default.yaml`` shows
+The default plot config in `examples/sklearn/config/plot/default.yaml <../examples/sklearn/config/plot/default.yaml>`_ shows
 the expected shape:
 
 .. code-block:: yaml
@@ -234,7 +234,7 @@ Troubleshooting
 
 - Confirm plotting dependencies are installed for the selected backend.
 - For Yellowbrick presets, ensure the selected ``plot=<name>`` exists under
-   ``examples/sklearn/config/plot``.
+   `examples/sklearn/config/plot <../examples/sklearn/config/plot>`_.
 - For Seaborn, ensure ``data_file`` exists and that ``x``/``y``/``hue`` columns
    are present in that dataset.
 - Verify input score/data files exist and are in expected schema.

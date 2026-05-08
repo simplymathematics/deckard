@@ -1,7 +1,7 @@
 Yellowbrick Visualization
 =========================
 
-Deckard provides single-run model diagnostics through the Yellowbrick library
+deckard provides single-run model diagnostics through the Yellowbrick library
 via :class:`deckard.plot.yellowbrick_plots.YellowbrickPlotConfig`. The
 Yellowbrick backend operates on a composed
 :class:`~deckard.experiment.ExperimentConfig` and renders visualizers directly
@@ -50,7 +50,7 @@ Command-line examples
 ~~~~~~~~~~~~~~~~~~~~~
 
 The recommended workflow is to select a plot type from the presets in
-``examples/sklearn/config/plot/``:
+`examples/sklearn/config/plot/ <../examples/sklearn/config/plot/>`_:
 
 .. code-block:: bash
 
@@ -94,111 +94,11 @@ The recommended workflow is to select a plot type from the presets in
 Programmatic examples
 ~~~~~~~~~~~~~~~~~~~~~
 
-**ROC-AUC for a classifier:**
+.. seealso::
 
-.. code-block:: python
-
-   from deckard.data import DataConfig
-   from deckard.experiment import ExperimentConfig
-   from deckard.model import ModelConfig
-   from deckard.plot.yellowbrick_plots import YellowbrickPlotConfig
-
-   data = DataConfig(
-       dataset_name="make_classification",
-       data_params={"n_samples": 200, "n_features": 10, "n_classes": 2},
-       train_size=150,
-       test_size=50,
-       classifier=True,
-   )
-   model = ModelConfig(
-       model_type="sklearn.linear_model.LogisticRegression",
-       classifier=True,
-       model_params={"max_iter": 100},
-   )
-   experiment = ExperimentConfig(data=data, model=model)
-   experiment()  # train model and prepare data
-
-   plot = YellowbrickPlotConfig(
-       experiment=experiment,
-       plot_type="roc_auc",
-       save_path="plots/roc_auc.png",
-   )
-   plot()
-
-**Classification report:**
-
-.. code-block:: python
-
-   from deckard.plot.yellowbrick_plots import YellowbrickPlotConfig
-
-   plot = YellowbrickPlotConfig(
-       experiment=experiment,
-       plot_type="classification_report",
-       save_path="plots/classification_report.png",
-   )
-   plot()
-
-**Feature importance (tree models only):**
-
-.. code-block:: python
-
-   from deckard.data import DataConfig
-   from deckard.experiment import ExperimentConfig
-   from deckard.model import ModelConfig
-   from deckard.plot.yellowbrick_plots import YellowbrickPlotConfig
-
-   data = DataConfig(
-       dataset_name="make_classification",
-       data_params={"n_samples": 200, "n_features": 10},
-       train_size=150,
-       test_size=50,
-       classifier=True,
-   )
-   model = ModelConfig(
-       model_type="sklearn.ensemble.RandomForestClassifier",
-       classifier=True,
-       model_params={"n_estimators": 50},
-   )
-   experiment = ExperimentConfig(data=data, model=model)
-   experiment()
-
-   plot = YellowbrickPlotConfig(
-       experiment=experiment,
-       plot_type="feature_importances",
-       save_path="plots/feature_importance.png",
-       plot_params={"cv": 3},  # cv is required for model selection plots
-   )
-   plot()
-
-**Learning curve:**
-
-.. code-block:: python
-
-   from deckard.plot.yellowbrick_plots import YellowbrickPlotConfig
-
-   plot = YellowbrickPlotConfig(
-       experiment=experiment,
-       plot_type="learning_curve",
-       save_path="plots/learning_curve.png",
-       plot_params={
-           "cv": 5,
-           "param_range": [0.1, 1.0],  # train_sizes range
-       },
-   )
-   plot()
-
-**PCA decomposition:**
-
-.. code-block:: python
-
-   from deckard.plot.yellowbrick_plots import YellowbrickPlotConfig
-
-   plot = YellowbrickPlotConfig(
-       experiment=experiment,
-       plot_type="pca",
-       save_path="plots/pca.png",
-   )
-   plot()
+   Fully-executed programmatic examples are available in the
+   :doc:`notebooks/yellowbrick.ipynb </notebooks/yellowbrick>` notebook, including ROC-AUC, classification
+   report, feature importance, learning curve, and PCA plots with rendered output.
 
 Configuration reference
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -234,7 +134,7 @@ Key fields of :class:`~deckard.plot.yellowbrick_plots.YellowbrickPlotConfig`:
 YAML preset examples
 ~~~~~~~~~~~~~~~~~~~~
 
-Each preset in ``examples/sklearn/config/plot/`` is a self-contained plot
+Each preset in `examples/sklearn/config/plot/ <../examples/sklearn/config/plot/>`_ is a self-contained plot
 config. For example, ``roc_auc.yaml``:
 
 .. code-block:: yaml

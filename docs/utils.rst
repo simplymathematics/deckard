@@ -12,7 +12,7 @@ class loading, and parser generation helpers.
 Overview
 --------
 
-Utilities provide the shared primitives that keep Deckard configs and runtime
+Utilities provide the shared primitives that keep deckard configs and runtime
 behavior deterministic across CLI and programmatic execution.
 
 Key responsibilities include:

@@ -1,0 +1,592 @@
+schema: '2.0'
+stages:
+  notebook_deckard:
+    cmd: "mkdir -p build/notebook_artifacts && if [[ ! -s deckard.ipynb ]]; then echo
+      '{\"cells\": [], \"metadata\": {}, \"nbformat\": 4, \"nbformat_minor\": 5}'
+      > build/notebook_artifacts/deckard.executed.ipynb; else python -m jupyter nbconvert
+      --to notebook --execute --ExecutePreprocessor.timeout=1800 --output deckard.executed.ipynb
+      --output-dir build/notebook_artifacts deckard.ipynb; fi\n"
+    deps:
+    - path: ../deckard/__main__.py
+      hash: md5
+      md5: 5611d9f31a7a935f62afeb40d127337d
+      size: 7094
+    - path: ../deckard/experiment/
+      hash: md5
+      md5: 6e811bbf88b96582032117ca5eecae14.dir
+      size: 153428
+      nfiles: 10
+    - path: ../deckard/file.py
+      hash: md5
+      md5: c99badb17d95cafbc4915fa0ebec8381
+      size: 7011
+    - path: ../deckard/utils.py
+      hash: md5
+      md5: 5512a7633364a7a17047df1cbecb65db
+      size: 50043
+    - path: deckard.ipynb
+      hash: md5
+      md5: d41d8cd98f00b204e9800998ecf8427e
+      size: 0
+    outs:
+    - path: build/notebook_artifacts/deckard.executed.ipynb
+      hash: md5
+      md5: 9eb8fa02c822e13304f56c40edaebdd2
+      size: 66
+  notebook_hydra:
+    cmd: "mkdir -p build/notebook_artifacts && if [[ ! -s hydra.ipynb ]]; then echo
+      '{\"cells\": [], \"metadata\": {}, \"nbformat\": 4, \"nbformat_minor\": 5}'
+      > build/notebook_artifacts/hydra.executed.ipynb; else python -m jupyter nbconvert
+      --to notebook --execute --ExecutePreprocessor.timeout=1800 --output hydra.executed.ipynb
+      --output-dir build/notebook_artifacts hydra.ipynb; fi\n"
+    deps:
+    - path: ../deckard/__main__.py
+      hash: md5
+      md5: 5611d9f31a7a935f62afeb40d127337d
+      size: 7094
+    - path: ../deckard/experiment/
+      hash: md5
+      md5: 6e811bbf88b96582032117ca5eecae14.dir
+      size: 153428
+      nfiles: 10
+    - path: ../deckard/file.py
+      hash: md5
+      md5: c99badb17d95cafbc4915fa0ebec8381
+      size: 7011
+    - path: ../deckard/utils.py
+      hash: md5
+      md5: 5512a7633364a7a17047df1cbecb65db
+      size: 50043
+    - path: hydra.ipynb
+      hash: md5
+      md5: d41d8cd98f00b204e9800998ecf8427e
+      size: 0
+    outs:
+    - path: build/notebook_artifacts/hydra.executed.ipynb
+      hash: md5
+      md5: 9eb8fa02c822e13304f56c40edaebdd2
+      size: 66
+  notebook_lifelines:
+    cmd: "mkdir -p build/notebook_artifacts && if [[ ! -s lifelines.ipynb ]]; then
+      echo '{\"cells\": [], \"metadata\": {}, \"nbformat\": 4, \"nbformat_minor\"\
+      : 5}' > build/notebook_artifacts/lifelines.executed.ipynb; else python -m jupyter
+      nbconvert --to notebook --execute --ExecutePreprocessor.timeout=1800 --output
+      lifelines.executed.ipynb --output-dir build/notebook_artifacts lifelines.ipynb;
+      fi\n"
+    deps:
+    - path: ../deckard/data/survival.py
+      hash: md5
+      md5: c4af968c42a5af852f53722e44fb0999
+      size: 6181
+    - path: ../deckard/experiment/survival.py
+      hash: md5
+      md5: 84edb4f55ca149d9cfcda1de2dc9f82d
+      size: 28454
+    - path: ../deckard/file.py
+      hash: md5
+      md5: c99badb17d95cafbc4915fa0ebec8381
+      size: 7011
+    - path: ../deckard/model/survival.py
+      hash: md5
+      md5: 6ca702659034d4ab610eb17c14609f26
+      size: 16934
+    - path: ../deckard/plot/survival.py
+      hash: md5
+      md5: 0236dc5ad158455316e150d4b1a68e51
+      size: 18620
+    - path: ../deckard/score/survival.py
+      hash: md5
+      md5: 00d7c6b6f715ea620ddf66cc9ef7f5f6
+      size: 3304
+    - path: ../deckard/utils.py
+      hash: md5
+      md5: 5512a7633364a7a17047df1cbecb65db
+      size: 50043
+    - path: lifelines.ipynb
+      hash: md5
+      md5: d41d8cd98f00b204e9800998ecf8427e
+      size: 0
+    outs:
+    - path: build/notebook_artifacts/lifelines.executed.ipynb
+      hash: md5
+      md5: 9eb8fa02c822e13304f56c40edaebdd2
+      size: 66
+  notebook_seaborn:
+    cmd: "mkdir -p build/seaborn_artifacts && python -m jupyter nbconvert --to html
+      --execute --ExecutePreprocessor.timeout=1800 --output seaborn.executed.html
+      --output-dir build/seaborn_artifacts seaborn.ipynb\n"
+    deps:
+    - path: ../deckard/plot/__init__.py
+      hash: md5
+      md5: 92b06254ad7b950416abe9e94009f4cf
+      size: 3968
+    - path: ../deckard/plot/declarations.py
+      hash: md5
+      md5: 7e68397d5e900649827e08970eeaac4a
+      size: 1377
+    - path: ../deckard/plot/seaborn_plots.py
+      hash: md5
+      md5: ae99e9072c5bf8177bda8d72cb9621af
+      size: 6239
+    - path: seaborn.ipynb
+      hash: md5
+      md5: f76a59e9fb969c24067929637fbe7c3d
+      size: 251014
+    outs:
+    - path: build/seaborn_artifacts/seaborn.executed.html
+      hash: md5
+      md5: 765068727bdc4855a31d30ecdb4ad0bc
+      size: 556241
+  notebook_yellowbrick:
+    cmd: "mkdir -p build/yellowbrick_artifacts && python -m jupyter nbconvert --to
+      html --execute --ExecutePreprocessor.timeout=1800 --output yellowbrick.executed.html
+      --output-dir build/yellowbrick_artifacts yellowbrick.ipynb\n"
+    deps:
+    - path: ../deckard/data/
+      hash: md5
+      md5: b2dff9bff55971644fe4b38f3a9acb0e.dir
+      size: 281856
+      nfiles: 18
+    - path: ../deckard/experiment/
+      hash: md5
+      md5: 6e811bbf88b96582032117ca5eecae14.dir
+      size: 153428
+      nfiles: 10
+    - path: ../deckard/file.py
+      hash: md5
+      md5: c99badb17d95cafbc4915fa0ebec8381
+      size: 7011
+    - path: ../deckard/model/
+      hash: md5
+      md5: db0feaef69b55a93e3a072ff170d78d6.dir
+      size: 318647
+      nfiles: 16
+    - path: ../deckard/plot/__init__.py
+      hash: md5
+      md5: 92b06254ad7b950416abe9e94009f4cf
+      size: 3968
+    - path: ../deckard/plot/declarations.py
+      hash: md5
+      md5: 7e68397d5e900649827e08970eeaac4a
+      size: 1377
+    - path: ../deckard/plot/yellowbrick_plots.py
+      hash: md5
+      md5: d2cd60d5657077840636179dc24446a2
+      size: 35511
+    - path: yellowbrick.ipynb
+      hash: md5
+      md5: f523178db6e4c7676e2a37121fd122d8
+      size: 2504690
+    outs:
+    - path: build/yellowbrick_artifacts/yellowbrick.executed.html
+      hash: md5
+      md5: eeec1df352416d154f13f130c8541c80
+      size: 2846529
+    - path: build/yellowbrick_artifacts/yellowbrick_plot_results.csv
+      hash: md5
+      md5: b9e02fc40ff77fcbfedde2db1b006c55
+      size: 465
+  notebook_detector:
+    cmd: "mkdir -p build/detector_artifacts && python -m jupyter nbconvert --to html
+      --execute --ExecutePreprocessor.timeout=1800 --output detector.executed.html
+      --output-dir build/detector_artifacts detector.ipynb\n"
+    deps:
+    - path: ../deckard/attack/
+      hash: md5
+      md5: f60aa35817d8197fd4e55beffa62df29.dir
+      size: 169821
+      nfiles: 11
+    - path: ../deckard/data/
+      hash: md5
+      md5: b2dff9bff55971644fe4b38f3a9acb0e.dir
+      size: 281856
+      nfiles: 18
+    - path: ../deckard/file.py
+      hash: md5
+      md5: c99badb17d95cafbc4915fa0ebec8381
+      size: 7011
+    - path: ../deckard/model/
+      hash: md5
+      md5: db0feaef69b55a93e3a072ff170d78d6.dir
+      size: 318647
+      nfiles: 16
+    - path: ../deckard/utils.py
+      hash: md5
+      md5: 5512a7633364a7a17047df1cbecb65db
+      size: 50043
+    - path: detector.ipynb
+      hash: md5
+      md5: 0ff3b8f64b27af1f311be143b30df389
+      size: 73387
+    outs:
+    - path: build/detector_artifacts/canonical_attack_examples.csv
+      hash: md5
+      md5: 2a597bf293b44a559120479017b9904e
+      size: 430
+    - path: build/detector_artifacts/detector.executed.html
+      hash: md5
+      md5: 2b0dcebfdb9a42e62703e481f0c648e3
+      size: 365418
+  notebook_art_attacks:
+    cmd: "mkdir -p build/art_attacks_artifacts && python -m jupyter nbconvert --to
+      html --execute --ExecutePreprocessor.timeout=1800 --output art_attacks.executed.html
+      --output-dir build/art_attacks_artifacts art_attacks.ipynb\n"
+    deps:
+    - path: ../deckard/attack/
+      hash: md5
+      md5: f60aa35817d8197fd4e55beffa62df29.dir
+      size: 169821
+      nfiles: 11
+    - path: ../deckard/data/
+      hash: md5
+      md5: b2dff9bff55971644fe4b38f3a9acb0e.dir
+      size: 281856
+      nfiles: 18
+    - path: ../deckard/file.py
+      hash: md5
+      md5: c99badb17d95cafbc4915fa0ebec8381
+      size: 7011
+    - path: ../deckard/model/
+      hash: md5
+      md5: db0feaef69b55a93e3a072ff170d78d6.dir
+      size: 318647
+      nfiles: 16
+    - path: ../deckard/utils.py
+      hash: md5
+      md5: 5512a7633364a7a17047df1cbecb65db
+      size: 50043
+    - path: art_attacks.ipynb
+      hash: md5
+      md5: c6bc0d19b00c2b4568506d17065dd0e5
+      size: 237291
+    outs:
+    - path: build/art_attacks_artifacts/art_attacks.executed.html
+      hash: md5
+      md5: faaeac224b32400950aa68f98ef402d5
+      size: 567701
+    - path: build/art_attacks_artifacts/attribute_inference_metrics.csv
+      hash: md5
+      md5: d1676aa347c627a8e85c99be150d671e
+      size: 328
+    - path: build/art_attacks_artifacts/implemented_sections.csv
+      hash: md5
+      md5: 3a628028f53876dc6574e7132df4c7a4
+      size: 583
+    - path: build/art_attacks_artifacts/membership_inference_metrics.csv
+      hash: md5
+      md5: 3ceb2bd8886cd5b6c79d49f13d4e465c
+      size: 462
+    - path: build/art_attacks_artifacts/sklearn_evasion_results.csv
+      hash: md5
+      md5: 77b0d9257a3b06e148108da098163a2d
+      size: 506
+    - path: build/art_attacks_artifacts/sklearn_poisoning_results.csv
+      hash: md5
+      md5: 1fac8943988606a267c0ef89460ae2b9
+      size: 294
+    - path: build/art_attacks_artifacts/torch_evasion_results.csv
+      hash: md5
+      md5: 6f6d54be7542c0b65da2c55e2605fd02
+      size: 514
+    - path: build/art_attacks_artifacts/torch_extraction_results.csv
+      hash: md5
+      md5: 72beebf444e7a9fdd416b932573b4fa5
+      size: 310
+  notebook_art_defenses:
+    cmd: "mkdir -p build/art_defenses_artifacts && python -m jupyter nbconvert --to
+      html --execute --ExecutePreprocessor.timeout=1800 --output art_defenses.executed.html
+      --output-dir build/art_defenses_artifacts art_defenses.ipynb\n"
+    deps:
+    - path: ../deckard/attack/
+      hash: md5
+      md5: f60aa35817d8197fd4e55beffa62df29.dir
+      size: 169821
+      nfiles: 11
+    - path: ../deckard/data/
+      hash: md5
+      md5: b2dff9bff55971644fe4b38f3a9acb0e.dir
+      size: 281856
+      nfiles: 18
+    - path: ../deckard/file.py
+      hash: md5
+      md5: c99badb17d95cafbc4915fa0ebec8381
+      size: 7011
+    - path: ../deckard/model/
+      hash: md5
+      md5: db0feaef69b55a93e3a072ff170d78d6.dir
+      size: 318647
+      nfiles: 16
+    - path: ../deckard/utils.py
+      hash: md5
+      md5: 5512a7633364a7a17047df1cbecb65db
+      size: 50043
+    - path: art_defenses.ipynb
+      hash: md5
+      md5: 19e20a5842ecffdbef12412eaaa0e981
+      size: 161667
+    outs:
+    - path: build/art_defenses_artifacts/art_defenses.executed.html
+      hash: md5
+      md5: 7bfd4c3aaa745495d8fba81ec059d7e3
+      size: 477998
+    - path: build/art_defenses_artifacts/defense_chain_order.csv
+      hash: md5
+      md5: bdd2eb4170f74cfd1b61ee92385e05df
+      size: 326
+    - path: build/art_defenses_artifacts/defense_chain_result.csv
+      hash: md5
+      md5: 547f2b2447f34b9d911482ce1cd74185
+      size: 396
+    - path: build/art_defenses_artifacts/sklearn_defense_results.csv
+      hash: md5
+      md5: 61bb6947ae9613ecd1f6fabc1c3ca941
+      size: 839
+    - path: build/art_defenses_artifacts/torch_defense_results.csv
+      hash: md5
+      md5: 8ec088e3fe92735b0c77f9667af0ca68
+      size: 828
+  notebook_sklearn:
+    cmd: "mkdir -p build/notebook_artifacts && python -m jupyter nbconvert --to html
+      --execute --ExecutePreprocessor.timeout=1800 --output sklearn.executed.html
+      --output-dir build/notebook_artifacts sklearn.ipynb\n"
+    deps:
+    - path: ../deckard/attack/
+      hash: md5
+      md5: f60aa35817d8197fd4e55beffa62df29.dir
+      size: 169821
+      nfiles: 11
+    - path: ../deckard/data/
+      hash: md5
+      md5: b2dff9bff55971644fe4b38f3a9acb0e.dir
+      size: 281856
+      nfiles: 18
+    - path: ../deckard/detector/
+      hash: md5
+      md5: ce05584f88effddca624abc089ee921c.dir
+      size: 19105
+      nfiles: 4
+    - path: ../deckard/experiment/
+      hash: md5
+      md5: 6e811bbf88b96582032117ca5eecae14.dir
+      size: 153428
+      nfiles: 10
+    - path: ../deckard/file.py
+      hash: md5
+      md5: c99badb17d95cafbc4915fa0ebec8381
+      size: 7011
+    - path: ../deckard/model/
+      hash: md5
+      md5: db0feaef69b55a93e3a072ff170d78d6.dir
+      size: 318647
+      nfiles: 16
+    - path: ../deckard/plot/
+      hash: md5
+      md5: 51dc0ec91e3522a3465b5dcf09685b0f.dir
+      size: 112805
+      nfiles: 10
+    - path: ../deckard/score/
+      hash: md5
+      md5: 3c469b7fe5caa121175b075ef1341e1f.dir
+      size: 195705
+      nfiles: 23
+    - path: ../deckard/utils.py
+      hash: md5
+      md5: 5512a7633364a7a17047df1cbecb65db
+      size: 50043
+    - path: sklearn.ipynb
+      hash: md5
+      md5: 3a4b29ddeb4fecf026f00dfc30af9939
+      size: 261480
+    outs:
+    - path: build/notebook_artifacts/seaborn_results.csv
+      hash: md5
+      md5: e9dda0841bff56cd951d5724fff0e5e2
+      size: 230
+    - path: build/notebook_artifacts/sklearn.executed.html
+      hash: md5
+      md5: 0dc8f5ad8f553d6a4e924e5cb073de4b
+      size: 578071
+  notebook_pytorch:
+    cmd: "mkdir -p build/pytorch_artifacts && python -m jupyter nbconvert --to html
+      --execute --ExecutePreprocessor.timeout=1800 --output pytorch.executed.html
+      --output-dir build/pytorch_artifacts pytorch.ipynb\n"
+    deps:
+    - path: ../deckard/attack/
+      hash: md5
+      md5: f60aa35817d8197fd4e55beffa62df29.dir
+      size: 169821
+      nfiles: 11
+    - path: ../deckard/data/
+      hash: md5
+      md5: b2dff9bff55971644fe4b38f3a9acb0e.dir
+      size: 281856
+      nfiles: 18
+    - path: ../deckard/experiment/
+      hash: md5
+      md5: 6e811bbf88b96582032117ca5eecae14.dir
+      size: 153428
+      nfiles: 10
+    - path: ../deckard/file.py
+      hash: md5
+      md5: c99badb17d95cafbc4915fa0ebec8381
+      size: 7011
+    - path: ../deckard/model/
+      hash: md5
+      md5: db0feaef69b55a93e3a072ff170d78d6.dir
+      size: 318647
+      nfiles: 16
+    - path: ../deckard/plot/
+      hash: md5
+      md5: 51dc0ec91e3522a3465b5dcf09685b0f.dir
+      size: 112805
+      nfiles: 10
+    - path: ../deckard/score/
+      hash: md5
+      md5: 3c469b7fe5caa121175b075ef1341e1f.dir
+      size: 195705
+      nfiles: 23
+    - path: ../deckard/utils.py
+      hash: md5
+      md5: 5512a7633364a7a17047df1cbecb65db
+      size: 50043
+    - path: pytorch.ipynb
+      hash: md5
+      md5: d09845829ee52c6f3c59396e4d4ca21f
+      size: 244492
+    outs:
+    - path: build/pytorch_artifacts/pytorch.executed.html
+      hash: md5
+      md5: 2b3c68b173960cfada3655433cd2ac70
+      size: 588644
+    - path: build/pytorch_artifacts/pytorch_results.csv
+      hash: md5
+      md5: d5e298396f9db3385bb9b922a74d58aa
+      size: 220
+  notebook_fairlearn:
+    cmd: "mkdir -p build/fairlearn_artifacts && python -m jupyter nbconvert --to html
+      --execute --ExecutePreprocessor.timeout=1800 --output fairlearn.executed.html
+      --output-dir build/fairlearn_artifacts fairlearn.ipynb\n"
+    deps:
+    - path: ../deckard/attack/
+      hash: md5
+      md5: f60aa35817d8197fd4e55beffa62df29.dir
+      size: 169821
+      nfiles: 11
+    - path: ../deckard/data/
+      hash: md5
+      md5: b2dff9bff55971644fe4b38f3a9acb0e.dir
+      size: 281856
+      nfiles: 18
+    - path: ../deckard/experiment/
+      hash: md5
+      md5: 6e811bbf88b96582032117ca5eecae14.dir
+      size: 153428
+      nfiles: 10
+    - path: ../deckard/file.py
+      hash: md5
+      md5: c99badb17d95cafbc4915fa0ebec8381
+      size: 7011
+    - path: ../deckard/model/
+      hash: md5
+      md5: db0feaef69b55a93e3a072ff170d78d6.dir
+      size: 318647
+      nfiles: 16
+    - path: ../deckard/plot/
+      hash: md5
+      md5: 51dc0ec91e3522a3465b5dcf09685b0f.dir
+      size: 112805
+      nfiles: 10
+    - path: ../deckard/score/
+      hash: md5
+      md5: 3c469b7fe5caa121175b075ef1341e1f.dir
+      size: 195705
+      nfiles: 23
+    - path: ../deckard/utils.py
+      hash: md5
+      md5: 5512a7633364a7a17047df1cbecb65db
+      size: 50043
+    - path: fairlearn.ipynb
+      hash: md5
+      md5: 0619160a9bbb30fbc4345f3ce2a6ea9e
+      size: 120194
+    outs:
+    - path: build/fairlearn_artifacts/fairlearn.executed.html
+      hash: md5
+      md5: 8aa7b93cdfb3da8b2c9108e844ddb01c
+      size: 437310
+    - path: build/fairlearn_artifacts/fairlearn_model_compare.csv
+      hash: md5
+      md5: cce771a06d92235e4dba775572112b73
+      size: 555
+    - path: build/fairlearn_artifacts/fairlearn_sklearn_compare.csv
+      hash: md5
+      md5: 1e685d44cc43319387cfdd25cea63fd0
+      size: 348
+    - path: build/fairlearn_artifacts/fairlearn_torch_compare.csv
+      hash: md5
+      md5: 45f2e6d2ad78f7f8cacb73418df6208a
+      size: 235
+  notebook_anjana:
+    cmd: "mkdir -p build/anjana_artifacts && python -m jupyter nbconvert --to html
+      --execute --ExecutePreprocessor.timeout=1800 --output anjana.executed.html --output-dir
+      build/anjana_artifacts anjana.ipynb\n"
+    deps:
+    - path: ../deckard/attack/
+      hash: md5
+      md5: f60aa35817d8197fd4e55beffa62df29.dir
+      size: 169821
+      nfiles: 11
+    - path: ../deckard/data/
+      hash: md5
+      md5: b2dff9bff55971644fe4b38f3a9acb0e.dir
+      size: 281856
+      nfiles: 18
+    - path: ../deckard/experiment/
+      hash: md5
+      md5: 6e811bbf88b96582032117ca5eecae14.dir
+      size: 153428
+      nfiles: 10
+    - path: ../deckard/file.py
+      hash: md5
+      md5: c99badb17d95cafbc4915fa0ebec8381
+      size: 7011
+    - path: ../deckard/model/
+      hash: md5
+      md5: db0feaef69b55a93e3a072ff170d78d6.dir
+      size: 318647
+      nfiles: 16
+    - path: ../deckard/plot/
+      hash: md5
+      md5: 51dc0ec91e3522a3465b5dcf09685b0f.dir
+      size: 112805
+      nfiles: 10
+    - path: ../deckard/score/
+      hash: md5
+      md5: 3c469b7fe5caa121175b075ef1341e1f.dir
+      size: 195705
+      nfiles: 23
+    - path: ../deckard/utils.py
+      hash: md5
+      md5: 5512a7633364a7a17047df1cbecb65db
+      size: 50043
+    - path: anjana.ipynb
+      hash: md5
+      md5: 99be90c86ce38b190e9e8e83f61c6834
+      size: 250302
+    outs:
+    - path: build/anjana_artifacts/anjana.executed.html
+      hash: md5
+      md5: 1648a7f59fcbba0393f62a365f9aa8d4
+      size: 561403
+    - path: build/anjana_artifacts/anjana_attack_compare.csv
+      hash: md5
+      md5: e5385e7fc0b43dc6299c86196fa6ee97
+      size: 272
+    - path: build/anjana_artifacts/anjana_data_score_compare.csv
+      hash: md5
+      md5: 889b8e9622ad755903bb30920c018cb0
+      size: 201
+    - path: build/anjana_artifacts/anjana_data_scores_compare.csv
+      hash: md5
+      md5: 889b8e9622ad755903bb30920c018cb0
+      size: 201

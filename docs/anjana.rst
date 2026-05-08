@@ -1,9 +1,9 @@
 Anjana Integration
 ==================
 
-Deckard provides support for anonymization-aware machine learning through the
+deckard provides support for anonymization-aware machine learning through the
 optional Anjana extension modules. This integration enables privacy-preserving
-modeling workflows within the Deckard framework.
+modeling workflows within the deckard framework.
 
 .. _anjana-overview:
 
@@ -32,7 +32,7 @@ Key Features
 Score Types Available
 ~~~~~~~~~~~~~~~~~~~~~
 
-Anjana scoring in Deckard is provided by :mod:`deckard.score.anjana` with the
+Anjana scoring in deckard is provided by :mod:`deckard.score.anjana` with the
 default scorer profiles:
 
 - :class:`deckard.score.anjana.DefaultAnjanaDataScoreConfig`
@@ -63,7 +63,7 @@ Data pipeline and preprocessing support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``AnjanaDataConfig`` extends ``DataPipelineConfig``, so it keeps standard
-Deckard pipeline capabilities while adding anonymization/fairness hooks:
+deckard pipeline capabilities while adding anonymization/fairness hooks:
 
 - configurable preprocessing pipeline steps from core data config
 - optional ANJANA defense transform via ``anjana_defense`` callable config
@@ -82,7 +82,7 @@ The :class:`~deckard.model.anjana.AnjanaModelConfig` supports:
 - Integration with privacy-aware loss functions
 - Checkpoint management for utility tracking
 
-``AnjanaModelConfig`` wraps ``ModelConfig`` behavior and can still use Deckard's
+``AnjanaModelConfig`` wraps ``ModelConfig`` behavior and can still use deckard's
 general model defenses via ``model.defense`` (ART preprocessors,
 postprocessors, trainers, and detector pipelines) where compatible with the
 selected backend/model.
@@ -143,111 +143,11 @@ Command-line examples
 Programmatic examples
 ~~~~~~~~~~~~~~~~~~~~~
 
-**Basic Anjana workflow:**
+.. seealso::
 
-.. code-block:: python
-
-   from deckard.data.anjana import AnjanaDataConfig
-   from deckard.model.anjana import AnjanaModelConfig
-   from deckard.experiment import ExperimentConfig
-   from deckard.score.anjana import (
-       DefaultAnjanaDataScoreConfig,
-       DefaultAnjanaModelScoreConfig,
-   )
-
-   # Configure anonymization-aware data
-   data = AnjanaDataConfig(
-       dataset_name="make_classification",
-       data_params={"n_samples": 500, "n_features": 20, "n_classes": 2},
-       train_size=70,
-       test_size=30,
-       sensitive_attributes=["age", "income"],  # columns to anonymize
-       anonymization_strategy="suppression",  # or "bucketing", "noise", etc.
-       classifier=True,
-       scorer=DefaultAnjanaDataScoreConfig(),
-   )
-
-   # Configure model with anonymization awareness
-   model = AnjanaModelConfig(
-       model_type="sklearn.ensemble.RandomForestClassifier",
-       classifier=True,
-       model_params={"n_estimators": 50, "max_depth": 10},
-       scorer=DefaultAnjanaModelScoreConfig(),
-   )
-
-   # Run experiment with anonymization evaluation
-   cfg = ExperimentConfig(data=data, model=model)
-   scores = cfg()
-
-   print("Original accuracy:", scores.get("accuracy"))
-   print("Anonymized accuracy:", scores.get("anonymized_accuracy", "N/A"))
-   print("Privacy score:", scores.get("privacy_score", "N/A"))
-
-**Anjana with attacks:**
-
-.. code-block:: python
-
-   from deckard.attack import AttackConfig
-
-   # Define attack on anonymized models
-   attack = AttackConfig(
-       attack_type="art.attacks.evasion.FastGradientMethod",
-       attack_params={"eps": 0.15},
-       attack_size=100,
-   )
-
-   # Evaluate attack robustness of anonymized models
-   cfg = ExperimentConfig(
-       data=data,
-       model=model,
-       attack=attack,
-   )
-   scores = cfg()
-
-   print("Evasion success rate:", scores.get("evasion_success_rate"))
-   print("Privacy-robust robustness:", scores.get("privacy_attack_success", "N/A"))
-
-**Anjana with PyTorch:**
-
-.. code-block:: python
-
-   from deckard.data.anjana import AnjanaDataConfig
-   from deckard.data.pytorch import PytorchDataConfig
-   from deckard.model.anjana import AnjanaModelConfig
-   from deckard.model.pytorch import PytorchModelConfig
-   from deckard.experiment.torch_experiment import TorchExperimentConfig
-
-   # Base PyTorch data config
-   pytorch_data = PytorchDataConfig(
-       dataset_name="CIFAR10",
-       train_size=45000,
-       test_size=5000,
-       device="auto",
-       classifier=True,
-   )
-
-   # Wrap with Anjana anonymization
-   data = AnjanaDataConfig(
-       base_data_config=pytorch_data,
-       sensitive_attributes=["label_coarse"],
-       anonymization_strategy="generalization",
-   )
-
-   # PyTorch model with Anjana tracking
-   pytorch_model = PytorchModelConfig(
-       model_type="torchvision.models.resnet18",
-       classifier=True,
-       device="auto",
-       epochs=10,
-   )
-
-   model = AnjanaModelConfig(
-       base_model_config=pytorch_model,
-   )
-
-   # Run PyTorch + Anjana experiment
-   cfg = TorchExperimentConfig(data=data, model=model)
-   scores = cfg()
+   Fully-executed programmatic examples — including basic Anjana workflows,
+   attacks on anonymized models, and PyTorch integration — are available in
+   the :doc:`notebooks/anjana.ipynb </notebooks/anjana>` notebook.
 
 Configuration
 ~~~~~~~~~~~~~

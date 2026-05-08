@@ -1,7 +1,7 @@
 Seaborn Visualization
 =====================
 
-Deckard provides statistical visualization through Seaborn via the
+deckard provides statistical visualization through Seaborn via the
 :class:`deckard.plot.seaborn_plots.SeabornPlotConfig` class. The Seaborn
 backend is designed for **multi-run aggregation plots** — visualizing compiled
 results across many experiment runs stored in a tabular data file (CSV,
@@ -90,82 +90,11 @@ Command-line examples
 Programmatic examples
 ~~~~~~~~~~~~~~~~~~~~~
 
-**Single scatter plot from compiled results:**
+.. seealso::
 
-.. code-block:: python
-
-   import pandas as pd
-   from deckard.plot.seaborn_plots import SeabornPlotConfig
-
-   # Create or load a compiled results file
-   df = pd.DataFrame({
-       "eps": [0.01, 0.05, 0.1, 0.2, 0.01, 0.05, 0.1, 0.2],
-       "evasion_accuracy": [0.90, 0.75, 0.55, 0.30, 0.88, 0.72, 0.50, 0.25],
-       "model": ["LogReg"] * 4 + ["RF"] * 4,
-   })
-   df.to_csv("/tmp/results.csv", index=False)
-
-   plot = SeabornPlotConfig(
-       x="eps",
-       y="evasion_accuracy",
-       plot_type="scatter",
-       data_file="/tmp/results.csv",
-       hue="model",
-       title="Evasion Accuracy vs Perturbation Budget",
-       xlabel="Epsilon",
-       ylabel="Accuracy",
-       plot_file="/tmp/evasion_scatter.png",
-   )
-   plot()
-
-**Bar plot comparing models:**
-
-.. code-block:: python
-
-   from deckard.plot.seaborn_plots import SeabornPlotConfig
-
-   plot = SeabornPlotConfig(
-       x="model",
-       y="accuracy",
-       plot_type="bar",
-       data_file="/tmp/results.csv",
-       title="Model Accuracy Comparison",
-       xlabel="Model Type",
-       ylabel="Accuracy",
-       plot_file="/tmp/model_comparison.png",
-   )
-   plot()
-
-**Plot list from the same results file:**
-
-.. code-block:: python
-
-   from deckard.plot.seaborn_plots import SeabornPlotConfig, SeabornPlotConfigList
-
-   plots = SeabornPlotConfigList(
-       data_file="/tmp/results.csv",
-       plots=[
-           SeabornPlotConfig(
-               x="eps",
-               y="evasion_accuracy",
-               plot_type="line",
-               data_file="/tmp/results.csv",
-               hue="model",
-               title="Evasion Accuracy",
-               plot_file="/tmp/evasion_line.png",
-           ),
-           SeabornPlotConfig(
-               x="eps",
-               y="accuracy",
-               plot_type="scatter",
-               data_file="/tmp/results.csv",
-               hue="model",
-               title="Benign Accuracy",
-               plot_file="/tmp/benign_scatter.png",
-           ),
-       ],
-   )
-   plots()
+   Fully-executed programmatic examples are available in the
+   :doc:`notebooks/seaborn.ipynb </notebooks/seaborn>` notebook, including scatter, bar, line, and
+   plot-list patterns with rendered output.
 
 Configuration reference
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -193,23 +122,8 @@ Key fields of :class:`~deckard.plot.seaborn_plots.SeabornPlotConfig`:
 Styling
 ~~~~~~~
 
-Pass matplotlib rcParams via the ``rc_config`` field:
-
-.. code-block:: python
-
-   plot = SeabornPlotConfig(
-       x="eps",
-       y="evasion_accuracy",
-       plot_type="scatter",
-       data_file="/tmp/results.csv",
-       rc_config={
-           "figure.figsize": [10, 6],
-           "axes.titlesize": 14,
-           "axes.labelsize": 12,
-       },
-       plot_file="/tmp/styled_plot.png",
-   )
-   plot()
+Pass matplotlib rcParams via the ``rc_config`` field. See the
+:doc:`notebooks/seaborn.ipynb </notebooks/seaborn>` notebook for a runnable example with rendered output.
 
 Troubleshooting
 ~~~~~~~~~~~~~~~

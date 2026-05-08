@@ -31,7 +31,7 @@ module.
 Overview
 --------
 
-The experiment layer coordinates the full Deckard workflow by composing:
+The experiment layer coordinates the full deckard workflow by composing:
 
 - data loading and sampling via :mod:`deckard.data`
 - model training/evaluation via :mod:`deckard.model`
@@ -138,124 +138,24 @@ Run an experiment from the project root:
 Programmatic example
 ~~~~~~~~~~~~~~~~~~~~
 
-Use the experiment config directly in Python with explicit configurations:
+.. seealso::
 
-.. code-block:: python
-
-   from deckard.attack import AttackConfig
-   from deckard.data import DataConfig
-   from deckard.experiment import ExperimentConfig
-   from deckard.model import ModelConfig
-   from deckard.model.defend import DefensePipelineConfig
-   from deckard.score import DefaultClassifierConfig
-
-   # Explicit data configuration
-   data = DataConfig(
-      dataset_name="make_classification",
-      data_params={
-         "n_samples": 100,
-         "n_features": 20,
-         "n_informative": 10,
-         "n_redundant": 0,
-         "n_clusters_per_class": 2,
-         "n_classes": 2,
-         "random_state": 42,
-      },
-      train_size=70,
-      test_size=30,
-      random_state=42,
-      stratify=True,
-      classifier=True,
-      scorer=DefaultClassifierConfig(),
-   )
-
-   # Explicit model configuration
-   model = ModelConfig(
-      model_type="sklearn.ensemble.RandomForestClassifier",
-      classifier=True,
-      model_params={"n_estimators": 50, "max_depth": 10, "random_state": 42},
-      scorer=DefaultClassifierConfig(),
-   )
-
-   # Optional defense configuration
-   defense = DefensePipelineConfig(
-      defenses=[
-         {
-            "defense_name": "art.defences.preprocessor.FeatureSqueezing",
-            "defense_params": {"bit_depth": 8},
-         }
-      ]
-   )
-   model.defense = defense
-
-   # Optional attack configuration
-   attack = AttackConfig(
-      attack_type="art.attacks.evasion.FastGradientMethod",
-      attack_params={"eps": 0.15},
-      attack_size=50,
-      alias="fgm",
-   )
-
-   # Compose the full experiment
-   cfg = ExperimentConfig(data=data, model=model, attack=attack)
-   scores = cfg()
-   
-   print("Experiment Results:")
-   print(f"  Data shape: {data.X_train.shape}")
-   print(f"  Model accuracy: {scores.get('accuracy', 'N/A')}")
-   print(f"  Attack success: {scores.get('evasion_success_rate', 'N/A')}")
+   Fully-executed programmatic examples — including single-attack, multi-attack,
+   defense pipelines, and detector phase — are available in the
+   :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>` and :doc:`notebooks/art_attacks.ipynb </notebooks/art_attacks>` notebooks.
 
 Multi-attack programmatic example
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: python
-
-   attacks = [
-      AttackConfig(
-         attack_type="art.attacks.evasion.FastGradientMethod",
-         attack_params={"eps": 0.05},
-         attack_size=25,
-         alias="fgm",
-      ),
-      AttackConfig(
-         attack_type="art.attacks.evasion.HopSkipJump",
-         attack_params={"max_iter": 5, "verbose": False},
-         attack_size=25,
-         alias="hsj",
-      ),
-   ]
-
-   cfg = ExperimentConfig(data=data, model=model, attack=attacks, detector=detector)
-   scores = cfg()
-   print(scores.get("evasion_accuracy"))
-   print(scores.get("evasion_accuracy_hsj"))
+See the :doc:`notebooks/art_attacks.ipynb </notebooks/art_attacks>` notebook for a multi-attack experiment
+with ``HopSkipJump`` alongside ``FastGradientMethod``.
 
 Detector phase
 ~~~~~~~~~~~~~~
 
 Detector configs can be attached to ``ExperimentConfig.detector`` to train and
-evaluate an auxiliary detector after attack generation:
-
-.. code-block:: python
-
-   from deckard.detector import DetectorConfig
-
-   detector = DetectorConfig(
-      detector_type="art.defences.detector.evasion.BinaryInputDetector",
-      detector_model={
-         "model_type": "sklearn.linear_model.LogisticRegression",
-         "classifier": True,
-         "model_params": {"max_iter": 50},
-      },
-      fit_params={"batch_size": 16, "nb_epochs": 1, "split": "test"},
-   )
-
-   cfg = ExperimentConfig(data=data, model=model, attack=attack, detector=detector)
-   scores = cfg()
-   print(scores["detector_accuracy"])
-
-With multiple attacks, detector inputs are pooled across all attack outputs and
-evaluated as one adversarial sample set.
+evaluate an auxiliary detector after attack generation. See the
+:doc:`notebooks/detector.ipynb </notebooks/detector>` notebook for an executed example.
 
 Internals
 ---------

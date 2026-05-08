@@ -32,7 +32,7 @@ Extensions
 Pipeline Extension
 ~~~~~~~~~~~~~~~~~~
 
-Deckard exposes a configurable pipeline layer for data preprocessing via
+deckard exposes a configurable pipeline layer for data preprocessing via
 :class:`~deckard.data.DataPipelineConfig`.
 
 Fairness Extension
@@ -120,86 +120,24 @@ Run data setup directly from the terminal:
 Programmatic usage
 ~~~~~~~~~~~~~~~~~~
 
-Use :class:`~deckard.data.DataConfig` from within your Python scripts or notebooks:
+.. seealso::
 
-.. code-block:: python
-
-   from deckard.data import DataConfig
-
-   data = DataConfig(
-      dataset_name="make_classification",
-      data_params={
-         "n_samples": 40,
-         "n_features": 10,
-         "n_informative": 4,
-         "n_redundant": 0,
-         "n_clusters_per_class": 1,
-         "n_classes": 2,
-         "random_state": 17,
-      },
-      train_size=30,
-      test_size=10,
-      random_state=42,
-      stratify=True,
-      classifier=True,
-   )
-   data()
-
-   X_train = data.X_train
-   X_test = data.X_test
-   y_train = data.y_train
-   y_test = data.y_test
-
-   print(f"Train size: {len(X_train)} | Test size: {len(X_test)}")
+   Fully-executed programmatic examples — including classification, regression,
+   fairness-aware data, and survival data — are available in the
+   :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>` notebook.
 
 Fairness data usage
 ~~~~~~~~~~~~~~~~~~~
 
-The fairness integration tests use :class:`~deckard.data.fairness.FairlearnDataConfig`
-with explicit sensitive columns and a preprocessing pipeline:
-
-.. code-block:: python
-
-   from deckard.data.fairness import FairlearnDataConfig
-
-   fair_data = FairlearnDataConfig(
-      dataset_name="make_classification",
-      data_params={
-         "n_samples": 40,
-         "n_features": 10,
-         "n_informative": 4,
-         "n_redundant": 0,
-         "n_clusters_per_class": 1,
-         "n_classes": 2,
-         "random_state": 23,
-      },
-      train_size=30,
-      test_size=10,
-      random_state=42,
-      stratify=True,
-      classifier=True,
-      sensitive_columns=["feature_0"],
-      pipeline={
-         "scaler": {"name": "sklearn.preprocessing.StandardScaler"},
-      },
-   )
-   fair_data()
+The :class:`~deckard.data.fairness.FairlearnDataConfig` adds group-aware
+sampling and fairness metrics with ``fairlearn`` integration.
+See the :doc:`notebooks/fairlearn.ipynb </notebooks/fairlearn>` notebook for an executed example.
 
 Survival data usage
 ~~~~~~~~~~~~~~~~~~~
 
-Survival integrations also use :class:`~deckard.data.DataConfig` for native
-lifelines datasets:
-
-.. code-block:: python
-
-   from deckard.data import DataConfig
-
-   survival_data = DataConfig(
-      dataset_name="lifelines_diabetes",
-      target="T",
-      classifier=False,
-   )
+Survival integrations use :class:`~deckard.data.DataConfig` for native
+lifelines datasets. See the :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>` notebook for examples.
 
 Custom configuration
 ~~~~~~~~~~~~~~~~~~~~
@@ -333,8 +271,8 @@ CLI examples:
 DataConfig Sampling Examples (Repository Configs)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Deckard includes ready-to-run sampling examples in
-``examples/sklearn/config/data`` and ``examples/sklearn/config/sample``.
+deckard includes ready-to-run sampling examples in
+`examples/sklearn/config/data <../examples/sklearn/config/data>`_ and `examples/sklearn/config/sample <../examples/sklearn/config/sample>`_.
 
 Key files:
 
@@ -378,8 +316,8 @@ Fairlearn-aware data configs use
 
 Repository examples:
 
-- ``examples/sklearn/config/data/fair-adult.yaml``
-- ``examples/pytorch/config/data/fairlearn_celeba.yaml``
+- `examples/sklearn/config/data/fair-adult.yaml <../examples/sklearn/config/data/fair-adult.yaml>`_
+- `examples/pytorch/config/data/fairlearn_celeba.yaml <../examples/pytorch/config/data/fairlearn_celeba.yaml>`_
 
 The sklearn fair-adult example demonstrates correlation-remover preprocessing:
 
@@ -399,9 +337,9 @@ PyTorch data workflows use :class:`deckard.data.pytorch.PytorchDataConfig`.
 
 Repository examples:
 
-- ``examples/pytorch/config/data/torch_mnist.yaml``
-- ``examples/pytorch/config/data/torch_cifar10.yaml``
-- ``examples/pytorch/config/data/fairlearn_celeba.yaml``
+- `examples/pytorch/config/data/torch_mnist.yaml <../examples/pytorch/config/data/torch_mnist.yaml>`_
+- `examples/pytorch/config/data/torch_cifar10.yaml <../examples/pytorch/config/data/torch_cifar10.yaml>`_
+- `examples/pytorch/config/data/fairlearn_celeba.yaml <../examples/pytorch/config/data/fairlearn_celeba.yaml>`_
 
 Example command:
 

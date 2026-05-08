@@ -1,7 +1,7 @@
 Lifelines Integration
 =====================
 
-Deckard provides specialized support for survival analysis through the optional
+deckard provides specialized support for survival analysis through the optional
 Lifelines integration. This enables time-to-event modeling, risk stratification,
 and adversarial robustness studies on survival models.
 
@@ -43,7 +43,7 @@ The default survival scorer profile is
 - ``bic`` via ``survival_bic_score``
 
 These are also provided in the sklearn example score profile at
-``examples/sklearn/config/score/survival.yaml``.
+`examples/sklearn/config/score/survival.yaml <../examples/sklearn/config/score/survival.yaml>`_.
 
 Survival Data
 ~~~~~~~~~~~~~
@@ -68,16 +68,16 @@ Survival data mode support is explicit in
 Data pipeline and sampling support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Because ``LifelinesDataConfig`` extends ``DataConfig`` (through the Deckard data
+Because ``LifelinesDataConfig`` extends ``DataConfig`` (through the deckard data
 stack), survival workflows can still use the standard data pipeline and sampler
 interfaces:
 
 - preprocessing pipelines from ``deckard.data.DataPipelineConfig``
-- split/k-fold/shuffle samplers via ``examples/sklearn/config/sample``
+- split/k-fold/shuffle samplers via `examples/sklearn/config/sample <../examples/sklearn/config/sample>`_
 - train/test/validation flow from core data config fields
 
 This lets users mix survival-specific fields (duration/event/mode) with normal
-Deckard preprocessing and split strategies.
+deckard preprocessing and split strategies.
 
 Survival Models
 ~~~~~~~~~~~~~~~
@@ -108,7 +108,7 @@ example ``concordance``, ``ici``, ``e50``) where available.
 Defenses in survival workflows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Survival models can use Deckard's defense pipeline from
+Survival models can use deckard's defense pipeline from
 :class:`deckard.model.defend.DefensePipelineConfig` just like other model types.
 Supported defense families include ART preprocessors, postprocessors,
 detectors, and trainers.
@@ -116,11 +116,11 @@ detectors, and trainers.
 Typical usage pattern:
 
 - choose a survival model (for example ``lifelines.fitters.coxph_fitter.CoxPHFitter``)
-- attach ``model.defense`` entries from ``examples/sklearn/config/defense``
+- attach ``model.defense`` entries from `examples/sklearn/config/defense <../examples/sklearn/config/defense>`_
 - evaluate robustness with survival scores and optional attacks in the same run
 
 Survival experiment contract
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``SurvivalExperimentConfig`` requires these fields at construction time:
 

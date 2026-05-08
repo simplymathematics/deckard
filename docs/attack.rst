@@ -24,7 +24,7 @@ adversarial attacks. It supports:
 
 Supported Attacks
 -----------------
-Deckard supports ART attacks across the following families:
+deckard supports ART attacks across the following families:
 
 - **Evasion attacks** (for example: ``FastGradientMethod``, ``HopSkipJump``,
    ``BoundaryAttack``, ``AutoProjectedGradientDescent``)
@@ -42,11 +42,11 @@ Deckard supports ART attacks across the following families:
 
 (Extendable to additional ART attack classes in future versions.)
 
-Preset Catalog (examples/sklearn)
----------------------------------
+Preset Catalog (`examples/sklearn <../examples/sklearn>`_)
+----------------------------------------------------------
 
-Deckard ships ready-to-run attack presets in ``examples/sklearn/config/attack``
-and search-space definitions in ``examples/sklearn/config/search/attacks``.
+deckard ships ready-to-run attack presets in `examples/sklearn/config/attack <../examples/sklearn/config/attack>`_
+and search-space definitions in `examples/sklearn/config/search/attacks <../examples/sklearn/config/search/attacks>`_.
 
 Common presets include:
 
@@ -198,112 +198,16 @@ You can run attacks directly from the terminal:
       attack.attack_size=20
 
 
-Programmatic example:
-~~~~~~~~~~~~~~~~~~~~~~
-You can also use the API programmatically:
+Programmatic examples
+~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: python
+.. seealso::
 
-   from deckard.attack import AttackConfig
-   from deckard.data import DataConfig
-   from deckard.model import ModelConfig
-
-   data = DataConfig(
-      dataset_name="make_classification",
-      data_params={
-         "n_samples": 60,
-         "n_features": 10,
-         "n_informative": 4,
-         "n_redundant": 0,
-         "n_clusters_per_class": 1,
-         "n_classes": 2,
-         "random_state": 7,
-      },
-      train_size=40,
-      test_size=20,
-      random_state=42,
-      stratify=True,
-      classifier=True,
-   )
-   data()
-
-   model = ModelConfig(
-      model_type="sklearn.linear_model.LogisticRegression",
-      classifier=True,
-      model_params={"max_iter": 25},
-   )
-   model(data)
-
-   attack_cfg = AttackConfig(
-      attack_type="art.attacks.evasion.FastGradientMethod",
-      attack_params={"eps": 0.1},
-      attack_size=20,
-      alias="fgm",
-   )
-
-   # run the attack against the trained model
-   scores = attack_cfg(data=data, model=model)
-   print([k for k in scores if k.startswith("evasion_")])
-
-Multi-attack with ExperimentConfig
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To execute several attacks in one experiment, pass a list to the same
-``attack`` field on :class:`deckard.experiment.ExperimentConfig`.
-
-.. code-block:: python
-
-   from deckard.experiment import ExperimentConfig
-
-   cfg = ExperimentConfig(
-      data=data,
-      model=model,
-      attack=[
-         AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
-            attack_params={"eps": 0.05},
-            attack_size=20,
-            alias="fgm",
-         ),
-         AttackConfig(
-            attack_type="art.attacks.evasion.HopSkipJump",
-            attack_params={"max_iter": 5, "verbose": False},
-            attack_size=20,
-            alias="hsj",
-         ),
-      ],
-   )
-   scores = cfg()
-
-   # First key keeps original name; colliding keys use alias suffix.
-   print(scores.get("evasion_accuracy"))
-   print(scores.get("evasion_accuracy_hsj"))
+   Fully-executed programmatic examples — including evasion attacks, poisoning
+   attacks, multi-attack runs, and ``BoundaryAttack`` — are available in the
+   :doc:`notebooks/art_attacks.ipynb </notebooks/art_attacks>` and :doc:`notebooks/art_defenses.ipynb </notebooks/art_defenses>` notebooks.
 
 For multi-attack runs, each attack must define a unique non-empty alias.
-
-BoundaryAttack example
-~~~~~~~~~~~~~~~~~~~~~~
-
-The fairness integration test exercises a small BoundaryAttack configuration:
-
-.. code-block:: python
-
-   boundary_attack = AttackConfig(
-      attack_type="art.attacks.evasion.BoundaryAttack",
-      attack_params={
-         "batch_size": 5,
-         "targeted": False,
-         "delta": 0.01,
-         "epsilon": 0.01,
-         "max_iter": 2,
-         "num_trial": 5,
-         "sample_size": 5,
-         "init_size": 5,
-         "min_epsilon": 0.0,
-         "verbose": False,
-      },
-      attack_size=5,
-   )
 
 Custom Configuration
 ~~~~~~~~~~~~~~~~~~~~
@@ -443,8 +347,8 @@ To run ART database reconstruction against a trained estimator:
 
 YAML config shortcuts are available at:
 
-- ``examples/sklearn/config/attack/database-reconstruction.yaml``
-- ``examples/pytorch/config/attack/database-reconstruction.yaml``
+- `examples/sklearn/config/attack/database-reconstruction.yaml <../examples/sklearn/config/attack/database-reconstruction.yaml>`_
+- `examples/pytorch/config/attack/database-reconstruction.yaml <../examples/pytorch/config/attack/database-reconstruction.yaml>`_
 
 Poisoning Attack
 ~~~~~~~~~~~~~~~~

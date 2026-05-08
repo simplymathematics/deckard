@@ -1,0 +1,256 @@
+stages:
+  # notebook_deckard:
+  #   cmd: >
+  #     mkdir -p build/notebook_artifacts && if [[ ! -s deckard.ipynb ]]; then echo '{"cells": [], "metadata": {}, "nbformat": 4, "nbformat_minor": 5}' > build/notebook_artifacts/deckard.executed.ipynb; else python -m jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=1800 --output deckard.executed.ipynb --output-dir build/notebook_artifacts deckard.ipynb; fi
+  #   deps:
+  #     - deckard.ipynb
+  #     - ../deckard/__main__.py
+  #     - ../deckard/experiment/
+  #     - ../deckard/file.py
+  #     - ../deckard/utils.py
+  #   outs:
+  #     - build/notebook_artifacts/deckard.executed.ipynb
+
+  # notebook_hydra:
+  #   cmd: >
+  #     mkdir -p build/notebook_artifacts && if [[ ! -s hydra.ipynb ]]; then echo '{"cells": [], "metadata": {}, "nbformat": 4, "nbformat_minor": 5}' > build/notebook_artifacts/hydra.executed.ipynb; else python -m jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=1800 --output hydra.executed.ipynb --output-dir build/notebook_artifacts hydra.ipynb; fi
+  #   deps:
+  #     - hydra.ipynb
+  #     - ../deckard/__main__.py
+  #     - ../deckard/experiment/
+  #     - ../deckard/file.py
+  #     - ../deckard/utils.py
+  #   outs:
+  #     - build/notebook_artifacts/hydra.executed.ipynb
+
+  notebook_seaborn:
+    cmd: >
+      mkdir -p build/seaborn_artifacts &&
+      python -m jupyter nbconvert --to html --execute
+      --ExecutePreprocessor.timeout=1800
+      --output seaborn.executed.html
+      --output-dir build/seaborn_artifacts
+      seaborn.ipynb
+    deps:
+      - seaborn.ipynb
+      - ../deckard/plot/seaborn_plots.py
+      - ../deckard/plot/declarations.py
+      - ../deckard/plot/__init__.py
+    outs:
+      - build/seaborn_artifacts/seaborn.executed.html
+    # plots:
+    #   - build/seaborn_artifacts/plots/
+
+  notebook_yellowbrick:
+    cmd: >
+      mkdir -p build/yellowbrick_artifacts &&
+      python -m jupyter nbconvert --to html --execute
+      --ExecutePreprocessor.timeout=1800
+      --output yellowbrick.executed.html
+      --output-dir build/yellowbrick_artifacts
+      yellowbrick.ipynb
+    deps:
+      - yellowbrick.ipynb
+      - ../deckard/data/
+      - ../deckard/model/
+      - ../deckard/experiment/
+      - ../deckard/file.py
+      - ../deckard/plot/yellowbrick_plots.py
+      - ../deckard/plot/declarations.py
+      - ../deckard/plot/__init__.py
+    outs:
+      - build/yellowbrick_artifacts/yellowbrick.executed.html
+    metrics:
+      - build/yellowbrick_artifacts/yellowbrick_plot_results.csv
+    # plots:
+    #   - build/yellowbrick_artifacts/plots/
+
+  notebook_detector:
+    cmd: >
+      mkdir -p build/detector_artifacts &&
+      python -m jupyter nbconvert --to html --execute
+      --ExecutePreprocessor.timeout=1800
+      --output detector.executed.html
+      --output-dir build/detector_artifacts
+      detector.ipynb
+    deps:
+      - detector.ipynb
+      - ../deckard/attack/
+      - ../deckard/data/
+      - ../deckard/model/
+      - ../deckard/file.py
+      - ../deckard/utils.py
+    outs:
+      - build/detector_artifacts/detector.executed.html
+    metrics:
+      - build/detector_artifacts/canonical_attack_examples.csv
+
+  notebook_art_attacks:
+    cmd: >
+      mkdir -p build/art_attacks_artifacts &&
+      python -m jupyter nbconvert --to html --execute
+      --ExecutePreprocessor.timeout=1800
+      --output art_attacks.executed.html
+      --output-dir build/art_attacks_artifacts
+      art_attacks.ipynb
+    deps:
+      - art_attacks.ipynb
+      - ../deckard/attack/
+      - ../deckard/data/
+      - ../deckard/model/
+      - ../deckard/file.py
+      - ../deckard/utils.py
+    outs:
+      - build/art_attacks_artifacts/art_attacks.executed.html
+    metrics:
+      - build/art_attacks_artifacts/attribute_inference_metrics.csv
+      - build/art_attacks_artifacts/implemented_sections.csv
+      - build/art_attacks_artifacts/membership_inference_metrics.csv
+      - build/art_attacks_artifacts/sklearn_evasion_results.csv
+      - build/art_attacks_artifacts/sklearn_poisoning_results.csv
+      - build/art_attacks_artifacts/torch_evasion_results.csv
+      - build/art_attacks_artifacts/torch_extraction_results.csv
+
+  notebook_art_defenses:
+    cmd: >
+      mkdir -p build/art_defenses_artifacts &&
+      python -m jupyter nbconvert --to html --execute
+      --ExecutePreprocessor.timeout=1800
+      --output art_defenses.executed.html
+      --output-dir build/art_defenses_artifacts
+      art_defenses.ipynb
+    deps:
+      - art_defenses.ipynb
+      - ../deckard/attack/
+      - ../deckard/data/
+      - ../deckard/model/
+      - ../deckard/file.py
+      - ../deckard/utils.py
+    outs:
+      - build/art_defenses_artifacts/art_defenses.executed.html
+    metrics:
+      - build/art_defenses_artifacts/defense_chain_order.csv
+      - build/art_defenses_artifacts/defense_chain_result.csv
+      - build/art_defenses_artifacts/sklearn_defense_results.csv
+      - build/art_defenses_artifacts/torch_defense_results.csv
+
+  notebook_sklearn:
+    cmd: >
+      mkdir -p build/notebook_artifacts &&
+      python -m jupyter nbconvert --to html --execute
+      --ExecutePreprocessor.timeout=1800
+      --output sklearn.executed.html
+      --output-dir build/notebook_artifacts
+      sklearn.ipynb
+    deps:
+      - sklearn.ipynb
+      - ../deckard/attack/
+      - ../deckard/data/
+      - ../deckard/model/
+      - ../deckard/detector/
+      - ../deckard/experiment/
+      - ../deckard/score/
+      - ../deckard/plot/
+      - ../deckard/file.py
+      - ../deckard/utils.py
+    outs:
+      - build/notebook_artifacts/sklearn.executed.html
+    metrics:
+      - build/notebook_artifacts/seaborn_results.csv
+    # plots:
+    #   - build/notebook_artifacts/plots/
+
+  notebook_pytorch:
+    cmd: >
+      mkdir -p build/pytorch_artifacts &&
+      python -m jupyter nbconvert --to html --execute
+      --ExecutePreprocessor.timeout=1800
+      --output pytorch.executed.html
+      --output-dir build/pytorch_artifacts
+      pytorch.ipynb
+    deps:
+      - pytorch.ipynb
+      - ../deckard/attack/
+      - ../deckard/data/
+      - ../deckard/model/
+      - ../deckard/experiment/
+      - ../deckard/score/
+      - ../deckard/plot/
+      - ../deckard/file.py
+      - ../deckard/utils.py
+    outs:
+      - build/pytorch_artifacts/pytorch.executed.html
+    metrics:
+      - build/pytorch_artifacts/pytorch_results.csv
+    # plots:
+    #   - build/pytorch_artifacts/plots/
+
+  notebook_fairlearn:
+    cmd: >
+      mkdir -p build/fairlearn_artifacts &&
+      python -m jupyter nbconvert --to html --execute
+      --ExecutePreprocessor.timeout=1800
+      --output fairlearn.executed.html
+      --output-dir build/fairlearn_artifacts
+      fairlearn.ipynb
+    deps:
+      - fairlearn.ipynb
+      - ../deckard/attack/
+      - ../deckard/data/
+      - ../deckard/model/
+      - ../deckard/experiment/
+      - ../deckard/score/
+      - ../deckard/plot/
+      - ../deckard/file.py
+      - ../deckard/utils.py
+    outs:
+      - build/fairlearn_artifacts/fairlearn.executed.html
+    metrics:
+      - build/fairlearn_artifacts/fairlearn_model_compare.csv
+      - build/fairlearn_artifacts/fairlearn_sklearn_compare.csv
+      - build/fairlearn_artifacts/fairlearn_torch_compare.csv
+    # plots:
+    #   - build/fairlearn_artifacts/plots/
+
+  notebook_anjana:
+    cmd: >
+      mkdir -p build/anjana_artifacts &&
+      python -m jupyter nbconvert --to html --execute
+      --ExecutePreprocessor.timeout=1800
+      --output anjana.executed.html
+      --output-dir build/anjana_artifacts
+      anjana.ipynb
+    deps:
+      - anjana.ipynb
+      - ../deckard/data/
+      - ../deckard/model/
+      - ../deckard/attack/
+      - ../deckard/experiment/
+      - ../deckard/score/
+      - ../deckard/plot/
+      - ../deckard/file.py
+      - ../deckard/utils.py
+    outs:
+      - build/anjana_artifacts/anjana.executed.html
+    metrics:
+      - build/anjana_artifacts/anjana_attack_compare.csv
+      - build/anjana_artifacts/anjana_data_score_compare.csv
+      - build/anjana_artifacts/anjana_data_scores_compare.csv
+      # - build/anjana_artifacts/anjana_privacy_results.csv
+    # plots:
+    #   - build/anjana_artifacts/plots/
+
+  # notebook_lifelines:
+  #   cmd: >
+  #     mkdir -p build/notebook_artifacts && if [[ ! -s lifelines.ipynb ]]; then echo '{"cells": [], "metadata": {}, "nbformat": 4, "nbformat_minor": 5}' > build/notebook_artifacts/lifelines.executed.ipynb; else python -m jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=1800 --output lifelines.executed.ipynb --output-dir build/notebook_artifacts lifelines.ipynb; fi
+  #   deps:
+  #     - lifelines.ipynb
+  #     - ../deckard/data/survival.py
+  #     - ../deckard/model/survival.py
+  #     - ../deckard/experiment/survival.py
+  #     - ../deckard/score/survival.py
+  #     - ../deckard/plot/survival.py
+  #     - ../deckard/file.py
+  #     - ../deckard/utils.py
+  #   outs:
+  #     - build/notebook_artifacts/lifelines.executed.ipynb

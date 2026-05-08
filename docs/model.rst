@@ -104,73 +104,18 @@ You can train and evaluate models directly from the terminal:
 Programmatic example
 ~~~~~~~~~~~~~~~~~~~~
 
-To use :class:`~deckard.model.ModelConfig` from Python:
+.. seealso::
 
-.. code-block:: python
-
-   from deckard.data import DataConfig
-   from deckard.model import ModelConfig
-
-   data = DataConfig(
-      dataset_name="make_classification",
-      data_params={
-         "n_samples": 40,
-         "n_features": 10,
-         "n_informative": 4,
-         "n_redundant": 0,
-         "n_clusters_per_class": 1,
-         "n_classes": 2,
-         "random_state": 7,
-      },
-      train_size=30,
-      test_size=10,
-      random_state=42,
-      stratify=True,
-      classifier=True,
-   )
-   data()
-
-   model = ModelConfig(
-      model_type="sklearn.linear_model.LogisticRegression",
-      classifier=True,
-      model_params={"max_iter": 25},
-   )
-
-   scores = model(data)
-   print(f"Scores: {scores}")
+   Fully-executed programmatic examples — including classification,
+   regression, defense pipelines, and fairness-aware models — are available
+   in the :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>` notebook.
 
 Regression example
 ~~~~~~~~~~~~~~~~~~
 
-The integration suite also validates regression with the same API:
-
-.. code-block:: python
-
-   from deckard.data import DataConfig
-   from deckard.model import ModelConfig
-
-   reg_data = DataConfig(
-      dataset_name="make_regression",
-      data_params={
-         "n_samples": 40,
-         "n_features": 10,
-         "n_informative": 5,
-         "noise": 0.1,
-         "random_state": 13,
-      },
-      train_size=30,
-      test_size=10,
-      random_state=42,
-      classifier=False,
-   )
-   reg_data()
-
-   reg_model = ModelConfig(
-      model_type="sklearn.linear_model.LinearRegression",
-      classifier=False,
-   )
-   reg_scores = reg_model(reg_data)
-   print(reg_scores["mse"])
+The same :class:`~deckard.model.ModelConfig` API works for regression by
+setting ``classifier=False``. See the :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>` notebook for
+an executed example.
 
 Custom configuration
 ~~~~~~~~~~~~~~~~~~~~
@@ -188,59 +133,14 @@ Example YAML configuration (``configs/model/rf.yaml``):
 Defense Pipelines
 ~~~~~~~~~~~~~~~~~
 
-Apply adversarial robustness defenses using :class:`~deckard.model.DefensePipelineConfig` 
-to chain multiple ART-based defenses:
-
-.. code-block:: python
-
-   from deckard.data import DataConfig
-   from deckard.model import ModelConfig
-   from deckard.model.defend import DefensePipelineConfig
-
-   # Train a baseline model
-   data = DataConfig(
-      dataset_name="make_classification",
-      data_params={
-         "n_samples": 60,
-         "n_features": 10,
-         "n_informative": 5,
-         "random_state": 42,
-      },
-      train_size=40,
-      test_size=20,
-      classifier=True,
-   )
-   data()
-
-   model = ModelConfig(
-      model_type="sklearn.linear_model.LogisticRegression",
-      classifier=True,
-      model_params={"max_iter": 50},
-   )
-   model(data)
-
-   # Apply a defense pipeline with feature squeezing preprocessor and gaussian noise postprocessor
-   defense_pipeline = DefensePipelineConfig(
-      defenses=[
-         {
-            "defense_name": "art.defences.preprocessor.FeatureSqueezing",
-            "defense_params": {"bit_depth": 8},
-         },
-         {
-            "defense_name": "art.defences.postprocessor.GaussianNoise",
-            "defense_params": {"sigma": 0.1},
-         },
-      ]
-   )
-
-   # Apply the defense to the trained model
-   defended_estimator = defense_pipeline.apply_to_trained_model(data=data, model=model)
-   print(f"Defense applied in {defense_pipeline.defense_application_time:.4f}s")
+Apply adversarial robustness defenses using :class:`~deckard.model.DefensePipelineConfig`
+to chain multiple ART-based defenses. See the :doc:`notebooks/art_defenses.ipynb </notebooks/art_defenses>` notebook
+for a fully-executed example.
 
 Transformer Defenses (Torch-backed)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Deckard also supports ART transformer defenses that wrap neural ART
+deckard also supports ART transformer defenses that wrap neural ART
 classifiers, including:
 
 - ``art.defences.transformer.evasion.DefensiveDistillation``
@@ -248,14 +148,14 @@ classifiers, including:
 
 Example configuration snippets are available in:
 
-- ``examples/pytorch/config/defense/defensive_distillation.yaml``
-- ``examples/pytorch/config/defense/neural_cleanse.yaml``
+- `examples/pytorch/config/defense/defensive_distillation.yaml <../examples/pytorch/config/defense/defensive_distillation.yaml>`_
+- `examples/pytorch/config/defense/neural_cleanse.yaml <../examples/pytorch/config/defense/neural_cleanse.yaml>`_
 
 Important backend notes:
 
 - Transformer defenses are only valid for neural-network model pipelines.
 - ART ``NeuralCleanse`` currently supports Keras classifier backends; when
-   used with unsupported ART backends (for example PyTorch wrappers), Deckard
+   used with unsupported ART backends (for example PyTorch wrappers), deckard
    raises a clear ``ValueError`` during defense initialization.
 
 CLI example:
@@ -292,8 +192,8 @@ Defense Chains in Config Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can build reproducible defense chains by composing entries from
-``examples/sklearn/config/defense`` (for scikit-learn workflows) or
-``examples/pytorch/config/defense`` (for PyTorch workflows).
+`examples/sklearn/config/defense <../examples/sklearn/config/defense>`_ (for scikit-learn workflows) or
+`examples/pytorch/config/defense <../examples/pytorch/config/defense>`_ (for PyTorch workflows).
 
 For example, the following chain applies an ART preprocessor first and then an
 ART postprocessor:
@@ -320,8 +220,8 @@ PyTorch Support Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 PyTorch model workflows are configured through
-``examples/pytorch/config/torch_default.yaml`` with model settings in
-``examples/pytorch/config/model/default.yaml``.
+`examples/pytorch/config/torch_default.yaml <../examples/pytorch/config/torch_default.yaml>`_ with model settings in
+`examples/pytorch/config/model/default.yaml <../examples/pytorch/config/model/default.yaml>`_.
 
 Example command:
 
@@ -336,12 +236,12 @@ This uses :class:`deckard.model.pytorch.PytorchModelConfig` and supports:
 - configurable optimizer/criterion
 - ART-compatible wrapping for attack evaluation
 - optional fairness defenses (for example,
-  ``examples/pytorch/config/defense/fairlearn-adversarial-classifier.yaml``)
+  `examples/pytorch/config/defense/fairlearn-adversarial-classifier.yaml <../examples/pytorch/config/defense/fairlearn-adversarial-classifier.yaml>`_)
 
 Fairlearn Model Support
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Deckard's fairness model extension supports fairlearn-backed defenses and model
+deckard's fairness model extension supports fairlearn-backed defenses and model
 wrappers in both sklearn and PyTorch-centered workflows.
 
 Common fairlearn defense chain usage:
@@ -406,49 +306,21 @@ and torch-native:
   ``state_dict`` using ``torch.save``.
 - ``load`` restores metadata and calls ``load_state_dict``.
 
-Public API example (automatic load-or-train):
+Public API example (automatic load-or-train): see the :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
+notebook for executed save/load examples.
 
-.. code-block:: python
-
-   from deckard.model import ModelConfig
-
-   model = ModelConfig(
-      model_type="sklearn.linear_model.LogisticRegression",
-      classifier=True,
-   )
-   # If model_file exists, it is loaded. Otherwise, the model is trained and saved.
-   scores = model(data, model_file="outputs/models/logreg.pkl")
-
-Public API example (PyTorch save/load):
-
-.. code-block:: python
-
-   from deckard.model.pytorch import PytorchModelConfig
-
-   model = PytorchModelConfig(
-      model_type="torch_example.py:ResNet18",
-      model_params={"num_channels": 1, "num_classes": 10},
-      classifier=True,
-   )
-   model(data)
-   model.save("outputs/models/torch_resnet18.pt")
-
-   reloaded = PytorchModelConfig(
-      model_type="torch_example.py:ResNet18",
-      model_params={"num_channels": 1, "num_classes": 10},
-      classifier=True,
-   )
-   reloaded.load("outputs/models/torch_resnet18.pt")
+Public API example (PyTorch save/load): see the :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
+notebook for executed PyTorch checkpoint save/load patterns.
 
 Pre-trained torch models
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 There are two supported patterns:
 
-1. Load a previously saved Deckard PyTorch checkpoint via ``load(filepath)``.
+1. Load a previously saved deckard PyTorch checkpoint via ``load(filepath)``.
 2. Point ``model_type`` to a custom constructor/class that returns an already
    initialized ``nn.Module`` (for example, one that internally loads external
-   pre-trained weights), then run normal Deckard training/evaluation.
+   pre-trained weights), then run normal deckard training/evaluation.
 
 If you want inference-only behavior from a pre-trained checkpoint, load it via
 ``load`` and then call the model with ``model_file``/prediction outputs as
