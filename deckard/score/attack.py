@@ -50,7 +50,7 @@ class DefaultEvasionScoreConfig(_TaskAwareScorerMixin, _AttackProfileScorer, Sco
     """Default evasion scorer family with optional task selection."""
 
     _profile_attr = "evasion"
-    classifier: Union[bool, str, None] = None
+    classifier: Union[bool, str] = True
     scorers: dict[str, ScorerConfig] = field(default_factory=dict)
 
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
@@ -106,7 +106,7 @@ class DefaultEvasionScoreConfig(_TaskAwareScorerMixin, _AttackProfileScorer, Sco
 class DefaultEvasionAttackScorerConfig(DefaultEvasionScoreConfig):
     """Default scorer set for evasion attack evaluation."""
 
-    classifier: Union[bool, str, None] = True
+    classifier: Union[bool, str] = True
 
 
 @dataclass(eq=False)
@@ -114,7 +114,7 @@ class DefaultEvasionRegressionAttackScorerConfig(DefaultEvasionScoreConfig):
     """Default scorer set for evasion attacks against regression models."""
 
     _profile_attr = "evasion_regression"
-    classifier: Union[bool, str, None] = False
+    classifier: Union[bool, str] = False
 
 
 @dataclass(eq=False)
@@ -126,7 +126,7 @@ class DefaultMembershipInferenceScoreConfig(_TaskAwareScorerMixin, _AttackProfil
     """
 
     _profile_attr = "membership_inference"
-    classifier: Union[bool, str, None] = True
+    classifier: Union[bool, str] = True
     scorers: dict[str, ScorerConfig] = field(default_factory=dict)
 
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
@@ -168,7 +168,7 @@ class DefaultAttributeInferenceScoreConfig(_TaskAwareScorerMixin, _AttackProfile
     """Default attribute-inference scorer family with optional task selection."""
 
     _profile_attr = "attribute_inference"
-    classifier: Union[bool, str, None] = None
+    classifier: Union[bool, str] = True
     scorers: dict[str, ScorerConfig] = field(default_factory=dict)
 
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
@@ -220,7 +220,7 @@ class DefaultAttributeInferenceScoreConfig(_TaskAwareScorerMixin, _AttackProfile
 class DefaultAttributeInferenceAttackScorerConfig(DefaultAttributeInferenceScoreConfig):
     """Default scorer set for categorical attribute inference evaluation."""
 
-    classifier: Union[bool, str, None] = True
+    classifier: Union[bool, str] = True
 
 
 @dataclass(eq=False)
@@ -228,7 +228,7 @@ class DefaultAttributeInferenceRegressionAttackScorerConfig(DefaultAttributeInfe
     """Default scorer set for continuous attribute inference evaluation."""
 
     _profile_attr = "attribute_inference_regression"
-    classifier: Union[bool, str, None] = False
+    classifier: Union[bool, str] = False
 @dataclass(eq=False)
 class AttackScorerConfig(ConfigBase):
     """Owns all attack scoring logic and profile-specific scorer configs."""

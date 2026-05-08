@@ -149,7 +149,10 @@ class _TaskAwareScorerMixin:
 
 
 def _resolve_yt_yp(
-    mode: Union[Literal["test", "train", "attack", "val", "attack-val"], None],
+    mode: Union[
+        Literal["test", "train", "attack", "val", "attack-val", "pre-sample"],
+        None,
+    ],
     data: "DataConfig | None",
     model: Any,
     attack: Any,
@@ -191,6 +194,10 @@ def _resolve_yt_yp(
             y_true = getattr(data, "y_val", y_true)
         if attack is not None:
             y_pred = getattr(attack, "attack_predictions", None)
+    elif mode == "pre-sample":
+        if data is not None:
+            y_true = getattr(data, "_y", y_true)
+            y_pred = getattr(data, "_X", y_pred)
     return y_true, y_pred
 
 
@@ -448,6 +455,8 @@ class ScorerDictConfig(ConfigBase):
             return getattr(data, "X_test", None)
         if mode in {"val", "attack-val"}:
             return getattr(data, "X_val", None)
+        if mode == "pre-sample":
+            return getattr(data, "_X", None)
         return None
 
     @staticmethod
@@ -486,6 +495,7 @@ class ScorerDictConfig(ConfigBase):
             "attack",
             "val",
             "attack-val",
+            "pre-sample",
             None,
         ] = "test",
         data: "DataConfig | None" = None,
@@ -518,10 +528,14 @@ class ScorerDictConfig(ConfigBase):
                 y_pred = model.training_predictions
             elif mode == "attack":
                 assert data is not None and attack is not None
-                y_test = getattr(data, "y_test", None)
-                if y_test is None:
-                    raise ValueError("attack mode requires data.y_test")
-                y_true = y_test[: attack.attack_size]
+                y_true = getattr(attack, "attacked_labels", None)
+                if y_true is None:
+                    y_test = getattr(data, "y_test", None)
+                    if y_test is None:
+                        raise ValueError(
+                            "attack mode requires attack.attacked_labels or data.y_test",
+                        )
+                    y_true = y_test[: attack.attack_size]
                 y_pred = attack.attack_predictions
             elif mode == "val":
                 assert data is not None and model is not None
@@ -529,8 +543,18 @@ class ScorerDictConfig(ConfigBase):
                 y_pred = model.val_predictions
             elif mode == "attack-val":
                 assert data is not None and attack is not None
-                y_true = data.y_val
+                y_true = getattr(attack, "attacked_labels", None)
+                if y_true is None:
+                    y_true = data.y_val
                 y_pred = attack.attack_predictions
+            elif mode == "pre-sample":
+                assert data is not None
+                y_true = getattr(data, "_y", None)
+                y_pred = getattr(data, "_X", None)
+                if y_true is None or y_pred is None:
+                    raise ValueError(
+                        "pre-sample mode requires data._X and data._y to be loaded",
+                    )
             elif y_true is None:
                 raise AssertionError("y_true must be provided if mode is None")
 
@@ -558,6 +582,10 @@ class ScorerDictConfig(ConfigBase):
             if results.get(scored_key) is None:
                 metric_input = y_pred
                 if scorer.needs_proba:
+                    if mode == "pre-sample":
+                        raise ValueError(
+                            f"Scorer '{key}' requires probabilities but pre-sample mode is reserved for full-dataset diagnostics.",
+                        )
                     if y_proba is not None:
                         metric_input = y_proba
                     else:

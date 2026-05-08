@@ -1,5 +1,6 @@
 # OS imports
 import copy
+import inspect
 import logging
 import time
 from pathlib import Path
@@ -34,6 +35,7 @@ from ..utils import is_default_config_value, load_class, resolve_torch_device
 logger = logging.getLogger(__name__)
 
 ScorerDictConfig = Any
+ModelType = Union[str, type[torch.nn.Module], torch.nn.Module]
 
 __all__ = ["PytorchModelConfig"]
 
@@ -90,7 +92,7 @@ class PytorchModelConfig(ModelConfig):
     """Configuration for PyTorch models using load_class for generic instantiation.
 
     Attributes:
-        model_type: Fully qualified class name (e.g., "torch.nn.Linear" or "torchvision.models.resnet18")
+        model_type: Fully qualified class path, an in-memory class, or an nn.Module instance
         model_params: Constructor parameters for the model
         device: torch.device ("cpu", "cuda", etc.)
         criterion: Loss function spec (str name or dict with _target_)
@@ -99,7 +101,7 @@ class PytorchModelConfig(ModelConfig):
         classifier: Whether model is classifier (True) or regressor (False)
     """
 
-    model_type: str = "torch.nn.Linear"
+    model_type: ModelType = "torch.nn.Linear"
     model_params: dict = field(default_factory=dict)
     classifier: bool = True
     fit_params: dict = field(default_factory=dict)
@@ -136,8 +138,68 @@ class PytorchModelConfig(ModelConfig):
         self._initialize_default_scorer()
         self._initialize_torch_seed_and_device()
 
+        # For in-memory model instances, infer constructor params so config
+        # metadata remains serializable and reproducible.
+        if isinstance(self.model_type, torch.nn.Module):
+            inferred_params = self._infer_model_init_params_from_instance(
+                self.model_type,
+            )
+            if self.model_params is None:
+                self.model_params = inferred_params
+            else:
+                merged_params = dict(inferred_params)
+                merged_params.update(dict(self.model_params))
+                self.model_params = merged_params
+
         # Call parent __post_init__ for shared initialization
         super().__post_init__()
+
+    def _infer_model_init_params_from_instance(
+        self,
+        model_instance: torch.nn.Module,
+    ) -> dict:
+        """Best-effort extraction of __init__ args from an in-memory model."""
+        try:
+            signature = inspect.signature(model_instance.__class__.__init__)
+        except (TypeError, ValueError):
+            return {}
+
+        inferred = {}
+        first_param = next(model_instance.parameters(), None)
+        for param in signature.parameters.values():
+            if param.name == "self":
+                continue
+            if param.kind in (
+                inspect.Parameter.VAR_POSITIONAL,
+                inspect.Parameter.VAR_KEYWORD,
+            ):
+                continue
+
+            name = param.name
+            if name == "bias" and hasattr(model_instance, "bias"):
+                inferred[name] = getattr(model_instance, "bias") is not None
+                continue
+
+            if hasattr(model_instance, name):
+                value = getattr(model_instance, name)
+                if isinstance(value, torch.nn.Parameter):
+                    # Constructor args usually expect bool for bias, not Parameter.
+                    inferred[name] = value is not None
+                elif isinstance(value, torch.Tensor):
+                    continue
+                else:
+                    inferred[name] = copy.deepcopy(value)
+                continue
+
+            if name == "device" and first_param is not None:
+                inferred[name] = first_param.device
+                continue
+
+            if name == "dtype" and first_param is not None:
+                inferred[name] = first_param.dtype
+                continue
+
+        return inferred
 
     def _resolve_torch_device(self, requested_device: Any) -> torch.device:
         return resolve_torch_device(requested_device)
@@ -225,8 +287,18 @@ class PytorchModelConfig(ModelConfig):
         self._epoch_attack = attack_config
 
     def _initialize_model(self):
-        """Initialize PyTorch model using load_class."""
-        if self.model_params is not None:
+        """Initialize PyTorch model from path, class, or in-memory instance."""
+        params = self.model_params if self.model_params is not None else {}
+        if isinstance(self.model_type, torch.nn.Module):
+            # Avoid mutating a caller-owned module instance.
+            self._model = copy.deepcopy(self.model_type)
+        elif isinstance(self.model_type, type):
+            if not issubclass(self.model_type, torch.nn.Module):
+                raise TypeError(
+                    "model_type class must inherit torch.nn.Module",
+                )
+            self._model = self.model_type(**params)
+        elif self.model_params is not None:
             self._model = load_class(self.model_type, **self.model_params)
         else:
             self._model = load_class(self.model_type)
@@ -405,6 +477,27 @@ class PytorchModelConfig(ModelConfig):
             snapshot.score_dict["epochs"] = copy.deepcopy(
                 self.score_dict["epochs"],
             )
+        # Expose the latest optimization loss directly in each checkpoint score
+        # payload so downstream consumers do not need to parse nested epoch data.
+        epochs = snapshot.score_dict.get("epochs", {}) if snapshot.score_dict else {}
+        if isinstance(epochs, dict) and len(epochs) > 0:
+            latest_epoch = None
+            for key in epochs.keys():
+                try:
+                    epoch_index = int(key)
+                except (TypeError, ValueError):
+                    continue
+                if latest_epoch is None or epoch_index > latest_epoch:
+                    latest_epoch = epoch_index
+            if latest_epoch is not None:
+                latest_entry = epochs.get(latest_epoch, None)
+                if latest_entry is None:
+                    latest_entry = epochs.get(str(latest_epoch), None)
+                if isinstance(latest_entry, dict):
+                    latest_loss = latest_entry.get("loss", None)
+                    if isinstance(latest_loss, (int, float)):
+                        snapshot.score_dict["optimizer_loss"] = float(latest_loss)
+
         checkpoint_stage = None
         if snapshot.defense is not None:
             defense_pipeline = snapshot._require_defense_pipeline()

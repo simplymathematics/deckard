@@ -59,6 +59,7 @@ if "FairlearnDefenseConfig" in globals():
         [
             "FairlearnDefenseConfig",
             "FairlearnModelConfig",
+            "FairlearnPytorchModelConfig",
         ],
     )
 if "AnjanaModelConfig" in globals():

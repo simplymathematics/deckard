@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 class DetectorScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     """Task-aware scorer config for detector outputs."""
 
-    classifier: Union[bool, str, None] = None
+    classifier: Union[bool, str] = True
     scorers: dict[str, Union[ScorerConfig, dict[str, Any]]] = field(
         default_factory=dict,
     )
