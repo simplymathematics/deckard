@@ -664,9 +664,20 @@ class YellowbrickPlotConfig(ConfigBase):
         )
 
     def parse_cv(self):
-        assert (
-            "cv" in self.plot_params
-        ), "CV must be specified for model selection plots"
+        if "cv" not in self.plot_params:
+            classifier_flag = getattr(self.experiment.model, "classifier", True)
+            if classifier_flag:
+                logger.warning(
+                    "No cv specified for model-selection plot '%s'; defaulting to StratifiedKFold(n_splits=5)",
+                    self.plot_type,
+                )
+                return StratifiedKFold(n_splits=5)
+            logger.warning(
+                "No cv specified for model-selection plot '%s'; defaulting to KFold(n_splits=5)",
+                self.plot_type,
+            )
+            return KFold(n_splits=5)
+
         cv = self.plot_params.pop("cv")
         if isinstance(cv, int):
             cv = StratifiedKFold(n_splits=cv)
