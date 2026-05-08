@@ -1,4 +1,4 @@
-name: Build and Upload Deckard (Windows)
+name: Build and Upload deckard (Windows)
 
 on:
     push:

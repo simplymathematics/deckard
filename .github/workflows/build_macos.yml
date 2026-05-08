@@ -1,4 +1,4 @@
-name: Build and Upload Deckard (macOS)
+name: Build and Upload deckard (macOS)
 
 on:
     push:

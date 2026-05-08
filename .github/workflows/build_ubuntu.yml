@@ -1,5 +1,5 @@
 
-name: Build and Upload Deckard
+name: Build and Upload deckard
 
 on:
     push:

@@ -1,4 +1,4 @@
-name: Release Deckard Package
+name: Release deckard Package
 
 on:
   push:
