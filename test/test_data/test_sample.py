@@ -274,7 +274,7 @@ class TestSplitSampler(unittest.TestCase):
 class TestKFoldSampler(unittest.TestCase):
     def setUp(self):
         self.cfg = _make_clf_config()
-        self.cfg.fold = 0
+        self.cfg.split = 0
 
     def test_returns_three_arrays(self):
         sampler = KFoldSampler(n_splits=5)
@@ -298,7 +298,7 @@ class TestKFoldSampler(unittest.TestCase):
         results = []
         for fold in range(3):
             cfg = _make_clf_config()
-            cfg.fold = fold
+            cfg.split = fold
             sampler = KFoldSampler(n_splits=5)
             _, _, val = sampler(cfg)
             results.append(set(val))
@@ -306,14 +306,14 @@ class TestKFoldSampler(unittest.TestCase):
         self.assertFalse(results[0] == results[1] == results[2])
 
     def test_fold_out_of_range_raises(self):
-        self.cfg.fold = 99
+        self.cfg.split = 99
         sampler = KFoldSampler(n_splits=5)
         with self.assertRaises(ValueError):
             sampler(self.cfg)
 
     def test_no_stratify(self):
         cfg = _make_clf_config(stratify=False)
-        cfg.fold = 0
+        cfg.split = 0
         sampler = KFoldSampler(n_splits=5, shuffle=False)
         train, test, val = sampler(cfg)
         self.assertEqual(len(train) + len(test) + len(val), len(cfg._X))
@@ -331,7 +331,7 @@ class TestKFoldSampler(unittest.TestCase):
             },
             test_size=0.2,
             random_state=42,
-            fold=1,
+            split=1,
             stratify=True,
             classifier=True,
             sample=KFoldSampler(n_splits=5),
@@ -344,12 +344,12 @@ class TestKFoldSampler(unittest.TestCase):
 
     def test_fold_none_defaults_to_zero(self):
         cfg = _make_clf_config()
-        cfg.fold = None
-        cfg_fold0 = _make_clf_config()
-        cfg_fold0.fold = 0
+        cfg.split = None
+        cfg_split0 = _make_clf_config()
+        cfg_split0.split = 0
         sampler = KFoldSampler(n_splits=5)
         _, _, val_none = sampler(cfg)
-        _, _, val_zero = sampler(cfg_fold0)
+        _, _, val_zero = sampler(cfg_split0)
         self.assertEqual(sorted(val_none), sorted(val_zero))
 
 
@@ -361,7 +361,7 @@ class TestKFoldSampler(unittest.TestCase):
 class TestShuffleSampler(unittest.TestCase):
     def setUp(self):
         self.cfg = _make_clf_config(val_size=0.15)
-        self.cfg.fold = 0
+        self.cfg.split = 0
 
     def test_returns_three_arrays(self):
         sampler = ShuffleSampler(n_splits=5)
@@ -384,13 +384,13 @@ class TestShuffleSampler(unittest.TestCase):
     def test_raises_without_val_size(self):
         cfg = _make_clf_config()
         cfg.val_size = None
-        cfg.fold = 0
+        cfg.split = 0
         sampler = ShuffleSampler(n_splits=5)
         with self.assertRaises(ValueError):
             sampler(cfg)
 
     def test_fold_out_of_range_raises(self):
-        self.cfg.fold = 99
+        self.cfg.split = 99
         sampler = ShuffleSampler(n_splits=5)
         with self.assertRaises(ValueError):
             sampler(self.cfg)
@@ -408,7 +408,7 @@ class TestShuffleSampler(unittest.TestCase):
             },
             test_size=0.2,
             val_size=0.15,
-            fold=2,
+            split=2,
             random_state=42,
             stratify=True,
             classifier=True,
@@ -422,7 +422,7 @@ class TestShuffleSampler(unittest.TestCase):
 
     def test_no_stratify(self):
         cfg = _make_reg_config(val_size=0.15)
-        cfg.fold = 0
+        cfg.split = 0
         sampler = ShuffleSampler(n_splits=5)
         train, test, val = sampler(cfg)
         self.assertEqual(len(train) + len(test) + len(val), len(cfg._X))

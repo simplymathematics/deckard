@@ -45,6 +45,20 @@ def test_discover_lifelines_dataset_loaders_filters_callable_loaders(monkeypatch
     assert set(loaders) == {"lung", "kidney"}
 
 
+def test_discover_yellowbrick_dataset_loaders_handles_import_error(monkeypatch):
+    monkeypatch.setattr(data_base.importlib, "import_module", lambda name: (_ for _ in ()).throw(ImportError()))
+    assert data_base._discover_yellowbrick_dataset_loaders() == {}
+
+
+def test_discover_yellowbrick_dataset_loaders_filters_callable_loaders(monkeypatch):
+    datasets_module = SimpleNamespace(load_energy=lambda: 1, load_credit=lambda: 2, other=3)
+    monkeypatch.setattr(data_base.importlib, "import_module", lambda name: datasets_module)
+
+    loaders = data_base._discover_yellowbrick_dataset_loaders()
+
+    assert set(loaders) == {"energy", "credit"}
+
+
 @pytest.mark.parametrize("test_size", [1.2, "bad"])
 def test_validate_init_rejects_invalid_test_size(test_size):
     with pytest.raises(ValueError):
@@ -201,6 +215,44 @@ def test_load_lifelines_dataset_branches(monkeypatch):
     assert cfg._y.tolist() == [0, 0]
 
 
+def test_load_yellowbrick_dataset_branches(monkeypatch):
+    cfg = _basic_data_config(dataset_name="energy", target=None, classifier=False)
+
+    monkeypatch.setattr(data_base, "_yellowbrick_dataset_loaders", lambda: {})
+    with pytest.raises(ImportError):
+        cfg._load_yellowbrick_dataset("energy")
+
+    monkeypatch.setattr(data_base, "_yellowbrick_dataset_loaders", lambda: {"other": lambda: (pd.DataFrame({"x": [1]}), pd.Series([0]))})
+    with pytest.raises(NotImplementedError):
+        cfg._load_yellowbrick_dataset("energy")
+
+    monkeypatch.setattr(
+        data_base,
+        "_yellowbrick_dataset_loaders",
+        lambda: {"energy": lambda **kwargs: (pd.DataFrame({"f": [1, 2]}), pd.Series([0, 1]))},
+    )
+    cfg._load_yellowbrick_dataset("energy")
+    assert list(cfg._X.columns) == ["f"]
+    assert cfg._y.tolist() == [0, 1]
+
+    monkeypatch.setattr(
+        data_base,
+        "_yellowbrick_dataset_loaders",
+        lambda: {"energy": lambda **kwargs: pd.DataFrame({"x": [1, 2]})},
+    )
+    cfg.target = None
+    cfg._load_yellowbrick_dataset("energy")
+    assert cfg._y.tolist() == [0, 0]
+
+    monkeypatch.setattr(
+        data_base,
+        "_yellowbrick_dataset_loaders",
+        lambda: {"energy": lambda **kwargs: object()},
+    )
+    with pytest.raises(TypeError):
+        cfg._load_yellowbrick_dataset("energy")
+
+
 def test_load_data_routes_lifelines_aliases_and_csv_options(monkeypatch, tmp_path):
     cfg = _basic_data_config(dataset_name="lifelines_demo", target="target")
     called = []
@@ -231,6 +283,23 @@ def test_load_data_routes_lifelines_aliases_and_csv_options(monkeypatch, tmp_pat
     cfg = _basic_data_config(dataset_name=csv_path.as_posix(), target="target", keep=["keep"], drop=["drop"])
     with pytest.raises(AssertionError):
         cfg._load_from_csv()
+
+
+def test_load_data_routes_yellowbrick_aliases(monkeypatch):
+    cfg = _basic_data_config(dataset_name="yellowbrick_energy", target="target")
+    called = []
+    monkeypatch.setattr(data_base, "_lifelines_dataset_loaders", lambda: {})
+    monkeypatch.setattr(data_base, "_yellowbrick_dataset_loaders", lambda: {"energy": object()})
+    monkeypatch.setattr(
+        cfg,
+        "_load_yellowbrick_dataset",
+        lambda name, **params: called.append(name)
+        or setattr(cfg, "_X", pd.DataFrame({"x": [1]}))
+        or setattr(cfg, "_y", pd.Series([0]))
+        or setattr(cfg, "data_load_time", 0.01),
+    )
+    cfg._load_data()
+    assert called == ["energy"]
 
 
 def test_prepare_data_file_existing_and_new(tmp_path):

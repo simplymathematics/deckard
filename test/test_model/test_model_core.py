@@ -957,7 +957,8 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         )
 
         self.assertNotIn("training_loss_curve", model.score_dict)
-        self.assertIn("training_accuracy", model.score_dict)
+        self.assertIn("accuracy", model.score_dict)
+        self.assertNotIn("training_accuracy", model.score_dict)
 
     def test_evaluate_with_no_test_data_raises(self):
         model = self._model()
@@ -1017,8 +1018,8 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         times = {}
         model._evaluate_and_score(data, times=times)
 
-        self.assertEqual(times["training_n"], len(data.y_train))
         self.assertEqual(times["prediction_n"], len(data.y_test))
+        self.assertNotIn("training_n", times)
 
     def test_evaluate_applies_defense_before_predict_and_merges_scores(self):
         model = self._model()
@@ -1116,6 +1117,40 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
 
         self.assertIsNotNone(model.training_probabilities)
         self.assertIsNotNone(model.probabilities)
+
+    def test_val_mode_resamples_when_validation_split_missing(self):
+        data = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 120,
+                "n_features": 6,
+                "n_informative": 4,
+                "n_redundant": 2,
+                "random_state": 0,
+            },
+            train_size=0.6,
+            test_size=0.2,
+            val_size=0.2,
+            sample="split",
+            random_state=42,
+            classifier=True,
+        )
+        data()
+        data.X_val = None
+        data.y_val = None
+        data.val_n = None
+
+        model = self._model()
+        model.score_mode = "val"
+        model._train(data.X_train, data.y_train)
+        model.scorer = lambda y_true, y_pred, mode="val", **kwargs: {"validation_accuracy": 1.0}
+
+        times = {}
+        model._evaluate_and_score(data, times=times)
+
+        self.assertIsNotNone(data.X_val)
+        self.assertIsNotNone(data.y_val)
+        self.assertIn("validation_n", times)
 
     def test_evaluate_initializes_score_dict_when_none(self):
         model = self._model()

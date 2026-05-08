@@ -6,6 +6,7 @@ from unittest.mock import patch
 from omegaconf import OmegaConf
 import pytest
 from sklearn.datasets import make_classification
+from sklearn.model_selection import KFold, StratifiedKFold
 
 try:
     import yellowbrick  # noqa: F401
@@ -39,6 +40,58 @@ expensive_viz_types = [
 
 
 class TestYellowbrickPlots(unittest.TestCase):
+    def _make_classification_experiment(self):
+        files = FileConfig(data_file="", model_file="")
+        data_conf = OmegaConf.load(self.classification_data_config)
+        model_conf = OmegaConf.load(self.classification_model_config)
+        data = DataConfig(**OmegaConf.to_container(data_conf, resolve=True))
+        model = ModelConfig(**OmegaConf.to_container(model_conf, resolve=True))
+        return ExperimentConfig(data=data, model=model, files=files)
+
+    def _make_regression_experiment(self):
+        files = FileConfig(data_file="", model_file="")
+        data_conf = OmegaConf.load(self.regression_data_config)
+        model_conf = OmegaConf.load(self.regression_model_config)
+        data = DataConfig(**OmegaConf.to_container(data_conf, resolve=True))
+        model = ModelConfig(**OmegaConf.to_container(model_conf, resolve=True))
+        return ExperimentConfig(data=data, model=model, files=files, classifier=False)
+
+    def test_parse_cv_defaults_to_stratifiedkfold_for_classifier(self):
+        plot_cfg = YellowbrickPlotConfig(
+            experiment=self._make_classification_experiment(),
+            plot_type="learning_curve",
+            plot_params={},
+        )
+
+        cv = plot_cfg.parse_cv()
+
+        self.assertIsInstance(cv, StratifiedKFold)
+        self.assertEqual(cv.n_splits, 5)
+
+    def test_parse_cv_defaults_to_kfold_for_regressor(self):
+        plot_cfg = YellowbrickPlotConfig(
+            experiment=self._make_regression_experiment(),
+            plot_type="learning_curve",
+            plot_params={},
+        )
+
+        cv = plot_cfg.parse_cv()
+
+        self.assertIsInstance(cv, KFold)
+        self.assertEqual(cv.n_splits, 5)
+
+    def test_parse_cv_uses_explicit_integer(self):
+        plot_cfg = YellowbrickPlotConfig(
+            experiment=self._make_classification_experiment(),
+            plot_type="learning_curve",
+            plot_params={"cv": 3},
+        )
+
+        cv = plot_cfg.parse_cv()
+
+        self.assertIsInstance(cv, StratifiedKFold)
+        self.assertEqual(cv.n_splits, 3)
+
     def test_one_classification_plot(self):
         files = FileConfig(data_file="", model_file="")
         data_conf = OmegaConf.load(self.classification_data_config)

@@ -69,8 +69,7 @@ def test_anjana_data_score_uses_auto_default(monkeypatch):
     cfg.scorer = "auto"
 
     out = cfg._score()
-    assert "anjana_scores" in out
-    assert out["anjana_scores"]["k_anonymity"] == 2.0
+    assert out["k_anonymity"] == 2.0
 
 
 def test_generate_anjana_hierarchy_dict_builds_interval_levels():

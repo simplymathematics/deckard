@@ -12,6 +12,7 @@ import yaml
 from numpy.exceptions import AxisError
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.svm import SVC
 from deckard.attack import AttackConfig
 from deckard.attack.base import SensitiveFeaturesWrapper, _sensitive_slice
 from conftest import TinyData
@@ -138,14 +139,71 @@ class TestAttackConfig(unittest.TestCase):
         self.assertEqual(attack.attack_subtype, "membership_inference")
         self.assertEqual(attack.attack_kind, "membership")
 
-        attack._attack_type = "evasion"
-        attack._attack_subtype = "anything"
-        self.assertEqual(attack.attack_kind, "evasion")
+    def test_poisoning_svm_initialization_injects_train_and_val_arrays(self):
+        class DummyPoisoningAttackSVM:
+            def __init__(self, classifier, **kwargs):
+                self.classifier = classifier
+                self.kwargs = kwargs
 
-        attack.attack_type = "art.attacks.inference.attribute_inference.AttributeInferenceBlackBox"
-        attack._attack_type = None
-        attack._attack_subtype = None
-        self.assertEqual(attack.attack_kind, "attribute")
+        class _TinyData:
+            X_train = np.array(
+                [[0.0, 0.1], [1.0, 0.2], [0.2, 1.0], [0.9, 0.8]],
+                dtype=np.float32,
+            )
+            y_train = np.array([0, 1, 0, 1])
+            X_val = np.array([[0.15, 0.25], [0.75, 0.65]], dtype=np.float32)
+            y_val = np.array([0, 1])
+            X_test = np.array([[0.05, 0.15], [0.85, 0.75]], dtype=np.float32)
+            y_test = np.array([0, 1])
+            classifier = True
+
+        model = SVC(probability=True)
+        model.fit(_TinyData.X_train, _TinyData.y_train)
+        attack = AttackConfig(
+            attack_type="art.attacks.poisoning.PoisoningAttackSVM",
+            attack_params={
+                "step": 0.1,
+                "eps": 0.2,
+                "max_iter": 2,
+                "verbose": False,
+            },
+            attack_size=2,
+        )
+
+        with patch(
+            "deckard.attack.base.resolve_class",
+            return_value=DummyPoisoningAttackSVM,
+        ):
+            initialized_attack, _, attack_type, _ = attack._initialize_attack(
+                model,
+                _TinyData(),
+            )
+
+        self.assertEqual(attack_type, "poisoning")
+        self.assertIsNotNone(getattr(initialized_attack.classifier, "clip_values", None))
+        self.assertIn("x_train", initialized_attack.kwargs)
+        self.assertIn("y_train", initialized_attack.kwargs)
+        self.assertIn("x_val", initialized_attack.kwargs)
+        self.assertIn("y_val", initialized_attack.kwargs)
+        self.assertEqual(initialized_attack.kwargs["x_train"].shape, (4, 2))
+        self.assertEqual(initialized_attack.kwargs["x_val"].shape, (2, 2))
+        np.testing.assert_array_equal(
+            initialized_attack.kwargs["y_train"],
+            np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 0.0], [0.0, 1.0]], dtype=np.float32),
+        )
+        np.testing.assert_array_equal(
+            initialized_attack.kwargs["y_val"],
+            np.array([[1.0, 0.0], [0.0, 1.0]], dtype=np.float32),
+        )
+
+    def test_select_extraction_scorer_falls_back_for_logits(self):
+        scorer, use_proba = AttackConfig._select_extraction_scorer(
+            benign_pred=np.array([[0.8, 0.2], [0.1, 0.9]]),
+            extracted_pred=np.array([[1.5, -0.2], [-0.4, 2.1]]),
+        )
+
+        self.assertFalse(use_proba)
+        self.assertNotIn("roc_auc", scorer.scorers)
 
     def test_infer_task_is_classification_and_compatibility_guard(self):
         class _Data:
@@ -1186,6 +1244,51 @@ class TestPytorchAttackConfig(unittest.TestCase):
         arr = np.array([0, 1])
         result = cfg._prepare_labels_for_attack(arr)
         self.assertIs(result, arr)
+
+    def test_prepare_features_for_art_tensor_to_numpy_float_dtype(self):
+        self._skip_if_no_torch()
+        from deckard.attack.pytorch import PytorchAttackConfig
+
+        cfg = PytorchAttackConfig(
+            attack_type="art.attacks.evasion.FastGradientMethod",
+        )
+        t = self.torch.randn(4, 3)
+        result = cfg._prepare_features_for_art(t)
+        self.assertIsInstance(result, np.ndarray)
+        self.assertEqual(result.shape, (4, 3))
+        self.assertTrue(np.issubdtype(result.dtype, np.floating))
+
+    def test_torch_evasion_uses_art_boundary_conversion(self):
+        self._skip_if_no_torch()
+        from types import SimpleNamespace
+        from deckard.attack.pytorch import PytorchAttackConfig
+
+        class _DummyArtModel:
+            def predict(self, x):
+                x = np.asarray(x)
+                p1 = (x[:, 0] > 0.0).astype(float)
+                p0 = 1.0 - p1
+                return np.column_stack([p0, p1])
+
+        class _DummyAttack:
+            def generate(self, x):
+                # This mimics ART's numpy-based path and would fail on raw tensors.
+                return x.astype(np.float32)
+
+        data = SimpleNamespace(
+            X_test=self.torch.randn(16, 4),
+            y_test=self.torch.randint(0, 2, (16,)),
+            _sensitive_test=None,
+        )
+        cfg = PytorchAttackConfig(
+            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_size=8,
+        )
+
+        scores = cfg._evade(data, _DummyArtModel(), _DummyAttack())
+        self.assertIn("evasion_accuracy", scores)
+        self.assertIsInstance(cfg.attack, np.ndarray)
+        self.assertEqual(cfg.attack.shape[0], 8)
 
 
 class TestTorchUtils(unittest.TestCase):
@@ -2852,6 +2955,46 @@ class TestPoisonBranches(unittest.TestCase):
         # class_source should have been adjusted to something present
         self.assertIn("poison_attack_source_class", result)
 
+    def test_poisoning_svm_branch_scores_benign_and_poisoned_accuracy(self):
+        attack = AttackConfig(
+            attack_type="art.attacks.poisoning.PoisoningAttackSVM",
+            attack_params={"step": 0.1, "eps": 0.2, "max_iter": 2, "verbose": False},
+            attack_size=2,
+        )
+
+        class _FakeArtModel:
+            nb_classes = 2
+            _poisoned = False
+
+            def predict(self, X):
+                X = np.asarray(X)
+                p1 = (X[:, 0] > 0.5).astype(float)
+                if self._poisoned:
+                    p1 = 1.0 - p1
+                return np.column_stack([1 - p1, p1])
+
+            def fit(self, x, y, **kw):
+                _ = x
+                _ = y
+                _ = kw
+                self._poisoned = True
+
+        class _FakePoisoningAttackSVM:
+            def poison(self, x, y=None, **kwargs):
+                _ = kwargs
+                return np.asarray(x), np.asarray(y)
+
+        result = attack._poison(
+            data=self._make_data(),
+            art_model=_FakeArtModel(),
+            attack=_FakePoisoningAttackSVM(),
+        )
+
+        self.assertIn("benign_accuracy", result)
+        self.assertIn("poisoned_accuracy", result)
+        self.assertIn("poisoning_attack_points", result)
+        self.assertEqual(result["attack_size"], 2)
+
 
 # ---------------------------------------------------------------------------
 # _extract val mode
@@ -2859,6 +3002,58 @@ class TestPoisonBranches(unittest.TestCase):
 
 
 class TestExtractBranches(unittest.TestCase):
+    def test_initialize_attack_builds_neural_art_classifier_for_extraction(self):
+        torch = pytest.importorskip("torch")
+        from deckard.data import PytorchDataConfig
+        from deckard.model import PytorchModelConfig
+
+        class DummyCopycatCNN:
+            def __init__(self, classifier, **kwargs):
+                self.classifier = classifier
+                self.kwargs = kwargs
+
+        X = torch.rand(16, 4)
+        y = torch.randint(0, 2, (16,))
+        data = PytorchDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            train_size=12,
+            test_size=4,
+            classifier=True,
+            random_state=42,
+            data_params={"_args_": [X, y]},
+        )
+        data()
+
+        model = PytorchModelConfig(
+            model_type="torch.nn.Linear",
+            model_params={"in_features": 4, "out_features": 2},
+            classifier=True,
+            fit_params={"nb_epochs": 1, "batch_size": 4},
+            criterion="CrossEntropyLoss",
+            optimizer={"name": "SGD", "lr": 0.05},
+        )
+        model(data)
+
+        attack = AttackConfig(
+            attack_type="art.attacks.extraction.CopycatCNN",
+            attack_params={},
+            attack_size=4,
+        )
+
+        with patch(
+            "deckard.attack.base.resolve_class",
+            return_value=DummyCopycatCNN,
+        ):
+            initialized_attack, art_model, attack_type, attack_subtype = attack._initialize_attack(
+                model,
+                data,
+            )
+
+        self.assertEqual(attack_type, "extraction")
+        self.assertEqual(attack_subtype, "CopycatCNN")
+        self.assertTrue(attack._is_nn_art_classifier(art_model))
+        self.assertIs(initialized_attack.classifier, art_model)
+
     def test_extract_uses_val_split(self):
         attack = AttackConfig(
             attack_type="art.attacks.extraction.CopycatCNN",

@@ -217,6 +217,45 @@ def test_apply_anjana_defense_branch_paths(monkeypatch):
     assert cfg._y.index.tolist() == [10, 11]
 
 
+def test_apply_anjana_defense_signature_filtering_and_defaults(monkeypatch):
+    cfg = _bare_cfg()
+    cfg._X = pd.DataFrame({"feature": [1, 2, 3]}, index=[10, 11, 12])
+    cfg._y = pd.Series([0, 1, 0], index=[10, 11, 12])
+    cfg.identifiers = None
+    cfg.quasi_identifiers = ["feature"]
+    cfg.sensitive_attribute = "label"
+    cfg.target = None
+    cfg.anjana_defense = {"name": "anjana.fake", "k": 2}
+
+    seen = {}
+
+    def _strict_k_anonymity_like(data, ident, quasi_ident, k, supp_level, hierarchies):
+        seen.update(
+            {
+                "data": data,
+                "ident": ident,
+                "quasi_ident": quasi_ident,
+                "k": k,
+                "supp_level": supp_level,
+                "hierarchies": hierarchies,
+            },
+        )
+        return data.copy()
+
+    monkeypatch.setattr(
+        "deckard.data.anjana.resolve_class",
+        lambda _: _strict_k_anonymity_like,
+    )
+
+    cfg._apply_anjana_defense()
+
+    assert seen["ident"] == []
+    assert seen["quasi_ident"] == ["feature"]
+    assert seen["k"] == 2
+    assert seen["supp_level"] == 100
+    assert "feature" in seen["hierarchies"]
+
+
 def test_load_init_sample_and_score_paths(monkeypatch):
     cfg = _bare_cfg()
 
@@ -258,7 +297,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
         lambda path: (lambda **kwargs: {"path": path, "n": len(kwargs["y_true"])}),
     )
     scored = cfg_score._score()
-    assert scored["anjana_scores"] == {
+    assert scored == {
         "path": "deckard.score.anjana.DefaultAnjanaDataScoreConfig",
         "n": 2,
     }
@@ -271,4 +310,4 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     cfg_fallback.scorer = lambda **kwargs: {"rows": len(kwargs["y_true"]), "cols": list(kwargs["y_pred"].columns)}
     cfg_fallback._y = pd.Series([1, 0])
     cfg_fallback._X = pd.DataFrame({"z": [3, 4]})
-    assert cfg_fallback._score() == {"anjana_scores": {"rows": 2, "cols": ["z"]}}
+    assert cfg_fallback._score() == {"rows": 2, "cols": ["z"]}

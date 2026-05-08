@@ -234,7 +234,7 @@ def test_base_data_model_attack_end_to_end(
     attack_scores = attack_cfg(data=data_cfg, model=attack_model)
 
     assert attack_cfg.attack is not None
-    assert attack_cfg.predictions is not None
+    assert attack_cfg.attack_predictions is not None
     assert any(key.startswith(expected_prefix) for key in attack_scores)
 
 
@@ -900,8 +900,8 @@ def test_cli_full_experiment_composition_database_reconstruction_end_to_end():
     assert any(key.startswith("database_reconstruction_") for key in scores)
 
 
-def test_cli_experiment_tuning_mode_emits_validation_scores():
-    """Test CLI-style composition with ExperimentConfig tuning mode validation scoring."""
+def test_cli_experiment_tuning_mode_emits_test_scores():
+    """Test CLI-style composition with ExperimentConfig tuning mode test scoring."""
 
     config_dir = (
         Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
@@ -932,9 +932,10 @@ def test_cli_experiment_tuning_mode_emits_validation_scores():
         model=model,
         score={"experiment": score_dict},
         evaluation_mode="tuning",
-        experiment_name="tuning-validation-integration",
+        experiment_name="tuning-test-integration",
     )
 
     scores = experiment()
-    assert "validation_accuracy" in scores
+    assert "accuracy" in scores
+    assert "validation_accuracy" not in scores
     assert "training_accuracy" not in scores

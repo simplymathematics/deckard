@@ -143,11 +143,12 @@ def test_task_aware_scorer_resolves_from_model_data_and_attack_context():
 
 
 def test_resolve_mode_features_and_predict_proba_paths():
-    data = SimpleNamespace(X_train="train", X_test="test", X_val="val")
+    data = SimpleNamespace(X_train="train", X_test="test", X_val="val", _X="full")
     assert ScorerDictConfig._resolve_mode_features("train", data) == "train"
     assert ScorerDictConfig._resolve_mode_features("test", data) == "test"
     assert ScorerDictConfig._resolve_mode_features("val", data) == "val"
     assert ScorerDictConfig._resolve_mode_features("attack-val", data) == "val"
+    assert ScorerDictConfig._resolve_mode_features("pre-sample", data) == "full"
     assert ScorerDictConfig._resolve_mode_features("attack", data) is None
     assert ScorerDictConfig._resolve_mode_features("test", None) is None
 
@@ -252,3 +253,66 @@ def test_scorer_dict_attack_placeholder_and_missing_probability_context():
             y_pred=np.array([0]),
             extra="{attack}",
         )
+
+
+def test_scorer_dict_attack_mode_prefers_attack_attacked_labels():
+    scorer_dict = ScorerDictConfig(
+        scorers={
+            "accuracy": ScorerConfig(
+                score_name="accuracy",
+                score_function="sklearn.metrics.accuracy_score",
+            ),
+        },
+    )
+
+    data = SimpleNamespace(y_test=np.array([1, 1, 1]))
+    attack = SimpleNamespace(
+        attack_size=2,
+        attack_predictions=np.array([0, 1]),
+        attacked_labels=np.array([0, 1]),
+        _attack="atk",
+    )
+
+    result = scorer_dict(mode="attack", data=data, attack=attack)
+
+    assert result["attack_accuracy"] == 1.0
+
+
+def test_scorer_dict_pre_sample_mode_uses_full_dataset_vectors():
+    scorer_dict = ScorerDictConfig(
+        scorers={
+            "n": ScorerConfig(
+                score_name="n",
+                score_function=lambda y_true, y_pred: len(y_true),
+            ),
+        },
+    )
+
+    data = SimpleNamespace(
+        _y=np.array([0, 1, 2, 3]),
+        _X=np.array([[0.0], [1.0], [2.0], [3.0]]),
+    )
+
+    result = scorer_dict(mode="pre-sample", data=data)
+
+    assert result["n"] == 4
+
+
+def test_scorer_dict_pre_sample_rejects_probability_metrics():
+    scorer_dict = ScorerDictConfig(
+        scorers={
+            "roc_auc": ScorerConfig(
+                score_name="roc_auc",
+                score_function="sklearn.metrics.roc_auc_score",
+                needs_proba=True,
+            ),
+        },
+    )
+
+    data = SimpleNamespace(
+        _y=np.array([0, 1, 0, 1]),
+        _X=np.array([[0.0], [1.0], [2.0], [3.0]]),
+    )
+
+    with pytest.raises(ValueError, match="reserved for full-dataset diagnostics"):
+        scorer_dict(mode="pre-sample", data=data)

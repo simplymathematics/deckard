@@ -241,6 +241,28 @@ class TestDataConfig(unittest.TestCase):
         self.assertIn("data_sample_time", scores)
         self.assertNotIn("class_counts", scores)
 
+    def test_presample_score_mode_uses_full_dataset(self):
+        cfg = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 30,
+                "n_features": 4,
+                "n_informative": 2,
+                "n_redundant": 0,
+                "random_state": 42,
+            },
+            score_mode="pre-sample",
+            scorer={
+                "n_samples": {
+                    "score_name": "n_samples",
+                    "score_function": lambda y_true, y_pred: len(y_true),
+                },
+            },
+        )
+        scores = cfg()
+        self.assertEqual(scores["n_samples"], len(cfg._y))
+        self.assertNotEqual(scores["n_samples"], len(cfg.y_train))
+
     def test_make_regression_data_loading_and_sampling(self):
         cfg = DataConfig(
             dataset_name="make_regression",

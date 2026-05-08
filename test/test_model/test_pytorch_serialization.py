@@ -204,6 +204,79 @@ def test_predict_path_for_art_wrapper_and_empty_loader():
     assert out.shape[0] == 2
 
 
+def test_model_type_accepts_in_memory_class():
+    class TinyLinear(torch.nn.Module):
+        def __init__(self, in_features=4, out_features=2):
+            super().__init__()
+            self.linear = torch.nn.Linear(in_features, out_features)
+
+        def forward(self, x):
+            return self.linear(x)
+
+    cfg = PytorchModelConfig(
+        model_type=TinyLinear,
+        model_params={"in_features": 4, "out_features": 2},
+        classifier=True,
+    )
+
+    model = cfg.get_model()
+    assert isinstance(model, TinyLinear)
+
+
+def test_model_type_accepts_in_memory_instance():
+    instance = torch.nn.Linear(4, 2)
+    cfg = PytorchModelConfig(
+        model_type=instance,
+        model_params={},
+        classifier=True,
+    )
+
+    model = cfg.get_model()
+    assert isinstance(model, torch.nn.Linear)
+    assert model is not instance
+    for expected, actual in zip(instance.parameters(), model.parameters()):
+        assert torch.equal(expected.detach().cpu(), actual.detach().cpu())
+
+
+def test_model_type_instance_populates_model_params_from_init():
+    cfg = PytorchModelConfig(
+        model_type=torch.nn.Linear(4, 2, bias=False),
+        classifier=True,
+    )
+
+    assert cfg.model_params["in_features"] == 4
+    assert cfg.model_params["out_features"] == 2
+    assert cfg.model_params["bias"] is False
+
+
+def test_model_type_instance_keeps_explicit_model_params_over_inferred():
+    cfg = PytorchModelConfig(
+        model_type=torch.nn.Linear(4, 2, bias=False),
+        model_params={"bias": True},
+        classifier=True,
+    )
+
+    assert cfg.model_params["in_features"] == 4
+    assert cfg.model_params["out_features"] == 2
+    assert cfg.model_params["bias"] is True
+
+
+def test_model_type_rejects_non_torch_module_class():
+    class NotAModule:
+        def __init__(self, *args, **kwargs):
+            _ = args, kwargs
+
+    with pytest.raises(
+        TypeError,
+        match="model_type class must inherit torch.nn.Module",
+    ):
+        PytorchModelConfig(
+            model_type=NotAModule,
+            model_params={},
+            classifier=True,
+        )
+
+
 class _StagePlugin:
     def __init__(self, stage):
         self.stage = stage

@@ -92,6 +92,37 @@ class TestSeabornPlots(unittest.TestCase):
         self.assertIs(returned, ax)
         plt.close(fig)
 
+    def test_heatmap_plot_uses_matrix_data(self):
+        corr = pd.DataFrame(
+            [[1.0, 0.25], [0.25, 1.0]],
+            columns=["x", "y"],
+            index=["x", "y"],
+        )
+        cfg = SeabornPlotConfig(
+            plot_type="heatmap",
+            x="x",
+            y="y",
+            data=corr,
+            kwargs={"annot": True},
+        )
+
+        ax = cfg()
+
+        self.assertIsInstance(ax, Axes)
+
+    def test_cat_plot_returns_real_axis(self):
+        cfg = self._make_cfg(
+            plot_type="cat",
+            x="group",
+            y="y",
+            kwargs={"kind": "box"},
+        )
+
+        ax = cfg()
+
+        self.assertIsInstance(ax, Axes)
+        self.assertGreater(len(ax.patches) + len(ax.lines), 0)
+
     def test_post_init_raises_for_missing_data_file(self):
         missing_file = (self.temp_dir / "does_not_exist.pkl").as_posix()
         with self.assertRaises(AssertionError):

@@ -17,7 +17,7 @@ from deckard.experiment import ExperimentConfig, SurvivalExperimentConfig
 from deckard.experiment.base import DataConfigResolutionMixin, _file_resolver, _merge_resolver
 from deckard.file import FileConfig
 from deckard.model import ModelConfig
-from deckard.score import DefaultClassifierConfig
+from deckard.score import DefaultClassifierConfig, DefaultDataClassificationConfig
 from deckard.utils import ConfigBase
 from helpers import make_runtime_env
 from deckard.attack.base import resolve_class as base_resolve_class
@@ -190,27 +190,33 @@ class TestExperimentValidationScoring(unittest.TestCase):
             score={"experiment": DefaultClassifierConfig()},
             attack=None,
             files=FileConfig(),
-            experiment_name="validation-scoring-test",
+            experiment_name="score-mode-policy-test",
             evaluation_mode=evaluation_mode,
         )
 
-    def test_tuning_mode_emits_validation_scores(self):
+    def test_tuning_mode_emits_test_scores(self):
         exp = self._make_exp(evaluation_mode="tuning")
         scores = exp()
-        self.assertIn("validation_accuracy", scores)
+        self.assertIn("accuracy", scores)
+        self.assertNotIn("validation_accuracy", scores)
         self.assertNotIn("training_accuracy", scores)
 
-    def test_report_mode_emits_train_test_and_validation_scores(self):
+    def test_report_mode_emits_validation_scores_only(self):
         exp = self._make_exp(evaluation_mode="report")
         scores = exp()
-        self.assertIn("training_accuracy", scores)
-        self.assertIn("accuracy", scores)
         self.assertIn("validation_accuracy", scores)
+        self.assertNotIn("accuracy", scores)
+        self.assertNotIn("training_accuracy", scores)
 
-    def test_tuning_mode_without_validation_split_raises(self):
-        exp = self._make_exp(val_size=None, evaluation_mode="tuning")
+    def test_report_mode_without_validation_split_raises(self):
+        exp = self._make_exp(val_size=None, evaluation_mode="report")
         with self.assertRaises(ValueError):
             exp()
+
+    def test_tuning_mode_without_validation_split_uses_test_scores(self):
+        exp = self._make_exp(val_size=None, evaluation_mode="tuning")
+        scores = exp()
+        self.assertIn("accuracy", scores)
 
 
 class _FakeDetector:
@@ -942,23 +948,89 @@ class TestResolveScoreModes(unittest.TestCase):
         exp.__dict__.update(kwargs)
         return exp
 
-    def test_standard_returns_train(self):
+    def test_standard_returns_test(self):
         exp = self._base_exp(evaluation_mode="standard")
-        self.assertEqual(exp._resolve_score_modes(), ["train"])
+        self.assertEqual(exp._resolve_score_modes(), ["test"])
 
-    def test_tuning_returns_val(self):
+    def test_tuning_returns_test(self):
         exp = self._base_exp(evaluation_mode="tuning")
-        self.assertEqual(exp._resolve_score_modes(), ["val"])
+        self.assertEqual(exp._resolve_score_modes(), ["test"])
 
-    def test_report_returns_train_test_val(self):
+    def test_report_returns_val(self):
         exp = self._base_exp(evaluation_mode="report")
-        self.assertIn("train", exp._resolve_score_modes())
-        self.assertIn("test", exp._resolve_score_modes())
-        self.assertIn("val", exp._resolve_score_modes())
+        self.assertEqual(exp._resolve_score_modes(), ["val"])
 
     def test_explicit_score_modes_override(self):
         exp = self._base_exp(score_modes=["test", "val"])
         self.assertEqual(exp._resolve_score_modes(), ["test", "val"])
+
+    def test_explicit_score_mode_presample(self):
+        exp = self._base_exp(score_mode="pre-sample")
+        self.assertEqual(exp._resolve_score_modes(), ["pre-sample"])
+
+    def test_normalize_mode_score_keys_presample(self):
+        out = ExperimentConfig._normalize_mode_score_keys(
+            "pre-sample",
+            {"num_classes": 3},
+        )
+        self.assertEqual(out, {"presample_num_classes": 3})
+
+
+class TestExperimentScorerModePermutations(unittest.TestCase):
+    def _base_data(self, *, val_size=0.1):
+        return DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 120,
+                "n_features": 6,
+                "n_informative": 4,
+                "n_redundant": 2,
+                "random_state": 0,
+                "n_clusters_per_class": 1,
+            },
+            test_size=0.2,
+            val_size=val_size,
+            random_state=42,
+            classifier=True,
+            sample="split",
+        )
+
+    def _base_model(self):
+        return ModelConfig(
+            model_type="sklearn.ensemble.RandomForestClassifier",
+            classifier=True,
+            model_params={"n_estimators": 5, "random_state": 0},
+        )
+
+    def test_data_profile_scorer_supports_all_mode_permutations(self):
+        exp = ExperimentConfig(
+            data=self._base_data(val_size=0.1),
+            model=self._base_model(),
+            score={"experiment": DefaultDataClassificationConfig()},
+            score_modes=["pre-sample", "train", "test", "val"],
+            files=FileConfig(),
+            experiment_name="score-permutations-data-profile",
+        )
+
+        scores = exp()
+
+        self.assertIn("presample_num_classes", scores)
+        self.assertIn("training_num_classes", scores)
+        self.assertIn("num_classes", scores)
+        self.assertIn("validation_num_classes", scores)
+
+    def test_non_data_profile_rejects_presample_mode(self):
+        exp = ExperimentConfig(
+            data=self._base_data(val_size=0.1),
+            model=self._base_model(),
+            score={"experiment": DefaultClassifierConfig()},
+            score_modes=["pre-sample", "test"],
+            files=FileConfig(),
+            experiment_name="score-permutations-non-data-profile",
+        )
+
+        with self.assertRaises(ValueError):
+            exp()
 
 
 # ── ExperimentConfig._aggregate_repeated_scores ──────────────────────────────
@@ -1381,6 +1453,52 @@ class TestRunSinglePipelineBranchesExtra(unittest.TestCase):
 
             self.assertIsInstance(scores, dict)
             self.assertTrue(score_file.exists())
+
+    def test_val_score_mode_resamples_loaded_data_for_validation_split(self):
+        loaded_data = DataConfig(
+            dataset_name="make_classification",
+            data_params={"n_samples": 80, "n_features": 6, "n_informative": 4, "n_redundant": 2, "random_state": 0},
+            train_size=60,
+            test_size=20,
+            random_state=42,
+            classifier=True,
+        )
+        loaded_data()
+        loaded_data.X_val = None
+        loaded_data.y_val = None
+        loaded_data.val_n = None
+
+        with tempfile.TemporaryDirectory() as td:
+            data_file = Path(td) / "data.pkl"
+            data_file.write_text("placeholder")
+
+            exp = ExperimentConfig(
+                data=DataConfig(
+                    dataset_name="make_classification",
+                    data_params={"n_samples": 80, "n_features": 6, "n_informative": 4, "n_redundant": 2, "random_state": 0},
+                    train_size=0.6,
+                    test_size=0.2,
+                    val_size=0.2,
+                    sample="split",
+                    random_state=42,
+                    classifier=True,
+                ),
+                model=ModelConfig(
+                    model_type="sklearn.tree.DecisionTreeClassifier",
+                    classifier=True,
+                    model_params={"max_depth": 2},
+                ),
+                files=FileConfig(data_file=str(data_file)),
+                score_mode="val",
+                experiment_name="val-mode-resample-loaded-data",
+            )
+
+            exp.load_object = lambda _p: loaded_data
+            scores = exp()
+
+            self.assertIsNotNone(exp.data.X_val)
+            self.assertIsNotNone(exp.data.y_val)
+            self.assertIn("validation_accuracy", scores)
 
 
 # ── ExperimentConfig set_device tensorflow ────────────────────────────────────
