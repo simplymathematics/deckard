@@ -217,4 +217,4 @@ See also
 * :doc:`model` — general model configuration including :mod:`deckard.model.anjana`
 * :doc:`score` — scoring framework including :mod:`deckard.score.anjana`
 * :doc:`pytorch` — optional PyTorch integration with Anjana
-* :doc:`package` — overview of all extensions
+* :doc:`modules` — overview of all extensions

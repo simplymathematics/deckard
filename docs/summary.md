@@ -177,10 +177,10 @@ for each execution backend, allowing researchers to focus only on the component
 that they are truly testing while gaining access to numerous mitigations,
 defenses, attacks, and metrics for validating ML pipelines.
 
-For implementation details and module-level APIs, continue to:
 
-- {doc}`source/modules`
-
-
-For implementation examples, see:
+See also:
+- [Package Summary](summary.md).
+- [API Reference](modules.rst)
+- [Extensions](extensions.md)
 - [Notebooks](notebooks/index.md)
+- [Developer Docs](development.md)

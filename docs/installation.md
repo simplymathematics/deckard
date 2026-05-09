@@ -118,13 +118,13 @@ For full documentation, use the docs navigation:
 
 - Overview: {doc}`build_docs`
 - Landing page: {doc}`index`
-- Concepts: {doc}`concepts`
+- Summary: {doc}`summary`
 
 API entry points:
 
-- API hub: {doc}`source/index`
-- Package overview: {doc}`source/package`
-- Module and extension map: {doc}`source/modules`
+- API hub: {doc}`index`
+- Package overview: {doc}`modules`
+- Module and extension map: {doc}`modules`
 
 Notebook entry point:
 

@@ -1,53 +1,37 @@
 deckard
 =======
 
-Documentation for the deckard package.
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Overview
+   :hidden:
 
-   overview
+   summary
    installation
    development
-   summary
+   build_docs
+   changelog
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Core API
+   :hidden:
 
-   modules
-   attack
-   data
-   detector
-   experiment
-   file
-   layers
-   model
-   plot
-   score
-   utils
+   api/modules
 
 .. toctree::
    :maxdepth: 2
    :caption: Extensions
+   :hidden:
 
-   pytorch
-   anjana
-   fairlearn
-   lifelines
-   seaborn
-   yellowbrick
+   extensions
 
 .. toctree::
    :maxdepth: 2
    :caption: Notebooks
+   :hidden:
 
-   notebooks/index
-
-Indices and tables
-------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   notebooks

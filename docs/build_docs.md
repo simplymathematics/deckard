@@ -1,3 +1,4 @@
+# Developer Documentation
 ## Notebook Dependencies
 
 All example notebooks in `docs/notebooks/*.ipynb` require the full set of optional dependencies for the relevant extension stacks. To run all notebooks without errors, install:
@@ -20,9 +21,9 @@ If you only install `pip install -e '.[docs]'`, some notebooks may fail to run d
 
 # Layout
 Sphinx documentation entry points:
-- Landing page: [index.rst](index.rst)
-- Software modules + extensions index: [source/modules.rst](source/modules.rst)
-- Notebook guide index: [notebooks/index.md](notebooks/index.md)
+- Landing page: [index](index)
+- Software modules + extensions index: [api/modules](api/modules)
+- Notebook guide index: [notebooks](notebooks)
 
 
 
@@ -36,8 +37,8 @@ docs/
 |- conf.py
 |- index.rst
 |- build/
-`- source/
-	|- package.rst
+`- 
+	|- modules.rst
 	|- index.rst
 	|- modules.rst
 	|- attack.rst
@@ -107,17 +108,6 @@ This installs the full documentation stack as defined in the `[project.optional-
 
 All of these will be installed automatically with the above pip command.
 
-## LaTeX/PDF Build Requirements
-
-To build PDF documentation with Sphinx (LaTeX builder), you must have:
-- A working LaTeX installation (e.g., TeX Live, MacTeX, or MiKTeX)
-- The Python package `roman` (installed automatically if you use `pip install -e .`)
-
-If you see an error about `No module named 'roman'`, run:
-
-	pip install roman
-
-Or ensure your environment includes all dependencies from `pyproject.toml`.
 
 ## Theme Version Requirement
 

@@ -1,30 +1,35 @@
 # Extensions
 
-This page documents the main extension modules and optional backends in deckard.
+## [Anjana](api/anjana)
+Integration for anonymization-aware machine learning.  
+See the [Anjana API docs](api/anjana).
 
-## Data Extensions
-- Fairlearn integration: `deckard.data.fairness`
-- Anjana anonymization: `deckard.data.anjana`
-- PyTorch integration: `deckard.data.pytorch`
-- Survival analysis: `deckard.data.survival`
+## [Fairlearn](api/fairlearn)
+Integration for fairness-aware machine learning.  
+See the [Fairlearn API docs](api/fairlearn).
 
-## Model Extensions
-- Fairlearn fairness models: `deckard.model.fairness`
-- Anjana anonymization models: `deckard.model.anjana`
-- PyTorch models: `deckard.model.pytorch`
-- Survival models: `deckard.model.survival`
-- ART defense pipeline: `deckard.model.defend`
+## [Lifelines](api/lifelines)
+Integration for survival analysis and time-to-event modeling.  
+See the [Lifelines API docs](api/lifelines).
 
-## Scoring Extensions
-- Fairness metrics: `deckard.score.fairness`
-- Anonymization metrics: `deckard.score.anjana`
-- Survival metrics: `deckard.score.survival`
-- Attack metrics: `deckard.score.attack`
-- Data metrics: `deckard.score.data`
+## [Pytorch](api/pytorch)
+Integration for PyTorch-based models and experiments.  
+See the [PyTorch API docs](api/pytorch).
 
-## Other Extensions
-- Attacks: `deckard.attack`
-- Visualization: `deckard.plot` (seaborn, yellowbrick, survival curves)
-- Advanced workflows: `deckard.layers`
-- PyTorch experiment orchestration: `deckard.experiment.torch_experiment`
-- Survival experiment orchestration: `deckard.experiment.survival`
+## [Seaborn](api/seaborn)
+Statistical visualization with Seaborn.  
+See the [Seaborn API docs](api/seaborn).
+
+## [Yellowbrick](api/yellowbrick)
+Single-run model diagnostics with Yellowbrick.  
+See the [Yellowbrick API docs](api/yellowbrick).
+
+```{toctree}
+:hidden:
+
+api/anjana
+api/fairlearn
+api/lifelines
+api/pytorch
+api/seaborn
+api/yellowbrick

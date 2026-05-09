@@ -1,5 +1,5 @@
 Fairlearn Integration
-====================
+=======================
 
 deckard provides support for fairness-aware machine learning through the optional Fairlearn extension modules. This integration enables fairness evaluation and mitigation workflows within the deckard framework.
 
@@ -191,4 +191,4 @@ See also
 * :doc:`model` — general model configuration including :mod:`deckard.model.fairness`
 * :doc:`score` — scoring framework including :mod:`deckard.score.fairness`
 * :doc:`pytorch` — optional PyTorch integration with Fairlearn
-* :doc:`package` — overview of all extensions
+* :doc:`modules` — overview of all extensions

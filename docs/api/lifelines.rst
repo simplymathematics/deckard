@@ -363,4 +363,4 @@ See also
 * :doc:`experiment` — experiment orchestration including :class:`SurvivalExperimentConfig`
 * :doc:`plot` — visualization including survival curve plotting
 * :doc:`pytorch` — optional deep learning survival models
-* :doc:`package` — overview of all extensions
+* :doc:`modules` — overview of all extensions

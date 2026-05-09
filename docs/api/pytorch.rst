@@ -197,4 +197,4 @@ See also
 * :doc:`attack` — attack configuration and execution
 * :doc:`plot` — visualization support including training history plots
 * :doc:`lifelines` — optional survival analysis integration with PyTorch
-* :doc:`package` — overview of all extensions
+* :doc:`modules` — overview of all extensions
