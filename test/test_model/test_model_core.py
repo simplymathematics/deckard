@@ -479,7 +479,7 @@ class TestModelPostInitScorerBranches(unittest.TestCase):
         )
         self.assertFalse(model.classifier)
 
-    def test_other_classifier_value_becomes_none(self):
+    def test_other_classifier_value_raises_valueerror(self):
         model = ModelConfig.__new__(ModelConfig)
         object.__setattr__(model, "model_type", "sklearn.tree.DecisionTreeClassifier")
         object.__setattr__(model, "classifier", "unknown_value")
@@ -493,8 +493,8 @@ class TestModelPostInitScorerBranches(unittest.TestCase):
         object.__setattr__(model, "_defense_pipeline", None)
         object.__setattr__(model, "score_dict", None)
         object.__setattr__(model, "defense", None)
-        model.__post_init__()
-        self.assertIsNone(model.classifier)
+        with self.assertRaises(ValueError):
+            model.__post_init__()
 
 
 # ── Plugin system ──────────────────────────────────────────────────────────
