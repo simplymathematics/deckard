@@ -1024,10 +1024,6 @@ class ConfigBase:
         filepath : str
             The path to the file where the instance will be saved.
         """
-        if Path(filepath).exists():
-            raise ValueError(
-                f"File {filepath} already exists. Will not overwrite.",
-            )
         self.save_object(self, filepath)
         logger.info(
             f"Instance of {self.__class__.__name__} saved to {filepath}",
