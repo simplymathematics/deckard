@@ -494,6 +494,7 @@ class PytorchModelConfig(ModelConfig):
         snapshot.defense = self.defense
         snapshot.score_dict = {}
         snapshot.checkpoint_records = copy.deepcopy(self.checkpoint_records)
+        snapshot._initialize_model()
         snapshot._model.load_state_dict(copy.deepcopy(self._model.state_dict()))
         snapshot._model = snapshot._model.to(snapshot.device)
         return snapshot
@@ -680,18 +681,37 @@ class PytorchModelConfig(ModelConfig):
             epoch_start = time.process_time()
             epoch_losses = []
 
-            for i in range(0, len(X), batch_size):
-                batch_X = X[i : i + batch_size].to(self.device)  # noqa E203
-                batch_y = y[i : i + batch_size].to(self.device)  # noqa E203
-
-                optimizer.zero_grad()
-                outputs = self._model(batch_X)
-                loss = criterion(outputs, batch_y)
-                loss_val = float(loss.detach().item())
-                batch_losses.append(loss_val)
-                epoch_losses.append(loss_val)
-                loss.backward()
-                optimizer.step()
+            # Support both DataLoader and tensor input
+            if hasattr(X, '__iter__') and not isinstance(X, (np.ndarray, torch.Tensor)):
+                # Assume DataLoader: yields (batch_X, batch_y)
+                for batch in X:
+                    if isinstance(batch, (tuple, list)) and len(batch) >= 2:
+                        batch_X, batch_y = batch[:2]
+                    else:
+                        raise ValueError("Each batch must be (X, y)")
+                    batch_X = batch_X.to(self.device)
+                    batch_y = batch_y.to(self.device)
+                    optimizer.zero_grad()
+                    outputs = self._model(batch_X)
+                    loss = criterion(outputs, batch_y)
+                    loss_val = float(loss.detach().item())
+                    batch_losses.append(loss_val)
+                    epoch_losses.append(loss_val)
+                    loss.backward()
+                    optimizer.step()
+            else:
+                # Tensor input
+                for i in range(0, len(X), batch_size):
+                    batch_X = X[i : i + batch_size].to(self.device)  # noqa E203
+                    batch_y = y[i : i + batch_size].to(self.device)  # noqa E203
+                    optimizer.zero_grad()
+                    outputs = self._model(batch_X)
+                    loss = criterion(outputs, batch_y)
+                    loss_val = float(loss.detach().item())
+                    batch_losses.append(loss_val)
+                    epoch_losses.append(loss_val)
+                    loss.backward()
+                    optimizer.step()
 
             epoch_time = time.process_time() - epoch_start
             epoch_loss_mean = float(np.mean(epoch_losses)) if epoch_losses else None
