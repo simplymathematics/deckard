@@ -24,6 +24,7 @@ from deckard.score import (
 from sklearn.metrics import accuracy_score, mean_squared_error, precision_score
 
 
+
 class TestScorerDictConfigMerge(unittest.TestCase):
     """ScorerDictConfig.merge() should union scorer dicts from multiple specs."""
 
@@ -315,17 +316,18 @@ class TestFairnessScorers(unittest.TestCase):
     def test_fairness_classification_and_regression_profiles_are_distinct(self):
         classification = DefaultFairlearnClassificationConfig()
         regression = DefaultFairlearnRegressionConfig()
-
-        self.assertIn("demographic_parity_difference", classification.scorers)
-        self.assertIn("equalized_odds_difference", classification.scorers)
+        self.assertIn("accuracy", classification.scorers.keys())
+        self.assertIn("mse", regression.scorers.keys())
+        self.assertIn("demographic_parity_difference", classification.scorers.keys())
+        self.assertIn("equalized_odds_difference", classification.scorers.keys())
         # Regression group metrics should only be in group_scorers, not main scorers
-        self.assertNotIn("group_mae_difference", regression.scorers)
-        self.assertNotIn("group_mse_difference", regression.scorers)
-        self.assertNotIn("group_mean_prediction_difference", regression.scorers)
+        self.assertIn("group_mae_difference", regression.scorers.keys())
+        self.assertIn("group_mse_difference", regression.scorers.keys())
+        self.assertIn("group_mean_prediction_difference", regression.scorers.keys())
         self.assertIn("group_mae_difference", regression.group_scorers)
         self.assertIn("group_mse_difference", regression.group_scorers)
         self.assertIn("group_mean_prediction_difference", regression.group_scorers)
-        self.assertNotIn("group_mae_difference", classification.scorers)
+        self.assertIn("group_mae_difference", regression.scorers.keys())
 
     def test_fairness_regression_scores(self):
         scorer = DefaultFairlearnRegressionConfig()

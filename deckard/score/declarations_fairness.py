@@ -2,13 +2,13 @@
 
 from .base import safe_store
 from .fairness import (
-    DefaultFairlearnConfig,
+    DefaultFairlearnScoreConfig,
     DefaultFairlearnScoreConfig,
 )
 
 
 class DefaultFairlearnDict:
-    scorers = DefaultFairlearnConfig()
+    scorers = DefaultFairlearnScoreConfig()
 
 
 class DefaultFairlearnClassificationDict:
