@@ -318,9 +318,13 @@ class TestFairnessScorers(unittest.TestCase):
 
         self.assertIn("demographic_parity_difference", classification.scorers)
         self.assertIn("equalized_odds_difference", classification.scorers)
-        self.assertIn("group_mae_difference", regression.scorers)
-        self.assertIn("group_mse_difference", regression.scorers)
-        self.assertIn("group_mean_prediction_difference", regression.scorers)
+        # Regression group metrics should only be in group_scorers, not main scorers
+        self.assertNotIn("group_mae_difference", regression.scorers)
+        self.assertNotIn("group_mse_difference", regression.scorers)
+        self.assertNotIn("group_mean_prediction_difference", regression.scorers)
+        self.assertIn("group_mae_difference", regression.group_scorers)
+        self.assertIn("group_mse_difference", regression.group_scorers)
+        self.assertIn("group_mean_prediction_difference", regression.group_scorers)
         self.assertNotIn("group_mae_difference", classification.scorers)
 
     def test_fairness_regression_scores(self):
@@ -336,12 +340,13 @@ class TestFairnessScorers(unittest.TestCase):
             sensitive_features=sensitive,
         )
 
-        self.assertIn("group_mean_prediction_difference", scores)
-        self.assertIn("group_mae_difference", scores)
-        self.assertIn("group_mse_difference", scores)
-        self.assertGreaterEqual(scores["group_mean_prediction_difference"], 0.0)
-        self.assertGreaterEqual(scores["group_mae_difference"], 0.0)
-        self.assertGreaterEqual(scores["group_mse_difference"], 0.0)
+        # Only expect per-group keys for group metrics
+        self.assertIn("0_group_mean_prediction_difference", scores)
+        self.assertIn("1_group_mean_prediction_difference", scores)
+        self.assertIn("0_group_mae_difference", scores)
+        self.assertIn("1_group_mae_difference", scores)
+        self.assertIn("0_group_mse_difference", scores)
+        self.assertIn("1_group_mse_difference", scores)
 
     def test_metric_frame_fairness_score_dict_classification(self):
         scorer = FairlearnScoreDictConfig(
