@@ -22,9 +22,9 @@ See the [ART Defenses Tutorial Notebook](notebooks/detector).
 Integration for fairness-aware machine learning.  
 See the [Fairlearn Tutorial Notebook](notebooks/fairlearn).
 
-## [Lifelines](notebooks/lifelines)
+<!-- ## [Lifelines](notebooks/lifelines)
 Integration for survival analysis and time-to-event modeling.  
-See the [Lifelines Tutorial Notebook](notebooks/lifelines).
+See the [Lifelines Tutorial Notebook](notebooks/lifelines). -->
 
 ## [Pytorch](notebooks/pytorch)
 Integration for PyTorch-based models and experiments.  

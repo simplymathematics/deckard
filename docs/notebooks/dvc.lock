@@ -112,356 +112,549 @@ stages:
       md5: 9eb8fa02c822e13304f56c40edaebdd2
       size: 66
   notebook_seaborn:
-    cmd: "mkdir -p build/seaborn_artifacts && python -m jupyter nbconvert --to html
-      --execute --ExecutePreprocessor.timeout=1800 --output seaborn.executed.html
-      --output-dir build/seaborn_artifacts seaborn.ipynb\n"
+    cmd: jupyter nbconvert --to notebook --execute --inplace seaborn.ipynb
     deps:
-    - path: ../deckard/plot/__init__.py
+    - path: ../../deckard/plot/__init__.py
       hash: md5
-      md5: 92b06254ad7b950416abe9e94009f4cf
+      md5: e411c1561a7a7f9c00f63ccc1c2639d1
       size: 3968
-    - path: ../deckard/plot/declarations.py
+    - path: ../../deckard/plot/declarations.py
       hash: md5
       md5: 7e68397d5e900649827e08970eeaac4a
       size: 1377
-    - path: ../deckard/plot/seaborn_plots.py
+    - path: ../../deckard/plot/seaborn_plots.py
       hash: md5
       md5: ae99e9072c5bf8177bda8d72cb9621af
       size: 6239
     - path: seaborn.ipynb
       hash: md5
-      md5: f76a59e9fb969c24067929637fbe7c3d
-      size: 251014
+      md5: cc905e815a5a53aab52619dc68daafc6
+      size: 253059
     outs:
-    - path: build/seaborn_artifacts/seaborn.executed.html
+    - path: ./build/seaborn/bar_bar_plot_from_make_blobs.png
       hash: md5
-      md5: 765068727bdc4855a31d30ecdb4ad0bc
-      size: 556241
+      md5: 7b572e30300ef727eaaef7ca6e37245f
+      size: 15536
+    - path: ./build/seaborn/cat_categorical_plot_from_make_moons.png
+      hash: md5
+      md5: b5174c25a0e782fcda27a8527cc4e5dd
+      size: 14804
+    - path: 
+        ./build/seaborn/heatmap_heatmap_from_make_classification_correlations.png
+      hash: md5
+      md5: 955525f1608af072efb99ac27a0d5d6a
+      size: 30485
+    - path: ./build/seaborn/hist_histogram_plot_from_make_friedman1.png
+      hash: md5
+      md5: 8cddeabe1bdc5e251462440cabc97311
+      size: 20462
+    - path: ./build/seaborn/line_line_plot_from_make_regression.png
+      hash: md5
+      md5: 7bb2b9feee80f8502a9600c2c9ea3dac
+      size: 38648
+    - path: ./build/seaborn/scatter_scatter_plot_from_make_classification.png
+      hash: md5
+      md5: fda37e246386cc117f6e9a0bb9033fae
+      size: 49824
   notebook_yellowbrick:
-    cmd: "mkdir -p build/yellowbrick_artifacts && python -m jupyter nbconvert --to
-      html --execute --ExecutePreprocessor.timeout=1800 --output yellowbrick.executed.html
-      --output-dir build/yellowbrick_artifacts yellowbrick.ipynb\n"
+    cmd: jupyter nbconvert --to notebook --execute --inplace yellowbrick.ipynb
     deps:
-    - path: ../deckard/data/
+    - path: ../../deckard/data/
       hash: md5
-      md5: b2dff9bff55971644fe4b38f3a9acb0e.dir
-      size: 281856
-      nfiles: 18
-    - path: ../deckard/experiment/
+      md5: 0a6865fc2b88c51b4c2c7ebd44141ce6.dir
+      size: 287723
+      nfiles: 20
+    - path: ../../deckard/experiment/
       hash: md5
-      md5: 6e811bbf88b96582032117ca5eecae14.dir
+      md5: cb82c3fd349ecdd65f68799cf3a3a62c.dir
       size: 153428
       nfiles: 10
-    - path: ../deckard/file.py
+    - path: ../../deckard/file.py
       hash: md5
-      md5: c99badb17d95cafbc4915fa0ebec8381
+      md5: abf96e34a774fa4b96865c3529e5deff
       size: 7011
-    - path: ../deckard/model/
+    - path: ../../deckard/model/
       hash: md5
-      md5: db0feaef69b55a93e3a072ff170d78d6.dir
-      size: 318647
+      md5: c4ececdca05f8aa586aa2839db2aadf5.dir
+      size: 319864
       nfiles: 16
-    - path: ../deckard/plot/__init__.py
+    - path: ../../deckard/plot/__init__.py
       hash: md5
-      md5: 92b06254ad7b950416abe9e94009f4cf
+      md5: e411c1561a7a7f9c00f63ccc1c2639d1
       size: 3968
-    - path: ../deckard/plot/declarations.py
+    - path: ../../deckard/plot/declarations.py
       hash: md5
       md5: 7e68397d5e900649827e08970eeaac4a
       size: 1377
-    - path: ../deckard/plot/yellowbrick_plots.py
+    - path: ../../deckard/plot/yellowbrick_plots.py
       hash: md5
-      md5: d2cd60d5657077840636179dc24446a2
+      md5: 0c8a8dcf136ae04bbdee8c4ad694f151
       size: 35511
     - path: yellowbrick.ipynb
       hash: md5
-      md5: f523178db6e4c7676e2a37121fd122d8
-      size: 2504690
+      md5: 72e57bea48cc93f30a77c7b1f2bd2b08
+      size: 2518434
     outs:
-    - path: build/yellowbrick_artifacts/yellowbrick.executed.html
+    - path: ./build/yellowbrick/plots/all_types_balanced_binning_reference.png
       hash: md5
-      md5: eeec1df352416d154f13f130c8541c80
-      size: 2846529
-    - path: build/yellowbrick_artifacts/yellowbrick_plot_results.csv
+      md5: efd3e21fa12ae7e099a0223820f8ff14
+      size: 20901
+    - path: ./build/yellowbrick/plots/all_types_class_balance.png
       hash: md5
-      md5: b9e02fc40ff77fcbfedde2db1b006c55
-      size: 465
+      md5: d71bb5b363133b9f1b04a4fdf000ae55
+      size: 18971
+    - path: ./build/yellowbrick/plots/all_types_class_prediction_error.png
+      hash: md5
+      md5: 64ca0b807fd3ba3f10643adefc284e48
+      size: 24345
+    - path: ./build/yellowbrick/plots/all_types_classification_report.png
+      hash: md5
+      md5: f197cec51a72981b8a23c13bafeab7bc
+      size: 24625
+    - path: ./build/yellowbrick/plots/all_types_cv_scores.png
+      hash: md5
+      md5: 125b65175935a679c88df5aae4631e73
+      size: 22917
+    - path: ./build/yellowbrick/plots/all_types_discrimination_threshold.png
+      hash: md5
+      md5: 69d7460ddee2cd9c3a7bab2230fe2fab
+      size: 77008
+    - path: ./build/yellowbrick/plots/all_types_dropping_curve.png
+      hash: md5
+      md5: 8829ca43432895cf493c49a31cb721ce
+      size: 62319
+    - path: ./build/yellowbrick/plots/all_types_feature_correlation.png
+      hash: md5
+      md5: 5e6d60084435a2230cb4b926e6db999a
+      size: 19848
+    - path: ./build/yellowbrick/plots/all_types_feature_importances.png
+      hash: md5
+      md5: 3bb77d0859415915795c96c4f3f61e9c
+      size: 21351
+    - path: ./build/yellowbrick/plots/all_types_intercluster_distance.png
+      hash: md5
+      md5: e8f339ec29a1070eb92a92ca190884a9
+      size: 65136
+    - path: ./build/yellowbrick/plots/all_types_jointplot.png
+      hash: md5
+      md5: e250b8561a166f3c2f52bf94c5c23439
+      size: 187488
+    - path: ./build/yellowbrick/plots/all_types_k_elbow.png
+      hash: md5
+      md5: 2d913575c37bf4fc7482503fd9cf9532
+      size: 58790
+    - path: ./build/yellowbrick/plots/all_types_learning_curve.png
+      hash: md5
+      md5: 85ff36e4b8f7b3dcf1158be06329468d
+      size: 61663
+    - path: ./build/yellowbrick/plots/all_types_pca.png
+      hash: md5
+      md5: 2440dfe46c4ab7adfa99e01fe52dbd47
+      size: 215596
+    - path: ./build/yellowbrick/plots/all_types_pcoords.png
+      hash: md5
+      md5: 273cfd1b80fb22dcae2f9f4d51e842b8
+      size: 262133
+    - path: ./build/yellowbrick/plots/all_types_precision_recall_curve.png
+      hash: md5
+      md5: 98a52bd90b2ddbc0281c7f367d666690
+      size: 31447
+    - path: ./build/yellowbrick/plots/all_types_prediction_error.png
+      hash: md5
+      md5: 41da11b406ef820f93e93bdb87c1fc70
+      size: 57230
+    - path: ./build/yellowbrick/plots/all_types_radviz.png
+      hash: md5
+      md5: c577655607e1dc92d5d4e75ef2c40bae
+      size: 44883
+    - path: ./build/yellowbrick/plots/all_types_rank1d.png
+      hash: md5
+      md5: f25832b64f6fd61bab7817abe5ebc319
+      size: 17521
+    - path: ./build/yellowbrick/plots/all_types_rank2d.png
+      hash: md5
+      md5: 8590af38365eb52e8f90fe01edc3f780
+      size: 29399
+    - path: ./build/yellowbrick/plots/all_types_residuals_plot.png
+      hash: md5
+      md5: b82a5f56828dce7da6fb284974c91e6e
+      size: 101160
+    - path: ./build/yellowbrick/plots/all_types_rfecv.png
+      hash: md5
+      md5: 88046591193c0c4c09d1d09697ddd427
+      size: 44919
+    - path: ./build/yellowbrick/plots/all_types_roc_auc.png
+      hash: md5
+      md5: de3eb16a96929c374441405b7d99786c
+      size: 50237
+    - path: ./build/yellowbrick/plots/all_types_silhouette.png
+      hash: md5
+      md5: 1a7762042d143514a3c73f03403de0a8
+      size: 47110
+    - path: ./build/yellowbrick/plots/all_types_validation_curve.png
+      hash: md5
+      md5: a98acbabb53691de1331631be22fcbf7
+      size: 34855
+    - path: ./build/yellowbrick/plots/plotlist_demo/class_balance.png
+      hash: md5
+      md5: 4e8aaad8cd5c061f4c78279c20c125a0
+      size: 15601
+    - path: ./build/yellowbrick/plots/plotlist_demo/classification_report.png
+      hash: md5
+      md5: be568cd14bcf0057f6218f9961be4dcb
+      size: 21278
+    - path: ./build/yellowbrick/plots/plotlist_demo/precision_recall_curve.png
+      hash: md5
+      md5: 4cf071a5c268c34c5af770b84a77398c
+      size: 28102
+    - path: ./build/yellowbrick/plots/plotlist_demo/rank1d.png
+      hash: md5
+      md5: 27278b79e5983fe44c09192346057d0b
+      size: 13853
+    - path: ./build/yellowbrick/plots/plotlist_demo/roc_auc.png
+      hash: md5
+      md5: 3998ccdbbae17b3afdaa0d8ab9509521
+      size: 46682
+    - path: ./build/yellowbrick/plots/torch_classification_report.png
+      hash: md5
+      md5: 2e9ae2ad26378f5f4de219bae37629cb
+      size: 23494
+    - path: ./build/yellowbrick/plots/torch_precision_recall_curve.png
+      hash: md5
+      md5: eb4a96659c7d03b7eb9fcb3ed216292d
+      size: 25444
+    - path: ./build/yellowbrick/plots/torch_roc_auc.png
+      hash: md5
+      md5: 7949558bf595ff490c1b39853fd169bf
+      size: 62994
   notebook_detector:
-    cmd: "mkdir -p build/detector_artifacts && python -m jupyter nbconvert --to html
-      --execute --ExecutePreprocessor.timeout=1800 --output detector.executed.html
-      --output-dir build/detector_artifacts detector.ipynb\n"
+    cmd: jupyter nbconvert --to notebook --execute detector.ipynb
     deps:
-    - path: ../deckard/attack/
+    - path: ../../deckard/attack/
       hash: md5
-      md5: f60aa35817d8197fd4e55beffa62df29.dir
-      size: 169821
+      md5: d1bad17776ce3afbccc8434f00fdf0cd.dir
+      size: 169919
       nfiles: 11
-    - path: ../deckard/data/
+    - path: ../../deckard/data/
       hash: md5
-      md5: b2dff9bff55971644fe4b38f3a9acb0e.dir
-      size: 281856
-      nfiles: 18
-    - path: ../deckard/file.py
+      md5: 0a6865fc2b88c51b4c2c7ebd44141ce6.dir
+      size: 287723
+      nfiles: 20
+    - path: ../../deckard/file.py
       hash: md5
-      md5: c99badb17d95cafbc4915fa0ebec8381
+      md5: abf96e34a774fa4b96865c3529e5deff
       size: 7011
-    - path: ../deckard/model/
+    - path: ../../deckard/model/
       hash: md5
-      md5: db0feaef69b55a93e3a072ff170d78d6.dir
-      size: 318647
+      md5: c4ececdca05f8aa586aa2839db2aadf5.dir
+      size: 319864
       nfiles: 16
-    - path: ../deckard/utils.py
+    - path: ../../deckard/utils.py
       hash: md5
-      md5: 5512a7633364a7a17047df1cbecb65db
-      size: 50043
+      md5: 4b1f8702684efdb004bfb781418a771a
+      size: 49891
     - path: detector.ipynb
       hash: md5
-      md5: 0ff3b8f64b27af1f311be143b30df389
-      size: 73387
+      md5: 61bae81988ab9a0124e58c2b8695d5bc
+      size: 73005
     outs:
-    - path: build/detector_artifacts/canonical_attack_examples.csv
+    - path: ./build/detector/canonical_attack_examples.csv
       hash: md5
-      md5: 2a597bf293b44a559120479017b9904e
-      size: 430
-    - path: build/detector_artifacts/detector.executed.html
-      hash: md5
-      md5: 2b0dcebfdb9a42e62703e481f0c648e3
-      size: 365418
+      md5: 7fbd15a0c2828b9f37d2f8b471e2dee2
+      size: 429
   notebook_art_attacks:
-    cmd: "mkdir -p build/art_attacks_artifacts && python -m jupyter nbconvert --to
-      html --execute --ExecutePreprocessor.timeout=1800 --output art_attacks.executed.html
-      --output-dir build/art_attacks_artifacts art_attacks.ipynb\n"
+    cmd: jupyter nbconvert --to notebook --execute --inplace art_attacks.ipynb
     deps:
-    - path: ../deckard/attack/
+    - path: ../../deckard/attack/
       hash: md5
-      md5: f60aa35817d8197fd4e55beffa62df29.dir
-      size: 169821
+      md5: d1bad17776ce3afbccc8434f00fdf0cd.dir
+      size: 169919
       nfiles: 11
-    - path: ../deckard/data/
+    - path: ../../deckard/data/
       hash: md5
-      md5: b2dff9bff55971644fe4b38f3a9acb0e.dir
-      size: 281856
-      nfiles: 18
-    - path: ../deckard/file.py
+      md5: 0a6865fc2b88c51b4c2c7ebd44141ce6.dir
+      size: 287723
+      nfiles: 20
+    - path: ../../deckard/file.py
       hash: md5
-      md5: c99badb17d95cafbc4915fa0ebec8381
+      md5: abf96e34a774fa4b96865c3529e5deff
       size: 7011
-    - path: ../deckard/model/
+    - path: ../../deckard/model/
       hash: md5
-      md5: db0feaef69b55a93e3a072ff170d78d6.dir
-      size: 318647
+      md5: c4ececdca05f8aa586aa2839db2aadf5.dir
+      size: 319864
       nfiles: 16
-    - path: ../deckard/utils.py
+    - path: ../../deckard/utils.py
       hash: md5
-      md5: 5512a7633364a7a17047df1cbecb65db
-      size: 50043
+      md5: 4b1f8702684efdb004bfb781418a771a
+      size: 49891
     - path: art_attacks.ipynb
       hash: md5
-      md5: c6bc0d19b00c2b4568506d17065dd0e5
-      size: 237291
+      md5: a39e941de691a2cb60a67bee1da433bb
+      size: 195626
     outs:
-    - path: build/art_attacks_artifacts/art_attacks.executed.html
+    - path: ./build/art_attacks/boundary_evasion_attack_file.pkl
       hash: md5
-      md5: faaeac224b32400950aa68f98ef402d5
-      size: 567701
-    - path: build/art_attacks_artifacts/attribute_inference_metrics.csv
+      md5: 1fb73a28309da05c10cfca15f9be335b
+      size: 3038
+    - path: ./build/art_attacks/fgm_evasion_attack_file.pkl
+      hash: md5
+      md5: 110334b6e78a17544ad0025e06e2e533
+      size: 3254
+    - path: ./build/art_attacks/hsj_evasion_attack_file.pkl
+      hash: md5
+      md5: a824b5f4c38b2652a02520b5e4fb07be
+      size: 2964
+    - path: ./build/art_attacks/membership_scores.csv
       hash: md5
       md5: d1676aa347c627a8e85c99be150d671e
       size: 328
-    - path: build/art_attacks_artifacts/implemented_sections.csv
+    - path: ./build/art_attacks/plot.png
       hash: md5
-      md5: 3a628028f53876dc6574e7132df4c7a4
-      size: 583
-    - path: build/art_attacks_artifacts/membership_inference_metrics.csv
+      md5: 386818da280371bf8ac70ec6b197f7a7
+      size: 3065
+    - path: ./build/art_attacks/sklearn_attribute_attack.pkl
       hash: md5
-      md5: 3ceb2bd8886cd5b6c79d49f13d4e465c
-      size: 462
-    - path: build/art_attacks_artifacts/sklearn_evasion_results.csv
+      md5: 22b307f7640aa4f695f2c0e8892b5e1b
+      size: 3413
+    - path: ./build/art_attacks/sklearn_data.pkl
       hash: md5
-      md5: 77b0d9257a3b06e148108da098163a2d
-      size: 506
-    - path: build/art_attacks_artifacts/sklearn_poisoning_results.csv
+      md5: 82bc970f2ab0bcaf6a1d11f64d115651
+      size: 43926
+    - path: ./build/art_attacks/sklearn_membership_attack.pkl
       hash: md5
-      md5: 1fac8943988606a267c0ef89460ae2b9
-      size: 294
-    - path: build/art_attacks_artifacts/torch_evasion_results.csv
+      md5: 544c2a5996aede8cbd4ed7daae8b9e51
+      size: 3486
+    - path: ./build/art_attacks/sklearn_model.pkl
       hash: md5
-      md5: 6f6d54be7542c0b65da2c55e2605fd02
-      size: 514
-    - path: build/art_attacks_artifacts/torch_extraction_results.csv
+      md5: 45b2e90577c33a65124518edb17d5261
+      size: 2348
+    - path: ./build/art_attacks/sklearn_scores.csv
       hash: md5
-      md5: 72beebf444e7a9fdd416b932573b4fa5
-      size: 310
+      md5: 7934d2e51694d6cb12fdf2ad7cd3b59c
+      size: 285
+    - path: ./build/art_attacks/svm.pkl
+      hash: md5
+      md5: 8278ddd2bd6719515df29022dd0cd1a9
+      size: 7671
+    - path: ./build/art_attacks/torch_evasion_attack.pkl
+      hash: md5
+      md5: dfa1f4c662e9b1b204fa3011a093606e
+      size: 3285
+    - path: ./build/art_attacks/torch_extraction_model.pt
+      hash: md5
+      md5: ba078f02e76231354f75aba1c31a0c99
+      size: 44792587
+    - path: ./build/art_attacks/torch_model.pt
+      hash: md5
+      md5: aebd2c663954e7ad9346fecf70eb2a89
+      size: 5317
+    - path: ./build/art_attacks/torch_scores.csv
+      hash: md5
+      md5: d286c84eeece35a6a6d592ccdfd7e5a8
+      size: 358
   notebook_art_defenses:
-    cmd: "mkdir -p build/art_defenses_artifacts && python -m jupyter nbconvert --to
-      html --execute --ExecutePreprocessor.timeout=1800 --output art_defenses.executed.html
-      --output-dir build/art_defenses_artifacts art_defenses.ipynb\n"
+    cmd: jupyter nbconvert --to notebook --execute art_defenses.ipynb
     deps:
-    - path: ../deckard/attack/
+    - path: ../../deckard/attack/
       hash: md5
-      md5: f60aa35817d8197fd4e55beffa62df29.dir
-      size: 169821
+      md5: d1bad17776ce3afbccc8434f00fdf0cd.dir
+      size: 169919
       nfiles: 11
-    - path: ../deckard/data/
+    - path: ../../deckard/data/
       hash: md5
-      md5: b2dff9bff55971644fe4b38f3a9acb0e.dir
-      size: 281856
-      nfiles: 18
-    - path: ../deckard/file.py
+      md5: 0a6865fc2b88c51b4c2c7ebd44141ce6.dir
+      size: 287723
+      nfiles: 20
+    - path: ../../deckard/file.py
       hash: md5
-      md5: c99badb17d95cafbc4915fa0ebec8381
+      md5: abf96e34a774fa4b96865c3529e5deff
       size: 7011
-    - path: ../deckard/model/
+    - path: ../../deckard/model/
       hash: md5
-      md5: db0feaef69b55a93e3a072ff170d78d6.dir
-      size: 318647
+      md5: c4ececdca05f8aa586aa2839db2aadf5.dir
+      size: 319864
       nfiles: 16
-    - path: ../deckard/utils.py
+    - path: ../../deckard/utils.py
       hash: md5
-      md5: 5512a7633364a7a17047df1cbecb65db
-      size: 50043
+      md5: 4b1f8702684efdb004bfb781418a771a
+      size: 49891
     - path: art_defenses.ipynb
       hash: md5
-      md5: 19e20a5842ecffdbef12412eaaa0e981
-      size: 161667
+      md5: c37323e98f6ad8813872c43a2c3e2439
+      size: 161908
     outs:
-    - path: build/art_defenses_artifacts/art_defenses.executed.html
-      hash: md5
-      md5: 7bfd4c3aaa745495d8fba81ec059d7e3
-      size: 477998
-    - path: build/art_defenses_artifacts/defense_chain_order.csv
+    - path: ./build/art_defenses/defense_chain_order.csv
       hash: md5
       md5: bdd2eb4170f74cfd1b61ee92385e05df
       size: 326
-    - path: build/art_defenses_artifacts/defense_chain_result.csv
+    - path: ./build/art_defenses/defense_chain_result.csv
       hash: md5
-      md5: 547f2b2447f34b9d911482ce1cd74185
+      md5: 9616fca8ca31c4e53d1eb54b7e9e2167
       size: 396
-    - path: build/art_defenses_artifacts/sklearn_defense_results.csv
+    - path: ./build/art_defenses/sklearn_defense_results.csv
       hash: md5
-      md5: 61bb6947ae9613ecd1f6fabc1c3ca941
-      size: 839
-    - path: build/art_defenses_artifacts/torch_defense_results.csv
+      md5: b3809bf41c58ee7a776225d64907bfb5
+      size: 841
+    - path: ./build/art_defenses/torch_defense_results.csv
       hash: md5
-      md5: 8ec088e3fe92735b0c77f9667af0ca68
+      md5: f5731f15622d7baaeb07bbc2e979036e
       size: 828
   notebook_sklearn:
-    cmd: "mkdir -p build/notebook_artifacts && python -m jupyter nbconvert --to html
-      --execute --ExecutePreprocessor.timeout=1800 --output sklearn.executed.html
-      --output-dir build/notebook_artifacts sklearn.ipynb\n"
+    cmd: jupyter nbconvert --to notebook --execute --inplace sklearn.ipynb
     deps:
-    - path: ../deckard/attack/
+    - path: ../../deckard/attack/
       hash: md5
-      md5: f60aa35817d8197fd4e55beffa62df29.dir
-      size: 169821
+      md5: d1bad17776ce3afbccc8434f00fdf0cd.dir
+      size: 169919
       nfiles: 11
-    - path: ../deckard/data/
+    - path: ../../deckard/data/
       hash: md5
-      md5: b2dff9bff55971644fe4b38f3a9acb0e.dir
-      size: 281856
-      nfiles: 18
-    - path: ../deckard/detector/
+      md5: 0a6865fc2b88c51b4c2c7ebd44141ce6.dir
+      size: 287723
+      nfiles: 20
+    - path: ../../deckard/detector/
       hash: md5
       md5: ce05584f88effddca624abc089ee921c.dir
       size: 19105
       nfiles: 4
-    - path: ../deckard/experiment/
+    - path: ../../deckard/experiment/
       hash: md5
-      md5: 6e811bbf88b96582032117ca5eecae14.dir
+      md5: cb82c3fd349ecdd65f68799cf3a3a62c.dir
       size: 153428
       nfiles: 10
-    - path: ../deckard/file.py
+    - path: ../../deckard/file.py
       hash: md5
-      md5: c99badb17d95cafbc4915fa0ebec8381
+      md5: abf96e34a774fa4b96865c3529e5deff
       size: 7011
-    - path: ../deckard/model/
+    - path: ../../deckard/model/
       hash: md5
-      md5: db0feaef69b55a93e3a072ff170d78d6.dir
-      size: 318647
+      md5: c4ececdca05f8aa586aa2839db2aadf5.dir
+      size: 319864
       nfiles: 16
-    - path: ../deckard/plot/
+    - path: ../../deckard/plot/
       hash: md5
-      md5: 51dc0ec91e3522a3465b5dcf09685b0f.dir
+      md5: 014a0b5de0673698aa821396cc510a86.dir
       size: 112805
       nfiles: 10
-    - path: ../deckard/score/
+    - path: ../../deckard/score/
       hash: md5
       md5: 3c469b7fe5caa121175b075ef1341e1f.dir
       size: 195705
       nfiles: 23
-    - path: ../deckard/utils.py
+    - path: ../../deckard/utils.py
       hash: md5
-      md5: 5512a7633364a7a17047df1cbecb65db
-      size: 50043
+      md5: 4b1f8702684efdb004bfb781418a771a
+      size: 49891
     - path: sklearn.ipynb
       hash: md5
-      md5: 3a4b29ddeb4fecf026f00dfc30af9939
-      size: 261480
+      md5: 680c2e317bdd08ba10bde796a0266297
+      size: 251433
     outs:
-    - path: build/notebook_artifacts/seaborn_results.csv
+    - path: ./build/sklearn/experiment_data_lr.pkl
+      hash: md5
+      md5: c9da088b0f172c1f707bf738ccbace29
+      size: 68651
+    - path: ./build/sklearn/experiment_model_lr.pkl
+      hash: md5
+      md5: 5da2d79e991fd6855115340ab310d4e1
+      size: 2468
+    - path: ./build/sklearn/experiment_scores_lr.json
+      hash: md5
+      md5: bcef8619454431ac13b37551e48d13cb
+      size: 1350
+    - path: ./build/sklearn/plots/seaborn_line.png
+      hash: md5
+      md5: c3fa01a69efb1e58606f7c14fffefada
+      size: 62947
+    - path: ./build/sklearn/plots/seaborn_scatter.png
+      hash: md5
+      md5: 83ab9c6033453a1d084c3434078588ef
+      size: 81150
+    - path: ./build/sklearn/plots/yellowbrick_roc_auc.png
+      hash: md5
+      md5: 72e0e88c81b938429d11842a0cd08730
+      size: 44887
+    - path: ./build/sklearn/seaborn_results.csv
       hash: md5
       md5: e9dda0841bff56cd951d5724fff0e5e2
       size: 230
-    - path: build/notebook_artifacts/sklearn.executed.html
-      hash: md5
-      md5: 0dc8f5ad8f553d6a4e924e5cb073de4b
-      size: 578071
   notebook_pytorch:
-    cmd: "mkdir -p build/pytorch_artifacts && python -m jupyter nbconvert --to html
-      --execute --ExecutePreprocessor.timeout=1800 --output pytorch.executed.html
-      --output-dir build/pytorch_artifacts pytorch.ipynb\n"
+    cmd: jupyter nbconvert --to notebook --execute --inplace pytorch.ipynb
     deps:
-    - path: ../deckard/attack/
+    - path: ../../deckard/attack/
       hash: md5
-      md5: f60aa35817d8197fd4e55beffa62df29.dir
-      size: 169821
+      md5: d1bad17776ce3afbccc8434f00fdf0cd.dir
+      size: 169919
       nfiles: 11
-    - path: ../deckard/data/
+    - path: ../../deckard/data/
       hash: md5
-      md5: b2dff9bff55971644fe4b38f3a9acb0e.dir
-      size: 281856
-      nfiles: 18
-    - path: ../deckard/experiment/
+      md5: 0a6865fc2b88c51b4c2c7ebd44141ce6.dir
+      size: 287723
+      nfiles: 20
+    - path: ../../deckard/experiment/
       hash: md5
-      md5: 6e811bbf88b96582032117ca5eecae14.dir
+      md5: cb82c3fd349ecdd65f68799cf3a3a62c.dir
       size: 153428
       nfiles: 10
-    - path: ../deckard/file.py
+    - path: ../../deckard/file.py
       hash: md5
-      md5: c99badb17d95cafbc4915fa0ebec8381
+      md5: abf96e34a774fa4b96865c3529e5deff
       size: 7011
-    - path: ../deckard/model/
+    - path: ../../deckard/model/
       hash: md5
-      md5: db0feaef69b55a93e3a072ff170d78d6.dir
-      size: 318647
+      md5: c4ececdca05f8aa586aa2839db2aadf5.dir
+      size: 319864
       nfiles: 16
-    - path: ../deckard/plot/
+    - path: ../../deckard/plot/
       hash: md5
-      md5: 51dc0ec91e3522a3465b5dcf09685b0f.dir
+      md5: 014a0b5de0673698aa821396cc510a86.dir
       size: 112805
       nfiles: 10
-    - path: ../deckard/score/
+    - path: ../../deckard/score/
       hash: md5
       md5: 3c469b7fe5caa121175b075ef1341e1f.dir
       size: 195705
       nfiles: 23
-    - path: ../deckard/utils.py
+    - path: ../../deckard/utils.py
       hash: md5
-      md5: 5512a7633364a7a17047df1cbecb65db
-      size: 50043
+      md5: 4b1f8702684efdb004bfb781418a771a
+      size: 49891
     - path: pytorch.ipynb
       hash: md5
-      md5: d09845829ee52c6f3c59396e4d4ca21f
-      size: 244492
+      md5: 185953bd79f4b77ba80c51c128a9dbc7
+      size: 255682
     outs:
-    - path: build/pytorch_artifacts/pytorch.executed.html
+    - path: ./build/pytorch/checkpoints/
       hash: md5
-      md5: 2b3c68b173960cfada3655433cd2ac70
-      size: 588644
-    - path: build/pytorch_artifacts/pytorch_results.csv
+      md5: 22463c5b767bfa1a4676e9e5b5f88348.dir
+      size: 374394
+      nfiles: 8
+    - path: ./build/pytorch/exp_model.pt
+      hash: md5
+      md5: a27231b3f25bd7acb4711ee5512e6217
+      size: 87405
+    - path: ./build/pytorch/plots/pytorch_line.png
+      hash: md5
+      md5: 36d4695c5a62c0ff60caaa28b7321164
+      size: 59181
+    - path: ./build/pytorch/plots/pytorch_roc_auc.png
+      hash: md5
+      md5: a5cfe7c05b622044edcabe631cde64c8
+      size: 81040
+    - path: ./build/pytorch/plots/pytorch_scatter.png
+      hash: md5
+      md5: 62b13fc0c587356d4dcc56784fa30655
+      size: 73396
+    - path: ./build/pytorch/pytorch_results.csv
       hash: md5
       md5: d5e298396f9db3385bb9b922a74d58aa
       size: 220
+    - path: ./build/pytorch/raw_data/
+      hash: md5
+      md5: ab3353d41bd7a24a20a31f29b64e3b3c.dir
+      size: 66544770
+      nfiles: 8
   notebook_fairlearn:
     cmd: "mkdir -p build/fairlearn_artifacts && python -m jupyter nbconvert --to html
       --execute --ExecutePreprocessor.timeout=1800 --output fairlearn.executed.html
@@ -527,66 +720,120 @@ stages:
       md5: 45f2e6d2ad78f7f8cacb73418df6208a
       size: 235
   notebook_anjana:
-    cmd: "mkdir -p build/anjana_artifacts && python -m jupyter nbconvert --to html
-      --execute --ExecutePreprocessor.timeout=1800 --output anjana.executed.html --output-dir
-      build/anjana_artifacts anjana.ipynb\n"
+    cmd: jupyter nbconvert --to notebook --execute --inplace anjana.ipynb
     deps:
-    - path: ../deckard/attack/
+    - path: ../../deckard/attack/
       hash: md5
-      md5: f60aa35817d8197fd4e55beffa62df29.dir
-      size: 169821
+      md5: d1bad17776ce3afbccc8434f00fdf0cd.dir
+      size: 169919
       nfiles: 11
-    - path: ../deckard/data/
+    - path: ../../deckard/data/
       hash: md5
-      md5: b2dff9bff55971644fe4b38f3a9acb0e.dir
-      size: 281856
-      nfiles: 18
-    - path: ../deckard/experiment/
+      md5: 0a6865fc2b88c51b4c2c7ebd44141ce6.dir
+      size: 287723
+      nfiles: 20
+    - path: ../../deckard/experiment/
       hash: md5
-      md5: 6e811bbf88b96582032117ca5eecae14.dir
+      md5: cb82c3fd349ecdd65f68799cf3a3a62c.dir
       size: 153428
       nfiles: 10
-    - path: ../deckard/file.py
+    - path: ../../deckard/file.py
       hash: md5
-      md5: c99badb17d95cafbc4915fa0ebec8381
+      md5: abf96e34a774fa4b96865c3529e5deff
       size: 7011
-    - path: ../deckard/model/
+    - path: ../../deckard/model/
       hash: md5
-      md5: db0feaef69b55a93e3a072ff170d78d6.dir
-      size: 318647
+      md5: c4ececdca05f8aa586aa2839db2aadf5.dir
+      size: 319864
       nfiles: 16
-    - path: ../deckard/plot/
+    - path: ../../deckard/plot/
       hash: md5
-      md5: 51dc0ec91e3522a3465b5dcf09685b0f.dir
+      md5: 014a0b5de0673698aa821396cc510a86.dir
       size: 112805
       nfiles: 10
-    - path: ../deckard/score/
+    - path: ../../deckard/score/
       hash: md5
       md5: 3c469b7fe5caa121175b075ef1341e1f.dir
       size: 195705
       nfiles: 23
-    - path: ../deckard/utils.py
+    - path: ../../deckard/utils.py
       hash: md5
-      md5: 5512a7633364a7a17047df1cbecb65db
-      size: 50043
+      md5: 4b1f8702684efdb004bfb781418a771a
+      size: 49891
     - path: anjana.ipynb
       hash: md5
-      md5: 99be90c86ce38b190e9e8e83f61c6834
-      size: 250302
+      md5: a006e715073bd20e81560c2caa0fb932
+      size: 310645
     outs:
-    - path: build/anjana_artifacts/anjana.executed.html
+    - path: ./build/anjana/anjana_attack_baseline.pkl
       hash: md5
-      md5: 1648a7f59fcbba0393f62a365f9aa8d4
-      size: 561403
-    - path: build/anjana_artifacts/anjana_attack_compare.csv
+      md5: acd292aa72014213823bf7425f838c5c
+      size: 3221
+    - path: ./build/anjana/anjana_attack_defended.pkl
       hash: md5
-      md5: e5385e7fc0b43dc6299c86196fa6ee97
-      size: 272
-    - path: build/anjana_artifacts/anjana_data_score_compare.csv
+      md5: 81fd128d4179e88adb310b7888f665d6
+      size: 3221
+    - path: ./build/anjana/anjana_baseline_data.pkl
+      hash: md5
+      md5: 231fa308559f7729450968642df80907
+      size: 82842792
+    - path: ./build/anjana/anjana_baseline_scores.csv
+      hash: md5
+      md5: 5f83015aa6e72737797b55da60979d26
+      size: 203
+    - path: ./build/anjana/anjana_baseline_sklearn_model.pkl
+      hash: md5
+      md5: dfc91b5871f995b3c6614ab2e5560217
+      size: 5460
+    - path: ./build/anjana/anjana_data_scores_compare.csv
       hash: md5
       md5: 889b8e9622ad755903bb30920c018cb0
       size: 201
-    - path: build/anjana_artifacts/anjana_data_scores_compare.csv
+    - path: ./build/anjana/anjana_defended_data.pkl
       hash: md5
-      md5: 889b8e9622ad755903bb30920c018cb0
-      size: 201
+      md5: b7697af54e3597b5178a2d7cce9a9dd6
+      size: 52673173
+    - path: ./build/anjana/anjana_defended_scores.csv
+      hash: md5
+      md5: 01ee38bfedadba4740654cddf2179df5
+      size: 205
+    - path: ./build/anjana/anjana_defended_sklearn_model.pkl
+      hash: md5
+      md5: 4a2e78a68c358a98210a71cbeb89c178
+      size: 5476
+    - path: ./build/anjana/baseline_experiment_data.pkl
+      hash: md5
+      md5: 231fa308559f7729450968642df80907
+      size: 82842792
+    - path: ./build/anjana/baseline_experiment_model.pkl
+      hash: md5
+      md5: e1c31e849369acf329861e40d5ea0a34
+      size: 1178151
+    - path: ./build/anjana/baseline_experiment_scores.json
+      hash: md5
+      md5: d4eeb70fa1c4f768e24bfe61cf4796f7
+      size: 977
+    - path: ./build/anjana/defended_experiment_data.pkl
+      hash: md5
+      md5: b7697af54e3597b5178a2d7cce9a9dd6
+      size: 52673173
+    - path: ./build/anjana/defended_experiment_scores.json
+      hash: md5
+      md5: a3dda3c28fc95b71d3c49a2702f111ee
+      size: 979
+    - path: ./build/anjana/plots/anjana_attack_compare_bar.png
+      hash: md5
+      md5: 37d0f501fc6718ced23c144bd216e92d
+      size: 32249
+    - path: ./build/anjana/plots/anjana_data_compare_bar_side_by_side.png
+      hash: md5
+      md5: 14f2ca1950d7de7c413288ab84cbdc17
+      size: 45104
+    - path: ./build/anjana/plots/anjana_data_scores_bar.png
+      hash: md5
+      md5: bafeae2e69ea3e92144c634ebe88157f
+      size: 20397
+    - path: ./build/anjana/plots/anjana_yellowbrick_roc_auc.png
+      hash: md5
+      md5: a80deb1d9823694e8a759828447956f2
+      size: 86695

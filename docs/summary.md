@@ -182,5 +182,5 @@ See also:
 - [Package Summary](summary.md).
 - [API Reference](modules.rst)
 - [Extensions](extensions.md)
-- [Notebooks](notebooks/index.md)
+- [Notebooks](notebooks)
 - [Developer Docs](development.md)
