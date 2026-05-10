@@ -69,7 +69,7 @@ __all__ = [
     "DefaultFairlearnScoreConfig",
     "DefaultFairlearnClassificationConfig",
     "DefaultFairlearnRegressionConfig",
-    "DefaultFairlearnConfig",
+    "DefaultFairlearnScoreConfig",
 ]
 
 FairnessMode = Literal["test", "train", "attack", "val", "attack-val", "all"]
@@ -374,18 +374,6 @@ class _FairnessScorerMixin:
             def __call__(self, y_true, y_pred, **sample_kwargs):
                 return metric_callable_call(self, y_true, y_pred, **sample_kwargs)
         return MetricCallable(scorer, data, scorer_kwargs_dict)
-        return MetricFrame(
-            metrics=metrics,
-            y_true=y_true,
-            y_pred=y_pred,
-            sensitive_features=sensitive_features,
-            control_features=control_features,
-            sample_params=sample_params,
-            n_boot=n_boot,
-            ci_quantiles=ci_quantiles,
-            random_state=random_state,
-        )
-
     def __call__(
         self,
         mode: Literal["test", "train", "attack", "val", "attack-val", None] = "test",
@@ -676,23 +664,93 @@ class DefaultFairlearnScoreConfig(_TaskAwareScorerMixin, FairlearnScoreDictConfi
                     greater_is_better=False,
                     needs_proba=False,
                 ),
+                "accuracy" : ScorerConfig(
+                    score_name="accuracy",
+                    score_function="sklearn.metrics.accuracy_score",
+                    greater_is_better=True,
+                    needs_proba=False,
+                ),
+                "precision" : ScorerConfig(
+                    score_name="precision",
+                    score_function="sklearn.metrics.precision_score",
+                    greater_is_better=True,
+                    needs_proba=False,
+                    score_params = {"average": "weighted", "zero_division" : 0}
+                ),
+                "recall" : ScorerConfig(
+                    score_name="recall",
+                    score_function="sklearn.metrics.recall_score",
+                    greater_is_better=True,
+                    needs_proba=False,
+                    score_params = {"average": "weighted", "zero_division" : 0}
+                ),
+                "f1" : ScorerConfig(
+                    score_name="f1",
+                    score_function="sklearn.metrics.f1_score",
+                    greater_is_better=True,
+                    needs_proba=False,
+                    score_params = {"average": "weighted", "zero_division" : 0}
+                ),
+                
             }
-        # For regression, only use standard regression metrics as main scorers
-        from sklearn.metrics import mean_absolute_error, mean_squared_error
-        return {
-            "mae": ScorerConfig(
-                score_name="mae",
-                score_function=mean_absolute_error,
+        else:
+            return {
+            "mse": ScorerConfig(
+                score_name="mse",
+                score_function="sklearn.metrics.mean_squared_error",
                 greater_is_better=False,
                 needs_proba=False,
             ),
-            "mse": ScorerConfig(
-                score_name="mse",
-                score_function=mean_squared_error,
+            "rmse": ScorerConfig(
+                score_name="rmse",
+                score_function="sklearn.metrics.mean_squared_error",
+                greater_is_better=False,
+                needs_proba=False,
+                score_params={
+                    "squared": False,
+                },
+            ),
+            "mae": ScorerConfig(
+                score_name="mae",
+                score_function="sklearn.metrics.mean_absolute_error",
+                greater_is_better=False,
+                needs_proba=False,
+            ),
+            "r2": ScorerConfig(
+                score_name="r2",
+                score_function="sklearn.metrics.r2_score",
+                greater_is_better=True,
+                needs_proba=False,
+            ),
+            "group_mean_prediction_difference": ScorerConfig(
+                score_name="group_mean_prediction_difference",
+                score_function=(
+                    "deckard.score.fairness_group_mean_prediction_difference"
+                ),
+                greater_is_better=False,
+                needs_proba=False,
+            ),
+            "group_mae_difference": ScorerConfig(
+                score_name="group_mae_difference",
+                score_function=(
+                    "deckard.score.fairness_group_mae_difference"
+                ),
+                greater_is_better=False,
+                needs_proba=False,
+            ),
+            "group_mse_difference": ScorerConfig(
+                score_name="group_mse_difference",
+                score_function=(
+                    "deckard.score.fairness_group_mse_difference"
+                ),
                 greater_is_better=False,
                 needs_proba=False,
             ),
         }
+            
+            
+        
+            
 
     def _build_default_group_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
         if classifier:
@@ -744,7 +802,6 @@ class DefaultFairlearnRegressionConfig(DefaultFairlearnScoreConfig):
     classifier: Union[bool, str, None] = False
 
 
-DefaultFairlearnConfig = DefaultFairlearnScoreConfig
 
 
 safe_store(
