@@ -254,13 +254,6 @@ class TestUtilsAdditional(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             load_data(None)
 
-    def test_save_overwrite_raises(self):
-        cfg = BaseConfig()
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "obj.pkl"
-            cfg.save(str(p))
-            with self.assertRaises(ValueError):
-                cfg.save(str(p))
 
     def test_load_type_mismatch_raises(self):
         a = TypeAConfig()

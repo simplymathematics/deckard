@@ -71,7 +71,8 @@ def test_fairlearn_score_dict_post_init_branches_and_type_errors():
             "string": "sklearn.metrics.accuracy_score",
         },
     )
-    assert any(k.startswith("nested_") for k in cfg.group_scorers)
+    # After normalization, nested ScorerDictConfig keys are flattened
+    assert "acc" in cfg.group_scorers
     assert "callable" in cfg.group_scorers
     assert "string" in cfg.group_scorers
 
@@ -80,6 +81,10 @@ def test_fairlearn_score_dict_post_init_branches_and_type_errors():
 
     with pytest.raises(TypeError, match="must be ScorerConfig"):
         FairlearnScoreDictConfig(group_scorers={"bad": 7})
+
+    # New: Expect ValueError if both group_scorers and scorers are empty
+    with pytest.raises(ValueError, match="group_scorers must not be empty"):
+        FairlearnScoreDictConfig()
 
 
 def test_build_metric_frame_import_error_and_call_validation(monkeypatch):
@@ -108,7 +113,6 @@ def test_build_metric_frame_import_error_and_call_validation(monkeypatch):
 
 def test_call_overall_value_branch_and_invalid_group_reduction(monkeypatch):
     cfg = FairlearnScoreDictConfig(
-        scorers={},
         group_scorers={
             "m1": ScorerConfig(score_name="m1", score_function="sklearn.metrics.accuracy_score"),
             "m2": ScorerConfig(score_name="m2", score_function="sklearn.metrics.accuracy_score"),
