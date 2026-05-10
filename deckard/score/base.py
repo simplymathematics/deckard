@@ -278,7 +278,16 @@ class ScorerConfig:
             "jaccard_score",
             "matthews_corrcoef",
             "cohen_kappa_score",
+            # Fairlearn group metrics (all expect 1D labels, not logits)
+            "demographic_parity_difference",
+            "equalized_odds_difference",
+            "group_mean_prediction_difference",
+            "group_mae_difference",
+            "group_mse_difference",
         }
+
+        # Trigger normalization if either the function name or the score_name matches
+        is_label_metric = metric_name in label_metrics or self.score_name in label_metrics
 
         if self.needs_proba:
             self._validate_probability_input(y_true=y_true, y_pred=y_pred)
@@ -289,7 +298,7 @@ class ScorerConfig:
                 if y_pred_arr.shape[1] == 2:
                     return y_pred_arr[:, 1]
             return y_pred
-        if metric_name not in label_metrics:
+        if not is_label_metric:
             return y_pred
         y_true_arr = np.asarray(to_numpy_if_torch(y_true))
         y_pred_arr = np.asarray(to_numpy_if_torch(y_pred))
