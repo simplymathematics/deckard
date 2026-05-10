@@ -11,9 +11,18 @@ from omegaconf import DictConfig
 from typing import Any, Union
 import numpy as np
 
-# Torch imports
-import torch
-from torch.utils.data import DataLoader as TorchDataLoader
+
+# Torch imports (optional dependency)
+try:
+    import torch
+    import torch.nn as nn
+    from torch.utils.data import DataLoader as TorchDataLoader
+except ImportError:
+    torch = None
+    nn = None
+    TorchDataLoader = None
+
+
 
 # Sklearn imports
 from sklearn.metrics import (
@@ -38,6 +47,26 @@ ScorerDictConfig = Any
 ModelType = Union[str, type[torch.nn.Module], torch.nn.Module]
 
 __all__ = ["PytorchModelConfig"]
+
+
+
+# TinyNet: Minimal torch model for binary classification
+class TinyNet(nn.Module if nn else object):
+    """A minimal torch model for binary classification (2-layer MLP)."""
+    def __init__(self, input_dim=10, hidden_dim=16, output_dim=2):
+        if nn is None:
+            raise ImportError("TinyNet requires torch to be installed.")
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, output_dim)
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+
 
 
 def initialize_criterion(criterion_spec):
@@ -322,9 +351,7 @@ class PytorchModelConfig(ModelConfig):
         path = Path(filepath)
         path.parent.mkdir(parents=True, exist_ok=True)
         if path.exists():
-            raise ValueError(
-                f"File {filepath} already exists. Will not overwrite.",
-            )
+            raise ValueError(f"File {filepath} already exists")
 
         payload = {
             "model_type": self.model_type,
