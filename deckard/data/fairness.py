@@ -4,11 +4,18 @@ from typing import Any, Dict, Optional, Union
 import pandas as pd
 from omegaconf import DictConfig, ListConfig
 
-from .base import DataConfig, DataPipelineConfig
-from ..utils import coerce_to_list, is_default_config_value, load_class, merge_list_of_dicts
+from .base import  DataPipelineConfig
+from ..utils import coerce_to_list, is_default_config_value,  merge_list_of_dicts
 
 @dataclass(eq=False)
 class FairlearnDataConfig(DataPipelineConfig):
+
+    def __call__(self, *args, **kwargs):
+        # Call parent to load and sample data
+        super().__call__(*args, **kwargs)
+        assert hasattr(self, "X_train"), ".X_train not found"
+        return self.score_dict
+
     """Data pipeline config with fairlearn-sensitive feature support."""
 
     sensitive_columns: Optional[Union[str, list]] = None
@@ -200,34 +207,28 @@ class FairlearnDataConfig(DataPipelineConfig):
             self._sensitive_val = None
 
     def _score(self) -> dict:
-        """Thin wrapper that delegates fairness dataset scoring to ``self.scorer``."""
+        """Delegate fairness dataset scoring to DefaultFairlearnClassificationConfig or RegressionConfig."""
+        from ..score.fairness import DefaultFairlearnClassificationConfig, DefaultFairlearnRegressionConfig
         if is_default_config_value(self.scorer, include_best=False):
-            scorer_cls = (
-                "deckard.score.data.DefaultDataClassificationConfig"
-                if self.classifier
-                else "deckard.score.data.DefaultDataRegressionConfig"
+            self.scorer = (
+                DefaultFairlearnClassificationConfig() if self.classifier else DefaultFairlearnRegressionConfig()
             )
-            self.scorer = load_class(scorer_cls)
         if self.scorer is None:
             return {}
         if not callable(self.scorer):
             raise TypeError(
                 f"FairlearnDataConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
-        y_true = (
-            self.y_train if getattr(self, "y_train", None) is not None else self._y
-        )
-        y_pred = (
-            self.X_train if getattr(self, "X_train", None) is not None else self._X
-        )
+        y_true = self.y_train if getattr(self, "y_train", None) is not None else self._y
+        y_pred = self.X_train if getattr(self, "X_train", None) is not None else self._X
         if isinstance(y_pred, pd.DataFrame):
             non_numeric = y_pred.select_dtypes(exclude=["number"]).columns
             if len(non_numeric) > 0:
-                y_pred = pd.get_dummies(y_pred, drop_first=False)
+                y_pred = pd.get_dummies(y_pred, drop_first=False).astype(int)
         fairness_scores = self.scorer(
             y_true=y_true,
             y_pred=y_pred,
-            mode=None,
+            mode="test",
             data=self,
         )
         return {"fairness_scores": fairness_scores}

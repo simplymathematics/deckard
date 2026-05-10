@@ -271,7 +271,7 @@ class PytorchDataConfig(DataConfig):
 
         Side Effects
         ------------
-        Sets ``self._train_indices``, ``self._test_indices``, and ``self.data_sample_time``.
+        Sets ``self.train_indices``, ``self.test_indices``, and ``self.data_sample_time``.
         Logs the time taken for sampling.
         """
         if self._X is None or self._y is None:
@@ -337,6 +337,10 @@ class PytorchDataConfig(DataConfig):
         # The next test_size indices are for testing
         test_idx = indices[train_size : train_size + test_size]  # noqa E203
 
+        # Store indices as attributes for downstream compatibility
+        self.train_indices = train_idx
+        self.test_indices = test_idx
+
         end_time = time.process_time()
         self.data_sample_time = end_time - start_time
 
@@ -348,8 +352,8 @@ class PytorchDataConfig(DataConfig):
 
         if hasattr(self, "_sensitive") and self._sensitive is not None:
             sensitive_arr = np.asarray(self._sensitive, dtype=object)
-            train_np_idx = train_idx.detach().cpu().numpy()
-            test_np_idx = test_idx.detach().cpu().numpy()
+            train_np_idx = self.train_indices.detach().cpu().numpy()
+            test_np_idx = self.test_indices.detach().cpu().numpy()
             self._sensitive_train = sensitive_arr[train_np_idx].tolist()
             self._sensitive_test = sensitive_arr[test_np_idx].tolist()
             self._sensitive_all = sensitive_arr.tolist()

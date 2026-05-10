@@ -140,10 +140,16 @@ class TestScore:
         config = FairlearnDataConfig(
             sensitive_columns="gender",
             classifier=True,
+            train_size=2,
+            test_size=2,
+            stratify=False,
         )
         config._X = df
         config._y = pd.Series([0, 1, 0, 1])
         config.classifier = True
+
+
+        config._sample()  # Ensure sensitive features are set up
 
         with patch.object(
             config,
