@@ -135,8 +135,6 @@ class ModelConfig(ConfigBase):
     _train(X, y): Trains the model using the provided feature matrix and target vector.
     _predict(X): Generates predictions for the input data.
     _predict_proba(X): Predicts class probabilities for the input data (if supported).
-    _classification_scores(y_true, y_pred): Computes classification metrics.
-    _regression_scores(y_true, y_pred): Computes regression metrics.
     _score(y_true, y_pred, train): Computes and logs performance scores.
     __call__(X, y, train, score, filepath): Executes the model workflow including training, prediction, scoring, and model persistence.
 
@@ -568,161 +566,6 @@ class ModelConfig(ConfigBase):
 
         return y_proba
 
-    def _classification_scores(
-        self,
-        y_true: pd.Series,
-        y_pred: pd.Series,
-    ) -> dict:
-        """
-        Computes classification metrics including accuracy, precision, recall, and F1-score.
-
-        Args
-        -------
-            y_true (pd.Series): True labels of the classification task.
-            y_pred (pd.Series): Predicted labels from the classifier.
-
-        Returns
-        -------
-            dict: A dictionary containing the following metrics:
-                - "accuracy": Accuracy score.
-                - "precision": Precision score.
-                - "recall": Recall score.
-                - "f1-score": F1 score.
-
-        Raises:
-            AssertionError: If y_true and y_pred do not have the same length.
-        """
-        # Ensure that y_true and y_pred have the same length
-        assert len(y_true) == len(
-            y_pred,
-        ), "y_true and y_pred must have the same length"
-        # Ensure that y_true.shape and y_pred.shape are compatible
-        y_true_arr = np.asarray(y_true)
-        y_pred_arr = np.asarray(y_pred)
-
-        if y_true.ndim > 1 and y_pred.ndim == 1:
-            y_pred = pd.get_dummies(y_pred).values
-            y_prob = y_pred
-        elif y_true.ndim == 1 and y_pred.ndim > 1:
-            y_prob = y_pred.copy()
-            if y_pred_arr.ndim == 2 and y_pred_arr.shape[1] == 1:
-                # Handle binary models that emit a single score/probability column.
-                binary_scores = y_pred_arr.reshape(-1)
-                threshold = 0.5
-                if np.nanmin(binary_scores) < 0.0 or np.nanmax(binary_scores) > 1.0:
-                    threshold = 0.0
-                classes = np.unique(y_true_arr[~pd.isna(y_true_arr)])
-                if len(classes) == 2 and np.issubdtype(
-                    np.asarray(classes).dtype,
-                    np.number,
-                ):
-                    sorted_classes = np.sort(np.asarray(classes, dtype=float))
-                    low_label = sorted_classes[0]
-                    high_label = sorted_classes[1]
-                    y_pred = np.where(
-                        binary_scores >= threshold,
-                        high_label,
-                        low_label,
-                    )
-                else:
-                    y_pred = (binary_scores >= threshold).astype(int)
-            else:
-                y_pred = np.argmax(y_prob, axis=1)
-        elif y_true.ndim > 1 and y_pred.ndim > 1:
-            assert (
-                y_true.shape == y_pred.shape
-            ), "y_true and y_pred must have the same shape"
-            y_prob = y_pred.copy()
-            y_prob = np.argmax(y_prob, axis=1)
-        else:
-            y_prob = y_pred.copy()
-        assert (
-            y_true.shape[0] == y_pred.shape[0]
-        ), "y_true and y_pred must have the same number of samples"
-        if y_true.ndim > 1:
-            assert (
-                y_true.shape[1] == y_pred.shape[1]
-            ), "y_true and y_pred must have the same number of classes"
-        try:
-            acc = accuracy_score(y_true, y_pred)
-            precision = precision_score(
-                y_true,
-                y_pred,
-                average="weighted",
-                zero_division=0,
-            )
-            recall = recall_score(
-                y_true,
-                y_pred,
-                average="weighted",
-                zero_division=0,
-            )
-            f1 = f1_score(y_true, y_pred, average="weighted", zero_division=0)
-
-        except Exception as e:
-            logger.error(f"Error computing classification scores: {e}")
-            raise e
-        try:
-            logloss = log_loss(y_true=y_true, y_pred=y_prob)
-        except ValueError as e:
-            if "y_prob contains values greater than 1" in str(e):
-                y_true = pd.get_dummies(y_true).values
-                y_pred = pd.get_dummies(y_pred).values
-                logloss = log_loss(y_true=y_true, y_pred=y_pred)
-            else:
-                logloss = np.nan
-        scores = {
-            "accuracy": acc,
-            "precision": precision,
-            "recall": recall,
-            "f1-score": f1,
-            "log_loss": logloss,
-        }
-        return scores
-
-    def _regression_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
-        """
-        Calculate regression error metrics between true and predicted values.
-
-        Args
-        -------
-            y_true (pd.Series): Series of true target values.
-            y_pred (pd.Series): Series of predicted target values.
-
-        Returns
-        -------
-            dict: Dictionary containing the following regression metrics:
-                - 'mse': Mean Squared Error
-                - 'rmse': Root Mean Squared Error
-                - 'mae': Mean Absolute Error
-
-        Raises
-        -------
-            AssertionError: If y_true and y_pred do not have the same length.
-        """
-        # Ensure that y_true and y_pred have the same length
-        assert len(y_true) == len(
-            y_pred,
-        ), "y_true and y_pred must have the same length"
-        mse = ((y_true - y_pred) ** 2).mean()
-        rmse = mse**0.5
-        mae = np.abs(y_true - y_pred).mean()
-        try:
-            logloss = log_loss(y_true=y_true, y_pred=y_pred)
-        except ValueError as e:
-            if "y_prob contains values greater than 1" in str(e):
-                y_true = pd.get_dummies(y_true).values
-                y_pred = pd.get_dummies(y_pred).values
-                logloss = log_loss(y_true=y_true, y_pred=y_pred)
-            else:
-                raise e
-        scores = {
-            "mse": mse,
-            "rmse": rmse,
-            "mae": mae,
-            "log_loss": logloss,
-        }
-        return scores
 
     def _score(
         self,
@@ -1369,14 +1212,12 @@ class ModelConfig(ConfigBase):
             score_time = time.process_time() - start
             setattr(self, score_time_attr, score_time)
             times[names["score_time_key"]] = score_time
-
             prefix = self._mode_score_prefix(score_mode)
             if prefix:
                 mode_scores = {f"{prefix}{key}": value for key, value in mode_scores.items()}
                 loss_curve_key = f"{prefix}loss_curve"
                 if loss_curve_key in mode_scores:
                     del mode_scores[loss_curve_key]
-
             if self.score_dict is None:
                 self.score_dict = {}
             self.score_dict.update(mode_scores)
