@@ -1,3 +1,25 @@
+def as_group_scorer(scorer_dict, *, group_reduction="difference", group_reduction_method="between_groups", include_group_overall=True, include_group_by_group=True, **kwargs):
+    """
+    Wrap any ScorerDictConfig (or dict of metrics) to enable MetricFrame group scoring at runtime.
+    Returns a FairlearnScoreDictConfig with group_scorers auto-populated from the main scorers.
+    """
+    if isinstance(scorer_dict, ScorerDictConfig):
+        scorers = scorer_dict.scorers
+    elif isinstance(scorer_dict, dict):
+        scorers = dict(scorer_dict)
+    else:
+        raise TypeError("scorer_dict must be a ScorerDictConfig or dict")
+    group_reduction_lit = group_reduction if group_reduction in ("difference", "ratio", "none") else "difference"
+    group_reduction_method_lit = group_reduction_method if group_reduction_method in ("between_groups", "to_overall") else "between_groups"
+    return FairlearnScoreDictConfig(
+        scorers=scorers,
+        group_scorers={},
+        group_reduction=group_reduction_lit,  # type: ignore
+        group_reduction_method=group_reduction_method_lit,  # type: ignore
+        include_group_overall=include_group_overall,
+        include_group_by_group=include_group_by_group,
+        **kwargs
+    )
 """Fairness-specific scoring helpers and default scorer configuration."""
 
 from dataclasses import dataclass, field
@@ -161,7 +183,10 @@ def _resolve_sensitive_from_kwargs_or_data(
         )
     if sensitive_features is None:
         raise ValueError("sensitive_features are required for fairness scoring")
-    return np.asarray(sensitive_features)
+    sensitive_arr = np.asarray(sensitive_features)
+    if hasattr(y_true, "__len__") and len(sensitive_arr) != len(y_true):
+        raise ValueError(f"Length of sensitive_features ({len(sensitive_arr)}) does not match y_true ({len(y_true)})")
+    return sensitive_arr
 
 
 def _flatten_metric_frame_by_group(by_group: pd.DataFrame) -> dict[str, float]:
@@ -238,12 +263,14 @@ class _FairnessScorerMixin:
 
     def _coerce_group_scorers(self) -> None:
         normalized = {}
-        for key, value in self.group_scorers.items():
+        # If group_scorers is empty, use all main scorers as group scorers by default
+        group_source = self.group_scorers if self.group_scorers else getattr(self, 'scorers', {})
+        for key, value in group_source.items():
             if isinstance(value, ScorerConfig):
                 normalized[key] = value
             elif isinstance(value, ScorerDictConfig):
                 for nested_key, nested_scorer in value.get_callables().items():
-                    normalized[f"{key}_{nested_key}"] = nested_scorer
+                    normalized[nested_key] = nested_scorer
             elif isinstance(value, dict):
                 scorer_data = dict(value)
                 normalized[key] = ScorerConfig(
@@ -289,18 +316,64 @@ class _FairnessScorerMixin:
                 }
         metrics = {
             key: (
-                lambda yt, yp, scorer=scorer, **sample_kwargs: cast(
-                    Callable[..., Any],
-                    scorer,
-                )(
-                    y_true=yt,
-                    y_pred=yp,
-                    **cast(dict[str, Any], sample_kwargs),
-                    **scorer_kwargs_dict,
-                )
+                self._make_metric_with_sensitive(scorer, scorer_kwargs_dict)
             )
             for key, scorer in cast(dict[str, ScorerConfig], self.group_scorers).items()
         }
+        # Defensive: If metrics is empty, return None to avoid constructing MetricFrame with no metrics
+        if not metrics:
+            return None
+
+        return MetricFrame(
+            metrics=metrics,
+            y_true=y_true,
+            y_pred=y_pred,
+            sensitive_features=sensitive_features,
+            control_features=control_features,
+            sample_params=sample_params,
+            n_boot=n_boot,
+            ci_quantiles=ci_quantiles,
+            random_state=random_state,
+        )
+
+    def _make_metric_with_sensitive(self, scorer, scorer_kwargs_dict):
+        data = getattr(self, 'data', None)
+        import numpy as np
+        def metric_callable_call(self, y_true, y_pred, **sample_kwargs):
+            sensitive = sample_kwargs.get("sensitive_features")
+            if sensitive is None:
+                sensitive = _resolve_sensitive_features(self.data, y_true, mode=self.scorer_kwargs_dict.get("mode", "test"))
+            try:
+                # Avoid passing sensitive_features twice
+                call_kwargs = {k: v for k, v in sample_kwargs.items() if k != "sensitive_features"}
+                call_kwargs.update(self.scorer_kwargs_dict)
+                if "sensitive_features" not in call_kwargs:
+                    call_kwargs["sensitive_features"] = sensitive
+                result = cast(
+                    Callable[..., Any],
+                    self.scorer,
+                )(
+                    y_true=y_true,
+                    y_pred=y_pred,
+                    data=self.data,
+                    **call_kwargs,
+                )
+                if result is None:
+                    print(f"[DEBUG] Metric function returned None for scorer {self.scorer} with y_true={y_true}, y_pred={y_pred}, sensitive={sensitive}")
+                    return np.nan
+                return result
+            except Exception as e:
+                print(f"[DEBUG] Exception in metric function for scorer {self.scorer}: {e}")
+                return np.nan
+
+        class MetricCallable:
+            def __init__(self, scorer, data, scorer_kwargs_dict):
+                self.scorer = scorer
+                self.data = data
+                self.scorer_kwargs_dict = scorer_kwargs_dict
+            def __call__(self, y_true, y_pred, **sample_kwargs):
+                return metric_callable_call(self, y_true, y_pred, **sample_kwargs)
+        return MetricCallable(scorer, data, scorer_kwargs_dict)
         return MetricFrame(
             metrics=metrics,
             y_true=y_true,
@@ -324,29 +397,14 @@ class _FairnessScorerMixin:
         score_file: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
-        # Step 1: run base ScorerDictConfig scorers (model/data predictions).
-        results = ScorerDictConfig.__call__(
-            cast(ScorerDictConfig, self),
-            mode=mode,
-            data=data,
-            model=model,
-            attack=attack,
-            y_pred=y_pred,
-            y_true=y_true,
-            score_file=score_file,
-            **kwargs,
-        )
-        if not self.group_scorers:
-            return results
-
-        # Step 2: resolve y_true/y_pred for MetricFrame (may have been None above).
+        # Step 1: resolve y_true/y_pred for both main and group metrics.
         if data is None and (y_true is None or y_pred is None):
             raise ValueError("data must be provided when y_true/y_pred are not passed directly")
         resolved_y_true, resolved_y_pred = _resolve_yt_yp(
             mode, cast(DataConfig, data), model, attack, y_pred, y_true,
         )
 
-        # Step 3: resolve sensitive features.
+        # Step 2: resolve sensitive features once.
         resolved_mode = "test" if mode is None else mode
         sensitive_features = kwargs.get("sensitive_features")
         if sensitive_features is None:
@@ -358,7 +416,22 @@ class _FairnessScorerMixin:
         if sensitive_features is None:
             raise ValueError("sensitive_features are required for fairness scoring")
 
-        # Step 4: build MetricFrame and populate results.
+        # Step 3: run base ScorerDictConfig scorers using resolved arrays.
+        results = ScorerDictConfig.__call__(
+            cast(ScorerDictConfig, self),
+            mode=mode,
+            data=data,
+            model=model,
+            attack=attack,
+            y_pred=resolved_y_pred,
+            y_true=resolved_y_true,
+            score_file=score_file,
+            **kwargs,
+        )
+        if not self.group_scorers:
+            return results
+
+        # Step 4: build MetricFrame and populate results using resolved arrays.
         self_cfg = cast("FairlearnScoreDictConfig", self)
         control_features = cast(
             ControlFeaturesLike,
@@ -410,14 +483,21 @@ class _FairnessScorerMixin:
                 _flatten_metric_frame_by_group(pd.DataFrame(metric_frame.by_group)),
             )
 
+        # Only apply reduction to metrics that are scalar per group (not group metric functions)
+        def is_scalar_metric(metric_name):
+            # Heuristic: group metric functions have 'group_' prefix and '_difference' or '_ratio' suffix
+            return not (metric_name.startswith("group_") and metric_name.endswith(("_difference", "_ratio")))
+
         if self_cfg.group_reduction == "difference":
             reduced = metric_frame.difference(method=self_cfg.group_reduction_method)
             for metric_name, value in _series_like_to_float_dict(reduced).items():
-                results[f"{metric_name}_difference"] = value
+                if is_scalar_metric(metric_name):
+                    results[f"{metric_name}_difference"] = value
         elif self_cfg.group_reduction == "ratio":
             reduced = metric_frame.ratio(method=self_cfg.group_reduction_method)
             for metric_name, value in _series_like_to_float_dict(reduced).items():
-                results[f"{metric_name}_ratio"] = value
+                if is_scalar_metric(metric_name):
+                    results[f"{metric_name}_ratio"] = value
         elif self_cfg.group_reduction != "none":
             raise ValueError(
                 "group_reduction must be one of {'difference', 'ratio', 'none'}",
@@ -460,6 +540,11 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
         super().__post_init__()
         self._normalize_group_scorers_input()
         self._coerce_group_scorers()
+        if not self.group_scorers:
+            raise ValueError(
+                "group_scorers must not be empty. Either provide group_scorers explicitly or ensure scorers is non-empty. "
+                "This is required for MetricFrame group scoring."
+            )
 
 
 def _group_metric_difference(
@@ -507,6 +592,7 @@ def fairness_group_mean_prediction_difference(
     )
     groups = np.asarray(sensitive_features)
     y_pred_arr = np.asarray(y_pred)
+    print(f"[DEBUG] fairness_group_mean_prediction_difference: y_true.shape={np.shape(y_true)}, y_pred.shape={np.shape(y_pred_arr)}, sensitive_features.shape={np.shape(groups)}")
     unique_groups = np.unique(groups)
     if unique_groups.size < 2:
         return 0.0
@@ -582,33 +668,65 @@ class DefaultFairlearnScoreConfig(_TaskAwareScorerMixin, FairlearnScoreDictConfi
                     score_name="demographic_parity_difference",
                     score_function="deckard.score.fairness.fairness_demographic_parity_difference",
                     greater_is_better=False,
+                    needs_proba=False,
                 ),
                 "equalized_odds_difference": ScorerConfig(
                     score_name="equalized_odds_difference",
                     score_function="deckard.score.fairness.fairness_equalized_odds_difference",
                     greater_is_better=False,
+                    needs_proba=False,
                 ),
             }
+        # For regression, only use standard regression metrics as main scorers
+        from sklearn.metrics import mean_absolute_error, mean_squared_error
+        return {
+            "mae": ScorerConfig(
+                score_name="mae",
+                score_function=mean_absolute_error,
+                greater_is_better=False,
+                needs_proba=False,
+            ),
+            "mse": ScorerConfig(
+                score_name="mse",
+                score_function=mean_squared_error,
+                greater_is_better=False,
+                needs_proba=False,
+            ),
+        }
+
+    def _build_default_group_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
+        if classifier:
+            return {}
+        # For regression, group metrics go here
         return {
             "group_mean_prediction_difference": ScorerConfig(
                 score_name="group_mean_prediction_difference",
                 score_function="deckard.score.fairness.fairness_group_mean_prediction_difference",
                 greater_is_better=False,
+                needs_proba=False,
             ),
             "group_mae_difference": ScorerConfig(
                 score_name="group_mae_difference",
                 score_function="deckard.score.fairness.fairness_group_mae_difference",
                 greater_is_better=False,
+                needs_proba=False,
             ),
             "group_mse_difference": ScorerConfig(
                 score_name="group_mse_difference",
                 score_function="deckard.score.fairness.fairness_group_mse_difference",
                 greater_is_better=False,
+                needs_proba=False,
             ),
         }
 
     def __post_init__(self):
         self._initialize_task_aware_scorers(default=True)
+        # Ensure scorers is always populated for group scoring
+        if not getattr(self, 'scorers', None):
+            self.scorers = self._build_default_scorers(bool(self.classifier))
+        # Always enable group scoring by default if not explicitly set
+        if not getattr(self, 'group_scorers', None):
+            self.group_scorers = cast(Any, self._build_default_group_scorers(bool(self.classifier)))
         super().__post_init__()
 
 
