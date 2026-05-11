@@ -13,15 +13,24 @@ mkdir -p "$OUT_DIR"
 ERROR_LOG="$OUT_DIR/error.log"
 TEST_OUT="$OUT_DIR/pytest.out"
 TEST_ERR="$OUT_DIR/pytest.err"
+RUN_FILE="$OUT_DIR/runtime.txt"
+TIMING_FILE="$OUT_DIR/timing.txt"
 COV_FILE="$OUT_DIR/coverage.txt"
 
 : > "$ERROR_LOG"
 
-rm -f "$TEST_OUT" "$TEST_ERR"
+rm -f "$TEST_OUT" "$TEST_ERR" "$RUN_FILE" "$TIMING_FILE" "$COV_FILE"
 
 run_tests() {
+  local started_epoch
+  local ended_epoch
+  local elapsed_seconds
+  local status
+
+  started_epoch="$(date +%s)"
   echo "[INFO] Running pytest..."
 
+  set +e
   "$PYTHON" -m pytest \
     -n auto \
     "$TEST_DIR" \
@@ -31,8 +40,20 @@ run_tests() {
     --durations=0 \
     > "$TEST_OUT" \
     2> "$TEST_ERR"
+  status=$?
+  set -e  
 
-  return $?
+  ended_epoch="$(date +%s)"
+  elapsed_seconds="$((ended_epoch - started_epoch))"
+
+  {
+    echo "test_dir=$TEST_DIR"
+    echo "started_epoch=$started_epoch"
+    echo "ended_epoch=$ended_epoch"
+    echo "elapsed_seconds=$elapsed_seconds"
+  } > "$RUN_FILE"
+
+  return "$status"
 }
 
 capture_failure() {
@@ -65,10 +86,16 @@ echo "[INFO] Generating coverage report..."
 echo "[INFO] Coverage written to $COV_FILE"
 
 # -------------------------
-# Optional derived summaries
+# Timing summary (separate file)
 # -------------------------
-echo "[INFO] Test timing summary (from pytest output):"
-grep -E "slowest|seconds|slow call" "$TEST_OUT" || true
+{
+  echo "=== PYTEST TIMING SUMMARY ==="
+  grep -E "^=+ slowest|^[[:space:]]*[0-9]+\.[0-9]+s|^[[:space:]]*[0-9]+\.[0-9]+ seconds" "$TEST_OUT" || true
+  grep -E "^=+ slowest|^[[:space:]]*[0-9]+\.[0-9]+s|^[[:space:]]*[0-9]+\.[0-9]+ seconds" "$TEST_ERR" || true
+} > "$TIMING_FILE"
+
+echo "[INFO] Runtime written to $RUN_FILE"
+echo "[INFO] Timing written to $TIMING_FILE"
 
 # -------------------------
 # Cleanup temp files
