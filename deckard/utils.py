@@ -763,17 +763,17 @@ class ConfigBase:
         score_path.parent.mkdir(parents=True, exist_ok=True)
         # Assume this is a dictionary of of strings: floats
         supported_filtypes = [".csv", ".json", ".xlsx"]
-        if not isinstance(scores, pd.Series):
-            scores = pd.Series(scores)
+        if not isinstance(scores, dict):
+            scores = dict(scores)
         if score_path.suffix in supported_filtypes:
             match score_path.suffix:
                 case ".csv":
-                    scores.to_csv(score_path, index=False)
+                    pd.DataFrame([scores]).to_csv(score_path, index=False)
                 case ".json":
                     with open(score_path, "w") as f:
-                        json.dump(scores.to_dict(), f, indent=4)
+                        json.dump(scores, f, indent=4)
                 case ".xlsx":
-                    scores.to_excel(score_path, index=False)
+                    pd.DataFrame([scores]).to_excel(score_path, index=False)
         else:
             raise ValueError(
                 f"Unsupported file type {score_path.suffix}. Supported types: {supported_filtypes}",
@@ -917,7 +917,11 @@ class ConfigBase:
         if score_path.suffix in supported_filetypes:
             match score_path.suffix:
                 case ".csv":
-                    scores = pd.read_csv(score_path).to_dict(orient="records")[0] if len(pd.read_csv(score_path)) == 1 else pd.read_csv(score_path).to_dict()
+                    df = pd.read_csv(score_path)
+                    if len(df) == 0:
+                        scores = {}
+                    else:
+                        scores = df.iloc[0].to_dict()
                 case ".json":
                     with open(score_path, "r") as f:
                         raw = json.load(f)
@@ -931,7 +935,11 @@ class ConfigBase:
                     if params is not None:
                         scores["params"] = params
                 case ".xlsx":
-                    scores = pd.read_excel(score_path).to_dict()
+                    df = pd.read_excel(score_path)
+                    if len(df) == 0:
+                        scores = {}
+                    else:
+                        scores = df.iloc[0].to_dict()
                 case _:
                     raise ValueError(
                         f"Unsupported file type {score_path.suffix}. Supported types: {supported_filetypes}",
@@ -941,7 +949,7 @@ class ConfigBase:
                 f"Unsupported file type {score_path.suffix}. Supported types: {supported_filetypes}",
             )
         logger.info(f"Scores loaded from {score_path}")
-        return scores
+        return {str(k): v for k, v in scores.items()}
 
     def load_data(self, filepath: str, **kwargs) -> pd.DataFrame:
         return load_data(filepath, **kwargs)
