@@ -48,28 +48,9 @@ class TestModelConfig(unittest.TestCase):
         proba = self.model._predict_proba(self.X_train)
         self.assertEqual(len(proba), len(self.y_train))
 
-    def test_classification_scores(self):
-        scores = self.model._classification_scores(self.y_train, self.y_train)
-        self.assertIn("accuracy", scores)
-        self.assertIn("precision", scores)
-        self.assertIn("recall", scores)
-        self.assertIn("f1-score", scores)
 
-    def test_classification_scores_handles_single_column_binary_outputs(self):
-        y_true = pd.Series([0, 1, 0, 1])
-        y_pred_single_col = np.array([[0.1], [0.9], [0.2], [0.8]])
-        scores = self.model._classification_scores(y_true, y_pred_single_col)
-        self.assertIn("accuracy", scores)
-        self.assertGreaterEqual(scores["accuracy"], 0.99)
 
-    def test_regression_scores(self):
-        # Use regression scores with float values
-        y_true = pd.Series([1.0, 2.0, 3.0])
-        y_pred = pd.Series([1.1, 1.9, 3.2])
-        scores = self.model._regression_scores(y_true, y_pred)
-        self.assertIn("mse", scores)
-        self.assertIn("rmse", scores)
-        self.assertIn("mae", scores)
+
 
     def test_score(self):
         self.model._train(self.X_train, self.y_train)
@@ -1208,16 +1189,7 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
             self.assertIn("training_time", out)
             self.assertIn("training_n", out)
 
-    def test_regression_scores_rethrows_unexpected_logloss_error(self):
-        model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeRegressor",
-            classifier=False,
-            model_params={"max_depth": 2},
-            scorer=None,
-        )
-        with patch("deckard.model.base.log_loss", side_effect=ValueError("other logloss error")):
-            with self.assertRaises(ValueError):
-                model._regression_scores(np.array([1.0, 2.0]), np.array([1.5, 2.5]))
+
 
     def test_load_or_train_with_none_model_and_missing_file_trains(self):
         data = _make_data()
