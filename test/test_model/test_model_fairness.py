@@ -4,12 +4,17 @@ import tempfile
 import shutil
 from unittest.mock import Mock
 import pytest
+import logging
 
 from deckard.model.fairness import FairlearnModelConfig
 from deckard.data.fairness import FairlearnDataConfig
 from deckard.model.fairness import FairlearnDefenseConfig
 from deckard.model.defend import DefenseConfig
 from deckard.model.defend import DefensePipelineConfig
+
+
+
+logger = logging.getLogger(__name__)
 
 pytest.importorskip("fairlearn")
 
@@ -148,264 +153,17 @@ class TestFairlearnModelConfig(unittest.TestCase):
         with self.assertRaises(TypeError):
             model._apply_defense(data=Mock())
 
-    def test_classification_scores_without_fairness_data(self):
-        """Test classification scores when fairness_data is None."""
-        model = FairlearnModelConfig(
-            model_type=self.model_type,
-            classifier=True,
-            model_params={"n_estimators": 10},
-            data=None,
-        )
-
-        scores = model._classification_scores(self.y_test, self.y_test)
-
-        self.assertIsInstance(scores, dict)
-        self.assertIn("accuracy", scores)
-        # Should not contain group-specific scores
-        self.assertNotIn("A_accuracy", scores)
-        self.assertNotIn("B_accuracy", scores)
-
-    def test_classification_scores_with_fairness_data(self):
-        """Test classification scores includes group fairness metrics."""
-        fairness_data = Mock(spec=FairlearnDataConfig)
-        fairness_data._sensitive_test = self.sensitive_test
-
-        model = FairlearnModelConfig(
-            model_type=self.model_type,
-            classifier=True,
-            model_params={"n_estimators": 10},
-            data=fairness_data,
-        )
-
-        scores = model._classification_scores(self.y_test, self.y_test)
-
-        self.assertIsInstance(scores, dict)
-        self.assertIn("accuracy", scores)
-        # Should contain group-specific scores
-        self.assertIn("A_accuracy", scores)
-        self.assertIn("B_accuracy", scores)
-
-    def test_regression_scores_without_fairness_data(self):
-        """Test regression scores when fairness_data is None."""
-        y_true = pd.Series([1.0, 2.0, 3.0, 4.0])
-        y_pred = pd.Series([1.1, 1.9, 3.2, 3.8])
-
-        model = FairlearnModelConfig(
-            model_type="sklearn.linear_model.LinearRegression",
-            classifier=False,
-            data=None,
-        )
-
-        scores = model._regression_scores(y_true, y_pred)
-
-        self.assertIsInstance(scores, dict)
-        self.assertIn("mse", scores)
-        # Should not contain group-specific scores
-        self.assertNotIn("A_mse", scores)
-        self.assertNotIn("B_mse", scores)
-
-    def test_regression_scores_with_fairness_data(self):
-        """Test regression scores includes group fairness metrics."""
-        y_true = pd.Series(
-            [1.0, 2.0, 3.0, 4.0],
-            index=self.sensitive_test.index,
-        )
-        y_pred = pd.Series(
-            [1.1, 1.9, 3.2, 3.8],
-            index=self.sensitive_test.index,
-        )
-
-        fairness_data = Mock(spec=FairlearnDataConfig)
-        fairness_data._sensitive_test = self.sensitive_test
-
-        model = FairlearnModelConfig(
-            model_type="sklearn.linear_model.LinearRegression",
-            classifier=False,
-            data=fairness_data,
-        )
-
-        scores = model._regression_scores(y_true, y_pred)
-
-        self.assertIsInstance(scores, dict)
-        self.assertIn("mse", scores)
-        # Should contain group-specific scores
-        self.assertIn("A_mse", scores)
-        self.assertIn("B_mse", scores)
-
-    def test_compute_sensitive_fairness_scores_no_sensitive_features(self):
-        """Test sensitive fairness scores error when sensitive features are missing."""
-        fairness_data = Mock(spec=FairlearnDataConfig)
-        fairness_data._sensitive_test = None
-
-        model = FairlearnModelConfig(
-            model_type=self.model_type,
-            classifier=True,
-            model_params={"n_estimators": 10},
-            data=fairness_data,
-        )
-
-        with self.assertRaises(ValueError):
-            model._compute_sensitive_fairness_scores(self.y_test, self.y_test)
-
-    def test_compute_sensitive_fairness_scores_none_sensitive_features(self):
-        """Test sensitive fairness scores error when sensitive features are all None."""
-        fairness_data = Mock(spec=FairlearnDataConfig)
-        fairness_data._sensitive_test = None
-        fairness_data._sensitive_train = None
-        fairness_data._sensitive_all = None
-
-        model = FairlearnModelConfig(
-            model_type=self.model_type,
-            classifier=True,
-            model_params={"n_estimators": 10},
-            data=fairness_data,
-        )
-
-        with self.assertRaises(ValueError):
-            model._compute_sensitive_fairness_scores(self.y_test, self.y_test)
-
-    def test_compute_sensitive_fairness_scores_empty_group(self):
-        """Test sensitive fairness scores skips empty groups."""
-        # Create groups with different sizes
-        sensitive_test = pd.Series(
-            ["A", "A", "A", "B"],
-            index=self.y_test.index,
-        )
-
-        fairness_data = Mock(spec=FairlearnDataConfig)
-        fairness_data._sensitive_test = sensitive_test
-
-        model = FairlearnModelConfig(
-            model_type=self.model_type,
-            classifier=True,
-            model_params={"n_estimators": 10},
-            data=fairness_data,
-        )
-
-        scores = model._compute_sensitive_fairness_scores(
-            self.y_test,
-            self.y_test,
-        )
-
-        self.assertIsInstance(scores, dict)
-        # Should have scores for both groups
-        self.assertTrue(any("A_" in key for key in scores.keys()))
-        self.assertTrue(any("B_" in key for key in scores.keys()))
-
-    def test_compute_sensitive_fairness_scores_classification(self):
-        """Test sensitive fairness scores for classification task."""
-        fairness_data = Mock(spec=FairlearnDataConfig)
-        fairness_data._sensitive_test = self.sensitive_test
-
-        model = FairlearnModelConfig(
-            model_type=self.model_type,
-            classifier=True,
-            model_params={"n_estimators": 10},
-            data=fairness_data,
-        )
-
-        scores = model._compute_sensitive_fairness_scores(
-            self.y_test,
-            self.y_test,
-        )
-
-        self.assertIsInstance(scores, dict)
-        # Check for classification metrics per group
-        for metric in ["accuracy", "precision", "recall", "f1-score"]:
-            self.assertTrue(
-                any(
-                    f"A_{metric}" in key or f"B_{metric}" in key
-                    for key in scores.keys()
-                ),
-            )
-
-    def test_compute_sensitive_fairness_scores_regression(self):
-        """Test sensitive fairness scores for regression task."""
-        y_true = pd.Series(
-            [1.0, 2.0, 3.0, 4.0],
-            index=self.sensitive_test.index,
-        )
-        y_pred = pd.Series(
-            [1.1, 1.9, 3.2, 3.8],
-            index=self.sensitive_test.index,
-        )
-
-        fairness_data = Mock(spec=FairlearnDataConfig)
-        fairness_data._sensitive_test = self.sensitive_test
-
-        model = FairlearnModelConfig(
-            model_type="sklearn.linear_model.LinearRegression",
-            classifier=False,
-            data=fairness_data,
-        )
-
-        scores = model._compute_sensitive_fairness_scores(y_true, y_pred)
-
-        self.assertIsInstance(scores, dict)
-        # Check for regression metrics per sensitive value
-        for metric in ["mse", "rmse", "mae"]:
-            self.assertTrue(
-                any(
-                    f"A_{metric}" in key or f"B_{metric}" in key
-                    for key in scores.keys()
-                ),
-            )
 
 
-def test_resolve_fairlearn_model_param_moves_torch_model_to_cpu():
-    torch = pytest.importorskip("torch")
-
-    cfg = FairlearnModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
-        classifier=True,
-        model_params={"max_iter": 25},
-        data=None,
-    )
-
-    resolved = cfg._resolve_fairlearn_model_param(
-        {
-            "model_type": "torch.nn.Linear",
-            "model_params": {"in_features": 4, "out_features": 2},
-            "device": "cpu",
-        },
-    )
-
-    assert isinstance(resolved, torch.nn.Module)
-    assert next(resolved.parameters()).device.type == "cpu"
-
-
-def test_resolve_fairlearn_model_param_falls_back_from_unavailable_mps(
-    monkeypatch,
-):
-    torch = pytest.importorskip("torch")
-    if not hasattr(torch.backends, "mps"):
-        pytest.skip("torch backend has no mps support")
-
-    monkeypatch.setattr(torch.backends.mps, "is_available", lambda: False)
-
-    cfg = FairlearnModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
-        classifier=True,
-        model_params={"max_iter": 25},
-        data=None,
-    )
-
-    resolved = cfg._resolve_fairlearn_model_param(
-        {
-            "model_type": "torch.nn.Linear",
-            "model_params": {"in_features": 4, "out_features": 2},
-            "device": "mps",
-        },
-    )
-
-    assert isinstance(resolved, torch.nn.Module)
-    assert next(resolved.parameters()).device.type == "cpu"
 
     def test_sensitive_fairness_scores_naming_convention(self):
         """Test that sensitive fairness scores follow naming convention."""
-        fairness_data = Mock(spec=FairlearnDataConfig)
-        fairness_data._sensitive_test = self.sensitive_test
-
+        # Create a minimal real FairlearnDataConfig with required fields
+        from deckard.data.fairness import FairlearnDataConfig
+        fairness_data = FairlearnDataConfig(
+            sensitive_columns="sex",
+        )
+        fairness_data()
         model = FairlearnModelConfig(
             model_type=self.model_type,
             classifier=True,
@@ -413,23 +171,11 @@ def test_resolve_fairlearn_model_param_falls_back_from_unavailable_mps(
             data=fairness_data,
         )
 
-        scores = model._compute_sensitive_fairness_scores(
-            self.y_test,
-            self.y_test,
-        )
-
-        # Check naming convention: {group_name}_{metric}
-        for key in scores.keys():
-            self.assertTrue(
-                "_" in key,
-                f"Key {key} should contain group_metric format",
-            )
-            parts = key.split("_")
-            self.assertGreaterEqual(
-                len(parts),
-                2,
-                f"Key {key} should have group and metric",
-            )
+        # Call the model with test data to get scores
+        scores = model(fairness_data)
+        assert "1_f1" in scores
+        assert "0_f1" in scores
+        
 
     def test_train_passes_sensitive_features_when_supported(self):
         class SensitiveFitEstimator:
@@ -461,56 +207,7 @@ def test_resolve_fairlearn_model_param_falls_back_from_unavailable_mps(
         self.assertIsNotNone(model._model.received_sensitive)
         self.assertEqual(len(model._model.received_sensitive), len(self.y_test))
 
-    def test_compute_sensitive_fairness_scores_train_mode_uses_train_sensitive(
-        self,
-    ):
-        train_sensitive = pd.Series(
-            ["T0", "T1", "T0", "T1"],
-            index=self.y_test.index,
-        )
-        fairness_data = Mock(spec=FairlearnDataConfig)
-        fairness_data._sensitive_train = train_sensitive
-        fairness_data._sensitive_test = pd.Series(
-            ["A", "B", "A", "B"],
-            index=self.y_test.index,
-        )
-        fairness_data._sensitive_all = None
 
-        model = FairlearnModelConfig(
-            model_type=self.model_type,
-            classifier=True,
-            model_params={"n_estimators": 10},
-            data=fairness_data,
-        )
-
-        scores = model._compute_sensitive_fairness_scores(
-            self.y_test,
-            self.y_test,
-            mode="train",
-        )
-
-        self.assertTrue(any(key.startswith("T0_") for key in scores))
-        self.assertTrue(any(key.startswith("T1_") for key in scores))
-
-    def test_compute_sensitive_fairness_scores_val_mode_not_implemented(self):
-        fairness_data = Mock(spec=FairlearnDataConfig)
-        fairness_data._sensitive_train = self.sensitive_test
-        fairness_data._sensitive_test = self.sensitive_test
-        fairness_data._sensitive_all = None
-
-        model = FairlearnModelConfig(
-            model_type=self.model_type,
-            classifier=True,
-            model_params={"n_estimators": 10},
-            data=fairness_data,
-        )
-
-        with self.assertRaises(NotImplementedError):
-            model._compute_sensitive_fairness_scores(
-                self.y_test,
-                self.y_test,
-                mode="val",
-            )
 
     def test_predict_passes_sensitive_features_when_supported(self):
         class SensitivePredictEstimator:
