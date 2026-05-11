@@ -582,6 +582,10 @@ class ScorerDictConfig(ConfigBase):
             "mode": mode,
         }
 
+
+        if not self.scorers:
+            raise ValueError("ScorerDictConfig must have at least one scorer defined; got empty scorers dict.")
+
         for key, scorer in self.scorers.items():
             scored_key = key
             if mode == "train":
@@ -619,6 +623,8 @@ class ScorerDictConfig(ConfigBase):
 
         if score_file is not None:
             self.save_scores(results, score_file)
+        if not results:
+            raise ValueError("ScorerDictConfig.__call__ did not produce any results; ensure at least one scorer is defined and executed.")
         return results
 
 
