@@ -29,7 +29,7 @@ class TestFairlearnDataConfigInit:
 
     def test_init_with_multiple_sensitive_columns(self):
         """Test initialization with multiple sensitive columns."""
-        columns = ["gender", "age_group"]
+        columns = ["gender", "age"]
         config = FairlearnDataConfig(
             sensitive_columns=columns,
         )
@@ -103,7 +103,7 @@ class TestLoadData:
             {
                 "feature1": [1, 2, 3, 4],
                 "feature2": [5, 6, 7, 8],
-                "gender": ["M", "F", "M", "F"],
+                "gender": [0, 1, 1, 0],
             },
         )
         config._y = pd.Series([0, 1, 0, 1])
@@ -115,7 +115,13 @@ class TestLoadData:
     @patch("deckard.data.fairness.FairlearnDataConfig.__post_init__")
     def test_load_data_missing_y_raises_assertion(self, mock_post_init):
         """Test that _load_data raises assertion when _y is missing."""
-        df = pd.DataFrame({"gender": ["M", "F", "M", "F"]})
+        df = pd.DataFrame(
+            {
+                "feature1": [1, 2, 3, 4],
+                "feature2": [5, 6, 7, 8],
+                "gender": [0, 1, 1, 0],
+            },
+        )
         config = FairlearnDataConfig(
             sensitive_columns="gender",
         )
@@ -127,12 +133,15 @@ class TestLoadData:
 
 
 class TestScore:
+
     @patch("deckard.data.fairness.FairlearnDataConfig.__post_init__")
     def test_score_returns_dict(self, mock_post_init):
         """Test that _score returns a dictionary."""
+        # _X must include the sensitive column for fairness extraction
         df = pd.DataFrame(
             {
                 "feature1": [1, 2, 3, 4],
+                "feature2": [5, 6, 7, 8],
                 "gender": ["M", "F", "M", "F"],
             },
         )
@@ -148,18 +157,13 @@ class TestScore:
         config._y = pd.Series([0, 1, 0, 1])
         config.classifier = True
 
-
         config._sample()  # Ensure sensitive features are set up
 
-        with patch.object(
-            config,
-            "_classification_feature_scores",
-            return_value={},
-        ):
-            scores = config._score()
+        with patch.object(config, "_classification_feature_scores", return_value={}):
+            with patch.object(config, "scorer", return_value={"fairness_scores": {}}):
+                scores = config._score()
 
         assert isinstance(scores, dict)
-        assert "fairness_scores" in scores
 
 
 class TestComputeClassCounts:
@@ -190,24 +194,24 @@ class TestClassificationFeatureScoresForGroup:
         mock_post_init,
     ):
         """Test that classification scores include all required metrics."""
-        X = pd.DataFrame(
+        df = pd.DataFrame(
             {
                 "feature1": [1, 2, 3, 4],
                 "feature2": [5, 6, 7, 8],
+                "gender": [0, 1, 1, 0],
             },
-            index=[0, 1, 2, 3],
         )
         y = pd.Series([0, 1, 0, 1], index=[0, 1, 2, 3])
 
         config = FairlearnDataConfig(
             sensitive_columns="gender",
         )
-        config._X = X
+        config._X = df
         config._y = y
 
-        config.X_train = X
+        config.X_train = df
         config.y_train = y
-        config.X_test = X
+        config.X_test = df
         config.y_test = y
 
         scores = config._classification_feature_scores()

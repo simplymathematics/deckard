@@ -215,6 +215,8 @@ class TestSplitSampler(unittest.TestCase):
         scores = cfg()
         self.assertIn("val_n", scores)
         self.assertIn("val_class_counts", scores)
+        # val_class_counts should be a dict
+        self.assertIsInstance(scores["val_class_counts"], dict)
 
     def test_regression_val_score(self):
         cfg = DataConfig(
