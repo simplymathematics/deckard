@@ -585,33 +585,56 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
     def __post_init__(self):
         from .fairness import FairlearnScoreDictConfig
 
-        def _fairlearn_profile(
-            field_val,
-            default_group_scorers,
-            base_scorers=None,
-        ):
+        def _fairlearn_profile(field_val, default_group_scorers, base_scorers=None):
             """Return a FairlearnScoreDictConfig, merging any user-supplied overrides."""
+            # If user provided a FairlearnScoreDictConfig, use as-is
+            if isinstance(field_val, FairlearnScoreDictConfig):
+                # Defensive: if scorers or group_scorers are empty, fill with defaults
+                if not getattr(field_val, 'scorers', None):
+                    field_val.scorers = base_scorers or {k: v for k, v in default_group_scorers.items()}
+                if not getattr(field_val, 'group_scorers', None):
+                    field_val.group_scorers = default_group_scorers
+                return field_val
+            # If user provided a dict, merge with defaults
+            if isinstance(field_val, dict):
+                scorers = dict(field_val.get('scorers', base_scorers or {k: v for k, v in default_group_scorers.items()}))
+                group_scorers = dict(field_val.get('group_scorers', default_group_scorers))
+                return FairlearnScoreDictConfig(
+                    scorers=scorers,
+                    group_scorers=group_scorers,
+                    include_group_by_group=field_val.get('include_group_by_group', True),
+                    include_group_overall=field_val.get('include_group_overall', True),
+                    group_reduction=field_val.get('group_reduction', 'difference'),
+                )
+            # If None, use all defaults
             if field_val is None:
                 return FairlearnScoreDictConfig(
-                    scorers=base_scorers or {},
+                    scorers=base_scorers or {k: v for k, v in default_group_scorers.items()},
                     group_scorers=default_group_scorers,
                     include_group_by_group=True,
                     include_group_overall=True,
                     group_reduction="difference",
                 )
-            if isinstance(field_val, FairlearnScoreDictConfig):
-                return field_val
-            # Fall back to base-class coercion for plain ScorerDictConfig
-            return self._coerce_profile(field_val, ScorerDictConfig)
+            # Fallback: coerce as ScorerDictConfig, then wrap
+            coerced = self._coerce_profile(field_val, ScorerDictConfig)
+            # Defensive: if scorers or group_scorers are empty, fill with defaults
+            if not getattr(coerced, 'scorers', None):
+                coerced.scorers = base_scorers or {k: v for k, v in default_group_scorers.items()}
+            if not getattr(coerced, 'group_scorers', None):
+                coerced.group_scorers = default_group_scorers
+            return FairlearnScoreDictConfig(
+                scorers=coerced.scorers,
+                group_scorers=coerced.group_scorers,
+                include_group_by_group=True,
+                include_group_overall=True,
+                group_reduction="difference",
+            )
 
+        # Reasonable defaults for each attack type
         evasion_group = FairlearnEvasionAttackScorerConfig().group_scorers
-        membership_group = (
-            FairlearnMembershipInferenceAttackScorerConfig().group_scorers
-        )
+        membership_group = FairlearnMembershipInferenceAttackScorerConfig().group_scorers
         attribute_group = FairlearnAttributeInferenceAttackScorerConfig().group_scorers
-        attribute_reg_group = (
-            FairlearnAttributeInferenceRegressionAttackScorerConfig().group_scorers
-        )
+        attribute_reg_group = FairlearnAttributeInferenceRegressionAttackScorerConfig().group_scorers
         evasion_success = {
             "success": ScorerConfig(
                 score_name="success",
@@ -619,27 +642,11 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
             ),
         }
 
-        self.evasion = _fairlearn_profile(
-            self.evasion,
-            evasion_group,
-            base_scorers=evasion_success,
-        )
-        self.evasion_regression = _fairlearn_profile(
-            self.evasion_regression,
-            FairlearnAttributeInferenceRegressionAttackScorerConfig().group_scorers,
-        )
-        self.membership_inference = _fairlearn_profile(
-            self.membership_inference,
-            membership_group,
-        )
-        self.attribute_inference = _fairlearn_profile(
-            self.attribute_inference,
-            attribute_group,
-        )
-        self.attribute_inference_regression = _fairlearn_profile(
-            self.attribute_inference_regression,
-            attribute_reg_group,
-        )
+        self.evasion = _fairlearn_profile(self.evasion, evasion_group, base_scorers=evasion_success)
+        self.evasion_regression = _fairlearn_profile(self.evasion_regression, attribute_reg_group)
+        self.membership_inference = _fairlearn_profile(self.membership_inference, membership_group)
+        self.attribute_inference = _fairlearn_profile(self.attribute_inference, attribute_group)
+        self.attribute_inference_regression = _fairlearn_profile(self.attribute_inference_regression, attribute_reg_group)
 
 
 safe_store(

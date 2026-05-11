@@ -1,3 +1,14 @@
+
+import unittest
+import numpy as np
+import pytest
+from sklearn.linear_model import LogisticRegression
+from deckard.attack import AttackConfig
+from deckard.score.attack import FairlearnAttackScorerConfig
+from deckard.score.attack import FairlearnAttackScorerConfig
+from deckard.score.fairness import FairlearnScoreDictConfig
+from deckard.score.base import DefaultClassifierConfig
+from deckard.data.fairness import FairlearnDataConfig
 class TestFairlearnAttackScorer(unittest.TestCase):
     """Unit tests for FairlearnAttackScorerConfig per-group attack metrics."""
 
@@ -6,21 +17,12 @@ class TestFairlearnAttackScorer(unittest.TestCase):
         pytest.importorskip("fairlearn")
 
     def _make_data_with_sensitive(self):
-        data = TinyData()
-        data._sensitive_train = pd.Series(
-            ["group_a" if i % 2 == 0 else "group_b" for i in range(len(data.X_train))],
-            name="sensitive",
-        )
-        data._sensitive_test = pd.Series(
-            ["group_a" if i % 2 == 0 else "group_b" for i in range(len(data.X_test))],
-            name="sensitive",
-        )
+        data = FairlearnDataConfig(dataset_name="adult", sensitive_columns="sex")
+        data()
         return data
 
     def test_fairlearn_attack_scorer_instantiates(self):
-        from deckard.score.attack import FairlearnAttackScorerConfig
-        from deckard.score.fairness import FairlearnScoreDictConfig
-        from deckard.score.base import DefaultClassifierConfig
+        
 
         scorer = FairlearnAttackScorerConfig(evasion=DefaultClassifierConfig())
         self.assertIsInstance(scorer.evasion, FairlearnScoreDictConfig)
@@ -82,7 +84,6 @@ class TestFairlearnAttackScorer(unittest.TestCase):
     def test_score_attribute_with_sensitive_features_produces_group_metrics(
         self,
     ):
-        from deckard.score.attack import FairlearnAttackScorerConfig
 
         scorer = FairlearnAttackScorerConfig()
         rng = np.random.default_rng(3)

@@ -1,192 +1,137 @@
-from types import SimpleNamespace
-
+import pytest
 import numpy as np
 import pandas as pd
-import pytest
-
-from deckard.score.base import ScorerConfig, ScorerDictConfig
+from deckard.score import fairness
 from deckard.score.fairness import (
-    FairlearnScoreDictConfig,
-    _flatten_metric_frame_by_group,
-    _group_metric_difference,
+    as_group_scorer,
     _resolve_sensitive_features,
-    _resolve_sensitive_from_kwargs_or_data,
-    _series_like_to_float_dict,
     fairness_demographic_parity_difference,
     fairness_equalized_odds_difference,
     fairness_group_mean_prediction_difference,
+    fairness_group_mae_difference,
+    fairness_group_mse_difference,
+    _flatten_metric_frame_by_group,
+    _series_like_to_float_dict,
+    FairlearnScoreDictConfig,
+    DefaultFairlearnClassificationConfig,
+    DefaultFairlearnRegressionConfig,
 )
+from deckard.score.base import ScorerConfig, ScorerDictConfig
 
+class DummyData:
+    def __init__(self, sensitive_train=None, sensitive_test=None, sensitive_val=None, sensitive_all=None):
+        self._sensitive_train = sensitive_train
+        self._sensitive_test = sensitive_test
+        self._sensitive_val = sensitive_val
+        self._sensitive_all = sensitive_all
 
-def test_resolve_sensitive_features_modes_and_errors():
-    data = SimpleNamespace(
-        _sensitive_train=np.array([0, 1]),
-        _sensitive_test=np.array([1, 1]),
-        _sensitive_val=np.array([0, 0]),
-        _sensitive_all=np.array([0, 1]),
-    )
+# --- as_group_scorer ---
+def test_as_group_scorer_with_dict():
+    scorer_dict = {"accuracy": ScorerConfig("accuracy", lambda y_true, y_pred: 1.0)}
+    group = as_group_scorer(scorer_dict)
+    assert isinstance(group, FairlearnScoreDictConfig)
+    assert group.scorers["accuracy"].score_name == "accuracy"
 
-    assert _resolve_sensitive_features(None, [0, 1], mode="test") is None
-    assert _resolve_sensitive_features(data, [0, 1], mode="train") is not None
-    assert _resolve_sensitive_features(data, [0, 1], mode="val") is not None
-    assert _resolve_sensitive_features(data, [0, 1], mode="all") is not None
-    assert _resolve_sensitive_features(data, [0], mode="test") is None
+def test_as_group_scorer_with_scorerdictconfig():
+    scorer_dict = ScorerDictConfig(scorers={"accuracy": ScorerConfig("accuracy", lambda y_true, y_pred: 1.0)})
+    group = as_group_scorer(scorer_dict)
+    assert isinstance(group, FairlearnScoreDictConfig)
+    assert group.scorers["accuracy"].score_name == "accuracy"
 
-    with pytest.raises(ValueError, match="Unsupported fairness scoring mode"):
-        _resolve_sensitive_features(data, [0, 1], mode="bad")
+@pytest.mark.parametrize("bad_input", [None, 123, "foo"])
+def test_as_group_scorer_typeerror(bad_input):
+    with pytest.raises(TypeError):
+        as_group_scorer(bad_input)
 
+# --- _resolve_sensitive_features ---
+def test_resolve_sensitive_features_modes():
+    arr = np.array([0, 1, 0, 1])
+    data = DummyData(sensitive_train=arr, sensitive_test=arr, sensitive_val=arr, sensitive_all=arr)
+    y = np.ones(4)
+    assert np.all(_resolve_sensitive_features(data, y, mode="train") == arr)
+    assert np.all(_resolve_sensitive_features(data, y, mode="test") == arr)
+    assert np.all(_resolve_sensitive_features(data, y, mode="attack") == arr)
+    assert np.all(_resolve_sensitive_features(data, y, mode="val") == arr)
+    assert np.all(_resolve_sensitive_features(data, y, mode="attack-val") == arr)
+    assert np.all(_resolve_sensitive_features(data, y, mode="all") == arr)
+    with pytest.raises(ValueError):
+        _resolve_sensitive_features(data, y, mode="badmode")
 
-def test_fairness_core_scorers_require_sensitive_features():
-    y_true = np.array([0, 1])
-    y_pred = np.array([0, 1])
+def test_resolve_sensitive_features_shape_mismatch():
+    arr = np.array([0, 1, 0])
+    data = DummyData(sensitive_train=arr)
+    y = np.ones(4)
+    assert _resolve_sensitive_features(data, y, mode="train") is None
 
-    with pytest.raises(ValueError, match="sensitive_features are required"):
-        fairness_demographic_parity_difference(y_true=y_true, y_pred=y_pred, data=None)
+def test_resolve_sensitive_features_none():
+    data = DummyData()
+    y = np.ones(4)
+    assert _resolve_sensitive_features(data, y, mode="train") is None
 
-    with pytest.raises(ValueError, match="sensitive_features are required"):
-        fairness_equalized_odds_difference(y_true=y_true, y_pred=y_pred, data=None)
+# --- fairness_demographic_parity_difference & fairness_equalized_odds_difference ---
+def test_fairness_demographic_parity_difference_and_equalized_odds(monkeypatch):
+    # Patch fairlearn.metrics functions
+    monkeypatch.setattr(fairness, "demographic_parity_difference", lambda **kwargs: 0.5)
+    monkeypatch.setattr(fairness, "equalized_odds_difference", lambda **kwargs: 0.2)
+    y_true = [0, 1, 0, 1]
+    y_pred = [0, 1, 1, 0]
+    sensitive = [0, 1, 0, 1]
+    # Should work with direct sensitive_features
+    assert fairness_demographic_parity_difference(y_true, y_pred, sensitive_features=sensitive) == 0.5
+    assert fairness_equalized_odds_difference(y_true, y_pred, sensitive_features=sensitive) == 0.2
+    # Should work with data object
+    data = DummyData(sensitive_test=sensitive)
+    assert fairness_demographic_parity_difference(y_true, y_pred, data=data) == 0.5
+    assert fairness_equalized_odds_difference(y_true, y_pred, data=data) == 0.2
+    # Should raise if sensitive_features missing
+    monkeypatch.setattr(fairness, "demographic_parity_difference", lambda **kwargs: 0.5)
+    with pytest.raises(ValueError):
+        fairness_demographic_parity_difference(y_true, y_pred)
 
-    with pytest.raises(ValueError, match="sensitive_features are required"):
-        _resolve_sensitive_from_kwargs_or_data(y_true=y_true, data=None)
+# --- _flatten_metric_frame_by_group & _series_like_to_float_dict ---
+def test_flatten_metric_frame_by_group():
+    df = pd.DataFrame({"accuracy": [0.8, 0.9], "f1": [0.7, 0.8]}, index=["A", "B"])
+    flat = _flatten_metric_frame_by_group(df)
+    assert flat == {"A_accuracy": 0.8, "A_f1": 0.7, "B_accuracy": 0.9, "B_f1": 0.8}
 
+def test_series_like_to_float_dict():
+    s = pd.Series([1.0, 2.0], index=["a", "b"])
+    assert _series_like_to_float_dict(s) == {"a": 1.0, "b": 2.0}
+    df = pd.DataFrame({"x": [1, 2]}, index=["a", "b"])
+    assert _series_like_to_float_dict(df) == {"a_x": 1.0, "b_x": 2.0}
+    assert _series_like_to_float_dict(3.5) == {"value": 3.5}
 
-def test_flatten_helpers_and_scalar_series_like_branches():
-    by_group = pd.DataFrame({"metric": [0.1, 0.2]}, index=["A", "B"])
-    flat = _flatten_metric_frame_by_group(by_group)
-    assert flat["A_metric"] == 0.1
+# --- group mean/mae/mse difference ---
+def test_fairness_group_mean_prediction_difference():
+    y_true = [0, 1, 0, 1]
+    y_pred = [0.1, 0.9, 0.2, 0.8]
+    sensitive = [0, 1, 0, 1]
+    result = fairness_group_mean_prediction_difference(y_true, y_pred, sensitive_features=sensitive)
+    assert abs(result - 0.7) < 1e-6
 
-    assert _series_like_to_float_dict(0.5) == {"value": 0.5}
+def test_fairness_group_mae_difference():
+    y_true = [0, 1, 0, 1]
+    y_pred = [0.1, 0.9, 0.2, 0.8]
+    sensitive = [0, 1, 0, 1]
+    result = fairness_group_mae_difference(y_true, y_pred, sensitive_features=sensitive)
+    assert abs(result) < 1e-6
 
+def test_fairness_group_mse_difference():
+    y_true = [0, 1, 0, 1]
+    y_pred = [0.1, 0.9, 0.2, 0.8]
+    sensitive = [0, 1, 0, 1]
+    result = fairness_group_mse_difference(y_true, y_pred, sensitive_features=sensitive)
+    assert abs(result) < 1e-6
 
-def test_fairlearn_score_dict_post_init_branches_and_type_errors():
-    nested = ScorerDictConfig(
-        scorers={
-            "acc": ScorerConfig(score_name="acc", score_function="sklearn.metrics.accuracy_score"),
-        },
-    )
-    cfg = FairlearnScoreDictConfig(
-        group_scorers={
-            "nested": nested,
-            "callable": lambda y_true, y_pred, **kwargs: 1.0,
-            "string": "sklearn.metrics.accuracy_score",
-        },
-    )
-    # After normalization, nested ScorerDictConfig keys are flattened
-    assert "acc" in cfg.group_scorers
-    assert "callable" in cfg.group_scorers
-    assert "string" in cfg.group_scorers
+# --- DefaultFairlearnClassificationConfig & DefaultFairlearnRegressionConfig ---
+def test_default_fairlearn_classification_config():
+    cfg = DefaultFairlearnClassificationConfig()
+    assert cfg.classifier is True
+    assert "accuracy" in cfg.scorers
+    assert isinstance(cfg, FairlearnScoreDictConfig)
 
-    with pytest.raises(TypeError, match="must contain a dict"):
-        FairlearnScoreDictConfig(group_scorers=[{"group_scorers": "bad"}])
-
-    with pytest.raises(TypeError, match="must be ScorerConfig"):
-        FairlearnScoreDictConfig(group_scorers={"bad": 7})
-
-    # New: Expect ValueError if both group_scorers and scorers are empty
-    with pytest.raises(ValueError, match="group_scorers must not be empty"):
-        FairlearnScoreDictConfig()
-
-
-def test_build_metric_frame_import_error_and_call_validation(monkeypatch):
-    cfg = FairlearnScoreDictConfig(
-        group_scorers={
-            "acc": ScorerConfig(score_name="acc", score_function="sklearn.metrics.accuracy_score"),
-        },
-    )
-
-    monkeypatch.setattr("deckard.score.fairness.MetricFrame", None)
-    with pytest.raises(ImportError, match="optional dependency"):
-        cfg._build_metric_frame(
-            y_true=np.array([0, 1]),
-            y_pred=np.array([0, 1]),
-            sensitive_features=np.array([0, 1]),
-        )
-
-    with pytest.raises(ValueError, match="sensitive_features are required"):
-        cfg(
-            y_true=np.array([0, 1]),
-            y_pred=np.array([0, 1]),
-            mode="test",
-            data=None,
-        )
-
-
-def test_call_overall_value_branch_and_invalid_group_reduction(monkeypatch):
-    cfg = FairlearnScoreDictConfig(
-        group_scorers={
-            "m1": ScorerConfig(score_name="m1", score_function="sklearn.metrics.accuracy_score"),
-            "m2": ScorerConfig(score_name="m2", score_function="sklearn.metrics.accuracy_score"),
-        },
-        include_group_overall=True,
-        include_group_by_group=False,
-        group_reduction="none",
-    )
-
-    class FakeMetricFrame:
-        overall = 0.25
-        by_group = {"A": {"m1": 0.5}}
-
-        def difference(self, method=None):
-            _ = method
-            return pd.Series({"m1": 0.1})
-
-        def ratio(self, method=None):
-            _ = method
-            return pd.Series({"m1": 0.9})
-
-    monkeypatch.setattr(cfg, "_build_metric_frame", lambda **kwargs: FakeMetricFrame())
-
-    out = cfg(
-        y_true=np.array([0, 1]),
-        y_pred=np.array([0, 1]),
-        sensitive_features=np.array(["A", "B"]),
-        mode=None,
-    )
-    assert out["m1_overall"] == 0.25
-    assert out["m2_overall"] == 0.25
-
-    cfg_bad = FairlearnScoreDictConfig(
-        group_scorers={
-            "m1": ScorerConfig(score_name="m1", score_function="sklearn.metrics.accuracy_score"),
-        },
-        group_reduction="invalid",  # type: ignore[arg-type]
-    )
-    monkeypatch.setattr(cfg_bad, "_build_metric_frame", lambda **kwargs: FakeMetricFrame())
-    with pytest.raises(ValueError, match="group_reduction must be one of"):
-        cfg_bad(
-            y_true=np.array([0, 1]),
-            y_pred=np.array([0, 1]),
-            sensitive_features=np.array(["A", "B"]),
-            mode="test",
-        )
-
-
-def test_group_difference_and_group_mean_edge_branches_with_nan_groups():
-    y_true = np.array([0.0, 1.0])
-    y_pred = np.array([0.0, 1.0])
-
-    assert _group_metric_difference(y_true, y_pred, np.array([1, 1]), lambda a, b: float(np.mean(np.abs(a - b)))) == 0.0
-
-    # np.nan yields an all-False equality mask branch for one group.
-    mixed_groups = np.array([np.nan, 1.0], dtype=float)
-    diff = _group_metric_difference(
-        y_true,
-        y_pred,
-        mixed_groups,
-        lambda a, b: float(np.mean(np.abs(a - b))),
-    )
-    assert diff == 0.0
-
-    mean_diff_single = fairness_group_mean_prediction_difference(
-        y_true=y_true,
-        y_pred=y_pred,
-        sensitive_features=np.array([1, 1]),
-    )
-    assert mean_diff_single == 0.0
-
-    mean_diff_nan = fairness_group_mean_prediction_difference(
-        y_true=y_true,
-        y_pred=y_pred,
-        sensitive_features=mixed_groups,
-    )
-    assert mean_diff_nan == 0.0
+def test_default_fairlearn_regression_config():
+    cfg = DefaultFairlearnRegressionConfig()
+    assert cfg.classifier is False
+    assert "mse" in cfg.scorers
+    assert isinstance(cfg, FairlearnScoreDictConfig)

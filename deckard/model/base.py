@@ -9,13 +9,6 @@ import numpy as np
 import pandas as pd
 
 
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-    log_loss,
-)
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
 from sklearn.base import BaseEstimator

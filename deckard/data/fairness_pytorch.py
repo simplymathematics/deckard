@@ -150,10 +150,10 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         fairness_scores = self.scorer(
             y_true=y_true,
             y_pred=None,  # y_pred should be provided by the model pipeline
-            mode="test",
+            mode="train",
             data=self,
             sensitive_features=sensitive,
         )
-        return {"fairness_scores": fairness_scores}
+        return fairness_scores
 
 

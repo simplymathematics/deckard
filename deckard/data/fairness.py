@@ -6,15 +6,37 @@ from omegaconf import DictConfig, ListConfig
 
 from .base import  DataPipelineConfig
 from ..utils import coerce_to_list, is_default_config_value,  merge_list_of_dicts
+from ..score.fairness import DefaultFairlearnClassificationConfig, DefaultFairlearnRegressionConfig
 
 @dataclass(eq=False)
 class FairlearnDataConfig(DataPipelineConfig):
 
     def __call__(self, *args, **kwargs):
+        # Auto-select fairness-compatible scorer if not set
+        if is_default_config_value(self.scorer, include_best=False) or self.scorer is None:
+            from deckard.score import DefaultFairlearnClassificationConfig, DefaultFairlearnRegressionConfig
+            self.scorer = (
+                DefaultFairlearnClassificationConfig() if self.classifier else DefaultFairlearnRegressionConfig()
+            )
         # Call parent to load and sample data
-        super().__call__(*args, **kwargs)
+        result = super().__call__(*args, **kwargs)
+        # Strict output validation for fairness data config
+        import traceback
+        def is_scalar(val):
+            return isinstance(val, (float, int, str, bool))
+        def is_flat_list(val):
+            return isinstance(val, list) and all(is_scalar(x) for x in val)
+        for k, v in result.items():
+            if isinstance(v, (dict, pd.DataFrame, pd.Series, list)) and not is_flat_list(v):
+                logger.error(f" Non-flat or nested value in FairlearnDataConfig score_dict for key '{k}': {repr(v)} (type: {type(v)})")
+                traceback.print_stack()
+                raise ValueError(f"FairlearnDataConfig score_dict key '{k}' contains a non-flat or nested value: {repr(v)}")
+            if isinstance(v, str) and (v.startswith('{') or v.startswith('[')):
+                logger.error(f" Stringified dict/list in FairlearnDataConfig score_dict for key '{k}': {v}")
+                traceback.print_stack()
+                raise ValueError(f"FairlearnDataConfig score_dict key '{k}' contains a stringified dict/list: {v}")
         assert hasattr(self, "X_train"), ".X_train not found"
-        return self.score_dict
+        return result
 
     """Data pipeline config with fairlearn-sensitive feature support."""
 
@@ -207,8 +229,7 @@ class FairlearnDataConfig(DataPipelineConfig):
             self._sensitive_val = None
 
     def _score(self) -> dict:
-        """Delegate fairness dataset scoring to DefaultFairlearnClassificationConfig or RegressionConfig."""
-        from ..score.fairness import DefaultFairlearnClassificationConfig, DefaultFairlearnRegressionConfig
+        """Delegate fairness dataset scoring to DefaultFairlearnClassificationConfig or RegressionConfig, and flatten output."""
         if is_default_config_value(self.scorer, include_best=False):
             self.scorer = (
                 DefaultFairlearnClassificationConfig() if self.classifier else DefaultFairlearnRegressionConfig()
@@ -221,14 +242,21 @@ class FairlearnDataConfig(DataPipelineConfig):
             )
         y_true = self.y_train if getattr(self, "y_train", None) is not None else self._y
         y_pred = self.X_train if getattr(self, "X_train", None) is not None else self._X
-        if isinstance(y_pred, pd.DataFrame):
-            non_numeric = y_pred.select_dtypes(exclude=["number"]).columns
-            if len(non_numeric) > 0:
-                y_pred = pd.get_dummies(y_pred, drop_first=False).astype(int)
         fairness_scores = self.scorer(
             y_true=y_true,
             y_pred=y_pred,
-            mode="pre-sample",
+            mode="train",
             data=self,
         )
-        return {"fairness_scores": fairness_scores}
+        # Flatten fairness_scores if it's a dict
+        if isinstance(fairness_scores, dict):
+            flat = {}
+            for k, v in fairness_scores.items():
+                if isinstance(v, dict):
+                    for subk, subv in v.items():
+                        flat[f"{k}_{subk}"] = subv
+                else:
+                    flat[k] = v
+            return flat
+        else:
+            return {"fairness_score": fairness_scores}

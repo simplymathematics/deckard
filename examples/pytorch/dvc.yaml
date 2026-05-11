@@ -9,7 +9,7 @@ stages:
       deps:
         - ./config/
   simple_example:
-      cmd: deckard && echo "Deckard ran successfully!" > deckard.log
+      cmd: deckard && echo "deckard ran successfully!" > deckard.log
       outs:
         - deckard.log
       deps:

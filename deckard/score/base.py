@@ -286,12 +286,15 @@ class ScorerConfig:
             "group_mse_difference",
         }
 
-        # Trigger normalization if either the function name or the score_name matches
         is_label_metric = metric_name in label_metrics or self.score_name in label_metrics
+
+        logger.debug(f" _normalize_predictions_for_metric: metric_name={metric_name}, score_name={self.score_name}, is_label_metric={is_label_metric}")
+        logger.debug(f" y_true type={type(y_true)}, shape={getattr(y_true, 'shape', None)}, y_pred type={type(y_pred)}, shape={getattr(y_pred, 'shape', None)}")
 
         if self.needs_proba:
             self._validate_probability_input(y_true=y_true, y_pred=y_pred)
             y_pred_arr = np.asarray(to_numpy_if_torch(y_pred))
+            logger.debug(f" needs_proba=True, y_pred_arr.shape={y_pred_arr.shape}, min={np.nanmin(y_pred_arr)}, max={np.nanmax(y_pred_arr)}")
             if y_pred_arr.ndim == 2 and metric_name == "roc_auc_score":
                 if y_pred_arr.shape[1] == 1:
                     return y_pred_arr.reshape(-1)
@@ -299,12 +302,16 @@ class ScorerConfig:
                     return y_pred_arr[:, 1]
             return y_pred
         if not is_label_metric:
+            logger.debug("[DEBUG] Not a label metric, returning y_pred unchanged.")
             return y_pred
         y_true_arr = np.asarray(to_numpy_if_torch(y_true))
         y_pred_arr = np.asarray(to_numpy_if_torch(y_pred))
+        logger.debug(f" y_true_arr.shape={y_true_arr.shape}, y_pred_arr.shape={y_pred_arr.shape}, y_pred_arr.dtype={y_pred_arr.dtype}")
         if y_true_arr.ndim != 1 or y_pred_arr.ndim != 2:
+            logger.debug(f" Skipping normalization: y_true_arr.ndim={y_true_arr.ndim}, y_pred_arr.ndim={y_pred_arr.ndim}")
             return y_pred
         if not np.issubdtype(y_pred_arr.dtype, np.number):
+            logger.debug(f" Skipping normalization: y_pred_arr.dtype={y_pred_arr.dtype} is not numeric")
             return y_pred
 
         if y_pred_arr.shape[1] == 1:
@@ -312,9 +319,14 @@ class ScorerConfig:
             threshold = 0.5
             if np.nanmin(binary_scores) < 0.0 or np.nanmax(binary_scores) > 1.0:
                 threshold = 0.0
-            return (binary_scores >= threshold).astype(int)
+            logger.debug(f" Binary scores normalization: threshold={threshold}, min={np.nanmin(binary_scores)}, max={np.nanmax(binary_scores)}")
+            result = (binary_scores >= threshold).astype(int)
+            logger.debug(f" Normalized binary result: unique={np.unique(result)}")
+            return result
 
-        return np.argmax(y_pred_arr, axis=1)
+        result = np.argmax(y_pred_arr, axis=1)
+        logger.debug(f" Argmax normalization: result.shape={result.shape}, unique={np.unique(result)}")
+        return result
 
     def __call__(
         self,

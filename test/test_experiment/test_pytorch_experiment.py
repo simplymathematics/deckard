@@ -15,7 +15,7 @@ from unittest.mock import patch
 
 import pytest
 import yaml
-from helpers import load_env_from_deckard_rc, make_runtime_env
+from helpers import make_runtime_env
 
 
 from deckard.attack import AttackConfig

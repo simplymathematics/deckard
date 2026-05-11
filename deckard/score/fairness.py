@@ -1,3 +1,93 @@
+
+import logging
+logger = logging.getLogger(__name__)
+from dataclasses import dataclass, field
+from sklearn.metrics import mutual_info_score
+
+
+"""Fairness-specific scoring helpers and default scorer configuration."""
+
+from dataclasses import dataclass, field
+from collections.abc import Sized
+from typing import TYPE_CHECKING, Any, Callable, Literal, Union, cast
+
+import numpy as np
+import pandas as pd
+from omegaconf import ListConfig
+from .base import (
+    ScorerConfig,
+    ScorerDictConfig,
+    _TaskAwareScorerMixin,
+    _resolve_yt_yp,
+    safe_store,
+)
+from ..utils import coerce_to_list, merge_list_of_dicts
+from ..data import DataConfig
+
+try:
+    from fairlearn.metrics import MetricFrame
+except ImportError:  # pragma: no cover
+    MetricFrame = None
+
+try:
+    from fairlearn.metrics import (
+        demographic_parity_difference,
+        equalized_odds_difference,
+    )
+except ImportError:  # pragma: no cover
+    demographic_parity_difference = None
+    equalized_odds_difference = None
+
+
+if TYPE_CHECKING:
+    from ..attack import AttackConfig
+    from ..model import ModelConfig
+
+__all__ = [
+    "_FairnessScorerMixin",
+    "fairness_demographic_parity_difference",
+    "fairness_equalized_odds_difference",
+    "fairness_group_mean_prediction_difference",
+    "fairness_group_mae_difference",
+    "fairness_group_mse_difference",
+    "FairlearnScoreDictConfig",
+    "DefaultFairlearnScoreConfig",
+    "DefaultFairlearnClassificationConfig",
+    "DefaultFairlearnRegressionConfig",
+    "DefaultFairlearnDataScoreConfig",
+]
+
+FairnessMode = Literal["test", "train", "attack", "val", "attack-val", "all"]
+ControlFeaturesLike = Union[pd.Series, pd.DataFrame, np.ndarray, None]
+SampleParamsLike = Union[dict[str, Any], dict[str, dict[str, Any]], None]
+RandomStateLike = Union[int, np.random.RandomState, None]
+
+
+@dataclass(eq=False)
+class DefaultFairlearnDataScoreConfig(_TaskAwareScorerMixin, ScorerDictConfig):
+    """Default fairness data scoring: class count, mutual information, etc."""
+    classifier: bool | None = None
+
+    def __post_init__(self):
+        super().__post_init__()
+        if not getattr(self, "scorers", None):
+            self._initialize_task_aware_scorers()
+
+    def _build_default_scorers(self, classifier: bool) -> dict:
+        # Data-level metrics, not model metrics
+        return {
+            "class_count": ScorerConfig(
+                score_name="class_count",
+                score_function=lambda y_true, y_pred=None, **kwargs: len(set(y_true)),
+                greater_is_better=False,
+            ),
+            "mutual_info": ScorerConfig(
+                score_name="mutual_info",
+                score_function=lambda y_true, y_pred=None, **kwargs: mutual_info_score(y_true, y_true),
+                greater_is_better=True,
+            ),
+        }
+
 def as_group_scorer(scorer_dict, *, group_reduction="difference", group_reduction_method="between_groups", include_group_overall=True, include_group_by_group=True, **kwargs):
     """
     Wrap any ScorerDictConfig (or dict of metrics) to enable MetricFrame group scoring at runtime.
@@ -20,63 +110,6 @@ def as_group_scorer(scorer_dict, *, group_reduction="difference", group_reductio
         include_group_by_group=include_group_by_group,
         **kwargs
     )
-"""Fairness-specific scoring helpers and default scorer configuration."""
-
-from dataclasses import dataclass, field
-from collections.abc import Sized
-from typing import TYPE_CHECKING, Any, Callable, Literal, Union, cast
-
-import numpy as np
-import pandas as pd
-from omegaconf import ListConfig
-
-try:
-    from fairlearn.metrics import MetricFrame
-except ImportError:  # pragma: no cover
-    MetricFrame = None
-
-try:
-    from fairlearn.metrics import (
-        demographic_parity_difference,
-        equalized_odds_difference,
-    )
-except ImportError:  # pragma: no cover
-    demographic_parity_difference = None
-    equalized_odds_difference = None
-
-from .base import (
-    ScorerConfig,
-    ScorerDictConfig,
-    _TaskAwareScorerMixin,
-    _resolve_yt_yp,
-    safe_store,
-)
-from ..utils import coerce_to_list, merge_list_of_dicts
-from ..data import DataConfig
-
-if TYPE_CHECKING:
-    from ..attack import AttackConfig
-    from ..model import ModelConfig
-
-__all__ = [
-    "_FairnessScorerMixin",
-    "fairness_demographic_parity_difference",
-    "fairness_equalized_odds_difference",
-    "fairness_group_mean_prediction_difference",
-    "fairness_group_mae_difference",
-    "fairness_group_mse_difference",
-    "FairlearnScoreDictConfig",
-    "DefaultFairlearnScoreConfig",
-    "DefaultFairlearnClassificationConfig",
-    "DefaultFairlearnRegressionConfig",
-    "DefaultFairlearnScoreConfig",
-]
-
-FairnessMode = Literal["test", "train", "attack", "val", "attack-val", "all"]
-ControlFeaturesLike = Union[pd.Series, pd.DataFrame, np.ndarray, None]
-SampleParamsLike = Union[dict[str, Any], dict[str, dict[str, Any]], None]
-RandomStateLike = Union[int, np.random.RandomState, None]
-
 
 def _resolve_sensitive_features(
     data: DataConfig | None,
@@ -194,7 +227,10 @@ def _flatten_metric_frame_by_group(by_group: pd.DataFrame) -> dict[str, float]:
     rows = by_group.to_dict(orient="index")
     flattened = {}
     for group, metrics in rows.items():
-        group_label = str(group)
+        if isinstance(group, tuple):
+            group_label = "_".join(str(g) for g in group)
+        else:
+            group_label = str(group)
         for metric_name, value in metrics.items():
             flattened[f"{group_label}_{metric_name}"] = float(value)
     return flattened
@@ -204,7 +240,10 @@ def _series_like_to_float_dict(values: Any) -> dict[str, float]:
     if isinstance(values, pd.DataFrame):
         flattened = {}
         for row_key, row_values in values.to_dict(orient="index").items():
-            row_label = str(row_key)
+            if isinstance(row_key, tuple):
+                row_label = "_".join(str(g) for g in row_key)
+            else:
+                row_label = str(row_key)
             for col_key, col_val in row_values.items():
                 flattened[f"{row_label}_{col_key}"] = float(col_val)
         return flattened
@@ -359,11 +398,11 @@ class _FairnessScorerMixin:
                     **call_kwargs,
                 )
                 if result is None:
-                    print(f"[DEBUG] Metric function returned None for scorer {self.scorer} with y_true={y_true}, y_pred={y_pred}, sensitive={sensitive}")
+                    logger.debug(f" Metric function returned None for scorer {self.scorer} with y_true={y_true}, y_pred={y_pred}, sensitive={sensitive}")
                     return np.nan
                 return result
             except Exception as e:
-                print(f"[DEBUG] Exception in metric function for scorer {self.scorer}: {e}")
+                logger.debug(f" Exception in metric function for scorer {self.scorer}: {e}")
                 return np.nan
 
         class MetricCallable:
@@ -466,10 +505,40 @@ class _FairnessScorerMixin:
                     for metric_name, value in overall_series.items():
                         results[f"{metric_name}_overall"] = value
 
+        import traceback
         if self_cfg.include_group_by_group:
-            results.update(
-                _flatten_metric_frame_by_group(pd.DataFrame(metric_frame.by_group)),
-            )
+            logger.debug(f" metric_frame.by_group type: {type(metric_frame.by_group)}")
+            logger.debug(f" metric_frame.by_group content: {repr(metric_frame.by_group)}")
+            import traceback
+            if not isinstance(metric_frame.by_group, pd.DataFrame):
+                logger.critical(f" metric_frame.by_group is NOT a DataFrame! Type: {type(metric_frame.by_group)}. Value: {repr(metric_frame.by_group)}")
+                traceback.print_stack()
+                raise TypeError(f"Expected metric_frame.by_group to be a DataFrame, got {type(metric_frame.by_group)}. Full content: {repr(metric_frame.by_group)}")
+            try:
+                flat_group_metrics = _flatten_metric_frame_by_group(metric_frame.by_group)
+                logger.debug(f" flat_group_metrics type: {type(flat_group_metrics)}")
+                logger.debug(f" flat_group_metrics content: {repr(flat_group_metrics)}")
+                # Defensive: check for nested dicts, lists, or stringified dicts/lists, and enforce float values
+                for k, v in flat_group_metrics.items():
+                    if isinstance(v, (dict, list)):
+                        logger.critical(f" Group metric '{k}' is NOT a flat value: {v}")
+                        traceback.print_stack()
+                        raise ValueError(f"Group metric '{k}' is NOT a flat value: {v}. Full key: {k}, value: {repr(v)}")
+                    if isinstance(v, str) and (v.startswith('{') or v.startswith('[')):
+                        logger.critical(f" Group metric '{k}' is a STRINGIFIED dict/list: {v}")
+                        traceback.print_stack()
+                        raise ValueError(f"Group metric '{k}' is a STRINGIFIED dict/list: {v}. Full key: {k}, value: {repr(v)}")
+                    try:
+                        float_v = float(v)
+                    except Exception as e:
+                        logger.critical(f" Group metric '{k}' value CANNOT be cast to float: {v} ({e})")
+                        traceback.print_exc()
+                        raise
+                results.update(flat_group_metrics)
+            except Exception as exc:
+                logger.critical(f" Exception during flattening or merging group metrics: {exc}")
+                traceback.print_exc()
+                raise
 
         # Only apply reduction to metrics that are scalar per group (not group metric functions)
         def is_scalar_metric(metric_name):
@@ -533,7 +602,158 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
                 "group_scorers must not be empty. Either provide group_scorers explicitly or ensure scorers is non-empty. "
                 "This is required for MetricFrame group scoring."
             )
+    
+    
+    def __call__(
+        self,
+        mode: Literal["test", "train", "attack", "val", "attack-val", None] = "test",
+        data: "DataConfig | None" = None,
+        model: "ModelConfig | None" = None,
+        attack: "AttackConfig | None" = None,
+        y_pred: Any | None = None,
+        y_true: Any | None = None,
+        score_file: str | None = None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        # Step 1: resolve y_true/y_pred for both main and group metrics.
+        if data is None and (y_true is None or y_pred is None):
+            raise ValueError("data must be provided when y_true/y_pred are not passed directly")
+        resolved_y_true, resolved_y_pred = _resolve_yt_yp(
+            mode, cast(DataConfig, data), model, attack, y_pred, y_true,
+        )
 
+        # Step 2: resolve sensitive features once.
+        resolved_mode = "test" if mode is None else mode
+        sensitive_features = kwargs.get("sensitive_features")
+        if sensitive_features is None:
+            sensitive_features = _resolve_sensitive_features(
+                data,
+                resolved_y_true,
+                mode=resolved_mode,
+            )
+        if sensitive_features is None:
+            raise ValueError("sensitive_features are required for fairness scoring")
+
+        # Step 3: run base ScorerDictConfig scorers using resolved arrays, if any.
+        if self.scorers:
+            results = ScorerDictConfig.__call__(
+                cast(ScorerDictConfig, self),
+                mode=mode,
+                data=data,
+                model=model,
+                attack=attack,
+                y_pred=resolved_y_pred,
+                y_true=resolved_y_true,
+                score_file=score_file,
+                **kwargs,
+            )
+        else:
+            results = {}
+        if not self.group_scorers:
+            return results
+
+        # Step 4: build MetricFrame and populate results using resolved arrays.
+        self_cfg = cast("FairlearnScoreDictConfig", self)
+        control_features = cast(
+            ControlFeaturesLike,
+            kwargs.pop("control_features", self_cfg.control_features),
+        )
+        sample_params = cast(
+            SampleParamsLike,
+            kwargs.pop("sample_params", self_cfg.sample_params),
+        )
+        n_boot = cast(int | None, kwargs.pop("n_boot", self_cfg.n_boot))
+        ci_quantiles = cast(
+            list[float] | None,
+            kwargs.pop("ci_quantiles", self_cfg.ci_quantiles),
+        )
+        random_state = cast(
+            RandomStateLike,
+            kwargs.pop("random_state", self_cfg.random_state),
+        )
+
+        metric_frame = self._build_metric_frame(
+            y_true=resolved_y_true,
+            y_pred=resolved_y_pred,
+            sensitive_features=sensitive_features,
+            scorer_kwargs=kwargs,
+            control_features=control_features,
+            sample_params=sample_params,
+            n_boot=n_boot,
+            ci_quantiles=ci_quantiles,
+            random_state=random_state,
+        )
+
+        if self_cfg.include_group_overall:
+            overall = metric_frame.overall
+            if isinstance(overall, pd.Series):
+                for metric_name, value in overall.items():
+                    results[f"{metric_name}_overall"] = float(value)
+            else:
+                overall_series = _series_like_to_float_dict(cast(Any, overall))
+                if len(overall_series) == 1 and "value" in overall_series:
+                    overall_value = overall_series["value"]
+                    for metric_name in self_cfg.group_scorers.keys():
+                        results[f"{metric_name}_overall"] = overall_value
+                else:
+                    for metric_name, value in overall_series.items():
+                        results[f"{metric_name}_overall"] = value
+
+        if self_cfg.include_group_by_group:
+            logger.debug(f" metric_frame.by_group type: {type(metric_frame.by_group)}")
+            logger.debug(f" metric_frame.by_group content: {repr(metric_frame.by_group)}")
+            if not isinstance(metric_frame.by_group, pd.DataFrame):
+                logger.critical(f" metric_frame.by_group is NOT a DataFrame! Type: {type(metric_frame.by_group)}. Value: {repr(metric_frame.by_group)}")
+                traceback.print_stack()
+                raise TypeError(f"Expected metric_frame.by_group to be a DataFrame, got {type(metric_frame.by_group)}. Full content: {repr(metric_frame.by_group)}")
+            try:
+                flat_group_metrics = _flatten_metric_frame_by_group(metric_frame.by_group)
+                logger.debug(f" flat_group_metrics type: {type(flat_group_metrics)}")
+                logger.debug(f" flat_group_metrics content: {repr(flat_group_metrics)}")
+                # Defensive: check for nested dicts, lists, or stringified dicts/lists, and enforce float values
+                for k, v in flat_group_metrics.items():
+                    if isinstance(v, (dict, list)):
+                        logger.critical(f" Group metric '{k}' is NOT a flat value: {v}")
+                        traceback.print_stack()
+                        raise ValueError(f"Group metric '{k}' is NOT a flat value: {v}. Full key: {k}, value: {repr(v)}")
+                    if isinstance(v, str) and (v.startswith('{') or v.startswith('[')):
+                        logger.critical(f" Group metric '{k}' is a STRINGIFIED dict/list: {v}")
+                        traceback.print_stack()
+                        raise ValueError(f"Group metric '{k}' is a STRINGIFIED dict/list: {v}. Full key: {k}, value: {repr(v)}")
+                    try:
+                        float_v = float(v)
+                    except Exception as e:
+                        logger.critical(f" Group metric '{k}' value CANNOT be cast to float: {v} ({e})")
+                        traceback.print_exc()
+                        raise
+                results.update(flat_group_metrics)
+            except Exception as exc:
+                logger.critical(f" Exception during flattening or merging group metrics: {exc}")
+                traceback.print_exc()
+                raise
+
+        # Only apply reduction to metrics that are scalar per group (not group metric functions)
+        if self_cfg.group_reduction == "difference":
+            reduced = metric_frame.difference(method=self_cfg.group_reduction_method)
+            for metric_name, value in _series_like_to_float_dict(reduced).items():
+                if is_scalar_metric(metric_name):
+                    results[f"{metric_name}_difference"] = value
+        elif self_cfg.group_reduction == "ratio":
+            reduced = metric_frame.ratio(method=self_cfg.group_reduction_method)
+            for metric_name, value in _series_like_to_float_dict(reduced).items():
+                if is_scalar_metric(metric_name):
+                    results[f"{metric_name}_ratio"] = value
+        elif self_cfg.group_reduction != "none":
+            raise ValueError(
+                "group_reduction must be one of {'difference', 'ratio', 'none'}",
+            )
+
+        return results
+
+
+def is_scalar_metric(metric_name):
+    # Heuristic: group metric functions have 'group_' prefix and '_difference' or '_ratio' suffix
+    return not (metric_name.startswith("group_") and metric_name.endswith(("_difference", "_ratio")))
 
 def _group_metric_difference(
     y_true: Any,
@@ -580,7 +800,7 @@ def fairness_group_mean_prediction_difference(
     )
     groups = np.asarray(sensitive_features)
     y_pred_arr = np.asarray(y_pred)
-    print(f"[DEBUG] fairness_group_mean_prediction_difference: y_true.shape={np.shape(y_true)}, y_pred.shape={np.shape(y_pred_arr)}, sensitive_features.shape={np.shape(groups)}")
+    logger.debug(f" fairness_group_mean_prediction_difference: y_true.shape={np.shape(y_true)}, y_pred.shape={np.shape(y_pred_arr)}, sensitive_features.shape={np.shape(groups)}")
     unique_groups = np.unique(groups)
     if unique_groups.size < 2:
         return 0.0
@@ -639,6 +859,7 @@ def fairness_group_mse_difference(
     )
 
 
+
 @dataclass(eq=False)
 class DefaultFairlearnScoreConfig(_TaskAwareScorerMixin, FairlearnScoreDictConfig):
     """Default fairness scorer family with optional task inheritance."""
@@ -646,145 +867,46 @@ class DefaultFairlearnScoreConfig(_TaskAwareScorerMixin, FairlearnScoreDictConfi
     classifier: Union[bool, str, None] = None
     scorers: dict[str, ScorerConfig] = field(default_factory=dict)
 
-    def _build_default_scorers(
-        self,
-        classifier: bool,
-    ) -> dict[str, ScorerConfig]:
+    def _build_default_scorers(self, classifier: bool) -> dict:
+        # Use the same default scorer configs as ModelConfig (via score.base)
+        from deckard.score.base import DefaultClassifierConfig, DefaultRegressorConfig
+        base = DefaultClassifierConfig().scorers.copy() if classifier else DefaultRegressorConfig().scorers.copy()
+        # Add fairness group metrics for classification
         if classifier:
-            return {
-                "demographic_parity_difference": ScorerConfig(
-                    score_name="demographic_parity_difference",
-                    score_function="deckard.score.fairness.fairness_demographic_parity_difference",
-                    greater_is_better=False,
-                    needs_proba=False,
-                ),
-                "equalized_odds_difference": ScorerConfig(
-                    score_name="equalized_odds_difference",
-                    score_function="deckard.score.fairness.fairness_equalized_odds_difference",
-                    greater_is_better=False,
-                    needs_proba=False,
-                ),
-                "accuracy" : ScorerConfig(
-                    score_name="accuracy",
-                    score_function="sklearn.metrics.accuracy_score",
-                    greater_is_better=True,
-                    needs_proba=False,
-                ),
-                "precision" : ScorerConfig(
-                    score_name="precision",
-                    score_function="sklearn.metrics.precision_score",
-                    greater_is_better=True,
-                    needs_proba=False,
-                    score_params = {"average": "weighted", "zero_division" : 0}
-                ),
-                "recall" : ScorerConfig(
-                    score_name="recall",
-                    score_function="sklearn.metrics.recall_score",
-                    greater_is_better=True,
-                    needs_proba=False,
-                    score_params = {"average": "weighted", "zero_division" : 0}
-                ),
-                "f1" : ScorerConfig(
-                    score_name="f1",
-                    score_function="sklearn.metrics.f1_score",
-                    greater_is_better=True,
-                    needs_proba=False,
-                    score_params = {"average": "weighted", "zero_division" : 0}
-                ),
-                
-            }
+            base["demographic_parity_difference"] = ScorerConfig(
+                score_name="demographic_parity_difference",
+                score_function=fairness_demographic_parity_difference,
+                greater_is_better=False,
+            )
+            base["equalized_odds_difference"] = ScorerConfig(
+                score_name="equalized_odds_difference",
+                score_function=fairness_equalized_odds_difference,
+                greater_is_better=False,
+            )
+            base["group_mean_prediction_difference"] = ScorerConfig(
+                score_name="group_mean_prediction_difference",
+                score_function=fairness_group_mean_prediction_difference,
+                greater_is_better=False,
+            )
         else:
-            return {
-            "mse": ScorerConfig(
-                score_name="mse",
-                score_function="sklearn.metrics.mean_squared_error",
-                greater_is_better=False,
-                needs_proba=False,
-            ),
-            "rmse": ScorerConfig(
-                score_name="rmse",
-                score_function="sklearn.metrics.mean_squared_error",
-                greater_is_better=False,
-                needs_proba=False,
-                score_params={
-                    "squared": False,
-                },
-            ),
-            "mae": ScorerConfig(
-                score_name="mae",
-                score_function="sklearn.metrics.mean_absolute_error",
-                greater_is_better=False,
-                needs_proba=False,
-            ),
-            "r2": ScorerConfig(
-                score_name="r2",
-                score_function="sklearn.metrics.r2_score",
-                greater_is_better=True,
-                needs_proba=False,
-            ),
-            "group_mean_prediction_difference": ScorerConfig(
-                score_name="group_mean_prediction_difference",
-                score_function=(
-                    "deckard.score.fairness_group_mean_prediction_difference"
-                ),
-                greater_is_better=False,
-                needs_proba=False,
-            ),
-            "group_mae_difference": ScorerConfig(
+            base["group_mae_difference"] = ScorerConfig(
                 score_name="group_mae_difference",
-                score_function=(
-                    "deckard.score.fairness_group_mae_difference"
-                ),
+                score_function=fairness_group_mae_difference,
                 greater_is_better=False,
-                needs_proba=False,
-            ),
-            "group_mse_difference": ScorerConfig(
+            )
+            base["group_mse_difference"] = ScorerConfig(
                 score_name="group_mse_difference",
-                score_function=(
-                    "deckard.score.fairness_group_mse_difference"
-                ),
+                score_function=fairness_group_mse_difference,
                 greater_is_better=False,
-                needs_proba=False,
-            ),
-        }
-            
-            
-        
-            
-
-    def _build_default_group_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
-        if classifier:
-            return {}
-        # For regression, group metrics go here
-        return {
-            "group_mean_prediction_difference": ScorerConfig(
-                score_name="group_mean_prediction_difference",
-                score_function="deckard.score.fairness.fairness_group_mean_prediction_difference",
-                greater_is_better=False,
-                needs_proba=False,
-            ),
-            "group_mae_difference": ScorerConfig(
-                score_name="group_mae_difference",
-                score_function="deckard.score.fairness.fairness_group_mae_difference",
-                greater_is_better=False,
-                needs_proba=False,
-            ),
-            "group_mse_difference": ScorerConfig(
-                score_name="group_mse_difference",
-                score_function="deckard.score.fairness.fairness_group_mse_difference",
-                greater_is_better=False,
-                needs_proba=False,
-            ),
-        }
+            )
+        return base
 
     def __post_init__(self):
         self._initialize_task_aware_scorers(default=True)
-        # Ensure scorers is always populated for group scoring
         if not getattr(self, 'scorers', None):
             self.scorers = self._build_default_scorers(bool(self.classifier))
-        # Always enable group scoring by default if not explicitly set
         if not getattr(self, 'group_scorers', None):
-            self.group_scorers = cast(Any, self._build_default_group_scorers(bool(self.classifier)))
+            self.group_scorers = self.scorers.copy()
         super().__post_init__()
 
 

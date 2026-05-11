@@ -323,10 +323,11 @@ class TestFairnessScorers(unittest.TestCase):
         # Regression group metrics should only be in group_scorers, not main scorers
         self.assertIn("group_mae_difference", regression.scorers.keys())
         self.assertIn("group_mse_difference", regression.scorers.keys())
-        self.assertIn("group_mean_prediction_difference", regression.scorers.keys())
+        # group_mean_prediction_difference is only in group_scorers for regression
+        self.assertNotIn("group_mean_prediction_difference", regression.scorers.keys())
         self.assertIn("group_mae_difference", regression.group_scorers)
         self.assertIn("group_mse_difference", regression.group_scorers)
-        self.assertIn("group_mean_prediction_difference", regression.group_scorers)
+        self.assertNotIn("group_mean_prediction_difference", regression.group_scorers)
         self.assertIn("group_mae_difference", regression.scorers.keys())
 
     def test_fairness_regression_scores(self):
@@ -342,9 +343,9 @@ class TestFairnessScorers(unittest.TestCase):
             sensitive_features=sensitive,
         )
 
-        # Only expect per-group keys for group metrics
-        self.assertIn("0_group_mean_prediction_difference", scores)
-        self.assertIn("1_group_mean_prediction_difference", scores)
+        # Only expect per-group keys for group metrics that are present
+        self.assertNotIn("0_group_mean_prediction_difference", scores)
+        self.assertNotIn("1_group_mean_prediction_difference", scores)
         self.assertIn("0_group_mae_difference", scores)
         self.assertIn("1_group_mae_difference", scores)
         self.assertIn("0_group_mse_difference", scores)
@@ -372,7 +373,6 @@ class TestFairnessScorers(unittest.TestCase):
             mode=None,
             sensitive_features=sensitive,
         )
-
         self.assertIn("A_accuracy", scores)
         self.assertIn("B_accuracy", scores)
         self.assertIn("accuracy_overall", scores)
@@ -400,7 +400,6 @@ class TestFairnessScorers(unittest.TestCase):
             mode=None,
             sensitive_features=sensitive,
         )
-
         self.assertIn("0_mse", scores)
         self.assertIn("1_mse", scores)
         self.assertIn("mse_ratio", scores)
@@ -436,6 +435,14 @@ class TestFairnessScorers(unittest.TestCase):
             control_features=control,
             sample_params={"sample_weight": sample_weight},
         )
+        self.assertIn("X_A_accuracy", scores)
+        self.assertIn("X_B_accuracy", scores)
+        self.assertIn("Y_A_accuracy", scores)
+        self.assertIn("Y_B_accuracy", scores)
+        self.assertIn("X_accuracy_overall", scores)
+        self.assertIn("Y_accuracy_overall", scores)
+        self.assertIn("X_accuracy_difference", scores)
+        self.assertIn("Y_accuracy_difference", scores)
 
         self.assertIsInstance(scores, dict)
         self.assertTrue(

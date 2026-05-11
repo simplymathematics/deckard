@@ -52,8 +52,8 @@ from .declarations import (  # noqa: E402
 try:
     from .fairness import (  # noqa: E402
         DefaultFairlearnClassificationConfig,
-        DefaultFairlearnScoreDictConfig,
         DefaultFairlearnRegressionConfig,
+        DefaultFairlearnDataScoreConfig,
         FairlearnScoreDictConfig,
         fairness_demographic_parity_difference,
         fairness_equalized_odds_difference,
@@ -64,8 +64,8 @@ try:
 
     _ = (
         DefaultFairlearnClassificationConfig,
-        DefaultFairlearnScoreDictConfig,
         DefaultFairlearnRegressionConfig,
+        DefaultFairlearnDataScoreConfig,
         FairlearnScoreDictConfig,
         fairness_demographic_parity_difference,
         fairness_equalized_odds_difference,

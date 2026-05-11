@@ -1277,6 +1277,7 @@ class DataConfig(ConfigBase):
         logger.debug("No data_file provided, data will not be saved")
         return False
 
+
     def __call__(
         self,
         data_file: Union[str, None] = None,
@@ -1284,25 +1285,9 @@ class DataConfig(ConfigBase):
     ) -> dict:
         """
         Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.
-        Parameters
-        ----------
-        data_file : Union[str, None]
-            Path to save loaded data as CSV. If None, data is not saved.
-        score_file : Union[str, None]
-            Path to save scores as CSV. If None, scores are not saved.
-        Returns
-        -------
-        dict:
-            A dictionary containing:
-            - 'data_load_time': Time taken to load the data.
-            - 'data_sample_time': Time taken to sample/split the data.
-            - Additional times/scores can be added in the future.
-
-        Raises
-        ------
-        AssertionError
-            If train or test indices are not set after sampling.
+        Strictly validates that all output values are flat and serializable.
         """
+        import traceback
         save_flag = self._prepare_data_file(data_file=data_file)
         scores = dict(getattr(self, "score_dict", {}) or {})
         # Load data if not already loaded
@@ -1312,7 +1297,6 @@ class DataConfig(ConfigBase):
         time_dict = {"data_load_time": self.data_load_time}
         # Sample data if not already sampled
         if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
-            # Sample data
             self._sample()
         time_dict["data_sample_time"] = (self.data_sample_time,)
         time_dict["train_n"] = self.train_n
@@ -1331,9 +1315,16 @@ class DataConfig(ConfigBase):
         data_scores = self._score()
         if self.y_val is not None:
             if self.classifier:
+                class_counts = self._compute_class_counts(self.y_val)
+                # Always store as a flat list for output validation
+                if isinstance(class_counts, dict):
+                    # Sort by label for deterministic output
+                    flat_counts = [class_counts[k] for k in sorted(class_counts.keys())]
+                else:
+                    flat_counts = list(class_counts)
                 data_scores.setdefault(
                     "val_class_counts",
-                    self._compute_class_counts(self.y_val),
+                    flat_counts,
                 )
             else:
                 data_scores.setdefault(
@@ -1341,9 +1332,22 @@ class DataConfig(ConfigBase):
                     self._empirical_cdf(self.y_val).tolist(),
                 )
         all_scores = {**scores, **data_scores, **time_dict}
+        # Strict output validation
+        def is_scalar(val):
+            return isinstance(val, (float, int, str, bool))
+        def is_flat_list(val):
+            return isinstance(val, list) and all(is_scalar(x) for x in val)
+        for k, v in all_scores.items():
+            if isinstance(v, (dict, pd.DataFrame, pd.Series, list)) and not is_flat_list(v):
+                logger.error(f" Non-flat or nested value in score_dict for key '{k}': {repr(v)} (type: {type(v)})")
+                traceback.print_stack()
+                raise ValueError(f"score_dict key '{k}' contains a non-flat or nested value: {repr(v)}")
+            if isinstance(v, str) and (v.startswith('{') or v.startswith('[')):
+                logger.error(f" Stringified dict/list in score_dict for key '{k}': {v}")
+                traceback.print_stack()
+                raise ValueError(f"score_dict key '{k}' contains a stringified dict/list: {v}")
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
-
         all_scores = self.merge_and_persist_scores(all_scores, score_file)
         if save_flag:
             self.save(data_file)
