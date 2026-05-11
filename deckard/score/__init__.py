@@ -52,8 +52,7 @@ from .declarations import (  # noqa: E402
 try:
     from .fairness import (  # noqa: E402
         DefaultFairlearnClassificationConfig,
-        DefaultFairlearnConfig,
-        DefaultFairlearnScoreConfig,
+        DefaultFairlearnScoreDictConfig,
         DefaultFairlearnRegressionConfig,
         FairlearnScoreDictConfig,
         fairness_demographic_parity_difference,
@@ -65,8 +64,7 @@ try:
 
     _ = (
         DefaultFairlearnClassificationConfig,
-        DefaultFairlearnConfig,
-        DefaultFairlearnScoreConfig,
+        DefaultFairlearnScoreDictConfig,
         DefaultFairlearnRegressionConfig,
         FairlearnScoreDictConfig,
         fairness_demographic_parity_difference,
@@ -116,16 +114,16 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     logger.debug("Lifelines not found. Survival score configs are unavailable.")
 
-if "DefaultFairlearnConfig" in globals():
+if "DefaultFairlearnScoreDictConfig" in globals():
     from .declarations_fairness import (  # noqa: E402
         DefaultFairlearnClassificationDict,
-        DefaultFairlearnDict,
+        DefaultFairlearnScoreDict,
         DefaultFairlearnRegressionDict,
     )
 
     _ = (
         DefaultFairlearnClassificationDict,
-        DefaultFairlearnDict,
+        DefaultFairlearnScoreDict,
         DefaultFairlearnRegressionDict,
     )
 
@@ -172,15 +170,15 @@ __all__ = [
     "build_scorer_dict",
 ]
 
-if "DefaultFairlearnConfig" in globals():
+if "DefaultFairlearnScoreDictConfig" in globals():
     __all__.extend(
         [
             "DefaultFairlearnClassificationConfig",
-            "DefaultFairlearnConfig",
-            "DefaultFairlearnScoreConfig",
+            "DefaultFairlearnScoreDictConfig",
+            "DefaultFairlearnScoreDictConfig",
             "DefaultFairlearnRegressionConfig",
             "FairlearnScoreDictConfig",
-            "DefaultFairlearnDict",
+            "DefaultFairlearnScoreDict",
             "DefaultFairlearnClassificationDict",
             "DefaultFairlearnRegressionDict",
             "fairness_demographic_parity_difference",
