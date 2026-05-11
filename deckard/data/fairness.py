@@ -228,7 +228,7 @@ class FairlearnDataConfig(DataPipelineConfig):
         fairness_scores = self.scorer(
             y_true=y_true,
             y_pred=y_pred,
-            mode="test",
+            mode="pre-sample",
             data=self,
         )
         return {"fairness_scores": fairness_scores}
