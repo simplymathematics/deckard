@@ -524,7 +524,7 @@ class PytorchDataConfig(DataConfig):
             result = self._regression_feature_scores()
         return result
 
-    def __call__(
+    def __call__(  # noqa: F811
         self,
         data_file: Union[str, None] = None,
         score_file: Union[str, None] = None,
