@@ -84,7 +84,7 @@ stages:
       - ./build/yellowbrick/plots/plotlist_demo/roc_auc.png
 
   notebook_detector:
-    cmd: jupyter nbconvert --to notebook --execute detector.ipynb
+    cmd: jupyter nbconvert --to notebook --execute --inplace detector.ipynb
     deps:
       - detector.ipynb
       - ../../deckard/attack/
