@@ -1,12 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUT_DIR="build"
 PKG="deckard"
 TEST_DIR="${1:-test}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PYTHON="$SCRIPT_DIR/.venv/bin/python"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+OUT_DIR="$REPO_ROOT/build"
+PYTHON="$REPO_ROOT/.venv/bin/python"
+
+if [[ ! -x "$PYTHON" ]]; then
+  echo "[ERROR] Expected python interpreter at $PYTHON"
+  echo "[ERROR] Create the project venv first (python3 -m venv .venv && source .venv/bin/activate)"
+  exit 1
+fi
 
 mkdir -p "$OUT_DIR"
 
@@ -31,17 +38,20 @@ run_tests() {
   echo "[INFO] Running pytest..."
 
   set +e
-  "$PYTHON" -m pytest \
-    -n auto \
-    "$TEST_DIR" \
-    -ra \
-    --cov="$PKG" \
-    --cov-append \
-    --durations=0 \
-    > "$TEST_OUT" \
-    2> "$TEST_ERR"
+  (
+    cd "$REPO_ROOT"
+    "$PYTHON" -m pytest \
+      -n auto \
+      "$TEST_DIR" \
+      -ra \
+      --cov="$PKG" \
+      --cov-append \
+      --durations=0 \
+      > "$TEST_OUT" \
+      2> "$TEST_ERR"
+  )
   status=$?
-  set -e  
+  set -e
 
   ended_epoch="$(date +%s)"
   elapsed_seconds="$((ended_epoch - started_epoch))"
@@ -81,7 +91,10 @@ fi
 # Coverage report (post-process only)
 # -------------------------
 echo "[INFO] Generating coverage report..."
-"$PYTHON" -m coverage report -m > "$COV_FILE"
+(
+  cd "$REPO_ROOT"
+  "$PYTHON" -m coverage report -m > "$COV_FILE"
+)
 
 echo "[INFO] Coverage written to $COV_FILE"
 

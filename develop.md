@@ -152,7 +152,7 @@ pre-commit install
 Then run:
 
 ```bash
-bash coverage.sh
+bash scripts/coverage.sh
 flake8 deckard/
 black deckard/
 mypy deckard/
@@ -164,7 +164,7 @@ Fix any reported issues before pushing updates.
 
 # 5. Coverage and Test Execution Script
 
-The project uses a unified script (`coverage.sh`) to run tests, collect coverage, and capture timing.
+The project uses a unified script (`scripts/coverage.sh`) to run tests, collect coverage, and capture timing.
 
 ## Overview
 

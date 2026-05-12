@@ -69,7 +69,7 @@ This command installs the project's dependencies in "editable" mode. Editable mo
 ```
 .
 ├── build <- exists after installation, contains the build files for the `deckard` executable.
-├── coverage.sh <- Script for tracking test coverage and test timing measurments.
+├── scripts/ <- Script for testing and developing the package
 ├── deckard <- Source directory
 ├── develop.md <- Documentation for developers
 ├── Dockerfile <- A docker environment for testing and deployment

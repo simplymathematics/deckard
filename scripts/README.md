@@ -2,6 +2,26 @@
 
 This directory contains local helper scripts for CI and development workflows.
 
+## Coverage Runner
+
+Use [scripts/coverage.sh](scripts/coverage.sh) to run tests, collect coverage, and capture timing artifacts.
+
+```bash
+bash scripts/coverage.sh
+```
+
+Optional test directory argument:
+
+```bash
+bash scripts/coverage.sh test/test_score
+```
+
+Notes:
+
+- The script resolves repository paths from its own location, so it can be invoked from any current working directory.
+- It writes outputs to `build/` at repository root (`coverage.txt`, `timing.txt`, `runtime.txt`, and logs).
+- It expects the project interpreter at `.venv/bin/python`.
+
 ## Test GitHub Workflows Locally
 
 Use [scripts/test_workflow.sh](scripts/test_workflow.sh) to run any workflow with `act`.

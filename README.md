@@ -44,7 +44,7 @@ For full installation options and platform notes, see:
 ```
 .
 ├── build <- exists after installation, contains the build files for the `deckard` executable.
-├── coverage.sh <- Script for tracking test coverage and test timing measurments.
+├── scripts/coverage.sh <- Script for tracking test coverage and test timing measurements.
 ├── deckard <- Source directory
 ├── develop.md <- Documentation for developers
 ├── Dockerfile <- A docker environment for testing and deployment
