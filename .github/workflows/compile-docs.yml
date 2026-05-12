@@ -56,7 +56,7 @@ jobs:
         repository: .
         commit_user_name: github-actions
         commit_user_email: github-actions@users.noreply.github.com
-        commit_author: github-actions
+        commit_author: github-actions <github-actions@users.noreply.github.com>
     - name: Upload Pages artifact
       uses: actions/upload-pages-artifact@v3
       with:
