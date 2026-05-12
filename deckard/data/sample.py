@@ -36,6 +36,7 @@ from sklearn.model_selection import (
     train_test_split,
 )
 from hydra.core.config_store import ConfigStore
+
 if TYPE_CHECKING:
     from .base import DataConfig
 
@@ -52,7 +53,9 @@ class BaseSampler:
     ``(train_idx, test_idx, val_idx)`` triple of integer numpy arrays.
     """
 
-    def __call__(self, config: "DataConfig") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def __call__(
+        self, config: "DataConfig"
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         raise NotImplementedError
 
 

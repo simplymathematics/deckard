@@ -13,10 +13,17 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
 from ..data import DataConfig
 from .base import ModelConfig
-from ..utils import ConfigBase, coerce_config, resolve_class, coerce_to_list, is_null_config_value
+from ..utils import (
+    ConfigBase,
+    coerce_config,
+    resolve_class,
+    coerce_to_list,
+    is_null_config_value,
+)
 
 warnings.filterwarnings("ignore", category=UserWarning)
 logger = logging.getLogger(__name__)
+
 
 @lru_cache(maxsize=1)
 def _get_art_symbols() -> dict[str, Any]:
@@ -73,6 +80,7 @@ def _is_art_torch_wrapper(model_obj: Any) -> bool:
     except Exception:
         return False
     return isinstance(model_obj, torch_wrapper_types)
+
 
 supported_defense_types = [
     "detector",
@@ -395,7 +403,9 @@ class _DefenseBehaviorMixin:
 
                 # Adversarial retraining defenses currently require torch-backed
                 # ART estimators (e.g., PyTorchClassifier).
-                if not _is_torch_model_instance(base_estimator) and not _is_art_torch_wrapper(
+                if not _is_torch_model_instance(
+                    base_estimator
+                ) and not _is_art_torch_wrapper(
                     self._model,
                 ):
                     raise ValueError(
@@ -479,7 +489,9 @@ class _DefenseBehaviorMixin:
                         else:
                             defended_estimator = transformer_classifier
                     case _:
-                        raise ValueError(f"Unknown transformer subtype: {defense_subtype}")
+                        raise ValueError(
+                            f"Unknown transformer subtype: {defense_subtype}"
+                        )
             case "regularizer":
                 raise NotImplementedError(
                     "Regularizer defenses are not implemented yet.",
@@ -568,6 +580,7 @@ class _DefenseBehaviorMixin:
 
             X_train = getattr(data, "X_train")
             from torch.utils.data import DataLoader, Dataset, Subset
+
             if isinstance(X_train, (Dataset, Subset)):
                 loader = DataLoader(X_train, batch_size=1, shuffle=False)
                 batch = next(iter(loader))
@@ -621,6 +634,7 @@ class _DefenseBehaviorMixin:
             return art_class, init_params
 
         from ..utils import is_null_config_value
+
         if is_null_config_value(self.model_type, allow_empty=True):
             raise ValueError(
                 "model_type must be set before creating an ART defense estimator",
@@ -828,6 +842,7 @@ class DefensePipelineConfig(ConfigBase):
     def _inherit_model_context(self, defense_obj, estimator) -> None:
         base_estimator = getattr(estimator, "model", estimator)
         from ..utils import is_null_config_value
+
         blank_values = {None, "", "None", "null", "Null", "NULL"}
 
         if (

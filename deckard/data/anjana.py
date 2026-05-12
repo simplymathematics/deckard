@@ -31,7 +31,9 @@ class AnjanaDataConfig(DataPipelineConfig):
     hierarchy_fill_value: str = "*"
 
     @staticmethod
-    def _normalize_optional_list(value: Optional[Union[str, list, ListConfig]]) -> Optional[list]:
+    def _normalize_optional_list(
+        value: Optional[Union[str, list, ListConfig]],
+    ) -> Optional[list]:
         if value is None:
             return None
         if isinstance(value, ListConfig):
@@ -329,9 +331,7 @@ class AnjanaDataConfig(DataPipelineConfig):
                 }
             }
             call_kwargs = {
-                key: value
-                for key, value in call_kwargs.items()
-                if key in accepted
+                key: value for key, value in call_kwargs.items() if key in accepted
             }
 
         transformed = defense_fn(**call_kwargs)

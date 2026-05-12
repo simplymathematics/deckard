@@ -22,10 +22,16 @@ class DefaultFairlearnRegressionDict:
 safe_store(
     group="score",
     name="fairlearn-classification",
-    node={"_target_": "deckard.score.fairness.DefaultFairlearnScoreDictConfig", "classifier": True},
+    node={
+        "_target_": "deckard.score.fairness.DefaultFairlearnScoreDictConfig",
+        "classifier": True,
+    },
 )
 safe_store(
     group="score",
     name="fairlearn-regression",
-    node={"_target_": "deckard.score.fairness.DefaultFairlearnScoreDictConfig", "classifier": False},
+    node={
+        "_target_": "deckard.score.fairness.DefaultFairlearnScoreDictConfig",
+        "classifier": False,
+    },
 )

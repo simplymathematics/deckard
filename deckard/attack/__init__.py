@@ -11,7 +11,7 @@ from .pytorch import PytorchAttackConfig
 from . import declarations  # noqa: F401
 
 __all__ = [
-	"AttackConfig",
-	"PytorchAttackConfig",
-	"SensitiveFeaturesWrapper",
+    "AttackConfig",
+    "PytorchAttackConfig",
+    "SensitiveFeaturesWrapper",
 ]

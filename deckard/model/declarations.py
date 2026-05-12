@@ -7,7 +7,7 @@ TINYNET_MODEL = {
     "model_params": {
         "input_dim": 10,  # Set default, should be overridden by data shape
         "hidden_dim": 16,
-        "output_dim": 2
+        "output_dim": 2,
     },
     "_target_": "deckard.model.pytorch.PytorchModelConfig",
     "alias": "tinynet",

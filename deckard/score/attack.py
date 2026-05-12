@@ -46,7 +46,9 @@ def evasion_success_score(
 
 
 @dataclass(eq=False)
-class DefaultEvasionScoreConfig(_TaskAwareScorerMixin, _AttackProfileScorer, ScorerDictConfig):
+class DefaultEvasionScoreConfig(
+    _TaskAwareScorerMixin, _AttackProfileScorer, ScorerDictConfig
+):
     """Default evasion scorer family with optional task selection."""
 
     _profile_attr = "evasion"
@@ -118,7 +120,9 @@ class DefaultEvasionRegressionAttackScorerConfig(DefaultEvasionScoreConfig):
 
 
 @dataclass(eq=False)
-class DefaultMembershipInferenceScoreConfig(_TaskAwareScorerMixin, _AttackProfileScorer, ScorerDictConfig):
+class DefaultMembershipInferenceScoreConfig(
+    _TaskAwareScorerMixin, _AttackProfileScorer, ScorerDictConfig
+):
     """Default membership-inference scorer family.
 
     Membership inference is always treated as a classification-style scoring
@@ -159,12 +163,16 @@ class DefaultMembershipInferenceScoreConfig(_TaskAwareScorerMixin, _AttackProfil
 
 
 @dataclass(eq=False)
-class DefaultMembershipInferenceAttackScorerConfig(DefaultMembershipInferenceScoreConfig):
+class DefaultMembershipInferenceAttackScorerConfig(
+    DefaultMembershipInferenceScoreConfig
+):
     """Default scorer set for membership inference attack evaluation."""
 
 
 @dataclass(eq=False)
-class DefaultAttributeInferenceScoreConfig(_TaskAwareScorerMixin, _AttackProfileScorer, ScorerDictConfig):
+class DefaultAttributeInferenceScoreConfig(
+    _TaskAwareScorerMixin, _AttackProfileScorer, ScorerDictConfig
+):
     """Default attribute-inference scorer family with optional task selection."""
 
     _profile_attr = "attribute_inference"
@@ -217,18 +225,24 @@ class DefaultAttributeInferenceScoreConfig(_TaskAwareScorerMixin, _AttackProfile
 
 
 @dataclass(eq=False)
-class DefaultAttributeInferenceAttackScorerConfig(DefaultAttributeInferenceScoreConfig):
+class DefaultAttributeInferenceAttackScorerConfig(
+    DefaultAttributeInferenceScoreConfig
+):
     """Default scorer set for categorical attribute inference evaluation."""
 
     classifier: Union[bool, str] = True
 
 
 @dataclass(eq=False)
-class DefaultAttributeInferenceRegressionAttackScorerConfig(DefaultAttributeInferenceScoreConfig):
+class DefaultAttributeInferenceRegressionAttackScorerConfig(
+    DefaultAttributeInferenceScoreConfig
+):
     """Default scorer set for continuous attribute inference evaluation."""
 
     _profile_attr = "attribute_inference_regression"
     classifier: Union[bool, str] = False
+
+
 @dataclass(eq=False)
 class AttackScorerConfig(ConfigBase):
     """Owns all attack scoring logic and profile-specific scorer configs."""
@@ -590,26 +604,39 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
             # If user provided a FairlearnScoreDictConfig, use as-is
             if isinstance(field_val, FairlearnScoreDictConfig):
                 # Defensive: if scorers or group_scorers are empty, fill with defaults
-                if not getattr(field_val, 'scorers', None):
-                    field_val.scorers = base_scorers or {k: v for k, v in default_group_scorers.items()}
-                if not getattr(field_val, 'group_scorers', None):
+                if not getattr(field_val, "scorers", None):
+                    field_val.scorers = base_scorers or {
+                        k: v for k, v in default_group_scorers.items()
+                    }
+                if not getattr(field_val, "group_scorers", None):
                     field_val.group_scorers = default_group_scorers
                 return field_val
             # If user provided a dict, merge with defaults
             if isinstance(field_val, dict):
-                scorers = dict(field_val.get('scorers', base_scorers or {k: v for k, v in default_group_scorers.items()}))
-                group_scorers = dict(field_val.get('group_scorers', default_group_scorers))
+                scorers = dict(
+                    field_val.get(
+                        "scorers",
+                        base_scorers
+                        or {k: v for k, v in default_group_scorers.items()},
+                    )
+                )
+                group_scorers = dict(
+                    field_val.get("group_scorers", default_group_scorers)
+                )
                 return FairlearnScoreDictConfig(
                     scorers=scorers,
                     group_scorers=group_scorers,
-                    include_group_by_group=field_val.get('include_group_by_group', True),
-                    include_group_overall=field_val.get('include_group_overall', True),
-                    group_reduction=field_val.get('group_reduction', 'difference'),
+                    include_group_by_group=field_val.get(
+                        "include_group_by_group", True
+                    ),
+                    include_group_overall=field_val.get("include_group_overall", True),
+                    group_reduction=field_val.get("group_reduction", "difference"),
                 )
             # If None, use all defaults
             if field_val is None:
                 return FairlearnScoreDictConfig(
-                    scorers=base_scorers or {k: v for k, v in default_group_scorers.items()},
+                    scorers=base_scorers
+                    or {k: v for k, v in default_group_scorers.items()},
                     group_scorers=default_group_scorers,
                     include_group_by_group=True,
                     include_group_overall=True,
@@ -618,9 +645,11 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
             # Fallback: coerce as ScorerDictConfig, then wrap
             coerced = self._coerce_profile(field_val, ScorerDictConfig)
             # Defensive: if scorers or group_scorers are empty, fill with defaults
-            if not getattr(coerced, 'scorers', None):
-                coerced.scorers = base_scorers or {k: v for k, v in default_group_scorers.items()}
-            if not getattr(coerced, 'group_scorers', None):
+            if not getattr(coerced, "scorers", None):
+                coerced.scorers = base_scorers or {
+                    k: v for k, v in default_group_scorers.items()
+                }
+            if not getattr(coerced, "group_scorers", None):
                 coerced.group_scorers = default_group_scorers
             return FairlearnScoreDictConfig(
                 scorers=coerced.scorers,
@@ -632,9 +661,13 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
 
         # Reasonable defaults for each attack type
         evasion_group = FairlearnEvasionAttackScorerConfig().group_scorers
-        membership_group = FairlearnMembershipInferenceAttackScorerConfig().group_scorers
+        membership_group = (
+            FairlearnMembershipInferenceAttackScorerConfig().group_scorers
+        )
         attribute_group = FairlearnAttributeInferenceAttackScorerConfig().group_scorers
-        attribute_reg_group = FairlearnAttributeInferenceRegressionAttackScorerConfig().group_scorers
+        attribute_reg_group = (
+            FairlearnAttributeInferenceRegressionAttackScorerConfig().group_scorers
+        )
         evasion_success = {
             "success": ScorerConfig(
                 score_name="success",
@@ -642,11 +675,21 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
             ),
         }
 
-        self.evasion = _fairlearn_profile(self.evasion, evasion_group, base_scorers=evasion_success)
-        self.evasion_regression = _fairlearn_profile(self.evasion_regression, attribute_reg_group)
-        self.membership_inference = _fairlearn_profile(self.membership_inference, membership_group)
-        self.attribute_inference = _fairlearn_profile(self.attribute_inference, attribute_group)
-        self.attribute_inference_regression = _fairlearn_profile(self.attribute_inference_regression, attribute_reg_group)
+        self.evasion = _fairlearn_profile(
+            self.evasion, evasion_group, base_scorers=evasion_success
+        )
+        self.evasion_regression = _fairlearn_profile(
+            self.evasion_regression, attribute_reg_group
+        )
+        self.membership_inference = _fairlearn_profile(
+            self.membership_inference, membership_group
+        )
+        self.attribute_inference = _fairlearn_profile(
+            self.attribute_inference, attribute_group
+        )
+        self.attribute_inference_regression = _fairlearn_profile(
+            self.attribute_inference_regression, attribute_reg_group
+        )
 
 
 safe_store(

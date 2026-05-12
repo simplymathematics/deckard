@@ -48,7 +48,9 @@ class TorchExperimentConfig(ExperimentConfig):
 
     @staticmethod
     def _canonical_device(device_value: Any) -> Union[str, None]:
-        if is_null_config_value(device_value, allow_empty=True) or is_default_config_value(
+        if is_null_config_value(
+            device_value, allow_empty=True
+        ) or is_default_config_value(
             device_value,
             include_best=True,
         ):

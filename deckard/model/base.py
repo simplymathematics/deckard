@@ -15,7 +15,10 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.base import BaseEstimator
 
 from ..data import DataConfig
-from ..score.base import ScorerDictConfig, coerce_scorer_config as _coerce_scorer_config
+from ..score.base import (
+    ScorerDictConfig,
+    coerce_scorer_config as _coerce_scorer_config,
+)
 from ..utils import (
     ConfigBase,
     load_class,
@@ -400,7 +403,9 @@ class ModelConfig(ConfigBase):
             ) from exc
 
         if self.model_type is None:
-            raise ValueError("model_type must be set before creating an ART model wrapper")
+            raise ValueError(
+                "model_type must be set before creating an ART model wrapper"
+            )
 
         art_class = (
             art_symbols["classifier_dict"][self.model_type.split(".")[-1]]
@@ -601,8 +606,9 @@ class ModelConfig(ConfigBase):
                 predict_proba = getattr(estimator, proba_method, None)
                 if callable(predict_proba):
                     return predict_proba(X)
-        raise AttributeError(f"Wrapped model of type {type(self._model)} does not have a predict_proba or _predict_proba method, nor does its underlying estimator.")
-
+        raise AttributeError(
+            f"Wrapped model of type {type(self._model)} does not have a predict_proba or _predict_proba method, nor does its underlying estimator."
+        )
 
     def _score(
         self,
@@ -1242,7 +1248,9 @@ class ModelConfig(ConfigBase):
                     setattr(self, probabilities_attr, None)
 
         if y_mode is None or mode_predictions is None:
-            raise ValueError(f"No labels or predictions available for {score_mode} scoring.")
+            raise ValueError(
+                f"No labels or predictions available for {score_mode} scoring."
+            )
 
         if self.scorer is not None:
             mode_probabilities = getattr(self, probabilities_attr, None)
@@ -1271,7 +1279,9 @@ class ModelConfig(ConfigBase):
             times[names["score_time_key"]] = score_time
             prefix = self._mode_score_prefix(score_mode)
             if prefix:
-                mode_scores = {f"{prefix}{key}": value for key, value in mode_scores.items()}
+                mode_scores = {
+                    f"{prefix}{key}": value for key, value in mode_scores.items()
+                }
                 loss_curve_key = f"{prefix}loss_curve"
                 if loss_curve_key in mode_scores:
                     del mode_scores[loss_curve_key]

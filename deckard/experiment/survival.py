@@ -205,7 +205,6 @@ class SurvivalExperimentConfig(ExperimentConfig):
             benign_metric,
         )
 
-   
     @staticmethod
     def _require_non_empty_str(name: str, value: Any) -> str:
         if not isinstance(value, str) or value.strip() == "":
@@ -213,7 +212,9 @@ class SurvivalExperimentConfig(ExperimentConfig):
         return value
 
     @staticmethod
-    def _normalize_optional_dict(name: str, value: Optional[dict[str, Any]]) -> dict[str, Any]:
+    def _normalize_optional_dict(
+        name: str, value: Optional[dict[str, Any]]
+    ) -> dict[str, Any]:
         if value is None:
             return {}
         if isinstance(value, Mapping):
@@ -484,7 +485,10 @@ class SurvivalExperimentConfig(ExperimentConfig):
             except Exception:
                 pass
 
-            if self.duration_col in X_test.columns and self.event_col in X_test.columns:
+            if (
+                self.duration_col in X_test.columns
+                and self.event_col in X_test.columns
+            ):
                 try:
                     calibration = self.survival_probability_calibration(
                         model=fitter,
@@ -498,7 +502,10 @@ class SurvivalExperimentConfig(ExperimentConfig):
                             row["ICI"] = calibration["ICI"]
                         if "E50" in calibration:
                             row["E50"] = calibration["E50"]
-                    elif isinstance(calibration, (tuple, list)) and len(calibration) >= 3:
+                    elif (
+                        isinstance(calibration, (tuple, list))
+                        and len(calibration) >= 3
+                    ):
                         row["ICI"] = calibration[1]
                         row["E50"] = calibration[2]
                 except Exception:
@@ -560,13 +567,19 @@ class SurvivalExperimentConfig(ExperimentConfig):
             )
             return {
                 "dataset_name": normalized_data_spec,
-                "target": None if _is_lifelines_dataset_name(normalized_data_spec) else target,
+                "target": (
+                    None
+                    if _is_lifelines_dataset_name(normalized_data_spec)
+                    else target
+                ),
                 "classifier": False,
                 "stratify": False,
             }, data_name
 
         if isinstance(data_spec, DataConfig):
-            data_spec.dataset_name = _normalize_survival_dataset_name(str(data_spec.dataset_name))
+            data_spec.dataset_name = _normalize_survival_dataset_name(
+                str(data_spec.dataset_name)
+            )
             if _is_lifelines_dataset_name(str(data_spec.dataset_name)):
                 data_spec.target = None
             return data_spec, data_spec.dataset_name
@@ -575,7 +588,9 @@ class SurvivalExperimentConfig(ExperimentConfig):
             spec = dict(data_spec)
             dataset_name_value = spec.get("dataset_name", spec.get("alias"))
             if dataset_name_value is not None:
-                normalized_data_spec = _normalize_survival_dataset_name(str(dataset_name_value))
+                normalized_data_spec = _normalize_survival_dataset_name(
+                    str(dataset_name_value)
+                )
                 spec["dataset_name"] = normalized_data_spec
                 if _is_lifelines_dataset_name(normalized_data_spec):
                     spec["target"] = None
@@ -603,7 +618,9 @@ class SurvivalExperimentConfig(ExperimentConfig):
             data_cfg._load_data()
         loaded_frame = data_cfg.X
         if loaded_frame is None:
-            raise ValueError("DataConfig did not load features for survival experiment")
+            raise ValueError(
+                "DataConfig did not load features for survival experiment"
+            )
         loaded_data = (
             loaded_frame.to_frame().copy()
             if isinstance(loaded_frame, pd.Series)
@@ -620,7 +637,9 @@ class SurvivalExperimentConfig(ExperimentConfig):
         data_cfg: DataConfig,
         survival_config: "SurvivalExperimentConfig",
     ) -> tuple[pd.DataFrame, Optional[AttackConfig], Any]:
-        loaded_data = cls._load_data_with_config(data_cfg=data_cfg, target=survival_config.target)
+        loaded_data = cls._load_data_with_config(
+            data_cfg=data_cfg, target=survival_config.target
+        )
         return loaded_data, None, None
 
     @classmethod
@@ -630,7 +649,9 @@ class SurvivalExperimentConfig(ExperimentConfig):
         data_cfg: DataConfig,
         survival_config: "SurvivalExperimentConfig",
     ) -> tuple[pd.DataFrame, Optional[AttackConfig], Any]:
-        loaded_data = cls._load_data_with_config(data_cfg=data_cfg, target=survival_config.target)
+        loaded_data = cls._load_data_with_config(
+            data_cfg=data_cfg, target=survival_config.target
+        )
         return loaded_data, survival_config.attack, survival_config.aux_model
 
     @classmethod
@@ -713,7 +734,9 @@ class SurvivalExperimentConfig(ExperimentConfig):
 
         if resolved_mode == "optuna":
             if self.attack_optuna_db is None:
-                raise ValueError("attack_optuna_db is required for execution_mode='optuna'")
+                raise ValueError(
+                    "attack_optuna_db is required for execution_mode='optuna'"
+                )
             loaded_data, attack_cfg, aux_model = self.run_optuna_mode(
                 attack_optuna_db=self.attack_optuna_db,
                 attack_schema=self.attack_schema,
@@ -735,7 +758,10 @@ class SurvivalExperimentConfig(ExperimentConfig):
             )
             data_name = getattr(self.data, "dataset_name", None) or "data"
 
-        if self.calculate_attack_failures or self.target in {"ben_failures", "adv_failures"}:
+        if self.calculate_attack_failures or self.target in {
+            "ben_failures",
+            "adv_failures",
+        }:
             loaded_data = self.compute_failures_under_attack(
                 loaded_data,
                 attack_config=attack_cfg,
@@ -766,7 +792,9 @@ class SurvivalExperimentConfig(ExperimentConfig):
                 or runtime_data.y_train is None
                 or runtime_data.y_test is None
             ):
-                raise ValueError("Runtime survival split unavailable for auxiliary model")
+                raise ValueError(
+                    "Runtime survival split unavailable for auxiliary model"
+                )
             model_scores = aux_model(runtime_data)
 
         return {

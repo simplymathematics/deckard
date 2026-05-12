@@ -59,8 +59,6 @@ def _sensitive_slice(sensitive, n):
     return arr[:n]
 
 
-
-
 class SensitiveFeaturesWrapper(BaseEstimator):
     """Wraps an estimator that requires `sensitive_features` in predict.
 
@@ -946,11 +944,15 @@ class AttackConfig(ConfigBase):
         elif isinstance(value, (list, tuple)):
             shapes = [np.shape(v) for v in value]
             if len(set(shapes)) > 1:
-                raise ValueError(f"Inconsistent shapes in input list/tuple: {shapes}. All elements must have the same shape for conversion to numpy array.")
+                raise ValueError(
+                    f"Inconsistent shapes in input list/tuple: {shapes}. All elements must have the same shape for conversion to numpy array."
+                )
             try:
                 arr = np.asarray(value, dtype=dtype)
             except Exception as e:
-                raise ValueError(f"Failed to convert list/tuple to numpy array due to shape inconsistency or unsupported types: {e}")
+                raise ValueError(
+                    f"Failed to convert list/tuple to numpy array due to shape inconsistency or unsupported types: {e}"
+                )
         else:
             try:
                 arr = np.asarray(value, dtype=dtype)
@@ -1086,8 +1088,7 @@ class AttackConfig(ConfigBase):
         """Use full classifier metrics when probabilities are available, else label-only metrics."""
         preds = [np.asarray(benign_pred), np.asarray(extracted_pred)]
         has_probabilities = all(
-            AttackConfig._looks_like_probabilities(pred)
-            for pred in preds
+            AttackConfig._looks_like_probabilities(pred) for pred in preds
         )
         if has_probabilities:
             return DefaultClassifierConfig(), True
@@ -1254,6 +1255,7 @@ class AttackConfig(ConfigBase):
             y_ = data.y_train
         from torch.utils.data import Dataset, Subset, DataLoader
         import torch
+
         # Accept Subset/Dataset and convert to tensor
         if isinstance(x_, (pd.Series, np.ndarray, pd.DataFrame)) or is_tensor(x_):
             x_subset = x_[:n]
@@ -1938,9 +1940,13 @@ class AttackConfig(ConfigBase):
         # Only pass batch_size if art_model is a torch/ART model (not sklearn)
         batch_size = getattr(data, "batch_size", None)
         if batch_size is None:
-            batch_size = getattr(getattr(data, "model", None), "fit_params", {}).get("batch_size", 32)
+            batch_size = getattr(getattr(data, "model", None), "fit_params", {}).get(
+                "batch_size", 32
+            )
         poison_fit_params = dict(poison_fit_params) if poison_fit_params else {}
-        is_torch_art = hasattr(art_model, "_model") and ("torch" in str(type(art_model._model)).lower())
+        is_torch_art = hasattr(art_model, "_model") and (
+            "torch" in str(type(art_model._model)).lower()
+        )
         if is_torch_art:
             poison_fit_params["batch_size"] = batch_size
             art_model.fit(x_poison, y_poison, **poison_fit_params)
@@ -2054,7 +2060,9 @@ class AttackConfig(ConfigBase):
         )
 
         benign_labels = self._prediction_to_labels(benign_pred, is_regression=False)
-        poisoned_labels = self._prediction_to_labels(poisoned_pred, is_regression=False)
+        poisoned_labels = self._prediction_to_labels(
+            poisoned_pred, is_regression=False
+        )
 
         start_time = time.process_time()
         full_classifier = DefaultClassifierConfig()
@@ -2064,8 +2072,12 @@ class AttackConfig(ConfigBase):
             if not scorer.needs_proba
         }
         classifier_scorer = ScorerDictConfig(scorers=label_only)
-        benign_scores = classifier_scorer(y_true=y_eval, y_pred=benign_labels, mode=None)
-        poisoned_scores = classifier_scorer(y_true=y_eval, y_pred=poisoned_labels, mode=None)
+        benign_scores = classifier_scorer(
+            y_true=y_eval, y_pred=benign_labels, mode=None
+        )
+        poisoned_scores = classifier_scorer(
+            y_true=y_eval, y_pred=poisoned_labels, mode=None
+        )
         self.attack_score_time = time.process_time() - start_time
 
         self.attack_predictions = poisoned_pred

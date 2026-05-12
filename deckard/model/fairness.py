@@ -21,14 +21,13 @@ from ..utils import (
 )
 from ..score import ScorerDictConfig
 
-
-
 try:
     import torch as torch_module
     import torch.nn as nn_module
 except:
     torch_model = None
     nn_module = None
+
 
 class _FairnessBehaviorMixin:
     """Model/defense mixin for explicit fairness-aware training and scoring."""
@@ -39,8 +38,6 @@ class _FairnessBehaviorMixin:
     classifier: bool = False
     probability: bool = False
     fit_params: dict = None
-
-  
 
     def _resolve_runtime_sensitive_source(self, split: str):
         if split == "train":
@@ -82,7 +79,6 @@ class _FairnessBehaviorMixin:
             raise ValueError(f"Sensitive features are blank during {context}")
         return sensitive_series
 
-
     def _infer_split_from_batch(self, batch, scoring_mode: str = None):
         """
         Determine the split name for a batch, using an explicit scoring_mode only.
@@ -90,9 +86,13 @@ class _FairnessBehaviorMixin:
         """
         valid_splits = {"train", "test", "val", "all"}
         if scoring_mode is None:
-            raise ValueError("scoring_mode must be explicitly provided (one of 'train', 'test', 'val', 'all')")
+            raise ValueError(
+                "scoring_mode must be explicitly provided (one of 'train', 'test', 'val', 'all')"
+            )
         if scoring_mode not in valid_splits:
-            raise ValueError(f"Invalid scoring_mode '{scoring_mode}'. Must be one of {valid_splits}.")
+            raise ValueError(
+                f"Invalid scoring_mode '{scoring_mode}'. Must be one of {valid_splits}."
+            )
         return scoring_mode
 
     def _resolve_sensitive_features_for_batch(
@@ -163,33 +163,39 @@ class _FairnessBehaviorMixin:
         # Coerce X_train/y_train to numpy arrays if needed (for fairlearn)
         X = data.X_train
         y = data.y_train
+
         # Robust shape validation before conversion
         def _check_shape_consistency(arr, name):
             if isinstance(arr, (list, tuple)):
                 shapes = [np.shape(v) for v in arr]
                 if len(set(shapes)) > 1:
-                    raise ValueError(f"Inconsistent shapes in {name}: {shapes}. All elements must have the same shape.")
+                    raise ValueError(
+                        f"Inconsistent shapes in {name}: {shapes}. All elements must have the same shape."
+                    )
+
         _check_shape_consistency(X, "X_train")
         _check_shape_consistency(y, "y_train")
-        if hasattr(X, 'numpy'):
+        if hasattr(X, "numpy"):
             X = X.numpy()
-        elif hasattr(X, 'detach'):
+        elif hasattr(X, "detach"):
             X = X.detach().cpu().numpy()
-        if hasattr(y, 'numpy'):
+        if hasattr(y, "numpy"):
             y = y.numpy()
-        elif hasattr(y, 'detach'):
+        elif hasattr(y, "detach"):
             y = y.detach().cpu().numpy()
 
-        if sensitive is not None and self._method_accepts_sensitive_features(fit_method):
-            sensitive_arg = sensitive.to_numpy() if hasattr(sensitive, "to_numpy") else sensitive
+        if sensitive is not None and self._method_accepts_sensitive_features(
+            fit_method
+        ):
+            sensitive_arg = (
+                sensitive.to_numpy() if hasattr(sensitive, "to_numpy") else sensitive
+            )
             fit_params = self.fit_params if self.fit_params is not None else {}
             fit_method(X, y, sensitive_features=sensitive_arg, **fit_params)
         else:
             fit_params = self.fit_params if self.fit_params is not None else {}
             fit_method(X, y, **fit_params)
         return defended_estimator
-
-    
 
     def _resolve_fairlearn_model_param(self, spec, fallback=None):
         if spec is None:
@@ -240,8 +246,6 @@ class _FairnessBehaviorMixin:
                 return load_class(spec)
             return spec
         return spec
-
-
 
     def _resolve_fairness_defense_spec(self):
         if hasattr(self, "defense_name"):
@@ -407,23 +411,25 @@ class _FairnessBehaviorMixin:
         raw_pred = self._predict(X)
         return probabilities_from_model_outputs(raw_pred)
 
-    
-    
-        
-    
     def __post_init__(self):
         # Auto-select fairness-compatible scorer if not set
-        if is_default_config_value(getattr(self, 'scorer', None), include_best=False) or getattr(self, 'scorer', None) is None:
-            from deckard.score import DefaultFairlearnClassificationConfig, DefaultFairlearnRegressionConfig
+        if (
+            is_default_config_value(getattr(self, "scorer", None), include_best=False)
+            or getattr(self, "scorer", None) is None
+        ):
+            from deckard.score import (
+                DefaultFairlearnClassificationConfig,
+                DefaultFairlearnRegressionConfig,
+            )
+
             # Use classifier attribute to determine which default scorer to use
-            if hasattr(self, 'classifier') and self.classifier is False:
+            if hasattr(self, "classifier") and self.classifier is False:
                 self.scorer = DefaultFairlearnRegressionConfig()
             else:
                 self.scorer = DefaultFairlearnClassificationConfig()
         super().__post_init__()
-    
-    
-    
+
+
 @dataclass(eq=False)
 class FairlearnModelConfig(_FairnessBehaviorMixin, ModelConfig):
     """Fairness-aware model config for sklearn models.
@@ -434,8 +440,6 @@ class FairlearnModelConfig(_FairnessBehaviorMixin, ModelConfig):
 
     data: Union[FairlearnDataConfig, None] = None
     fit_params: dict = field(default_factory=dict)
-
-    
 
 
 @dataclass(eq=False)
@@ -454,13 +458,18 @@ class FairlearnPytorchModelConfig(_FairnessBehaviorMixin, PytorchModelConfig):
     def _predict(self, X):
         return PytorchModelConfig._predict(self, X)
 
+
 class BinaryLogitAdapter:
     def __init__(self, base_model, nn_module):
         # Dynamically inherit from nn.Module
         self.base_model = base_model
         self._nn_module = nn_module
         if hasattr(nn_module, "Module"):
-            self.__class__ = type("_BinaryLogitAdapter", (nn_module.Module,), dict(self.__class__.__dict__))
+            self.__class__ = type(
+                "_BinaryLogitAdapter",
+                (nn_module.Module,),
+                dict(self.__class__.__dict__),
+            )
             nn_module.Module.__init__(self)
 
     def forward(self, x):
@@ -472,9 +481,11 @@ class BinaryLogitAdapter:
                 return out
             if out.ndim == 2 and out.shape[1] >= 2:
                 return out[:, 1:2]
-        raise ValueError(f"Unsupported predictor output shape for fairness: {getattr(out, 'shape', None)}")
-    
-    
+        raise ValueError(
+            f"Unsupported predictor output shape for fairness: {getattr(out, 'shape', None)}"
+        )
+
+
 @dataclass(eq=False)
 class FairlearnDefenseConfig(_FairnessBehaviorMixin, DefenseConfig):
     """Fairness-aware defense config that inherits DefenseConfig."""
@@ -486,8 +497,7 @@ class FairlearnDefenseConfig(_FairnessBehaviorMixin, DefenseConfig):
         if not defense_name or not defense_name.startswith("fairlearn."):
             return super().apply_defense(data)
         return self._apply_fairlearn_defense(data)
-    
-    
+
     def _adapt_binary_torch_predictor(self, predictor_model, data):
         """
         Fairlearn binary classification expects a single-score predictor output.
@@ -510,6 +520,7 @@ class FairlearnDefenseConfig(_FairnessBehaviorMixin, DefenseConfig):
         else:
             # fallback for non-tensor
             import numpy as np
+
             y_values = np.asarray(y_train)
             if np.unique(y_values).size != 2:
                 return predictor_model
@@ -535,7 +546,3 @@ class FairlearnDefenseConfig(_FairnessBehaviorMixin, DefenseConfig):
             return bool(getattr(out, "ndim", 0) == 2 and out.shape[1] == 2)
         except Exception:
             return False
-
-
-
-    

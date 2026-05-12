@@ -42,6 +42,7 @@ def to_numpy_if_torch(value: Any) -> Any:
 # Dataset / DataLoader inspection helpers
 # ---------------------------------------------------------------------------
 
+
 def to_numpy(value: Any) -> np.ndarray:
     """Convert any tensor-like, array-like, or scalar to a numpy array."""
     if isinstance(value, np.ndarray):
@@ -98,14 +99,20 @@ def get_dataset_shape(obj: Any) -> tuple:
                 return shape
         if len(obj) > 0:
             first = obj[0]
-            first_x = first[0] if isinstance(first, (tuple, list)) and len(first) > 0 else first
+            first_x = (
+                first[0]
+                if isinstance(first, (tuple, list)) and len(first) > 0
+                else first
+            )
             sample_shape = getattr(to_numpy(first_x), "shape", ())
             if len(sample_shape) > 0:
                 return (len(obj), *sample_shape)
             return (len(obj),)
     if is_dataset_like(obj) and len(obj) > 0:
         first = obj[0]
-        first_x = first[0] if isinstance(first, (tuple, list)) and len(first) > 0 else first
+        first_x = (
+            first[0] if isinstance(first, (tuple, list)) and len(first) > 0 else first
+        )
         sample_shape = getattr(to_numpy(first_x), "shape", ())
         if len(sample_shape) > 0:
             return (len(obj), *sample_shape)
@@ -121,7 +128,7 @@ def get_dataset_shape(obj: Any) -> tuple:
 _SENSITIVE_ATTR: dict = {
     "train": "_sensitive_train",
     "test": "_sensitive_test",
-    "attack": "_sensitive_test",   # attack uses test-split features
+    "attack": "_sensitive_test",  # attack uses test-split features
     "val": "_sensitive_val",
     "attack-val": "_sensitive_val",
     "all": "_sensitive_all",
@@ -247,7 +254,7 @@ def materialize_dataset(dataset_obj: Any) -> Tuple[np.ndarray, Optional[np.ndarr
                 x_rows.append(x_batch[i])
         else:  # Single sample: shape (*features)
             x_rows.append(x_batch)
-        
+
         if len(sample) >= 2:
             y_batch = np.asarray(to_numpy(sample[1])).reshape(-1)
             # Extend y_rows with individual labels from batch

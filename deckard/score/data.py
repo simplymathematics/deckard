@@ -329,7 +329,9 @@ def data_empirical_cdf_function_score(
 
 
 @dataclass(eq=False)
-class DefaultDataScoreConfig(_DataScorerMarker, _TaskAwareScorerMixin, ScorerDictConfig):
+class DefaultDataScoreConfig(
+    _DataScorerMarker, _TaskAwareScorerMixin, ScorerDictConfig
+):
     """Default data-analysis scorer family with optional task inheritance."""
 
     classifier: Union[bool, str, None] = None
@@ -409,7 +411,10 @@ safe_store(
 safe_store(
     group="score",
     name="data-regression",
-    node={"_target_": "deckard.score.data.DefaultDataScoreConfig", "classifier": False},
+    node={
+        "_target_": "deckard.score.data.DefaultDataScoreConfig",
+        "classifier": False,
+    },
 )
 
 

@@ -37,9 +37,11 @@ def survival_main(cfg: dict = None) -> dict:
     """
     if cfg is None:
         raise ValueError("survival_main requires a Hydra config (cfg)")
-    
-    cfg_dict = OmegaConf.to_container(cfg) if isinstance(cfg, DictConfig) else dict(cfg)
-    
+
+    cfg_dict = (
+        OmegaConf.to_container(cfg) if isinstance(cfg, DictConfig) else dict(cfg)
+    )
+
     # Extract survival section from Hydra config
     survival_cfg = cfg_dict.get("survival", cfg_dict)
     if not isinstance(survival_cfg, dict):
@@ -47,10 +49,10 @@ def survival_main(cfg: dict = None) -> dict:
 
     _validate_raw_data_model_specs(survival_cfg)
     survival_cfg = _coerce_survival_model_spec(survival_cfg)
-    
+
     # Check if this is plot-only mode (has plot specifications)
     has_plot_spec = _has_plot_specification(survival_cfg)
-    
+
     if has_plot_spec:
         # Plot-only mode: instantiate plotter config and render
         return _run_plot_mode(survival_cfg)
@@ -69,7 +71,9 @@ def _validate_raw_data_model_specs(survival_cfg: dict) -> None:
         )
     if isinstance(model_spec, str):
         if model_spec.strip() == "":
-            raise ValueError("survival.model must be a non-empty survival model string")
+            raise ValueError(
+                "survival.model must be a non-empty survival model string"
+            )
         return
     if isinstance(model_spec, dict):
         return
@@ -134,7 +138,11 @@ def _coerce_survival_model_spec(survival_cfg: dict) -> dict:
     if not isinstance(model_spec, dict):
         return survival_cfg
 
-    candidate = model_spec.get("alias") or model_spec.get("survival_model") or model_spec.get("model_type")
+    candidate = (
+        model_spec.get("alias")
+        or model_spec.get("survival_model")
+        or model_spec.get("model_type")
+    )
     if not isinstance(candidate, str) or candidate.strip() == "":
         raise ValueError(
             "Could not resolve survival model string from survival.model mapping. "
@@ -144,11 +152,15 @@ def _coerce_survival_model_spec(survival_cfg: dict) -> dict:
     model_name = _normalize_model_name(candidate)
     normalized["model"] = model_name
     if "plot" in normalized:
-        normalized["plot"] = _resolve_model_alias_placeholders(normalized["plot"], model_name)
+        normalized["plot"] = _resolve_model_alias_placeholders(
+            normalized["plot"], model_name
+        )
     return normalized
 
 
-def _validate_experiment_config_types(experiment_config: SurvivalExperimentConfig) -> None:
+def _validate_experiment_config_types(
+    experiment_config: SurvivalExperimentConfig,
+) -> None:
     if not isinstance(experiment_config.data, DataConfig):
         raise TypeError(
             "survival.data must resolve to a DataConfig instance via Hydra instantiation",
@@ -200,7 +212,7 @@ def _has_plot_specification(survival_cfg: dict) -> bool:
         for model_type, model_spec in model_cfg.items():
             if isinstance(model_spec, dict) and "plot" in model_spec:
                 return True
-    
+
     return False
 
 
@@ -214,12 +226,12 @@ def _run_plot_mode(survival_cfg: dict) -> dict:
     _validate_experiment_config_types(experiment_config)
 
     model_config = survival_cfg.get("model_config", {})
-    
+
     if not isinstance(model_config, dict) or len(model_config) == 0:
         raise ValueError(
             "plot mode requires model_config dict with plot specifications"
         )
-    
+
     # Instantiate plotter config list (handles single or multiple models)
     plotter_config = instantiate_config(
         {"model_config": model_config, **survival_cfg},

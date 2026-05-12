@@ -7,7 +7,9 @@ import optuna
 from typing import Any, cast
 from hydra.experimental.callback import Callback as HydraCallback
 from optuna.storages._rdb import models as _optuna_rdb_models
-from optuna.storages._rdb.storage import _create_scoped_session as _optuna_scoped_session
+from optuna.storages._rdb.storage import (
+    _create_scoped_session as _optuna_scoped_session,
+)
 
 
 from omegaconf import OmegaConf, DictConfig, ListConfig
@@ -58,10 +60,16 @@ class OptunaStudyCallback(HydraCallback):
         """Create the Optuna study and initialize objective metric names."""
         hydra_cfg = HydraConfig.get()
         sweeper = _get_sweeper_cfg(hydra_cfg)
-        study_name = self.study_name or (sweeper.get("study_name") if isinstance(sweeper, dict) else None)
-        storage = self.storage or (sweeper.get("storage") if isinstance(sweeper, dict) else None)
+        study_name = self.study_name or (
+            sweeper.get("study_name") if isinstance(sweeper, dict) else None
+        )
+        storage = self.storage or (
+            sweeper.get("storage") if isinstance(sweeper, dict) else None
+        )
         if study_name is None or storage is None:
-            raise ValueError("study_name and storage must be provided for multirun study setup")
+            raise ValueError(
+                "study_name and storage must be provided for multirun study setup"
+            )
         self.study = create_study(
             study_name=study_name,
             storage=storage,
@@ -114,7 +122,9 @@ class OptunaStudyCallback(HydraCallback):
                 files_cfg[k] = v
             else:
                 try:
-                    config["files"] = {k: v for k, v in resolved.items() if v is not None}
+                    config["files"] = {
+                        k: v for k, v in resolved.items() if v is not None
+                    }
                     break
                 except Exception:
                     pass
@@ -185,7 +195,9 @@ class OptunaStudyCallback(HydraCallback):
 
         score_payload_dict: dict[str, Any] = {}
         if isinstance(job_return_payload, dict):
-            score_payload_dict.update({str(k): v for k, v in job_return_payload.items()})
+            score_payload_dict.update(
+                {str(k): v for k, v in job_return_payload.items()}
+            )
 
         # If Hydra sweeper wraps return values, recover the raw score payload that
         # optimize_main stashes onto config from ConfigBase.__call__.
@@ -243,12 +255,16 @@ class OptunaStudyCallback(HydraCallback):
         ):
             scores = conf_obj.execute_without_mercy()
         else:
-            raise TypeError("conf_obj must be callable or implement execute_without_mercy")
+            raise TypeError(
+                "conf_obj must be callable or implement execute_without_mercy"
+            )
 
         if isinstance(scores, DictConfig):
             scores = OmegaConf.to_container(scores, resolve=True)
         if not isinstance(scores, dict):
-            raise TypeError(f"Runtime object must return a dict-like score payload. Got {type(scores)}")
+            raise TypeError(
+                f"Runtime object must return a dict-like score payload. Got {type(scores)}"
+            )
         return {str(k): v for k, v in scores.items()}
 
 
@@ -285,7 +301,7 @@ def _assert_multirun_sweeper(hydra_cfg):
 
 def _resolve_multirun_sweep_paths(hydra_cfg) -> dict:
     log_dir = Path(hydra_cfg.sweep.dir, hydra_cfg.sweep.subdir)
-    # TODO: Ensure that data/model/attack *_file names are hashes if they exist in the cfg.files dict. 
+    # TODO: Ensure that data/model/attack *_file names are hashes if they exist in the cfg.files dict.
     # data_file: data/${hash:${data}}.pkl
     # model_file: model/${hash:${data},${model}$}.pkl
     # attack_file: attack/${hash:${data},${model},${attack}}.pkl
@@ -370,7 +386,9 @@ def _seed_experiment_uuid_for_current_trial(hydra_cfg, experiment_name) -> None:
     if selected_trial is None:
         return
 
-    trial_id = getattr(selected_trial, "_trial_id", getattr(selected_trial, "trial_id", None))
+    trial_id = getattr(
+        selected_trial, "_trial_id", getattr(selected_trial, "trial_id", None)
+    )
     if trial_id is None or not hasattr(study, "_storage"):
         return
     study._storage.set_trial_user_attr(trial_id, "experiment_name", exp_uuid)
@@ -386,7 +404,9 @@ def _inject_experiment_name(score_payload, experiment_name):
     return {**score_payload, "experiment_name": exp_uuid}
 
 
-def _overwrite_frozen_trial_user_attr(study, trial_id: int, key: str, value: Any) -> bool:
+def _overwrite_frozen_trial_user_attr(
+    study, trial_id: int, key: str, value: Any
+) -> bool:
     """Bypass Optuna's finished-trial mutability guard for RDB-backed studies."""
     storage = getattr(study, "_storage", None)
     backend = getattr(storage, "_backend", None)
@@ -400,11 +420,15 @@ def _overwrite_frozen_trial_user_attr(study, trial_id: int, key: str, value: Any
 
     try:
         with _optuna_scoped_session(backend.scoped_session, True) as session:
-            trial_model = _optuna_rdb_models.TrialModel.find_or_raise_by_id(trial_id, session)
-            attribute = _optuna_rdb_models.TrialUserAttributeModel.find_by_trial_and_key(
-                trial_model,
-                key,
-                session,
+            trial_model = _optuna_rdb_models.TrialModel.find_or_raise_by_id(
+                trial_id, session
+            )
+            attribute = (
+                _optuna_rdb_models.TrialUserAttributeModel.find_by_trial_and_key(
+                    trial_model,
+                    key,
+                    session,
+                )
             )
             value_json = json.dumps(value)
             if attribute is None:
@@ -419,9 +443,6 @@ def _overwrite_frozen_trial_user_attr(study, trial_id: int, key: str, value: Any
     except Exception:
         return False
     return True
-
-
-
 
 
 def _prepare_multirun_cfg(cfg, hydra_cfg, include_file_paths: bool = False):
@@ -504,8 +525,6 @@ def _sync_multirun_trial_attributes(
     study_name = sweeper.get("study_name")
     if not storage or not study_name:
         return
-
-
 
     if attrs is None:
         _, attrs = filter_scores(
@@ -634,10 +653,14 @@ def prepare_multirun_file_paths(
             conf_obj.experiment_name = hash_conf_values(str(conf_obj))
     else:
         conf_obj.experiment_name = _ensure_experiment_hash(current_name)
-    if not isinstance(conf_obj, ExperimentConfig) and hasattr(
-        conf_obj,
-        "__post_init__",
-    ) and callable(getattr(conf_obj, "__post_init__")):
+    if (
+        not isinstance(conf_obj, ExperimentConfig)
+        and hasattr(
+            conf_obj,
+            "__post_init__",
+        )
+        and callable(getattr(conf_obj, "__post_init__"))
+    ):
         conf_obj.__post_init__()
     if conf_obj.files is None:
         from ..file import FileConfig
@@ -795,7 +818,10 @@ def set_trial_attributes(
     attrs = {**attrs, "experiment_name": exp_uuid}
     trials = list(study.get_trials(deepcopy=False))
     if not trials:
-        logger.warning("Skipping trial attribute sync: no trials found in study '%s'.", study.study_name)
+        logger.warning(
+            "Skipping trial attribute sync: no trials found in study '%s'.",
+            study.study_name,
+        )
         return
 
     selected_trial = None

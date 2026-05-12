@@ -11,7 +11,6 @@ from omegaconf import DictConfig
 from typing import Any, Union
 import numpy as np
 
-
 # Torch imports (optional dependency)
 try:
     import torch
@@ -21,7 +20,6 @@ except ImportError:
     torch = None
     nn = None
     TorchDataLoader = None
-
 
 
 # Sklearn imports
@@ -49,10 +47,10 @@ ModelType = Union[str, type[torch.nn.Module], torch.nn.Module]
 __all__ = ["PytorchModelConfig"]
 
 
-
 # TinyNet: Minimal torch model for binary classification
 class TinyNet(nn.Module if nn else object):
     """A minimal torch model for binary classification (2-layer MLP)."""
+
     def __init__(self, input_dim=10, hidden_dim=16, output_dim=2):
         if nn is None:
             raise ImportError("TinyNet requires torch to be installed.")
@@ -60,13 +58,11 @@ class TinyNet(nn.Module if nn else object):
         self.net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, output_dim)
+            nn.Linear(hidden_dim, output_dim),
         )
 
     def forward(self, x):
         return self.net(x)
-
-
 
 
 def initialize_criterion(criterion_spec):
@@ -540,7 +536,10 @@ class PytorchModelConfig(ModelConfig):
             snapshot._evaluate_and_score(data, times={})
         except ValueError as exc:
             exc_text = str(exc).lower()
-            if "predict_proba" not in exc_text and "probability predictions" not in exc_text:
+            if (
+                "predict_proba" not in exc_text
+                and "probability predictions" not in exc_text
+            ):
                 raise
             if checkpoint_stage == "before_predict" and snapshot.defense is not None:
                 snapshot._model = snapshot._apply_defense(data)
@@ -677,11 +676,17 @@ class PytorchModelConfig(ModelConfig):
         self._model.train()
         epoch_metrics = {}
 
-
         from torch.utils.data import DataLoader, Dataset, Subset
+
         is_tensor_input = isinstance(X, torch.Tensor)
-        is_dataloader = hasattr(X, 'batch_size') and hasattr(X, '__iter__') and not is_tensor_input
-        is_dataset = isinstance(X, (Dataset, Subset)) and not is_dataloader and not is_tensor_input
+        is_dataloader = (
+            hasattr(X, "batch_size") and hasattr(X, "__iter__") and not is_tensor_input
+        )
+        is_dataset = (
+            isinstance(X, (Dataset, Subset))
+            and not is_dataloader
+            and not is_tensor_input
+        )
 
         for epoch_num in range(epochs):
             epoch_idx = epoch_offset + epoch_num + 1
@@ -808,12 +813,17 @@ class PytorchModelConfig(ModelConfig):
         """Raise TypeError if data contains non-torch tensors/DataLoaders."""
         bad_attrs = []
         from torch.utils.data import Subset, Dataset
-        data_loader_types = (TorchDataLoader,) if TorchDataLoader is not None else tuple()
+
+        data_loader_types = (
+            (TorchDataLoader,) if TorchDataLoader is not None else tuple()
+        )
         for attr in ("X_train", "X_test", "y_train", "y_test"):
             value = getattr(data, attr, None)
             if value is None:
                 continue
-            if not isinstance(value, (torch.Tensor, Subset, Dataset, *data_loader_types)):
+            if not isinstance(
+                value, (torch.Tensor, Subset, Dataset, *data_loader_types)
+            ):
                 bad_attrs.append(f"{attr}: {type(value).__name__}")
 
         if bad_attrs:
@@ -929,14 +939,25 @@ class PytorchModelConfig(ModelConfig):
             raise ValueError("Model not initialized")
 
         from torch.utils.data import DataLoader, Dataset, Subset
+
         is_tensor_input = isinstance(X, torch.Tensor)
-        is_dataloader = hasattr(X, 'batch_size') and hasattr(X, '__iter__') and not is_tensor_input
-        is_dataset = isinstance(X, (Dataset, Subset)) and not is_dataloader and not is_tensor_input
+        is_dataloader = (
+            hasattr(X, "batch_size") and hasattr(X, "__iter__") and not is_tensor_input
+        )
+        is_dataset = (
+            isinstance(X, (Dataset, Subset))
+            and not is_dataloader
+            and not is_tensor_input
+        )
 
         # ART wrappers (e.g., PyTorchClassifier) expose predict() instead of eval().
         if hasattr(self._model, "predict") and not hasattr(self._model, "eval"):
             if is_dataloader or is_dataset:
-                loader = X if is_dataloader else DataLoader(X, batch_size=128, shuffle=False)
+                loader = (
+                    X
+                    if is_dataloader
+                    else DataLoader(X, batch_size=128, shuffle=False)
+                )
                 x_batches = []
                 for batch in loader:
                     batch_x = batch[0] if isinstance(batch, (tuple, list)) else batch
@@ -961,7 +982,11 @@ class PytorchModelConfig(ModelConfig):
 
         with torch.no_grad():
             if is_dataloader or is_dataset:
-                loader = X if is_dataloader else DataLoader(X, batch_size=128, shuffle=False)
+                loader = (
+                    X
+                    if is_dataloader
+                    else DataLoader(X, batch_size=128, shuffle=False)
+                )
                 for batch in loader:
                     if isinstance(batch, (tuple, list)):
                         batch_X = batch[0]
@@ -1048,8 +1073,11 @@ class PytorchModelConfig(ModelConfig):
             clip_values = self.clip_values
 
         from torch.utils.data import DataLoader, Dataset, Subset
+
         # Use data.batch_size if available, else fallback to 32
-        batch_size = getattr(data, "batch_size", None) or self.fit_params.get("batch_size", 32)
+        batch_size = getattr(data, "batch_size", None) or self.fit_params.get(
+            "batch_size", 32
+        )
         # Always use a DataLoader for shape inference and ART
         if isinstance(data.X_train, torch.utils.data.DataLoader):
             loader = data.X_train

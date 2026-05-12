@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 
-
 """Core scoring primitives and default scorer profiles."""
 
 from dataclasses import dataclass, field
@@ -27,6 +26,7 @@ from ..utils import (
     merge_list_of_dicts,
     load_class,
 )
+
 if TYPE_CHECKING:
     from ..data import DataConfig
 
@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 MetricScalar = Union[float, int, np.floating, np.integer]
 MetricResult = Union[MetricScalar, np.ndarray]
 ScoreFunction = Callable[..., MetricResult]
+
 
 # Utility to flatten Series/DataFrame/Scalar to dict of floats (for scorer outputs)
 def _series_like_to_float_dict(values: Any) -> dict[str, float]:
@@ -54,6 +55,8 @@ def _series_like_to_float_dict(values: Any) -> dict[str, float]:
         return {str(key): float(value) for key, value in values.items()}
     scalar_value = values
     return {"value": float(scalar_value)}
+
+
 class _DataScorerMarker:
     """Mixin that marks a ScorerDictConfig as operating on data rather than model predictions.
 
@@ -74,7 +77,9 @@ class _AttackProfileScorer:
     _profile_attr: str = "evasion"
 
 
-def _normalize_classifier_flag(classifier: Union[bool, str, None]) -> Union[bool, None]:
+def _normalize_classifier_flag(
+    classifier: Union[bool, str, None],
+) -> Union[bool, None]:
     """Normalize classifier/regressor aliases to ``True`` / ``False`` / ``None``."""
     if classifier in ["classifier", True]:
         return True
@@ -161,7 +166,9 @@ class _TaskAwareScorerMixin:
     def _build_default_scorers(self, classifier: bool) -> dict[str, "ScorerConfig"]:
         raise NotImplementedError()
 
-    def _initialize_task_aware_scorers(self, *, default: Union[bool, None] = None) -> None:
+    def _initialize_task_aware_scorers(
+        self, *, default: Union[bool, None] = None
+    ) -> None:
         self._normalize_classifier()
         if getattr(self, "scorers", None):
             return
@@ -192,7 +199,9 @@ def _resolve_yt_yp(
         if data is not None:
             y_true = getattr(data, "y_test", y_true)
         if model is not None:
-            y_pred = getattr(model, "test_predictions", None) or getattr(model, "predictions", None)
+            y_pred = getattr(model, "test_predictions", None) or getattr(
+                model, "predictions", None
+            )
     elif mode == "train":
         if data is not None:
             y_true = getattr(data, "y_train", y_true)
@@ -290,6 +299,7 @@ class ScorerConfig:
     def _normalize_predictions_for_metric(self, y_true, y_pred):
         """Convert score/probability matrices to class labels for label-only metrics, and apply softmax to logits for probability metrics if needed."""
         import numpy as np
+
         metric_name = getattr(self.score_function, "__name__", "")
         label_metrics = {
             "accuracy_score",
@@ -308,20 +318,34 @@ class ScorerConfig:
             "group_mse_difference",
         }
 
-        is_label_metric = metric_name in label_metrics or self.score_name in label_metrics
+        is_label_metric = (
+            metric_name in label_metrics or self.score_name in label_metrics
+        )
 
-        logger.debug(f" _normalize_predictions_for_metric: metric_name={metric_name}, score_name={self.score_name}, is_label_metric={is_label_metric}")
-        logger.debug(f" y_true type={type(y_true)}, shape={getattr(y_true, 'shape', None)}, y_pred type={type(y_pred)}, shape={getattr(y_pred, 'shape', None)}")
+        logger.debug(
+            f" _normalize_predictions_for_metric: metric_name={metric_name}, score_name={self.score_name}, is_label_metric={is_label_metric}"
+        )
+        logger.debug(
+            f" y_true type={type(y_true)}, shape={getattr(y_true, 'shape', None)}, y_pred type={type(y_pred)}, shape={getattr(y_pred, 'shape', None)}"
+        )
 
         if self.needs_proba:
             y_pred_arr = np.asarray(to_numpy_if_torch(y_pred))
             # If values are not in [0, 1], apply softmax to logits
-            if y_pred_arr.ndim == 2 and (np.nanmin(y_pred_arr) < 0.0 or np.nanmax(y_pred_arr) > 1.0):
-                logger.debug("Applying softmax to logits for probability-based metric.")
-                exp_logits = np.exp(y_pred_arr - np.max(y_pred_arr, axis=1, keepdims=True))
+            if y_pred_arr.ndim == 2 and (
+                np.nanmin(y_pred_arr) < 0.0 or np.nanmax(y_pred_arr) > 1.0
+            ):
+                logger.debug(
+                    "Applying softmax to logits for probability-based metric."
+                )
+                exp_logits = np.exp(
+                    y_pred_arr - np.max(y_pred_arr, axis=1, keepdims=True)
+                )
                 y_pred_arr = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
             self._validate_probability_input(y_true=y_true, y_pred=y_pred_arr)
-            logger.debug(f" needs_proba=True, y_pred_arr.shape={y_pred_arr.shape}, min={np.nanmin(y_pred_arr)}, max={np.nanmax(y_pred_arr)}")
+            logger.debug(
+                f" needs_proba=True, y_pred_arr.shape={y_pred_arr.shape}, min={np.nanmin(y_pred_arr)}, max={np.nanmax(y_pred_arr)}"
+            )
             if y_pred_arr.ndim == 2 and metric_name == "roc_auc_score":
                 if y_pred_arr.shape[1] == 1:
                     return y_pred_arr.reshape(-1)
@@ -333,12 +357,18 @@ class ScorerConfig:
             return y_pred
         y_true_arr = np.asarray(to_numpy_if_torch(y_true))
         y_pred_arr = np.asarray(to_numpy_if_torch(y_pred))
-        logger.debug(f" y_true_arr.shape={y_true_arr.shape}, y_pred_arr.shape={y_pred_arr.shape}, y_pred_arr.dtype={y_pred_arr.dtype}")
+        logger.debug(
+            f" y_true_arr.shape={y_true_arr.shape}, y_pred_arr.shape={y_pred_arr.shape}, y_pred_arr.dtype={y_pred_arr.dtype}"
+        )
         if y_true_arr.ndim != 1 or y_pred_arr.ndim != 2:
-            logger.debug(f" Skipping normalization: y_true_arr.ndim={y_true_arr.ndim}, y_pred_arr.ndim={y_pred_arr.ndim}")
+            logger.debug(
+                f" Skipping normalization: y_true_arr.ndim={y_true_arr.ndim}, y_pred_arr.ndim={y_pred_arr.ndim}"
+            )
             return y_pred
         if not np.issubdtype(y_pred_arr.dtype, np.number):
-            logger.debug(f" Skipping normalization: y_pred_arr.dtype={y_pred_arr.dtype} is not numeric")
+            logger.debug(
+                f" Skipping normalization: y_pred_arr.dtype={y_pred_arr.dtype} is not numeric"
+            )
             return y_pred
 
         if y_pred_arr.shape[1] == 1:
@@ -346,13 +376,17 @@ class ScorerConfig:
             threshold = 0.5
             if np.nanmin(binary_scores) < 0.0 or np.nanmax(binary_scores) > 1.0:
                 threshold = 0.0
-            logger.debug(f" Binary scores normalization: threshold={threshold}, min={np.nanmin(binary_scores)}, max={np.nanmax(binary_scores)}")
+            logger.debug(
+                f" Binary scores normalization: threshold={threshold}, min={np.nanmin(binary_scores)}, max={np.nanmax(binary_scores)}"
+            )
             result = (binary_scores >= threshold).astype(int)
             logger.debug(f" Normalized binary result: unique={np.unique(result)}")
             return result
 
         result = np.argmax(y_pred_arr, axis=1)
-        logger.debug(f" Argmax normalization: result.shape={result.shape}, unique={np.unique(result)}")
+        logger.debug(
+            f" Argmax normalization: result.shape={result.shape}, unique={np.unique(result)}"
+        )
         return result
 
     def __call__(
@@ -423,10 +457,12 @@ class ScorerDictConfig(ConfigBase):
                     score_name=str(raw_score_name),
                     score_function=scorer_data.pop("score_function"),
                     score_params=dict(raw_score_params),
-                    greater_is_better=bool(scorer_data.pop(
-                        "greater_is_better",
-                        True,
-                    )),
+                    greater_is_better=bool(
+                        scorer_data.pop(
+                            "greater_is_better",
+                            True,
+                        )
+                    ),
                     needs_proba=bool(scorer_data.pop("needs_proba", False)),
                 )
             elif isinstance(value, DictConfig):
@@ -446,10 +482,12 @@ class ScorerDictConfig(ConfigBase):
                     score_name=str(raw_score_name),
                     score_function=scorer_data.pop("score_function"),
                     score_params=dict(raw_score_params),
-                    greater_is_better=bool(scorer_data.pop(
-                        "greater_is_better",
-                        True,
-                    )),
+                    greater_is_better=bool(
+                        scorer_data.pop(
+                            "greater_is_better",
+                            True,
+                        )
+                    ),
                     needs_proba=bool(scorer_data.pop("needs_proba", False)),
                 )
             else:
@@ -511,7 +549,7 @@ class ScorerDictConfig(ConfigBase):
     def _is_classification_labels(y):
         # Returns True if y is integer/binary labels, False if continuous
         y_arr = np.asarray(to_numpy_if_torch(y))
-        if y_arr.dtype.kind in {'i', 'u', 'b'}:
+        if y_arr.dtype.kind in {"i", "u", "b"}:
             return True
         # Heuristic: if all values are 0/1 or small integer classes
         if np.issubdtype(y_arr.dtype, np.number):
@@ -552,18 +590,25 @@ class ScorerDictConfig(ConfigBase):
         # Fallback: try predict or _predict
         predict_fn = getattr(model, "predict", getattr(model, "_predict", None))
         if not callable(predict_fn):
-            raise ValueError("Model must have a predict or predict_proba function for probability metrics.")
+            raise ValueError(
+                "Model must have a predict or predict_proba function for probability metrics."
+            )
         # If y_pred is provided and looks like probabilities, use it
         if y_pred is not None:
             arr = np.asarray(y_pred)
             if arr.ndim == 2 and np.issubdtype(arr.dtype, np.number):
                 # Heuristic: if all values in [0,1] or row sums ~1, treat as proba
-                if (np.all((arr >= 0) & (arr <= 1)) and np.allclose(arr.sum(axis=1), 1, atol=1e-2)):
+                if np.all((arr >= 0) & (arr <= 1)) and np.allclose(
+                    arr.sum(axis=1), 1, atol=1e-2
+                ):
                     return arr
             # Fallback: if arr is 1D class labels and y_true is available, convert to one-hot
             if arr.ndim == 1 and y_true is not None:
                 import warnings
-                warnings.warn("Probability scorer received class labels instead of probabilities; converting to one-hot encoding as fallback.")
+
+                warnings.warn(
+                    "Probability scorer received class labels instead of probabilities; converting to one-hot encoding as fallback."
+                )
                 y_true_arr = np.asarray(y_true)
                 classes = np.unique(y_true_arr)
                 n_classes = len(classes)
@@ -576,9 +621,12 @@ class ScorerDictConfig(ConfigBase):
                         one_hot[i, idx] = 1.0
                 return one_hot
             # Otherwise, raise error
-            raise ValueError("Probability scorer requires probability outputs (1D/2D array of probabilities), but got class labels or invalid shape.")
-        raise ValueError("Probability scorer requires probability outputs, but model does not support predict_proba and y_pred is not a valid probability array.")
-            
+            raise ValueError(
+                "Probability scorer requires probability outputs (1D/2D array of probabilities), but got class labels or invalid shape."
+            )
+        raise ValueError(
+            "Probability scorer requires probability outputs, but model does not support predict_proba and y_pred is not a valid probability array."
+        )
 
     def __call__(
         self,
@@ -667,7 +715,9 @@ class ScorerDictConfig(ConfigBase):
         }
 
         if not self.scorers:
-            raise ValueError("ScorerDictConfig must have at least one scorer defined; got empty scorers dict.")
+            raise ValueError(
+                "ScorerDictConfig must have at least one scorer defined; got empty scorers dict."
+            )
 
         for key, scorer in self.scorers.items():
             scored_key = key
@@ -713,7 +763,9 @@ class ScorerDictConfig(ConfigBase):
                     y_pred=metric_input,
                     **runtime_kwargs,
                 )
-                logger.debug(f"Scorer '{scored_key}' raw output: {value} (type: {type(value)})")
+                logger.debug(
+                    f"Scorer '{scored_key}' raw output: {value} (type: {type(value)})"
+                )
                 if isinstance(value, (dict, pd.Series, pd.DataFrame)):
                     flat_scores = _series_like_to_float_dict(value)
                     for k, v in flat_scores.items():
@@ -725,7 +777,9 @@ class ScorerDictConfig(ConfigBase):
         if score_file is not None:
             self.save_scores(results, score_file)
         if not results:
-            raise ValueError("ScorerDictConfig.__call__ did not produce any results; ensure at least one scorer is defined and executed.")
+            raise ValueError(
+                "ScorerDictConfig.__call__ did not produce any results; ensure at least one scorer is defined and executed."
+            )
         return results
 
 
@@ -759,7 +813,9 @@ def coerce_scorer_config(scorer_obj, *, default_factory=None):
         return scorer_obj
     if isinstance(scorer_obj, (list, ListConfig)):
         return ScorerDictConfig.merge(list(scorer_obj))
-    scorer_obj = coerce_config(scorer_obj)  # DictConfig->dict, ConfigBase->dict, YAML file->dict
+    scorer_obj = coerce_config(
+        scorer_obj
+    )  # DictConfig->dict, ConfigBase->dict, YAML file->dict
     if isinstance(scorer_obj, str):
         scorer_obj = ScorerDictConfig.from_yaml(scorer_obj).to_dict()
     if isinstance(scorer_obj, dict):
@@ -943,22 +999,34 @@ class DefaultPytorchRegressorConfig(DefaultPytorchScoreConfig):
 safe_store(
     group="score",
     name="classification",
-    node={"_target_": "deckard.score.base.DefaultModelScoreConfig", "classifier": True},
+    node={
+        "_target_": "deckard.score.base.DefaultModelScoreConfig",
+        "classifier": True,
+    },
 )
 safe_store(
     group="score",
     name="regression",
-    node={"_target_": "deckard.score.base.DefaultModelScoreConfig", "classifier": False},
+    node={
+        "_target_": "deckard.score.base.DefaultModelScoreConfig",
+        "classifier": False,
+    },
 )
 safe_store(
     group="score",
     name="pytorch_classification",
-    node={"_target_": "deckard.score.base.DefaultPytorchScoreConfig", "classifier": True},
+    node={
+        "_target_": "deckard.score.base.DefaultPytorchScoreConfig",
+        "classifier": True,
+    },
 )
 safe_store(
     group="score",
     name="pytorch_regression",
-    node={"_target_": "deckard.score.base.DefaultPytorchScoreConfig", "classifier": False},
+    node={
+        "_target_": "deckard.score.base.DefaultPytorchScoreConfig",
+        "classifier": False,
+    },
 )
 
 

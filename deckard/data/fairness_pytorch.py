@@ -22,27 +22,35 @@ from .pytorch import PytorchCustomDataConfig
 
 logger = logging.getLogger(__name__)
 
+
 class TinyFairness(Dataset):
-    
     """Minimal synthetic dataset for fairness testing."""
-    def __init__(self, num_samples=40, n_features=4, random_state=123, split=None, transform=None):
+
+    def __init__(
+        self,
+        num_samples=40,
+        n_features=4,
+        random_state=123,
+        split=None,
+        transform=None,
+    ):
         np.random.seed(random_state)
         self._X = np.random.randn(num_samples, n_features)
         # Binary labels 0/1
         self._y = np.random.randint(0, 2, size=num_samples)
         # Sensitive attribute: two groups 'A' and 'B'
-        self._sensitive = np.random.choice(['A', 'B'], size=num_samples)
+        self._sensitive = np.random.choice(["A", "B"], size=num_samples)
         self.split = split
         self.transform = transform
 
     def __len__(self):
         return len(self._y)
-    
 
     def __getitem__(self, idx):
         x = torch.tensor(self._X[idx], dtype=torch.float32)
         y = torch.tensor(self._y[idx], dtype=torch.long)  # scalar
         return x, y
+
 
 class SyntheticImageSensitiveDataset(Dataset):
     def __init__(
@@ -70,10 +78,7 @@ class SyntheticImageSensitiveDataset(Dataset):
 
         # Optional combined sensitive tensor
         # shape: [N, 2]
-        self._sensitive = torch.stack(
-            [sex, gender],
-            dim=1
-        )
+        self._sensitive = torch.stack([sex, gender], dim=1)
 
     def __len__(self):
         return len(self.images)
@@ -81,8 +86,6 @@ class SyntheticImageSensitiveDataset(Dataset):
     def __getitem__(self, idx):
         # Model only sees image + target
         return self.images[idx], self.labels[idx]
-
-
 
 
 @dataclass(eq=False)
@@ -176,6 +179,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
 
     def _extract_sensitive_splits(self):
         """Populate ``_sensitive_train``, ``_sensitive_test``, ``_sensitive_all``."""
+
         def _from_split(ds) -> list | None:
             if isinstance(ds, Subset):
                 base_sensitive = getattr(ds.dataset, "_sensitive", None)
@@ -188,7 +192,9 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             return None
 
         if not (isinstance(self._X, (tuple, list)) and len(self._X) == 2):
-            raise RuntimeError("_extract_sensitive_splits called before dataset was split")
+            raise RuntimeError(
+                "_extract_sensitive_splits called before dataset was split"
+            )
 
         train_ds, test_ds = self._X
         train_sensitive = _from_split(train_ds)
@@ -212,7 +218,10 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
     def __call__(self, *args, **kwargs):
         from ..utils import is_default_config_value
 
-        if is_default_config_value(self.scorer, include_best=False) or self.scorer is None:
+        if (
+            is_default_config_value(self.scorer, include_best=False)
+            or self.scorer is None
+        ):
             self.scorer = DefaultFairlearnDataScoreConfig(
                 classifier=getattr(self, "classifier", True),
             )
@@ -224,7 +233,10 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         """Compute fairness scores using canonical helpers for sensitive-feature lookup."""
         from ..utils import is_default_config_value
 
-        if is_default_config_value(self.scorer, include_best=False) or self.scorer is None:
+        if (
+            is_default_config_value(self.scorer, include_best=False)
+            or self.scorer is None
+        ):
             self.scorer = DefaultFairlearnDataScoreConfig(
                 classifier=getattr(self, "classifier", True),
             )
@@ -284,8 +296,6 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             return flat
         return {"fairness_score": fairness_scores}
 
-
-
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
@@ -324,5 +334,3 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
 
         y_all = coerce_to_numpy(y_all)
         return y_all.tolist(), sensitive
-
-

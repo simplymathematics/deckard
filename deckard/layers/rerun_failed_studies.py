@@ -56,11 +56,15 @@ def _collect_failed_studies(
     """
     failed: list[str] = []
     for summary in optuna.study.get_all_study_summaries(storage=storage):
-        study_name = getattr(summary, "study_name", None) or getattr(summary, "name", None)
+        study_name = getattr(summary, "study_name", None) or getattr(
+            summary, "name", None
+        )
         if not study_name:
             continue
         study = optuna.study.load_study(storage=storage, study_name=study_name)
-        states = [str(getattr(t, "state", "")) for t in study.get_trials(deepcopy=False)]
+        states = [
+            str(getattr(t, "state", "")) for t in study.get_trials(deepcopy=False)
+        ]
         if not states:
             continue
         has_fail = any("FAIL" in s for s in states)

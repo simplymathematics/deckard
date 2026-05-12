@@ -4,23 +4,36 @@ from typing import Any, Dict, Optional, Union
 import pandas as pd
 from omegaconf import DictConfig, ListConfig
 
-from .base import  DataPipelineConfig
-from ..utils import coerce_to_list, is_default_config_value,  merge_list_of_dicts
-from ..score.fairness import DefaultFairlearnClassificationConfig, DefaultFairlearnRegressionConfig
+from .base import DataPipelineConfig
+from ..utils import coerce_to_list, is_default_config_value, merge_list_of_dicts
+from ..score.fairness import (
+    DefaultFairlearnClassificationConfig,
+    DefaultFairlearnRegressionConfig,
+)
 
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass(eq=False)
 class FairlearnDataConfig(DataPipelineConfig):
 
     def __call__(self, *args, **kwargs):
         # Auto-select fairness-compatible scorer if not set
-        if is_default_config_value(self.scorer, include_best=False) or self.scorer is None:
-            from deckard.score import DefaultFairlearnClassificationConfig, DefaultFairlearnRegressionConfig
+        if (
+            is_default_config_value(self.scorer, include_best=False)
+            or self.scorer is None
+        ):
+            from deckard.score import (
+                DefaultFairlearnClassificationConfig,
+                DefaultFairlearnRegressionConfig,
+            )
+
             self.scorer = (
-                DefaultFairlearnClassificationConfig() if self.classifier else DefaultFairlearnRegressionConfig()
+                DefaultFairlearnClassificationConfig()
+                if self.classifier
+                else DefaultFairlearnRegressionConfig()
             )
         # Call parent to load and sample data
         result = super().__call__(*args, **kwargs)
@@ -51,7 +64,9 @@ class FairlearnDataConfig(DataPipelineConfig):
         elif isinstance(self.sensitive_columns, str):
             self.sensitive_columns = [self.sensitive_columns]
 
-    def _sensitive_labels_from_frame(self, frame: Optional[Union[pd.DataFrame, pd.Series]]) -> pd.Series:
+    def _sensitive_labels_from_frame(
+        self, frame: Optional[Union[pd.DataFrame, pd.Series]]
+    ) -> pd.Series:
         """Build a single sensitive-feature label series for fairlearn APIs.
 
         Parameters
@@ -222,7 +237,9 @@ class FairlearnDataConfig(DataPipelineConfig):
         """Delegate fairness dataset scoring to DefaultFairlearnClassificationConfig or RegressionConfig, and flatten output."""
         if is_default_config_value(self.scorer, include_best=False):
             self.scorer = (
-                DefaultFairlearnClassificationConfig() if self.classifier else DefaultFairlearnRegressionConfig()
+                DefaultFairlearnClassificationConfig()
+                if self.classifier
+                else DefaultFairlearnRegressionConfig()
             )
         if self.scorer is None:
             return {}
@@ -233,8 +250,12 @@ class FairlearnDataConfig(DataPipelineConfig):
         # Use train mode by default to preserve DataConfig key prefixes
         # such as training_class_count/training_mutual_info.
         scorer_mode = mode if mode is not None else "train"
-        y_true = self.y_train if getattr(self, "y_train", None) is not None else self._y
-        y_pred = self.X_train if getattr(self, "X_train", None) is not None else self._X
+        y_true = (
+            self.y_train if getattr(self, "y_train", None) is not None else self._y
+        )
+        y_pred = (
+            self.X_train if getattr(self, "X_train", None) is not None else self._X
+        )
         fairness_scores = self.scorer(
             y_true=y_true,
             y_pred=y_pred,

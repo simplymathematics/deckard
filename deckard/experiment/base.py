@@ -211,7 +211,9 @@ class DataConfigResolutionMixin:
         if isinstance(self.data, DataConfig):
             return self.data
 
-        if hasattr(self.data, "_target_") and not isinstance(self.data, (dict, DictConfig, str, ConfigBase)):
+        if hasattr(self.data, "_target_") and not isinstance(
+            self.data, (dict, DictConfig, str, ConfigBase)
+        ):
             data_obj = instantiate(self.data)
             if not isinstance(data_obj, DataConfig):
                 raise TypeError(
@@ -318,7 +320,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         return y_true, y_pred
 
     @staticmethod
-    def _apply_runtime_data_split_overrides(loaded_data: Any, configured_data: Any) -> None:
+    def _apply_runtime_data_split_overrides(
+        loaded_data: Any, configured_data: Any
+    ) -> None:
         """Apply split-related runtime config from *configured_data* to *loaded_data*."""
         if loaded_data is None or configured_data is None:
             return
@@ -379,7 +383,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 "score_mode='val' requires validation data (X_val/y_val), but no validation split is available.",
             )
 
-    def _resolve_component_score_mode(self) -> Literal["train", "test", "val", "pre-sample"]:
+    def _resolve_component_score_mode(
+        self,
+    ) -> Literal["train", "test", "val", "pre-sample"]:
         for mode in self._resolve_score_modes():
             if mode in {"test", "val", "train", "pre-sample"}:
                 return mode
@@ -394,14 +400,26 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         """
         active_mode = self._resolve_component_score_mode()
         if self.data is not None and hasattr(self.data, "score_mode"):
-            self.data.score_mode = active_mode if active_mode in {"pre-sample", "train", "test", "val"} else "pre-sample"
-        if self.model is not None and hasattr(self.model, "score_mode") and active_mode in {"train", "test", "val"}:
+            self.data.score_mode = (
+                active_mode
+                if active_mode in {"pre-sample", "train", "test", "val"}
+                else "pre-sample"
+            )
+        if (
+            self.model is not None
+            and hasattr(self.model, "score_mode")
+            and active_mode in {"train", "test", "val"}
+        ):
             self.model.score_mode = active_mode
         attack_chain = getattr(self, "_attack_chain", None)
         if attack_chain is None:
             attack_chain = [self.attack] if self.attack is not None else []
         for attack_cfg in attack_chain:
-            if attack_cfg is not None and hasattr(attack_cfg, "set_mode") and active_mode in {"test", "val"}:
+            if (
+                attack_cfg is not None
+                and hasattr(attack_cfg, "set_mode")
+                and active_mode in {"test", "val"}
+            ):
                 attack_cfg.set_mode(active_mode)
         return active_mode
 
@@ -596,11 +614,19 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         score_cfg = self.score
 
         # Null / auto -> let each component self-configure.
-        if score_cfg is None or is_null_config_value(score_cfg) or is_default_config_value(score_cfg):
+        if (
+            score_cfg is None
+            or is_null_config_value(score_cfg)
+            or is_default_config_value(score_cfg)
+        ):
             self.score = None
             return
 
-        plain = OmegaConf.to_container(score_cfg, resolve=True) if isinstance(score_cfg, DictConfig) else (dict(score_cfg) if isinstance(score_cfg, dict) else None)
+        plain = (
+            OmegaConf.to_container(score_cfg, resolve=True)
+            if isinstance(score_cfg, DictConfig)
+            else (dict(score_cfg) if isinstance(score_cfg, dict) else None)
+        )
 
         if isinstance(plain, dict):
             # Auto-configure sentinel (from score/auto.yaml).
@@ -614,7 +640,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             if any(k in _SCOPE_KEYS for k in plain):
                 for scope in _SCOPE_KEYS:
                     if scope in plain:
-                        self._route_scorer_to_scope(scope, coerce_scorer_config(plain[scope]))
+                        self._route_scorer_to_scope(
+                            scope, coerce_scorer_config(plain[scope])
+                        )
                 # experiment scope sets self.score; all others clear it
                 if "experiment" not in plain:
                     self.score = None
@@ -644,11 +672,15 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
         if data_scorers:
             self.data.scorer = (
-                ScorerDictConfig.merge(data_scorers) if len(data_scorers) > 1 else data_scorers[0]
+                ScorerDictConfig.merge(data_scorers)
+                if len(data_scorers) > 1
+                else data_scorers[0]
             )
         if model_scorers and self.model is not None:
             self.model.scorer = (
-                ScorerDictConfig.merge(model_scorers) if len(model_scorers) > 1 else model_scorers[0]
+                ScorerDictConfig.merge(model_scorers)
+                if len(model_scorers) > 1
+                else model_scorers[0]
             )
 
         # Score chain fully routed; no experiment-level scorer needed.
@@ -662,7 +694,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 default_target="deckard.attack.AttackConfig",
             )
         except TypeError as exc:
-            raise ValueError(f"Unsupported type for attack: {type(attack_obj)}") from exc
+            raise ValueError(
+                f"Unsupported type for attack: {type(attack_obj)}"
+            ) from exc
 
         assert isinstance(
             attack_cfg,
@@ -858,10 +892,14 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 self.model,
                 ModelConfig,
                 default_target="deckard.model.ModelConfig",
-                overrides={"defense": self.defense} if self.defense is not None else None,
+                overrides=(
+                    {"defense": self.defense} if self.defense is not None else None
+                ),
             )
         except TypeError as exc:
-            raise ValueError(f"Unsupported type for model: {type(self.model)}") from exc
+            raise ValueError(
+                f"Unsupported type for model: {type(self.model)}"
+            ) from exc
 
         if self.defense is not None:
             self.model.defense = self.defense
@@ -887,13 +925,17 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     "FairlearnModelConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn model configs.",
                 )
 
-            is_torch_model = (
-                PytorchModelConfig is not None
-                and isinstance(self.model, PytorchModelConfig)
+            is_torch_model = PytorchModelConfig is not None and isinstance(
+                self.model, PytorchModelConfig
             )
-            target_model_cls = FairlearnPytorchModelConfig if is_torch_model else FairlearnModelConfig
+            target_model_cls = (
+                FairlearnPytorchModelConfig if is_torch_model else FairlearnModelConfig
+            )
 
-            if target_model_cls is FairlearnPytorchModelConfig and target_model_cls is None:
+            if (
+                target_model_cls is FairlearnPytorchModelConfig
+                and target_model_cls is None
+            ):
                 raise ImportError(
                     "FairlearnPytorchModelConfig requires optional fairness and torch dependencies. "
                     "Install deckard[fairlearn,torch] to enable fairness-aware pytorch model configs.",
@@ -966,7 +1008,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     default_target="deckard.file.FileConfig",
                 )
             except TypeError as exc:
-                raise ValueError(f"Unsupported type for files: {type(self.files)}") from exc
+                raise ValueError(
+                    f"Unsupported type for files: {type(self.files)}"
+                ) from exc
         assert isinstance(
             self.files,
             FileConfig,
@@ -1038,7 +1082,10 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         hash_parts = []
         for conf in config_list:
             normalized = coerce_config(conf)
-            if isinstance(normalized, (dict, list, tuple, str, int, float, bool)) or normalized is None:
+            if (
+                isinstance(normalized, (dict, list, tuple, str, int, float, bool))
+                or normalized is None
+            ):
                 hash_parts.append(str(normalized))
                 continue
 
@@ -1051,7 +1098,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     [
                         str(getattr(conf, attr))
                         for attr in dir(conf)
-                        if not attr.startswith("_") and not callable(getattr(conf, attr))
+                        if not attr.startswith("_")
+                        and not callable(getattr(conf, attr))
                     ],
                 ),
             )

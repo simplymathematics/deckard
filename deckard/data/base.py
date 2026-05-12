@@ -98,6 +98,7 @@ def _discover_yellowbrick_dataset_loaders() -> dict:
 def _yellowbrick_dataset_loaders() -> dict:
     return _discover_yellowbrick_dataset_loaders()
 
+
 SUPPORTED_DATA_SCORING_MODES = ["train", "test", "val", "pre-sample"]
 
 
@@ -550,14 +551,18 @@ class DataConfig(ConfigBase):
         """
         start_time = time.process_time()
         adult = fetch_openml(name=self.dataset_name, version=2, as_frame=True)
-        frame = adult.frame.copy() if getattr(adult, "frame", None) is not None else None
+        frame = (
+            adult.frame.copy() if getattr(adult, "frame", None) is not None else None
+        )
         if frame is None:
             frame = pd.DataFrame(adult.data).copy()
             target_source = pd.Series(adult.target, name="class")
         else:
-            target_source = frame.pop("class") if "class" in frame.columns else pd.Series(adult.target, name="class")
-
-        
+            target_source = (
+                frame.pop("class")
+                if "class" in frame.columns
+                else pd.Series(adult.target, name="class")
+            )
 
         y_raw = pd.Series(target_source, name="target").copy()
         if pd.api.types.is_numeric_dtype(y_raw):
@@ -588,7 +593,9 @@ class DataConfig(ConfigBase):
             if column in X.columns:
                 X[column] = pd.to_numeric(X[column], errors="coerce")
 
-        categorical_columns = X.select_dtypes(include=["object", "category"]).columns.tolist()
+        categorical_columns = X.select_dtypes(
+            include=["object", "category"]
+        ).columns.tolist()
         X = pd.get_dummies(
             X,
             columns=categorical_columns,
@@ -612,18 +619,25 @@ class DataConfig(ConfigBase):
         ), f"Expected Series got {type(self._y)}"
         self._X = self._X.apply(pd.to_numeric, errors="coerce")
         return self
-    def _encode_binary_series(self, series: pd.Series, mapping: dict[str, int]) -> pd.Series:
-            encoded = series.map(mapping)
-            if encoded.isna().any():
-                unique_values = [value for value in series.dropna().unique().tolist() if value != "nan"]
-                if len(unique_values) != 2:
-                    raise ValueError(
-                        f"Expected a binary series, found values {sorted(unique_values)}",
-                    )
-                fallback_mapping = {value: idx for idx, value in enumerate(sorted(unique_values))}
-                encoded = series.map(fallback_mapping)
-            return encoded.astype(int)
-        
+
+    def _encode_binary_series(
+        self, series: pd.Series, mapping: dict[str, int]
+    ) -> pd.Series:
+        encoded = series.map(mapping)
+        if encoded.isna().any():
+            unique_values = [
+                value for value in series.dropna().unique().tolist() if value != "nan"
+            ]
+            if len(unique_values) != 2:
+                raise ValueError(
+                    f"Expected a binary series, found values {sorted(unique_values)}",
+                )
+            fallback_mapping = {
+                value: idx for idx, value in enumerate(sorted(unique_values))
+            }
+            encoded = series.map(fallback_mapping)
+        return encoded.astype(int)
+
     def _make_classification_data(
         self,
         n_samples=1000,
@@ -1115,7 +1129,9 @@ class DataConfig(ConfigBase):
         self._X = data
         self._y = y
 
-    def _score(self, mode:Literal["train", "test", "val", "pre-sample"]=None) -> dict:
+    def _score(
+        self, mode: Literal["train", "test", "val", "pre-sample"] = None
+    ) -> dict:
         """
         Delegates all dataset scoring to ``self.scorer``. Supports pre-sample mode (raw data, only in DataConfig),
         as well as train/test/val splits. If mode is not provided, uses self.score_mode or defaults to 'pre-sample'.
@@ -1124,8 +1140,12 @@ class DataConfig(ConfigBase):
         if self.scorer is None:
             return {}
         if not callable(self.scorer):
-            raise TypeError(f"DataConfig.scorer must be callable or None, got {type(self.scorer)}")
-        scorer_mode = str(mode or getattr(self, "score_mode", None) or "pre-sample").lower()
+            raise TypeError(
+                f"DataConfig.scorer must be callable or None, got {type(self.scorer)}"
+            )
+        scorer_mode = str(
+            mode or getattr(self, "score_mode", None) or "pre-sample"
+        ).lower()
         allowed = {"pre-sample", "train", "test", "val"}
         if scorer_mode not in allowed:
             raise ValueError(f"DataConfig score_mode '{scorer_mode}' not in {allowed}")
@@ -1144,7 +1164,9 @@ class DataConfig(ConfigBase):
         else:
             raise ValueError(f"Mode must be in {allowed}")
         if y_true is None or y_pred is None:
-            raise ValueError(f"Data scoring mode '{scorer_mode}' requested but required data split is unavailable.")
+            raise ValueError(
+                f"Data scoring mode '{scorer_mode}' requested but required data split is unavailable."
+            )
         result_dict = self.scorer(
             y_true=y_true,
             y_pred=y_pred,
@@ -1276,7 +1298,6 @@ class DataConfig(ConfigBase):
         logger.debug("No data_file provided, data will not be saved")
         return False
 
-
     def __call__(
         self,
         data_file: Union[str, None] = None,
@@ -1287,6 +1308,7 @@ class DataConfig(ConfigBase):
         Strictly validates that all output values are flat and serializable.
         """
         import traceback
+
         save_flag = self._prepare_data_file(data_file=data_file)
         scores = dict(getattr(self, "score_dict", {}) or {})
         # Load data if not already loaded
@@ -1318,7 +1340,9 @@ class DataConfig(ConfigBase):
                 # Always store as a flat list for output validation
                 if isinstance(class_counts, dict):
                     # Sort by label for deterministic output
-                    flat_counts = [class_counts[k] for k in sorted(class_counts.keys())]
+                    flat_counts = [
+                        class_counts[k] for k in sorted(class_counts.keys())
+                    ]
                 else:
                     flat_counts = list(class_counts)
                 data_scores.setdefault(
@@ -1689,6 +1713,7 @@ class DataPipelineConfig(DataConfig):
                 val_cols = [f"feature_{i}" for i in range(self.X_val.shape[1])]
             X_val_transformed = X_pipeline.transform(self.X_val)
             from scipy.sparse import issparse
+
             if issparse(X_val_transformed):
                 X_val_transformed = X_val_transformed.toarray()
             try:

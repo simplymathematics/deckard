@@ -18,6 +18,7 @@ __all__ = [
     "DefaultAnjanaModelScoreConfig",
 ]
 
+
 def _resolve_frame_and_context(
     data: DataConfig | None = None,
     y_pred: Any | None = None,
@@ -46,7 +47,11 @@ def _resolve_frame_and_context(
         getattr(data, "sensitive_attribute", None),
     )
 
-    if isinstance(sens_att, str) and sens_att not in frame.columns and y_true is not None:
+    if (
+        isinstance(sens_att, str)
+        and sens_att not in frame.columns
+        and y_true is not None
+    ):
         frame = frame.copy()
         labels = pd.Series(cast(Any, y_true)).reset_index(drop=True)
         if len(labels) == len(frame):

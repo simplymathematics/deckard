@@ -2,7 +2,6 @@
 
 from ..utils import safe_store
 
-
 LIFELINES_DATASETS = {
     "lung": {
         "_target_": "deckard.data.DataConfig",

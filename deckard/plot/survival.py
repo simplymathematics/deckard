@@ -108,7 +108,11 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
                 continue
             selected_columns.append(col)
 
-        ax = aft.plot() if len(selected_columns) == 0 else aft.plot(columns=selected_columns)
+        ax = (
+            aft.plot()
+            if len(selected_columns) == 0
+            else aft.plot(columns=selected_columns)
+        )
 
         labels = [label.get_text() for label in ax.get_yticklabels()]
         for old, new in replacement_dict.items():
@@ -179,7 +183,9 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
         file: str,
         xlabel: str,
         ylabel: str,
-        calibration_fn: Callable[[Any, pd.DataFrame, Optional[pd.DataFrame], float], pd.DataFrame],
+        calibration_fn: Callable[
+            [Any, pd.DataFrame, Optional[pd.DataFrame], float], pd.DataFrame
+        ],
         folder: str,
         ax: Optional[Axes] = None,
         filetype: str = ".pdf",
@@ -292,7 +298,9 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
                 X_train=X_train,
                 X_test=X_test,
                 t0=t0,
-                title=plot_dict.get("qq_title", f"{mtype.replace('_', ' ').title()} Calibration"),
+                title=plot_dict.get(
+                    "qq_title", f"{mtype.replace('_', ' ').title()} Calibration"
+                ),
                 file=plot_dict.get("qq_file", f"{mtype}_qq.pdf"),
                 xlabel="Predicted Probability",
                 ylabel="Observed Probability",
@@ -313,7 +321,11 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
                                     t0=cutoff,
                                     return_curve=True,
                                     plot=False,
-                                )[3].assign(dataset="test"),
+                                )[
+                                    3
+                                ].assign(
+                                    dataset="test"
+                                ),
                             ]
                             if frame_test is not None
                             else []
@@ -329,7 +341,9 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
             plots.append(
                 self.plot_summary(
                     aft=aft,
-                    title=plot_dict.get("summary_title", f"{mtype.replace('_', ' ').title()} P-values"),
+                    title=plot_dict.get(
+                        "summary_title", f"{mtype.replace('_', ' ').title()} P-values"
+                    ),
                     file=plot_dict["summary_plot"],
                     xlabel=label_dict.get("summary_xlabel", "Covariate"),
                     ylabel=label_dict.get("summary_ylabel", "p-value"),
@@ -432,7 +446,7 @@ class SurvivalSeabornPlotConfigList(ConfigBase):
     ) -> dict:
         dummy_dict = dummy_dict or {}
         plotter = SurvivalSeabornPlotterConfig()
-        
+
         target = survival_config.target
         duration_col = survival_config.duration_col
 
@@ -465,7 +479,9 @@ class SurvivalSeabornPlotConfigList(ConfigBase):
             or runtime_data.y_train is None
             or runtime_data.y_test is None
         ):
-            raise ValueError("Runtime survival split did not produce train/test partitions")
+            raise ValueError(
+                "Runtime survival split did not produce train/test partitions"
+            )
 
         X_train = pd.DataFrame(runtime_data.X_train).copy()
         X_test = pd.DataFrame(runtime_data.X_test).copy()

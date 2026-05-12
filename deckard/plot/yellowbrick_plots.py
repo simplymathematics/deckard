@@ -143,7 +143,6 @@ all_viz_types: Final = (
 )
 
 
-
 YellowBrickVizType = Literal[
     "rank1d",
     "rank2d",
@@ -224,11 +223,6 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-
-
-
-
-
 def _get_shape(obj):
     if hasattr(obj, "shape"):
         return obj.shape
@@ -260,7 +254,11 @@ def _get_shape(obj):
                 return shape
         if len(obj) > 0:
             first = obj[0]
-            first_x = first[0] if isinstance(first, (tuple, list)) and len(first) > 0 else first
+            first_x = (
+                first[0]
+                if isinstance(first, (tuple, list)) and len(first) > 0
+                else first
+            )
             first_arr = _to_numpy(first_x)
             sample_shape = getattr(first_arr, "shape", ())
             if len(sample_shape) > 0:
@@ -268,13 +266,16 @@ def _get_shape(obj):
             return (len(obj),)
     if hasattr(obj, "__len__") and hasattr(obj, "__getitem__") and len(obj) > 0:
         first = obj[0]
-        first_x = first[0] if isinstance(first, (tuple, list)) and len(first) > 0 else first
+        first_x = (
+            first[0] if isinstance(first, (tuple, list)) and len(first) > 0 else first
+        )
         first_arr = _to_numpy(first_x)
         sample_shape = getattr(first_arr, "shape", ())
         if len(sample_shape) > 0:
             return (len(obj), *sample_shape)
         return (len(obj),)
     raise AttributeError(f"{type(obj).__name__} has no shape")
+
 
 class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
     """Expose deckard model configs with a sklearn-like inference interface.
@@ -347,7 +348,9 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
             return (raw > 0.0).astype(int)
         if raw.ndim == 2:
             return np.argmax(raw, axis=1)
-        raise ValueError(f"Unsupported prediction shape for predict: {_get_shape(raw)}")
+        raise ValueError(
+            f"Unsupported prediction shape for predict: {_get_shape(raw)}"
+        )
 
     def score(self, X, y) -> float:
         y_true = self._to_numpy(y).reshape(-1)
@@ -1018,9 +1021,7 @@ class YellowbrickConfigList(ConfigBase):
 
     experiment: ExperimentConfig
     plots: (
-        dict[str, YellowbrickPlotConfig]
-        | Literal["all"]
-        | list[YellowBrickVizType]
+        dict[str, YellowbrickPlotConfig] | Literal["all"] | list[YellowBrickVizType]
     ) = "all"
     clustering: bool = False
     plot_folder: Optional[str] = None

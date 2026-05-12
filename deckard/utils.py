@@ -453,7 +453,9 @@ def instantiate_config(
     return instance
 
 
-def round_scores(scores: dict, n_samples: int, logger_obj: Optional[logging.Logger] = None) -> dict:
+def round_scores(
+    scores: dict, n_samples: int, logger_obj: Optional[logging.Logger] = None
+) -> dict:
     """Round numeric score values using a sample-size-aware precision rule.
 
     The number of decimal places is derived from ``log10(n_samples) + 1`` and

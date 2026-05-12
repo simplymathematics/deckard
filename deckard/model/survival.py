@@ -66,13 +66,12 @@ class SurvivalModelConfig(ModelConfig):
     t0 : float
         Time point for calibration scoring.
     """
-    classifier = False # Survival Models are always regression models. Auxilary models may not be.
+
+    classifier = False  # Survival Models are always regression models. Auxilary models may not be.
     duration_col: str = "T"
     event_col: str = "E"
     survival_model: str = "weibull"
     t0: float = 0.35
-    
-    
 
     def _initialize_runtime_fields(self) -> None:
         if not hasattr(self, "score_dict") or self.score_dict is None:
@@ -97,7 +96,6 @@ class SurvivalModelConfig(ModelConfig):
     def _initialize_target(self) -> None:
         if not hasattr(self, "_target_") or self._target_ is None:
             self._target_ = "deckard.model.SurvivalModelConfig"
-
 
     def __post_init__(self):
         """Initialize SurvivalModelConfig without loading a model through Hydra."""
