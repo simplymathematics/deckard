@@ -7,50 +7,50 @@ Overview
 The attack module orchestrates adversarial example generation across supported
 backends and attack families.
 
-Notebook Example
-----------------
+It provides:
 
-.. seeal.. seeal.. seeal.. seeal.. seeal.. sta.. seeal.. seeal.. seeal.. serkflows.
+- attack configuration and instantiation
+- attack execution over model/data outputs
+- artifact persistence for attacked samples and labels
+- attack-aware scoring hooks used by experiment orchestration
 
-API Reference
-API Reference
-a.. automodule:: deckard.a.. automodule:: deckard.a.. automodule:: deckard.a.. automodule:: deckard.ase
-   :members:
-   :show-inheritance:
-
-.. automodule:: de.. automodule::torch
-   :members:
-            eri            eri            eri            eri            eri   e mod            
-22222222t attack22222222t attack22222222t attack2ck 22222222t aand persist attack artifa22222222t attack22222222t attackt <<'22222222t
-==============
+Examples
 --------
-
-TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTe TTTTTTTTTsampTTTTTTTTTTTTTTTTTTTT and
-split-aware scoring interfaces used throughout deckard experiments.
-
-Notebook Example
-----------------
 
 .. seealso::
 
-   Core data workflows are shown in :doc:`/notebooks/skl   Core data workflows are showna variant   Co sh   Core:d   Coroteb   Core data workflows are shown in :doc:`/notebooks/skl   Core data workflow-
-   Core data workflows ardata
-          s:
-   :s   :s   :stance:
+   Notebook-based attack workflows are documented in:
 
+   - :doc:`notebooks/art_attacks.ipynb </notebooks/art_attacks>`
+   - :doc:`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
+   - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
-  :s   :s   :stance:
- ardata
-wn in :doc:`/notebooks/skl   Core data workflows aule:: deckard.data.wn in :doc:members:
-   :show-inheritance:
+API Reference
+-------------
 
-.. automodule:: deckard.data.pytorch
+.. automodule:: deckard.attack
    :members:
    :show-inheritance:
 
-.........dule::.........dule::.....ss
-.........dule::.........dule::...:
+.. automodule:: deckard.attack.base
+   :members:
+   :show-inheritance:
 
-.. automodule:: .. automodule:: .. automodule:: .. automodule:: .. automodule:: .. automodule:: .. auto----
+.. automodule:: deckard.attack.pytorch
+   :members:
+   :show-inheritance:
 
-1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1tions for model execution.
+Troubleshooting
+---------------
+
+- Ensure the selected attack backend matches the active model backend.
+- Confirm attack parameters are valid for the chosen ART/Fairlearn attack type.
+- Verify the attack receives compatible input shapes and labels.
+
+See also
+~~~~~~~~
+
+* :doc:`experiment` — experiment orchestration
+* :doc:`model` — model configuration and execution
+* :doc:`data` — data loading and split handling
+* :doc:`score` — attack scoring profiles

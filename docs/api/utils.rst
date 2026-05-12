@@ -24,47 +24,15 @@ Key responsibilities include:
 - torch device resolution helpers for cpu/cuda/mps selection
 - ConfigStore-safe registration helpers for Hydra config groups
 
-Usage
------
+Examples
+--------
 
-Programmatic example
-~~~~~~~~~~~~~~~~~~~~
+.. seealso::
 
-.. code-block:: python
+   Utility helpers are exercised throughout the executable notebooks, including:
 
-   from deckard.utils import (
-      hash_conf_values,
-      create_parser_from_function,
-      resolve_torch_device,
-      safe_store,
-   )
-
-   conf_hash = hash_conf_values({"a": 1, "b": [2, 3]})
-   print(conf_hash)
-
-   def fn(x: int, y: str = "demo"):
-       return x, y
-
-   parser = create_parser_from_function(fn)
-   print(parser)
-
-   device = resolve_torch_device("auto")
-   print(device)
-
-   # Safe duplicate-tolerant ConfigStore registration
-   safe_store(group="score", name="my-score", node={"scorers": {}})
-
-ConfigBase Helpers
-~~~~~~~~~~~~~~~~~~
-
-Most major config classes inherit from :class:`deckard.utils.ConfigBase`, which
-provides shared persistence and serialization primitives:
-
-- ``save(filepath)`` / ``load(filepath)`` for object persistence
-- ``save_data`` / ``load_data`` for tabular artifacts
-- ``save_scores`` / ``load_scores`` for score dictionaries
-- stable hash computation via ``to_dict(for_hash=True)`` +
-   :func:`deckard.utils.hash_conf_values`
+   - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
+   - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
 Internals
 ---------

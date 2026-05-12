@@ -34,96 +34,15 @@ The ``plot_type`` field accepts:
 - ``bar`` — bar plot (``seaborn.barplot``)
 - ``heatmap`` — heatmap (``seaborn.heatmap``)
 
-Usage
------
-
-Seaborn mode requires a tabular data file produced by the
-``compile_results`` layer. Run ``compile_results`` first, then invoke the
-``plot`` layer with ``backend=seaborn`` (or let the auto-detector choose
-when you supply ``data_file``).
-
-Command-line examples
-~~~~~~~~~~~~~~~~~~~~~
-
-**Compile results then plot accuracy vs. epsilon:**
-
-.. code-block:: bash
-
-   # 1. Run multiple experiments (e.g. via Hydra multirun)
-   python -m deckard optimize \
-      --config-path examples/sklearn/config \
-      --config-name attack-default \
-      --multirun attack.attack_params.eps=0.01,0.05,0.1,0.2
-
-   # 2. Compile results into a single CSV
-   python -m deckard compile_results \
-      --config-path examples/sklearn/config \
-      --output_file results.csv
-
-   # 3. Plot with Seaborn backend
-   python -m deckard plot \
-      --config-path examples/sklearn/config \
-      --config-name default \
-      plot.backend=seaborn \
-      plot.data_file=results.csv \
-      plot.x=attack.attack_params.eps \
-      plot.y=evasion_accuracy \
-      plot.plot_type=scatter \
-      plot.title="Evasion Accuracy vs Epsilon" \
-      plot.plot_file=plots/evasion_vs_eps.png
-
-**Line plot with hue grouping:**
-
-.. code-block:: bash
-
-   python -m deckard plot \
-      --config-path examples/sklearn/config \
-      --config-name default \
-      plot.backend=seaborn \
-      plot.data_file=results.csv \
-      plot.x=attack.attack_params.eps \
-      plot.y=evasion_accuracy \
-      plot.plot_type=line \
-      plot.hue=model.model_type \
-      plot.plot_file=plots/accuracy_by_model.png
-
-Programmatic examples
-~~~~~~~~~~~~~~~~~~~~~
+Examples
+--------
 
 .. seealso::
 
-   Fully-executed programmatic examples are available in the
-   :doc:`notebooks/seaborn.ipynb </notebooks/seaborn>` notebook, including scatter, bar, line, and
-   plot-list patterns with rendered output.
+  Notebook-based Seaborn plotting workflows are documented in:
 
-Configuration reference
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Key fields of :class:`~deckard.plot.seaborn_plots.SeabornPlotConfig`:
-
-- **x** (str, required): column name to use as the x-axis
-- **y** (str, required): column name to use as the y-axis
-- **data_file** (str): path to compiled results file (CSV / Parquet / etc.);
-  mutually exclusive with ``data``
-- **data** (pd.DataFrame): in-memory DataFrame; mutually exclusive with
-  ``data_file``
-- **plot_type** (str): one of ``scatter``, ``line``, ``hist``, ``cat``,
-  ``bar``, ``heatmap``
-- **hue** (str, optional): column name for color grouping
-- **style** (str, optional): column name for style grouping (scatter/line only)
-- **title** (str, optional): plot title
-- **xlabel** / **ylabel** (str, optional): axis labels
-- **xscale** / **yscale** (str, optional): axis scale (``log``, ``linear``, …)
-- **legend_title** (str, optional): title for the legend
-- **plot_file** (str, optional): path to save the output image
-- **rc_config** (dict): matplotlib rcParams overrides
-- **kwargs** (dict): extra keyword arguments forwarded to the Seaborn plotter
-
-Styling
-~~~~~~~
-
-Pass matplotlib rcParams via the ``rc_config`` field. See the
-:doc:`notebooks/seaborn.ipynb </notebooks/seaborn>` notebook for a runnable example with rendered output.
+  - :doc:`notebooks/seaborn.ipynb </notebooks/seaborn>`
+  - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
 
 Troubleshooting
 ~~~~~~~~~~~~~~~

@@ -22,30 +22,16 @@ Layers are thin orchestration entrypoints for higher-level tasks, such as:
 Each layer is registered in :data:`deckard.layers.layer_dict` as a
 ``[parser, main]`` pair consumed by the top-level CLI.
 
-Usage
------
+Examples
+--------
 
-Command-line example
-~~~~~~~~~~~~~~~~~~~~
+.. seealso::
 
-Invoke a registered layer through the top-level CLI:
+   Notebook-driven layer execution appears throughout:
 
-.. code-block:: bash
-
-   python -m deckard optimize --config-name experiment
-
-Programmatic example
-~~~~~~~~~~~~~~~~~~~~
-
-Access layer dispatch metadata directly:
-
-.. code-block:: python
-
-   from deckard.layers import layer_dict, SUPPORTED_LAYERS
-
-   print(SUPPORTED_LAYERS)
-   parser_fn, main_fn = layer_dict["optimize"]
-   print(parser_fn, main_fn)
+   - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
+   - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
+   - :doc:`notebooks/seaborn.ipynb </notebooks/seaborn>`
 
 Internals
 ---------

@@ -67,113 +67,16 @@ The :class:`~deckard.experiment.torch_experiment.TorchExperimentConfig` enforces
 - Automatic device reconciliation to prevent device mismatch errors
 - Lifecycle management (training, evaluation, attack, scoring)
 
-Usage
------
-
-Command-line examples
-~~~~~~~~~~~~~~~~~~~~~
-
-**Basic PyTorch experiment with default config:**
-
-.. code-block:: bash
-
-   python -m deckard optimize \
-      --config-path examples/pytorch/config \
-      --config-name torch_default
-
-**PyTorch with custom model and data:**
-
-.. code-block:: bash
-
-   python -m deckard optimize --config-name experiment \
-      data=pytorch \
-      data.dataset_name=CIFAR10 \
-      model=pytorch \
-      model.model_type=torchvision.models.resnet18
-
-**PyTorch with evasion attack and defense:**
-
-.. code-block:: bash
-
-   python -m deckard optimize --config-name experiment \
-      data=pytorch \
-      model=pytorch \
-      attack.attack_type=art.attacks.evasion.FastGradientMethod \
-      attack.attack_params.eps=0.1 \
-      model.defense.defenses[0].defense_name=art.defences.preprocessor.FeatureSqueezing
-
-**PyTorch with fairness-aware attack metrics:**
-
-.. code-block:: bash
-
-   python -m deckard optimize --config-name experiment \
-      data=fairness \
-      data.base_data_config=pytorch \
-      data.sensitive_feature=gender \
-      model=pytorch \
-      attack=fairlearn-attack \
-      score.attack=fairlearn-attack
-
-Programmatic examples
-~~~~~~~~~~~~~~~~~~~~~
+Examples
+--------
 
 .. seealso::
 
-   Fully-executed programmatic examples — including basic PyTorch experiments,
-   ART attacks, and fairness-aware evaluation — are available in the
-   :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>` notebook.
+  Notebook-based PyTorch workflows (training, attacks, defenses, and
+  fairness-integrated evaluation) are documented in:
 
-Configuration
-~~~~~~~~~~~~~
-
-Key configuration options for :class:`~deckard.model.pytorch.PytorchModelConfig`:
-
-- **model_type** (str): fully qualified import path to :class:`torch.nn.Module`
-  or a file target in ``path/to/file.py:ClassName`` form
-  (e.g. ``"torch.nn.Linear"``, ``"torchvision.models.resnet18"``, or
-  ``"../../examples/pytorch/torch_example.py:ResNet18"``)
-- **model_params** (dict): keyword arguments forwarded to the module constructor
-- **device** (str or None): ``"cpu"``, ``"cuda"``, ``"mps"``, or ``None``
-  for automatic selection via :func:`~deckard.utils.resolve_torch_device`
-- **criterion** (str or dict): loss function — string shorthand
-  (e.g. ``"CrossEntropyLoss"``) or fully qualified path
-  (e.g. ``"torch.nn.CrossEntropyLoss"``), or a dict with a ``name`` key
-- **optimizer** (str or dict): optimizer — string shorthand (e.g. ``"SGD"``),
-  fully qualified path (e.g. ``"torch.optim.Adam"``), or a dict with ``name``
-  and any keyword arguments (e.g. ``{"name": "Adam", "lr": 0.001}``)
-- **fit_params** (dict): training hyperparameters:
-
-  - ``nb_epochs`` (int): number of training epochs
-  - ``batch_size`` (int): batch size for training
-  - ``checkpoint_every_epochs`` (int, optional): save a checkpoint every N epochs
-  - ``checkpoint_dir`` (str, optional): directory for checkpoint files
-
-- **classifier** (bool): ``True`` for classification, ``False`` for regression
-- **clip_values** (tuple or None): ``(min, max)`` clipping range for ART wrapper
-- **random_seed** (int): seed for reproducibility
-
-Device Management
-~~~~~~~~~~~~~~~~~
-
-The :class:`~deckard.experiment.torch_experiment.TorchExperimentConfig` handles
-device reconciliation automatically. If you specify different devices in data,
-model, or attack configs, it will:
-
-1. Collect all specified devices
-2. Select the most specific device (cuda > mps > cpu)
-3. Validate no conflicts exist
-4. Apply the unified device to all components
-
-Example device specifications:
-
-.. code-block:: python
-
-   cfg = TorchExperimentConfig(
-       data=data,  # device="cuda:0"
-       model=model,  # device="auto"
-       attack=attack,  # device=None
-   )
-   # Result: all components use device="cuda:0"
+  - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
+  - :doc:`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
 
 Troubleshooting
 ~~~~~~~~~~~~~~~

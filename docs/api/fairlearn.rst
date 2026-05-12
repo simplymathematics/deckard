@@ -84,97 +84,16 @@ The :mod:`deckard.score.fairness` module provides:
 - :class:`~deckard.score.fairness.DefaultFairnessDataScoreConfig` — data-level fairness metrics (group parity, bias)
 - :class:`~deckard.score.fairness.DefaultFairnessModelScoreConfig` — model-level fairness and utility metrics (accuracy, group fairness)
 
-Usage
------
-
-Command-line examples
-~~~~~~~~~~~~~~~~~~~~~
-
-**Basic Fairlearn experiment:**
-
-.. code-block:: bash
-
-   python -m deckard optimize --config-name experiment \
-      data=fairlearn \
-      data.dataset_name=adult \
-      model=fairlearn \
-      model.model_type=sklearn.linear_model.LogisticRegression \
-      score.data=fairness \
-      score.model=fairness
-
-**Fairlearn with PyTorch backend:**
-
-.. code-block:: bash
-
-   python -m deckard optimize --config-name experiment \
-      data=fairlearn \
-      data.base_data_config=pytorch \
-      data.dataset_name=CIFAR10 \
-      model=fairlearn \
-      model.base_model_config=pytorch \
-      score.data=fairness \
-      score.model=fairness
-
-**Fairlearn with attack evaluation:**
-
-.. code-block:: bash
-
-   python -m deckard optimize --config-name experiment \
-      data=fairlearn \
-      model=fairlearn \
-      attack.attack_type=art.attacks.evasion.FastGradientMethod \
-      attack.attack_params.eps=0.1 \
-      score.data=fairness \
-      score.model=fairness
-
-Programmatic examples
-~~~~~~~~~~~~~~~~~~~~~
+Examples
+--------
 
 .. seealso::
 
-   Fully-executed programmatic examples — including basic Fairlearn workflows, attacks on fairness-aware models, and PyTorch integration — are available in the :doc:`notebooks/fairlearn.ipynb </notebooks/fairlearn>` notebook.
+   Notebook-based Fairlearn workflows, including fairness-aware model training,
+   data transforms, and fairness attack scoring, are documented in:
 
-Configuration
-~~~~~~~~~~~~~
-
-Key configuration options for :class:`~deckard.data.fairness.FairlearnDataConfig`:
-
-- **base_data_config** (DataConfig, optional): base data config to extend with fairness; if omitted, uses :class:`deckard.data.DataConfig`
-- **sensitive_features** (list): column names or indices for fairness analysis
-- **mitigation_strategy** (str): one of "preprocessing", "inprocessing", "postprocessing"
-- **group_names** (list): names of groups for group fairness analysis
-- **fairness_metric** (str): metric to optimize (e.g., "demographic_parity_difference")
-
-For :class:`~deckard.model.fairness.FairlearnModelConfig`:
-
-- **base_model_config** (ModelConfig, optional): base model to extend
-- **track_fairness** (bool): compute group fairness metrics
-- **fairness_loss_weight** (float): optional weighting in composite loss function
-
-Defense options for users
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Fairlearn workflows can layer three defense categories:
-
-- data-level fairness mitigations (``fairness_defense``)
-- anonymization preprocessing defenses (``anjana_defense``)
-- model-level ART defenses via ``model.defense`` / defense pipelines
-
-This allows fairness transformation and adversarial defense composition in a single experiment.
-
-Interpretation
-~~~~~~~~~~~~~~
-
-Fairlearn scores commonly include:
-
-- **demographic_parity_difference**: difference in positive outcome rates between groups
-- **equalized_odds_difference**: difference in true/false positive rates between groups
-- **statistical_parity_difference**: difference in selection rates between groups
-- **disparate_impact**: ratio of positive outcome rates between groups
-- **accuracy_group_0/1**: accuracy for each group
-- **overall_accuracy**: overall model accuracy
-
-A well-tuned fairness strategy reduces group disparities while maintaining high utility.
+   - :doc:`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
+   - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
 Troubleshooting
 ~~~~~~~~~~~~~~~
