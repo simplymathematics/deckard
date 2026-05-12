@@ -100,3 +100,37 @@ Or write to a local env file:
 - Requires `docker` and `act` for non-dry runs.
 - Install `act` on macOS with `brew install act`.
 - If `--ref` is omitted, the current git branch is used.
+
+## DVC Cache Management
+
+Use [scripts/manage_dvc_cache.sh](scripts/manage_dvc_cache.sh) to inspect and manage notebook build caches.
+
+```bash
+bash scripts/manage_dvc_cache.sh [command]
+```
+
+Commands:
+
+- `status` - Show cache size, cached files, and pipeline state (default)
+- `list` - List all cached notebook stages
+- `clear` - Remove cache (forces full rebuild next time)
+- `rebuild` - Force rebuild all notebooks from scratch
+- `rebuild-changed` - Rebuild only stages with changed dependencies
+
+Examples:
+
+```bash
+# Check cache status
+bash scripts/manage_dvc_cache.sh status
+
+# See which notebooks are cached
+bash scripts/manage_dvc_cache.sh list
+
+# Clear cache if rebuilding everything
+bash scripts/manage_dvc_cache.sh clear
+
+# Force full rebuild after major changes
+bash scripts/manage_dvc_cache.sh rebuild
+```
+
+For more details on DVC caching and workflows, see [docs/DVC_CACHE_GUIDE.md](../docs/DVC_CACHE_GUIDE.md).
