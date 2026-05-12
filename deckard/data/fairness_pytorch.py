@@ -1,4 +1,5 @@
 import logging
+import collections
 
 from dataclasses import dataclass
 from typing import Any
@@ -8,12 +9,15 @@ from torch.utils.data import Dataset
 from torch.utils.data import Subset  # Ensure Subset is always in scope
 
 from ..score.fairness import DefaultFairlearnClassificationConfig, DefaultFairlearnRegressionConfig
+from ..score.pytorch import (
+    resolve_sensitive_features,
+    coerce_to_numpy,
+    materialize_dataset,
+    is_dataset_like,
+    is_dataloader_like,
+)
 from .fairness import FairlearnDataConfig
 from .pytorch import PytorchCustomDataConfig
-
-        
-
-
 
 logger = logging.getLogger(__name__)
 
@@ -83,259 +87,192 @@ class SyntheticImageSensitiveDataset(Dataset):
 @dataclass(eq=False)
 class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
     """Fairlearn-compatible DataConfig for PyTorch Datasets with sensitive features."""
+
     _target_: str = "deckard.data.fairness_pytorch.FairlearnPytorchDataConfig"
     scorer: Any = None
 
+    # ------------------------------------------------------------------
+    # Initialisation
+    # ------------------------------------------------------------------
 
-
-    def __call__(self, *args, **kwargs):
-        # Auto-select fairness-compatible scorer if not set
-        from deckard.utils import is_default_config_value
-        if is_default_config_value(self.scorer, include_best=False) or self.scorer is None:
-            from deckard.score import DefaultFairlearnClassificationConfig, DefaultFairlearnRegressionConfig
+    def __post_init__(self):
+        FairlearnDataConfig.__post_init__(self)
+        PytorchCustomDataConfig.__post_init__(self)
+        if not hasattr(self, "dataset") or not self.dataset:
+            self.dataset = self.dataset_name
+        if self.scorer is None:
             self.scorer = (
-                DefaultFairlearnClassificationConfig() if self.classifier else DefaultFairlearnRegressionConfig()
+                DefaultFairlearnClassificationConfig()
+                if getattr(self, "classifier", True)
+                else DefaultFairlearnRegressionConfig()
             )
-        # Ensure mode and scorer_mode are always defined
-        mode = kwargs.get('mode', 'pre-sample')
-        scorer_mode = mode if mode is not None else 'pre-sample'
-        kwargs['mode'] = mode
-        result = super().__call__(*args, **kwargs)
-        # If sensitive_features was not passed, re-run scoring with the correct mode-aware attribute
-        if 'sensitive_features' not in kwargs and hasattr(self, 'scorer') and callable(self.scorer):
-            if mode == 'train' and hasattr(self, '_sensitive_train'):
-                sensitive = self._sensitive_train
-                y_true = self.y_train
-            elif mode == 'test' and hasattr(self, '_sensitive_test'):
-                sensitive = self._sensitive_test
-                y_true = self.y_test
-            elif mode == 'val' and hasattr(self, '_sensitive_val'):
-                sensitive = self._sensitive_val
-                y_true = self.y_val
-            elif mode == 'all' and hasattr(self, '_sensitive_all'):
-                sensitive = self._sensitive_all
-                y_true = self.y_all
-            if scorer_mode == 'pre-sample' and hasattr(self, '_sensitive_all'):
-                # Map pre-sample to 'all' for the scorer
-                scorer_mode = 'all'
-                sensitive = self._sensitive_all
-                # Use self._y as the flat label array for both y_true and y_pred
-                y_true = self._y
-                y_pred = self._y
-            elif scorer_mode == 'train' and hasattr(self, '_sensitive_train'):
-                sensitive = self._sensitive_train
-                y_true = self.y_train
-                y_pred = y_true
-            elif scorer_mode == 'test' and hasattr(self, '_sensitive_test'):
-                sensitive = self._sensitive_test
-                y_true = self.y_test
-                y_pred = y_true
-            elif scorer_mode == 'val' and hasattr(self, '_sensitive_val'):
-                sensitive = self._sensitive_val
-                y_true = self.y_val
-                y_pred = y_true
-            elif scorer_mode == 'all' and hasattr(self, '_sensitive_all'):
-                sensitive = self._sensitive_all
-                y_true = self.y_all
-                y_pred = y_true
-            else:
-                sensitive = None
-                y_true = None
-                y_pred = None
-                # Flatten fairness_scores if it's a dict
-                if isinstance(fairness_scores, dict):
-                    flat = {}
-                    for k, v in fairness_scores.items():
-                        # Flatten tuple keys and nested dicts
-                        if isinstance(k, tuple):
-                            k = '_'.join(str(x) for x in k)
-                        if isinstance(v, dict):
-                            for kk, vv in v.items():
-                                if isinstance(kk, tuple):
-                                    kk = '_'.join(str(x) for x in kk)
-                                flat[f"{k}_{kk}"] = vv
-                        else:
-                            flat[k] = v
-                    fairness_scores = flat
-                if sensitive is None or not hasattr(sensitive, "__len__") or y_true is None or len(sensitive) != len(y_true):
-                    raise RuntimeError(f"[DIAGNOSE] sensitive_features problem: mode={mode}, type={type(sensitive)}, value={repr(sensitive)[:200]}, y_true type={type(y_true)}, y_true len={len(y_true) if hasattr(y_true, '__len__') else 'N/A'}, sensitive len={len(sensitive) if hasattr(sensitive, '__len__') else 'N/A'}")
-                fairness_scores = self.scorer(
-                    y_true=y_true,
-                    y_pred=y_pred,
-                    mode=scorer_mode,
-                    data=self,
-                    sensitive_features=sensitive,
-                )
-        assert hasattr(self, "X_train"), ".X_train not found"
-        return result
 
-    def _fit_transform_X(
-        self,
-        X_train,
-        X_test,
-        y_train,
-        y_test,
-        pipeline,
-    ):
-        """Bypass pipeline fit/transform for torch types. Returns inputs unchanged, sets timing fields."""
+    # ------------------------------------------------------------------
+    # Data loading / splitting
+    # ------------------------------------------------------------------
+
+    def _load_data(self):
+        """Use the PyTorch parent's _load_data — skip FairlearnDataConfig's DataFrame logic."""
+        PytorchCustomDataConfig._load_data(self)
+
+    def _fit_transform_X(self, X_train, X_test, y_train, y_test, pipeline):
+        """Bypass pipeline fit/transform for torch types."""
         if pipeline:
             raise NotImplementedError("Pytorch data pipelines not yet implemented.")
         self.pipeline_fit_time = 0.0
-        self.pipeline_fit_n = len(X_train) if hasattr(X_train, '__len__') else 0
+        self.pipeline_fit_n = len(X_train) if hasattr(X_train, "__len__") else 0
         self.pipeline_transform_time = 0.0
-        self.pipeline_transform_n = len(X_test) if hasattr(X_test, '__len__') else 0
+        self.pipeline_transform_n = len(X_test) if hasattr(X_test, "__len__") else 0
         return X_train, X_test, y_train, y_test
-    def _load_data(self):
-            # Only call the PyTorch parent's _load_data, skip FairlearnDataConfig's DataFrame logic
-            PytorchCustomDataConfig._load_data(self)
-    
-    def __post_init__(self):
-        # Call both parent initializers
-        FairlearnDataConfig.__post_init__(self)
-        PytorchCustomDataConfig.__post_init__(self)
-        # Ensure self.dataset is set for downstream logic
-        if not hasattr(self, "dataset") or self.dataset is None or self.dataset == "":
-            self.dataset = self.dataset_name
-        # Set default scorer if not provided
-        if self.scorer is None:
-            self.scorer = (
-                DefaultFairlearnClassificationConfig() if getattr(self, "classifier", True) else DefaultFairlearnRegressionConfig()
-            )
 
     def _sample(self):
-        # Split the dataset and indices as usual
-        
-        # If not already split, split and set indices
+        """Split the dataset and extract per-split sensitive-feature arrays."""
         if not (isinstance(self._X, (tuple, list)) and len(self._X) == 2):
             num_samples = len(self._X)
             indices = np.arange(num_samples)
             np.random.seed(self.random_state)
             np.random.shuffle(indices)
+
             if self.train_size is None and self.test_size is None:
                 raise ValueError("Either train_size or test_size must be specified.")
             if self.train_size is None:
-                test_size = int(self.test_size * num_samples) if isinstance(self.test_size, float) else self.test_size
+                test_size = (
+                    int(self.test_size * num_samples)
+                    if isinstance(self.test_size, float)
+                    else self.test_size
+                )
                 train_size = num_samples - test_size
             elif self.test_size is None:
-                train_size = int(self.train_size * num_samples) if isinstance(self.train_size, float) else self.train_size
+                train_size = (
+                    int(self.train_size * num_samples)
+                    if isinstance(self.train_size, float)
+                    else self.train_size
+                )
                 test_size = num_samples - train_size
             else:
-                train_size = int(self.train_size * num_samples) if isinstance(self.train_size, float) else self.train_size
-                test_size = int(self.test_size * num_samples) if isinstance(self.test_size, float) else self.test_size
+                train_size = (
+                    int(self.train_size * num_samples)
+                    if isinstance(self.train_size, float)
+                    else self.train_size
+                )
+                test_size = (
+                    int(self.test_size * num_samples)
+                    if isinstance(self.test_size, float)
+                    else self.test_size
+                )
+
             train_idx = indices[:train_size]
-            test_idx = indices[train_size:train_size+test_size]
+            test_idx = indices[train_size : train_size + test_size]
             train_ds = Subset(self._X, train_idx)
             test_ds = Subset(self._X, test_idx)
             self._X = (train_ds, test_ds)
             self.train_indices = torch.tensor(train_idx)
-            self.test_indices = _torch.tensor(test_idx)
+            self.test_indices = torch.tensor(test_idx)
         else:
-            # If already split, try to infer indices if possible, else set to None
-            self.train_indices = getattr(self, 'train_indices', None)
-            self.test_indices = getattr(self, 'test_indices', None)
-        # Call parent to set up y_train/y_test, etc.
-        PytorchCustomDataConfig._sample(self)
+            self.train_indices = getattr(self, "train_indices", None)
+            self.test_indices = getattr(self, "test_indices", None)
 
-        def _extract_sensitive_for_split(ds):
-            # Preferred path: split is a Subset and base dataset exposes _sensitive.
+        PytorchCustomDataConfig._sample(self)
+        self._extract_sensitive_splits()
+
+    def _extract_sensitive_splits(self):
+        """Populate ``_sensitive_train``, ``_sensitive_test``, ``_sensitive_all``."""
+        def _from_split(ds) -> list | None:
             if isinstance(ds, Subset):
-                base_ds = ds.dataset
-                base_sensitive = getattr(base_ds, "_sensitive", None)
+                base_sensitive = getattr(ds.dataset, "_sensitive", None)
                 if base_sensitive is not None:
-                    sens_arr = np.asarray(base_sensitive, dtype=object)
-                    return sens_arr[np.asarray(ds.indices)].tolist()
-            # Next path: dataset itself exposes _sensitive for this split.
-            direct_sensitive = getattr(ds, "_sensitive", None)
-            if direct_sensitive is not None:
-                return np.asarray(direct_sensitive, dtype=object).tolist()
+                    arr = np.asarray(base_sensitive, dtype=object)
+                    return arr[np.asarray(ds.indices)].tolist()
+            direct = getattr(ds, "_sensitive", None)
+            if direct is not None:
+                return np.asarray(direct, dtype=object).tolist()
             return None
 
+        if not (isinstance(self._X, (tuple, list)) and len(self._X) == 2):
+            raise RuntimeError("_extract_sensitive_splits called before dataset was split")
+
         train_ds, test_ds = self._X
-        train_sensitive = _extract_sensitive_for_split(train_ds)
-        test_sensitive = _extract_sensitive_for_split(test_ds)
+        train_sensitive = _from_split(train_ds)
+        test_sensitive = _from_split(test_ds)
 
         if train_sensitive is None and test_sensitive is None:
-            raise ValueError("No sensitive features found in the torch dataset (_sensitive attribute missing or None).")
+            raise ValueError(
+                "No sensitive features found in the torch dataset "
+                "(_sensitive attribute missing or None)."
+            )
 
         self._sensitive_train = train_sensitive
         self._sensitive_test = test_sensitive
         self._sensitive_all = (train_sensitive or []) + (test_sensitive or [])
+        self._sensitive_val = None
 
-    def _score(self, mode=None) -> dict:
-        # Use the same logic as FairlearnDataConfig, but ensure y_true/y_pred/sensitive are torch-compatible and always injected
-        if self.scorer is None:
+    # ------------------------------------------------------------------
+    # Scoring
+    # ------------------------------------------------------------------
+
+    def __call__(self, *args, **kwargs):
+        from ..utils import is_default_config_value
+
+        if is_default_config_value(self.scorer, include_best=False) or self.scorer is None:
             self.scorer = (
-                DefaultFairlearnClassificationConfig() if getattr(self, "classifier", True) else DefaultFairlearnRegressionConfig()
+                DefaultFairlearnClassificationConfig()
+                if self.classifier
+                else DefaultFairlearnRegressionConfig()
+            )
+        result = super().__call__(*args, **kwargs)
+        assert hasattr(self, "X_train"), ".X_train not found"
+        return result
+
+    def _score(self, mode: str | None = None) -> dict:
+        """Compute fairness scores using canonical helpers for sensitive-feature lookup."""
+        from ..utils import is_default_config_value
+
+        if is_default_config_value(self.scorer, include_best=False) or self.scorer is None:
+            self.scorer = (
+                DefaultFairlearnClassificationConfig()
+                if getattr(self, "classifier", True)
+                else DefaultFairlearnRegressionConfig()
             )
         if not callable(self.scorer):
-            raise TypeError(f"FairlearnPytorchDataConfig.scorer must be callable or None, got {type(self.scorer)}")
+            raise TypeError(
+                f"FairlearnPytorchDataConfig.scorer must be callable, got {type(self.scorer)}"
+            )
+
         scorer_mode = mode if mode is not None else "train"
-        sensitive = None
-        y_true = None
-        if scorer_mode == 'pre-sample' and hasattr(self, '_sensitive_all'):
-            # Map pre-sample to 'all' for the scorer
-            scorer_mode = 'all'
-            sensitive = self._sensitive_all
-            # Extract y_true as a flat list matching sensitive length from the full dataset
-            y_true = None
-            if hasattr(self, 'dataset_obj') and hasattr(self.dataset_obj, '_y'):
-                y_true = self.dataset_obj._y
-                if hasattr(y_true, 'cpu'):
-                    y_true = y_true.cpu().numpy()
-                if hasattr(y_true, 'tolist'):
-                    y_true = y_true.tolist()
-            elif hasattr(self, '_y'):
-                y_true = self._y
-                if hasattr(y_true, 'cpu'):
-                    y_true = y_true.cpu().numpy()
-                if hasattr(y_true, 'tolist'):
-                    y_true = y_true.tolist()
-            else:
-                raise RuntimeError("Could not extract y_true for pre-sample mode; dataset type unsupported.")
-            if not isinstance(y_true, list):
-                y_true = list(y_true)
-            if len(y_true) != len(sensitive):
-                raise RuntimeError(f"[DIAGNOSE] y_true and sensitive length mismatch in pre-sample mode: len(y_true)={len(y_true)}, len(sensitive)={len(sensitive)}")
-            # Only compute dataset-level metrics, not accuracy or model-dependent metrics
-            import collections
-            result = {
-                "n_samples": len(y_true),
-                "label_distribution": dict(collections.Counter(y_true)),
+
+        # Map "pre-sample" -> dataset-level summary (no model predictions needed).
+        if scorer_mode == "pre-sample":
+            y_all, sensitive = self._get_full_dataset_labels()
+            return {
+                "n_samples": len(y_all),
+                "label_distribution": dict(collections.Counter(y_all)),
                 "sensitive_distribution": dict(collections.Counter(sensitive)),
             }
-            return result
-        elif scorer_mode == 'train' and hasattr(self, '_sensitive_train'):
-            sensitive = self._sensitive_train
-            y_true = self.y_train.cpu().numpy() if hasattr(self.y_train, 'cpu') else self.y_train
-            y_pred = self.X_train.cpu().numpy() if hasattr(self, 'X_train') and hasattr(self.X_train, 'cpu') else self.X_train
-        elif scorer_mode == 'test' and hasattr(self, '_sensitive_test'):
-            sensitive = self._sensitive_test
-            y_true = self.y_test.cpu().numpy() if hasattr(self.y_test, 'cpu') else self.y_test
-            y_pred = self.X_test.cpu().numpy() if hasattr(self, 'X_test') and hasattr(self.X_test, 'cpu') else self.X_test
-        elif scorer_mode == 'val' and hasattr(self, '_sensitive_val'):
-            sensitive = self._sensitive_val
-            y_true = self.y_val.cpu().numpy() if hasattr(self.y_val, 'cpu') else self.y_val
-            y_pred = self.X_val.cpu().numpy() if hasattr(self, 'X_val') and hasattr(self.X_val, 'cpu') else self.X_val
-        elif scorer_mode == 'all' and hasattr(self, '_sensitive_all'):
-            sensitive = self._sensitive_all
-            y_true = self.y_all.cpu().numpy() if hasattr(self.y_all, 'cpu') else self.y_all
-            y_pred = self.X_all.cpu().numpy() if hasattr(self, 'X_all') and hasattr(self.X_all, 'cpu') else getattr(self, 'X_all', None)
-        else:
-            y_pred = None
-        print(f"[DEBUG] FairlearnPytorchDataConfig._score: mode={mode}, type(sensitive)={type(sensitive)}, sensitive={repr(sensitive)[:200]}")
-        logger.info(f"[DEBUG] FairlearnPytorchDataConfig._score: mode={mode}, type(sensitive)={type(sensitive)}, sensitive (first 10)={repr(sensitive)[:200]}")
-        if sensitive is None or not hasattr(sensitive, "__len__") or y_true is None or len(sensitive) != len(y_true):
-            raise RuntimeError(f"[DIAGNOSE] sensitive_features problem: mode={mode}, type={type(sensitive)}, value={repr(sensitive)[:200]}, y_true type={type(y_true)}, y_true len={len(y_true) if hasattr(y_true, '__len__') else 'N/A'}, sensitive len={len(sensitive) if hasattr(sensitive, '__len__') else 'N/A'}")
+
+        # Canonical sensitive-feature lookup.
+        sensitive = resolve_sensitive_features(self, scorer_mode)
+        if sensitive is None:
+            logger.warning(
+                "No sensitive features for mode '%s'; skipping fairness scoring.",
+                scorer_mode,
+            )
+            return {}
+
+        # Extract (X, y) arrays for the requested split.
+        X, y_true = self._get_split_arrays(scorer_mode)
+        if y_true is None:
+            return {}
+
         fairness_scores = self.scorer(
             y_true=y_true,
-            y_pred=y_pred,
+            y_pred=X,
             mode=scorer_mode,
             data=self,
             sensitive_features=sensitive,
         )
-        # Flatten fairness_scores if it's a dict
+        # Flatten nested dicts.
         if isinstance(fairness_scores, dict):
-            flat = {}
+            flat: dict = {}
             for k, v in fairness_scores.items():
                 if isinstance(v, dict):
                     for subk, subv in v.items():
@@ -343,6 +280,47 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
                 else:
                     flat[k] = v
             return flat
-        
+        return {"fairness_score": fairness_scores}
+
+
+
+    # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
+
+    def _get_split_arrays(self, mode: str):
+        """Return ``(X_array, y_array)`` numpy arrays for the given split *mode*.
+
+        Handles Subset / DataLoader via ``materialize_dataset``.
+        """
+        from ..score.pytorch import _SPLIT_ATTRS
+
+        x_attr, y_attr = _SPLIT_ATTRS.get(mode, ("X_test", "y_test"))
+        X_raw = getattr(self, x_attr, None)
+        y_raw = getattr(self, y_attr, None)
+
+        if is_dataset_like(X_raw) or is_dataloader_like(X_raw):
+            X_arr, y_from_ds = materialize_dataset(X_raw)
+            y_arr = coerce_to_numpy(y_raw) if y_raw is not None else y_from_ds
+        else:
+            X_arr = coerce_to_numpy(X_raw)
+            y_arr = coerce_to_numpy(y_raw)
+
+        return X_arr, y_arr
+
+    def _get_full_dataset_labels(self):
+        """Return ``(y_all, sensitive_all)`` lists for the un-split dataset."""
+        sensitive = getattr(self, "_sensitive_all", None)
+        if sensitive is None:
+            raise RuntimeError("_sensitive_all not set; call _sample() first.")
+
+        y_all = getattr(self, "_y", None)
+        if y_all is None and hasattr(self, "_X") and is_dataset_like(self._X):
+            _, y_all = materialize_dataset(self._X)
+        if y_all is None:
+            raise RuntimeError("Could not extract y labels for pre-sample mode.")
+
+        y_all = coerce_to_numpy(y_all)
+        return y_all.tolist(), sensitive
 
 

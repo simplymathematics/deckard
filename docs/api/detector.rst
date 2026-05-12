@@ -1,69 +1,23 @@
 Detector
 ========
 
-The :mod:`deckard.detector` module provides auxiliary detector orchestration for
-post-attack analysis. Detector models are trained to classify **clean vs
-adversarial/poisoned** samples and are executed as an optional phase in
-:class:`deckard.experiment.ExperimentConfig`.
-
-.. automodule:: deckard.detector
-   :members:
+Overview
+------------------------------------------------------------------------nd d---------------co---------------Not---------mple
+------------------------------------------------------------------------nd d---------------co---------------Not---------mple
+ 1. 1. 1. 1tions for model execution.
+  :members:
    :show-inheritance:
 
-Overview
---------
+.. au.. au.. au.. au.. au.. au...ba.. a  :member.. au.. au.. au.. aance:
 
-Detector execution is intentionally separate from model defenses:
+Typical Workflow
+-----------------------------------------------------------------------------------------r scoring -----------------erimen---------------------------------etri-----------aseline and attacked runs-----------------------------------t <------------------------------Overvi-----------------------------------------------------------------------------------------r scoring ------- si-----------------------------------------------------------------------------------------r scoring -----------------erimen---------------------------------et:`/notebook----------------------------------to-------AP----ferenc--------------------------------------------------------------------------------------------------r scoring -----------------erime :me-----------------------------------------------------------------------------------------r scoring -----------------erimeauto--------------------------------ival
+   :members:
+   :members:
+-------:
 
-- **Defense pipeline**: transforms or wraps the task model used for the
-  original prediction task.
-- **Detector phase**: trains a secondary model for detection after adversarial
-  samples are generated.
 
-In ExperimentConfig, detector execution runs after attack execution and merges
-metrics under ``detector_*`` keys.
-
-Supported detector families
----------------------------
-
-- Evasion detectors exposing ``fit`` + ``detect`` APIs
-  (for example ``BinaryInputDetector``).
-- Poison detectors exposing ``detect_poison`` APIs
-  (for example ``SpectralSignatureDefense``).
-
-Configuration examples
-----------------------
-
-Binary input detector (evasion):
-
-.. code-block:: yaml
-
-   detector_type: art.defences.detector.evasion.BinaryInputDetector
-   detector_params: {}
-   fit_params:
-     batch_size: 16
-     nb_epochs: 1
-     split: test
-   detector_model:
-     model_type: sklearn.linear_model.LogisticRegression
-     classifier: true
-     model_params:
-       max_iter: 50
-   _target_: deckard.detector.DetectorConfig
-
-Spectral signature detector (poison):
-
-.. code-block:: yaml
-
-   detector_type: art.defences.detector.poison.SpectralSignatureDefense
-   detector_params:
-     expected_pp_poison: 0.2
-     batch_size: 16
-   fit_params:
-     split: train
-   detector_model:
-     model_type: sklearn.linear_model.LogisticRegression
-     classifier: true
-     model_params:
-       max_iter: 100
-   _target_: deckard.detector.DetectorConfig
+------:
+rs:
+--------------------------------------------------------igurations.
+2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Optiona2. Opnd group metric2. Optiona2ed scorer int2. Opts.

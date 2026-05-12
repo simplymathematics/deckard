@@ -69,15 +69,23 @@ from yellowbrick.model_selection import (
 
 from ..utils import ConfigBase
 from ..experiment import ExperimentConfig
+from ..score.pytorch import (
+    to_numpy as _to_numpy,
+    is_dataloader_like as _is_dataloader_like,
+    is_dataset_like as _is_dataset_like,
+    get_dataset_shape as _get_shape,
+    materialize_dataset as _materialize_dataset_features_labels,
+    HAS_TORCH,
+)
 
 try:
     from torch.utils.data import Subset
-except:
+except ImportError:
     Subset = None
 
 try:
     import torch
-except Exception:
+except ImportError:
     torch = None
 
 feature_viz_types: Final = (
@@ -216,51 +224,6 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-def _to_numpy(value: Any) -> np.ndarray:
-    if isinstance(value, np.ndarray):
-        return value
-    if hasattr(value, "detach") and hasattr(value, "cpu"):
-        return value.detach().cpu().numpy()
-    if hasattr(value, "cpu") and hasattr(value, "numpy"):
-        return value.cpu().numpy()
-    if hasattr(value, "numpy"):
-        return value.numpy()
-    return np.asarray(value)
-
-
-def _is_dataloader_like(obj: Any) -> bool:
-    return hasattr(obj, "__iter__") and hasattr(obj, "batch_size")
-
-
-def _is_dataset_like(obj: Any) -> bool:
-    return hasattr(obj, "__len__") and hasattr(obj, "__getitem__")
-
-
-def _materialize_dataset_features_labels(dataset_obj: Any):
-    """Materialize dataset/dataloader feature rows for Yellowbrick visualizers."""
-    x_rows = []
-    y_rows = []
-
-    if _is_dataloader_like(dataset_obj):
-        iterator = dataset_obj
-    elif _is_dataset_like(dataset_obj):
-        iterator = (dataset_obj[i] for i in range(len(dataset_obj)))
-    else:
-        raise TypeError(f"Unsupported dataset-like input: {type(dataset_obj)}")
-
-    for sample in iterator:
-        if not isinstance(sample, (tuple, list)) or len(sample) < 1:
-            continue
-        x_part = _to_numpy(sample[0])
-        x_rows.append(x_part)
-        if len(sample) >= 2:
-            y_part = _to_numpy(sample[1])
-            y_arr = np.asarray(y_part).reshape(-1)
-            y_rows.extend(y_arr.tolist())
-
-    X = np.asarray(x_rows) if len(x_rows) > 0 else np.empty((0,))
-    y = np.asarray(y_rows) if len(y_rows) > 0 else None
-    return X, y
 
 
 
@@ -346,6 +309,18 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
         ):
             device = getattr(self.model_config, "device", "cpu")
             X = torch.as_tensor(X, dtype=torch.float32, device=device)
+        if (
+            torch is not None
+            and isinstance(X, torch.Tensor)
+            and getattr(self.model_config, "library", "") == "pytorch"
+        ):
+            # Yellowbrick may pass grayscale image batches as [N, H, W].
+            # Conv2d expects [N, C, H, W], so inject a channel dimension.
+            if X.ndim == 3:
+                if X.shape[0] <= 4 and X.shape[1] > 4 and X.shape[2] > 4:
+                    X = X.unsqueeze(0)
+                else:
+                    X = X.unsqueeze(1)
         raw = self.model_config._predict(X)
         return self._to_numpy(raw)
 
@@ -437,13 +412,30 @@ class YellowbrickPlotConfig(ConfigBase):
             raise TypeError("experiment must be an ExperimentConfig instance")
 
     def _experiment_outputs_ready(self) -> bool:
-        # Only require that data fields are present and are pandas objects
-        data_ready = all(
-            hasattr(self.experiment.data, attr)
-            and getattr(self.experiment.data, attr) is not None
-            and hasattr(getattr(self.experiment.data, attr), "shape")
+        def _materializable(value: Any) -> bool:
+            return value is not None and (
+                hasattr(value, "shape")
+                or _is_dataset_like(value)
+                or _is_dataloader_like(value)
+            )
+
+        data_obj = getattr(self.experiment, "data", None)
+        if data_obj is None:
+            return False
+
+        # Preferred path for plotting APIs: train/test splits.
+        split_ready = all(
+            hasattr(data_obj, attr) and _materializable(getattr(data_obj, attr))
+            for attr in ["X_train", "y_train", "X_test", "y_test"]
+        )
+
+        # Fallback path for configs that only materialize full arrays until sampled.
+        full_ready = all(
+            hasattr(data_obj, attr) and _materializable(getattr(data_obj, attr))
             for attr in ["_X", "_y"]
         )
+
+        data_ready = split_ready or full_ready
         # Only require that the model object exists
         model_ready = self.experiment.model is not None
         attack_ready = True
@@ -471,6 +463,14 @@ class YellowbrickPlotConfig(ConfigBase):
             and callable(getattr(self.experiment.data, "__call__", None))
         ):
             self.experiment.data(data_file=None, score_file=None)
+        # If full arrays are present but splits are missing, force an in-memory sample split.
+        if (
+            not self._experiment_outputs_ready()
+            and hasattr(self.experiment, "data")
+            and callable(getattr(self.experiment.data, "_sample", None))
+            and getattr(self.experiment.data, "_X", None) is not None
+        ):
+            self.experiment.data._sample()
         # Fallback: generate synthetic data if still not ready
         if not self._experiment_outputs_ready():
             raise RuntimeError(
@@ -1073,7 +1073,7 @@ class YellowbrickConfigList(ConfigBase):
             hasattr(self.experiment.data, attr)
             and getattr(self.experiment.data, attr) is not None
             and hasattr(getattr(self.experiment.data, attr), "shape")
-            for attr in ["X_train", "y_train", "X_test", "y_test"]
+            for attr in ["_X", "_y"]
         )
         # Only require that the model object exists
         model_ready = self.experiment.model is not None

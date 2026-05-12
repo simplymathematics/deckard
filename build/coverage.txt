@@ -3,7 +3,7 @@ Name                                     Stmts   Miss  Cover   Missing
 deckard/__init__.py                         80      0   100%
 deckard/__main__.py                         98      6    94%   53, 66-69, 77, 122, 135
 deckard/attack/__init__.py                   4      0   100%
-deckard/attack/base.py                    1098     13    99%   487-488, 587, 831-839, 2120
+deckard/attack/base.py                    1096     12    99%   487-488, 587, 831-839
 deckard/attack/declarations.py              25      0   100%
 deckard/attack/pytorch.py                   43     14    67%   42-48, 52-58
 deckard/attack/torch_utils.py               71      0   100%
@@ -12,7 +12,7 @@ deckard/data/anjana.py                     232      2    99%   43, 417
 deckard/data/base.py                       746     14    98%   867, 1071, 1079, 1620, 1627-1632, 1694-1695, 1697-1703
 deckard/data/declarations.py                14      0   100%
 deckard/data/fairness.py                   124      0   100%
-deckard/data/fairness_pytorch.py           228    112    51%   55-59, 93, 101, 104, 106-107, 123-125, 127, 135-137, 139-143, 146-169, 180-186, 189, 215, 217-218, 220-221, 234-235, 248, 251, 258, 266-345
+deckard/data/fairness_pytorch.py           164     48    71%   60, 123-125, 137, 139-144, 151, 172-173, 186, 188-189, 192, 222, 236, 259, 263, 266-284, 295-308, 312-323
 deckard/data/pytorch.py                    409     12    97%   37-42, 84, 86-87, 129, 823-829
 deckard/data/sample.py                      80      0   100%
 deckard/data/survival.py                    65      0   100%
@@ -34,28 +34,28 @@ deckard/layers/rerun_failed_studies.py      95      1    99%   65
 deckard/layers/survival.py                 109      5    95%   90, 96-98, 165
 deckard/model/__init__.py                   28      2    93%   51-52
 deckard/model/anjana.py                     16      0   100%
-deckard/model/base.py                      519      2    99%   477, 568
+deckard/model/base.py                      517      2    99%   477, 568
 deckard/model/declarations.py               30      0   100%
 deckard/model/defend.py                    505     19    96%   263, 272-274, 331, 352-353, 366-371, 386, 406-407, 428, 448-453, 484, 596
-deckard/model/fairness.py                  338      2    99%   26, 512
+deckard/model/fairness.py                  329      0   100%
 deckard/model/pytorch.py                   569      6    99%   20-21, 1061, 1068, 1087-1100
 deckard/model/survival.py                  223      0   100%
 deckard/plot/__init__.py                    44      2    95%   89, 99
 deckard/plot/declarations.py                 6      0   100%
 deckard/plot/seaborn_plots.py              125      9    93%   75, 82, 95, 112, 135-136, 195-197
 deckard/plot/survival.py                   198     29    85%   41, 45-51, 108, 141, 146, 148-151, 165, 218, 369, 403-407, 412, 440, 442, 444, 446, 468, 527
-deckard/plot/yellowbrick_plots.py          638    200    69%   75-76, 80, 225, 227, 232, 236, 241, 244-245, 249, 258, 270, 272, 283, 288, 295, 298-299, 304, 306, 308, 332, 357, 360-361, 370-372, 375, 378-382, 391-394, 396, 431, 456, 485-493, 496, 498, 502, 506, 522-526, 529, 531-536, 545-551, 580-585, 592-597, 656-659, 695-696, 712, 714-715, 717-718, 724-727, 740, 742, 762-764, 781-784, 791-795, 802, 839, 853-859, 892, 901-905, 909-911, 913-926, 937, 950, 959-967, 989-995, 1000, 1033, 1035, 1037, 1040, 1045-1059, 1072-1081, 1084-1108, 1111-1144, 1147, 1157-1163
+deckard/plot/yellowbrick_plots.py          605    126    79%   84, 233-234, 236-237, 245, 248-249, 258, 265, 267, 270, 272, 295, 299, 320, 345, 357, 366, 394, 396, 400, 456, 467, 485-487, 489-493, 500-502, 508-509, 512, 523-524, 545-548, 568, 629, 631, 653-659, 691, 705, 724-727, 764, 781-784, 791-798, 800, 802-803, 849, 853-857, 913, 915, 922-932, 963, 996, 998, 1000, 1043, 1047-1067, 1071, 1074-1082, 1084-1107, 1120-1126
 deckard/score/__init__.py                   28      0   100%
 deckard/score/anjana.py                     61      0   100%
 deckard/score/attack.py                    206      3    99%   279, 593, 601
-deckard/score/base.py                      492      1    99%   195
+deckard/score/base.py                      477      0   100%
 deckard/score/data.py                      114      0   100%
 deckard/score/declarations.py               24      0   100%
 deckard/score/declarations_fairness.py      10      0   100%
 deckard/score/declarations_survival.py       5      0   100%
-deckard/score/fairness.py                  439      1    99%   19
-deckard/score/pytorch.py                    14      1    93%   29
+deckard/score/fairness.py                  427      1    99%   19
+deckard/score/pytorch.py                   129     67    48%   37, 48, 53, 74-113, 167-170, 180, 182, 187-188, 190-191, 201-220, 234, 238, 242
 deckard/score/survival.py                   45      2    96%   54-55
 deckard/utils.py                           718     17    98%   190-193, 260-262, 288-289, 293, 296, 466, 635, 708, 814, 848, 1022
 ----------------------------------------------------------------------
-TOTAL                                    11648    549    95%
+TOTAL                                    11626    473    96%

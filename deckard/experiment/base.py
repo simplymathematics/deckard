@@ -534,15 +534,15 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
         **Single config** (type-based fallback)::
 
-            score=classification              # → model.scorer
-            score=data-classification        # → data.scorer (_DataScorerMarker)
-            score=evasion-classification     # → attack scorer (_AttackProfileScorer)
+            score=classification              # -> model.scorer
+            score=data-classification        # -> data.scorer (_DataScorerMarker)
+            score=evasion-classification     # -> attack scorer (_AttackProfileScorer)
 
-        **Null / auto / default** → components self-configure from their own defaults.
+        **Null / auto / default** -> components self-configure from their own defaults.
         """
         score_cfg = self.score
 
-        # Null / auto → let each component self-configure.
+        # Null / auto -> let each component self-configure.
         if score_cfg is None or is_null_config_value(score_cfg) or is_default_config_value(score_cfg):
             self.score = None
             return

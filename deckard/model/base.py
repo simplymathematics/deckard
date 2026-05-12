@@ -33,7 +33,7 @@ from art.estimators.regression import PyTorchRegressor
 from art.config import ART_NUMPY_DTYPE
 
 from ..data import DataConfig
-from ..score.base import ScorerDictConfig, coerce_scorer_config as _coerce_scorer_config
+from ..score.base import ScorerDictConfig, coerce_scorer_config as _coerce_scorer_config, resolve_mode_prefix
 from ..utils import ConfigBase, load_class, round_scores
 
 art_model_types = tuple(
@@ -616,11 +616,11 @@ class ModelConfig(ConfigBase):
 
     @staticmethod
     def _mode_score_prefix(mode: str) -> str:
-        if mode == "train":
-            return "training_"
+        # val uses "validation_" at the model level; all other common prefixes
+        # are handled by the canonical resolve_mode_prefix helper.
         if mode == "val":
             return "validation_"
-        return ""
+        return resolve_mode_prefix(mode)
 
     def _mode_runtime_names(self, mode: str) -> dict:
         if mode == "train":

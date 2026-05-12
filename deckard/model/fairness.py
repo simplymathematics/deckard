@@ -15,6 +15,13 @@ from .pytorch import PytorchModelConfig
 from ..data.fairness import FairlearnDataConfig
 from ..utils import ConfigBase, load_class, resolve_class
 from ..score import ScorerDictConfig
+from ..score.pytorch import (
+    resolve_sensitive_features,
+    coerce_to_numpy,
+    is_dataset_like,
+    is_dataloader_like,
+    materialize_dataset,
+)
 
 
 
@@ -38,54 +45,43 @@ class _FairnessBehaviorMixin:
   
 
     def _resolve_runtime_sensitive_source(self, split: str):
-        if split == "train":
-            return getattr(self.data, "_sensitive_train", None)
-        if split == "test":
-            return getattr(self.data, "_sensitive_test", None)
-        if split == "all":
-            return getattr(self.data, "_sensitive_all", None)
+        """Return sensitive-feature array for *split* from ``self.data``."""
         if split == "val":
             raise NotImplementedError(
                 "Validation sensitive features are not implemented yet",
             )
-        raise ValueError(f"Unsupported fairness split: {split}")
+        return resolve_sensitive_features(self.data, split)
 
     def _resolve_scoring_split(self, mode: str) -> str:
-        if mode == "train":
-            return "train"
-        if mode in {"test", "attack"}:
-            return "test"
+        """Map a scoring mode to a canonical split name."""
         if mode in {"val", "attack-val"}:
             raise NotImplementedError(
                 "Validation fairness scoring is not implemented yet",
             )
-        if mode == "all":
-            return "all"
-        raise ValueError(f"Unsupported fairness scoring mode: {mode}")
+        from ..score.pytorch import _SENSITIVE_ATTR
+        if mode not in _SENSITIVE_ATTR:
+            raise ValueError(f"Unsupported fairness scoring mode: {mode}")
+        if mode in {"test", "attack"}:
+            return "test"
+        return mode  # "train", "all", "pre-sample" pass through
 
     def _validate_sensitive_series(self, sensitive, context: str):
+        """Return a validated pd.Series for *sensitive*, or raise on invalid input."""
         if sensitive is None:
             return None
         sensitive_series = pd.Series(sensitive)
         if len(sensitive_series) == 0:
             raise ValueError(f"Sensitive features are empty during {context}")
         if sensitive_series.dropna().empty:
-            raise ValueError(
-                f"Sensitive features are all null during {context}",
-            )
+            raise ValueError(f"Sensitive features are all null during {context}")
         if sensitive_series.astype(str).str.strip().eq("").all():
             raise ValueError(f"Sensitive features are blank during {context}")
         return sensitive_series
 
-
     def _infer_split_from_batch(self, batch, scoring_mode: str = None):
-        """
-        Determine the split name for a batch, using an explicit scoring_mode only.
-        scoring_mode (str): Must be one of 'train', 'test', 'val', or 'all'. No fallback or inference.
-        """
         valid_splits = {"train", "test", "val", "all"}
         if scoring_mode is None:
-            raise ValueError("scoring_mode must be explicitly provided (one of 'train', 'test', 'val', 'all')")
+            raise ValueError("scoring_mode must be explicitly provided")
         if scoring_mode not in valid_splits:
             raise ValueError(f"Invalid scoring_mode '{scoring_mode}'. Must be one of {valid_splits}.")
         return scoring_mode
@@ -155,25 +151,23 @@ class _FairnessBehaviorMixin:
         )
         fit_method = defended_estimator.fit
 
-        # Coerce X_train/y_train to numpy arrays if needed (for fairlearn)
+        # Coerce X_train/y_train to numpy arrays — handles Subset, DataLoader,
+        # tensors, and plain arrays via the canonical helpers.
         X = data.X_train
         y = data.y_train
-        # Robust shape validation before conversion
-        def _check_shape_consistency(arr, name):
-            if isinstance(arr, (list, tuple)):
-                shapes = [np.shape(v) for v in arr]
-                if len(set(shapes)) > 1:
-                    raise ValueError(f"Inconsistent shapes in {name}: {shapes}. All elements must have the same shape.")
-        _check_shape_consistency(X, "X_train")
-        _check_shape_consistency(y, "y_train")
-        if hasattr(X, 'numpy'):
-            X = X.numpy()
-        elif hasattr(X, 'detach'):
-            X = X.detach().cpu().numpy()
-        if hasattr(y, 'numpy'):
-            y = y.numpy()
-        elif hasattr(y, 'detach'):
-            y = y.detach().cpu().numpy()
+        _torch_dataset_types = []
+        try:
+            import torch.utils.data as _tud
+            _torch_dataset_types = (_tud.Subset, _tud.DataLoader, _tud.Dataset)
+        except ImportError:
+            pass
+        if _torch_dataset_types and isinstance(X, _torch_dataset_types):
+            X, _ = materialize_dataset(X)
+        elif is_dataloader_like(X):
+            X, _ = materialize_dataset(X)
+        else:
+            X = coerce_to_numpy(X)
+        y = coerce_to_numpy(y)
 
         if sensitive is not None and self._method_accepts_sensitive_features(fit_method):
             sensitive_arg = sensitive.to_numpy() if hasattr(sensitive, "to_numpy") else sensitive

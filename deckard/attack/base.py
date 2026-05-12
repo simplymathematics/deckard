@@ -888,7 +888,7 @@ class AttackConfig(ConfigBase):
             The function updates the instance's score_dict attribute with the computed metrics.
         """
         score_dict = self._score(
-            attack_kind="evasion",
+            attack_kind=self.attack_kind,
             y_true=y_test_numeric,
             y_pred=adv_pred_labels,
             ben_pred_labels=ben_pred_labels,
@@ -1136,18 +1136,6 @@ class AttackConfig(ConfigBase):
         }
         return ScorerDictConfig(scorers=label_only), False
 
-    def _score_attack_legacy(
-        self,
-        ben_pred_labels,
-        adv_pred_labels,
-        y_test_numeric,
-    ):
-        """Backward-compatible alias retained for older call sites."""
-        return self._score_attack(
-            ben_pred_labels,
-            adv_pred_labels,
-            y_test_numeric,
-        )
 
     def _evade(self, data, art_model, attack):
         """
