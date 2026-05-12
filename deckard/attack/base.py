@@ -965,6 +965,18 @@ class AttackConfig(ConfigBase):
 
         Subclasses can override this to preserve framework-native tensors.
         """
+        if is_dataloader(value):
+            x_subset, _ = collect_subset_from_dataloader(value, n=len(value.dataset))
+            return tensor_to_numpy(x_subset, dtype=ART_NUMPY_DTYPE)
+        try:
+            from torch.utils.data import DataLoader, Dataset, Subset
+        except ImportError:  # pragma: no cover
+            DataLoader = Dataset = Subset = ()
+        if isinstance(value, (Dataset, Subset)) and not isinstance(value, DataLoader):
+            loader = DataLoader(value, batch_size=len(value), shuffle=False)
+            batch = next(iter(loader))
+            features = batch[0] if isinstance(batch, (tuple, list)) else batch
+            return tensor_to_numpy(features, dtype=ART_NUMPY_DTYPE)
         if is_tensor(value):
             return tensor_to_numpy(value, dtype=ART_NUMPY_DTYPE)
         if isinstance(value, pd.DataFrame):

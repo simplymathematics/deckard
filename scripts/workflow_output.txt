@@ -7,8 +7,7 @@ GPU mode: mps (requested: mps)
 Docker build hint: docker build -t deckard:mps .
 Job:      docs
 Command:
- act push -W /Users/c.meyers/Documents/deckard/.github/workflows/compile-docs.yml -e /var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/tmp.Zvarb8fPm5 --container-architecture linux/amd64 -P ubuntu-latest=ghcr.io/catthehacker/ubuntu:full-latest --env DECKARD_GPU_MODE=mps --env DECKARD_DOCKER_IMAGE_TAG=deckard:mps --env DECKARD_DOCKER_BUILD_ARGS=--build-arg\ ENABLE_CUDA=0\ --build-arg\ BASE_IMAGE=ubuntu:20.04 -j docs -s GITHUB_TOKEN=\*\*\*
-time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+ act push -W /Users/c.meyers/Documents/deckard/.github/workflows/compile-docs.yml -e /var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/tmp.DZYe44GxRs --container-architecture linux/amd64 -P ubuntu-latest=ghcr.io/catthehacker/ubuntu:full-latest --env DECKARD_GPU_MODE=mps --env DECKARD_DOCKER_IMAGE_TAG=deckard:mps --env DECKARD_DOCKER_BUILD_ARGS=--build-arg\ ENABLE_CUDA=0\ --build-arg\ BASE_IMAGE=ubuntu:20.04 -j docs -s GITHUB_TOKEN=\*\*\*
 [Push Docs Check/docs] ⭐ Run Set up job
 [Push Docs Check/docs] 🚀  Start image=ghcr.io/catthehacker/ubuntu:full-latest
 [Push Docs Check/docs]   🐳  docker pull image=ghcr.io/catthehacker/ubuntu:full-latest platform=linux/amd64 username= forcePull=true
@@ -32,7 +31,7 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   | git version 2.52.0
 [Push Docs Check/docs]   ❓  ::endgroup::
 [Push Docs Check/docs]   ⚙  ***
-[Push Docs Check/docs]   | Temporarily overriding HOME='/tmp/e87a46db-d032-42e6-b88a-31cec964a2fb' before making global git config changes
+[Push Docs Check/docs]   | Temporarily overriding HOME='/tmp/e6e9ee71-9a00-4d5b-8fd5-eea6c4d280df' before making global git config changes
 [Push Docs Check/docs]   | Adding repository directory to the temporary git global config as a safe directory
 [Push Docs Check/docs]   | [command]/usr/bin/git config --global --add safe.directory /Users/c.meyers/Documents/deckard
 [Push Docs Check/docs]   | Deleting the contents of '/Users/c.meyers/Documents/deckard'
@@ -83,10 +82,10 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   | branch 'refactor-squashed' set up to track 'origin/refactor-squashed'.
 [Push Docs Check/docs]   ❓  ::endgroup::
 [Push Docs Check/docs]   | [command]/usr/bin/git log -1 --format=%H
-[Push Docs Check/docs]   | 88e3474d6b1ac8e07b373c1481ea92ae12c6a46d
+[Push Docs Check/docs]   | c35c017edab5c6bfb60ed94de8b3bf7d4e5d6b60
 [Push Docs Check/docs]   ❓  ::remove-matcher owner=checkout-git::
-[Push Docs Check/docs]   ✅  Success - Main actions/checkout@v4 [3.412913042s]
-[Push Docs Check/docs]   ⚙  ::set-output:: commit=88e3474d6b1ac8e07b373c1481ea92ae12c6a46d
+[Push Docs Check/docs]   ✅  Success - Main actions/checkout@v4 [3.356611209s]
+[Push Docs Check/docs]   ⚙  ::set-output:: commit=c35c017edab5c6bfb60ed94de8b3bf7d4e5d6b60
 [Push Docs Check/docs]   ⚙  ::set-output:: ref=refactor-squashed
 [Push Docs Check/docs] ⭐ Run Main actions/setup-python@v5
 [Push Docs Check/docs]   🐳  docker cp src=/Users/c.meyers/.cache/act/actions-setup-python@v5/ dst=/var/run/act/actions/actions-setup-python@v5/
@@ -99,16 +98,16 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   | /home/runner/.cache/pip
 [Push Docs Check/docs]   | pip cache is not found
 [Push Docs Check/docs]   ❓ add-matcher /run/act/actions/actions-setup-python@v5/.github/python.json
-[Push Docs Check/docs]   ✅  Success - Main actions/setup-python@v5 [1.655367917s]
+[Push Docs Check/docs]   ✅  Success - Main actions/setup-python@v5 [1.71699575s]
+[Push Docs Check/docs]   ⚙  ::set-env:: LD_LIBRARY_PATH=/opt/hostedtoolcache/Python/3.10.19/x64/lib
+[Push Docs Check/docs]   ⚙  ::set-env:: pythonLocation=/opt/hostedtoolcache/Python/3.10.19/x64
 [Push Docs Check/docs]   ⚙  ::set-env:: PKG_CONFIG_PATH=/opt/hostedtoolcache/Python/3.10.19/x64/lib/pkgconfig
 [Push Docs Check/docs]   ⚙  ::set-env:: Python_ROOT_DIR=/opt/hostedtoolcache/Python/3.10.19/x64
 [Push Docs Check/docs]   ⚙  ::set-env:: Python2_ROOT_DIR=/opt/hostedtoolcache/Python/3.10.19/x64
 [Push Docs Check/docs]   ⚙  ::set-env:: Python3_ROOT_DIR=/opt/hostedtoolcache/Python/3.10.19/x64
-[Push Docs Check/docs]   ⚙  ::set-env:: LD_LIBRARY_PATH=/opt/hostedtoolcache/Python/3.10.19/x64/lib
-[Push Docs Check/docs]   ⚙  ::set-env:: pythonLocation=/opt/hostedtoolcache/Python/3.10.19/x64
-[Push Docs Check/docs]   ⚙  ::set-output:: python-path=/opt/hostedtoolcache/Python/3.10.19/x64/bin/python
 [Push Docs Check/docs]   ⚙  ::set-output:: cache-hit=false
 [Push Docs Check/docs]   ⚙  ::set-output:: python-version=3.10.19
+[Push Docs Check/docs]   ⚙  ::set-output:: python-path=/opt/hostedtoolcache/Python/3.10.19/x64/bin/python
 [Push Docs Check/docs]   ⚙  ::add-path:: /opt/hostedtoolcache/Python/3.10.19/x64
 [Push Docs Check/docs]   ⚙  ::add-path:: /opt/hostedtoolcache/Python/3.10.19/x64/bin
 [Push Docs Check/docs] ⭐ Run Main install dependencies
@@ -124,7 +123,7 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   | Requirement already satisfied: pandas in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (2.2.2)
 [Push Docs Check/docs]   | Requirement already satisfied: scikit-learn in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (1.7.2)
 [Push Docs Check/docs]   | Requirement already satisfied: hydra-core in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (1.4.0.dev1)
-[Push Docs Check/docs]   | Requirement already satisfied: numpy in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (2.0.2)
+[Push Docs Check/docs]   | Requirement already satisfied: numpy in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (2.2.6)
 [Push Docs Check/docs]   | Requirement already satisfied: adversarial-robustness-toolbox in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (1.20.1)
 [Push Docs Check/docs]   | Requirement already satisfied: matplotlib in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (3.10.9)
 [Push Docs Check/docs]   | Requirement already satisfied: dvc in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (3.67.1)
@@ -134,8 +133,8 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   | Requirement already satisfied: optuna-dashboard in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (0.20.0)
 [Push Docs Check/docs]   | Requirement already satisfied: hydra-joblib-launcher in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (1.2.0)
 [Push Docs Check/docs]   | Collecting hydra-optuna-sweeper @ git+https://github.com/simplymathematics/hydra-optuna-sweeper.git (from deckard==0.95.0)
-[Push Docs Check/docs]   |   Cloning https://github.com/simplymathematics/hydra-optuna-sweeper.git to /tmp/pip-install-c7exo9ei/hydra-optuna-sweeper_e00fc197c425461caa507dcafed84282
-[Push Docs Check/docs]   |   Running command git clone --filter=blob:none --quiet https://github.com/simplymathematics/hydra-optuna-sweeper.git /tmp/pip-install-c7exo9ei/hydra-optuna-sweeper_e00fc197c425461caa507dcafed84282
+[Push Docs Check/docs]   |   Cloning https://github.com/simplymathematics/hydra-optuna-sweeper.git to /tmp/pip-install-_yh2ll72/hydra-optuna-sweeper_c26d4e8afc68456a8e8cb7b1ff70d731
+[Push Docs Check/docs]   |   Running command git clone --filter=blob:none --quiet https://github.com/simplymathematics/hydra-optuna-sweeper.git /tmp/pip-install-_yh2ll72/hydra-optuna-sweeper_c26d4e8afc68456a8e8cb7b1ff70d731
 [Push Docs Check/docs]   |   Resolved https://github.com/simplymathematics/hydra-optuna-sweeper.git to commit 0f3a72f7e5f7e37b6c233802b2389168933666aa
 [Push Docs Check/docs]   |   Installing build dependencies: started
 [Push Docs Check/docs]   |   Installing build dependencies: finished with status 'done'
@@ -145,18 +144,9 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   |   Preparing metadata (pyproject.toml): finished with status 'done'
 [Push Docs Check/docs]   | Requirement already satisfied: optuna>=3 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (4.8.0)
 [Push Docs Check/docs]   | Requirement already satisfied: paretoset in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (1.2.5)
-[Push Docs Check/docs]   | WARNING: deckard 0.95.0 does not provide the extra 'datasets'
-[Push Docs Check/docs]   | Collecting anjana @ git+https://github.com/IFCA-Advanced-Computing/anjana.git (from deckard==0.95.0)
-[Push Docs Check/docs]   |   Cloning https://github.com/IFCA-Advanced-Computing/anjana.git to /tmp/pip-install-c7exo9ei/anjana_953fe5e001e34689bea2edcc5140b67f
-[Push Docs Check/docs]   |   Running command git clone --filter=blob:none --quiet https://github.com/IFCA-Advanced-Computing/anjana.git /tmp/pip-install-c7exo9ei/anjana_953fe5e001e34689bea2edcc5140b67f
-[Push Docs Check/docs]   |   Resolved https://github.com/IFCA-Advanced-Computing/anjana.git to commit 0b51f4c1fc7bcffb9bcb1b32fd8e8bcdc4cdbc24
-[Push Docs Check/docs]   |   Installing build dependencies: started
-[Push Docs Check/docs]   |   Installing build dependencies: finished with status 'done'
-[Push Docs Check/docs]   |   Getting requirements to build wheel: started
-[Push Docs Check/docs]   |   Getting requirements to build wheel: finished with status 'done'
-[Push Docs Check/docs]   |   Preparing metadata (pyproject.toml): started
-[Push Docs Check/docs]   |   Preparing metadata (pyproject.toml): finished with status 'done'
-[Push Docs Check/docs]   | Requirement already satisfied: pycanon in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (1.0.3)
+[Push Docs Check/docs]   | Requirement already satisfied: seaborn in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (0.13.2)
+[Push Docs Check/docs]   | Requirement already satisfied: lifelines in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (0.30.0)
+[Push Docs Check/docs]   | Requirement already satisfied: fairlearn in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (0.13.0)
 [Push Docs Check/docs]   | Requirement already satisfied: sphinx in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (8.1.3)
 [Push Docs Check/docs]   | Requirement already satisfied: myst-parser in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (4.0.1)
 [Push Docs Check/docs]   | Requirement already satisfied: myst-nb in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (1.4.0)
@@ -169,26 +159,28 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   | Requirement already satisfied: jupyterlab in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (4.5.7)
 [Push Docs Check/docs]   | Requirement already satisfied: sphinxcontrib-bibtex in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (2.7.0)
 [Push Docs Check/docs]   | Requirement already satisfied: roman in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (5.2)
-[Push Docs Check/docs]   | Requirement already satisfied: torch>=2.0.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (2.11.0)
-[Push Docs Check/docs]   | Requirement already satisfied: torchvision>=0.15.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (0.26.0)
-[Push Docs Check/docs]   | Requirement already satisfied: torchaudio>=2.0.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (2.11.0)
-[Push Docs Check/docs]   | Requirement already satisfied: pytest in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (9.0.3)
-[Push Docs Check/docs]   | Requirement already satisfied: pytest-cov in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (7.1.0)
-[Push Docs Check/docs]   | Requirement already satisfied: flake8 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (7.3.0)
-[Push Docs Check/docs]   | Requirement already satisfied: black in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (26.3.1)
-[Push Docs Check/docs]   | Requirement already satisfied: isort in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (8.0.1)
-[Push Docs Check/docs]   | Requirement already satisfied: mypy in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (2.1.0)
-[Push Docs Check/docs]   | Requirement already satisfied: pre-commit in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (4.6.0)
-[Push Docs Check/docs]   | Requirement already satisfied: lifelines in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (0.30.0)
-[Push Docs Check/docs]   | Requirement already satisfied: fairlearn in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (0.13.0)
+[Push Docs Check/docs]   | Requirement already satisfied: datasets in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (4.8.5)
+[Push Docs Check/docs]   | Collecting anjana @ git+https://github.com/IFCA-Advanced-Computing/anjana.git (from deckard==0.95.0)
+[Push Docs Check/docs]   |   Cloning https://github.com/IFCA-Advanced-Computing/anjana.git to /tmp/pip-install-_yh2ll72/anjana_491194c09a4c460098d3f3529ca4717d
+[Push Docs Check/docs]   |   Running command git clone --filter=blob:none --quiet https://github.com/IFCA-Advanced-Computing/anjana.git /tmp/pip-install-_yh2ll72/anjana_491194c09a4c460098d3f3529ca4717d
+[Push Docs Check/docs]   |   Resolved https://github.com/IFCA-Advanced-Computing/anjana.git to commit 0b51f4c1fc7bcffb9bcb1b32fd8e8bcdc4cdbc24
+[Push Docs Check/docs]   |   Installing build dependencies: started
+[Push Docs Check/docs]   |   Installing build dependencies: finished with status 'done'
+[Push Docs Check/docs]   |   Getting requirements to build wheel: started
+[Push Docs Check/docs]   |   Getting requirements to build wheel: finished with status 'done'
+[Push Docs Check/docs]   |   Preparing metadata (pyproject.toml): started
+[Push Docs Check/docs]   |   Preparing metadata (pyproject.toml): finished with status 'done'
+[Push Docs Check/docs]   | Requirement already satisfied: pycanon in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (1.0.3)
 [Push Docs Check/docs]   | Requirement already satisfied: yellowbrick in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (1.5)
-[Push Docs Check/docs]   | Requirement already satisfied: seaborn in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (0.13.2)
 [Push Docs Check/docs]   | Requirement already satisfied: beartype==0.19.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from anjana @ git+https://github.com/IFCA-Advanced-Computing/anjana.git->deckard==0.95.0) (0.19.0)
 [Push Docs Check/docs]   | Requirement already satisfied: docutils==0.21.2 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from anjana @ git+https://github.com/IFCA-Advanced-Computing/anjana.git->deckard==0.95.0) (0.21.2)
-[Push Docs Check/docs]   | Requirement already satisfied: typing_extensions==4.12.2 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from anjana @ git+https://github.com/IFCA-Advanced-Computing/anjana.git->deckard==0.95.0) (4.12.2)
+[Push Docs Check/docs]   | Collecting typing_extensions==4.12.2 (from anjana @ git+https://github.com/IFCA-Advanced-Computing/anjana.git->deckard==0.95.0)
+[Push Docs Check/docs]   |   Downloading typing_extensions-4.12.2-py3-none-any.whl.metadata (3.0 kB)
 [Push Docs Check/docs]   | Requirement already satisfied: python-dateutil>=2.8.2 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pandas->deckard==0.95.0) (2.9.0.post0)
 [Push Docs Check/docs]   | Requirement already satisfied: pytz>=2020.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pandas->deckard==0.95.0) (2026.2)
 [Push Docs Check/docs]   | Requirement already satisfied: tzdata>=2022.7 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pandas->deckard==0.95.0) (2026.2)
+[Push Docs Check/docs]   | Collecting numpy (from deckard==0.95.0)
+[Push Docs Check/docs]   |   Downloading numpy-2.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (60 kB)
 [Push Docs Check/docs]   | Requirement already satisfied: reportlab==4.2.5 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pycanon->deckard==0.95.0) (4.2.5)
 [Push Docs Check/docs]   | Requirement already satisfied: tabulate==0.8.10 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pycanon->deckard==0.95.0) (0.8.10)
 [Push Docs Check/docs]   | Requirement already satisfied: typer==0.15.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pycanon->deckard==0.95.0) (0.15.1)
@@ -230,40 +222,34 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   | Requirement already satisfied: markdown-it-py>=2.2.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from rich>=10.11.0->typer==0.15.1->pycanon->deckard==0.95.0) (3.0.0)
 [Push Docs Check/docs]   | Requirement already satisfied: mdurl~=0.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from markdown-it-py>=2.2.0->rich>=10.11.0->typer==0.15.1->pycanon->deckard==0.95.0) (0.1.2)
 [Push Docs Check/docs]   | Requirement already satisfied: greenlet>=1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from sqlalchemy>=1.4.2->optuna>=3->deckard==0.95.0) (3.5.0)
-[Push Docs Check/docs]   | Requirement already satisfied: filelock in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from torch>=2.0.0->deckard==0.95.0) (3.29.0)
-[Push Docs Check/docs]   | Requirement already satisfied: setuptools<82 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from torch>=2.0.0->deckard==0.95.0) (79.0.1)
-[Push Docs Check/docs]   | Requirement already satisfied: sympy>=1.13.3 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from torch>=2.0.0->deckard==0.95.0) (1.14.0)
-[Push Docs Check/docs]   | Requirement already satisfied: networkx>=2.5.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from torch>=2.0.0->deckard==0.95.0) (3.4.2)
-[Push Docs Check/docs]   | Requirement already satisfied: fsspec>=0.8.5 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from torch>=2.0.0->deckard==0.95.0) (2026.4.0)
-[Push Docs Check/docs]   | Requirement already satisfied: cuda-toolkit==13.0.2 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch>=2.0.0->deckard==0.95.0) (13.0.2)
-[Push Docs Check/docs]   | Requirement already satisfied: cuda-bindings<14,>=13.0.3 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from torch>=2.0.0->deckard==0.95.0) (13.2.0)
-[Push Docs Check/docs]   | Requirement already satisfied: nvidia-cudnn-cu13==9.19.0.56 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from torch>=2.0.0->deckard==0.95.0) (9.19.0.56)
-[Push Docs Check/docs]   | Requirement already satisfied: nvidia-cusparselt-cu13==0.8.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from torch>=2.0.0->deckard==0.95.0) (0.8.0)
-[Push Docs Check/docs]   | Requirement already satisfied: nvidia-nccl-cu13==2.28.9 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from torch>=2.0.0->deckard==0.95.0) (2.28.9)
-[Push Docs Check/docs]   | Requirement already satisfied: nvidia-nvshmem-cu13==3.4.5 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from torch>=2.0.0->deckard==0.95.0) (3.4.5)
-[Push Docs Check/docs]   | Requirement already satisfied: triton==3.6.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from torch>=2.0.0->deckard==0.95.0) (3.6.0)
-[Push Docs Check/docs]   | Requirement already satisfied: nvidia-cublas==13.1.0.3.* in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch>=2.0.0->deckard==0.95.0) (13.1.0.3)
-[Push Docs Check/docs]   | Requirement already satisfied: nvidia-cusparse==12.6.3.3.* in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch>=2.0.0->deckard==0.95.0) (12.6.3.3)
-[Push Docs Check/docs]   | Requirement already satisfied: nvidia-cuda-runtime==13.0.96.* in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch>=2.0.0->deckard==0.95.0) (13.0.96)
-[Push Docs Check/docs]   | Requirement already satisfied: nvidia-nvjitlink==13.0.88.* in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch>=2.0.0->deckard==0.95.0) (13.0.88)
-[Push Docs Check/docs]   | Requirement already satisfied: nvidia-curand==10.4.0.35.* in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch>=2.0.0->deckard==0.95.0) (10.4.0.35)
-[Push Docs Check/docs]   | Requirement already satisfied: nvidia-cuda-cupti==13.0.85.* in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch>=2.0.0->deckard==0.95.0) (13.0.85)
-[Push Docs Check/docs]   | Requirement already satisfied: nvidia-cufile==1.15.1.6.* in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch>=2.0.0->deckard==0.95.0) (1.15.1.6)
-[Push Docs Check/docs]   | Requirement already satisfied: nvidia-nvtx==13.0.85.* in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch>=2.0.0->deckard==0.95.0) (13.0.85)
-[Push Docs Check/docs]   | Requirement already satisfied: nvidia-cufft==12.0.0.61.* in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch>=2.0.0->deckard==0.95.0) (12.0.0.61)
-[Push Docs Check/docs]   | Requirement already satisfied: nvidia-cusolver==12.0.4.66.* in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch>=2.0.0->deckard==0.95.0) (12.0.4.66)
-[Push Docs Check/docs]   | Requirement already satisfied: nvidia-cuda-nvrtc==13.0.88.* in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch>=2.0.0->deckard==0.95.0) (13.0.88)
-[Push Docs Check/docs]   | Requirement already satisfied: cuda-pathfinder~=1.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from cuda-bindings<14,>=13.0.3->torch>=2.0.0->deckard==0.95.0) (1.5.4)
-[Push Docs Check/docs]   | Requirement already satisfied: mpmath<1.4,>=1.1.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from sympy>=1.13.3->torch>=2.0.0->deckard==0.95.0) (1.3.0)
 [Push Docs Check/docs]   | Requirement already satisfied: scipy>=1.4.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from adversarial-robustness-toolbox->deckard==0.95.0) (1.15.3)
+[Push Docs Check/docs]   | Requirement already satisfied: setuptools in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from adversarial-robustness-toolbox->deckard==0.95.0) (70.2.0)
 [Push Docs Check/docs]   | Requirement already satisfied: joblib>=1.2.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from scikit-learn->deckard==0.95.0) (1.5.3)
 [Push Docs Check/docs]   | Requirement already satisfied: threadpoolctl>=3.1.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from scikit-learn->deckard==0.95.0) (3.6.0)
 [Push Docs Check/docs]   | Requirement already satisfied: soupsieve>=1.6.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from beautifulsoup4->pydata-sphinx-theme>=0.14->deckard==0.95.0) (2.8.3)
-[Push Docs Check/docs]   | Requirement already satisfied: mypy-extensions>=0.4.3 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from black->deckard==0.95.0) (1.1.0)
-[Push Docs Check/docs]   | Requirement already satisfied: pathspec>=1.0.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from black->deckard==0.95.0) (1.1.1)
-[Push Docs Check/docs]   | Requirement already satisfied: platformdirs>=2 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from black->deckard==0.95.0) (4.9.6)
-[Push Docs Check/docs]   | Requirement already satisfied: pytokens~=0.4.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from black->deckard==0.95.0) (0.4.1)
-[Push Docs Check/docs]   | Requirement already satisfied: attrs>=22.2.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from dvc->deckard==0.95.0) (26.1.0)
+[Push Docs Check/docs]   | Requirement already satisfied: filelock in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from datasets->deckard==0.95.0) (3.29.0)
+[Push Docs Check/docs]   | Requirement already satisfied: pyarrow>=21.0.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from datasets->deckard==0.95.0) (24.0.0)
+[Push Docs Check/docs]   | Requirement already satisfied: dill<0.4.2,>=0.3.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from datasets->deckard==0.95.0) (0.4.1)
+[Push Docs Check/docs]   | Requirement already satisfied: httpx<1.0.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from datasets->deckard==0.95.0) (0.28.1)
+[Push Docs Check/docs]   | Requirement already satisfied: xxhash in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from datasets->deckard==0.95.0) (3.7.0)
+[Push Docs Check/docs]   | Requirement already satisfied: multiprocess<0.70.20 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from datasets->deckard==0.95.0) (0.70.19)
+[Push Docs Check/docs]   | Collecting fsspec<=2026.2.0,>=2023.1.0 (from fsspec[http]<=2026.2.0,>=2023.1.0->datasets->deckard==0.95.0)
+[Push Docs Check/docs]   |   Downloading fsspec-2026.2.0-py3-none-any.whl.metadata (10 kB)
+[Push Docs Check/docs]   | Requirement already satisfied: huggingface-hub<2.0,>=0.25.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from datasets->deckard==0.95.0) (1.13.0)
+[Push Docs Check/docs]   | Requirement already satisfied: aiohttp!=4.0.0a0,!=4.0.0a1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from fsspec[http]<=2026.2.0,>=2023.1.0->datasets->deckard==0.95.0) (3.13.5)
+[Push Docs Check/docs]   | Requirement already satisfied: anyio in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from httpx<1.0.0->datasets->deckard==0.95.0) (4.13.0)
+[Push Docs Check/docs]   | Requirement already satisfied: httpcore==1.* in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from httpx<1.0.0->datasets->deckard==0.95.0) (1.0.9)
+[Push Docs Check/docs]   | Requirement already satisfied: h11>=0.16 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from httpcore==1.*->httpx<1.0.0->datasets->deckard==0.95.0) (0.16.0)
+[Push Docs Check/docs]   | Requirement already satisfied: hf-xet<2.0.0,>=1.4.3 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from huggingface-hub<2.0,>=0.25.0->datasets->deckard==0.95.0) (1.5.0)
+[Push Docs Check/docs]   | Requirement already satisfied: aiohappyeyeballs>=2.5.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets->deckard==0.95.0) (2.6.1)
+[Push Docs Check/docs]   | Requirement already satisfied: aiosignal>=1.4.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets->deckard==0.95.0) (1.4.0)
+[Push Docs Check/docs]   | Requirement already satisfied: async-timeout<6.0,>=4.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets->deckard==0.95.0) (5.0.1)
+[Push Docs Check/docs]   | Requirement already satisfied: attrs>=17.3.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets->deckard==0.95.0) (26.1.0)
+[Push Docs Check/docs]   | Requirement already satisfied: frozenlist>=1.1.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets->deckard==0.95.0) (1.8.0)
+[Push Docs Check/docs]   | Requirement already satisfied: multidict<7.0,>=4.5 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets->deckard==0.95.0) (6.7.1)
+[Push Docs Check/docs]   | Requirement already satisfied: propcache>=0.2.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets->deckard==0.95.0) (0.5.2)
+[Push Docs Check/docs]   | Requirement already satisfied: yarl<2.0,>=1.17.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets->deckard==0.95.0) (1.23.0)
+[Push Docs Check/docs]   | Requirement already satisfied: exceptiongroup>=1.0.2 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from anyio->httpx<1.0.0->datasets->deckard==0.95.0) (1.3.1)
 [Push Docs Check/docs]   | Requirement already satisfied: celery in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from dvc->deckard==0.95.0) (5.6.3)
 [Push Docs Check/docs]   | Requirement already satisfied: colorama>=0.3.9 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from dvc->deckard==0.95.0) (0.4.6)
 [Push Docs Check/docs]   | Requirement already satisfied: configobj>=5.0.9 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from dvc->deckard==0.95.0) (5.0.9)
@@ -283,6 +269,9 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   | Requirement already satisfied: gto<2,>=1.6.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from dvc->deckard==0.95.0) (1.9.0)
 [Push Docs Check/docs]   | Requirement already satisfied: iterative-telemetry>=0.0.7 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from dvc->deckard==0.95.0) (0.0.10)
 [Push Docs Check/docs]   | Requirement already satisfied: kombu in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from dvc->deckard==0.95.0) (5.6.2)
+[Push Docs Check/docs]   | Requirement already satisfied: networkx>=2.5 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from dvc->deckard==0.95.0) (3.4.2)
+[Push Docs Check/docs]   | Requirement already satisfied: pathspec<2,>=0.10.3 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from dvc->deckard==0.95.0) (1.1.1)
+[Push Docs Check/docs]   | Requirement already satisfied: platformdirs<5,>=3.1.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from dvc->deckard==0.95.0) (4.9.6)
 [Push Docs Check/docs]   | Requirement already satisfied: psutil>=5.8 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from dvc->deckard==0.95.0) (7.2.2)
 [Push Docs Check/docs]   | Requirement already satisfied: pydot>=1.2.4 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from dvc->deckard==0.95.0) (4.0.1)
 [Push Docs Check/docs]   | Requirement already satisfied: pygtrie>=2.3.2 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from dvc->deckard==0.95.0) (2.5.0)
@@ -303,7 +292,6 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   | Requirement already satisfied: click-didyoumean>=0.3.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from celery->dvc->deckard==0.95.0) (0.3.1)
 [Push Docs Check/docs]   | Requirement already satisfied: click-repl>=0.2.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from celery->dvc->deckard==0.95.0) (0.3.0)
 [Push Docs Check/docs]   | Requirement already satisfied: click-plugins>=1.1.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from celery->dvc->deckard==0.95.0) (1.1.1.2)
-[Push Docs Check/docs]   | Requirement already satisfied: exceptiongroup>=1.3.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from celery->dvc->deckard==0.95.0) (1.3.1)
 [Push Docs Check/docs]   | Requirement already satisfied: tzlocal in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from celery->dvc->deckard==0.95.0) (5.3.1)
 [Push Docs Check/docs]   | Requirement already satisfied: atpublic in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from flufl.lock<10,>=8.1.0->dvc->deckard==0.95.0) (7.0.0)
 [Push Docs Check/docs]   | Requirement already satisfied: entrypoints in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from gto<2,>=1.6.0->dvc->deckard==0.95.0) (0.4)
@@ -316,7 +304,6 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   | Requirement already satisfied: asyncssh<3,>=2.13.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from scmrepo<4,>=3.5.2->dvc->deckard==0.95.0) (2.23.0)
 [Push Docs Check/docs]   | Requirement already satisfied: aiohttp-retry>=2.5.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from scmrepo<4,>=3.5.2->dvc->deckard==0.95.0) (2.9.1)
 [Push Docs Check/docs]   | Requirement already satisfied: cryptography>=39.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from asyncssh<3,>=2.13.1->scmrepo<4,>=3.5.2->dvc->deckard==0.95.0) (45.0.7)
-[Push Docs Check/docs]   | Requirement already satisfied: aiohttp in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp-retry>=2.5.0->scmrepo<4,>=3.5.2->dvc->deckard==0.95.0) (3.13.5)
 [Push Docs Check/docs]   | Requirement already satisfied: prompt-toolkit>=3.0.36 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from click-repl>=0.2.0->celery->dvc->deckard==0.95.0) (3.0.52)
 [Push Docs Check/docs]   | Requirement already satisfied: cffi>=1.14 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from cryptography>=39.0->asyncssh<3,>=2.13.1->scmrepo<4,>=3.5.2->dvc->deckard==0.95.0) (2.0.0)
 [Push Docs Check/docs]   | Requirement already satisfied: pycparser in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from cffi>=1.14->cryptography>=39.0->asyncssh<3,>=2.13.1->scmrepo<4,>=3.5.2->dvc->deckard==0.95.0) (3.0)
@@ -328,17 +315,7 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   | Requirement already satisfied: pydantic-core==2.33.2 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pydantic>=2->gto<2,>=1.6.0->dvc->deckard==0.95.0) (2.33.2)
 [Push Docs Check/docs]   | Requirement already satisfied: typing-inspection>=0.4.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pydantic>=2->gto<2,>=1.6.0->dvc->deckard==0.95.0) (0.4.2)
 [Push Docs Check/docs]   | Requirement already satisfied: python-dotenv>=0.21.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pydantic-settings>=2->gto<2,>=1.6.0->dvc->deckard==0.95.0) (1.2.2)
-[Push Docs Check/docs]   | Requirement already satisfied: aiohappyeyeballs>=2.5.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp->aiohttp-retry>=2.5.0->scmrepo<4,>=3.5.2->dvc->deckard==0.95.0) (2.6.1)
-[Push Docs Check/docs]   | Requirement already satisfied: aiosignal>=1.4.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp->aiohttp-retry>=2.5.0->scmrepo<4,>=3.5.2->dvc->deckard==0.95.0) (1.4.0)
-[Push Docs Check/docs]   | Requirement already satisfied: async-timeout<6.0,>=4.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp->aiohttp-retry>=2.5.0->scmrepo<4,>=3.5.2->dvc->deckard==0.95.0) (5.0.1)
-[Push Docs Check/docs]   | Requirement already satisfied: frozenlist>=1.1.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp->aiohttp-retry>=2.5.0->scmrepo<4,>=3.5.2->dvc->deckard==0.95.0) (1.8.0)
-[Push Docs Check/docs]   | Requirement already satisfied: multidict<7.0,>=4.5 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp->aiohttp-retry>=2.5.0->scmrepo<4,>=3.5.2->dvc->deckard==0.95.0) (6.7.1)
-[Push Docs Check/docs]   | Requirement already satisfied: propcache>=0.2.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp->aiohttp-retry>=2.5.0->scmrepo<4,>=3.5.2->dvc->deckard==0.95.0) (0.5.2)
-[Push Docs Check/docs]   | Requirement already satisfied: yarl<2.0,>=1.17.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from aiohttp->aiohttp-retry>=2.5.0->scmrepo<4,>=3.5.2->dvc->deckard==0.95.0) (1.23.0)
 [Push Docs Check/docs]   | Requirement already satisfied: narwhals>=1.14.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from fairlearn->deckard==0.95.0) (2.21.0)
-[Push Docs Check/docs]   | Requirement already satisfied: mccabe<0.8.0,>=0.7.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from flake8->deckard==0.95.0) (0.7.0)
-[Push Docs Check/docs]   | Requirement already satisfied: pycodestyle<2.15.0,>=2.14.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from flake8->deckard==0.95.0) (2.14.0)
-[Push Docs Check/docs]   | Requirement already satisfied: pyflakes<3.5.0,>=3.4.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from flake8->deckard==0.95.0) (3.4.0)
 [Push Docs Check/docs]   | Requirement already satisfied: comm>=0.1.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from ipykernel->deckard==0.95.0) (0.2.3)
 [Push Docs Check/docs]   | Requirement already satisfied: debugpy>=1.6.5 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from ipykernel->deckard==0.95.0) (1.8.20)
 [Push Docs Check/docs]   | Requirement already satisfied: ipython>=7.23.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from ipykernel->deckard==0.95.0) (8.39.0)
@@ -356,14 +333,10 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   | Requirement already satisfied: parso<0.9.0,>=0.8.6 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from jedi>=0.16->ipython>=7.23.1->ipykernel->deckard==0.95.0) (0.8.7)
 [Push Docs Check/docs]   | Requirement already satisfied: ptyprocess>=0.5 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pexpect>4.3->ipython>=7.23.1->ipykernel->deckard==0.95.0) (0.7.0)
 [Push Docs Check/docs]   | Requirement already satisfied: async-lru>=1.0.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from jupyterlab->deckard==0.95.0) (2.3.0)
-[Push Docs Check/docs]   | Requirement already satisfied: httpx<1,>=0.25.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from jupyterlab->deckard==0.95.0) (0.28.1)
 [Push Docs Check/docs]   | Requirement already satisfied: jupyter-lsp>=2.0.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from jupyterlab->deckard==0.95.0) (2.3.1)
 [Push Docs Check/docs]   | Requirement already satisfied: jupyter-server<3,>=2.4.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from jupyterlab->deckard==0.95.0) (2.18.2)
 [Push Docs Check/docs]   | Requirement already satisfied: jupyterlab-server<3,>=2.28.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from jupyterlab->deckard==0.95.0) (2.28.0)
 [Push Docs Check/docs]   | Requirement already satisfied: notebook-shim>=0.2 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from jupyterlab->deckard==0.95.0) (0.2.4)
-[Push Docs Check/docs]   | Requirement already satisfied: anyio in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from httpx<1,>=0.25.0->jupyterlab->deckard==0.95.0) (4.13.0)
-[Push Docs Check/docs]   | Requirement already satisfied: httpcore==1.* in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from httpx<1,>=0.25.0->jupyterlab->deckard==0.95.0) (1.0.9)
-[Push Docs Check/docs]   | Requirement already satisfied: h11>=0.16 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from httpcore==1.*->httpx<1,>=0.25.0->jupyterlab->deckard==0.95.0) (0.16.0)
 [Push Docs Check/docs]   | Requirement already satisfied: argon2-cffi>=21.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from jupyter-server<3,>=2.4.0->jupyterlab->deckard==0.95.0) (25.1.0)
 [Push Docs Check/docs]   | Requirement already satisfied: jupyter-events>=0.11.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from jupyter-server<3,>=2.4.0->jupyterlab->deckard==0.95.0) (0.12.1)
 [Push Docs Check/docs]   | Requirement already satisfied: jupyter-server-terminals>=0.4.4 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from jupyter-server<3,>=2.4.0->jupyterlab->deckard==0.95.0) (0.5.4)
@@ -411,8 +384,6 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   | Requirement already satisfied: cycler>=0.10 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from matplotlib->deckard==0.95.0) (0.12.1)
 [Push Docs Check/docs]   | Requirement already satisfied: fonttools>=4.22.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from matplotlib->deckard==0.95.0) (4.62.1)
 [Push Docs Check/docs]   | Requirement already satisfied: kiwisolver>=1.3.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from matplotlib->deckard==0.95.0) (1.5.0)
-[Push Docs Check/docs]   | Requirement already satisfied: librt>=0.11.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from mypy->deckard==0.95.0) (0.11.0)
-[Push Docs Check/docs]   | Requirement already satisfied: ast-serialize<1.0.0,>=0.3.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from mypy->deckard==0.95.0) (0.3.0)
 [Push Docs Check/docs]   | Requirement already satisfied: importlib_metadata in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from myst-nb->deckard==0.95.0) (9.0.0)
 [Push Docs Check/docs]   | Requirement already satisfied: jupyter-cache>=0.5 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from myst-nb->deckard==0.95.0) (1.0.1)
 [Push Docs Check/docs]   | Requirement already satisfied: mdit-py-plugins>=0.4.1,~=0.4 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from myst-parser->deckard==0.95.0) (0.6.0)
@@ -420,14 +391,6 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   | Requirement already satisfied: bottle>=0.13.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from optuna-dashboard->deckard==0.95.0) (0.13.4)
 [Push Docs Check/docs]   | Requirement already satisfied: numba in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from paretoset->deckard==0.95.0) (0.65.1)
 [Push Docs Check/docs]   | Requirement already satisfied: llvmlite<0.48,>=0.47.0dev0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from numba->paretoset->deckard==0.95.0) (0.47.0)
-[Push Docs Check/docs]   | Requirement already satisfied: cfgv>=2.0.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pre-commit->deckard==0.95.0) (3.5.0)
-[Push Docs Check/docs]   | Requirement already satisfied: identify>=1.0.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pre-commit->deckard==0.95.0) (2.6.19)
-[Push Docs Check/docs]   | Requirement already satisfied: nodeenv>=0.11.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pre-commit->deckard==0.95.0) (1.10.0)
-[Push Docs Check/docs]   | Requirement already satisfied: virtualenv>=20.10.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pre-commit->deckard==0.95.0) (20.33.1)
-[Push Docs Check/docs]   | Requirement already satisfied: distlib<1,>=0.3.7 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from virtualenv>=20.10.0->pre-commit->deckard==0.95.0) (0.4.0)
-[Push Docs Check/docs]   | Requirement already satisfied: iniconfig>=1.0.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pytest->deckard==0.95.0) (2.3.0)
-[Push Docs Check/docs]   | Requirement already satisfied: pluggy<2,>=1.5 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pytest->deckard==0.95.0) (1.6.0)
-[Push Docs Check/docs]   | Requirement already satisfied: coverage>=7.10.6 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from coverage[toml]>=7.10.6->pytest-cov->deckard==0.95.0) (7.14.0)
 [Push Docs Check/docs]   | Requirement already satisfied: sphinxcontrib-jquery<5,>=4 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from sphinx-rtd-theme->deckard==0.95.0) (4.1)
 [Push Docs Check/docs]   | Requirement already satisfied: wheel in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from sphinx-togglebutton->deckard==0.95.0) (0.47.0)
 [Push Docs Check/docs]   | Requirement already satisfied: pybtex>=0.25 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from sphinxcontrib-bibtex->deckard==0.95.0) (0.26.1)
@@ -436,255 +399,82 @@ time="2026-05-12T14:49:40-04:00" level=info msg="Using docker host 'unix:///var/
 [Push Docs Check/docs]   | Requirement already satisfied: executing>=1.2.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from stack_data->ipython>=7.23.1->ipykernel->deckard==0.95.0) (2.2.1)
 [Push Docs Check/docs]   | Requirement already satisfied: asttokens>=2.1.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from stack_data->ipython>=7.23.1->ipykernel->deckard==0.95.0) (3.0.1)
 [Push Docs Check/docs]   | Requirement already satisfied: pure-eval in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from stack_data->ipython>=7.23.1->ipykernel->deckard==0.95.0) (0.2.3)
+[Push Docs Check/docs]   | Downloading numpy-2.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (19.5 MB)
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 19.5/19.5 MB 27.4 MB/s  0:00:00
+[Push Docs Check/docs]   | Downloading typing_extensions-4.12.2-py3-none-any.whl (37 kB)
+[Push Docs Check/docs]   | Downloading fsspec-2026.2.0-py3-none-any.whl (202 kB)
 [Push Docs Check/docs]   | Building wheels for collected packages: deckard
 [Push Docs Check/docs]   |   Building wheel for deckard (pyproject.toml): started
 [Push Docs Check/docs]   |   Building wheel for deckard (pyproject.toml): finished with status 'done'
-[Push Docs Check/docs]   |   Created wheel for deckard: filename=deckard-0.95.0-py3-none-any.whl size=237616 sha256=6be5d1c0b6daec1161a4e5a529c8fb89bf514925ec5ba2e4bea710b48978f131
-[Push Docs Check/docs]   |   Stored in directory: /tmp/pip-ephem-wheel-cache-lqpbutos/wheels/52/50/a9/6421a98976b24aca6fdc80a76557f56d5320adc850a9fce4d0
+[Push Docs Check/docs]   |   Created wheel for deckard: filename=deckard-0.95.0-py3-none-any.whl size=238103 sha256=8d6ef93fcd2dbbc1077c69b481d8e5e81b74df79a7006728dae27b6a4b196f04
+[Push Docs Check/docs]   |   Stored in directory: /tmp/pip-ephem-wheel-cache-oj1nziyh/wheels/52/50/a9/6421a98976b24aca6fdc80a76557f56d5320adc850a9fce4d0
 [Push Docs Check/docs]   | Successfully built deckard
-[Push Docs Check/docs]   | Installing collected packages: deckard
+[Push Docs Check/docs]   | Installing collected packages: typing_extensions, numpy, fsspec, deckard
+[Push Docs Check/docs]   |   Attempting uninstall: typing_extensions
+[Push Docs Check/docs]   |     Found existing installation: typing_extensions 4.15.0
+[Push Docs Check/docs]   |     Uninstalling typing_extensions-4.15.0:
+[Push Docs Check/docs]   |       Successfully uninstalled typing_extensions-4.15.0
+[Push Docs Check/docs]   |   Attempting uninstall: numpy
+[Push Docs Check/docs]   |     Found existing installation: numpy 2.2.6
+[Push Docs Check/docs]   |     Uninstalling numpy-2.2.6:
+[Push Docs Check/docs]   |       Successfully uninstalled numpy-2.2.6
+[Push Docs Check/docs]   |   Attempting uninstall: fsspec
+[Push Docs Check/docs]   |     Found existing installation: fsspec 2026.4.0
+[Push Docs Check/docs]   |     Uninstalling fsspec-2026.4.0:
+[Push Docs Check/docs]   |       Successfully uninstalled fsspec-2026.4.0
 [Push Docs Check/docs]   |   Attempting uninstall: deckard
 [Push Docs Check/docs]   |     Found existing installation: deckard 0.95.0
 [Push Docs Check/docs]   |     Uninstalling deckard-0.95.0:
 [Push Docs Check/docs]   |       Successfully uninstalled deckard-0.95.0
-[Push Docs Check/docs]   | Successfully installed deckard-0.95.0
-[Push Docs Check/docs]   ✅  Success - Main install dependencies [11.245574708s]
-[Push Docs Check/docs] ⭐ Run Main build docs
-[Push Docs Check/docs]   🐳  docker exec cmd=[bash -e /var/run/act/workflow/3] user= workdir=
-[Push Docs Check/docs]   | Running stage 'notebook_seaborn':
-[Push Docs Check/docs]   | > jupyter nbconvert --to notebook --execute --inplace seaborn.ipynb
-[Push Docs Check/docs]   | [NbConvertApp] Converting notebook seaborn.ipynb to notebook
-[Push Docs Check/docs]   | Traceback (most recent call last):
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/bin/jupyter-nbconvert", line 6, in <module>
-[Push Docs Check/docs]   |     sys.exit(main())
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/jupyter_core/application.py", line 284, in launch_instance
-[Push Docs Check/docs]   |     super().launch_instance(argv=argv, **kwargs)
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/traitlets/config/application.py", line 1082, in launch_instance
-[Push Docs Check/docs]   |     app.start()
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/nbconvert/nbconvertapp.py", line 420, in start
-[Push Docs Check/docs]   |     self.convert_notebooks()
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/nbconvert/nbconvertapp.py", line 597, in convert_notebooks
-[Push Docs Check/docs]   |     self.convert_single_notebook(notebook_filename)
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/nbconvert/nbconvertapp.py", line 563, in convert_single_notebook
-[Push Docs Check/docs]   |     output, resources = self.export_single_notebook(
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/nbconvert/nbconvertapp.py", line 487, in export_single_notebook
-[Push Docs Check/docs]   |     output, resources = self.exporter.from_filename(
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/nbconvert/exporters/exporter.py", line 201, in from_filename
-[Push Docs Check/docs]   |     return self.from_file(f, resources=resources, **kw)
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/nbconvert/exporters/exporter.py", line 220, in from_file
-[Push Docs Check/docs]   |     return self.from_notebook_node(
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/nbconvert/exporters/notebook.py", line 36, in from_notebook_node
-[Push Docs Check/docs]   |     nb_copy, resources = super().from_notebook_node(nb, resources, **kw)
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/nbconvert/exporters/exporter.py", line 154, in from_notebook_node
-[Push Docs Check/docs]   |     nb_copy, resources = self._preprocess(nb_copy, resources)
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/nbconvert/exporters/exporter.py", line 353, in _preprocess
-[Push Docs Check/docs]   |     nbc, resc = preprocessor(nbc, resc)
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/nbconvert/preprocessors/base.py", line 48, in __call__
-[Push Docs Check/docs]   |     return self.preprocess(nb, resources)
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/nbconvert/preprocessors/execute.py", line 103, in preprocess
-[Push Docs Check/docs]   |     self.preprocess_cell(cell, resources, index)
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/nbconvert/preprocessors/execute.py", line 124, in preprocess_cell
-[Push Docs Check/docs]   |     cell = self.execute_cell(cell, index, store_history=True)
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
-[Push Docs Check/docs]   |     return loop.run_until_complete(inner)
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
-[Push Docs Check/docs]   |     return future.result()
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/nbclient/client.py", line 1062, in async_execute_cell
-[Push Docs Check/docs]   |     await self._check_raise_for_error(cell, cell_index, exec_reply)
-[Push Docs Check/docs]   |   File "/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
-[Push Docs Check/docs]   |     raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
-[Push Docs Check/docs]   | nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
-[Push Docs Check/docs]   | ------------------
-[Push Docs Check/docs]   | from __future__ import annotations
 [Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | from pathlib import Path
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | import matplotlib.pyplot as plt
-[Push Docs Check/docs]   | import numpy as np
-[Push Docs Check/docs]   | import pandas as pd
-[Push Docs Check/docs]   | from IPython.display import display
-[Push Docs Check/docs]   | from sklearn.datasets import (
-[Push Docs Check/docs]   |     make_blobs,
-[Push Docs Check/docs]   |     make_classification,
-[Push Docs Check/docs]   |     make_friedman1,
-[Push Docs Check/docs]   |     make_moons,
-[Push Docs Check/docs]   |     make_regression,
-[Push Docs Check/docs]   |  )
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | from deckard.plot.seaborn_plots import SeabornPlotConfig, supported_seaborn_plotters
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | SEED = 7
-[Push Docs Check/docs]   | NOTEBOOK_ROOT = Path(".")
-[Push Docs Check/docs]   | ARTIFACT_DIR = NOTEBOOK_ROOT / "build" / "seaborn"
-[Push Docs Check/docs]   | ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | def artifact_path(filename):
-[Push Docs Check/docs]   |     return ARTIFACT_DIR / filename
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | print("Supported plot types:", supported_seaborn_plotters)
-[Push Docs Check/docs]   | print("Artifacts will be written under:", ARTIFACT_DIR)
-[Push Docs Check/docs]   | ------------------
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | ----- stderr -----
-[Push Docs Check/docs]   | /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-[Push Docs Check/docs]   |   from .autonotebook import tqdm as notebook_tqdm
-[Push Docs Check/docs]   | ------------------
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | [0;31m---------------------------------------------------------------------------[0m
-[Push Docs Check/docs]   | [0;31mImportError[0m                               Traceback (most recent call last)
-[Push Docs Check/docs]   | Cell [0;32mIn[1], line 17[0m
-[Push Docs Check/docs]   | [1;32m      8[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mIPython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdisplay[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m display
-[Push Docs Check/docs]   | [1;32m      9[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01msklearn[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdatasets[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m (
-[Push Docs Check/docs]   | [1;32m     10[0m     make_blobs,
-[Push Docs Check/docs]   | [1;32m     11[0m     make_classification,
-[Push Docs Check/docs]   | [0;32m   (...)[0m
-[Push Docs Check/docs]   | [1;32m     14[0m     make_regression,
-[Push Docs Check/docs]   | [1;32m     15[0m  )
-[Push Docs Check/docs]   | [0;32m---> 17[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mdeckard[39;00m[38;5;21;01m.[39;00m[38;5;21;01mplot[39;00m[38;5;21;01m.[39;00m[38;5;21;01mseaborn_plots[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m SeabornPlotConfig, supported_seaborn_plotters
-[Push Docs Check/docs]   | [1;32m     19[0m SEED [38;5;241m=[39m [38;5;241m7[39m
-[Push Docs Check/docs]   | [1;32m     20[0m NOTEBOOK_ROOT [38;5;241m=[39m Path([38;5;124m"[39m[38;5;124m.[39m[38;5;124m"[39m)
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | File [0;32m/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/deckard/__init__.py:39[0m
-[Push Docs Check/docs]   | [1;32m     32[0m warnings[38;5;241m.[39mfilterwarnings(
-[Push Docs Check/docs]   | [1;32m     33[0m     [38;5;124m"[39m[38;5;124mignore[39m[38;5;124m"[39m,
-[Push Docs Check/docs]   | [1;32m     34[0m     category[38;5;241m=[39m[38;5;167;01mUserWarning[39;00m,
-[Push Docs Check/docs]   | [1;32m     35[0m     message[38;5;241m=[39m[38;5;124mr[39m[38;5;124m"[39m[38;5;124mPyTorch not found[39m[38;5;124m\[39m[38;5;124m. Not importing DeepZ or Interval Bound Propagation functionality[39m[38;5;124m"[39m,
-[Push Docs Check/docs]   | [1;32m     36[0m )
-[Push Docs Check/docs]   | [1;32m     38[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01m.[39;00m[38;5;21;01mdata[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m DataConfig  [38;5;66;03m# noqa E402[39;00m
-[Push Docs Check/docs]   | [0;32m---> 39[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01m.[39;00m[38;5;21;01mmodel[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m ModelConfig  [38;5;66;03m# noqa E402[39;00m
-[Push Docs Check/docs]   | [1;32m     40[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01m.[39;00m[38;5;21;01mmodel[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdefend[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m DefenseConfig  [38;5;66;03m# noqa E402[39;00m
-[Push Docs Check/docs]   | [1;32m     41[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01m.[39;00m[38;5;21;01mattack[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m AttackConfig  [38;5;66;03m# noqa E402[39;00m
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | File [0;32m/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/deckard/model/__init__.py:10[0m
-[Push Docs Check/docs]   | [1;32m      8[0m [38;5;28;01mimport[39;00m[38;5;250m [39m[38;5;21;01mlogging[39;00m
-[Push Docs Check/docs]   | [1;32m      9[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mtyping[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m Any
-[Push Docs Check/docs]   | [0;32m---> 10[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01m.[39;00m[38;5;21;01mbase[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m ModelConfig
-[Push Docs Check/docs]   | [1;32m     11[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01m.[39;00m[38;5;21;01mdefend[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m DefenseConfig, DefensePipelineConfig
-[Push Docs Check/docs]   | [1;32m     13[0m [38;5;66;03m# Import declarations to register example configs with ConfigStore[39;00m
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | File [0;32m/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/deckard/model/base.py:16[0m
-[Push Docs Check/docs]   | [1;32m     13[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01msklearn[39;00m[38;5;21;01m.[39;00m[38;5;21;01mutils[39;00m[38;5;21;01m.[39;00m[38;5;21;01mvalidation[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m check_is_fitted
-[Push Docs Check/docs]   | [1;32m     14[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01msklearn[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbase[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m BaseEstimator
-[Push Docs Check/docs]   | [0;32m---> 16[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;21;01m.[39;00m[38;5;21;01mclassification[39;00m[38;5;21;01m.[39;00m[38;5;21;01mscikitlearn[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m (
-[Push Docs Check/docs]   | [1;32m     17[0m     ScikitlearnAdaBoostClassifier,
-[Push Docs Check/docs]   | [1;32m     18[0m     ScikitlearnBaggingClassifier,
-[Push Docs Check/docs]   | [1;32m     19[0m     ScikitlearnClassifier,
-[Push Docs Check/docs]   | [1;32m     20[0m     ScikitlearnDecisionTreeClassifier,
-[Push Docs Check/docs]   | [1;32m     21[0m     ScikitlearnExtraTreesClassifier,
-[Push Docs Check/docs]   | [1;32m     22[0m     ScikitlearnGradientBoostingClassifier,
-[Push Docs Check/docs]   | [1;32m     23[0m     ScikitlearnLogisticRegression,
-[Push Docs Check/docs]   | [1;32m     24[0m     ScikitlearnRandomForestClassifier,
-[Push Docs Check/docs]   | [1;32m     25[0m     ScikitlearnSVC,
-[Push Docs Check/docs]   | [1;32m     26[0m )
-[Push Docs Check/docs]   | [1;32m     27[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;21;01m.[39;00m[38;5;21;01mregression[39;00m[38;5;21;01m.[39;00m[38;5;21;01mscikitlearn[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m (
-[Push Docs Check/docs]   | [1;32m     28[0m     ScikitlearnDecisionTreeRegressor,
-[Push Docs Check/docs]   | [1;32m     29[0m     ScikitlearnRegressor,
-[Push Docs Check/docs]   | [1;32m     30[0m )
-[Push Docs Check/docs]   | [1;32m     31[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;21;01m.[39;00m[38;5;21;01mclassification[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m PyTorchClassifier
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | File [0;32m/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/art/__init__.py:8[0m
-[Push Docs Check/docs]   | [1;32m      5[0m [38;5;28;01mimport[39;00m[38;5;250m [39m[38;5;21;01mlogging[39;00m[38;5;21;01m.[39;00m[38;5;21;01mconfig[39;00m
-[Push Docs Check/docs]   | [1;32m      7[0m [38;5;66;03m# Project Imports[39;00m
-[Push Docs Check/docs]   | [0;32m----> 8[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m attacks
-[Push Docs Check/docs]   | [1;32m      9[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m defences
-[Push Docs Check/docs]   | [1;32m     10[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m estimators
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | File [0;32m/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/art/attacks/__init__.py:10[0m
-[Push Docs Check/docs]   | [1;32m      7[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattacks[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattack[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m ExtractionAttack, InferenceAttack, AttributeInferenceAttack
-[Push Docs Check/docs]   | [1;32m      8[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattacks[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattack[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m ReconstructionAttack
-[Push Docs Check/docs]   | [0;32m---> 10[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattacks[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m evasion
-[Push Docs Check/docs]   | [1;32m     11[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattacks[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m extraction
-[Push Docs Check/docs]   | [1;32m     12[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattacks[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m inference
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | File [0;32m/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/art/attacks/evasion/__init__.py:8[0m
-[Push Docs Check/docs]   | [1;32m      5[0m [38;5;66;03m# pylint: disable=wrong-import-position[39;00m
-[Push Docs Check/docs]   | [1;32m      6[0m [38;5;28;01mimport[39;00m[38;5;250m [39m[38;5;21;01mimportlib[39;00m
-[Push Docs Check/docs]   | [0;32m----> 8[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattacks[39;00m[38;5;21;01m.[39;00m[38;5;21;01mevasion[39;00m[38;5;21;01m.[39;00m[38;5;21;01madversarial_patch[39;00m[38;5;21;01m.[39;00m[38;5;21;01madversarial_patch[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m AdversarialPatch
-[Push Docs Check/docs]   | [1;32m      9[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattacks[39;00m[38;5;21;01m.[39;00m[38;5;21;01mevasion[39;00m[38;5;21;01m.[39;00m[38;5;21;01madversarial_patch[39;00m[38;5;21;01m.[39;00m[38;5;21;01madversarial_patch_numpy[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m AdversarialPatchNumpy
-[Push Docs Check/docs]   | [1;32m     10[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattacks[39;00m[38;5;21;01m.[39;00m[38;5;21;01mevasion[39;00m[38;5;21;01m.[39;00m[38;5;21;01madversarial_patch[39;00m[38;5;21;01m.[39;00m[38;5;21;01madversarial_patch_tensorflow[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m AdversarialPatchTensorFlowV2
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | File [0;32m/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/art/attacks/evasion/adversarial_patch/adversarial_patch.py:31[0m
-[Push Docs Check/docs]   | [1;32m     27[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mtyping[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m TYPE_CHECKING
-[Push Docs Check/docs]   | [1;32m     29[0m [38;5;28;01mimport[39;00m[38;5;250m [39m[38;5;21;01mnumpy[39;00m[38;5;250m [39m[38;5;28;01mas[39;00m[38;5;250m [39m[38;5;21;01mnp[39;00m
-[Push Docs Check/docs]   | [0;32m---> 31[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattacks[39;00m[38;5;21;01m.[39;00m[38;5;21;01mevasion[39;00m[38;5;21;01m.[39;00m[38;5;21;01madversarial_patch[39;00m[38;5;21;01m.[39;00m[38;5;21;01madversarial_patch_numpy[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m AdversarialPatchNumpy
-[Push Docs Check/docs]   | [1;32m     32[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattacks[39;00m[38;5;21;01m.[39;00m[38;5;21;01mevasion[39;00m[38;5;21;01m.[39;00m[38;5;21;01madversarial_patch[39;00m[38;5;21;01m.[39;00m[38;5;21;01madversarial_patch_tensorflow[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m AdversarialPatchTensorFlowV2
-[Push Docs Check/docs]   | [1;32m     33[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattacks[39;00m[38;5;21;01m.[39;00m[38;5;21;01mevasion[39;00m[38;5;21;01m.[39;00m[38;5;21;01madversarial_patch[39;00m[38;5;21;01m.[39;00m[38;5;21;01madversarial_patch_pytorch[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m AdversarialPatchPyTorch
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | File [0;32m/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/art/attacks/evasion/adversarial_patch/adversarial_patch_numpy.py:37[0m
-[Push Docs Check/docs]   | [1;32m     35[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattacks[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattack[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m EvasionAttack
-[Push Docs Check/docs]   | [1;32m     36[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mattacks[39;00m[38;5;21;01m.[39;00m[38;5;21;01mevasion[39;00m[38;5;21;01m.[39;00m[38;5;21;01madversarial_patch[39;00m[38;5;21;01m.[39;00m[38;5;21;01mutils[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m insert_transformed_patch
-[Push Docs Check/docs]   | [0;32m---> 37[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimator[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m BaseEstimator, NeuralNetworkMixin
-[Push Docs Check/docs]   | [1;32m     38[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;21;01m.[39;00m[38;5;21;01mclassification[39;00m[38;5;21;01m.[39;00m[38;5;21;01mclassifier[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m ClassifierMixin
-[Push Docs Check/docs]   | [1;32m     39[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mutils[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m check_and_transform_label_format
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | File [0;32m/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/art/estimators/__init__.py:17[0m
-[Push Docs Check/docs]   | [1;32m     14[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;21;01m.[39;00m[38;5;21;01mscikitlearn[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m ScikitlearnEstimator
-[Push Docs Check/docs]   | [1;32m     15[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;21;01m.[39;00m[38;5;21;01mtensorflow[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m TensorFlowV2Estimator
-[Push Docs Check/docs]   | [0;32m---> 17[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m certification
-[Push Docs Check/docs]   | [1;32m     18[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m classification
-[Push Docs Check/docs]   | [1;32m     19[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m generation
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | File [0;32m/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/art/estimators/certification/__init__.py:16[0m
-[Push Docs Check/docs]   | [1;32m     13[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcertification[39;00m[38;5;21;01m.[39;00m[38;5;21;01mobject_seeker[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpytorch[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m PyTorchObjectSeeker
-[Push Docs Check/docs]   | [1;32m     15[0m [38;5;28;01mif[39;00m importlib[38;5;241m.[39mutil[38;5;241m.[39mfind_spec([38;5;124m"[39m[38;5;124mtorch[39m[38;5;124m"[39m) [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m:
-[Push Docs Check/docs]   | [0;32m---> 16[0m     [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcertification[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdeep_z[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdeep_z[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m ZonoDenseLayer
-[Push Docs Check/docs]   | [1;32m     17[0m     [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcertification[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdeep_z[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdeep_z[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m ZonoBounds
-[Push Docs Check/docs]   | [1;32m     18[0m     [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcertification[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdeep_z[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdeep_z[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m ZonoConv
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | File [0;32m/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/art/estimators/certification/deep_z/__init__.py:5[0m
-[Push Docs Check/docs]   | [1;32m      1[0m [38;5;124;03m"""[39;00m
-[Push Docs Check/docs]   | [1;32m      2[0m [38;5;124;03mDeepZ based certification estimators.[39;00m
-[Push Docs Check/docs]   | [1;32m      3[0m [38;5;124;03m"""[39;00m
-[Push Docs Check/docs]   | [0;32m----> 5[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcertification[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdeep_z[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdeep_z[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m ZonoDenseLayer
-[Push Docs Check/docs]   | [1;32m      6[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcertification[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdeep_z[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdeep_z[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m ZonoBounds
-[Push Docs Check/docs]   | [1;32m      7[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mart[39;00m[38;5;21;01m.[39;00m[38;5;21;01mestimators[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcertification[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdeep_z[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdeep_z[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m ZonoConv
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | File [0;32m/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/art/estimators/certification/deep_z/deep_z.py:26[0m
-[Push Docs Check/docs]   | [1;32m     23[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01m__future__[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m annotations
-[Push Docs Check/docs]   | [1;32m     25[0m [38;5;28;01mimport[39;00m[38;5;250m [39m[38;5;21;01mnumpy[39;00m[38;5;250m [39m[38;5;28;01mas[39;00m[38;5;250m [39m[38;5;21;01mnp[39;00m
-[Push Docs Check/docs]   | [0;32m---> 26[0m [38;5;28;01mimport[39;00m[38;5;250m [39m[38;5;21;01mtorch[39;00m
-[Push Docs Check/docs]   | [1;32m     29[0m [38;5;28;01mclass[39;00m[38;5;250m [39m[38;5;21;01mZonoDenseLayer[39;00m(torch[38;5;241m.[39mnn[38;5;241m.[39mModule):
-[Push Docs Check/docs]   | [1;32m     30[0m [38;5;250m    [39m[38;5;124;03m"""[39;00m
-[Push Docs Check/docs]   | [1;32m     31[0m [38;5;124;03m    Class implementing a dense layer on a zonotope.[39;00m
-[Push Docs Check/docs]   | [1;32m     32[0m [38;5;124;03m    Bias is only added to the zeroth term.[39;00m
-[Push Docs Check/docs]   | [1;32m     33[0m [38;5;124;03m    """[39;00m
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | File [0;32m/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/torch/__init__.py:442[0m
-[Push Docs Check/docs]   | [1;32m    440[0m     [38;5;28;01mif[39;00m USE_GLOBAL_DEPS:
-[Push Docs Check/docs]   | [1;32m    441[0m         _load_global_deps()
-[Push Docs Check/docs]   | [0;32m--> 442[0m     [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mtorch[39;00m[38;5;21;01m.[39;00m[38;5;21;01m_C[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m [38;5;241m*[39m  [38;5;66;03m# noqa: F403[39;00m
-[Push Docs Check/docs]   | [1;32m    445[0m [38;5;28;01mclass[39;00m[38;5;250m [39m[38;5;21;01mSymInt[39;00m:
-[Push Docs Check/docs]   | [1;32m    446[0m [38;5;250m    [39m[38;5;124;03m"""[39;00m
-[Push Docs Check/docs]   | [1;32m    447[0m [38;5;124;03m    Like an int (including magic methods), but redirects all operations on the[39;00m
-[Push Docs Check/docs]   | [1;32m    448[0m [38;5;124;03m    wrapped node. This is used in particular to symbolically record operations[39;00m
-[Push Docs Check/docs]   | [1;32m    449[0m [38;5;124;03m    in the symbolic shape workflow.[39;00m
-[Push Docs Check/docs]   | [1;32m    450[0m [38;5;124;03m    """[39;00m
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | [0;31mImportError[0m: /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/torch/lib/../../nvidia/cu13/lib/libcupti.so.13: file too short
-[Push Docs Check/docs]   | 
-[Push Docs Check/docs]   | ERROR: failed to reproduce 'notebook_seaborn': failed to run: jupyter nbconvert --to notebook --execute --inplace seaborn.ipynb, exited with 1
-[Push Docs Check/docs]   | make: *** [Makefile:40: notebooks] Error 255
-[Push Docs Check/docs]   ❌  Failure - Main build docs [7.296900334s]
-[Push Docs Check/docs] exitcode '2': failure
-[Push Docs Check/docs] ⭐ Run Post actions/checkout@v4
-[Push Docs Check/docs]   🐳  docker exec cmd=[/usr/local/bin/node /var/run/act/actions/actions-checkout@v4/dist/index.js] user= workdir=
-[Push Docs Check/docs]   | [command]/usr/bin/git version
-[Push Docs Check/docs]   | git version 2.52.0
-[Push Docs Check/docs]   ⚙  ***
-[Push Docs Check/docs]   | Temporarily overriding HOME='/tmp/02717396-7cc2-448c-b51d-6915ec7e1d36' before making global git config changes
-[Push Docs Check/docs]   | Adding repository directory to the temporary git global config as a safe directory
-[Push Docs Check/docs]   | [command]/usr/bin/git config --global --add safe.directory /Users/c.meyers/Documents/deckard
-[Push Docs Check/docs]   | [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
-[Push Docs Check/docs]   | [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
-[Push Docs Check/docs]   | [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
-[Push Docs Check/docs]   | http.https://github.com/.extraheader
-[Push Docs Check/docs]   | [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
-[Push Docs Check/docs]   | [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
-[Push Docs Check/docs]   | [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
-[Push Docs Check/docs]   | [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
-[Push Docs Check/docs]   ✅  Success - Post actions/checkout@v4 [1.57545525s]
-[Push Docs Check/docs] ⭐ Run Complete job
-[Push Docs Check/docs]   ✅  Success - Complete job
-[Push Docs Check/docs] 🏁  Job failed
-Error: Job 'docs' failed
-Exit code: 1
+[Push Docs Check/docs]   | Successfully installed deckard-0.95.0 fsspec-2026.2.0 numpy-2.0.2 typing_extensions-4.12.2
+[Push Docs Check/docs]   | Looking in indexes: https://download.pytorch.org/whl/cpu
+[Push Docs Check/docs]   | Collecting torch
+[Push Docs Check/docs]   |   Downloading torch-2.12.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl.metadata (31 kB)
+[Push Docs Check/docs]   | Collecting torchvision
+[Push Docs Check/docs]   |   Downloading torchvision-0.27.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl.metadata (5.5 kB)
+[Push Docs Check/docs]   | Collecting torchaudio
+[Push Docs Check/docs]   |   Downloading torchaudio-2.11.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl.metadata (6.9 kB)
+[Push Docs Check/docs]   | Collecting filelock (from torch)
+[Push Docs Check/docs]   |   Downloading filelock-3.29.0-py3-none-any.whl.metadata (2.0 kB)
+[Push Docs Check/docs]   | Collecting typing-extensions>=4.10.0 (from torch)
+[Push Docs Check/docs]   |   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+[Push Docs Check/docs]   | Collecting setuptools<82 (from torch)
+[Push Docs Check/docs]   |   Downloading setuptools-70.2.0-py3-none-any.whl.metadata (5.8 kB)
+[Push Docs Check/docs]   | Collecting sympy>=1.13.3 (from torch)
+[Push Docs Check/docs]   |   Downloading sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+[Push Docs Check/docs]   | Collecting networkx>=2.5.1 (from torch)
+[Push Docs Check/docs]   |   Downloading networkx-3.4.2-py3-none-any.whl.metadata (6.3 kB)
+[Push Docs Check/docs]   | Collecting jinja2 (from torch)
+[Push Docs Check/docs]   |   Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+[Push Docs Check/docs]   | Collecting fsspec>=0.8.5 (from torch)
+[Push Docs Check/docs]   |   Downloading fsspec-2026.4.0-py3-none-any.whl.metadata (10 kB)
+[Push Docs Check/docs]   | Collecting numpy (from torchvision)
+[Push Docs Check/docs]   |   Downloading numpy-2.2.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (62 kB)
+[Push Docs Check/docs]   | Collecting pillow!=8.3.*,>=5.3.0 (from torchvision)
+[Push Docs Check/docs]   |   Downloading pillow-12.2.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (8.8 kB)
+[Push Docs Check/docs]   | Collecting mpmath<1.4,>=1.1.0 (from sympy>=1.13.3->torch)
+[Push Docs Check/docs]   |   Downloading mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+[Push Docs Check/docs]   | Collecting MarkupSafe>=2.0 (from jinja2->torch)
+[Push Docs Check/docs]   |   Downloading markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+[Push Docs Check/docs]   | Downloading torch-2.12.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl (192.2 MB)
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 192.2/192.2 MB 29.5 MB/s  0:00:06
+[Push Docs Check/docs]   | Downloading setuptools-70.2.0-py3-none-any.whl (930 kB)
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 930.8/930.8 kB 27.7 MB/s  0:00:00
+[Push Docs Check/docs]   | Downloading torchvision-0.27.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl (1.7 MB)
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 28.0 MB/s  0:00:00
+[Push Docs Check/docs]   | Downloading torchaudio-2.11.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl (341 kB)
+[Push Docs Check/docs]   | Downloading fsspec-2026.4.0-py3-none-any.whl (203 kB)
+[Push Docs Check/docs]   | Downloading networkx-3.4.2-py3-none-any.whl (1.7 MB)
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 25.4 MB/s  0:00:00
+[Push Docs Check/docs]   | Downloading pillow-12.2.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (7.1 MB)
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.1/7.1 MB 29.7 MB/s  0:00:00
+[Push Docs Check/docs]   | Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 29.7 MB/s  0:00:00
+[Push Docs Check/docs]   | Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 24.1 MB/s  0:00:00
+[Push Docs Check/docs]   | Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+[Push Docs Check/docs]   | Downloading filelock-3.29.0-py3-none-any.whl (39 kB)
+[Push Docs Check/docs]   | Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+[Push Docs Check/docs]   | Downloading markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (20 kB)
+[Push Docs Check/docs]   | Downloading numpy-2.2.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.8 MB)
