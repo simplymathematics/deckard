@@ -223,7 +223,13 @@ class AttackConfig(ConfigBase):
     scorer: Union["AttackScorerConfig", None] = None
     alias: Union[str, None] = None
     device: Union[str, None] = None
-    mode: Literal["test", "val"] = "test"
+    mode: Literal["test", "val"] = "test"  # Only test/val allowed
+    def set_mode(self, mode: str):
+        """Set attack mode, only allowing 'test' or 'val'."""
+        allowed = {"test", "val"}
+        if mode not in allowed:
+            raise ValueError(f"AttackConfig mode '{mode}' not in {allowed}")
+        self.mode = mode
 
     # Runtime state fields
     attack_time: Union[float, None] = None
@@ -924,7 +930,7 @@ class AttackConfig(ConfigBase):
 
     @staticmethod
     def _to_numpy_array(value, dtype=None, flatten: bool = False) -> np.ndarray:
-        """Normalize array-like inputs (tensor/pandas/list/ndarray) to numpy arrays."""
+        """Normalize array-like inputs (tensor/pandas/list/ndarray) to numpy arrays. Raises error for inconsistent shapes and provides clear error messages."""
         if is_tensor(value):
             arr = tensor_to_numpy(value, dtype=dtype)
         elif isinstance(value, pd.DataFrame):
@@ -937,8 +943,19 @@ class AttackConfig(ConfigBase):
                 arr = arr.astype(dtype)
         elif isinstance(value, np.ndarray):
             arr = value.astype(dtype) if dtype is not None else value
+        elif isinstance(value, (list, tuple)):
+            shapes = [np.shape(v) for v in value]
+            if len(set(shapes)) > 1:
+                raise ValueError(f"Inconsistent shapes in input list/tuple: {shapes}. All elements must have the same shape for conversion to numpy array.")
+            try:
+                arr = np.asarray(value, dtype=dtype)
+            except Exception as e:
+                raise ValueError(f"Failed to convert list/tuple to numpy array due to shape inconsistency or unsupported types: {e}")
         else:
-            arr = np.asarray(value, dtype=dtype)
+            try:
+                arr = np.asarray(value, dtype=dtype)
+            except Exception as e:
+                raise ValueError(f"Failed to convert input to numpy array: {e}")
 
         arr = np.asarray(arr)
         return arr.reshape(-1) if flatten else arr
@@ -1223,17 +1240,31 @@ class AttackConfig(ConfigBase):
         else:
             x_ = data.X_train
             y_ = data.y_train
-        if isinstance(x_, (pd.Series, np.ndarray, pd.DataFrame)) or is_tensor(
-            x_,
-        ):
+        from torch.utils.data import Dataset, Subset, DataLoader
+        import torch
+        # Accept Subset/Dataset and convert to tensor
+        if isinstance(x_, (pd.Series, np.ndarray, pd.DataFrame)) or is_tensor(x_):
             x_subset = x_[:n]
             y_subset = y_[:n]
+        elif isinstance(x_, (Dataset, Subset)):
+            # Convert to tensor
+            loader = DataLoader(x_, batch_size=n, shuffle=False)
+            batch = next(iter(loader))
+            if isinstance(batch, (tuple, list)):
+                x_subset = batch[0]
+                y_subset = batch[1]
+            else:
+                x_subset = batch
+                y_subset = None
         elif is_dataloader(x_):
             x_subset, y_subset = collect_subset_from_dataloader(x_, n=n)
         else:
             raise ValueError(
-                f"Expected data.X_test to be a pd.Series, np.ndarray, or a torch Tensor or torch DataLoader. Got: {type(data.X_test)}",
+                f"Expected data.X_test to be a pd.Series, np.ndarray, torch Tensor, torch DataLoader, or torch Dataset/Subset. Got: {type(data.X_test)}",
             )
+        # Do not flatten x_subset; preserve original shape for torch/ART models
+        if is_tensor(y_subset) and y_subset.ndim > 1:
+            y_subset = y_subset.view(-1)
         return n, x_subset, y_subset
 
     def _infer_attribute(
@@ -1892,7 +1923,18 @@ class AttackConfig(ConfigBase):
 
         start_time = time.process_time()
         benign_pred = art_model.predict(x_eval)
-        art_model.fit(x_poison, y_poison, **poison_fit_params)
+        # Only pass batch_size if art_model is a torch/ART model (not sklearn)
+        batch_size = getattr(data, "batch_size", None)
+        if batch_size is None:
+            batch_size = getattr(getattr(data, "model", None), "fit_params", {}).get("batch_size", 32)
+        poison_fit_params = dict(poison_fit_params) if poison_fit_params else {}
+        is_torch_art = hasattr(art_model, "_model") and ("torch" in str(type(art_model._model)).lower())
+        if is_torch_art:
+            poison_fit_params["batch_size"] = batch_size
+            art_model.fit(x_poison, y_poison, **poison_fit_params)
+        else:
+            # For sklearn models, do not pass batch_size
+            art_model.fit(x_poison, y_poison)
         poisoned_pred = art_model.predict(x_eval)
         self.attack_prediction_time = time.process_time() - start_time
         logger.info(

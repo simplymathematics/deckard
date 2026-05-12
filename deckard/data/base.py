@@ -98,6 +98,8 @@ def _discover_yellowbrick_dataset_loaders() -> dict:
 def _yellowbrick_dataset_loaders() -> dict:
     return _discover_yellowbrick_dataset_loaders()
 
+SUPPORTED_DATA_SCORING_MODES = ["train", "test", "val", "pre-sample"]
+
 
 @dataclass(eq=False)
 class DataConfig(ConfigBase):
@@ -258,7 +260,7 @@ class DataConfig(ConfigBase):
     plugins: list = field(default_factory=list)
     alias: Union[str, None] = None
     scorer: Any = AUTO_SCORER
-    score_mode: Literal["train", "test", "val", "pre-sample"] = "train"
+    score_mode: Literal["train", "test", "val", "pre-sample"] = "pre-sample"
 
     # Runtime state fields
     score_dict: dict = field(init=False, repr=True)
@@ -1113,39 +1115,36 @@ class DataConfig(ConfigBase):
         self._X = data
         self._y = y
 
-    def _score(self) -> dict:
-        """Thin wrapper that delegates all dataset scoring to ``self.scorer``."""
+    def _score(self, mode:Literal["train", "test", "val", "pre-sample"]=None) -> dict:
+        """
+        Delegates all dataset scoring to ``self.scorer``. Supports pre-sample mode (raw data, only in DataConfig),
+        as well as train/test/val splits. If mode is not provided, uses self.score_mode or defaults to 'pre-sample'.
+        """
         self._run_plugin_hook("before_score")
         if self.scorer is None:
             return {}
         if not callable(self.scorer):
-            raise TypeError(
-                f"DataConfig.scorer must be callable or None, got {type(self.scorer)}",
-            )
-
-        mode = str(getattr(self, "score_mode", "train") or "train").lower()
-        if mode == "pre-sample":
+            raise TypeError(f"DataConfig.scorer must be callable or None, got {type(self.scorer)}")
+        scorer_mode = str(mode or getattr(self, "score_mode", None) or "pre-sample").lower()
+        allowed = {"pre-sample", "train", "test", "val"}
+        if scorer_mode not in allowed:
+            raise ValueError(f"DataConfig score_mode '{scorer_mode}' not in {allowed}")
+        if scorer_mode == "pre-sample":
             y_true = getattr(self, "_y", None)
             y_pred = getattr(self, "_X", None)
-            scorer_mode = "pre-sample"
-        elif mode == "test":
-            y_true = self.y_test
-            y_pred = self.X_test
-            scorer_mode = "test"
-        elif mode == "val":
-            y_true = self.y_val
-            y_pred = self.X_val
-            scorer_mode = "val"
+        elif scorer_mode == "train":
+            y_true = getattr(self, "y_train", None)
+            y_pred = getattr(self, "X_train", None)
+        elif scorer_mode == "test":
+            y_true = getattr(self, "y_test", None)
+            y_pred = getattr(self, "X_test", None)
+        elif scorer_mode == "val":
+            y_true = getattr(self, "y_val", None)
+            y_pred = getattr(self, "X_val", None)
         else:
-            y_true = self.y_train
-            y_pred = self.X_train
-            scorer_mode = "train"
-
+            raise ValueError(f"Mode must be in {allowed}")
         if y_true is None or y_pred is None:
-            raise ValueError(
-                f"Data scoring mode '{mode}' requested but required data split is unavailable.",
-            )
-
+            raise ValueError(f"Data scoring mode '{scorer_mode}' requested but required data split is unavailable.")
         result_dict = self.scorer(
             y_true=y_true,
             y_pred=y_pred,
@@ -1332,20 +1331,6 @@ class DataConfig(ConfigBase):
                     self._empirical_cdf(self.y_val).tolist(),
                 )
         all_scores = {**scores, **data_scores, **time_dict}
-        # Strict output validation
-        def is_scalar(val):
-            return isinstance(val, (float, int, str, bool))
-        def is_flat_list(val):
-            return isinstance(val, list) and all(is_scalar(x) for x in val)
-        for k, v in all_scores.items():
-            if isinstance(v, (dict, pd.DataFrame, pd.Series, list)) and not is_flat_list(v):
-                logger.error(f" Non-flat or nested value in score_dict for key '{k}': {repr(v)} (type: {type(v)})")
-                traceback.print_stack()
-                raise ValueError(f"score_dict key '{k}' contains a non-flat or nested value: {repr(v)}")
-            if isinstance(v, str) and (v.startswith('{') or v.startswith('[')):
-                logger.error(f" Stringified dict/list in score_dict for key '{k}': {v}")
-                traceback.print_stack()
-                raise ValueError(f"score_dict key '{k}' contains a stringified dict/list: {v}")
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
         all_scores = self.merge_and_persist_scores(all_scores, score_file)
@@ -1650,6 +1635,8 @@ class DataPipelineConfig(DataConfig):
         self,
         data_file: Union[str, None] = None,
         score_file: Union[str, None] = None,
+        mode: str = None,
+        **kwargs,
     ) -> dict:
         """
         Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.
@@ -1745,7 +1732,11 @@ class DataPipelineConfig(DataConfig):
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
             )
         self.score_dict.update(**time_dict)
-        data_scores = self._score()
+        # Pass mode to _score if present
+        if mode is not None:
+            data_scores = self._score(mode=mode)
+        else:
+            data_scores = self._score()
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"

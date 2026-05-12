@@ -386,17 +386,23 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         return "test"
 
     def _propagate_score_mode(self) -> Literal["train", "test", "val", "pre-sample"]:
+        """
+        Propagate score mode to data, model, and attack configs.
+        - DataConfig: supports pre-sample/train/test/val
+        - ModelConfig: supports train/test/val (no pre-sample)
+        - AttackConfig: supports test/val only
+        """
         active_mode = self._resolve_component_score_mode()
         if self.data is not None and hasattr(self.data, "score_mode"):
-            self.data.score_mode = active_mode
+            self.data.score_mode = active_mode if active_mode in {"pre-sample", "train", "test", "val"} else "pre-sample"
         if self.model is not None and hasattr(self.model, "score_mode") and active_mode in {"train", "test", "val"}:
             self.model.score_mode = active_mode
         attack_chain = getattr(self, "_attack_chain", None)
         if attack_chain is None:
             attack_chain = [self.attack] if self.attack is not None else []
         for attack_cfg in attack_chain:
-            if attack_cfg is not None and hasattr(attack_cfg, "mode") and active_mode in {"test", "val"}:
-                attack_cfg.mode = active_mode
+            if attack_cfg is not None and hasattr(attack_cfg, "set_mode") and active_mode in {"test", "val"}:
+                attack_cfg.set_mode(active_mode)
         return active_mode
 
     @staticmethod

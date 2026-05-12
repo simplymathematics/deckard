@@ -158,7 +158,7 @@ class ModelConfig(ConfigBase):
     defense: Any = None
     plugins: Union[list, None] = None
     scorer: Any = AUTO_SCORER
-    score_mode: Literal["train", "test", "val"] = "test"
+    score_mode: Literal["train", "test", "val"] = "test"  # Only train/test/val allowed
 
     # Runtime/model state fields
     _model: Any = None
@@ -555,9 +555,20 @@ class ModelConfig(ConfigBase):
             raise ValueError("Model not initialized")
         if not self.probability:
             raise ValueError("Model does not support probability predictions")
-        y_proba = self._model.predict_proba(X)
 
-        return y_proba
+        # Try predict_proba or _predict_proba on the wrapped model
+        for proba_method in ("predict_proba", "_predict_proba"):
+            predict_proba = getattr(self._model, proba_method, None)
+            if callable(predict_proba):
+                return predict_proba(X)
+        # Try underlying estimator if available
+        estimator = getattr(self._model, "model", None)
+        if estimator is not None:
+            for proba_method in ("predict_proba", "_predict_proba"):
+                predict_proba = getattr(estimator, proba_method, None)
+                if callable(predict_proba):
+                    return predict_proba(X)
+        raise AttributeError(f"Wrapped model of type {type(self._model)} does not have a predict_proba or _predict_proba method, nor does its underlying estimator.")
 
 
     def _score(
@@ -601,10 +612,9 @@ class ModelConfig(ConfigBase):
 
     def _canonical_score_mode(self) -> Literal["train", "test", "val"]:
         mode = str(getattr(self, "score_mode", "test") or "test").lower()
-        if mode not in {"train", "test", "val"}:
-            raise ValueError(
-                f"Unsupported ModelConfig score_mode '{self.score_mode}'. Expected one of: train, test, val.",
-            )
+        allowed = {"train", "test", "val"}
+        if mode not in allowed:
+            raise ValueError(f"ModelConfig score_mode '{mode}' not in {allowed}")
         return mode
 
     @staticmethod
