@@ -31,6 +31,17 @@ class PytorchDataPipelineConfig(DataPipelineConfig):
 
 @dataclass(eq=False)
 class PytorchDataConfig(DataConfig):
+
+    def __call__(self, *args, **kwargs):
+        # Always load data and sample to set X_train, X_test, y_train, y_test
+        self._load_data()
+        self._sample()
+        # Optionally call parent __call__ for scoring or further processing
+        if hasattr(super(), '__call__'):
+            return super().__call__(*args, **kwargs)
+        return {}
+
+        
     """Configuration for PyTorch datasets.
 
     Attributes:
@@ -58,6 +69,23 @@ class PytorchDataConfig(DataConfig):
     data_params: dict = field(default_factory=dict)
     drop: List[str] = field(default_factory=list)
     keep: List[str] = field(default_factory=list)
+    
+    def _fit_transform_X(
+            self,
+            X_train,
+            X_test,
+            y_train,
+            y_test,
+            pipeline,
+        ):
+            """Bypass pipeline fit/transform for torch types. Returns inputs unchanged, sets timing fields."""
+            if len(pipeline) > 0:
+                raise NotImplementedError("Pytorch data pipelines not yet implemented.")
+            self.pipeline_fit_time = 0.0
+            self.pipeline_fit_n = len(X_train) if hasattr(X_train, '__len__') else 0
+            self.pipeline_transform_time = 0.0
+            self.pipeline_transform_n = len(X_test) if hasattr(X_test, '__len__') else 0
+            return X_train, X_test, y_train, y_test
 
     def _normalize_sensitive_item(self, sensitive_item: Any) -> Any:
         if isinstance(sensitive_item, torch.Tensor):
@@ -117,6 +145,9 @@ class PytorchDataConfig(DataConfig):
 
     def __post_init__(self):
         super().__post_init__()
+        # Ensure self.dataset is set for downstream logic
+        if not hasattr(self, "dataset") or self.dataset is None:
+            self.dataset = self.dataset_name
         self._initialize_torch_device()
         self._validate_pytorch_dataset_constraints()
         self._initialize_data_params()
@@ -152,6 +183,15 @@ class PytorchDataConfig(DataConfig):
                     )
                 dataset_name = dataset_aliases[dataset_name.lower()]
 
+            # If using torchvision image datasets, ensure transform=ToTensor() if not set
+            if dataset_name.startswith("torchvision.datasets."):
+                try:
+                    from torchvision import transforms
+                    if "transform" not in self.data_params or self.data_params["transform"] is None:
+                        self.data_params["transform"] = transforms.ToTensor()
+                except ImportError:
+                    pass
+
             # Instantiate the dataset using load_class.
             # Keep DataLoader-only keys out of dataset constructor kwargs.
             loader_only_keys = {
@@ -169,6 +209,7 @@ class PytorchDataConfig(DataConfig):
                 if key not in loader_only_keys
             }
             full_dataset = load_class(dataset_name, **dataset_params)
+            self.dataset_obj = full_dataset
 
             # Extract data and labels from dataset. For very large datasets,
             # _max_samples can cap materialization for fast iteration.
@@ -344,10 +385,17 @@ class PytorchDataConfig(DataConfig):
         end_time = time.process_time()
         self.data_sample_time = end_time - start_time
 
-        # Split the data
-        self.X_train = self._X[train_idx]
+
+        # For compatibility with sklearn-like and torch workflows, set as Subset objects and tensors
+        from torch.utils.data import Subset
+        # If the original dataset is available, use Subset; else fallback to tensor slices
+        if hasattr(self, 'dataset_obj') and self.dataset_obj is not None:
+            self.X_train = Subset(self.dataset_obj, train_idx.tolist())
+            self.X_test = Subset(self.dataset_obj, test_idx.tolist())
+        else:
+            self.X_train = self._X[train_idx]
+            self.X_test = self._X[test_idx]
         self.y_train = self._y[train_idx]
-        self.X_test = self._X[test_idx]
         self.y_test = self._y[test_idx]
 
         if hasattr(self, "_sensitive") and self._sensitive is not None:
@@ -366,10 +414,13 @@ class PytorchDataConfig(DataConfig):
             f"Train: {self.train_n}, Test: {self.test_n}",
         )
 
-        assert isinstance(self.X_train, Tensor), "X_train must be a Tensor"
-        assert isinstance(self.y_train, Tensor), "y_train must be a Tensor"
-        assert isinstance(self.X_test, Tensor), "X_test must be a Tensor"
-        assert isinstance(self.y_test, Tensor), "y_test must be a Tensor"
+        # Accept X_train/X_test as Tensor, Subset, or Dataset for torch compatibility
+        # Accept y_train/y_test as Tensor or Dataset (for custom loaders)
+        from torch.utils.data import Subset
+        assert isinstance(self.X_train, (Tensor, Subset, Dataset)), "X_train must be a Tensor, Subset, or Dataset"
+        assert isinstance(self.y_train, (Tensor, Dataset)), "y_train must be a Tensor or Dataset"
+        assert isinstance(self.X_test, (Tensor, Subset, Dataset)), "X_test must be a Tensor, Subset, or Dataset"
+        assert isinstance(self.y_test, (Tensor, Dataset)), "y_test must be a Tensor or Dataset"
 
     def _classification_feature_scores(self):
         """
@@ -551,6 +602,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         return super().__hash__()
 
     def __post_init__(self):
+        super().__post_init__()
         self._initialize_timing_fields()
         if not self.data_params:
             self.data_params = {}
@@ -559,6 +611,8 @@ class PytorchCustomDataConfig(PytorchDataConfig):
 
     def _as_dataset(self, obj, split: str, transform):
         if isinstance(obj, str):
+            if not obj:
+                raise ValueError("dataset path cannot be empty for custom torch dataset")
             obj = load_class(
                 obj,
                 **self.dataset_params,
@@ -566,16 +620,36 @@ class PytorchCustomDataConfig(PytorchDataConfig):
                 transform=transform,
             )
             return obj
-        elif isinstance(obj, Dataset):
+        if isinstance(obj, type) and issubclass(obj, Dataset):
             return obj(**self.dataset_params, split=split, transform=transform)
+        if isinstance(obj, Dataset):
+            return obj
         raise TypeError(
             f"Invalid dataset object for split '{split}': {type(obj)}",
         )
 
-    def _truncate_dataset(self, dataset: Dataset, size: int):
-        assert isinstance(size, int), ValueError(
-            f"Size must be an integer. Got: {size}.",
-        )
+    @staticmethod
+    def _extract_label_tensor(dataset: Dataset) -> torch.Tensor:
+        labels = []
+        for i in range(len(dataset)):
+            sample = dataset[i]
+            if not isinstance(sample, (tuple, list)) or len(sample) < 2:
+                raise ValueError("Each dataset sample must be (X, y) or (X, y, sensitive)")
+            label = sample[1]
+            if isinstance(label, torch.Tensor):
+                label = label.detach().cpu().reshape(-1)
+                labels.append(label[0].item() if label.numel() > 0 else 0)
+            else:
+                labels.append(label)
+        return torch.as_tensor(labels, dtype=torch.long)
+
+    def _truncate_dataset(self, dataset: Dataset, size):
+        # Allow float proportions as well as int counts
+        if isinstance(size, float):
+            n = len(dataset)
+            size = int(round(size * n))
+        if not isinstance(size, int):
+            raise ValueError(f"Size must be an integer or float proportion. Got: {size}.")
         dataset = Subset(dataset, range(size))
         return dataset
 
@@ -614,20 +688,23 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             split=valid_split,
             transform=test_transform,
         )
-        if self.train_size:
+        # For custom split datasets, only explicit integer caps should truncate.
+        if isinstance(self.train_size, int):
             train_ds = self._truncate_dataset(train_ds, self.train_size)
-            self.train_n = self.train_size
+            self.train_n = len(train_ds)
         else:
             self.train_n = len(train_ds)
-        if self.test_size:
+        if isinstance(self.test_size, int):
             test_ds = self._truncate_dataset(test_ds, size=self.test_size)
-            self.test_n = self.test_size
+            self.test_n = len(test_ds)
         else:
             self.test_n = len(test_ds)
 
-        # Minimal placeholders to satisfy parent __call__ checks
+        # Keep train/test split datasets explicit for sampling and downstream compatibility.
         self._X = (train_ds, test_ds)
-        self._y = (train_ds, test_ds)
+        train_labels = self._extract_label_tensor(train_ds)
+        test_labels = self._extract_label_tensor(test_ds)
+        self._y = torch.cat([train_labels, test_labels], dim=0)
 
         end = time.process_time()
         self.data_load_time = end - start
@@ -647,8 +724,9 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         pin_memory = bool(
             self.data_params.get("pin_memory", self.device != "cpu"),
         )
-        train_ds = self._X[0]
-        test_ds = self._X[1]
+        if not isinstance(self._X, (tuple, list)) or len(self._X) != 2:
+            raise ValueError("Expected custom torch _X to contain (train_dataset, test_dataset)")
+        train_ds, test_ds = self._X
         torch.manual_seed(self.random_state)
         train_loader = DataLoader(
             train_ds,
@@ -717,6 +795,10 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             if test_y_batches
             else torch.empty(0, dtype=torch.long)
         )
+        if self.y_train.ndim > 1:
+            self.y_train = self.y_train.reshape(self.y_train.shape[0], -1)[:, 0]
+        if self.y_test.ndim > 1:
+            self.y_test = self.y_test.reshape(self.y_test.shape[0], -1)[:, 0]
 
         if len(train_sensitive_batches) > 0 or len(test_sensitive_batches) > 0:
             self._sensitive_train = train_sensitive_batches
@@ -735,7 +817,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             scores = {}
         if not hasattr(self, "_X") or self._X is None:
             self._load_data()
-        if not hasattr(self, "X_train"):
+        if getattr(self, "X_train", None) is None:
             self._sample()
         if not hasattr(self, "score_dict"):
             new_scores = self._classification_feature_scores()

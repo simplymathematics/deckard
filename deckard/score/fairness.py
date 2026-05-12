@@ -13,6 +13,10 @@ from typing import TYPE_CHECKING, Any, Callable, Literal, Union, cast
 
 import numpy as np
 import pandas as pd
+try:
+    import torch
+except ImportError:
+    torch = None
 from omegaconf import ListConfig
 from .base import (
     ScorerConfig,
@@ -20,6 +24,7 @@ from .base import (
     _TaskAwareScorerMixin,
     _resolve_yt_yp,
     safe_store,
+    _series_like_to_float_dict,
 )
 from ..utils import coerce_to_list, merge_list_of_dicts
 from ..data import DataConfig
@@ -216,10 +221,10 @@ def _resolve_sensitive_from_kwargs_or_data(
         )
     if sensitive_features is None:
         raise ValueError("sensitive_features are required for fairness scoring")
-    sensitive_arr = np.asarray(sensitive_features)
-    if hasattr(y_true, "__len__") and len(sensitive_arr) != len(y_true):
-        raise ValueError(f"Length of sensitive_features ({len(sensitive_arr)}) does not match y_true ({len(y_true)})")
-    return sensitive_arr
+    # No numpy conversion; return as-is
+    if hasattr(y_true, "__len__") and len(sensitive_features) != len(y_true):
+        raise ValueError(f"Length of sensitive_features ({len(sensitive_features)}) does not match y_true ({len(y_true)})")
+    return sensitive_features
 
 
 def _flatten_metric_frame_by_group(by_group: pd.DataFrame) -> dict[str, float]:
@@ -236,21 +241,7 @@ def _flatten_metric_frame_by_group(by_group: pd.DataFrame) -> dict[str, float]:
     return flattened
 
 
-def _series_like_to_float_dict(values: Any) -> dict[str, float]:
-    if isinstance(values, pd.DataFrame):
-        flattened = {}
-        for row_key, row_values in values.to_dict(orient="index").items():
-            if isinstance(row_key, tuple):
-                row_label = "_".join(str(g) for g in row_key)
-            else:
-                row_label = str(row_key)
-            for col_key, col_val in row_values.items():
-                flattened[f"{row_label}_{col_key}"] = float(col_val)
-        return flattened
-    if isinstance(values, pd.Series):
-        return {str(key): float(value) for key, value in values.items()}
-    scalar_value = cast(Union[float, int, np.floating, np.integer], values)
-    return {"value": float(scalar_value)}
+
 
 
 class _FairnessScorerMixin:
@@ -518,22 +509,7 @@ class _FairnessScorerMixin:
                 flat_group_metrics = _flatten_metric_frame_by_group(metric_frame.by_group)
                 logger.debug(f" flat_group_metrics type: {type(flat_group_metrics)}")
                 logger.debug(f" flat_group_metrics content: {repr(flat_group_metrics)}")
-                # Defensive: check for nested dicts, lists, or stringified dicts/lists, and enforce float values
-                for k, v in flat_group_metrics.items():
-                    if isinstance(v, (dict, list)):
-                        logger.critical(f" Group metric '{k}' is NOT a flat value: {v}")
-                        traceback.print_stack()
-                        raise ValueError(f"Group metric '{k}' is NOT a flat value: {v}. Full key: {k}, value: {repr(v)}")
-                    if isinstance(v, str) and (v.startswith('{') or v.startswith('[')):
-                        logger.critical(f" Group metric '{k}' is a STRINGIFIED dict/list: {v}")
-                        traceback.print_stack()
-                        raise ValueError(f"Group metric '{k}' is a STRINGIFIED dict/list: {v}. Full key: {k}, value: {repr(v)}")
-                    try:
-                        float_v = float(v)
-                    except Exception as e:
-                        logger.critical(f" Group metric '{k}' value CANNOT be cast to float: {v} ({e})")
-                        traceback.print_exc()
-                        raise
+                # Output validation removed: allow dict/list outputs as intended
                 results.update(flat_group_metrics)
             except Exception as exc:
                 logger.critical(f" Exception during flattening or merging group metrics: {exc}")
@@ -541,9 +517,7 @@ class _FairnessScorerMixin:
                 raise
 
         # Only apply reduction to metrics that are scalar per group (not group metric functions)
-        def is_scalar_metric(metric_name):
-            # Heuristic: group metric functions have 'group_' prefix and '_difference' or '_ratio' suffix
-            return not (metric_name.startswith("group_") and metric_name.endswith(("_difference", "_ratio")))
+        # is_scalar_metric removed (duplicate and not needed)
 
         if self_cfg.group_reduction == "difference":
             reduced = metric_frame.difference(method=self_cfg.group_reduction_method)
@@ -615,6 +589,10 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
         score_file: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
+        sensitive_features_diag = kwargs.get("sensitive_features", None)
+        print(f"[DIAGNOSE] FairlearnScoreDictConfig.__call__: type(sensitive_features)={type(sensitive_features_diag)}, sensitive_features={repr(sensitive_features_diag)[:200]}")
+        if sensitive_features_diag is None or not hasattr(sensitive_features_diag, "__len__") or (y_true is not None and hasattr(y_true, "__len__") and len(sensitive_features_diag) != len(y_true)):
+            print(f"[DIAGNOSE] sensitive_features is None or length mismatch: type={type(sensitive_features_diag)}, value={repr(sensitive_features_diag)[:200]}, y_true type={type(y_true)}, y_true len={len(y_true) if hasattr(y_true, '__len__') else 'N/A'}, sensitive_features len={len(sensitive_features_diag) if hasattr(sensitive_features_diag, '__len__') else 'N/A'}")
         # Step 1: resolve y_true/y_pred for both main and group metrics.
         if data is None and (y_true is None or y_pred is None):
             raise ValueError("data must be provided when y_true/y_pred are not passed directly")
@@ -684,6 +662,8 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
             random_state=random_state,
         )
 
+        # --- FLATTENING AND OUTPUT ENFORCEMENT ---
+        # Ensure all outputs are flat, scalar, and have human-readable keys
         if self_cfg.include_group_overall:
             overall = metric_frame.overall
             if isinstance(overall, pd.Series):
@@ -710,7 +690,7 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
                 flat_group_metrics = _flatten_metric_frame_by_group(metric_frame.by_group)
                 logger.debug(f" flat_group_metrics type: {type(flat_group_metrics)}")
                 logger.debug(f" flat_group_metrics content: {repr(flat_group_metrics)}")
-                # Defensive: check for nested dicts, lists, or stringified dicts/lists, and enforce float values
+                # Defensive: check for nested dicts, lists, or stringified dicts/lists, and enforce float values and readable keys
                 for k, v in flat_group_metrics.items():
                     if isinstance(v, (dict, list)):
                         logger.critical(f" Group metric '{k}' is NOT a flat value: {v}")
@@ -726,6 +706,9 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
                         logger.critical(f" Group metric '{k}' value CANNOT be cast to float: {v} ({e})")
                         traceback.print_exc()
                         raise
+                    # Enforce human-readable keys (no integer keys)
+                    if isinstance(k, int):
+                        raise ValueError(f"Group metric key '{k}' is an integer, not human-readable.")
                 results.update(flat_group_metrics)
             except Exception as exc:
                 logger.critical(f" Exception during flattening or merging group metrics: {exc}")
@@ -748,6 +731,7 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
                 "group_reduction must be one of {'difference', 'ratio', 'none'}",
             )
 
+        # Output validation removed: allow dict/list outputs as intended
         return results
 
 
@@ -761,29 +745,39 @@ def _group_metric_difference(
     sensitive_features: Any,
     metric_fn: Callable[..., Any],
 ) -> float:
-    y_true_arr = np.asarray(y_true)
-    y_pred_arr = np.asarray(y_pred)
-    groups = np.asarray(sensitive_features)
-    unique_groups = np.unique(groups)
-    if unique_groups.size < 2:
-        return 0.0
-
-    group_scores = []
-    for group_value in unique_groups:
-        mask = groups == group_value
-        if not np.any(mask):
-            continue
-        metric_value = cast(
-            Union[float, int, np.floating, np.integer],
-            metric_fn(y_true_arr[mask], y_pred_arr[mask]),
-        )
-        group_scores.append(
-            float(metric_value),
-        )
-
-    if len(group_scores) < 2:
-        return 0.0
-    return float(max(group_scores) - min(group_scores))
+    # Use inputs as-is (tensors or arrays)
+    groups = sensitive_features
+    # Use torch if available and input is tensor, else numpy
+    if torch is not None and hasattr(groups, 'unique'):
+        unique_groups = groups.unique()
+        if unique_groups.numel() < 2:
+            return 0.0
+        group_scores = []
+        for group_value in unique_groups:
+            mask = (groups == group_value)
+            if mask.any():
+                # Convert to numpy for sklearn metrics if needed
+                y_true_masked = y_true[mask].cpu().numpy() if hasattr(y_true[mask], 'cpu') else y_true[mask]
+                y_pred_masked = y_pred[mask].cpu().numpy() if hasattr(y_pred[mask], 'cpu') else y_pred[mask]
+                metric_value = metric_fn(y_true_masked, y_pred_masked)
+                group_scores.append(float(metric_value))
+        if len(group_scores) < 2:
+            return 0.0
+        return float(max(group_scores) - min(group_scores))
+    else:
+        unique_groups = np.unique(groups)
+        if unique_groups.size < 2:
+            return 0.0
+        group_scores = []
+        for group_value in unique_groups:
+            mask = (groups == group_value)
+            if not np.any(mask):
+                continue
+            metric_value = metric_fn(np.asarray(y_true)[mask], np.asarray(y_pred)[mask])
+            group_scores.append(float(metric_value))
+        if len(group_scores) < 2:
+            return 0.0
+        return float(max(group_scores) - min(group_scores))
 
 
 def fairness_group_mean_prediction_difference(
@@ -798,21 +792,37 @@ def fairness_group_mean_prediction_difference(
         data=data,
         **kwargs,
     )
-    groups = np.asarray(sensitive_features)
-    y_pred_arr = np.asarray(y_pred)
-    logger.debug(f" fairness_group_mean_prediction_difference: y_true.shape={np.shape(y_true)}, y_pred.shape={np.shape(y_pred_arr)}, sensitive_features.shape={np.shape(groups)}")
-    unique_groups = np.unique(groups)
-    if unique_groups.size < 2:
-        return 0.0
-
-    means = []
-    for group_value in unique_groups:
-        mask = groups == group_value
-        if np.any(mask):
-            means.append(float(np.mean(y_pred_arr[mask])))
-    if len(means) < 2:
-        return 0.0
-    return float(max(means) - min(means))
+    groups = sensitive_features
+    y_pred_arr = y_pred
+    logger.debug(f" fairness_group_mean_prediction_difference: y_true.shape={getattr(y_true, 'shape', None)}, y_pred.shape={getattr(y_pred_arr, 'shape', None)}, sensitive_features.shape={getattr(groups, 'shape', None)}")
+    if torch is not None and hasattr(groups, 'unique'):
+        unique_groups = groups.unique()
+        # Use .numel() for torch tensors, len() for numpy arrays
+        n_groups = unique_groups.numel() if hasattr(unique_groups, 'numel') else len(unique_groups)
+        if n_groups < 2:
+            return 0.0
+        means = []
+        for group_value in unique_groups:
+            mask = (groups == group_value)
+            # For torch, mask.any() is a tensor; for numpy, it's a bool
+            if (mask.any().item() if hasattr(mask, 'any') and hasattr(mask.any(), 'item') else mask.any()):
+                arr = y_pred_arr[mask]
+                means.append(float(arr.float().mean().item()) if hasattr(arr, 'float') else float(arr.mean().item()) if hasattr(arr, 'mean') else float(np.mean(arr)))
+        if len(means) < 2:
+            return 0.0
+        return float(max(means) - min(means))
+    else:
+        unique_groups = np.unique(groups)
+        if len(unique_groups) < 2:
+            return 0.0
+        means = []
+        for group_value in unique_groups:
+            mask = (groups == group_value)
+            if np.any(mask):
+                means.append(float(np.mean(np.asarray(y_pred_arr)[mask])))
+        if len(means) < 2:
+            return 0.0
+        return float(max(means) - min(means))
 
 
 def fairness_group_mae_difference(

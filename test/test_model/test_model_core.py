@@ -13,6 +13,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 
 class TestModelConfig(unittest.TestCase):
+    
     def setUp(self):
         # Simple binary classification data
         self.X_train = pd.DataFrame({"a": [0, 1, 2, 3], "b": [1, 2, 3, 4]})
@@ -32,7 +33,7 @@ class TestModelConfig(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
-
+    
     def test_post_init(self):
         self.assertTrue(hasattr(self.model._model, "fit"))
         self.assertTrue(hasattr(self.model._model, "predict"))

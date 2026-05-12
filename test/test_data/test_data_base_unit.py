@@ -355,6 +355,8 @@ def test_score_and_feature_score_branches(monkeypatch):
     cfg.scorer = lambda **kwargs: {"base_score": 1}
     cfg.y_train = pd.Series([0, 1])
     cfg.X_train = pd.DataFrame({"a": [1, 2]})
+    cfg._X = pd.DataFrame({"a": [1, 2]})
+    cfg._y = pd.Series([0, 1])
     assert cfg._score() == {"base_score": 1, "plugin_score": 7}
 
     cfg.X_train = pd.DataFrame({"a": [1, 2], "b": [3, 4]})

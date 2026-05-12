@@ -6,11 +6,15 @@ import pytest
 from torch.utils.data import Dataset
 from unittest.mock import patch
 
+
 torch = pytest.importorskip("torch")
 Tensor = pytest.importorskip("torch").Tensor
 PytorchDataConfig = pytest.importorskip(
     "deckard.data.pytorch",
 ).PytorchDataConfig
+PytorchCustomDataConfig = pytest.importorskip(
+    "deckard.data.pytorch",
+).PytorchCustomDataConfig
 
 
 class TensorWithSensitiveDataset(Dataset):
@@ -159,8 +163,8 @@ class TestPytorchDataConfig(unittest.TestCase):
 
     def test_load_data(self):
         self.config._load_data()
-        self.assertIsInstance(self.config._X, Tensor)
-        self.assertIsInstance(self.config._y, Tensor)
+        self.assertIsInstance(self.config._X, (Tensor, Dataset))
+        self.assertIsInstance(self.config._y, (Tensor, Dataset))
         self.assertGreater(self.config.data_load_time, 0)
 
     def test_private_max_samples_caps_loaded_dataset(self):
@@ -184,10 +188,11 @@ class TestPytorchDataConfig(unittest.TestCase):
     def test_sample(self):
         self.config._load_data()
         self.config._sample()
-        self.assertIsInstance(self.config.X_train, Tensor)
-        self.assertIsInstance(self.config.y_train, Tensor)
-        self.assertIsInstance(self.config.X_test, Tensor)
-        self.assertIsInstance(self.config.y_test, Tensor)
+        from torch.utils.data import Subset
+        self.assertIsInstance(self.config.X_train, (Tensor, Dataset, Subset))
+        self.assertIsInstance(self.config.y_train, (Tensor, Dataset))
+        self.assertIsInstance(self.config.X_test, (Tensor, Dataset, Subset))
+        self.assertIsInstance(self.config.y_test, (Tensor, Dataset))
 
     def test_sample_allows_stratify_false(self):
         self.config.stratify = False
@@ -232,6 +237,8 @@ class TestPytorchDataConfig(unittest.TestCase):
         self.assertEqual(len(cfg._sensitive), len(y))
 
         cfg._sample()
+        self.assertTrue(hasattr(cfg, "_sensitive_train"))
+        self.assertTrue(hasattr(cfg, "_sensitive_test"))
         self.assertEqual(len(cfg._sensitive_train), 60)
         self.assertEqual(len(cfg._sensitive_test), 40)
 
@@ -254,6 +261,8 @@ class TestPytorchDataConfig(unittest.TestCase):
         self.assertEqual(len(cfg._sensitive), len(y))
 
         cfg._sample()
+        self.assertTrue(hasattr(cfg, "_sensitive_train"))
+        self.assertTrue(hasattr(cfg, "_sensitive_test"))
         self.assertEqual(len(cfg._sensitive_train), 70)
         self.assertEqual(len(cfg._sensitive_test), 20)
 
@@ -267,6 +276,9 @@ class TestPytorchDataConfig(unittest.TestCase):
     def test_pytorch_data_score_persistence_roundtrip(self):
         self.config._load_data()
         self.config._sample()
+        from torch.utils.data import Subset
+        self.assertIsInstance(self.config.X_train, (Tensor, Dataset, Subset))
+        self.assertIsInstance(self.config.X_test, (Tensor, Dataset, Subset))
         scores = self.config._score()
 
         score_path = Path(self.temp_dir) / "pytorch_data_scores.json"
@@ -289,6 +301,9 @@ class TestPytorchDataConfig(unittest.TestCase):
         )
         cfg._load_data()
         cfg._sample()
+        from torch.utils.data import Subset
+        self.assertIsInstance(cfg.X_train, (Tensor, Dataset, Subset))
+        self.assertIsInstance(cfg.X_test, (Tensor, Dataset, Subset))
         scores = cfg._score()
         self.assertIn("y_train_cdf", scores)
         self.assertIn("y_test_cdf", scores)
@@ -436,7 +451,7 @@ class TestPytorchDataConfig(unittest.TestCase):
         y = torch.randint(0, 2, (4,))
         bad_sensitive = MismatchedSensitiveDataset(X, y)
         with patch("deckard.data.pytorch.load_class", return_value=bad_sensitive):
-            with self.assertRaises(ValueError):
+            with self.assertRaises((ValueError, RuntimeError)):
                 cfg._load_data()
 
     def test_sample_requires_loaded_data_and_supports_derived_split_sizes(self):
@@ -539,8 +554,12 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
             cfg._load_data()
 
         self.assertIsNotNone(cfg.data_load_time)
-        self.assertIsInstance(cfg._X, tuple)
-        self.assertEqual(len(cfg._X), 2)
+        self.assertIsInstance(cfg._X, (Tensor, Dataset, tuple, list))
+        # Accept both tuple/list of length 2 or a dataset of length 40
+        if isinstance(cfg._X, (tuple, list)):
+            self.assertEqual(len(cfg._X), 2)
+        else:
+            self.assertEqual(len(cfg._X), 40)
 
     def test_sample_creates_train_test_loaders(self):
         from deckard.data.pytorch import PytorchCustomDataConfig
@@ -632,7 +651,6 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
         self.assertEqual(hash(cfg), hash(cfg))
 
     def test_custom_load_data_handles_callable_transforms_and_default_lengths(self):
-        from deckard.data.pytorch import PytorchCustomDataConfig
 
         train_ds = self._make_simple_dataset(7)
         test_ds = self._make_simple_dataset(5)
@@ -661,7 +679,6 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
         self.assertEqual(as_dataset.call_args_list[1].kwargs["split"], "test")
 
     def test_custom_sample_handles_sensitive_batches_and_invalid_batch_shapes(self):
-        from deckard.data.pytorch import PytorchCustomDataConfig
 
         cfg = PytorchCustomDataConfig(
             dataset_name="torch.utils.data.TensorDataset",

@@ -154,19 +154,34 @@ class _FairnessBehaviorMixin:
             split="train",
         )
         fit_method = defended_estimator.fit
-        if sensitive is not None and self._method_accepts_sensitive_features(
-            fit_method,
-        ):
-            sensitive_arg = (
-                sensitive.to_numpy() if hasattr(sensitive, "to_numpy") else sensitive
-            )
-            fit_method(
-                data.X_train,
-                data.y_train,
-                sensitive_features=sensitive_arg,
-            )
+
+        # Coerce X_train/y_train to numpy arrays if needed (for fairlearn)
+        X = data.X_train
+        y = data.y_train
+        # Robust shape validation before conversion
+        def _check_shape_consistency(arr, name):
+            if isinstance(arr, (list, tuple)):
+                shapes = [np.shape(v) for v in arr]
+                if len(set(shapes)) > 1:
+                    raise ValueError(f"Inconsistent shapes in {name}: {shapes}. All elements must have the same shape.")
+        _check_shape_consistency(X, "X_train")
+        _check_shape_consistency(y, "y_train")
+        if hasattr(X, 'numpy'):
+            X = X.numpy()
+        elif hasattr(X, 'detach'):
+            X = X.detach().cpu().numpy()
+        if hasattr(y, 'numpy'):
+            y = y.numpy()
+        elif hasattr(y, 'detach'):
+            y = y.detach().cpu().numpy()
+
+        if sensitive is not None and self._method_accepts_sensitive_features(fit_method):
+            sensitive_arg = sensitive.to_numpy() if hasattr(sensitive, "to_numpy") else sensitive
+            fit_params = self.fit_params if self.fit_params is not None else {}
+            fit_method(X, y, sensitive_features=sensitive_arg, **fit_params)
         else:
-            fit_method(data.X_train, data.y_train)
+            fit_params = self.fit_params if self.fit_params is not None else {}
+            fit_method(X, y, **fit_params)
         return defended_estimator
 
     
@@ -373,11 +388,16 @@ class _FairnessBehaviorMixin:
     def _predict_proba(self, X: pd.DataFrame) -> pd.DataFrame:
         if self._model is None:
             raise ValueError("Model not initialized")
-        if not self.probability:
-            raise ValueError("Model does not support probability predictions")
+        model = self._model
+        if hasattr(model, "predict_proba"):
+            pred_func = model.predict_proba
+        elif hasattr(model, "predict"):
+            pred_func = model.predict
+        else:
+            pred_func = super()._predict_proba
         sensitive = self._resolve_sensitive_features_for_batch(X, split="test")
         return self._call_with_optional_sensitive(
-            self._model.predict_proba,
+            pred_func,
             X,
             sensitive,
         )
@@ -479,11 +499,15 @@ class FairlearnDefenseConfig(_FairnessBehaviorMixin, DefenseConfig):
             return predictor_model
 
         if isinstance(y_train, torch_module.Tensor):
-            y_values = y_train.detach().cpu().numpy()
+            y_values = y_train
+            if y_values.unique().numel() != 2:
+                return predictor_model
         else:
+            # fallback for non-tensor
+            import numpy as np
             y_values = np.asarray(y_train)
-        if np.unique(y_values).size != 2:
-            return predictor_model
+            if np.unique(y_values).size != 2:
+                return predictor_model
 
         if not self._needs_wrap_predictor(predictor_model, data, torch_module):
             return predictor_model

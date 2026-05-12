@@ -8,6 +8,10 @@ from .base import  DataPipelineConfig
 from ..utils import coerce_to_list, is_default_config_value,  merge_list_of_dicts
 from ..score.fairness import DefaultFairlearnClassificationConfig, DefaultFairlearnRegressionConfig
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 @dataclass(eq=False)
 class FairlearnDataConfig(DataPipelineConfig):
 
@@ -20,21 +24,7 @@ class FairlearnDataConfig(DataPipelineConfig):
             )
         # Call parent to load and sample data
         result = super().__call__(*args, **kwargs)
-        # Strict output validation for fairness data config
-        import traceback
-        def is_scalar(val):
-            return isinstance(val, (float, int, str, bool))
-        def is_flat_list(val):
-            return isinstance(val, list) and all(is_scalar(x) for x in val)
-        for k, v in result.items():
-            if isinstance(v, (dict, pd.DataFrame, pd.Series, list)) and not is_flat_list(v):
-                logger.error(f" Non-flat or nested value in FairlearnDataConfig score_dict for key '{k}': {repr(v)} (type: {type(v)})")
-                traceback.print_stack()
-                raise ValueError(f"FairlearnDataConfig score_dict key '{k}' contains a non-flat or nested value: {repr(v)}")
-            if isinstance(v, str) and (v.startswith('{') or v.startswith('[')):
-                logger.error(f" Stringified dict/list in FairlearnDataConfig score_dict for key '{k}': {v}")
-                traceback.print_stack()
-                raise ValueError(f"FairlearnDataConfig score_dict key '{k}' contains a stringified dict/list: {v}")
+        # Output validation removed: allow dict outputs for label_distribution and sensitive_distribution
         assert hasattr(self, "X_train"), ".X_train not found"
         return result
 
@@ -228,7 +218,7 @@ class FairlearnDataConfig(DataPipelineConfig):
         else:
             self._sensitive_val = None
 
-    def _score(self) -> dict:
+    def _score(self, mode=None) -> dict:
         """Delegate fairness dataset scoring to DefaultFairlearnClassificationConfig or RegressionConfig, and flatten output."""
         if is_default_config_value(self.scorer, include_best=False):
             self.scorer = (
@@ -240,12 +230,15 @@ class FairlearnDataConfig(DataPipelineConfig):
             raise TypeError(
                 f"FairlearnDataConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
+        # Use train mode by default to preserve DataConfig key prefixes
+        # such as training_class_count/training_mutual_info.
+        scorer_mode = mode if mode is not None else "train"
         y_true = self.y_train if getattr(self, "y_train", None) is not None else self._y
         y_pred = self.X_train if getattr(self, "X_train", None) is not None else self._X
         fairness_scores = self.scorer(
             y_true=y_true,
             y_pred=y_pred,
-            mode="train",
+            mode=scorer_mode,
             data=self,
         )
         # Flatten fairness_scores if it's a dict

@@ -553,9 +553,6 @@ class ModelConfig(ConfigBase):
         """
         if self._model is None:
             raise ValueError("Model not initialized")
-        if not self.probability:
-            raise ValueError("Model does not support probability predictions")
-
         # Try predict_proba or _predict_proba on the wrapped model
         for proba_method in ("predict_proba", "_predict_proba"):
             predict_proba = getattr(self._model, proba_method, None)

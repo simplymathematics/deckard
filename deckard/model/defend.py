@@ -557,7 +557,17 @@ class _DefenseBehaviorMixin:
                     "Torch model defenses require optional dependency deckard[torch]",
                 ) from exc
 
-            input_shape = tuple(getattr(data, "X_train").shape[1:])
+            X_train = getattr(data, "X_train")
+            from torch.utils.data import DataLoader, Dataset, Subset
+            if isinstance(X_train, (Dataset, Subset)):
+                loader = DataLoader(X_train, batch_size=1, shuffle=False)
+                batch = next(iter(loader))
+                if isinstance(batch, (tuple, list)):
+                    input_shape = batch[0].shape[1:]
+                else:
+                    input_shape = batch.shape[1:]
+            else:
+                input_shape = tuple(X_train.shape[1:])
             y_train = getattr(data, "y_train")
             if isinstance(y_train, torch.Tensor):
                 nb_classes = int(torch.unique(y_train).numel())

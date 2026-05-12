@@ -1,3 +1,7 @@
+import pandas as pd
+import numpy as np
+
+
 """Core scoring primitives and default scorer profiles."""
 
 from dataclasses import dataclass, field
@@ -8,6 +12,8 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Literal, Union, cast
 
 import numpy as np
+import pandas as pd
+
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf, ListConfig
 
@@ -32,7 +38,22 @@ MetricScalar = Union[float, int, np.floating, np.integer]
 MetricResult = Union[MetricScalar, np.ndarray]
 ScoreFunction = Callable[..., MetricResult]
 
-
+# Utility to flatten Series/DataFrame/Scalar to dict of floats (for scorer outputs)
+def _series_like_to_float_dict(values: Any) -> dict[str, float]:
+    if isinstance(values, pd.DataFrame):
+        flattened = {}
+        for row_key, row_values in values.to_dict(orient="index").items():
+            if isinstance(row_key, tuple):
+                row_label = "_".join(str(g) for g in row_key)
+            else:
+                row_label = str(row_key)
+            for col_key, col_val in row_values.items():
+                flattened[f"{row_label}_{col_key}"] = float(col_val)
+        return flattened
+    if isinstance(values, pd.Series):
+        return {str(key): float(value) for key, value in values.items()}
+    scalar_value = values
+    return {"value": float(scalar_value)}
 class _DataScorerMarker:
     """Mixin that marks a ScorerDictConfig as operating on data rather than model predictions.
 
@@ -267,7 +288,8 @@ class ScorerConfig:
             )
 
     def _normalize_predictions_for_metric(self, y_true, y_pred):
-        """Convert score/probability matrices to class labels for label-only metrics."""
+        """Convert score/probability matrices to class labels for label-only metrics, and apply softmax to logits for probability metrics if needed."""
+        import numpy as np
         metric_name = getattr(self.score_function, "__name__", "")
         label_metrics = {
             "accuracy_score",
@@ -292,15 +314,20 @@ class ScorerConfig:
         logger.debug(f" y_true type={type(y_true)}, shape={getattr(y_true, 'shape', None)}, y_pred type={type(y_pred)}, shape={getattr(y_pred, 'shape', None)}")
 
         if self.needs_proba:
-            self._validate_probability_input(y_true=y_true, y_pred=y_pred)
             y_pred_arr = np.asarray(to_numpy_if_torch(y_pred))
+            # If values are not in [0, 1], apply softmax to logits
+            if y_pred_arr.ndim == 2 and (np.nanmin(y_pred_arr) < 0.0 or np.nanmax(y_pred_arr) > 1.0):
+                logger.debug("Applying softmax to logits for probability-based metric.")
+                exp_logits = np.exp(y_pred_arr - np.max(y_pred_arr, axis=1, keepdims=True))
+                y_pred_arr = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+            self._validate_probability_input(y_true=y_true, y_pred=y_pred_arr)
             logger.debug(f" needs_proba=True, y_pred_arr.shape={y_pred_arr.shape}, min={np.nanmin(y_pred_arr)}, max={np.nanmax(y_pred_arr)}")
             if y_pred_arr.ndim == 2 and metric_name == "roc_auc_score":
                 if y_pred_arr.shape[1] == 1:
                     return y_pred_arr.reshape(-1)
                 if y_pred_arr.shape[1] == 2:
                     return y_pred_arr[:, 1]
-            return y_pred
+            return y_pred_arr
         if not is_label_metric:
             logger.debug("[DEBUG] Not a label metric, returning y_pred unchanged.")
             return y_pred
@@ -481,9 +508,25 @@ class ScorerDictConfig(ConfigBase):
         return None
 
     @staticmethod
-    def _predict_proba_from_model(model, X):
+    def _is_classification_labels(y):
+        # Returns True if y is integer/binary labels, False if continuous
+        y_arr = np.asarray(to_numpy_if_torch(y))
+        if y_arr.dtype.kind in {'i', 'u', 'b'}:
+            return True
+        # Heuristic: if all values are 0/1 or small integer classes
+        if np.issubdtype(y_arr.dtype, np.number):
+            unique = np.unique(y_arr)
+            if len(unique) <= 20 and np.all(np.equal(np.mod(unique, 1), 0)):
+                return True
+        return False
+
+    @staticmethod
+    def _predict_proba_from_model(model, X, y_true=None, y_pred=None):
+        """
+        For torch models, use the model's raw output (logits) as the probability input for normalization if predict_proba is not available.
+        """
         if model is None or X is None:
-            return None
+            raise ValueError("Cannot compute probabilities: model or input X is None.")
 
         estimator = None
         if hasattr(model, "get_model") and callable(model.get_model):
@@ -493,20 +536,61 @@ class ScorerDictConfig(ConfigBase):
                 estimator = None
         if estimator is None:
             estimator = getattr(model, "_model", None)
-        if estimator is None or not hasattr(estimator, "predict_proba"):
-            raise ValueError(
-                "Probability-required scorer configured but model does not expose predict_proba",
-            )
-        predict_proba = getattr(estimator, "predict_proba")
-        if not callable(predict_proba):
-            raise ValueError(
-                "Probability-required scorer configured but predict_proba is not callable",
-            )
-
-        try:
-            return predict_proba(X)
-        except TypeError:
-            return predict_proba(np.asarray(X, dtype=float))
+        predict_proba = None
+        
+        # Try probability and prediction methods on the model. If explicit
+        # probability methods fail, fall through to predict/_predict so torch
+        # logits can still be normalized downstream.
+        for proba_method in ("predict_proba", "_predict_proba", "predict", "_predict"):
+            predict_proba = getattr(model, proba_method, None)
+            if callable(predict_proba):
+                try:
+                    return predict_proba(X)
+                except (AttributeError, ValueError, NotImplementedError):
+                    continue
+        
+        # Try estimator if available
+        estimator = getattr(model, "_model", None)
+        if estimator is not None:
+            for proba_method in ("predict_proba", "_predict_proba", "predict", "_predict"):
+                predict_proba = getattr(estimator, proba_method, None)
+                if callable(predict_proba):
+                    try:
+                        return predict_proba(X)
+                    except (AttributeError, ValueError, NotImplementedError):
+                        continue
+        
+        if predict_proba is None:
+            # Fallback: try predict or _predict
+            predict_fn = getattr(model, "predict", getattr(model, "_predict", None))
+            if not callable(predict_fn):
+                raise ValueError(f"Model must have a predict or predict_proba function for probability metrics. Got model type: {type(model)}")
+        # If y_pred is provided and looks like probabilities, use it
+        if y_pred is not None:
+            arr = np.asarray(y_pred)
+            if arr.ndim == 2 and np.issubdtype(arr.dtype, np.number):
+                # Heuristic: if all values in [0,1] or row sums ~1, treat as proba
+                if (np.all((arr >= 0) & (arr <= 1)) and np.allclose(arr.sum(axis=1), 1, atol=1e-2)):
+                    return arr
+            # Fallback: if arr is 1D class labels and y_true is available, convert to one-hot
+            if arr.ndim == 1 and y_true is not None:
+                import warnings
+                warnings.warn("Probability scorer received class labels instead of probabilities; converting to one-hot encoding as fallback.")
+                y_true_arr = np.asarray(y_true)
+                classes = np.unique(y_true_arr)
+                n_classes = len(classes)
+                # Map labels to indices in classes
+                class_to_index = {c: i for i, c in enumerate(classes)}
+                one_hot = np.zeros((arr.shape[0], n_classes), dtype=float)
+                for i, label in enumerate(arr):
+                    idx = class_to_index.get(label, None)
+                    if idx is not None:
+                        one_hot[i, idx] = 1.0
+                return one_hot
+            # Otherwise, raise error
+            raise ValueError("Probability scorer requires probability outputs (1D/2D array of probabilities), but got class labels or invalid shape.")
+        raise ValueError("Probability scorer requires probability outputs, but model does not support predict_proba and y_pred is not a valid probability array.")
+            
 
     def __call__(
         self,
@@ -594,7 +678,6 @@ class ScorerDictConfig(ConfigBase):
             "mode": mode,
         }
 
-
         if not self.scorers:
             raise ValueError("ScorerDictConfig must have at least one scorer defined; got empty scorers dict.")
 
@@ -622,16 +705,34 @@ class ScorerDictConfig(ConfigBase):
                             metric_input = self._predict_proba_from_model(
                                 model=model,
                                 X=X_mode,
+                                y_true=y_true,
+                                y_pred=y_pred,
                             )
                         else:
                             raise ValueError(
                                 f"Scorer '{key}' requires probabilities from predict_proba; provide y_proba or pass model+data context",
                             )
-                results[scored_key] = scorer(
+                    # Final check: ensure metric_input is valid
+                    metric_arr = np.asarray(to_numpy_if_torch(metric_input))
+                    if metric_arr.ndim not in (1, 2):
+                        raise ValueError(
+                            f"Scorer '{key}' expected 1D/2D probability array, got shape {metric_arr.shape}. "
+                            f"Check your model/scorer configuration."
+                        )
+                # Debug print: show raw output from each scorer
+                value = scorer(
                     y_true=y_true,
                     y_pred=metric_input,
                     **runtime_kwargs,
                 )
+                logger.debug(f"Scorer '{scored_key}' raw output: {value} (type: {type(value)})")
+                if isinstance(value, (dict, pd.Series, pd.DataFrame)):
+                    flat_scores = _series_like_to_float_dict(value)
+                    for k, v in flat_scores.items():
+                        # Use informative keys: f"{scored_key}_{k}"
+                        results[f"{scored_key}_{k}"] = v
+                else:
+                    results[scored_key] = value
 
         if score_file is not None:
             self.save_scores(results, score_file)

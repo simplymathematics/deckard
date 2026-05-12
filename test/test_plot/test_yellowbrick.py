@@ -36,7 +36,8 @@ expensive_viz_types = [
     "feature_importances",
     "cv_scores",
     "silhouette",
-] + model_selection_viz_types
+]
+expensive_viz_types += list(model_selection_viz_types)
 
 
 class TestYellowbrickPlots(unittest.TestCase):

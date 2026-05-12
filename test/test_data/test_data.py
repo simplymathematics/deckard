@@ -131,10 +131,9 @@ class TestDataPipelineConfig(unittest.TestCase):
 
     def test_pipeline_fit_and_transform(self):
         config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
-        config._X = self.X_train
         config._y = self.y_train
         config.data_load_time = 3
-        config()
+        config._fit_transform_X(self.X_train, self.y_train)
         self.assertEqual(config.X_train.shape, (8, 2))
         self.assertEqual(config.X_test.shape, (2, 2))
         self.assertFalse(self.X_train.equals(config.X_train))
@@ -165,6 +164,15 @@ class TestDataPipelineConfig(unittest.TestCase):
 
 
 class TestDataConfig(unittest.TestCase):
+    def test_invalid_score_mode_raises(self):
+        cfg = DataConfig(
+            dataset_name="make_classification",
+            data_params={"n_samples": 10, "n_features": 2},
+            score_mode="invalid",
+            scorer=lambda y_true, y_pred: {"dummy": 1},
+        )
+        with self.assertRaises(ValueError):
+            cfg()
 
     def basic_config(self):
         # Minimal config for DataConfig
@@ -617,7 +625,7 @@ class TestDataPipelineConfig(unittest.TestCase):
         self.assertEqual(pipeline.steps[1][0], "scaler")
 
     def test_pipeline_fit_and_transform(self):
-        config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
+        config = DataPipelineConfig(pipeline=self.pipeline_config_dict, score_mode="train")
         config._X = self.X_train
         config._y = self.y_train
         config.data_load_time = 3

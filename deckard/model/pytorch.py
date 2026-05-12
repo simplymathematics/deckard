@@ -16,11 +16,9 @@ import numpy as np
 try:
     import torch
     import torch.nn as nn
-    from torch.utils.data import DataLoader as TorchDataLoader
 except ImportError:
     torch = None
     nn = None
-    TorchDataLoader = None
 
 
 
@@ -676,21 +674,22 @@ class PytorchModelConfig(ModelConfig):
         self._model.train()
         epoch_metrics = {}
 
+
+        from torch.utils.data import DataLoader, Dataset, Subset
+        is_tensor_input = isinstance(X, torch.Tensor)
+        is_dataloader = hasattr(X, 'batch_size') and hasattr(X, '__iter__') and not is_tensor_input
+        is_dataset = isinstance(X, (Dataset, Subset)) and not is_dataloader and not is_tensor_input
+
         for epoch_num in range(epochs):
             epoch_idx = epoch_offset + epoch_num + 1
             epoch_start = time.process_time()
             epoch_losses = []
 
-            # Support both DataLoader and tensor input
-            if hasattr(X, '__iter__') and not isinstance(X, (np.ndarray, torch.Tensor)):
-                # Assume DataLoader: yields (batch_X, batch_y)
-                for batch in X:
-                    if isinstance(batch, (tuple, list)) and len(batch) >= 2:
-                        batch_X, batch_y = batch[:2]
-                    else:
-                        raise ValueError("Each batch must be (X, y)")
-                    batch_X = batch_X.to(self.device)
-                    batch_y = batch_y.to(self.device)
+            if is_tensor_input:
+                # Tensor input
+                for i in range(0, len(X), batch_size):
+                    batch_X = X[i : i + batch_size].to(self.device)
+                    batch_y = y[i : i + batch_size].to(self.device)
                     optimizer.zero_grad()
                     outputs = self._model(batch_X)
                     loss = criterion(outputs, batch_y)
@@ -700,10 +699,18 @@ class PytorchModelConfig(ModelConfig):
                     loss.backward()
                     optimizer.step()
             else:
-                # Tensor input
-                for i in range(0, len(X), batch_size):
-                    batch_X = X[i : i + batch_size].to(self.device)  # noqa E203
-                    batch_y = y[i : i + batch_size].to(self.device)  # noqa E203
+                # DataLoader or Dataset/Subset input
+                if is_dataset:
+                    loader = DataLoader(X, batch_size=batch_size, shuffle=False)
+                else:
+                    loader = X  # Already a DataLoader
+                for batch in loader:
+                    if isinstance(batch, (tuple, list)) and len(batch) >= 2:
+                        batch_X, batch_y = batch[:2]
+                    else:
+                        raise ValueError("Each batch must be (X, y)")
+                    batch_X = batch_X.to(self.device)
+                    batch_y = batch_y.to(self.device)
                     optimizer.zero_grad()
                     outputs = self._model(batch_X)
                     loss = criterion(outputs, batch_y)
@@ -797,19 +804,19 @@ class PytorchModelConfig(ModelConfig):
     def _validate_torch_data(self, data) -> None:
         """Raise TypeError if data contains non-torch tensors/DataLoaders."""
         bad_attrs = []
+        from torch.utils.data import Subset, Dataset
         for attr in ("X_train", "X_test", "y_train", "y_test"):
             value = getattr(data, attr, None)
             if value is None:
                 continue
-            if not isinstance(value, (torch.Tensor, TorchDataLoader)):
+            if not isinstance(value, (torch.Tensor, Subset, Dataset, torch.utils.data.DataLoader)):
                 bad_attrs.append(f"{attr}: {type(value).__name__}")
-
         if bad_attrs:
             raise TypeError(
                 "PytorchModelConfig requires torch.Tensor or DataLoader inputs, "
                 f"but received non-torch types for: {', '.join(bad_attrs)}. "
                 "Use PytorchDataConfig (or another torch-compatible data config) "
-                "to produce torch tensors before passing data to a torch model.",
+                f"to produce torch tensors before passing data to a torch model. Got: {', '.join([str(type(bad)) for bad in bad_attrs])}",
             )
 
     def _train(self, X: torch.Tensor, y: torch.Tensor):
@@ -912,15 +919,21 @@ class PytorchModelConfig(ModelConfig):
         )
 
     def _predict(self, X: Union[torch.Tensor, torch.utils.data.DataLoader]):
-        """Make predictions, handling both Tensor and DataLoader inputs."""
+        """Make predictions, handling Tensor, DataLoader, Subset, or Dataset inputs."""
         if self._model is None:
             raise ValueError("Model not initialized")
 
+        from torch.utils.data import DataLoader, Dataset, Subset
+        is_tensor_input = isinstance(X, torch.Tensor)
+        is_dataloader = hasattr(X, 'batch_size') and hasattr(X, '__iter__') and not is_tensor_input
+        is_dataset = isinstance(X, (Dataset, Subset)) and not is_dataloader and not is_tensor_input
+
         # ART wrappers (e.g., PyTorchClassifier) expose predict() instead of eval().
         if hasattr(self._model, "predict") and not hasattr(self._model, "eval"):
-            if isinstance(X, torch.utils.data.DataLoader):
+            if is_dataloader or is_dataset:
+                loader = X if is_dataloader else DataLoader(X, batch_size=128, shuffle=False)
                 x_batches = []
-                for batch in X:
+                for batch in loader:
                     batch_x = batch[0] if isinstance(batch, (tuple, list)) else batch
                     x_batches.append(batch_x)
                 if len(x_batches) == 0:
@@ -942,8 +955,9 @@ class PytorchModelConfig(ModelConfig):
         predictions = []
 
         with torch.no_grad():
-            if isinstance(X, torch.utils.data.DataLoader):
-                for batch in X:
+            if is_dataloader or is_dataset:
+                loader = X if is_dataloader else DataLoader(X, batch_size=128, shuffle=False)
+                for batch in loader:
                     if isinstance(batch, (tuple, list)):
                         batch_X = batch[0]
                     else:
@@ -1028,12 +1042,23 @@ class PytorchModelConfig(ModelConfig):
         else:
             clip_values = self.clip_values
 
+        from torch.utils.data import DataLoader, Dataset, Subset
+        # Use data.batch_size if available, else fallback to 32
+        batch_size = getattr(data, "batch_size", None) or self.fit_params.get("batch_size", 32)
+        # Always use a DataLoader for shape inference and ART
         if isinstance(data.X_train, torch.utils.data.DataLoader):
-            batch = next(iter(data.X_train))
+            loader = data.X_train
+        elif isinstance(data.X_train, (Dataset, Subset)):
+            loader = DataLoader(data.X_train, batch_size=batch_size, shuffle=False)
+        else:
+            loader = None
+
+        if loader is not None:
+            batch = next(iter(loader))
             if isinstance(batch, (tuple, list)):
-                input_shape = batch[0][0].shape[1:]
-            else:
                 input_shape = batch[0].shape[1:]
+            else:
+                input_shape = batch.shape[1:]
         else:
             input_shape = data.X_train.shape[1:]
 
@@ -1042,6 +1067,7 @@ class PytorchModelConfig(ModelConfig):
         if isinstance(art_model, (PyTorchClassifier, PyTorchRegressor)):
             return self._override_art_internal_device(art_model)
         art_device_type = self._resolve_art_device_type()
+        logger.info(f"[ART] Using batch_size={batch_size} for ART estimator.")
         if self.classifier:
             estimator = PyTorchClassifier(
                 model=art_model,

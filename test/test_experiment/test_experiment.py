@@ -164,7 +164,17 @@ class TestShuffleExperiment(unittest.TestCase):
 
 
 class TestExperimentValidationScoring(unittest.TestCase):
-    def _make_exp(self, *, val_size=0.1, evaluation_mode="tuning"):
+    def test_propagation_of_modes_to_children(self):
+        exp = self._make_exp(score_mode="test")
+        exp._propagate_score_mode()
+        self.assertEqual(exp.data.score_mode, "test")
+        self.assertEqual(exp.model.score_mode, "test")
+        exp = self._make_exp(score_mode="val")
+        exp._propagate_score_mode()
+        self.assertEqual(exp.data.score_mode, "val")
+        self.assertEqual(exp.model.score_mode, "val")
+    
+    def _make_exp(self, *, val_size=0.1, evaluation_mode="tuning", score_mode="test"):
         return ExperimentConfig(
             data=DataConfig(
                 dataset_name="make_classification",
@@ -192,6 +202,7 @@ class TestExperimentValidationScoring(unittest.TestCase):
             files=FileConfig(),
             experiment_name="score-mode-policy-test",
             evaluation_mode=evaluation_mode,
+            score_mode=score_mode,
         )
 
     def test_tuning_mode_emits_test_scores(self):
@@ -202,14 +213,14 @@ class TestExperimentValidationScoring(unittest.TestCase):
         self.assertNotIn("training_accuracy", scores)
 
     def test_report_mode_emits_validation_scores_only(self):
-        exp = self._make_exp(evaluation_mode="report")
+        exp = self._make_exp(evaluation_mode="report", score_mode=None)
         scores = exp()
         self.assertIn("validation_accuracy", scores)
         self.assertNotIn("accuracy", scores)
         self.assertNotIn("training_accuracy", scores)
 
     def test_report_mode_without_validation_split_raises(self):
-        exp = self._make_exp(val_size=None, evaluation_mode="report")
+        exp = self._make_exp(val_size=None, evaluation_mode="report", score_mode=None)
         with self.assertRaises(ValueError):
             exp()
 

@@ -7,7 +7,7 @@ then reuse that prepared state across multiple plot renders.
 import logging
 import warnings
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union, Final, get_args
 
 import numpy as np
 from pathlib import Path
@@ -70,7 +70,17 @@ from yellowbrick.model_selection import (
 from ..utils import ConfigBase
 from ..experiment import ExperimentConfig
 
-feature_viz_types = [
+try:
+    from torch.utils.data import Subset
+except:
+    Subset = None
+
+try:
+    import torch
+except Exception:
+    torch = None
+
+feature_viz_types: Final = (
     "rank1d",
     "rank2d",
     "radviz",
@@ -78,22 +88,76 @@ feature_viz_types = [
     "jointplot",
     "pca",
     "manifold",
-]
-target_viz_types = [
+)
+
+target_viz_types: Final = (
     "class_balance",
     "balanced_binning_reference",
     "feature_correlation",
-]
-regressor_viz_types = ["prediction_error", "residuals_plot", "alpha_selection"]
-classifier_viz_types = [
+)
+
+regressor_viz_types: Final = (
+    "prediction_error",
+    "residuals_plot",
+    "alpha_selection",
+)
+
+classifier_viz_types: Final = (
     "roc_auc",
     "precision_recall_curve",
     "classification_report",
     "class_prediction_error",
     "discrimination_threshold",
-]
-cluster_viz_types = ["k_elbow", "silhouette", "intercluster_distance"]
-model_selection_viz_types = [
+)
+
+cluster_viz_types: Final = (
+    "k_elbow",
+    "silhouette",
+    "intercluster_distance",
+)
+
+model_selection_viz_types: Final = (
+    "validation_curve",
+    "learning_curve",
+    "cv_scores",
+    "feature_importances",
+    "rfecv",
+    "dropping_curve",
+)
+
+all_viz_types: Final = (
+    feature_viz_types
+    + target_viz_types
+    + regressor_viz_types
+    + classifier_viz_types
+    + cluster_viz_types
+    + model_selection_viz_types
+)
+
+
+
+YellowBrickVizType = Literal[
+    "rank1d",
+    "rank2d",
+    "radviz",
+    "pcoords",
+    "jointplot",
+    "pca",
+    "manifold",
+    "class_balance",
+    "balanced_binning_reference",
+    "feature_correlation",
+    "prediction_error",
+    "residuals_plot",
+    "alpha_selection",
+    "roc_auc",
+    "precision_recall_curve",
+    "classification_report",
+    "class_prediction_error",
+    "discrimination_threshold",
+    "k_elbow",
+    "silhouette",
+    "intercluster_distance",
     "validation_curve",
     "learning_curve",
     "cv_scores",
@@ -102,14 +166,19 @@ model_selection_viz_types = [
     "dropping_curve",
 ]
 
-all_viz_types = (
-    feature_viz_types
-    + target_viz_types
-    + regressor_viz_types
-    + classifier_viz_types
-    + cluster_viz_types
-    + model_selection_viz_types
-)
+# Ensure the Literal stays in sync with your runtime list.
+_LITERAL_VIZ_TYPES = set(get_args(YellowBrickVizType))
+_RUNTIME_VIZ_TYPES = set(all_viz_types)
+
+if _LITERAL_VIZ_TYPES != _RUNTIME_VIZ_TYPES:
+    missing_from_literal = _RUNTIME_VIZ_TYPES - _LITERAL_VIZ_TYPES
+    extra_in_literal = _LITERAL_VIZ_TYPES - _RUNTIME_VIZ_TYPES
+
+    raise RuntimeError(
+        "YellowBrickVizType is out of sync with all_viz_types.\n"
+        f"Missing from Literal: {sorted(missing_from_literal)}\n"
+        f"Extra in Literal: {sorted(extra_in_literal)}"
+    )
 
 all_viz_objects = [
     Rank1D,
@@ -140,9 +209,109 @@ all_viz_objects = [
     RFECV,
     DroppingCurve,
 ]
+
+SUPPORTED_YELLOWBRICK_PLOT_TYPES = all_viz_types
+
 logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=UserWarning)
 
+
+def _to_numpy(value: Any) -> np.ndarray:
+    if isinstance(value, np.ndarray):
+        return value
+    if hasattr(value, "detach") and hasattr(value, "cpu"):
+        return value.detach().cpu().numpy()
+    if hasattr(value, "cpu") and hasattr(value, "numpy"):
+        return value.cpu().numpy()
+    if hasattr(value, "numpy"):
+        return value.numpy()
+    return np.asarray(value)
+
+
+def _is_dataloader_like(obj: Any) -> bool:
+    return hasattr(obj, "__iter__") and hasattr(obj, "batch_size")
+
+
+def _is_dataset_like(obj: Any) -> bool:
+    return hasattr(obj, "__len__") and hasattr(obj, "__getitem__")
+
+
+def _materialize_dataset_features_labels(dataset_obj: Any):
+    """Materialize dataset/dataloader feature rows for Yellowbrick visualizers."""
+    x_rows = []
+    y_rows = []
+
+    if _is_dataloader_like(dataset_obj):
+        iterator = dataset_obj
+    elif _is_dataset_like(dataset_obj):
+        iterator = (dataset_obj[i] for i in range(len(dataset_obj)))
+    else:
+        raise TypeError(f"Unsupported dataset-like input: {type(dataset_obj)}")
+
+    for sample in iterator:
+        if not isinstance(sample, (tuple, list)) or len(sample) < 1:
+            continue
+        x_part = _to_numpy(sample[0])
+        x_rows.append(x_part)
+        if len(sample) >= 2:
+            y_part = _to_numpy(sample[1])
+            y_arr = np.asarray(y_part).reshape(-1)
+            y_rows.extend(y_arr.tolist())
+
+    X = np.asarray(x_rows) if len(x_rows) > 0 else np.empty((0,))
+    y = np.asarray(y_rows) if len(y_rows) > 0 else None
+    return X, y
+
+
+
+
+
+def _get_shape(obj):
+    if hasattr(obj, "shape"):
+        return obj.shape
+    if hasattr(obj, "dataset") and hasattr(obj.dataset, "shape"):
+        shape = obj.dataset.shape
+        if hasattr(obj, "indices") and len(shape) > 0:
+            return (len(obj.indices), *shape[1:])
+        return shape
+    if Subset is not None and isinstance(obj, Subset):
+        # Unwrap nested Subset / TensorDataset / custom dataset wrappers
+        base = obj.dataset
+
+        # Try recursive resolution first
+        try:
+            shape = _get_shape(base)
+            if len(shape) > 0:
+                return (len(obj.indices), *shape[1:])
+            return shape
+        except AttributeError:
+            pass
+
+        # Handle TensorDataset-like objects (.tensors)
+        if hasattr(base, "tensors") and base.tensors:
+            tensor = base.tensors[0]
+            if hasattr(tensor, "shape"):
+                shape = tensor.shape
+                if len(shape) > 0:
+                    return (len(obj.indices), *shape[1:])
+                return shape
+        if len(obj) > 0:
+            first = obj[0]
+            first_x = first[0] if isinstance(first, (tuple, list)) and len(first) > 0 else first
+            first_arr = _to_numpy(first_x)
+            sample_shape = getattr(first_arr, "shape", ())
+            if len(sample_shape) > 0:
+                return (len(obj), *sample_shape)
+            return (len(obj),)
+    if hasattr(obj, "__len__") and hasattr(obj, "__getitem__") and len(obj) > 0:
+        first = obj[0]
+        first_x = first[0] if isinstance(first, (tuple, list)) and len(first) > 0 else first
+        first_arr = _to_numpy(first_x)
+        sample_shape = getattr(first_arr, "shape", ())
+        if len(sample_shape) > 0:
+            return (len(obj), *sample_shape)
+        return (len(obj),)
+    raise AttributeError(f"{type(obj).__name__} has no shape")
 
 class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
     """Expose deckard model configs with a sklearn-like inference interface.
@@ -160,15 +329,7 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
 
     @staticmethod
     def _to_numpy(value: Any) -> np.ndarray:
-        if isinstance(value, np.ndarray):
-            return value
-        if hasattr(value, "detach") and hasattr(value, "cpu"):
-            return value.detach().cpu().numpy()
-        if hasattr(value, "cpu") and hasattr(value, "numpy"):
-            return value.cpu().numpy()
-        if hasattr(value, "numpy"):
-            return value.numpy()
-        return np.asarray(value)
+        return _to_numpy(value)
 
     def fit(self, X, y=None, **kwargs):
         # Experiment preparation performs model fitting already.
@@ -178,6 +339,13 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
         return self
 
     def _predict_raw(self, X) -> np.ndarray:
+        if (
+            torch is not None
+            and isinstance(X, np.ndarray)
+            and getattr(self.model_config, "library", "") == "pytorch"
+        ):
+            device = getattr(self.model_config, "device", "cpu")
+            X = torch.as_tensor(X, dtype=torch.float32, device=device)
         raw = self.model_config._predict(X)
         return self._to_numpy(raw)
 
@@ -195,7 +363,7 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
             exp_vals = np.exp(shifted)
             return exp_vals / np.sum(exp_vals, axis=1, keepdims=True)
         raise ValueError(
-            f"Unsupported prediction shape for predict_proba: {raw.shape}",
+            f"Unsupported prediction shape for predict_proba: {_get_shape(raw)}",
         )
 
     def predict(self, X) -> np.ndarray:
@@ -204,12 +372,12 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
             return (raw > 0.0).astype(int)
         if raw.ndim == 2:
             return np.argmax(raw, axis=1)
-        raise ValueError(f"Unsupported prediction shape for predict: {raw.shape}")
+        raise ValueError(f"Unsupported prediction shape for predict: {_get_shape(raw)}")
 
     def score(self, X, y) -> float:
         y_true = self._to_numpy(y).reshape(-1)
         y_pred = self.predict(X).reshape(-1)
-        if y_true.shape[0] == 0:
+        if _get_shape(y_true)[0] == 0:
             return 0.0
         return float(np.mean(y_true == y_pred))
 
@@ -247,7 +415,7 @@ class YellowbrickPlotConfig(ConfigBase):
     experiment: ExperimentConfig
 
     # Plot-specific parameters
-    plot_type: str
+    plot_type: Literal[YellowBrickVizType]
     clustering: bool = False
     features: Union[List[str], Literal["all"]] = "all"
     classes: Union[List[str], Literal["all"]] = "all"
@@ -274,7 +442,7 @@ class YellowbrickPlotConfig(ConfigBase):
             hasattr(self.experiment.data, attr)
             and getattr(self.experiment.data, attr) is not None
             and hasattr(getattr(self.experiment.data, attr), "shape")
-            for attr in ["X_train", "y_train", "X_test", "y_test"]
+            for attr in ["_X", "_y"]
         )
         # Only require that the model object exists
         model_ready = self.experiment.model is not None
@@ -318,7 +486,7 @@ class YellowbrickPlotConfig(ConfigBase):
         if hasattr(X, "columns"):
             all_features = X.columns.tolist()
         else:
-            all_features = list(range(X.shape[1]))
+            all_features = list(range(_get_shape(X)[1]))
         if len(all_features) <= limit:
             return all_features
 
@@ -403,15 +571,43 @@ class YellowbrickPlotConfig(ConfigBase):
             self.experiment.data.X_test,
             self.experiment.data.y_test,
         )
+
+        if (
+            not hasattr(X, "columns")
+            and not hasattr(X, "shape")
+            and (_is_dataset_like(X) or _is_dataloader_like(X))
+        ):
+            X_mat, y_mat = _materialize_dataset_features_labels(X)
+            X = X_mat
+            if y_mat is not None and (
+                y is None or np.asarray(y).reshape(-1).shape[0] != y_mat.shape[0]
+            ):
+                y = y_mat
+        if (
+            not hasattr(X_test, "columns")
+            and not hasattr(X_test, "shape")
+            and (_is_dataset_like(X_test) or _is_dataloader_like(X_test))
+        ):
+            X_test_mat, y_test_mat = _materialize_dataset_features_labels(X_test)
+            X_test = X_test_mat
+            if y_test_mat is not None and (
+                y_test is None
+                or np.asarray(y_test).reshape(-1).shape[0] != y_test_mat.shape[0]
+            ):
+                y_test = y_test_mat
+
+        y = _to_numpy(y).reshape(-1)
+        y_test = _to_numpy(y_test).reshape(-1)
+
         if self.classes == "all":
-            classes = np.unique(y)
+            classes = np.asarray(np.unique(y)).reshape(-1).tolist()
         else:
-            classes = self.classes
+            classes = np.asarray(self.classes).reshape(-1).tolist()
         if self.features == "all":
             if hasattr(X, "columns"):
                 features = X.columns.tolist()
             else:
-                features = list(range(X.shape[1]))
+                features = list(range(_get_shape(X)[1]))
         else:
             features = self.features
 
@@ -420,9 +616,6 @@ class YellowbrickPlotConfig(ConfigBase):
             if hasattr(X, "columns"):
                 X = X.loc[:, features]
                 X_test = X_test.loc[:, features]
-            else:
-                X = X[:, features]
-                X_test = X_test[:, features]
         if attack:
             X_attack, y_attack = (
                 self.experiment.attack.attack,
@@ -555,44 +748,49 @@ class YellowbrickPlotConfig(ConfigBase):
         logger.info(f"Yellowbrick regressor plot saved to {self.save_path}")
 
     def visualize_classifiers(self, ax=None):
-        X, y, classes, _ = self._get_plot_data()
+        X, y, _classes, _ = self._get_plot_data()
         X_test, y_test, _, _ = self._get_plot_data(test=True)
         model = self._get_plot_model()
+        inferred_classes = np.asarray(np.unique(np.asarray(y).reshape(-1))).reshape(-1)
         if self.plot_type == "classification_report":
             visualizer = ClassificationReport(
                 model,
-                classes=classes,
                 **self.plot_params,
                 ax=ax,
             )
             visualizer.fit(X, y)
+            if getattr(visualizer, "classes_", None) is None:
+                visualizer.classes_ = inferred_classes
             visualizer.score(X_test, y_test)
         elif self.plot_type == "roc_auc":
             visualizer = ROCAUC(
                 model,
-                classes=classes,
                 **self.plot_params,
                 ax=ax,
             )
             visualizer.fit(X, y)
+            if getattr(visualizer, "classes_", None) is None:
+                visualizer.classes_ = inferred_classes
             visualizer.score(X_test, y_test)
         elif self.plot_type == "precision_recall_curve":
             visualizer = PrecisionRecallCurve(
                 model,
-                classes=classes,
                 **self.plot_params,
                 ax=ax,
             )
             visualizer.fit(X, y)
+            if getattr(visualizer, "classes_", None) is None:
+                visualizer.classes_ = inferred_classes
             visualizer.score(X_test, y_test)
         elif self.plot_type == "class_prediction_error":
             visualizer = ClassPredictionError(
                 model,
-                classes=classes,
                 **self.plot_params,
                 ax=ax,
             )
             visualizer.fit(X, y)
+            if getattr(visualizer, "classes_", None) is None:
+                visualizer.classes_ = inferred_classes
             visualizer.score(X_test, y_test)
         elif self.plot_type == "discrimination_threshold":
             visualizer = DiscriminationThreshold(
@@ -819,11 +1017,11 @@ class YellowbrickConfigList(ConfigBase):
     """
 
     experiment: ExperimentConfig
-    plots: Union[
-        Dict[str, YellowbrickPlotConfig],
-        Literal["all"],
-        List[str],
-    ] = "all"
+    plots: (
+        dict[str, YellowbrickPlotConfig]
+        | Literal["all"]
+        | list[YellowBrickVizType]
+    ) = "all"
     clustering: bool = False
     plot_folder: Optional[str] = None
     rc_config: Dict[str, Any] = field(default_factory=dict)

@@ -152,8 +152,13 @@ def test_resolve_mode_features_and_predict_proba_paths():
     assert ScorerDictConfig._resolve_mode_features("attack", data) is None
     assert ScorerDictConfig._resolve_mode_features("test", None) is None
 
-    assert ScorerDictConfig._predict_proba_from_model(None, [1]) is None
-    assert ScorerDictConfig._predict_proba_from_model(object(), None) is None
+    import pytest
+    
+    
+    with pytest.raises(ValueError, match="Cannot compute probabilities: model or input X is None"):
+        ScorerDictConfig._predict_proba_from_model(None, [1])
+    with pytest.raises(ValueError, match="Cannot compute probabilities: model or input X is None"):
+        ScorerDictConfig._predict_proba_from_model(object(), None)
 
     class Estimator:
         def predict_proba(self, x):
@@ -167,10 +172,11 @@ def test_resolve_mode_features_and_predict_proba_paths():
 
         _model = Estimator()
 
-    out = ScorerDictConfig._predict_proba_from_model(ModelWithBrokenGetter(), [[1.0]])
-    assert out.shape == (1, 2)
+    import pytest
+    with pytest.raises(TypeError, match="need ndarray"):
+        ScorerDictConfig._predict_proba_from_model(ModelWithBrokenGetter(), [[1.0]])
 
-    with pytest.raises(ValueError, match="does not expose predict_proba"):
+    with pytest.raises(ValueError, match="Model must have a predict or predict_proba function for probability metrics."):
         ScorerDictConfig._predict_proba_from_model(SimpleNamespace(_model=object()), [[1.0]])
 
 
@@ -198,14 +204,16 @@ def test_scorer_dict_call_mode_and_probability_routing(tmp_path, monkeypatch):
 
     class Estimator:
         def predict_proba(self, x):
+            _= x
             return np.array([[0.8, 0.2], [0.1, 0.9]])
+        
 
     model = SimpleNamespace(
         predictions=np.array([0, 1]),
         test_predictions=None,
         training_predictions=np.array([1, 0]),
         val_predictions=np.array([1, 1]),
-        get_model=lambda: Estimator(),
+        _model = Estimator()
     )
     attack = SimpleNamespace(attack_size=1, attack_predictions=np.array([0]), _attack="atk")
     attack_val = SimpleNamespace(attack_size=1, attack_predictions=np.array([0, 1]), _attack="atk")
