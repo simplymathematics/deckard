@@ -811,7 +811,7 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
                             f"Group metric '{k}' is a STRINGIFIED dict/list: {v}. Full key: {k}, value: {repr(v)}",
                         )
                     try:
-                        float_v = float(v)
+                        float(v)
                     except Exception as e:
                         logger.critical(
                             f" Group metric '{k}' value CANNOT be cast to float: {v} ({e})",

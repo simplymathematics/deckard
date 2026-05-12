@@ -15,7 +15,7 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.base import BaseEstimator
 
 from ..data import DataConfig
-from ..score.base import (
+from ..score.base import (  # noqa: F401
     ScorerDictConfig,
     coerce_scorer_config as _coerce_scorer_config,
 )

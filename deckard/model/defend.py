@@ -841,7 +841,6 @@ class DefensePipelineConfig(ConfigBase):
 
     def _inherit_model_context(self, defense_obj, estimator) -> None:
         base_estimator = getattr(estimator, "model", estimator)
-        from ..utils import is_null_config_value
 
         blank_values = {None, "", "None", "null", "Null", "NULL"}
 
