@@ -25,7 +25,7 @@ from art.estimators.classification.classifier import ClassifierNeuralNetwork
 from omegaconf import DictConfig, OmegaConf, ListConfig
 
 from ..model import ModelConfig
-from ..model.defend import sklearn_dict
+from ..model.defend import _get_art_symbols
 from ..score.base import (
     DefaultClassifierConfig,
     DefaultRegressorConfig,
@@ -119,8 +119,13 @@ supported_attacks = [
     "whitebox_attribute_inference",
 ]
 
-sklearn_supported_models = list(sklearn_dict.values())
-supported_models = sklearn_supported_models
+
+def _get_sklearn_dict() -> dict[str, Any]:
+    return _get_art_symbols()["sklearn_dict"]
+
+
+def _get_supported_models() -> tuple[type, ...]:
+    return tuple(_get_sklearn_dict().values())
 
 
 @dataclass(eq=False)
@@ -417,7 +422,8 @@ class AttackConfig(ConfigBase):
 
         attack_class = resolve_class(self.attack_type)
         if art_model is None:
-            if isinstance(model, tuple(supported_models)):
+            sklearn_dict = _get_sklearn_dict()
+            if isinstance(model, _get_supported_models()):
                 art_model = model
             elif (
                 isinstance(model, BaseEstimator)
