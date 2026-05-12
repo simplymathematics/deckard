@@ -1,20 +1,20 @@
-Core software documentation:
+# Core software documentation:
 
-- [data.rst](data.rst)
-- [model.rst](model.rst)
-- [attack.rst](attack.rst)
-- [detector.rst](detector.rst)
-- [experiment.rst](experiment.rst)
-- [score.rst](score.rst)
-- [plot.rst](plot.rst)
-- [layers.rst](layers.rst)
-- [file.rst](file.rst)
-- [utils.rst](utils.rst)
+- {doc}`api/data`
+- {doc}`api/model`
+- {doc}`api/attack`
+- {doc}`api/detector`
+- {doc}`api/experiment`
+- {doc}`api/score`
+- {doc}`api/plot`
+- {doc}`api/layers`
+- {doc}`api/file`
+- {doc}`api/utils`
 
 Extension documentation:
 
-- [pytorch.rst](pytorch.rst)
-- [anjana.rst](anjana.rst)
-- [lifelines.rst](lifelines.rst)
-- [seaborn.rst](seaborn.rst)
-- [yellowbrick.rst](yellowbrick.rst)
+- {doc}`api/pytorch`
+- {doc}`api/anjana`
+- {doc}`api/lifelines`
+- {doc}`api/seaborn`
+- {doc}`api/yellowbrick`

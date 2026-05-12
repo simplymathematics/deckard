@@ -23,7 +23,7 @@ If you only install `pip install -e '.[docs]'`, some notebooks may fail to run d
 Sphinx documentation entry points:
 - Landing page: [index](index)
 - Software modules + extensions index: [api/modules](api/modules)
-- Notebook guide index: [notebooks](notebooks)
+- Notebook guide index: [notebooks/index](notebooks/index)
 
 
 

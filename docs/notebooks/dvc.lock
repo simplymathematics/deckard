@@ -534,7 +534,7 @@ stages:
       nfiles: 16
     - path: ../../deckard/plot/
       hash: md5
-      md5: c932f66956928c6a9f8cb8b472d1c10e.dir
+      md5: 82b2d00049b4498803e780d2a6df9a02.dir
       size: 122972
       nfiles: 10
     - path: ../../deckard/score/
@@ -548,21 +548,21 @@ stages:
       size: 50118
     - path: sklearn.ipynb
       hash: md5
-      md5: 5cbc1cbc800d12478b267b56552e08a3
-      size: 251021
+      md5: a65c3007d08cb83997e9ed2569cb883a
+      size: 251020
     outs:
     - path: ./build/sklearn/experiment_data_lr.pkl
       hash: md5
-      md5: 7502dc2b7a2db2b4920eba3997fd2d17
+      md5: 0cf5dfac279c420cde67f4579a902d3d
       size: 68598
     - path: ./build/sklearn/experiment_model_lr.pkl
       hash: md5
-      md5: af918d90856ab22027f7484c16c7bdf0
+      md5: 0f2d498e30ae2bb95b55304b4920d6c6
       size: 2468
     - path: ./build/sklearn/experiment_scores_lr.json
       hash: md5
-      md5: f83a71b321198b5275b0dbfde80a8a14
-      size: 1282
+      md5: 8a07dbed5a1afeea186f26f965eb0d04
+      size: 1286
     - path: ./build/sklearn/plots/seaborn_line.png
       hash: md5
       md5: 7b30818258b7da02a9f70b7a6a690b77
@@ -608,7 +608,7 @@ stages:
       nfiles: 16
     - path: ../../deckard/plot/
       hash: md5
-      md5: c932f66956928c6a9f8cb8b472d1c10e.dir
+      md5: 82b2d00049b4498803e780d2a6df9a02.dir
       size: 122972
       nfiles: 10
     - path: ../../deckard/score/
@@ -622,17 +622,17 @@ stages:
       size: 50118
     - path: pytorch.ipynb
       hash: md5
-      md5: 3a27732589fd88438e3da7af80cc7e62
-      size: 253016
+      md5: 3fda28d55560e3552948f360c4959d47
+      size: 253087
     outs:
     - path: ./build/pytorch/checkpoints/
       hash: md5
-      md5: 6fc337569395950a49d8f0aaa6ecedcf.dir
-      size: 374388
+      md5: 7657b228cb06bbd750b030aa8192eba1.dir
+      size: 374389
       nfiles: 8
     - path: ./build/pytorch/exp_model.pt
       hash: md5
-      md5: b5cdad00637da201be334a8745c25d19
+      md5: 369d46149f2d7e745893b17494878156
       size: 87469
     - path: ./build/pytorch/plots/pytorch_line.png
       hash: md5
@@ -684,7 +684,7 @@ stages:
       nfiles: 16
     - path: ../../deckard/plot/
       hash: md5
-      md5: c932f66956928c6a9f8cb8b472d1c10e.dir
+      md5: 82b2d00049b4498803e780d2a6df9a02.dir
       size: 122972
       nfiles: 10
     - path: ../../deckard/score/
@@ -698,13 +698,13 @@ stages:
       size: 50118
     - path: fairlearn.ipynb
       hash: md5
-      md5: cf999a4b02d9e2a16ead5fa4e0ff8dfa
-      size: 86672
+      md5: 3def265d8623c648d66f993d54219198
+      size: 86947
     outs:
     - path: ./build/fairlearn/torch_fair_data.pkl
       hash: md5
-      md5: c83b2666759ce40284ba6a3ff2d3a068
-      size: 10167
+      md5: e20132f4b0101a32ec4d669e57b8da64
+      size: 10161
   notebook_anjana:
     cmd: jupyter nbconvert --to notebook --execute --inplace anjana.ipynb
     deps:
@@ -734,7 +734,7 @@ stages:
       nfiles: 16
     - path: ../../deckard/plot/
       hash: md5
-      md5: c932f66956928c6a9f8cb8b472d1c10e.dir
+      md5: 82b2d00049b4498803e780d2a6df9a02.dir
       size: 122972
       nfiles: 10
     - path: ../../deckard/score/
@@ -748,28 +748,28 @@ stages:
       size: 50118
     - path: anjana.ipynb
       hash: md5
-      md5: 84ed6a220282f53e3a4a4748b7a274df
-      size: 308447
+      md5: 783e256cf629aec705b01217dc88e2cb
+      size: 314886
     outs:
     - path: ./build/anjana/anjana_attack_baseline.pkl
       hash: md5
-      md5: d736d520ad2701c00f7e737e2cade8e2
+      md5: 06883b06bd18125c295906fd02d5707b
       size: 3221
     - path: ./build/anjana/anjana_attack_defended.pkl
       hash: md5
-      md5: 3ce0b9e414b0ce6286236ca60f6743b9
+      md5: 61171c0fc0864feedf075d317a8a1a57
       size: 3221
     - path: ./build/anjana/anjana_baseline_data.pkl
       hash: md5
-      md5: c4537b6e1d2d187856b25f43dc95fcc4
+      md5: f897eb4878bf7e47c8a6b5ecfa7caa05
       size: 82842833
     - path: ./build/anjana/anjana_baseline_scores.csv
       hash: md5
-      md5: 2f9027bc31a6786d57d26e2eda80748c
-      size: 522
+      md5: f5f9a6719988840c62f3ea5c745de3b6
+      size: 511
     - path: ./build/anjana/anjana_baseline_sklearn_model.pkl
       hash: md5
-      md5: 37e57fe134295f1754ffceb13f82129c
+      md5: 198083d0a55084e31e049ba4f67c6db4
       size: 5460
     - path: ./build/anjana/anjana_data_scores_compare.csv
       hash: md5
@@ -777,44 +777,44 @@ stages:
       size: 201
     - path: ./build/anjana/anjana_defended_data.pkl
       hash: md5
-      md5: 0e5d8cc4593fd4cc3a6da94741d1853f
+      md5: a955ef97afcd4b0b06e5cf7a6b94b67b
       size: 52673214
     - path: ./build/anjana/anjana_defended_scores.csv
       hash: md5
-      md5: 938fc70a67a74ca515d05e7ddddaff8a
-      size: 504
+      md5: c16de2b3b972c78485a04849f019d08f
+      size: 512
     - path: ./build/anjana/anjana_defended_sklearn_model.pkl
       hash: md5
-      md5: ac7fa749f8612ec51a632346b0caa9df
+      md5: beb9292081de4c170314c0823fc89493
       size: 5476
     - path: ./build/anjana/baseline_experiment_data.pkl
       hash: md5
-      md5: c4537b6e1d2d187856b25f43dc95fcc4
+      md5: f897eb4878bf7e47c8a6b5ecfa7caa05
       size: 82842833
     - path: ./build/anjana/baseline_experiment_model.pkl
       hash: md5
-      md5: b6ef2cae9480079d807a157af62fbffd
+      md5: 262b21e57b7533bb8beda4dc0c4e559e
       size: 1178185
     - path: ./build/anjana/baseline_experiment_scores.json
       hash: md5
-      md5: bb684fcdade5255b5bdbb1aa4e07b3ee
-      size: 980
+      md5: c50cb01919b523ad4be5ec4c969b0026
+      size: 969
     - path: ./build/anjana/defended_experiment_data.pkl
       hash: md5
-      md5: 0e5d8cc4593fd4cc3a6da94741d1853f
+      md5: a955ef97afcd4b0b06e5cf7a6b94b67b
       size: 52673214
     - path: ./build/anjana/defended_experiment_scores.json
       hash: md5
-      md5: 288bd1c9a15ad99b9aaf4140011e0b9b
-      size: 963
+      md5: 76fab73565f0ca7d47536968bc504178
+      size: 973
     - path: ./build/anjana/plots/anjana_attack_compare_bar.png
       hash: md5
-      md5: 3f7c4161ea7b0fbf40e2bef50310f7cc
-      size: 31549
+      md5: 165c5e6c0fab7fa27c3962b023c1b2de
+      size: 34003
     - path: ./build/anjana/plots/anjana_data_compare_bar_side_by_side.png
       hash: md5
-      md5: f43fdf5d1b7a64ae369848f6a0585906
-      size: 44431
+      md5: 3b54163c5991a0a25e83f2c57207b46f
+      size: 46919
     - path: ./build/anjana/plots/anjana_data_scores_bar.png
       hash: md5
       md5: bafeae2e69ea3e92144c634ebe88157f

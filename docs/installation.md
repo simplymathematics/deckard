@@ -123,8 +123,8 @@ For full documentation, use the docs navigation:
 API entry points:
 
 - API hub: {doc}`index`
-- Package overview: {doc}`modules`
-- Module and extension map: {doc}`modules`
+- Package overview: {doc}`api/modules`
+- Module and extension map: {doc}`api/modules`
 
 Notebook entry point:
 

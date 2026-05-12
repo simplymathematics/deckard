@@ -1,18 +1,11 @@
 deckard
 =======
-
-
-
 .. toctree::
    :maxdepth: 2
    :caption: Overview
    :hidden:
 
-   summary
-   installation
-   development
-   build_docs
-   changelog
+   quickstart
 
 
 .. toctree::
@@ -34,4 +27,4 @@ deckard
    :caption: Notebooks
    :hidden:
 
-   notebooks
+   notebooks/index

@@ -180,7 +180,7 @@ defenses, attacks, and metrics for validating ML pipelines.
 
 See also:
 - [Package Summary](summary.md).
-- [API Reference](modules.rst)
+- [API Reference](api/modules.rst)
 - [Extensions](extensions.md)
-- [Notebooks](notebooks)
+- [Notebooks](notebooks/index)
 - [Developer Docs](development.md)
