@@ -564,7 +564,6 @@ class _FairnessScorerMixin:
             logger.debug(
                 f" metric_frame.by_group content: {repr(metric_frame.by_group)}",
             )
-            import traceback
 
             if not isinstance(metric_frame.by_group, pd.DataFrame):
                 logger.critical(

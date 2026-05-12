@@ -1256,8 +1256,7 @@ class AttackConfig(ConfigBase):
         else:
             x_ = data.X_train
             y_ = data.y_train
-        from torch.utils.data import Dataset, Subset, DataLoader
-        import torch
+        from torch.utils.data import Dataset, DataLoader, Subset
 
         # Accept Subset/Dataset and convert to tensor
         if isinstance(x_, (pd.Series, np.ndarray, pd.DataFrame)) or is_tensor(x_):
