@@ -1,0 +1,6 @@
+_target_: deckard.data.DataConfig
+dataset_name: classification
+random_state: 0
+stratify: true
+train_size: 100
+test_size: 1000

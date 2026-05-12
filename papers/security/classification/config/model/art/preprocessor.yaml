@@ -1,0 +1,6 @@
+_target_ : deckard.base.model.art_pipeline.ArtPipeline
+library : sklearn-svc
+preprocessor:
+  name: art.defences.preprocessor.FeatureSqueezing
+  bit_depth: 32
+initialize:

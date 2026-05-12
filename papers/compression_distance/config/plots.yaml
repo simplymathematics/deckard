@@ -1,0 +1,341 @@
+line_plot:
+- file: compressor_metric_vs_accuracy.pdf
+  hue: Metric
+  title: #"Accuracy vs $m$-best samples"
+  x: data.sample.train_size
+  xlabel: Number of Training Samples
+  y: accuracy
+  ylabel: Accuracy
+  hue_order:
+  - Brotli
+  - GZIP
+  - BZ2
+  - ZSTD
+  - LZMA
+  errorbar: se
+  err_style: bars
+  # xlim: [10, 500]
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}} 
+- file: metric_vs_accuracy.pdf
+  hue: Metric
+  title: #"Accuracy vs $m$-best samples"
+  x: data.sample.train_size
+  xlabel: Number of Training Samples
+  y: accuracy
+  ylabel: Accuracy
+  hue_order:
+  - Brotli
+  - GZIP
+  - BZ2
+  - ZSTD
+  - LZMA
+  - Levenshtein
+  - Ratio
+  - Hamming
+  - Jaro
+  - Jaro-Winkler 
+  - SeqRatio
+  errorbar: se
+  err_style: bars
+  xlim: [10, 500]
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}} 
+- file: string_metric_vs_accuracy.pdf
+  hue: Metric
+  title: #"Accuracy vs $m$-best samples"
+  x: data.sample.train_size
+  xlabel: Number of Training Samples
+  y: accuracy
+  ylabel: Accuracy
+  hue_order:
+  # - GZIP
+  # - BZ2
+  # - ZSTD
+  # - LZMA
+  - Levenshtein
+  - Ratio
+  - Hamming
+  - Jaro
+  - Jaro-Winkler 
+  - SeqRatio
+  errorbar: se
+  err_style: bars
+  xlim: [10, 500]
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}  
+- file: metric_vs_train_time.pdf
+  hue: Metric
+  title: #"Training Time vs $m$-best samples"
+  x: data.sample.train_size
+  xlabel: Number of Training Samples
+  y: train_time
+  ylabel: Training Time (s)
+  y_scale: linear
+  hue_order:
+  - Brotli
+  - GZIP
+  - BZ2
+  - ZSTD
+  - LZMA
+  - Levenshtein
+  - Ratio
+  - Hamming
+  - Jaro
+  - Jaro-Winkler 
+  - SeqRatio
+  errorbar: se
+  err_style: bars
+  xlim: [10, 500]
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+- file: compressor_metric_vs_train_time.pdf
+  hue: Metric
+  title: #"Training Time vs $m$-best samples"
+  x: data.sample.train_size
+  xlabel: Number of Training Samples
+  y: train_time
+  ylabel: Training Time (s)
+  y_scale: linear
+  hue_order:
+  - Brotli
+  - GZIP
+  - BZ2
+  - ZSTD
+  - LZMA
+  errorbar: se
+  err_style: bars
+  xlim: [10, 500]
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+- file: string_metric_vs_train_time.pdf
+  hue: Metric
+  title: #"Training Time vs $m$-best samples"
+  x: data.sample.train_size
+  xlabel: Number of Training Samples
+  y: train_time
+  ylabel: Training Time (s)
+  y_scale: linear
+  hue_order:
+  # - GZIP
+  # - BZ2
+  # - ZSTD
+  # - LZMA
+  - Levenshtein
+  - Ratio
+  - Hamming
+  - Jaro
+  - Jaro-Winkler 
+  - SeqRatio
+  errorbar: se
+  err_style: bars
+  xlim: [10, 500]
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+- file: compressor_metric_vs_predict_time.pdf
+  hue: Metric
+  title: #"Prediction Time vs $m$-best samples"
+  x: data.sample.train_size
+  xlabel: Number of Training Samples
+  y: predict_time
+  ylabel: Prediction Time (s)
+  y_scale: linear
+  hue_order:
+  - Brotli
+  - GZIP
+  - BZ2
+  - ZSTD
+  - LZMA
+- file: metric_vs_predict_time.pdf
+  hue: Metric
+  title: #"Prediction Time vs $m$-best samples"
+  x: data.sample.train_size
+  xlabel: Number of Training Samples
+  y: predict_time
+  ylabel: Prediction Time (s)
+  y_scale: linear
+  hue_order:
+  - GZIP
+  - BZ2
+  - ZSTD
+  - LZMA
+  - Levenshtein
+  - Ratio
+  - Hamming
+  - Jaro
+  - Jaro-Winkler 
+  - SeqRatio
+- file: string_metric_vs_predict_time.pdf
+  hue: Metric
+  title: #"Prediction Time vs $m$-best samples"
+  x: data.sample.train_size
+  xlabel: Number of Training Samples
+  y: predict_time
+  ylabel: Prediction Time (s)
+  y_scale: linear
+  hue_order:
+  - Levenshtein
+  - Ratio
+  - Hamming
+  - Jaro
+  - Jaro-Winkler 
+  - SeqRatio
+  errorbar: se
+  err_style: bars
+  xlim: [10, 500]
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+cat_plot:
+  - file: symmetric_vs_compressor_metric.pdf
+    x : Metric
+    y : accuracy
+    hue : Symmetric
+    errorbar: se
+    kind : boxen
+    titles : " "
+    xlabels : "Compressor"
+    ylabels : Accuracy
+    legend_title: "Metrics"
+    order:
+    - Brotli
+    - GZIP
+    - BZ2
+    - ZSTD
+    - LZMA
+    hue_order :
+    - Asymmetric
+    - Symmetric
+    # - Levenshtein
+    # - Ratio
+    # - Hamming
+    # - Jaro
+    # - Jaro-Winkler 
+    # - SeqRatio
+    rotation: 90
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+  - file: symmetric_vs_string_metric.pdf
+    x : Metric
+    y : accuracy
+    hue : Symmetric
+    errorbar: se
+    kind : boxen
+    titles : " "
+    xlabels : "Compressors"
+    ylabels : Accuracy
+    legend_title: " "
+    order:
+    # - GZIP
+    # - BZ2
+    # - ZSTD
+    # - LZMA
+    - Levenshtein
+    - Ratio
+    - Hamming
+    - Jaro
+    - Jaro-Winkler 
+    - SeqRatio
+    hue_order :
+    - Asymmetric
+    - Symmetric
+    rotation: 90
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+  - file: symmetric_vs_metric.pdf
+    x : Metric
+    y : accuracy
+    hue : Symmetric
+    errorbar: se
+    kind : boxen
+    titles : " "
+    xlabels : "Compressors"
+    ylabels : Accuracy
+    legend_title: " "
+    order:
+    - GZIP
+    - BZ2
+    - ZSTD
+    - LZMA
+    - Levenshtein
+    - Ratio
+    - Hamming
+    - Jaro
+    - Jaro-Winkler 
+    - SeqRatio
+    hue_order :
+    - Asymmetric
+    - Symmetric
+    rotation: 90
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+  - file: symmetric_vs_metric_train_time.pdf
+    x : Metric
+    y : train_time
+    hue : Symmetric
+    errorbar: se
+    kind : boxen
+    titles : 
+    xlabels : "Metrics"
+    ylabels : Training Time (s)
+    legend_title: "Metrics"
+    order:
+    - Brotli
+    - GZIP
+    - BZ2
+    - ZSTD
+    - LZMA
+    - Levenshtein
+    - Ratio
+    - Hamming
+    - Jaro
+    - Jaro-Winkler 
+    - SeqRatio
+    hue_order :
+    - Asymmetric
+    - Symmetric
+    rotation : 90
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    y_scale : linear
+  - file: symmetric_vs_string_metric_train_time.pdf
+    x : Metric
+    y : train_time
+    hue : Symmetric
+    errorbar: se
+    kind : boxen
+    titles : 
+    xlabels : "Compressors"
+    ylabels : Training Time (s)
+    legend_title: "String Metrics"
+    order:
+    # - GZIP
+    # - BZ2
+    # - ZSTD
+    # - LZMA
+    - Levenshtein
+    - Ratio
+    - Hamming
+    - Jaro
+    - Jaro-Winkler 
+    - SeqRatio
+    hue_order :
+    - Asymmetric
+    - Symmetric
+    rotation : 90
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+  - file: symmetric_vs_compressor_metric_train_time.pdf
+    x : Metric
+    y : train_time
+    hue : Symmetric
+    errorbar: se
+    kind : boxen
+    titles : 
+    xlabels : "Compressors"
+    ylabels : Training Time (s)
+    legend_title: "Metrics"
+    order:
+    - Brotli
+    - GZIP
+    - BZ2
+    - ZSTD
+    - LZMA
+    # - Levenshtein
+    # - Ratio
+    # - Hamming
+    # - Jaro
+    # - Jaro-Winkler 
+    # - SeqRatio
+    hue_order :
+    - Asymmetric
+    - Symmetric
+    rotation : 90
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}

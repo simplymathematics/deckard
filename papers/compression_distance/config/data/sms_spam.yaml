@@ -1,0 +1,7 @@
+target: label
+alias: sms_spam
+random_state: 0
+stratify: true
+
+_target_: deckard.data.DataConfig
+dataset_name: raw_data/sms-spam_undersampled_1450.csv

@@ -1,0 +1,5 @@
+_target_: deckard.data.PytorchDataConfig
+dataset_name: torchvision.datasets.CIFAR100
+data_dir: original_data/
+random_state: 0
+stratify: true

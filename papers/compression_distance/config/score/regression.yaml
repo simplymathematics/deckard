@@ -1,0 +1,17 @@
+_target_: deckard.score.ScorerDictConfig
+scorers:
+  explained_variance:
+    score_name: explained_variance
+    score_function: sklearn.metrics.explained_variance_score
+    greater_is_better: true
+    needs_proba: false
+  r2:
+    score_name: r2
+    score_function: sklearn.metrics.r2_score
+    greater_is_better: true
+    needs_proba: false
+  mse:
+    score_name: mse
+    score_function: sklearn.metrics.mean_squared_error
+    greater_is_better: false
+    needs_proba: false

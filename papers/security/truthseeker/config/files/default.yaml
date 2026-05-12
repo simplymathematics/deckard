@@ -1,0 +1,11 @@
+_target_: deckard.file.FileConfig
+data_file: output/data/data.pkl
+model_file: output/models/model.pkl
+attack_file: output/attacks/attack.pkl
+score_file: output/reports/attack/score_dict.json
+params_file: output/params.yaml
+test_predictions_file: output/reports/attack/predictions.json
+test_probabilities_file: output/reports/attack/probabilities.json
+attack_predictions_file: output/reports/attack/adv_predictions.json
+log_file: output/reports/logs/run.log
+error_file: output/reports/logs/error.log

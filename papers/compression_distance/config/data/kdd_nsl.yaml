@@ -1,0 +1,8 @@
+drop:
+- id
+target: label
+alias: kdd_nsl
+random_state: 0
+stratify: true
+_target_: deckard.data.DataConfig
+dataset_name: raw_data/kdd_nsl_undersampled_5000.csv

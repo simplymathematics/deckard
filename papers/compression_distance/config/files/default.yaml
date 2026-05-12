@@ -1,0 +1,7 @@
+_target_: deckard.file.FileConfig
+data_file: output/${dataset}/data/${dataset}-${data.sample.random_state}-${data.sample.train_size}-${data.sample.test_size}${data.sample.fold}.pkl
+score_file: output/${dataset}/reports/attack/score_dict.json
+params_file: output/${dataset}/params.yaml
+test_predictions_file: output/${dataset}/reports/attack/predictions.json
+log_file: output/${dataset}/reports/logs/run.log
+error_file: output/${dataset}/reports/logs/error.log

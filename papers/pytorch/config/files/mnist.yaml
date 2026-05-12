@@ -1,0 +1,9 @@
+_target_: deckard.file.FileConfig
+model_file: mnist/models/model.pt
+attack_file: mnist/attacks/attack.pkl
+score_file: mnist/reports/attack/score_dict.json
+params_file: mnist/params.yaml
+test_predictions_file: mnist/reports/attack/predictions.json
+attack_predictions_file: mnist/reports/attack/adv_predictions.json
+log_file: mnist/reports/logs/run.log
+error_file: mnist/reports/logs/error.log

@@ -1,0 +1,9 @@
+_target_: deckard.model.PytorchModelConfig
+model_type: torch_example.ResNet18
+model_params:
+  num_channels: 1
+  num_classes: 10
+fit_params:
+  nb_epochs: 1
+  batch_size: 4096
+  verbose: true

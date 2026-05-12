@@ -1,0 +1,9 @@
+_target_: deckard.file.FileConfig
+data_file: result/bit_depth/mnist/data/data.pkl
+attack_file: result/bit_depth/mnist/attacks/attack.pkl
+score_file: result/bit_depth/mnist/reports/attack/score_dict.json
+params_file: result/bit_depth/mnist/params.yaml
+test_predictions_file: result/bit_depth/mnist/reports/attack/predictions.json
+attack_predictions_file: result/bit_depth/mnist/reports/attack/adv_predictions.json
+log_file: result/bit_depth/mnist/reports/logs/run.log
+error_file: result/bit_depth/mnist/reports/logs/error.log

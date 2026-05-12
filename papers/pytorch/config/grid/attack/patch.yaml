@@ -1,0 +1,5 @@
+init.name : art.attacks.evasion.ThresholdAttack
+init.max_iter : [10]
+init.batch_size : [1024]
+init.scale_min : [0.01,]
+init.scale_max : [.01, .1, .3, .5, .9, .99, 1]

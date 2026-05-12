@@ -1,0 +1,3 @@
+_target_: deckard.attack.AttackConfig
+attack_size: 10
+attack_type: art.attacks.evasion.ProjectedGradientDescent

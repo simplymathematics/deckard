@@ -1,0 +1,9 @@
+_target_: deckard.file.FileConfig
+model_file: cifar100/models/model.pt
+attack_file: cifar100/attacks/attack.pkl
+score_file: cifar100/reports/attack/score_dict.json
+params_file: cifar100/params.yaml
+test_predictions_file: cifar100/reports/attack/predictions.json
+attack_predictions_file: cifar100/reports/attack/adv_predictions.json
+log_file: cifar100/reports/logs/run.log
+error_file: cifar100/reports/logs/error.log

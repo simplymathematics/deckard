@@ -1,0 +1,4 @@
+_target_: deckard.data.DataConfig
+train_size: 1000
+test_size: 100
+val_size: 100

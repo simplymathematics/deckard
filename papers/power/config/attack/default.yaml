@@ -1,0 +1,8 @@
+_target_: deckard.attack.AttackConfig
+attack_size: 10
+attack_type: art.attacks.evasion.FastGradientMethod
+attack_params:
+  eps: 0.99
+  batch_size: ${model.trainer.batch_size}
+  targeted: false
+  minimal: true

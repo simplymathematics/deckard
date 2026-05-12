@@ -5,12 +5,4 @@ stratify: true
 train_size: 0.1
 test_size: 0.1
 alias: kdd_nsl
-
-pipeline:
-  encoder:
-    name: sklearn.preprocessing.OneHotEncoder
-    handle_unknown: ignore
-  preprocessor:
-    name: sklearn.preprocessing.StandardScaler
-    with_mean: false
-    with_std: true
+_target_: deckard.data.DataConfig

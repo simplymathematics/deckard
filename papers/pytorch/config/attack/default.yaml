@@ -1,0 +1,5 @@
+_target_: deckard.attack.AttackConfig
+attack_size: 100
+attack_type: art.attacks.evasion.HopSkipJump
+attack_params:
+  batch_size: ${model.trainer.batch_size}

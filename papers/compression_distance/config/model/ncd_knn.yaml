@@ -1,0 +1,4 @@
+model_type: sklearn.neighbors.KNeighborsClassifier
+model_params:
+  n_neighbors: 1
+_target_: deckard.model.ModelConfig

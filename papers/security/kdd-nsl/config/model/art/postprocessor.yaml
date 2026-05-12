@@ -1,0 +1,6 @@
+_target_ : deckard.base.model.art_pipeline.ArtPipeline
+library : sklearn-svc
+postprocessor:
+  name: art.defences.postprocessor.HighConfidence
+  threshold: 0.0
+initialize:

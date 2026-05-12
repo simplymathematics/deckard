@@ -1,0 +1,4 @@
+model_type: sklearn.linear_model.LogisticRegression
+model_params:
+  max_iter: 1000
+_target_: deckard.model.ModelConfig
