@@ -21,7 +21,7 @@ jobs:
     - name : install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install '.[lifelines,anjana,fairlearn,seaborn,yellowbrick,docs,test,datasets]'
+        pip install '.[lifelines,anjana,fairlearn,seaborn,yellowbrick,docs,datasets]'
         pip install --index-url https://download.pytorch.org/whl/cpu --force-reinstall torch torchvision torchaudio
     - name : build docs
       run: |

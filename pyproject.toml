@@ -111,8 +111,6 @@ test = [
     "pycanon",
     "yellowbrick",
     "seaborn",
-    "torch>=2.0.0",
-    "torchvision>=0.15.0",
     "torchaudio>=2.0.0",
     "cma",
 ]
@@ -128,7 +126,9 @@ lint = [
     "pre-commit",
     "flake8-pyproject",
 ]
-
+datasets = [
+    "datasets"
+]
 # -------------------------
 # Convenience meta-extras
 # (fully expanded, no references)
