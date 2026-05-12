@@ -9,7 +9,7 @@ import pandas as pd
 
 # Typing imports
 from dataclasses import dataclass, field
-from typing import Any, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
 # Sklearn and numpy imports
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
@@ -47,6 +47,9 @@ from .torch_utils import (
     is_torch_model,
     tensor_to_numpy,
 )
+
+if TYPE_CHECKING:
+    from ..score.attack import AttackScorerConfig
 
 logger = logging.getLogger(__name__)
 
