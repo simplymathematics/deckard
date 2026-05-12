@@ -70,7 +70,7 @@ def test_probability_validation_error_paths():
             [0, 1],
             np.array([["a"], ["b"]], dtype=object),
         )
-    with pytest.raises(ValueError, match="values in \[0, 1\]"):
+    with pytest.raises(ValueError, match=r"values in \[0, 1\]"):
         scorer._validate_probability_input([0, 1], np.array([[1.2], [0.2]]))
 
 
@@ -349,7 +349,7 @@ def test_scorer_dict_attack_placeholder_and_missing_probability_context():
             ),
         },
     )
-    attack = SimpleNamespace(_attack="resolved")
+    _ = SimpleNamespace(_attack="resolved")
 
     with pytest.raises(ValueError, match="requires probabilities from predict_proba"):
         scorer(

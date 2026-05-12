@@ -6,7 +6,7 @@ import os
 import shutil
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from deckard.model import ModelConfig
 from deckard.data import DataConfig
 from sklearn.ensemble import RandomForestClassifier

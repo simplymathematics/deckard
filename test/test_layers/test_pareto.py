@@ -6,10 +6,8 @@ import warnings
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import numpy as np
 import optuna
 import pandas as pd
-import pytest
 from optuna.exceptions import ExperimentalWarning
 
 from deckard.layers.pareto import (
@@ -348,7 +346,7 @@ class TestParetoMain(unittest.TestCase):
 
     def test_diff_direction_single_raises(self):
         storage = self._make_storage()
-        study = self._create_study_with_trials(storage, study_name="diff_study")
+        self._create_study_with_trials(storage, study_name="diff_study")
         with tempfile.TemporaryDirectory() as tmpdir:
             with self.assertRaises(ValueError):
                 pareto_main(

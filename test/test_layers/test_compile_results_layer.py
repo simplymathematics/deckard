@@ -4,7 +4,6 @@ import tempfile
 import unittest
 import yaml
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import optuna
 import pandas as pd

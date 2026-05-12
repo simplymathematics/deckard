@@ -4,8 +4,8 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-import uuid
 import importlib.util
+import uuid
 
 import optuna
 import pandas as pd
@@ -15,7 +15,7 @@ from deckard.attack import AttackConfig
 from deckard.experiment import ExperimentConfig
 from deckard.file import FileConfig
 from deckard.model import DefensePipelineConfig, ModelConfig
-from helpers import load_env_from_deckard_rc, make_runtime_env
+from helpers import make_runtime_env
 
 
 ROOT = Path(__file__).resolve().parents[2]

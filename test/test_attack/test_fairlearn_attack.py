@@ -4,7 +4,6 @@ import pytest
 from sklearn.linear_model import LogisticRegression
 from deckard.attack import AttackConfig
 from deckard.score.attack import FairlearnAttackScorerConfig
-from deckard.score.attack import FairlearnAttackScorerConfig
 from deckard.score.fairness import FairlearnScoreDictConfig
 from deckard.score.base import DefaultClassifierConfig
 from deckard.data.fairness import FairlearnDataConfig

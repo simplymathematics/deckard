@@ -1692,7 +1692,6 @@ class TestInitializeAttackBranches(unittest.TestCase):
     def test_model_with_sensitive_features_predict_wraps_with_wrapper(self):
         """Cover the SensitiveFeaturesWrapper path in _initialize_attack."""
         from sklearn.base import BaseEstimator, ClassifierMixin
-        from sklearn.utils.validation import check_is_fitted
 
         class _SFModel(BaseEstimator, ClassifierMixin):
             classes_ = [0, 1]
@@ -2243,7 +2242,7 @@ class TestInferAttributeBranches(unittest.TestCase):
         )
         from sklearn.linear_model import LogisticRegression
 
-        model = LogisticRegression(max_iter=200).fit(
+        LogisticRegression(max_iter=200).fit(
             data.X_train.drop(columns=["sensitive"]).values,
             data.y_train.values,
         )

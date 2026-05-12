@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from helpers import load_env_from_deckard_rc, make_runtime_env
+from helpers import make_runtime_env
 
 
 ROOT = Path(__file__).resolve().parents[2]

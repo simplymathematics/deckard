@@ -11,7 +11,6 @@ from deckard.model import (
     DefensePipelineConfig,
     FairlearnDefenseConfig,
     FairlearnModelConfig,
-    ModelConfig,
 )
 from deckard.score.attack import FairlearnAttackScorerConfig
 from deckard.score import FairlearnScoreDictConfig, ScorerConfig

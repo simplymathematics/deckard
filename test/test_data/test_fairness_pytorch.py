@@ -1,4 +1,3 @@
-import pytest
 import torch
 import numpy as np
 from deckard.data.fairness_pytorch import FairlearnPytorchDataConfig

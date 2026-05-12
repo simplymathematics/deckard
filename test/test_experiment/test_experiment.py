@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import OmegaConf
 
 from deckard.attack import AttackConfig
 from deckard.data import DataConfig

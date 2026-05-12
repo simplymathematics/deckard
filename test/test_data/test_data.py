@@ -1,6 +1,7 @@
 import unittest
 import tempfile
 import pandas as pd
+import pytest
 from pathlib import Path
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
@@ -513,18 +514,8 @@ class TestDataConfig(unittest.TestCase):
         )
 
 
-import unittest
-import tempfile
-import pandas as pd
-import numpy as np
-from pathlib import Path
-from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
-import pytest
-
 try:
     import fairlearn  # noqa: F401
-    from deckard.data import DataConfig, DataPipelineConfig
 except Exception:
     pytest.skip(
         "fairlearn is required for fairness data tests",
@@ -558,7 +549,7 @@ class ScorePlugin:
         return {"plugin_metric": float(len(scores))}
 
 
-class TestDataPipelineConfig(unittest.TestCase):
+class TestFairlearnDataPipelineConfig(unittest.TestCase):
     def setUp(self):
         self.pipeline_config_dict = {
             "imputer": {

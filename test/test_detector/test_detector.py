@@ -385,6 +385,6 @@ def test_detector_raises_when_backend_has_no_detection_api(monkeypatch):
 
     with pytest.raises(
         AttributeError,
-        match="exposes neither detect\(\) nor detect_poison\(\)",
+        match=r"exposes neither detect\(\) nor detect_poison\(\)",
     ):
         cfg(data=data, model=None, attack=attack)

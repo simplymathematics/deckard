@@ -665,8 +665,12 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
 
         train_ds = self._make_simple_dataset(7)
         test_ds = self._make_simple_dataset(5)
-        train_transform = lambda value: value
-        test_transform = lambda value: value
+
+        def train_transform(value):
+            return value
+
+        def test_transform(value):
+            return value
 
         cfg = PytorchCustomDataConfig(
             dataset_name="torch.utils.data.TensorDataset",

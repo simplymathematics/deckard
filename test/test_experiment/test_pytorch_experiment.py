@@ -690,7 +690,6 @@ def test_deckard_optimize_torch_poisoning_gradient_matching_smoke_matrix():
         "attack.attack_params.class_source=0",
         "attack.attack_params.class_target=1",
     ]
-    import pytest
 
     result = subprocess.run(
         cmd,
@@ -742,7 +741,6 @@ def test_deckard_optimize_torch_fairness_smoke_matrix():
         "defense.defense_params.epochs=1",
         "defense.defense_params.batch_size=16",
     ]
-    import pytest
 
     result = subprocess.run(
         cmd,
