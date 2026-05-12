@@ -32,10 +32,18 @@ jobs:
         python -m pip install --upgrade pip
         pip install '.[lifelines,anjana,fairlearn,seaborn,yellowbrick,docs,datasets]'
         pip install --index-url https://download.pytorch.org/whl/cpu --force-reinstall torch torchvision torchaudio
+    - name: Pull DVC cache
+      run: |
+        cd docs/notebooks
+        dvc pull || echo "DVC pull not available; will proceed with cached objects from GitHub Actions"
     - name : build docs
       run: |
         cd docs
         make html
+    - name: Push DVC cache
+      run: |
+        cd docs/notebooks
+        dvc push || echo "DVC push not available; cache will be saved via GitHub Actions"
     - name: commit changes
       uses : stefanzweifel/git-auto-commit-action@v4
       with:
