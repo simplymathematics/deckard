@@ -32,7 +32,7 @@ class PytorchDataPipelineConfig(DataPipelineConfig):
 @dataclass(eq=False)
 class PytorchDataConfig(DataConfig):
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs):  # noqa: F811
         # Always load data and sample to set X_train, X_test, y_train, y_test
         self._load_data()
         self._sample()

@@ -1,10 +1,7 @@
 """Fairness score-profile declarations and ConfigStore registrations."""
 
 from .base import safe_store
-from .fairness import (
-    DefaultFairlearnScoreDictConfig,
-    DefaultFairlearnScoreDictConfig,
-)
+from .fairness import DefaultFairlearnScoreDictConfig
 
 
 class DefaultFairlearnScoreDict:

@@ -69,7 +69,7 @@ from yellowbrick.model_selection import (
 
 from ..utils import ConfigBase
 from ..experiment import ExperimentConfig
-from ..score.pytorch import (
+from ..score.pytorch import (  # noqa: F401
     to_numpy as _to_numpy,
     is_dataloader_like as _is_dataloader_like,
     is_dataset_like as _is_dataset_like,
@@ -223,7 +223,7 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-def _get_shape(obj):
+def _get_shape(obj):  # noqa: F811
     if hasattr(obj, "shape"):
         return obj.shape
     if hasattr(obj, "dataset") and hasattr(obj.dataset, "shape"):
