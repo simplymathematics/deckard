@@ -7,7 +7,7 @@ GPU mode: mps (requested: mps)
 Docker build hint: docker build -t deckard:mps .
 Job:      docs
 Command:
- act push -W /Users/c.meyers/Documents/deckard/.github/workflows/compile-docs.yml -e /var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/tmp.DZYe44GxRs --container-architecture linux/amd64 -P ubuntu-latest=ghcr.io/catthehacker/ubuntu:full-latest --env DECKARD_GPU_MODE=mps --env DECKARD_DOCKER_IMAGE_TAG=deckard:mps --env DECKARD_DOCKER_BUILD_ARGS=--build-arg\ ENABLE_CUDA=0\ --build-arg\ BASE_IMAGE=ubuntu:20.04 -j docs -s GITHUB_TOKEN=\*\*\*
+ act push -W /Users/c.meyers/Documents/deckard/.github/workflows/compile-docs.yml -e /var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/tmp.m9kOq5XW2p --container-architecture linux/amd64 -P ubuntu-latest=ghcr.io/catthehacker/ubuntu:full-latest --env DECKARD_GPU_MODE=mps --env DECKARD_DOCKER_IMAGE_TAG=deckard:mps --env DECKARD_DOCKER_BUILD_ARGS=--build-arg\ ENABLE_CUDA=0\ --build-arg\ BASE_IMAGE=ubuntu:20.04 -j docs -s GITHUB_TOKEN=\*\*\*
 [Push Docs Check/docs] ⭐ Run Set up job
 [Push Docs Check/docs] 🚀  Start image=ghcr.io/catthehacker/ubuntu:full-latest
 [Push Docs Check/docs]   🐳  docker pull image=ghcr.io/catthehacker/ubuntu:full-latest platform=linux/amd64 username= forcePull=true
@@ -31,7 +31,7 @@ Command:
 [Push Docs Check/docs]   | git version 2.52.0
 [Push Docs Check/docs]   ❓  ::endgroup::
 [Push Docs Check/docs]   ⚙  ***
-[Push Docs Check/docs]   | Temporarily overriding HOME='/tmp/e6e9ee71-9a00-4d5b-8fd5-eea6c4d280df' before making global git config changes
+[Push Docs Check/docs]   | Temporarily overriding HOME='/tmp/e564024f-332f-49d4-9043-515bc13eaab1' before making global git config changes
 [Push Docs Check/docs]   | Adding repository directory to the temporary git global config as a safe directory
 [Push Docs Check/docs]   | [command]/usr/bin/git config --global --add safe.directory /Users/c.meyers/Documents/deckard
 [Push Docs Check/docs]   | Deleting the contents of '/Users/c.meyers/Documents/deckard'
@@ -82,10 +82,10 @@ Command:
 [Push Docs Check/docs]   | branch 'refactor-squashed' set up to track 'origin/refactor-squashed'.
 [Push Docs Check/docs]   ❓  ::endgroup::
 [Push Docs Check/docs]   | [command]/usr/bin/git log -1 --format=%H
-[Push Docs Check/docs]   | c35c017edab5c6bfb60ed94de8b3bf7d4e5d6b60
+[Push Docs Check/docs]   | db9a669cebcfe9fd550a960fd92b894acf07c287
 [Push Docs Check/docs]   ❓  ::remove-matcher owner=checkout-git::
-[Push Docs Check/docs]   ✅  Success - Main actions/checkout@v4 [3.356611209s]
-[Push Docs Check/docs]   ⚙  ::set-output:: commit=c35c017edab5c6bfb60ed94de8b3bf7d4e5d6b60
+[Push Docs Check/docs]   ✅  Success - Main actions/checkout@v4 [3.725390542s]
+[Push Docs Check/docs]   ⚙  ::set-output:: commit=db9a669cebcfe9fd550a960fd92b894acf07c287
 [Push Docs Check/docs]   ⚙  ::set-output:: ref=refactor-squashed
 [Push Docs Check/docs] ⭐ Run Main actions/setup-python@v5
 [Push Docs Check/docs]   🐳  docker cp src=/Users/c.meyers/.cache/act/actions-setup-python@v5/ dst=/var/run/act/actions/actions-setup-python@v5/
@@ -98,16 +98,16 @@ Command:
 [Push Docs Check/docs]   | /home/runner/.cache/pip
 [Push Docs Check/docs]   | pip cache is not found
 [Push Docs Check/docs]   ❓ add-matcher /run/act/actions/actions-setup-python@v5/.github/python.json
-[Push Docs Check/docs]   ✅  Success - Main actions/setup-python@v5 [1.71699575s]
-[Push Docs Check/docs]   ⚙  ::set-env:: LD_LIBRARY_PATH=/opt/hostedtoolcache/Python/3.10.19/x64/lib
+[Push Docs Check/docs]   ✅  Success - Main actions/setup-python@v5 [1.704068209s]
 [Push Docs Check/docs]   ⚙  ::set-env:: pythonLocation=/opt/hostedtoolcache/Python/3.10.19/x64
 [Push Docs Check/docs]   ⚙  ::set-env:: PKG_CONFIG_PATH=/opt/hostedtoolcache/Python/3.10.19/x64/lib/pkgconfig
 [Push Docs Check/docs]   ⚙  ::set-env:: Python_ROOT_DIR=/opt/hostedtoolcache/Python/3.10.19/x64
 [Push Docs Check/docs]   ⚙  ::set-env:: Python2_ROOT_DIR=/opt/hostedtoolcache/Python/3.10.19/x64
 [Push Docs Check/docs]   ⚙  ::set-env:: Python3_ROOT_DIR=/opt/hostedtoolcache/Python/3.10.19/x64
-[Push Docs Check/docs]   ⚙  ::set-output:: cache-hit=false
+[Push Docs Check/docs]   ⚙  ::set-env:: LD_LIBRARY_PATH=/opt/hostedtoolcache/Python/3.10.19/x64/lib
 [Push Docs Check/docs]   ⚙  ::set-output:: python-version=3.10.19
 [Push Docs Check/docs]   ⚙  ::set-output:: python-path=/opt/hostedtoolcache/Python/3.10.19/x64/bin/python
+[Push Docs Check/docs]   ⚙  ::set-output:: cache-hit=false
 [Push Docs Check/docs]   ⚙  ::add-path:: /opt/hostedtoolcache/Python/3.10.19/x64
 [Push Docs Check/docs]   ⚙  ::add-path:: /opt/hostedtoolcache/Python/3.10.19/x64/bin
 [Push Docs Check/docs] ⭐ Run Main install dependencies
@@ -133,8 +133,8 @@ Command:
 [Push Docs Check/docs]   | Requirement already satisfied: optuna-dashboard in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (0.20.0)
 [Push Docs Check/docs]   | Requirement already satisfied: hydra-joblib-launcher in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (1.2.0)
 [Push Docs Check/docs]   | Collecting hydra-optuna-sweeper @ git+https://github.com/simplymathematics/hydra-optuna-sweeper.git (from deckard==0.95.0)
-[Push Docs Check/docs]   |   Cloning https://github.com/simplymathematics/hydra-optuna-sweeper.git to /tmp/pip-install-_yh2ll72/hydra-optuna-sweeper_c26d4e8afc68456a8e8cb7b1ff70d731
-[Push Docs Check/docs]   |   Running command git clone --filter=blob:none --quiet https://github.com/simplymathematics/hydra-optuna-sweeper.git /tmp/pip-install-_yh2ll72/hydra-optuna-sweeper_c26d4e8afc68456a8e8cb7b1ff70d731
+[Push Docs Check/docs]   |   Cloning https://github.com/simplymathematics/hydra-optuna-sweeper.git to /tmp/pip-install-clvdfnvx/hydra-optuna-sweeper_e22bab142055453d96d09be972664c8c
+[Push Docs Check/docs]   |   Running command git clone --filter=blob:none --quiet https://github.com/simplymathematics/hydra-optuna-sweeper.git /tmp/pip-install-clvdfnvx/hydra-optuna-sweeper_e22bab142055453d96d09be972664c8c
 [Push Docs Check/docs]   |   Resolved https://github.com/simplymathematics/hydra-optuna-sweeper.git to commit 0f3a72f7e5f7e37b6c233802b2389168933666aa
 [Push Docs Check/docs]   |   Installing build dependencies: started
 [Push Docs Check/docs]   |   Installing build dependencies: finished with status 'done'
@@ -144,9 +144,9 @@ Command:
 [Push Docs Check/docs]   |   Preparing metadata (pyproject.toml): finished with status 'done'
 [Push Docs Check/docs]   | Requirement already satisfied: optuna>=3 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (4.8.0)
 [Push Docs Check/docs]   | Requirement already satisfied: paretoset in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (1.2.5)
-[Push Docs Check/docs]   | Requirement already satisfied: seaborn in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (0.13.2)
+[Push Docs Check/docs]   | Requirement already satisfied: datasets in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (4.8.5)
 [Push Docs Check/docs]   | Requirement already satisfied: lifelines in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (0.30.0)
-[Push Docs Check/docs]   | Requirement already satisfied: fairlearn in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (0.13.0)
+[Push Docs Check/docs]   | Requirement already satisfied: yellowbrick in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (1.5)
 [Push Docs Check/docs]   | Requirement already satisfied: sphinx in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (8.1.3)
 [Push Docs Check/docs]   | Requirement already satisfied: myst-parser in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (4.0.1)
 [Push Docs Check/docs]   | Requirement already satisfied: myst-nb in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (1.4.0)
@@ -159,10 +159,9 @@ Command:
 [Push Docs Check/docs]   | Requirement already satisfied: jupyterlab in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (4.5.7)
 [Push Docs Check/docs]   | Requirement already satisfied: sphinxcontrib-bibtex in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (2.7.0)
 [Push Docs Check/docs]   | Requirement already satisfied: roman in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (5.2)
-[Push Docs Check/docs]   | Requirement already satisfied: datasets in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (4.8.5)
 [Push Docs Check/docs]   | Collecting anjana @ git+https://github.com/IFCA-Advanced-Computing/anjana.git (from deckard==0.95.0)
-[Push Docs Check/docs]   |   Cloning https://github.com/IFCA-Advanced-Computing/anjana.git to /tmp/pip-install-_yh2ll72/anjana_491194c09a4c460098d3f3529ca4717d
-[Push Docs Check/docs]   |   Running command git clone --filter=blob:none --quiet https://github.com/IFCA-Advanced-Computing/anjana.git /tmp/pip-install-_yh2ll72/anjana_491194c09a4c460098d3f3529ca4717d
+[Push Docs Check/docs]   |   Cloning https://github.com/IFCA-Advanced-Computing/anjana.git to /tmp/pip-install-clvdfnvx/anjana_4ff78f9010694bb4b60bb43cb6ad696c
+[Push Docs Check/docs]   |   Running command git clone --filter=blob:none --quiet https://github.com/IFCA-Advanced-Computing/anjana.git /tmp/pip-install-clvdfnvx/anjana_4ff78f9010694bb4b60bb43cb6ad696c
 [Push Docs Check/docs]   |   Resolved https://github.com/IFCA-Advanced-Computing/anjana.git to commit 0b51f4c1fc7bcffb9bcb1b32fd8e8bcdc4cdbc24
 [Push Docs Check/docs]   |   Installing build dependencies: started
 [Push Docs Check/docs]   |   Installing build dependencies: finished with status 'done'
@@ -171,7 +170,8 @@ Command:
 [Push Docs Check/docs]   |   Preparing metadata (pyproject.toml): started
 [Push Docs Check/docs]   |   Preparing metadata (pyproject.toml): finished with status 'done'
 [Push Docs Check/docs]   | Requirement already satisfied: pycanon in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (1.0.3)
-[Push Docs Check/docs]   | Requirement already satisfied: yellowbrick in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (1.5)
+[Push Docs Check/docs]   | Requirement already satisfied: fairlearn in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (0.13.0)
+[Push Docs Check/docs]   | Requirement already satisfied: seaborn in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from deckard==0.95.0) (0.13.2)
 [Push Docs Check/docs]   | Requirement already satisfied: beartype==0.19.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from anjana @ git+https://github.com/IFCA-Advanced-Computing/anjana.git->deckard==0.95.0) (0.19.0)
 [Push Docs Check/docs]   | Requirement already satisfied: docutils==0.21.2 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from anjana @ git+https://github.com/IFCA-Advanced-Computing/anjana.git->deckard==0.95.0) (0.21.2)
 [Push Docs Check/docs]   | Collecting typing_extensions==4.12.2 (from anjana @ git+https://github.com/IFCA-Advanced-Computing/anjana.git->deckard==0.95.0)
@@ -400,14 +400,14 @@ Command:
 [Push Docs Check/docs]   | Requirement already satisfied: asttokens>=2.1.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from stack_data->ipython>=7.23.1->ipykernel->deckard==0.95.0) (3.0.1)
 [Push Docs Check/docs]   | Requirement already satisfied: pure-eval in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from stack_data->ipython>=7.23.1->ipykernel->deckard==0.95.0) (0.2.3)
 [Push Docs Check/docs]   | Downloading numpy-2.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (19.5 MB)
-[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 19.5/19.5 MB 27.4 MB/s  0:00:00
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 19.5/19.5 MB 31.6 MB/s  0:00:00
 [Push Docs Check/docs]   | Downloading typing_extensions-4.12.2-py3-none-any.whl (37 kB)
 [Push Docs Check/docs]   | Downloading fsspec-2026.2.0-py3-none-any.whl (202 kB)
 [Push Docs Check/docs]   | Building wheels for collected packages: deckard
 [Push Docs Check/docs]   |   Building wheel for deckard (pyproject.toml): started
 [Push Docs Check/docs]   |   Building wheel for deckard (pyproject.toml): finished with status 'done'
-[Push Docs Check/docs]   |   Created wheel for deckard: filename=deckard-0.95.0-py3-none-any.whl size=238103 sha256=8d6ef93fcd2dbbc1077c69b481d8e5e81b74df79a7006728dae27b6a4b196f04
-[Push Docs Check/docs]   |   Stored in directory: /tmp/pip-ephem-wheel-cache-oj1nziyh/wheels/52/50/a9/6421a98976b24aca6fdc80a76557f56d5320adc850a9fce4d0
+[Push Docs Check/docs]   |   Created wheel for deckard: filename=deckard-0.95.0-py3-none-any.whl size=238248 sha256=dc2ab574d0ab5e4e00bbf9113cae4e6431f7989f5bf2ab1e97122c17d4159963
+[Push Docs Check/docs]   |   Stored in directory: /tmp/pip-ephem-wheel-cache-au_736ec/wheels/52/50/a9/6421a98976b24aca6fdc80a76557f56d5320adc850a9fce4d0
 [Push Docs Check/docs]   | Successfully built deckard
 [Push Docs Check/docs]   | Installing collected packages: typing_extensions, numpy, fsspec, deckard
 [Push Docs Check/docs]   |   Attempting uninstall: typing_extensions
@@ -458,23 +458,130 @@ Command:
 [Push Docs Check/docs]   | Collecting MarkupSafe>=2.0 (from jinja2->torch)
 [Push Docs Check/docs]   |   Downloading markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
 [Push Docs Check/docs]   | Downloading torch-2.12.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl (192.2 MB)
-[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 192.2/192.2 MB 29.5 MB/s  0:00:06
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 192.2/192.2 MB 29.6 MB/s  0:00:06
 [Push Docs Check/docs]   | Downloading setuptools-70.2.0-py3-none-any.whl (930 kB)
-[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 930.8/930.8 kB 27.7 MB/s  0:00:00
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 930.8/930.8 kB 31.5 MB/s  0:00:00
 [Push Docs Check/docs]   | Downloading torchvision-0.27.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl (1.7 MB)
-[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 28.0 MB/s  0:00:00
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 31.0 MB/s  0:00:00
 [Push Docs Check/docs]   | Downloading torchaudio-2.11.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl (341 kB)
 [Push Docs Check/docs]   | Downloading fsspec-2026.4.0-py3-none-any.whl (203 kB)
 [Push Docs Check/docs]   | Downloading networkx-3.4.2-py3-none-any.whl (1.7 MB)
-[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 25.4 MB/s  0:00:00
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 27.2 MB/s  0:00:00
 [Push Docs Check/docs]   | Downloading pillow-12.2.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (7.1 MB)
-[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.1/7.1 MB 29.7 MB/s  0:00:00
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.1/7.1 MB 32.0 MB/s  0:00:00
 [Push Docs Check/docs]   | Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
-[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 29.7 MB/s  0:00:00
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 27.1 MB/s  0:00:00
 [Push Docs Check/docs]   | Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
-[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 24.1 MB/s  0:00:00
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 28.1 MB/s  0:00:00
 [Push Docs Check/docs]   | Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
 [Push Docs Check/docs]   | Downloading filelock-3.29.0-py3-none-any.whl (39 kB)
 [Push Docs Check/docs]   | Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
 [Push Docs Check/docs]   | Downloading markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (20 kB)
 [Push Docs Check/docs]   | Downloading numpy-2.2.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.8 MB)
+[Push Docs Check/docs]   |    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.8/16.8 MB 20.1 MB/s  0:00:00
+[Push Docs Check/docs]   | Installing collected packages: torchaudio, mpmath, typing-extensions, sympy, setuptools, pillow, numpy, networkx, MarkupSafe, fsspec, filelock, jinja2, torch, torchvision
+[Push Docs Check/docs]   |   Attempting uninstall: torchaudio
+[Push Docs Check/docs]   |     Found existing installation: torchaudio 2.11.0+cpu
+[Push Docs Check/docs]   |     Uninstalling torchaudio-2.11.0+cpu:
+[Push Docs Check/docs]   |       Successfully uninstalled torchaudio-2.11.0+cpu
+[Push Docs Check/docs]   |   Attempting uninstall: mpmath
+[Push Docs Check/docs]   |     Found existing installation: mpmath 1.3.0
+[Push Docs Check/docs]   |     Uninstalling mpmath-1.3.0:
+[Push Docs Check/docs]   |       Successfully uninstalled mpmath-1.3.0
+[Push Docs Check/docs]   |   Attempting uninstall: typing-extensions
+[Push Docs Check/docs]   |     Found existing installation: typing_extensions 4.12.2
+[Push Docs Check/docs]   |     Uninstalling typing_extensions-4.12.2:
+[Push Docs Check/docs]   |       Successfully uninstalled typing_extensions-4.12.2
+[Push Docs Check/docs]   |   Attempting uninstall: sympy
+[Push Docs Check/docs]   |     Found existing installation: sympy 1.14.0
+[Push Docs Check/docs]   |     Uninstalling sympy-1.14.0:
+[Push Docs Check/docs]   |       Successfully uninstalled sympy-1.14.0
+[Push Docs Check/docs]   |   Attempting uninstall: setuptools
+[Push Docs Check/docs]   |     Found existing installation: setuptools 70.2.0
+[Push Docs Check/docs]   |     Uninstalling setuptools-70.2.0:
+[Push Docs Check/docs]   |       Successfully uninstalled setuptools-70.2.0
+[Push Docs Check/docs]   |   Attempting uninstall: pillow
+[Push Docs Check/docs]   |     Found existing installation: pillow 12.2.0
+[Push Docs Check/docs]   |     Uninstalling pillow-12.2.0:
+[Push Docs Check/docs]   |       Successfully uninstalled pillow-12.2.0
+[Push Docs Check/docs]   |   Attempting uninstall: numpy
+[Push Docs Check/docs]   |     Found existing installation: numpy 2.0.2
+[Push Docs Check/docs]   |     Uninstalling numpy-2.0.2:
+[Push Docs Check/docs]   |       Successfully uninstalled numpy-2.0.2
+[Push Docs Check/docs]   |   Attempting uninstall: networkx
+[Push Docs Check/docs]   |     Found existing installation: networkx 3.4.2
+[Push Docs Check/docs]   |     Uninstalling networkx-3.4.2:
+[Push Docs Check/docs]   |       Successfully uninstalled networkx-3.4.2
+[Push Docs Check/docs]   |   Attempting uninstall: MarkupSafe
+[Push Docs Check/docs]   |     Found existing installation: MarkupSafe 3.0.3
+[Push Docs Check/docs]   |     Uninstalling MarkupSafe-3.0.3:
+[Push Docs Check/docs]   |       Successfully uninstalled MarkupSafe-3.0.3
+[Push Docs Check/docs]   |   Attempting uninstall: fsspec
+[Push Docs Check/docs]   |     Found existing installation: fsspec 2026.2.0
+[Push Docs Check/docs]   |     Uninstalling fsspec-2026.2.0:
+[Push Docs Check/docs]   |       Successfully uninstalled fsspec-2026.2.0
+[Push Docs Check/docs]   |   Attempting uninstall: filelock
+[Push Docs Check/docs]   |     Found existing installation: filelock 3.29.0
+[Push Docs Check/docs]   |     Uninstalling filelock-3.29.0:
+[Push Docs Check/docs]   |       Successfully uninstalled filelock-3.29.0
+[Push Docs Check/docs]   |   Attempting uninstall: jinja2
+[Push Docs Check/docs]   |     Found existing installation: Jinja2 3.1.6
+[Push Docs Check/docs]   |     Uninstalling Jinja2-3.1.6:
+[Push Docs Check/docs]   |       Successfully uninstalled Jinja2-3.1.6
+[Push Docs Check/docs]   |   Attempting uninstall: torch
+[Push Docs Check/docs]   |     Found existing installation: torch 2.12.0+cpu
+[Push Docs Check/docs]   |     Uninstalling torch-2.12.0+cpu:
+[Push Docs Check/docs]   |       Successfully uninstalled torch-2.12.0+cpu
+[Push Docs Check/docs]   |   Attempting uninstall: torchvision
+[Push Docs Check/docs]   |     Found existing installation: torchvision 0.27.0+cpu
+[Push Docs Check/docs]   |     Uninstalling torchvision-0.27.0+cpu:
+[Push Docs Check/docs]   |       Successfully uninstalled torchvision-0.27.0+cpu
+[Push Docs Check/docs]   | 
+[Push Docs Check/docs]   | ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+[Push Docs Check/docs]   | anjana 1.2.0 requires typing_extensions==4.12.2, but you have typing-extensions 4.15.0 which is incompatible.
+[Push Docs Check/docs]   | datasets 4.8.5 requires fsspec[http]<=2026.2.0,>=2023.1.0, but you have fsspec 2026.4.0 which is incompatible.
+[Push Docs Check/docs]   | pycanon 1.0.3 requires numpy==2.0.2, but you have numpy 2.2.6 which is incompatible.
+[Push Docs Check/docs]   | pycanon 1.0.3 requires typing_extensions==4.12.2, but you have typing-extensions 4.15.0 which is incompatible.
+[Push Docs Check/docs]   | Successfully installed MarkupSafe-3.0.3 filelock-3.29.0 fsspec-2026.4.0 jinja2-3.1.6 mpmath-1.3.0 networkx-3.4.2 numpy-2.2.6 pillow-12.2.0 setuptools-70.2.0 sympy-1.14.0 torch-2.12.0+cpu torchaudio-2.11.0+cpu torchvision-0.27.0+cpu typing-extensions-4.15.0
+[Push Docs Check/docs]   ✅  Success - Main install dependencies [42.175707209s]
+[Push Docs Check/docs] ⭐ Run Main build docs
+[Push Docs Check/docs]   🐳  docker exec cmd=[bash -e /var/run/act/workflow/3] user= workdir=
+[Push Docs Check/docs]   | Running stage 'notebook_seaborn':
+[Push Docs Check/docs]   | > jupyter nbconvert --to notebook --execute --inplace seaborn.ipynb
+[Push Docs Check/docs]   | [NbConvertApp] Converting notebook seaborn.ipynb to notebook
+[Push Docs Check/docs]   | [NbConvertApp] Writing 272574 bytes to seaborn.ipynb
+[Push Docs Check/docs]   | Updating lock file 'dvc.lock'
+[Push Docs Check/docs]   | 
+[Push Docs Check/docs]   | Running stage 'notebook_yellowbrick':
+[Push Docs Check/docs]   | > jupyter nbconvert --to notebook --execute --inplace yellowbrick.ipynb
+[Push Docs Check/docs]   | [NbConvertApp] Converting notebook yellowbrick.ipynb to notebook
+[Push Docs Check/docs]   | [NbConvertApp] Writing 2716054 bytes to yellowbrick.ipynb
+[Push Docs Check/docs]   | Updating lock file 'dvc.lock'
+[Push Docs Check/docs]   | 
+[Push Docs Check/docs]   | Running stage 'notebook_detector':
+[Push Docs Check/docs]   | > jupyter nbconvert --to notebook --execute --inplace detector.ipynb
+[Push Docs Check/docs]   | [NbConvertApp] Converting notebook detector.ipynb to notebook
+[Push Docs Check/docs]   | [NbConvertApp] Writing 81207 bytes to detector.ipynb
+[Push Docs Check/docs]   | Updating lock file 'dvc.lock'
+[Push Docs Check/docs]   | 
+[Push Docs Check/docs]   | Running stage 'notebook_art_attacks':
+[Push Docs Check/docs]   | > jupyter nbconvert --to notebook --execute --inplace art_attacks.ipynb
+[Push Docs Check/docs]   | [NbConvertApp] Converting notebook art_attacks.ipynb to notebook
+[Push Docs Check/docs]   | [NbConvertApp] Writing 226241 bytes to art_attacks.ipynb
+[Push Docs Check/docs]   | Updating lock file 'dvc.lock'
+[Push Docs Check/docs]   | 
+[Push Docs Check/docs]   | Running stage 'notebook_art_defenses':
+[Push Docs Check/docs]   | > jupyter nbconvert --to notebook --execute --inplace art_defenses.ipynb
+[Push Docs Check/docs]   | [NbConvertApp] Converting notebook art_defenses.ipynb to notebook
+[Push Docs Check/docs]   | [NbConvertApp] Writing 188643 bytes to art_defenses.ipynb
+[Push Docs Check/docs]   | Updating lock file 'dvc.lock'
+[Push Docs Check/docs]   | 
+[Push Docs Check/docs]   | Running stage 'notebook_sklearn':
+[Push Docs Check/docs]   | > jupyter nbconvert --to notebook --execute --inplace sklearn.ipynb
+[Push Docs Check/docs]   | [NbConvertApp] Converting notebook sklearn.ipynb to notebook
+[Push Docs Check/docs]   | [NbConvertApp] Writing 416433 bytes to sklearn.ipynb
+[Push Docs Check/docs]   | Updating lock file 'dvc.lock'
+[Push Docs Check/docs]   | 
+[Push Docs Check/docs]   | Running stage 'notebook_pytorch':
+[Push Docs Check/docs]   | > jupyter nbconvert --to notebook --execute --inplace pytorch.ipynb
+[Push Docs Check/docs]   | [NbConvertApp] Converting notebook pytorch.ipynb to notebook

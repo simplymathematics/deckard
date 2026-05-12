@@ -161,6 +161,6 @@ It represents a complete deckard research workflow from configuration -> executi
 # See also:
 
 [Installation help](../README.md)  
-[Full Documentation](../docs/build_docs.md)
+[Full Documentation](../docs/overview/build_docs.md)
 [Developer Documentation](../develop.md)
 [Jupyter Notebook Examples](../notebooks/README.md)

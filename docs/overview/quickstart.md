@@ -7,7 +7,7 @@ A conceptual summary of the package.
 ## [Installation](installation)
 Installation instructions for users.
 
-## [API](api/modules)
+## [API](../api/modules)
 Core package documentattion
 
 ## [Developer Docs](development)

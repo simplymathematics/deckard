@@ -117,18 +117,18 @@ suffixed with `_<alias>`.
 For full documentation, use the docs navigation:
 
 - Overview: {doc}`build_docs`
-- Landing page: {doc}`index`
+- Landing page: {doc}`/index`
 - Summary: {doc}`summary`
 
 API entry points:
 
-- API hub: {doc}`index`
-- Package overview: {doc}`api/modules`
-- Module and extension map: {doc}`api/modules`
+- API hub: {doc}`/index`
+- Package overview: {doc}`/api/modules`
+- Module and extension map: {doc}`/api/modules`
 
 Notebook entry point:
 
-- Notebook hub: {doc}`notebooks/index`
+- Notebook hub: {doc}`/notebooks/index`
 
 ### Example Configs
 

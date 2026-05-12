@@ -42,9 +42,9 @@ If Docker is installed but you see an error like `connect: no such file or direc
 
 # Layout
 Sphinx documentation entry points:
-- Landing page: [index](index)
-- Software modules + extensions index: [api/modules](api/modules)
-- Notebook guide index: [notebooks/index](notebooks/index)
+- Landing page: [index](../index)
+- Software modules + extensions index: [api/modules](../api/modules)
+- Notebook guide index: [notebooks/index](../notebooks/index)
 
 
 
@@ -54,9 +54,18 @@ Sphinx documentation entry points:
 docs/
 |- Makefile
 |- make.bat
-|- build_docs.md
 |- conf.py
 |- index.md
+|- overview/
+|  |- index.md
+|  |- build_docs.md
+|  |- quickstart.md
+|  |- summary.md
+|  |- installation.md
+|  |- development.md
+|  |- docker.md
+|  |- extensions.md
+|  `- changelog.md
 |- build/
 `- 
 	|- modules.md
@@ -94,9 +103,9 @@ docs/
 
 Related runnable example configs live under:
 
-- [examples/sklearn/config/attack](../examples/sklearn/config/attack)
-- [examples/sklearn/config/score](../examples/sklearn/config/score)
-- [examples/sklearn/config/plot](../examples/sklearn/config/plot)
+- [examples/sklearn/config/attack](../../examples/sklearn/config/attack)
+- [examples/sklearn/config/score](../../examples/sklearn/config/score)
+- [examples/sklearn/config/plot](../../examples/sklearn/config/plot)
 ```
 
 
@@ -108,7 +117,7 @@ From the repository root, install documentation dependencies with:
 pip install -e '.[docs]'
 ```
 
-This installs the full documentation stack as defined in the `[project.optional-dependencies] docs` section of [pyproject.toml](../pyproject.toml):
+This installs the full documentation stack as defined in the `[project.optional-dependencies] docs` section of [pyproject.toml](../../pyproject.toml):
 
 **Documentation dependencies:**
 
@@ -138,7 +147,7 @@ If you see navigation issues, upgrade with:
 
 ## Render the Docs
 
-From the [docs](./index.md) directory:
+From the [docs](../index.md) directory:
 
 ```bash
 make html
@@ -160,7 +169,7 @@ Optional: install sphinx-autobuild and run a live docs server.
 pip install sphinx-autobuild
 ```
 
-From the [docs](./index.md) directory:
+From the [docs](../index.md) directory:
 
 ```bash
 make autobuild

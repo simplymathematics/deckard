@@ -5,7 +5,7 @@
 :caption: Overview
 :hidden:
 
-quickstart
+overview/index
 ```
 
 
@@ -22,7 +22,7 @@ api/modules
 :caption: Extensions
 :hidden:
 
-extensions
+overview/extensions
 ```
 
 ```{toctree}
