@@ -6,6 +6,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   docs:
@@ -49,9 +51,24 @@ jobs:
       with:
         commit_message: Update docs
         branch: refactor-squashed
-        file_pattern: docs/build/html/** docs/notebooks/*.ipynb docs/notebooks/dvc.lock
+        file_pattern: docs/notebooks/*.ipynb docs/notebooks/dvc.lock
         commit_options: '--no-verify --signoff'
         repository: .
         commit_user_name: github-actions
         commit_user_email: github-actions@users.noreply.github.com
         commit_author: github-actions
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: docs/build/html
+
+  deploy:
+    needs: docs
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
