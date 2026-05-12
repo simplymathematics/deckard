@@ -1,8 +1,6 @@
-Plot
-====
+# Plot
 
-Plotting APIs
--------------
+## Plotting APIs
 
 The plotting package exposes two public entry points:
 
@@ -14,8 +12,7 @@ The plotting package exposes two public entry points:
    :undoc-members:
    :show-inheritance:
 
-Survival Plot Extension
------------------------
+## Survival Plot Extension
 
 Survival plotting configs are provided in a dedicated optional module.
 
@@ -27,8 +24,7 @@ Survival plotting configs are provided in a dedicated optional module.
    :members:
    :show-inheritance:
 
-Overview
---------
+## Overview
 
 Plot configs separate plotting intent from execution details. They support:
 
@@ -37,8 +33,7 @@ Plot configs separate plotting intent from execution details. They support:
 - shared style and rc parameter configuration
 - optional experiment-aware setup for plotting from prior outputs
 
-Examples
---------
+## Examples
 
 .. seealso::
 
@@ -49,15 +44,13 @@ Examples
    - :doc:`notebooks/seaborn.ipynb </notebooks/seaborn>`
    - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
-Internals
----------
+## Internals
 
 The plotting module routes to backend-specific config objects and ensures
 output files are written consistently. Yellowbrick plotting can hydrate
 experiment context lazily before rendering to avoid repeated setup.
 
-Troubleshooting
----------------
+## Troubleshooting
 
 - Confirm plotting dependencies are installed for the selected backend.
 - For Yellowbrick presets, ensure the selected ``plot=<name>`` exists under
@@ -67,8 +60,7 @@ Troubleshooting
 - Verify input score/data files exist and are in expected schema.
 - Use explicit output paths to avoid confusion in multirun directories.
 
-See also
-~~~~~~~~
+### See also
 
 * :doc:`experiment` — experiment orchestration and result generation
 * :doc:`score` — scoring framework that produces plotting data

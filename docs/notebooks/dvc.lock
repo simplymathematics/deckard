@@ -548,21 +548,21 @@ stages:
       size: 50118
     - path: sklearn.ipynb
       hash: md5
-      md5: a65c3007d08cb83997e9ed2569cb883a
-      size: 251020
+      md5: 9931e6efd95a4db98e9102f1d22104cc
+      size: 250812
     outs:
     - path: ./build/sklearn/experiment_data_lr.pkl
       hash: md5
-      md5: 0cf5dfac279c420cde67f4579a902d3d
+      md5: 33b1f5766d4304c65ed5f4f6045d9b16
       size: 68598
     - path: ./build/sklearn/experiment_model_lr.pkl
       hash: md5
-      md5: 0f2d498e30ae2bb95b55304b4920d6c6
+      md5: ec33112a3444f1a754016a397c5f73ea
       size: 2468
     - path: ./build/sklearn/experiment_scores_lr.json
       hash: md5
-      md5: 8a07dbed5a1afeea186f26f965eb0d04
-      size: 1286
+      md5: 462daefaf299ce2464dfc2cc6aaa6ccc
+      size: 1284
     - path: ./build/sklearn/plots/seaborn_line.png
       hash: md5
       md5: 7b30818258b7da02a9f70b7a6a690b77
@@ -622,17 +622,17 @@ stages:
       size: 50118
     - path: pytorch.ipynb
       hash: md5
-      md5: 3fda28d55560e3552948f360c4959d47
-      size: 253087
+      md5: feb184ca970974c91209fc6062c94122
+      size: 249553
     outs:
     - path: ./build/pytorch/checkpoints/
       hash: md5
-      md5: 7657b228cb06bbd750b030aa8192eba1.dir
-      size: 374389
+      md5: d234912d889b82ef8bfb92423888d1d1.dir
+      size: 374410
       nfiles: 8
     - path: ./build/pytorch/exp_model.pt
       hash: md5
-      md5: 369d46149f2d7e745893b17494878156
+      md5: fd1454e564e7419f137d6ea7f6d3b426
       size: 87469
     - path: ./build/pytorch/plots/pytorch_line.png
       hash: md5

@@ -1,5 +1,4 @@
-Utils
-=====
+# Utils
 
 The :mod:`deckard.utils` module contains shared utilities used across the
 public API, including stable config hashing, serialization helpers, dynamic
@@ -9,8 +8,7 @@ class loading, and parser generation helpers.
    :members:
    :show-inheritance:
 
-Overview
---------
+## Overview
 
 Utilities provide the shared primitives that keep deckard configs and runtime
 behavior deterministic across CLI and programmatic execution.
@@ -24,8 +22,7 @@ Key responsibilities include:
 - torch device resolution helpers for cpu/cuda/mps selection
 - ConfigStore-safe registration helpers for Hydra config groups
 
-Examples
---------
+## Examples
 
 .. seealso::
 
@@ -34,21 +31,18 @@ Examples
    - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
    - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
-Internals
----------
+## Internals
 
 The module emphasizes deterministic normalization (for hashing and persistence)
 and defensive loading behavior so configs are portable across environments.
 
-Troubleshooting
----------------
+## Troubleshooting
 
 - Verify dotted import paths when using dynamic class loading helpers.
 - Ensure serialized object/data formats match file extension and expected loader.
 - Check hash normalization inputs when comparing run identity across platforms.
 
-See also
-~~~~~~~~
+### See also
 
 * :doc:`experiment`
 * :doc:`file`

@@ -1,5 +1,4 @@
-Experiment
-==========
+# Experiment
 
 The :mod:`deckard.experiment` module contains the high-level orchestration
 entrypoints for end-to-end experiment execution.
@@ -8,8 +7,7 @@ entrypoints for end-to-end experiment execution.
    :members:
    :show-inheritance:
 
-Torch Extension
----------------
+## Torch Extension
 
 PyTorch-specific experiment orchestration is available via
 :class:`deckard.experiment.torch_experiment.TorchExperimentConfig` in the
@@ -18,8 +16,7 @@ optional :mod:`deckard.experiment.torch_experiment` module.
 Use this extension when you need PyTorch model/data orchestration while keeping
 the same high-level experiment lifecycle as :class:`deckard.experiment.ExperimentConfig`.
 
-Survival Extension
-------------------
+## Survival Extension
 
 Survival-specific experiment orchestration is split into a dedicated optional
 module.
@@ -28,8 +25,7 @@ module.
    :members:
    :show-inheritance:
 
-Overview
---------
+## Overview
 
 The experiment layer coordinates the full deckard workflow by composing:
 
@@ -47,8 +43,7 @@ Available experiment entrypoints:
 - :class:`deckard.experiment.torch_experiment.TorchExperimentConfig` (PyTorch)
 - :class:`deckard.experiment.survival.SurvivalExperimentConfig` (survival)
 
-Examples
---------
+## Examples
 
 .. seealso::
 
@@ -59,21 +54,18 @@ Examples
    - :doc:`notebooks/art_attacks.ipynb </notebooks/art_attacks>`
    - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
-Internals
----------
+## Internals
 
 The module resolves nested config objects, applies runtime overrides, and
 normalizes outputs for downstream scoring/serialization.
 
-Troubleshooting
----------------
+## Troubleshooting
 
 - Verify config paths and override keys when Hydra/OmegaConf resolution fails.
 - Ensure optional dependencies are installed for selected model/attack backends.
 - Check file output paths in :class:`deckard.file.FileConfig` if artifacts are missing.
 
-See also
-~~~~~~~~
+### See also
 
 * :doc:`data` — data configuration and loading
 * :doc:`model` — model configuration and training

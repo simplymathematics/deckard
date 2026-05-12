@@ -1,5 +1,4 @@
-Seaborn Visualization
-=====================
+# Seaborn Visualization
 
 deckard provides statistical visualization through Seaborn via the
 :class:`deckard.plot.seaborn_plots.SeabornPlotConfig` class. The Seaborn
@@ -9,8 +8,7 @@ Parquet, etc.).
 
 .. _seaborn-overview:
 
-Overview
---------
+## Overview
 
 The :mod:`deckard.plot.seaborn_plots` module provides:
 
@@ -22,8 +20,7 @@ The :mod:`deckard.plot.seaborn_plots` module provides:
 These configs are intended for post-hoc visualization of compiled experiment
 results rather than single-run diagnostics.
 
-Supported plot types
-~~~~~~~~~~~~~~~~~~~~
+### Supported plot types
 
 The ``plot_type`` field accepts:
 
@@ -34,8 +31,7 @@ The ``plot_type`` field accepts:
 - ``bar`` — bar plot (``seaborn.barplot``)
 - ``heatmap`` — heatmap (``seaborn.heatmap``)
 
-Examples
---------
+## Examples
 
 .. seealso::
 
@@ -44,8 +40,7 @@ Examples
   - :doc:`notebooks/seaborn.ipynb </notebooks/seaborn>`
   - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
 
-Troubleshooting
-~~~~~~~~~~~~~~~
+### Troubleshooting
 
 - **AssertionError on column names**: verify that ``x``, ``y``, ``hue``, and
   ``style`` match column names in the data file exactly.
@@ -54,8 +49,7 @@ Troubleshooting
 - **Import error**: install the optional plotting dependencies with
   ``pip install "deckard[plot]"``.
 
-See also
-~~~~~~~~
+### See also
 
 * :doc:`plot` — general plotting documentation
 * :doc:`yellowbrick` — single-run diagnostics (ROC, confusion matrix, etc.)

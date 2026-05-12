@@ -1,5 +1,4 @@
-PyTorch Integration
-===================
+# PyTorch Integration
 
 deckard provides native support for PyTorch models, data, and experiments through
 the optional PyTorch extension modules. This integration enables seamless use of
@@ -7,8 +6,7 @@ PyTorch-based workflows within the deckard framework.
 
 .. _pytorch-overview:
 
-Overview
---------
+## Overview
 
 The PyTorch integration consists of three main extension modules:
 
@@ -19,8 +17,7 @@ The PyTorch integration consists of three main extension modules:
 These modules are fully integrated with deckard's attack, defense, and scoring
 pipelines, allowing adversarial robustness studies on PyTorch models.
 
-Key Features
-~~~~~~~~~~~~
+### Key Features
 
 - **Device reconciliation**: automatic CPU/CUDA/MPS device selection and validation
 - **ART integration**: PyTorch models wrap as ART estimators for attack/defense
@@ -33,8 +30,7 @@ Key Features
 - **Standard scorers**: classification, regression, and attack metrics via
   :class:`deckard.score.DefaultClassifierConfig`, etc.
 
-Data Loading
-~~~~~~~~~~~~
+### Data Loading
 
 The :class:`~deckard.data.pytorch.PytorchDataConfig` extends :class:`deckard.data.DataConfig`
 with PyTorch-specific behavior:
@@ -44,8 +40,7 @@ with PyTorch-specific behavior:
 - Supports device placement for GPU-accelerated data loading
 - Integrates with :mod:`deckard.data.fairness` for stratified sampling
 
-Model Configuration
-~~~~~~~~~~~~~~~~~~~
+### Model Configuration
 
 The :class:`~deckard.model.pytorch.PytorchModelConfig` supports:
 
@@ -57,8 +52,7 @@ The :class:`~deckard.model.pytorch.PytorchModelConfig` supports:
 - Integration with ART's :class:`~art.estimators.classification.PyTorchClassifier`
   and :class:`~art.estimators.regression.PyTorchRegressor`
 
-Experiment Orchestration
-~~~~~~~~~~~~~~~~~~~~~~~~
+### Experiment Orchestration
 
 The :class:`~deckard.experiment.torch_experiment.TorchExperimentConfig` enforces:
 
@@ -67,8 +61,7 @@ The :class:`~deckard.experiment.torch_experiment.TorchExperimentConfig` enforces
 - Automatic device reconciliation to prevent device mismatch errors
 - Lifecycle management (training, evaluation, attack, scoring)
 
-Examples
---------
+## Examples
 
 .. seealso::
 
@@ -78,8 +71,7 @@ Examples
   - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
   - :doc:`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
 
-Troubleshooting
-~~~~~~~~~~~~~~~
+### Troubleshooting
 
 - **Device mismatch errors**: Verify all components use compatible devices. The
   :class:`~deckard.experiment.torch_experiment.TorchExperimentConfig` will raise
@@ -91,8 +83,7 @@ Troubleshooting
 - **ART compatibility**: Use ART-supported model architectures. Custom modules may
   need additional ART estimator wrapping.
 
-See also
-~~~~~~~~
+### See also
 
 * :doc:`data` — general data configuration including :mod:`deckard.data.pytorch`
 * :doc:`model` — general model configuration including :mod:`deckard.model.pytorch`

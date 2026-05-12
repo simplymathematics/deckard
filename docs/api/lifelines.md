@@ -1,5 +1,4 @@
-Lifelines Integration
-=====================
+# Lifelines Integration
 
 deckard provides specialized support for survival analysis through the optional
 Lifelines integration. This enables time-to-event modeling, risk stratification,
@@ -7,8 +6,7 @@ and adversarial robustness studies on survival models.
 
 .. _lifelines-overview:
 
-Overview
---------
+## Overview
 
 The Lifelines integration consists of four main modules:
 
@@ -20,8 +18,7 @@ The Lifelines integration consists of four main modules:
 These modules support adversarial robustness studies on time-to-event models,
 including attacks that perturb event times or event status.
 
-Key Features
-~~~~~~~~~~~~
+### Key Features
 
 - **Lifelines integration**: support for Kaplan-Meier, Cox PH, Weibull, and other
   lifelines estimators
@@ -32,8 +29,7 @@ Key Features
 - **Survival curves**: plotting and visualization of survival functions
 - **PyTorch integration**: optional deep learning survival models via extension
 
-Score Types Available
-~~~~~~~~~~~~~~~~~~~~~
+### Score Types Available
 
 The default survival scorer profile is
 :class:`deckard.score.survival.DefaultLifelinesConfig` and includes:
@@ -45,8 +41,7 @@ The default survival scorer profile is
 These are also provided in the sklearn example score profile at
 `examples/sklearn/config/score/survival.yaml <../examples/sklearn/config/score/survival.yaml>`_.
 
-Survival Data
-~~~~~~~~~~~~~
+### Survival Data
 
 The :class:`~deckard.data.survival.LifelinesDataConfig` extends
 :class:`deckard.data.DataConfig` with survival-specific fields:
@@ -65,8 +60,7 @@ Survival data mode support is explicit in
 - ``auxiliary_attack``: derive failures from attack outputs
 - ``optuna_db``: treat Optuna study outputs as time-to-event data
 
-Data pipeline and sampling support
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### Data pipeline and sampling support
 
 Because ``LifelinesDataConfig`` extends ``DataConfig`` (through the deckard data
 stack), survival workflows can still use the standard data pipeline and sampler
@@ -79,8 +73,7 @@ interfaces:
 This lets users mix survival-specific fields (duration/event/mode) with normal
 deckard preprocessing and split strategies.
 
-Survival Models
-~~~~~~~~~~~~~~~
+### Survival Models
 
 The :class:`~deckard.model.survival.SurvivalModelConfig` supports:
 
@@ -90,8 +83,7 @@ The :class:`~deckard.model.survival.SurvivalModelConfig` supports:
 - Partial hazard computation for attack generation
 - Concordance index validation
 
-Scoring and Metrics
-~~~~~~~~~~~~~~~~~~~
+### Scoring and Metrics
 
 The :mod:`deckard.score.survival` module provides:
 
@@ -105,8 +97,7 @@ When using :class:`deckard.model.survival.SurvivalModelConfig` without a custom
 scorer override, model scoring still emits calibration-oriented metrics (for
 example ``concordance``, ``ici``, ``e50``) where available.
 
-Defenses in survival workflows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### Defenses in survival workflows
 
 Survival models can use deckard's defense pipeline from
 :class:`deckard.model.defend.DefensePipelineConfig` just like other model types.
@@ -119,8 +110,7 @@ Typical usage pattern:
 - attach ``model.defense`` entries from `examples/sklearn/config/defense <../examples/sklearn/config/defense>`_
 - evaluate robustness with survival scores and optional attacks in the same run
 
-Survival experiment contract
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### Survival experiment contract
 
 ``SurvivalExperimentConfig`` requires these fields at construction time:
 
@@ -133,8 +123,7 @@ Survival experiment contract
 In YAML configs, ``model_type`` should be a fully-qualified import path so
 custom user-provided regression fitters can be imported reliably.
 
-Examples
---------
+## Examples
 
 .. seealso::
 
@@ -143,8 +132,7 @@ Examples
 
   - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
 
-Troubleshooting
-~~~~~~~~~~~~~~~
+### Troubleshooting
 
 - **Missing lifelines**: install via ``pip install lifelines`` or
   ``pip install "deckard[survival]"``
@@ -155,8 +143,7 @@ Troubleshooting
 - **Convergence warnings**: check for highly sparse or skewed durations; reduce
   penalizer or try different fit_method
 
-See also
-~~~~~~~~
+### See also
 
 * :doc:`data` — general data configuration including :mod:`deckard.data.survival`
 * :doc:`model` — general model configuration including :mod:`deckard.model.survival`

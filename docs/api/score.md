@@ -1,5 +1,4 @@
-Score
-=====
+# Score
 
 The :mod:`deckard.score` module defines scorer configuration objects used by
 model, attack, and experiment pipelines.
@@ -8,8 +7,7 @@ model, attack, and experiment pipelines.
    :members:
    :show-inheritance:
 
-Overview
---------
+## Overview
 
 The score layer provides configurable scorer wrappers so data/model/attack
 components can use a consistent scoring interface without hard-coding metric
@@ -54,8 +52,7 @@ These registrations are added through :func:`deckard.score.safe_store`, which
 wraps Hydra's ``ConfigStore.instance().store(...)`` and tolerates duplicate
 import-time registration attempts in tests and repeated imports.
 
-Examples
---------
+## Examples
 
 .. seealso::
 
@@ -67,8 +64,7 @@ Examples
    - :doc:`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
    - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
-Internals
----------
+## Internals
 
 Score configs normalize definitions into callable maps and support both
 classification and regression defaults through dedicated config classes.
@@ -101,8 +97,7 @@ can be reused across model scoring and attack scoring. The attack layer adapts
 the inputs and prefixes the outputs instead of requiring a separate metric
 implementation for every attack family.
 
-Troubleshooting
----------------
+## Troubleshooting
 
 - Ensure metric names map to importable scorer callables.
 - Check expected prediction shape/type for selected metrics.
@@ -120,8 +115,7 @@ Troubleshooting
    misleading values. Match the scorer profile to the task type.
 
 
-See also
-~~~~~~~~
+### See also
 
 * :doc:`model` — model configuration and evaluation
 * :doc:`data` — data configuration

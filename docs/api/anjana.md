@@ -1,21 +1,17 @@
-Anjana Integration
-==================
+# Anjana Integration
 
-Overview
---------
+## Overview
 
 The Anjana integration provides anonymization-aware data preparation and scoring
 for privacy-preserving machine-learning workflows.
 
-Notebook Example
-----------------
+## Notebook Example
 
 .. seealso::
 
    End-to-end examples are documented in :doc:`/notebooks/anjana`.
 
-API Reference
--------------
+## API Reference
 
 .. automodule:: deckard.data.anjana
    :members:
@@ -29,8 +25,7 @@ API Reference
    :members:
    :show-inheritance:
 
-Typical Workflow
-----------------
+## Typical Workflow
 
 1. Configure an Anjana-aware data pipeline.
 2. Train a compatible model configuration.

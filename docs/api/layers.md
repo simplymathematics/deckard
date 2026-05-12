@@ -1,5 +1,4 @@
-Layers
-======
+# Layers
 
 The :mod:`deckard.layers` package exposes CLI layer parser/main pairs and the
 registry used by the top-level CLI router.
@@ -8,8 +7,7 @@ registry used by the top-level CLI router.
    :members:
    :show-inheritance:
 
-Overview
---------
+## Overview
 
 Layers are thin orchestration entrypoints for higher-level tasks, such as:
 
@@ -22,8 +20,7 @@ Layers are thin orchestration entrypoints for higher-level tasks, such as:
 Each layer is registered in :data:`deckard.layers.layer_dict` as a
 ``[parser, main]`` pair consumed by the top-level CLI.
 
-Examples
---------
+## Examples
 
 .. seealso::
 
@@ -33,21 +30,18 @@ Examples
    - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
    - :doc:`notebooks/seaborn.ipynb </notebooks/seaborn>`
 
-Internals
----------
+## Internals
 
 Layer functions are intentionally small wrappers that parse runtime arguments,
 delegate to domain modules, and normalize outputs for CLI and automation.
 
-Troubleshooting
----------------
+## Troubleshooting
 
 - Ensure the requested subcommand exists in :data:`deckard.layers.layer_dict`.
 - Check config compatibility with the selected layer.
 - Verify optional dependencies for survival/plotting extensions are installed.
 
-See also
-~~~~~~~~
+### See also
 
 * :doc:`experiment`
 * :doc:`plot`

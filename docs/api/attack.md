@@ -1,8 +1,6 @@
-Attack
-======
+# Attack
 
-Overview
---------
+## Overview
 
 The attack module orchestrates adversarial example generation across supported
 backends and attack families.
@@ -14,8 +12,7 @@ It provides:
 - artifact persistence for attacked samples and labels
 - attack-aware scoring hooks used by experiment orchestration
 
-Examples
---------
+## Examples
 
 .. seealso::
 
@@ -25,8 +22,7 @@ Examples
    - :doc:`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
    - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
-API Reference
--------------
+## API Reference
 
 .. automodule:: deckard.attack
    :members:
@@ -40,15 +36,13 @@ API Reference
    :members:
    :show-inheritance:
 
-Troubleshooting
----------------
+## Troubleshooting
 
 - Ensure the selected attack backend matches the active model backend.
 - Confirm attack parameters are valid for the chosen ART/Fairlearn attack type.
 - Verify the attack receives compatible input shapes and labels.
 
-See also
-~~~~~~~~
+### See also
 
 * :doc:`experiment` — experiment orchestration
 * :doc:`model` — model configuration and execution

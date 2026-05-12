@@ -1,5 +1,4 @@
-Model
-============
+# Model
 
 The :mod:`~deckard.model` module defines the :class:`~deckard.model.ModelConfig` dataclass,
 which provides a complete pipeline for **model configuration, training, evaluation, and persistence**.
@@ -10,11 +9,9 @@ and integration with the :mod:`deckard.data` module.
    :members:
    :show-inheritance:
 
-Extensions
-----------
+## Extensions
 
-Fairness Extension
-~~~~~~~~~~~~~~~~~~
+### Fairness Extension
 
 The fairness extension provides fairness-aware model behavior, including
 group-sensitive fitting, scoring, and fairlearn defense wrappers.
@@ -23,8 +20,7 @@ group-sensitive fitting, scoring, and fairlearn defense wrappers.
    :members:
    :show-inheritance:
 
-Torch Extension
-~~~~~~~~~~~~~~~
+### Torch Extension
 
 The torch extension provides PyTorch-native model training, prediction, and
 scoring through a ``ModelConfig``-compatible API.
@@ -33,8 +29,7 @@ scoring through a ``ModelConfig``-compatible API.
    :members:
    :show-inheritance:
 
-Survival Extension
-------------------
+## Survival Extension
 
 Survival-specific experiment orchestration is split into a dedicated optional
 module.
@@ -43,8 +38,7 @@ module.
    :members:
    :show-inheritance:
 
-Overview
---------
+## Overview
 
 :class:`~deckard.model.ModelConfig` automates the following steps:
 
@@ -55,8 +49,7 @@ Overview
 * Hydra/YAML configuration for reproducibility and experiment management
 * CLI support for one-line model training and testing
 
-Model scoring mode
-~~~~~~~~~~~~~~~~~~
+### Model scoring mode
 
 ``ModelConfig`` supports split-aware scoring with ``score_mode`` set to one of:
 
@@ -67,8 +60,7 @@ Model scoring mode
 The experiment layer can propagate this mode automatically so model scoring is
 performed on the active split selected by experiment scoring policy.
 
-Supported frameworks
-~~~~~~~~~~~~~~~~~~~~
+### Supported frameworks
 Currently supports:
 
 - **scikit-learn** — via :class:`~deckard.model.ModelConfig`
@@ -76,8 +68,7 @@ Currently supports:
 - **Fairlearn (sklearn)** — via :class:`~deckard.model.fairness.FairlearnModelConfig`
 - **Fairlearn (PyTorch)** — via :class:`~deckard.model.fairness.FairlearnPytorchModelConfig`
 
-Examples
---------
+## Examples
 
 .. seealso::
 
@@ -89,21 +80,17 @@ Examples
    - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
    - :doc:`notebooks/art_defenses.ipynb </notebooks/art_defenses>`
 
-Internals
----------
+## Internals
 
-Timing and logging
-~~~~~~~~~~~~~~~~~~
+### Timing and logging
 All major operations (training, prediction, scoring, saving/loading) record wall-clock time
 and log via Python’s ``logging`` module.
 
-Scoring
-~~~~~~~
+### Scoring
 * For classifiers: accuracy, precision, recall, and F1 score.
 * For regressors: MSE, RMSE, and MAE.
 
-Persistence
-~~~~~~~~~~~
+### Persistence
 Use the public model persistence interfaces:
 
 - ``model.save(filepath)``
@@ -127,8 +114,7 @@ notebook for executed save/load examples.
 Public API example (PyTorch save/load): see the :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
 notebook for executed PyTorch checkpoint save/load patterns.
 
-Pre-trained torch models
-^^^^^^^^^^^^^^^^^^^^^^^^
+#### Pre-trained torch models
 
 There are two supported patterns:
 
@@ -141,8 +127,7 @@ If you want inference-only behavior from a pre-trained checkpoint, load it via
 ``load`` and then call the model with ``model_file``/prediction outputs as
 needed, without requiring private methods.
 
-Troubleshooting
----------------
+## Troubleshooting
 
 * **Model not fitted error** — train the model before calling ``_save_model`` or predictions.
 * **Hydra config not found** — ensure the YAML file path is valid or use inline overrides.
@@ -151,8 +136,7 @@ Troubleshooting
 * **Probability prediction errors** — set ``--probability`` only for models that support ``predict_proba()``.
 
 
-See also
-~~~~~~~~
+### See also
 * :doc:`data` — data configuration and loading
 * :doc:`experiment` — experiment orchestration
 * :doc:`attack` — attack configuration

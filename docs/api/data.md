@@ -1,5 +1,4 @@
-Data
-===========
+# Data
 
 The :mod:`deckard.data` module defines the :class:`~deckard.data.DataConfig` dataclass,
 which provides a unified interface for loading, generating, preprocessing, and
@@ -10,8 +9,7 @@ It supports both real and synthetic datasets, as well as YAML/Hydra-based config
    :members:
    :show-inheritance:
 
-Data Sampling
--------------
+## Data Sampling
 
 The :mod:`deckard.data.sample` module provides pluggable sampling strategies via :class:`~deckard.data.sample.BaseSampler`
 for robust train/test/validation splits.
@@ -20,23 +18,19 @@ for robust train/test/validation splits.
    :members:
    :show-inheritance:
 
-Data Preprocessing Pipelines
------------------------------
+## Data Preprocessing Pipelines
 
 The :class:`~deckard.data.DataPipelineConfig` wraps scikit-learn's :class:`~sklearn.pipeline.Pipeline`
 to enable configurable feature preprocessing with timing instrumentation.
 
-Extensions
-----------
+## Extensions
 
-Pipeline Extension
-~~~~~~~~~~~~~~~~~~
+### Pipeline Extension
 
 deckard exposes a configurable pipeline layer for data preprocessing via
 :class:`~deckard.data.DataPipelineConfig`.
 
-Fairness Extension
-~~~~~~~~~~~~~~~~~~
+### Fairness Extension
 
 The fairness extension adds group-aware sampling and fairness metrics with
 ``fairlearn`` integration.
@@ -45,8 +39,7 @@ The fairness extension adds group-aware sampling and fairness metrics with
    :members:
    :show-inheritance:
 
-Torch Extension
-~~~~~~~~~~~~~~~
+### Torch Extension
 
 The torch extension provides dataset loading and sampling for PyTorch and
 torchvision-backed workflows.
@@ -55,8 +48,7 @@ torchvision-backed workflows.
    :members:
    :show-inheritance:
 
-Survival Extension
-------------------
+## Survival Extension
 
 Survival-specific experiment orchestration is split into a dedicated optional
 module.
@@ -65,8 +57,7 @@ module.
    :members:
    :show-inheritance:
 
-Overview
---------
+## Overview
 
 :class:`~deckard.data.DataConfig` can load well-known datasets such as:
 
@@ -78,8 +69,7 @@ Overview
 It also supports **reproducible splits** via `train_test_split` with optional stratification,
 timing instrumentation, and hashing for config tracking.
 
-Data scoring mode
-~~~~~~~~~~~~~~~~~
+### Data scoring mode
 
 ``DataConfig`` supports mode-aware dataset scoring via ``score_mode`` with
 values:
@@ -93,8 +83,7 @@ values:
 selection (``_X`` / ``_y``), while split modes run diagnostics on the selected
 partition.
 
-Examples
---------
+## Examples
 
 .. seealso::
 
@@ -105,25 +94,21 @@ Examples
    - :doc:`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
    - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
-Internals
----------
+## Internals
 
-Timing and logging
-~~~~~~~~~~~~~~~~~~
+### Timing and logging
 The data loading and splitting process is timed, and the duration is stored in
 the `_data_load_time` and `_data_sample_time` attributes of the :class:`~deckard.data.DataConfig` instance. This can be useful for comparing the run-time efficiency of different datasets of various methods. 
 Logging is performed at key steps.
 
 
-Troubleshooting
----------------
+## Troubleshooting
 If you encounter issues with dataset loading, ensure that:
 - You have an active internet connection for datasets fetched from OpenML.
 - The specified CSV file path is correct and the file is accessible.
 - Otherwise, use one of the built-in datasets or synthetic data generation options.
 
-See also
-~~~~~~~~
+### See also
 * :doc:`model` — model configuration and training
 * :doc:`experiment` — experiment orchestration
 * :doc:`attack` — attack configuration

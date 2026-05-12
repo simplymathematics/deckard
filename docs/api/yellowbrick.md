@@ -1,5 +1,4 @@
-Yellowbrick Visualization
-=========================
+# Yellowbrick Visualization
 
 deckard provides single-run model diagnostics through the Yellowbrick library
 via :class:`deckard.plot.yellowbrick_plots.YellowbrickPlotConfig`. The
@@ -9,8 +8,7 @@ from the trained model and prepared dataset.
 
 .. _yellowbrick-overview:
 
-Overview
---------
+## Overview
 
 The :mod:`deckard.plot.yellowbrick_plots` module provides:
 
@@ -43,8 +41,7 @@ Yellowbrick plots are selected by ``plot_type`` and are grouped by category:
   ``learning_curve``, ``validation_curve``, ``cv_scores``,
   ``feature_importances``, ``rfecv``, ``dropping_curve``
 
-Examples
---------
+## Examples
 
 .. seealso::
 
@@ -53,8 +50,7 @@ Examples
   - :doc:`notebooks/yellowbrick.ipynb </notebooks/yellowbrick>`
   - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
 
-Troubleshooting
-~~~~~~~~~~~~~~~
+### Troubleshooting
 
 - **Import error**: install yellowbrick with
   ``pip install yellowbrick`` or ``pip install "deckard[plot]"``.
@@ -68,8 +64,7 @@ Troubleshooting
 - **Headless environments**: set ``matplotlib.use("Agg")`` before importing
   pyplot to avoid display errors in CI or server contexts.
 
-See also
-~~~~~~~~
+### See also
 
 * :doc:`plot` — general plotting documentation
 * :doc:`seaborn` — multi-run aggregation visualization

@@ -1,12 +1,10 @@
-Fairlearn Integration
-=======================
+# Fairlearn Integration
 
 deckard provides support for fairness-aware machine learning through the optional Fairlearn extension modules. This integration enables fairness evaluation and mitigation workflows within the deckard framework.
 
 .. _fairlearn-overview:
 
-Overview
---------
+## Overview
 
 The Fairlearn integration consists of three main extension modules:
 
@@ -16,8 +14,7 @@ The Fairlearn integration consists of three main extension modules:
 
 These modules support fairness analysis and mitigation by quantifying and reducing bias in model predictions.
 
-Key Features
-~~~~~~~~~~~~
+### Key Features
 
 - **Fairness metrics**: evaluate model bias and group fairness
 - **Mitigation strategies**: configurable pre-, in-, and post-processing mitigators
@@ -25,8 +22,7 @@ Key Features
 - **ART compatibility**: work alongside standard ART attacks and defenses
 - **Flexible backends**: support sklearn, PyTorch, and custom model types
 
-Score Types Available
-~~~~~~~~~~~~~~~~~~~~~
+### Score Types Available
 
 Fairness scoring in deckard is provided by :mod:`deckard.score.fairness` with the default scorer profiles:
 
@@ -42,8 +38,7 @@ These include:
 
 The scorers operate on pandas DataFrame-backed data and can resolve context from ``y_pred`` or from ``data._X`` together with sensitive attribute configuration.
 
-Data Configuration
-~~~~~~~~~~~~~~~~~~
+### Data Configuration
 
 The :class:`~deckard.data.fairness.FairlearnDataConfig` extends :class:`deckard.data.DataConfig` with fairness parameters:
 
@@ -52,8 +47,7 @@ The :class:`~deckard.data.fairness.FairlearnDataConfig` extends :class:`deckard.
 - Track group-wise statistics and fairness metrics
 - Optional validation dataset for fairness measurement
 
-Data pipeline and preprocessing support
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### Data pipeline and preprocessing support
 
 ``FairlearnDataConfig`` extends ``DataPipelineConfig``, so it keeps standard deckard pipeline capabilities while adding fairness hooks:
 
@@ -63,8 +57,7 @@ Data pipeline and preprocessing support
 - group-aware sampling and stratification
 - standard split/k-fold/shuffle sampling through the base data stack
 
-Model Configuration
-~~~~~~~~~~~~~~~~~~~
+### Model Configuration
 
 The :class:`~deckard.model.fairness.FairlearnModelConfig` supports:
 
@@ -76,16 +69,14 @@ The :class:`~deckard.model.fairness.FairlearnModelConfig` supports:
 
 ``FairlearnModelConfig`` wraps ``ModelConfig`` behavior and can still use deckard's general model defenses via ``model.defense`` (ART preprocessors, postprocessors, trainers, and detector pipelines) where compatible with the selected backend/model.
 
-Scoring and Metrics
-~~~~~~~~~~~~~~~~~~~
+### Scoring and Metrics
 
 The :mod:`deckard.score.fairness` module provides:
 
 - :class:`~deckard.score.fairness.DefaultFairnessDataScoreConfig` — data-level fairness metrics (group parity, bias)
 - :class:`~deckard.score.fairness.DefaultFairnessModelScoreConfig` — model-level fairness and utility metrics (accuracy, group fairness)
 
-Examples
---------
+## Examples
 
 .. seealso::
 
@@ -95,16 +86,14 @@ Examples
    - :doc:`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
    - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
-Troubleshooting
-~~~~~~~~~~~~~~~
+### Troubleshooting
 
 - **No sensitive features**: Ensure sensitive_features list is non-empty and matches actual column names in the data.
 - **Mitigation ineffective**: Try a different mitigation_strategy or adjust group_names.
 - **Fairness metric not improving**: Tune fairness_loss_weight or try a different fairness_metric.
 - **Memory issues with large datasets**: Consider batch-wise mitigation or sampling.
 
-See also
-~~~~~~~~
+### See also
 
 * :doc:`data` — general data configuration including :mod:`deckard.data.fairness`
 * :doc:`model` — general model configuration including :mod:`deckard.model.fairness`

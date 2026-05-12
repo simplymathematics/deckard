@@ -35,25 +35,24 @@ docs/
 |- make.bat
 |- build_docs.md
 |- conf.py
-|- index.rst
+|- index.md
 |- build/
 `- 
-	|- modules.rst
-	|- index.rst
-	|- modules.rst
-	|- attack.rst
-	|- data.rst
-	|- detector.rst
-	|- experiment.rst
-	|- file.rst
-	|- layers.rst
-	|- lifelines.rst
-	|- model.rst
-	|- pytorch.rst
-	|- plot.rst
-	|- score.rst
-	|- seaborn.rst
-	`- utils.rst
+	|- modules.md
+	|- index.md
+	|- attack.md
+	|- data.md
+	|- detector.md
+	|- experiment.md
+	|- file.md
+	|- layers.md
+	|- lifelines.md
+	|- model.md
+	|- pytorch.md
+	|- plot.md
+	|- score.md
+	|- seaborn.md
+	`- utils.md
 - docs/notebooks/
 	├── anjana.ipynb
 	├── art_attacks.ipynb
@@ -118,7 +117,7 @@ If you see navigation issues, upgrade with:
 
 ## Render the Docs
 
-From the [docs](./index.rst) directory:
+From the [docs](./index.md) directory:
 
 ```bash
 make html
@@ -140,10 +139,45 @@ Optional: install sphinx-autobuild and run a live docs server.
 pip install sphinx-autobuild
 ```
 
-From the [docs](./index.rst) directory:
+From the [docs](./index.md) directory:
 
 ```bash
-sphinx-autobuild . build/html
+make autobuild
 ```
 
 Default preview URL: http://127.0.0.1:8000
+
+The `autobuild` target integrates the new DVC-backed notebook workflow:
+
+- `make notebooks` runs first as a `sphinx-autobuild` pre-build step.
+- DVC decides which notebook stages actually need to rerun based on `docs/notebooks/dvc.yaml`.
+- Sphinx then renders with `nb_execution_mode=off`, so MyST-NB does not execute notebooks a second time.
+
+This gives you dependency tracking, cache reuse, and reproducible notebook outputs while keeping live preview updates.
+
+Useful variants:
+
+```bash
+# Rebuild only one notebook stage before each live refresh
+make autobuild DVC_STAGE=notebook_pytorch
+
+# Choose a different preview port if 8000 is already in use
+make autobuild AUTOBUILD_PORT=8001
+
+# Pass extra DVC flags through to the pre-build step
+make autobuild DVC_REPRO_ARGS="--force"
+```
+
+If you prefer to run `sphinx-autobuild` directly, use the equivalent command:
+
+```bash
+sphinx-autobuild \
+	-j auto \
+	--port 8000 \
+	--pre-build "make notebooks" \
+	--watch ../deckard \
+	--watch ../examples \
+	--watch notebooks/dvc.yaml \
+	-D nb_execution_mode=off \
+	. build/html
+```
