@@ -91,8 +91,6 @@ ipython_config.py
 *.sqlite3
 *.sqlite
 *.db
-# env
-env/
 
 # Python egg metadata
 **/*.egg-info/*
@@ -102,7 +100,9 @@ env/
 
 # envs
 env/
-
+env/
+env310/*
+.venv-*
 
 # random pdfs
 *.pdf
@@ -112,14 +112,13 @@ env/
 # screenlog
 screenlog.*
 
-# env310
-env310/*
+
 # dvc read-write protect files in  the examples folder
 old_examples
+old_papers
 
 
 
 build/lib/deckard/*
 docs/build/
 .python-version
-.venv-*
