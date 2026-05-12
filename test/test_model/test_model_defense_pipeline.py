@@ -625,7 +625,7 @@ def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
 
     custom_art = type("CustomArt", (), {})
     monkeypatch.setitem(
-        defend_module.classifier_dict,
+        defend_module._get_art_symbols()["classifier_dict"],
         "LogisticRegression",
         custom_art,
     )

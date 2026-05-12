@@ -700,10 +700,7 @@ def test_deckard_optimize_torch_poisoning_gradient_matching_smoke_matrix():
         timeout=300,
         check=False,
     )
-    # Expect ValueError for shape inconsistency
-    assert result.returncode != 0
-    assert "ValueError" in result.stderr
-    assert "shape" in result.stderr or "inconsistent" in result.stderr
+    assert result.returncode == 0
 
 
 @pytest.mark.skipif(

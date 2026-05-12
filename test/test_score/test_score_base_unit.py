@@ -271,6 +271,7 @@ def test_scorer_dict_call_mode_and_probability_routing(tmp_path, monkeypatch):
         test_predictions=None,
         training_predictions=np.array([1, 0]),
         val_predictions=np.array([1, 1]),
+        _model=Estimator(),
         get_model=lambda: Estimator(),
     )
     attack = SimpleNamespace(
@@ -349,7 +350,7 @@ def test_scorer_dict_attack_placeholder_and_missing_probability_context():
             ),
         },
     )
-    _ = SimpleNamespace(_attack="resolved")
+    SimpleNamespace(_attack="resolved")
 
     with pytest.raises(ValueError, match="requires probabilities from predict_proba"):
         scorer(

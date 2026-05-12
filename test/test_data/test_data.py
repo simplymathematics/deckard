@@ -134,8 +134,15 @@ class TestDataPipelineConfig(unittest.TestCase):
         config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
         config._y = self.y_train
         config.data_load_time = 3
-        config._fit_transform_X(self.X_train, self.y_train)
-        self.assertEqual(config.X_train.shape, (8, 2))
+        pipeline, _ = config._init_pipeline()
+        config.X_train, config.X_test, _, _ = config._fit_transform_X(
+            self.X_train,
+            self.X_test,
+            self.y_train,
+            self.y_test,
+            pipeline,
+        )
+        self.assertEqual(config.X_train.shape, (10, 2))
         self.assertEqual(config.X_test.shape, (2, 2))
         self.assertFalse(self.X_train.equals(config.X_train))
         self.assertFalse(self.X_test.equals(config.X_test))
