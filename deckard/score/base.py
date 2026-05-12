@@ -182,10 +182,9 @@ def _resolve_yt_yp(
 ) -> tuple[Any, Any]:
     """Resolve y_true and y_pred from mode + context when not explicitly provided.
 
-    This is the single canonical resolver used by :meth:`ScorerDictConfig.__call__`
-    and any mixin overrides (e.g. ``_FairnessScorerMixin``).  Callers are
-    responsible for pre-validating that the required context objects (data,
-    model, attack) are present before calling this function.
+    This mirrors the resolution logic inside ``ScorerDictConfig.__call__`` so that
+    mixin overrides (e.g. ``_FairnessScorerMixin``) can access the resolved values
+    after delegating to ``super().__call__()``.
     """
     if y_pred is not None:
         return y_true, y_pred
@@ -200,15 +199,9 @@ def _resolve_yt_yp(
         if model is not None:
             y_pred = getattr(model, "training_predictions", None)
     elif mode == "attack":
-        if attack is not None:
-            y_true = getattr(attack, "attacked_labels", None)
-        if y_true is None and data is not None:
-            y_test = getattr(data, "y_test", None)
-            if y_test is None:
-                raise ValueError(
-                    "attack mode requires attack.attacked_labels or data.y_test",
-                )
-            attack_size = getattr(attack, "attack_size", None) if attack is not None else None
+        if data is not None and attack is not None:
+            y_test = np.asarray(getattr(data, "y_test", y_true))
+            attack_size = getattr(attack, "attack_size", None)
             y_true = y_test[:attack_size] if attack_size is not None else y_test
         if attack is not None:
             y_pred = getattr(attack, "attack_predictions", None)
@@ -218,9 +211,7 @@ def _resolve_yt_yp(
         if model is not None:
             y_pred = getattr(model, "val_predictions", None)
     elif mode == "attack-val":
-        if attack is not None:
-            y_true = getattr(attack, "attacked_labels", None)
-        if y_true is None and data is not None:
+        if data is not None:
             y_true = getattr(data, "y_val", y_true)
         if attack is not None:
             y_pred = getattr(attack, "attack_predictions", None)
@@ -229,42 +220,6 @@ def _resolve_yt_yp(
             y_true = getattr(data, "_y", y_true)
             y_pred = getattr(data, "_X", y_pred)
     return y_true, y_pred
-
-
-def resolve_mode_features(mode: str, data: "DataConfig | None") -> Any:
-    """Return the feature matrix X for a given scoring mode.
-
-    This is the single canonical feature-array resolver.  It is used by
-    :meth:`ScorerDictConfig._resolve_mode_features` and any other caller
-    that needs the raw X array for a split without loading labels.
-    """
-    if data is None:
-        return None
-    if mode == "train":
-        return getattr(data, "X_train", None)
-    if mode == "test":
-        return getattr(data, "X_test", None)
-    if mode in {"val", "attack-val"}:
-        return getattr(data, "X_val", None)
-    if mode == "pre-sample":
-        return getattr(data, "_X", None)
-    return None
-
-
-def resolve_mode_prefix(mode: str) -> str:
-    """Return the canonical score-key prefix for a scoring mode.
-
-    ``"train"`` -> ``"training_"``, ``"attack"`` -> ``"attack_"``,
-    all other modes -> ``""``.
-
-    Note: model-level scoring that needs ``"validation_"`` for the val split
-    should check ``mode == "val"`` explicitly after calling this function.
-    """
-    if mode == "train":
-        return "training_"
-    if mode == "attack":
-        return "attack_"
-    return ""
 
 
 @dataclass
@@ -540,7 +495,17 @@ class ScorerDictConfig(ConfigBase):
 
     @staticmethod
     def _resolve_mode_features(mode, data):
-        return resolve_mode_features(mode, data)
+        if data is None:
+            return None
+        if mode == "train":
+            return getattr(data, "X_train", None)
+        if mode == "test":
+            return getattr(data, "X_test", None)
+        if mode in {"val", "attack-val"}:
+            return getattr(data, "X_val", None)
+        if mode == "pre-sample":
+            return getattr(data, "_X", None)
+        return None
 
     @staticmethod
     def _is_classification_labels(y):
@@ -571,35 +536,23 @@ class ScorerDictConfig(ConfigBase):
                 estimator = None
         if estimator is None:
             estimator = getattr(model, "_model", None)
-        predict_proba = None
-        
-        # Try probability and prediction methods on the model. If explicit
-        # probability methods fail, fall through to predict/_predict so torch
-        # logits can still be normalized downstream.
-        for proba_method in ("predict_proba", "_predict_proba", "predict", "_predict"):
+
+        # Try predict_proba or _predict_proba on the model
+        for proba_method in ("predict_proba", "_predict_proba"):
             predict_proba = getattr(model, proba_method, None)
             if callable(predict_proba):
-                try:
-                    return predict_proba(X)
-                except (AttributeError, ValueError, NotImplementedError):
-                    continue
-        
+                return predict_proba(X)
         # Try estimator if available
         estimator = getattr(model, "_model", None)
         if estimator is not None:
-            for proba_method in ("predict_proba", "_predict_proba", "predict", "_predict"):
+            for proba_method in ("predict_proba", "_predict_proba"):
                 predict_proba = getattr(estimator, proba_method, None)
                 if callable(predict_proba):
-                    try:
-                        return predict_proba(X)
-                    except (AttributeError, ValueError, NotImplementedError):
-                        continue
-        
-        if predict_proba is None:
-            # Fallback: try predict or _predict
-            predict_fn = getattr(model, "predict", getattr(model, "_predict", None))
-            if not callable(predict_fn):
-                raise ValueError(f"Model must have a predict or predict_proba function for probability metrics. Got model type: {type(model)}")
+                    return predict_proba(X)
+        # Fallback: try predict or _predict
+        predict_fn = getattr(model, "predict", getattr(model, "_predict", None))
+        if not callable(predict_fn):
+            raise ValueError("Model must have a predict or predict_proba function for probability metrics.")
         # If y_pred is provided and looks like probabilities, use it
         if y_pred is not None:
             arr = np.asarray(y_pred)
@@ -656,21 +609,47 @@ class ScorerDictConfig(ConfigBase):
                     "If y_pred is provided, y_true must also be provided.",
                 )
         else:
-            # Validate required context before resolving.
-            if mode in ("test", "pre-sample"):
+            if mode == "test":
                 assert data is not None
-            elif mode in ("train", "val"):
+                y_true = data.y_test
+                y_pred = getattr(model, "test_predictions", None)
+                if y_pred is None:
+                    y_pred = getattr(model, "predictions", None)
+            elif mode == "train":
                 assert data is not None and model is not None
-            elif mode in ("attack", "attack-val"):
+                y_true = data.y_train
+                y_pred = model.training_predictions
+            elif mode == "attack":
                 assert data is not None and attack is not None
+                y_true = getattr(attack, "attacked_labels", None)
+                if y_true is None:
+                    y_test = getattr(data, "y_test", None)
+                    if y_test is None:
+                        raise ValueError(
+                            "attack mode requires attack.attacked_labels or data.y_test",
+                        )
+                    y_true = y_test[: attack.attack_size]
+                y_pred = attack.attack_predictions
+            elif mode == "val":
+                assert data is not None and model is not None
+                y_true = data.y_val
+                y_pred = model.val_predictions
+            elif mode == "attack-val":
+                assert data is not None and attack is not None
+                y_true = getattr(attack, "attacked_labels", None)
+                if y_true is None:
+                    y_true = data.y_val
+                y_pred = attack.attack_predictions
+            elif mode == "pre-sample":
+                assert data is not None
+                y_true = getattr(data, "_y", None)
+                y_pred = getattr(data, "_X", None)
+                if y_true is None or y_pred is None:
+                    raise ValueError(
+                        "pre-sample mode requires data._X and data._y to be loaded",
+                    )
             elif y_true is None:
                 raise AssertionError("y_true must be provided if mode is None")
-            # Single canonical resolver for all modes.
-            y_true, y_pred = _resolve_yt_yp(mode, data, model, attack, None, None)
-            if mode == "pre-sample" and (y_true is None or y_pred is None):
-                raise ValueError(
-                    "pre-sample mode requires data._X and data._y to be loaded",
-                )
 
         if attack is not None:
             for key, value in kwargs.items():
@@ -691,8 +670,11 @@ class ScorerDictConfig(ConfigBase):
             raise ValueError("ScorerDictConfig must have at least one scorer defined; got empty scorers dict.")
 
         for key, scorer in self.scorers.items():
-            prefix = resolve_mode_prefix(mode) if mode is not None else ""
-            scored_key = f"{prefix}{key}"
+            scored_key = key
+            if mode == "train":
+                scored_key = f"training_{key}"
+            elif mode == "attack":
+                scored_key = f"attack_{key}"
             if results.get(scored_key) is None:
                 metric_input = y_pred
                 if scorer.needs_proba:

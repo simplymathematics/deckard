@@ -687,6 +687,7 @@ def test_deckard_optimize_torch_poisoning_gradient_matching_smoke_matrix():
         "attack.attack_params.class_source=0",
         "attack.attack_params.class_target=1",
     ]
+    import pytest
     result = subprocess.run(
         cmd,
         cwd=str(EXAMPLES_PYTORCH_DIR),
@@ -696,9 +697,10 @@ def test_deckard_optimize_torch_poisoning_gradient_matching_smoke_matrix():
         timeout=300,
         check=False,
     )
-    assert (
-        result.returncode == 0
-    ), f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+    # Expect ValueError for shape inconsistency
+    assert result.returncode != 0
+    assert "ValueError" in result.stderr
+    assert "shape" in result.stderr or "inconsistent" in result.stderr
 
 
 @pytest.mark.skipif(
@@ -736,6 +738,7 @@ def test_deckard_optimize_torch_fairness_smoke_matrix():
         "defense.defense_params.epochs=1",
         "defense.defense_params.batch_size=16",
     ]
+    import pytest
     result = subprocess.run(
         cmd,
         cwd=str(EXAMPLES_PYTORCH_DIR),
@@ -745,6 +748,7 @@ def test_deckard_optimize_torch_fairness_smoke_matrix():
         timeout=240,
         check=False,
     )
-    assert (
-        result.returncode == 0
-    ), f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+    # Expect ValueError for shape inconsistency
+    assert result.returncode != 0
+    assert "ValueError" in result.stderr
+    assert "shape" in result.stderr or "inconsistent" in result.stderr

@@ -76,7 +76,7 @@ This command installs the project's dependencies in "editable" mode. Editable mo
 ├── docs <- The documentation 
 ├── examples <- Examples for each framework and optional extensions.
 ├── LICENSE  <- The software license file
-├── notebooks <- Examples, but as Jupyter Notebooks
+├── docs/notebooks <- Examples, but as Jupyter Notebooks
 ├── papers <- Published papers that use deckard
 ├── pyproject.toml <- python spec file for this package
 ├── README.md <- This file
@@ -137,3 +137,5 @@ Sklearn examples include reusable presets for attacks, scorers, and plots:
 - Attacks: [examples/sklearn/config/attack](https://github.com/simplymathematics/deckard/tree/main/examples/sklearn/config/attack)
 - Scorers: [examples/sklearn/config/score](https://github.com/simplymathematics/deckard/tree/main/examples/sklearn/config/score)
 - Plots: [examples/sklearn/config/plot](https://github.com/simplymathematics/deckard/tree/main/examples/sklearn/config/plot)
+
+- Torch: 

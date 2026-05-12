@@ -26,31 +26,8 @@ from .base import (
     safe_store,
     _series_like_to_float_dict,
 )
-from .pytorch import (
-    resolve_sensitive_features as _resolve_sensitive_features_canonical,
-    validate_sensitive_features as _validate_sensitive_features,
-    coerce_to_numpy as _coerce_to_numpy,
-)
 from ..utils import coerce_to_list, merge_list_of_dicts
 from ..data import DataConfig
-
-
-# _resolve_sensitive_features: 3-arg signature kept for backward-compat.
-# Delegates to the canonical 2-arg helper in score.pytorch, then optionally
-# validates length against y_true (returns None on mismatch).
-def _resolve_sensitive_features(
-    data: "DataConfig | None",
-    y_true: Any,
-    mode: "FairnessMode" = "test",
-) -> Any | None:
-    sensitive = _resolve_sensitive_features_canonical(data, mode)
-    if sensitive is None:
-        return None
-    if y_true is not None and hasattr(y_true, "__len__") and hasattr(sensitive, "__len__"):
-        if len(sensitive) != len(y_true):
-            return None
-    return sensitive
-
 
 try:
     from fairlearn.metrics import MetricFrame
@@ -139,6 +116,34 @@ def as_group_scorer(scorer_dict, *, group_reduction="difference", group_reductio
         **kwargs
     )
 
+def _resolve_sensitive_features(
+    data: DataConfig | None,
+    y_true: Any,
+    mode: FairnessMode = "test",
+) -> Any | None:
+    if data is None:
+        return None
+    if mode == "train":
+        sensitive = getattr(data, "_sensitive_train", None)
+    elif mode in {"test", "attack"}:
+        sensitive = getattr(data, "_sensitive_test", None)
+    elif mode in {"val", "attack-val"}:
+        sensitive = getattr(data, "_sensitive_val", None)
+    elif mode == "all":
+        sensitive = getattr(data, "_sensitive_all", None)
+    else:
+        raise ValueError(f"Unsupported fairness scoring mode: {mode}")
+
+    if not hasattr(y_true, "__len__"):
+        return None
+    if sensitive is not None and not hasattr(sensitive, "__len__"):
+        return None
+    if sensitive is None:
+        return None
+    if len(cast("Sized", sensitive)) != len(cast("Sized", y_true)):
+        return None
+    return sensitive
+
 
 def fairness_demographic_parity_difference(
     y_true: Any,
@@ -154,8 +159,9 @@ def fairness_demographic_parity_difference(
 
     sensitive_features = kwargs.get("sensitive_features")
     if sensitive_features is None:
-        sensitive_features = _resolve_sensitive_features_canonical(
+        sensitive_features = _resolve_sensitive_features(
             data,
+            y_true,
             mode=kwargs.get("mode", "test"),
         )
     if sensitive_features is None:
@@ -184,8 +190,9 @@ def fairness_equalized_odds_difference(
 
     sensitive_features = kwargs.get("sensitive_features")
     if sensitive_features is None:
-        sensitive_features = _resolve_sensitive_features_canonical(
+        sensitive_features = _resolve_sensitive_features(
             data,
+            y_true,
             mode=kwargs.get("mode", "test"),
         )
     if sensitive_features is None:
@@ -202,22 +209,21 @@ def fairness_equalized_odds_difference(
 
 def _resolve_sensitive_from_kwargs_or_data(
     y_true: Any,
-    data: "DataConfig | None" = None,
+    data: DataConfig | None = None,
     **kwargs: Any,
 ) -> np.ndarray:
     sensitive_features = kwargs.get("sensitive_features")
     if sensitive_features is None:
-        sensitive_features = _resolve_sensitive_features_canonical(
+        sensitive_features = _resolve_sensitive_features(
             data,
+            y_true,
             mode=kwargs.get("mode", "test"),
         )
     if sensitive_features is None:
         raise ValueError("sensitive_features are required for fairness scoring")
+    # No numpy conversion; return as-is
     if hasattr(y_true, "__len__") and len(sensitive_features) != len(y_true):
-        raise ValueError(
-            f"Length of sensitive_features ({len(sensitive_features)}) does not "
-            f"match y_true ({len(y_true)})"
-        )
+        raise ValueError(f"Length of sensitive_features ({len(sensitive_features)}) does not match y_true ({len(y_true)})")
     return sensitive_features
 
 
@@ -366,10 +372,7 @@ class _FairnessScorerMixin:
         def metric_callable_call(self, y_true, y_pred, **sample_kwargs):
             sensitive = sample_kwargs.get("sensitive_features")
             if sensitive is None:
-                sensitive = _resolve_sensitive_features_canonical(
-                    self.data,
-                    mode=self.scorer_kwargs_dict.get("mode", "test"),
-                )
+                sensitive = _resolve_sensitive_features(self.data, y_true, mode=self.scorer_kwargs_dict.get("mode", "test"))
             try:
                 # Avoid passing sensitive_features twice
                 call_kwargs = {k: v for k, v in sample_kwargs.items() if k != "sensitive_features"}
@@ -423,7 +426,11 @@ class _FairnessScorerMixin:
         resolved_mode = "test" if mode is None else mode
         sensitive_features = kwargs.get("sensitive_features")
         if sensitive_features is None:
-            sensitive_features = _resolve_sensitive_features_canonical(data, mode=resolved_mode)
+            sensitive_features = _resolve_sensitive_features(
+                data,
+                resolved_y_true,
+                mode=resolved_mode,
+            )
         if sensitive_features is None:
             raise ValueError("sensitive_features are required for fairness scoring")
 
@@ -489,11 +496,14 @@ class _FairnessScorerMixin:
                     for metric_name, value in overall_series.items():
                         results[f"{metric_name}_overall"] = value
 
+        import traceback
         if self_cfg.include_group_by_group:
             logger.debug(f" metric_frame.by_group type: {type(metric_frame.by_group)}")
             logger.debug(f" metric_frame.by_group content: {repr(metric_frame.by_group)}")
+            import traceback
             if not isinstance(metric_frame.by_group, pd.DataFrame):
                 logger.critical(f" metric_frame.by_group is NOT a DataFrame! Type: {type(metric_frame.by_group)}. Value: {repr(metric_frame.by_group)}")
+                traceback.print_stack()
                 raise TypeError(f"Expected metric_frame.by_group to be a DataFrame, got {type(metric_frame.by_group)}. Full content: {repr(metric_frame.by_group)}")
             try:
                 flat_group_metrics = _flatten_metric_frame_by_group(metric_frame.by_group)
@@ -503,6 +513,7 @@ class _FairnessScorerMixin:
                 results.update(flat_group_metrics)
             except Exception as exc:
                 logger.critical(f" Exception during flattening or merging group metrics: {exc}")
+                traceback.print_exc()
                 raise
 
         # Only apply reduction to metrics that are scalar per group (not group metric functions)
@@ -527,7 +538,7 @@ class _FairnessScorerMixin:
 
 
 @dataclass(eq=False)
-class FairlearnScoreDictConfig(_TaskAwareScorerMixin, _FairnessScorerMixin, ScorerDictConfig):
+class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
     """ScorerDictConfig variant that computes fairness metrics through MetricFrame.
 
     Composes ``_FairnessScorerMixin`` (group scoring) with ``ScorerDictConfig``
@@ -555,21 +566,9 @@ class FairlearnScoreDictConfig(_TaskAwareScorerMixin, _FairnessScorerMixin, Scor
     n_boot: int | None = None
     ci_quantiles: list[float] | None = None
     random_state: RandomStateLike = None
-    classifier: Union[bool, str, None] = None
-
-    def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
-        from .base import _default_classification_scorers, _default_regression_scorers
-
-        return (
-            _default_classification_scorers()
-            if classifier
-            else _default_regression_scorers()
-        )
 
     def __post_init__(self):
         super().__post_init__()
-        if not getattr(self, "scorers", None):
-            self._initialize_task_aware_scorers(default=True)
         self._normalize_group_scorers_input()
         self._coerce_group_scorers()
         if not self.group_scorers:
@@ -577,54 +576,8 @@ class FairlearnScoreDictConfig(_TaskAwareScorerMixin, _FairnessScorerMixin, Scor
                 "group_scorers must not be empty. Either provide group_scorers explicitly or ensure scorers is non-empty. "
                 "This is required for MetricFrame group scoring."
             )
-
-    @staticmethod
-    def _is_probability_array(y_pred: Any) -> bool:
-        if y_pred is None:
-            return False
-        arr = np.asarray(_coerce_to_numpy(y_pred))
-        if arr.ndim != 2 or not np.issubdtype(arr.dtype, np.number):
-            return False
-        min_v = np.nanmin(arr)
-        max_v = np.nanmax(arr)
-        if min_v < -1e-12 or max_v > 1.0 + 1e-12:
-            return False
-        row_sums = np.nansum(arr, axis=1)
-        return np.allclose(row_sums, 1.0, atol=1e-2)
-
-    def _get_contextual_main_scorers(
-        self,
-        *,
-        model: "ModelConfig | None",
-        y_proba: Any,
-        resolved_y_pred: Any,
-    ) -> dict[str, ScorerConfig]:
-        has_probability_context = (
-            y_proba is not None
-            or model is not None
-            or self._is_probability_array(resolved_y_pred)
-        )
-        if has_probability_context:
-            return cast(dict[str, ScorerConfig], self.scorers)
-        return {
-            key: scorer
-            for key, scorer in cast(dict[str, ScorerConfig], self.scorers).items()
-            if not scorer.needs_proba
-        }
-
-    @staticmethod
-    def _looks_like_feature_matrix(y_true: Any, y_pred: Any) -> bool:
-        if y_true is None or y_pred is None:
-            return False
-        y_true_arr = np.asarray(_coerce_to_numpy(y_true)).reshape(-1)
-        y_pred_arr = np.asarray(_coerce_to_numpy(y_pred))
-        if y_pred_arr.ndim != 2:
-            return False
-        if y_pred_arr.shape[0] != y_true_arr.shape[0]:
-            return False
-        # Heuristic: feature matrices usually have >2 columns and arbitrary ranges.
-        return y_pred_arr.shape[1] > 2
-
+    
+    
     def __call__(
         self,
         mode: Literal["test", "train", "attack", "val", "attack-val", None] = "test",
@@ -636,6 +589,10 @@ class FairlearnScoreDictConfig(_TaskAwareScorerMixin, _FairnessScorerMixin, Scor
         score_file: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
+        sensitive_features_diag = kwargs.get("sensitive_features", None)
+        print(f"[DIAGNOSE] FairlearnScoreDictConfig.__call__: type(sensitive_features)={type(sensitive_features_diag)}, sensitive_features={repr(sensitive_features_diag)[:200]}")
+        if sensitive_features_diag is None or not hasattr(sensitive_features_diag, "__len__") or (y_true is not None and hasattr(y_true, "__len__") and len(sensitive_features_diag) != len(y_true)):
+            print(f"[DIAGNOSE] sensitive_features is None or length mismatch: type={type(sensitive_features_diag)}, value={repr(sensitive_features_diag)[:200]}, y_true type={type(y_true)}, y_true len={len(y_true) if hasattr(y_true, '__len__') else 'N/A'}, sensitive_features len={len(sensitive_features_diag) if hasattr(sensitive_features_diag, '__len__') else 'N/A'}")
         # Step 1: resolve y_true/y_pred for both main and group metrics.
         if data is None and (y_true is None or y_pred is None):
             raise ValueError("data must be provided when y_true/y_pred are not passed directly")
@@ -647,29 +604,18 @@ class FairlearnScoreDictConfig(_TaskAwareScorerMixin, _FairnessScorerMixin, Scor
         resolved_mode = "test" if mode is None else mode
         sensitive_features = kwargs.get("sensitive_features")
         if sensitive_features is None:
-            sensitive_features = _resolve_sensitive_features_canonical(data, mode=resolved_mode)
+            sensitive_features = _resolve_sensitive_features(
+                data,
+                resolved_y_true,
+                mode=resolved_mode,
+            )
         if sensitive_features is None:
             raise ValueError("sensitive_features are required for fairness scoring")
 
-        y_proba = kwargs.get("y_proba")
-        if (
-            model is None
-            and y_proba is None
-            and self._looks_like_feature_matrix(resolved_y_true, resolved_y_pred)
-        ):
-            logger.debug(
-                "Skipping model-style fairness scorers because y_pred looks like raw features without model/y_proba context.",
-            )
-            return {}
-
-        # Step 3: run base scorers with context-aware filtering for probability metrics.
-        contextual_scorers = self._get_contextual_main_scorers(
-            model=model,
-            y_proba=y_proba,
-            resolved_y_pred=resolved_y_pred,
-        )
-        if contextual_scorers:
-            results = ScorerDictConfig(scorers=contextual_scorers).__call__(
+        # Step 3: run base ScorerDictConfig scorers using resolved arrays, if any.
+        if self.scorers:
+            results = ScorerDictConfig.__call__(
+                cast(ScorerDictConfig, self),
                 mode=mode,
                 data=data,
                 model=model,
@@ -734,13 +680,39 @@ class FairlearnScoreDictConfig(_TaskAwareScorerMixin, _FairnessScorerMixin, Scor
                         results[f"{metric_name}_overall"] = value
 
         if self_cfg.include_group_by_group:
+            logger.debug(f" metric_frame.by_group type: {type(metric_frame.by_group)}")
+            logger.debug(f" metric_frame.by_group content: {repr(metric_frame.by_group)}")
             if not isinstance(metric_frame.by_group, pd.DataFrame):
+                logger.critical(f" metric_frame.by_group is NOT a DataFrame! Type: {type(metric_frame.by_group)}. Value: {repr(metric_frame.by_group)}")
+                traceback.print_stack()
                 raise TypeError(f"Expected metric_frame.by_group to be a DataFrame, got {type(metric_frame.by_group)}. Full content: {repr(metric_frame.by_group)}")
             try:
                 flat_group_metrics = _flatten_metric_frame_by_group(metric_frame.by_group)
+                logger.debug(f" flat_group_metrics type: {type(flat_group_metrics)}")
+                logger.debug(f" flat_group_metrics content: {repr(flat_group_metrics)}")
+                # Defensive: check for nested dicts, lists, or stringified dicts/lists, and enforce float values and readable keys
+                for k, v in flat_group_metrics.items():
+                    if isinstance(v, (dict, list)):
+                        logger.critical(f" Group metric '{k}' is NOT a flat value: {v}")
+                        traceback.print_stack()
+                        raise ValueError(f"Group metric '{k}' is NOT a flat value: {v}. Full key: {k}, value: {repr(v)}")
+                    if isinstance(v, str) and (v.startswith('{') or v.startswith('[')):
+                        logger.critical(f" Group metric '{k}' is a STRINGIFIED dict/list: {v}")
+                        traceback.print_stack()
+                        raise ValueError(f"Group metric '{k}' is a STRINGIFIED dict/list: {v}. Full key: {k}, value: {repr(v)}")
+                    try:
+                        float_v = float(v)
+                    except Exception as e:
+                        logger.critical(f" Group metric '{k}' value CANNOT be cast to float: {v} ({e})")
+                        traceback.print_exc()
+                        raise
+                    # Enforce human-readable keys (no integer keys)
+                    if isinstance(k, int):
+                        raise ValueError(f"Group metric key '{k}' is an integer, not human-readable.")
                 results.update(flat_group_metrics)
             except Exception as exc:
                 logger.critical(f" Exception during flattening or merging group metrics: {exc}")
+                traceback.print_exc()
                 raise
 
         # Only apply reduction to metrics that are scalar per group (not group metric functions)
@@ -899,7 +871,7 @@ def fairness_group_mse_difference(
 
 
 @dataclass(eq=False)
-class DefaultFairlearnScoreConfig(FairlearnScoreDictConfig):
+class DefaultFairlearnScoreConfig(_TaskAwareScorerMixin, FairlearnScoreDictConfig):
     """Default fairness scorer family with optional task inheritance."""
 
     classifier: Union[bool, str, None] = None

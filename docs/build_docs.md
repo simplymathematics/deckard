@@ -19,6 +19,27 @@ This will install all core, extension, and documentation dependencies as defined
 
 If you only install `pip install -e '.[docs]'`, some notebooks may fail to run due to missing ML or plotting libraries. For full reproducibility, always use the full stack above.
 
+## Test CI Docs Workflow Locally
+
+For a generic local GitHub Actions runner, use:
+
+```bash
+./scripts/test_workflow.sh --list
+./scripts/test_workflow.sh --workflow compile-docs.yml --job docs
+```
+
+This runs any existing workflow via `act` with branch-aware payload generation.
+
+To preview the exact command without running it:
+
+```bash
+./scripts/test_workflow.sh --workflow compile-docs.yml --job docs --ref refactor-squashed --dry-run
+```
+
+`act` runs require Docker and `act` (`brew install act`).
+
+If Docker is installed but you see an error like `connect: no such file or directory` for `/var/run/docker.sock`, start a Docker engine first (Docker Desktop, `colima start`, or OrbStack), then rerun the script.
+
 # Layout
 Sphinx documentation entry points:
 - Landing page: [index](index)

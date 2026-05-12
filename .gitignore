@@ -122,3 +122,4 @@ old_examples
 build/lib/deckard/*
 docs/build/
 .python-version
+.venv-*

@@ -33,7 +33,7 @@ from art.estimators.regression import PyTorchRegressor
 from art.config import ART_NUMPY_DTYPE
 
 from ..data import DataConfig
-from ..score.base import ScorerDictConfig, coerce_scorer_config as _coerce_scorer_config, resolve_mode_prefix
+from ..score.base import ScorerDictConfig, coerce_scorer_config as _coerce_scorer_config
 from ..utils import ConfigBase, load_class, round_scores
 
 art_model_types = tuple(
@@ -158,7 +158,7 @@ class ModelConfig(ConfigBase):
     defense: Any = None
     plugins: Union[list, None] = None
     scorer: Any = AUTO_SCORER
-    score_mode: Literal["train", "test", "val"] = "test"  # Only train/test/val allowed
+    score_mode: Literal["train", "test", "val"] = "test"
 
     # Runtime/model state fields
     _model: Any = None
@@ -553,6 +553,9 @@ class ModelConfig(ConfigBase):
         """
         if self._model is None:
             raise ValueError("Model not initialized")
+        if not self.probability:
+            raise ValueError("Model does not support probability predictions")
+
         # Try predict_proba or _predict_proba on the wrapped model
         for proba_method in ("predict_proba", "_predict_proba"):
             predict_proba = getattr(self._model, proba_method, None)
@@ -609,18 +612,19 @@ class ModelConfig(ConfigBase):
 
     def _canonical_score_mode(self) -> Literal["train", "test", "val"]:
         mode = str(getattr(self, "score_mode", "test") or "test").lower()
-        allowed = {"train", "test", "val"}
-        if mode not in allowed:
-            raise ValueError(f"ModelConfig score_mode '{mode}' not in {allowed}")
+        if mode not in {"train", "test", "val"}:
+            raise ValueError(
+                f"Unsupported ModelConfig score_mode '{self.score_mode}'. Expected one of: train, test, val.",
+            )
         return mode
 
     @staticmethod
     def _mode_score_prefix(mode: str) -> str:
-        # val uses "validation_" at the model level; all other common prefixes
-        # are handled by the canonical resolve_mode_prefix helper.
+        if mode == "train":
+            return "training_"
         if mode == "val":
             return "validation_"
-        return resolve_mode_prefix(mode)
+        return ""
 
     def _mode_runtime_names(self, mode: str) -> dict:
         if mode == "train":

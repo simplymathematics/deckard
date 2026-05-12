@@ -1,16 +1,27 @@
 name: "Push Docs Check"
-on: 
-- push
+on:
+  push:
+    branches:
+      - refactor-squashed
+
+permissions:
+  contents: write
 
 jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
+      with:
+        ref: refactor-squashed
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
     - name : install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install .[docs]
+        pip install '.[lifelines,anjana,torch,fairlearn,seaborn,yellowbrick,docs,test,datasets]'
     - name : build docs
       run: |
         cd docs
@@ -19,8 +30,8 @@ jobs:
       uses : stefanzweifel/git-auto-commit-action@v4
       with:
         commit_message: Update docs
-        branch: main
-        file_pattern: docs/html/
+        branch: refactor-squashed
+        file_pattern: docs/build/html/** docs/notebooks/*.ipynb docs/notebooks/dvc.lock
         commit_options: '--no-verify --signoff'
         repository: .
         commit_user_name: github-actions

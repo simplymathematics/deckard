@@ -64,7 +64,7 @@ module.
 - **Adult Income** (via OpenML)
 - **Diabetes** and **Digits** (from scikit-learn)
 - **Synthetic datasets** via ``make_classification`` or ``make_regression``
-- **CSV files** that contain a ``target`` column
+- **pd.DataFrame files** that contain a ``target`` column or
 
 It also supports **reproducible splits** via `train_test_split` with optional stratification,
 timing instrumentation, and hashing for config tracking.
@@ -104,8 +104,8 @@ Logging is performed at key steps.
 
 ## Troubleshooting
 If you encounter issues with dataset loading, ensure that:
-- You have an active internet connection for datasets fetched from OpenML.
-- The specified CSV file path is correct and the file is accessible.
+- You have an active internet connection for datasets fetched from OpenML, etc.
+- The specified .csv/.html/.json file path is correct and the file is accessible.
 - Otherwise, use one of the built-in datasets or synthetic data generation options.
 
 ### See also

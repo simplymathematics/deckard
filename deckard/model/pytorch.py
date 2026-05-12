@@ -16,9 +16,11 @@ import numpy as np
 try:
     import torch
     import torch.nn as nn
+    from torch.utils.data import DataLoader as TorchDataLoader
 except ImportError:
     torch = None
     nn = None
+    TorchDataLoader = None
 
 
 
@@ -809,14 +811,15 @@ class PytorchModelConfig(ModelConfig):
             value = getattr(data, attr, None)
             if value is None:
                 continue
-            if not isinstance(value, (torch.Tensor, Subset, Dataset, torch.utils.data.DataLoader)):
+            if not isinstance(value, (torch.Tensor, Subset, Dataset)):
                 bad_attrs.append(f"{attr}: {type(value).__name__}")
+
         if bad_attrs:
             raise TypeError(
                 "PytorchModelConfig requires torch.Tensor or DataLoader inputs, "
                 f"but received non-torch types for: {', '.join(bad_attrs)}. "
                 "Use PytorchDataConfig (or another torch-compatible data config) "
-                f"to produce torch tensors before passing data to a torch model. Got: {', '.join([str(type(bad)) for bad in bad_attrs])}",
+                "to produce torch tensors before passing data to a torch model.",
             )
 
     def _train(self, X: torch.Tensor, y: torch.Tensor):

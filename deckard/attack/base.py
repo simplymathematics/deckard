@@ -40,7 +40,6 @@ from ..utils import (
     resolve_torch_device,
 )
 from .torch_utils import (
-    HAS_TORCH,
     build_torch_art_model,
     collect_subset_from_dataloader,
     is_dataloader,
@@ -224,13 +223,7 @@ class AttackConfig(ConfigBase):
     scorer: Union["AttackScorerConfig", None] = None
     alias: Union[str, None] = None
     device: Union[str, None] = None
-    mode: Literal["test", "val"] = "test"  # Only test/val allowed
-    def set_mode(self, mode: str):
-        """Set attack mode, only allowing 'test' or 'val'."""
-        allowed = {"test", "val"}
-        if mode not in allowed:
-            raise ValueError(f"AttackConfig mode '{mode}' not in {allowed}")
-        self.mode = mode
+    mode: Literal["test", "val"] = "test"
 
     # Runtime state fields
     attack_time: Union[float, None] = None
@@ -888,7 +881,7 @@ class AttackConfig(ConfigBase):
             The function updates the instance's score_dict attribute with the computed metrics.
         """
         score_dict = self._score(
-            attack_kind=self.attack_kind,
+            attack_kind="evasion",
             y_true=y_test_numeric,
             y_pred=adv_pred_labels,
             ben_pred_labels=ben_pred_labels,
@@ -966,16 +959,6 @@ class AttackConfig(ConfigBase):
 
         Subclasses can override this to preserve framework-native tensors.
         """
-        if is_dataloader(value):
-            n = len(getattr(value, "dataset", []))
-            features, _ = collect_subset_from_dataloader(value, n=n)
-            return tensor_to_numpy(features, dtype=ART_NUMPY_DTYPE)
-        if self._is_torch_dataset_like(value):
-            features, _ = self._collect_from_torch_dataset(
-                value,
-                n=max(len(value), 1),
-            )
-            return tensor_to_numpy(features, dtype=ART_NUMPY_DTYPE)
         if is_tensor(value):
             return tensor_to_numpy(value, dtype=ART_NUMPY_DTYPE)
         if isinstance(value, pd.DataFrame):
@@ -989,18 +972,6 @@ class AttackConfig(ConfigBase):
 
         Subclasses can override this to preserve framework-native tensors.
         """
-        if is_dataloader(value):
-            n = len(getattr(value, "dataset", []))
-            _, labels = collect_subset_from_dataloader(value, n=n)
-            return tensor_to_numpy(labels, dtype=ART_NUMPY_DTYPE)
-        if self._is_torch_dataset_like(value):
-            _, labels = self._collect_from_torch_dataset(
-                value,
-                n=max(len(value), 1),
-            )
-            if labels is None:
-                return labels
-            return tensor_to_numpy(labels, dtype=ART_NUMPY_DTYPE)
         if is_tensor(value):
             return tensor_to_numpy(value, dtype=ART_NUMPY_DTYPE)
         if isinstance(value, pd.DataFrame):
@@ -1008,32 +979,6 @@ class AttackConfig(ConfigBase):
         if isinstance(value, pd.Series):
             return value.values
         return value
-
-    @staticmethod
-    def _is_torch_dataset_like(value) -> bool:
-        if not HAS_TORCH:
-            return False
-        try:
-            from torch.utils.data import Dataset, Subset
-
-            return isinstance(value, (Dataset, Subset))
-        except Exception:
-            return False
-
-    @staticmethod
-    def _collect_from_torch_dataset(dataset, n: int):
-        if not HAS_TORCH:
-            raise ImportError(
-                "Torch support requires optional dependency deckard[torch]",
-            )
-        from torch.utils.data import DataLoader
-
-        batch_size = max(1, min(int(n), len(dataset)))
-        loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-        batch = next(iter(loader))
-        if isinstance(batch, (tuple, list)) and len(batch) >= 2:
-            return batch[0], batch[1]
-        return batch, None
 
     def _prepare_features_for_art(self, value):
         """Prepare feature inputs specifically for ART model/attack boundaries."""
@@ -1136,6 +1081,18 @@ class AttackConfig(ConfigBase):
         }
         return ScorerDictConfig(scorers=label_only), False
 
+    def _score_attack_legacy(
+        self,
+        ben_pred_labels,
+        adv_pred_labels,
+        y_test_numeric,
+    ):
+        """Backward-compatible alias retained for older call sites."""
+        return self._score_attack(
+            ben_pred_labels,
+            adv_pred_labels,
+            y_test_numeric,
+        )
 
     def _evade(self, data, art_model, attack):
         """
@@ -1277,23 +1234,28 @@ class AttackConfig(ConfigBase):
         else:
             x_ = data.X_train
             y_ = data.y_train
-
+        from torch.utils.data import Dataset, Subset, DataLoader
+        import torch
+        # Accept Subset/Dataset and convert to tensor
         if isinstance(x_, (pd.Series, np.ndarray, pd.DataFrame)) or is_tensor(x_):
             x_subset = x_[:n]
             y_subset = y_[:n]
+        elif isinstance(x_, (Dataset, Subset)):
+            # Convert to tensor
+            loader = DataLoader(x_, batch_size=n, shuffle=False)
+            batch = next(iter(loader))
+            if isinstance(batch, (tuple, list)):
+                x_subset = batch[0]
+                y_subset = batch[1]
+            else:
+                x_subset = batch
+                y_subset = None
         elif is_dataloader(x_):
             x_subset, y_subset = collect_subset_from_dataloader(x_, n=n)
-        elif self._is_torch_dataset_like(x_):
-            x_subset, y_subset = self._collect_from_torch_dataset(x_, n=n)
         else:
             raise ValueError(
                 f"Expected data.X_test to be a pd.Series, np.ndarray, torch Tensor, torch DataLoader, or torch Dataset/Subset. Got: {type(data.X_test)}",
             )
-        if y_subset is None and y_ is not None:
-            try:
-                y_subset = y_[:n]
-            except Exception:
-                y_subset = y_
         # Do not flatten x_subset; preserve original shape for torch/ART models
         if is_tensor(y_subset) and y_subset.ndim > 1:
             y_subset = y_subset.view(-1)
