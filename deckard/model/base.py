@@ -3,6 +3,7 @@ import logging
 from typing import Any, Literal, Union
 from pathlib import Path
 from dataclasses import dataclass, field
+from functools import lru_cache
 from omegaconf import DictConfig
 
 import numpy as np
@@ -13,38 +14,9 @@ from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
 from sklearn.base import BaseEstimator
 
-from art.estimators.classification.scikitlearn import (
-    ScikitlearnAdaBoostClassifier,
-    ScikitlearnBaggingClassifier,
-    ScikitlearnClassifier,
-    ScikitlearnDecisionTreeClassifier,
-    ScikitlearnExtraTreesClassifier,
-    ScikitlearnGradientBoostingClassifier,
-    ScikitlearnLogisticRegression,
-    ScikitlearnRandomForestClassifier,
-    ScikitlearnSVC,
-)
-from art.estimators.regression.scikitlearn import (
-    ScikitlearnDecisionTreeRegressor,
-    ScikitlearnRegressor,
-)
-from art.estimators.classification import PyTorchClassifier
-from art.estimators.regression import PyTorchRegressor
-from art.config import ART_NUMPY_DTYPE
-
 from ..data import DataConfig
 from ..score.base import ScorerDictConfig, coerce_scorer_config as _coerce_scorer_config
 from ..utils import ConfigBase, load_class, round_scores
-
-art_model_types = tuple(
-    [
-        ScikitlearnClassifier,
-        ScikitlearnRegressor,
-        PyTorchClassifier,
-        PyTorchRegressor,
-    ],
-)
-
 
 logger = logging.getLogger(__name__)
 
@@ -53,25 +25,72 @@ AUTO_SCORER = "auto"
 __all__ = ["ModelConfig"]
 
 
-classifier_dict = {
-    "SVC": ScikitlearnSVC,
-    "LogisticRegression": ScikitlearnLogisticRegression,
-    "RandomForestClassifier": ScikitlearnRandomForestClassifier,
-    "GradientBoostingClassifier": ScikitlearnGradientBoostingClassifier,
-    "ExtraTreesClassifier": ScikitlearnExtraTreesClassifier,
-    "AdaBoostClassifier": ScikitlearnAdaBoostClassifier,
-    "BaggingClassifier": ScikitlearnBaggingClassifier,
-    "DecisionTreeClassifier": ScikitlearnDecisionTreeClassifier,
-    "sklearn-classifier": ScikitlearnClassifier,
-}
+@lru_cache(maxsize=1)
+def _get_art_symbols() -> dict[str, Any]:
+    from art.estimators.classification.scikitlearn import (
+        ScikitlearnAdaBoostClassifier,
+        ScikitlearnBaggingClassifier,
+        ScikitlearnClassifier,
+        ScikitlearnDecisionTreeClassifier,
+        ScikitlearnExtraTreesClassifier,
+        ScikitlearnGradientBoostingClassifier,
+        ScikitlearnLogisticRegression,
+        ScikitlearnRandomForestClassifier,
+        ScikitlearnSVC,
+    )
+    from art.estimators.regression.scikitlearn import (
+        ScikitlearnDecisionTreeRegressor,
+        ScikitlearnRegressor,
+    )
+    from art.estimators.classification import PyTorchClassifier
+    from art.estimators.regression import PyTorchRegressor
 
-regressor_dict = {
-    "DecisionTreeRegressor": ScikitlearnDecisionTreeRegressor,
-    "sklearn-regressor": ScikitlearnRegressor,
-}
+    classifier_dict = {
+        "SVC": ScikitlearnSVC,
+        "LogisticRegression": ScikitlearnLogisticRegression,
+        "RandomForestClassifier": ScikitlearnRandomForestClassifier,
+        "GradientBoostingClassifier": ScikitlearnGradientBoostingClassifier,
+        "ExtraTreesClassifier": ScikitlearnExtraTreesClassifier,
+        "AdaBoostClassifier": ScikitlearnAdaBoostClassifier,
+        "BaggingClassifier": ScikitlearnBaggingClassifier,
+        "DecisionTreeClassifier": ScikitlearnDecisionTreeClassifier,
+        "sklearn-classifier": ScikitlearnClassifier,
+    }
+    regressor_dict = {
+        "DecisionTreeRegressor": ScikitlearnDecisionTreeRegressor,
+        "sklearn-regressor": ScikitlearnRegressor,
+    }
+    sklearn_dict = {**classifier_dict, **regressor_dict}
+    art_model_types = (
+        ScikitlearnClassifier,
+        ScikitlearnRegressor,
+        PyTorchClassifier,
+        PyTorchRegressor,
+    )
+    return {
+        "classifier_dict": classifier_dict,
+        "regressor_dict": regressor_dict,
+        "sklearn_dict": sklearn_dict,
+        "sklearn_models": list(sklearn_dict.values()),
+        "art_model_types": art_model_types,
+    }
 
-sklearn_dict = {**classifier_dict, **regressor_dict}
-sklearn_models = list(sklearn_dict.values())
+
+def _art_numpy_dtype():
+    try:
+        from art.config import ART_NUMPY_DTYPE
+
+        return ART_NUMPY_DTYPE
+    except Exception:
+        return np.float32
+
+
+def _is_art_model_instance(model_obj: Any) -> bool:
+    try:
+        art_model_types = _get_art_symbols()["art_model_types"]
+    except Exception:
+        return False
+    return isinstance(model_obj, art_model_types)
 
 
 @dataclass(eq=False)
@@ -368,13 +387,22 @@ class ModelConfig(ConfigBase):
         return self._defense_pipeline
 
     def get_art_class(self, data: Any):
+        try:
+            art_symbols = _get_art_symbols()
+        except Exception as exc:
+            raise ImportError(
+                "ART estimators are required for wrapped model access. Install optional dependencies that include ART.",
+            ) from exc
+
+        if self.model_type is None:
+            raise ValueError("model_type must be set before creating an ART model wrapper")
 
         art_class = (
-            classifier_dict[self.model_type.split(".")[-1]]
+            art_symbols["classifier_dict"][self.model_type.split(".")[-1]]
             if self.classifier
-            else regressor_dict[self.model_type.split(".")[-1]]
+            else art_symbols["regressor_dict"][self.model_type.split(".")[-1]]
         )
-        if art_class in sklearn_dict.values():
+        if art_class in art_symbols["sklearn_dict"].values():
             init_params = {}
         else:
             init_params = {
@@ -415,7 +443,7 @@ class ModelConfig(ConfigBase):
         """
         if self._model is None:
             raise ValueError("Model is not fitted yet.")
-        if isinstance(self._model, art_model_types):
+        if _is_art_model_instance(self._model):
             return self._model.model
         else:
             return self._model
@@ -504,10 +532,10 @@ class ModelConfig(ConfigBase):
             y_pred = self._model.predict(X)
         except TypeError as e:
             if "loop of ufunc does not support argument" in str(e):
-                X_array = np.array(X, dtype=ART_NUMPY_DTYPE)
+                X_array = np.array(X, dtype=_art_numpy_dtype())
                 y_pred = self._model.predict(X_array)
             elif "can't convert" in str(e):
-                X_array = np.array(X, dtype=ART_NUMPY_DTYPE)
+                X_array = np.array(X, dtype=_art_numpy_dtype())
                 y_pred = self._model.predict(X_array)
             else:
                 raise e
@@ -1117,7 +1145,7 @@ class ModelConfig(ConfigBase):
                         ) or "can't convert" in str(e):
                             X_array = np.array(
                                 data.X_train,
-                                dtype=ART_NUMPY_DTYPE,
+                                dtype=_art_numpy_dtype(),
                             )
                             self.training_probabilities = self._model.predict_proba(
                                 X_array,
@@ -1185,7 +1213,7 @@ class ModelConfig(ConfigBase):
                             ) or "can't convert" in str(e):
                                 X_array = np.array(
                                     X_mode,
-                                    dtype=ART_NUMPY_DTYPE,
+                                    dtype=_art_numpy_dtype(),
                                 )
                                 probabilities = self._model.predict_proba(X_array)
                             else:

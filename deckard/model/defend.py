@@ -7,27 +7,10 @@ import warnings
 from sklearn.base import BaseEstimator
 from dataclasses import dataclass, field
 from typing import Any, cast, Union
+from functools import lru_cache
 from omegaconf import DictConfig, ListConfig, OmegaConf
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
-
-from art.estimators.classification.scikitlearn import (
-    ScikitlearnAdaBoostClassifier,
-    ScikitlearnBaggingClassifier,
-    ScikitlearnClassifier,
-    ScikitlearnDecisionTreeClassifier,
-    ScikitlearnExtraTreesClassifier,
-    ScikitlearnGradientBoostingClassifier,
-    ScikitlearnLogisticRegression,
-    ScikitlearnRandomForestClassifier,
-    ScikitlearnSVC,
-)
-from art.estimators.regression.scikitlearn import (
-    ScikitlearnDecisionTreeRegressor,
-    ScikitlearnRegressor,
-)
-from art.estimators.classification import PyTorchClassifier
-from art.estimators.regression import PyTorchRegressor
 from ..data import DataConfig
 from .base import ModelConfig
 from ..utils import ConfigBase, coerce_config, resolve_class, coerce_to_list, is_null_config_value
@@ -35,25 +18,61 @@ from ..utils import ConfigBase, coerce_config, resolve_class, coerce_to_list, is
 warnings.filterwarnings("ignore", category=UserWarning)
 logger = logging.getLogger(__name__)
 
-classifier_dict = {
-    "SVC": ScikitlearnSVC,
-    "LogisticRegression": ScikitlearnLogisticRegression,
-    "RandomForestClassifier": ScikitlearnRandomForestClassifier,
-    "GradientBoostingClassifier": ScikitlearnGradientBoostingClassifier,
-    "ExtraTreesClassifier": ScikitlearnExtraTreesClassifier,
-    "AdaBoostClassifier": ScikitlearnAdaBoostClassifier,
-    "BaggingClassifier": ScikitlearnBaggingClassifier,
-    "DecisionTreeClassifier": ScikitlearnDecisionTreeClassifier,
-    "sklearn-classifier": ScikitlearnClassifier,
-}
+@lru_cache(maxsize=1)
+def _get_art_symbols() -> dict[str, Any]:
+    from art.estimators.classification.scikitlearn import (
+        ScikitlearnAdaBoostClassifier,
+        ScikitlearnBaggingClassifier,
+        ScikitlearnClassifier,
+        ScikitlearnDecisionTreeClassifier,
+        ScikitlearnExtraTreesClassifier,
+        ScikitlearnGradientBoostingClassifier,
+        ScikitlearnLogisticRegression,
+        ScikitlearnRandomForestClassifier,
+        ScikitlearnSVC,
+    )
+    from art.estimators.regression.scikitlearn import (
+        ScikitlearnDecisionTreeRegressor,
+        ScikitlearnRegressor,
+    )
+    from art.estimators.classification import PyTorchClassifier
+    from art.estimators.regression import PyTorchRegressor
 
-regressor_dict = {
-    "DecisionTreeRegressor": ScikitlearnDecisionTreeRegressor,
-    "sklearn-regressor": ScikitlearnRegressor,
-}
+    classifier_dict = {
+        "SVC": ScikitlearnSVC,
+        "LogisticRegression": ScikitlearnLogisticRegression,
+        "RandomForestClassifier": ScikitlearnRandomForestClassifier,
+        "GradientBoostingClassifier": ScikitlearnGradientBoostingClassifier,
+        "ExtraTreesClassifier": ScikitlearnExtraTreesClassifier,
+        "AdaBoostClassifier": ScikitlearnAdaBoostClassifier,
+        "BaggingClassifier": ScikitlearnBaggingClassifier,
+        "DecisionTreeClassifier": ScikitlearnDecisionTreeClassifier,
+        "sklearn-classifier": ScikitlearnClassifier,
+    }
 
-sklearn_dict = {**classifier_dict, **regressor_dict}
-sklearn_models = list(sklearn_dict.keys())
+    regressor_dict = {
+        "DecisionTreeRegressor": ScikitlearnDecisionTreeRegressor,
+        "sklearn-regressor": ScikitlearnRegressor,
+    }
+
+    sklearn_dict = {**classifier_dict, **regressor_dict}
+    return {
+        "classifier_dict": classifier_dict,
+        "regressor_dict": regressor_dict,
+        "sklearn_dict": sklearn_dict,
+        "sklearn_models": list(sklearn_dict.keys()),
+        "torch_wrapper_types": (PyTorchClassifier, PyTorchRegressor),
+        "torch_classifier": PyTorchClassifier,
+        "torch_regressor": PyTorchRegressor,
+    }
+
+
+def _is_art_torch_wrapper(model_obj: Any) -> bool:
+    try:
+        torch_wrapper_types = _get_art_symbols()["torch_wrapper_types"]
+    except Exception:
+        return False
+    return isinstance(model_obj, torch_wrapper_types)
 
 supported_defense_types = [
     "detector",
@@ -324,10 +343,7 @@ class _DefenseBehaviorMixin:
                         # BinaryInputDetector expects a neural-network ART classifier.
                         if not _is_torch_model_instance(
                             base_estimator,
-                        ) and not isinstance(
-                            self._model,
-                            (PyTorchClassifier, PyTorchRegressor),
-                        ):
+                        ) and not _is_art_torch_wrapper(self._model):
                             raise ValueError(
                                 "Evasion detector defenses only support neural-network models. "
                                 f"Got base estimator type {type(base_estimator)}.",
@@ -379,9 +395,8 @@ class _DefenseBehaviorMixin:
 
                 # Adversarial retraining defenses currently require torch-backed
                 # ART estimators (e.g., PyTorchClassifier).
-                if not _is_torch_model_instance(base_estimator) and not isinstance(
+                if not _is_torch_model_instance(base_estimator) and not _is_art_torch_wrapper(
                     self._model,
-                    (PyTorchClassifier, PyTorchRegressor),
                 ):
                     raise ValueError(
                         "Retraining trainer defenses only support neural-network models. "
@@ -421,10 +436,7 @@ class _DefenseBehaviorMixin:
                         # NeuralCleanse) wrap/class-transform neural ART classifiers.
                         if not _is_torch_model_instance(
                             base_estimator,
-                        ) and not isinstance(
-                            self._model,
-                            (PyTorchClassifier, PyTorchRegressor),
-                        ):
+                        ) and not _is_art_torch_wrapper(self._model):
                             raise ValueError(
                                 "Transformer defenses only support neural-network models. "
                                 f"Got base estimator type {type(base_estimator)}.",
@@ -545,10 +557,7 @@ class _DefenseBehaviorMixin:
                 isinstance(self.model_type, str)
                 and self.model_type.startswith("torch.")
             )
-            or isinstance(
-                getattr(self, "_model", None),
-                (PyTorchClassifier, PyTorchRegressor),
-            )
+            or _is_art_torch_wrapper(getattr(self, "_model", None))
         ):
             try:
                 import torch
@@ -576,11 +585,13 @@ class _DefenseBehaviorMixin:
 
             # Resolve the underlying nn.Module (unwrap if already an ART wrapper).
             raw_model = self._model
-            if isinstance(raw_model, (PyTorchClassifier, PyTorchRegressor)):
+            if _is_art_torch_wrapper(raw_model):
                 raw_model = getattr(raw_model, "model", raw_model)
 
+            art_symbols = _get_art_symbols()
+
             if self.classifier:
-                art_class = PyTorchClassifier
+                art_class = art_symbols["torch_classifier"]
                 init_params = {
                     "loss": torch.nn.CrossEntropyLoss(),
                     "optimizer": torch.optim.SGD(
@@ -593,7 +604,7 @@ class _DefenseBehaviorMixin:
                     "device_type": ("gpu" if torch.cuda.is_available() else "cpu"),
                 }
             else:
-                art_class = PyTorchRegressor
+                art_class = art_symbols["torch_regressor"]
                 init_params = {
                     "loss": torch.nn.MSELoss(),
                     "optimizer": torch.optim.SGD(
@@ -615,12 +626,18 @@ class _DefenseBehaviorMixin:
                 "model_type must be set before creating an ART defense estimator",
             )
         assert self.model_type is not None
+        try:
+            art_symbols = _get_art_symbols()
+        except Exception as exc:
+            raise ImportError(
+                "ART estimators are required for defense wrapping. Install optional dependencies that include ART.",
+            ) from exc
         art_class = (
-            classifier_dict[self.model_type.split(".")[-1]]
+            art_symbols["classifier_dict"][self.model_type.split(".")[-1]]
             if self.classifier
-            else regressor_dict[self.model_type.split(".")[-1]]
+            else art_symbols["regressor_dict"][self.model_type.split(".")[-1]]
         )
-        if art_class in sklearn_dict.values():
+        if art_class in art_symbols["sklearn_dict"].values():
             init_params = {}
         else:
             init_params = {
