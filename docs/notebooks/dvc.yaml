@@ -122,7 +122,7 @@ stages:
       - ./build/art_attacks/torch_scores.csv
       - ./build/art_attacks/sklearn_scores.csv
   notebook_art_defenses:
-    cmd: jupyter nbconvert --to notebook --execute art_defenses.ipynb
+    cmd: jupyter nbconvert --to notebook --execute --inplace art_defenses.ipynb
     deps:
       - art_defenses.ipynb
       - ../../deckard/attack/
@@ -195,23 +195,7 @@ stages:
       - ../../deckard/file.py
       - ../../deckard/utils.py
     outs:
-      - ./build/fairlearn/fairlearn_data.pkl
-      - ./build/fairlearn/fairlearn_fair_data.pkl
-      - ./build/fairlearn/fairlearn_sklearn_model.pkl
-      - ./build/fairlearn/fairlearn_torch_model.pt
-      - ./build/fairlearn/fairlearn_sklearn_scores.csv
-      - ./build/fairlearn/fairlearn_torch_scores.csv
-      - ./build/fairlearn/fairlearn_attack_results.pkl
-    plots:
-      - ./build/fairlearn/fairlearn_attack_plot.png
-      - ./build/fairlearn/fairlearn_roc_auc.png
-      - ./build/fairlearn/fairlearn_sklearn_compare_bar.png
-      - ./build/fairlearn/fairlearn_torch_compare_bar.png
-      - /build/fairlearn/plots/
-    metrics:
-      - ./build/fairlearn/fairlearn_model_compare.csv
-      - ./build/fairlearn/fairlearn_sklearn_compare.csv
-      - ./build/fairlearn/fairlearn_torch_compare.csv
+      - ./build/fairlearn/torch_fair_data.pkl
 
   notebook_anjana:
     cmd: jupyter nbconvert --to notebook --execute --inplace anjana.ipynb
