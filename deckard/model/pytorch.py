@@ -808,11 +808,12 @@ class PytorchModelConfig(ModelConfig):
         """Raise TypeError if data contains non-torch tensors/DataLoaders."""
         bad_attrs = []
         from torch.utils.data import Subset, Dataset
+        data_loader_types = (TorchDataLoader,) if TorchDataLoader is not None else tuple()
         for attr in ("X_train", "X_test", "y_train", "y_test"):
             value = getattr(data, attr, None)
             if value is None:
                 continue
-            if not isinstance(value, (torch.Tensor, Subset, Dataset)):
+            if not isinstance(value, (torch.Tensor, Subset, Dataset, *data_loader_types)):
                 bad_attrs.append(f"{attr}: {type(value).__name__}")
 
         if bad_attrs:

@@ -16,7 +16,12 @@ from sklearn.base import BaseEstimator
 
 from ..data import DataConfig
 from ..score.base import ScorerDictConfig, coerce_scorer_config as _coerce_scorer_config
-from ..utils import ConfigBase, load_class, round_scores
+from ..utils import (
+    ConfigBase,
+    load_class,
+    probabilities_from_model_outputs,
+    round_scores,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -631,7 +636,14 @@ class ModelConfig(ConfigBase):
             raise TypeError(
                 f"ModelConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
-        scores = self.scorer(y_true=y_true, y_pred=y_pred, mode=mode, **kwargs)
+        y_proba = kwargs.pop("y_proba", None)
+        scores = self.scorer(
+            y_true=y_true,
+            y_pred=y_pred,
+            y_proba=y_proba,
+            mode=mode,
+            **kwargs,
+        )
         return round_scores(
             scores=scores,
             n_samples=len(y_true),
@@ -1233,10 +1245,23 @@ class ModelConfig(ConfigBase):
             raise ValueError(f"No labels or predictions available for {score_mode} scoring.")
 
         if self.scorer is not None:
+            mode_probabilities = getattr(self, probabilities_attr, None)
+            if mode_probabilities is None and self.classifier:
+                try:
+                    mode_probabilities = self._predict_proba(X_mode)
+                except Exception:
+                    try:
+                        mode_probabilities = probabilities_from_model_outputs(
+                            mode_predictions,
+                        )
+                    except Exception:
+                        mode_probabilities = None
+
             start = time.process_time()
             mode_scores = self._score(
                 y_mode,
                 mode_predictions,
+                y_proba=mode_probabilities,
                 mode=score_mode,
                 data=data,
                 model=self,

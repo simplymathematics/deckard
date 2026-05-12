@@ -8,7 +8,7 @@ import numpy as np
 from torch.utils.data import Dataset
 from torch.utils.data import Subset  # Ensure Subset is always in scope
 
-from ..score.fairness import DefaultFairlearnClassificationConfig, DefaultFairlearnRegressionConfig
+from ..score.fairness import DefaultFairlearnDataScoreConfig
 from ..score.pytorch import (
     resolve_sensitive_features,
     coerce_to_numpy,
@@ -16,6 +16,7 @@ from ..score.pytorch import (
     is_dataset_like,
     is_dataloader_like,
 )
+from ..utils import probabilities_from_model_outputs
 from .fairness import FairlearnDataConfig
 from .pytorch import PytorchCustomDataConfig
 
@@ -101,10 +102,8 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         if not hasattr(self, "dataset") or not self.dataset:
             self.dataset = self.dataset_name
         if self.scorer is None:
-            self.scorer = (
-                DefaultFairlearnClassificationConfig()
-                if getattr(self, "classifier", True)
-                else DefaultFairlearnRegressionConfig()
+            self.scorer = DefaultFairlearnDataScoreConfig(
+                classifier=getattr(self, "classifier", True),
             )
 
     # ------------------------------------------------------------------
@@ -214,10 +213,8 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         from ..utils import is_default_config_value
 
         if is_default_config_value(self.scorer, include_best=False) or self.scorer is None:
-            self.scorer = (
-                DefaultFairlearnClassificationConfig()
-                if self.classifier
-                else DefaultFairlearnRegressionConfig()
+            self.scorer = DefaultFairlearnDataScoreConfig(
+                classifier=getattr(self, "classifier", True),
             )
         result = super().__call__(*args, **kwargs)
         assert hasattr(self, "X_train"), ".X_train not found"
@@ -228,10 +225,8 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         from ..utils import is_default_config_value
 
         if is_default_config_value(self.scorer, include_best=False) or self.scorer is None:
-            self.scorer = (
-                DefaultFairlearnClassificationConfig()
-                if getattr(self, "classifier", True)
-                else DefaultFairlearnRegressionConfig()
+            self.scorer = DefaultFairlearnDataScoreConfig(
+                classifier=getattr(self, "classifier", True),
             )
         if not callable(self.scorer):
             raise TypeError(
@@ -263,9 +258,16 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         if y_true is None:
             return {}
 
+        y_proba = None
+        try:
+            y_proba = probabilities_from_model_outputs(X)
+        except Exception:
+            y_proba = None
+
         fairness_scores = self.scorer(
             y_true=y_true,
             y_pred=X,
+            y_proba=y_proba,
             mode=scorer_mode,
             data=self,
             sensitive_features=sensitive,

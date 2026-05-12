@@ -191,6 +191,8 @@ class SurvivalModelConfig(ModelConfig):
         self,
         y_true: pd.DataFrame,
         y_pred: RegressionFitter,
+        mode: str = "test",
+        **kwargs,
     ) -> dict:
         """Compute survival model scores (calibration metrics).
 
@@ -213,8 +215,9 @@ class SurvivalModelConfig(ModelConfig):
             return self.scorer(
                 y_true=y_true,
                 y_pred=y_pred,
-                mode=None,
+                mode=mode,
                 data=y_true,
+                **kwargs,
             )
 
         scores = {}

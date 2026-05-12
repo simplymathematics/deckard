@@ -68,6 +68,26 @@ SampleParamsLike = Union[dict[str, Any], dict[str, dict[str, Any]], None]
 RandomStateLike = Union[int, np.random.RandomState, None]
 
 
+def fairness_data_class_count(
+    y_true: Any,
+    y_pred: Any = None,
+    **kwargs: Any,
+) -> int:
+    """Return the number of unique labels in y_true."""
+    y_true_arr = np.asarray(y_true)
+    return int(len(np.unique(y_true_arr)))
+
+
+def fairness_data_mutual_info_self(
+    y_true: Any,
+    y_pred: Any = None,
+    **kwargs: Any,
+) -> float:
+    """Return mutual information of y_true with itself (label entropy proxy)."""
+    y_true_arr = np.asarray(y_true)
+    return float(mutual_info_score(y_true_arr, y_true_arr))
+
+
 @dataclass(eq=False)
 class DefaultFairlearnDataScoreConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     """Default fairness data scoring: class count, mutual information, etc."""
@@ -83,12 +103,12 @@ class DefaultFairlearnDataScoreConfig(_TaskAwareScorerMixin, ScorerDictConfig):
         return {
             "class_count": ScorerConfig(
                 score_name="class_count",
-                score_function=lambda y_true, y_pred=None, **kwargs: len(set(y_true)),
+                score_function=fairness_data_class_count,
                 greater_is_better=False,
             ),
             "mutual_info": ScorerConfig(
                 score_name="mutual_info",
-                score_function=lambda y_true, y_pred=None, **kwargs: mutual_info_score(y_true, y_true),
+                score_function=fairness_data_mutual_info_self,
                 greater_is_better=True,
             ),
         }

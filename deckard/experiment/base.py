@@ -455,22 +455,75 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             self._compute_val_predictions()
             return
 
+    def _resolve_mode_model_outputs(self, mode: str) -> tuple[Any, Any, Any]:
+        """Return ``(y_true, y_pred, y_proba)`` for the requested experiment mode."""
+        if mode == "train":
+            X_split = self.data.X_train
+            y_true = self.data.y_train
+            pred_attr = "training_predictions"
+            proba_attr = "training_probabilities"
+        elif mode == "test":
+            X_split = self.data.X_test
+            y_true = self.data.y_test
+            pred_attr = "predictions"
+            proba_attr = "probabilities"
+        elif mode == "val":
+            X_split = self.data.X_val
+            y_true = self.data.y_val
+            pred_attr = "val_predictions"
+            proba_attr = "val_probabilities"
+        else:
+            raise ValueError(f"Unsupported model scoring mode '{mode}'")
+
+        y_pred = getattr(self.model, pred_attr, None)
+        if y_pred is None and hasattr(self.model, "_predict"):
+            y_pred = self.model._predict(X_split)
+            setattr(self.model, pred_attr, y_pred)
+
+        y_proba = getattr(self.model, proba_attr, None)
+        if y_proba is None and getattr(self.model, "classifier", False):
+            predict_proba = getattr(self.model, "_predict_proba", None)
+            if callable(predict_proba):
+                try:
+                    y_proba = predict_proba(X_split)
+                    setattr(self.model, proba_attr, y_proba)
+                except Exception:
+                    y_proba = None
+
+        return y_true, y_pred, y_proba
+
     def _run_experiment_scorer_modes(self, score_file=None) -> dict:
         if self.score is None:
             return {}
         out = {}
         scorer_is_data_profile = isinstance(self.score, _DataScorerMarker)
         for mode in self._resolve_score_modes():
+            common_kwargs = {
+                "data": self.data,
+                "model": self.model,
+                "attack": self.attack,
+                "detector": self.detector,
+                "experiment": self,
+                "mode": mode,
+                "score_file": score_file,
+            }
             if scorer_is_data_profile:
                 y_true, y_pred = self._resolve_data_mode_inputs(mode)
+                y_proba = None
+                if (
+                    mode != "pre-sample"
+                    and self.model is not None
+                    and getattr(self.model, "classifier", False)
+                ):
+                    try:
+                        _, _, y_proba = self._resolve_mode_model_outputs(mode)
+                    except Exception:
+                        y_proba = None
                 mode_scores = self.score(
-                    data=self.data,
-                    model=self.model,
-                    attack=self.attack,
-                    mode=mode,
+                    **common_kwargs,
                     y_true=y_true,
                     y_pred=y_pred,
-                    score_file=None,
+                    y_proba=y_proba,
                 )
             else:
                 if mode == "pre-sample":
@@ -478,12 +531,12 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                         "pre-sample mode is only supported for data-profile experiment scorers.",
                     )
                 self._ensure_mode_predictions(mode)
+                y_true, y_pred, y_proba = self._resolve_mode_model_outputs(mode)
                 mode_scores = self.score(
-                    data=self.data,
-                    model=self.model,
-                    attack=self.attack,
-                    mode=mode,
-                    score_file=None,
+                    **common_kwargs,
+                    y_true=y_true,
+                    y_pred=y_pred,
+                    y_proba=y_proba,
                 )
             out.update(self._normalize_mode_score_keys(mode, mode_scores))
         return out
