@@ -1,24 +1,21 @@
-import logging
-import traceback
-
-logger = logging.getLogger(__name__)
-from dataclasses import dataclass, field
-from sklearn.metrics import mutual_info_score
-
 """Fairness-specific scoring helpers and default scorer configuration."""
 
-from dataclasses import dataclass, field
+import logging
+import traceback
 from collections.abc import Sized
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Callable, Literal, Union, cast
 
 import numpy as np
 import pandas as pd
+from omegaconf import ListConfig
+from sklearn.metrics import mutual_info_score
 
 try:
     import torch
 except ImportError:
     torch = None
-from omegaconf import ListConfig
+
 from .base import (
     ScorerConfig,
     ScorerDictConfig,
@@ -27,8 +24,8 @@ from .base import (
     safe_store,
     _series_like_to_float_dict,
 )
-from ..utils import coerce_to_list, merge_list_of_dicts
 from ..data import DataConfig
+from ..utils import coerce_to_list, merge_list_of_dicts
 
 try:
     from fairlearn.metrics import MetricFrame
@@ -44,10 +41,11 @@ except ImportError:  # pragma: no cover
     demographic_parity_difference = None
     equalized_odds_difference = None
 
-
 if TYPE_CHECKING:
     from ..attack import AttackConfig
     from ..model import ModelConfig
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "_FairnessScorerMixin",

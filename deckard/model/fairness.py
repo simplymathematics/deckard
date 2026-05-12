@@ -24,8 +24,8 @@ from ..score import ScorerDictConfig
 try:
     import torch as torch_module
     import torch.nn as nn_module
-except:
-    torch_model = None
+except ImportError:
+    torch_module = None
     nn_module = None
 
 
