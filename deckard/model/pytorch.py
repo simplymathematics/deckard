@@ -539,7 +539,8 @@ class PytorchModelConfig(ModelConfig):
         try:
             snapshot._evaluate_and_score(data, times={})
         except ValueError as exc:
-            if "predict_proba" not in str(exc):
+            exc_text = str(exc).lower()
+            if "predict_proba" not in exc_text and "probability predictions" not in exc_text:
                 raise
             if checkpoint_stage == "before_predict" and snapshot.defense is not None:
                 snapshot._model = snapshot._apply_defense(data)

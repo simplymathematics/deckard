@@ -13,7 +13,12 @@ from .base import ModelConfig, logger
 from .defend import DefenseConfig
 from .pytorch import PytorchModelConfig
 from ..data.fairness import FairlearnDataConfig
-from ..utils import ConfigBase, load_class, resolve_class
+from ..utils import (
+    ConfigBase,
+    load_class,
+    probabilities_from_model_outputs,
+    resolve_class,
+)
 from ..score import ScorerDictConfig
 
 
@@ -388,14 +393,19 @@ class _FairnessBehaviorMixin:
     def _predict_proba(self, X: pd.DataFrame) -> pd.DataFrame:
         if self._model is None:
             raise ValueError("Model not initialized")
-        if not self.probability:
-            raise ValueError("Model does not support probability predictions")
         sensitive = self._resolve_sensitive_features_for_batch(X, split="test")
-        return self._call_with_optional_sensitive(
-            self._model.predict_proba,
-            X,
-            sensitive,
-        )
+        predict_proba = getattr(self._model, "predict_proba", None)
+        if callable(predict_proba):
+            return self._call_with_optional_sensitive(
+                predict_proba,
+                X,
+                sensitive,
+            )
+
+        # Fallback for torch-style models without predict_proba: derive probabilities
+        # from raw outputs or labels so probability-based scorers can run.
+        raw_pred = self._predict(X)
+        return probabilities_from_model_outputs(raw_pred)
 
     
     

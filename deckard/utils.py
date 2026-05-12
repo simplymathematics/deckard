@@ -52,6 +52,7 @@ __all__ = [
     "merge_list_of_dicts",
     "merge_scores_with_collision_suffix",
     "resolve_torch_device",
+    "probabilities_from_model_outputs",
 ]
 
 
@@ -480,6 +481,42 @@ def round_scores(scores: dict, n_samples: int, logger_obj: Optional[logging.Logg
         elif logger_obj is not None:
             logger_obj.info(f"{score}: {value}")
     return rounded_scores
+
+
+def probabilities_from_model_outputs(outputs: Any) -> np.ndarray:
+    """Convert classifier outputs into a 2D probability array.
+
+    Accepts logits/probabilities from torch or numpy outputs and returns
+    ``(n_samples, n_classes)`` probabilities for downstream scorers.
+    """
+    if hasattr(outputs, "detach") and hasattr(outputs, "cpu"):
+        arr = outputs.detach().cpu().numpy()
+    else:
+        arr = np.asarray(outputs)
+
+    if arr.ndim == 2 and arr.shape[1] > 1:
+        arr = arr.astype(np.float64, copy=False)
+        max_per_row = np.max(arr, axis=1, keepdims=True)
+        exp_logits = np.exp(arr - max_per_row)
+        denom = np.sum(exp_logits, axis=1, keepdims=True)
+        denom[denom == 0.0] = 1.0
+        return exp_logits / denom
+
+    if arr.ndim == 2 and arr.shape[1] == 1:
+        arr = arr.reshape(-1)
+
+    if arr.ndim == 1:
+        arr = arr.astype(np.float64, copy=False)
+        if np.any(arr < 0.0) or np.any(arr > 1.0):
+            pos = 1.0 / (1.0 + np.exp(-arr))
+        else:
+            pos = np.clip(arr, 0.0, 1.0)
+        neg = 1.0 - pos
+        return np.column_stack([neg, pos])
+
+    raise ValueError(
+        f"Unable to derive probability predictions from output shape {arr.shape}",
+    )
 
 
 def _canonicalize_for_hash(value):

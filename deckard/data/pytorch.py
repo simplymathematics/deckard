@@ -783,6 +783,28 @@ class PytorchCustomDataConfig(PytorchDataConfig):
                     [self._normalize_sensitive_item(v) for v in list(batch[2])],
                 )
 
+        def _sensitive_from_split(ds):
+            if ds is None:
+                return None
+            if isinstance(ds, Subset):
+                base_sensitive = getattr(ds.dataset, "_sensitive", None)
+                if base_sensitive is None:
+                    return None
+                arr = np.asarray(base_sensitive, dtype=object)
+                indices = np.asarray(ds.indices)
+                return [self._normalize_sensitive_item(v) for v in arr[indices].tolist()]
+            direct_sensitive = getattr(ds, "_sensitive", None)
+            if direct_sensitive is None:
+                return None
+            return [self._normalize_sensitive_item(v) for v in list(direct_sensitive)]
+
+        split_train_sensitive = _sensitive_from_split(train_ds)
+        split_test_sensitive = _sensitive_from_split(test_ds)
+        if len(train_sensitive_batches) == 0 and split_train_sensitive is not None:
+            train_sensitive_batches = split_train_sensitive
+        if len(test_sensitive_batches) == 0 and split_test_sensitive is not None:
+            test_sensitive_batches = split_test_sensitive
+
         self.X_train = train_loader
         self.y_train = (
             torch.cat(train_y_batches, dim=0)
