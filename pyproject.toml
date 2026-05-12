@@ -30,8 +30,8 @@ dependencies = [
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["deckard"]
+[tool.setuptools.packages.find]
+include = ["deckard*"]
 
 [project.optional-dependencies]
 
