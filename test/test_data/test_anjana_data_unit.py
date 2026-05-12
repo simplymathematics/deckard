@@ -26,14 +26,18 @@ def _bare_cfg():
 
 def test_post_init_normalizes_list_like_fields(monkeypatch):
     cfg = _bare_cfg()
-    cfg.anjana_defense = OmegaConf.create([
-        {"name": "anjana.one"},
-        {"k": 2},
-    ])
-    cfg.fairness_defense = OmegaConf.create([
-        {"name": "fairlearn.preprocessing.CorrelationRemover"},
-        {"alpha": 0.1},
-    ])
+    cfg.anjana_defense = OmegaConf.create(
+        [
+            {"name": "anjana.one"},
+            {"k": 2},
+        ]
+    )
+    cfg.fairness_defense = OmegaConf.create(
+        [
+            {"name": "fairlearn.preprocessing.CorrelationRemover"},
+            {"alpha": 0.1},
+        ]
+    )
     cfg.identifiers = OmegaConf.create(["id"])
     cfg.quasi_identifiers = "zip"
     cfg.sensitive_columns = "group"
@@ -212,7 +216,9 @@ def test_apply_anjana_defense_branch_paths(monkeypatch):
     assert seen["ident"] == ["id"]
     assert seen["quasi_ident"] == ["feature"]
     assert seen["sens_att"] == "label"
-    np.testing.assert_array_equal(seen["hierarchies"]["feature"][0], np.array([1, 2, 3]))
+    np.testing.assert_array_equal(
+        seen["hierarchies"]["feature"][0], np.array([1, 2, 3])
+    )
     assert cfg._X.index.tolist() == [10, 11]
     assert cfg._y.index.tolist() == [10, 11]
 
@@ -260,12 +266,20 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     cfg = _bare_cfg()
 
     calls = []
-    monkeypatch.setattr(DataPipelineConfig, "_load_data", lambda self: calls.append("load"))
-    monkeypatch.setattr(AnjanaDataConfig, "_apply_anjana_defense", lambda self: calls.append("defense"))
+    monkeypatch.setattr(
+        DataPipelineConfig, "_load_data", lambda self: calls.append("load")
+    )
+    monkeypatch.setattr(
+        AnjanaDataConfig, "_apply_anjana_defense", lambda self: calls.append("defense")
+    )
     assert cfg._load_data() is cfg
     assert calls == ["load", "defense"]
 
-    monkeypatch.setattr(AnjanaDataConfig, "_inject_fairness_defense_step", lambda self: calls.append("inject"))
+    monkeypatch.setattr(
+        AnjanaDataConfig,
+        "_inject_fairness_defense_step",
+        lambda self: calls.append("inject"),
+    )
     monkeypatch.setattr(DataPipelineConfig, "_init_pipeline", lambda self: "pipeline")
     assert cfg._init_pipeline() == "pipeline"
 
@@ -307,7 +321,10 @@ def test_load_init_sample_and_score_paths(monkeypatch):
         cfg_score._score()
 
     cfg_fallback = _bare_cfg()
-    cfg_fallback.scorer = lambda **kwargs: {"rows": len(kwargs["y_true"]), "cols": list(kwargs["y_pred"].columns)}
+    cfg_fallback.scorer = lambda **kwargs: {
+        "rows": len(kwargs["y_true"]),
+        "cols": list(kwargs["y_pred"].columns),
+    }
     cfg_fallback._y = pd.Series([1, 0])
     cfg_fallback._X = pd.DataFrame({"z": [3, 4]})
     assert cfg_fallback._score() == {"rows": 2, "cols": ["z"]}

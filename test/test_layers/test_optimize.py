@@ -400,7 +400,6 @@ def test_execute_runtime_object_rejects_non_mapping_payload(tmp_path):
         optimize_module.OptunaStudyCallback.execute_runtime_object(conf)
 
 
-
 def test_hydra_optuna_callback_on_compose_config_sets_experiment_and_files(
     monkeypatch,
     tmp_path,
@@ -440,8 +439,12 @@ def test_hydra_optuna_callback_on_compose_config_writes_params_file(
 ):
     hydra_cfg = SimpleNamespace(mode="RunMode.MULTIRUN")
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
-    monkeypatch.setattr(optimize_module, "_normalize_mode_cfg", lambda cfg, h, **kw: cfg)
-    monkeypatch.setattr(optimize_module, "_seed_experiment_uuid_for_current_trial", lambda **kw: None)
+    monkeypatch.setattr(
+        optimize_module, "_normalize_mode_cfg", lambda cfg, h, **kw: cfg
+    )
+    monkeypatch.setattr(
+        optimize_module, "_seed_experiment_uuid_for_current_trial", lambda **kw: None
+    )
 
     params_file = str(tmp_path / "params.yaml")
     callback = optimize_module.OptunaStudyCallback(
@@ -597,8 +600,12 @@ def test_hydra_optuna_callback_on_compose_config_uses_constructor_params_file(
         job=SimpleNamespace(name="__main__"),
     )
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
-    monkeypatch.setattr(optimize_module, "_normalize_mode_cfg", lambda cfg, h, **kw: cfg)
-    monkeypatch.setattr(optimize_module, "_seed_experiment_uuid_for_current_trial", lambda **kw: None)
+    monkeypatch.setattr(
+        optimize_module, "_normalize_mode_cfg", lambda cfg, h, **kw: cfg
+    )
+    monkeypatch.setattr(
+        optimize_module, "_seed_experiment_uuid_for_current_trial", lambda **kw: None
+    )
 
     params_file = str(tmp_path / "params.yaml")
     callback = optimize_module.OptunaStudyCallback(
@@ -1070,7 +1077,9 @@ def test_mode_helpers_sweeper_assertions_and_extract_scores_paths():
 
     optimize_module._assert_multirun_sweeper(hydra_multirun)
     with pytest.raises(AssertionError, match="Sweeper must be specified"):
-        optimize_module._assert_multirun_sweeper(OmegaConf.create({"mode": "RunMode.MULTIRUN"}))
+        optimize_module._assert_multirun_sweeper(
+            OmegaConf.create({"mode": "RunMode.MULTIRUN"})
+        )
 
     resolved_paths = optimize_module._resolve_multirun_paths(hydra_multirun)
     assert resolved_paths["score_file"].endswith("scores.json")
@@ -1237,7 +1246,10 @@ def test_seed_experiment_uuid_no_matching_trial_and_no_storage(monkeypatch):
     optimize_module._seed_experiment_uuid_for_current_trial(
         hydra_cfg=OmegaConf.create(
             {
-                "sweeper": {"storage": "sqlite:///db.sqlite3", "study_name": "demo-study"},
+                "sweeper": {
+                    "storage": "sqlite:///db.sqlite3",
+                    "study_name": "demo-study",
+                },
                 "job": {"id": "2"},
             },
         ),
@@ -1256,7 +1268,10 @@ def test_seed_experiment_uuid_no_matching_trial_and_no_storage(monkeypatch):
     optimize_module._seed_experiment_uuid_for_current_trial(
         hydra_cfg=OmegaConf.create(
             {
-                "sweeper": {"storage": "sqlite:///db.sqlite3", "study_name": "demo-study"},
+                "sweeper": {
+                    "storage": "sqlite:///db.sqlite3",
+                    "study_name": "demo-study",
+                },
                 "job": {"id": "0"},
             },
         ),
@@ -1359,7 +1374,10 @@ def test_mode_and_multirun_cfg_branches(tmp_path):
 
     unknown_mode_cfg = {"name": "demo"}
     unknown_mode = SimpleNamespace(mode="RunMode.UNKNOWN")
-    assert optimize_module._normalize_mode_cfg(unknown_mode_cfg, unknown_mode) is unknown_mode_cfg
+    assert (
+        optimize_module._normalize_mode_cfg(unknown_mode_cfg, unknown_mode)
+        is unknown_mode_cfg
+    )
 
 
 def test_extract_scores_kwargs_path_and_none():
@@ -1367,7 +1385,10 @@ def test_extract_scores_kwargs_path_and_none():
         kwargs={"job_return": {"return_value": {"loss": 0.1}}},
     )
     assert payload == {"loss": 0.1}
-    assert optimize_module._extract_scores_from_job_end_kwargs(job_return=None, kwargs={}) is None
+    assert (
+        optimize_module._extract_scores_from_job_end_kwargs(job_return=None, kwargs={})
+        is None
+    )
 
 
 def test_sync_multirun_trial_attributes_missing_sweeper_values_and_empty_attrs():
@@ -1416,7 +1437,9 @@ def test_optimize_main_accepts_plain_dict_cfg(monkeypatch):
 
     monkeypatch.setattr(optimize_module, "ConfigBase", DummyBase)
     monkeypatch.setattr(optimize_module, "instantiate", lambda cfg: DummyBase())
-    monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: SimpleNamespace(mode="RunMode.RUN"))
+    monkeypatch.setattr(
+        optimize_module.HydraConfig, "get", lambda: SimpleNamespace(mode="RunMode.RUN")
+    )
 
     result = optimize_module.optimize_main({"name": "demo"})
     assert result == {"ok": True}
@@ -1472,7 +1495,10 @@ def test_set_trial_attributes_remaining_error_and_guard_paths(monkeypatch, caplo
 
     with pytest.raises(TypeError, match="attrs must be a dict-like object"):
         optimize_module.set_trial_attributes(
-            SimpleNamespace(study_name="demo-study", get_trials=lambda deepcopy=False: [SimpleNamespace(number=0)]),
+            SimpleNamespace(
+                study_name="demo-study",
+                get_trials=lambda deepcopy=False: [SimpleNamespace(number=0)],
+            ),
             attrs="bad",
             experiment_name="demo",
         )
@@ -1515,7 +1541,10 @@ def test_set_trial_attributes_remaining_error_and_guard_paths(monkeypatch, caplo
     monkeypatch.setattr(
         optimize_module,
         "_overwrite_frozen_trial_user_attr",
-        lambda study, trial_id, key, value: calls.__setitem__("overwrite", calls["overwrite"] + 1) or True,
+        lambda study, trial_id, key, value: calls.__setitem__(
+            "overwrite", calls["overwrite"] + 1
+        )
+        or True,
     )
 
     study_retry = SimpleNamespace(

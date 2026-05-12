@@ -24,7 +24,6 @@ from deckard.score import (
 from sklearn.metrics import accuracy_score, mean_squared_error, precision_score
 
 
-
 class TestScorerDictConfigMerge(unittest.TestCase):
     """ScorerDictConfig.merge() should union scorer dicts from multiple specs."""
 
@@ -692,7 +691,7 @@ class TestAnjanaScorers(unittest.TestCase):
                 "zip": ["10001", "10001", "10002", "10002"],
                 "income": [50000, 60000, 70000, 80000],
                 "disease": ["flu", "cold", "diabetes", "flu"],
-            }
+            },
         )
 
     # -----------------------------------------------------------------------

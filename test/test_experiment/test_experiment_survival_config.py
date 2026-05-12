@@ -76,14 +76,18 @@ def test_calculate_failures_under_attack_fallback_uses_attack_size_column():
         },
     )
 
-    out = cfg.calculate_failures_under_attack(df, attack_config=SimpleNamespace(attack_size=8, attack_kind="evasion"))
+    out = cfg.calculate_failures_under_attack(
+        df, attack_config=SimpleNamespace(attack_size=8, attack_kind="evasion")
+    )
 
     assert "ben_failures" in out.columns
     assert "adv_failures" in out.columns
     assert np.isfinite(out["adv_failures"]).all()
 
 
-def test_make_survival_model_table_handles_none_models_and_metric_failures(monkeypatch, tmp_path):
+def test_make_survival_model_table_handles_none_models_and_metric_failures(
+    monkeypatch, tmp_path
+):
     cfg = _bare_instance()
     cfg.event_col = "E"
 
@@ -180,14 +184,24 @@ def test_call_requires_attack_when_auxiliary_mode(tmp_path):
 
 
 def test_candidate_attack_metrics_specific_kinds():
-    assert SurvivalExperimentConfig._infer_attack_kind_from_label("membership attack") == "membership"
-    assert SurvivalExperimentConfig._infer_attack_kind_from_label("attribute inference") == "attribute"
+    assert (
+        SurvivalExperimentConfig._infer_attack_kind_from_label("membership attack")
+        == "membership"
+    )
+    assert (
+        SurvivalExperimentConfig._infer_attack_kind_from_label("attribute inference")
+        == "attribute"
+    )
     assert SurvivalExperimentConfig._infer_attack_kind_from_label("pgd") == "evasion"
 
-    assert SurvivalExperimentConfig._candidate_attack_metrics_for_kind("membership") == [
+    assert SurvivalExperimentConfig._candidate_attack_metrics_for_kind(
+        "membership"
+    ) == [
         "membership_inference_accuracy",
     ]
-    assert SurvivalExperimentConfig._candidate_attack_metrics_for_kind("attribute") == [
+    assert SurvivalExperimentConfig._candidate_attack_metrics_for_kind(
+        "attribute"
+    ) == [
         "sex_inference_accuracy",
         "attribute_inference_accuracy",
     ]
@@ -287,7 +301,9 @@ def test_call_raises_when_aux_runtime_split_missing(monkeypatch, tmp_path):
 
     from deckard.plot import survival as plot_survival_mod
 
-    monkeypatch.setattr(plot_survival_mod, "SurvivalSeabornPlotConfigList", FakePlotList)
+    monkeypatch.setattr(
+        plot_survival_mod, "SurvivalSeabornPlotConfigList", FakePlotList
+    )
 
     with pytest.raises(ValueError, match="Runtime survival split unavailable"):
         cfg()

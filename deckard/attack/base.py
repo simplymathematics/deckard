@@ -9,7 +9,7 @@ import pandas as pd
 
 # Typing imports
 from dataclasses import dataclass, field
-from typing import Any, Literal, Optional, Union, TYPE_CHECKING
+from typing import Any, Literal, Optional, Union
 
 # Sklearn and numpy imports
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
@@ -945,13 +945,13 @@ class AttackConfig(ConfigBase):
             shapes = [np.shape(v) for v in value]
             if len(set(shapes)) > 1:
                 raise ValueError(
-                    f"Inconsistent shapes in input list/tuple: {shapes}. All elements must have the same shape for conversion to numpy array."
+                    f"Inconsistent shapes in input list/tuple: {shapes}. All elements must have the same shape for conversion to numpy array.",
                 )
             try:
                 arr = np.asarray(value, dtype=dtype)
             except Exception as e:
                 raise ValueError(
-                    f"Failed to convert list/tuple to numpy array due to shape inconsistency or unsupported types: {e}"
+                    f"Failed to convert list/tuple to numpy array due to shape inconsistency or unsupported types: {e}",
                 )
         else:
             try:
@@ -1941,7 +1941,8 @@ class AttackConfig(ConfigBase):
         batch_size = getattr(data, "batch_size", None)
         if batch_size is None:
             batch_size = getattr(getattr(data, "model", None), "fit_params", {}).get(
-                "batch_size", 32
+                "batch_size",
+                32,
             )
         poison_fit_params = dict(poison_fit_params) if poison_fit_params else {}
         is_torch_art = hasattr(art_model, "_model") and (
@@ -2061,7 +2062,8 @@ class AttackConfig(ConfigBase):
 
         benign_labels = self._prediction_to_labels(benign_pred, is_regression=False)
         poisoned_labels = self._prediction_to_labels(
-            poisoned_pred, is_regression=False
+            poisoned_pred,
+            is_regression=False,
         )
 
         start_time = time.process_time()
@@ -2073,10 +2075,14 @@ class AttackConfig(ConfigBase):
         }
         classifier_scorer = ScorerDictConfig(scorers=label_only)
         benign_scores = classifier_scorer(
-            y_true=y_eval, y_pred=benign_labels, mode=None
+            y_true=y_eval,
+            y_pred=benign_labels,
+            mode=None,
         )
         poisoned_scores = classifier_scorer(
-            y_true=y_eval, y_pred=poisoned_labels, mode=None
+            y_true=y_eval,
+            y_pred=poisoned_labels,
+            mode=None,
         )
         self.attack_score_time = time.process_time() - start_time
 

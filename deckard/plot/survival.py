@@ -184,7 +184,8 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
         xlabel: str,
         ylabel: str,
         calibration_fn: Callable[
-            [Any, pd.DataFrame, Optional[pd.DataFrame], float], pd.DataFrame
+            [Any, pd.DataFrame, Optional[pd.DataFrame], float],
+            pd.DataFrame,
         ],
         folder: str,
         ax: Optional[Axes] = None,
@@ -299,7 +300,8 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
                 X_test=X_test,
                 t0=t0,
                 title=plot_dict.get(
-                    "qq_title", f"{mtype.replace('_', ' ').title()} Calibration"
+                    "qq_title",
+                    f"{mtype.replace('_', ' ').title()} Calibration",
                 ),
                 file=plot_dict.get("qq_file", f"{mtype}_qq.pdf"),
                 xlabel="Predicted Probability",
@@ -324,7 +326,7 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
                                 )[
                                     3
                                 ].assign(
-                                    dataset="test"
+                                    dataset="test",
                                 ),
                             ]
                             if frame_test is not None
@@ -342,7 +344,8 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
                 self.plot_summary(
                     aft=aft,
                     title=plot_dict.get(
-                        "summary_title", f"{mtype.replace('_', ' ').title()} P-values"
+                        "summary_title",
+                        f"{mtype.replace('_', ' ').title()} P-values",
                     ),
                     file=plot_dict["summary_plot"],
                     xlabel=label_dict.get("summary_xlabel", "Covariate"),
@@ -480,7 +483,7 @@ class SurvivalSeabornPlotConfigList(ConfigBase):
             or runtime_data.y_test is None
         ):
             raise ValueError(
-                "Runtime survival split did not produce train/test partitions"
+                "Runtime survival split did not produce train/test partitions",
             )
 
         X_train = pd.DataFrame(runtime_data.X_train).copy()

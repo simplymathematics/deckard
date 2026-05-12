@@ -13,7 +13,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 
 class TestModelConfig(unittest.TestCase):
-    
+
     def setUp(self):
         # Simple binary classification data
         self.X_train = pd.DataFrame({"a": [0, 1, 2, 3], "b": [1, 2, 3, 4]})
@@ -33,7 +33,7 @@ class TestModelConfig(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
-    
+
     def test_post_init(self):
         self.assertTrue(hasattr(self.model._model, "fit"))
         self.assertTrue(hasattr(self.model._model, "predict"))
@@ -48,10 +48,6 @@ class TestModelConfig(unittest.TestCase):
         self.model.probability = True
         proba = self.model._predict_proba(self.X_train)
         self.assertEqual(len(proba), len(self.y_train))
-
-
-
-
 
     def test_score(self):
         self.model._train(self.X_train, self.y_train)
@@ -413,8 +409,8 @@ class TestModelPostInitScorerBranches(unittest.TestCase):
                     "score_params": {},
                     "greater_is_better": True,
                     "needs_proba": False,
-                }
-            }
+                },
+            },
         }
         model = ModelConfig(
             model_type="sklearn.tree.DecisionTreeClassifier",
@@ -495,7 +491,7 @@ class TestPluginSystem(unittest.TestCase):
         model = self._model()
         # Reuse sklearn's DecisionTreeClassifier as a loadable class
         instance = model._instantiate_plugin(
-            "sklearn.tree.DecisionTreeClassifier"
+            "sklearn.tree.DecisionTreeClassifier",
         )
         from sklearn.tree import DecisionTreeClassifier
 
@@ -526,7 +522,7 @@ class TestPluginSystem(unittest.TestCase):
             {
                 "name": "sklearn.tree.DecisionTreeClassifier",
                 "max_depth": 2,
-            }
+            },
         )
         from sklearn.tree import DecisionTreeClassifier
 
@@ -624,7 +620,7 @@ class TestPredictTypeErrorHandling(unittest.TestCase):
             scorer=None,
         )
         model._model = SimpleNamespace(
-            predict=MagicMock(side_effect=TypeError("something else entirely"))
+            predict=MagicMock(side_effect=TypeError("something else entirely")),
         )
         X = pd.DataFrame({"a": [1, 2, 3]})
         with self.assertRaises(TypeError):
@@ -727,7 +723,7 @@ class TestLoadScoreFile(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             score_path = Path(td) / "scores.json"
             score_path.write_text(
-                json.dumps({"accuracy": 0.9, "training_time": 1.2, "training_n": 50})
+                json.dumps({"accuracy": 0.9, "training_time": 1.2, "training_n": 50}),
             )
             times = model._load_score_file(str(score_path))
         self.assertIn("training_time", times)
@@ -1125,7 +1121,9 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         model = self._model()
         model.score_mode = "val"
         model._train(data.X_train, data.y_train)
-        model.scorer = lambda y_true, y_pred, mode="val", **kwargs: {"validation_accuracy": 1.0}
+        model.scorer = lambda y_true, y_pred, mode="val", **kwargs: {
+            "validation_accuracy": 1.0
+        }
 
         times = {}
         model._evaluate_and_score(data, times=times)
@@ -1183,14 +1181,22 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
             loaded_obj.defense = None
 
             model.load = lambda _fp: loaded_obj
-            loaded_obj._train = lambda X, y: setattr(loaded_obj, "training_time", 0.01) or setattr(loaded_obj, "training_n", len(y)) or setattr(loaded_obj, "_model", SimpleNamespace(predict=lambda s: np.zeros(len(s), dtype=int)))
-            model._model = SimpleNamespace(predict=lambda s: np.zeros(len(s), dtype=int))
+            loaded_obj._train = (
+                lambda X, y: setattr(loaded_obj, "training_time", 0.01)
+                or setattr(loaded_obj, "training_n", len(y))
+                or setattr(
+                    loaded_obj,
+                    "_model",
+                    SimpleNamespace(predict=lambda s: np.zeros(len(s), dtype=int)),
+                )
+            )
+            model._model = SimpleNamespace(
+                predict=lambda s: np.zeros(len(s), dtype=int)
+            )
             out = model._load_or_train_model(data, str(p), {})
 
             self.assertIn("training_time", out)
             self.assertIn("training_n", out)
-
-
 
     def test_load_or_train_with_none_model_and_missing_file_trains(self):
         data = _make_data()
@@ -1205,7 +1211,9 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
         def _train(_X, y):
             model.training_time = 0.01
             model.training_n = len(y)
-            model._model = SimpleNamespace(predict=lambda s: np.zeros(len(s), dtype=int))
+            model._model = SimpleNamespace(
+                predict=lambda s: np.zeros(len(s), dtype=int)
+            )
 
         model._train = _train
         model.save = lambda filepath: None
@@ -1258,8 +1266,18 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
             )
             loaded_obj._model = _Unfitted()
             loaded_obj.defense = object()
-            loaded_obj._train = lambda X, y: setattr(loaded_obj, "training_time", 0.01) or setattr(loaded_obj, "training_n", len(y)) or setattr(loaded_obj, "_model", SimpleNamespace(predict=lambda s: np.zeros(len(s), dtype=int)))
-            loaded_obj._apply_defense = lambda _data: SimpleNamespace(predict=lambda s: np.zeros(len(s), dtype=int))
+            loaded_obj._train = (
+                lambda X, y: setattr(loaded_obj, "training_time", 0.01)
+                or setattr(loaded_obj, "training_n", len(y))
+                or setattr(
+                    loaded_obj,
+                    "_model",
+                    SimpleNamespace(predict=lambda s: np.zeros(len(s), dtype=int)),
+                )
+            )
+            loaded_obj._apply_defense = lambda _data: SimpleNamespace(
+                predict=lambda s: np.zeros(len(s), dtype=int)
+            )
             loaded_obj._require_defense_pipeline = lambda: SimpleNamespace(
                 resolve_stage=lambda **_kwargs: "skip",
             )

@@ -86,7 +86,9 @@ def test_initialize_criterion_and_optimizer_support_variants(monkeypatch):
     criterion = initialize_criterion("CrossEntropyLoss")
     assert criterion["name"] == "torch.nn.CrossEntropyLoss"
 
-    criterion_cfg = initialize_criterion({"name": "torch.nn.MSELoss", "reduction": "sum"})
+    criterion_cfg = initialize_criterion(
+        {"name": "torch.nn.MSELoss", "reduction": "sum"}
+    )
     assert criterion_cfg["kwargs"]["reduction"] == "sum"
 
     with pytest.raises(ValueError, match="criterion must be str or dict"):
@@ -96,7 +98,9 @@ def test_initialize_criterion_and_optimizer_support_variants(monkeypatch):
     optimizer = initialize_optimizer("SGD", model.parameters())
     assert optimizer["name"] == "torch.optim.SGD"
 
-    optimizer_cfg = initialize_optimizer({"name": "Adam", "lr": 0.01}, model.parameters())
+    optimizer_cfg = initialize_optimizer(
+        {"name": "Adam", "lr": 0.01}, model.parameters()
+    )
     assert optimizer_cfg["name"] == "torch.optim.Adam"
     assert "params" in optimizer_cfg["kwargs"]
 
@@ -400,7 +404,9 @@ def test_score_checkpoint_snapshot_predict_proba_fallback_classification():
         defense=None,
         classifier=True,
         score_dict={},
-        _evaluate_and_score=lambda data, times={}: (_ for _ in ()).throw(ValueError("predict_proba unavailable")),
+        _evaluate_and_score=lambda data, times={}: (_ for _ in ()).throw(
+            ValueError("predict_proba unavailable")
+        ),
         _predict=lambda X: torch.zeros(len(X), dtype=torch.long),
         _classification_scores=lambda y_true, y_pred: {"accuracy": 0.5},
         _regression_scores=lambda y_true, y_pred: {"mse": 1.0},
@@ -432,7 +438,9 @@ def test_score_checkpoint_snapshot_predict_proba_fallback_regression():
         defense=None,
         classifier=False,
         score_dict={},
-        _evaluate_and_score=lambda data, times={}: (_ for _ in ()).throw(ValueError("predict_proba missing")),
+        _evaluate_and_score=lambda data, times={}: (_ for _ in ()).throw(
+            ValueError("predict_proba missing")
+        ),
         _predict=lambda X: torch.zeros(len(X), dtype=torch.float32),
         _classification_scores=lambda y_true, y_pred: {"accuracy": 0.5},
         _regression_scores=lambda y_true, y_pred: {"mse": 0.25},
@@ -870,8 +878,6 @@ def test_pytorch_save_refuses_to_overwrite_existing_file():
         classifier=True,
     )
     cfg._model = torch.nn.Linear(4, 2)
-
-
 
 
 def test_pytorch_score_epoch_snapshot_with_none_data_returns_early():

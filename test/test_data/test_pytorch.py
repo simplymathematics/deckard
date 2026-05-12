@@ -58,8 +58,7 @@ class ArrayFallbackSample:
 class ArrayFallbackDataset(Dataset):
     def __init__(self):
         self.samples = [
-            (ArrayFallbackSample([[0, 255], [128, 64]]), [0, 1])
-            for _ in range(4)
+            (ArrayFallbackSample([[0, 255], [128, 64]]), [0, 1]) for _ in range(4)
         ]
 
     def __len__(self):
@@ -72,8 +71,7 @@ class ArrayFallbackDataset(Dataset):
 class IntImageDataset(Dataset):
     def __init__(self):
         self.samples = [
-            (torch.tensor([[1, 2], [3, 4]], dtype=torch.int64), 1)
-            for _ in range(6)
+            (torch.tensor([[1, 2], [3, 4]], dtype=torch.int64), 1) for _ in range(6)
         ]
 
     def __len__(self):
@@ -189,6 +187,7 @@ class TestPytorchDataConfig(unittest.TestCase):
         self.config._load_data()
         self.config._sample()
         from torch.utils.data import Subset
+
         self.assertIsInstance(self.config.X_train, (Tensor, Dataset, Subset))
         self.assertIsInstance(self.config.y_train, (Tensor, Dataset))
         self.assertIsInstance(self.config.X_test, (Tensor, Dataset, Subset))
@@ -277,6 +276,7 @@ class TestPytorchDataConfig(unittest.TestCase):
         self.config._load_data()
         self.config._sample()
         from torch.utils.data import Subset
+
         self.assertIsInstance(self.config.X_train, (Tensor, Dataset, Subset))
         self.assertIsInstance(self.config.X_test, (Tensor, Dataset, Subset))
         scores = self.config._score()
@@ -302,6 +302,7 @@ class TestPytorchDataConfig(unittest.TestCase):
         cfg._load_data()
         cfg._sample()
         from torch.utils.data import Subset
+
         self.assertIsInstance(cfg.X_train, (Tensor, Dataset, Subset))
         self.assertIsInstance(cfg.X_test, (Tensor, Dataset, Subset))
         scores = cfg._score()
@@ -443,7 +444,9 @@ class TestPytorchDataConfig(unittest.TestCase):
             data_params={},
         )
 
-        with patch("deckard.data.pytorch.load_class", return_value=InvalidSampleDataset()):
+        with patch(
+            "deckard.data.pytorch.load_class", return_value=InvalidSampleDataset()
+        ):
             with self.assertRaises(ValueError):
                 cfg._load_data()
 
@@ -509,9 +512,13 @@ class TestPytorchDataConfig(unittest.TestCase):
         data_path.write_text("cached")
         score_path.write_text("cached")
 
-        with patch.object(self.config, "load_scores", return_value={"cached": 1}) as load_scores:
+        with patch.object(
+            self.config, "load_scores", return_value={"cached": 1}
+        ) as load_scores:
             with patch.object(self.config, "save_scores") as save_scores:
-                scores = self.config(data_file=str(data_path), score_file=str(score_path))
+                scores = self.config(
+                    data_file=str(data_path), score_file=str(score_path)
+                )
 
         load_scores.assert_not_called()
         save_scores.assert_called_once()
@@ -669,7 +676,9 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
             data_params={},
         )
 
-        with patch.object(cfg, "_as_dataset", side_effect=[train_ds, test_ds]) as as_dataset:
+        with patch.object(
+            cfg, "_as_dataset", side_effect=[train_ds, test_ds]
+        ) as as_dataset:
             cfg._load_data()
 
         self.assertEqual(cfg.train_n, 7)

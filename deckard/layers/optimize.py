@@ -68,7 +68,7 @@ class OptunaStudyCallback(HydraCallback):
         )
         if study_name is None or storage is None:
             raise ValueError(
-                "study_name and storage must be provided for multirun study setup"
+                "study_name and storage must be provided for multirun study setup",
             )
         self.study = create_study(
             study_name=study_name,
@@ -196,7 +196,7 @@ class OptunaStudyCallback(HydraCallback):
         score_payload_dict: dict[str, Any] = {}
         if isinstance(job_return_payload, dict):
             score_payload_dict.update(
-                {str(k): v for k, v in job_return_payload.items()}
+                {str(k): v for k, v in job_return_payload.items()},
             )
 
         # If Hydra sweeper wraps return values, recover the raw score payload that
@@ -256,14 +256,14 @@ class OptunaStudyCallback(HydraCallback):
             scores = conf_obj.execute_without_mercy()
         else:
             raise TypeError(
-                "conf_obj must be callable or implement execute_without_mercy"
+                "conf_obj must be callable or implement execute_without_mercy",
             )
 
         if isinstance(scores, DictConfig):
             scores = OmegaConf.to_container(scores, resolve=True)
         if not isinstance(scores, dict):
             raise TypeError(
-                f"Runtime object must return a dict-like score payload. Got {type(scores)}"
+                f"Runtime object must return a dict-like score payload. Got {type(scores)}",
             )
         return {str(k): v for k, v in scores.items()}
 
@@ -387,7 +387,9 @@ def _seed_experiment_uuid_for_current_trial(hydra_cfg, experiment_name) -> None:
         return
 
     trial_id = getattr(
-        selected_trial, "_trial_id", getattr(selected_trial, "trial_id", None)
+        selected_trial,
+        "_trial_id",
+        getattr(selected_trial, "trial_id", None),
     )
     if trial_id is None or not hasattr(study, "_storage"):
         return
@@ -405,7 +407,10 @@ def _inject_experiment_name(score_payload, experiment_name):
 
 
 def _overwrite_frozen_trial_user_attr(
-    study, trial_id: int, key: str, value: Any
+    study,
+    trial_id: int,
+    key: str,
+    value: Any,
 ) -> bool:
     """Bypass Optuna's finished-trial mutability guard for RDB-backed studies."""
     storage = getattr(study, "_storage", None)
@@ -421,7 +426,8 @@ def _overwrite_frozen_trial_user_attr(
     try:
         with _optuna_scoped_session(backend.scoped_session, True) as session:
             trial_model = _optuna_rdb_models.TrialModel.find_or_raise_by_id(
-                trial_id, session
+                trial_id,
+                session,
             )
             attribute = (
                 _optuna_rdb_models.TrialUserAttributeModel.find_by_trial_and_key(

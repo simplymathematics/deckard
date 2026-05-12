@@ -26,6 +26,7 @@ pytest.importorskip("art")
 @pytest.fixture(scope="module")
 def generate_fairness_data():
     from deckard.score import DefaultFairlearnDataScoreConfig
+
     cfg = FairlearnDataConfig(
         dataset_name="make_classification",
         data_params={
@@ -47,9 +48,6 @@ def generate_fairness_data():
     )
     cfg()
     return cfg
-    
-
-
 
 
 def test_fairness_data_and_model_scores(generate_fairness_data):
@@ -64,7 +62,10 @@ def test_fairness_data_and_model_scores(generate_fairness_data):
     model(data)
 
     # Data-level scorer: check for training_class_count or training_mutual_info
-    assert any(key in data.score_dict for key in ("training_class_count", "training_mutual_info"))
+    assert any(
+        key in data.score_dict
+        for key in ("training_class_count", "training_mutual_info")
+    )
     # Model-level scorer: check for accuracy
     assert "accuracy" in model.score_dict
     assert any(key.endswith("_accuracy") for key in model.score_dict)
@@ -117,6 +118,7 @@ def test_fairness_regression_data_and_metric_frame_scores():
     assert "mse_difference" in model.score_dict
     assert any(key.endswith("_mse") for key in model.score_dict)
 
+
 def test_fairness_defense_config_apply_to_trained_model(generate_fairness_data):
     data = generate_fairness_data
 
@@ -142,7 +144,9 @@ def test_fairness_defense_config_apply_to_trained_model(generate_fairness_data):
     assert defense.defense_application_time is not None
 
 
-def test_mixed_fairlearn_and_art_defenses_apply_with_type_checks(generate_fairness_data):
+def test_mixed_fairlearn_and_art_defenses_apply_with_type_checks(
+    generate_fairness_data,
+):
     class DefenseHookProbe:
         def __init__(self):
             self.before_called = False
@@ -206,11 +210,10 @@ def test_mixed_fairlearn_and_art_defenses_apply_with_type_checks(generate_fairne
     assert isinstance(defended.model, ExponentiatedGradient)
 
 
-
-
 @pytest.fixture(scope="module")
 def generate_fairness_model(generate_fairness_data):
     from deckard.score import DefaultFairlearnClassificationConfig
+
     model = FairlearnModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
         classifier=True,
@@ -230,7 +233,10 @@ def test_generate_fairness_data_model_with_and_without_attack(
 ):
 
     # Data-level scorer: check for training_class_count or training_mutual_info
-    assert any(key in generate_fairness_data.score_dict for key in ("training_class_count", "training_mutual_info"))
+    assert any(
+        key in generate_fairness_data.score_dict
+        for key in ("training_class_count", "training_mutual_info")
+    )
 
     # Model-level scorer: check for accuracy and group metrics
     sensitive = generate_fairness_data._sensitive_test
@@ -241,12 +247,15 @@ def test_generate_fairness_data_model_with_and_without_attack(
         for group in unique_groups
     ), f"No group metric keys found in model.score_dict: {list(generate_fairness_model.score_dict.keys())}"
     # Model-level: check for group difference metric
-    assert any(key.endswith("_difference") for key in generate_fairness_model.score_dict)
+    assert any(
+        key.endswith("_difference") for key in generate_fairness_model.score_dict
+    )
 
     if not use_attack:
         return
 
     from deckard.score.attack import FairlearnAttackScorerConfig
+
     attack_cfg = AttackConfig(
         attack_type="art.attacks.evasion.BoundaryAttack",
         attack_params={

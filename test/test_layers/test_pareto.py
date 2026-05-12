@@ -90,7 +90,7 @@ class TestCompleteTrialsOnly(unittest.TestCase):
             {
                 "state": ["COMPLETE", "RUNNING", "COMPLETE", "FAIL"],
                 "value": [0.9, 0.5, 0.8, 0.1],
-            }
+            },
         )
 
     def test_filters_non_complete(self):
@@ -164,7 +164,9 @@ class TestObjectiveToColumn(unittest.TestCase):
 
     def test_values_prefix_lookup(self):
         df = pd.DataFrame({"values_accuracy": [0.9]})
-        self.assertEqual(_objective_to_column("accuracy", 0, df, []), "values_accuracy")
+        self.assertEqual(
+            _objective_to_column("accuracy", 0, df, []), "values_accuracy"
+        )
 
     def test_user_attrs_prefix_lookup(self):
         df = pd.DataFrame({"user_attrs_accuracy": [0.9]})
@@ -392,9 +394,15 @@ class TestResolveStudy(unittest.TestCase):
         del summary.study_name
         summary.name = "fallback_name"
 
-        with patch("deckard.layers.pareto.optuna.study.get_all_study_summaries", return_value=[summary]), patch(
-            "deckard.layers.pareto.optuna.study.load_study",
-        ) as load_mock:
+        with (
+            patch(
+                "deckard.layers.pareto.optuna.study.get_all_study_summaries",
+                return_value=[summary],
+            ),
+            patch(
+                "deckard.layers.pareto.optuna.study.load_study",
+            ) as load_mock,
+        ):
             _resolve_study(storage, study_name=None)
             load_mock.assert_called_once()
 

@@ -72,4 +72,3 @@ Yellowbrick plots are selected by ``plot_type`` and are grouped by category:
 * :doc:`seaborn` — multi-run aggregation visualization
 * :doc:`experiment` — experiment orchestration
 * :doc:`model` — model configuration and training
-

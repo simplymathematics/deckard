@@ -1,5 +1,4 @@
 import importlib
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -10,7 +9,9 @@ import deckard.score.data as score_data
 import deckard.score.declarations as score_declarations
 
 
-def test_score_declarations_loader_returns_when_examples_missing(tmp_path, monkeypatch):
+def test_score_declarations_loader_returns_when_examples_missing(
+    tmp_path, monkeypatch
+):
     fake_file = tmp_path / "pkg" / "deckard" / "score" / "declarations.py"
     fake_file.parent.mkdir(parents=True, exist_ok=True)
     fake_file.write_text("x=1")
@@ -41,7 +42,11 @@ def test_score_declarations_loader_skips_bad_yaml(tmp_path, monkeypatch):
 def test_data_declarations_register_sampler_configs_exception_path(monkeypatch):
     import deckard.data.sample as sample_mod
 
-    monkeypatch.setattr(sample_mod, "register_sampler_configs", lambda: (_ for _ in ()).throw(RuntimeError("boom")))
+    monkeypatch.setattr(
+        sample_mod,
+        "register_sampler_configs",
+        lambda: (_ for _ in ()).throw(RuntimeError("boom")),
+    )
     reloaded = importlib.reload(data_declarations)
 
     assert reloaded is not None
@@ -69,7 +74,9 @@ def test_score_data_reference_resolution_reference_and_missing_column_error():
 
 def test_score_data_is_discrete_reference_empty_and_object():
     assert score_data._is_discrete_reference(np.array([])) is True
-    assert score_data._is_discrete_reference(np.array(["x", "y"], dtype=object)) is True
+    assert (
+        score_data._is_discrete_reference(np.array(["x", "y"], dtype=object)) is True
+    )
 
 
 def test_score_data_mutual_information_raises_when_no_features_left():
@@ -77,7 +84,9 @@ def test_score_data_mutual_information_raises_when_no_features_left():
     X = pd.DataFrame({"label": y})
 
     with pytest.raises(ValueError, match="No feature columns available"):
-        score_data._feature_mutual_information_vector(y_true=y, y_pred=X, reference_column="label")
+        score_data._feature_mutual_information_vector(
+            y_true=y, y_pred=X, reference_column="label"
+        )
 
 
 def test_score_data_class_imbalance_ratio_empty_and_zero_min_count(monkeypatch):
@@ -91,7 +100,9 @@ def test_score_data_class_imbalance_ratio_empty_and_zero_min_count(monkeypatch):
 
     monkeypatch.setattr(score_data.pd.Series, "value_counts", _fake_value_counts)
     try:
-        assert score_data.data_class_imbalance_ratio_score([0, 1], None) == float("inf")
+        assert score_data.data_class_imbalance_ratio_score([0, 1], None) == float(
+            "inf"
+        )
     finally:
         monkeypatch.setattr(score_data.pd.Series, "value_counts", original)
 
@@ -101,4 +112,6 @@ def test_score_data_empirical_cdf_empty_reference_raises():
     X = pd.DataFrame({"x": [1.0, 2.0]})
 
     with pytest.raises(ValueError, match="Reference vector is empty"):
-        score_data.data_empirical_cdf_function_score(y_true=y, y_pred=X, reference=[np.nan, np.nan])
+        score_data.data_empirical_cdf_function_score(
+            y_true=y, y_pred=X, reference=[np.nan, np.nan]
+        )

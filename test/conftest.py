@@ -25,12 +25,12 @@ def pytest_collection_modifyitems(config, items):
         "test_pytorch_fairness_integration.py",
         "test_pytorch_anjana_integration.py",
     }
-    
+
     for item in items:
         # Mark PyTorch-related test files
         if any(exp_file in str(item.fspath) for exp_file in expensive_files):
             item.add_marker(pytest.mark.slow)
-        
+
         # Mark tests that involve expensive operations
         if "optimize" in str(item.fspath):
             item.add_marker(pytest.mark.slow)

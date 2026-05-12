@@ -13,7 +13,6 @@ from deckard.model.defend import DefenseConfig
 from deckard.model.defend import DefensePipelineConfig
 
 
-
 logger = logging.getLogger(__name__)
 
 pytest.importorskip("fairlearn")
@@ -153,13 +152,11 @@ class TestFairlearnModelConfig(unittest.TestCase):
         with self.assertRaises(TypeError):
             model._apply_defense(data=Mock())
 
-
-
-
     def test_sensitive_fairness_scores_naming_convention(self):
         """Test that sensitive fairness scores follow naming convention."""
         # Create a minimal real FairlearnDataConfig with required fields
         from deckard.data.fairness import FairlearnDataConfig
+
         fairness_data = FairlearnDataConfig(
             sensitive_columns="sex",
         )
@@ -175,7 +172,6 @@ class TestFairlearnModelConfig(unittest.TestCase):
         scores = model(fairness_data)
         assert "1_f1" in scores
         assert "0_f1" in scores
-        
 
     def test_train_passes_sensitive_features_when_supported(self):
         class SensitiveFitEstimator:
@@ -206,8 +202,6 @@ class TestFairlearnModelConfig(unittest.TestCase):
 
         self.assertIsNotNone(model._model.received_sensitive)
         self.assertEqual(len(model._model.received_sensitive), len(self.y_test))
-
-
 
     def test_predict_passes_sensitive_features_when_supported(self):
         class SensitivePredictEstimator:

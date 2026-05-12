@@ -57,7 +57,9 @@ def _collect_failed_studies(
     failed: list[str] = []
     for summary in optuna.study.get_all_study_summaries(storage=storage):
         study_name = getattr(summary, "study_name", None) or getattr(
-            summary, "name", None
+            summary,
+            "name",
+            None,
         )
         if not study_name:
             continue

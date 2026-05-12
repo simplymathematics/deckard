@@ -330,7 +330,9 @@ def data_empirical_cdf_function_score(
 
 @dataclass(eq=False)
 class DefaultDataScoreConfig(
-    _DataScorerMarker, _TaskAwareScorerMixin, ScorerDictConfig
+    _DataScorerMarker,
+    _TaskAwareScorerMixin,
+    ScorerDictConfig,
 ):
     """Default data-analysis scorer family with optional task inheritance."""
 

@@ -511,6 +511,8 @@ class TestDataConfig(unittest.TestCase):
             hash(cfg),
             msg="Hash changed after call for DataConfig",
         )
+
+
 import unittest
 import tempfile
 import pandas as pd
@@ -524,7 +526,9 @@ try:
     import fairlearn  # noqa: F401
     from deckard.data import DataConfig, DataPipelineConfig
 except Exception:
-    pytest.skip("fairlearn is required for fairness data tests", allow_module_level=True)
+    pytest.skip(
+        "fairlearn is required for fairness data tests", allow_module_level=True
+    )
 
 
 class HookRecorderPlugin:
@@ -625,7 +629,9 @@ class TestDataPipelineConfig(unittest.TestCase):
         self.assertEqual(pipeline.steps[1][0], "scaler")
 
     def test_pipeline_fit_and_transform(self):
-        config = DataPipelineConfig(pipeline=self.pipeline_config_dict, score_mode="train")
+        config = DataPipelineConfig(
+            pipeline=self.pipeline_config_dict, score_mode="train"
+        )
         config._X = self.X_train
         config._y = self.y_train
         config.data_load_time = 3

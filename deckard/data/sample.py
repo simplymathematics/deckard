@@ -54,7 +54,8 @@ class BaseSampler:
     """
 
     def __call__(
-        self, config: "DataConfig"
+        self,
+        config: "DataConfig",
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         raise NotImplementedError
 

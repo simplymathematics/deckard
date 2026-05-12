@@ -454,7 +454,9 @@ def instantiate_config(
 
 
 def round_scores(
-    scores: dict, n_samples: int, logger_obj: Optional[logging.Logger] = None
+    scores: dict,
+    n_samples: int,
+    logger_obj: Optional[logging.Logger] = None,
 ) -> dict:
     """Round numeric score values using a sample-size-aware precision rule.
 

@@ -281,9 +281,11 @@ class ModelConfig(ConfigBase):
         self.scorer = _coerce_scorer_config(
             self.scorer,
             default_factory=lambda: load_class(
-                "deckard.score.base.DefaultClassifierConfig"
-                if self.classifier
-                else "deckard.score.base.DefaultRegressorConfig"
+                (
+                    "deckard.score.base.DefaultClassifierConfig"
+                    if self.classifier
+                    else "deckard.score.base.DefaultRegressorConfig"
+                ),
             ),
         )
         if self.plugins is None:
@@ -404,7 +406,7 @@ class ModelConfig(ConfigBase):
 
         if self.model_type is None:
             raise ValueError(
-                "model_type must be set before creating an ART model wrapper"
+                "model_type must be set before creating an ART model wrapper",
             )
 
         art_class = (
@@ -607,7 +609,7 @@ class ModelConfig(ConfigBase):
                 if callable(predict_proba):
                     return predict_proba(X)
         raise AttributeError(
-            f"Wrapped model of type {type(self._model)} does not have a predict_proba or _predict_proba method, nor does its underlying estimator."
+            f"Wrapped model of type {type(self._model)} does not have a predict_proba or _predict_proba method, nor does its underlying estimator.",
         )
 
     def _score(
@@ -1249,7 +1251,7 @@ class ModelConfig(ConfigBase):
 
         if y_mode is None or mode_predictions is None:
             raise ValueError(
-                f"No labels or predictions available for {score_mode} scoring."
+                f"No labels or predictions available for {score_mode} scoring.",
             )
 
         if self.scorer is not None:

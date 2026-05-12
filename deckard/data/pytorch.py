@@ -422,16 +422,20 @@ class PytorchDataConfig(DataConfig):
         from torch.utils.data import Subset
 
         assert isinstance(
-            self.X_train, (Tensor, Subset, Dataset)
+            self.X_train,
+            (Tensor, Subset, Dataset),
         ), "X_train must be a Tensor, Subset, or Dataset"
         assert isinstance(
-            self.y_train, (Tensor, Dataset)
+            self.y_train,
+            (Tensor, Dataset),
         ), "y_train must be a Tensor or Dataset"
         assert isinstance(
-            self.X_test, (Tensor, Subset, Dataset)
+            self.X_test,
+            (Tensor, Subset, Dataset),
         ), "X_test must be a Tensor, Subset, or Dataset"
         assert isinstance(
-            self.y_test, (Tensor, Dataset)
+            self.y_test,
+            (Tensor, Dataset),
         ), "y_test must be a Tensor or Dataset"
 
     def _classification_feature_scores(self):
@@ -625,7 +629,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         if isinstance(obj, str):
             if not obj:
                 raise ValueError(
-                    "dataset path cannot be empty for custom torch dataset"
+                    "dataset path cannot be empty for custom torch dataset",
                 )
             obj = load_class(
                 obj,
@@ -649,7 +653,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             sample = dataset[i]
             if not isinstance(sample, (tuple, list)) or len(sample) < 2:
                 raise ValueError(
-                    "Each dataset sample must be (X, y) or (X, y, sensitive)"
+                    "Each dataset sample must be (X, y) or (X, y, sensitive)",
                 )
             label = sample[1]
             if isinstance(label, torch.Tensor):
@@ -666,7 +670,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             size = int(round(size * n))
         if not isinstance(size, int):
             raise ValueError(
-                f"Size must be an integer or float proportion. Got: {size}."
+                f"Size must be an integer or float proportion. Got: {size}.",
             )
         dataset = Subset(dataset, range(size))
         return dataset
@@ -744,7 +748,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         )
         if not isinstance(self._X, (tuple, list)) or len(self._X) != 2:
             raise ValueError(
-                "Expected custom torch _X to contain (train_dataset, test_dataset)"
+                "Expected custom torch _X to contain (train_dataset, test_dataset)",
             )
         train_ds, test_ds = self._X
         torch.manual_seed(self.random_state)

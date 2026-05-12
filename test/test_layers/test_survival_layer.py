@@ -52,7 +52,7 @@ def test_survival_main_routes_to_experiment_when_no_plot_payload(monkeypatch):
             "target": "E",
             "duration_col": "T",
             "event_col": "E",
-        }
+        },
     }
     result = survival_main(cfg=cfg)
 
@@ -61,7 +61,9 @@ def test_survival_main_routes_to_experiment_when_no_plot_payload(monkeypatch):
     assert calls["model"] == "weibull"
 
 
-def test_survival_main_routes_to_plot_list_for_dataframe_with_plot_payload(monkeypatch):
+def test_survival_main_routes_to_plot_list_for_dataframe_with_plot_payload(
+    monkeypatch,
+):
     from deckard.layers import survival as layer_survival
 
     calls = {}
@@ -69,7 +71,11 @@ def test_survival_main_routes_to_plot_list_for_dataframe_with_plot_payload(monke
     class FakePlotList:
         def __call__(self, **kwargs):
             calls.update(kwargs)
-            return {"models": {"weibull": object()}, "plots": {"weibull": []}, "table": pd.DataFrame()}
+            return {
+                "models": {"weibull": object()},
+                "plots": {"weibull": []},
+                "table": pd.DataFrame(),
+            }
 
     def _fake_instantiate_config(config_obj, expected_type):
         if expected_type is layer_survival.SurvivalExperimentConfig:
@@ -103,7 +109,7 @@ def test_survival_main_routes_to_plot_list_for_dataframe_with_plot_payload(monke
             "target": "E",
             "event_col": "E",
             "plots_folder": "plots/survival",
-        }
+        },
     }
     result = survival_main(cfg=cfg)
 
@@ -126,7 +132,7 @@ def test_survival_main_rejects_non_object_data_and_model():
         "survival": {
             "data": "lifelines.lung",
             "model": "weibull",
-        }
+        },
     }
 
     try:

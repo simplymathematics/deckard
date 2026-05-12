@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 logger = logging.getLogger(__name__)
 from dataclasses import dataclass, field
@@ -263,7 +264,7 @@ def _resolve_sensitive_from_kwargs_or_data(
     # No numpy conversion; return as-is
     if hasattr(y_true, "__len__") and len(sensitive_features) != len(y_true):
         raise ValueError(
-            f"Length of sensitive_features ({len(sensitive_features)}) does not match y_true ({len(y_true)})"
+            f"Length of sensitive_features ({len(sensitive_features)}) does not match y_true ({len(y_true)})",
         )
     return sensitive_features
 
@@ -387,7 +388,8 @@ class _FairnessScorerMixin:
         metrics = {
             key: (self._make_metric_with_sensitive(scorer, scorer_kwargs_dict))
             for key, scorer in cast(
-                dict[str, ScorerConfig], self.group_scorers
+                dict[str, ScorerConfig],
+                self.group_scorers,
             ).items()
         }
         # Defensive: If metrics is empty, return None to avoid constructing MetricFrame with no metrics
@@ -414,7 +416,9 @@ class _FairnessScorerMixin:
             sensitive = sample_kwargs.get("sensitive_features")
             if sensitive is None:
                 sensitive = _resolve_sensitive_features(
-                    self.data, y_true, mode=self.scorer_kwargs_dict.get("mode", "test")
+                    self.data,
+                    y_true,
+                    mode=self.scorer_kwargs_dict.get("mode", "test"),
                 )
             try:
                 # Avoid passing sensitive_features twice
@@ -435,13 +439,13 @@ class _FairnessScorerMixin:
                 )
                 if result is None:
                     logger.debug(
-                        f" Metric function returned None for scorer {self.scorer} with y_true={y_true}, y_pred={y_pred}, sensitive={sensitive}"
+                        f" Metric function returned None for scorer {self.scorer} with y_true={y_true}, y_pred={y_pred}, sensitive={sensitive}",
                     )
                     return np.nan
                 return result
             except Exception as e:
                 logger.debug(
-                    f" Exception in metric function for scorer {self.scorer}: {e}"
+                    f" Exception in metric function for scorer {self.scorer}: {e}",
                 )
                 return np.nan
 
@@ -470,7 +474,7 @@ class _FairnessScorerMixin:
         # Step 1: resolve y_true/y_pred for both main and group metrics.
         if data is None and (y_true is None or y_pred is None):
             raise ValueError(
-                "data must be provided when y_true/y_pred are not passed directly"
+                "data must be provided when y_true/y_pred are not passed directly",
             )
         resolved_y_true, resolved_y_pred = _resolve_yt_yp(
             mode,
@@ -560,31 +564,31 @@ class _FairnessScorerMixin:
         if self_cfg.include_group_by_group:
             logger.debug(f" metric_frame.by_group type: {type(metric_frame.by_group)}")
             logger.debug(
-                f" metric_frame.by_group content: {repr(metric_frame.by_group)}"
+                f" metric_frame.by_group content: {repr(metric_frame.by_group)}",
             )
             import traceback
 
             if not isinstance(metric_frame.by_group, pd.DataFrame):
                 logger.critical(
-                    f" metric_frame.by_group is NOT a DataFrame! Type: {type(metric_frame.by_group)}. Value: {repr(metric_frame.by_group)}"
+                    f" metric_frame.by_group is NOT a DataFrame! Type: {type(metric_frame.by_group)}. Value: {repr(metric_frame.by_group)}",
                 )
                 traceback.print_stack()
                 raise TypeError(
-                    f"Expected metric_frame.by_group to be a DataFrame, got {type(metric_frame.by_group)}. Full content: {repr(metric_frame.by_group)}"
+                    f"Expected metric_frame.by_group to be a DataFrame, got {type(metric_frame.by_group)}. Full content: {repr(metric_frame.by_group)}",
                 )
             try:
                 flat_group_metrics = _flatten_metric_frame_by_group(
-                    metric_frame.by_group
+                    metric_frame.by_group,
                 )
                 logger.debug(f" flat_group_metrics type: {type(flat_group_metrics)}")
                 logger.debug(
-                    f" flat_group_metrics content: {repr(flat_group_metrics)}"
+                    f" flat_group_metrics content: {repr(flat_group_metrics)}",
                 )
                 # Output validation removed: allow dict/list outputs as intended
                 results.update(flat_group_metrics)
             except Exception as exc:
                 logger.critical(
-                    f" Exception during flattening or merging group metrics: {exc}"
+                    f" Exception during flattening or merging group metrics: {exc}",
                 )
                 traceback.print_exc()
                 raise
@@ -647,7 +651,7 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
         if not self.group_scorers:
             raise ValueError(
                 "group_scorers must not be empty. Either provide group_scorers explicitly or ensure scorers is non-empty. "
-                "This is required for MetricFrame group scoring."
+                "This is required for MetricFrame group scoring.",
             )
 
     def __call__(
@@ -663,7 +667,7 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
     ) -> dict[str, Any]:
         sensitive_features_diag = kwargs.get("sensitive_features", None)
         print(
-            f"[DIAGNOSE] FairlearnScoreDictConfig.__call__: type(sensitive_features)={type(sensitive_features_diag)}, sensitive_features={repr(sensitive_features_diag)[:200]}"
+            f"[DIAGNOSE] FairlearnScoreDictConfig.__call__: type(sensitive_features)={type(sensitive_features_diag)}, sensitive_features={repr(sensitive_features_diag)[:200]}",
         )
         if (
             sensitive_features_diag is None
@@ -675,12 +679,12 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
             )
         ):
             print(
-                f"[DIAGNOSE] sensitive_features is None or length mismatch: type={type(sensitive_features_diag)}, value={repr(sensitive_features_diag)[:200]}, y_true type={type(y_true)}, y_true len={len(y_true) if hasattr(y_true, '__len__') else 'N/A'}, sensitive_features len={len(sensitive_features_diag) if hasattr(sensitive_features_diag, '__len__') else 'N/A'}"
+                f"[DIAGNOSE] sensitive_features is None or length mismatch: type={type(sensitive_features_diag)}, value={repr(sensitive_features_diag)[:200]}, y_true type={type(y_true)}, y_true len={len(y_true) if hasattr(y_true, '__len__') else 'N/A'}, sensitive_features len={len(sensitive_features_diag) if hasattr(sensitive_features_diag, '__len__') else 'N/A'}",
             )
         # Step 1: resolve y_true/y_pred for both main and group metrics.
         if data is None and (y_true is None or y_pred is None):
             raise ValueError(
-                "data must be provided when y_true/y_pred are not passed directly"
+                "data must be provided when y_true/y_pred are not passed directly",
             )
         resolved_y_true, resolved_y_pred = _resolve_yt_yp(
             mode,
@@ -773,59 +777,59 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
         if self_cfg.include_group_by_group:
             logger.debug(f" metric_frame.by_group type: {type(metric_frame.by_group)}")
             logger.debug(
-                f" metric_frame.by_group content: {repr(metric_frame.by_group)}"
+                f" metric_frame.by_group content: {repr(metric_frame.by_group)}",
             )
             if not isinstance(metric_frame.by_group, pd.DataFrame):
                 logger.critical(
-                    f" metric_frame.by_group is NOT a DataFrame! Type: {type(metric_frame.by_group)}. Value: {repr(metric_frame.by_group)}"
+                    f" metric_frame.by_group is NOT a DataFrame! Type: {type(metric_frame.by_group)}. Value: {repr(metric_frame.by_group)}",
                 )
                 traceback.print_stack()
                 raise TypeError(
-                    f"Expected metric_frame.by_group to be a DataFrame, got {type(metric_frame.by_group)}. Full content: {repr(metric_frame.by_group)}"
+                    f"Expected metric_frame.by_group to be a DataFrame, got {type(metric_frame.by_group)}. Full content: {repr(metric_frame.by_group)}",
                 )
             try:
                 flat_group_metrics = _flatten_metric_frame_by_group(
-                    metric_frame.by_group
+                    metric_frame.by_group,
                 )
                 logger.debug(f" flat_group_metrics type: {type(flat_group_metrics)}")
                 logger.debug(
-                    f" flat_group_metrics content: {repr(flat_group_metrics)}"
+                    f" flat_group_metrics content: {repr(flat_group_metrics)}",
                 )
                 # Defensive: check for nested dicts, lists, or stringified dicts/lists, and enforce float values and readable keys
                 for k, v in flat_group_metrics.items():
                     if isinstance(v, (dict, list)):
                         logger.critical(
-                            f" Group metric '{k}' is NOT a flat value: {v}"
+                            f" Group metric '{k}' is NOT a flat value: {v}",
                         )
                         traceback.print_stack()
                         raise ValueError(
-                            f"Group metric '{k}' is NOT a flat value: {v}. Full key: {k}, value: {repr(v)}"
+                            f"Group metric '{k}' is NOT a flat value: {v}. Full key: {k}, value: {repr(v)}",
                         )
                     if isinstance(v, str) and (v.startswith("{") or v.startswith("[")):
                         logger.critical(
-                            f" Group metric '{k}' is a STRINGIFIED dict/list: {v}"
+                            f" Group metric '{k}' is a STRINGIFIED dict/list: {v}",
                         )
                         traceback.print_stack()
                         raise ValueError(
-                            f"Group metric '{k}' is a STRINGIFIED dict/list: {v}. Full key: {k}, value: {repr(v)}"
+                            f"Group metric '{k}' is a STRINGIFIED dict/list: {v}. Full key: {k}, value: {repr(v)}",
                         )
                     try:
                         float_v = float(v)
                     except Exception as e:
                         logger.critical(
-                            f" Group metric '{k}' value CANNOT be cast to float: {v} ({e})"
+                            f" Group metric '{k}' value CANNOT be cast to float: {v} ({e})",
                         )
                         traceback.print_exc()
                         raise
                     # Enforce human-readable keys (no integer keys)
                     if isinstance(k, int):
                         raise ValueError(
-                            f"Group metric key '{k}' is an integer, not human-readable."
+                            f"Group metric key '{k}' is an integer, not human-readable.",
                         )
                 results.update(flat_group_metrics)
             except Exception as exc:
                 logger.critical(
-                    f" Exception during flattening or merging group metrics: {exc}"
+                    f" Exception during flattening or merging group metrics: {exc}",
                 )
                 traceback.print_exc()
                 raise
@@ -901,7 +905,8 @@ def _group_metric_difference(
             if not np.any(mask):
                 continue
             metric_value = metric_fn(
-                np.asarray(y_true)[mask], np.asarray(y_pred)[mask]
+                np.asarray(y_true)[mask],
+                np.asarray(y_pred)[mask],
             )
             group_scores.append(float(metric_value))
         if len(group_scores) < 2:
@@ -924,7 +929,7 @@ def fairness_group_mean_prediction_difference(
     groups = sensitive_features
     y_pred_arr = y_pred
     logger.debug(
-        f" fairness_group_mean_prediction_difference: y_true.shape={getattr(y_true, 'shape', None)}, y_pred.shape={getattr(y_pred_arr, 'shape', None)}, sensitive_features.shape={getattr(groups, 'shape', None)}"
+        f" fairness_group_mean_prediction_difference: y_true.shape={getattr(y_true, 'shape', None)}, y_pred.shape={getattr(y_pred_arr, 'shape', None)}, sensitive_features.shape={getattr(groups, 'shape', None)}",
     )
     if torch is not None and hasattr(groups, "unique"):
         unique_groups = groups.unique()
@@ -947,13 +952,15 @@ def fairness_group_mean_prediction_difference(
             ):
                 arr = y_pred_arr[mask]
                 means.append(
-                    float(arr.float().mean().item())
-                    if hasattr(arr, "float")
-                    else (
-                        float(arr.mean().item())
-                        if hasattr(arr, "mean")
-                        else float(np.mean(arr))
-                    )
+                    (
+                        float(arr.float().mean().item())
+                        if hasattr(arr, "float")
+                        else (
+                            float(arr.mean().item())
+                            if hasattr(arr, "mean")
+                            else float(np.mean(arr))
+                        )
+                    ),
                 )
         if len(means) < 2:
             return 0.0

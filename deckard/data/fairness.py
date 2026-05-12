@@ -65,7 +65,8 @@ class FairlearnDataConfig(DataPipelineConfig):
             self.sensitive_columns = [self.sensitive_columns]
 
     def _sensitive_labels_from_frame(
-        self, frame: Optional[Union[pd.DataFrame, pd.Series]]
+        self,
+        frame: Optional[Union[pd.DataFrame, pd.Series]],
     ) -> pd.Series:
         """Build a single sensitive-feature label series for fairlearn APIs.
 

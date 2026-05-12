@@ -212,7 +212,8 @@ class DataConfigResolutionMixin:
             return self.data
 
         if hasattr(self.data, "_target_") and not isinstance(
-            self.data, (dict, DictConfig, str, ConfigBase)
+            self.data,
+            (dict, DictConfig, str, ConfigBase),
         ):
             data_obj = instantiate(self.data)
             if not isinstance(data_obj, DataConfig):
@@ -321,7 +322,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
     @staticmethod
     def _apply_runtime_data_split_overrides(
-        loaded_data: Any, configured_data: Any
+        loaded_data: Any,
+        configured_data: Any,
     ) -> None:
         """Apply split-related runtime config from *configured_data* to *loaded_data*."""
         if loaded_data is None or configured_data is None:
@@ -641,7 +643,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 for scope in _SCOPE_KEYS:
                     if scope in plain:
                         self._route_scorer_to_scope(
-                            scope, coerce_scorer_config(plain[scope])
+                            scope,
+                            coerce_scorer_config(plain[scope]),
                         )
                 # experiment scope sets self.score; all others clear it
                 if "experiment" not in plain:
@@ -695,7 +698,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             )
         except TypeError as exc:
             raise ValueError(
-                f"Unsupported type for attack: {type(attack_obj)}"
+                f"Unsupported type for attack: {type(attack_obj)}",
             ) from exc
 
         assert isinstance(
@@ -898,7 +901,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             )
         except TypeError as exc:
             raise ValueError(
-                f"Unsupported type for model: {type(self.model)}"
+                f"Unsupported type for model: {type(self.model)}",
             ) from exc
 
         if self.defense is not None:
@@ -926,7 +929,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 )
 
             is_torch_model = PytorchModelConfig is not None and isinstance(
-                self.model, PytorchModelConfig
+                self.model,
+                PytorchModelConfig,
             )
             target_model_cls = (
                 FairlearnPytorchModelConfig if is_torch_model else FairlearnModelConfig
@@ -1009,7 +1013,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 )
             except TypeError as exc:
                 raise ValueError(
-                    f"Unsupported type for files: {type(self.files)}"
+                    f"Unsupported type for files: {type(self.files)}",
                 ) from exc
         assert isinstance(
             self.files,

@@ -213,7 +213,8 @@ class SurvivalExperimentConfig(ExperimentConfig):
 
     @staticmethod
     def _normalize_optional_dict(
-        name: str, value: Optional[dict[str, Any]]
+        name: str,
+        value: Optional[dict[str, Any]],
     ) -> dict[str, Any]:
         if value is None:
             return {}
@@ -578,7 +579,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
 
         if isinstance(data_spec, DataConfig):
             data_spec.dataset_name = _normalize_survival_dataset_name(
-                str(data_spec.dataset_name)
+                str(data_spec.dataset_name),
             )
             if _is_lifelines_dataset_name(str(data_spec.dataset_name)):
                 data_spec.target = None
@@ -589,7 +590,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
             dataset_name_value = spec.get("dataset_name", spec.get("alias"))
             if dataset_name_value is not None:
                 normalized_data_spec = _normalize_survival_dataset_name(
-                    str(dataset_name_value)
+                    str(dataset_name_value),
                 )
                 spec["dataset_name"] = normalized_data_spec
                 if _is_lifelines_dataset_name(normalized_data_spec):
@@ -619,7 +620,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
         loaded_frame = data_cfg.X
         if loaded_frame is None:
             raise ValueError(
-                "DataConfig did not load features for survival experiment"
+                "DataConfig did not load features for survival experiment",
             )
         loaded_data = (
             loaded_frame.to_frame().copy()
@@ -638,7 +639,8 @@ class SurvivalExperimentConfig(ExperimentConfig):
         survival_config: "SurvivalExperimentConfig",
     ) -> tuple[pd.DataFrame, Optional[AttackConfig], Any]:
         loaded_data = cls._load_data_with_config(
-            data_cfg=data_cfg, target=survival_config.target
+            data_cfg=data_cfg,
+            target=survival_config.target,
         )
         return loaded_data, None, None
 
@@ -650,7 +652,8 @@ class SurvivalExperimentConfig(ExperimentConfig):
         survival_config: "SurvivalExperimentConfig",
     ) -> tuple[pd.DataFrame, Optional[AttackConfig], Any]:
         loaded_data = cls._load_data_with_config(
-            data_cfg=data_cfg, target=survival_config.target
+            data_cfg=data_cfg,
+            target=survival_config.target,
         )
         return loaded_data, survival_config.attack, survival_config.aux_model
 
@@ -735,7 +738,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
         if resolved_mode == "optuna":
             if self.attack_optuna_db is None:
                 raise ValueError(
-                    "attack_optuna_db is required for execution_mode='optuna'"
+                    "attack_optuna_db is required for execution_mode='optuna'",
                 )
             loaded_data, attack_cfg, aux_model = self.run_optuna_mode(
                 attack_optuna_db=self.attack_optuna_db,
@@ -793,7 +796,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
                 or runtime_data.y_test is None
             ):
                 raise ValueError(
-                    "Runtime survival split unavailable for auxiliary model"
+                    "Runtime survival split unavailable for auxiliary model",
                 )
             model_scores = aux_model(runtime_data)
 

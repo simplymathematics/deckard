@@ -814,15 +814,14 @@ class PytorchModelConfig(ModelConfig):
         bad_attrs = []
         from torch.utils.data import Subset, Dataset
 
-        data_loader_types = (
-            (TorchDataLoader,) if TorchDataLoader is not None else tuple()
-        )
+        data_loader_types = (TorchDataLoader,) if TorchDataLoader is not None else ()
         for attr in ("X_train", "X_test", "y_train", "y_test"):
             value = getattr(data, attr, None)
             if value is None:
                 continue
             if not isinstance(
-                value, (torch.Tensor, Subset, Dataset, *data_loader_types)
+                value,
+                (torch.Tensor, Subset, Dataset, *data_loader_types),
             ):
                 bad_attrs.append(f"{attr}: {type(value).__name__}")
 
@@ -1076,7 +1075,8 @@ class PytorchModelConfig(ModelConfig):
 
         # Use data.batch_size if available, else fallback to 32
         batch_size = getattr(data, "batch_size", None) or self.fit_params.get(
-            "batch_size", 32
+            "batch_size",
+            32,
         )
         # Always use a DataLoader for shape inference and ART
         if isinstance(data.X_train, torch.utils.data.DataLoader):

@@ -1,4 +1,3 @@
-
 import unittest
 import numpy as np
 import pytest
@@ -9,6 +8,8 @@ from deckard.score.attack import FairlearnAttackScorerConfig
 from deckard.score.fairness import FairlearnScoreDictConfig
 from deckard.score.base import DefaultClassifierConfig
 from deckard.data.fairness import FairlearnDataConfig
+
+
 class TestFairlearnAttackScorer(unittest.TestCase):
     """Unit tests for FairlearnAttackScorerConfig per-group attack metrics."""
 
@@ -22,7 +23,6 @@ class TestFairlearnAttackScorer(unittest.TestCase):
         return data
 
     def test_fairlearn_attack_scorer_instantiates(self):
-        
 
         scorer = FairlearnAttackScorerConfig(evasion=DefaultClassifierConfig())
         self.assertIsInstance(scorer.evasion, FairlearnScoreDictConfig)

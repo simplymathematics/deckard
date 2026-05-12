@@ -71,5 +71,3 @@ Canonical documentation lives in `docs/` and is built with Sphinx.
 - [Package overview](docs/source/modules.md)
 - [Module and extension map](docs/source/modules.md)
 - [Notebook hub](docs/notebooks/index.md)
-
-

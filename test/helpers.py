@@ -15,7 +15,7 @@ def load_env_from_deckard_rc(path: Path) -> dict[str, str]:
         line = raw_line.strip()
         if not line or line.startswith("#") or not line.startswith("export "):
             continue
-        key_value = line[len("export "):]
+        key_value = line[len("export ") :]
         if "=" not in key_value:
             continue
         key, value = key_value.split("=", 1)

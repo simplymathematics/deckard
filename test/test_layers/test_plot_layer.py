@@ -1,4 +1,3 @@
-from pathlib import Path
 from types import ModuleType, SimpleNamespace
 import sys
 
@@ -113,14 +112,29 @@ def test_cfg_resolution_helpers_cover_shapes():
     assert plot_module._extract_experiment_cfg_from_hydra_cfg(cfg_top) == cfg_top
 
     cfg_nested = {"experiment": {"data": {"x": 1}}}
-    assert plot_module._extract_experiment_cfg_from_hydra_cfg(cfg_nested) == {"data": {"x": 1}}
+    assert plot_module._extract_experiment_cfg_from_hydra_cfg(cfg_nested) == {
+        "data": {"x": 1}
+    }
 
     cfg_plot_exp = {"plot": {"experiment": {"data": {"y": 2}}}}
-    assert plot_module._extract_experiment_cfg_from_hydra_cfg(cfg_plot_exp) == {"data": {"y": 2}}
+    assert plot_module._extract_experiment_cfg_from_hydra_cfg(cfg_plot_exp) == {
+        "data": {"y": 2}
+    }
 
-    assert plot_module._resolve_experiment_config_path({"plot": {"experiment_config": "a.yaml"}}) == "a.yaml"
-    assert plot_module._resolve_experiment_config_path({"experiment_config": "top.yaml"}) == "top.yaml"
-    assert plot_module._resolve_data_file({"compile_results": {"output_file": "out.csv"}}) == "out.csv"
+    assert (
+        plot_module._resolve_experiment_config_path(
+            {"plot": {"experiment_config": "a.yaml"}}
+        )
+        == "a.yaml"
+    )
+    assert (
+        plot_module._resolve_experiment_config_path({"experiment_config": "top.yaml"})
+        == "top.yaml"
+    )
+    assert (
+        plot_module._resolve_data_file({"compile_results": {"output_file": "out.csv"}})
+        == "out.csv"
+    )
     assert plot_module._cfg_to_dict(None) == {}
     assert plot_module._cfg_to_dict(object()) == {}
     assert plot_module._cfg_to_dict([1, 2]) == {}
@@ -195,10 +209,7 @@ def test_plot_main_seaborn_single_and_multi(monkeypatch, tmp_path):
     kwargs_file.write_text("alpha: 0.5\n")
     rc_file.write_text("font.size: 10\n")
     plots_file.write_text(
-        "plots:\n"
-        "  - plot_type: scatterplot\n"
-        "    x: a\n"
-        "    y: b\n",
+        "plots:\n" "  - plot_type: scatterplot\n" "    x: a\n" "    y: b\n",
     )
 
     single_cfg = {
@@ -242,7 +253,9 @@ def test_plot_main_validation_errors(monkeypatch, tmp_path):
         plot_module.plot_main({"plot": {"backend": "yellowbrick", "plot_type": "roc"}})
 
     with pytest.raises(ValueError, match="requires plot.data_file"):
-        plot_module.plot_main({"plot": {"backend": "seaborn", "plot_type": "lineplot"}})
+        plot_module.plot_main(
+            {"plot": {"backend": "seaborn", "plot_type": "lineplot"}}
+        )
 
     with pytest.raises(ValueError, match="Provide only one"):
         plot_module.plot_main(
@@ -279,7 +292,9 @@ def test_plot_main_validation_errors(monkeypatch, tmp_path):
         )
 
     with pytest.raises(ValueError, match="Provide one of plot.plot_type"):
-        plot_module.plot_main({"plot": {"backend": "seaborn", "data_file": "scores.csv"}})
+        plot_module.plot_main(
+            {"plot": {"backend": "seaborn", "data_file": "scores.csv"}}
+        )
 
     with pytest.raises(ValueError, match="only supported for seaborn backend"):
         plot_module.plot_main(
@@ -364,7 +379,9 @@ def test_plot_main_validation_errors(monkeypatch, tmp_path):
 
     bad_format = tmp_path / "bad_format.yaml"
     bad_format.write_text("value: 1\n")
-    with pytest.raises(TypeError, match="must contain a list or a dict with key 'plots'"):
+    with pytest.raises(
+        TypeError, match="must contain a list or a dict with key 'plots'"
+    ):
         plot_module.plot_main(
             {
                 "plot": {

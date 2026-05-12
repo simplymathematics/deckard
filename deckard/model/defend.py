@@ -404,7 +404,7 @@ class _DefenseBehaviorMixin:
                 # Adversarial retraining defenses currently require torch-backed
                 # ART estimators (e.g., PyTorchClassifier).
                 if not _is_torch_model_instance(
-                    base_estimator
+                    base_estimator,
                 ) and not _is_art_torch_wrapper(
                     self._model,
                 ):
@@ -490,7 +490,7 @@ class _DefenseBehaviorMixin:
                             defended_estimator = transformer_classifier
                     case _:
                         raise ValueError(
-                            f"Unknown transformer subtype: {defense_subtype}"
+                            f"Unknown transformer subtype: {defense_subtype}",
                         )
             case "regularizer":
                 raise NotImplementedError(

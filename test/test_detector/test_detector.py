@@ -272,7 +272,9 @@ def test_detector_build_dataset_split_and_size_validation():
     with pytest.raises(ValueError, match="Unsupported detector split"):
         cfg._build_detector_dataset(data, attack)
 
-    empty_attack = SimpleNamespace(attack_predictions=np.empty((0, 3), dtype=np.float32))
+    empty_attack = SimpleNamespace(
+        attack_predictions=np.empty((0, 3), dtype=np.float32)
+    )
     cfg.fit_params = {"split": "test"}
     with pytest.raises(ValueError, match="must contain at least one"):
         cfg._build_detector_dataset(data, empty_attack)
@@ -343,7 +345,9 @@ def test_detector_detect_poison_invalid_shape_raises(monkeypatch):
         },
     )
 
-    monkeypatch.setattr("deckard.detector.base.resolve_class", lambda _name: _BadPoisonDetector)
+    monkeypatch.setattr(
+        "deckard.detector.base.resolve_class", lambda _name: _BadPoisonDetector
+    )
     monkeypatch.setattr(
         DetectorConfig,
         "_build_detector_backend",
@@ -368,12 +372,16 @@ def test_detector_raises_when_backend_has_no_detection_api(monkeypatch):
         },
     )
 
-    monkeypatch.setattr("deckard.detector.base.resolve_class", lambda _name: _NoDetectDetector)
+    monkeypatch.setattr(
+        "deckard.detector.base.resolve_class", lambda _name: _NoDetectDetector
+    )
     monkeypatch.setattr(
         DetectorConfig,
         "_build_detector_backend",
         lambda self, x_train, y_train: object(),
     )
 
-    with pytest.raises(AttributeError, match="exposes neither detect\(\) nor detect_poison\(\)"):
+    with pytest.raises(
+        AttributeError, match="exposes neither detect\(\) nor detect_poison\(\)"
+    ):
         cfg(data=data, model=None, attack=attack)

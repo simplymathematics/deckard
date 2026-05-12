@@ -57,4 +57,3 @@ The ``plot_type`` field accepts:
 * :doc:`yellowbrick` — single-run diagnostics (ROC, confusion matrix, etc.)
 * :doc:`layers` — CLI layer registry (compile_results, plot)
 * :doc:`experiment` — experiment orchestration that produces scored outputs
-

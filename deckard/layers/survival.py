@@ -72,7 +72,7 @@ def _validate_raw_data_model_specs(survival_cfg: dict) -> None:
     if isinstance(model_spec, str):
         if model_spec.strip() == "":
             raise ValueError(
-                "survival.model must be a non-empty survival model string"
+                "survival.model must be a non-empty survival model string",
             )
         return
     if isinstance(model_spec, dict):
@@ -153,7 +153,8 @@ def _coerce_survival_model_spec(survival_cfg: dict) -> dict:
     normalized["model"] = model_name
     if "plot" in normalized:
         normalized["plot"] = _resolve_model_alias_placeholders(
-            normalized["plot"], model_name
+            normalized["plot"],
+            model_name,
         )
     return normalized
 
@@ -229,7 +230,7 @@ def _run_plot_mode(survival_cfg: dict) -> dict:
 
     if not isinstance(model_config, dict) or len(model_config) == 0:
         raise ValueError(
-            "plot mode requires model_config dict with plot specifications"
+            "plot mode requires model_config dict with plot specifications",
         )
 
     # Instantiate plotter config list (handles single or multiple models)

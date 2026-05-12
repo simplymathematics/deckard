@@ -87,11 +87,11 @@ class _FairnessBehaviorMixin:
         valid_splits = {"train", "test", "val", "all"}
         if scoring_mode is None:
             raise ValueError(
-                "scoring_mode must be explicitly provided (one of 'train', 'test', 'val', 'all')"
+                "scoring_mode must be explicitly provided (one of 'train', 'test', 'val', 'all')",
             )
         if scoring_mode not in valid_splits:
             raise ValueError(
-                f"Invalid scoring_mode '{scoring_mode}'. Must be one of {valid_splits}."
+                f"Invalid scoring_mode '{scoring_mode}'. Must be one of {valid_splits}.",
             )
         return scoring_mode
 
@@ -170,7 +170,7 @@ class _FairnessBehaviorMixin:
                 shapes = [np.shape(v) for v in arr]
                 if len(set(shapes)) > 1:
                     raise ValueError(
-                        f"Inconsistent shapes in {name}: {shapes}. All elements must have the same shape."
+                        f"Inconsistent shapes in {name}: {shapes}. All elements must have the same shape.",
                     )
 
         _check_shape_consistency(X, "X_train")
@@ -185,7 +185,7 @@ class _FairnessBehaviorMixin:
             y = y.detach().cpu().numpy()
 
         if sensitive is not None and self._method_accepts_sensitive_features(
-            fit_method
+            fit_method,
         ):
             sensitive_arg = (
                 sensitive.to_numpy() if hasattr(sensitive, "to_numpy") else sensitive
@@ -482,7 +482,7 @@ class BinaryLogitAdapter:
             if out.ndim == 2 and out.shape[1] >= 2:
                 return out[:, 1:2]
         raise ValueError(
-            f"Unsupported predictor output shape for fairness: {getattr(out, 'shape', None)}"
+            f"Unsupported predictor output shape for fairness: {getattr(out, 'shape', None)}",
         )
 
 

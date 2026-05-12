@@ -84,11 +84,9 @@ html_theme_options = {
     # Top header bar
     "navbar_align": "left",
     "header_links_before_dropdown": 5,
-
     # Left sidebar: expand two levels
     "show_nav_level": 1,
     "navigation_depth": 2,
-
     # Right sidebar: current page headings only
     "secondary_sidebar_items": ["page-toc"],
 }
@@ -104,6 +102,7 @@ html_sidebars = {
 # ---------------------------------------------------------------------------
 napoleon_google_docstring = True
 napoleon_numpy_docstring = True
+
 
 # ---------------------------------------------------------------------------
 # Post-build sanitization

@@ -184,7 +184,7 @@ if _LITERAL_VIZ_TYPES != _RUNTIME_VIZ_TYPES:
     raise RuntimeError(
         "YellowBrickVizType is out of sync with all_viz_types.\n"
         f"Missing from Literal: {sorted(missing_from_literal)}\n"
-        f"Extra in Literal: {sorted(extra_in_literal)}"
+        f"Extra in Literal: {sorted(extra_in_literal)}",
     )
 
 all_viz_objects = [
@@ -349,7 +349,7 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
         if raw.ndim == 2:
             return np.argmax(raw, axis=1)
         raise ValueError(
-            f"Unsupported prediction shape for predict: {_get_shape(raw)}"
+            f"Unsupported prediction shape for predict: {_get_shape(raw)}",
         )
 
     def score(self, X, y) -> float:

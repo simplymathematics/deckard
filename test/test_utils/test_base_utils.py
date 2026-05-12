@@ -1,7 +1,6 @@
 import argparse
 import json
 import logging
-import pickle
 import tempfile
 import unittest
 from pathlib import Path
@@ -254,7 +253,6 @@ class TestUtilsAdditional(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             load_data(None)
 
-
     def test_load_type_mismatch_raises(self):
         a = TypeAConfig()
         b = TypeBConfig()
@@ -391,6 +389,7 @@ class TestTorchCompilerBackends(unittest.TestCase):
     def test_list_backends_exception_returns_empty(self):
         def _raise():
             raise RuntimeError("boom")
+
         compiler = SimpleNamespace(list_backends=_raise)
         mod = SimpleNamespace(compiler=compiler)
         self.assertEqual(_torch_compiler_backends(mod), [])
@@ -882,7 +881,8 @@ class TestResolveLoadClass(unittest.TestCase):
         from sklearn.ensemble import RandomForestClassifier
 
         obj = load_class(
-            "sklearn.ensemble.RandomForestClassifier", n_estimators=5
+            "sklearn.ensemble.RandomForestClassifier",
+            n_estimators=5,
         )
         self.assertIsInstance(obj, RandomForestClassifier)
 

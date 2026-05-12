@@ -1,4 +1,5 @@
 """Integration and runtime tests for Anjana chains in examples/sklearn."""
+
 import json
 import subprocess
 import sys
@@ -34,14 +35,20 @@ def _run_optimize_and_load_scores(
     timeout: int = 300,
 ) -> tuple[dict, subprocess.CompletedProcess]:
     experiment_override = [
-        item for item in overrides if isinstance(item, str) and item.startswith("experiment_name=")
+        item
+        for item in overrides
+        if isinstance(item, str) and item.startswith("experiment_name=")
     ]
     assert len(experiment_override) == 1
     experiment_name = experiment_override[0].split("=", 1)[1]
 
-    score_override = f"+files={{score_file:outputs/logs/{experiment_name}/scores.json}}"
+    score_override = (
+        f"+files={{score_file:outputs/logs/{experiment_name}/scores.json}}"
+    )
     has_score_override = any(
-        isinstance(item, str) and "score_file" in item and item.startswith(("files", "+files"))
+        isinstance(item, str)
+        and "score_file" in item
+        and item.startswith(("files", "+files"))
         for item in overrides
     )
     final_overrides = list(overrides)
@@ -62,7 +69,9 @@ def _run_optimize_and_load_scores(
         result.returncode == 0
     ), f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
 
-    score_file = EXAMPLES_SKLEARN_DIR / "outputs" / "logs" / experiment_name / "scores.json"
+    score_file = (
+        EXAMPLES_SKLEARN_DIR / "outputs" / "logs" / experiment_name / "scores.json"
+    )
     if not score_file.exists():
         candidates = sorted(
             EXAMPLES_SKLEARN_DIR.glob("outputs/logs/**/scores.json"),
@@ -304,7 +313,7 @@ def test_deckard_optimize_hydra_multirun_syncs_optuna_trial_attrs_sklearn(tmp_pa
     assert any(k.startswith("benign_") for k in attrs)
     assert any(k.startswith("evasion_") for k in attrs)
     assert any(k.endswith("_time") for k in attrs)
-    assert ("training_n" in attrs or "train_n" in attrs)
+    assert "training_n" in attrs or "train_n" in attrs
     assert "attack_size" in attrs
 
 

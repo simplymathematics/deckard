@@ -379,9 +379,11 @@ class DataConfig(ConfigBase):
         self.scorer = _coerce_scorer_config(
             self.scorer,
             default_factory=lambda: load_class(
-                "deckard.score.data.DefaultDataClassificationConfig"
-                if self.classifier
-                else "deckard.score.data.DefaultDataRegressionConfig"
+                (
+                    "deckard.score.data.DefaultDataClassificationConfig"
+                    if self.classifier
+                    else "deckard.score.data.DefaultDataRegressionConfig"
+                ),
             ),
         )
 
@@ -594,7 +596,7 @@ class DataConfig(ConfigBase):
                 X[column] = pd.to_numeric(X[column], errors="coerce")
 
         categorical_columns = X.select_dtypes(
-            include=["object", "category"]
+            include=["object", "category"],
         ).columns.tolist()
         X = pd.get_dummies(
             X,
@@ -621,7 +623,9 @@ class DataConfig(ConfigBase):
         return self
 
     def _encode_binary_series(
-        self, series: pd.Series, mapping: dict[str, int]
+        self,
+        series: pd.Series,
+        mapping: dict[str, int],
     ) -> pd.Series:
         encoded = series.map(mapping)
         if encoded.isna().any():
@@ -1130,7 +1134,8 @@ class DataConfig(ConfigBase):
         self._y = y
 
     def _score(
-        self, mode: Literal["train", "test", "val", "pre-sample"] = None
+        self,
+        mode: Literal["train", "test", "val", "pre-sample"] = None,
     ) -> dict:
         """
         Delegates all dataset scoring to ``self.scorer``. Supports pre-sample mode (raw data, only in DataConfig),
@@ -1141,10 +1146,10 @@ class DataConfig(ConfigBase):
             return {}
         if not callable(self.scorer):
             raise TypeError(
-                f"DataConfig.scorer must be callable or None, got {type(self.scorer)}"
+                f"DataConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
         scorer_mode = str(
-            mode or getattr(self, "score_mode", None) or "pre-sample"
+            mode or getattr(self, "score_mode", None) or "pre-sample",
         ).lower()
         allowed = {"pre-sample", "train", "test", "val"}
         if scorer_mode not in allowed:
@@ -1165,7 +1170,7 @@ class DataConfig(ConfigBase):
             raise ValueError(f"Mode must be in {allowed}")
         if y_true is None or y_pred is None:
             raise ValueError(
-                f"Data scoring mode '{scorer_mode}' requested but required data split is unavailable."
+                f"Data scoring mode '{scorer_mode}' requested but required data split is unavailable.",
             )
         result_dict = self.scorer(
             y_true=y_true,
@@ -1307,7 +1312,6 @@ class DataConfig(ConfigBase):
         Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.
         Strictly validates that all output values are flat and serializable.
         """
-        import traceback
 
         save_flag = self._prepare_data_file(data_file=data_file)
         scores = dict(getattr(self, "score_dict", {}) or {})
@@ -1408,9 +1412,11 @@ class DataPipelineConfig(DataConfig):
         self.scorer = _coerce_scorer_config(
             self.scorer,
             default_factory=lambda: load_class(
-                "deckard.score.data.DefaultDataClassificationConfig"
-                if self.classifier
-                else "deckard.score.data.DefaultDataRegressionConfig"
+                (
+                    "deckard.score.data.DefaultDataClassificationConfig"
+                    if self.classifier
+                    else "deckard.score.data.DefaultDataRegressionConfig"
+                ),
             ),
         )
 

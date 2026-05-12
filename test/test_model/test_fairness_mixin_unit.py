@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 
 
-
 from deckard.model.fairness import (
     _FairnessBehaviorMixin,
 )
@@ -75,7 +74,9 @@ def test_infer_and_resolve_sensitive_features_for_batch_paths(monkeypatch):
 
     # Test all valid scoring modes
     assert d._infer_split_from_batch(d.data.X_train, scoring_mode="train") == "train"
-    assert d._infer_split_from_batch(d.data.X_test.copy(), scoring_mode="test") == "test"
+    assert (
+        d._infer_split_from_batch(d.data.X_test.copy(), scoring_mode="test") == "test"
+    )
     # For 'val', just call and check result (should not raise)
     result_val = d._infer_split_from_batch(d.data.X_train, scoring_mode="val")
     assert result_val == "val"
@@ -93,7 +94,11 @@ def test_infer_and_resolve_sensitive_features_for_batch_paths(monkeypatch):
     assert d._resolve_sensitive_features_for_batch(batch, split="train") is None
 
     d.data._sensitive_train = pd.Series(["a", "b"])
-    monkeypatch.setattr(pd.Series, "reindex", lambda self, idx: (_ for _ in ()).throw(RuntimeError("reindex fail")))
+    monkeypatch.setattr(
+        pd.Series,
+        "reindex",
+        lambda self, idx: (_ for _ in ()).throw(RuntimeError("reindex fail")),
+    )
     assert d._resolve_sensitive_features_for_batch(batch, split="train") is None
 
 
@@ -150,5 +155,3 @@ def test_fit_defended_estimator_paths():
 
     sentinel = object()
     assert d._fit_defended_estimator(sentinel, None) is sentinel
-
-

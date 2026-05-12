@@ -47,7 +47,9 @@ def evasion_success_score(
 
 @dataclass(eq=False)
 class DefaultEvasionScoreConfig(
-    _TaskAwareScorerMixin, _AttackProfileScorer, ScorerDictConfig
+    _TaskAwareScorerMixin,
+    _AttackProfileScorer,
+    ScorerDictConfig,
 ):
     """Default evasion scorer family with optional task selection."""
 
@@ -121,7 +123,9 @@ class DefaultEvasionRegressionAttackScorerConfig(DefaultEvasionScoreConfig):
 
 @dataclass(eq=False)
 class DefaultMembershipInferenceScoreConfig(
-    _TaskAwareScorerMixin, _AttackProfileScorer, ScorerDictConfig
+    _TaskAwareScorerMixin,
+    _AttackProfileScorer,
+    ScorerDictConfig,
 ):
     """Default membership-inference scorer family.
 
@@ -164,14 +168,16 @@ class DefaultMembershipInferenceScoreConfig(
 
 @dataclass(eq=False)
 class DefaultMembershipInferenceAttackScorerConfig(
-    DefaultMembershipInferenceScoreConfig
+    DefaultMembershipInferenceScoreConfig,
 ):
     """Default scorer set for membership inference attack evaluation."""
 
 
 @dataclass(eq=False)
 class DefaultAttributeInferenceScoreConfig(
-    _TaskAwareScorerMixin, _AttackProfileScorer, ScorerDictConfig
+    _TaskAwareScorerMixin,
+    _AttackProfileScorer,
+    ScorerDictConfig,
 ):
     """Default attribute-inference scorer family with optional task selection."""
 
@@ -226,7 +232,7 @@ class DefaultAttributeInferenceScoreConfig(
 
 @dataclass(eq=False)
 class DefaultAttributeInferenceAttackScorerConfig(
-    DefaultAttributeInferenceScoreConfig
+    DefaultAttributeInferenceScoreConfig,
 ):
     """Default scorer set for categorical attribute inference evaluation."""
 
@@ -235,7 +241,7 @@ class DefaultAttributeInferenceAttackScorerConfig(
 
 @dataclass(eq=False)
 class DefaultAttributeInferenceRegressionAttackScorerConfig(
-    DefaultAttributeInferenceScoreConfig
+    DefaultAttributeInferenceScoreConfig,
 ):
     """Default scorer set for continuous attribute inference evaluation."""
 
@@ -618,16 +624,17 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
                         "scorers",
                         base_scorers
                         or {k: v for k, v in default_group_scorers.items()},
-                    )
+                    ),
                 )
                 group_scorers = dict(
-                    field_val.get("group_scorers", default_group_scorers)
+                    field_val.get("group_scorers", default_group_scorers),
                 )
                 return FairlearnScoreDictConfig(
                     scorers=scorers,
                     group_scorers=group_scorers,
                     include_group_by_group=field_val.get(
-                        "include_group_by_group", True
+                        "include_group_by_group",
+                        True,
                     ),
                     include_group_overall=field_val.get("include_group_overall", True),
                     group_reduction=field_val.get("group_reduction", "difference"),
@@ -676,19 +683,25 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
         }
 
         self.evasion = _fairlearn_profile(
-            self.evasion, evasion_group, base_scorers=evasion_success
+            self.evasion,
+            evasion_group,
+            base_scorers=evasion_success,
         )
         self.evasion_regression = _fairlearn_profile(
-            self.evasion_regression, attribute_reg_group
+            self.evasion_regression,
+            attribute_reg_group,
         )
         self.membership_inference = _fairlearn_profile(
-            self.membership_inference, membership_group
+            self.membership_inference,
+            membership_group,
         )
         self.attribute_inference = _fairlearn_profile(
-            self.attribute_inference, attribute_group
+            self.attribute_inference,
+            attribute_group,
         )
         self.attribute_inference_regression = _fairlearn_profile(
-            self.attribute_inference_regression, attribute_reg_group
+            self.attribute_inference_regression,
+            attribute_reg_group,
         )
 
 

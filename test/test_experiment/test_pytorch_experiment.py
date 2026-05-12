@@ -35,6 +35,7 @@ DECKARD_RC_PATH = EXAMPLES_PYTORCH_DIR / ".deckard_rc"
 def _runtime_env() -> dict[str, str]:
     return make_runtime_env(DECKARD_RC_PATH)
 
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -436,7 +437,9 @@ def test_torch_experiment_reconcile_component_devices_prefers_model_then_attack_
     assert exp3.device == "mps"
 
 
-def test_torch_experiment_reconcile_component_devices_uses_resolver_fallback(monkeypatch):
+def test_torch_experiment_reconcile_component_devices_uses_resolver_fallback(
+    monkeypatch,
+):
     monkeypatch.setattr(
         "deckard.experiment.torch_experiment.resolve_torch_device",
         lambda _d=None: "cpu",
@@ -688,6 +691,7 @@ def test_deckard_optimize_torch_poisoning_gradient_matching_smoke_matrix():
         "attack.attack_params.class_target=1",
     ]
     import pytest
+
     result = subprocess.run(
         cmd,
         cwd=str(EXAMPLES_PYTORCH_DIR),
@@ -739,6 +743,7 @@ def test_deckard_optimize_torch_fairness_smoke_matrix():
         "defense.defense_params.batch_size=16",
     ]
     import pytest
+
     result = subprocess.run(
         cmd,
         cwd=str(EXAMPLES_PYTORCH_DIR),

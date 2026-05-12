@@ -14,7 +14,11 @@ from omegaconf import DictConfig, OmegaConf
 from deckard.attack import AttackConfig
 from deckard.data import DataConfig
 from deckard.experiment import ExperimentConfig, SurvivalExperimentConfig
-from deckard.experiment.base import DataConfigResolutionMixin, _file_resolver, _merge_resolver
+from deckard.experiment.base import (
+    DataConfigResolutionMixin,
+    _file_resolver,
+    _merge_resolver,
+)
 from deckard.file import FileConfig
 from deckard.model import ModelConfig
 from deckard.score import DefaultClassifierConfig, DefaultDataClassificationConfig
@@ -173,7 +177,7 @@ class TestExperimentValidationScoring(unittest.TestCase):
         exp._propagate_score_mode()
         self.assertEqual(exp.data.score_mode, "val")
         self.assertEqual(exp.model.score_mode, "val")
-    
+
     def _make_exp(self, *, val_size=0.1, evaluation_mode="tuning", score_mode="test"):
         return ExperimentConfig(
             data=DataConfig(
@@ -493,6 +497,7 @@ class TestFileResolver(unittest.TestCase):
     def test_file_not_found_raises(self):
         # Patch so DECKARD_CONFIG_DIR points to tmpdir
         import deckard.experiment.base as _mod
+
         orig = _mod.DECKARD_CONFIG_DIR
         _mod.DECKARD_CONFIG_DIR = self.tmpdir
         try:
@@ -503,6 +508,7 @@ class TestFileResolver(unittest.TestCase):
 
     def test_whole_file_returned_when_no_key(self):
         import deckard.experiment.base as _mod
+
         orig = _mod.DECKARD_CONFIG_DIR
         _mod.DECKARD_CONFIG_DIR = self.tmpdir
         try:
@@ -514,6 +520,7 @@ class TestFileResolver(unittest.TestCase):
 
     def test_key_lookup_returns_sub_value(self):
         import deckard.experiment.base as _mod
+
         orig = _mod.DECKARD_CONFIG_DIR
         _mod.DECKARD_CONFIG_DIR = self.tmpdir
         try:
@@ -526,6 +533,7 @@ class TestFileResolver(unittest.TestCase):
 
     def test_missing_key_raises(self):
         import deckard.experiment.base as _mod
+
         orig = _mod.DECKARD_CONFIG_DIR
         _mod.DECKARD_CONFIG_DIR = self.tmpdir
         try:
@@ -577,7 +585,7 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
                 "dataset_name": "make_classification",
                 "classifier": True,
                 "_target_": "deckard.data.DataConfig",
-            }
+            },
         )
         result = self.mixin._data_to_dict(dc)
         self.assertIsInstance(result, dict)
@@ -727,6 +735,7 @@ class TestSetRandomSeed(unittest.TestCase):
         exp.library = "tensorflow"
         try:
             import tensorflow  # noqa: F401
+
             # If tensorflow is available, this won't raise
         except ImportError:
             with self.assertRaises(Exception):
@@ -781,7 +790,7 @@ class TestExperimentPostInitModelTypes(unittest.TestCase):
                 "model_type": "sklearn.tree.DecisionTreeClassifier",
                 "classifier": True,
                 "model_params": {"max_depth": 2},
-            }
+            },
         )
         exp = ExperimentConfig(
             data=self._data(),
@@ -830,7 +839,7 @@ class TestExperimentPostInitModelTypes(unittest.TestCase):
                 "attack_type": "art.attacks.evasion.FastGradientMethod",
                 "attack_params": {"eps": 0.1},
                 "attack_size": 5,
-            }
+            },
         )
         exp = ExperimentConfig(
             data=self._data(),
@@ -954,7 +963,7 @@ class TestResolveScoreModes(unittest.TestCase):
             {
                 "score_modes": None,
                 "evaluation_mode": "standard",
-            }
+            },
         )
         exp.__dict__.update(kwargs)
         return exp
@@ -1054,7 +1063,8 @@ class TestAggregateRepeatedScores(unittest.TestCase):
 
     def test_single_run_produces_fold_keys(self):
         result = ExperimentConfig._aggregate_repeated_scores(
-            [{"accuracy": 0.9}], suffix="fold"
+            [{"accuracy": 0.9}],
+            suffix="fold",
         )
         self.assertIn("accuracy_fold_0", result)
         self.assertAlmostEqual(result["accuracy"], 0.9)
@@ -1105,7 +1115,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
                 "model_type: sklearn.tree.DecisionTreeClassifier\n"
                 "classifier: true\n"
                 "model_params:\n"
-                "  max_depth: 2\n"
+                "  max_depth: 2\n",
             )
             exp = ExperimentConfig(
                 data=self._data(),
@@ -1170,7 +1180,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
                 "model_type": "sklearn.tree.DecisionTreeClassifier",
                 "classifier": True,
                 "model_params": {"max_depth": 2},
-            }
+            },
         )
         exp = ExperimentConfig(
             data=self._data(),
@@ -1187,7 +1197,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
                 "attack_type: art.attacks.evasion.FastGradientMethod\n"
                 "attack_params:\n"
                 "  eps: 0.1\n"
-                "attack_size: 5\n"
+                "attack_size: 5\n",
             )
             exp = ExperimentConfig(
                 data=self._data(),
@@ -1284,8 +1294,8 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
                 "acc": ScorerConfig(
                     score_name="accuracy",
                     score_function="sklearn.metrics.accuracy_score",
-                )
-            }
+                ),
+            },
         )
         exp = ExperimentConfig(
             data=self._data(),
@@ -1359,11 +1369,12 @@ class TestCoerceScorerConfig(unittest.TestCase):
     def test_score_as_dict_with_data_model_experiment_keys(self):
         """Cover path where score dict has data/model/experiment keys."""
         from sklearn.metrics import accuracy_score
+
         scorer_spec = {
             "accuracy": {
                 "score_name": "accuracy",
                 "score_function": accuracy_score,
-            }
+            },
         }
         exp = ExperimentConfig(
             data=self._data(),
@@ -1428,7 +1439,13 @@ class TestRunSinglePipelineBranchesExtra(unittest.TestCase):
     def test_data_file_path_loads_object_and_saves_score_file(self):
         loaded_data = DataConfig(
             dataset_name="make_classification",
-            data_params={"n_samples": 40, "n_features": 4, "n_informative": 3, "n_redundant": 1, "random_state": 0},
+            data_params={
+                "n_samples": 40,
+                "n_features": 4,
+                "n_informative": 3,
+                "n_redundant": 1,
+                "random_state": 0,
+            },
             train_size=30,
             test_size=10,
             random_state=42,
@@ -1444,7 +1461,13 @@ class TestRunSinglePipelineBranchesExtra(unittest.TestCase):
             exp = ExperimentConfig(
                 data=DataConfig(
                     dataset_name="make_classification",
-                    data_params={"n_samples": 20, "n_features": 4, "n_informative": 3, "n_redundant": 1, "random_state": 0},
+                    data_params={
+                        "n_samples": 20,
+                        "n_features": 4,
+                        "n_informative": 3,
+                        "n_redundant": 1,
+                        "random_state": 0,
+                    },
                     train_size=10,
                     test_size=10,
                     random_state=42,
@@ -1468,7 +1491,13 @@ class TestRunSinglePipelineBranchesExtra(unittest.TestCase):
     def test_val_score_mode_resamples_loaded_data_for_validation_split(self):
         loaded_data = DataConfig(
             dataset_name="make_classification",
-            data_params={"n_samples": 80, "n_features": 6, "n_informative": 4, "n_redundant": 2, "random_state": 0},
+            data_params={
+                "n_samples": 80,
+                "n_features": 6,
+                "n_informative": 4,
+                "n_redundant": 2,
+                "random_state": 0,
+            },
             train_size=60,
             test_size=20,
             random_state=42,
@@ -1486,7 +1515,13 @@ class TestRunSinglePipelineBranchesExtra(unittest.TestCase):
             exp = ExperimentConfig(
                 data=DataConfig(
                     dataset_name="make_classification",
-                    data_params={"n_samples": 80, "n_features": 6, "n_informative": 4, "n_redundant": 2, "random_state": 0},
+                    data_params={
+                        "n_samples": 80,
+                        "n_features": 6,
+                        "n_informative": 4,
+                        "n_redundant": 2,
+                        "random_state": 0,
+                    },
                     train_size=0.6,
                     test_size=0.2,
                     val_size=0.2,
@@ -1750,4 +1785,3 @@ class TestExperimentBranchEdges(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

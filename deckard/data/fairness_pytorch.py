@@ -193,7 +193,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
 
         if not (isinstance(self._X, (tuple, list)) and len(self._X) == 2):
             raise RuntimeError(
-                "_extract_sensitive_splits called before dataset was split"
+                "_extract_sensitive_splits called before dataset was split",
             )
 
         train_ds, test_ds = self._X
@@ -203,7 +203,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         if train_sensitive is None and test_sensitive is None:
             raise ValueError(
                 "No sensitive features found in the torch dataset "
-                "(_sensitive attribute missing or None)."
+                "(_sensitive attribute missing or None).",
             )
 
         self._sensitive_train = train_sensitive
@@ -242,7 +242,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             )
         if not callable(self.scorer):
             raise TypeError(
-                f"FairlearnPytorchDataConfig.scorer must be callable, got {type(self.scorer)}"
+                f"FairlearnPytorchDataConfig.scorer must be callable, got {type(self.scorer)}",
             )
 
         scorer_mode = mode if mode is not None else "train"

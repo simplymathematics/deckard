@@ -1,6 +1,5 @@
 from pathlib import Path
 from datetime import datetime
-from types import SimpleNamespace
 
 import optuna
 import pytest
@@ -298,7 +297,9 @@ def test_resolve_hydra_config_for_stage_absolute_and_not_found(tmp_path):
 
 def test_parser_helpers_cover_nested_csv_and_ranges():
     assert progress_bar_module._split_top_level_commas("a,b,c") == ["a", "b", "c"]
-    assert progress_bar_module._split_top_level_commas('choice("a,b",range(0,2),x)') == [
+    assert progress_bar_module._split_top_level_commas(
+        'choice("a,b",range(0,2),x)'
+    ) == [
         'choice("a,b",range(0,2),x)',
     ]
     assert progress_bar_module._unwrap_outer_call("range(1,5)", "range") == "1,5"
@@ -316,7 +317,10 @@ def test_parser_helpers_cover_nested_csv_and_ranges():
     assert progress_bar_module._count_values_for_param_space("range(1,5,0)") is None
     assert progress_bar_module._count_values_for_param_space("x,y,z") == 3
 
-    assert progress_bar_module._calculate_grid_search_n_trials({"a": [1, 2], "b": "x,y"}) == 4
+    assert (
+        progress_bar_module._calculate_grid_search_n_trials({"a": [1, 2], "b": "x,y"})
+        == 4
+    )
     assert progress_bar_module._calculate_grid_search_n_trials("not-a-dict") is None
 
 
@@ -381,7 +385,9 @@ def test_progress_bar_main_polls_until_completion(tmp_path, monkeypatch):
         except StopIteration:
             return ([2], datetime(2026, 1, 1, 0, 0, 0))
 
-    monkeypatch.setattr(progress_bar_module, "_collect_storage_finished_counts", fake_collect)
+    monkeypatch.setattr(
+        progress_bar_module, "_collect_storage_finished_counts", fake_collect
+    )
     monkeypatch.setattr(progress_bar_module, "tqdm", DummyPbar)
     monkeypatch.setattr(progress_bar_module.time, "sleep", lambda *_a, **_k: None)
 
