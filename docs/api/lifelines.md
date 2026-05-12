@@ -29,14 +29,19 @@ including attacks that perturb event times or event status.
 - **Survival curves**: plotting and visualization of survival functions
 - **PyTorch integration**: optional deep learning survival models via extension
 
+Extension docs:
+
+- :doc:`pytorch`
+- :doc:`plot`
+
 ### Score Types Available
 
 The default survival scorer profile is
 :class:`deckard.score.survival.DefaultLifelinesConfig` and includes:
 
-- ``concordance`` via ``survival_concordance_score``
-- ``aic`` via ``survival_aic_score``
-- ``bic`` via ``survival_bic_score``
+- ``concordance`` via :func:`~deckard.score.survival.survival_concordance_score`
+- ``aic`` via :func:`~deckard.score.survival.survival_aic_score`
+- ``bic`` via :func:`~deckard.score.survival.survival_bic_score`
 
 These are also provided in the sklearn example score profile at
 `examples/sklearn/config/score/survival.yaml <../examples/sklearn/config/score/survival.yaml>`_.
@@ -62,11 +67,12 @@ Survival data mode support is explicit in
 
 ### Data pipeline and sampling support
 
-Because ``LifelinesDataConfig`` extends ``DataConfig`` (through the deckard data
+Because :class:`~deckard.data.survival.LifelinesDataConfig` extends
+:class:`~deckard.data.DataConfig` (through the deckard data
 stack), survival workflows can still use the standard data pipeline and sampler
 interfaces:
 
-- preprocessing pipelines from ``deckard.data.DataPipelineConfig``
+- preprocessing pipelines from :class:`~deckard.data.DataPipelineConfig`
 - split/k-fold/shuffle samplers via `examples/sklearn/config/sample <../examples/sklearn/config/sample>`_
 - train/test/validation flow from core data config fields
 
@@ -112,7 +118,8 @@ Typical usage pattern:
 
 ### Survival experiment contract
 
-``SurvivalExperimentConfig`` requires these fields at construction time:
+:class:`~deckard.experiment.survival.SurvivalExperimentConfig` requires these
+fields at construction time:
 
 - ``data``
 - ``model`` (string model name/alias, for example ``cox`` or ``weibull``)
@@ -148,7 +155,8 @@ custom user-provided regression fitters can be imported reliably.
 * :doc:`data` — general data configuration including :mod:`deckard.data.survival`
 * :doc:`model` — general model configuration including :mod:`deckard.model.survival`
 * :doc:`score` — scoring framework including :mod:`deckard.score.survival`
-* :doc:`experiment` — experiment orchestration including :class:`SurvivalExperimentConfig`
+* :doc:`experiment` — experiment orchestration including
+  :class:`~deckard.experiment.survival.SurvivalExperimentConfig`
 * :doc:`plot` — visualization including survival curve plotting
 * :doc:`pytorch` — optional deep learning survival models
 * :doc:`modules` — overview of all extensions

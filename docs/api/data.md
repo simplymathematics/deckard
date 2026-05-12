@@ -34,6 +34,7 @@ deckard exposes a configurable pipeline layer for data preprocessing via
 
 The fairness extension adds group-aware sampling and fairness metrics with
 ``fairlearn`` integration.
+See also: :doc:`fairlearn`.
 
 .. automodule:: deckard.data.fairness
    :members:
@@ -43,6 +44,7 @@ The fairness extension adds group-aware sampling and fairness metrics with
 
 The torch extension provides dataset loading and sampling for PyTorch and
 torchvision-backed workflows.
+See also: :doc:`pytorch`.
 
 .. automodule:: deckard.data.pytorch
    :members:
@@ -52,6 +54,7 @@ torchvision-backed workflows.
 
 Survival-specific experiment orchestration is split into a dedicated optional
 module.
+See also: :doc:`lifelines`.
 
 .. automodule:: deckard.data.survival
    :members:
@@ -71,7 +74,8 @@ timing instrumentation, and hashing for config tracking.
 
 ### Data scoring mode
 
-``DataConfig`` supports mode-aware dataset scoring via ``score_mode`` with
+:class:`~deckard.data.DataConfig` supports mode-aware dataset scoring via
+``score_mode`` with
 values:
 
 - ``train``

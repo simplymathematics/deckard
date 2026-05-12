@@ -15,7 +15,8 @@ The :mod:`deckard.plot.seaborn_plots` module provides:
 - :class:`~deckard.plot.seaborn_plots.SeabornPlotConfig` — single-plot
   configuration with x/y columns, plot type, and optional hue/style
 - :class:`~deckard.plot.seaborn_plots.SeabornPlotConfigList` — ordered list of
-  SeabornPlotConfig instances sharing a common ``data_file``
+  :class:`~deckard.plot.seaborn_plots.SeabornPlotConfig` instances sharing a
+  common ``data_file``
 
 These configs are intended for post-hoc visualization of compiled experiment
 results rather than single-run diagnostics.
@@ -45,7 +46,8 @@ The ``plot_type`` field accepts:
 - **AssertionError on column names**: verify that ``x``, ``y``, ``hue``, and
   ``style`` match column names in the data file exactly.
 - **File not found**: ensure ``data_file`` path exists before constructing
-  ``SeabornPlotConfig``; directories for ``plot_file`` are created automatically.
+  :class:`~deckard.plot.seaborn_plots.SeabornPlotConfig`; directories for
+  ``plot_file`` are created automatically.
 - **Import error**: install the optional plotting dependencies with
   ``pip install "deckard[plot]"``.
 

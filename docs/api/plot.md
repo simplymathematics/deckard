@@ -4,8 +4,11 @@
 
 The plotting package exposes two public entry points:
 
-- ``deckard.plot.PlotConfig`` chooses between the Seaborn and Yellowbrick backends.
-- ``deckard.plot.yellowbrick_plots.YellowbrickPlotConfig`` and ``deckard.plot.yellowbrick_plots.YellowbrickConfigList`` behave like experiment configs and prepare experiment outputs at most once before rendering plots.
+- :class:`~deckard.plot.PlotConfig` chooses between the Seaborn and Yellowbrick backends.
+- :class:`~deckard.plot.yellowbrick_plots.YellowbrickPlotConfig` and
+   :class:`~deckard.plot.yellowbrick_plots.YellowbrickConfigList` behave like
+   experiment configs and prepare experiment outputs at most once before
+   rendering plots.
 
 .. automodule:: deckard.plot
    :members:
@@ -15,6 +18,7 @@ The plotting package exposes two public entry points:
 ## Survival Plot Extension
 
 Survival plotting configs are provided in a dedicated optional module.
+See also: :doc:`lifelines`.
 
 .. automodule:: deckard.plot.survival
    :members:

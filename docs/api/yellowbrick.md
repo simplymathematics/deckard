@@ -16,7 +16,8 @@ The :mod:`deckard.plot.yellowbrick_plots` module provides:
   config that wraps an :class:`~deckard.experiment.ExperimentConfig` with a
   Yellowbrick visualizer
 - :class:`~deckard.plot.yellowbrick_plots.YellowbrickConfigList` — ordered list
-  of YellowbrickPlotConfig instances that share a common experiment
+  of :class:`~deckard.plot.yellowbrick_plots.YellowbrickPlotConfig` instances
+  that share a common experiment
 
 Yellowbrick plots are selected by ``plot_type`` and are grouped by category:
 
@@ -55,7 +56,8 @@ Yellowbrick plots are selected by ``plot_type`` and are grouped by category:
 - **Import error**: install yellowbrick with
   ``pip install yellowbrick`` or ``pip install "deckard[plot]"``.
 - **Missing experiment outputs**: call ``experiment()`` before passing it to
-  ``YellowbrickPlotConfig``; the config calls ``_ensure_experiment_prepared``
+  :class:`~deckard.plot.yellowbrick_plots.YellowbrickPlotConfig`; the config
+  calls ``_ensure_experiment_prepared``
   lazily but explicit preparation is cleaner.
 - **Unsupported plot type**: check the valid ``plot_type`` values listed in the
   *Overview* section above.

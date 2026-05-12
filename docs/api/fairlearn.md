@@ -1,6 +1,7 @@
 # Fairlearn Integration
 
 deckard provides support for fairness-aware machine learning through the optional Fairlearn extension modules. This integration enables fairness evaluation and mitigation workflows within the deckard framework.
+See also: :doc:`pytorch` for torch-backed fairness workflows.
 
 .. _fairlearn-overview:
 
@@ -26,8 +27,8 @@ These modules support fairness analysis and mitigation by quantifying and reduci
 
 Fairness scoring in deckard is provided by :mod:`deckard.score.fairness` with the default scorer profiles:
 
-- :class:`deckard.score.fairness.DefaultFairnessDataScoreConfig`
-- :class:`deckard.score.fairness.DefaultFairnessModelScoreConfig`
+- :class:`~deckard.score.fairness.DefaultFairnessDataScoreConfig`
+- :class:`~deckard.score.fairness.DefaultFairnessModelScoreConfig`
 
 These include:
 
@@ -49,7 +50,9 @@ The :class:`~deckard.data.fairness.FairlearnDataConfig` extends :class:`deckard.
 
 ### Data pipeline and preprocessing support
 
-``FairlearnDataConfig`` extends ``DataPipelineConfig``, so it keeps standard deckard pipeline capabilities while adding fairness hooks:
+:class:`~deckard.data.fairness.FairlearnDataConfig` extends
+:class:`~deckard.data.DataPipelineConfig`, so it keeps standard deckard
+pipeline capabilities while adding fairness hooks:
 
 - configurable preprocessing pipeline steps from core data config
 - optional Fairlearn mitigation transform via ``fairness_defense`` callable config
@@ -67,7 +70,11 @@ The :class:`~deckard.model.fairness.FairlearnModelConfig` supports:
 - Integration with fairness-aware loss functions
 - Checkpoint management for fairness tracking
 
-``FairlearnModelConfig`` wraps ``ModelConfig`` behavior and can still use deckard's general model defenses via ``model.defense`` (ART preprocessors, postprocessors, trainers, and detector pipelines) where compatible with the selected backend/model.
+:class:`~deckard.model.fairness.FairlearnModelConfig` wraps
+:class:`~deckard.model.ModelConfig` behavior and can still use deckard's
+general model defenses via ``model.defense`` (ART preprocessors,
+postprocessors, trainers, and detector pipelines) where compatible with the
+selected backend/model.
 
 ### Scoring and Metrics
 

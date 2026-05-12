@@ -16,13 +16,13 @@ implementations.
 deckard now treats scoring as a runtime-configured layer rather than a fixed
 set of metrics embedded inside each pipeline component.
 
-- :class:`deckard.score.ScorerConfig` wraps a single metric callable.
-- :class:`deckard.score.ScorerDictConfig` normalizes a mapping of metric names
+- :class:`~deckard.score.ScorerConfig` wraps a single metric callable.
+- :class:`~deckard.score.ScorerDictConfig` normalizes a mapping of metric names
    into callable scorer definitions.
-- :class:`deckard.model.ModelConfig` and :class:`deckard.data.DataConfig` accept
+- :class:`~deckard.model.ModelConfig` and :class:`~deckard.data.DataConfig` accept
    scorer configs directly through their ``scorer`` fields.
-- :class:`deckard.attack.AttackConfig` delegates all attack scoring to
-   :class:`deckard.score.attack.AttackScorerConfig`.
+- :class:`~deckard.attack.AttackConfig` delegates all attack scoring to
+   :class:`~deckard.score.attack.AttackScorerConfig`.
 
 Attack scoring is now profile-based and attack-kind-aware:
 
@@ -32,7 +32,7 @@ Attack scoring is now profile-based and attack-kind-aware:
    outputs with ``membership_inference_``.
 - Attribute inference attacks use attribute scorer profiles and prefix outputs
    with ``inferred_<attribute>_``.
-- Generic :class:`deckard.score.ScorerDictConfig` instances can be supplied to
+- Generic :class:`~deckard.score.ScorerDictConfig` instances can be supplied to
    attack scorer profiles; deckard will route the correct ``y_true`` and
    ``y_pred`` values for the active attack kind and then prefix the resulting
    metric names.
@@ -48,7 +48,7 @@ The default score profiles registered in Hydra's config store are:
 - ``attack_scorers/membership-inference``
 - ``attack_scorers/attribute-inference``
 
-These registrations are added through :func:`deckard.score.safe_store`, which
+These registrations are added through :func:`~deckard.score.safe_store`, which
 wraps Hydra's ``ConfigStore.instance().store(...)`` and tolerates duplicate
 import-time registration attempts in tests and repeated imports.
 
@@ -72,8 +72,8 @@ classification and regression defaults through dedicated config classes.
 The main scoring flow is:
 
 1. A config object normalizes metric declarations into
-    :class:`deckard.score.ScorerConfig` instances.
-2. :class:`deckard.score.ScorerDictConfig` resolves import-string callables,
+   :class:`~deckard.score.ScorerConfig` instances.
+2. :class:`~deckard.score.ScorerDictConfig` resolves import-string callables,
     filters unsupported keyword arguments against the target metric signature,
     and executes the metric.
 3. Pipeline components decide which targets and predictions to pass.
@@ -81,7 +81,7 @@ The main scoring flow is:
 
 Important attack-scoring details:
 
-- :class:`deckard.score.attack.AttackScorerConfig` owns all attack scoring
+- :class:`~deckard.score.attack.AttackScorerConfig` owns all attack scoring
    behavior.
 - ``score_evasion`` chooses between classification and regression evasion
    profiles based on the detected task type.

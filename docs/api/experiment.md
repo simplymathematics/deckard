@@ -12,6 +12,7 @@ entrypoints for end-to-end experiment execution.
 PyTorch-specific experiment orchestration is available via
 :class:`deckard.experiment.torch_experiment.TorchExperimentConfig` in the
 optional :mod:`deckard.experiment.torch_experiment` module.
+See also: :doc:`pytorch`.
 
 Use this extension when you need PyTorch model/data orchestration while keeping
 the same high-level experiment lifecycle as :class:`deckard.experiment.ExperimentConfig`.
@@ -20,6 +21,7 @@ the same high-level experiment lifecycle as :class:`deckard.experiment.Experimen
 
 Survival-specific experiment orchestration is split into a dedicated optional
 module.
+See also: :doc:`lifelines`.
 
 .. automodule:: deckard.experiment.survival
    :members:
@@ -39,9 +41,9 @@ It is the primary integration point for reproducible end-to-end runs.
 
 Available experiment entrypoints:
 
-- :class:`deckard.experiment.ExperimentConfig` (default)
-- :class:`deckard.experiment.torch_experiment.TorchExperimentConfig` (PyTorch)
-- :class:`deckard.experiment.survival.SurvivalExperimentConfig` (survival)
+- :class:`~deckard.experiment.ExperimentConfig` (default)
+- :class:`~deckard.experiment.torch_experiment.TorchExperimentConfig` (PyTorch)
+- :class:`~deckard.experiment.survival.SurvivalExperimentConfig` (survival)
 
 ## Examples
 

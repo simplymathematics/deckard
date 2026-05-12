@@ -15,6 +15,7 @@ and integration with the :mod:`deckard.data` module.
 
 The fairness extension provides fairness-aware model behavior, including
 group-sensitive fitting, scoring, and fairlearn defense wrappers.
+See also: :doc:`fairlearn`.
 
 .. automodule:: deckard.model.fairness
    :members:
@@ -23,7 +24,8 @@ group-sensitive fitting, scoring, and fairlearn defense wrappers.
 ### Torch Extension
 
 The torch extension provides PyTorch-native model training, prediction, and
-scoring through a ``ModelConfig``-compatible API.
+scoring through a :class:`~deckard.model.ModelConfig`-compatible API.
+See also: :doc:`pytorch`.
 
 .. automodule:: deckard.model.pytorch
    :members:
@@ -33,6 +35,7 @@ scoring through a ``ModelConfig``-compatible API.
 
 Survival-specific experiment orchestration is split into a dedicated optional
 module.
+See also: :doc:`lifelines`.
 
 .. automodule:: deckard.model.survival
    :members:
@@ -51,7 +54,8 @@ module.
 
 ### Model scoring mode
 
-``ModelConfig`` supports split-aware scoring with ``score_mode`` set to one of:
+:class:`~deckard.model.ModelConfig` supports split-aware scoring with
+``score_mode`` set to one of:
 
 - ``train``
 - ``test``
@@ -93,8 +97,8 @@ and log via Python’s ``logging`` module.
 ### Persistence
 Use the public model persistence interfaces:
 
-- ``model.save(filepath)``
-- ``model.load(filepath)``
+- :meth:`deckard.model.ModelConfig.save`
+- :meth:`deckard.model.ModelConfig.load`
 - ``model(data, model_file=...)`` for automatic load-or-train behavior
 
 For scikit-learn-backed :class:`~deckard.model.ModelConfig`, persisted models
@@ -120,7 +124,7 @@ There are two supported patterns:
 
 1. Load a previously saved deckard PyTorch checkpoint via ``load(filepath)``.
 2. Point ``model_type`` to a custom constructor/class that returns an already
-   initialized ``nn.Module`` (for example, one that internally loads external
+   initialized :class:`torch.nn.Module` (for example, one that internally loads external
    pre-trained weights), then run normal deckard training/evaluation.
 
 If you want inference-only behavior from a pre-trained checkpoint, load it via
@@ -129,7 +133,8 @@ needed, without requiring private methods.
 
 ## Troubleshooting
 
-* **Model not fitted error** — train the model before calling ``_save_model`` or predictions.
+* **Model not fitted error** — train the model before calling
+   :meth:`deckard.model.ModelConfig.save` or predictions.
 * **Hydra config not found** — ensure the YAML file path is valid or use inline overrides.
 * **pickle EOFError** — verify the model file is not corrupted.
 * **CLI argument conflicts** — use ``conflict_handler='resolve'`` when composing parsers.
