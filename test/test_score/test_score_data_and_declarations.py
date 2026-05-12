@@ -10,7 +10,8 @@ import deckard.score.declarations as score_declarations
 
 
 def test_score_declarations_loader_returns_when_examples_missing(
-    tmp_path, monkeypatch
+    tmp_path,
+    monkeypatch,
 ):
     fake_file = tmp_path / "pkg" / "deckard" / "score" / "declarations.py"
     fake_file.parent.mkdir(parents=True, exist_ok=True)
@@ -85,7 +86,9 @@ def test_score_data_mutual_information_raises_when_no_features_left():
 
     with pytest.raises(ValueError, match="No feature columns available"):
         score_data._feature_mutual_information_vector(
-            y_true=y, y_pred=X, reference_column="label"
+            y_true=y,
+            y_pred=X,
+            reference_column="label",
         )
 
 
@@ -101,7 +104,7 @@ def test_score_data_class_imbalance_ratio_empty_and_zero_min_count(monkeypatch):
     monkeypatch.setattr(score_data.pd.Series, "value_counts", _fake_value_counts)
     try:
         assert score_data.data_class_imbalance_ratio_score([0, 1], None) == float(
-            "inf"
+            "inf",
         )
     finally:
         monkeypatch.setattr(score_data.pd.Series, "value_counts", original)
@@ -113,5 +116,7 @@ def test_score_data_empirical_cdf_empty_reference_raises():
 
     with pytest.raises(ValueError, match="Reference vector is empty"):
         score_data.data_empirical_cdf_function_score(
-            y_true=y, y_pred=X, reference=[np.nan, np.nan]
+            y_true=y,
+            y_pred=X,
+            reference=[np.nan, np.nan],
         )

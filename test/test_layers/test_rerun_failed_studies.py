@@ -88,12 +88,14 @@ def test_collect_failed_studies_include_running_toggle(monkeypatch):
     )
 
     failed_default = mod._collect_failed_studies(
-        "sqlite:///optuna.db", include_running=False
+        "sqlite:///optuna.db",
+        include_running=False,
     )
     assert failed_default == ["only_fail", "fallback_name"]
 
     failed_with_running = mod._collect_failed_studies(
-        "sqlite:///optuna.db", include_running=True
+        "sqlite:///optuna.db",
+        include_running=True,
     )
     assert failed_with_running == ["only_fail", "fail_and_running", "fallback_name"]
 
@@ -101,7 +103,8 @@ def test_collect_failed_studies_include_running_toggle(monkeypatch):
 def test_rerun_failed_studies_main_dry_run_and_execute(monkeypatch, tmp_path):
     meta_file = tmp_path / "meta.yaml"
     meta_file.write_text(
-        "schema:\n  sep: '_'\n  data: 0\n  model: 1\n", encoding="utf-8"
+        "schema:\n  sep: '_'\n  data: 0\n  model: 1\n",
+        encoding="utf-8",
     )
 
     monkeypatch.setattr(
@@ -146,7 +149,7 @@ def test_rerun_failed_studies_main_dry_run_and_execute(monkeypatch, tmp_path):
 
 def test_rerun_failed_studies_parser_flags_and_defaults():
     args = mod.rerun_failed_studies_parser.parse_args(
-        ["--include_running", "--execute", "--limit", "7"]
+        ["--include_running", "--execute", "--limit", "7"],
     )
     assert args.optuna_db == "sqlite:///optuna.db"
     assert args.working_dir == "."

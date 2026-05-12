@@ -1122,7 +1122,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         model.score_mode = "val"
         model._train(data.X_train, data.y_train)
         model.scorer = lambda y_true, y_pred, mode="val", **kwargs: {
-            "validation_accuracy": 1.0
+            "validation_accuracy": 1.0,
         }
 
         times = {}
@@ -1191,7 +1191,7 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
                 )
             )
             model._model = SimpleNamespace(
-                predict=lambda s: np.zeros(len(s), dtype=int)
+                predict=lambda s: np.zeros(len(s), dtype=int),
             )
             out = model._load_or_train_model(data, str(p), {})
 
@@ -1212,7 +1212,7 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
             model.training_time = 0.01
             model.training_n = len(y)
             model._model = SimpleNamespace(
-                predict=lambda s: np.zeros(len(s), dtype=int)
+                predict=lambda s: np.zeros(len(s), dtype=int),
             )
 
         model._train = _train
@@ -1276,7 +1276,7 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
                 )
             )
             loaded_obj._apply_defense = lambda _data: SimpleNamespace(
-                predict=lambda s: np.zeros(len(s), dtype=int)
+                predict=lambda s: np.zeros(len(s), dtype=int),
             )
             loaded_obj._require_defense_pipeline = lambda: SimpleNamespace(
                 resolve_stage=lambda **_kwargs: "skip",

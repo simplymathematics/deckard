@@ -445,7 +445,8 @@ class TestPytorchDataConfig(unittest.TestCase):
         )
 
         with patch(
-            "deckard.data.pytorch.load_class", return_value=InvalidSampleDataset()
+            "deckard.data.pytorch.load_class",
+            return_value=InvalidSampleDataset(),
         ):
             with self.assertRaises(ValueError):
                 cfg._load_data()
@@ -513,11 +514,14 @@ class TestPytorchDataConfig(unittest.TestCase):
         score_path.write_text("cached")
 
         with patch.object(
-            self.config, "load_scores", return_value={"cached": 1}
+            self.config,
+            "load_scores",
+            return_value={"cached": 1},
         ) as load_scores:
             with patch.object(self.config, "save_scores") as save_scores:
                 scores = self.config(
-                    data_file=str(data_path), score_file=str(score_path)
+                    data_file=str(data_path),
+                    score_file=str(score_path),
                 )
 
         load_scores.assert_not_called()
@@ -677,7 +681,9 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
         )
 
         with patch.object(
-            cfg, "_as_dataset", side_effect=[train_ds, test_ds]
+            cfg,
+            "_as_dataset",
+            side_effect=[train_ds, test_ds],
         ) as as_dataset:
             cfg._load_data()
 

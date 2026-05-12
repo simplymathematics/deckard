@@ -181,7 +181,7 @@ class TestAttackConfig(unittest.TestCase):
 
         self.assertEqual(attack_type, "poisoning")
         self.assertIsNotNone(
-            getattr(initialized_attack.classifier, "clip_values", None)
+            getattr(initialized_attack.classifier, "clip_values", None),
         )
         self.assertIn("x_train", initialized_attack.kwargs)
         self.assertIn("y_train", initialized_attack.kwargs)
@@ -192,7 +192,8 @@ class TestAttackConfig(unittest.TestCase):
         np.testing.assert_array_equal(
             initialized_attack.kwargs["y_train"],
             np.array(
-                [[1.0, 0.0], [0.0, 1.0], [1.0, 0.0], [0.0, 1.0]], dtype=np.float32
+                [[1.0, 0.0], [0.0, 1.0], [1.0, 0.0], [0.0, 1.0]],
+                dtype=np.float32,
             ),
         )
         np.testing.assert_array_equal(
@@ -233,10 +234,10 @@ class TestAttackConfig(unittest.TestCase):
 
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
         self.assertFalse(
-            attack._is_regression_prediction_output([0, 1], [[0.2, 0.8], [0.6, 0.4]])
+            attack._is_regression_prediction_output([0, 1], [[0.2, 0.8], [0.6, 0.4]]),
         )
         self.assertTrue(
-            attack._is_regression_prediction_output([0.2, 0.3], [0.1, 0.2])
+            attack._is_regression_prediction_output([0.2, 0.3], [0.1, 0.2]),
         )
 
         arr = attack._to_numpy_array(pd.Series([1, 2, 3]), flatten=True)
@@ -248,13 +249,15 @@ class TestAttackConfig(unittest.TestCase):
         self.assertIsInstance(lbl, np.ndarray)
 
         labels = attack._prediction_to_labels(
-            np.array([[0.1, 0.9], [0.8, 0.2]]), is_regression=False
+            np.array([[0.1, 0.9], [0.8, 0.2]]),
+            is_regression=False,
         )
         self.assertTrue(np.array_equal(labels, np.array([1, 0])))
         self.assertTrue(
             np.array_equal(
                 attack._normalize_ground_truth(
-                    pd.Series(["a", "b", "a"]), is_regression=False
+                    pd.Series(["a", "b", "a"]),
+                    is_regression=False,
                 ),
                 np.array([0, 1, 0]),
             ),
@@ -267,12 +270,14 @@ class TestAttackConfig(unittest.TestCase):
         self.assertEqual(one_hot.shape, (2, 2))
 
         norm = attack._normalize_inferred_output(
-            np.array([0, 1]), reference=np.array([[1, 0], [0, 1]])
+            np.array([0, 1]),
+            reference=np.array([[1, 0], [0, 1]]),
         )
         self.assertEqual(norm.shape[1], 2)
 
         scorer_cfg, has_proba = attack._select_extraction_scorer(
-            np.array([0, 1]), np.array([0, 1])
+            np.array([0, 1]),
+            np.array([0, 1]),
         )
         self.assertFalse(has_proba)
         self.assertIsNotNone(scorer_cfg)
@@ -1912,7 +1917,8 @@ class TestInitializeAttackBranches(unittest.TestCase):
             fake_attack_cls = MagicMock(return_value=MagicMock())
             with (
                 patch(
-                    "deckard.attack.base.resolve_class", return_value=fake_attack_cls
+                    "deckard.attack.base.resolve_class",
+                    return_value=fake_attack_cls,
                 ),
                 patch("deckard.attack.base.ModelConfig", _PickleableFakeModelConfig),
             ):
@@ -2135,7 +2141,9 @@ class TestGetBenignPreds(unittest.TestCase):
         data = self._make_numpy_data()
         art_model = _FakeArtModel()
         n, labels, x_sub, y_sub = attack._get_benign_preds(
-            data, art_model, train=False
+            data,
+            art_model,
+            train=False,
         )
         self.assertEqual(n, 4)
 
@@ -2417,28 +2425,32 @@ class TestInferModelInversionModes(unittest.TestCase):
     def test_zeros_init(self):
         cfg = self._make_mi_attack_config("zeros")
         result = cfg._infer_model_inversion(
-            data=self._make_data(), attack=self._fake_attack()
+            data=self._make_data(),
+            attack=self._fake_attack(),
         )
         self.assertIn("model_inversion_mse", result)
 
     def test_ones_init(self):
         cfg = self._make_mi_attack_config("ones")
         result = cfg._infer_model_inversion(
-            data=self._make_data(), attack=self._fake_attack()
+            data=self._make_data(),
+            attack=self._fake_attack(),
         )
         self.assertIn("model_inversion_mse", result)
 
     def test_random_init(self):
         cfg = self._make_mi_attack_config("random")
         result = cfg._infer_model_inversion(
-            data=self._make_data(), attack=self._fake_attack()
+            data=self._make_data(),
+            attack=self._fake_attack(),
         )
         self.assertIn("model_inversion_mse", result)
 
     def test_average_init(self):
         cfg = self._make_mi_attack_config("average")
         result = cfg._infer_model_inversion(
-            data=self._make_data(), attack=self._fake_attack()
+            data=self._make_data(),
+            attack=self._fake_attack(),
         )
         self.assertIn("model_inversion_mse", result)
 
@@ -2446,7 +2458,8 @@ class TestInferModelInversionModes(unittest.TestCase):
         cfg = self._make_mi_attack_config("invalid_mode")
         with self.assertRaises(ValueError):
             cfg._infer_model_inversion(
-                data=self._make_data(), attack=self._fake_attack()
+                data=self._make_data(),
+                attack=self._fake_attack(),
             )
 
     def test_train_split_used(self):
@@ -2456,7 +2469,8 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_size=2,
         )
         result = cfg._infer_model_inversion(
-            data=self._make_data(), attack=self._fake_attack()
+            data=self._make_data(),
+            attack=self._fake_attack(),
         )
         self.assertIn("model_inversion_mse", result)
 
@@ -2468,7 +2482,8 @@ class TestInferModelInversionModes(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             cfg._infer_model_inversion(
-                data=self._make_data(), attack=self._fake_attack()
+                data=self._make_data(),
+                attack=self._fake_attack(),
             )
 
     def test_empty_x_source_raises(self):
@@ -2488,7 +2503,8 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_size=2,
         )
         result = cfg._infer_model_inversion(
-            data=self._make_data(), attack=self._fake_attack()
+            data=self._make_data(),
+            attack=self._fake_attack(),
         )
         self.assertIn("model_inversion_mse", result)
 
@@ -2546,7 +2562,8 @@ class TestInferModelInversionModes(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             cfg._infer_model_inversion(
-                data=self._make_data(), attack=self._fake_attack()
+                data=self._make_data(),
+                attack=self._fake_attack(),
             )
 
 

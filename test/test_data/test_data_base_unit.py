@@ -41,10 +41,14 @@ def test_discover_lifelines_dataset_loaders_handles_import_error(monkeypatch):
 
 def test_discover_lifelines_dataset_loaders_filters_callable_loaders(monkeypatch):
     datasets_module = SimpleNamespace(
-        load_lung=lambda: 1, load_kidney=lambda: 2, other=3
+        load_lung=lambda: 1,
+        load_kidney=lambda: 2,
+        other=3,
     )
     monkeypatch.setattr(
-        data_base.importlib, "import_module", lambda name: datasets_module
+        data_base.importlib,
+        "import_module",
+        lambda name: datasets_module,
     )
 
     loaders = data_base._discover_lifelines_dataset_loaders()
@@ -63,10 +67,14 @@ def test_discover_yellowbrick_dataset_loaders_handles_import_error(monkeypatch):
 
 def test_discover_yellowbrick_dataset_loaders_filters_callable_loaders(monkeypatch):
     datasets_module = SimpleNamespace(
-        load_energy=lambda: 1, load_credit=lambda: 2, other=3
+        load_energy=lambda: 1,
+        load_credit=lambda: 2,
+        other=3,
     )
     monkeypatch.setattr(
-        data_base.importlib, "import_module", lambda name: datasets_module
+        data_base.importlib,
+        "import_module",
+        lambda name: datasets_module,
     )
 
     loaders = data_base._discover_yellowbrick_dataset_loaders()
@@ -105,7 +113,9 @@ def test_resolve_max_samples_and_apply_max_samples_branches(monkeypatch):
 def test_post_init_normalizes_scorer_string_and_dict(monkeypatch):
     sentinel = object()
     monkeypatch.setattr(
-        data_base, "load_class", lambda path, *args, **kwargs: sentinel
+        data_base,
+        "load_class",
+        lambda path, *args, **kwargs: sentinel,
     )
 
     none_cfg = _basic_data_config(scorer="none")
@@ -128,7 +138,9 @@ def test_plugin_instantiation_and_hook_paths(monkeypatch):
 
     plugin_object = PluginType()
     monkeypatch.setattr(
-        data_base, "load_class", lambda path, **kwargs: PluginType() if path else None
+        data_base,
+        "load_class",
+        lambda path, **kwargs: PluginType() if path else None,
     )
 
     cfg = _basic_data_config(
@@ -232,7 +244,7 @@ def test_load_lifelines_dataset_branches(monkeypatch):
         data_base,
         "_lifelines_dataset_loaders",
         lambda: {
-            "lung": lambda **kwargs: pd.DataFrame({"time": [1, 2], "feature": [3, 4]})
+            "lung": lambda **kwargs: pd.DataFrame({"time": [1, 2], "feature": [3, 4]}),
         },
     )
     cfg._load_lifelines_dataset("lung")
@@ -259,7 +271,10 @@ def test_load_yellowbrick_dataset_branches(monkeypatch):
         data_base,
         "_yellowbrick_dataset_loaders",
         lambda: {
-            "energy": lambda **kwargs: (pd.DataFrame({"f": [1, 2]}), pd.Series([0, 1]))
+            "energy": lambda **kwargs: (
+                pd.DataFrame({"f": [1, 2]}),
+                pd.Series([0, 1]),
+            ),
         },
     )
     cfg._load_yellowbrick_dataset("energy")
@@ -288,7 +303,9 @@ def test_load_data_routes_lifelines_aliases_and_csv_options(monkeypatch, tmp_pat
     cfg = _basic_data_config(dataset_name="lifelines_demo", target="target")
     called = []
     monkeypatch.setattr(
-        data_base, "_lifelines_dataset_loaders", lambda: {"demo": object()}
+        data_base,
+        "_lifelines_dataset_loaders",
+        lambda: {"demo": object()},
     )
     monkeypatch.setattr(
         cfg,
@@ -303,24 +320,32 @@ def test_load_data_routes_lifelines_aliases_and_csv_options(monkeypatch, tmp_pat
 
     csv_path = tmp_path / "data.csv"
     pd.DataFrame({"keep": [1, 2], "drop": [3, 4], "target": [0, 1]}).to_csv(
-        csv_path, index=False
+        csv_path,
+        index=False,
     )
 
     cfg = _basic_data_config(
-        dataset_name=csv_path.as_posix(), target="target", keep=["keep"]
+        dataset_name=csv_path.as_posix(),
+        target="target",
+        keep=["keep"],
     )
     cfg._load_from_csv()
     assert isinstance(cfg._X, pd.Series)
     assert cfg._X.name == "keep"
 
     cfg = _basic_data_config(
-        dataset_name=csv_path.as_posix(), target="target", drop=["drop"]
+        dataset_name=csv_path.as_posix(),
+        target="target",
+        drop=["drop"],
     )
     cfg._load_from_csv()
     assert list(cfg._X.columns) == ["keep"]
 
     cfg = _basic_data_config(
-        dataset_name=csv_path.as_posix(), target="target", keep=["keep"], drop=["drop"]
+        dataset_name=csv_path.as_posix(),
+        target="target",
+        keep=["keep"],
+        drop=["drop"],
     )
     with pytest.raises(AssertionError):
         cfg._load_from_csv()
@@ -331,7 +356,9 @@ def test_load_data_routes_yellowbrick_aliases(monkeypatch):
     called = []
     monkeypatch.setattr(data_base, "_lifelines_dataset_loaders", lambda: {})
     monkeypatch.setattr(
-        data_base, "_yellowbrick_dataset_loaders", lambda: {"energy": object()}
+        data_base,
+        "_yellowbrick_dataset_loaders",
+        lambda: {"energy": object()},
     )
     monkeypatch.setattr(
         cfg,
@@ -382,7 +409,7 @@ def test_pipeline_config_invalid_and_fit_y_paths(monkeypatch):
     assert y_pipeline[0][0] == "target"
 
     cfg.pipeline = {
-        "bad": {"name": "sklearn.preprocessing.FunctionTransformer", "fit_xy": True}
+        "bad": {"name": "sklearn.preprocessing.FunctionTransformer", "fit_xy": True},
     }
     with pytest.raises(ValueError):
         cfg._init_pipeline()
@@ -433,7 +460,7 @@ def test_score_and_feature_score_branches(monkeypatch):
 
     reg_cfg = _basic_data_config(classifier=False)
     reg_cfg.X_train = pd.DataFrame(
-        {"a": [1.0, 2.0, 3.0, 4.0, 5.0], "b": [0.5, 1.5, 2.5, 3.5, 4.5]}
+        {"a": [1.0, 2.0, 3.0, 4.0, 5.0], "b": [0.5, 1.5, 2.5, 3.5, 4.5]},
     )
     reg_cfg.y_train = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0])
     reg_cfg.y_test = pd.Series([2.0, 4.0, 6.0])
@@ -455,7 +482,11 @@ def test_fit_transform_x_empty_pipeline_short_circuits():
     y_test = pd.Series([1])
 
     out = cfg._fit_transform_X(
-        x_train, x_test, y_train, y_test, data_base.Pipeline(steps=[])
+        x_train,
+        x_test,
+        y_train,
+        y_test,
+        data_base.Pipeline(steps=[]),
     )
     assert out == (x_train, x_test, y_train, y_test)
     assert cfg.pipeline_fit_time == 0.0
@@ -473,14 +504,19 @@ def test_fit_transform_x_handles_sparse_and_generated_feature_names():
             (
                 "csr",
                 FunctionTransformer(
-                    lambda values: data_base.csr_matrix(values), validate=False
+                    lambda values: data_base.csr_matrix(values),
+                    validate=False,
                 ),
-            )
+            ),
         ],
     )
 
     out_train, out_test, _, _ = cfg._fit_transform_X(
-        x_train, x_test, y_train, y_test, pipeline
+        x_train,
+        x_test,
+        y_train,
+        y_test,
+        pipeline,
     )
     assert list(out_train.columns) == ["feature_0"]
     assert list(out_test.columns) == ["feature_0"]
@@ -489,7 +525,8 @@ def test_fit_transform_x_handles_sparse_and_generated_feature_names():
 def test_fit_transform_y_csr_conversion():
     cfg = DataPipelineConfig(pipeline={}, scorer="none")
     transformer = FunctionTransformer(
-        lambda values: data_base.csr_matrix(values), validate=False
+        lambda values: data_base.csr_matrix(values),
+        validate=False,
     )
     x_train = pd.DataFrame({"a": [1, 2]})
     x_test = pd.DataFrame({"a": [3]})
@@ -512,7 +549,7 @@ def test_pipeline_call_saves_scores_and_handles_y_pipeline(tmp_path):
             "target": {
                 "name": "sklearn.preprocessing.FunctionTransformer",
                 "fit_y": True,
-            }
+            },
         },
         scorer="none",
     )

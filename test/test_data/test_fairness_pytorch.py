@@ -20,7 +20,8 @@ class DummyDataset(torch.utils.data.Dataset):
 def test_sensitive_extraction():
     ds = DummyDataset(20)
     config = FairlearnPytorchDataConfig(
-        dataset_name="test.DummyDataset", sensitive_columns=["_sensitive"]
+        dataset_name="test.DummyDataset",
+        sensitive_columns=["_sensitive"],
     )
     config._X = ds  # Pass the dataset, not just the tensor
     config._y = ds.y
@@ -34,6 +35,6 @@ def test_sensitive_extraction():
     assert len(config._sensitive_train) + len(config._sensitive_test) == 20
     # Ensure concatenation works for numpy arrays or pandas Series
     all_sensitive = np.concatenate(
-        [np.array(config._sensitive_train), np.array(config._sensitive_test)]
+        [np.array(config._sensitive_train), np.array(config._sensitive_test)],
     )
     assert set(all_sensitive) <= {0, 1}

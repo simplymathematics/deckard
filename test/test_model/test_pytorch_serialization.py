@@ -87,7 +87,7 @@ def test_initialize_criterion_and_optimizer_support_variants(monkeypatch):
     assert criterion["name"] == "torch.nn.CrossEntropyLoss"
 
     criterion_cfg = initialize_criterion(
-        {"name": "torch.nn.MSELoss", "reduction": "sum"}
+        {"name": "torch.nn.MSELoss", "reduction": "sum"},
     )
     assert criterion_cfg["kwargs"]["reduction"] == "sum"
 
@@ -99,7 +99,8 @@ def test_initialize_criterion_and_optimizer_support_variants(monkeypatch):
     assert optimizer["name"] == "torch.optim.SGD"
 
     optimizer_cfg = initialize_optimizer(
-        {"name": "Adam", "lr": 0.01}, model.parameters()
+        {"name": "Adam", "lr": 0.01},
+        model.parameters(),
     )
     assert optimizer_cfg["name"] == "torch.optim.Adam"
     assert "params" in optimizer_cfg["kwargs"]
@@ -405,7 +406,7 @@ def test_score_checkpoint_snapshot_predict_proba_fallback_classification():
         classifier=True,
         score_dict={},
         _evaluate_and_score=lambda data, times={}: (_ for _ in ()).throw(
-            ValueError("predict_proba unavailable")
+            ValueError("predict_proba unavailable"),
         ),
         _predict=lambda X: torch.zeros(len(X), dtype=torch.long),
         _classification_scores=lambda y_true, y_pred: {"accuracy": 0.5},
@@ -439,7 +440,7 @@ def test_score_checkpoint_snapshot_predict_proba_fallback_regression():
         classifier=False,
         score_dict={},
         _evaluate_and_score=lambda data, times={}: (_ for _ in ()).throw(
-            ValueError("predict_proba missing")
+            ValueError("predict_proba missing"),
         ),
         _predict=lambda X: torch.zeros(len(X), dtype=torch.float32),
         _classification_scores=lambda y_true, y_pred: {"accuracy": 0.5},

@@ -33,7 +33,7 @@ def test_scorer_config_post_init_dict_and_string_paths(monkeypatch):
     cfg = ScorerConfig(
         score_name="custom",
         score_function=OmegaConf.create(
-            {"_target_": "pkg.metric", "_args_": 3, "flag": True}
+            {"_target_": "pkg.metric", "_args_": 3, "flag": True},
         ),
         score_params=None,
     )
@@ -42,7 +42,8 @@ def test_scorer_config_post_init_dict_and_string_paths(monkeypatch):
     assert cfg.score_params == {}
 
     cfg_str = ScorerConfig(
-        score_name="acc", score_function="sklearn.metrics.accuracy_score"
+        score_name="acc",
+        score_function="sklearn.metrics.accuracy_score",
     )
     assert callable(cfg_str.score_function)
 
@@ -66,7 +67,8 @@ def test_probability_validation_error_paths():
         scorer._validate_probability_input([0, 1], np.array([[0.1], [0.2], [0.3]]))
     with pytest.raises(ValueError, match="numeric probabilities"):
         scorer._validate_probability_input(
-            [0, 1], np.array([["a"], ["b"]], dtype=object)
+            [0, 1],
+            np.array([["a"], ["b"]], dtype=object),
         )
     with pytest.raises(ValueError, match="values in \[0, 1\]"):
         scorer._validate_probability_input([0, 1], np.array([[1.2], [0.2]]))
@@ -84,13 +86,15 @@ def test_normalize_predictions_branches_for_probability_and_labels():
     )
     assert np.array_equal(
         roc._normalize_predictions_for_metric(
-            [0, 1], np.array([[0.8, 0.2], [0.1, 0.9]])
+            [0, 1],
+            np.array([[0.8, 0.2], [0.1, 0.9]]),
         ),
         np.array([0.2, 0.9]),
     )
 
     acc = ScorerConfig(
-        score_name="accuracy", score_function="sklearn.metrics.accuracy_score"
+        score_name="accuracy",
+        score_function="sklearn.metrics.accuracy_score",
     )
     assert np.array_equal(
         acc._normalize_predictions_for_metric([0, 1], np.array([[0.2], [0.9]])),
@@ -102,7 +106,8 @@ def test_normalize_predictions_branches_for_probability_and_labels():
     )
     assert np.array_equal(
         acc._normalize_predictions_for_metric(
-            [0, 1], np.array([[0.8, 0.2], [0.1, 0.9]])
+            [0, 1],
+            np.array([[0.8, 0.2], [0.1, 0.9]]),
         ),
         np.array([0, 1]),
     )
@@ -130,7 +135,7 @@ def test_scorer_dict_init_iter_getitem_and_builders():
     assert build_scorer(sd["acc"]) is sd["acc"]
     assert isinstance(
         build_scorer(
-            {"score_name": "acc", "score_function": "sklearn.metrics.accuracy_score"}
+            {"score_name": "acc", "score_function": "sklearn.metrics.accuracy_score"},
         ),
         ScorerConfig,
     )
@@ -187,11 +192,13 @@ def test_resolve_mode_features_and_predict_proba_paths():
     import pytest
 
     with pytest.raises(
-        ValueError, match="Cannot compute probabilities: model or input X is None"
+        ValueError,
+        match="Cannot compute probabilities: model or input X is None",
     ):
         ScorerDictConfig._predict_proba_from_model(None, [1])
     with pytest.raises(
-        ValueError, match="Cannot compute probabilities: model or input X is None"
+        ValueError,
+        match="Cannot compute probabilities: model or input X is None",
     ):
         ScorerDictConfig._predict_proba_from_model(object(), None)
 
@@ -217,7 +224,8 @@ def test_resolve_mode_features_and_predict_proba_paths():
         match="Model must have a predict or predict_proba function for probability metrics.",
     ):
         ScorerDictConfig._predict_proba_from_model(
-            SimpleNamespace(_model=object()), [[1.0]]
+            SimpleNamespace(_model=object()),
+            [[1.0]],
         )
 
 
@@ -226,7 +234,8 @@ def test_scorer_dict_call_mode_and_probability_routing(tmp_path, monkeypatch):
     score_file.write_text("dummy")
 
     acc = ScorerConfig(
-        score_name="accuracy", score_function="sklearn.metrics.accuracy_score"
+        score_name="accuracy",
+        score_function="sklearn.metrics.accuracy_score",
     )
     roc = ScorerConfig(
         score_name="roc_auc",
@@ -239,7 +248,9 @@ def test_scorer_dict_call_mode_and_probability_routing(tmp_path, monkeypatch):
     saved = {}
     monkeypatch.setattr(scorer_dict, "load_scores", lambda path: dict(loaded))
     monkeypatch.setattr(
-        scorer_dict, "save_scores", lambda scores, path: saved.update(scores)
+        scorer_dict,
+        "save_scores",
+        lambda scores, path: saved.update(scores),
     )
 
     data = SimpleNamespace(
@@ -263,10 +274,14 @@ def test_scorer_dict_call_mode_and_probability_routing(tmp_path, monkeypatch):
         get_model=lambda: Estimator(),
     )
     attack = SimpleNamespace(
-        attack_size=1, attack_predictions=np.array([0]), _attack="atk"
+        attack_size=1,
+        attack_predictions=np.array([0]),
+        _attack="atk",
     )
     attack_val = SimpleNamespace(
-        attack_size=1, attack_predictions=np.array([0, 1]), _attack="atk"
+        attack_size=1,
+        attack_predictions=np.array([0, 1]),
+        _attack="atk",
     )
 
     result_test = scorer_dict(
@@ -281,23 +296,36 @@ def test_scorer_dict_call_mode_and_probability_routing(tmp_path, monkeypatch):
     assert saved
 
     result_train = scorer_dict(
-        mode="train", data=data, model=model, y_proba=np.array([0.2, 0.8])
+        mode="train",
+        data=data,
+        model=model,
+        y_proba=np.array([0.2, 0.8]),
     )
     assert "training_accuracy" in result_train
     assert "training_roc_auc" in result_train
 
     result_attack = scorer_dict(
-        mode="attack", data=data, model=model, attack=attack, y_proba=np.array([0.7])
+        mode="attack",
+        data=data,
+        model=model,
+        attack=attack,
+        y_proba=np.array([0.7]),
     )
     assert "attack_accuracy" in result_attack
     assert "attack_roc_auc" in result_attack
 
     result_val = scorer_dict(
-        mode="val", data=data, model=model, y_proba=np.array([0.6, 0.6])
+        mode="val",
+        data=data,
+        model=model,
+        y_proba=np.array([0.6, 0.6]),
     )
     assert "accuracy" in result_val
     result_attack_val = scorer_dict(
-        mode="attack-val", data=data, model=model, attack=attack_val
+        mode="attack-val",
+        data=data,
+        model=model,
+        attack=attack_val,
     )
     assert "accuracy" in result_attack_val
 
@@ -305,7 +333,8 @@ def test_scorer_dict_call_mode_and_probability_routing(tmp_path, monkeypatch):
         scorer_dict(y_pred=np.array([0, 1]))
 
     with pytest.raises(
-        AssertionError, match="y_true must be provided if mode is None"
+        AssertionError,
+        match="y_true must be provided if mode is None",
     ):
         scorer_dict(mode=None)
 
@@ -328,7 +357,9 @@ def test_scorer_dict_attack_placeholder_and_missing_probability_context():
             data=SimpleNamespace(y_test=np.array([0, 1])),
             model=None,
             attack=SimpleNamespace(
-                attack_size=1, attack_predictions=np.array([0]), _attack="resolved"
+                attack_size=1,
+                attack_predictions=np.array([0]),
+                _attack="resolved",
             ),
             y_true=np.array([0]),
             y_pred=np.array([0]),

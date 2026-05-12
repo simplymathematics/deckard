@@ -165,7 +165,8 @@ class TestObjectiveToColumn(unittest.TestCase):
     def test_values_prefix_lookup(self):
         df = pd.DataFrame({"values_accuracy": [0.9]})
         self.assertEqual(
-            _objective_to_column("accuracy", 0, df, []), "values_accuracy"
+            _objective_to_column("accuracy", 0, df, []),
+            "values_accuracy",
         )
 
     def test_user_attrs_prefix_lookup(self):

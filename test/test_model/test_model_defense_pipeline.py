@@ -618,14 +618,16 @@ def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
     )
     with pytest.raises(ValueError, match="model_type must be set"):
         defense.get_art_class(
-            SimpleNamespace(X_train=np.zeros((2, 3)), y_train=[0, 1])
+            SimpleNamespace(X_train=np.zeros((2, 3)), y_train=[0, 1]),
         )
 
     import deckard.model.defend as defend_module
 
     custom_art = type("CustomArt", (), {})
     monkeypatch.setitem(
-        defend_module.classifier_dict, "LogisticRegression", custom_art
+        defend_module.classifier_dict,
+        "LogisticRegression",
+        custom_art,
     )
     defense.model_type = "sklearn.linear_model.LogisticRegression"
     art_class, init_params = defense.get_art_class(
@@ -650,7 +652,7 @@ def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
     assert not DefensePipelineConfig._is_pipeline_target(7)
     assert not DefensePipelineConfig._looks_like_single_defense_spec({"defenses": []})
     assert DefensePipelineConfig._looks_like_single_defense_spec(
-        {"_target_": "pkg.OtherDefense"}
+        {"_target_": "pkg.OtherDefense"},
     )
 
     class ApplyObj:
@@ -661,8 +663,8 @@ def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
     assert (
         len(
             DefensePipelineConfig.coerce(
-                [{"defense_name": "art.defences.postprocessor.HighConfidence"}]
-            ).defenses
+                [{"defense_name": "art.defences.postprocessor.HighConfidence"}],
+            ).defenses,
         )
         == 1
     )
@@ -702,7 +704,7 @@ def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
     monkeypatch.setattr("deckard.model.defend.resolve_class", _resolve_plugin)
     plugin_pipeline = DefensePipelineConfig(defenses=[])
     assert plugin_pipeline._instantiate_plugin(
-        {"name": "pkg.Plugin", "flag": True}
+        {"name": "pkg.Plugin", "flag": True},
     ) == {"name": "pkg.Plugin", "flag": True}
     with pytest.raises(ValueError, match="must include 'name' or '_target_'"):
         plugin_pipeline._instantiate_plugin({"flag": True})
@@ -760,13 +762,13 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
     monkeypatch.setattr("deckard.model.defend.resolve_class", _resolve)
 
     coerced_target = pipeline._coerce_single_defense(
-        {"_target_": "pkg.CustomDefense", "x": 1}
+        {"_target_": "pkg.CustomDefense", "x": 1},
     )
     assert isinstance(coerced_target, CustomDefense)
     assert coerced_target.kwargs == {"x": 1}
 
     coerced_fair = pipeline._coerce_single_defense(
-        {"defense_name": "fairlearn.reductions.ExponentiatedGradient", "eps": 0.1}
+        {"defense_name": "fairlearn.reductions.ExponentiatedGradient", "eps": 0.1},
     )
     assert isinstance(coerced_fair, FairDefense)
     assert coerced_fair.kwargs["eps"] == 0.1
@@ -776,14 +778,17 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
         lambda name: (_ for _ in ()).throw(RuntimeError(name)),
     )
     coerced_plain = pipeline._coerce_single_defense(
-        {"defense_name": "fairlearn.reductions.ExponentiatedGradient"}
+        {"defense_name": "fairlearn.reductions.ExponentiatedGradient"},
     )
     assert isinstance(coerced_plain, DefenseConfig)
     with pytest.raises(TypeError, match="Unsupported defense specification"):
         pipeline._coerce_single_defense(3)
 
     defense = SimpleNamespace(
-        model_type=None, classifier=None, model_params=None, probability=False
+        model_type=None,
+        classifier=None,
+        model_params=None,
+        probability=False,
     )
     estimator = SimpleNamespace(
         model=SimpleNamespace(
@@ -799,10 +804,14 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
     assert defense.probability is True
 
     reg_defense = SimpleNamespace(
-        model_type="", classifier=None, model_params={}, probability=False
+        model_type="",
+        classifier=None,
+        model_params={},
+        probability=False,
     )
     reg_estimator = SimpleNamespace(
-        _estimator_type="regressor", get_params=lambda: {"alpha": 1}
+        _estimator_type="regressor",
+        get_params=lambda: {"alpha": 1},
     )
     pipeline._inherit_model_context(reg_defense, reg_estimator)
     assert reg_defense.classifier is False
@@ -812,8 +821,8 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
     assert (
         len(
             pipeline.normalize_defenses(
-                {"defense_name": "art.defences.postprocessor.HighConfidence"}
-            )
+                {"defense_name": "art.defences.postprocessor.HighConfidence"},
+            ),
         )
         == 1
     )
@@ -855,7 +864,8 @@ def test_pipeline_apply_validation_and_elapsed_fallback(monkeypatch):
         lambda hook_name, **kwargs: hook_calls.append(hook_name) or [],
     )
     monkeypatch.setattr(
-        "deckard.model.defend.time.process_time", iter([10.0, 12.5]).__next__
+        "deckard.model.defend.time.process_time",
+        iter([10.0, 12.5]).__next__,
     )
 
     result = timed_pipeline.apply(estimator="model", data="payload")

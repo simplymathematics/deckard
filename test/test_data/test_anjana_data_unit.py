@@ -30,13 +30,13 @@ def test_post_init_normalizes_list_like_fields(monkeypatch):
         [
             {"name": "anjana.one"},
             {"k": 2},
-        ]
+        ],
     )
     cfg.fairness_defense = OmegaConf.create(
         [
             {"name": "fairlearn.preprocessing.CorrelationRemover"},
             {"alpha": 0.1},
-        ]
+        ],
     )
     cfg.identifiers = OmegaConf.create(["id"])
     cfg.quasi_identifiers = "zip"
@@ -217,7 +217,8 @@ def test_apply_anjana_defense_branch_paths(monkeypatch):
     assert seen["quasi_ident"] == ["feature"]
     assert seen["sens_att"] == "label"
     np.testing.assert_array_equal(
-        seen["hierarchies"]["feature"][0], np.array([1, 2, 3])
+        seen["hierarchies"]["feature"][0],
+        np.array([1, 2, 3]),
     )
     assert cfg._X.index.tolist() == [10, 11]
     assert cfg._y.index.tolist() == [10, 11]
@@ -267,10 +268,14 @@ def test_load_init_sample_and_score_paths(monkeypatch):
 
     calls = []
     monkeypatch.setattr(
-        DataPipelineConfig, "_load_data", lambda self: calls.append("load")
+        DataPipelineConfig,
+        "_load_data",
+        lambda self: calls.append("load"),
     )
     monkeypatch.setattr(
-        AnjanaDataConfig, "_apply_anjana_defense", lambda self: calls.append("defense")
+        AnjanaDataConfig,
+        "_apply_anjana_defense",
+        lambda self: calls.append("defense"),
     )
     assert cfg._load_data() is cfg
     assert calls == ["load", "defense"]

@@ -527,7 +527,8 @@ try:
     from deckard.data import DataConfig, DataPipelineConfig
 except Exception:
     pytest.skip(
-        "fairlearn is required for fairness data tests", allow_module_level=True
+        "fairlearn is required for fairness data tests",
+        allow_module_level=True,
     )
 
 
@@ -630,7 +631,8 @@ class TestDataPipelineConfig(unittest.TestCase):
 
     def test_pipeline_fit_and_transform(self):
         config = DataPipelineConfig(
-            pipeline=self.pipeline_config_dict, score_mode="train"
+            pipeline=self.pipeline_config_dict,
+            score_mode="train",
         )
         config._X = self.X_train
         config._y = self.y_train

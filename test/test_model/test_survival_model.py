@@ -143,7 +143,9 @@ def test_initialize_aft_fitter_sets_aalen_default_alpha():
 
 def test_fit_aft_validates_required_columns():
     cfg = SurvivalModelConfig(
-        duration_col="T", event_col="E", survival_model="weibull"
+        duration_col="T",
+        event_col="E",
+        survival_model="weibull",
     )
 
     with pytest.raises(ValueError, match="Column T not found in data"):
@@ -155,7 +157,9 @@ def test_fit_aft_validates_required_columns():
 
 def test_fit_aft_retries_on_convergence_nan_delta(monkeypatch):
     cfg = SurvivalModelConfig(
-        duration_col="T", event_col="E", survival_model="weibull"
+        duration_col="T",
+        event_col="E",
+        survival_model="weibull",
     )
     calls = {"n": 0}
 
@@ -233,7 +237,8 @@ def test_clean_data_for_aft_raises_when_target_removed_by_dummy_encoding():
     )
 
     with pytest.raises(
-        ValueError, match="Target adv_failure_rate not in cleaned dataframe"
+        ValueError,
+        match="Target adv_failure_rate not in cleaned dataframe",
     ):
         SurvivalModelConfig.clean_data_for_aft(
             data=df,
@@ -427,7 +432,8 @@ def test_survival_probability_calibration_interval_and_default_fit_paths(monkeyp
 
 
 def test_make_survival_model_table_handles_metric_attribute_and_calibration_failures(
-    monkeypatch, tmp_path
+    monkeypatch,
+    tmp_path,
 ):
     cfg = SurvivalModelConfig(duration_col="T", event_col="E", t0=0.5)
     x_test = pd.DataFrame({"T": [1.0, 2.0], "E": [1, 0]})

@@ -77,7 +77,8 @@ def test_calculate_failures_under_attack_fallback_uses_attack_size_column():
     )
 
     out = cfg.calculate_failures_under_attack(
-        df, attack_config=SimpleNamespace(attack_size=8, attack_kind="evasion")
+        df,
+        attack_config=SimpleNamespace(attack_size=8, attack_kind="evasion"),
     )
 
     assert "ben_failures" in out.columns
@@ -86,7 +87,8 @@ def test_calculate_failures_under_attack_fallback_uses_attack_size_column():
 
 
 def test_make_survival_model_table_handles_none_models_and_metric_failures(
-    monkeypatch, tmp_path
+    monkeypatch,
+    tmp_path,
 ):
     cfg = _bare_instance()
     cfg.event_col = "E"
@@ -195,12 +197,12 @@ def test_candidate_attack_metrics_specific_kinds():
     assert SurvivalExperimentConfig._infer_attack_kind_from_label("pgd") == "evasion"
 
     assert SurvivalExperimentConfig._candidate_attack_metrics_for_kind(
-        "membership"
+        "membership",
     ) == [
         "membership_inference_accuracy",
     ]
     assert SurvivalExperimentConfig._candidate_attack_metrics_for_kind(
-        "attribute"
+        "attribute",
     ) == [
         "sex_inference_accuracy",
         "attribute_inference_accuracy",
@@ -302,7 +304,9 @@ def test_call_raises_when_aux_runtime_split_missing(monkeypatch, tmp_path):
     from deckard.plot import survival as plot_survival_mod
 
     monkeypatch.setattr(
-        plot_survival_mod, "SurvivalSeabornPlotConfigList", FakePlotList
+        plot_survival_mod,
+        "SurvivalSeabornPlotConfigList",
+        FakePlotList,
     )
 
     with pytest.raises(ValueError, match="Runtime survival split unavailable"):

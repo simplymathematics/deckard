@@ -440,10 +440,14 @@ def test_hydra_optuna_callback_on_compose_config_writes_params_file(
     hydra_cfg = SimpleNamespace(mode="RunMode.MULTIRUN")
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
     monkeypatch.setattr(
-        optimize_module, "_normalize_mode_cfg", lambda cfg, h, **kw: cfg
+        optimize_module,
+        "_normalize_mode_cfg",
+        lambda cfg, h, **kw: cfg,
     )
     monkeypatch.setattr(
-        optimize_module, "_seed_experiment_uuid_for_current_trial", lambda **kw: None
+        optimize_module,
+        "_seed_experiment_uuid_for_current_trial",
+        lambda **kw: None,
     )
 
     params_file = str(tmp_path / "params.yaml")
@@ -601,10 +605,14 @@ def test_hydra_optuna_callback_on_compose_config_uses_constructor_params_file(
     )
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
     monkeypatch.setattr(
-        optimize_module, "_normalize_mode_cfg", lambda cfg, h, **kw: cfg
+        optimize_module,
+        "_normalize_mode_cfg",
+        lambda cfg, h, **kw: cfg,
     )
     monkeypatch.setattr(
-        optimize_module, "_seed_experiment_uuid_for_current_trial", lambda **kw: None
+        optimize_module,
+        "_seed_experiment_uuid_for_current_trial",
+        lambda **kw: None,
     )
 
     params_file = str(tmp_path / "params.yaml")
@@ -1078,7 +1086,7 @@ def test_mode_helpers_sweeper_assertions_and_extract_scores_paths():
     optimize_module._assert_multirun_sweeper(hydra_multirun)
     with pytest.raises(AssertionError, match="Sweeper must be specified"):
         optimize_module._assert_multirun_sweeper(
-            OmegaConf.create({"mode": "RunMode.MULTIRUN"})
+            OmegaConf.create({"mode": "RunMode.MULTIRUN"}),
         )
 
     resolved_paths = optimize_module._resolve_multirun_paths(hydra_multirun)
@@ -1438,7 +1446,9 @@ def test_optimize_main_accepts_plain_dict_cfg(monkeypatch):
     monkeypatch.setattr(optimize_module, "ConfigBase", DummyBase)
     monkeypatch.setattr(optimize_module, "instantiate", lambda cfg: DummyBase())
     monkeypatch.setattr(
-        optimize_module.HydraConfig, "get", lambda: SimpleNamespace(mode="RunMode.RUN")
+        optimize_module.HydraConfig,
+        "get",
+        lambda: SimpleNamespace(mode="RunMode.RUN"),
     )
 
     result = optimize_module.optimize_main({"name": "demo"})
@@ -1542,7 +1552,8 @@ def test_set_trial_attributes_remaining_error_and_guard_paths(monkeypatch, caplo
         optimize_module,
         "_overwrite_frozen_trial_user_attr",
         lambda study, trial_id, key, value: calls.__setitem__(
-            "overwrite", calls["overwrite"] + 1
+            "overwrite",
+            calls["overwrite"] + 1,
         )
         or True,
     )

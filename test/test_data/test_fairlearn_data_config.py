@@ -7,7 +7,8 @@ try:
     from deckard.data.fairness import FairlearnDataConfig
 except Exception:
     pytest.skip(
-        "fairlearn is required for FairlearnDataConfig tests", allow_module_level=True
+        "fairlearn is required for FairlearnDataConfig tests",
+        allow_module_level=True,
     )
 
 

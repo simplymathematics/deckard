@@ -43,7 +43,7 @@ def test_as_group_scorer_with_dict():
 
 def test_as_group_scorer_with_scorerdictconfig():
     scorer_dict = ScorerDictConfig(
-        scorers={"accuracy": ScorerConfig("accuracy", lambda y_true, y_pred: 1.0)}
+        scorers={"accuracy": ScorerConfig("accuracy", lambda y_true, y_pred: 1.0)},
     )
     group = as_group_scorer(scorer_dict)
     assert isinstance(group, FairlearnScoreDictConfig)
@@ -60,7 +60,10 @@ def test_as_group_scorer_typeerror(bad_input):
 def test_resolve_sensitive_features_modes():
     arr = np.array([0, 1, 0, 1])
     data = DummyData(
-        sensitive_train=arr, sensitive_test=arr, sensitive_val=arr, sensitive_all=arr
+        sensitive_train=arr,
+        sensitive_test=arr,
+        sensitive_val=arr,
+        sensitive_all=arr,
     )
     y = np.ones(4)
     assert np.all(_resolve_sensitive_features(data, y, mode="train") == arr)
@@ -90,7 +93,9 @@ def test_resolve_sensitive_features_none():
 def test_fairness_demographic_parity_difference_and_equalized_odds(monkeypatch):
     # Patch fairlearn.metrics functions
     monkeypatch.setattr(
-        fairness, "demographic_parity_difference", lambda **kwargs: 0.5
+        fairness,
+        "demographic_parity_difference",
+        lambda **kwargs: 0.5,
     )
     monkeypatch.setattr(fairness, "equalized_odds_difference", lambda **kwargs: 0.2)
     y_true = [0, 1, 0, 1]
@@ -99,13 +104,17 @@ def test_fairness_demographic_parity_difference_and_equalized_odds(monkeypatch):
     # Should work with direct sensitive_features
     assert (
         fairness_demographic_parity_difference(
-            y_true, y_pred, sensitive_features=sensitive
+            y_true,
+            y_pred,
+            sensitive_features=sensitive,
         )
         == 0.5
     )
     assert (
         fairness_equalized_odds_difference(
-            y_true, y_pred, sensitive_features=sensitive
+            y_true,
+            y_pred,
+            sensitive_features=sensitive,
         )
         == 0.2
     )
@@ -115,7 +124,9 @@ def test_fairness_demographic_parity_difference_and_equalized_odds(monkeypatch):
     assert fairness_equalized_odds_difference(y_true, y_pred, data=data) == 0.2
     # Should raise if sensitive_features missing
     monkeypatch.setattr(
-        fairness, "demographic_parity_difference", lambda **kwargs: 0.5
+        fairness,
+        "demographic_parity_difference",
+        lambda **kwargs: 0.5,
     )
     with pytest.raises(ValueError):
         fairness_demographic_parity_difference(y_true, y_pred)
@@ -142,7 +153,9 @@ def test_fairness_group_mean_prediction_difference():
     y_pred = [0.1, 0.9, 0.2, 0.8]
     sensitive = [0, 1, 0, 1]
     result = fairness_group_mean_prediction_difference(
-        y_true, y_pred, sensitive_features=sensitive
+        y_true,
+        y_pred,
+        sensitive_features=sensitive,
     )
     assert abs(result - 0.7) < 1e-6
 
@@ -152,7 +165,9 @@ def test_fairness_group_mae_difference():
     y_pred = [0.1, 0.9, 0.2, 0.8]
     sensitive = [0, 1, 0, 1]
     result = fairness_group_mae_difference(
-        y_true, y_pred, sensitive_features=sensitive
+        y_true,
+        y_pred,
+        sensitive_features=sensitive,
     )
     assert abs(result) < 1e-6
 
@@ -162,7 +177,9 @@ def test_fairness_group_mse_difference():
     y_pred = [0.1, 0.9, 0.2, 0.8]
     sensitive = [0, 1, 0, 1]
     result = fairness_group_mse_difference(
-        y_true, y_pred, sensitive_features=sensitive
+        y_true,
+        y_pred,
+        sensitive_features=sensitive,
     )
     assert abs(result) < 1e-6
 
