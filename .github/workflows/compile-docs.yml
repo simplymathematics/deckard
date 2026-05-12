@@ -35,7 +35,7 @@ jobs:
     - name: Pull DVC cache
       run: |
         cd docs/notebooks
-        dvc pull || echo "DVC pull not available; will proceed with cached objects from GitHub Actions"
+        dvc pull || echo "DVC pull: no remote or cache empty; using what's available locally"
     - name : build docs
       run: |
         cd docs
@@ -43,7 +43,7 @@ jobs:
     - name: Push DVC cache
       run: |
         cd docs/notebooks
-        dvc push || echo "DVC push not available; cache will be saved via GitHub Actions"
+        dvc push || echo "DVC push: remote not configured; artifacts managed via GitHub Actions cache"
     - name: commit changes
       uses : stefanzweifel/git-auto-commit-action@v4
       with:

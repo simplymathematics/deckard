@@ -94,8 +94,9 @@ clear_cache() {
 # Rebuild notebooks
 rebuild() {
     print_header "Rebuilding Notebooks"
-    echo "Executing: cd $DOCS_NOTEBOOKS_DIR && make html DVC_REPRO_ARGS=\"--force\""
-    cd "$DOCS_NOTEBOOKS_DIR"
+    echo "Note: This uses the parent Makefile from docs/ directory"
+    echo "Executing: cd $DOCS_NOTEBOOKS_DIR/.. && make html DVC_REPRO_ARGS=\"--force\""
+    cd "$DOCS_NOTEBOOKS_DIR/.."
     make html DVC_REPRO_ARGS="--force"
     print_success "Rebuild complete"
 }

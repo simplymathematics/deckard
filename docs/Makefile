@@ -40,9 +40,9 @@ notebooks:
 		echo "Error: dvc executable not found. Install DVC or run 'make html' for Sphinx-only docs."; \
 		exit 1; \
 	}
-	@cd "$(NOTEBOOKSDIR)" && $(DVC) pull
+	@cd "$(NOTEBOOKSDIR)" && $(DVC) pull || echo "DVC pull: no remote configured or cache empty; proceeding with pipeline"
 	@cd "$(NOTEBOOKSDIR)" && $(DVC) repro $(DVC_REPRO_ARGS) $(DVC_STAGE)
-	@cd "$(NOTEBOOKSDIR)" && $(DVC) push
+	@cd "$(NOTEBOOKSDIR)" && $(DVC) push || echo "DVC push: remote not configured; cache will be managed locally"
 
 html: notebooks
 	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(SPHINX_NB_OFF) $(O)
