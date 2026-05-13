@@ -24,7 +24,7 @@ pytest.importorskip("art")
 
 @pytest.fixture(scope="module")
 def generate_fairness_data():
-    from deckard.score import DefaultFairlearnDataScoreConfig
+    from deckard.score import DefaultFairlearnDataScorerConfig
 
     cfg = FairlearnDataConfig(
         dataset_name="make_classification",
@@ -43,7 +43,7 @@ def generate_fairness_data():
         stratify=True,
         classifier=True,
         sensitive_columns=["feature_0"],
-        scorer=DefaultFairlearnDataScoreConfig(classifier=True),
+        scorer=DefaultFairlearnDataScorerConfig(classifier=True),
     )
     cfg()
     return cfg

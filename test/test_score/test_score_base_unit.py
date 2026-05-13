@@ -5,15 +5,15 @@ import pytest
 from omegaconf import OmegaConf
 
 from deckard.score.base import (
-    DefaultModelScoreConfig,
+    DefaultModelScorerConfig,
     DefaultRegressorConfig,
     ScorerConfig,
     ScorerDictConfig,
     build_scorer,
     build_scorer_dict,
 )
-from deckard.score.attack import DefaultEvasionScoreConfig
-from deckard.score.data import DefaultDataScoreConfig
+from deckard.score.attack import DefaultEvasionAttackScorerConfig
+from deckard.score.data import DefaultDataScorerConfig
 
 
 def test_scorer_config_post_init_dict_and_string_paths(monkeypatch):
@@ -147,7 +147,7 @@ def test_scorer_dict_init_iter_getitem_and_builders():
 
 
 def test_task_aware_model_scorer_normalizes_explicit_classifier_aliases():
-    reg = DefaultModelScoreConfig(classifier="regressor")
+    reg = DefaultModelScorerConfig(classifier="regressor")
     assert reg.classifier is False
     assert set(reg.scorers) == {"mse", "mae", "r2"}
 
@@ -164,15 +164,15 @@ def test_task_aware_scorer_resolves_from_model_data_and_attack_context():
         ),
     }
 
-    model_cfg = DefaultModelScoreConfig(scorers=custom, classifier=None)
+    model_cfg = DefaultModelScorerConfig(scorers=custom, classifier=None)
     assert (
         model_cfg.resolve_classifier(model=SimpleNamespace(classifier=False)) is False
     )
 
-    data_cfg = DefaultDataScoreConfig(scorers=custom, classifier=None)
+    data_cfg = DefaultDataScorerConfig(scorers=custom, classifier=None)
     assert data_cfg.resolve_classifier(data=SimpleNamespace(classifier=False)) is False
 
-    attack_cfg = DefaultEvasionScoreConfig(scorers=custom, classifier=None)
+    attack_cfg = DefaultEvasionAttackScorerConfig(scorers=custom, classifier=None)
     assert (
         attack_cfg.resolve_classifier(attack=SimpleNamespace(_is_continuous=True))
         is False

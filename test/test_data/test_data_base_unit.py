@@ -165,7 +165,7 @@ def test_plugin_instantiation_and_hook_paths(monkeypatch):
 
     cfg.plugins = "pkg.Plugin"
     cfg._plugin_objects = None
-    with pytest.raises(TypeError):
+    with pytest.raises(ImportError):
         cfg._get_plugins()
 
 
@@ -559,10 +559,10 @@ def test_pipeline_call_saves_scores_and_handles_y_pipeline(tmp_path):
     cfg.X_test = pd.DataFrame({"a": [3]})
     cfg.y_train = pd.Series([0, 1])
     cfg.y_test = pd.Series([1])
-    cfg._sample = lambda: None
+    cfg._sample = lambda run_hooks=True: None
     cfg._load_data = lambda: None
     cfg.read_or_initialize_scores = lambda path: {"existing": 1}
-    cfg._score = lambda: {"metric": 2}
+    cfg._score = lambda mode=None, **kwargs: {"metric": 2}
     cfg._fit_transform_y = lambda X_train, X_test, y_train, y_test, pipeline: (
         setattr(cfg, "pipeline_y_fit_time", 0.01)
         or setattr(cfg, "pipeline_y_transform_time", 0.01)

@@ -106,7 +106,7 @@ def test_sample_populates_sensitive_val_when_present(monkeypatch):
     cfg = _cfg()
     cfg.sensitive_columns = ["group"]
 
-    def _noop_sample(self):
+    def _noop_sample(self, run_hooks: bool = True):
         self.X_train = pd.DataFrame({"group": ["a", "b"], "x": [1, 2]})
         self.X_test = pd.DataFrame({"group": ["b"], "x": [3]})
         self._X = pd.DataFrame({"group": ["a", "b", "b"], "x": [1, 2, 3]})

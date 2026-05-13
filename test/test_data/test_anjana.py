@@ -1,7 +1,7 @@
 import pandas as pd
 
 from deckard.data.anjana import AnjanaDataConfig
-from deckard.score.anjana import DefaultAnjanaDataScoreConfig
+from deckard.score.anjana import DefaultAnjanaDataScorerConfig
 
 
 def _fake_anjana_defense(data, **kwargs):
@@ -156,6 +156,10 @@ def test_anjana_data_defense_auto_injects_generated_hierarchies(monkeypatch):
 
 
 def test_default_anjana_data_scorer_includes_privacy_metrics():
-    scorer = DefaultAnjanaDataScoreConfig()
+    scorer = DefaultAnjanaDataScorerConfig()
 
-    assert set(scorer.scorers) == {"k_anonymity", "l_diversity", "t_closeness"}
+    # DefaultAnjanaDataScoreConfig combines data metrics with privacy metrics
+    privacy_metrics = {"k_anonymity", "l_diversity", "t_closeness"}
+    assert privacy_metrics.issubset(set(scorer.scorers))
+    # Verify privacy metrics are present alongside data metrics
+    assert len(scorer.scorers) > 3
