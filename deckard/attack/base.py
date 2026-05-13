@@ -53,6 +53,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+
+
 def _sensitive_slice(sensitive, n):
     """Return the first *n* rows of *sensitive*, or None if unavailable."""
     if sensitive is None:
@@ -109,6 +111,13 @@ class SensitiveFeaturesWrapper(BaseEstimator):
         if "sensitive_features" in params:
             self._sensitive = np.asarray(params["sensitive_features"])
         return self
+    def _sensitive_slice(self, sensitive, n):
+        """Return the first *n* rows of *sensitive*, or None if unavailable."""
+        if sensitive is None:
+            return None
+        arr = np.asarray(sensitive)
+        return arr[:n]
+
 
 
 supported_attacks = [
@@ -120,13 +129,19 @@ supported_attacks = [
 ]
 
 
+@dataclass(eq=True)
 class _AttackMixin:
-    """Base callable attack handler used by runtime attack context resolution."""
+    """Base callable attack handler used by runtime attack context resolution.
 
-    runtime: "AttackConfig"
+    Parameters
+    ----------
+    runtime : AttackConfig
+        Runtime config object owned by ``AttackConfig.__call__``. Mixins should
+        treat this as the source of mutable runtime state (timers, predictions,
+        score_dict, etc).
+    """
 
-    def __init__(self, runtime: "AttackConfig") -> None:
-        object.__setattr__(self, "runtime", runtime)
+    runtime: Any = None
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self.runtime, name)
@@ -135,7 +150,11 @@ class _AttackMixin:
         if name == "runtime":
             object.__setattr__(self, name, value)
             return
-        setattr(self.runtime, name, value)
+        runtime = object.__getattribute__(self, "runtime")
+        if runtime is None:
+            object.__setattr__(self, name, value)
+            return
+        setattr(runtime, name, value)
 
     def __call__(
         self,
@@ -147,9 +166,123 @@ class _AttackMixin:
         attack_type: str,
         attack_subtype: str,
     ) -> dict:
+        """Execute one attack handler.
+
+        Parameters
+        ----------
+        data : Any
+            Data runtime containing train/test/val splits.
+        model : Any
+            User model object or model config supplied to ``AttackConfig``.
+        art_model : Any
+            ART estimator wrapper used by the selected attack implementation.
+        attack : Any
+            Instantiated attack object (e.g., ART attack instance).
+        attack_type : str
+            Parsed attack family (e.g., ``evasion``, ``poisoning``, ``inference``).
+        attack_subtype : str
+            Parsed attack subtype from attack path.
+
+        Returns
+        -------
+        dict
+            Score dictionary merged into runtime ``score_dict``.
+        """
         raise NotImplementedError(
             "Attack handlers must implement __call__",
         )
+
+
+@dataclass(eq=False)
+class AttackTypePlugin:
+    """Generic attack plugin that binds one mixin to one attack family/subtype.
+
+    Initialization fields
+    ---------------------
+    mixin_type : Any
+        Mixin class (or import path) implementing runtime ``__call__``.
+    attack_type : str
+        Attack family this plugin matches.
+    attack_subtype : str | None
+        Optional subtype constraint.
+    excluded_subtypes : tuple[str, ...]
+        Subtypes explicitly excluded from this plugin match.
+
+    Runtime behavior
+    ----------------
+    - ``resolve_attack_mixins`` contributes mixins to runtime context assembly.
+    - ``resolve_attack_handler`` returns callable handler for dispatch.
+    - ``__call__`` forwards ``*args``/``**kwargs`` to the configured mixin
+      instance bound to the runtime config.
+    """
+
+    mixin_type: Any
+    attack_type: str
+    attack_subtype: Union[str, None] = None
+    excluded_subtypes: tuple[str, ...] = field(default_factory=tuple)
+
+    def _resolve_mixin_type(self) -> type:
+        if isinstance(self.mixin_type, str):
+            resolved = resolve_class(self.mixin_type)
+            self.mixin_type = resolved
+            return resolved
+        return self.mixin_type
+
+    def _matches(self, *, attack_type: str, attack_subtype: str) -> bool:
+        if (attack_type or "").lower() != (self.attack_type or "").lower():
+            return False
+        subtype = (attack_subtype or "").lower()
+        if self.attack_subtype is not None and subtype != self.attack_subtype.lower():
+            return False
+        if subtype in {item.lower() for item in self.excluded_subtypes}:
+            return False
+        return True
+
+    def resolve_attack_mixins(
+        self,
+        runtime: "AttackConfig",
+        *,
+        attack_type: str,
+        attack_subtype: str,
+        default_mixins: tuple[type, ...],
+    ) -> tuple[type, ...]:
+        """Return mixin tuple for matching attack family/subtype."""
+        _ = (runtime, default_mixins)
+        if not self._matches(attack_type=attack_type, attack_subtype=attack_subtype):
+            return tuple()
+        mixin = self._resolve_mixin_type()
+        return (mixin,)
+
+    def resolve_attack_handler(
+        self,
+        runtime: "AttackConfig",
+        *,
+        attack_type: str,
+        attack_subtype: str,
+        default_handler: Any,
+        default_mixins: tuple[type, ...],
+    ) -> Any:
+        """Return callable runtime handler for matching attack family/subtype."""
+        _ = (default_handler, default_mixins)
+        if not self._matches(attack_type=attack_type, attack_subtype=attack_subtype):
+            return None
+        return lambda *args, **kwargs: self(runtime, *args, **kwargs)
+
+    def __call__(self, runtime: "AttackConfig", *args, **kwargs) -> dict:
+        """Delegate runtime attack execution to configured mixin handler.
+
+        Parameters
+        ----------
+        runtime : AttackConfig
+            Runtime config instance currently orchestrating the attack.
+        *args : Any
+            Positional runtime args forwarded to mixin ``__call__``.
+        **kwargs : Any
+            Keyword runtime args forwarded to mixin ``__call__``.
+        """
+        mixin = self._resolve_mixin_type()
+        handler = mixin(runtime)
+        return handler(*args, **kwargs)
 
 
 def _get_sklearn_dict() -> dict[str, Any]:
@@ -162,85 +295,62 @@ def _get_supported_models() -> tuple[type, ...]:
 
 @dataclass(eq=False)
 class AttackConfig(ConfigBase):
-    """
-    AttackConfig
-    Configuration and execution class for adversarial attacks on machine learning models.
-    This class provides a unified interface for configuring, executing, and scoring various types of adversarial attacks,
-    including evasion, poisoning, extraction, and inference attacks. It supports integration with scikit-learn models
-    and the Adversarial Robustness Toolbox (ART), and provides detailed logging and timing for attack operations.
+    """Runtime attack configuration with plugin-driven dispatch.
 
-    Attributes
-    ----------
-    attack_type : str
-        Fully qualified ART attack class path.
+    Attack behavior is resolved at runtime via mixins and optional plugins.
+    Concrete attack logic lives in type-specific modules, while this class
+    owns orchestration, timing, scoring, and plugin hook execution.
+
+    Plugin hooks
+    ------------
+    resolve_attack_mixins(self, *, attack_type, attack_subtype, default_mixins)
+        Return one mixin type, or a list/tuple of mixin types, to extend runtime
+        dispatch for the parsed attack type.
+    resolve_attack_handler(self, *, attack_type, attack_subtype, default_handler, default_mixins)
+        Return a callable handler (or handler type) to override default runtime
+        handler resolution.
+    before_attack_dispatch(self, *, data, model, attack, art_model, attack_type, attack_subtype, runtime, handler)
+        Runs immediately before handler execution. Dict returns are merged into
+        score_dict.
+    after_attack_dispatch(self, *, data, model, attack, art_model, attack_type, attack_subtype, scores)
+        Runs immediately after handler execution. Dict returns are merged into
+        score_dict.
+
+    Parameter layers
+    ----------------
     attack_params : dict
-        Parameters passed to the ART attack initializer.
-    attack_size : int
-        Number of samples to include in attack evaluation.
-    targeted_attribute : str
-        Feature name for attribute inference attacks.
-    alias : str or None
-        Optional alias for this attack configuration.
-    attack_time : float, optional
-        Time taken to execute the attack.
-    attack_prediction_time : float, optional
-        Time taken for adversarial prediction.
-    attack_score_time : float, optional
-        Time taken to score the attack.
-    attack : object, optional
-        Stores the result of the attack.
-    attack_predictions : list, optional
-        Attack output persisted for scoring (canonical name).
-    attacked_labels : object, optional
-        Target labels aligned with ``attack_predictions`` for scoring.
-    target_index : int, optional
-        Cached column index for ``targeted_attribute``.
-    _attack_type : str, optional
-        Parsed attack family (e.g., evasion, inference).
-    _attack_subtype : str, optional
-        Parsed attack subtype.
-    score_dict : dict, optional
-        Stores the computed scores and metrics for the attack.
-    _target_ : str, optional
-        Internal target identifier used by config tooling.
+        Attack-class constructor kwargs. These are copied and filtered before
+        attack instantiation in ``_initialize_attack``.
+    init_params : dict
+        Declaration metadata for config-store entries (class/type/library docs).
+        This is not passed directly to ART attack constructors.
 
-    Methods
-    -------
-    __hash__()
-        Computes a hash value for the object based on its non-private attributes.
-    __post_init__()
-        Initializes post-construction attributes and sets defaults.
-    __call__(data, model, train=False, **kwargs)
-    _get_benign_preds(data, art_model, train=False)
-        Generates benign predictions and corresponding labels for a subset of data.
-    _get_feature_vector_preds(data, targeted_attribute, train=False)
-        Extracts a subset of feature vectors, labels, and attributes from the provided data.
-    _score_attack(ben_pred_labels, adv_pred_labels, y_test_numeric)
-    _evade(data, art_model, attack, train=False)
-    _infer_attribute(data, art_model, attack, targeted_attribute, train=False)
-        Performs an attribute inference attack on a dataset using a specified attack model and model.
-    _infer_membership(data, art_model, attack, train=False)
-        Performs membership inference attack on the given dataset using the specified attack and model.
-    _poison()
-    _extract()
-    _save(filepath)
+    Family-specific parameter semantics
+    ----------------------------------
+    evasion
+        Typical ART attack kwargs (for example ``eps``, ``eps_step``,
+        ``max_iter``), passed through to attack constructor.
+    poisoning
+        Requires ``class_source`` and ``class_target`` for Deckard runtime
+        validation. Some orchestration keys (for example ``trigger_index``,
+        ``poison_fit_params``) are consumed by Deckard and stripped before
+        constructing ART attack objects.
+    extraction
+        Constructor kwargs are attack-specific; query/eval split handling and
+        thieved classifier reset are runtime concerns implemented in mixins.
+    inference
+        Some keys (for example ``split``, ``targets``, ``missing_index``) are
+        runtime controls used by specific inference subtypes and may be removed
+        from constructor kwargs before ART instantiation.
 
-    Raises
-    ------
-    ValueError
-        If the attack type, subtype, or model type is unsupported, or if the model is not fitted.
-    NotImplementedError
-        If the attack type or subtype is not implemented.
-    AssertionError
-        If the output scores or timing variables are not of the expected types.
-    TypeError
-        If the attack model's fit method does not accept the expected arguments.
-
-    Examples
-    --------
-    >>> config = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod", attack_params={"eps": 0.2})
-    >>> results = config(data, model)
-    >>> print(results)
+    Plugin hook runtime params
+    --------------------------
+    Hooks are orchestrated by ``_run_plugin_hook(hook_name, **kwargs)``.
+    Core hook names used by AttackConfig runtime are:
+    ``resolve_attack_mixins``, ``resolve_attack_handler``,
+    ``before_attack_dispatch``, and ``after_attack_dispatch``.
+    Hook kwargs are phase-specific runtime objects supplied by attack
+    orchestration.
     """
 
     # Configuration fields
@@ -248,6 +358,12 @@ class AttackConfig(ConfigBase):
     attack_params: dict = field(
         default_factory=dict,
         metadata={"help": "Parameters for the attack."},
+    )
+    init_params: dict = field(
+        default_factory=dict,
+        metadata={
+            "help": "Initialization metadata for attack class/type/library declaration.",
+        },
     )
     attack_size: int = field(
         default=1000,
@@ -261,7 +377,7 @@ class AttackConfig(ConfigBase):
     alias: Union[str, None] = None
     plugins: list = field(default_factory=list)
     device: Union[str, None] = None
-    mode: Literal["test", "val"] = "test"
+    mode: Literal["auto", "train", "test", "val"] = "auto"
 
     # Runtime state fields
     attack_time: Union[float, None] = None
@@ -270,6 +386,8 @@ class AttackConfig(ConfigBase):
     attack: Union[object, None] = None
     attack_predictions: Union[object, None] = None
     attacked_labels: Union[object, None] = None
+    score_y_pred: Union[object, None] = None
+    score_y_proba: Union[object, None] = None
     target_index: Union[int, None] = None
     _attack_type: Union[str, None] = None
     _attack_subtype: Union[str, None] = None
@@ -349,6 +467,27 @@ class AttackConfig(ConfigBase):
                 "Poisoning attacks require class_source and class_target to differ.",
             )
 
+    def set_mode(self, mode: Literal["auto", "train", "test", "val"]) -> "AttackConfig":
+        """Set attack scoring/evaluation split mode explicitly."""
+        canonical = str(mode).strip().lower()
+        if canonical not in {"auto", "train", "test", "val"}:
+            raise ValueError(
+                f"Unsupported attack mode '{mode}'. Expected one of: auto, train, test, val.",
+            )
+        self.mode = canonical
+        return self
+
+    def resolve_mode_for_attack_kind(
+        self,
+        attack_kind: Optional[str],
+    ) -> Literal["train", "test", "val"]:
+        """Resolve active split mode from explicit mode or attack-kind default."""
+        if self.mode in {"train", "test", "val"}:
+            return self.mode
+        if attack_kind == "attribute":
+            return "train"
+        return "test"
+
     def _parse_attack_path(self) -> tuple[str, str]:
         parts = (self.attack_type or "").split("attacks.")[-1].split(".")
         attack_type = parts[0] if len(parts) > 0 else ""
@@ -372,7 +511,21 @@ class AttackConfig(ConfigBase):
             ]
         return self._plugin_objects
 
-    def _run_plugin_hook(self, hook_name: str, **kwargs):
+    def _run_plugin_hook(self, hook_name: str, **kwargs) -> list[Any]:
+        """Execute one plugin hook across all instantiated plugins.
+
+        Parameters
+        ----------
+        hook_name : str
+            Hook method name to invoke when present on a plugin.
+        **kwargs : Any
+            Hook-specific keyword arguments.
+
+        Returns
+        -------
+        list[Any]
+            Ordered list of hook return values.
+        """
         hook_outputs = []
         for plugin in self._get_plugins():
             hook = getattr(plugin, hook_name, None)
@@ -1054,18 +1207,39 @@ class AttackConfig(ConfigBase):
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
 
-    def _score(self, attack_kind: str, y_true, y_pred, **kwargs) -> dict:
+    def _score(self, attack_kind: str, y_true, y_pred=None, *args, **kwargs) -> dict:
         """Dispatch attack scoring through the configured AttackScorerConfig."""
         if self.scorer is None:
             raise ValueError(
                 "AttackConfig.scorer must be configured with an AttackScorerConfig instance",
             )
-        score_dict = self.scorer._score(
-            attack_kind=attack_kind,
-            y_true=y_true,
-            y_pred=y_pred,
-            attack_size=self.attack_size,
+        if y_pred is None:
+            y_pred = self.score_y_pred
+        y_proba = kwargs.pop("y_proba", None)
+        if y_proba is None:
+            y_proba = self.score_y_proba
+
+        score_kwargs = {
+            "attack_kind": attack_kind,
+            "y_true": y_true,
+            "y_pred": y_pred,
+            "attack_size": self.attack_size,
             **kwargs,
+        }
+        if y_proba is not None:
+            import inspect
+
+            signature = inspect.signature(self.scorer._score)
+            accepts_var_kwargs = any(
+                p.kind == inspect.Parameter.VAR_KEYWORD
+                for p in signature.parameters.values()
+            )
+            if accepts_var_kwargs or "y_proba" in signature.parameters:
+                score_kwargs["y_proba"] = y_proba
+
+        score_dict = self.scorer._score(
+            *args,
+            **score_kwargs,
         )
         self.attack_score_time = score_dict.get("attack_score_time")
         return score_dict
@@ -1169,6 +1343,24 @@ class AttackConfig(ConfigBase):
         """Prepare labels specifically for ART model/attack boundaries."""
         prepared = self._prepare_labels_for_attack(value)
         return self._to_numpy_array(prepared)
+
+    @classmethod
+    def _labels_from_classifier_predictions(cls, predictions) -> np.ndarray:
+        """Convert classifier outputs (labels/logits/probabilities) to class labels."""
+        arr = cls._to_numpy_array(predictions)
+        if arr.ndim == 1:
+            if np.issubdtype(arr.dtype, np.floating):
+                unique_vals = np.unique(arr)
+                if np.all(np.isin(unique_vals, [0.0, 1.0])):
+                    return arr.astype(int)
+                return (arr >= 0.5).astype(int)
+            return arr.astype(int)
+        if arr.ndim == 2:
+            if arr.shape[1] == 1:
+                col = arr.reshape(-1)
+                return (col >= 0.5).astype(int)
+            return np.argmax(arr, axis=1).astype(int)
+        return arr.reshape(-1).astype(int)
 
     @classmethod
     def _prediction_to_labels(cls, predictions, is_regression: bool = False):

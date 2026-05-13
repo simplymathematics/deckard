@@ -2,13 +2,13 @@
 
 import time
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Union
 
 import numpy as np
 from art.config import ART_NUMPY_DTYPE
 
-from .base import AttackConfig, _AttackMixin, _sensitive_slice
+from .base import AttackConfig, AttackTypePlugin, _AttackMixin, _sensitive_slice
 from ..utils import safe_store
 from ..score.base import (
     DefaultClassifierConfig,
@@ -17,8 +17,7 @@ from ..score.base import (
 )
 from .torch_utils import is_tensor, tensor_to_numpy, is_dataloader, collect_subset_from_dataloader
 
-if TYPE_CHECKING:
-    pass
+
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +49,7 @@ class _EvasionAttackMixin(_AttackMixin):
             )
         return self._evade(data, art_model, attack)
 
-    def _evade(self, data, art_model, attack):
+    def _evade(self, data, art_model, attack) -> dict:
         """
         Executes an evasion attack on a given dataset using the specified ART model and attack method.
 
@@ -78,7 +77,11 @@ class _EvasionAttackMixin(_AttackMixin):
         import pandas as pd
 
         start_time = time.process_time()
-        n, x_subset, y_subset = self.get_attack_subset(data)
+        active_mode = self.resolve_mode_for_attack_kind("evasion")
+        n, x_subset, y_subset = self.get_attack_subset(
+            data,
+            test=(active_mode != "train"),
+        )
         x_subset = self._prepare_features_for_attack(x_subset)
         y_subset = self._prepare_labels_for_attack(y_subset)
         x_subset_art = self._prepare_features_for_art(x_subset)
@@ -138,6 +141,8 @@ class _EvasionAttackMixin(_AttackMixin):
             adv_pred,
             is_regression=is_regression,
         )
+        self.score_y_pred = adv_pred_labels
+        self.score_y_proba = adv_pred
         y_test_numeric = self._normalize_ground_truth(
             y_subset,
             is_regression=is_regression,
@@ -224,15 +229,39 @@ class _EvasionAttackMixin(_AttackMixin):
 
 @dataclass(eq=False)
 class EvasionAttackConfig(_EvasionAttackMixin, AttackConfig):
-    """
-    Configuration for evasion attacks that generate adversarial examples.
-    
-    Evasion attacks are test-time attacks that generate adversarial examples
-    by perturbing input features to fool a trained model while minimizing
-    the perturbation. Common evasion attack methods include FGSM, PGD, C&W, etc.
+    """Configuration for evasion attacks that generate adversarial examples.
+
+    Initialization params
+    ---------------------
+    attack_type : str
+        Attack family path inherited from ``AttackConfig``. Expected family is
+        ``evasion``.
+    attack_params : dict[str, Any]
+        Constructor kwargs forwarded to resolved ART evasion attack classes.
+    init_params : dict[str, Any]
+        Metadata-only declaration payload for class/type/library docs.
+    plugins : list[AttackTypePlugin]
+        Declarative runtime plugin specs. Default contains one
+        ``AttackTypePlugin`` configured with:
+        ``mixin_type: type = _EvasionAttackMixin`` and
+        ``attack_type: str = 'evasion'``.
+
+    Runtime params
+    --------------
+    _EvasionAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> dict
+        Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
+    _EvasionAttackMixin._evade(self, data: Any, art_model: Any, attack: Any) -> dict
+        Generates adversarial examples and returns score payload.
     """
 
-    pass
+    plugins: list = field(
+        default_factory=lambda: [
+            AttackTypePlugin(
+                mixin_type=_EvasionAttackMixin,
+                attack_type="evasion",
+            )
+        ]
+    )
 
 
 # Register evasion attack config

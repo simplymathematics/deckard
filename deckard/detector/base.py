@@ -8,7 +8,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from ..model import ModelConfig
 from ..score.base import (
-    DefaultModelScoreConfig,
+    DefaultModelScorerConfig,
     ScorerConfig,
     ScorerDictConfig,
     _TaskAwareScorerMixin,
@@ -34,7 +34,7 @@ class DetectorScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
         self,
         classifier: bool,
     ) -> dict[str, Union[ScorerConfig, dict[str, Any]]]:
-        shared_defaults = DefaultModelScoreConfig(classifier=classifier).scorers
+        shared_defaults = DefaultModelScorerConfig(classifier=classifier).scorers
         if classifier:
             # Detector scoring uses class-label outputs; keep the label metrics subset.
             keys = ("accuracy", "precision", "recall", "f1")

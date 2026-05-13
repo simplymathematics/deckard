@@ -329,12 +329,56 @@ def data_empirical_cdf_function_score(
 
 
 @dataclass(eq=False)
-class DefaultDataScoreConfig(
+class DefaultDataScorerConfig(
     _DataScorerMarker,
     _TaskAwareScorerMixin,
     ScorerDictConfig,
 ):
-    """Default data-analysis scorer family with optional task inheritance."""
+    """Default data-analysis scorer family with optional task inheritance.
+
+    Initialization parameters
+    -------------------------
+    classifier : bool | str | None
+        Task type selector. Accepted values are ``True``, ``False``,
+        ``"classifier"``, ``"regressor"``, or ``None``. When ``None``,
+        task type is resolved from data/model/attack context or defaults to ``True``.
+    scorers : dict[str, ScorerConfig | dict[str, Any]]
+        Named scorer configurations. When empty, populated by ``_build_default_scorers``
+        based on resolved task type (classification vs regression).
+
+    Runtime parameters
+    -------------------
+    data : DataConfig
+        Runtime data configuration containing train/test/val splits, feature matrices.
+    model : Any
+        Runtime model object (optional, used for context resolution).
+    attack : Any
+        Runtime attack object (optional, used for context resolution).
+
+    Parameter layers
+    ----------------
+    1. Task awareness: ``classifier`` field enables task-specific scorer defaults
+    2. Data properties: Scorers analyze feature matrices and label distributions
+    3. Reference vector: Mutual information and ECDF scorers accept optional ``reference``
+       or ``reference_column`` overrides for non-label analysis targets
+
+    Family-specific parameter semantics
+    -----------------------------------
+    Data scorers operate on dataset properties without requiring trained models:
+
+    - **Class distribution**: ``num_classes``, ``class_count_min/max``, ``class_imbalance_ratio``
+      measure label-space characteristics (classification only).
+    - **Feature informativeness**: ``mutual_information_mean/max`` quantify feature-label
+      associations using information-theoretic measures.
+    - **Empirical distribution**: ``empirical_cdf`` returns a calibrated CDF function for
+      reference-vector percentile queries.
+
+    Plugin pattern
+    --------------
+    This scorer inherits from ``_ScorerMixin`` semantics through ``ScorerDictConfig``.
+    Plugins registered via ``ScorerTypePlugin`` contribute mixin-based runtime context
+    for scope-based dispatch (e.g., ``scoring_type: "data"`` routes to this scorer).
+    """
 
     classifier: Union[bool, str, None] = None
     scorers: dict[str, Union[ScorerConfig, KwargMap]] = field(default_factory=dict)
@@ -392,15 +436,42 @@ class DefaultDataScoreConfig(
 
 
 @dataclass(eq=False)
-class DefaultDataClassificationConfig(DefaultDataScoreConfig):
-    """Default dataset-analysis scorers for classification datasets."""
+class DefaultDataClassificationConfig(DefaultDataScorerConfig):
+    """Default dataset-analysis scorers for classification datasets.
+
+    Initialization parameters
+    -------------------------
+    classifier : bool | str | None
+        Fixed to ``True`` (classification mode). Class-distribution scorers
+        (num_classes, class_count_min/max, class_imbalance_ratio) are included
+        by default.
+
+    Runtime behavior
+    ----------------
+    Inherits all runtime parameter resolution from ``DefaultDataScoreConfig``.
+    Default scorers include both class-distribution and information-theoretic
+    measures specific to classification analysis.
+    """
 
     classifier: Union[bool, str, None] = True
 
 
 @dataclass(eq=False)
-class DefaultDataRegressionConfig(DefaultDataScoreConfig):
-    """Default dataset-analysis scorers for regression datasets."""
+class DefaultDataRegressionConfig(DefaultDataScorerConfig):
+    """Default dataset-analysis scorers for regression datasets.
+
+    Initialization parameters
+    -------------------------
+    classifier : bool | str | None
+        Fixed to ``False`` (regression mode). Excludes class-distribution scorers
+        and includes only information-theoretic measures for continuous target analysis.
+
+    Runtime behavior
+    ----------------
+    Inherits all runtime parameter resolution from ``DefaultDataScoreConfig``.
+    Default scorers focus on feature-informativeness and empirical distribution
+    measures suitable for regression analysis.
+    """
 
     classifier: Union[bool, str, None] = False
 
@@ -408,13 +479,13 @@ class DefaultDataRegressionConfig(DefaultDataScoreConfig):
 safe_store(
     group="score",
     name="data-classification",
-    node={"_target_": "deckard.score.data.DefaultDataScoreConfig", "classifier": True},
+    node={"_target_": "deckard.score.data.DefaultDataScorerConfig", "classifier": True},
 )
 safe_store(
     group="score",
     name="data-regression",
     node={
-        "_target_": "deckard.score.data.DefaultDataScoreConfig",
+        "_target_": "deckard.score.data.DefaultDataScorerConfig",
         "classifier": False,
     },
 )
@@ -428,7 +499,7 @@ __all__ = [
     "data_mutual_information_mean_score",
     "data_mutual_information_max_score",
     "data_empirical_cdf_function_score",
-    "DefaultDataScoreConfig",
+    "DefaultDataScorerConfig",
     "DefaultDataClassificationConfig",
     "DefaultDataRegressionConfig",
 ]

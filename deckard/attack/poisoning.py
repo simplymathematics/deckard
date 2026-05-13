@@ -2,20 +2,19 @@
 
 import time
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import numpy as np
 from art.config import ART_NUMPY_DTYPE
 from art.estimators.classification.classifier import ClassifierNeuralNetwork
 
-from .base import AttackConfig, _AttackMixin
+from .base import AttackConfig, AttackTypePlugin, _AttackMixin
 from .torch_utils import is_torch_model
 from ..score.base import DefaultClassifierConfig, ScorerDictConfig
 from ..utils import safe_store
 
-if TYPE_CHECKING:
-    pass
+
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +38,7 @@ class _PoisoningAttackMixin(_AttackMixin):
             )
         return self._poison(data=data, art_model=art_model, attack=attack)
 
-    def _poison(self, data, art_model, attack):
+    def _poison(self, data, art_model, attack) -> dict:
         """Execute a poisoning attack and score benign vs poisoned model accuracy."""
         attack_name = type(attack).__name__.lower()
         if "poisoningattacksvm" in attack_name:
@@ -225,7 +224,7 @@ class _PoisoningAttackMixin(_AttackMixin):
         }
         return self.score_dict
 
-    def _poison_svm(self, data, art_model, attack):
+    def _poison_svm(self, data, art_model, attack) -> dict:
         """Execute an ART PoisoningAttackSVM attack and score benign vs poisoned model accuracy."""
         poison_fit_params = self.attack_params.get("poison_fit_params", {})
 
@@ -372,15 +371,39 @@ class _PoisoningAttackMixin(_AttackMixin):
 
 @dataclass(eq=False)
 class PoisoningAttackConfig(_PoisoningAttackMixin, AttackConfig):
-    """
-    Configuration for poisoning attacks that corrupt training data.
-    
-    Poisoning attacks manipulate training data to degrade model performance
-    or implant backdoors. Includes backdoor attacks, trojan attacks, and
-    availability attacks on training data.
+    """Configuration for poisoning attacks that corrupt training data.
+
+    Initialization params
+    ---------------------
+    attack_type : str
+        Attack family path inherited from ``AttackConfig``. Expected family is
+        ``poisoning``.
+    attack_params : dict[str, Any]
+        Constructor kwargs forwarded to resolved ART poisoning attack classes.
+    init_params : dict[str, Any]
+        Metadata-only declaration payload for class/type/library docs.
+    plugins : list[AttackTypePlugin]
+        Declarative runtime plugin specs. Default contains one
+        ``AttackTypePlugin`` configured with:
+        ``mixin_type: type = _PoisoningAttackMixin`` and
+        ``attack_type: str = 'poisoning'``.
+
+    Runtime params
+    --------------
+    _PoisoningAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> dict
+        Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
+    _PoisoningAttackMixin._poison(self, data: Any, art_model: Any, attack: Any) -> dict
+        Executes poisoning flow and returns score payload.
     """
 
-    pass
+    plugins: list = field(
+        default_factory=lambda: [
+            AttackTypePlugin(
+                mixin_type=_PoisoningAttackMixin,
+                attack_type="poisoning",
+            )
+        ]
+    )
 
 
 # Register poisoning attack config

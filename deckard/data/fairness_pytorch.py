@@ -8,7 +8,7 @@ import numpy as np
 from torch.utils.data import Dataset
 from torch.utils.data import Subset  # Ensure Subset is always in scope
 
-from ..score.fairness import DefaultFairlearnDataScoreConfig
+from ..score.fairness import DefaultFairlearnDataScorerConfig
 from ..score.pytorch import (
     resolve_sensitive_features,
     coerce_to_numpy,
@@ -105,7 +105,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         if not hasattr(self, "dataset") or not self.dataset:
             self.dataset = self.dataset_name
         if self.scorer is None:
-            self.scorer = DefaultFairlearnDataScoreConfig(
+            self.scorer = DefaultFairlearnDataScorerConfig(
                 classifier=getattr(self, "classifier", True),
             )
 
@@ -222,7 +222,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             is_default_config_value(self.scorer, include_best=False)
             or self.scorer is None
         ):
-            self.scorer = DefaultFairlearnDataScoreConfig(
+            self.scorer = DefaultFairlearnDataScorerConfig(
                 classifier=getattr(self, "classifier", True),
             )
         result = super().__call__(*args, **kwargs)
@@ -237,7 +237,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             is_default_config_value(self.scorer, include_best=False)
             or self.scorer is None
         ):
-            self.scorer = DefaultFairlearnDataScoreConfig(
+            self.scorer = DefaultFairlearnDataScorerConfig(
                 classifier=getattr(self, "classifier", True),
             )
         if not callable(self.scorer):

@@ -103,6 +103,11 @@ MODEL_LINEAR = {
 # Static defense options mirrored from examples/sklearn/config/defense.
 DEFENSE_BASELINE = {
     "defense_name": None,
+    "init_params": {
+        "library": "art",
+        "type": "defense",
+        "class": "baseline",
+    },
     "defense_params": {},
     "_target_": "deckard.DefenseConfig",
     "alias": "baseline",
@@ -110,6 +115,11 @@ DEFENSE_BASELINE = {
 
 DEFENSE_CLASS_LABELS = {
     "defense_name": "art.defences.postprocessor.ClassLabels",
+    "init_params": {
+        "library": "art",
+        "type": "postprocessor",
+        "class": "ClassLabels",
+    },
     "defense_params": {
         "apply_fit": False,
         "apply_predict": True,
@@ -120,6 +130,11 @@ DEFENSE_CLASS_LABELS = {
 
 DEFENSE_FEATURE_SQUEEZING = {
     "defense_name": "art.defences.preprocessor.FeatureSqueezing",
+    "init_params": {
+        "library": "art",
+        "type": "preprocessor",
+        "class": "FeatureSqueezing",
+    },
     "defense_params": {
         "apply_fit": False,
         "apply_predict": True,
@@ -127,6 +142,87 @@ DEFENSE_FEATURE_SQUEEZING = {
         "clip_values": [0, 255],
     },
     "alias": "feature-squeezing",
+}
+
+DEFENSE_ANJANA = {
+    "defense_name": None,
+    "init_params": {
+        "library": "anjana",
+        "type": "data",
+        "class": "anonymization",
+    },
+    "defense_params": {
+        "name": "anjana.anonymity.k_anonymity",
+        "k": 2,
+    },
+    "_target_": "deckard.DefenseConfig",
+    "alias": "anjana",
+}
+
+DEFENSE_PLUGIN_DETECTOR = {
+    "name": "deckard.model.defend.DefenseTypePlugin",
+    "mixin_type": "deckard.model.detector._DetectorDefenseMixin",
+    "defense_type": "detector",
+    "init_params": {
+        "library": "art",
+        "type": "defense",
+        "class": "detector",
+    },
+}
+
+DEFENSE_PLUGIN_PREPROCESSOR = {
+    "name": "deckard.model.defend.DefenseTypePlugin",
+    "mixin_type": "deckard.model.preprocessor._PreprocessorDefenseMixin",
+    "defense_type": "preprocessor",
+    "init_params": {
+        "library": "art",
+        "type": "defense",
+        "class": "preprocessor",
+    },
+}
+
+DEFENSE_PLUGIN_POSTPROCESSOR = {
+    "name": "deckard.model.defend.DefenseTypePlugin",
+    "mixin_type": "deckard.model.postprocessor._PostprocessorDefenseMixin",
+    "defense_type": "postprocessor",
+    "init_params": {
+        "library": "art",
+        "type": "defense",
+        "class": "postprocessor",
+    },
+}
+
+DEFENSE_PLUGIN_TRAINER = {
+    "name": "deckard.model.defend.DefenseTypePlugin",
+    "mixin_type": "deckard.model.trainer._TrainerDefenseMixin",
+    "defense_type": "trainer",
+    "init_params": {
+        "library": "art",
+        "type": "defense",
+        "class": "trainer",
+    },
+}
+
+DEFENSE_PLUGIN_TRANSFORMER = {
+    "name": "deckard.model.defend.DefenseTypePlugin",
+    "mixin_type": "deckard.model.transformer._TransformerDefenseMixin",
+    "defense_type": "transformer",
+    "init_params": {
+        "library": "art",
+        "type": "defense",
+        "class": "transformer",
+    },
+}
+
+DEFENSE_PLUGIN_REGULARIZER = {
+    "name": "deckard.model.defend.DefenseTypePlugin",
+    "mixin_type": "deckard.model.regularizer._RegularizerDefenseMixin",
+    "defense_type": "regularizer",
+    "init_params": {
+        "library": "art",
+        "type": "defense",
+        "class": "regularizer",
+    },
 }
 
 
@@ -149,6 +245,7 @@ safe_store(
     name="feature-squeezing",
     node=DEFENSE_FEATURE_SQUEEZING,
 )
+safe_store(group="defense", name="anjana", node=DEFENSE_ANJANA)
 
 safe_store(group="search/defenses", name="baseline", node=DEFENSE_BASELINE)
 safe_store(
@@ -160,4 +257,59 @@ safe_store(
     group="search/defenses",
     name="feature-squeezing",
     node=DEFENSE_FEATURE_SQUEEZING,
+)
+safe_store(group="search/defenses", name="anjana", node=DEFENSE_ANJANA)
+
+safe_store(group="defense/plugins", name="detector", node=DEFENSE_PLUGIN_DETECTOR)
+safe_store(
+    group="defense/plugins",
+    name="preprocessor",
+    node=DEFENSE_PLUGIN_PREPROCESSOR,
+)
+safe_store(
+    group="defense/plugins",
+    name="postprocessor",
+    node=DEFENSE_PLUGIN_POSTPROCESSOR,
+)
+safe_store(group="defense/plugins", name="trainer", node=DEFENSE_PLUGIN_TRAINER)
+safe_store(
+    group="defense/plugins",
+    name="transformer",
+    node=DEFENSE_PLUGIN_TRANSFORMER,
+)
+safe_store(
+    group="defense/plugins",
+    name="regularizer",
+    node=DEFENSE_PLUGIN_REGULARIZER,
+)
+
+safe_store(
+    group="search/defense/plugins",
+    name="detector",
+    node=DEFENSE_PLUGIN_DETECTOR,
+)
+safe_store(
+    group="search/defense/plugins",
+    name="preprocessor",
+    node=DEFENSE_PLUGIN_PREPROCESSOR,
+)
+safe_store(
+    group="search/defense/plugins",
+    name="postprocessor",
+    node=DEFENSE_PLUGIN_POSTPROCESSOR,
+)
+safe_store(
+    group="search/defense/plugins",
+    name="trainer",
+    node=DEFENSE_PLUGIN_TRAINER,
+)
+safe_store(
+    group="search/defense/plugins",
+    name="transformer",
+    node=DEFENSE_PLUGIN_TRANSFORMER,
+)
+safe_store(
+    group="search/defense/plugins",
+    name="regularizer",
+    node=DEFENSE_PLUGIN_REGULARIZER,
 )

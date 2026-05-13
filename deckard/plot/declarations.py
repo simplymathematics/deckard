@@ -1,6 +1,8 @@
 """Static plot configuration declarations and ConfigStore registrations."""
 
-from ..utils import safe_store
+from .base import PlotTypePlugin, safe_store
+from .seaborn_plots import _SeabornPlotterMixin
+from .yellowbrick_plots import _YellowbrickPlotterMixin
 
 PLOT_DEFAULT = {
     "backend": "yellowbrick",
@@ -50,6 +52,37 @@ PLOT_TYPES = [
     "validation_curve",
 ]
 
+# Plugin Declarations
+# Seaborn plotter plugin for matplotlib-based plotting
+SEABORN_PLOTTER_PLUGIN = PlotTypePlugin(
+    mixin_type="deckard.plot.seaborn_plots._SeabornPlotterMixin",
+    plot_backend="seaborn",
+    plot_family=None,
+    init_params={
+        "description": "Seaborn matplotlib backend for statistical plots",
+        "supported_types": ["scatter", "line", "hist", "cat", "bar", "heatmap"],
+    },
+)
+
+# Yellowbrick plotter plugin for ML model visualization
+YELLOWBRICK_PLOTTER_PLUGIN = PlotTypePlugin(
+    mixin_type="deckard.plot.yellowbrick_plots._YellowbrickPlotterMixin",
+    plot_backend="yellowbrick",
+    plot_family=None,
+    init_params={
+        "description": "Yellowbrick backend for ML model diagnostics and visualization",
+        "supported_types": [
+            "rank1d", "rank2d", "radviz", "pcoords", "jointplot", "pca", "manifold",
+            "class_balance", "balanced_binning_reference", "feature_correlation",
+            "prediction_error", "residuals_plot", "alpha_selection",
+            "roc_auc", "precision_recall_curve", "classification_report",
+            "class_prediction_error", "discrimination_threshold",
+            "k_elbow", "silhouette", "intercluster_distance",
+            "validation_curve", "learning_curve", "cv_scores",
+            "feature_importances", "rfecv", "dropping_curve",
+        ],
+    },
+)
 
 safe_store(group="plot", name="default", node=PLOT_DEFAULT)
 for _plot_name in PLOT_TYPES:
@@ -61,3 +94,24 @@ for _plot_name in PLOT_TYPES:
             "plot_type": _plot_name,
         },
     )
+
+# Register plotter plugins to plot group for discovery
+safe_store(
+    group="plot/plugins",
+    name="seaborn",
+    node={
+        "_target_": "deckard.plot.base.PlotTypePlugin",
+        "mixin_type": "deckard.plot.seaborn_plots._SeabornPlotterMixin",
+        "plot_backend": "seaborn",
+    },
+)
+
+safe_store(
+    group="plot/plugins",
+    name="yellowbrick",
+    node={
+        "_target_": "deckard.plot.base.PlotTypePlugin",
+        "mixin_type": "deckard.plot.yellowbrick_plots._YellowbrickPlotterMixin",
+        "plot_backend": "yellowbrick",
+    },
+)

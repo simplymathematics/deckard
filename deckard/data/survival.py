@@ -66,26 +66,44 @@ class _LifelinesValidationMixin:
 
 @dataclass(eq=False)
 class LifelinesDataConfig(_LifelinesValidationMixin, DataConfig):
-    """DataConfig specialization for survival analysis with explicit mode handling.
+    """DataConfig specialization for survival-analysis mode management.
 
-    Attributes
-    ----------
+    Initialization params
+    ---------------------
     mode : LifelinesDataMode
-        The survival data mode (NATIVE, AUXILIARY_MODEL, AUXILIARY_ATTACK, OPTUNA_DB).
+        Survival data mode selector. Allowed values are
+        ``LifelinesDataMode.NATIVE``, ``LifelinesDataMode.AUXILIARY_MODEL``,
+        ``LifelinesDataMode.AUXILIARY_ATTACK``, and
+        ``LifelinesDataMode.OPTUNA_DB``.
     duration_col : str
-        Column name for duration/time values. Required for NATIVE mode.
+        Duration/time column name required for ``NATIVE`` mode.
     event_col : str
-        Column name for event indicators. Required for NATIVE mode.
+        Event-indicator column name required for ``NATIVE`` mode.
     benign_metric : str
-        Metric to use for benign failures. Used in AUXILIARY_MODEL mode.
-    attack_config : Optional[dict]
-        Attack configuration. Used in AUXILIARY_ATTACK mode.
-    optuna_db : Optional[str]
-        Path to Optuna database. Used in OPTUNA_DB mode.
-    optuna_schema : Optional[Union[str, dict]]
-        Optional Optuna schema filter.
-    optuna_query : Optional[str]
-        Optional Optuna query to filter results.
+        Benign-model metric name required for ``AUXILIARY_MODEL`` mode.
+    attack_config : dict | None
+        Attack-configuration mapping required for ``AUXILIARY_ATTACK`` mode.
+    optuna_db : str | None
+        Optuna database path required for ``OPTUNA_DB`` mode.
+    optuna_schema : str | dict | None
+        Optional Optuna schema selector/filter used in ``OPTUNA_DB`` mode.
+    optuna_query : str | None
+        Optional Optuna query filter used in ``OPTUNA_DB`` mode.
+
+    Runtime params
+    --------------
+    __post_init__(self) -> None
+        Runs base ``DataConfig`` post-initialization, then validates that mode
+        requirements are satisfied.
+    from_data_and_model(cls, data_config: DataConfig, duration_col: str, event_col: str) -> LifelinesDataConfig
+        Constructs ``NATIVE`` mode config from a source ``DataConfig``.
+    from_auxiliary_model(cls, data_config: DataConfig, benign_metric: str) -> LifelinesDataConfig
+        Constructs ``AUXILIARY_MODEL`` mode config from a source ``DataConfig``.
+    from_auxiliary_attack(cls, data_config: DataConfig, attack_config: dict) -> LifelinesDataConfig
+        Constructs ``AUXILIARY_ATTACK`` mode config from a source
+        ``DataConfig`` and attack mapping.
+    from_optuna_db(cls, optuna_db: str, dataset_name: str, optuna_schema: str | dict | None, optuna_query: str | None) -> LifelinesDataConfig
+        Constructs ``OPTUNA_DB`` mode config from Optuna storage metadata.
     """
 
     mode: LifelinesDataMode = field(default=LifelinesDataMode.NATIVE)

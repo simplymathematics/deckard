@@ -2,7 +2,7 @@
 
 import time
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -11,11 +11,10 @@ from art.config import ART_NUMPY_DTYPE
 from omegaconf import ListConfig, OmegaConf
 from numpy.exceptions import AxisError
 
-from .base import AttackConfig, _AttackMixin, _sensitive_slice
+from .base import AttackConfig, AttackTypePlugin, _AttackMixin, _sensitive_slice
 from ..utils import safe_store
 
-if TYPE_CHECKING:
-    pass
+
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +63,7 @@ class _InferenceAttackMixin(_AttackMixin):
         art_model,
         attack,
         targeted_attribute,
-    ):
+    ) -> dict:
         assert hasattr(data, "X_train") and hasattr(
             data,
             "y_train",
@@ -95,7 +94,17 @@ class _InferenceAttackMixin(_AttackMixin):
                     raise ValueError(
                         f"Targeted attribute '{attr}' not found in test data columns.",
                     )
-        X_test = data.X_test.copy()
+        active_mode = self.resolve_mode_for_attack_kind("attribute")
+        if active_mode == "val":
+            X_source = getattr(data, "X_val", None)
+            if X_source is None:
+                X_source = data.X_test
+        elif active_mode == "train":
+            X_source = data.X_train
+        else:
+            X_source = data.X_test
+
+        X_test = X_source.copy()
         target = X_test[targeted_attribute].copy()
         X_test_subset = X_test.iloc[: self.attack_size, :].copy().values
         target = target[: self.attack_size].values
@@ -163,13 +172,15 @@ class _InferenceAttackMixin(_AttackMixin):
             attack_generation_time=self.attack_time,
             sensitive_features=sensitive_attribute,
         )
+        self.score_y_pred = inferred
+        self.score_y_proba = None
         self.score_dict = {**self.score_dict, **score_dict}
         self.attack = inferred
         self.attack_predictions = inferred
         self.attacked_labels = target
         return self.score_dict
 
-    def _infer_membership(self, data, attack):
+    def _infer_membership(self, data, attack) -> dict:
         start_time = time.process_time()
         y_train_raw = self._prepare_labels_for_attack(getattr(data, "y_train"))
         y_train_values = self._to_numpy_array(y_train_raw)
@@ -257,11 +268,13 @@ class _InferenceAttackMixin(_AttackMixin):
             y_pred=inferred,
             sensitive_features=sensitive_membership,
         )
+        self.score_y_pred = inferred
+        self.score_y_proba = None
         self.score_dict = {**self.score_dict, **score_dict}
         self.attack = inferred
         return self.score_dict
 
-    def _infer_model_inversion(self, data, attack):
+    def _infer_model_inversion(self, data, attack) -> dict:
         split = str(self.attack_params.get("split", "test")).lower()
         if split not in {"train", "test"}:
             raise ValueError(
@@ -376,7 +389,7 @@ class _InferenceAttackMixin(_AttackMixin):
         }
         return self.score_dict
 
-    def _infer_database_reconstruction(self, data, attack):
+    def _infer_database_reconstruction(self, data, attack) -> dict:
         split = str(self.attack_params.get("split", "train")).lower()
         if split not in {"train", "test"}:
             raise ValueError(
@@ -489,15 +502,46 @@ class _InferenceAttackMixin(_AttackMixin):
 
 @dataclass(eq=False)
 class InferenceAttackConfig(_InferenceAttackMixin, AttackConfig):
-    """
-    Configuration for privacy inference attacks.
-    
-    Inference attacks attempt to extract sensitive information about the
-    model's training data or behavior. Includes membership inference,
-    attribute inference, and model inversion attacks.
+    """Configuration for privacy inference attacks.
+
+    Initialization params
+    ---------------------
+    attack_type : str
+        Attack family path inherited from ``AttackConfig``. Expected family is
+        ``inference``.
+    attack_params : dict[str, Any]
+        Constructor kwargs and runtime controls for membership, attribute,
+        model-inversion, and related inference subtypes.
+    init_params : dict[str, Any]
+        Metadata-only declaration payload for class/type/library docs.
+    plugins : list[AttackTypePlugin]
+        Declarative runtime plugin specs. Default contains one
+        ``AttackTypePlugin`` configured with:
+        ``mixin_type: type = _InferenceAttackMixin``,
+        ``attack_type: str = 'inference'``, and
+        ``excluded_subtypes: tuple[str, ...] = ('reconstruction',)``.
+
+    Runtime params
+    --------------
+    _InferenceAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> dict
+        Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
+    _InferenceAttackMixin._infer_membership(self, data: Any, attack: Any) -> dict
+        Membership-inference runtime handler.
+    _InferenceAttackMixin._infer_attribute(self, data: Any, art_model: Any, attack: Any, targeted_attribute: str | int) -> dict
+        Attribute-inference runtime handler.
+    _InferenceAttackMixin._infer_model_inversion(self, data: Any, attack: Any) -> dict
+        Model-inversion runtime handler.
     """
 
-    pass
+    plugins: list = field(
+        default_factory=lambda: [
+            AttackTypePlugin(
+                mixin_type=_InferenceAttackMixin,
+                attack_type="inference",
+                excluded_subtypes=("reconstruction",),
+            )
+        ]
+    )
 
 
 # Register inference attack config

@@ -106,77 +106,65 @@ def _is_art_model_instance(model_obj: Any) -> bool:
 
 @dataclass(eq=False)
 class ModelConfig(ConfigBase):
-    """
-    A configuration and utility class for managing scikit-learn model instantiation, training, prediction, scoring, and persistence.
+    """Runtime model configuration with plugin-aware training/evaluation orchestration.
 
-    Attributes:
-    -----------
+    Model behavior is resolved from ``model_type`` and runtime context. This
+    class owns model instantiation, training/load flow, prediction, scoring,
+    persistence, and optional defense-pipeline integration.
 
-    model_type : str
-        The fully qualified class name of the scikit-learn model to instantiate (e.g., "sklearn.svm.SVC").
-    classifier : bool
-        Indicates whether the model is a classifier (True) or a regressor (False).
-    model_params : dict or None
-        Dictionary of parameters to initialize the model with. If None, default parameters are used.
-    defense : dict or None
-        Optional defense configuration applied after base model training.
-    _model : object or None
-        The instantiated scikit-learn model object.
-    probability : bool
-        If True, enables probability prediction (requires model support).
-    training_time : float or None
-        Time taken to train the model (in seconds).
-    prediction_time : float or None
-        Time taken to make predictions (in seconds).
-    training_prediction_time : float or None
-        Time taken to make predictions during training (in seconds).
-    training_score_time : float or None
-        Time taken to compute training scoring metrics (in seconds).
-    prediction_score_time : float or None
-        Time taken to compute prediction scoring metrics (in seconds).
-    defense_application_time : float or None
-        Time taken to apply the configured defense (in seconds).
-    alias : str or None
-        An optional alias for the model configuration.
-    score_dict : dict or None
-        Dictionary containing the latest computed scores and timing information.
-    training_n : int or None
-        Number of training samples.
-    prediction_n : int or None
-        Number of prediction samples.
-    training_predictions : pd.Series, pd.DataFrame, np.ndarray, list, or None
-        Predictions made on the training data.
-    predictions : pd.Series, pd.DataFrame, np.ndarray, list, or None
-        Predictions made on the prediction data.
-    _target_ : str
-        Internal identifier for the class.
+    Plugin hooks
+    ------------
+    before_load_score(self, *, data, score_file)
+        Runs before reading persisted score/timing artifacts.
+    after_load_score(self, *, data, score_file, times)
+        Runs after reading persisted score/timing artifacts.
+    before_load_predictions(self, *, data, train_predictions_file, test_predictions_file)
+        Runs before loading persisted predictions/probabilities.
+    after_load_predictions(self, *, data, train_predictions_file, test_predictions_file, times)
+        Runs after loading persisted predictions/probabilities.
+    before_train_or_load_model(self, *, data, model_file, times)
+        Runs before model load-or-train resolution.
+    after_train_or_load_model(self, *, data, model_file, times)
+        Runs after model load-or-train resolution.
+    before_evaluate(self, *, data, times)
+        Runs before evaluation/scoring.
+    after_evaluate(self, *, data, times)
+        Runs after evaluation/scoring. Dict returns are merged into
+        ``score_dict``.
+    before_persist(self, *, data, times, model_file, test_predictions_file, train_predictions_file, training_probabilities_file, test_probabilities_file, score_file)
+        Runs before persistence of model artifacts and score outputs.
+    after_persist(self, *, data, times, model_file, test_predictions_file, train_predictions_file, training_probabilities_file, test_probabilities_file, score_file)
+        Runs after persistence. Dict returns are merged into ``score_dict``.
 
-    Methods
-    -------
-    __post_init__(): Initializes the model based on the provided type and parameters.
-    __hash__(): Computes a hash value for the instance based on its attributes.
-    _train(X, y): Trains the model using the provided feature matrix and target vector.
-    _predict(X): Generates predictions for the input data.
-    _predict_proba(X): Predicts class probabilities for the input data (if supported).
-    _score(y_true, y_pred, train): Computes and logs performance scores.
-    __call__(X, y, train, score, filepath): Executes the model workflow including training, prediction, scoring, and model persistence.
+    Parameter layers
+    ----------------
+    model_params : dict
+        Model-constructor kwargs passed to the resolved estimator/class.
+    defense : Any
+        Optional defense pipeline/config applied after model training or load.
+    plugins : list
+        Plugin specs resolved at runtime and invoked through hook names.
 
-    Raises:
-    -------
-    AssertionError:
-        If the specified model type is not supported.
-    ValueError:
-        If the model is not initialized, not trained, or if prediction is attempted without a trained model.
-    NotImplementedError:
-        If model saving/loading is attempted for unsupported model types.
+    Family-specific parameter semantics
+    ----------------------------------
+    sklearn estimators
+        ``model_params`` are forwarded directly to estimator constructors.
+    wrapped or custom model classes
+        ``model_params`` may be split between wrapper setup and underlying
+        model kwargs.
+    defense-enabled runs
+        ``defense`` controls post-training estimator wrapping/application.
 
-    Examples
-    -------
-    data_config = DataConfig()
-    data = data_config()
-    model_config = ModelConfig(model_type="sklearn.ensemble.RandomForestClassifier", classifier=True, model_params={"n_estimators": 100})
-    train_scores = model_config(data, train=True, score=True)
-    test_scores = model_config(data, train=False, score=True)
+    Plugin hook runtime params
+    --------------------------
+    Hooks are orchestrated by ``_run_plugin_hook(hook_name, **kwargs)``.
+    Core hook names used by ModelConfig runtime are:
+    ``before_load_score``, ``after_load_score``, ``before_load_predictions``,
+    ``after_load_predictions``, ``before_train_or_load_model``,
+    ``after_train_or_load_model``, ``before_evaluate``, ``after_evaluate``,
+    ``before_persist``, and ``after_persist``.
+    Hook kwargs are phase-specific runtime objects supplied by model
+    orchestration.
     """
 
     # Configuration fields
@@ -589,6 +577,7 @@ class ModelConfig(ConfigBase):
         self,
         y_true: pd.Series,
         y_pred: pd.Series,
+        *args,
         mode: str = "test",
         **kwargs,
     ) -> dict:
@@ -619,6 +608,7 @@ class ModelConfig(ConfigBase):
             )
         y_proba = kwargs.pop("y_proba", None)
         scores = self.scorer(
+            *args,
             y_true=y_true,
             y_pred=y_pred,
             y_proba=y_proba,

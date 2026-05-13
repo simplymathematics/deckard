@@ -58,9 +58,7 @@ class _SensitiveBehaviorMixin:
         if mode in {"test", "attack"}:
             return "test"
         if mode in {"val", "attack-val"}:
-            raise NotImplementedError(
-                "Validation fairness scoring is not implemented yet",
-            )
+            return "val"
         if mode == "all":
             return "all"
         raise ValueError(f"Unsupported fairness scoring mode: {mode}")

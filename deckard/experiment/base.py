@@ -36,6 +36,7 @@ from ..utils import (
     instantiate_config,
     is_default_config_value,
     is_null_config_value,
+    load_class,
     merge_scores_with_collision_suffix,
     split_comma_separated_tokens,
 )
@@ -241,7 +242,17 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
     An experiment coordinates data loading, optional defense application, model
     training or loading, adversarial attack execution, scoring, and artifact
-    persistence through ``FileConfig``.
+        persistence through ``FileConfig``.
+
+        Mode policy
+        -----------
+        ``evaluation_mode`` and ``score_mode`` are mutually exclusive to prevent
+        ambiguous routing. Use exactly one strategy:
+
+        - ``evaluation_mode``: high-level preset routing (``standard`` (train + test), ``tuning`` (test),
+            ``report`` (train + test + val)).
+        - ``score_mode``: explicit split routing (``train``, ``test``, ``val``,
+            ``pre-sample``), optionally a list for multi-pass experiment scoring.
     """
 
     data: Union[DataConfig, DataPipelineConfig]
@@ -257,8 +268,17 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
     device: Any = None
     classifier: Union[str, bool] = True
     evaluation_mode: Literal["standard", "tuning", "report"] = "standard"
-    score_mode: Union[Literal["train", "test", "val", "pre-sample"], None] = None
-    score_modes: Union[list[str], None] = None
+    score_mode: Union[Literal["train", "test", "val", "pre-sample"], list[Literal["train", "test", "val", "pre-sample"]], None] = None
+
+    def _validate_mode_configuration(self) -> None:
+        """Ensure exactly one experiment mode-routing strategy is active."""
+        # ``standard`` acts as the neutral preset, so it can coexist with
+        # explicit ``score_mode`` without ambiguity.
+        if self.score_mode is not None and self.evaluation_mode != "standard":
+            raise ValueError(
+                "evaluation_mode and score_mode are mutually exclusive. "
+                "Set score_mode with evaluation_mode='standard', or unset score_mode.",
+            )
 
     @staticmethod
     def _canonical_device(device_value: Any) -> Union[str, None]:
@@ -276,16 +296,20 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         pass
 
     def _resolve_score_modes(self) -> list[str]:
-        if self.score_modes is not None:
-            raw_modes = list(self.score_modes)
-        elif self.score_mode is not None:
-            raw_modes = [self.score_mode]
+        """Resolve concrete score modes from explicit score_mode or evaluation preset."""
+        if self.score_mode is not None:
+            if isinstance(self.score_mode, list):
+                raw_modes = list(self.score_mode)
+            else:
+                raw_modes = [self.score_mode]
+        elif self.evaluation_mode == "standard":
+            raw_modes = ["train", "test"]
         elif self.evaluation_mode == "tuning":
             raw_modes = ["test"]
         elif self.evaluation_mode == "report":
-            raw_modes = ["val"]
+            raw_modes = ["train", "test", "val"]
         else:
-            raw_modes = ["test"]
+            raise NotImplementedError(f"Evaluation mode: {self.evaluation_mode} not implemented")
 
         allowed = {"pre-sample", "train", "test", "val"}
         modes = []
@@ -420,7 +444,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             if (
                 attack_cfg is not None
                 and hasattr(attack_cfg, "set_mode")
-                and active_mode in {"test", "val"}
+                and active_mode in {"train", "test", "val"}
             ):
                 attack_cfg.set_mode(active_mode)
         return active_mode
@@ -590,6 +614,113 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         elif scope == "experiment":
             self.score = scorer
 
+    def _default_scorer_factory_for_scope(self, scope: str):
+        if scope == "data":
+            return lambda: load_class(
+                (
+                    "deckard.score.data.DefaultDataClassificationConfig"
+                    if bool(getattr(self.data, "classifier", True))
+                    else "deckard.score.data.DefaultDataRegressionConfig"
+                ),
+            )
+        if scope == "model":
+            return lambda: load_class(
+                (
+                    "deckard.score.base.DefaultClassifierConfig"
+                    if bool(getattr(self.model, "classifier", True))
+                    else "deckard.score.base.DefaultRegressorConfig"
+                ),
+            )
+        return None
+
+    def _merge_scope_scorers(self, scope: str, incoming_scorers: list):
+        if scope not in {"data", "model"}:
+            raise ValueError(f"Unsupported scope for scorer merge: {scope}")
+
+        current = getattr(self.data if scope == "data" else self.model, "scorer", None)
+        default_factory = self._default_scorer_factory_for_scope(scope)
+        current = coerce_scorer_config(current, default_factory=default_factory)
+
+        chain = []
+        if current is not None:
+            chain.append(current)
+        chain.extend([sc for sc in incoming_scorers if sc is not None])
+
+        if not chain:
+            return None
+
+        fairness_base = None
+        for candidate in chain:
+            if hasattr(candidate, "group_scorers"):
+                fairness_base = candidate
+
+        merged = ScorerDictConfig.merge(chain)
+        if fairness_base is None:
+            return merged
+
+        from ..score.fairness import FairlearnScoreDictConfig
+
+        return FairlearnScoreDictConfig(
+            scorers=merged.scorers,
+            group_scorers=dict(getattr(fairness_base, "group_scorers", {}) or {}),
+            group_reduction=getattr(
+                fairness_base,
+                "group_reduction",
+                "difference",
+            ),
+            group_reduction_method=getattr(
+                fairness_base,
+                "group_reduction_method",
+                "between_groups",
+            ),
+            include_group_overall=bool(
+                getattr(fairness_base, "include_group_overall", False),
+            ),
+            include_group_by_group=bool(
+                getattr(fairness_base, "include_group_by_group", True),
+            ),
+        )
+
+    @staticmethod
+    def _is_anjana_scorer_spec(spec: Any) -> bool:
+        if isinstance(spec, dict):
+            score_fn = spec.get("score_function")
+        else:
+            score_fn = getattr(spec, "score_function", None)
+        return isinstance(score_fn, str) and "deckard.score.anjana." in score_fn
+
+    def _split_merged_score_profiles(self, plain: dict) -> tuple[dict | None, dict | None]:
+        scorers = plain.get("scorers")
+        if not isinstance(scorers, dict):
+            return None, plain
+
+        data_scorers = {
+            key: value
+            for key, value in scorers.items()
+            if self._is_anjana_scorer_spec(value)
+        }
+        if not data_scorers:
+            return None, plain
+
+        remaining_scorers = {
+            key: value
+            for key, value in scorers.items()
+            if key not in data_scorers
+        }
+
+        data_cfg = {
+            "_target_": "deckard.score.anjana.DefaultAnjanaScorerConfig",
+            "scorers": data_scorers,
+        }
+
+        model_cfg = dict(plain)
+        if remaining_scorers:
+            model_cfg["scorers"] = remaining_scorers
+        else:
+            model_cfg.pop("scorers", None)
+
+        return data_cfg, model_cfg
+
     def _initialize_component_scorers(self) -> None:
         """Route the experiment-level ``score`` config to data/model/attack components.
 
@@ -636,6 +767,22 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 self.score = None
                 return
 
+            split_data_cfg, split_model_cfg = self._split_merged_score_profiles(plain)
+            if split_data_cfg is not None:
+                data_scorer = coerce_scorer_config(split_data_cfg)
+                if data_scorer is not None:
+                    self.data.scorer = self._merge_scope_scorers("data", [data_scorer])
+
+                model_scorer = coerce_scorer_config(split_model_cfg)
+                if model_scorer is not None and self.model is not None:
+                    self.model.scorer = self._merge_scope_scorers(
+                        "model",
+                        [model_scorer],
+                    )
+
+                self.score = None
+                return
+
             # Scoped dict: keys are component names produced by Hydra @ package syntax
             # or by passing {"data": scorer, "model": scorer, ...} directly.
             _SCOPE_KEYS = {"data", "model", "attack", "detector", "experiment"}
@@ -674,17 +821,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 model_scorers.append(scorer)
 
         if data_scorers:
-            self.data.scorer = (
-                ScorerDictConfig.merge(data_scorers)
-                if len(data_scorers) > 1
-                else data_scorers[0]
-            )
+            self.data.scorer = self._merge_scope_scorers("data", data_scorers)
         if model_scorers and self.model is not None:
-            self.model.scorer = (
-                ScorerDictConfig.merge(model_scorers)
-                if len(model_scorers) > 1
-                else model_scorers[0]
-            )
+            self.model.scorer = self._merge_scope_scorers("model", model_scorers)
 
         # Score chain fully routed; no experiment-level scorer needed.
         self.score = None
@@ -1028,6 +1167,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         # Set random seed
         self.set_random_seed()
         self._initialize_data_and_classifier()
+        self._validate_mode_configuration()
         self._initialize_defense()
         self._coerce_model()
         self._specialize_model_for_data()

@@ -1,27 +1,25 @@
 import inspect
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, Literal, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
 from omegaconf import DictConfig
 
-from .base import DataPipelineConfig
+from .base import DataHookPlugin, DataPipelineConfig
 from .fairness import _SensitiveBehaviorMixin
 from ..utils import (
     is_default_config_value,
     load_class,
     safe_store,
     resolve_class,
-    normalize_plugin_specs,
     normalize_optional_list_value as _normalize_optional_list_value,
     normalize_optional_mapping_or_steps as _normalize_optional_mapping_or_steps,
 )
 
-
-@dataclass
-class AnjanaDefensePlugin:
-    """Hookable ANJANA anonymization stub used by data configs."""
+@dataclass(eq=False)
+class _PrivacyBehaviorMixin:
+    """Reusable privacy behavior mixed into data pipeline configs."""
 
     anjana_defense: Union[None, bool, Dict[str, Any], list] = None
     identifiers: Optional[Union[str, list]] = None
@@ -30,26 +28,6 @@ class AnjanaDefensePlugin:
     hierarchies: Optional[Dict[str, Dict[int, Any]]] = None
     hierarchy_interval_sizes: Optional[Dict[str, Union[int, list]]] = None
     hierarchy_fill_value: str = "*"
-
-    def after_load_data(self, data, **kwargs):
-        _ = kwargs
-        data._apply_anjana_defense()
-
-
-class _PrivacyBehaviorMixin:
-    """Reusable privacy behavior mixed into data pipeline configs."""
-
-    # Declared for static analyzers; concrete dataclass provides these fields.
-    anjana_defense: Union[None, bool, Dict[str, Any], list]
-    identifiers: Optional[Union[str, list]]
-    quasi_identifiers: Optional[Union[str, list]]
-    sensitive_attribute: Optional[str]
-    sensitive_columns: Optional[Union[str, list]]
-    hierarchies: Optional[Dict[str, Dict[int, Any]]]
-    hierarchy_interval_sizes: Optional[Dict[str, Union[int, list]]]
-    hierarchy_fill_value: str
-    target: Optional[str]
-    plugins: list
 
     @staticmethod
     def _normalize_optional_list(
@@ -76,34 +54,15 @@ class _PrivacyBehaviorMixin:
             self.anjana_defense,
             field_name="anjana_defense",
         )
+        self.fairness_defense = self._normalize_optional_mapping_or_steps(
+            self.fairness_defense,
+            field_name="fairness_defense",
+        )
         self.identifiers = self._normalize_optional_list(self.identifiers)
         self.quasi_identifiers = self._normalize_optional_list(self.quasi_identifiers)
         self.sensitive_columns = self._normalize_optional_list(self.sensitive_columns)
         if isinstance(self.hierarchy_interval_sizes, DictConfig):
             self.hierarchy_interval_sizes = dict(self.hierarchy_interval_sizes)
-        self.plugins = normalize_plugin_specs(self.plugins)
-        if any(
-            value is not None
-            for value in (
-                self.anjana_defense,
-                self.sensitive_columns,
-            )
-        ):
-            self.plugins = cast(
-                list,
-                [
-                    AnjanaDefensePlugin(
-                        anjana_defense=self.anjana_defense,
-                        identifiers=self.identifiers,
-                        quasi_identifiers=self.quasi_identifiers,
-                        sensitive_attribute=self.sensitive_attribute,
-                        hierarchies=self.hierarchies,
-                        hierarchy_interval_sizes=self.hierarchy_interval_sizes,
-                        hierarchy_fill_value=self.hierarchy_fill_value,
-                    ),
-                    *self.plugins,
-                ],
-            )
 
     @staticmethod
     def _format_interval_label(lower, upper) -> str:
@@ -295,24 +254,66 @@ class _PrivacyBehaviorMixin:
 
 @dataclass(eq=False)
 class AnjanaDataConfig(_PrivacyBehaviorMixin, _SensitiveBehaviorMixin, DataPipelineConfig):
-    """Data pipeline config with ANJANA anonymization support."""
+    """Data pipeline config with ANJANA anonymization support.
 
-    identifiers: Optional[Union[str, list]] = None
-    quasi_identifiers: Optional[Union[str, list]] = None
-    sensitive_attribute: Optional[str] = None
-    anjana_defense: Union[None, bool, Dict[str, Any], list] = None
-    sensitive_columns: Optional[Union[str, list]] = None
-    fairness_defense: Union[None, bool, Dict[str, Any], list] = None
-    hierarchies: Optional[Dict[str, Dict[int, Any]]] = None
-    hierarchy_interval_sizes: Optional[Dict[str, Union[int, list]]] = None
-    hierarchy_fill_value: str = "*"
+    Initialization params
+    ---------------------
+    identifiers : str | list[str] | None
+        Explicit identifier columns used by anonymization.
+    quasi_identifiers : str | list[str] | None
+        Quasi-identifier columns used for hierarchy-based generalization.
+    sensitive_attribute : str | None
+        Logical sensitive-attribute name used by ANJANA helpers.
+    anjana_defense : dict[str, Any] | list[dict[str, Any]] | bool | None
+        ANJANA defense step specification consumed by
+        ``_apply_anjana_defense``.
+    sensitive_columns : str | list[str] | None
+        Sensitive feature column name(s) used for fairness-aware scoring.
+    fairness_defense : dict[str, Any] | list[dict[str, Any]] | bool | None
+        Optional fairness preprocessing specification.
+    hierarchies : dict[str, dict[int, Any]] | None
+        Optional precomputed generalization hierarchies.
+    hierarchy_interval_sizes : dict[str, int | list[int]] | None
+        Interval-size controls used when synthesizing hierarchies.
+    hierarchy_fill_value : str
+        Fill token used for generalized values.
+    plugins : list[DataHookPlugin]
+        Declarative runtime plugin specs. Default contains one
+        ``DataHookPlugin`` configured with:
+        ``hook_name: str = 'after_load_data'``,
+        ``method_name: str = '_apply_anjana_defense'``, and
+        ``init_params: dict[str, Any]`` metadata.
+
+    Runtime params
+    --------------
+    __call__(self, *args: Any, **kwargs: Any) -> Any
+        Ensures scorer defaults are resolved, then delegates to
+        ``DataPipelineConfig.__call__``.
+    _score(self, mode: Literal['train', 'test', 'val', 'pre-sample'] | None = None, **kwargs: Any) -> dict
+        Delegates score computation to the active scorer with mode-aware
+        behavior.
+    """
+
+    plugins: list = field(
+        default_factory=lambda: [
+            DataHookPlugin(
+                hook_name="after_load_data",
+                method_name="_apply_anjana_defense",
+                init_params={
+                    "library": "anjana",
+                    "type": "data",
+                    "class": "anonymization",
+                },
+            )
+        ]
+    )
 
     def __post_init__(self):
         # Support test patterns that call __post_init__ directly on bare instances.
         self._before_post_init()
         if is_default_config_value(self.scorer, include_best=False):
             self.scorer = load_class(
-                "deckard.score.anjana.DefaultAnjanaDataScoreConfig",
+                "deckard.score.anjana.DefaultAnjanaDataScorerConfig",
             )
         super().__post_init__()
         self._validate_init()
@@ -323,28 +324,22 @@ class AnjanaDataConfig(_PrivacyBehaviorMixin, _SensitiveBehaviorMixin, DataPipel
             or self.scorer is None
         ):
             self.scorer = load_class(
-                "deckard.score.anjana.DefaultAnjanaDataScoreConfig",
+                "deckard.score.anjana.DefaultAnjanaDataScorerConfig",
             )
         return DataPipelineConfig.__call__(self, *args, **kwargs)
 
-    def _load_data(self):
-        return super()._load_data()
-
-    def _init_pipeline(self):
-        return super()._init_pipeline()
-
     def _score(
         self,
+        *args,
         mode: Optional[Literal["train", "test", "val", "pre-sample"]] = None,
         **kwargs,
     ) -> dict:
         if is_default_config_value(self.scorer, include_best=False):
             self.scorer = load_class(
-                "deckard.score.anjana.DefaultAnjanaDataScoreConfig",
+                "deckard.score.anjana.DefaultAnjanaDataScorerConfig",
             )
-        if mode is None:
-            return super()._score(**kwargs)
-        return super()._score(mode=mode, **kwargs)
+            return super()._score(*args, **kwargs)
+        return super()._score(*args, mode=mode, **kwargs)
 
 
 ANJANA_DATA = {
@@ -362,6 +357,10 @@ ANJANA_DATA = {
     "classifier": True,
     "alias": "anjana",
     "sample": "split",
+    "anjana_defense": {
+        "name": "anjana.anonymity.k_anonymity",
+        "k": 2,
+    },
     "quasi_identifiers": ["feature_0", "feature_1"],
     "sensitive_attribute": "target",
     "sensitive_columns": ["feature_0"],
@@ -379,6 +378,10 @@ ANJANA_DIABETES = {
     "classifier": False,
     "alias": "anjana-diabetes",
     "sample": "split",
+    "anjana_defense": {
+        "name": "anjana.anonymity.k_anonymity",
+        "k": 2,
+    },
     "quasi_identifiers": ["age", "sex"],
     "sensitive_attribute": "sex",
     "sensitive_columns": ["sex"],
@@ -399,6 +402,10 @@ ANJANA_ADULT = {
     "classifier": True,
     "alias": "anjana-adult",
     "sample": "split",
+    "anjana_defense": {
+        "name": "anjana.anonymity.k_anonymity",
+        "k": 2,
+    },
     "quasi_identifiers": ["age", "education-num"],
     "sensitive_attribute": "race",
     "sensitive_columns": ["race", "sex"],

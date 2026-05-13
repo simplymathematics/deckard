@@ -96,7 +96,34 @@ supported_defense_types = [
 
 
 class _DefensePipelineConfigBehaviorMixin:
-    """Reusable defense pipeline configuration behavior mixed into pipeline configs."""
+    """Reusable defense pipeline configuration behavior mixed into pipeline configs.
+
+    Plugin hooks
+    ------------
+    resolve_defense_stage(self, *, default_stage, current_stage, **context)
+        Override stage selection for pipeline application.
+    before_apply_defense(self, *, estimator, data, stage, defense_chain)
+        Runs once before the defense chain executes.
+    before_apply_defense_step(self, *, estimator, data, stage, defense, applied_defenses)
+        Runs before each defense step in the chain.
+    after_apply_defense_step(self, *, estimator, data, stage, defense, applied_defenses, step_defense_time)
+        Runs after each defense step; dict returns are merged into score_dict.
+    after_apply_defense(self, *, estimator, data, stage, defense_chain, applied_defenses, applied_defense_types, defense_application_time)
+        Runs once after the defense chain executes; dict returns are merged into score_dict.
+
+    Additional DefenseConfig runtime hooks
+    --------------------------------------
+    resolve_defense_mixins(self, *, defense_type, defense_subtype, default_mixins)
+        Return one mixin type, or a list/tuple of mixin types, to extend runtime
+        handler resolution.
+    resolve_defense_handler(self, *, defense_type, defense_subtype, default_handler, default_mixins)
+        Return a callable handler (or handler type) to override default runtime
+        handler resolution.
+    before_defense_dispatch(self, *, data, defense_type, defense_subtype, art_class, init_params, base_estimator, existing_preprocessors, existing_postprocessors, handler)
+        Runs immediately before runtime defense handler execution.
+    after_defense_dispatch(self, *, data, defense_type, defense_subtype, defense, defended_estimator, defense_application_time)
+        Runs immediately after runtime defense handler execution.
+    """
 
     # Declared for static analyzers; concrete dataclass provides these fields.
     defenses: list
@@ -139,24 +166,24 @@ class _DefensePipelineConfigBehaviorMixin:
         # Keep concrete defense objects intact; converting them to dict can
         # capture runtime-only attrs that are not valid constructor kwargs.
         if hasattr(defense_config, "apply_to"):
-            return cls(defenses=[defense_config])
+            return DefensePipelineConfig(defenses=[defense_config])
 
         # Coerce config first (may return a list after converting DictConfig/YAML)
         defense_config = coerce_config(defense_config)
 
         # Handle lists (either provided directly or returned from coerce_config)
         if isinstance(defense_config, (list, ListConfig)):
-            return cls(defenses=coerce_to_list(defense_config))
+            return DefensePipelineConfig(defenses=coerce_to_list(defense_config))
 
         if isinstance(defense_config, dict):
             defense_dict = cast(dict[str, Any], dict(defense_config))
             if cls._is_pipeline_target(defense_dict.get("_target_")):
                 defense_dict.pop("_target_", None)
-                return cls(**defense_dict)
+                return DefensePipelineConfig(**defense_dict)
             if "defenses" in defense_dict:
-                return cls(**defense_dict)
+                return DefensePipelineConfig(**defense_dict)
             if cls._looks_like_single_defense_spec(defense_dict):
-                return cls(defenses=[defense_dict])
+                return DefensePipelineConfig(defenses=[defense_dict])
 
         raise TypeError(
             "Defense config must be a DefensePipelineConfig, a single defense spec, or None",
@@ -179,7 +206,8 @@ class _DefensePipelineConfigBehaviorMixin:
             ]
         return self._plugin_objects
 
-    def _run_plugin_hook(self, hook_name: str, **kwargs):
+    def _run_plugin_hook(self, hook_name: str, **kwargs) -> list[Any]:
+        """Execute one plugin hook across all instantiated plugins."""
         hook_outputs = []
         for plugin in self._get_plugins():
             hook = getattr(plugin, hook_name, None)
@@ -289,6 +317,7 @@ class _DefensePipelineConfigBehaviorMixin:
         **context: Any,
     ) -> str:
         stage = default_stage
+        #TODO: make this context aware since art defenses have _apply_fit and _apply_predict
         hook_outputs = self._run_plugin_hook(
             "resolve_defense_stage",
             default_stage=default_stage,
@@ -502,13 +531,17 @@ def _is_torch_model_instance(model_obj) -> bool:
     return isinstance(model_obj, torch.nn.Module)
 
 
+@dataclass(eq=True)
 class _DefenseMixin:
-    """Base callable defense handler used by runtime defense context resolution."""
+    """Base callable defense handler used by runtime defense context resolution.
 
-    runtime: Any
+    Parameters
+    ----------
+    runtime : Any
+        Runtime defense config object owned by defense orchestration.
+    """
 
-    def __init__(self, runtime: Any) -> None:
-        object.__setattr__(self, "runtime", runtime)
+    runtime: Any = None
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self.runtime, name)
@@ -517,7 +550,11 @@ class _DefenseMixin:
         if name == "runtime":
             object.__setattr__(self, name, value)
             return
-        setattr(self.runtime, name, value)
+        runtime = object.__getattribute__(self, "runtime")
+        if runtime is None:
+            object.__setattr__(self, name, value)
+            return
+        setattr(runtime, name, value)
 
     def __call__(
         self,
@@ -532,6 +569,32 @@ class _DefenseMixin:
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[Any, Any]:
+        """Execute one defense handler.
+
+        Parameters
+        ----------
+        data : Any
+            Data runtime containing train/test/val splits.
+        defense_type : str | None
+            Parsed defense family.
+        defense_subtype : str | None
+            Parsed defense subtype.
+        defense_class : Any
+            Concrete defense class resolved from ``defense_name``.
+        art_class : Any
+            ART estimator wrapper class selected for model type.
+        init_params : dict
+            Runtime ART estimator initialization kwargs resolved by
+            ``DefenseConfig.get_art_class``. Handlers should treat this as
+            library/class-specific defaults and merge with ``defense_params``
+            when constructing wrapped estimators.
+        base_estimator : Any
+            Unwrapped model estimator used as defense target.
+        existing_preprocessors : list
+            Existing preprocessor defenses already attached to wrapper.
+        existing_postprocessors : list
+            Existing postprocessor defenses already attached to wrapper.
+        """
         raise NotImplementedError("Defense handlers must implement __call__")
 
 
@@ -561,6 +624,105 @@ class _PassthroughDefenseMixin(_DefenseMixin):
         return None, defended_estimator
 
 
+@dataclass(eq=False)
+class DefenseTypePlugin:
+    """Generic defense plugin that binds one mixin to one defense family/subtype.
+
+    Initialization fields
+    ---------------------
+    mixin_type : Any
+        Mixin class (or import path) implementing runtime ``__call__``.
+    defense_type : str | None
+        Defense family this plugin matches.
+    defense_subtype : str | None
+        Optional subtype constraint.
+    excluded_subtypes : tuple[str, ...]
+        Subtypes explicitly excluded from this plugin match.
+    init_params : dict[str, Any]
+        Metadata-only declaration payload for class/type/library docs.
+    """
+
+    mixin_type: Any
+    defense_type: Union[str, None]
+    defense_subtype: Union[str, None] = None
+    excluded_subtypes: tuple[str, ...] = field(default_factory=tuple)
+    init_params: dict[str, Any] = field(default_factory=dict)
+
+    def _resolve_mixin_type(self) -> type:
+        if isinstance(self.mixin_type, str):
+            resolved = resolve_class(self.mixin_type)
+            self.mixin_type = resolved
+            return resolved
+        return self.mixin_type
+
+    def _matches(
+        self,
+        *,
+        defense_type: Union[str, None],
+        defense_subtype: Union[str, None],
+    ) -> bool:
+        if (defense_type or "").lower() != (self.defense_type or "").lower():
+            return False
+        subtype = (defense_subtype or "").lower()
+        if self.defense_subtype is not None and subtype != self.defense_subtype.lower():
+            return False
+        if subtype in {item.lower() for item in self.excluded_subtypes}:
+            return False
+        return True
+
+    def resolve_defense_mixins(
+        self,
+        runtime: "DefensePipelineConfig",
+        *,
+        defense_type: Union[str, None],
+        defense_subtype: Union[str, None],
+        default_mixins: tuple[type, ...],
+    ) -> tuple[type, ...]:
+        """Return mixin tuple for matching defense family/subtype."""
+        _ = (runtime, default_mixins)
+        if not self._matches(
+            defense_type=defense_type,
+            defense_subtype=defense_subtype,
+        ):
+            return tuple()
+        mixin = self._resolve_mixin_type()
+        return (mixin,)
+
+    def resolve_defense_handler(
+        self,
+        runtime: "DefensePipelineConfig",
+        *,
+        defense_type: Union[str, None],
+        defense_subtype: Union[str, None],
+        default_handler: Any,
+        default_mixins: tuple[type, ...],
+    ) -> Any:
+        """Return callable runtime handler for matching defense family/subtype."""
+        _ = (default_handler, default_mixins)
+        if not self._matches(
+            defense_type=defense_type,
+            defense_subtype=defense_subtype,
+        ):
+            return None
+        return lambda *args, **kwargs: self(runtime, *args, **kwargs)
+
+    def __call__(self, runtime: "DefensePipelineConfig", *args, **kwargs) -> tuple[Any, Any]:
+        """Delegate runtime defense execution to configured mixin handler.
+
+        Parameters
+        ----------
+        runtime : DefensePipelineConfig
+            Runtime defense config instance orchestrating dispatch.
+        *args : Any
+            Positional runtime args forwarded to mixin ``__call__``.
+        **kwargs : Any
+            Keyword runtime args forwarded to mixin ``__call__``.
+        """
+        mixin = self._resolve_mixin_type()
+        handler = mixin(runtime)
+        return handler(*args, **kwargs)
+
+
 class _DefenseBehaviorMixin:
     """Reusable defense workflow behavior mixed into concrete config dataclasses."""
 
@@ -576,6 +738,34 @@ class _DefenseBehaviorMixin:
     score_dict: dict
     _target_: Union[str, None]
     _model_config: Union[ModelConfig, None]
+    plugins: list
+    _plugin_objects: Union[list, None]
+
+    def _instantiate_plugin(self, plugin_spec: Any):
+        def _resolve_and_instantiate(path: str, **kwargs):
+            return resolve_class(path)(**kwargs)
+
+        return instantiate_plugin_spec(
+            plugin_spec,
+            loader=_resolve_and_instantiate,
+        )
+
+    def _get_plugins(self) -> list:
+        if getattr(self, "_plugin_objects", None) is None:
+            plugin_specs = normalize_plugin_specs(getattr(self, "plugins", []))
+            self._plugin_objects = [
+                self._instantiate_plugin(spec) for spec in plugin_specs
+            ]
+        return list(self._plugin_objects or [])
+
+    def _run_plugin_hook(self, hook_name: str, **kwargs) -> list[Any]:
+        """Execute one plugin hook across all instantiated plugins."""
+        hook_outputs = []
+        for plugin in self._get_plugins():
+            hook = getattr(plugin, hook_name, None)
+            if callable(hook):
+                hook_outputs.append(hook(self, **kwargs))
+        return hook_outputs
 
     def _resolve_runtime_defense_mixins(
         self,
@@ -611,6 +801,20 @@ class _DefenseBehaviorMixin:
 
             mixins.append(_RegularizerDefenseMixin)
 
+        plugin_outputs = self._run_plugin_hook(
+            "resolve_defense_mixins",
+            defense_type=defense_type,
+            defense_subtype=defense_subtype,
+            default_mixins=tuple(mixins),
+        )
+        for output in plugin_outputs:
+            if isinstance(output, type):
+                mixins.append(output)
+            elif isinstance(output, (tuple, list)):
+                for item in output:
+                    if isinstance(item, type):
+                        mixins.append(item)
+
         deduped: list[type] = []
         for mixin in mixins:
             if mixin not in deduped:
@@ -623,10 +827,26 @@ class _DefenseBehaviorMixin:
         defense_subtype: Union[str, None],
     ):
         mixins = self._resolve_runtime_defense_mixins(defense_type, defense_subtype)
+        default_handler = None
         for mixin in mixins:
             if isinstance(mixin, type) and issubclass(mixin, _DefenseMixin):
-                return mixin(self)
-        return None
+                default_handler = mixin(self)
+                break
+
+        hook_outputs = self._run_plugin_hook(
+            "resolve_defense_handler",
+            defense_type=defense_type,
+            defense_subtype=defense_subtype,
+            default_handler=default_handler,
+            default_mixins=mixins,
+        )
+        for output in hook_outputs:
+            if callable(output):
+                return output
+            if isinstance(output, type) and issubclass(output, _DefenseMixin):
+                return output(self)
+
+        return default_handler
 
     def _get_model_config(self) -> ModelConfig:
         if getattr(self, "_model_config", None) is None:
@@ -662,6 +882,7 @@ class _DefenseBehaviorMixin:
         self.defense_scoring_time = None
         self.defense_params = self.defense_params or {}
         self._apply_fit = True  # Whether to apply fit during defense application
+        self.plugins = normalize_plugin_specs(getattr(self, "plugins", []))
 
     def __hash__(self) -> int:
         return super().__hash__()
@@ -845,6 +1066,19 @@ class _DefensePipelineMixin:
                 f"Defense type '{defense_type}' has no registered callable handler.",
             )
 
+        self._run_plugin_hook(
+            "before_defense_dispatch",
+            data=data,
+            defense_type=defense_type,
+            defense_subtype=defense_subtype,
+            art_class=art_class,
+            init_params=init_params,
+            base_estimator=base_estimator,
+            existing_preprocessors=existing_preprocessors,
+            existing_postprocessors=existing_postprocessors,
+            handler=handler,
+        )
+
         defense, defended_estimator = handler(
             data=data,
             defense_type=defense_type,
@@ -869,6 +1103,15 @@ class _DefensePipelineMixin:
         )
 
         self.defense_application_time = end - start
+        self._run_plugin_hook(
+            "after_defense_dispatch",
+            data=data,
+            defense_type=defense_type,
+            defense_subtype=defense_subtype,
+            defense=defense,
+            defended_estimator=defended_estimator,
+            defense_application_time=self.defense_application_time,
+        )
         model_cfg = getattr(self, "_model_config", None)
         if model_cfg is not None:
             model_cfg._model = defended_estimator
@@ -1054,7 +1297,47 @@ class DefensePipelineConfig(_DefensePipelineConfigBehaviorMixin, ConfigBase):
 
 @dataclass(kw_only=True)
 class DefenseConfig(_DefenseBehaviorMixin, _DefensePipelineMixin, ConfigBase):
-    """Concrete defense config dataclass that uses shared defense behavior mixin."""
+    """Concrete defense config dataclass that uses shared defense behavior mixin.
+
+    Parameter layers
+    ----------------
+    model_params : dict
+        Base model-constructor kwargs (owned by model runtime).
+    defense_params : dict
+        Defense-constructor or defense-call kwargs passed to the resolved
+        defense class/callable.
+    init_params : dict
+        Declaration metadata for class/type/library docs. Runtime ART wrapper
+        kwargs are resolved by ``get_art_class`` and passed to mixin handlers as
+        ``init_params`` in ``_DefenseMixin.__call__``.
+
+    Family-specific parameter semantics
+    ----------------------------------
+    sklearn ART wrappers
+        Typically empty wrapper kwargs (plus ``preprocessing=None`` fallback).
+    torch ART wrappers
+        Include runtime wrapper kwargs such as ``input_shape`` and
+        ``nb_classes`` (when classification is enabled), then merged with
+        defense-specific params by mixin handlers.
+    detector
+        ``defense_params`` often configures detector constructor kwargs while
+        runtime wrapper init kwargs come from resolved ART wrapper context.
+    preprocessor/postprocessor
+        ``defense_params`` configures transformation object behavior; runtime
+        wrapper kwargs remain ART-estimator concerns.
+    trainer/transformer/regularizer
+        ``defense_params`` configures training-time behavior; runtime
+        wrapper kwargs are still sourced from model/ART context.
+
+    Plugin hook runtime params
+    --------------------------
+    Hooks are orchestrated by ``_run_plugin_hook(hook_name, **kwargs)``.
+    Core hook names used by DefenseConfig runtime are:
+    ``resolve_defense_mixins``, ``resolve_defense_handler``,
+    ``before_defense_dispatch``, and ``after_defense_dispatch``.
+    Hook kwargs are phase-specific runtime objects supplied by defense
+    orchestration.
+    """
 
     model_type: Union[str, None] = None
     classifier: Union[bool, str, None] = True
@@ -1077,10 +1360,23 @@ class DefenseConfig(_DefenseBehaviorMixin, _DefensePipelineMixin, ConfigBase):
         default_factory=dict,
         metadata={"help": "Parameters for the defense."},
     )
+    init_params: dict = field(
+        default_factory=dict,
+        metadata={
+            "help": "Initialization metadata for defense class/type/library declaration.",
+        },
+    )
     alias: str = field(default_factory=str)
+    plugins: list = field(default_factory=list)
     _model: Union[BaseEstimator, None] = field(default=None, repr=False)
     score_dict: dict = field(default_factory=dict)
     _target_: Union[str, None] = field(default=None, repr=False)
+    _plugin_objects: Union[list, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+    )
     _model_config: Union[ModelConfig, None] = field(
         default=None,
         init=False,

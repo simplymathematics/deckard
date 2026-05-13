@@ -4,14 +4,14 @@ import copy
 import time
 import logging
 from dataclasses import dataclass
+from dataclasses import field
 from typing import TYPE_CHECKING
 
-from .base import AttackConfig
+from .base import AttackConfig, AttackTypePlugin
 from .poisoning import _PoisoningAttackMixin
 from ..utils import safe_store
 
-if TYPE_CHECKING:
-    pass
+
 
 logger = logging.getLogger(__name__)
 
@@ -29,13 +29,30 @@ class _ExtractionAttackMixin(_PoisoningAttackMixin):
         attack_type: str,
         attack_subtype: str,
     ) -> dict:
+        """Run extraction attack runtime handler.
+
+        Parameters
+        ----------
+        data : Any
+            Data runtime with sampled train/test/val splits.
+        model : Any
+            User model object/config passed into attack orchestration.
+        art_model : Any
+            ART-wrapped victim model used for extraction.
+        attack : Any
+            Instantiated extraction attack object.
+        attack_type : str
+            Parsed runtime family; must be ``extraction`` for this mixin.
+        attack_subtype : str
+            Parsed subtype token from attack path.
+        """
         if (attack_type or "").lower() != "extraction":
             raise ValueError(
                 f"_ExtractionAttackMixin received unsupported attack type: {attack_type}",
             )
         return self._extract(data=data, art_model=art_model, attack=attack)
 
-    def _extract(self, data, art_model, attack):
+    def _extract(self, data, art_model, attack) -> dict:
         """Execute a model extraction attack and score victim vs extracted classifiers."""
         task_is_classification = self._infer_task_is_classification(
             data,
@@ -135,15 +152,39 @@ class _ExtractionAttackMixin(_PoisoningAttackMixin):
 
 @dataclass(eq=False)
 class ExtractionAttackConfig(_ExtractionAttackMixin, AttackConfig):
-    """
-    Configuration for model extraction attacks (model stealing).
-    
-    Extraction attacks aim to replicate the functionality of a target model
-    by querying it and training a substitute model on the collected data.
-    Useful for reverse-engineering proprietary models.
+    """Configuration for model extraction attacks (model stealing).
+
+    Initialization params
+    ---------------------
+    attack_type : str
+        Attack family path inherited from ``AttackConfig``. Expected family is
+        ``extraction``.
+    attack_params : dict[str, Any]
+        Constructor kwargs and runtime controls used by extraction attacks.
+    init_params : dict[str, Any]
+        Metadata-only declaration payload for class/type/library docs.
+    plugins : list[AttackTypePlugin]
+        Declarative runtime plugin specs. Default contains one
+        ``AttackTypePlugin`` configured with:
+        ``mixin_type: type = _ExtractionAttackMixin`` and
+        ``attack_type: str = 'extraction'``.
+
+    Runtime params
+    --------------
+    _ExtractionAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> dict
+        Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
+    _ExtractionAttackMixin._extract(self, data: Any, art_model: Any, attack: Any) -> dict
+        Executes extraction flow and returns score payload.
     """
 
-    pass
+    plugins: list = field(
+        default_factory=lambda: [
+            AttackTypePlugin(
+                mixin_type=_ExtractionAttackMixin,
+                attack_type="extraction",
+            )
+        ]
+    )
 
 
 # Register extraction attack config

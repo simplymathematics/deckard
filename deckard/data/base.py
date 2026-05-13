@@ -184,6 +184,68 @@ class _DataPipelineMixin:
 
 
 @dataclass(eq=False)
+class DataHookPlugin:
+    """Generic data plugin that delegates one hook to one runtime method.
+
+    Initialization fields
+    ---------------------
+    hook_name : str
+        Hook method name exposed to runtime (e.g., ``before_sample``).
+    method_name : str
+        Runtime method name invoked when the hook runs.
+    method_kwargs : dict[str, Any]
+        Default kwargs merged into hook invocation kwargs.
+    init_params : dict[str, Any]
+        Metadata-only declaration payload for class/type/library docs.
+    """
+
+    hook_name: str
+    method_name: str
+    method_kwargs: dict[str, Any] = field(default_factory=dict)
+    init_params: dict[str, Any] = field(default_factory=dict)
+
+    def declares_hook(self, hook_name: str) -> bool:
+        return hook_name == self.hook_name
+
+    def _invoke(self, runtime: "DataConfig", **kwargs):
+        method = getattr(runtime, self.method_name, None)
+        if not callable(method):
+            raise AttributeError(
+                f"Runtime '{type(runtime).__name__}' has no callable '{self.method_name}'",
+            )
+        call_kwargs = dict(self.method_kwargs)
+        call_kwargs.update(kwargs)
+        return method(**call_kwargs)
+
+    def __call__(self, runtime: "DataConfig", *args, **kwargs):
+        """Common plugin callable contract used across runtime adapters.
+
+        Parameters
+        ----------
+        runtime : DataConfig
+            Runtime data config instance orchestrating plugin hooks.
+        *args : Any
+            Positional runtime args (reserved for contract parity).
+        **kwargs : Any
+            Hook runtime kwargs. Optional ``hook_name`` filters execution.
+        """
+        _ = args
+        hook_name = kwargs.pop("hook_name", None)
+        if hook_name is not None and hook_name != self.hook_name:
+            return None
+        return self._invoke(runtime, **kwargs)
+
+    def __getattr__(self, attr_name: str):
+        if attr_name != self.hook_name:
+            raise AttributeError(attr_name)
+
+        def _hook(runtime: "DataConfig", *args, **kwargs):
+            return self(runtime, *args, hook_name=attr_name, **kwargs)
+
+        return _hook
+
+
+@dataclass(eq=False)
 class DataConfig(ConfigBase):
     """
     Configuration and utility class for loading, preprocessing, and splitting datasets for machine learning tasks.
@@ -264,6 +326,46 @@ class DataConfig(ConfigBase):
         Dictionary to store scores or metrics.
     _target_ : str
         Internal identifier for the class.
+
+    Parameter layers
+    ----------------
+    data_params : dict
+        Dataset loader/generator kwargs consumed by the selected data source
+        (for example sklearn loaders, OpenML fetchers, synthetic generators,
+        or file readers).
+    plugins : list
+        Plugin specs resolved at runtime and invoked through hook names.
+        For :class:`DataHookPlugin`, initialization fields are:
+        ``hook_name``, ``method_name``, ``method_kwargs``, and ``init_params``
+        (metadata only).
+    init_params (plugin metadata)
+        Plugin declaration metadata (class/type/library docs). This is not
+        interpreted by DataConfig orchestration logic directly.
+
+    Family-specific parameter semantics
+    ----------------------------------
+    sklearn loader datasets
+        ``data_params`` are forwarded to sklearn dataset loader callables
+        (for example ``as_frame=True``).
+    OpenML/fetch datasets
+        ``data_params`` typically include source-identifying keys (for example
+        ``name``, ``version``, ``as_frame``) and are passed to fetch helpers.
+    synthetic generators
+        ``data_params`` are generation controls (for example
+        ``n_samples``, ``n_features``, ``n_classes``).
+    file-backed datasets
+        ``data_params`` may include read-time options used by pandas/file
+        loading utilities.
+
+    Plugin hook runtime params
+    --------------------------
+    Hooks are orchestrated by ``_run_plugin_hook(hook_name, **kwargs)``.
+    Core hook names used by DataConfig runtime are:
+    ``before_load_data``, ``after_load_data``, ``before_sample``,
+    ``after_sample``, ``before_score``, and ``after_score``.
+    Hook kwargs are phase-specific runtime objects supplied by the caller;
+    DataHookPlugin forwards them to ``method_name`` after merging
+    ``method_kwargs``.
 
     Methods
     -------
@@ -521,7 +623,13 @@ class DataConfig(ConfigBase):
             ]
         return self._plugin_objects
 
-    def _run_plugin_hook(self, hook_name: str, **kwargs):
+    def _run_plugin_hook(self, hook_name: str, **kwargs) -> list[Any]:
+        """Execute one plugin hook across all instantiated plugins.
+
+        Supported DataConfig hook names used by the runtime include:
+        ``before_load_data``, ``after_load_data``, ``before_sample``,
+        ``after_sample``, ``before_score``, and ``after_score``.
+        """
         hook_outputs = []
         for plugin in self._get_plugins():
             hook = getattr(plugin, hook_name, None)
@@ -1232,6 +1340,7 @@ class DataConfig(ConfigBase):
 
     def _score(
         self,
+        *args,
         mode: Literal["train", "test", "val", "pre-sample"] = None,
         **kwargs,
     ) -> dict:
@@ -1271,6 +1380,7 @@ class DataConfig(ConfigBase):
                 f"Data scoring mode '{scorer_mode}' requested but required data split is unavailable.",
             )
         result_dict = self.scorer(
+            *args,
             y_true=y_true,
             y_pred=y_pred,
             mode=scorer_mode,
@@ -1413,8 +1523,10 @@ class DataConfig(ConfigBase):
 
     def __call__(
         self,
+        *args,
         data_file: Union[str, None] = None,
         score_file: Union[str, None] = None,
+        **kwargs,
     ) -> dict:
         """
         Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.
@@ -1445,7 +1557,7 @@ class DataConfig(ConfigBase):
             logger.info(
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
             )
-        data_scores = self._score()
+        data_scores = self._score(*args, **kwargs)
         if self.y_val is not None:
             if self.classifier:
                 class_counts = self._compute_class_counts(self.y_val)
@@ -2001,6 +2113,7 @@ class DataPipelineConfig(_DataPipelineMixin, DataConfig):
 
     def __call__(
         self,
+        *args,
         data_file: Union[str, None] = None,
         score_file: Union[str, None] = None,
         mode: str = None,
@@ -2115,12 +2228,9 @@ class DataPipelineConfig(_DataPipelineMixin, DataConfig):
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
             )
         self.score_dict.update(**time_dict)
-        # Pass mode to _score if present
-        if mode is not None:
-            data_scores = self._score(mode=mode, **kwargs)
-        else:
-            # Score on pre-sample-transformed data (now guaranteed to be numeric after transformations)
-            data_scores = self._score(mode="pre-sample", **kwargs)
+        # Respect explicit mode first, then configured score_mode, then _score fallback.
+        resolved_mode = mode if mode is not None else getattr(self, "score_mode", None)
+        data_scores = self._score(*args, mode=resolved_mode, **kwargs)
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"

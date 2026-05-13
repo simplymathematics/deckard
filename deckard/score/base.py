@@ -73,6 +73,174 @@ class _AttackProfileScorer:
     _profile_attr: str = "evasion"
 
 
+@dataclass(eq=True)
+class _ScorerMixin:
+    """Base callable scorer handler used by runtime scorer context resolution.
+
+    Initialization parameters
+    -------------------------
+    runtime : ScorerDictConfig
+        Runtime config object owned by ``ScorerDictConfig.__call__``. Mixins should
+        treat this as the source of mutable runtime state (scorers, cached results, etc).
+
+    Runtime parameters
+    -------------------
+    The mixin forwards attribute access to runtime to enable transparent delegation
+    of scorer configuration to the underlying runtime instance.
+    """
+
+    runtime: Any = None
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.runtime, name)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name == "runtime":
+            object.__setattr__(self, name, value)
+            return
+        runtime = object.__getattribute__(self, "runtime")
+        if runtime is None:
+            object.__setattr__(self, name, value)
+            return
+        setattr(runtime, name, value)
+
+    def __call__(
+        self,
+        *,
+        data: Any = None,
+        model: Any = None,
+        attack: Any = None,
+        mode: str = "test",
+    ) -> dict:
+        """Execute one scorer handler.
+
+        Parameters
+        ----------
+        data : Any
+            Data runtime containing train/test/val splits.
+        model : Any
+            User model object or model config supplied to scorer chain.
+        attack : Any
+            Instantiated attack object (optional).
+        mode : str
+            Scoring mode (test, train, attack, val, attack-val, pre-sample).
+
+        Returns
+        -------
+        dict
+            Score dictionary from scorer execution.
+        """
+        raise NotImplementedError(
+            "Scorer mixins must implement __call__",
+        )
+
+
+@dataclass(eq=False)
+class ScorerTypePlugin:
+    """Generic scorer plugin that binds one mixin to one scoring family/subtype.
+
+    Initialization fields
+    ---------------------
+    mixin_type : Any
+        Mixin class (or import path) implementing runtime ``__call__``.
+    scoring_type : str
+        Scoring scope this plugin matches (e.g., "model", "data").
+    scoring_subtype : str | None
+        Optional subtype constraint (e.g., "classifier", "regressor", "fairness").
+    excluded_subtypes : tuple[str, ...]
+        Subtypes explicitly excluded from this plugin match.
+    init_params : dict[str, Any]
+        Metadata-only declaration payload for class/type/library docs.
+
+    Plugin hooks
+    ------------
+    - ``resolve_scorer_mixins`` contributes mixins to runtime scorer context assembly.
+    - ``resolve_scorer_handler`` returns callable handler for dispatch.
+    - ``__call__`` forwards ``*args``/``**kwargs`` to the configured mixin instance
+      bound to the runtime config.
+    """
+
+    mixin_type: Any
+    scoring_type: str
+    scoring_subtype: Union[str, None] = None
+    excluded_subtypes: tuple[str, ...] = field(default_factory=tuple)
+    init_params: dict[str, Any] = field(default_factory=dict)
+
+    def _resolve_mixin_type(self) -> type:
+        if isinstance(self.mixin_type, str):
+            resolved = resolve_class(self.mixin_type)
+            self.mixin_type = resolved
+            return resolved
+        return self.mixin_type
+
+    def _matches(
+        self,
+        *,
+        scoring_type: str,
+        scoring_subtype: Union[str, None],
+    ) -> bool:
+        if (scoring_type or "").lower() != (self.scoring_type or "").lower():
+            return False
+        subtype = (scoring_subtype or "").lower()
+        if self.scoring_subtype is not None and subtype != self.scoring_subtype.lower():
+            return False
+        if subtype in {item.lower() for item in self.excluded_subtypes}:
+            return False
+        return True
+
+    def resolve_scorer_mixins(
+        self,
+        runtime: "ScorerDictConfig",
+        *,
+        scoring_type: str,
+        scoring_subtype: Union[str, None],
+        default_mixins: tuple[type, ...],
+    ) -> tuple[type, ...]:
+        """Return mixin tuple for matching scoring family/subtype."""
+        _ = (runtime, default_mixins)
+        if not self._matches(
+            scoring_type=scoring_type,
+            scoring_subtype=scoring_subtype,
+        ):
+            return tuple()
+        mixin = self._resolve_mixin_type()
+        return (mixin,)
+
+    def resolve_scorer_handler(
+        self,
+        runtime: "ScorerDictConfig",
+        *,
+        scoring_type: str,
+        scoring_subtype: Union[str, None],
+        default_handler: Any,
+        default_mixins: tuple[type, ...],
+    ) -> Any:
+        """Return callable runtime handler for matching scoring family/subtype."""
+        _ = (default_handler, default_mixins)
+        if not self._matches(
+            scoring_type=scoring_type,
+            scoring_subtype=scoring_subtype,
+        ):
+            return None
+        return lambda *args, **kwargs: self(runtime, *args, **kwargs)
+
+    def __call__(self, runtime: "ScorerDictConfig", *args, **kwargs) -> dict:
+        """Delegate runtime scorer execution to configured mixin handler.
+
+        Parameters
+        ----------
+        runtime : ScorerDictConfig
+            Runtime config instance currently orchestrating scoring.
+        *args : Any
+            Positional runtime args forwarded to mixin ``__call__``.
+        **kwargs : Any
+            Keyword runtime args forwarded to mixin ``__call__``.
+        """
+        mixin = self._resolve_mixin_type()
+        handler = mixin(runtime)
+        return handler(*args, **kwargs)
+
+
 def _normalize_classifier_flag(
     classifier: Union[bool, str, None],
 ) -> Union[bool, None]:
@@ -932,7 +1100,7 @@ def _default_pytorch_classification_scorers() -> dict[str, ScorerConfig]:
 
 
 @dataclass(eq=False)
-class DefaultModelScoreConfig(_TaskAwareScorerMixin, ScorerDictConfig):
+class DefaultModelScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     """Default model scorer family with optional task inheritance."""
 
     classifier: Union[bool, str, None] = None
@@ -951,17 +1119,17 @@ class DefaultModelScoreConfig(_TaskAwareScorerMixin, ScorerDictConfig):
 
 
 @dataclass(eq=False)
-class DefaultClassifierConfig(DefaultModelScoreConfig):
+class DefaultClassifierConfig(DefaultModelScorerConfig):
     classifier: Union[bool, str, None] = True
 
 
 @dataclass(eq=False)
-class DefaultRegressorConfig(DefaultModelScoreConfig):
+class DefaultRegressorConfig(DefaultModelScorerConfig):
     classifier: Union[bool, str, None] = False
 
 
 @dataclass(eq=False)
-class DefaultPytorchScoreConfig(_TaskAwareScorerMixin, ScorerDictConfig):
+class DefaultPytorchScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     """Default PyTorch scorer family with optional task inheritance."""
 
     classifier: Union[bool, str, None] = None
@@ -980,7 +1148,7 @@ class DefaultPytorchScoreConfig(_TaskAwareScorerMixin, ScorerDictConfig):
 
 
 @dataclass(eq=False)
-class DefaultPytorchClassifierConfig(DefaultPytorchScoreConfig):
+class DefaultPytorchClassifierConfig(DefaultPytorchScorerConfig):
     """Default classifier scorers for PyTorch models.
 
     PyTorch model wrappers often expose logits but not ``predict_proba``. This
@@ -992,7 +1160,7 @@ class DefaultPytorchClassifierConfig(DefaultPytorchScoreConfig):
 
 
 @dataclass(eq=False)
-class DefaultPytorchRegressorConfig(DefaultPytorchScoreConfig):
+class DefaultPytorchRegressorConfig(DefaultPytorchScorerConfig):
     """Default regressor scorers for PyTorch models."""
 
     classifier: Union[bool, str, None] = False
@@ -1002,7 +1170,7 @@ safe_store(
     group="score",
     name="classification",
     node={
-        "_target_": "deckard.score.base.DefaultModelScoreConfig",
+        "_target_": "deckard.score.base.DefaultModelScorerConfig",
         "classifier": True,
     },
 )
@@ -1010,7 +1178,7 @@ safe_store(
     group="score",
     name="regression",
     node={
-        "_target_": "deckard.score.base.DefaultModelScoreConfig",
+        "_target_": "deckard.score.base.DefaultModelScorerConfig",
         "classifier": False,
     },
 )
@@ -1018,7 +1186,7 @@ safe_store(
     group="score",
     name="pytorch_classification",
     node={
-        "_target_": "deckard.score.base.DefaultPytorchScoreConfig",
+        "_target_": "deckard.score.base.DefaultPytorchScorerConfig",
         "classifier": True,
     },
 )
@@ -1026,7 +1194,7 @@ safe_store(
     group="score",
     name="pytorch_regression",
     node={
-        "_target_": "deckard.score.base.DefaultPytorchScoreConfig",
+        "_target_": "deckard.score.base.DefaultPytorchScorerConfig",
         "classifier": False,
     },
 )
@@ -1040,10 +1208,10 @@ __all__ = [
     "_resolve_yt_yp",
     "ScorerConfig",
     "ScorerDictConfig",
-    "DefaultModelScoreConfig",
+    "DefaultModelScorerConfig",
     "DefaultClassifierConfig",
     "DefaultRegressorConfig",
-    "DefaultPytorchScoreConfig",
+    "DefaultPytorchScorerConfig",
     "DefaultPytorchClassifierConfig",
     "DefaultPytorchRegressorConfig",
     "build_scorer",

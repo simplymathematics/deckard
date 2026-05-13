@@ -1,13 +1,12 @@
 """Configuration for preprocessor defenses (input transformation)."""
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any
 
-from .defend import DefensePipelineConfig, _DefenseMixin
+from .defend import DefensePipelineConfig, DefenseTypePlugin, _DefenseMixin
 from ..utils import safe_store
 
-if TYPE_CHECKING:
-    pass
+
 
 
 class _PreprocessorDefenseMixin(_DefenseMixin):
@@ -25,7 +24,7 @@ class _PreprocessorDefenseMixin(_DefenseMixin):
         base_estimator,
         existing_preprocessors,
         existing_postprocessors,
-    ):
+    ) -> tuple[Any, Any]:
         assert defense_class is not None
         defense = defense_class(**(self.defense_params or {}))
         defended_estimator = self._build_art_wrapper(
@@ -40,15 +39,36 @@ class _PreprocessorDefenseMixin(_DefenseMixin):
 
 @dataclass(eq=False)
 class PreprocessorDefenseConfig(_PreprocessorDefenseMixin, DefensePipelineConfig):
-    """
-    Configuration for preprocessor-based defenses.
-    
-    Preprocessors apply transformations to inputs before they reach the model
-    (e.g., compression, normalization, denoising). Improves robustness by
-    making adversarial perturbations less effective.
+    """Configuration for preprocessor-based defenses.
+
+    Initialization params
+    ---------------------
+    defense_name : str | None
+        Defense class path inherited from ``DefensePipelineConfig``.
+    defense_params : dict[str, Any]
+        Constructor kwargs forwarded to resolved preprocessor defense class.
+    init_params : dict[str, Any]
+        Runtime ART-wrapper kwargs resolved by defense orchestration.
+    plugins : list[DefenseTypePlugin]
+        Declarative runtime plugin specs. Default contains one
+        ``DefenseTypePlugin`` configured with:
+        ``mixin_type: type = _PreprocessorDefenseMixin`` and
+        ``defense_type: str = 'preprocessor'``.
+
+    Runtime params
+    --------------
+    _PreprocessorDefenseMixin.__call__(self, *, data: Any, defense_type: str | None, defense_subtype: str | None, defense_class: Any, art_class: Any, init_params: dict, base_estimator: Any, existing_preprocessors: list, existing_postprocessors: list) -> tuple[Any, Any]
+        Runtime dispatch entrypoint invoked by defense orchestration.
     """
 
-    pass
+    plugins: list = field(
+        default_factory=lambda: [
+            DefenseTypePlugin(
+                mixin_type=_PreprocessorDefenseMixin,
+                defense_type="preprocessor",
+            )
+        ]
+    )
 
 
 # Register preprocessor defense config

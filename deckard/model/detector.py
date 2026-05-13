@@ -1,9 +1,10 @@
 """Configuration for detector defenses (adversarial detector)."""
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any
 
 from .defend import (
+    DefenseTypePlugin,
     DefensePipelineConfig,
     _DefenseMixin,
     _is_art_torch_wrapper,
@@ -11,8 +12,7 @@ from .defend import (
 )
 from ..utils import safe_store
 
-if TYPE_CHECKING:
-    pass
+
 
 
 class _DetectorDefenseMixin(_DefenseMixin):
@@ -30,7 +30,7 @@ class _DetectorDefenseMixin(_DefenseMixin):
         base_estimator,
         existing_preprocessors,
         existing_postprocessors,
-    ):
+    ) -> tuple[Any, Any]:
         assert defense_class is not None
         subtype = (defense_subtype or "").lower()
         if subtype == "evasion":
@@ -80,16 +80,37 @@ class _DetectorDefenseMixin(_DefenseMixin):
 
 @dataclass(eq=False)
 class DetectorDefenseConfig(_DetectorDefenseMixin, DefensePipelineConfig):
-    """
-    Configuration for detector-based defenses.
-    
-    Detectors identify and reject adversarial examples at test time
-    without modifying the model itself. Uses auxiliary detection models
-    to flag suspicious inputs. Generally optimized against evasion or poisoning attacks, 
-    but your mileage may vary with other attacks.
+    """Configuration for detector-based defenses.
+
+    Initialization params
+    ---------------------
+    defense_name : str | None
+        Defense class path inherited from ``DefensePipelineConfig``.
+    defense_params : dict[str, Any]
+        Constructor kwargs forwarded to resolved detector defense class.
+    init_params : dict[str, Any]
+        Runtime ART-wrapper kwargs resolved by defense orchestration.
+    plugins : list[DefenseTypePlugin]
+        Declarative runtime plugin specs. Default contains one
+        ``DefenseTypePlugin`` configured with:
+        ``mixin_type: type = _DetectorDefenseMixin`` and
+        ``defense_type: str = 'detector'``.
+
+    Runtime params
+    --------------
+    _DetectorDefenseMixin.__call__(self, *, data: Any, defense_type: str | None, defense_subtype: str | None, defense_class: Any, art_class: Any, init_params: dict, base_estimator: Any, existing_preprocessors: list, existing_postprocessors: list) -> tuple[Any, Any]
+        Runtime dispatch entrypoint invoked by ``DefenseConfig``/
+        ``DefensePipelineConfig`` defense orchestration.
     """
 
-    pass
+    plugins: list = field(
+        default_factory=lambda: [
+            DefenseTypePlugin(
+                mixin_type=_DetectorDefenseMixin,
+                defense_type="detector",
+            )
+        ]
+    )
 
 
 # Register detector defense config

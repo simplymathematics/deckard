@@ -19,9 +19,9 @@ __all__ = [
     "anjana_l_diversity_score",
     "anjana_t_closeness_score",
     "_AnjanaScorerMixin",
-    "DefaultAnjanaScoreConfig",
-    "DefaultAnjanaDataScoreConfig",
-    "DefaultAnjanaModelScoreConfig",
+    "DefaultAnjanaScorerConfig",
+    "DefaultAnjanaDataScorerConfig",
+    "DefaultAnjanaModelScorerConfig",
 ]
 
 
@@ -242,7 +242,46 @@ class _AnjanaScorerMixin(_DataScorerMarker):
 
 
 @dataclass(eq=False)
-class DefaultAnjanaScoreConfig(_AnjanaScorerMixin, ScorerDictConfig):
+class DefaultAnjanaScorerConfig(_AnjanaScorerMixin, ScorerDictConfig):
+    """Default privacy scorer set for ANJANA anonymization analysis.
+
+    Initialization parameters
+    -------------------------
+    scorers : dict[str, ScorerConfig]
+        Named privacy scorer configurations. Defaults include k-anonymity,
+        l-diversity, and t-closeness metrics.
+
+    Runtime parameters
+    -------------------
+    data : DataConfig
+        Data configuration carrying ``quasi_identifiers`` and optional
+        ``sensitive_attribute`` column name.
+    y_pred : pd.DataFrame
+        The (possibly anonymized) feature matrix.  When a DataFrame, used directly;
+        otherwise fallback to ``data._X``.
+
+    Parameter layers
+    ----------------
+    1. Quasi-identifiers: Column names (``quasi_ident``) for privacy reidentification risk
+    2. Sensitive attributes: Optional attribute column for additional privacy scope
+    3. Privacy metrics: k-anonymity (group size), l-diversity (value distribution),
+       t-closeness (distribution distance)
+
+    Family-specific parameter semantics
+    -----------------------------------
+    ANJANA privacy scorers quantify dataset anonymization effectiveness:
+
+    - **k_anonymity**: Minimum group size for quasi-identifier combinations
+    - **l_diversity**: Value diversity within each equivalence class
+    - **t_closeness**: Maximum distance between group distributions and overall distribution
+
+    Plugin pattern
+    --------------
+    This scorer inherits from ``_ScorerMixin`` semantics through ``ScorerDictConfig``.
+    Plugins registered via ``ScorerTypePlugin`` contribute mixin-based runtime context
+    for data-scope dispatch (e.g., ``scoring_type: "data"``, ``scoring_subtype: "anjana"``).
+    """
+
     scorers: dict[str, ScorerConfig] = field(
         default_factory=lambda: {
             "k_anonymity": ScorerConfig(
@@ -265,9 +304,40 @@ class DefaultAnjanaScoreConfig(_AnjanaScorerMixin, ScorerDictConfig):
 
 
 @dataclass(eq=False)
-@dataclass(eq=False)
-class DefaultAnjanaDataScoreConfig(_TaskAwareScorerMixin, ScorerDictConfig):
-    """Default data-analysis scorers plus ANJANA privacy scorers."""
+class DefaultAnjanaDataScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
+    """Default data-analysis scorers plus ANJANA privacy scorers.
+
+    Initialization parameters
+    -------------------------
+    classifier : bool | str | None
+        Task type selector for base data scorer inheritance. When ``None``,
+        resolved from data/model/attack context or defaults to ``True``.
+    scorers : dict[str, ScorerConfig]
+        Combined scorers: base data metrics plus ANJANA privacy metrics.
+
+    Runtime parameters
+    -------------------
+    Inherits all runtime parameters from both ``DefaultDataScoreConfig`` and
+    ``DefaultAnjanaScoreConfig``. Combines data property analysis (mutual information,
+    class distribution) with privacy metrics (k-anonymity, l-diversity, t-closeness).
+
+    Parameter layers
+    ----------------
+    1. Task awareness: Resolves classifier/regressor to determine data base scorers
+    2. Data properties: Feature informativeness and label distribution from DefaultDataScoreConfig
+    3. Privacy metrics: k-anonymity, l-diversity, t-closeness from DefaultAnjanaScoreConfig
+
+    Family-specific parameter semantics
+    -----------------------------------
+    Combines data analysis and privacy assessment in a single scorer family.
+    Base data scorers provide context (feature correlations, class imbalance),
+    while privacy scorers measure anonymization effectiveness.
+
+    Plugin pattern
+    --------------
+    This scorer inherits from ``_ScorerMixin`` semantics through ``ScorerDictConfig``.
+    Plugins registered via ``ScorerTypePlugin`` contribute mixin-based runtime context.
+    """
 
     classifier: bool | None = None
     scorers: dict[str, ScorerConfig] = field(default_factory=dict)
@@ -280,7 +350,7 @@ class DefaultAnjanaDataScoreConfig(_TaskAwareScorerMixin, ScorerDictConfig):
             if classifier
             else DefaultDataRegressionConfig().scorers
         )
-        privacy_scorers = dict(DefaultAnjanaScoreConfig().scorers)
+        privacy_scorers = dict(DefaultAnjanaScorerConfig().scorers)
         return {**base_scorers, **privacy_scorers}
 
     def __post_init__(self):
@@ -290,14 +360,37 @@ class DefaultAnjanaDataScoreConfig(_TaskAwareScorerMixin, ScorerDictConfig):
 
 
 @dataclass(eq=False)
-class DefaultAnjanaModelScoreConfig(DefaultAnjanaScoreConfig):
+class DefaultAnjanaModelScorerConfig(DefaultAnjanaScorerConfig):
+    """Model-scope privacy scorer set for ANJANA anonymization analysis.
+
+    Initialization parameters
+    -------------------------
+    Inherits all initialization parameters from ``DefaultAnjanaScoreConfig``.
+
+    Runtime parameters
+    -------------------
+    Inherits all runtime parameters from ``DefaultAnjanaScoreConfig``.
+    Operates on model predictions/features in the model-scoring scope.
+
+    Purpose
+    -------
+    Extends ``DefaultAnjanaScoreConfig`` for explicit model-scope registration
+    and routing. Enables privacy assessment in post-training analysis pipelines
+    where anonymization is applied at the feature level.
+
+    Plugin pattern
+    --------------
+    This scorer inherits from ``_ScorerMixin`` semantics through ``ScorerDictConfig``.
+    Plugins registered via ``ScorerTypePlugin`` route to model-scope dispatch.
+    """
+
     pass
 
 
-safe_store(group="score", name="anjana", node=DefaultAnjanaScoreConfig)
-safe_store(group="score", name="anjana_data", node=DefaultAnjanaDataScoreConfig)
+safe_store(group="score", name="anjana", node=DefaultAnjanaScorerConfig)
+safe_store(group="score", name="anjana_data", node=DefaultAnjanaDataScorerConfig)
 safe_store(
     group="score",
     name="anjana_model",
-    node=DefaultAnjanaModelScoreConfig,
+    node=DefaultAnjanaModelScorerConfig,
 )

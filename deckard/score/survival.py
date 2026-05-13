@@ -72,7 +72,47 @@ def survival_bic_score(y_true: Any, y_pred: Any, **kwargs: Any) -> float:
 
 @dataclass(eq=False)
 class DefaultLifelinesConfig(ScorerDictConfig):
-    """Default scorer set for survival workflows."""
+    """Default scorer set for survival workflows.
+
+    Initialization parameters
+    -------------------------
+    scorers : dict[str, ScorerConfig | dict[str, Any]]
+        Named scorer configurations extracted from fitted lifelines survival models.
+        Default set includes concordance, AIC, and BIC metrics.
+
+    Runtime parameters
+    -------------------
+    y_pred : Any
+        Fitted lifelines survival model instance (e.g., KaplanMeierFitter,
+        CoxPHFitter, WeibullAFTFitter). Must expose relevant survival metrics
+        as attributes (concordance_index_, AIC_, BIC_, log_likelihood_).
+    y_true : Any
+        Optional event data or durations (used for BIC calculation when
+        n_samples is not explicitly provided).
+    n_samples : int
+        Optional sample count for BIC computation. If not provided, inferred
+        from y_true length.
+
+    Parameter layers
+    ----------------
+    1. Model introspection: Scorers extract fitted model attributes
+    2. Information criteria: AIC and BIC support model comparison
+    3. Predictive performance: Concordance measures prediction accuracy
+
+    Family-specific parameter semantics
+    -----------------------------------
+    Survival scorers operate on fitted lifelines models:
+
+    - **concordance_index_**: C-statistic measuring ranking accuracy of predictions.
+    - **AIC_** / **partial_AIC_**: Akaike Information Criterion for model comparison.
+    - **BIC_**: Bayesian Information Criterion (computed from log_likelihood_ if BIC_ unavailable).
+
+    Plugin pattern
+    --------------
+    This scorer inherits from ``_ScorerMixin`` semantics through ``ScorerDictConfig``.
+    Plugins registered via ``ScorerTypePlugin`` contribute mixin-based runtime context
+    for survival-specific dispatch (e.g., ``scoring_subtype: "survival"`` routes to this scorer).
+    """
 
     scorers: dict[str, Union[ScorerConfig, dict[str, Any]]] = field(
         default_factory=lambda: {

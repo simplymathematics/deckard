@@ -1,11 +1,15 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Union
 
 import pandas as pd
 from omegaconf import DictConfig, ListConfig
 
-from .base import DataPipelineConfig
-from ..utils import coerce_to_list, is_default_config_value, merge_list_of_dicts
+from .base import DataHookPlugin, DataPipelineConfig
+from ..utils import (
+    coerce_to_list,
+    is_default_config_value,
+    merge_list_of_dicts,
+)
 from ..score.fairness import (
     DefaultFairlearnClassificationConfig,
     DefaultFairlearnRegressionConfig,
@@ -16,8 +20,31 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+@dataclass(eq=False)
 class _SensitiveBehaviorMixin:
     """Shared sensitive-feature behavior for data configs."""
+
+    sensitive_columns: Optional[Union[str, list]] = None
+    fairness_defense: Union[None, bool, Dict[str, Any], list] = None
+
+    def _sensitive_labels_from_targets(
+        self,
+        frame: pd.DataFrame,
+    ) -> Optional[pd.Series]:
+        """Fallback sensitive labels from y-splits when sensitive feature is a target label."""
+        if getattr(self, "X_train", None) is frame:
+            y_values = getattr(self, "y_train", None)
+        elif getattr(self, "X_test", None) is frame:
+            y_values = getattr(self, "y_test", None)
+        elif getattr(self, "X_val", None) is frame:
+            y_values = getattr(self, "y_val", None)
+        elif getattr(self, "_X", None) is frame:
+            y_values = getattr(self, "_y", None)
+        else:
+            y_values = None
+        if y_values is None:
+            return None
+        return pd.Series(y_values).astype(str)
 
     def _sensitive_labels_from_frame(
         self,
@@ -33,7 +60,19 @@ class _SensitiveBehaviorMixin:
         if isinstance(cols, str):
             cols = [cols]
         if cols is None:
+            fallback = self._sensitive_labels_from_targets(frame)
+            if fallback is not None:
+                return fallback
             raise ValueError("sensitive_columns must be configured")
+        missing_cols = [col for col in cols if col not in frame.columns]
+        if missing_cols:
+            if len(cols) == 1:
+                fallback = self._sensitive_labels_from_targets(frame)
+                if fallback is not None:
+                    return fallback
+            raise KeyError(
+                f"Sensitive feature columns not found: {missing_cols}. Available columns: {list(frame.columns)}",
+            )
         if len(cols) == 1:
             return frame[cols[0]].astype(str)
         labels_df = frame[cols].astype(str)
@@ -67,6 +106,8 @@ class _SensitiveBehaviorMixin:
                 "fairness_defense must be a dict/DictConfig, False, or None. "
                 f"Got {type(self.fairness_defense)}",
             )
+        if self.sensitive_columns is None:
+            raise ValueError("sensitive_columns must be configured")
         if (
             not hasattr(self, "_X")
             or self._X is None
@@ -74,8 +115,6 @@ class _SensitiveBehaviorMixin:
         ):
             return
 
-        if self.sensitive_columns is None:
-            raise ValueError("sensitive_columns must be configured")
         sensitive_columns = [
             col for col in self.sensitive_columns if col in self._X.columns
         ]
@@ -131,6 +170,32 @@ class _SensitiveBehaviorMixin:
 
 @dataclass(eq=False)
 class FairlearnDataConfig(_SensitiveBehaviorMixin, DataPipelineConfig):
+    """Data pipeline config with fairlearn-sensitive feature support.
+
+    Initialization params
+    ---------------------
+    sensitive_columns : str | list[str] | None
+        Sensitive-feature column name(s) used for fairness metrics and
+        mitigation transforms. This value is required.
+    fairness_defense : dict[str, Any] | list[dict[str, Any]] | bool | None
+        Fairness-defense step specification consumed by
+        ``_inject_fairness_defense_step``.
+    plugins : list[DataHookPlugin]
+        Declarative runtime plugin specs. Default contains one
+        ``DataHookPlugin`` configured with:
+        ``hook_name: str = 'before_sample'``,
+        ``method_name: str = '_inject_fairness_defense_step'``, and
+        ``init_params: dict[str, Any]`` metadata.
+
+    Runtime params
+    --------------
+    __call__(self, *args: Any, **kwargs: Any) -> Any
+        Resolves default fairness scorer when needed and delegates to
+        ``DataPipelineConfig.__call__``.
+    _score(self, mode: str | None = None) -> dict
+        Computes fairness scores with ``y_true`` and ``y_pred`` sourced from
+        runtime train buffers when available.
+    """
 
     def __call__(self, *args, **kwargs):
         # Auto-select fairness-compatible scorer if not set
@@ -154,10 +219,19 @@ class FairlearnDataConfig(_SensitiveBehaviorMixin, DataPipelineConfig):
         assert hasattr(self, "X_train"), ".X_train not found"
         return result
 
-    """Data pipeline config with fairlearn-sensitive feature support."""
-
-    sensitive_columns: Optional[Union[str, list]] = None
-    fairness_defense: Union[None, bool, Dict[str, Any], list] = None
+    plugins: list = field(
+        default_factory=lambda: [
+            DataHookPlugin(
+                hook_name="before_sample",
+                method_name="_inject_fairness_defense_step",
+                init_params={
+                    "library": "fairlearn",
+                    "type": "data",
+                    "class": "CorrelationRemover",
+                },
+            )
+        ]
+    )
 
     def __post_init__(self):
         super().__post_init__()
@@ -195,11 +269,7 @@ class FairlearnDataConfig(_SensitiveBehaviorMixin, DataPipelineConfig):
             assert col in self._X.columns
         return self
 
-    def _init_pipeline(self):
-        self._inject_fairness_defense_step()
-        return super()._init_pipeline()
-
-    def _score(self, mode=None) -> dict:
+    def _score(self, *args, mode=None, **kwargs) -> dict:
         """Delegate fairness dataset scoring to DefaultFairlearnClassificationConfig or RegressionConfig, and flatten output."""
         if is_default_config_value(self.scorer, include_best=False):
             self.scorer = (
@@ -223,10 +293,12 @@ class FairlearnDataConfig(_SensitiveBehaviorMixin, DataPipelineConfig):
             self.X_train if getattr(self, "X_train", None) is not None else self._X
         )
         fairness_scores = self.scorer(
+            *args,
             y_true=y_true,
             y_pred=y_pred,
             mode=scorer_mode,
             data=self,
+            **kwargs,
         )
         # Flatten fairness_scores if it's a dict
         if isinstance(fairness_scores, dict):

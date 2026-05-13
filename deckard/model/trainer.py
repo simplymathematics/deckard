@@ -1,18 +1,18 @@
 """Configuration for trainer defenses (adversarial training)."""
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any
 
 from .defend import (
     DefensePipelineConfig,
+    DefenseTypePlugin,
     _DefenseMixin,
     _is_art_torch_wrapper,
     _is_torch_model_instance,
 )
 from ..utils import safe_store
 
-if TYPE_CHECKING:
-    pass
+
 
 
 class _TrainerDefenseMixin(_DefenseMixin):
@@ -30,7 +30,7 @@ class _TrainerDefenseMixin(_DefenseMixin):
         base_estimator,
         existing_preprocessors,
         existing_postprocessors,
-    ):
+    ) -> tuple[Any, Any]:
         assert defense_class is not None
         trainer_params = dict(self.defense_params or {})
 
@@ -66,15 +66,36 @@ class _TrainerDefenseMixin(_DefenseMixin):
 
 @dataclass(eq=False)
 class TrainerDefenseConfig(_TrainerDefenseMixin, DefensePipelineConfig):
-    """
-    Configuration for trainer-based defenses (adversarial training).
-    
-    Adversarial training improves model robustness by including adversarial
-    examples during training. The model learns to defend itself against
-    adversarial attacks by training on both clean and adversarial data.
+    """Configuration for trainer-based defenses (adversarial training).
+
+    Initialization params
+    ---------------------
+    defense_name : str | None
+        Defense class path inherited from ``DefensePipelineConfig``.
+    defense_params : dict[str, Any]
+        Constructor kwargs forwarded to resolved trainer defense class.
+    init_params : dict[str, Any]
+        Runtime ART-wrapper kwargs resolved by defense orchestration.
+    plugins : list[DefenseTypePlugin]
+        Declarative runtime plugin specs. Default contains one
+        ``DefenseTypePlugin`` configured with:
+        ``mixin_type: type = _TrainerDefenseMixin`` and
+        ``defense_type: str = 'trainer'``.
+
+    Runtime params
+    --------------
+    _TrainerDefenseMixin.__call__(self, *, data: Any, defense_type: str | None, defense_subtype: str | None, defense_class: Any, art_class: Any, init_params: dict, base_estimator: Any, existing_preprocessors: list, existing_postprocessors: list) -> tuple[Any, Any]
+        Runtime dispatch entrypoint invoked by defense orchestration.
     """
 
-    pass
+    plugins: list = field(
+        default_factory=lambda: [
+            DefenseTypePlugin(
+                mixin_type=_TrainerDefenseMixin,
+                defense_type="trainer",
+            )
+        ]
+    )
 
 
 # Register trainer defense config

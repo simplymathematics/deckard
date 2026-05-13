@@ -69,6 +69,7 @@ from yellowbrick.model_selection import (
 
 from ..utils import ConfigBase
 from ..experiment import ExperimentConfig
+from .base import _PlotterMixin, _YellowbrickPlotterMarker, PlotTypePlugin, safe_store
 from ..score.pytorch import (  # noqa: F401
     to_numpy as _to_numpy,
     is_dataloader_like as _is_dataloader_like,
@@ -381,13 +382,123 @@ def _named_classifier_adapter(model_config: Any) -> _YellowbrickModelAdapter:
     return adapter_type(model_config=model_config, classifier=True)
 
 
-@dataclass(kw_only=True)
-class YellowbrickPlotConfig(ConfigBase):
+@dataclass(eq=True)
+class _YellowbrickPlotterMixin(_PlotterMixin):
+    """Yellowbrick-specific plotter handler for ML model visualization.
+
+    Initialization parameters
+    -------------------------
+    runtime : Any
+        Yellowbrick plot config object (YellowbrickPlotConfig or subclass).
+
+    Runtime parameters
+    -------------------
+    plot_type : str
+        Yellowbrick visualizer type (e.g., "roc_auc", "learning_curve").
+    experiment : ExperimentConfig
+        Experiment context providing model/data/attack state.
+    clustering : bool
+        Whether this is a clustering visualization.
+    features : list[str] | Literal["all"]
+        Features to include in visualization.
+    classes : list[str] | Literal["all"]
+        Classes to include in visualization.
+    plot_params : dict
+        Visualizer-specific parameters.
+
+    Plugin pattern
+    --------------
+    This mixin is registered via PlotTypePlugin for plot_backend="yellowbrick"
+    and provides yellowbrick-specific visualization logic when bound to YellowbrickPlotConfig.
+    Enables lazy experiment preparation and reusable plot rendering across multiple calls.
+    """
+
+    def __call__(
+        self,
+        *,
+        ax: Any = None,
+        **kwargs: Any,
+    ) -> Any:
+        """Execute yellowbrick visualization.
+
+        Parameters
+        ----------
+        ax : Axes | None
+            Matplotlib axis to plot on. If None, visualizer creates figure.
+        **kwargs : Any
+            Additional visualizer parameters.
+
+        Returns
+        -------
+        Any
+            Yellowbrick visualizer object containing rendered plot.
+        """
+        # This is a placeholder implementation.
+        # The actual implementation delegates to runtime config methods
+        # (visualize_features, visualize_targets, etc.)
+        raise NotImplementedError(
+            "YellowbrickPlotterMixin.__call__ must be implemented by subclass",
+        )
+
+
+@dataclass(kw_only=True, eq=False)
+class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
     """Render a single Yellowbrick plot from composed experiment configuration.
 
-    This config composes an ExperimentConfig and prepares missing experiment
-    outputs on first call. Later calls reuse the prepared state and only render
-    the plot again.
+    Initialization parameters
+    -------------------------
+    experiment : ExperimentConfig
+        Experiment configuration providing model/data/attack context.
+    plot_type : Literal[YellowBrickVizType]
+        Yellowbrick visualizer type (e.g., "roc_auc", "learning_curve").
+    clustering : bool
+        Whether this visualization is for clustering analysis.
+    features : list[str] | Literal["all"]
+        Features to visualize. "all" includes all features up to a limit.
+    classes : list[str] | Literal["all"]
+        Classes to visualize. "all" includes all inferred classes.
+    title : str
+        Plot title displayed in visualizer.
+    save_path : str
+        Output file path for rendered visualization.
+    rc_config : dict
+        Matplotlib rcParams updates.
+    plot_params : dict
+        Yellowbrick visualizer-specific parameters.
+
+    Runtime parameters
+    -------------------
+    experiment : ExperimentConfig
+        Lazily prepared on first visualization call.
+    _experiment_prepared : bool
+        Internal flag tracking experiment preparation state.
+    _experiment_scores : dict
+        Cached experiment scoring results.
+
+    Parameter layers
+    ----------------
+    1. Experiment context: Model, data, attack configuration
+    2. Visualizer selection: plot_type determines visualization class
+    3. Feature/class selection: Automatic or explicit subset selection
+    4. Rendering: Title, output path, matplotlib parameters
+
+    Family-specific parameter semantics
+    -----------------------------------
+    Yellowbrick visualizers specialize in ML model diagnostics:
+
+    - **Feature visualizers**: Data distributions, correlations, dimensionality
+    - **Target visualizers**: Class balance, feature importance
+    - **Classifier visualizers**: ROC, precision-recall, confusion matrix
+    - **Regressor visualizers**: Residuals, prediction error, learning curves
+    - **Model selection**: Cross-validation scores, learning curves, feature selection
+    - **Clustering**: Silhouette plots, cluster distances, elbow curves
+
+    Plugin pattern
+    --------------
+    This config inherits from ``_YellowbrickPlotterMarker`` for backend identification.
+    At runtime, ``PlotTypePlugin`` resolves ``_YellowbrickPlotterMixin`` for rendering
+    when plot_backend="yellowbrick", enabling flexible seaborn/yellowbrick switching.
+    Lazy experiment preparation reuses state across multiple plot renders.
     """
 
     experiment: ExperimentConfig
