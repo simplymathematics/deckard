@@ -1,0 +1,10 @@
+distance:
+  name: classifier_refactor.py:StringDistanceTransformer
+  metric: gzip
+  algorithm: sort
+  n_jobs: -1
+  zero_hack: false
+  sort_hack: true
+  average_hack: false
+  lower_triangle: false
+  upper_triangle: false

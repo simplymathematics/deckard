@@ -1,0 +1,6 @@
+# @package _global_
+hydra:
+  sweeper:
+    params:
+      model.model_params.C: .0001,.001,.01,.1,1,10,100,1000
+model_alias: svc

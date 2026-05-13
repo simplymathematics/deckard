@@ -1,4 +1,8 @@
 model_type: sklearn.neighbors.KNeighborsClassifier
+classifier: true
+alias: knn
 model_params:
   n_neighbors: 1
+  weights: uniform
+  algorithm: brute
 _target_: deckard.model.ModelConfig

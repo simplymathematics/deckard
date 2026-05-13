@@ -1,3 +1,6 @@
+defaults:
+  - default
+
 target: Label
 drop:
 - Timestamp
@@ -5,5 +8,4 @@ drop:
 alias: ddos
 random_state: 0
 stratify: true
-_target_: deckard.data.DataConfig
 dataset_name: raw_data/ddos_undersampled_10000.csv

@@ -1,0 +1,8 @@
+# @package _global_
+hydra:
+  sweeper:
+    params:
+      model.model_params.n_neighbors: int(range(1, 100))
+      model.model_params.weights: uniform,distance
+      model.model_params.algorithm: brute
+model_alias: knn

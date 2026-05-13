@@ -1,5 +1,11 @@
-_target_: deckard.data.DataConfig
-fold: 0
+defaults:
+  - _self_
+  - pipeline: precompute
+
+_target_: deckard.data.DataPipelineConfig
 train_size: 1000
-test_size: 100
-val_size: 100
+test_size: 200
+val_size: 200
+sample: 
+  name: deckard.data.sample.KFoldSampler
+  n_splits: 5

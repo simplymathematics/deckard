@@ -1,6 +1,8 @@
 model_type: sklearn.svm.SVC
+classifier: true
+alias: svc
 model_params:
-  kernel: rbf
+  kernel: precomputed
   probability: true
   max_iter: 1000
 _target_: deckard.model.ModelConfig
