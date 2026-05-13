@@ -748,6 +748,7 @@ class DataConfig(ConfigBase):
 
     def _sample(
         self,
+        run_hooks: bool = True,
     ):
         """
         Samples training, testing, and optionally validation indices from the loaded dataset.
@@ -770,7 +771,8 @@ class DataConfig(ConfigBase):
         ``None``), and ``self.data_sample_time``.
         Logs the time taken for sampling.
         """
-        self._run_plugin_hook("before_sample")
+        if run_hooks:
+            self._run_plugin_hook("before_sample")
         if self._X is None or self._y is None:
             raise ValueError("Data not loaded. Cannot sample.")
 
@@ -828,7 +830,8 @@ class DataConfig(ConfigBase):
             self.y_test,
             pd.Series,
         ), f"y_test must be a Series, got {type(self.y_test)}"
-        self._run_plugin_hook("after_sample")
+        if run_hooks:
+            self._run_plugin_hook("after_sample")
 
     def _load_generic_sklearn(self, loader_func, **loader_params):
         """
@@ -1372,6 +1375,7 @@ class DataPipelineConfig(DataConfig):
     """Initializes a data pipeline configuration and fits it to the data in the call() method."""
 
     pipeline: dict = field(default_factory=dict)
+    pre_sample_transform: bool = False
 
     def __post_init__(self):
         self._validate_init()
@@ -1420,6 +1424,82 @@ class DataPipelineConfig(DataConfig):
             ),
         )
 
+    def _resolve_step_config(self, step_class: str, step_config: dict) -> dict:
+        """Resolve fold-specific paths in step config for precomputed matrices.
+        
+        For StringDistanceTransformer, resolves ${data.split} placeholders in
+        distance_matrix_train and distance_matrix_test paths using self.split.
+        """
+        resolved_config = {**step_config}
+        
+        # Only process StringDistanceTransformer configs
+        if "StringDistanceTransformer" not in step_class:
+            return resolved_config
+        
+        # Resolve distance_matrix_full path if present
+        if "distance_matrix_full" in resolved_config:
+            path = resolved_config["distance_matrix_full"]
+            if isinstance(path, str) and "${data.split}" in path:
+                if self.split is not None:
+                    resolved_config["distance_matrix_full"] = path.replace(
+                        "${data.split}", str(self.split)
+                    )
+            elif isinstance(path, str) and "${item.fold}" in path:
+                if self.split is not None:
+                    resolved_config["distance_matrix_full"] = path.replace(
+                        "${item.fold}", str(self.split)
+                    )
+
+        # Resolve distance_matrix_train path if present
+        if "distance_matrix_train" in resolved_config:
+            path = resolved_config["distance_matrix_train"]
+            if isinstance(path, str) and "${data.split}" in path:
+                if self.split is not None:
+                    resolved_config["distance_matrix_train"] = path.replace(
+                        "${data.split}", str(self.split)
+                    )
+            elif isinstance(path, str) and "${item.fold}" in path:
+                if self.split is not None:
+                    resolved_config["distance_matrix_train"] = path.replace(
+                        "${item.fold}", str(self.split)
+                    )
+        
+        # Resolve distance_matrix_test path if present
+        if "distance_matrix_test" in resolved_config:
+            path = resolved_config["distance_matrix_test"]
+            if isinstance(path, str) and "${data.split}" in path:
+                if self.split is not None:
+                    resolved_config["distance_matrix_test"] = path.replace(
+                        "${data.split}", str(self.split)
+                    )
+            elif isinstance(path, str) and "${item.fold}" in path:
+                if self.split is not None:
+                    resolved_config["distance_matrix_test"] = path.replace(
+                        "${item.fold}", str(self.split)
+                    )
+        
+        return resolved_config
+
+    def _run_pre_sample_transformations(self, pipeline: Pipeline):
+        if not self.pre_sample_transform:
+            return
+        for _, step in pipeline.steps:
+            pre_sample_fit = getattr(step, "pre_sample_fit", None)
+            if callable(pre_sample_fit):
+                pre_sample_fit(self._X, y=self._y, data=self)
+
+    def _inject_sample_indices(self, pipeline: Pipeline):
+        if not hasattr(self, "train_indices") or self.train_indices is None:
+            return
+        for _, step in pipeline.steps:
+            set_split_indices = getattr(step, "set_split_indices", None)
+            if callable(set_split_indices):
+                set_split_indices(
+                    train_indices=self.train_indices,
+                    test_indices=self.test_indices,
+                    val_indices=self.val_indices,
+                )
+
     def _init_pipeline(self):
         if not isinstance(self.pipeline, (dict, DictConfig)):
             raise ValueError(f"Invalid pipeline configuration: {self.pipeline}")
@@ -1446,6 +1526,10 @@ class DataPipelineConfig(DataConfig):
                 del step_config_without_name["fit_xy"]
             if "dtype" in step_config:
                 del step_config_without_name["dtype"]
+            # Resolve fold-specific paths before instantiation
+            step_config_without_name = self._resolve_step_config(
+                step_class, step_config_without_name
+            )
             step_instance = load_class(step_class, **step_config_without_name)
             dtypes.append(dtype)
             if fit_y is not True:
@@ -1696,11 +1780,19 @@ class DataPipelineConfig(DataConfig):
             self._load_data()
             logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
         time_dict = {"data_load_time": self.data_load_time}
-        X_pipeline, y_pipeline = self._init_pipeline()
-
         if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
-            self._sample()
+            if self.pre_sample_transform:
+                self._run_plugin_hook("before_sample")
+                pre_sample_pipeline, _ = self._init_pipeline()
+                self._run_pre_sample_transformations(pre_sample_pipeline)
+                self._sample(run_hooks=False)
+                self._run_plugin_hook("after_sample")
+            else:
+                self._sample()
         time_dict["data_sample_time"] = (self.data_sample_time,)
+
+        X_pipeline, y_pipeline = self._init_pipeline()
+        self._inject_sample_indices(X_pipeline)
         # Fit X pipeline
         self.X_train, self.X_test, self.y_train, self.y_test = self._fit_transform_X(
             self.X_train,
