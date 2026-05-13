@@ -71,3 +71,20 @@ Canonical documentation lives in `docs/` and is built with Sphinx.
 - [Package overview](docs/source/modules.md)
 - [Module and extension map](docs/source/modules.md)
 - [Notebook hub](docs/notebooks/index.md)
+
+
+## Citation:
+If you find this software useful please cite us:
+
+
+```bibtex
+@software{deckard,
+  author       = {deckard team},
+  title        = {deckard},
+  year         = {2026},
+  url          = {https://github.com/simplymathematics/deckard},
+  version      = {v.98},
+  note         = {GitHub repository}
+  author+an    = {1=orcid:0000-0002-1277-9811; 2=orcid:0000-0002-0751-9695}
+}
+```

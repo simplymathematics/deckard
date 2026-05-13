@@ -74033,7 +74033,7 @@ stages:
       size: 665706
   merge_refit_datasets:
     cmd: python merge.py --big_dir output/ --little_dir output/ --data_file 
-      ddos/plots/refit_merged.csv --little_dir_data_file  
+      ddos/plots/refit_merged.csv --little_dir_data_file 
       kdd_nsl/plots/refit_merged.csv sms_spam/plots/refit_merged.csv 
       truthseeker/plots/refit_merged.csv  --output_file refit_merged.csv 
       --output_folder output/combined/plots/
@@ -74122,8 +74122,12 @@ stages:
     deps:
     - path: data_prep.py
       hash: md5
-      md5: 18244c921ed2d7cbf25b8362b3ca33aa
-      size: 5146
+      md5: 6dd5fed3f6a6f5cf2128a13551ade79b
+      size: 5228
+    - path: requirements.txt
+      hash: md5
+      md5: 6a8c73176ef1b0270b41b9677216154a
+      size: 73
     outs:
     - path: raw_data/
       hash: md5
@@ -75357,7 +75361,7 @@ stages:
       size: 20621346
   merge_search_datasets:
     cmd: python merge.py --big_dir output/ --little_dir output/ --data_file 
-      ddos/plots/search_merged.csv --little_dir_data_file  
+      ddos/plots/search_merged.csv --little_dir_data_file 
       kdd_nsl/plots/search_merged.csv sms_spam/plots/search_merged.csv 
       truthseeker/plots/search_merged.csv  --output_file search_merged.csv 
       --output_folder output/combined/plots/
@@ -75438,3 +75442,13 @@ stages:
       md5: 47553a6cfbabc722c8c921141f1e6320.dir
       size: 24627339
       nfiles: 5
+  install dependencies:
+    cmd: pip install imbalanced-learn brotli zstd Levenshtein && python -c 
+      "import imblearn, brotli, Levenshtein, importlib.metadata as md; 
+      open('requirements.txt', 'w', 
+      encoding='utf-8').write(f'imbalanced-learn=={imblearn.__version__}\\nbrotli=={brotli.__version__}\\nzstd=={md.version(\"zstd\")}\\nLevenshtein=={Levenshtein.__version__}\\n')"
+    outs:
+    - path: requirements.txt
+      hash: md5
+      md5: 6a8c73176ef1b0270b41b9677216154a
+      size: 73

@@ -24,6 +24,9 @@ from ..utils import (
     load_class,
     probabilities_from_model_outputs,
     round_scores,
+    normalize_plugin_specs,
+    instantiate_plugin_spec,
+    is_null_config_value,
 )
 
 logger = logging.getLogger(__name__)
@@ -258,17 +261,7 @@ class ModelConfig(ConfigBase):
         if not hasattr(self, "_target_") or self._target_ is None:
             self._target_ = "deckard.model.ModelConfig"
         if hasattr(self, "defense") and hasattr(self.defense, "defense_name"):
-            if self.defense.defense_name in [
-                "",
-                None,
-                "None",
-                "null",
-                "Null",
-                "NULL",
-                "none",
-                "N/A",
-                "n/a",
-            ]:
+            if is_null_config_value(self.defense.defense_name):
                 self.defense = None
         if self.classifier in ["classifier", True]:
             self.classifier = True
@@ -288,8 +281,7 @@ class ModelConfig(ConfigBase):
                 ),
             ),
         )
-        if self.plugins is None:
-            self.plugins = []
+        self.plugins = normalize_plugin_specs(self.plugins)
         if self.defense is not None:
             from .defend import DefensePipelineConfig
 
@@ -315,30 +307,11 @@ class ModelConfig(ConfigBase):
         return super().__hash__()
 
     def _instantiate_plugin(self, plugin_spec: Any):
-        if isinstance(plugin_spec, dict):
-            spec = dict(plugin_spec)
-            class_path = spec.pop("name", spec.pop("_target_", None))
-            if class_path is None:
-                raise ValueError(
-                    "Plugin dict must include 'name' or '_target_'",
-                )
-            return load_class(class_path, **spec)
-
-        if isinstance(plugin_spec, str):
-            return load_class(plugin_spec)
-
-        if isinstance(plugin_spec, type):
-            return plugin_spec()
-
-        return plugin_spec
+        return instantiate_plugin_spec(plugin_spec, loader=load_class)
 
     def _get_plugins(self) -> list:
         if self._plugin_objects is None:
-            plugin_specs = self.plugins if self.plugins is not None else []
-            if not isinstance(plugin_specs, list):
-                raise TypeError(
-                    f"plugins must be a list, got {type(plugin_specs)}",
-                )
+            plugin_specs = normalize_plugin_specs(self.plugins)
             self._plugin_objects = [
                 self._instantiate_plugin(spec) for spec in plugin_specs
             ]

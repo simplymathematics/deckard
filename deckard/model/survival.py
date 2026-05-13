@@ -47,31 +47,11 @@ AFT_MODEL_TYPES = {
 }
 
 
-@dataclass(eq=False)
-class SurvivalModelConfig(ModelConfig):
-    """Configuration for survival analysis models using lifelines.
+class _SurvivalModelInitMixin:
+    """Reusable initialization behavior for survival model configs."""
 
-    Extends ModelConfig to support AFT (Accelerated Failure Time) survival
-    models. Handles fitting, calibration scoring, and model comparison table
-    generation.
-
-    Attributes
-    ----------
-    duration_col : str
-        Column name for duration/time values.
-    event_col : str
-        Column name for event indicators.
-    survival_model : str
-        Type of survival model (e.g., "weibull", "cox").
-    t0 : float
-        Time point for calibration scoring.
-    """
-
-    classifier = False  # Survival Models are always regression models. Auxilary models may not be.
-    duration_col: str = "T"
-    event_col: str = "E"
-    survival_model: str = "weibull"
-    t0: float = 0.35
+    # Declared for static analyzers; concrete dataclass provides these fields.
+    score_dict: dict
 
     def _initialize_runtime_fields(self) -> None:
         if not hasattr(self, "score_dict") or self.score_dict is None:
@@ -96,6 +76,33 @@ class SurvivalModelConfig(ModelConfig):
     def _initialize_target(self) -> None:
         if not hasattr(self, "_target_") or self._target_ is None:
             self._target_ = "deckard.model.SurvivalModelConfig"
+
+
+@dataclass(eq=False)
+class SurvivalModelConfig(_SurvivalModelInitMixin, ModelConfig):
+    """Configuration for survival analysis models using lifelines.
+
+    Extends ModelConfig to support AFT (Accelerated Failure Time) survival
+    models. Handles fitting, calibration scoring, and model comparison table
+    generation.
+
+    Attributes
+    ----------
+    duration_col : str
+        Column name for duration/time values.
+    event_col : str
+        Column name for event indicators.
+    survival_model : str
+        Type of survival model (e.g., "weibull", "cox").
+    t0 : float
+        Time point for calibration scoring.
+    """
+
+    classifier = False  # Survival Models are always regression models. Auxilary models may not be.
+    duration_col: str = "T"
+    event_col: str = "E"
+    survival_model: str = "weibull"
+    t0: float = 0.35
 
     def __post_init__(self):
         """Initialize SurvivalModelConfig without loading a model through Hydra."""

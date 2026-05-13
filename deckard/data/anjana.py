@@ -1,65 +1,74 @@
 import inspect
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Literal, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
-from omegaconf import DictConfig, ListConfig
+from omegaconf import DictConfig
 
 from .base import DataPipelineConfig
+from .fairness import _SensitiveBehaviorMixin
 from ..utils import (
-    coerce_to_list,
     is_default_config_value,
     load_class,
-    merge_list_of_dicts,
+    safe_store,
     resolve_class,
+    normalize_plugin_specs,
+    normalize_optional_list_value as _normalize_optional_list_value,
+    normalize_optional_mapping_or_steps as _normalize_optional_mapping_or_steps,
 )
 
 
-@dataclass(eq=False)
-class AnjanaDataConfig(DataPipelineConfig):
-    """Data pipeline config with ANJANA anonymization support."""
+@dataclass
+class AnjanaDefensePlugin:
+    """Hookable ANJANA anonymization stub used by data configs."""
 
+    anjana_defense: Union[None, bool, Dict[str, Any], list] = None
     identifiers: Optional[Union[str, list]] = None
     quasi_identifiers: Optional[Union[str, list]] = None
     sensitive_attribute: Optional[str] = None
-    anjana_defense: Union[None, bool, Dict[str, Any], list] = None
-    sensitive_columns: Optional[Union[str, list]] = None
-    fairness_defense: Union[None, bool, Dict[str, Any], list] = None
     hierarchies: Optional[Dict[str, Dict[int, Any]]] = None
     hierarchy_interval_sizes: Optional[Dict[str, Union[int, list]]] = None
     hierarchy_fill_value: str = "*"
 
+    def after_load_data(self, data, **kwargs):
+        _ = kwargs
+        data._apply_anjana_defense()
+
+
+class _PrivacyBehaviorMixin:
+    """Reusable privacy behavior mixed into data pipeline configs."""
+
+    # Declared for static analyzers; concrete dataclass provides these fields.
+    anjana_defense: Union[None, bool, Dict[str, Any], list]
+    identifiers: Optional[Union[str, list]]
+    quasi_identifiers: Optional[Union[str, list]]
+    sensitive_attribute: Optional[str]
+    sensitive_columns: Optional[Union[str, list]]
+    hierarchies: Optional[Dict[str, Dict[int, Any]]]
+    hierarchy_interval_sizes: Optional[Dict[str, Union[int, list]]]
+    hierarchy_fill_value: str
+    target: Optional[str]
+    plugins: list
+
     @staticmethod
     def _normalize_optional_list(
-        value: Optional[Union[str, list, ListConfig]],
+        value: Optional[Union[str, list]],
     ) -> Optional[list]:
-        if value is None:
-            return None
-        if isinstance(value, ListConfig):
-            return list(value)
-        if isinstance(value, str):
-            return [value]
-        if isinstance(value, list):
-            return list(value)
-        raise TypeError(f"Expected optional list-like value, got {type(value)}")
+        return _normalize_optional_list_value(value, field_name="optional_list")
 
     @staticmethod
     def _normalize_optional_mapping_or_steps(
-        value: Union[None, bool, Dict[str, Any], list, ListConfig],
+        value: Union[None, bool, Dict[str, Any], list],
         *,
         field_name: str,
     ) -> Union[None, bool, Dict[str, Any]]:
-        if isinstance(value, (list, ListConfig)):
-            return merge_list_of_dicts(coerce_to_list(value))
-        if value in [None, False, True]:
-            return value
-        if isinstance(value, DictConfig):
-            return dict(value)
-        if isinstance(value, dict):
-            return dict(value)
-        raise TypeError(
-            f"{field_name} must be None, bool, dict/DictConfig, or list/ListConfig. Got {type(value)}",
+        return cast(
+            Union[None, bool, Dict[str, Any]],
+            _normalize_optional_mapping_or_steps(
+                value,
+                field_name=field_name,
+            ),
         )
 
     def _before_post_init(self) -> None:
@@ -67,25 +76,34 @@ class AnjanaDataConfig(DataPipelineConfig):
             self.anjana_defense,
             field_name="anjana_defense",
         )
-        self.fairness_defense = self._normalize_optional_mapping_or_steps(
-            self.fairness_defense,
-            field_name="fairness_defense",
-        )
         self.identifiers = self._normalize_optional_list(self.identifiers)
         self.quasi_identifiers = self._normalize_optional_list(self.quasi_identifiers)
         self.sensitive_columns = self._normalize_optional_list(self.sensitive_columns)
         if isinstance(self.hierarchy_interval_sizes, DictConfig):
             self.hierarchy_interval_sizes = dict(self.hierarchy_interval_sizes)
-
-    def __post_init__(self):
-        # Support test patterns that call __post_init__ directly on bare instances.
-        self._before_post_init()
-        if is_default_config_value(self.scorer, include_best=False):
-            self.scorer = load_class(
-                "deckard.score.anjana.DefaultAnjanaScoreConfig",
+        self.plugins = normalize_plugin_specs(self.plugins)
+        if any(
+            value is not None
+            for value in (
+                self.anjana_defense,
+                self.sensitive_columns,
             )
-        super().__post_init__()
-        self._validate_init()
+        ):
+            self.plugins = cast(
+                list,
+                [
+                    AnjanaDefensePlugin(
+                        anjana_defense=self.anjana_defense,
+                        identifiers=self.identifiers,
+                        quasi_identifiers=self.quasi_identifiers,
+                        sensitive_attribute=self.sensitive_attribute,
+                        hierarchies=self.hierarchies,
+                        hierarchy_interval_sizes=self.hierarchy_interval_sizes,
+                        hierarchy_fill_value=self.hierarchy_fill_value,
+                    ),
+                    *self.plugins,
+                ],
+            )
 
     @staticmethod
     def _format_interval_label(lower, upper) -> str:
@@ -181,92 +199,6 @@ class AnjanaDataConfig(DataPipelineConfig):
             return self.target
         return "__deckard_target__"
 
-    def _sensitive_labels_from_frame(self, frame: pd.DataFrame) -> pd.Series:
-        cols = self.sensitive_columns
-        if isinstance(cols, str):
-            cols = [cols]
-        if cols is None:
-            raise ValueError("sensitive_columns must be configured")
-        if len(cols) == 1:
-            return frame[cols[0]].astype(str)
-        labels_df = frame[cols].astype(str)
-        return labels_df.apply(lambda row: tuple(row.values.tolist()), axis=1)
-
-    def _validate_sensitive_runtime(
-        self,
-        sensitive: pd.Series,
-        context: str,
-    ) -> pd.Series:
-        sensitive_series = pd.Series(sensitive)
-        if len(sensitive_series) == 0:
-            raise ValueError(f"Sensitive features are empty during {context}")
-        if sensitive_series.dropna().empty:
-            raise ValueError(
-                f"Sensitive features are all null during {context}",
-            )
-        if sensitive_series.astype(str).str.strip().eq("").all():
-            raise ValueError(f"Sensitive features are blank during {context}")
-        return sensitive_series
-
-    def _inject_fairness_defense_step(self) -> None:
-        """Inject fairlearn preprocessing into the data pipeline when configured."""
-        if self.fairness_defense in [None, False]:
-            return
-        if self.fairness_defense is True:
-            raise ValueError(
-                "fairness_defense=True is ambiguous. Provide a config dict with at least a 'name' key.",
-            )
-        if not isinstance(self.fairness_defense, (dict, DictConfig)):
-            raise TypeError(
-                "fairness_defense must be a dict/DictConfig, False, or None. "
-                f"Got {type(self.fairness_defense)}",
-            )
-        if self.sensitive_columns is None:
-            raise ValueError(
-                "sensitive_columns must be configured when fairness_defense is set",
-            )
-        if (
-            not hasattr(self, "_X")
-            or self._X is None
-            or not isinstance(self._X, pd.DataFrame)
-        ):
-            return
-
-        sensitive_columns = [
-            col for col in self.sensitive_columns if col in self._X.columns
-        ]
-        if not sensitive_columns:
-            raise RuntimeError(
-                f"Sensitive features not found for {self.sensitive_columns}.",
-            )
-
-        step_config: Dict[str, Any] = {
-            "sensitive_feature_ids": list(sensitive_columns),
-        }
-        step_name = "fairness_correlation_remover"
-        custom = dict(self.fairness_defense)
-        step_name = custom.pop("step_name", step_name)
-        step_config.update(custom)
-        if "name" not in step_config:
-            raise ValueError(
-                "fairness_defense config must include a 'name' key",
-            )
-
-        if step_name in self.pipeline:
-            return
-
-        self.pipeline = {step_name: step_config, **self.pipeline}
-
-    def _build_anjana_frame(self) -> pd.DataFrame:
-        if not isinstance(getattr(self, "_X", None), pd.DataFrame):
-            raise TypeError(
-                "ANJANA data defense requires tabular pandas DataFrame inputs",
-            )
-        frame = self._X.copy()
-        target_col = self._resolve_anjana_target_column()
-        frame[target_col] = pd.Series(self._y).values
-        return frame
-
     def _apply_anjana_defense(self) -> None:
         if self.anjana_defense in [None, False]:
             return
@@ -313,8 +245,6 @@ class AnjanaDataConfig(DataPipelineConfig):
                 self.generate_anjana_hierarchy_dict(frame=frame),
             )
 
-        # ANJANA defenses expose different signatures; keep only supported kwargs
-        # unless the callable accepts arbitrary keyword arguments.
         signature = inspect.signature(defense_fn)
         supports_var_kwargs = any(
             p.kind == inspect.Parameter.VAR_KEYWORD
@@ -342,7 +272,6 @@ class AnjanaDataConfig(DataPipelineConfig):
 
         target_col = self._resolve_anjana_target_column()
         if target_col not in transformed.columns:
-            # Fallback: retain labels by index overlap when target column is removed.
             retained_index = transformed.index.intersection(frame.index)
             transformed = transformed.loc[retained_index].copy()
             self._y = pd.Series(self._y, index=frame.index).loc[retained_index]
@@ -352,69 +281,134 @@ class AnjanaDataConfig(DataPipelineConfig):
 
         self._X = transformed
 
-    def _load_data(self):
-        super()._load_data()
-        self._apply_anjana_defense()
-        return self
-
-    def _init_pipeline(self):
-        self._inject_fairness_defense_step()
-        return super()._init_pipeline()
-
-    def _sample(self):
-        super()._sample()
-        if self.sensitive_columns is None:
-            return
-        self._sensitive_train = self._sensitive_labels_from_frame(self.X_train)
-        self._sensitive_test = self._sensitive_labels_from_frame(self.X_test)
-        self._sensitive_all = self._sensitive_labels_from_frame(self._X)
-        self._sensitive_train = self._validate_sensitive_runtime(
-            self._sensitive_train,
-            "train sampling",
-        )
-        self._sensitive_test = self._validate_sensitive_runtime(
-            self._sensitive_test,
-            "test sampling",
-        )
-        self._sensitive_all = self._validate_sensitive_runtime(
-            self._sensitive_all,
-            "full-data sampling",
-        )
-        # Compute sensitive labels for the validation split when present.
-        if getattr(self, "X_val", None) is not None:
-            self._sensitive_val = self._sensitive_labels_from_frame(self.X_val)
-            self._sensitive_val = self._validate_sensitive_runtime(
-                self._sensitive_val,
-                "val sampling",
+    def _build_anjana_frame(self) -> pd.DataFrame:
+        frame = getattr(self, "_X", None)
+        if not isinstance(frame, pd.DataFrame):
+            raise TypeError(
+                "ANJANA data defense requires tabular pandas DataFrame inputs",
             )
-        else:
-            self._sensitive_val = None
+        frame = frame.copy()
+        target_col = self._resolve_anjana_target_column()
+        frame[target_col] = pd.Series(self._y).values
+        return frame
 
-    def _score(self) -> dict:
+
+@dataclass(eq=False)
+class AnjanaDataConfig(_PrivacyBehaviorMixin, _SensitiveBehaviorMixin, DataPipelineConfig):
+    """Data pipeline config with ANJANA anonymization support."""
+
+    identifiers: Optional[Union[str, list]] = None
+    quasi_identifiers: Optional[Union[str, list]] = None
+    sensitive_attribute: Optional[str] = None
+    anjana_defense: Union[None, bool, Dict[str, Any], list] = None
+    sensitive_columns: Optional[Union[str, list]] = None
+    fairness_defense: Union[None, bool, Dict[str, Any], list] = None
+    hierarchies: Optional[Dict[str, Dict[int, Any]]] = None
+    hierarchy_interval_sizes: Optional[Dict[str, Union[int, list]]] = None
+    hierarchy_fill_value: str = "*"
+
+    def __post_init__(self):
+        # Support test patterns that call __post_init__ directly on bare instances.
+        self._before_post_init()
         if is_default_config_value(self.scorer, include_best=False):
             self.scorer = load_class(
                 "deckard.score.anjana.DefaultAnjanaDataScoreConfig",
             )
-        if self.scorer is None:
-            return {}
-        if not callable(self.scorer):
-            raise TypeError(
-                f"AnjanaDataConfig.scorer must be callable or None, got {type(self.scorer)}",
+        super().__post_init__()
+        self._validate_init()
+
+    def __call__(self, *args, **kwargs):
+        if (
+            is_default_config_value(self.scorer, include_best=False)
+            or self.scorer is None
+        ):
+            self.scorer = load_class(
+                "deckard.score.anjana.DefaultAnjanaDataScoreConfig",
             )
-        y_true = (
-            self.y_train if getattr(self, "y_train", None) is not None else self._y
-        )
-        y_pred = (
-            self.X_train if getattr(self, "X_train", None) is not None else self._X
-        )
-        raw_scores = self.scorer(
-            y_true=y_true,
-            y_pred=y_pred,
-            mode=None,
-            data=self,
-        )
-        if not isinstance(raw_scores, dict):
-            raise TypeError(
-                f"AnjanaDataConfig.scorer must return a dict, got {type(raw_scores)}",
+        return DataPipelineConfig.__call__(self, *args, **kwargs)
+
+    def _load_data(self):
+        return super()._load_data()
+
+    def _init_pipeline(self):
+        return super()._init_pipeline()
+
+    def _score(
+        self,
+        mode: Optional[Literal["train", "test", "val", "pre-sample"]] = None,
+        **kwargs,
+    ) -> dict:
+        if is_default_config_value(self.scorer, include_best=False):
+            self.scorer = load_class(
+                "deckard.score.anjana.DefaultAnjanaDataScoreConfig",
             )
-        return dict(raw_scores)
+        if mode is None:
+            return super()._score(**kwargs)
+        return super()._score(mode=mode, **kwargs)
+
+
+ANJANA_DATA = {
+    "dataset_name": "make_classification",
+    "data_params": {
+        "n_samples": 1000,
+        "n_features": 20,
+        "n_informative": 15,
+        "n_redundant": 5,
+        "n_classes": 2,
+        "random_state": 42,
+    },
+    "test_size": 0.2,
+    "random_state": 42,
+    "classifier": True,
+    "alias": "anjana",
+    "sample": "split",
+    "quasi_identifiers": ["feature_0", "feature_1"],
+    "sensitive_attribute": "target",
+    "sensitive_columns": ["feature_0"],
+    "hierarchy_interval_sizes": {"feature_0": [1, 2], "feature_1": [1, 2]},
+    "_target_": "deckard.data.anjana.AnjanaDataConfig",
+}
+
+ANJANA_DIABETES = {
+    "dataset_name": "load_diabetes",
+    "data_params": {
+        "as_frame": True,
+    },
+    "test_size": 0.2,
+    "random_state": 42,
+    "classifier": False,
+    "alias": "anjana-diabetes",
+    "sample": "split",
+    "quasi_identifiers": ["age", "sex"],
+    "sensitive_attribute": "sex",
+    "sensitive_columns": ["sex"],
+    "hierarchy_interval_sizes": {"age": [5, 10]},
+    "_target_": "deckard.data.anjana.AnjanaDataConfig",
+}
+
+ANJANA_ADULT = {
+    "dataset_name": "fetch_openml",
+    "data_params": {
+        "name": "adult",
+        "version": 2,
+        "as_frame": True,
+        "parser": "auto",
+    },
+    "test_size": 0.2,
+    "random_state": 42,
+    "classifier": True,
+    "alias": "anjana-adult",
+    "sample": "split",
+    "quasi_identifiers": ["age", "education-num"],
+    "sensitive_attribute": "race",
+    "sensitive_columns": ["race", "sex"],
+    "hierarchy_interval_sizes": {"age": [5, 10], "education-num": [2, 4]},
+    "_target_": "deckard.data.anjana.AnjanaDataConfig",
+}
+
+safe_store(group="data", name="anjana", node=ANJANA_DATA)
+safe_store(group="search/data", name="anjana", node=ANJANA_DATA)
+safe_store(group="data", name="anjana-diabetes", node=ANJANA_DIABETES)
+safe_store(group="search/data", name="anjana-diabetes", node=ANJANA_DIABETES)
+safe_store(group="data", name="anjana-adult", node=ANJANA_ADULT)
+safe_store(group="search/data", name="anjana-adult", node=ANJANA_ADULT)

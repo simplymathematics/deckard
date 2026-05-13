@@ -29,15 +29,15 @@ except ImportError:
     nn_module = None
 
 
-class _FairnessBehaviorMixin:
+class _SensitiveBehaviorMixin:
     """Model/defense mixin for explicit fairness-aware training and scoring."""
 
     data: Any = None
     _model: Any = None
     scorer: Union[ScorerDictConfig, str, None] = None
-    classifier: bool = False
+    classifier: Any = False
     probability: bool = False
-    fit_params: dict = None
+    fit_params: Any = None
 
     def _resolve_runtime_sensitive_source(self, split: str):
         if split == "train":
@@ -79,11 +79,11 @@ class _FairnessBehaviorMixin:
             raise ValueError(f"Sensitive features are blank during {context}")
         return sensitive_series
 
-    def _infer_split_from_batch(self, batch, scoring_mode: str = None):
-        """
-        Determine the split name for a batch, using an explicit scoring_mode only.
-        scoring_mode (str): Must be one of 'train', 'test', 'val', or 'all'. No fallback or inference.
-        """
+    def _infer_split_from_batch(
+        self,
+        batch,
+        scoring_mode: Optional[str] = None,
+    ):
         valid_splits = {"train", "test", "val", "all"}
         if scoring_mode is None:
             raise ValueError(
@@ -101,17 +101,11 @@ class _FairnessBehaviorMixin:
         split: Optional[str] = None,
         scoring_mode: Optional[str] = None,
     ):
-        """
-        Resolve sensitive features for a batch, using an explicit split or scoring_mode if provided.
-        scoring_mode (str): Explicit split name ('train', 'test', 'all'). If provided, overrides split and inference.
-        split (str): Legacy/compatibility; if provided, used if scoring_mode is not set.
-        """
-        if self.data is None:
+        if getattr(self, "data", None) is None:
             return None
 
         n_rows = len(batch)
         batch_index = getattr(batch, "index", None)
-        # scoring_mode takes precedence, then split, then inference
         resolved_split = scoring_mode or split or self._infer_split_from_batch(batch)
         if resolved_split is None:
             return None
@@ -146,6 +140,17 @@ class _FairnessBehaviorMixin:
         ):
             return method(X, sensitive_features=sensitive)
         return method(X)
+
+    def _move_torch_model_to_device(self, model_obj, device):
+        _ = device
+        return model_obj
+
+    def get_model(self) -> BaseEstimator:
+        if self._model is None:
+            raise ValueError("Model is not fitted yet.")
+        if hasattr(self._model, "model"):
+            return self._model.model
+        return self._model
 
     def _fit_defended_estimator(self, defended_estimator, data):
         if data is None or not hasattr(defended_estimator, "fit"):
@@ -226,16 +231,19 @@ class _FairnessBehaviorMixin:
             if "_target_" in spec:
                 target = spec.get("_target_")
                 kwargs = {k: v for k, v in spec.items() if k != "_target_"}
-                obj = load_class(target, **kwargs)
-                if hasattr(obj, "get_model") and callable(obj.get_model):
-                    try:
-                        return obj.get_model()
-                    except Exception:
-                        return obj
-                return obj
+                if isinstance(target, str):
+                    obj = load_class(target, **kwargs)
+                    get_model = getattr(obj, "get_model", None)
+                    if callable(get_model):
+                        try:
+                            return get_model()
+                        except Exception:
+                            return obj
+                    return obj
         if isinstance(spec, ConfigBase):
-            if hasattr(spec, "get_model") and callable(spec.get_model):
-                return spec.get_model()
+            get_model = getattr(spec, "get_model", None)
+            if callable(get_model):
+                return get_model()
             spec_dict = spec.to_dict()
             target = spec_dict.get("model_type")
             params = spec_dict.get("model_params", {})
@@ -328,7 +336,6 @@ class _FairnessBehaviorMixin:
                 fallback=base_estimator,
             )
             predictor_model = FairlearnDefenseConfig._adapt_binary_torch_predictor(
-                self,
                 predictor_model,
                 data,
             )
@@ -372,7 +379,7 @@ class _FairnessBehaviorMixin:
         self.training_n = len(y)
         logger.info(f"Model trained in {self.training_time:.2f} seconds")
 
-    def _predict(self, X: pd.DataFrame) -> pd.Series:
+    def _predict(self, X: pd.DataFrame) -> Any:
         if self._model is None:
             raise ValueError("Model not initialized")
         sensitive = self._resolve_sensitive_features_for_batch(X, split="test")
@@ -394,7 +401,7 @@ class _FairnessBehaviorMixin:
                 )
             raise
 
-    def _predict_proba(self, X: pd.DataFrame) -> pd.DataFrame:
+    def _predict_proba(self, X: pd.DataFrame) -> Any:
         if self._model is None:
             raise ValueError("Model not initialized")
         sensitive = self._resolve_sensitive_features_for_batch(X, split="test")
@@ -427,11 +434,13 @@ class _FairnessBehaviorMixin:
                 self.scorer = DefaultFairlearnRegressionConfig()
             else:
                 self.scorer = DefaultFairlearnClassificationConfig()
-        super().__post_init__()
+        super_post_init = getattr(super(), "__post_init__", None)
+        if callable(super_post_init):
+            super_post_init()
 
 
 @dataclass(eq=False)
-class FairlearnModelConfig(_FairnessBehaviorMixin, ModelConfig):
+class FairlearnModelConfig(_SensitiveBehaviorMixin, ModelConfig):
     """Fairness-aware model config for sklearn models.
 
     Inherits sklearn training/prediction from ModelConfig and adds
@@ -443,7 +452,7 @@ class FairlearnModelConfig(_FairnessBehaviorMixin, ModelConfig):
 
 
 @dataclass(eq=False)
-class FairlearnPytorchModelConfig(_FairnessBehaviorMixin, PytorchModelConfig):
+class FairlearnPytorchModelConfig(_SensitiveBehaviorMixin, PytorchModelConfig):
     """Fairness-aware model config for PyTorch models.
 
     Inherits all torch training/prediction/defense from PytorchModelConfig
@@ -487,7 +496,7 @@ class BinaryLogitAdapter:
 
 
 @dataclass(eq=False)
-class FairlearnDefenseConfig(_FairnessBehaviorMixin, DefenseConfig):
+class FairlearnDefenseConfig(_SensitiveBehaviorMixin, DefenseConfig):
     """Fairness-aware defense config that inherits DefenseConfig."""
 
     data: Union[FairlearnDataConfig, None] = None
@@ -498,7 +507,8 @@ class FairlearnDefenseConfig(_FairnessBehaviorMixin, DefenseConfig):
             return super().apply_defense(data)
         return self._apply_fairlearn_defense(data)
 
-    def _adapt_binary_torch_predictor(self, predictor_model, data):
+    @staticmethod
+    def _adapt_binary_torch_predictor(predictor_model, data):
         """
         Fairlearn binary classification expects a single-score predictor output.
         This adapts a PyTorch model to output a single logit if needed.
@@ -525,7 +535,11 @@ class FairlearnDefenseConfig(_FairnessBehaviorMixin, DefenseConfig):
             if np.unique(y_values).size != 2:
                 return predictor_model
 
-        if not self._needs_wrap_predictor(predictor_model, data, torch_module):
+        if not FairlearnDefenseConfig._needs_wrap_predictor(
+            predictor_model,
+            data,
+            torch_module,
+        ):
             return predictor_model
 
         return BinaryLogitAdapter(predictor_model, nn_module)
@@ -536,7 +550,11 @@ class FairlearnDefenseConfig(_FairnessBehaviorMixin, DefenseConfig):
         if num_classes == 2:
             return True
         x_train = getattr(data, "X_train", None)
-        if not isinstance(x_train, torch_module.Tensor) or len(x_train) == 0:
+        if (
+            x_train is None
+            or not isinstance(x_train, torch_module.Tensor)
+            or len(x_train) == 0
+        ):
             return False
         try:
             with torch_module.no_grad():

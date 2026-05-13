@@ -1,0 +1,3 @@
+export DECKARD_CONFIG_DIR=./config
+export DECKARD_DEFAULT_CONFIG_FILE=default.yaml
+export HYDRA_FULL_ERROR=1

@@ -20,38 +20,16 @@ class LifelinesDataMode(str, Enum):
     OPTUNA_DB = "optuna_db"
 
 
-@dataclass(eq=False)
-class LifelinesDataConfig(DataConfig):
-    """DataConfig specialization for survival analysis with explicit mode handling.
+class _LifelinesValidationMixin:
+    """Reusable validation behavior for lifelines-compatible configs."""
 
-    Attributes
-    ----------
-    mode : LifelinesDataMode
-        The survival data mode (NATIVE, AUXILIARY_MODEL, AUXILIARY_ATTACK, OPTUNA_DB).
-    duration_col : str
-        Column name for duration/time values. Required for NATIVE mode.
-    event_col : str
-        Column name for event indicators. Required for NATIVE mode.
-    benign_metric : str
-        Metric to use for benign failures. Used in AUXILIARY_MODEL mode.
-    attack_config : Optional[dict]
-        Attack configuration. Used in AUXILIARY_ATTACK mode.
-    optuna_db : Optional[str]
-        Path to Optuna database. Used in OPTUNA_DB mode.
-    optuna_schema : Optional[Union[str, dict]]
-        Optional Optuna schema filter.
-    optuna_query : Optional[str]
-        Optional Optuna query to filter results.
-    """
-
-    mode: LifelinesDataMode = field(default=LifelinesDataMode.NATIVE)
-    duration_col: str = "T"
-    event_col: str = "E"
-    benign_metric: str = "accuracy"
-    attack_config: Optional[dict] = None
-    optuna_db: Optional[str] = None
-    optuna_schema: Optional[Union[str, dict]] = None
-    optuna_query: Optional[str] = None
+    # Declared for static analyzers; concrete dataclass provides these fields.
+    mode: "LifelinesDataMode"
+    duration_col: str
+    event_col: str
+    benign_metric: str
+    attack_config: Optional[dict]
+    optuna_db: Optional[str]
 
     def _validate_native_mode(self) -> None:
         if self.duration_col in [None, ""]:
@@ -84,6 +62,40 @@ class LifelinesDataConfig(DataConfig):
             self._validate_auxiliary_attack_mode()
         elif self.mode == LifelinesDataMode.OPTUNA_DB:
             self._validate_optuna_db_mode()
+
+
+@dataclass(eq=False)
+class LifelinesDataConfig(_LifelinesValidationMixin, DataConfig):
+    """DataConfig specialization for survival analysis with explicit mode handling.
+
+    Attributes
+    ----------
+    mode : LifelinesDataMode
+        The survival data mode (NATIVE, AUXILIARY_MODEL, AUXILIARY_ATTACK, OPTUNA_DB).
+    duration_col : str
+        Column name for duration/time values. Required for NATIVE mode.
+    event_col : str
+        Column name for event indicators. Required for NATIVE mode.
+    benign_metric : str
+        Metric to use for benign failures. Used in AUXILIARY_MODEL mode.
+    attack_config : Optional[dict]
+        Attack configuration. Used in AUXILIARY_ATTACK mode.
+    optuna_db : Optional[str]
+        Path to Optuna database. Used in OPTUNA_DB mode.
+    optuna_schema : Optional[Union[str, dict]]
+        Optional Optuna schema filter.
+    optuna_query : Optional[str]
+        Optional Optuna query to filter results.
+    """
+
+    mode: LifelinesDataMode = field(default=LifelinesDataMode.NATIVE)
+    duration_col: str = "T"
+    event_col: str = "E"
+    benign_metric: str = "accuracy"
+    attack_config: Optional[dict] = None
+    optuna_db: Optional[str] = None
+    optuna_schema: Optional[Union[str, dict]] = None
+    optuna_query: Optional[str] = None
 
     def __post_init__(self):
         """Validate mode-specific requirements."""

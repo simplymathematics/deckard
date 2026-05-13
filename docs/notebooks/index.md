@@ -10,23 +10,26 @@ snippets. Most notebooks follow a similar shape:
 3. Inspect metrics and generated artifacts.
 4. Adapt one configuration axis (model, attack, scorer, sampler) and rerun.
 
+```{note}
 For reproducibility in CI and local testing, notebooks are also wired into DVC
 stages. When validating notebook updates, prefer forced stage execution for
 changed notebooks to avoid stale cached outputs.
+```
 
 ## Core Workflows
 
 - [sklearn](sklearn) - End-to-end sklearn experiments.
 - [pytorch](pytorch) - End-to-end PyTorch experiments.
+
+## Fair Models and Group Scoring
 - [fairlearn](fairlearn) - Fairness-aware data/model/score workflows.
 
 ## Security and Robustness
-
 - [art_attacks](art_attacks) - Adversarial attack workflows.
 - [art_defenses](art_defenses) - Defense pipeline workflows.
 - [detector](detector) - Detector training and evaluation workflows.
 
-## Privacy 
+## Privacy-aware models and metrics
 - [anjana](anjana) - Anjana anonymization-aware workflows.
 
 ## Visualization
@@ -40,15 +43,14 @@ For general onboarding:
 1. [sklearn](sklearn)
 2. [pytorch](pytorch)
 3. [fairlearn](fairlearn)
+4. [anjana](anjana)
 
 For robustness-first users:
-
 1. [art_attacks](art_attacks)
 2. [art_defenses](art_defenses)
 3. [detector](detector)
 
-For reporting and diagnostics:
-
+For reporting, explainability, and diagnostics:
 1. [seaborn](seaborn)
 2. [yellowbrick](yellowbrick)
 

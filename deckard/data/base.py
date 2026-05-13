@@ -1,5 +1,6 @@
 # Imports
 import os
+import copy
 import pandas as pd
 import time
 import logging
@@ -7,8 +8,8 @@ import importlib
 from pathlib import Path
 
 from dataclasses import dataclass, field
-from typing import Any, Literal, Tuple, Union
-from omegaconf import DictConfig
+from typing import Any, Literal, Tuple, Union, Optional
+from omegaconf import DictConfig, ListConfig
 
 import numpy as np
 
@@ -40,6 +41,8 @@ from ..utils import (
     load_class,
     coerce_to_list,
     merge_list_of_dicts,
+    normalize_plugin_specs,
+    instantiate_plugin_spec,
 )
 
 # Setup logger
@@ -100,6 +103,84 @@ def _yellowbrick_dataset_loaders() -> dict:
 
 
 SUPPORTED_DATA_SCORING_MODES = ["train", "test", "val", "pre-sample"]
+
+
+class _DataPipelineMixin:
+    """Reusable pipeline application behavior mixed into data pipeline configs."""
+
+    def declares_hook(self, hook_name: str) -> bool:
+        return self._pipeline_declares_hook(hook_name)
+
+    def apply_to(self, data: "DataConfig", mode: str = None, **kwargs):
+        """Apply this pipeline config to a data config instance."""
+        runtime = copy.copy(self)
+        runtime.__dict__.update(data.__dict__)
+        runtime.plugins = list(getattr(data, "plugins", []) or [])
+
+        if not hasattr(runtime, "data_load_time") or runtime.data_load_time is None:
+            runtime._load_data()
+
+        run_before_sample_pipeline = runtime.pre_sample_transform or runtime._pipeline_declares_hook(
+            "before_sample",
+        )
+        if run_before_sample_pipeline:
+            runtime._run_plugin_hook("before_sample")
+            pre_sample_pipeline, _ = runtime._init_pipeline()
+            runtime._run_pre_sample_transformations(
+                pre_sample_pipeline,
+                force=run_before_sample_pipeline,
+            )
+            runtime._sample(run_hooks=False)
+            runtime._run_plugin_hook("after_sample")
+        else:
+            runtime._sample()
+
+        X_pipeline, y_pipeline = runtime._init_pipeline()
+        runtime._inject_sample_indices(X_pipeline)
+        runtime.X_train, runtime.X_test, runtime.y_train, runtime.y_test = (
+            runtime._fit_transform_X(
+                runtime.X_train,
+                runtime.X_test,
+                runtime.y_train,
+                runtime.y_test,
+                X_pipeline,
+            )
+        )
+        if getattr(runtime, "X_val", None) is not None and X_pipeline.steps:
+            if isinstance(runtime.X_val, pd.DataFrame):
+                val_cols = runtime.X_val.columns
+            elif isinstance(runtime.X_val, pd.Series):
+                val_cols = [runtime.X_val.name]
+            else:
+                val_cols = [f"feature_{i}" for i in range(runtime.X_val.shape[1])]
+            X_val_transformed = X_pipeline.transform(runtime.X_val)
+            from scipy.sparse import issparse
+
+            if issparse(X_val_transformed):
+                X_val_transformed = X_val_transformed.toarray()
+            try:
+                val_cols_out = list(X_pipeline.get_feature_names_out(val_cols))
+            except AttributeError:
+                n_features = X_val_transformed.shape[1]
+                val_cols_out = (
+                    list(val_cols)
+                    if len(val_cols) == n_features
+                    else [f"feature_{i}" for i in range(n_features)]
+                )
+            runtime.X_val = pd.DataFrame(X_val_transformed, columns=val_cols_out)
+        if y_pipeline is not None:
+            runtime.X_train, runtime.X_test, runtime.y_train, runtime.y_test = (
+                runtime._fit_transform_y(
+                    runtime.X_train,
+                    runtime.X_test,
+                    runtime.y_train,
+                    runtime.y_test,
+                    y_pipeline,
+                )
+            )
+
+        runtime._copy_runtime_state_to(data)
+        return data
 
 
 @dataclass(eq=False)
@@ -374,6 +455,38 @@ class DataConfig(ConfigBase):
 
         self._y = self._y.iloc[:sample_cap].copy()
 
+    def _copy_runtime_state_to(self, target) -> None:
+        runtime_fields = [
+            "score_dict",
+            "data_load_time",
+            "data_sample_time",
+            "_X",
+            "_y",
+            "train_indices",
+            "test_indices",
+            "val_indices",
+            "X_train",
+            "y_train",
+            "X_test",
+            "y_test",
+            "X_val",
+            "y_val",
+            "train_n",
+            "test_n",
+            "val_n",
+            "pipeline_fit_n",
+            "pipeline_transform_n",
+            "pipeline_fit_time",
+            "pipeline_transform_time",
+            "pipeline_y_fit_n",
+            "pipeline_y_fit_time",
+            "pipeline_y_transform_n",
+            "pipeline_y_transform_time",
+        ]
+        for attr in runtime_fields:
+            if hasattr(self, attr):
+                setattr(target, attr, getattr(self, attr, None))
+
     def __post_init__(self):
         self._validate_init()
         self.scorer = _coerce_scorer_config(
@@ -398,30 +511,11 @@ class DataConfig(ConfigBase):
         return self._y
 
     def _instantiate_plugin(self, plugin_spec: Any):
-        if isinstance(plugin_spec, dict):
-            spec = dict(plugin_spec)
-            class_path = spec.pop("name", spec.pop("_target_", None))
-            if class_path is None:
-                raise ValueError(
-                    "Plugin dict must include 'name' or '_target_'",
-                )
-            return load_class(class_path, **spec)
-
-        if isinstance(plugin_spec, str):
-            return load_class(plugin_spec)
-
-        if isinstance(plugin_spec, type):
-            return plugin_spec()
-
-        return plugin_spec
+        return instantiate_plugin_spec(plugin_spec, loader=load_class)
 
     def _get_plugins(self) -> list:
         if not hasattr(self, "_plugin_objects") or self._plugin_objects is None:
-            plugin_specs = self.plugins if self.plugins is not None else []
-            if not isinstance(plugin_specs, list):
-                raise TypeError(
-                    f"plugins must be a list, got {type(plugin_specs)}",
-                )
+            plugin_specs = normalize_plugin_specs(self.plugins)
             self._plugin_objects = [
                 self._instantiate_plugin(spec) for spec in plugin_specs
             ]
@@ -1139,6 +1233,7 @@ class DataConfig(ConfigBase):
     def _score(
         self,
         mode: Literal["train", "test", "val", "pre-sample"] = None,
+        **kwargs,
     ) -> dict:
         """
         Delegates all dataset scoring to ``self.scorer``. Supports pre-sample mode (raw data, only in DataConfig),
@@ -1180,12 +1275,22 @@ class DataConfig(ConfigBase):
             y_pred=y_pred,
             mode=scorer_mode,
             data=self,
+            **kwargs,
         )
         plugin_scores = self._run_plugin_hook("after_score", scores=result_dict)
         for plugin_score in plugin_scores:
             if isinstance(plugin_score, dict):
                 result_dict.update(plugin_score)
         return result_dict
+
+    def apply_pipeline(self, pipeline) -> "DataConfig":
+        """Attach a pipeline-like plugin object to this data config."""
+        if pipeline is None:
+            return self
+        pipeline_plugins = [pipeline] if not isinstance(pipeline, list) else list(pipeline)
+        existing_plugins = list(self.plugins or [])
+        self.plugins = [*pipeline_plugins, *existing_plugins]
+        return self
 
     def _compute_class_counts(self, y: pd.Series) -> dict:
         if isinstance(y, pd.Series):
@@ -1369,9 +1474,97 @@ class DataConfig(ConfigBase):
             self.save(data_file)
         return self.score_dict
 
+@dataclass
+class DataPipelineStep:
+    """
+    Represents a step in a data pipeline with optional metadata.
+    
+    This dataclass normalizes and documents the optional parameters that
+    configure how a step integrates with the pipeline runtime.
+    
+    Attributes
+    ----------
+    name : str
+        Fully-qualified class name or file path (e.g., "sklearn.preprocessing.StandardScaler"
+        or "path/to/custom.py:CustomTransformer").
+    fit_y : bool, default=False
+        If True, this step is applied to the target (y) rather than features (X).
+        Only one of fit_y or fit_xy can be True.
+    dtype : str, optional
+        Column selector hint for ColumnTransformer. Supported values: "numeric",
+        "num", "float", "int", "object", "string", "category". When specified,
+        only columns of matching dtype are passed to this step.
+    plugin_hook : str | list[str], optional
+        Hook name(s) that trigger when this step runs. Supported hooks:
+        - "before_sample": Run this step's pre_sample_fit before KFold sampling.
+    """
+    
+    name: str
+    fit_y: bool = False
+    dtype: Optional[str] = None
+    plugin_hook: Union[str, list, None] = None
+    
+    @classmethod
+    def from_config(cls, step_name: str, step_config: dict) -> "DataPipelineStep":
+        """
+        Extract DataPipelineStep from a pipeline step config dict.
+        
+        Parameters
+        ----------
+        step_name : str
+            Name of the step (key in pipeline.steps dict).
+        step_config : dict
+            Configuration dict for the step.
+            
+        Returns
+        -------
+        DataPipelineStep
+            Parsed step metadata.
+            
+        Raises
+        ------
+        ValueError
+            If "name" key is missing or if both fit_y and fit_xy are True.
+        """
+        step_class = step_config.get("name")
+        if step_class is None:
+            raise ValueError(f"Step {step_name} missing required 'name' key")
+        
+        fit_y = step_config.get("fit_y", False)
+        fit_xy = step_config.get("fit_xy", False)
+        
+        if fit_xy is True:
+            raise ValueError("fit_xy pipeline steps are no longer supported.")
+        
+        return cls(
+            name=step_class,
+            fit_y=fit_y,
+            dtype=step_config.get("dtype", None),
+            plugin_hook=step_config.get("plugin_hook", None),
+        )
+    
+    def stripped_config(self, step_config: dict) -> dict:
+        """
+        Remove DataPipelineStep metadata from a step config dict.
+        
+        Parameters
+        ----------
+        step_config : dict
+            Original step configuration.
+            
+        Returns
+        -------
+        dict
+            New dict with metadata keys removed, ready for transformer instantiation.
+        """
+        config = dict(step_config)
+        for key in {"name", "fit_y", "fit_xy", "dtype", "plugin_hook"}:
+            config.pop(key, None)
+        return config
+
 
 @dataclass(eq=False)
-class DataPipelineConfig(DataConfig):
+class DataPipelineConfig(_DataPipelineMixin, DataConfig):
     """Initializes a data pipeline configuration and fits it to the data in the call() method."""
 
     pipeline: dict = field(default_factory=dict)
@@ -1380,10 +1573,11 @@ class DataPipelineConfig(DataConfig):
     def __post_init__(self):
         self._validate_init()
         # Allow a list of step-dicts: merge them in order (later wins on key conflict)
-        from omegaconf import ListConfig
+        
 
         if isinstance(self.pipeline, (list, ListConfig)):
             self.pipeline = merge_list_of_dicts(coerce_to_list(self.pipeline))
+        self._pipeline_step_hooks = {}
         assert isinstance(
             self.pipeline,
             (dict, DictConfig),
@@ -1402,9 +1596,11 @@ class DataPipelineConfig(DataConfig):
                 v,
                 (dict, DictConfig),
             ), f"Each step in pipeline must be a dictionary, got {type(v)} for step {k}"
-            assert (
-                "name" in v
-            ), f"Each step in pipeline must have a 'name' key, missing in step {k}"
+            # Validate step using DataPipelineStep.from_config (also validates "name" is present)
+            try:
+                DataPipelineStep.from_config(k, v)
+            except (ValueError, TypeError) as e:
+                raise ValueError(f"Invalid pipeline step '{k}': {e}") from e
         if self.classifier in ["classifier", True]:
             self.classifier = True
         elif self.classifier in ["regressor", False]:
@@ -1423,6 +1619,33 @@ class DataPipelineConfig(DataConfig):
                 ),
             ),
         )
+
+    def _normalize_step_hooks(self, raw_hooks: Any) -> list[str]:
+        if raw_hooks is None:
+            return []
+        if isinstance(raw_hooks, str):
+            hooks = [raw_hooks]
+        elif isinstance(raw_hooks, (list, tuple, set)):
+            hooks = list(raw_hooks)
+        else:
+            raise TypeError(
+                f"plugin_hook must be None, str, or list-like. Got {type(raw_hooks)}",
+            )
+
+        normalized = []
+        for hook in hooks:
+            text = str(hook).strip().lower()
+            if text:
+                normalized.append(text)
+        return normalized
+
+    def _pipeline_declares_hook(self, hook_name: str) -> bool:
+        target_hook = str(hook_name).strip().lower()
+        for _, step_config in self.pipeline.items():
+            hooks = self._normalize_step_hooks(step_config.get("plugin_hook", None))
+            if target_hook in hooks:
+                return True
+        return False
 
     def _resolve_step_config(self, step_class: str, step_config: dict) -> dict:
         """Resolve fold-specific paths in step config for precomputed matrices.
@@ -1480,13 +1703,49 @@ class DataPipelineConfig(DataConfig):
         
         return resolved_config
 
-    def _run_pre_sample_transformations(self, pipeline: Pipeline):
-        if not self.pre_sample_transform:
+    
+    
+    def _run_pre_sample_transformations(self, pipeline: Pipeline, force: bool = False):
+        if not (self.pre_sample_transform or force):
             return
-        for _, step in pipeline.steps:
+        # Compute budget: cap the data passed to pre_sample_fit to the configured split sizes
+        train_size = getattr(self, "train_size", None) or 0
+        test_size = getattr(self, "test_size", None) or 0
+        val_size = getattr(self, "val_size", None) or 0
+        # Only cap when sizes are integers (fractional sizes are not capped)
+        if (
+            isinstance(train_size, int) and
+            isinstance(test_size, int) and
+            isinstance(val_size, int)
+        ):
+            budget = train_size + test_size + val_size
+        else:
+            budget = 0
+        n_samples = len(self._y) if self._y is not None else 0
+        if budget > 0 and n_samples > budget:
+            rng = np.random.default_rng(getattr(self, "random_state", None) or 0)
+            keep_idx = np.sort(rng.choice(n_samples, size=budget, replace=False))
+            if hasattr(self._X, "iloc"):
+                X_hook = self._X.iloc[keep_idx].reset_index(drop=True)
+            else:
+                X_hook = self._X[keep_idx]
+            if hasattr(self._y, "iloc"):
+                y_hook = self._y.iloc[keep_idx].reset_index(drop=True)
+            else:
+                y_hook = self._y[keep_idx]
+            logger.info(
+                f"Subsetting data from {n_samples} to {budget} samples before pre_sample_fit."
+            )
+        else:
+            X_hook = self._X
+            y_hook = self._y
+        for step_name, step in pipeline.steps:
+            configured_hooks = self._pipeline_step_hooks.get(step_name, [])
+            if configured_hooks and "before_sample" not in configured_hooks:
+                continue
             pre_sample_fit = getattr(step, "pre_sample_fit", None)
             if callable(pre_sample_fit):
-                pre_sample_fit(self._X, y=self._y, data=self)
+                pre_sample_fit(X_hook, y=y_hook, data=self)
 
     def _inject_sample_indices(self, pipeline: Pipeline):
         if not hasattr(self, "train_indices") or self.train_indices is None:
@@ -1503,36 +1762,30 @@ class DataPipelineConfig(DataConfig):
     def _init_pipeline(self):
         if not isinstance(self.pipeline, (dict, DictConfig)):
             raise ValueError(f"Invalid pipeline configuration: {self.pipeline}")
+        self._pipeline_step_hooks = {}
         X_pipeline_steps = []
         y_pipeline_steps = []
         dtypes = []
         for step_name, step_config in self.pipeline.items():
-            step_class = step_config.get(
-                "name",
-                ValueError(f"Step {step_name} missing 'name' key"),
-            )
-            fit_y = step_config.get("fit_y", False)
-            fit_Xy = step_config.get("fit_xy", False)
-            if fit_Xy is True:
-                raise ValueError(
-                    "fit_xy pipeline steps are no longer supported.",
-                )
-            dtype = step_config.get("dtype", None)
-            step_config_without_name = {**step_config}
-            del step_config_without_name["name"]
-            if "fit_y" in step_config_without_name:
-                del step_config_without_name["fit_y"]
-            if "fit_xy" in step_config_without_name:
-                del step_config_without_name["fit_xy"]
-            if "dtype" in step_config:
-                del step_config_without_name["dtype"]
+            # Parse step metadata (name, fit_y, dtype, plugin_hook)
+            step = DataPipelineStep.from_config(step_name, step_config)
+            
+            # Register hooks if present
+            step_hooks = self._normalize_step_hooks(step.plugin_hook)
+            if step_hooks:
+                self._pipeline_step_hooks[step_name] = step_hooks
+            
+            # Get clean config (metadata removed, ready for instantiation)
+            step_config_clean = step.stripped_config(step_config)
+            
             # Resolve fold-specific paths before instantiation
-            step_config_without_name = self._resolve_step_config(
-                step_class, step_config_without_name
-            )
-            step_instance = load_class(step_class, **step_config_without_name)
-            dtypes.append(dtype)
-            if fit_y is not True:
+            step_config_clean = self._resolve_step_config(step.name, step_config_clean)
+            
+            # Instantiate the transformer
+            step_instance = load_class(step.name, **step_config_clean)
+            dtypes.append(step.dtype)
+            
+            if step.fit_y is not True:
                 X_pipeline_steps.append((step_name, step_instance))
             else:
                 y_pipeline_steps.append((step_name, step_instance))
@@ -1579,6 +1832,7 @@ class DataPipelineConfig(DataConfig):
         else:
             y_pipeline = None
         return X_pipeline, y_pipeline
+
 
     def _fit_transform_X(
         self,
@@ -1781,10 +2035,16 @@ class DataPipelineConfig(DataConfig):
             logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
         time_dict = {"data_load_time": self.data_load_time}
         if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
-            if self.pre_sample_transform:
+            run_before_sample_pipeline = self.pre_sample_transform or self._pipeline_declares_hook(
+                "before_sample",
+            )
+            if run_before_sample_pipeline:
                 self._run_plugin_hook("before_sample")
                 pre_sample_pipeline, _ = self._init_pipeline()
-                self._run_pre_sample_transformations(pre_sample_pipeline)
+                self._run_pre_sample_transformations(
+                    pre_sample_pipeline,
+                    force=run_before_sample_pipeline,
+                )
                 self._sample(run_hooks=False)
                 self._run_plugin_hook("after_sample")
             else:
@@ -1857,9 +2117,10 @@ class DataPipelineConfig(DataConfig):
         self.score_dict.update(**time_dict)
         # Pass mode to _score if present
         if mode is not None:
-            data_scores = self._score(mode=mode)
+            data_scores = self._score(mode=mode, **kwargs)
         else:
-            data_scores = self._score()
+            # Score on pre-sample-transformed data (now guaranteed to be numeric after transformations)
+            data_scores = self._score(mode="pre-sample", **kwargs)
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"

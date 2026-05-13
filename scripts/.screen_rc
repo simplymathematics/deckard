@@ -1,0 +1,54 @@
+# ~/.screenrc for Deckard with split panes
+
+# Friendly session title
+shelltitle "Deckard Monitor"
+sessionname deckard
+
+##########################
+# Left Pane: Deckard Work#
+##########################
+
+# Create first window for optimize
+screen -t "Optimize" bash -c "deckard optimize; exec bash"
+
+# Split horizontally for progress bar
+split
+focus
+screen -t "Progress" bash -c "deckard progress bar; exec bash"
+
+# Optional: Firefox window in left pane (can be launched separately)
+# Focus back to top
+# focus up
+# New window for Firefox (optional)
+# screen -t "Optuna-Firefox" bash -c "firefox http://localhost:8080 &; exec bash"
+
+##########################
+# Right Pane: Monitoring #
+##########################
+
+# Move focus to right pane
+split -h
+focus right
+
+# Top: htop
+screen -t "HTop" bash -c "htop; exec bash"
+
+# Split bottom for GPU
+split
+focus down
+screen -t "GPU" bash -c "watch -n 2 nvidia-smi; exec bash"
+
+# Split bottom again for Optuna server
+split
+focus down
+screen -t "Optuna-Server" bash -c "optuna-dashboard sqlite:///optuna.db --host 0.0.0.0 --port 8080; exec bash"
+
+# Focus back to left pane top window
+focus left
+focus up
+
+##########################
+# Navigation tips:
+# Ctrl-a Tab → switch between panes
+# Ctrl-a n / Ctrl-a p → switch between windows inside a pane
+##########################

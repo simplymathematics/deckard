@@ -22,7 +22,7 @@ from typing import Iterable, Optional, Union, Any
 from dataclasses import MISSING, dataclass, field
 from hydra.utils import instantiate, get_class
 from hydra.core.config_store import ConfigStore
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, ListConfig, OmegaConf
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -47,6 +47,10 @@ __all__ = [
     "create_parser_from_function",
     "round_scores",
     "coerce_to_list",
+    "normalize_optional_list_value",
+    "normalize_optional_mapping_or_steps",
+    "normalize_plugin_specs",
+    "instantiate_plugin_spec",
     "split_comma_separated_tokens",
     "normalize_hydra_list_overrides",
     "merge_list_of_dicts",
@@ -254,6 +258,96 @@ def coerce_to_list(items: Union[list, Any]) -> list:
     if isinstance(items, (list, ListConfig)):
         return list(items)
     raise TypeError(f"Expected list or ListConfig, got {type(items)}")
+
+
+def normalize_optional_list_value(
+    value: Any,
+    *,
+    field_name: str = "value",
+) -> Optional[list]:
+    """Normalize optional list-like config values to ``list`` or ``None``.
+
+    Accepts null-like tokens, plain strings, ``list``, and OmegaConf
+    ``ListConfig`` values.
+    """
+    if is_null_config_value(value):
+        return None
+    if isinstance(value, ListConfig):
+        return list(value)
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return list(value)
+    raise TypeError(
+        f"{field_name} expected optional list-like value, got {type(value)}",
+    )
+
+
+def normalize_optional_mapping_or_steps(
+    value: Any,
+    *,
+    field_name: str,
+) -> Union[None, bool, dict[str, Any]]:
+    """Normalize optional mapping-or-step-list config values.
+
+    - ``None`` / null-like tokens -> ``None``
+    - ``True`` / ``False`` -> same bool
+    - ``dict`` / ``DictConfig`` -> plain ``dict``
+    - ``list`` / ``ListConfig`` -> merged dict via ``merge_list_of_dicts``
+    """
+    if isinstance(value, (list, ListConfig)):
+        return merge_list_of_dicts(coerce_to_list(value))
+    if isinstance(value, bool):
+        return value
+    if is_null_config_value(value):
+        return None
+    if isinstance(value, DictConfig):
+        return dict(value)
+    if isinstance(value, dict):
+        return dict(value)
+    raise TypeError(
+        f"{field_name} must be None, bool, dict/DictConfig, or list/ListConfig. Got {type(value)}",
+    )
+
+
+def normalize_plugin_specs(plugins: Any) -> list:
+    """Normalize plugin config values into a plain list.
+
+    Accepts ``None`` / null-like tokens, single plugin specs, ``list`` and
+    OmegaConf ``ListConfig`` values.
+    """
+    if is_null_config_value(plugins):
+        return []
+    if isinstance(plugins, ListConfig):
+        return list(plugins)
+    if isinstance(plugins, list):
+        return list(plugins)
+    return [plugins]
+
+
+def instantiate_plugin_spec(
+    plugin_spec: Any,
+    *,
+    loader,
+) -> Any:
+    """Instantiate one plugin spec using a caller-provided loader.
+
+    ``loader`` must accept ``loader(path, **kwargs)`` and return an instance.
+    """
+    if isinstance(plugin_spec, dict):
+        spec = dict(plugin_spec)
+        class_path = spec.pop("name", spec.pop("_target_", None))
+        if class_path is None:
+            raise ValueError("Plugin dict must include 'name' or '_target_'")
+        return loader(class_path, **spec)
+
+    if isinstance(plugin_spec, str):
+        return loader(plugin_spec)
+
+    if isinstance(plugin_spec, type):
+        return plugin_spec()
+
+    return plugin_spec
 
 
 def split_comma_separated_tokens(value: Any) -> list[str]:

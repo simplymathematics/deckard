@@ -5,7 +5,13 @@ from typing import Any, cast
 
 import pandas as pd
 
-from .base import ScorerConfig, ScorerDictConfig, _DataScorerMarker, safe_store
+from .base import (
+    ScorerConfig,
+    ScorerDictConfig,
+    _DataScorerMarker,
+    _TaskAwareScorerMixin,
+    safe_store,
+)
 from ..data import DataConfig
 
 __all__ = [
@@ -259,8 +265,28 @@ class DefaultAnjanaScoreConfig(_AnjanaScorerMixin, ScorerDictConfig):
 
 
 @dataclass(eq=False)
-class DefaultAnjanaDataScoreConfig(DefaultAnjanaScoreConfig):
-    pass
+@dataclass(eq=False)
+class DefaultAnjanaDataScoreConfig(_TaskAwareScorerMixin, ScorerDictConfig):
+    """Default data-analysis scorers plus ANJANA privacy scorers."""
+
+    classifier: bool | None = None
+    scorers: dict[str, ScorerConfig] = field(default_factory=dict)
+
+    def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
+        from .data import DefaultDataClassificationConfig, DefaultDataRegressionConfig
+
+        base_scorers = (
+            DefaultDataClassificationConfig().scorers
+            if classifier
+            else DefaultDataRegressionConfig().scorers
+        )
+        privacy_scorers = dict(DefaultAnjanaScoreConfig().scorers)
+        return {**base_scorers, **privacy_scorers}
+
+    def __post_init__(self):
+        if not getattr(self, "scorers", None):
+            self._initialize_task_aware_scorers(default=True)
+        super().__post_init__()
 
 
 @dataclass(eq=False)

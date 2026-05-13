@@ -21,6 +21,8 @@ metric_name: gzip
 fold_name: 0
 study_sep: _
 direction: maximize
+directions:
+  - ${oc.select:direction,maximize}
 optimizers:
   - accuracy
 device: ${oc.env:DECKARD_DEVICE_ID, "cpu"}
@@ -32,13 +34,10 @@ hydra:
     dir: output/logs/
     subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
   callbacks:
-    study_dump:
-      _target_: optuna_database.OptunaStudyDumpCallback
-      storage: ${hydra.sweeper.storage}
-      study_name: ${hydra.sweeper.study_name}
-      directions: maximize
-      metric_names: accuracy
-      output_file: ${hydra.sweep.dir}/study.csv
+    deckard_optuna:
+      _target_: deckard.layers.optimize.OptunaStudyCallback
+      directions: ${directions}
+      optimizers: ${optimizers}
   sweeper:
     sampler:
       _target_: optuna.samplers.GridSampler

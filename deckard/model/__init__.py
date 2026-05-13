@@ -9,6 +9,12 @@ import logging
 from typing import Any
 from .base import ModelConfig
 from .defend import DefenseConfig, DefensePipelineConfig
+from .detector import DetectorDefenseConfig
+from .preprocessor import PreprocessorDefenseConfig
+from .postprocessor import PostprocessorDefenseConfig
+from .trainer import TrainerDefenseConfig
+from .regularizer import RegularizerDefenseConfig
+from .transformer import TransformerDefenseConfig
 
 # Import declarations to register example configs with ConfigStore
 from . import declarations  # noqa: F401
@@ -52,7 +58,17 @@ except ImportError:
     logger.debug("Torch not found. Cannot use torch features.")
 
 
-__all__ = ["ModelConfig", "DefenseConfig", "DefensePipelineConfig"]
+__all__ = [
+    "ModelConfig",
+    "DefenseConfig",
+    "DefensePipelineConfig",
+    "DetectorDefenseConfig",
+    "PreprocessorDefenseConfig",
+    "PostprocessorDefenseConfig",
+    "TrainerDefenseConfig",
+    "RegularizerDefenseConfig",
+    "TransformerDefenseConfig",
+]
 
 if "FairlearnDefenseConfig" in globals():
     __all__.extend(

@@ -7,7 +7,7 @@ import pytest
 
 
 from deckard.model.fairness import (
-    _FairnessBehaviorMixin,
+    _SensitiveBehaviorMixin,
 )
 
 # Use the logger from conftest_logging.py
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 pytest.importorskip("fairlearn")
 
 
-class _DummyMixin(_FairnessBehaviorMixin):
+class _DummyMixin(_SensitiveBehaviorMixin):
     pass
 
 

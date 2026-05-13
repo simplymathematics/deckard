@@ -1,5 +1,6 @@
 distance:
   name: classifier_refactor.py:StringDistanceTransformer
+  plugin_hook: before_sample
   metric: gzip
   algorithm: sort
   n_jobs: -1
@@ -8,3 +9,4 @@ distance:
   average_hack: false
   lower_triangle: false
   upper_triangle: false
+  distance_matrix_full: output/${dataset}/distance_matrix/${metric_name}/${algorithm}/full.npz
