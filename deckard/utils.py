@@ -313,16 +313,17 @@ def normalize_optional_mapping_or_steps(
 def normalize_plugin_specs(plugins: Any) -> list:
     """Normalize plugin config values into a plain list.
 
-    Accepts ``None`` / null-like tokens, single plugin specs, ``list`` and
-    OmegaConf ``ListConfig`` values.
+    Accepts ``None`` / null-like tokens, ``list`` and OmegaConf ``ListConfig``
+    values. Raises ``TypeError`` for bare non-list values (e.g. a plain string
+    or dict) since ``plugins`` must always be a list of specs.
     """
     if is_null_config_value(plugins):
         return []
-    if isinstance(plugins, ListConfig):
+    if isinstance(plugins, (ListConfig, list)):
         return list(plugins)
-    if isinstance(plugins, list):
-        return list(plugins)
-    return [plugins]
+    raise TypeError(
+        f"plugins must be a list or None, got {type(plugins).__name__!r}: {plugins!r}"
+    )
 
 
 def instantiate_plugin_spec(
