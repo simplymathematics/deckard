@@ -122,3 +122,4 @@ old_papers
 build/lib/deckard/*
 docs/build/
 .python-version
+.DS_Store
