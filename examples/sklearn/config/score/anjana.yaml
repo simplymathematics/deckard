@@ -1,4 +1,4 @@
-_target_: deckard.score.anjana.DefaultAnjanaScoreConfig
+_target_: deckard.score.anjana.DefaultAnjanaScorerConfig
 scorers:
   k_anonymity:
     score_function: deckard.score.anjana.anjana_k_anonymity_score

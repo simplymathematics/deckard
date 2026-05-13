@@ -1,0 +1,5 @@
+_target_: deckard.score.base.DefaultRegressorConfig
+init_params:
+  library: deckard
+  type: scorer
+  class: model.regressor

@@ -1,0 +1,27 @@
+dataset_name: make_classification
+data_params:
+  n_samples: 1000
+  n_features: 20
+  n_informative: 15
+  n_redundant: 5
+  n_classes: 2
+  random_state: 42
+test_size: 0.2
+random_state: 42
+classifier: true
+stratify: false
+_target_: deckard.data.anjana.AnjanaDataConfig
+alias: anjana
+sample: split
+anjana_defense:
+  name: anjana.anonymity.k_anonymity
+  k: 2
+quasi_identifiers:
+  - feature_0
+  - feature_1
+sensitive_attribute: target
+sensitive_columns:
+  - feature_0
+hierarchy_interval_sizes:
+  feature_0: [1, 2]
+  feature_1: [1, 2]

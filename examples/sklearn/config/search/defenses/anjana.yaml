@@ -1,0 +1,17 @@
+# @package _global_
+defense_alias: anjana
+hydra:
+  sweeper:
+    params:
+      ++defense.defense_params.name: anjana.anonymity.k_anonymity
+      ++defense.defense_params.k: int(2)
+      ++defense.init_params.library: anjana
+      ++defense.init_params.type: data
+      ++defense.init_params.class: anonymization
+      ++data._target_: deckard.data.anjana.AnjanaDataConfig
+      ++data.alias: anjana
+      ++data.dataset_name: make_classification
+      ++data.classifier: bool(True)
+      ++data.sample: split
+      ++data.anjana_defense.name: anjana.anonymity.k_anonymity
+      ++data.anjana_defense.k: int(2)

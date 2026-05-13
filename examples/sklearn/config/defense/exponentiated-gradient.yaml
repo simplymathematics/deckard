@@ -1,0 +1,11 @@
+defense_name: fairlearn.reductions.ExponentiatedGradient
+init_params:
+  library: fairlearn
+  type: reductions
+  class: ExponentiatedGradient
+defense_params:
+  constraints: fairlearn.reductions.DemographicParity
+  eps: 0.05
+  max_iter: 50
+_target_: deckard.DefenseConfig
+alias: exponentiated-gradient

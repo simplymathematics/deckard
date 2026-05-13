@@ -1,3 +1,4 @@
+_target_: deckard.score.base.DefaultRegressorConfig
 scorers:
   mse:
     score_function: sklearn.metrics.mean_squared_error

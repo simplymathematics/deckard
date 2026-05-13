@@ -1,4 +1,8 @@
 attack_type : "art.attacks.inference.attribute_inference.AttributeInferenceBlackBox"
+init_params:
+  library: art
+  type: inference
+  class: AttributeInferenceBlackBox
 targeted_attribute: 
 - "age"
 attack_params : 

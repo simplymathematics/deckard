@@ -1,0 +1,5 @@
+_target_: deckard.score.base.DefaultClassifierConfig
+init_params:
+  library: deckard
+  type: scorer
+  class: model.classifier

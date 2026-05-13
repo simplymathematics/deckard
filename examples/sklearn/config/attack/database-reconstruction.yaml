@@ -1,4 +1,8 @@
 attack_type: art.attacks.inference.reconstruction.DatabaseReconstruction
+init_params:
+  library: art
+  type: inference
+  class: DatabaseReconstruction
 attack_size: 1
 attack_params:
   split: train

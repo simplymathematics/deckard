@@ -1,4 +1,8 @@
 defense_name: null
+init_params:
+	library: art
+	type: defense
+	class: baseline
 defense_params: {}
 _target_: deckard.DefenseConfig
 alias: baseline
