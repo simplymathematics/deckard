@@ -1357,10 +1357,23 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     "train_n",
                     "test_n",
                     "val_n",
+                    "pipeline_fit_n",
+                    "pipeline_transform_n",
+                    "pipeline_fit_time",
+                    "pipeline_transform_time",
+                    "pipeline_y_fit_n",
+                    "pipeline_y_transform_n",
+                    "pipeline_y_fit_time",
+                    "pipeline_y_transform_time",
                 ):
                     setattr(self.data, attr, None)
                 self.data.score_dict = {}
-                self.data._sample()
+                # Run full data runtime per fold so DataPipelineConfig hooks and
+                # transformations (e.g., StringDistanceTransformer) execute.
+                self.data(
+                    data_file=None,
+                    score_file=None,
+                )
                 self.data.score_dict.update(
                     data_load_time=self.data.data_load_time,
                     data_sample_time=self.data.data_sample_time,

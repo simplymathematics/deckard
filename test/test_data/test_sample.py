@@ -1,6 +1,8 @@
 """Tests for deckard/data/sample.py and the sampler integration in DataConfig."""
 
 import unittest
+import os
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -353,6 +355,60 @@ class TestKFoldSampler(unittest.TestCase):
         _, _, val_none = sampler(cfg)
         _, _, val_zero = sampler(cfg_split0)
         self.assertEqual(sorted(val_none), sorted(val_zero))
+
+    def test_caps_produce_expected_sizes_for_1200_samples(self):
+        """Lock cap semantics: val_size caps val fold, train_size caps train+test pool."""
+        with patch.dict(os.environ, {"DECKARD_TEST_MAX_SAMPLES": ""}):
+            for split in range(5):
+                cfg = DataConfig(
+                    dataset_name="make_classification",
+                    data_params={
+                        "n_samples": 1200,
+                        "n_features": 20,
+                        "n_informative": 10,
+                        "n_redundant": 5,
+                        "random_state": 42,
+                        "n_clusters_per_class": 1,
+                    },
+                    train_size=1000,
+                    test_size=200,
+                    val_size=200,
+                    random_state=42,
+                    stratify=True,
+                    classifier=True,
+                    split=split,
+                    sample={"name": "deckard.data.sample.KFoldSampler", "n_splits": 5},
+                )
+                cfg._load_data()
+                cfg._sample()
+                self.assertEqual(len(cfg.X_train), 800)
+                self.assertEqual(len(cfg.X_test), 200)
+                self.assertEqual(len(cfg.X_val), 200)
+
+    def test_integer_test_size_guardrail_raises(self):
+        """test_size must be <= train_size // n_splits for integer sizing."""
+        cfg = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 1200,
+                "n_features": 10,
+                "n_informative": 5,
+                "n_redundant": 2,
+                "random_state": 1,
+                "n_clusters_per_class": 1,
+            },
+            train_size=1000,
+            test_size=201,
+            val_size=200,
+            random_state=42,
+            stratify=True,
+            classifier=True,
+            split=0,
+            sample={"name": "deckard.data.sample.KFoldSampler", "n_splits": 5},
+        )
+        cfg._load_data()
+        with self.assertRaises(ValueError):
+            cfg._sample()
 
 
 # ---------------------------------------------------------------------------
