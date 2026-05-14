@@ -1,0 +1,3 @@
+_target_: deckard.data.pipeline.core.FairlearnDataPipelineConfig
+alias: fairlearn
+pipeline: {}

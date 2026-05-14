@@ -1,0 +1,3 @@
+_target_: deckard.data.pytorch.PytorchDataPipelineConfig
+alias: pytorch
+pipeline: {}
