@@ -12,9 +12,6 @@ from typing import Union
 
 from ..utils import ConfigBase
 
-# Import declarations to register static plot configs with ConfigStore.
-from . import declarations  # noqa: F401
-
 logger = logging.getLogger(__name__)
 
 try:

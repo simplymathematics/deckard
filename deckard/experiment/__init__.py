@@ -5,12 +5,8 @@ orchestration config and an optional survival-specific extension.
 """
 
 import logging
-import sys
 
 from .base import ExperimentConfig
-
-# Import declarations to register survival ConfigStore nodes.
-from . import declarations  # noqa: F401
 
 logger = logging.getLogger(__name__)
 

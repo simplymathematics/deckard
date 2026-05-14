@@ -17,10 +17,7 @@ def __getattr__(name):
         from ..pytorch.attack import PytorchAttackConfig
 
         return PytorchAttackConfig
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
-
-# Import declarations to register example configs with ConfigStore
-from . import declarations  # noqa: F401
+    raise ModuleNotFoundError(f"Can't import PytorchAttackConfig. Is torch installed?")
 
 __all__ = [
     "AttackConfig",

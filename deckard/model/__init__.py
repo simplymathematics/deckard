@@ -6,7 +6,6 @@ dependencies are installed.
 """
 
 import logging
-import sys
 from typing import Any
 from .base import ModelConfig
 from .defense import (
@@ -21,9 +20,6 @@ from .postprocessor import PostprocessorDefenseConfig
 from .trainer import TrainerDefenseConfig
 from .regularizer import RegularizerDefenseConfig
 from .transformer import TransformerDefenseConfig
-
-# Import declarations to register example configs with ConfigStore
-from . import declarations  # noqa: F401
 
 ScorerDictConfig = Any
 

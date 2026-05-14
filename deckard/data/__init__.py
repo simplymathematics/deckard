@@ -6,7 +6,6 @@ Optional exports are only available when their dependencies are installed.
 """
 
 import logging
-import sys
 
 from .base import DataConfig, DataPipelineConfig
 from .pipeline import (
@@ -22,9 +21,6 @@ from .sample import (
     ShuffleSampler,
     register_sampler_configs,
 )
-
-# Import declarations to register example configs with ConfigStore
-from . import declarations  # noqa: F401
 
 logger = logging.getLogger(__name__)
 

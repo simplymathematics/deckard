@@ -12,7 +12,7 @@ dynamically registers them with Hydra's ConfigStore at runtime. It supports:
 
 Usage:
     >>> from deckard.declarations import register_configs
-    >>> register_configs()  # Called automatically at package import
+    >>> register_configs()  # Explicit bootstrap or CLI startup
 """
 
 import importlib.util

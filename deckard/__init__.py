@@ -35,19 +35,6 @@ warnings.filterwarnings(
     message=r"PyTorch not found\. Not importing DeepZ or Interval Bound Propagation functionality",
 )
 
-# Register runtime configs before importing config classes
-from .declarations import register_configs  # noqa E402
-
-# Register all discovered configs with Hydra ConfigStore
-if os.environ.get("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "0") not in {
-    "1",
-    "true",
-    "True",
-    "yes",
-    "on",
-}:
-    register_configs()
-
 from .data import DataConfig  # noqa E402
 from .model import ModelConfig  # noqa E402
 from .model.defend import DefenseConfig  # noqa E402

@@ -1,9 +1,6 @@
 """Scoring configuration exports and Hydra registrations."""
 
 import logging
-import sys
-
-
 
 from .base import (  # noqa: F401
     DefaultModelScorerConfig,

@@ -11,6 +11,7 @@ from pathlib import Path
 
 
 from . import DECKARD_CONFIG_DIR, DECKARD_DEFAULT_CONFIG_FILE
+from .declarations import register_configs
 from .utils import normalize_hydra_list_overrides
 
 from .layers import SUPPORTED_LAYERS, layer_dict
@@ -124,6 +125,15 @@ def main():
             "Please enter a valid config directory path: ",
         )
     os.environ["DECKARD_CONFIG_DIR"] = Path(config_dir).resolve().as_posix()
+
+    if os.environ.get("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "0") not in {
+        "1",
+        "true",
+        "True",
+        "yes",
+        "on",
+    }:
+        register_configs()
 
     parsed, _ = parser.parse_known_args()
     module = parsed.module
