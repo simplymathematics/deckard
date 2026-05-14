@@ -1,5 +1,5 @@
-from deckard.model.anjana import AnjanaModelConfig
-from deckard.score.anjana import DefaultAnjanaModelScorerConfig
+from deckard.plugins.anjana.model import AnjanaModelConfig
+from deckard.plugins.anjana.score import DefaultAnjanaModelScorerConfig
 
 
 def test_anjana_model_auto_scorer_uses_anjana_default(monkeypatch):
@@ -9,7 +9,7 @@ def test_anjana_model_auto_scorer_uses_anjana_default(monkeypatch):
             return {"k_anonymity": 1.0}
 
     monkeypatch.setattr(
-        "deckard.model.anjana.load_class",
+        "deckard.plugins.anjana.model.load_class",
         lambda _: _StubScorer(),
     )
 

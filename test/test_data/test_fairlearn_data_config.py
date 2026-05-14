@@ -2,14 +2,22 @@ import pytest
 import pandas as pd
 from unittest.mock import patch
 
+from helpers import load_canonical_data_profile
+
 try:
     import fairlearn  # noqa: F401
-    from deckard.data.fairness import FairlearnDataConfig
+    from deckard.plugins.fairlearn.data import FairlearnDataConfig
 except Exception:
     pytest.skip(
         "fairlearn is required for FairlearnDataConfig tests",
         allow_module_level=True,
     )
+
+
+def _fairlearn_config(**overrides):
+    cfg = load_canonical_data_profile("fair-adult", framework="sklearn")
+    cfg.update(overrides)
+    return FairlearnDataConfig(**cfg)
 
 
 class TestFairlearnDataConfigInit:
@@ -25,22 +33,18 @@ class TestFairlearnDataConfigInit:
 
     def test_init_with_single_sensitive_column(self):
         """Test initialization with single sensitive column."""
-        config = FairlearnDataConfig(
-            sensitive_columns="gender",
-        )
+        config = _fairlearn_config(sensitive_columns="gender")
         assert config.sensitive_columns == ["gender"]
 
     def test_init_with_multiple_sensitive_columns(self):
         """Test initialization with multiple sensitive columns."""
         columns = ["gender", "age"]
-        config = FairlearnDataConfig(
-            sensitive_columns=columns,
-        )
+        config = _fairlearn_config(sensitive_columns=columns)
         assert config.sensitive_columns == columns
 
     def test_init_with_fairness_defense_list_merges_dicts(self):
         """List fairness_defense specs should merge into one dict."""
-        config = FairlearnDataConfig(
+        config = _fairlearn_config(
             sensitive_columns="gender",
             fairness_defense=[
                 {"name": "fairlearn.preprocessing.CorrelationRemover"},
@@ -57,7 +61,7 @@ class TestFairlearnDataConfigInit:
 
     def test_init_with_fairness_defense_list_later_wins(self):
         """Later fairness_defense list entries should override earlier keys."""
-        config = FairlearnDataConfig(
+        config = _fairlearn_config(
             sensitive_columns="gender",
             fairness_defense=[
                 {
@@ -85,9 +89,7 @@ class TestLoadData:
                 "gender": ["M", "F", "M", "F"],
             },
         )
-        config = FairlearnDataConfig(
-            sensitive_columns="gender",
-        )
+        config = _fairlearn_config(sensitive_columns="gender")
         config._X = df
         config._y = pd.Series([0, 1, 0, 1])
 
@@ -96,12 +98,10 @@ class TestLoadData:
         assert config is not None
         assert "gender" in config._X.columns
 
-    @patch("deckard.data.fairness.FairlearnDataConfig.__post_init__")
+    @patch.object(FairlearnDataConfig, "__post_init__")
     def test_load_data_missing_X_raises_assertion(self, mock_post_init):
         """Test that _load_data raises assertion when _X is missing."""
-        config = FairlearnDataConfig(
-            sensitive_columns="sex",
-        )
+        config = _fairlearn_config(sensitive_columns="sex")
         config._X = pd.DataFrame(
             {
                 "feature1": [1, 2, 3, 4],
@@ -115,7 +115,7 @@ class TestLoadData:
         with pytest.raises(AssertionError):
             config._load_data()
 
-    @patch("deckard.data.fairness.FairlearnDataConfig.__post_init__")
+    @patch.object(FairlearnDataConfig, "__post_init__")
     def test_load_data_missing_y_raises_assertion(self, mock_post_init):
         """Test that _load_data raises assertion when _y is missing."""
         df = pd.DataFrame(
@@ -125,9 +125,7 @@ class TestLoadData:
                 "gender": [0, 1, 1, 0],
             },
         )
-        config = FairlearnDataConfig(
-            sensitive_columns="gender",
-        )
+        config = _fairlearn_config(sensitive_columns="gender")
         config._X = df
         config.data_params = {}
 
@@ -137,7 +135,7 @@ class TestLoadData:
 
 class TestScore:
 
-    @patch("deckard.data.fairness.FairlearnDataConfig.__post_init__")
+    @patch.object(FairlearnDataConfig, "__post_init__")
     def test_score_returns_dict(self, mock_post_init):
         """Test that _score returns a dictionary."""
         # _X must include the sensitive column for fairness extraction
@@ -149,8 +147,8 @@ class TestScore:
             },
         )
 
-        config = FairlearnDataConfig(
-            sensitive_columns="gender",
+        config = _fairlearn_config(
+            sensitive_columns=["gender"],
             classifier=True,
             train_size=2,
             test_size=2,
@@ -170,7 +168,7 @@ class TestScore:
 
 
 class TestComputeClassCounts:
-    @patch("deckard.data.fairness.FairlearnDataConfig.__post_init__")
+    @patch.object(FairlearnDataConfig, "__post_init__")
     def test_sensitive_labels_from_frame_returns_dict_compatible_values(
         self,
         mock_post_init,
@@ -178,9 +176,7 @@ class TestComputeClassCounts:
         """Test sensitive label generation from configured sensitive columns."""
         df = pd.DataFrame({"gender": ["M", "F", "M", "F"]})
 
-        config = FairlearnDataConfig(
-            sensitive_columns="gender",
-        )
+        config = _fairlearn_config(sensitive_columns="gender")
         config._X = df
         config._y = pd.Series([0, 1, 0, 1])
 
@@ -191,7 +187,7 @@ class TestComputeClassCounts:
 
 
 class TestClassificationFeatureScoresForGroup:
-    @patch("deckard.data.fairness.FairlearnDataConfig.__post_init__")
+    @patch.object(FairlearnDataConfig, "__post_init__")
     def test_classification_scores_contains_required_metrics(
         self,
         mock_post_init,
@@ -206,9 +202,7 @@ class TestClassificationFeatureScoresForGroup:
         )
         y = pd.Series([0, 1, 0, 1], index=[0, 1, 2, 3])
 
-        config = FairlearnDataConfig(
-            sensitive_columns="gender",
-        )
+        config = _fairlearn_config(sensitive_columns="gender")
         config._X = df
         config._y = y
 
@@ -232,9 +226,7 @@ class TestFairlearnDataConfigHashStability:
         pytest.importorskip("fairlearn")
         from deckard.utils import ConfigBase
 
-        config = FairlearnDataConfig(
-            sensitive_columns="gender",
-        )
+        config = _fairlearn_config(sensitive_columns="gender")
         assert isinstance(
             config,
             ConfigBase,

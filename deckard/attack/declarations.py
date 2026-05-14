@@ -1,6 +1,14 @@
-"""Static attack configuration declarations and ConfigStore registrations."""
+"""Attack configuration module.
 
-from ..utils import safe_store
+This module is kept for backward compatibility.
+Canonical attack configs are now loaded from examples/*/config/attack/ YAML files
+at runtime via deckard.declarations.register_configs().
+
+Previous static ConfigStore registrations have been consolidated into YAML files:
+- attack configs: examples/sklearn/config/attack/ (boundary, fgm, hsj, membership, etc.)
+
+Reference dictionaries are kept below for documentation only.
+"""
 
 ATTACK_BOUNDARY = {
     "attack_type": "art.attacks.evasion.BoundaryAttack",
@@ -216,73 +224,21 @@ ATTACK_PLUGIN_RECONSTRUCTION = {
     },
 }
 
+# Configs are now loaded from YAML files in examples/*/config/attack/
+# These dictionaries are kept for reference/legacy code but not registered via safe_store
 
-safe_store(group="attack", name="attribute-bb", node=ATTACK_ATTRIBUTE_BB)
-safe_store(
-    group="attack",
-    name="database-reconstruction",
-    node=ATTACK_DATABASE_RECONSTRUCTION,
-)
-safe_store(group="attack", name="model-inversion", node=ATTACK_MODEL_INVERSION)
-safe_store(group="attack", name="boundary", node=ATTACK_BOUNDARY)
-safe_store(group="attack", name="fgm", node=ATTACK_FGM)
-safe_store(group="attack", name="hsj", node=ATTACK_HSJ)
-safe_store(group="attack", name="membership", node=ATTACK_MEMBERSHIP)
-safe_store(group="attack", name="zoo", node=ATTACK_ZOO)
-
-safe_store(
-    group="search/attacks",
-    name="attribute-bb",
-    node=ATTACK_ATTRIBUTE_BB,
-)
-safe_store(
-    group="search/attacks",
-    name="database-reconstruction",
-    node=ATTACK_DATABASE_RECONSTRUCTION,
-)
-safe_store(
-    group="search/attacks",
-    name="model-inversion",
-    node=ATTACK_MODEL_INVERSION,
-)
-safe_store(group="search/attacks", name="boundary", node=ATTACK_BOUNDARY)
-safe_store(group="search/attacks", name="fgm", node=ATTACK_FGM)
-safe_store(group="search/attacks", name="hsj", node=ATTACK_HSJ)
-safe_store(group="search/attacks", name="membership", node=ATTACK_MEMBERSHIP)
-safe_store(group="search/attacks", name="zoo", node=ATTACK_ZOO)
-
-safe_store(group="attack/plugins", name="evasion", node=ATTACK_PLUGIN_EVASION)
-safe_store(group="attack/plugins", name="poisoning", node=ATTACK_PLUGIN_POISONING)
-safe_store(group="attack/plugins", name="extraction", node=ATTACK_PLUGIN_EXTRACTION)
-safe_store(group="attack/plugins", name="inference", node=ATTACK_PLUGIN_INFERENCE)
-safe_store(
-    group="attack/plugins",
-    name="reconstruction",
-    node=ATTACK_PLUGIN_RECONSTRUCTION,
-)
-
-safe_store(
-    group="search/attack/plugins",
-    name="evasion",
-    node=ATTACK_PLUGIN_EVASION,
-)
-safe_store(
-    group="search/attack/plugins",
-    name="poisoning",
-    node=ATTACK_PLUGIN_POISONING,
-)
-safe_store(
-    group="search/attack/plugins",
-    name="extraction",
-    node=ATTACK_PLUGIN_EXTRACTION,
-)
-safe_store(
-    group="search/attack/plugins",
-    name="inference",
-    node=ATTACK_PLUGIN_INFERENCE,
-)
-safe_store(
-    group="search/attack/plugins",
-    name="reconstruction",
-    node=ATTACK_PLUGIN_RECONSTRUCTION,
-)
+__all__ = [
+    "ATTACK_BOUNDARY",
+    "ATTACK_FGM",
+    "ATTACK_HSJ",
+    "ATTACK_MEMBERSHIP",
+    "ATTACK_ATTRIBUTE_BB",
+    "ATTACK_MODEL_INVERSION",
+    "ATTACK_DATABASE_RECONSTRUCTION",
+    "ATTACK_ZOO",
+    "ATTACK_PLUGIN_EVASION",
+    "ATTACK_PLUGIN_POISONING",
+    "ATTACK_PLUGIN_EXTRACTION",
+    "ATTACK_PLUGIN_INFERENCE",
+    "ATTACK_PLUGIN_RECONSTRUCTION",
+]

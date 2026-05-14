@@ -994,7 +994,7 @@ def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):
     dataset = torch.utils.data.TensorDataset(X, y)
 
     monkeypatch.setattr(
-        "deckard.data.pytorch.load_class",
+        "deckard.frameworks.pytorch.data.load_class",
         lambda *_args, **_kwargs: dataset,
     )
 
@@ -1004,7 +1004,7 @@ def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):
             "library": "pytorch",
             "classifier": True,
             "data": {
-                "_target_": "deckard.data.pytorch.PytorchDataConfig",
+                "_target_": "deckard.pytorch.data.PytorchDataConfig",
                 "dataset_name": "torch.utils.data.TensorDataset",
                 "data_params": {},
                 "train_size": 32,
@@ -1012,7 +1012,7 @@ def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):
                 "stratify": True,
             },
             "model": {
-                "_target_": "deckard.model.pytorch.PytorchModelConfig",
+                "_target_": "deckard.pytorch.model.PytorchModelConfig",
                 "model_type": "torch.nn.Linear",
                 "model_params": {"in_features": 4, "out_features": 2},
                 "classifier": True,
@@ -1188,7 +1188,7 @@ def test_deckard_optimize_hydra_multirun_cli_smoke(tmp_path):
         "--multirun",
         "data=test-classification",
         "model=test-logistic",
-        "attack=fgm",
+        "attack=boundary",
         "defense=class-labels",
         "score=classification",
         "hydra.sweeper.n_trials=1",
@@ -1200,7 +1200,10 @@ def test_deckard_optimize_hydra_multirun_cli_smoke(tmp_path):
     result = subprocess.run(
         cmd,
         cwd=str(EXAMPLES_SKLEARN_DIR),
-        env=make_runtime_env(DECKARD_RC_PATH),
+        env={
+            **make_runtime_env(DECKARD_RC_PATH),
+            "DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION": "1",
+        },
         capture_output=True,
         text=True,
         timeout=240,

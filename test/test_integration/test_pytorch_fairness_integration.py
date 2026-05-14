@@ -9,17 +9,20 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+torch = pytest.importorskip("torch")
+pytest.importorskip("fairlearn")
+
 from deckard.data import PytorchDataConfig
-from deckard.model import (
-    DefensePipelineConfig,
-    FairlearnPytorchModelConfig,
-    PytorchModelConfig,
-)
+import deckard.model as model_module
 from deckard.score.attack import FairlearnAttackScorerConfig
 from helpers import load_env_from_deckard_rc
 
-torch = pytest.importorskip("torch")
-pytest.importorskip("fairlearn")
+DefensePipelineConfig = model_module.DefensePipelineConfig
+PytorchModelConfig = model_module.PytorchModelConfig
+FairlearnPytorchModelConfig = getattr(model_module, "FairlearnPytorchModelConfig", None)
+
+if FairlearnPytorchModelConfig is None:
+    pytest.skip("fairlearn pytorch model configs are unavailable", allow_module_level=True)
 
 
 ROOT = Path(__file__).resolve().parents[2]

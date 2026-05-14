@@ -10,9 +10,8 @@ from art.config import ART_NUMPY_DTYPE
 from art.estimators.classification.classifier import ClassifierNeuralNetwork
 
 from .base import AttackConfig, AttackTypePlugin, _AttackMixin
-from .torch_utils import is_torch_model
+from ..frameworks.pytorch.torch_utils import is_torch_model
 from ..score.base import DefaultClassifierConfig, ScorerDictConfig
-from ..utils import safe_store
 
 
 
@@ -405,16 +404,3 @@ class PoisoningAttackConfig(_PoisoningAttackMixin, AttackConfig):
         ]
     )
 
-
-# Register poisoning attack config
-safe_store(
-    group="attack",
-    name="poisoning",
-    node=PoisoningAttackConfig(),
-)
-
-safe_store(
-    group="search/attack",
-    name="poisoning",
-    node=PoisoningAttackConfig(),
-)

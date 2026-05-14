@@ -3,7 +3,7 @@ import pytest
 from omegaconf import ListConfig
 
 from deckard.data.base import DataPipelineConfig
-from deckard.data.fairness import FairlearnDataConfig
+from deckard.plugins.fairlearn.data import FairlearnDataConfig
 
 
 def _cfg():

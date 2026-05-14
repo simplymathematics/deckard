@@ -5,14 +5,14 @@ import pandas as pd
 import pytest
 from lifelines.exceptions import ConvergenceError
 
-from deckard.model.survival import SurvivalModelConfig
+from deckard.plugins.lifelines.model import SurvivalModelConfig
 
 
 def test_survival_model_post_init_normalizes_classifier_and_target():
     cfg = SurvivalModelConfig(classifier=True)
 
     assert cfg.classifier is False
-    assert cfg._target_ == "deckard.model.SurvivalModelConfig"
+    assert cfg._target_ == "deckard.plugins.lifelines.model.SurvivalModelConfig"
     assert isinstance(cfg.score_dict, dict)
 
 
@@ -283,8 +283,14 @@ def test_survival_probability_calibration_crc_fit_failure_returns_nan_curve(
             _ = times
             return pd.DataFrame([[0.9] for _ in range(len(df))], index=df.index)
 
-    monkeypatch.setattr("deckard.model.survival.CensoringType", FakeCensoringType)
-    monkeypatch.setattr("deckard.model.survival.CRCSplineFitter", FailingCRC)
+    monkeypatch.setattr(
+        "deckard.plugins.lifelines.model.CensoringType",
+        FakeCensoringType,
+    )
+    monkeypatch.setattr(
+        "deckard.plugins.lifelines.model.CRCSplineFitter",
+        FailingCRC,
+    )
 
     df = pd.DataFrame({"T": [1.0, 2.0, 3.0], "E": [1, 0, 1]})
     _, ici, e50, curve = cfg.survival_probability_calibration(
@@ -338,8 +344,14 @@ def test_survival_probability_calibration_left_censor_and_delta_fallback(monkeyp
             _ = times
             return pd.DataFrame([[0.9] for _ in range(len(df))], index=df.index)
 
-    monkeypatch.setattr("deckard.model.survival.CensoringType", FakeCensoringType)
-    monkeypatch.setattr("deckard.model.survival.CRCSplineFitter", CRCForLeft)
+    monkeypatch.setattr(
+        "deckard.plugins.lifelines.model.CensoringType",
+        FakeCensoringType,
+    )
+    monkeypatch.setattr(
+        "deckard.plugins.lifelines.model.CRCSplineFitter",
+        CRCForLeft,
+    )
 
     df = pd.DataFrame({"T": [1.0, 2.0, 3.0], "E": [1, 0, 1]})
     _, ici, e50 = cfg.survival_probability_calibration(
@@ -409,16 +421,28 @@ def test_survival_probability_calibration_interval_and_default_fit_paths(monkeyp
             _ = times
             return pd.DataFrame([[0.8] for _ in range(len(df))], index=df.index)
 
-    monkeypatch.setattr("deckard.model.survival.CensoringType", IntervalCensoring)
-    monkeypatch.setattr("deckard.model.survival.CRCSplineFitter", CRCWithBranchMarkers)
+    monkeypatch.setattr(
+        "deckard.plugins.lifelines.model.CensoringType",
+        IntervalCensoring,
+    )
+    monkeypatch.setattr(
+        "deckard.plugins.lifelines.model.CRCSplineFitter",
+        CRCWithBranchMarkers,
+    )
     _, ici_interval, e50_interval = cfg.survival_probability_calibration(
         model=FakeModel(),
         df=df,
         plot=False,
     )
 
-    monkeypatch.setattr("deckard.model.survival.CensoringType", DefaultCensoring)
-    monkeypatch.setattr("deckard.model.survival.CRCSplineFitter", CRCWithBranchMarkers)
+    monkeypatch.setattr(
+        "deckard.plugins.lifelines.model.CensoringType",
+        DefaultCensoring,
+    )
+    monkeypatch.setattr(
+        "deckard.plugins.lifelines.model.CRCSplineFitter",
+        CRCWithBranchMarkers,
+    )
     _, ici_default, e50_default = cfg.survival_probability_calibration(
         model=FakeModel(),
         df=df,

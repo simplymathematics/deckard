@@ -6,20 +6,24 @@ import pytest
 
 from deckard.attack import AttackConfig
 from deckard.data import FairlearnDataConfig
-from deckard.model import (
-    DefenseConfig,
-    DefensePipelineConfig,
-    FairlearnDefenseConfig,
-    FairlearnModelConfig,
-)
+import deckard.model as model_module
 from deckard.score.attack import FairlearnAttackScorerConfig
 from deckard.score import FairlearnScoreDictConfig, ScorerConfig
-from art.estimators.classification.scikitlearn import ScikitlearnClassifier
-from fairlearn.reductions import ExponentiatedGradient
 
 
 pytest.importorskip("fairlearn")
 pytest.importorskip("art")
+
+from art.estimators.classification.scikitlearn import ScikitlearnClassifier
+from fairlearn.reductions import ExponentiatedGradient
+
+DefenseConfig = model_module.DefenseConfig
+DefensePipelineConfig = model_module.DefensePipelineConfig
+FairlearnDefenseConfig = getattr(model_module, "FairlearnDefenseConfig", None)
+FairlearnModelConfig = getattr(model_module, "FairlearnModelConfig", None)
+
+if FairlearnDefenseConfig is None or FairlearnModelConfig is None:
+    pytest.skip("fairlearn model configs are unavailable", allow_module_level=True)
 
 
 @pytest.fixture(scope="module")

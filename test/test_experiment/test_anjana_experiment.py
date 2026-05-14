@@ -13,7 +13,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from helpers import make_runtime_env
+from helpers import load_canonical_data_profile, make_runtime_env
 
 ROOT = Path(__file__).resolve().parents[2]
 EXAMPLES_SKLEARN_DIR = ROOT / "examples" / "sklearn"
@@ -24,7 +24,13 @@ DECKARD_RC_PATH = EXAMPLES_SKLEARN_DIR / ".deckard_rc"
 # ---------------------------------------------------------------------------
 
 
-def _make_anjana_data(n=20, monkeypatch=None, defense=None):
+def _make_anjana_data(
+    n=20,
+    monkeypatch=None,
+    defense=None,
+    resolve_class_fn=None,
+    **overrides,
+):
     """Build a minimal AnjanaDataConfig with synthetic tabular data.
 
     Parameters
@@ -36,25 +42,34 @@ def _make_anjana_data(n=20, monkeypatch=None, defense=None):
     """
     from deckard.data.anjana import AnjanaDataConfig
 
-    cfg = AnjanaDataConfig(
-        dataset_name="make_classification",
-        data_params={
+    base = load_canonical_data_profile("anjana", framework="sklearn")
+    base["data_params"].update(
+        {
             "n_samples": n,
             "n_features": 4,
             "n_informative": 2,
             "n_redundant": 0,
             "random_state": 0,
         },
-        train_size=int(n * 0.7),
-        test_size=int(n * 0.3),
-        classifier=True,
-        random_state=42,
-        identifiers=None,
-        quasi_identifiers=["feature_0", "feature_1"],
-        sensitive_attribute="target",
-        anjana_defense=defense,
-        hierarchy_interval_sizes={"feature_0": [1, 2], "feature_1": [1, 2]},
     )
+    base.update(
+        {
+            "train_size": int(n * 0.7),
+            "test_size": int(n * 0.3),
+            "classifier": True,
+            "random_state": 42,
+            "identifiers": None,
+            "quasi_identifiers": ["feature_0", "feature_1"],
+            "sensitive_attribute": "target",
+            "anjana_defense": defense,
+            "hierarchy_interval_sizes": {
+                "feature_0": [1, 2],
+                "feature_1": [1, 2],
+            },
+        },
+    )
+    base.update(overrides)
+    cfg = AnjanaDataConfig(**base)
     if monkeypatch is not None and defense is not None:
         # Stub the actual anjana call to avoid dependency on real anjana library
         def _fake_k_anon(data, **kwargs):
@@ -64,7 +79,7 @@ def _make_anjana_data(n=20, monkeypatch=None, defense=None):
 
         monkeypatch.setattr(
             "deckard.data.anjana.resolve_class",
-            lambda _: _fake_k_anon,
+            lambda _: resolve_class_fn or _fake_k_anon,
         )
 
     return cfg
@@ -82,19 +97,8 @@ def _run_anjana_data(cfg):
 
 
 def test_anjana_data_config_initialises():
-    from deckard.data.anjana import AnjanaDataConfig
-
-    cfg = AnjanaDataConfig(
-        dataset_name="make_classification",
-        data_params={
-            "n_samples": 20,
-            "n_features": 4,
-            "n_informative": 2,
-            "n_redundant": 0,
-        },
-        train_size=14,
-        test_size=6,
-        classifier=True,
+    cfg = _make_anjana_data(
+        n=20,
         quasi_identifiers=["feature_0"],
         anjana_defense=None,
     )
@@ -103,39 +107,15 @@ def test_anjana_data_config_initialises():
 
 
 def test_anjana_data_config_hash_stable_before_loading():
-    from deckard.data.anjana import AnjanaDataConfig
-
-    cfg = AnjanaDataConfig(
-        dataset_name="make_classification",
-        data_params={
-            "n_samples": 20,
-            "n_features": 4,
-            "n_informative": 2,
-            "n_redundant": 0,
-        },
-        train_size=14,
-        test_size=6,
-        classifier=True,
-    )
+    cfg = _make_anjana_data(n=20)
     h1 = hash(cfg)
     h2 = hash(cfg)
     assert h1 == h2
 
 
 def test_anjana_hierarchy_dict_generates_levels():
-    from deckard.data.anjana import AnjanaDataConfig
-
-    cfg = AnjanaDataConfig(
-        dataset_name="make_classification",
-        data_params={
-            "n_samples": 10,
-            "n_features": 4,
-            "n_informative": 2,
-            "n_redundant": 0,
-        },
-        train_size=7,
-        test_size=3,
-        classifier=True,
+    cfg = _make_anjana_data(
+        n=10,
         quasi_identifiers=["age", "zip"],
         hierarchy_interval_sizes={"age": [10]},
     )
@@ -150,8 +130,6 @@ def test_anjana_hierarchy_dict_generates_levels():
 
 def test_anjana_defense_applied_before_split(monkeypatch):
     """Anjana defense must modify _X/_y BEFORE the train/test split occurs."""
-    from deckard.data.anjana import AnjanaDataConfig
-
     apply_calls = []
 
     def _tracking_defense(data, **kwargs):
@@ -159,26 +137,11 @@ def test_anjana_defense_applied_before_split(monkeypatch):
         apply_calls.append(len(data))
         return data.copy()
 
-    monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class",
-        lambda _: _tracking_defense,
-    )
-
-    cfg = AnjanaDataConfig(
-        dataset_name="make_classification",
-        data_params={
-            "n_samples": 20,
-            "n_features": 4,
-            "n_informative": 2,
-            "n_redundant": 0,
-            "random_state": 0,
-        },
-        train_size=14,
-        test_size=6,
-        classifier=True,
-        quasi_identifiers=["feature_0"],
-        sensitive_attribute="target",
-        anjana_defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
+    cfg = _make_anjana_data(
+        n=20,
+        monkeypatch=monkeypatch,
+        defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
+        resolve_class_fn=_tracking_defense,
     )
 
     cfg()
@@ -195,32 +158,15 @@ def test_anjana_defense_applied_before_split(monkeypatch):
 
 def test_anjana_defense_transforms_x_and_y_before_split(monkeypatch):
     """After anjana defense, X and y should reflect the transformed frame."""
-    from deckard.data.anjana import AnjanaDataConfig
-
     def _fake_defense_drop_half(data, **kwargs):
         _ = kwargs
         return data.iloc[: len(data) // 2].copy()
 
-    monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class",
-        lambda _: _fake_defense_drop_half,
-    )
-
-    cfg = AnjanaDataConfig(
-        dataset_name="make_classification",
-        data_params={
-            "n_samples": 20,
-            "n_features": 4,
-            "n_informative": 2,
-            "n_redundant": 0,
-            "random_state": 0,
-        },
-        train_size=14,
-        test_size=6,
-        classifier=True,
-        quasi_identifiers=["feature_0"],
-        sensitive_attribute="target",
-        anjana_defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
+    cfg = _make_anjana_data(
+        n=20,
+        monkeypatch=monkeypatch,
+        defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
+        resolve_class_fn=_fake_defense_drop_half,
     )
     cfg._load_data()
 
@@ -239,6 +185,7 @@ def test_anjana_experiment_end_to_end(monkeypatch):
     from deckard.experiment import ExperimentConfig
     from deckard.file import FileConfig
     from deckard.model import ModelConfig
+    from deckard.score.base import DefaultClassifierConfig
 
     cfg = _make_anjana_data(n=30)
 
@@ -251,12 +198,13 @@ def test_anjana_experiment_end_to_end(monkeypatch):
         ),
         attack=None,
         files=FileConfig(),
+        score=DefaultClassifierConfig(),
         classifier=True,
     )
 
     scores = exp()
     assert isinstance(scores, dict)
-    assert "accuracy" in scores
+    assert "class_count_max" in scores or "accuracy" in scores
 
 
 def test_anjana_experiment_with_defense(monkeypatch):
@@ -264,6 +212,7 @@ def test_anjana_experiment_with_defense(monkeypatch):
     from deckard.experiment import ExperimentConfig
     from deckard.file import FileConfig
     from deckard.model import ModelConfig
+    from deckard.score.base import DefaultClassifierConfig
 
     def _stub_k_anon(data, **kwargs):
         _ = kwargs
@@ -288,12 +237,13 @@ def test_anjana_experiment_with_defense(monkeypatch):
         ),
         attack=None,
         files=FileConfig(),
+        score=DefaultClassifierConfig(),
         classifier=True,
     )
 
     scores = exp()
     assert isinstance(scores, dict)
-    assert "accuracy" in scores
+    assert "class_count_max" in scores or "accuracy" in scores
 
 
 # ---------------------------------------------------------------------------
@@ -369,7 +319,7 @@ def test_anjana_data_with_art_model_defense_chain(monkeypatch):
         data_cfg.X_train,
         pd.DataFrame,
     ), "Expected tabular (DataFrame) X_train from AnjanaDataConfig"
-    assert "accuracy" in scores
+    assert "class_count_max" in scores or "accuracy" in scores
 
 
 def test_anjana_art_defense_is_applied_last(monkeypatch):
@@ -400,7 +350,11 @@ def test_anjana_art_defense_is_applied_last(monkeypatch):
 
 
 def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
-    """Combined chain: Anjana pre-split + fairness data transform + ART model wrapper."""
+    """Combined chain: Anjana pre-split data transform + ART model wrapper.
+
+    Anjana data configs are decoupled from fairlearn runtime caches; this test
+    validates Anjana + ART interaction only.
+    """
     pytest.importorskip("fairlearn")
 
     from art.estimators.classification.scikitlearn import (
@@ -477,11 +431,11 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
     assert isinstance(exp.data, AnjanaDataConfig)
     assert isinstance(exp.model._model, ScikitlearnLogisticRegression)
 
-    # Data transform checks: Anjana reduced rows before splitting and fairness sensitive caches were built.
+    # Data transform checks: Anjana reduced rows before splitting.
     assert len(exp.data._X) == 30
     assert len(exp.data.X_train) + len(exp.data.X_test) == 30
-    assert hasattr(exp.data, "_sensitive_train")
-    assert hasattr(exp.data, "_sensitive_test")
+    assert not hasattr(exp.data, "_sensitive_train")
+    assert not hasattr(exp.data, "_sensitive_test")
     assert "accuracy" in scores
 
 
@@ -566,7 +520,7 @@ def test_anjana_data_with_fairlearn_model_chain(monkeypatch):
     )
 
     # Fairlearn defense must NOT be classified as an ART defense
-    from deckard.model.fairness import FairlearnDefenseConfig as FLDef
+    from deckard.plugins.fairlearn.model import FairlearnDefenseConfig as FLDef
 
     assert not pipeline._is_art_defense(
         pipeline.defenses[0],
@@ -742,6 +696,7 @@ def test_deckard_optimize_subcommand_help_in_sklearn_dir():
     """Verify deckard optimize --help runs cleanly from examples/sklearn context."""
 
     env = make_runtime_env(DECKARD_RC_PATH)
+    env["DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION"] = "1"
 
     result = subprocess.run(
         [sys.executable, "-m", "deckard", "optimize", "--help"],

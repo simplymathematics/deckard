@@ -8,10 +8,10 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 
 from deckard.model.defend import DefensePipelineConfig
-from deckard.model import pytorch as pytorch_module
+from deckard.frameworks.pytorch import model as pytorch_module
 
 PytorchModelConfig = pytest.importorskip(
-    "deckard.model.pytorch",
+    "deckard.pytorch.model",
 ).PytorchModelConfig
 initialize_criterion = pytorch_module.initialize_criterion
 initialize_optimizer = pytorch_module.initialize_optimizer

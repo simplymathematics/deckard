@@ -6,8 +6,15 @@ Optional exports are only available when their dependencies are installed.
 """
 
 import logging
+import sys
 
 from .base import DataConfig, DataPipelineConfig
+from .pipeline import (
+    AnjanaDataPipelineConfig,
+    DefaultDataPipelineConfig,
+    FairlearnDataPipelineConfig,
+    PytorchDataPipelineConfig,
+)
 from .sample import (
     BaseSampler,
     SplitSampler,
@@ -22,21 +29,21 @@ from . import declarations  # noqa: F401
 logger = logging.getLogger(__name__)
 
 try:
-    from .fairness import FairlearnDataConfig
+    from ..plugins.fairlearn.data import FairlearnDataConfig
 
     _ = FairlearnDataConfig
 except ImportError:  # pragma: no cover
     logger.debug("Fairlearn not found. FairlearnDataConfig is unavailable.")
 
 try:
-    from .anjana import AnjanaDataConfig
+    from ..plugins.anjana.data import AnjanaDataConfig
 
     _ = AnjanaDataConfig
 except ImportError:  # pragma: no cover
     logger.debug("Anjana not found. AnjanaDataConfig is unavailable.")
 
 try:
-    from .pytorch import PytorchDataConfig, PytorchCustomDataConfig
+    from ..frameworks.pytorch.data import PytorchDataConfig, PytorchCustomDataConfig
 
     _ = (PytorchDataConfig, PytorchCustomDataConfig)
 except ImportError:
@@ -46,6 +53,10 @@ except ImportError:
 __all__ = [
     "DataConfig",
     "DataPipelineConfig",
+    "DefaultDataPipelineConfig",
+    "AnjanaDataPipelineConfig",
+    "FairlearnDataPipelineConfig",
+    "PytorchDataPipelineConfig",
     "BaseSampler",
     "SplitSampler",
     "KFoldSampler",

@@ -412,9 +412,22 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
     def _resolve_component_score_mode(
         self,
     ) -> Literal["train", "test", "val", "pre-sample"]:
-        for mode in self._resolve_score_modes():
+        modes = self._resolve_score_modes()
+        if not modes:
+            return "test"
+
+        # Respect explicit single-mode configuration as-is.
+        if len(modes) == 1:
+            mode = modes[0]
             if mode in {"test", "val", "train", "pre-sample"}:
                 return mode
+
+        # For multi-mode evaluations (e.g. standard/report), prefer test-mode
+        # component scoring so model metrics retain canonical keys like
+        # ``accuracy`` instead of ``training_accuracy``.
+        for preferred in ("test", "val", "train", "pre-sample"):
+            if preferred in modes:
+                return preferred
         return "test"
 
     def _propagate_score_mode(self) -> Literal["train", "test", "val", "pre-sample"]:
@@ -658,7 +671,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         if fairness_base is None:
             return merged
 
-        from ..score.fairness import FairlearnScoreDictConfig
+        from ..plugins.fairlearn.score import FairlearnScoreDictConfig
 
         return FairlearnScoreDictConfig(
             scorers=merged.scorers,
@@ -687,7 +700,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             score_fn = spec.get("score_function")
         else:
             score_fn = getattr(spec, "score_function", None)
-        return isinstance(score_fn, str) and "deckard.score.anjana." in score_fn
+        return isinstance(score_fn, str) and "deckard.plugins.anjana.score." in score_fn
 
     def _split_merged_score_profiles(self, plain: dict) -> tuple[dict | None, dict | None]:
         scorers = plain.get("scorers")
@@ -709,7 +722,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         }
 
         data_cfg = {
-            "_target_": "deckard.score.anjana.DefaultAnjanaScorerConfig",
+            "_target_": "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
             "scorers": data_scorers,
         }
 

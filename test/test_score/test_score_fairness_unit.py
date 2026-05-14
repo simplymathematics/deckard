@@ -1,8 +1,8 @@
 import pytest
 import numpy as np
 import pandas as pd
-from deckard.score import fairness
-from deckard.score.fairness import (
+from deckard.plugins.fairlearn import score as fairness
+from deckard.plugins.fairlearn.score import (
     as_group_scorer,
     _resolve_sensitive_features,
     fairness_demographic_parity_difference,

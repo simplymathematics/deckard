@@ -5,6 +5,9 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from hydra.core.global_hydra import GlobalHydra
+from omegaconf import OmegaConf
+
 
 def load_env_from_deckard_rc(path: Path) -> dict[str, str]:
     """Parse ``export KEY=VALUE`` lines from a ``.deckard_rc`` file."""
@@ -30,3 +33,19 @@ def make_runtime_env(rc_path: Path) -> dict[str, str]:
     env["DECKARD_TEST_MAX_SAMPLES"] = "200"
     env.setdefault("MPLBACKEND", "Agg")
     return env
+
+
+def reset_hydra_state() -> None:
+    """Clear Hydra's global state between compose calls."""
+    if GlobalHydra.instance().is_initialized():
+        GlobalHydra.instance().clear()
+
+
+def load_canonical_data_profile(profile_name: str, framework: str = "sklearn") -> dict:
+    """Load a canonical data profile from examples/<framework>/config/data."""
+    repo_root = Path(__file__).resolve().parents[1]
+    profile_path = (
+        repo_root / "examples" / framework / "config" / "data" / f"{profile_name}.yaml"
+    )
+    cfg = OmegaConf.load(profile_path)
+    return OmegaConf.to_container(cfg, resolve=True)

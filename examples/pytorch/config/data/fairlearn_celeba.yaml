@@ -1,4 +1,4 @@
-_target_: deckard.data.pytorch.PytorchDataConfig
+_target_: deckard.pytorch.data.PytorchDataConfig
 dataset_name: torch_fairness_dataset.py:CelebASmileDataset
 train_size: 128
 test_size: 128

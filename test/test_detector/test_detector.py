@@ -7,6 +7,7 @@ from omegaconf import OmegaConf
 from sklearn.datasets import make_classification
 
 from deckard.detector import DetectorConfig
+from deckard.detector.default import DetectorScorerConfig
 
 
 class _FakeBinaryInputDetector:
@@ -256,6 +257,15 @@ def test_detector_model_coercion_from_yaml_string(monkeypatch):
 
     cfg = DetectorConfig(detector_model="fake.yaml")
     assert cfg.detector_model is not None
+
+
+@pytest.mark.parametrize(
+    "alias",
+    [DetectorConfig, DetectorScorerConfig],
+    ids=["DetectorConfig", "DetectorScorerConfig"],
+)
+def test_detector_family_aliases_are_importable(alias):
+    assert alias is not None
 
 
 def test_detector_build_dataset_split_and_size_validation():

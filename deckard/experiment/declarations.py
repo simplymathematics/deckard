@@ -1,6 +1,11 @@
-"""Static survival ConfigStore declarations used by tests and Hydra overrides."""
+"""Experiment configuration module.
 
-from ..utils import safe_store
+This module is kept for backward compatibility.
+Canonical experiment configs are now loaded from examples/*/config/experiment/ YAML files
+at runtime via deckard.declarations.register_configs().
+
+Reference dictionaries are kept below for documentation only.
+"""
 
 LIFELINES_DATASETS = {
     "lung": {
@@ -25,9 +30,7 @@ SURVIVAL_MODELS = {
     "aalen": "aalen",
 }
 
+# Configs are now loaded from YAML files in examples/*/config/experiment/
+# These dictionaries are kept for reference/legacy code but not registered via safe_store
 
-for dataset_name, dataset_cfg in LIFELINES_DATASETS.items():
-    safe_store(group="survival/data", name=dataset_name, node=dataset_cfg)
-
-for model_name, model_value in SURVIVAL_MODELS.items():
-    safe_store(group="survival/model", name=model_name, node=model_value)
+__all__ = ["LIFELINES_DATASETS", "SURVIVAL_MODELS"]

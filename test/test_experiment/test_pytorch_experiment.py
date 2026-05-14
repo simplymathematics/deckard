@@ -19,12 +19,12 @@ from helpers import make_runtime_env
 
 
 from deckard.attack import AttackConfig
-from deckard.data.pytorch import PytorchDataConfig
+from deckard.pytorch.data import PytorchDataConfig
 from deckard.experiment import TorchExperimentConfig
 from deckard.file import FileConfig
 from deckard.model import DefensePipelineConfig
 from deckard.model.defend import DefenseConfig
-from deckard.model.pytorch import PytorchModelConfig
+from deckard.pytorch.model import PytorchModelConfig
 
 torch = pytest.importorskip("torch")
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,7 +33,10 @@ DECKARD_RC_PATH = EXAMPLES_PYTORCH_DIR / ".deckard_rc"
 
 
 def _runtime_env() -> dict[str, str]:
-    return make_runtime_env(DECKARD_RC_PATH)
+    env = make_runtime_env(DECKARD_RC_PATH)
+    env["DECKARD_DEFAULT_CONFIG_FILE"] = "torch_default_cli.yaml"
+    env["DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION"] = "1"
+    return env
 
 
 # ---------------------------------------------------------------------------
@@ -263,7 +266,7 @@ def test_pytorch_auto_device_propagates_to_all_components():
 
     with (
         patch(
-            "deckard.experiment.torch_experiment.resolve_torch_device",
+            "deckard.frameworks.pytorch.experiment.resolve_torch_device",
         ) as resolve_device,
         patch(
             "deckard.attack.base.resolve_torch_device",
@@ -408,10 +411,9 @@ def test_torch_experiment_reconcile_component_devices_prefers_model_then_attack_
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "deckard.experiment.torch_experiment.resolve_torch_device",
+        "deckard.frameworks.pytorch.experiment.resolve_torch_device",
         lambda _d=None: "cpu",
     )
-
     exp = TorchExperimentConfig.__new__(TorchExperimentConfig)
     exp.device = None
     exp.data = SimpleNamespace(device="cpu")
@@ -441,7 +443,7 @@ def test_torch_experiment_reconcile_component_devices_uses_resolver_fallback(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "deckard.experiment.torch_experiment.resolve_torch_device",
+        "deckard.frameworks.pytorch.experiment.resolve_torch_device",
         lambda _d=None: "cpu",
     )
     exp = TorchExperimentConfig.__new__(TorchExperimentConfig)
@@ -589,7 +591,7 @@ def test_pytorch_experiment_scores_persist_via_file_config(tmp_path):
     reason="examples/pytorch/.deckard_rc not found",
 )
 def test_deckard_optimize_subcommand_help_in_pytorch_dir():
-    env = make_runtime_env(DECKARD_RC_PATH)
+    env = _runtime_env()
 
     result = subprocess.run(
         [sys.executable, "-m", "deckard", "optimize", "--help"],
@@ -639,6 +641,7 @@ def test_deckard_optimize_torch_art_smoke_matrix():
         "+defense=class_labels",
         "experiment_name=torch_art_smoke_chain",
         "files.model_file=null",
+            "files.attack_file=null",
         "data.train_size=64",
         "data.test_size=32",
         "model.fit_params.nb_epochs=1",
@@ -677,6 +680,7 @@ def test_deckard_optimize_torch_poisoning_gradient_matching_smoke_matrix():
         "attack=poisoning-gradient-matching",
         "experiment_name=torch_poisoning_smoke_chain",
         "files.model_file=null",
+            "files.attack_file=null",
         "data.train_size=64",
         "data.test_size=32",
         "+data.data_params.num_workers=0",
@@ -723,6 +727,7 @@ def test_deckard_optimize_torch_fairness_smoke_matrix():
         "+defense=fairlearn-adversarial-classifier",
         "experiment_name=torch_fairness_smoke_chain",
         "files.model_file=null",
+            "files.attack_file=null",
         "data.train_size=64",
         "data.test_size=32",
         "data.dataset_name=torch_fairness_dataset.py:SyntheticTabularFairnessDataset",

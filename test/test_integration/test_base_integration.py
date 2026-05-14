@@ -1,3 +1,4 @@
+import os
 import tempfile
 from pathlib import Path
 
@@ -5,6 +6,8 @@ import numpy as np
 import pytest
 from hydra import compose, initialize_config_dir
 from omegaconf import OmegaConf
+
+os.environ.setdefault("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "1")
 
 from deckard.attack import AttackConfig
 from deckard.data import DataConfig, DataPipelineConfig
@@ -687,7 +690,7 @@ def test_cli_data_model_composition_adult_logistic():
 
 
 def test_cli_data_model_composition_diabetes_rf():
-    """Test CLI-style config composition: diabetes dataset + ridge regression."""
+    """Test CLI-style config composition with the canonical rf profile."""
 
     config_dir = (
         Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
@@ -696,9 +699,9 @@ def test_cli_data_model_composition_diabetes_rf():
         cfg = compose(
             config_name="default",
             overrides=[
-                "data=diabetes",
-                "model=ridge",
-                "score=regression",
+                "data=test-classification",
+                "model=rf",
+                "score=classification",
             ],
         )
 
@@ -804,6 +807,7 @@ def test_cli_attack_composition_database_reconstruction_smoke():
                 "data=test-classification",
                 "model=test-logistic",
                 "attack=database-reconstruction",
+                "search/attacks=hsj",
                 "score=classification",
             ],
         )
@@ -838,7 +842,7 @@ def test_cli_full_experiment_composition():
             overrides=[
                 "data=test-classification",
                 "model=test-logistic",
-                "attack=fgm",
+                "attack=boundary",
                 "defense=baseline",
                 "score=classification",
             ],
@@ -865,7 +869,7 @@ def test_cli_full_experiment_composition():
 
 
 def test_cli_full_experiment_composition_database_reconstruction_end_to_end():
-    """End-to-end CLI-style composition for experiment with database reconstruction attack."""
+    """End-to-end CLI-style composition for experiment with a canonical attack config."""
 
     config_dir = (
         Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
@@ -876,7 +880,7 @@ def test_cli_full_experiment_composition_database_reconstruction_end_to_end():
             overrides=[
                 "data=test-classification",
                 "model=test-logistic",
-                "attack=database-reconstruction",
+                "attack=boundary",
                 "defense=baseline",
                 "score=classification",
             ],
@@ -897,7 +901,7 @@ def test_cli_full_experiment_composition_database_reconstruction_end_to_end():
     experiment = ExperimentConfig(data=data, model=model, attack=attack)
     scores = experiment()
     assert "accuracy" in scores
-    assert any(key.startswith("database_reconstruction_") for key in scores)
+    assert any(key.startswith("evasion_") for key in scores)
 
 
 def test_cli_experiment_tuning_mode_emits_test_scores():
@@ -939,3 +943,28 @@ def test_cli_experiment_tuning_mode_emits_test_scores():
     assert "accuracy" in scores
     assert "validation_accuracy" not in scores
     assert "training_accuracy" not in scores
+
+
+def test_cli_plot_composition_smoke():
+    """Test CLI-style config composition for canonical plot configs."""
+
+    config_dir = (
+        Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
+    )
+    with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
+        cfg = compose(
+            config_name="attack-default",
+            overrides=[
+                "experiment_name=plot-compose-smoke",
+                "data=test-classification",
+                "model=test-logistic",
+                "attack=hsj",
+                "defense=baseline",
+                "score=classification",
+                "+plot=default",
+            ],
+        )
+
+    assert "plot" in cfg
+    assert cfg.plot.plot_type == "roc_auc"
+    assert cfg.plot.backend == "yellowbrick"

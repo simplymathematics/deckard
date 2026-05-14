@@ -40,6 +40,8 @@ run_tests() {
   set +e
   (
     cd "$REPO_ROOT"
+    "$PYTHON" -m coverage erase
+    export DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION=1
     "$PYTHON" -m pytest \
       -n auto \
       "$TEST_DIR" \
@@ -93,7 +95,7 @@ fi
 echo "[INFO] Generating coverage report..."
 (
   cd "$REPO_ROOT"
-  "$PYTHON" -m coverage report -m > "$COV_FILE"
+  "$PYTHON" -m coverage report --ignore-errors -m > "$COV_FILE"
 )
 
 echo "[INFO] Coverage written to $COV_FILE"

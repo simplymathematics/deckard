@@ -38,7 +38,7 @@ from ..utils import (
     resolve_class,
     resolve_torch_device,
 )
-from .torch_utils import (
+from ..frameworks.pytorch.torch_utils import (
     build_torch_art_model,
     collect_subset_from_dataloader,
     is_dataloader,

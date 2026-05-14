@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 
 from .base import AttackConfig, AttackTypePlugin
 from .poisoning import _PoisoningAttackMixin
-from ..utils import safe_store
 
 
 
@@ -186,16 +185,3 @@ class ExtractionAttackConfig(_ExtractionAttackMixin, AttackConfig):
         ]
     )
 
-
-# Register extraction attack config
-safe_store(
-    group="attack",
-    name="extraction",
-    node=ExtractionAttackConfig(),
-)
-
-safe_store(
-    group="search/attack",
-    name="extraction",
-    node=ExtractionAttackConfig(),
-)

@@ -6,8 +6,14 @@ dependencies are installed.
 """
 
 import logging
+import sys
 from typing import Any
 from .base import ModelConfig
+from .defense import (
+    DefaultDefenseConfig,
+    DefaultPytorchDefenseConfig,
+    DefaultSklearnDefenseConfig,
+)
 from .defend import DefenseConfig, DefensePipelineConfig
 from .detector import DetectorDefenseConfig
 from .preprocessor import PreprocessorDefenseConfig
@@ -24,14 +30,14 @@ ScorerDictConfig = Any
 logger = logging.getLogger(__name__)
 
 try:
-    from .survival import SurvivalModelConfig
+    from ..plugins.lifelines.model import SurvivalModelConfig
 
     _ = SurvivalModelConfig
 except ImportError:  # pragma: no cover
     logger.debug("Lifelines not found. Survival model configs are unavailable.")
 
 try:
-    from .fairness import (
+    from ..plugins.fairlearn.model import (
         FairlearnDefenseConfig,
         FairlearnModelConfig,
         FairlearnPytorchModelConfig,
@@ -44,14 +50,14 @@ except ImportError:  # pragma: no cover
     )
 
 try:
-    from .anjana import AnjanaModelConfig
+    from ..plugins.anjana.model import AnjanaModelConfig
 
     _ = AnjanaModelConfig
 except ImportError:  # pragma: no cover
     logger.debug("Anjana not found. Anjana model configs are unavailable.")
 
 try:
-    from .pytorch import PytorchModelConfig
+    from ..frameworks.pytorch.model import PytorchModelConfig
 
     _ = PytorchModelConfig
 except ImportError:
@@ -60,6 +66,9 @@ except ImportError:
 
 __all__ = [
     "ModelConfig",
+    "DefaultDefenseConfig",
+    "DefaultSklearnDefenseConfig",
+    "DefaultPytorchDefenseConfig",
     "DefenseConfig",
     "DefensePipelineConfig",
     "DetectorDefenseConfig",

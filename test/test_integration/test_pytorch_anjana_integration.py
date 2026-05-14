@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 
 
-from deckard.data.pytorch import PytorchDataConfig
-from deckard.model.pytorch import PytorchModelConfig
+from deckard.pytorch.data import PytorchDataConfig
+from deckard.pytorch.model import PytorchModelConfig
 
 torch = pytest.importorskip("torch")
 ROOT = Path(__file__).resolve().parents[2]

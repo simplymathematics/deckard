@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+from helpers import load_canonical_data_profile
 
 from deckard.data import (
     DataConfig,
@@ -23,9 +24,9 @@ from deckard.data import (
 
 def _make_clf_config(**kwargs):
     """Return a small classification DataConfig, loading data but not yet sampling."""
-    defaults = dict(
-        dataset_name="make_classification",
-        data_params={
+    defaults = load_canonical_data_profile("classification", framework="sklearn")
+    defaults["data_params"].update(
+        {
             "n_samples": 120,
             "n_features": 5,
             "n_informative": 3,
@@ -33,11 +34,8 @@ def _make_clf_config(**kwargs):
             "random_state": 0,
             "n_clusters_per_class": 1,
         },
-        test_size=0.2,
-        random_state=42,
-        stratify=True,
-        classifier=True,
     )
+    defaults.update({"test_size": 0.2, "random_state": 42, "stratify": True, "classifier": True})
     defaults.update(kwargs)
     cfg = DataConfig(**defaults)
     cfg._load_data()
@@ -46,19 +44,16 @@ def _make_clf_config(**kwargs):
 
 def _make_reg_config(**kwargs):
     """Return a small regression DataConfig."""
-    defaults = dict(
-        dataset_name="make_regression",
-        data_params={
+    defaults = load_canonical_data_profile("regression", framework="sklearn")
+    defaults["data_params"].update(
+        {
             "n_samples": 100,
             "n_features": 4,
             "n_informative": 2,
             "random_state": 1,
         },
-        test_size=0.2,
-        random_state=1,
-        stratify=False,
-        classifier=False,
     )
+    defaults.update({"test_size": 0.2, "random_state": 1, "stratify": False, "classifier": False})
     defaults.update(kwargs)
     cfg = DataConfig(**defaults)
     cfg._load_data()

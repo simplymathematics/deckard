@@ -271,6 +271,7 @@ def test_scorer_dict_call_mode_and_probability_routing(tmp_path, monkeypatch):
         test_predictions=None,
         training_predictions=np.array([1, 0]),
         val_predictions=np.array([1, 1]),
+        predict_proba=lambda x: np.array([[0.8, 0.2], [0.1, 0.9]]),
         _model=Estimator(),
         get_model=lambda: Estimator(),
     )

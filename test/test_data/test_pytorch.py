@@ -10,10 +10,10 @@ from unittest.mock import patch
 torch = pytest.importorskip("torch")
 Tensor = pytest.importorskip("torch").Tensor
 PytorchDataConfig = pytest.importorskip(
-    "deckard.data.pytorch",
+    "deckard.pytorch.data",
 ).PytorchDataConfig
 PytorchCustomDataConfig = pytest.importorskip(
-    "deckard.data.pytorch",
+    "deckard.pytorch.data",
 ).PytorchCustomDataConfig
 
 
@@ -230,7 +230,7 @@ class TestPytorchDataConfig(unittest.TestCase):
             data_params={},
         )
 
-        with patch("deckard.data.pytorch.load_class", return_value=ds):
+        with patch("deckard.frameworks.pytorch.data.load_class", return_value=ds):
             cfg._load_data()
         self.assertTrue(hasattr(cfg, "_sensitive"))
         self.assertEqual(len(cfg._sensitive), len(y))
@@ -254,7 +254,7 @@ class TestPytorchDataConfig(unittest.TestCase):
             data_params={},
         )
 
-        with patch("deckard.data.pytorch.load_class", return_value=ds):
+        with patch("deckard.frameworks.pytorch.data.load_class", return_value=ds):
             cfg._load_data()
         self.assertTrue(hasattr(cfg, "_sensitive"))
         self.assertEqual(len(cfg._sensitive), len(y))
@@ -411,7 +411,7 @@ class TestPytorchDataConfig(unittest.TestCase):
             seen["kwargs"] = kwargs
             return ArrayFallbackDataset()
 
-        with patch("deckard.data.pytorch.load_class", side_effect=fake_load_class):
+        with patch("deckard.frameworks.pytorch.data.load_class", side_effect=fake_load_class):
             cfg._load_data()
 
         self.assertEqual(seen["name"], "torchvision.datasets.MNIST")
@@ -429,7 +429,7 @@ class TestPytorchDataConfig(unittest.TestCase):
             data_params={},
         )
 
-        with patch("deckard.data.pytorch.load_class", return_value=IntImageDataset()):
+        with patch("deckard.frameworks.pytorch.data.load_class", return_value=IntImageDataset()):
             cfg._load_data()
 
         self.assertEqual(tuple(cfg._X.shape), (6, 1, 2, 2))
@@ -445,7 +445,7 @@ class TestPytorchDataConfig(unittest.TestCase):
         )
 
         with patch(
-            "deckard.data.pytorch.load_class",
+            "deckard.frameworks.pytorch.data.load_class",
             return_value=InvalidSampleDataset(),
         ):
             with self.assertRaises(ValueError):
@@ -454,7 +454,7 @@ class TestPytorchDataConfig(unittest.TestCase):
         X = torch.randn(4, 2)
         y = torch.randint(0, 2, (4,))
         bad_sensitive = MismatchedSensitiveDataset(X, y)
-        with patch("deckard.data.pytorch.load_class", return_value=bad_sensitive):
+        with patch("deckard.frameworks.pytorch.data.load_class", return_value=bad_sensitive):
             with self.assertRaises((ValueError, RuntimeError)):
                 cfg._load_data()
 
@@ -547,7 +547,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
         return torch.utils.data.TensorDataset(X, y)
 
     def test_load_data_creates_dataloaders(self):
-        from deckard.data.pytorch import PytorchCustomDataConfig
+        from deckard.pytorch.data import PytorchCustomDataConfig
 
         ds = self._make_simple_dataset()
 
@@ -573,7 +573,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
             self.assertEqual(len(cfg._X), 40)
 
     def test_sample_creates_train_test_loaders(self):
-        from deckard.data.pytorch import PytorchCustomDataConfig
+        from deckard.pytorch.data import PytorchCustomDataConfig
 
         ds_train = self._make_simple_dataset(40)
         ds_test = self._make_simple_dataset(20)
@@ -603,7 +603,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
         self.assertIsInstance(cfg.y_test, torch.Tensor)
 
     def test_truncate_dataset(self):
-        from deckard.data.pytorch import PytorchCustomDataConfig
+        from deckard.pytorch.data import PytorchCustomDataConfig
 
         ds = self._make_simple_dataset(40)
         cfg = PytorchCustomDataConfig(
@@ -618,7 +618,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
         self.assertEqual(len(subset), 10)
 
     def test_as_dataset_with_string_raises_on_invalid(self):
-        from deckard.data.pytorch import PytorchCustomDataConfig
+        from deckard.pytorch.data import PytorchCustomDataConfig
 
         cfg = PytorchCustomDataConfig(
             dataset_name="torch.utils.data.TensorDataset",
@@ -632,7 +632,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
             cfg._as_dataset("not.a.real.Dataset", split="train", transform=None)
 
     def test_as_dataset_with_invalid_type_raises(self):
-        from deckard.data.pytorch import PytorchCustomDataConfig
+        from deckard.pytorch.data import PytorchCustomDataConfig
 
         cfg = PytorchCustomDataConfig(
             dataset_name="torch.utils.data.TensorDataset",
@@ -646,7 +646,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
             cfg._as_dataset(12345, split="train", transform=None)
 
     def test_custom_config_post_init_and_hash_defaults(self):
-        from deckard.data.pytorch import PytorchCustomDataConfig
+        from deckard.pytorch.data import PytorchCustomDataConfig
 
         cfg = PytorchCustomDataConfig(
             dataset_name="torch.utils.data.TensorDataset",
@@ -730,7 +730,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
             bad_cfg._sample()
 
     def test_custom_call_uses_cached_paths_and_persists_outputs(self):
-        from deckard.data.pytorch import PytorchCustomDataConfig
+        from deckard.pytorch.data import PytorchCustomDataConfig
         import json
 
         data_path = Path(self.temp_dir) / "custom_data.pkl"

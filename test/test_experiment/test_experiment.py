@@ -9,11 +9,14 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
+from hydra import compose, initialize_config_dir
+from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
 from deckard.attack import AttackConfig
 from deckard.data import DataConfig
 from deckard.experiment import ExperimentConfig, SurvivalExperimentConfig
+from deckard.frameworks.pytorch.experiment import TorchExperimentConfig
 from deckard.experiment.base import (
     DataConfigResolutionMixin,
     _file_resolver,
@@ -25,6 +28,11 @@ from deckard.score import DefaultClassifierConfig, DefaultDataClassificationConf
 from deckard.utils import ConfigBase
 from helpers import make_runtime_env
 from deckard.attack.base import resolve_class as base_resolve_class
+
+
+def test_experiment_family_aliases_are_importable():
+    assert SurvivalExperimentConfig is not None
+    assert TorchExperimentConfig is not None
 
 
 class DummyPoisonAttack:
@@ -178,7 +186,7 @@ class TestExperimentValidationScoring(unittest.TestCase):
         self.assertEqual(exp.data.score_mode, "val")
         self.assertEqual(exp.model.score_mode, "val")
 
-    def _make_exp(self, *, val_size=0.1, evaluation_mode="tuning", score_mode="test"):
+    def _make_exp(self, *, val_size=0.1, evaluation_mode="standard", score_mode=None):
         return ExperimentConfig(
             data=DataConfig(
                 dataset_name="make_classification",
@@ -216,12 +224,12 @@ class TestExperimentValidationScoring(unittest.TestCase):
         self.assertNotIn("validation_accuracy", scores)
         self.assertNotIn("training_accuracy", scores)
 
-    def test_report_mode_emits_validation_scores_only(self):
+    def test_report_mode_emits_validation_scores(self):
         exp = self._make_exp(evaluation_mode="report", score_mode=None)
         scores = exp()
         self.assertIn("validation_accuracy", scores)
-        self.assertNotIn("accuracy", scores)
-        self.assertNotIn("training_accuracy", scores)
+        self.assertIn("accuracy", scores)
+        self.assertIn("training_accuracy", scores)
 
     def test_report_mode_without_validation_split_raises(self):
         exp = self._make_exp(val_size=None, evaluation_mode="report", score_mode=None)
@@ -399,6 +407,7 @@ class TestPoisoningExperimentIntegration(unittest.TestCase):
         examples_dir = Path(__file__).resolve().parents[2] / "examples" / "sklearn"
         rc_path = examples_dir / ".deckard_rc"
         env = make_runtime_env(rc_path)
+        env["DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION"] = "1"
 
         result = subprocess.run(
             [sys.executable, "-m", "deckard", "optimize", "--help"],
@@ -691,6 +700,43 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
         with self.assertRaises(TypeError):
             exp._resolve_data_config()
 
+    def test_sklearn_pipeline_yaml_compose_instantiates_pipeline_configs(self):
+        from deckard.data import DataPipelineConfig
+
+        config_dir = (
+            Path(__file__).resolve().parents[2]
+            / "examples"
+            / "sklearn"
+            / "config"
+            / "data"
+            / "pipeline"
+        )
+        for config_name in (
+            "default_pipeline",
+            "anjana_pipeline",
+            "fairlearn_pipeline",
+        ):
+            with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
+                cfg = compose(config_name=config_name)
+            self.assertIsInstance(instantiate(cfg), DataPipelineConfig)
+
+    def test_pytorch_pipeline_yaml_compose_instantiates_pipeline_config(self):
+        pytest.importorskip("torch")
+
+        from deckard.data import DataPipelineConfig
+
+        config_dir = (
+            Path(__file__).resolve().parents[2]
+            / "examples"
+            / "pytorch"
+            / "config"
+            / "data"
+            / "pipeline"
+        )
+        with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
+            cfg = compose(config_name="pytorch_pipeline")
+        self.assertIsInstance(instantiate(cfg), DataPipelineConfig)
+
 
 # ── ExperimentConfig.set_random_seed ─────────────────────────────────────────
 
@@ -961,27 +1007,27 @@ class TestResolveScoreModes(unittest.TestCase):
         exp = ExperimentConfig.__new__(ExperimentConfig)
         exp.__dict__.update(
             {
-                "score_modes": None,
+                "score_mode": None,
                 "evaluation_mode": "standard",
             },
         )
         exp.__dict__.update(kwargs)
         return exp
 
-    def test_standard_returns_test(self):
+    def test_standard_returns_train_and_test(self):
         exp = self._base_exp(evaluation_mode="standard")
-        self.assertEqual(exp._resolve_score_modes(), ["test"])
+        self.assertEqual(exp._resolve_score_modes(), ["train", "test"])
 
     def test_tuning_returns_test(self):
         exp = self._base_exp(evaluation_mode="tuning")
         self.assertEqual(exp._resolve_score_modes(), ["test"])
 
-    def test_report_returns_val(self):
+    def test_report_returns_train_test_and_val(self):
         exp = self._base_exp(evaluation_mode="report")
-        self.assertEqual(exp._resolve_score_modes(), ["val"])
+        self.assertEqual(exp._resolve_score_modes(), ["train", "test", "val"])
 
     def test_explicit_score_modes_override(self):
-        exp = self._base_exp(score_modes=["test", "val"])
+        exp = self._base_exp(score_mode=["test", "val"])
         self.assertEqual(exp._resolve_score_modes(), ["test", "val"])
 
     def test_explicit_score_mode_presample(self):
@@ -1027,7 +1073,7 @@ class TestExperimentScorerModePermutations(unittest.TestCase):
             data=self._base_data(val_size=0.1),
             model=self._base_model(),
             score={"experiment": DefaultDataClassificationConfig()},
-            score_modes=["pre-sample", "train", "test", "val"],
+            score_mode=["pre-sample", "train", "test", "val"],
             files=FileConfig(),
             experiment_name="score-permutations-data-profile",
         )
@@ -1044,7 +1090,7 @@ class TestExperimentScorerModePermutations(unittest.TestCase):
             data=self._base_data(val_size=0.1),
             model=self._base_model(),
             score={"experiment": DefaultClassifierConfig()},
-            score_modes=["pre-sample", "test"],
+            score_mode=["pre-sample", "test"],
             files=FileConfig(),
             experiment_name="score-permutations-non-data-profile",
         )

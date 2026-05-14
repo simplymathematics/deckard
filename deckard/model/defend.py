@@ -240,7 +240,7 @@ class _DefensePipelineConfigBehaviorMixin:
             ):
                 try:
                     fair_cls = resolve_class(
-                        "deckard.model.fairness.FairlearnDefenseConfig",
+                        "deckard.plugins.fairlearn.model.FairlearnDefenseConfig",
                     )
                     return fair_cls(**defense_dict)
                 except Exception:
@@ -343,7 +343,7 @@ class _DefensePipelineConfigBehaviorMixin:
             return True
         # DefenseConfig instances without a fairlearn/art prefix are ART-style model wrappers
         try:
-            from .fairness import FairlearnDefenseConfig
+            from ..plugins.fairlearn.model import FairlearnDefenseConfig
 
             if isinstance(defense_obj, FairlearnDefenseConfig):
                 return False
@@ -358,7 +358,7 @@ class _DefensePipelineConfigBehaviorMixin:
         if self._is_art_defense(defense_obj):
             return True
         try:
-            from .fairness import FairlearnDefenseConfig
+            from ..plugins.fairlearn.model import FairlearnDefenseConfig
 
             if isinstance(defense_obj, FairlearnDefenseConfig):
                 return True

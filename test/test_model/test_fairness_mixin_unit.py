@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 
-from deckard.model.fairness import (
+from deckard.plugins.fairlearn.model import (
     _SensitiveBehaviorMixin,
 )
 

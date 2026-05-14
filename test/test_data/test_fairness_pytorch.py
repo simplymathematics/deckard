@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from deckard.data.fairness_pytorch import FairlearnPytorchDataConfig
+from deckard.pytorch.fairness_data import FairlearnPytorchDataConfig
 
 
 class DummyDataset(torch.utils.data.Dataset):

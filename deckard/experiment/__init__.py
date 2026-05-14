@@ -5,6 +5,7 @@ orchestration config and an optional survival-specific extension.
 """
 
 import logging
+import sys
 
 from .base import ExperimentConfig
 
@@ -14,7 +15,7 @@ from . import declarations  # noqa: F401
 logger = logging.getLogger(__name__)
 
 try:
-    from .torch_experiment import TorchExperimentConfig
+    from ..frameworks.pytorch.experiment import TorchExperimentConfig
 
     _ = TorchExperimentConfig
 except ImportError:  # pragma: no cover
@@ -23,7 +24,7 @@ except ImportError:  # pragma: no cover
     )
 
 try:
-    from .survival import SurvivalExperimentConfig
+    from ..plugins.lifelines.experiment import SurvivalExperimentConfig
 
     _ = SurvivalExperimentConfig
 except ImportError:  # pragma: no cover

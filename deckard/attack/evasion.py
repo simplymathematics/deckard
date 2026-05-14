@@ -9,13 +9,17 @@ import numpy as np
 from art.config import ART_NUMPY_DTYPE
 
 from .base import AttackConfig, AttackTypePlugin, _AttackMixin, _sensitive_slice
-from ..utils import safe_store
 from ..score.base import (
     DefaultClassifierConfig,
     DefaultRegressorConfig,
     ScorerDictConfig,
 )
-from .torch_utils import is_tensor, tensor_to_numpy, is_dataloader, collect_subset_from_dataloader
+from ..frameworks.pytorch.torch_utils import (
+    collect_subset_from_dataloader,
+    is_dataloader,
+    is_tensor,
+    tensor_to_numpy,
+)
 
 
 
@@ -222,7 +226,7 @@ class _EvasionAttackMixin(_AttackMixin):
                 f"Expected data.X_test to be a pd.Series, np.ndarray, torch Tensor, torch DataLoader, or torch Dataset/Subset. Got: {type(data.X_test)}",
             )
         # Do not flatten x_subset; preserve original shape for torch/ART models
-        if is_tensor(y_subset) and y_subset.ndim > 1:
+        if y_subset is not None and is_tensor(y_subset) and y_subset.ndim > 1:
             y_subset = y_subset.view(-1)
         return n, x_subset, y_subset
 
@@ -263,17 +267,4 @@ class EvasionAttackConfig(_EvasionAttackMixin, AttackConfig):
         ]
     )
 
-
-# Register evasion attack config
-safe_store(
-    group="attack",
-    name="evasion",
-    node=EvasionAttackConfig(),
-)
-
-safe_store(
-    group="search/attack",
-    name="evasion",
-    node=EvasionAttackConfig(),
-)
 

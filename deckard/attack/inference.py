@@ -12,7 +12,6 @@ from omegaconf import ListConfig, OmegaConf
 from numpy.exceptions import AxisError
 
 from .base import AttackConfig, AttackTypePlugin, _AttackMixin, _sensitive_slice
-from ..utils import safe_store
 
 
 
@@ -543,17 +542,4 @@ class InferenceAttackConfig(_InferenceAttackMixin, AttackConfig):
         ]
     )
 
-
-# Register inference attack config
-safe_store(
-    group="attack",
-    name="inference",
-    node=InferenceAttackConfig(),
-)
-
-safe_store(
-    group="search/attack",
-    name="inference",
-    node=InferenceAttackConfig(),
-)
 

@@ -6,9 +6,9 @@ from unittest.mock import Mock
 import pytest
 import logging
 
-from deckard.model.fairness import FairlearnModelConfig
-from deckard.data.fairness import FairlearnDataConfig
-from deckard.model.fairness import FairlearnDefenseConfig
+from deckard.plugins.fairlearn.model import FairlearnModelConfig
+from deckard.plugins.fairlearn.data import FairlearnDataConfig
+from deckard.plugins.fairlearn.model import FairlearnDefenseConfig
 from deckard.model.defend import DefenseConfig
 from deckard.model.defend import DefensePipelineConfig
 
@@ -155,7 +155,7 @@ class TestFairlearnModelConfig(unittest.TestCase):
     def test_sensitive_fairness_scores_naming_convention(self):
         """Test that sensitive fairness scores follow naming convention."""
         # Create a minimal real FairlearnDataConfig with required fields
-        from deckard.data.fairness import FairlearnDataConfig
+        from deckard.plugins.fairlearn.data import FairlearnDataConfig
 
         fairness_data = FairlearnDataConfig(
             sensitive_columns="sex",

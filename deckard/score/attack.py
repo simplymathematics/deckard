@@ -94,6 +94,7 @@ class DefaultEvasionAttackScorerConfig(
     """
 
     _profile_attr = "evasion"
+    _deckard_attack_profile: str | None = None
     classifier: Union[bool, str] = True
     scorers: dict[str, ScorerConfig] = field(default_factory=dict)
 
@@ -713,7 +714,7 @@ class FairlearnAttributeInferenceRegressionAttackScorerConfig:
 class FairlearnAttackScorerConfig(AttackScorerConfig):
     """AttackScorerConfig that computes attack metrics stratified by sensitive group.
 
-    Uses :class:`~deckard.score.fairness.FairlearnScoreDictConfig` profiles for
+    Uses :class:`~deckard.plugins.fairlearn.score.FairlearnScoreDictConfig` profiles for
     each attack type so that metrics (accuracy, f1, mse, …) are computed
     per sensitive group via ``fairlearn.metrics.MetricFrame``.
 
@@ -721,7 +722,7 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
     :class:`~deckard.attack.base.AttackConfig` injects them automatically
     when the data object exposes ``_sensitive_test`` / ``_sensitive_train``
     (i.e. the data object is a
-    :class:`~deckard.data.fairness.FairlearnDataConfig`).
+    :class:`~deckard.plugins.fairlearn.data.FairlearnDataConfig`).
     """
 
     evasion: Union[ScorerDictConfig, dict, None] = None
@@ -731,7 +732,7 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
     attribute_inference_regression: Union[ScorerDictConfig, dict, None] = None
 
     def __post_init__(self):
-        from .fairness import FairlearnScoreDictConfig
+        from ..plugins.fairlearn.score import FairlearnScoreDictConfig
 
         def _fairlearn_profile(field_val, default_group_scorers, base_scorers=None):
             """Return a FairlearnScoreDictConfig, merging any user-supplied overrides."""

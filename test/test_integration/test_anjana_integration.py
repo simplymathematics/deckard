@@ -25,6 +25,7 @@ DECKARD_RC_PATH = EXAMPLES_SKLEARN_DIR / ".deckard_rc"
 
 def _runtime_env() -> dict[str, str]:
     env = make_runtime_env(DECKARD_RC_PATH)
+    env["DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION"] = "1"
     env.setdefault("DECKARD_TEST_MAX_SAMPLES", "200")
     return env
 
@@ -418,7 +419,7 @@ def test_anjana_fairness_and_art_chain_type_and_transform(monkeypatch):
     assert isinstance(exp.model._model, ScikitlearnLogisticRegression)
     assert len(exp.data._X) == 30
     assert len(exp.data.X_train) + len(exp.data.X_test) == 30
-    assert hasattr(exp.data, "_sensitive_train")
+    assert not hasattr(exp.data, "_sensitive_train")
     _assert_anjana_privacy_scores(scores)
     assert "accuracy" in scores
 

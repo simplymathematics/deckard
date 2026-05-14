@@ -3,7 +3,8 @@ import pandas as pd
 import pytest
 from omegaconf import OmegaConf
 
-from deckard.data.anjana import AnjanaDataConfig
+from deckard.plugins.anjana.data import AnjanaDataConfig
+from deckard.plugins.anjana import data as anjana_data_module
 from deckard.data.base import DataPipelineConfig
 
 
@@ -120,49 +121,6 @@ def test_sensitive_helpers_and_target_resolution_paths():
         cfg._validate_sensitive_runtime([" ", ""], "ctx")
 
 
-def test_inject_fairness_defense_step_branch_paths():
-    cfg = _bare_cfg()
-
-    cfg.fairness_defense = True
-    with pytest.raises(ValueError, match="ambiguous"):
-        cfg._inject_fairness_defense_step()
-
-    cfg.fairness_defense = 7
-    with pytest.raises(TypeError, match="must be a dict"):
-        cfg._inject_fairness_defense_step()
-
-    cfg.fairness_defense = {"name": "fairlearn.preprocessing.CorrelationRemover"}
-    cfg.sensitive_columns = None
-    with pytest.raises(ValueError, match="must be configured"):
-        cfg._inject_fairness_defense_step()
-
-    cfg.sensitive_columns = ["group"]
-    cfg._inject_fairness_defense_step()
-
-    cfg._X = pd.DataFrame({"feature": [1, 2]})
-    with pytest.raises(RuntimeError, match="Sensitive features not found"):
-        cfg._inject_fairness_defense_step()
-
-    cfg._X = pd.DataFrame({"group": ["a", "b"], "feature": [1, 2]})
-    cfg.fairness_defense = {}
-    with pytest.raises(ValueError, match="include a 'name' key"):
-        cfg._inject_fairness_defense_step()
-
-    cfg.fairness_defense = {
-        "name": "fairlearn.preprocessing.CorrelationRemover",
-        "step_name": "fairness_step",
-        "alpha": 0.3,
-    }
-    cfg.pipeline = {"existing": {"name": "noop"}}
-    cfg._inject_fairness_defense_step()
-    assert cfg.pipeline["fairness_step"]["sensitive_feature_ids"] == ["group"]
-    assert cfg.pipeline["fairness_step"]["alpha"] == 0.3
-
-    before = dict(cfg.pipeline)
-    cfg._inject_fairness_defense_step()
-    assert cfg.pipeline == before
-
-
 def test_apply_anjana_defense_branch_paths(monkeypatch):
     cfg = _bare_cfg()
 
@@ -188,7 +146,7 @@ def test_apply_anjana_defense_branch_paths(monkeypatch):
         cfg._apply_anjana_defense()
 
     cfg.anjana_defense = {"name": "anjana.fake"}
-    monkeypatch.setattr("deckard.data.anjana.resolve_class", lambda _: "not-callable")
+    monkeypatch.setattr(anjana_data_module, "resolve_class", lambda _: "not-callable")
     with pytest.raises(TypeError, match="not callable"):
         cfg._apply_anjana_defense()
 
@@ -196,7 +154,7 @@ def test_apply_anjana_defense_branch_paths(monkeypatch):
         _ = kwargs
         return [1, 2, 3]
 
-    monkeypatch.setattr("deckard.data.anjana.resolve_class", lambda _: _wrong_type)
+    monkeypatch.setattr(anjana_data_module, "resolve_class", lambda _: _wrong_type)
     with pytest.raises(TypeError, match="must return pandas.DataFrame"):
         cfg._apply_anjana_defense()
 
@@ -209,7 +167,7 @@ def test_apply_anjana_defense_branch_paths(monkeypatch):
     cfg.target = None
     cfg.hierarchies = {"feature": {0: np.array([1, 2, 3])}}
     cfg.anjana_defense = {"_target_": "anjana.fake", "k": 2}
-    monkeypatch.setattr("deckard.data.anjana.resolve_class", lambda _: _drop_target)
+    monkeypatch.setattr(anjana_data_module, "resolve_class", lambda _: _drop_target)
 
     cfg._apply_anjana_defense()
 
@@ -249,10 +207,7 @@ def test_apply_anjana_defense_signature_filtering_and_defaults(monkeypatch):
         )
         return data.copy()
 
-    monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class",
-        lambda _: _strict_k_anonymity_like,
-    )
+    monkeypatch.setattr(anjana_data_module, "resolve_class", lambda _: _strict_k_anonymity_like)
 
     cfg._apply_anjana_defense()
 
@@ -270,7 +225,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     monkeypatch.setattr(
         DataPipelineConfig,
         "_load_data",
-        lambda self: calls.append("load"),
+        lambda self: (calls.append("load"), self)[1],
     )
     monkeypatch.setattr(
         AnjanaDataConfig,
@@ -312,12 +267,13 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     cfg_score.y_train = pd.Series([0, 1])
     cfg_score.X_train = pd.DataFrame({"x": [1, 2]})
     monkeypatch.setattr(
-        "deckard.data.anjana.load_class",
+        anjana_data_module,
+        "load_class",
         lambda path: (lambda **kwargs: {"path": path, "n": len(kwargs["y_true"])}),
     )
     scored = cfg_score._score()
     assert scored == {
-        "path": "deckard.score.anjana.DefaultAnjanaDataScoreConfig",
+        "path": "deckard.plugins.anjana.score.DefaultAnjanaDataScorerConfig",
         "n": 2,
     }
 

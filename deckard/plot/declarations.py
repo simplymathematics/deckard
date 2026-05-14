@@ -1,8 +1,13 @@
-"""Static plot configuration declarations and ConfigStore registrations."""
+"""Plot configuration module.
 
-from .base import PlotTypePlugin, safe_store
-from .seaborn_plots import _SeabornPlotterMixin
-from .yellowbrick_plots import _YellowbrickPlotterMixin
+This module is kept for backward compatibility.
+Canonical plot configs are now loaded from examples/*/config/plot/ YAML files
+at runtime via deckard.declarations.register_configs().
+
+Reference dictionaries are kept below for documentation only.
+"""
+
+from .base import PlotTypePlugin
 
 PLOT_DEFAULT = {
     "backend": "yellowbrick",
@@ -55,7 +60,7 @@ PLOT_TYPES = [
 # Plugin Declarations
 # Seaborn plotter plugin for matplotlib-based plotting
 SEABORN_PLOTTER_PLUGIN = PlotTypePlugin(
-    mixin_type="deckard.plot.seaborn_plots._SeabornPlotterMixin",
+    mixin_type="deckard.plugins.seaborn.plot._SeabornPlotterMixin",
     plot_backend="seaborn",
     plot_family=None,
     init_params={
@@ -66,7 +71,7 @@ SEABORN_PLOTTER_PLUGIN = PlotTypePlugin(
 
 # Yellowbrick plotter plugin for ML model visualization
 YELLOWBRICK_PLOTTER_PLUGIN = PlotTypePlugin(
-    mixin_type="deckard.plot.yellowbrick_plots._YellowbrickPlotterMixin",
+    mixin_type="deckard.plugins.yellowbrick.plot._YellowbrickPlotterMixin",
     plot_backend="yellowbrick",
     plot_family=None,
     init_params={
@@ -84,34 +89,12 @@ YELLOWBRICK_PLOTTER_PLUGIN = PlotTypePlugin(
     },
 )
 
-safe_store(group="plot", name="default", node=PLOT_DEFAULT)
-for _plot_name in PLOT_TYPES:
-    safe_store(
-        group="plot",
-        name=_plot_name,
-        node={
-            "defaults": ["default"],
-            "plot_type": _plot_name,
-        },
-    )
+# Configs are now loaded from YAML files in examples/*/config/plot/
+# These dictionaries are kept for reference/legacy code but not registered via safe_store
 
-# Register plotter plugins to plot group for discovery
-safe_store(
-    group="plot/plugins",
-    name="seaborn",
-    node={
-        "_target_": "deckard.plot.base.PlotTypePlugin",
-        "mixin_type": "deckard.plot.seaborn_plots._SeabornPlotterMixin",
-        "plot_backend": "seaborn",
-    },
-)
-
-safe_store(
-    group="plot/plugins",
-    name="yellowbrick",
-    node={
-        "_target_": "deckard.plot.base.PlotTypePlugin",
-        "mixin_type": "deckard.plot.yellowbrick_plots._YellowbrickPlotterMixin",
-        "plot_backend": "yellowbrick",
-    },
-)
+__all__ = [
+    "PLOT_DEFAULT",
+    "PLOT_TYPES",
+    "SEABORN_PLOTTER_PLUGIN",
+    "YELLOWBRICK_PLOTTER_PLUGIN",
+]

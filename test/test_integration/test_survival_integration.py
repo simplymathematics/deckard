@@ -117,7 +117,7 @@ lifelines_installed = __import__("importlib").util.find_spec("lifelines") is not
     reason="lifelines is required for LifelinesDataConfig hash tests",
 )
 def test_lifelines_data_config_hash_stable_after_execution():
-    from deckard.data.survival import LifelinesDataConfig, LifelinesDataMode
+    from deckard.plugins.lifelines.data import LifelinesDataConfig, LifelinesDataMode
 
     cfg = LifelinesDataConfig(
         dataset_name="make_classification",
@@ -148,7 +148,7 @@ def test_lifelines_data_config_hash_stable_after_execution():
     reason="lifelines is required for LifelinesDataConfig persistence tests",
 )
 def test_lifelines_data_config_scores_persist_and_reload():
-    from deckard.data.survival import LifelinesDataConfig, LifelinesDataMode
+    from deckard.plugins.lifelines.data import LifelinesDataConfig, LifelinesDataMode
 
     cfg = LifelinesDataConfig(
         dataset_name="make_classification",
@@ -183,7 +183,7 @@ def test_lifelines_data_config_scores_persist_and_reload():
     reason="lifelines is required for LifelinesDataConfig pickle tests",
 )
 def test_lifelines_data_config_object_pickle_roundtrip():
-    from deckard.data.survival import LifelinesDataConfig, LifelinesDataMode
+    from deckard.plugins.lifelines.data import LifelinesDataConfig, LifelinesDataMode
 
     cfg = LifelinesDataConfig(
         dataset_name="make_classification",

@@ -1,10 +1,27 @@
-"""Named score-profile declarations and ConfigStore registrations."""
+"""Score configuration module.
+
+This module is kept for backward compatibility.
+Canonical score configs are now loaded from examples/*/config/score/ YAML files
+at runtime via deckard.declarations.register_configs().
+
+Reference dictionaries are kept below for documentation only.
+"""
 
 from pathlib import Path
 from omegaconf import OmegaConf
-from .base import DefaultModelScorerConfig, ScorerTypePlugin, safe_store
+from .base import DefaultModelScorerConfig, ScorerTypePlugin
 from .data import DefaultDataScorerConfig
-from .fairness import DefaultFairlearnScorerConfig
+
+
+def _load_example_score_configs() -> None:
+    """Backward-compatible no-op loader.
+
+    Score configs are registered dynamically from YAML via
+    ``deckard.declarations.register_configs()`` at package import time.
+    This function remains to preserve older call sites and tests.
+    """
+
+    return None
 
 
 # Scorer Plugin Declarations
@@ -96,46 +113,20 @@ SCORER_PLUGIN_FAIRNESS = {
     },
 }
 
+# Configs are now loaded from YAML files in examples/*/config/score/
+# These dictionaries are kept for reference/legacy code but not registered via safe_store
 
-# Register scorer plugins to ConfigStore
-safe_store(group="score/plugins", name="model", node=SCORER_PLUGIN_MODEL_BASE)
-safe_store(group="score/plugins", name="model-classifier", node=SCORER_PLUGIN_MODEL_CLASSIFIER)
-safe_store(group="score/plugins", name="model-regressor", node=SCORER_PLUGIN_MODEL_REGRESSOR)
-safe_store(group="score/plugins", name="data", node=SCORER_PLUGIN_DATA_BASE)
-safe_store(group="score/plugins", name="data-classifier", node=SCORER_PLUGIN_DATA_CLASSIFIER)
-safe_store(group="score/plugins", name="data-regressor", node=SCORER_PLUGIN_DATA_REGRESSOR)
-safe_store(group="score/plugins", name="fairness", node=SCORER_PLUGIN_FAIRNESS)
-
-# Register same plugins to search/score/plugins for search space composition
-safe_store(group="search/score/plugins", name="model", node=SCORER_PLUGIN_MODEL_BASE)
-safe_store(group="search/score/plugins", name="model-classifier", node=SCORER_PLUGIN_MODEL_CLASSIFIER)
-safe_store(group="search/score/plugins", name="model-regressor", node=SCORER_PLUGIN_MODEL_REGRESSOR)
-safe_store(group="search/score/plugins", name="data", node=SCORER_PLUGIN_DATA_BASE)
-safe_store(group="search/score/plugins", name="data-classifier", node=SCORER_PLUGIN_DATA_CLASSIFIER)
-safe_store(group="search/score/plugins", name="data-regressor", node=SCORER_PLUGIN_DATA_REGRESSOR)
-safe_store(group="search/score/plugins", name="fairness", node=SCORER_PLUGIN_FAIRNESS)
+__all__ = [
+    "_load_example_score_configs",
+    "SCORER_PLUGIN_MODEL_BASE",
+    "SCORER_PLUGIN_MODEL_CLASSIFIER",
+    "SCORER_PLUGIN_MODEL_REGRESSOR",
+    "SCORER_PLUGIN_DATA_BASE",
+    "SCORER_PLUGIN_DATA_CLASSIFIER",
+    "SCORER_PLUGIN_DATA_REGRESSOR",
+    "SCORER_PLUGIN_FAIRNESS",
+    "DefaultModelScorerConfig",
+    "DefaultDataScorerConfig",
+]
 
 
-def _load_example_score_configs():
-    """Load score configs from examples/sklearn/config/score and register with ConfigStore."""
-    examples_dir = (
-        Path(__file__).resolve().parents[2]
-        / "examples"
-        / "sklearn"
-        / "config"
-        / "score"
-    )
-
-    if not examples_dir.exists():
-        return
-
-    for yaml_file in sorted(examples_dir.glob("*.yaml")):
-        try:
-            config_name = yaml_file.stem
-            cfg = OmegaConf.load(yaml_file)
-            safe_store(group="score", name=config_name, node=cfg)
-        except Exception:
-            pass  # Silently skip any problematic configs
-
-
-_load_example_score_configs()

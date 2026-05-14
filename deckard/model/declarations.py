@@ -1,25 +1,31 @@
-from ..utils import safe_store
+"""Model configuration module.
 
-# TinyNet config and registration (must be after safe_store import)
+This module is kept for backward compatibility.
+Canonical model and defense configs are now loaded from examples/*/config/ YAML files
+at runtime via deckard.declarations.register_configs().
+
+Previous static ConfigStore registrations have been consolidated into YAML files:
+- model configs: examples/sklearn/config/model/ (logistic, rf, svc, ridge, linear, ...)
+- model configs: examples/pytorch/config/model/ (tinynet, ...)
+- defense configs: examples/sklearn/config/defense/ (baseline, class-labels, anjana, ...)
+
+Reference dictionaries are kept below for documentation only.
+"""
+
+# Reference dictionaries for documentation (no longer registered via safe_store)
+
 TINYNET_MODEL = {
-    "model_type": "deckard.model.pytorch.TinyNet",
+    "model_type": "deckard.pytorch.model.TinyNet",
     "classifier": True,
     "model_params": {
         "input_dim": 10,  # Set default, should be overridden by data shape
         "hidden_dim": 16,
         "output_dim": 2,
     },
-    "_target_": "deckard.model.pytorch.PytorchModelConfig",
+    "_target_": "deckard.pytorch.model.PytorchModelConfig",
     "alias": "tinynet",
 }
-safe_store(group="model", name="tinynet", node=TINYNET_MODEL)
-safe_store(group="search/models", name="tinynet", node=TINYNET_MODEL)
-"""Static model/defense configuration declarations and ConfigStore registrations."""
 
-
-"""Static model/defense configuration declarations and ConfigStore registrations."""
-
-# Static model options mirrored from examples/sklearn/config/model.
 MODEL_LOGISTIC = {
     "model_type": "sklearn.linear_model.LogisticRegression",
     "classifier": True,
@@ -100,7 +106,6 @@ MODEL_LINEAR = {
     "alias": "linear",
 }
 
-# Static defense options mirrored from examples/sklearn/config/defense.
 DEFENSE_BASELINE = {
     "defense_name": None,
     "init_params": {
@@ -128,22 +133,6 @@ DEFENSE_CLASS_LABELS = {
     "alias": "class-labels",
 }
 
-DEFENSE_FEATURE_SQUEEZING = {
-    "defense_name": "art.defences.preprocessor.FeatureSqueezing",
-    "init_params": {
-        "library": "art",
-        "type": "preprocessor",
-        "class": "FeatureSqueezing",
-    },
-    "defense_params": {
-        "apply_fit": False,
-        "apply_predict": True,
-        "bit_depth": 8,
-        "clip_values": [0, 255],
-    },
-    "alias": "feature-squeezing",
-}
-
 DEFENSE_ANJANA = {
     "defense_name": None,
     "init_params": {
@@ -159,157 +148,14 @@ DEFENSE_ANJANA = {
     "alias": "anjana",
 }
 
-DEFENSE_PLUGIN_DETECTOR = {
-    "name": "deckard.model.defend.DefenseTypePlugin",
-    "mixin_type": "deckard.model.detector._DetectorDefenseMixin",
-    "defense_type": "detector",
-    "init_params": {
-        "library": "art",
-        "type": "defense",
-        "class": "detector",
-    },
-}
-
-DEFENSE_PLUGIN_PREPROCESSOR = {
-    "name": "deckard.model.defend.DefenseTypePlugin",
-    "mixin_type": "deckard.model.preprocessor._PreprocessorDefenseMixin",
-    "defense_type": "preprocessor",
-    "init_params": {
-        "library": "art",
-        "type": "defense",
-        "class": "preprocessor",
-    },
-}
-
-DEFENSE_PLUGIN_POSTPROCESSOR = {
-    "name": "deckard.model.defend.DefenseTypePlugin",
-    "mixin_type": "deckard.model.postprocessor._PostprocessorDefenseMixin",
-    "defense_type": "postprocessor",
-    "init_params": {
-        "library": "art",
-        "type": "defense",
-        "class": "postprocessor",
-    },
-}
-
-DEFENSE_PLUGIN_TRAINER = {
-    "name": "deckard.model.defend.DefenseTypePlugin",
-    "mixin_type": "deckard.model.trainer._TrainerDefenseMixin",
-    "defense_type": "trainer",
-    "init_params": {
-        "library": "art",
-        "type": "defense",
-        "class": "trainer",
-    },
-}
-
-DEFENSE_PLUGIN_TRANSFORMER = {
-    "name": "deckard.model.defend.DefenseTypePlugin",
-    "mixin_type": "deckard.model.transformer._TransformerDefenseMixin",
-    "defense_type": "transformer",
-    "init_params": {
-        "library": "art",
-        "type": "defense",
-        "class": "transformer",
-    },
-}
-
-DEFENSE_PLUGIN_REGULARIZER = {
-    "name": "deckard.model.defend.DefenseTypePlugin",
-    "mixin_type": "deckard.model.regularizer._RegularizerDefenseMixin",
-    "defense_type": "regularizer",
-    "init_params": {
-        "library": "art",
-        "type": "defense",
-        "class": "regularizer",
-    },
-}
-
-
-safe_store(group="model", name="logistic", node=MODEL_LOGISTIC)
-safe_store(group="model", name="rf", node=MODEL_RF)
-safe_store(group="model", name="svc", node=MODEL_SVC)
-safe_store(group="model", name="ridge", node=MODEL_RIDGE)
-safe_store(group="model", name="linear", node=MODEL_LINEAR)
-
-safe_store(group="search/models", name="logistic", node=MODEL_LOGISTIC)
-safe_store(group="search/models", name="rf", node=MODEL_RF)
-safe_store(group="search/models", name="svc", node=MODEL_SVC)
-safe_store(group="search/models", name="ridge", node=MODEL_RIDGE)
-safe_store(group="search/models", name="linear", node=MODEL_LINEAR)
-
-safe_store(group="defense", name="baseline", node=DEFENSE_BASELINE)
-safe_store(group="defense", name="class-labels", node=DEFENSE_CLASS_LABELS)
-safe_store(
-    group="defense",
-    name="feature-squeezing",
-    node=DEFENSE_FEATURE_SQUEEZING,
-)
-safe_store(group="defense", name="anjana", node=DEFENSE_ANJANA)
-
-safe_store(group="search/defenses", name="baseline", node=DEFENSE_BASELINE)
-safe_store(
-    group="search/defenses",
-    name="class-labels",
-    node=DEFENSE_CLASS_LABELS,
-)
-safe_store(
-    group="search/defenses",
-    name="feature-squeezing",
-    node=DEFENSE_FEATURE_SQUEEZING,
-)
-safe_store(group="search/defenses", name="anjana", node=DEFENSE_ANJANA)
-
-safe_store(group="defense/plugins", name="detector", node=DEFENSE_PLUGIN_DETECTOR)
-safe_store(
-    group="defense/plugins",
-    name="preprocessor",
-    node=DEFENSE_PLUGIN_PREPROCESSOR,
-)
-safe_store(
-    group="defense/plugins",
-    name="postprocessor",
-    node=DEFENSE_PLUGIN_POSTPROCESSOR,
-)
-safe_store(group="defense/plugins", name="trainer", node=DEFENSE_PLUGIN_TRAINER)
-safe_store(
-    group="defense/plugins",
-    name="transformer",
-    node=DEFENSE_PLUGIN_TRANSFORMER,
-)
-safe_store(
-    group="defense/plugins",
-    name="regularizer",
-    node=DEFENSE_PLUGIN_REGULARIZER,
-)
-
-safe_store(
-    group="search/defense/plugins",
-    name="detector",
-    node=DEFENSE_PLUGIN_DETECTOR,
-)
-safe_store(
-    group="search/defense/plugins",
-    name="preprocessor",
-    node=DEFENSE_PLUGIN_PREPROCESSOR,
-)
-safe_store(
-    group="search/defense/plugins",
-    name="postprocessor",
-    node=DEFENSE_PLUGIN_POSTPROCESSOR,
-)
-safe_store(
-    group="search/defense/plugins",
-    name="trainer",
-    node=DEFENSE_PLUGIN_TRAINER,
-)
-safe_store(
-    group="search/defense/plugins",
-    name="transformer",
-    node=DEFENSE_PLUGIN_TRANSFORMER,
-)
-safe_store(
-    group="search/defense/plugins",
-    name="regularizer",
-    node=DEFENSE_PLUGIN_REGULARIZER,
-)
+__all__ = [
+    "TINYNET_MODEL",
+    "MODEL_LOGISTIC",
+    "MODEL_RF",
+    "MODEL_SVC",
+    "MODEL_RIDGE",
+    "MODEL_LINEAR",
+    "DEFENSE_BASELINE",
+    "DEFENSE_CLASS_LABELS",
+    "DEFENSE_ANJANA",
+]

@@ -297,7 +297,7 @@ def plot_main(cfg: Any) -> dict:
             plot_params = loaded
 
         # Import lazily so this layer can be listed even when optional plotting deps are missing.
-        from ..plot.yellowbrick_plots import (
+        from ..plugins.yellowbrick.plot import (
             YellowbrickConfigList,
             YellowbrickPlotConfig,
         )
@@ -351,7 +351,7 @@ def plot_main(cfg: Any) -> dict:
         }
 
     # Seaborn backend: designed for aggregated/tabular outputs from many experiments.
-    from ..plot.seaborn_plots import SeabornPlotConfig, SeabornPlotConfigList
+    from ..plugins.seaborn.plot import SeabornPlotConfig, SeabornPlotConfigList
 
     kwargs = {}
     if kwargs_file:

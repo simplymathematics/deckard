@@ -9,12 +9,13 @@ from sklearn.preprocessing import FunctionTransformer
 import deckard.data.base as data_base
 from deckard.data.base import DataConfig, DataPipelineConfig
 from deckard.score.base import ScorerDictConfig
+from helpers import load_canonical_data_profile
 
 
 def _basic_data_config(**overrides):
-    params = {
-        "dataset_name": "make_classification",
-        "data_params": {
+    params = load_canonical_data_profile("classification", framework="sklearn")
+    params["data_params"].update(
+        {
             "n_samples": 20,
             "n_features": 4,
             "n_informative": 2,
@@ -22,10 +23,8 @@ def _basic_data_config(**overrides):
             "random_state": 0,
             "n_clusters_per_class": 1,
         },
-        "test_size": 0.25,
-        "random_state": 0,
-        "classifier": True,
-    }
+    )
+    params.update({"test_size": 0.25, "random_state": 0, "classifier": True})
     params.update(overrides)
     return DataConfig(**params)
 
@@ -165,7 +164,7 @@ def test_plugin_instantiation_and_hook_paths(monkeypatch):
 
     cfg.plugins = "pkg.Plugin"
     cfg._plugin_objects = None
-    with pytest.raises(ImportError):
+    with pytest.raises(TypeError):
         cfg._get_plugins()
 
 

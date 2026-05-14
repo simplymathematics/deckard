@@ -1,9 +1,13 @@
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
+
 import numpy as np
 import pandas as pd
 import pytest
 from unittest.mock import MagicMock
 from hydra.core.config_store import ConfigStore
+from omegaconf import OmegaConf
 from deckard.score import (
     ScorerConfig,
     ScorerDictConfig,
@@ -19,6 +23,14 @@ from deckard.score import (
     survival_aic_score,
     survival_bic_score,
 )
+from deckard.score.base import (
+    DefaultModelScorerConfig,
+    _DataScorerMarker,
+    coerce_scorer_config,
+)
+from deckard.score.data import DefaultDataScorerConfig
+from deckard.plugins.fairlearn.score import DefaultFairlearnScorerConfig
+from deckard.plugins.lifelines.score import DefaultLifelinesConfig
 from sklearn.metrics import accuracy_score, mean_squared_error, precision_score
 
 
@@ -194,7 +206,7 @@ class TestDefaultScorerDicts(unittest.TestCase):
         y_true = [1, 0, 1, 1]
         y_pred = [1, 0, 0, 1]
         y_proba = [0.9, 0.1, 0.3, 0.8]
-        scores = DefaultClassifierDict.scorers(
+        scores = DefaultClassifierConfig()(
             y_true=y_true,
             y_pred=y_pred,
             y_proba=y_proba,
@@ -212,12 +224,12 @@ class TestDefaultScorerDicts(unittest.TestCase):
         y_true = [1, 0, 1, 1]
         y_pred = [1, 0, 0, 1]
         with self.assertRaises(ValueError):
-            DefaultClassifierDict.scorers(y_true=y_true, y_pred=y_pred)
+            DefaultClassifierConfig()(y_true=y_true, y_pred=y_pred)
 
     def test_default_regressor_dict(self):
         y_true = [1.0, 2.0, 3.0, 4.0]
         y_pred = [1.1, 1.9, 3.2, 3.8]
-        scores = DefaultRegressorDict.scorers(y_true=y_true, y_pred=y_pred)
+        scores = DefaultRegressorConfig()(y_true=y_true, y_pred=y_pred)
         self.assertIn("mse", scores)
         self.assertIn("mae", scores)
         self.assertIn("r2", scores)
@@ -226,13 +238,13 @@ class TestDefaultScorerDicts(unittest.TestCase):
         y_true = []
         y_pred = []
         with self.assertRaises(ValueError):
-            DefaultClassifierDict.scorers(y_true=y_true, y_pred=y_pred)
+            DefaultClassifierConfig()(y_true=y_true, y_pred=y_pred)
 
     def test_default_regressor_dict_with_empty_predictions(self):
         y_true = []
         y_pred = []
         with self.assertRaises(ValueError):
-            DefaultRegressorDict.scorers(y_true=y_true, y_pred=y_pred)
+            DefaultRegressorConfig()(y_true=y_true, y_pred=y_pred)
 
 
 class TestSurvivalScorers(unittest.TestCase):
@@ -257,6 +269,81 @@ class TestSurvivalScorers(unittest.TestCase):
         fitter = self._MockFitter()
         score = survival_bic_score(y_true=[1, 2, 3, 4, 5], y_pred=fitter)
         self.assertIsInstance(score, float)
+
+
+SCORE_DIR = (
+    Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config" / "score"
+)
+
+
+def _load_score_profile(name: str):
+    cfg = OmegaConf.load(SCORE_DIR / f"{name}.yaml")
+    return coerce_scorer_config(OmegaConf.to_container(cfg, resolve=True))
+
+
+def test_score_family_aliases_are_importable():
+    assert DefaultFairlearnScorerConfig is not None
+    assert DefaultLifelinesConfig is not None
+
+
+def test_model_default_score_profile_executes_from_yaml_defaults():
+    scorer = _load_score_profile("classification")
+
+    scores = scorer(
+        y_true=[1, 0, 1, 1],
+        y_pred=[1, 0, 0, 1],
+        y_proba=[0.9, 0.1, 0.3, 0.8],
+        mode=None,
+    )
+
+    assert "accuracy" in scores
+    assert "precision" in scores
+    assert "recall" in scores
+    assert "f1" in scores
+    assert "log_loss" in scores
+
+
+def test_data_default_score_profile_executes_from_yaml_defaults():
+    scorer = _load_score_profile("data-classification")
+    assert isinstance(scorer, _DataScorerMarker)
+
+    data = SimpleNamespace(
+        _X=[[0.1, 1.0], [0.2, 1.0], [0.9, 0.0], [0.8, 0.0]],
+        _y=[0, 0, 1, 1],
+        classifier=True,
+    )
+
+    scores = scorer(data=data, mode="pre-sample")
+
+    assert "num_classes" in scores
+    assert "class_count_min" in scores
+    assert "class_count_max" in scores
+    assert "class_imbalance_ratio" in scores
+    assert "mutual_information_mean" in scores
+    assert "mutual_information_max" in scores
+
+
+def test_model_and_data_default_profiles_infer_task_from_context():
+    model_scorer = DefaultModelScorerConfig(classifier=None, scorers={})
+    data_scorer = DefaultDataScorerConfig(classifier=None, scorers={})
+
+    model_scores = model_scorer(
+        y_true=[0, 1, 1, 0],
+        y_pred=[0, 1, 1, 1],
+        y_proba=[0.1, 0.8, 0.7, 0.6],
+        mode=None,
+    )
+    assert "accuracy" in model_scores
+
+    data_scores = data_scorer(
+        data=SimpleNamespace(
+            _X=[[1.0, 0.0], [0.0, 1.0], [0.5, 0.5], [0.2, 0.8]],
+            _y=[0, 1, 1, 0],
+            classifier=True,
+        ),
+        mode="pre-sample",
+    )
+    assert "num_classes" in data_scores
 
     def test_survival_concordance_requires_attribute(self):
         with self.assertRaises(ValueError):
@@ -601,7 +688,7 @@ class TestDataInspectionScorers(unittest.TestCase):
                 "feature_1": [1, 2, 1, 2, 2, 1, 2, 1],
             },
         )
-        scores = DefaultDataClassificationDict.scorers(
+        scores = DefaultDataClassificationConfig()(
             y_true=y_true,
             y_pred=X,
             mode=None,
@@ -622,7 +709,7 @@ class TestDataInspectionScorers(unittest.TestCase):
                 "income_proxy": [1.2, 1.5, 2.8, 3.0, 2.9, 1.4, 3.1, 1.3],
             },
         )
-        scores = DefaultDataClassificationDict.scorers(
+        scores = DefaultDataClassificationConfig()(
             y_true=y_true,
             y_pred=X,
             mode=None,
@@ -639,7 +726,7 @@ class TestDataInspectionScorers(unittest.TestCase):
                 "feature_1": [10, 12, 14, 18, 19, 22],
             },
         )
-        scores = DefaultDataRegressionDict.scorers(
+        scores = DefaultDataRegressionConfig()(
             y_true=y_true,
             y_pred=X,
             mode=None,
@@ -666,8 +753,8 @@ class TestDataInspectionScorers(unittest.TestCase):
         )
 
     def test_score_profile_classes_available(self):
-        self.assertIsInstance(DefaultClassifierDict.scorers, ScorerDictConfig)
-        self.assertIsInstance(DefaultRegressorDict.scorers, ScorerDictConfig)
+        self.assertIsInstance(DefaultClassifierConfig(), ScorerDictConfig)
+        self.assertIsInstance(DefaultRegressorConfig(), ScorerDictConfig)
         self.assertIsInstance(
             DefaultFairlearnClassificationConfig(),
             ScorerDictConfig,

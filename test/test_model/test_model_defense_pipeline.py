@@ -755,7 +755,7 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
     def _resolve(name):
         if name == "pkg.CustomDefense":
             return CustomDefense
-        if name == "deckard.model.fairness.FairlearnDefenseConfig":
+        if name == "deckard.plugins.fairlearn.model.FairlearnDefenseConfig":
             return FairDefense
         raise RuntimeError(name)
 

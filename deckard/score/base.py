@@ -26,7 +26,7 @@ from ..utils import (
 if TYPE_CHECKING:
     from ..data import DataConfig
 
-from .pytorch import to_numpy_if_torch
+from ..frameworks.pytorch.score import to_numpy_if_torch
 
 logger = logging.getLogger(__name__)
 
@@ -1003,7 +1003,7 @@ def coerce_scorer_config(scorer_obj, *, default_factory=None):
                 fallback.pop("classifier", None)
                 if "group_scorers" in fallback:
                     try:
-                        from .fairness import FairlearnScoreDictConfig
+                        from ..plugins.fairlearn.score import FairlearnScoreDictConfig
 
                         return FairlearnScoreDictConfig(**fallback)
                     except Exception:

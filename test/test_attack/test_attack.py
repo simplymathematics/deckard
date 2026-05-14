@@ -340,7 +340,8 @@ class TestAttackConfig(unittest.TestCase):
                 x[:, 0] = 1.0 - x[:, 0]
                 return x
 
-        result = attack._evade(
+        runtime = attack._with_attack_context(attack_type="evasion", attack_subtype="")
+        result = runtime._evade(
             data=_TinyData(),
             art_model=_FakeArtModel(),
             attack=_FakeEvasionAttack(),
@@ -357,6 +358,7 @@ class TestAttackConfig(unittest.TestCase):
             attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
             attack_params={"class_source": 0, "class_target": 1},
             attack_size=6,
+            mode="test",
         )
 
         class _TinyData:
@@ -434,7 +436,8 @@ class TestAttackConfig(unittest.TestCase):
         data = object()
         model = object()
 
-        def _fake_evade(*args, **kwargs):
+        def _fake_handler(**kwargs):
+            _ = kwargs
             self.attack.attack_time = 0.1
             self.attack.attack_prediction_time = 0.05
             self.attack.attack_score_time = 0.02
@@ -446,7 +449,16 @@ class TestAttackConfig(unittest.TestCase):
                 "_initialize_attack",
                 return_value=(object(), object(), "evasion", ""),
             ),
-            patch.object(AttackConfig, "_evade", side_effect=_fake_evade),
+            patch.object(
+                AttackConfig,
+                "_with_attack_context",
+                return_value=self.attack,
+            ),
+            patch.object(
+                AttackConfig,
+                "_resolve_attack_handler",
+                return_value=_fake_handler,
+            ),
         ):
             result = self.attack(data, model)
 
@@ -460,7 +472,8 @@ class TestAttackConfig(unittest.TestCase):
             attack_params={},
         )
 
-        def _fake_membership(*args, **kwargs):
+        def _fake_handler(**kwargs):
+            _ = kwargs
             attack.attack_time = 0.2
             attack.attack_prediction_time = 0.1
             attack.attack_score_time = 0.05
@@ -479,8 +492,13 @@ class TestAttackConfig(unittest.TestCase):
             ),
             patch.object(
                 AttackConfig,
-                "_infer_membership",
-                side_effect=_fake_membership,
+                "_with_attack_context",
+                return_value=attack,
+            ),
+            patch.object(
+                AttackConfig,
+                "_resolve_attack_handler",
+                return_value=_fake_handler,
             ),
         ):
             result = attack(object(), object())
@@ -495,7 +513,8 @@ class TestAttackConfig(unittest.TestCase):
             attack_params={},
         )
 
-        def _fake_attribute(*args, **kwargs):
+        def _fake_handler(**kwargs):
+            _ = kwargs
             attack.attack_time = 0.3
             attack.attack_prediction_time = 0.1
             attack.attack_score_time = 0.07
@@ -514,8 +533,13 @@ class TestAttackConfig(unittest.TestCase):
             ),
             patch.object(
                 AttackConfig,
-                "_infer_attribute",
-                side_effect=_fake_attribute,
+                "_with_attack_context",
+                return_value=attack,
+            ),
+            patch.object(
+                AttackConfig,
+                "_resolve_attack_handler",
+                return_value=_fake_handler,
             ),
         ):
             result = attack(object(), object())
@@ -545,7 +569,11 @@ class TestAttackConfig(unittest.TestCase):
                 y = np.asarray(y).reshape(-1, 1).astype(np.float32)
                 return np.asarray(x, dtype=np.float32) + (0.05 * y)
 
-        scores = attack._infer_model_inversion(
+        runtime = attack._with_attack_context(
+            attack_type="inference",
+            attack_subtype="model_inversion",
+        )
+        scores = runtime._infer_model_inversion(
             data=_TinyData(),
             attack=_FakeModelInversionAttack(),
         )
@@ -631,7 +659,11 @@ class TestAttackConfig(unittest.TestCase):
                 y_guess = np.array([int(y[0])], dtype=np.int64)
                 return x_guess, y_guess
 
-        scores = attack._infer_database_reconstruction(
+        runtime = attack._with_attack_context(
+            attack_type="inference",
+            attack_subtype="reconstruction",
+        )
+        scores = runtime._infer_database_reconstruction(
             data=_TinyData(),
             attack=_FakeDatabaseReconstructionAttack(),
         )
@@ -1036,7 +1068,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
 
     def test_prepare_features_tensor_passthrough(self):
         self._skip_if_no_torch()
-        from deckard.attack.pytorch import PytorchAttackConfig
+        from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
             attack_type="art.attacks.evasion.FastGradientMethod",
@@ -1046,7 +1078,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
         self.assertIs(result, t)
 
     def test_prepare_features_dataframe_to_numpy(self):
-        from deckard.attack.pytorch import PytorchAttackConfig
+        from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
             attack_type="art.attacks.evasion.FastGradientMethod",
@@ -1056,7 +1088,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
         self.assertIsInstance(result, np.ndarray)
 
     def test_prepare_features_series_to_numpy(self):
-        from deckard.attack.pytorch import PytorchAttackConfig
+        from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
             attack_type="art.attacks.evasion.FastGradientMethod",
@@ -1066,7 +1098,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
         self.assertIsInstance(result, np.ndarray)
 
     def test_prepare_features_passthrough_for_other_types(self):
-        from deckard.attack.pytorch import PytorchAttackConfig
+        from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
             attack_type="art.attacks.evasion.FastGradientMethod",
@@ -1077,7 +1109,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
 
     def test_prepare_labels_tensor_passthrough(self):
         self._skip_if_no_torch()
-        from deckard.attack.pytorch import PytorchAttackConfig
+        from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
             attack_type="art.attacks.evasion.FastGradientMethod",
@@ -1087,7 +1119,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
         self.assertIs(result, t)
 
     def test_prepare_labels_dataframe_to_numpy(self):
-        from deckard.attack.pytorch import PytorchAttackConfig
+        from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
             attack_type="art.attacks.evasion.FastGradientMethod",
@@ -1097,7 +1129,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
         self.assertIsInstance(result, np.ndarray)
 
     def test_prepare_labels_series_to_numpy(self):
-        from deckard.attack.pytorch import PytorchAttackConfig
+        from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
             attack_type="art.attacks.evasion.FastGradientMethod",
@@ -1107,7 +1139,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
         self.assertIsInstance(result, np.ndarray)
 
     def test_prepare_labels_passthrough_for_other_types(self):
-        from deckard.attack.pytorch import PytorchAttackConfig
+        from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
             attack_type="art.attacks.evasion.FastGradientMethod",
@@ -1118,7 +1150,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
 
     def test_prepare_features_for_art_tensor_to_numpy_float_dtype(self):
         self._skip_if_no_torch()
-        from deckard.attack.pytorch import PytorchAttackConfig
+        from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
             attack_type="art.attacks.evasion.FastGradientMethod",
@@ -1132,7 +1164,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
     def test_torch_evasion_uses_art_boundary_conversion(self):
         self._skip_if_no_torch()
         from types import SimpleNamespace
-        from deckard.attack.pytorch import PytorchAttackConfig
+        from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         class _DummyArtModel:
             def predict(self, x):
@@ -1156,14 +1188,15 @@ class TestPytorchAttackConfig(unittest.TestCase):
             attack_size=8,
         )
 
-        scores = cfg._evade(data, _DummyArtModel(), _DummyAttack())
+        runtime = cfg._with_attack_context(attack_type="evasion", attack_subtype="")
+        scores = runtime._evade(data, _DummyArtModel(), _DummyAttack())
         self.assertIn("evasion_accuracy", scores)
-        self.assertIsInstance(cfg.attack, np.ndarray)
-        self.assertEqual(cfg.attack.shape[0], 8)
+        self.assertIsInstance(runtime.attack, np.ndarray)
+        self.assertEqual(runtime.attack.shape[0], 8)
 
 
 class TestTorchUtils(unittest.TestCase):
-    """Tests for deckard/attack/torch_utils.py — currently 67% coverage."""
+    """Tests for deckard/frameworks/pytorch/torch_utils.py."""
 
     @classmethod
     def setUpClass(cls):
@@ -1180,24 +1213,24 @@ class TestTorchUtils(unittest.TestCase):
 
     def test_is_tensor_true_for_tensor(self):
         self._skip_if_no_torch()
-        from deckard.attack.torch_utils import is_tensor
+        from deckard.frameworks.pytorch.torch_utils import is_tensor
 
         self.assertTrue(is_tensor(self.torch.tensor([1.0])))
 
     def test_is_tensor_false_for_numpy(self):
-        from deckard.attack.torch_utils import is_tensor
+        from deckard.frameworks.pytorch.torch_utils import is_tensor
 
         self.assertFalse(is_tensor(np.array([1.0])))
 
     def test_is_torch_model_true(self):
         self._skip_if_no_torch()
-        from deckard.attack.torch_utils import is_torch_model
+        from deckard.frameworks.pytorch.torch_utils import is_torch_model
 
         model = self.torch.nn.Linear(2, 2)
         self.assertTrue(is_torch_model(model))
 
     def test_is_torch_model_false_for_sklearn(self):
-        from deckard.attack.torch_utils import is_torch_model
+        from deckard.frameworks.pytorch.torch_utils import is_torch_model
         from sklearn.linear_model import LogisticRegression
 
         self.assertFalse(is_torch_model(LogisticRegression()))
@@ -1206,20 +1239,20 @@ class TestTorchUtils(unittest.TestCase):
         self._skip_if_no_torch()
         from torch.utils.data import DataLoader, TensorDataset
 
-        from deckard.attack.torch_utils import is_dataloader
+        from deckard.frameworks.pytorch.torch_utils import is_dataloader
 
         ds = TensorDataset(self.torch.randn(4, 2))
         dl = DataLoader(ds, batch_size=2)
         self.assertTrue(is_dataloader(dl))
 
     def test_is_dataloader_false_for_list(self):
-        from deckard.attack.torch_utils import is_dataloader
+        from deckard.frameworks.pytorch.torch_utils import is_dataloader
 
         self.assertFalse(is_dataloader([1, 2, 3]))
 
     def test_tensor_to_numpy_converts(self):
         self._skip_if_no_torch()
-        from deckard.attack.torch_utils import tensor_to_numpy
+        from deckard.frameworks.pytorch.torch_utils import tensor_to_numpy
 
         t = self.torch.tensor([1.0, 2.0, 3.0])
         arr = tensor_to_numpy(t)
@@ -1228,14 +1261,14 @@ class TestTorchUtils(unittest.TestCase):
 
     def test_tensor_to_numpy_with_dtype(self):
         self._skip_if_no_torch()
-        from deckard.attack.torch_utils import tensor_to_numpy
+        from deckard.frameworks.pytorch.torch_utils import tensor_to_numpy
 
         t = self.torch.tensor([1.0, 2.0])
         arr = tensor_to_numpy(t, dtype=np.float32)
         self.assertEqual(arr.dtype, np.float32)
 
     def test_tensor_to_numpy_passthrough_non_tensor(self):
-        from deckard.attack.torch_utils import tensor_to_numpy
+        from deckard.frameworks.pytorch.torch_utils import tensor_to_numpy
 
         arr = np.array([1, 2])
         result = tensor_to_numpy(arr)
@@ -1243,7 +1276,7 @@ class TestTorchUtils(unittest.TestCase):
 
     def test_get_torch_model_device_returns_cpu(self):
         self._skip_if_no_torch()
-        from deckard.attack.torch_utils import get_torch_model_device
+        from deckard.frameworks.pytorch.torch_utils import get_torch_model_device
 
         model = self.torch.nn.Linear(2, 2)
         device = get_torch_model_device(model)
@@ -1251,14 +1284,14 @@ class TestTorchUtils(unittest.TestCase):
 
     def test_get_torch_model_device_non_torch_returns_cpu(self):
         self._skip_if_no_torch()
-        from deckard.attack.torch_utils import get_torch_model_device
+        from deckard.frameworks.pytorch.torch_utils import get_torch_model_device
 
         device = get_torch_model_device(object())
         self.assertEqual(str(device.type), "cpu")
 
     def test_get_torch_model_device_model_with_no_parameters_returns_cpu(self):
         self._skip_if_no_torch()
-        from deckard.attack.torch_utils import get_torch_model_device
+        from deckard.frameworks.pytorch.torch_utils import get_torch_model_device
 
         class EmptyModule(self.torch.nn.Module):
             def forward(self, x):
@@ -1269,16 +1302,16 @@ class TestTorchUtils(unittest.TestCase):
         self.assertEqual(str(device.type), "cpu")
 
     def test_build_torch_art_model_raises_when_torch_flag_disabled(self):
-        from deckard.attack.torch_utils import build_torch_art_model
+        from deckard.frameworks.pytorch.torch_utils import build_torch_art_model
 
-        with patch("deckard.attack.torch_utils.HAS_TORCH", False):
+        with patch("deckard.frameworks.pytorch.torch_utils.HAS_TORCH", False):
             with self.assertRaises(ImportError):
                 build_torch_art_model(object(), object())
 
     def test_collect_subset_raises_when_torch_flag_disabled(self):
-        from deckard.attack.torch_utils import collect_subset_from_dataloader
+        from deckard.frameworks.pytorch.torch_utils import collect_subset_from_dataloader
 
-        with patch("deckard.attack.torch_utils.HAS_TORCH", False):
+        with patch("deckard.frameworks.pytorch.torch_utils.HAS_TORCH", False):
             with self.assertRaises(ImportError):
                 collect_subset_from_dataloader(object(), n=2)
 
@@ -1286,7 +1319,7 @@ class TestTorchUtils(unittest.TestCase):
         self._skip_if_no_torch()
         from torch.utils.data import DataLoader, TensorDataset
 
-        from deckard.attack.torch_utils import build_torch_art_model
+        from deckard.frameworks.pytorch.torch_utils import build_torch_art_model
 
         class FakePyTorchClassifier:
             def __init__(self, **kwargs):
@@ -1326,7 +1359,7 @@ class TestTorchUtils(unittest.TestCase):
         self._skip_if_no_torch()
         from torch.utils.data import DataLoader, Dataset
 
-        from deckard.attack.torch_utils import build_torch_art_model
+        from deckard.frameworks.pytorch.torch_utils import build_torch_art_model
 
         class TensorOnlyDataset(Dataset):
             def __init__(self, x):
@@ -1376,7 +1409,7 @@ class TestTorchUtils(unittest.TestCase):
         self._skip_if_no_torch()
         from torch.utils.data import DataLoader, TensorDataset
 
-        from deckard.attack.torch_utils import collect_subset_from_dataloader
+        from deckard.frameworks.pytorch.torch_utils import collect_subset_from_dataloader
 
         X = self.torch.randn(10, 3)
         y = self.torch.randint(0, 2, (10,))
@@ -1390,7 +1423,7 @@ class TestTorchUtils(unittest.TestCase):
         self._skip_if_no_torch()
         from torch.utils.data import DataLoader, TensorDataset
 
-        from deckard.attack.torch_utils import collect_subset_from_dataloader
+        from deckard.frameworks.pytorch.torch_utils import collect_subset_from_dataloader
 
         X = self.torch.randn(5, 2)
         y = self.torch.randint(0, 2, (5,))
@@ -1401,7 +1434,7 @@ class TestTorchUtils(unittest.TestCase):
 
     def test_collect_subset_raises_for_non_dataloader(self):
         self._skip_if_no_torch()
-        from deckard.attack.torch_utils import collect_subset_from_dataloader
+        from deckard.frameworks.pytorch.torch_utils import collect_subset_from_dataloader
 
         with self.assertRaises(TypeError):
             collect_subset_from_dataloader([1, 2, 3], n=2)
@@ -1969,8 +2002,13 @@ class TestCallCachingPaths(unittest.TestCase):
             ),
             patch.object(
                 AttackConfig,
-                "_evade",
-                side_effect=self._fake_evade_side_effect(attack),
+                "_with_attack_context",
+                return_value=attack,
+            ),
+            patch.object(
+                AttackConfig,
+                "_resolve_attack_handler",
+                return_value=self._fake_evade_side_effect(attack),
             ),
             patch.object(AttackConfig, "load_data", side_effect=OSError("boom")),
         ):
@@ -1998,8 +2036,13 @@ class TestCallCachingPaths(unittest.TestCase):
             ),
             patch.object(
                 AttackConfig,
-                "_evade",
-                side_effect=self._fake_evade_side_effect(attack),
+                "_with_attack_context",
+                return_value=attack,
+            ),
+            patch.object(
+                AttackConfig,
+                "_resolve_attack_handler",
+                return_value=self._fake_evade_side_effect(attack),
             ),
         ):
             result = attack(
@@ -2023,8 +2066,13 @@ class TestCallCachingPaths(unittest.TestCase):
             ),
             patch.object(
                 AttackConfig,
-                "_evade",
-                side_effect=self._fake_evade_side_effect(attack),
+                "_with_attack_context",
+                return_value=attack,
+            ),
+            patch.object(
+                AttackConfig,
+                "_resolve_attack_handler",
+                return_value=self._fake_evade_side_effect(attack),
             ),
             patch.object(
                 AttackConfig,
@@ -2053,8 +2101,13 @@ class TestCallCachingPaths(unittest.TestCase):
             ),
             patch.object(
                 AttackConfig,
-                "_evade",
-                side_effect=self._fake_evade_side_effect(attack),
+                "_with_attack_context",
+                return_value=attack,
+            ),
+            patch.object(
+                AttackConfig,
+                "_resolve_attack_handler",
+                return_value=self._fake_evade_side_effect(attack),
             ),
             patch.object(AttackConfig, "save_data") as mock_save_data,
         ):
@@ -2186,7 +2239,8 @@ class TestEvadeBranches(unittest.TestCase):
                 return probs
 
         fake_attack_obj = AdversarialPatch()
-        result = attack._evade(
+        runtime = attack._with_attack_context(attack_type="evasion", attack_subtype="")
+        result = runtime._evade(
             data=_TinyData(),
             art_model=_FakeModel(),
             attack=fake_attack_obj,
@@ -2214,7 +2268,8 @@ class TestEvadeBranches(unittest.TestCase):
             def generate(self, x):
                 return np.asarray(x).copy() + 0.01
 
-        result = attack._evade(
+        runtime = attack._with_attack_context(attack_type="evasion", attack_subtype="")
+        result = runtime._evade(
             data=_TinyData(),
             art_model=_RegressionArtModel(),
             attack=_FakeEvasionAttack(),
@@ -2302,8 +2357,12 @@ class TestInferAttributeBranches(unittest.TestCase):
                 X = np.asarray(X)
                 return np.column_stack([np.zeros(len(X)), np.ones(len(X))])
 
+        runtime = attack._with_attack_context(
+            attack_type="inference",
+            attack_subtype="attribute_inference",
+        )
         with self.assertRaises((AssertionError, ValueError, KeyError)):
-            attack._infer_attribute(
+            runtime._infer_attribute(
                 data,
                 _FakeArt(),
                 _FakeAttribAttack(),
@@ -2333,8 +2392,12 @@ class TestInferAttributeBranches(unittest.TestCase):
                 X = np.asarray(X)
                 return np.column_stack([np.zeros(len(X)), np.ones(len(X))])
 
+        runtime = attack._with_attack_context(
+            attack_type="inference",
+            attack_subtype="attribute_inference",
+        )
         with self.assertRaises((ValueError, AssertionError)):
-            attack._infer_attribute(
+            runtime._infer_attribute(
                 data,
                 _FakeArt(),
                 _FakeAttribAttack(),
@@ -2368,7 +2431,11 @@ class TestInferMembershipBranches(unittest.TestCase):
             def infer(self, x, y=None):
                 return np.zeros(len(x), dtype=int)
 
-        result = attack._infer_membership(data=data, attack=_FakeMIAttack())
+        runtime = attack._with_attack_context(
+            attack_type="inference",
+            attack_subtype="membership_inference",
+        )
+        result = runtime._infer_membership(data=data, attack=_FakeMIAttack())
         self.assertIsInstance(result, dict)
 
     def test_sensitive_features_present_builds_big_sensitive(self):
@@ -2388,7 +2455,11 @@ class TestInferMembershipBranches(unittest.TestCase):
             def infer(self, x, y=None):
                 return np.zeros(len(x), dtype=int)
 
-        result = attack._infer_membership(data=data, attack=_FakeMIAttack())
+        runtime = attack._with_attack_context(
+            attack_type="inference",
+            attack_subtype="membership_inference",
+        )
+        result = runtime._infer_membership(data=data, attack=_FakeMIAttack())
         self.assertIsInstance(result, dict)
 
 
@@ -2423,7 +2494,11 @@ class TestInferModelInversionModes(unittest.TestCase):
 
     def test_zeros_init(self):
         cfg = self._make_mi_attack_config("zeros")
-        result = cfg._infer_model_inversion(
+        runtime = cfg._with_attack_context(
+            attack_type="inference",
+            attack_subtype="model_inversion",
+        )
+        result = runtime._infer_model_inversion(
             data=self._make_data(),
             attack=self._fake_attack(),
         )
@@ -2431,7 +2506,11 @@ class TestInferModelInversionModes(unittest.TestCase):
 
     def test_ones_init(self):
         cfg = self._make_mi_attack_config("ones")
-        result = cfg._infer_model_inversion(
+        runtime = cfg._with_attack_context(
+            attack_type="inference",
+            attack_subtype="model_inversion",
+        )
+        result = runtime._infer_model_inversion(
             data=self._make_data(),
             attack=self._fake_attack(),
         )
@@ -2439,7 +2518,11 @@ class TestInferModelInversionModes(unittest.TestCase):
 
     def test_random_init(self):
         cfg = self._make_mi_attack_config("random")
-        result = cfg._infer_model_inversion(
+        runtime = cfg._with_attack_context(
+            attack_type="inference",
+            attack_subtype="model_inversion",
+        )
+        result = runtime._infer_model_inversion(
             data=self._make_data(),
             attack=self._fake_attack(),
         )
@@ -2447,7 +2530,11 @@ class TestInferModelInversionModes(unittest.TestCase):
 
     def test_average_init(self):
         cfg = self._make_mi_attack_config("average")
-        result = cfg._infer_model_inversion(
+        runtime = cfg._with_attack_context(
+            attack_type="inference",
+            attack_subtype="model_inversion",
+        )
+        result = runtime._infer_model_inversion(
             data=self._make_data(),
             attack=self._fake_attack(),
         )
@@ -2455,8 +2542,12 @@ class TestInferModelInversionModes(unittest.TestCase):
 
     def test_invalid_init_mode_raises(self):
         cfg = self._make_mi_attack_config("invalid_mode")
+        runtime = cfg._with_attack_context(
+            attack_type="inference",
+            attack_subtype="model_inversion",
+        )
         with self.assertRaises(ValueError):
-            cfg._infer_model_inversion(
+            runtime._infer_model_inversion(
                 data=self._make_data(),
                 attack=self._fake_attack(),
             )
@@ -2467,7 +2558,11 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_params={"split": "train"},
             attack_size=2,
         )
-        result = cfg._infer_model_inversion(
+        runtime = cfg._with_attack_context(
+            attack_type="inference",
+            attack_subtype="model_inversion",
+        )
+        result = runtime._infer_model_inversion(
             data=self._make_data(),
             attack=self._fake_attack(),
         )
@@ -2479,8 +2574,12 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_params={"split": "validate"},
             attack_size=2,
         )
+        runtime = cfg._with_attack_context(
+            attack_type="inference",
+            attack_subtype="model_inversion",
+        )
         with self.assertRaises(ValueError):
-            cfg._infer_model_inversion(
+            runtime._infer_model_inversion(
                 data=self._make_data(),
                 attack=self._fake_attack(),
             )
@@ -2492,8 +2591,12 @@ class TestInferModelInversionModes(unittest.TestCase):
         d.y_test = np.array([], dtype=int)
         d.X_train = np.empty((0, 3), dtype=np.float32)
         d.y_train = np.array([], dtype=int)
+        runtime = cfg._with_attack_context(
+            attack_type="inference",
+            attack_subtype="model_inversion",
+        )
         with self.assertRaises(ValueError):
-            cfg._infer_model_inversion(data=d, attack=self._fake_attack())
+            runtime._infer_model_inversion(data=d, attack=self._fake_attack())
 
     def test_explicit_targets_param(self):
         cfg = AttackConfig(
@@ -2501,7 +2604,11 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_params={"split": "test", "targets": [0, 1]},
             attack_size=2,
         )
-        result = cfg._infer_model_inversion(
+        runtime = cfg._with_attack_context(
+            attack_type="inference",
+            attack_subtype="model_inversion",
+        )
+        result = runtime._infer_model_inversion(
             data=self._make_data(),
             attack=self._fake_attack(),
         )
@@ -2519,7 +2626,11 @@ class TestInferModelInversionModes(unittest.TestCase):
             },
             attack_size=2,
         )
-        result = cfg._infer_model_inversion(data=d, attack=self._fake_attack())
+        runtime = cfg._with_attack_context(
+            attack_type="inference",
+            attack_subtype="model_inversion",
+        )
+        result = runtime._infer_model_inversion(data=d, attack=self._fake_attack())
         self.assertIn("model_inversion_mse", result)
 
     def test_x_init_length_mismatch_raises(self):
@@ -2534,8 +2645,12 @@ class TestInferModelInversionModes(unittest.TestCase):
             },
             attack_size=2,
         )
+        runtime = cfg._with_attack_context(
+            attack_type="inference",
+            attack_subtype="model_inversion",
+        )
         with self.assertRaises(ValueError):
-            cfg._infer_model_inversion(data=d, attack=self._fake_attack())
+            runtime._infer_model_inversion(data=d, attack=self._fake_attack())
 
     def test_type_error_fallback_on_infer(self):
         """Cover the TypeError fallback path in _infer_model_inversion."""
@@ -2549,7 +2664,11 @@ class TestInferModelInversionModes(unittest.TestCase):
                     raise TypeError("unexpected keyword argument")
                 return np.zeros_like(x)
 
-        result = cfg._infer_model_inversion(data=self._make_data(), attack=_A())
+        runtime = cfg._with_attack_context(
+            attack_type="inference",
+            attack_subtype="model_inversion",
+        )
+        result = runtime._infer_model_inversion(data=self._make_data(), attack=_A())
         self.assertIn("model_inversion_mse", result)
 
     def test_empty_target_labels_raises(self):
@@ -2559,8 +2678,12 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_params={"split": "test", "targets": []},
             attack_size=2,
         )
+        runtime = cfg._with_attack_context(
+            attack_type="inference",
+            attack_subtype="model_inversion",
+        )
         with self.assertRaises(ValueError):
-            cfg._infer_model_inversion(
+            runtime._infer_model_inversion(
                 data=self._make_data(),
                 attack=self._fake_attack(),
             )
@@ -2598,7 +2721,11 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             def reconstruct(self, x, y=None):
                 return x[:1], np.array([0])
 
-        result = attack._infer_database_reconstruction(
+        runtime = attack._with_attack_context(
+            attack_type="inference",
+            attack_subtype="reconstruction",
+        )
+        result = runtime._infer_database_reconstruction(
             data=self._make_data(),
             attack=_FakeAttack(),
         )
@@ -2615,8 +2742,12 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             def reconstruct(self, x, y=None):
                 return x[:1], np.array([0])
 
+        runtime = attack._with_attack_context(
+            attack_type="inference",
+            attack_subtype="reconstruction",
+        )
         with self.assertRaises(ValueError):
-            attack._infer_database_reconstruction(
+            runtime._infer_database_reconstruction(
                 data=self._make_data(),
                 attack=_FakeAttack(),
             )
@@ -2632,8 +2763,12 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             def reconstruct(self, x, y=None):
                 return x[:1], np.array([0])
 
+        runtime = attack._with_attack_context(
+            attack_type="inference",
+            attack_subtype="reconstruction",
+        )
         with self.assertRaises(ValueError):
-            attack._infer_database_reconstruction(
+            runtime._infer_database_reconstruction(
                 data=self._make_data(),
                 attack=_FakeAttack(),
             )
@@ -2652,8 +2787,12 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
         d = self._make_data()
         d.X_train = d.X_train[:1]  # only 1 row
         d.y_train = d.y_train[:1]
+        runtime = attack._with_attack_context(
+            attack_type="inference",
+            attack_subtype="reconstruction",
+        )
         with self.assertRaises(ValueError):
-            attack._infer_database_reconstruction(data=d, attack=_FakeAttack())
+            runtime._infer_database_reconstruction(data=d, attack=_FakeAttack())
 
     def test_y_reconstructed_none_skips_label_scoring(self):
         """Cover the path where reconstructed tuple has only x."""
@@ -2668,7 +2807,11 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
                 # Return only features, no labels
                 return x[:1]
 
-        result = attack._infer_database_reconstruction(
+        runtime = attack._with_attack_context(
+            attack_type="inference",
+            attack_subtype="reconstruction",
+        )
+        result = runtime._infer_database_reconstruction(
             data=self._make_data(),
             attack=_FakeAttack(),
         )
@@ -2690,7 +2833,11 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
         # Make task appear as regression
         d.classifier = False
 
-        result = attack._infer_database_reconstruction(data=d, attack=_FakeAttack())
+        runtime = attack._with_attack_context(
+            attack_type="inference",
+            attack_subtype="reconstruction",
+        )
+        result = runtime._infer_database_reconstruction(data=d, attack=_FakeAttack())
         self.assertIn("database_reconstruction_label_mae", result)
 
     def test_type_error_fallback_on_reconstruct(self):
@@ -2709,7 +2856,11 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
                     raise TypeError("y not expected")
                 return x[:1], np.array([0])
 
-        result = attack._infer_database_reconstruction(
+        runtime = attack._with_attack_context(
+            attack_type="inference",
+            attack_subtype="reconstruction",
+        )
+        result = runtime._infer_database_reconstruction(
             data=self._make_data(),
             attack=_FakeAttack(),
         )
@@ -2727,7 +2878,11 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             def reconstruct(self, x, y=None):
                 return x[:1], np.array([])
 
-        result = attack._infer_database_reconstruction(
+        runtime = attack._with_attack_context(
+            attack_type="inference",
+            attack_subtype="reconstruction",
+        )
+        result = runtime._infer_database_reconstruction(
             data=self._make_data(),
             attack=_FakeAttack(),
         )
@@ -2742,7 +2897,8 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
 class TestResolveEvalSplit(unittest.TestCase):
     def test_val_split_available_returns_val(self):
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+            attack_params={"class_source": 0, "class_target": 1},
             mode="val",
         )
 
@@ -2752,12 +2908,14 @@ class TestResolveEvalSplit(unittest.TestCase):
             X_test = np.zeros((4, 2))
             y_test = np.array([0, 1, 0, 1])
 
-        mode, x, y = attack._resolve_eval_split(_Data())
+        runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="gradient_matching_attack")
+        mode, x, y = runtime._resolve_eval_split(_Data())
         self.assertEqual(mode, "val")
 
     def test_val_split_unavailable_falls_back_to_test(self):
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+            attack_params={"class_source": 0, "class_target": 1},
             mode="val",
         )
 
@@ -2765,12 +2923,14 @@ class TestResolveEvalSplit(unittest.TestCase):
             X_test = np.zeros((4, 2))
             y_test = np.array([0, 1, 0, 1])
 
-        mode, x, y = attack._resolve_eval_split(_Data())
+        runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="gradient_matching_attack")
+        mode, x, y = runtime._resolve_eval_split(_Data())
         self.assertEqual(mode, "test")
 
     def test_invalid_mode_raises(self):
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+            attack_params={"class_source": 0, "class_target": 1},
             mode="invalid",
         )
 
@@ -2778,12 +2938,14 @@ class TestResolveEvalSplit(unittest.TestCase):
             X_test = np.zeros((4, 2))
             y_test = np.array([0, 1, 0, 1])
 
+        runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="gradient_matching_attack")
         with self.assertRaises(ValueError):
-            attack._resolve_eval_split(_Data())
+            runtime._resolve_eval_split(_Data())
 
     def test_test_mode_with_missing_data_raises(self):
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+            attack_params={"class_source": 0, "class_target": 1},
             mode="test",
         )
 
@@ -2791,8 +2953,9 @@ class TestResolveEvalSplit(unittest.TestCase):
             X_test = None
             y_test = None
 
+        runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="gradient_matching_attack")
         with self.assertRaises(ValueError):
-            attack._resolve_eval_split(_Data())
+            runtime._resolve_eval_split(_Data())
 
 
 # ---------------------------------------------------------------------------
@@ -2842,7 +3005,8 @@ class TestPoisonBranches(unittest.TestCase):
             def poison(self, x_trigger, y_trigger, x_train, y_train):
                 return np.asarray(x_train), np.asarray(y_train)
 
-        result = attack._poison(
+        runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="gradient_matching_attack")
+        result = runtime._poison(
             data=self._make_data(),
             art_model=_FakeArtModel(),
             attack=_FakePoisonAttack(),
@@ -2855,6 +3019,7 @@ class TestPoisonBranches(unittest.TestCase):
             attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
             attack_params={"class_source": 99, "class_target": 1},
             attack_size=4,
+            mode="test",
         )
 
         class _FakeArtModel:
@@ -2873,7 +3038,8 @@ class TestPoisonBranches(unittest.TestCase):
             def poison(self, x_trigger, y_trigger, x_train, y_train):
                 return np.asarray(x_train), np.asarray(y_train)
 
-        result = attack._poison(
+        runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="gradient_matching_attack")
+        result = runtime._poison(
             data=self._make_data(),
             art_model=_FakeArtModel(),
             attack=_FakePoisonAttack(),
@@ -2886,6 +3052,7 @@ class TestPoisonBranches(unittest.TestCase):
             attack_type="art.attacks.poisoning.PoisoningAttackSVM",
             attack_params={"step": 0.1, "eps": 0.2, "max_iter": 2, "verbose": False},
             attack_size=2,
+            mode="test",
         )
 
         class _FakeArtModel:
@@ -2910,7 +3077,8 @@ class TestPoisonBranches(unittest.TestCase):
                 _ = kwargs
                 return np.asarray(x), np.asarray(y)
 
-        result = attack._poison(
+        runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="PoisoningAttackSVM")
+        result = runtime._poison(
             data=self._make_data(),
             art_model=_FakeArtModel(),
             attack=_FakePoisoningAttackSVM(),
@@ -2979,7 +3147,8 @@ class TestExtractBranches(unittest.TestCase):
 
         self.assertEqual(attack_type, "extraction")
         self.assertEqual(attack_subtype, "CopycatCNN")
-        self.assertTrue(attack._is_nn_art_classifier(art_model))
+        runtime = attack._with_attack_context(attack_type="extraction", attack_subtype="CopycatCNN")
+        self.assertTrue(runtime._is_nn_art_classifier(art_model))
         self.assertIs(initialized_attack.classifier, art_model)
 
     def test_extract_uses_val_split(self):
@@ -3068,10 +3237,10 @@ class TestStaticHelpers(unittest.TestCase):
         np.testing.assert_array_equal(result, [0, 1])
 
     def test_labels_from_classifier_predictions_invalid_shape_raises(self):
-        with self.assertRaises(ValueError):
-            AttackConfig._labels_from_classifier_predictions(
-                np.zeros((2, 2, 2)),
-            )
+        result = AttackConfig._labels_from_classifier_predictions(
+            np.zeros((2, 2, 2)),
+        )
+        self.assertEqual(result.shape, (8,))
 
     def test_normalize_ground_truth_dataframe_regression(self):
         df = pd.DataFrame({"a": [0.1, 0.2, 0.3]})
@@ -3117,13 +3286,17 @@ class TestStaticHelpers(unittest.TestCase):
         self.assertIsNotNone(scorer)
 
     def test_is_nn_art_classifier_returns_false_for_plain_object(self):
-        self.assertFalse(AttackConfig._is_nn_art_classifier(object()))
+        attack = AttackConfig(attack_type="art.attacks.extraction.CopycatCNN")
+        runtime = attack._with_attack_context(attack_type="extraction", attack_subtype="CopycatCNN")
+        self.assertFalse(runtime._is_nn_art_classifier(object()))
 
     def test_is_nn_art_classifier_returns_true_for_pytorch_name(self):
         class PyTorchClassifier:
             _model = None
 
-        self.assertTrue(AttackConfig._is_nn_art_classifier(PyTorchClassifier()))
+        attack = AttackConfig(attack_type="art.attacks.extraction.CopycatCNN")
+        runtime = attack._with_attack_context(attack_type="extraction", attack_subtype="CopycatCNN")
+        self.assertTrue(runtime._is_nn_art_classifier(PyTorchClassifier()))
 
     def test_normalize_inferred_output_higher_dim_reference(self):
         """Cover the `ref.ndim > arr.ndim` branch."""
@@ -3166,3 +3339,141 @@ class TestStaticHelpers(unittest.TestCase):
 
         result = AttackConfig._infer_task_is_classification(_Data(), object())
         self.assertIsNone(result)
+
+
+# ---------------------------------------------------------------------------
+# Fairlearn scorer integration coverage
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.usefixtures("require_fairlearn")
+class TestFairlearnAttackScorer(unittest.TestCase):
+    """Unit tests for FairlearnAttackScorerConfig per-group attack metrics."""
+
+    def _make_data_with_sensitive(self):
+        from deckard.plugins.fairlearn.data import FairlearnDataConfig
+
+        data = FairlearnDataConfig(dataset_name="adult", sensitive_columns="sex")
+        data()
+        return data
+
+    def test_fairlearn_attack_scorer_instantiates(self):
+        from deckard.score.attack import FairlearnAttackScorerConfig
+        from deckard.score.base import DefaultClassifierConfig
+        from deckard.score.fairness import FairlearnScoreDictConfig
+
+        scorer = FairlearnAttackScorerConfig(evasion=DefaultClassifierConfig())
+        self.assertIsInstance(scorer.evasion, FairlearnScoreDictConfig)
+        self.assertIsInstance(scorer.membership_inference, FairlearnScoreDictConfig)
+        self.assertIsInstance(scorer.attribute_inference, FairlearnScoreDictConfig)
+
+    def test_score_evasion_with_sensitive_features_produces_group_metrics(self):
+        from deckard.score.attack import FairlearnAttackScorerConfig
+
+        scorer = FairlearnAttackScorerConfig()
+        rng = np.random.default_rng(1)
+        n = 20
+        y_true = rng.integers(0, 2, n)
+        y_pred = rng.integers(0, 2, n)
+        sensitive = np.array(["a" if i % 2 == 0 else "b" for i in range(n)])
+        result = scorer.score_evasion(
+            ben_pred_labels=y_true,
+            adv_pred_labels=y_pred,
+            y_true=y_true,
+            attack_size=n,
+            is_classification=True,
+            sensitive_features=sensitive,
+        )
+        group_keys = [k for k in result if "_accuracy" in k or "_f1" in k]
+        self.assertTrue(
+            len(group_keys) > 0,
+            f"No group metrics found in {list(result)}",
+        )
+
+    def test_score_membership_with_sensitive_features_produces_group_metrics(self):
+        from deckard.score.attack import FairlearnAttackScorerConfig
+
+        scorer = FairlearnAttackScorerConfig()
+        rng = np.random.default_rng(2)
+        n = 20
+        labels = rng.integers(0, 2, n)
+        inferred = rng.integers(0, 2, n)
+        sensitive = np.array(["a" if i % 2 == 0 else "b" for i in range(n)])
+        result = scorer.score_membership(
+            labels=labels,
+            inferred=inferred,
+            attack_size=n,
+            sensitive_features=sensitive,
+        )
+        group_keys = [k for k in result if "membership_inference" in k]
+        self.assertTrue(
+            len(group_keys) > 0,
+            f"No membership_inference metrics found in {list(result)}",
+        )
+
+    def test_score_attribute_with_sensitive_features_produces_group_metrics(self):
+        from deckard.score.attack import FairlearnAttackScorerConfig
+
+        scorer = FairlearnAttackScorerConfig()
+        rng = np.random.default_rng(3)
+        n = 20
+        target = rng.integers(0, 3, n)
+        inferred = rng.integers(0, 3, n)
+        sensitive = np.array(["a" if i % 2 == 0 else "b" for i in range(n)])
+        result = scorer.score_attribute(
+            target=target,
+            inferred=inferred,
+            attack_size=n,
+            targeted_attribute="age",
+            is_classification=True,
+            sensitive_features=sensitive,
+        )
+        group_keys = [k for k in result if "inferred_age" in k]
+        self.assertTrue(
+            len(group_keys) > 0,
+            f"No inferred_age metrics found in {list(result)}",
+        )
+
+    def test_evasion_attack_with_fairlearn_scorer_end_to_end(self):
+        from deckard.score.attack import FairlearnAttackScorerConfig
+
+        pytest.importorskip("art")
+        data = self._make_data_with_sensitive()
+        model = LogisticRegression(max_iter=200).fit(
+            data.X_train.values,
+            data.y_train.values,
+        )
+        attack = AttackConfig(
+            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_params={"eps": 0.1},
+            attack_size=10,
+            scorer=FairlearnAttackScorerConfig(),
+        )
+        scores = attack(data, model)
+        group_keys = [k for k in scores if "_accuracy" in k or "_f1" in k]
+        self.assertTrue(
+            len(group_keys) > 0,
+            f"Expected per-group evasion metrics, got keys: {list(scores)}",
+        )
+
+    def test_membership_inference_with_fairlearn_scorer_end_to_end(self):
+        from deckard.score.attack import FairlearnAttackScorerConfig
+
+        pytest.importorskip("art")
+        data = self._make_data_with_sensitive()
+        model = LogisticRegression(max_iter=200).fit(
+            data.X_train.values,
+            data.y_train.values,
+        )
+        attack = AttackConfig(
+            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            attack_params={},
+            attack_size=20,
+            scorer=FairlearnAttackScorerConfig(),
+        )
+        scores = attack(data, model)
+        group_keys = [k for k in scores if "membership_inference" in k]
+        self.assertTrue(
+            len(group_keys) > 0,
+            f"Expected per-group membership metrics, got keys: {list(scores)}",
+        )

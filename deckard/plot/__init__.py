@@ -18,7 +18,7 @@ from . import declarations  # noqa: F401
 logger = logging.getLogger(__name__)
 
 try:
-    from .seaborn_plots import (
+    from ..plugins.seaborn.plot import (
         SeabornPlotConfig,
         SeabornPlotConfigList,
     )
@@ -27,7 +27,7 @@ except ImportError:  # pragma: no cover
     SeabornPlotConfigList = None
 
 try:
-    from .survival import (
+    from ..plugins.lifelines.plot import (
         SurvivalSeabornPlotConfigList,
         SurvivalSeabornPlotterConfig,
     )
@@ -41,7 +41,7 @@ except ImportError:  # pragma: no cover
     SurvivalSeabornPlotterConfig = None
 
 try:
-    from .yellowbrick_plots import YellowbrickConfigList, YellowbrickPlotConfig
+    from ..plugins.yellowbrick.plot import YellowbrickConfigList, YellowbrickPlotConfig
 
     _ = (YellowbrickConfigList, YellowbrickPlotConfig)
 except ImportError:  # pragma: no cover

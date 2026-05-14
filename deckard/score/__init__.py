@@ -1,6 +1,9 @@
 """Scoring configuration exports and Hydra registrations."""
 
 import logging
+import sys
+
+
 
 from .base import (  # noqa: F401
     DefaultModelScorerConfig,
@@ -49,7 +52,7 @@ from .declarations import (  # noqa: E402
 )
 
 try:
-    from .fairness import (  # noqa: E402
+    from ..plugins.fairlearn.score import (  # noqa: E402
         DefaultFairlearnClassificationConfig,
         DefaultFairlearnRegressionConfig,
         DefaultFairlearnDataScorerConfig,
@@ -76,7 +79,7 @@ except ImportError:  # pragma: no cover - optional dependency
     logger.debug("Fairlearn not found. Fairness score configs are unavailable.")
 
 try:
-    from .anjana import (  # noqa: E402
+    from ..plugins.anjana.score import (  # noqa: E402
         DefaultAnjanaScorerConfig,
         DefaultAnjanaDataScorerConfig,
         DefaultAnjanaModelScorerConfig,
@@ -97,7 +100,7 @@ except ImportError:  # pragma: no cover - optional dependency
     logger.debug("Anjana not found. Anjana score configs are unavailable.")
 
 try:
-    from .survival import (  # noqa: E402
+    from ..plugins.lifelines.score import (  # noqa: E402
         DefaultLifelinesConfig,
         survival_aic_score,
         survival_bic_score,

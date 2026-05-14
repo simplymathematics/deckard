@@ -3,7 +3,7 @@ import pandas as pd
 
 from ..data import DataConfig
 from ..experiment import SurvivalExperimentConfig
-from ..plot.survival import (
+from ..plugins.lifelines.plot import (
     SurvivalSeabornPlotConfigList,
 )
 from ..utils import create_parser_from_function, instantiate_config

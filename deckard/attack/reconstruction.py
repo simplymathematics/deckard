@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Union
 
 from .base import AttackConfig, AttackTypePlugin
 from .inference import _InferenceAttackMixin
-from ..utils import safe_store
 
 
 
@@ -68,16 +67,3 @@ class ReconstructionAttackConfig(_ReconstructionAttackMixin, AttackConfig):
         ]
     )
 
-
-# Register reconstruction attack config
-safe_store(
-    group="attack",
-    name="reconstruction",
-    node=ReconstructionAttackConfig(),
-)
-
-safe_store(
-    group="search/attack",
-    name="reconstruction",
-    node=ReconstructionAttackConfig(),
-)
