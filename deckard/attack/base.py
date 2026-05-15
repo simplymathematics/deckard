@@ -38,6 +38,8 @@ from ..utils import (
     resolve_class,
     resolve_torch_device,
 )
+from ..frameworks import AttackContractMixin, FrameworkAttackConfig
+from ..frameworks.core import EstimatorLike
 from ..frameworks.pytorch.torch_utils import (
     build_torch_art_model,
     collect_subset_from_dataloader,
@@ -48,6 +50,7 @@ from ..frameworks.pytorch.torch_utils import (
 )
 
 if TYPE_CHECKING:
+    from ..data.base import DataConfig
     from ..score.attack import AttackScorerConfig
 
 logger = logging.getLogger(__name__)
@@ -193,7 +196,7 @@ class _AttackMixin:
         )
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class AttackTypePlugin:
     """Generic attack plugin that binds one mixin to one attack family/subtype.
 
@@ -293,8 +296,8 @@ def _get_supported_models() -> tuple[type, ...]:
     return tuple(_get_sklearn_dict().values())
 
 
-@dataclass(eq=False)
-class AttackConfig(ConfigBase):
+@dataclass(eq=False, kw_only=True)
+class AttackConfig(AttackContractMixin, ConfigBase, FrameworkAttackConfig):
     """Runtime attack configuration with plugin-driven dispatch.
 
     Attack behavior is resolved at runtime via mixins and optional plugins.
@@ -403,13 +406,18 @@ class AttackConfig(ConfigBase):
         return super().__hash__()
 
     def __post_init__(self):
-        """
-        Initializes post-construction attributes for the class.
+        """Initialize and normalize attack runtime configuration."""
+        self._initialize_target_reference()
+        self._initialize_attack_scorer()
+        self._validate_poisoning_params()
+        self._initialize_runtime_device()
 
-        Sets the internal attack attribute to None. If attack_params is not provided,
-        initializes it as an empty dictionary.
-        """
+    def _initialize_target_reference(self) -> None:
+        """Set canonical runtime target path."""
         self._target_ = "deckard.attack.AttackConfig"
+
+    def _initialize_attack_scorer(self) -> None:
+        """Resolve scorer configuration into an attack-scorer runtime object."""
         attack_scorer_cls = resolve_class(
             "deckard.score.attack.AttackScorerConfig",
         )
@@ -440,8 +448,79 @@ class AttackConfig(ConfigBase):
             raise TypeError(
                 "AttackConfig scorer must expose a '_score' method.",
             )
-        self._validate_poisoning_params()
+
+    def _initialize_runtime_device(self) -> None:
+        """Resolve and normalize runtime device selection."""
         self.device = str(resolve_torch_device(self.device))
+
+    def load_cached_attack_artifacts(
+        self,
+        attack_file: str | None,
+        attack_predictions_file: str | None,
+    ) -> None:
+        """Load previously persisted attack runtime artifacts when available."""
+        if attack_file is not None and Path(attack_file).exists():
+            loaded_self = self.load_object(
+                attack_file,
+                ignore_corrupt=True,
+                delete_corrupt=True,
+            )
+            if loaded_self is not None:
+                self.__dict__.update(loaded_self.__dict__)
+        if (
+            attack_predictions_file is not None
+            and Path(attack_predictions_file).exists()
+        ):
+            try:
+                self.attack_predictions = self.load_data(attack_predictions_file)
+            except (ValueError, OSError) as exc:
+                logger.warning(
+                    "Failed to load cached attack predictions %s (%s). Recomputing predictions.",
+                    attack_predictions_file,
+                    exc,
+                )
+                Path(attack_predictions_file).unlink(missing_ok=True)
+
+    def validate_attack_runtime_inputs(self, data, model) -> None:
+        """Validate model/data compatibility for the configured attack."""
+        self._validate_attack_task_compatibility(data, model)
+
+    def initialize_attack_runtime(self, model, data):
+        """Initialize attack runtime objects and resolved attack family metadata."""
+        return self._initialize_attack(model, data)
+
+    def resolve_attack_runtime_handler(self, runtime, attack_type: str, attack_subtype: str):
+        """Resolve the runtime handler function for this attack family/subtype."""
+        handler = runtime._resolve_attack_handler(
+            attack_type=attack_type,
+            attack_subtype=attack_subtype,
+        )
+        if handler is None:
+            raise NotImplementedError(
+                f"Attack type {attack_type} subtype {attack_subtype} has no registered runtime handler.",
+            )
+        return handler
+
+    def dispatch_attack_runtime(
+        self,
+        handler,
+        *,
+        data,
+        model,
+        art_model,
+        attack,
+        attack_type: str,
+        attack_subtype: str,
+    ):
+        """Execute the resolved runtime handler for attack generation/scoring."""
+        return handler(
+            data=data,
+            model=model,
+            art_model=art_model,
+            attack=attack,
+            attack_type=attack_type,
+            attack_subtype=attack_subtype,
+        )
 
     def _validate_poisoning_params(self):
         """Validate poisoning-specific configuration parameters."""
@@ -873,6 +952,14 @@ class AttackConfig(ConfigBase):
         self._attack_subtype = attack_subtype
         return attack, art_model, attack_type, attack_subtype
 
+    def initialize_attack(
+        self,
+        model: ModelConfig | EstimatorLike,
+        data: "DataConfig",
+    ):
+        """Public entry-point for attack initialisation. Delegates to _initialize_attack()."""
+        return self._initialize_attack(model, data)
+
     @staticmethod
     def _is_poisoning_svm_attack(attack_class) -> bool:
         return "PoisoningAttackSVM" in getattr(attack_class, "__name__", "")
@@ -946,42 +1033,18 @@ class AttackConfig(ConfigBase):
         AssertionError
             If the output scores or timing variables are not of the expected types.
         """
-        if attack_file is not None and Path(attack_file).exists():
-            loaded_self = self.load_object(
-                attack_file,
-                ignore_corrupt=True,
-                delete_corrupt=True,
-            )
-            if loaded_self is not None:
-                self = loaded_self
-        if (
-            attack_predictions_file is not None
-            and Path(attack_predictions_file).exists()
-        ):
-            try:
-                self.attack_predictions = self.load_data(attack_predictions_file)
-            except (ValueError, OSError) as exc:
-                logger.warning(
-                    "Failed to load cached attack predictions %s (%s). Recomputing predictions.",
-                    attack_predictions_file,
-                    exc,
-                )
-                Path(attack_predictions_file).unlink(missing_ok=True)
-        self._validate_attack_task_compatibility(data, model)
+        self.load_cached_attack_artifacts(
+            attack_file=attack_file,
+            attack_predictions_file=attack_predictions_file,
+        )
+        self.validate_attack_runtime_inputs(data, model)
 
-        attack, art_model, attack_type, attack_subtype = self._initialize_attack(
+        attack, art_model, attack_type, attack_subtype = self.initialize_attack_runtime(
             model,
             data,
         )
         runtime = self._with_attack_context(attack_type=attack_type, attack_subtype=attack_subtype)
-        handler = runtime._resolve_attack_handler(
-            attack_type=attack_type,
-            attack_subtype=attack_subtype,
-        )
-        if handler is None:
-            raise NotImplementedError(
-                f"Attack type {attack_type} subtype {attack_subtype} has no registered runtime handler.",
-            )
+        handler = self.resolve_attack_runtime_handler(runtime, attack_type, attack_subtype)
 
         before_outputs = runtime._run_plugin_hook(
             "before_attack_dispatch",
@@ -996,7 +1059,8 @@ class AttackConfig(ConfigBase):
         )
         runtime._merge_plugin_scores(before_outputs)
 
-        scores = handler(
+        scores = self.dispatch_attack_runtime(
+            handler,
             data=data,
             model=model,
             art_model=art_model,
@@ -1462,36 +1526,42 @@ class AttackConfig(ConfigBase):
             y_test_numeric,
         )
 
-    def get_attack_subset(self, data: Any, test: bool = True) -> tuple:
+    def compose_subset_sampling_behavior(
+        self,
+        data: Any,
+        test: bool,
+    ):
+        """Compose subset-sampling behavior based on runtime data container types."""
         n = self.attack_size
-        if test is True:
-            x_ = data.X_test
-            y_ = data.y_test
-        else:
-            x_ = data.X_train
-            y_ = data.y_train
+        x_ = data.X_test if test is True else data.X_train
+        y_ = data.y_test if test is True else data.y_train
         from torch.utils.data import Dataset, DataLoader, Subset
 
-        # Accept Subset/Dataset and convert to tensor
         if isinstance(x_, (pd.Series, np.ndarray, pd.DataFrame)) or is_tensor(x_):
-            x_subset = x_[:n]
-            y_subset = y_[:n]
-        elif isinstance(x_, (Dataset, Subset)):
-            # Convert to tensor
-            loader = DataLoader(x_, batch_size=n, shuffle=False)
-            batch = next(iter(loader))
-            if isinstance(batch, (tuple, list)):
-                x_subset = batch[0]
-                y_subset = batch[1]
-            else:
-                x_subset = batch
-                y_subset = None
-        elif is_dataloader(x_):
-            x_subset, y_subset = collect_subset_from_dataloader(x_, n=n)
-        else:
-            raise ValueError(
-                f"Expected data.X_test to be a pd.Series, np.ndarray, torch Tensor, torch DataLoader, or torch Dataset/Subset. Got: {type(data.X_test)}",
-            )
+            return lambda: (x_[:n], y_[:n])
+        if isinstance(x_, (Dataset, Subset)):
+            return lambda: self._collect_subset_from_dataset(x_, n)
+        if is_dataloader(x_):
+            return lambda: collect_subset_from_dataloader(x_, n=n)
+        raise ValueError(
+            f"Expected data.X_test to be a pd.Series, np.ndarray, torch Tensor, torch DataLoader, or torch Dataset/Subset. Got: {type(data.X_test)}",
+        )
+
+    @staticmethod
+    def _collect_subset_from_dataset(dataset, n: int):
+        """Collect first batch subset from torch Dataset/Subset containers."""
+        from torch.utils.data import DataLoader
+
+        loader = DataLoader(dataset, batch_size=n, shuffle=False)
+        batch = next(iter(loader))
+        if isinstance(batch, (tuple, list)):
+            return batch[0], batch[1]
+        return batch, None
+
+    def get_attack_subset(self, data: Any, test: bool = True) -> tuple:
+        n = self.attack_size
+        subset_sampler = self.compose_subset_sampling_behavior(data=data, test=test)
+        x_subset, y_subset = subset_sampler()
         # Do not flatten x_subset; preserve original shape for torch/ART models
         if is_tensor(y_subset) and y_subset.ndim > 1:
             y_subset = y_subset.view(-1)

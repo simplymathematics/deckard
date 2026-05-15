@@ -499,7 +499,7 @@ class _InferenceAttackMixin(_AttackMixin):
         return self.score_dict
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class InferenceAttackConfig(_InferenceAttackMixin, AttackConfig):
     """Configuration for privacy inference attacks.
 

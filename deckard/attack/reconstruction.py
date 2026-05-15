@@ -31,7 +31,7 @@ class _ReconstructionAttackMixin(_InferenceAttackMixin):
         return self._infer_database_reconstruction(data=data, attack=attack)
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class ReconstructionAttackConfig(_ReconstructionAttackMixin, AttackConfig):
     """Configuration for database reconstruction attacks.
 

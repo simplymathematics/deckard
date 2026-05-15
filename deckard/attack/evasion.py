@@ -231,7 +231,7 @@ class _EvasionAttackMixin(_AttackMixin):
         return n, x_subset, y_subset
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class EvasionAttackConfig(_EvasionAttackMixin, AttackConfig):
     """Configuration for evasion attacks that generate adversarial examples.
 

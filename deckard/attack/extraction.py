@@ -149,7 +149,7 @@ class _ExtractionAttackMixin(_PoisoningAttackMixin):
         return self.score_dict
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class ExtractionAttackConfig(_ExtractionAttackMixin, AttackConfig):
     """Configuration for model extraction attacks (model stealing).
 

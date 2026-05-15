@@ -368,7 +368,7 @@ class _PoisoningAttackMixin(_AttackMixin):
         return "test", X_test, y_test
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class PoisoningAttackConfig(_PoisoningAttackMixin, AttackConfig):
     """Configuration for poisoning attacks that corrupt training data.
 
