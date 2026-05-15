@@ -94,7 +94,7 @@ class _PlotterMixin:
         )
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class PlotTypePlugin:
     """Generic plotter plugin that binds one mixin to one plotting family/backend.
 
@@ -200,7 +200,7 @@ class PlotTypePlugin:
         return handler(*args, **kwargs)
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class PlotDictConfig(ConfigBase):
     """Container for multiple plot configs enabling flexible plot composition.
 

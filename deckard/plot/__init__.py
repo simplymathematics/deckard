@@ -46,7 +46,7 @@ except ImportError:  # pragma: no cover
     YellowbrickPlotConfig = None
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class PlotConfig(ConfigBase):
     """Wrapper that routes to appropriate plot config (Seaborn or Yellowbrick).
 
