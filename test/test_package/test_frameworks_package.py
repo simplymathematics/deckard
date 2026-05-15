@@ -58,8 +58,8 @@ class _ContractStubBase:
         self.call_log.append("load")
         return "load"
 
-    def load_pretrained(self):
-        self.call_log.append("load_pretrained")
+    def load_cached(self):
+        self.call_log.append("load_cached")
         return "pretrained"
 
     def resolve_context(self, **context):
@@ -159,9 +159,9 @@ class _StubFrameworkModelConfig(_ContractStubBase, FrameworkModelConfig):
     def _validate_model_contract(self):
         self.call_log.append("validate")
 
-    def build_model(self, data=None):
+    def init_model(self, data=None):
         _ = data
-        self.call_log.append("build_model")
+        self.call_log.append("init_model")
         return data
 
     def fit_model(self, data=None):
@@ -269,7 +269,7 @@ class _StubFrameworkDataSamplerContract(FrameworkDataSamplerContract):
             [
                 "load_defaults",
                 "load",
-                "load_pretrained",
+                "load_cached",
                 "resolve_context",
                 "load_data",
                 "sample_data",
@@ -286,7 +286,7 @@ class _StubFrameworkDataSamplerContract(FrameworkDataSamplerContract):
             [
                 "load_defaults",
                 "load",
-                "load_pretrained",
+                "load_cached",
                 "resolve_context",
                 "load_data",
                 "sample_data",
@@ -305,9 +305,9 @@ class _StubFrameworkDataSamplerContract(FrameworkDataSamplerContract):
             [
                 "load_defaults",
                 "load",
-                "load_pretrained",
+                "load_cached",
                 "resolve_context",
-                "build_model",
+                "init_model",
                 "fit_model",
                 "score",
                 "save",
@@ -318,7 +318,7 @@ class _StubFrameworkDataSamplerContract(FrameworkDataSamplerContract):
             [
                 "load_defaults",
                 "load",
-                "load_pretrained",
+                "load_cached",
                 "resolve_context",
                 "build_attack",
                 "score",
@@ -330,7 +330,7 @@ class _StubFrameworkDataSamplerContract(FrameworkDataSamplerContract):
             [
                 "load_defaults",
                 "load",
-                "load_pretrained",
+                "load_cached",
                 "resolve_context",
                 "build_detector",
                 "score",
@@ -342,7 +342,7 @@ class _StubFrameworkDataSamplerContract(FrameworkDataSamplerContract):
             [
                 "load_defaults",
                 "load",
-                "load_pretrained",
+                "load_cached",
                 "resolve_context",
                 "run_experiment",
                 "score",
@@ -354,7 +354,7 @@ class _StubFrameworkDataSamplerContract(FrameworkDataSamplerContract):
             [
                 "load_defaults",
                 "load",
-                "load_pretrained",
+                "load_cached",
                 "resolve_context",
                 "score",
                 "save",
