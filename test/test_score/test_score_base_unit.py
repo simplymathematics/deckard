@@ -179,15 +179,15 @@ def test_task_aware_scorer_resolves_from_model_data_and_attack_context():
     )
 
 
-def test_resolve_mode_features_and_predict_proba_paths():
+def testresolve_mode_features_and_predict_proba_paths():
     data = SimpleNamespace(X_train="train", X_test="test", X_val="val", _X="full")
-    assert ScorerDictConfig._resolve_mode_features("train", data) == "train"
-    assert ScorerDictConfig._resolve_mode_features("test", data) == "test"
-    assert ScorerDictConfig._resolve_mode_features("val", data) == "val"
-    assert ScorerDictConfig._resolve_mode_features("attack-val", data) == "val"
-    assert ScorerDictConfig._resolve_mode_features("pre-sample", data) == "full"
-    assert ScorerDictConfig._resolve_mode_features("attack", data) is None
-    assert ScorerDictConfig._resolve_mode_features("test", None) is None
+    assert ScorerDictConfig.resolve_mode_features("train", data) == "train"
+    assert ScorerDictConfig.resolve_mode_features("test", data) == "test"
+    assert ScorerDictConfig.resolve_mode_features("val", data) == "val"
+    assert ScorerDictConfig.resolve_mode_features("attack-val", data) == "val"
+    assert ScorerDictConfig.resolve_mode_features("pre-sample", data) == "full"
+    assert ScorerDictConfig.resolve_mode_features("attack", data) is None
+    assert ScorerDictConfig.resolve_mode_features("test", None) is None
 
     import pytest
 
@@ -195,12 +195,12 @@ def test_resolve_mode_features_and_predict_proba_paths():
         ValueError,
         match="Cannot compute probabilities: model or input X is None",
     ):
-        ScorerDictConfig._predict_proba_from_model(None, [1])
+        ScorerDictConfig.predict_proba_from_model(None, [1])
     with pytest.raises(
         ValueError,
         match="Cannot compute probabilities: model or input X is None",
     ):
-        ScorerDictConfig._predict_proba_from_model(object(), None)
+        ScorerDictConfig.predict_proba_from_model(object(), None)
 
     class Estimator:
         def predict_proba(self, x):
@@ -217,13 +217,13 @@ def test_resolve_mode_features_and_predict_proba_paths():
     import pytest
 
     with pytest.raises(TypeError, match="need ndarray"):
-        ScorerDictConfig._predict_proba_from_model(ModelWithBrokenGetter(), [[1.0]])
+        ScorerDictConfig.predict_proba_from_model(ModelWithBrokenGetter(), [[1.0]])
 
     with pytest.raises(
         ValueError,
         match="Model must have a predict or predict_proba function for probability metrics.",
     ):
-        ScorerDictConfig._predict_proba_from_model(
+        ScorerDictConfig.predict_proba_from_model(
             SimpleNamespace(_model=object()),
             [[1.0]],
         )
@@ -430,3 +430,86 @@ def test_scorer_dict_pre_sample_rejects_probability_metrics():
 
     with pytest.raises(ValueError, match="reserved for full-dataset diagnostics"):
         scorer_dict(mode="pre-sample", data=data)
+
+
+
+import numpy as np
+import pandas as pd
+import pytest
+
+import deckard.score.data as score_data
+
+
+
+
+
+
+
+
+def test_score_data_coerce_features_dataframe_series_and_vector():
+    s = pd.Series([1.0, 2.0], name="named")
+    out_series = score_data._coerce_features_dataframe(s)
+    assert list(out_series.columns) == ["named"]
+
+    out_vector = score_data._coerce_features_dataframe(np.array([1.0, 2.0]))
+    assert list(out_vector.columns) == ["feature_0"]
+
+
+def test_score_data_reference_resolution_reference_and_missing_column_error():
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+
+    ref, out_X = score_data._resolve_reference_vector([0, 1], X, reference=[9, 8])
+    assert np.array_equal(ref, np.array([9, 8]))
+    assert list(out_X.columns) == ["a", "b"]
+
+    with pytest.raises(ValueError, match="reference_column 'nope' not found"):
+        score_data._resolve_reference_vector([0, 1], X, reference_column="nope")
+
+
+def test_score_data_is_discrete_reference_empty_and_object():
+    assert score_data._is_discrete_reference(np.array([])) is True
+    assert (
+        score_data._is_discrete_reference(np.array(["x", "y"], dtype=object)) is True
+    )
+
+
+def test_score_data_mutual_information_raises_when_no_features_left():
+    y = np.array([0, 1, 0, 1])
+    X = pd.DataFrame({"label": y})
+
+    with pytest.raises(ValueError, match="No feature columns available"):
+        score_data._feature_mutual_information_vector(
+            y_true=y,
+            X=X,
+            reference_column="label",
+        )
+
+
+def test_score_data_class_imbalance_ratio_empty_and_zero_min_count(monkeypatch):
+    assert score_data.data_class_imbalance_ratio_score([], None) == 0.0
+
+    original = score_data.pd.Series.value_counts
+
+    def _fake_value_counts(self, dropna=False):
+        _ = dropna
+        return pd.Series([3.0, 0.0])
+
+    monkeypatch.setattr(score_data.pd.Series, "value_counts", _fake_value_counts)
+    try:
+        assert score_data.data_class_imbalance_ratio_score([0, 1], None) == float(
+            "inf",
+        )
+    finally:
+        monkeypatch.setattr(score_data.pd.Series, "value_counts", original)
+
+
+def test_score_data_empirical_cdf_empty_reference_raises():
+    y = pd.Series([np.nan, np.nan])
+    X = pd.DataFrame({"x": [1.0, 2.0]})
+
+    with pytest.raises(ValueError, match="Reference vector is empty"):
+        score_data.data_empirical_cdf_function_score(
+            y_true=y,
+            X=X,
+            reference=[np.nan, np.nan],
+        )

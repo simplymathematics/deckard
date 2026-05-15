@@ -1,11 +1,10 @@
-from deckard.data.fairlearn import FairlearnDataConfig
-from deckard.data.lifelines import LifelinesDataConfig
+from deckard.plugins.fairlearn.data import FairlearnDataConfig
+from deckard.plugins.lifelines.data import LifelinesDataConfig
 from deckard.data import PytorchDataConfig
 from deckard.data import DataConfig
-from deckard.data.pipeline import DataPipelineConfig
+from deckard.frameworks.pytorch.data import PytorchDataConfig as PytorchDataConfigFromFramework
 from deckard.plugins.anjana.data import AnjanaDataConfig
 from deckard.plugins.fairlearn.data import FairlearnDataConfig
-from deckard.pytorch.data import PytorchDataConfig as PytorchDataConfigFromUserFacing
 
 
 def test_data_family_aliases_are_importable():
@@ -20,5 +19,5 @@ def test_data_pipeline_family_aliases_are_importable():
     assert PytorchDataConfig is not None
 
 
-def test_data_pipeline_wrapper_is_reexported_at_top_level():
-    assert PytorchDataConfig is PytorchDataConfigFromUserFacing
+def test_data_pipeline_pytorch_config_matches_framework_canonical_export():
+    assert PytorchDataConfig is PytorchDataConfigFromFramework

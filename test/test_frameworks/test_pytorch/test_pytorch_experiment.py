@@ -19,12 +19,12 @@ from helpers import make_runtime_env
 
 
 from deckard.attack import AttackConfig
-from deckard.pytorch.data import PytorchDataConfig
+from deckard.frameworks.pytorch.data import PytorchDataConfig
 from deckard.experiment import TorchExperimentConfig
 from deckard.file import FileConfig
 from deckard.model import DefensePipelineConfig
 from deckard.model.defend import DefenseConfig
-from deckard.pytorch.model import PytorchModelConfig
+from deckard.frameworks.pytorch.model import PytorchModelConfig
 
 torch = pytest.importorskip("torch")
 ROOT = Path(__file__).resolve().parents[2]

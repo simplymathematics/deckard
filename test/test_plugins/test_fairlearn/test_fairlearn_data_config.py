@@ -153,10 +153,14 @@ class TestScore:
             train_size=2,
             test_size=2,
             stratify=False,
+            fairness_defense=False,
+            pipeline={},
         )
         config._X = df
         config._y = pd.Series([0, 1, 0, 1])
         config.classifier = True
+        config.score_dict = {}
+        config.data_load_time = 0.0  # Prevent base _load_data from reloading adult dataset
 
         config()  # Ensure sensitive features are set up
         scores = config.score_dict

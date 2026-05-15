@@ -125,7 +125,7 @@ def test_apply_anjana_defense_branch_paths(monkeypatch):
     cfg = _bare_cfg()
 
     with pytest.raises(TypeError, match="requires tabular pandas DataFrame"):
-        cfg._build_anjana_frame()
+        cfg._build_privacy_frame()
 
     cfg._X = pd.DataFrame({"feature": [1, 2, 3]}, index=[10, 11, 12])
     cfg._y = pd.Series([0, 1, 0], index=[10, 11, 12])
@@ -243,10 +243,13 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     monkeypatch.setattr(DataPipelineConfig, "_init_pipeline", lambda self: "pipeline")
     assert cfg._init_pipeline() == "pipeline"
 
-    def _sample_with_sensitive(self):
-        self.X_train = pd.DataFrame({"group": ["a", "b"], "x": [1, 2]})
-        self.X_test = pd.DataFrame({"group": ["b"], "x": [3]})
+    def _sample_with_sensitive(self, **kwargs):
+        _ = kwargs
         self._X = pd.DataFrame({"group": ["a", "b", "b"], "x": [1, 2, 3]})
+        self.train_indices = [0, 1]
+        self.test_indices = [2]
+        self.X_train = self._X.iloc[self.train_indices].reset_index(drop=True)
+        self.X_test = self._X.iloc[self.test_indices].reset_index(drop=True)
 
     monkeypatch.setattr(DataPipelineConfig, "_sample", _sample_with_sensitive)
     cfg.sensitive_columns = ["group"]
@@ -256,7 +259,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     assert cfg._sensitive_all.tolist() == ["a", "b", "b"]
 
     cfg_none = _bare_cfg()
-    monkeypatch.setattr(DataPipelineConfig, "_sample", lambda self: None)
+    monkeypatch.setattr(DataPipelineConfig, "_sample", lambda self, **kw: None)
     cfg_none._sample()
 
     cfg_score = _bare_cfg()

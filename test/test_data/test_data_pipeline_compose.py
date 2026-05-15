@@ -38,7 +38,7 @@ def test_pytorch_pipeline_yaml_config_compose_and_instantiate():
     import pytest
 
     pytest.importorskip("torch")
-    from deckard.pytorch.data import PytorchDataPipelineConfig
+    from deckard.frameworks.pytorch.data import PytorchDataPipelineConfig
 
     config_dir = (
         Path(__file__).resolve().parents[2]

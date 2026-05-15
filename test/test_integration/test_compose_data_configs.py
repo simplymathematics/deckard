@@ -54,7 +54,7 @@ def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
             "data/anjana",
             {
                 "dataset_name": "make_classification",
-                "_target_": "deckard.plugins.anjana.data.AnjanaDataConfig",
+                "_target_": "deckard.plugins.anjana.AnjanaDataConfig",
                 "alias": "anjana",
             },
             id="sklearn-anjana",
@@ -63,7 +63,7 @@ def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
             "data/fair-adult",
             {
                 "dataset_name": "adult",
-                "_target_": "deckard.data.FairlearnDataConfig",
+                "_target_": "deckard.plugins.fairlearn.FairlearnDataConfig",
                 "sensitive_columns": ["sex"],
             },
             id="sklearn-fairlearn",

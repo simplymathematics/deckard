@@ -9,7 +9,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from deckard.data.base import DataHookPlugin
+from deckard.plugins import HookPlugin
 from deckard.declarations import (
     register_configs,
 )
@@ -58,8 +58,8 @@ def test_plugin_orchestration_is_deterministic() -> None:
 
     runtime = _Runtime()
     plugins = [
-        DataHookPlugin(hook_name="first", method_name="first"),
-        DataHookPlugin(hook_name="second", method_name="second"),
+        HookPlugin(hook_name="first", method_name="first"),
+        HookPlugin(hook_name="second", method_name="second"),
     ]
 
     seq1 = [plugin(runtime, hook_name=plugin.hook_name) for plugin in plugins]
@@ -75,7 +75,7 @@ def test_mixin_composition_order_is_explicit() -> None:
     fairlearn_mro = [cls.__name__ for cls in FairlearnDataConfig.__mro__]
 
     assert anjana_mro.index("_PrivacyBehaviorMixin") < anjana_mro.index("DataPipelineConfig")
-    assert fairlearn_mro.index("_SensitiveBehaviorMixin") < fairlearn_mro.index("DataPipelineConfig")
+    assert fairlearn_mro.index("_FairnessBehaviorMixin") < fairlearn_mro.index("DataPipelineConfig")
 
 
 def test_runtime_declaration_registration_is_idempotent() -> None:

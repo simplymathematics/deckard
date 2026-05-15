@@ -7,7 +7,7 @@ import pytest
 
 from deckard.data import DataConfig
 from deckard.experiment.base import ExperimentConfig
-from deckard.experiment.survival import SurvivalExperimentConfig
+from deckard.plugins.lifelines.experiment import SurvivalExperimentConfig
 from deckard.model import ModelConfig
 
 

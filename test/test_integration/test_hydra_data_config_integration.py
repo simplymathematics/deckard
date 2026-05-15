@@ -36,7 +36,7 @@ def test_sklearn_data_profile_anjana_composes():
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
 
     assert data_cfg["dataset_name"] == "make_classification"
-    assert data_cfg["_target_"] == "deckard.plugins.anjana.data.AnjanaDataConfig"
+    assert data_cfg["_target_"] == "deckard.plugins.anjana.AnjanaDataConfig"
     assert data_cfg["alias"] == "anjana"
 
 
@@ -45,7 +45,7 @@ def test_sklearn_data_profile_fairlearn_composes():
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
 
     assert data_cfg["dataset_name"] == "adult"
-    assert data_cfg["_target_"] == "deckard.data.FairlearnDataConfig"
+    assert data_cfg["_target_"] == "deckard.plugins.fairlearn.FairlearnDataConfig"
     assert data_cfg["sensitive_columns"] == ["sex"]
 
 

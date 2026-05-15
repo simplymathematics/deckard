@@ -40,7 +40,7 @@ def _make_anjana_data(
     monkeypatch:
         If provided, patches resolve_class so no real anjana package is needed.
     """
-    from deckard.data.anjana import AnjanaDataConfig
+    from deckard.plugins.anjana.data import AnjanaDataConfig
 
     base = load_canonical_data_profile("anjana", framework="sklearn")
     base["data_params"].update(
@@ -78,7 +78,7 @@ def _make_anjana_data(
             return data.copy()
 
         monkeypatch.setattr(
-            "deckard.data.anjana.resolve_class",
+            "deckard.plugins.anjana.data.resolve_class",
             lambda _: resolve_class_fn or _fake_k_anon,
         )
 
@@ -219,7 +219,7 @@ def test_anjana_experiment_with_defense(monkeypatch):
         return data.copy()
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class",
+        "deckard.plugins.anjana.data.resolve_class",
         lambda _: _stub_k_anon,
     )
 
@@ -267,7 +267,7 @@ def test_anjana_data_with_art_model_defense_chain(monkeypatch):
         return data.copy()
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class",
+        "deckard.plugins.anjana.data.resolve_class",
         lambda _: _stub_k_anon,
     )
 
@@ -360,7 +360,7 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
     from art.estimators.classification.scikitlearn import (
         ScikitlearnLogisticRegression,
     )
-    from deckard.data.anjana import AnjanaDataConfig
+    from deckard.plugins.anjana.data import AnjanaDataConfig
     from deckard.experiment import ExperimentConfig
     from deckard.file import FileConfig
     from deckard.model import DefensePipelineConfig, ModelConfig
@@ -370,7 +370,7 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
         return data.iloc[: len(data) // 2].copy()
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class",
+        "deckard.plugins.anjana.data.resolve_class",
         lambda _: _drop_half_rows,
     )
 
@@ -489,7 +489,7 @@ def test_anjana_data_with_fairlearn_model_chain(monkeypatch):
     """
     pytest.importorskip("fairlearn")
 
-    from deckard.data.anjana import AnjanaDataConfig
+    from deckard.plugins.anjana.data import AnjanaDataConfig
     from deckard.model import DefensePipelineConfig
 
     def _stub_k_anon(data, **kwargs):
@@ -497,7 +497,7 @@ def test_anjana_data_with_fairlearn_model_chain(monkeypatch):
         return data.copy()
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class",
+        "deckard.plugins.anjana.data.resolve_class",
         lambda _: _stub_k_anon,
     )
 
@@ -548,7 +548,7 @@ def test_anjana_data_with_attack_scoring(monkeypatch):
         return data.copy()
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class",
+        "deckard.plugins.anjana.data.resolve_class",
         lambda _: _stub_k_anon,
     )
 
@@ -597,7 +597,7 @@ def test_anjana_data_config_hash_stable_after_load(monkeypatch):
     def _stub(data, **kwargs):
         return data.copy()
 
-    monkeypatch.setattr("deckard.data.anjana.resolve_class", lambda _: _stub)
+    monkeypatch.setattr("deckard.plugins.anjana.data.resolve_class", lambda _: _stub)
 
     cfg = _make_anjana_data(
         n=20,
@@ -617,7 +617,7 @@ def test_anjana_experiment_hash_stable_after_execution(monkeypatch):
     def _stub(data, **kwargs):
         return data.copy()
 
-    monkeypatch.setattr("deckard.data.anjana.resolve_class", lambda _: _stub)
+    monkeypatch.setattr("deckard.plugins.anjana.data.resolve_class", lambda _: _stub)
 
     cfg = _make_anjana_data(
         n=20,
@@ -655,7 +655,7 @@ def test_anjana_experiment_scores_persist_to_json(monkeypatch, tmp_path):
     def _stub(data, **kwargs):
         return data.copy()
 
-    monkeypatch.setattr("deckard.data.anjana.resolve_class", lambda _: _stub)
+    monkeypatch.setattr("deckard.plugins.anjana.data.resolve_class", lambda _: _stub)
 
     score_file = str(tmp_path / "scores.json")
     cfg = _make_anjana_data(

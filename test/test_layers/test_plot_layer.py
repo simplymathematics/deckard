@@ -8,8 +8,8 @@ from deckard.layers import plot as plot_module
 
 
 def _install_fake_plot_modules(monkeypatch):
-    yellow_mod = ModuleType("deckard.plot.yellowbrick_plots")
-    seaborn_mod = ModuleType("deckard.plot.seaborn_plots")
+    yellow_mod = ModuleType("deckard.plugins.yellowbrick.plot")
+    seaborn_mod = ModuleType("deckard.plugins.seaborn.plot")
 
     class FakeYellowbrickPlotConfig:
         def __init__(self, **kwargs):
@@ -46,8 +46,8 @@ def _install_fake_plot_modules(monkeypatch):
     seaborn_mod.SeabornPlotConfig = FakeSeabornPlotConfig
     seaborn_mod.SeabornPlotConfigList = FakeSeabornPlotConfigList
 
-    monkeypatch.setitem(sys.modules, "deckard.plot.yellowbrick_plots", yellow_mod)
-    monkeypatch.setitem(sys.modules, "deckard.plot.seaborn_plots", seaborn_mod)
+    monkeypatch.setitem(sys.modules, "deckard.plugins.yellowbrick.plot", yellow_mod)
+    monkeypatch.setitem(sys.modules, "deckard.plugins.seaborn.plot", seaborn_mod)
 
 
 def test_load_experiment_config_and_yaml_helpers(tmp_path):

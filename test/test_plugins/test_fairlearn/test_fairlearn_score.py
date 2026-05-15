@@ -1,7 +1,12 @@
 import unittest
 import numpy as np
-from deckard.plugins.fairlearn.score import DefaultFairlearnClassificationConfig, DefaultFairlearnRegressionConfig
+from sklearn.metrics import mean_squared_error
 
+from deckard.plugins.fairlearn.score import DefaultFairlearnClassificationConfig, DefaultFairlearnRegressionConfig
+from deckard.plugins.fairlearn.score import  FairlearnScoreDictConfig
+from deckard.score import ScorerConfig
+
+import pytest
 
 class TestFairnessScorers(unittest.TestCase):
     def test_fairness_classification_and_regression_profiles_are_distinct(self):
@@ -41,7 +46,17 @@ class TestFairnessScorers(unittest.TestCase):
         self.assertIn("1_group_mae_difference", scores)
         self.assertIn("0_group_mse_difference", scores)
         self.assertIn("1_group_mse_difference", scores)
-
+    
+    def test_score_profile_classes_available(self):
+        self.assertIsInstance(
+            DefaultFairlearnClassificationConfig(),
+            ScorerConfig,
+        )
+        self.assertIsInstance(
+            DefaultFairlearnRegressionConfig(),
+            ScorerConfig,
+        )
+        
     def test_metric_frame_fairness_score_dict_classification(self):
         scorer = FairlearnScoreDictConfig(
             group_scorers={
@@ -139,3 +154,18 @@ class TestFairnessScorers(unittest.TestCase):
         self.assertTrue(
             any(key.endswith("accuracy_difference") for key in scores),
         )
+        
+    def test_fairlearn_attack_scorer_accepts_plain_scorerdict_profiles(self):
+        pytest.importorskip("fairlearn")
+        from deckard.score.attack import FairlearnAttackScorerConfig
+
+        profile = ScorerDictConfig(
+            scorers={
+                "accuracy": ScorerConfig(
+                    score_name="accuracy",
+                    score_function="sklearn.metrics.accuracy_score",
+                ),
+            },
+        )
+        scorer = FairlearnAttackScorerConfig(evasion=profile)
+        self.assertIsNotNone(scorer.evasion)

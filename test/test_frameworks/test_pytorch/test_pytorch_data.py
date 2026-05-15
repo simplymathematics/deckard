@@ -10,10 +10,10 @@ from unittest.mock import patch
 torch = pytest.importorskip("torch")
 Tensor = pytest.importorskip("torch").Tensor
 PytorchDataConfig = pytest.importorskip(
-    "deckard.pytorch.data",
+    "deckard.frameworks.pytorch.data",
 ).PytorchDataConfig
 PytorchCustomDataConfig = pytest.importorskip(
-    "deckard.pytorch.data",
+    "deckard.frameworks.pytorch.data",
 ).PytorchCustomDataConfig
 
 
@@ -513,7 +513,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
         return torch.utils.data.TensorDataset(X, y)
 
     def test_load_data_creates_dataloaders(self):
-        from deckard.pytorch.data import PytorchCustomDataConfig
+        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
 
         ds = self._make_simple_dataset()
 
@@ -539,7 +539,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
             self.assertEqual(len(cfg._X), 40)
 
     def test_sample_creates_train_test_loaders(self):
-        from deckard.pytorch.data import PytorchCustomDataConfig
+        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
 
         ds_train = self._make_simple_dataset(40)
         ds_test = self._make_simple_dataset(20)
@@ -569,7 +569,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
         self.assertIsInstance(cfg.y_test, torch.Tensor)
 
     def test_truncate_dataset(self):
-        from deckard.pytorch.data import PytorchCustomDataConfig
+        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
 
         ds = self._make_simple_dataset(40)
         cfg = PytorchCustomDataConfig(
@@ -584,7 +584,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
         self.assertEqual(len(subset), 10)
 
     def test_as_dataset_with_string_raises_on_invalid(self):
-        from deckard.pytorch.data import PytorchCustomDataConfig
+        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
 
         cfg = PytorchCustomDataConfig(
             dataset_name="torch.utils.data.TensorDataset",
@@ -598,7 +598,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
             cfg._as_dataset("not.a.real.Dataset", split="train", transform=None)
 
     def test_as_dataset_with_invalid_type_raises(self):
-        from deckard.pytorch.data import PytorchCustomDataConfig
+        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
 
         cfg = PytorchCustomDataConfig(
             dataset_name="torch.utils.data.TensorDataset",
@@ -612,7 +612,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
             cfg._as_dataset(12345, split="train", transform=None)
 
     def test_custom_config_post_init_and_hash_defaults(self):
-        from deckard.pytorch.data import PytorchCustomDataConfig
+        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
 
         cfg = PytorchCustomDataConfig(
             dataset_name="torch.utils.data.TensorDataset",
@@ -696,7 +696,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
             bad_cfg._sample()
 
     def test_custom_call_uses_cached_paths_and_persists_outputs(self):
-        from deckard.pytorch.data import PytorchCustomDataConfig
+        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
         import json
 
         data_path = Path(self.temp_dir) / "custom_data.pkl"

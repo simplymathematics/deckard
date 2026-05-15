@@ -1004,7 +1004,7 @@ def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):
             "library": "pytorch",
             "classifier": True,
             "data": {
-                "_target_": "deckard.pytorch.data.PytorchDataConfig",
+                "_target_": "deckard.frameworks.pytorch.data.PytorchDataConfig",
                 "dataset_name": "torch.utils.data.TensorDataset",
                 "data_params": {},
                 "train_size": 32,
@@ -1012,7 +1012,7 @@ def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):
                 "stratify": True,
             },
             "model": {
-                "_target_": "deckard.pytorch.model.PytorchModelConfig",
+                "_target_": "deckard.frameworks.pytorch.model.PytorchModelConfig",
                 "model_type": "torch.nn.Linear",
                 "model_params": {"in_features": 4, "out_features": 2},
                 "classifier": True,

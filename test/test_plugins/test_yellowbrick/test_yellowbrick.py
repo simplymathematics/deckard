@@ -14,7 +14,7 @@ try:
     from deckard.experiment import ExperimentConfig
     from deckard.file import FileConfig
     from deckard.model import ModelConfig
-    from deckard.plot.yellowbrick_plots import (
+    from deckard.plugins.yellowbrick.plot import (
         YellowbrickConfigList,
         YellowbrickPlotConfig,
         model_selection_viz_types,
@@ -310,7 +310,7 @@ class TestYellowbrickPlots(unittest.TestCase):
 
         with (
             patch(
-                "deckard.plot.yellowbrick_plots.plt.rcParams.update",
+                "deckard.plugins.yellowbrick.plot.plt.rcParams.update",
             ) as mock_rc_update,
             patch.object(
                 YellowbrickPlotConfig,
@@ -343,7 +343,7 @@ class TestYellowbrickPlots(unittest.TestCase):
 
         with (
             patch(
-                "deckard.plot.yellowbrick_plots.plt.rcParams.update",
+                "deckard.plugins.yellowbrick.plot.plt.rcParams.update",
             ) as mock_rc_update,
             patch.object(
                 YellowbrickConfigList,

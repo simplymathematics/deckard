@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 try:
     import seaborn  # noqa: F401
-    from deckard.plot.seaborn_plots import (
+    from deckard.plugins.seaborn.plot import (
         SeabornPlotConfig,
         SeabornPlotConfigList,
     )

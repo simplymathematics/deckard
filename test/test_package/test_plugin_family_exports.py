@@ -1,4 +1,4 @@
-from deckard.plugins.anjana import AnjanaDataConfig
+from deckard.plugins.anjana.data import AnjanaDataConfig
 from deckard.plugins.yellowbrick import YellowbrickPlotConfig
 
 

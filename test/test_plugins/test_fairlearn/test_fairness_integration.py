@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from deckard.attack import AttackConfig
-from deckard.data import FairlearnDataConfig
+from deckard.plugins.fairlearn.data import FairlearnDataConfig
 import deckard.model as model_module
 from deckard.score.attack import FairlearnAttackScorerConfig
 from deckard.score import FairlearnScoreDictConfig, ScorerConfig

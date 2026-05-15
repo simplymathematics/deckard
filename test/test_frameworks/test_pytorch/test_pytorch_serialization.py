@@ -11,7 +11,7 @@ from deckard.model.defend import DefensePipelineConfig
 from deckard.frameworks.pytorch import model as pytorch_module
 
 PytorchModelConfig = pytest.importorskip(
-    "deckard.pytorch.model",
+    "deckard.frameworks.pytorch.model",
 ).PytorchModelConfig
 initialize_criterion = pytorch_module.initialize_criterion
 initialize_optimizer = pytorch_module.initialize_optimizer

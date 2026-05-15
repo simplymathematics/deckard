@@ -1,6 +1,7 @@
 import pandas as pd
 
-from deckard.data.anjana import AnjanaDataConfig
+from deckard.plugins.anjana.data import AnjanaDataConfig
+from deckard.plugins.anjana.score import DefaultAnjanaDataScorerConfig
 import pytest
 
 def _fake_anjana_defense(data, **kwargs):
@@ -34,7 +35,7 @@ def test_anjana_data_defense_applies_callable_and_updates_xy(monkeypatch):
     cfg._y = pd.Series([0, 1, 0, 1, 0, 1, 0, 1, 0, 1])
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class",
+        "deckard.plugins.anjana.data.resolve_class",
         lambda _: _fake_anjana_defense,
     )
 
@@ -62,7 +63,7 @@ def test_anjana_data_score_uses_auto_default(monkeypatch):
             return {"k_anonymity": 2.0}
 
     monkeypatch.setattr(
-        "deckard.data.anjana.load_class",
+        "deckard.plugins.anjana.data.load_class",
         lambda _: _StubScorer(),
     )
     cfg.scorer = "auto"
@@ -137,7 +138,7 @@ def test_anjana_data_defense_auto_injects_generated_hierarchies(monkeypatch):
         return kwargs["data"].copy()
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class",
+        "deckard.plugins.anjana.data.resolve_class",
         lambda _: _capture_hierarchy_kwargs,
     )
 

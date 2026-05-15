@@ -96,7 +96,7 @@ def _run_optimize_and_load_scores(
 
 
 def _make_anjana_data(n=40, monkeypatch=None, defense=None):
-    from deckard.data.anjana import AnjanaDataConfig
+    from deckard.plugins.anjana.data import AnjanaDataConfig
 
     cfg = AnjanaDataConfig(
         dataset_name="make_classification",
@@ -126,7 +126,7 @@ def _make_anjana_data(n=40, monkeypatch=None, defense=None):
             return data.copy()
 
         monkeypatch.setattr(
-            "deckard.data.anjana.resolve_class",
+            "deckard.plugins.anjana.data.resolve_class",
             lambda _: _stub_k_anon,
         )
     return cfg
@@ -324,7 +324,7 @@ def test_anjana_attack_chain_type_and_scores(monkeypatch):
         return data.copy()
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class",
+        "deckard.plugins.anjana.data.resolve_class",
         lambda _: _stub_k_anon,
     )
 
@@ -376,7 +376,7 @@ def test_anjana_fairness_and_art_chain_type_and_transform(monkeypatch):
         return data.iloc[: len(data) // 2].copy()
 
     monkeypatch.setattr(
-        "deckard.data.anjana.resolve_class",
+        "deckard.plugins.anjana.data.resolve_class",
         lambda _: _drop_half_rows,
     )
 
