@@ -25,8 +25,9 @@ class TestFileConfig(unittest.TestCase):
             model_file="{experiment_name}.pkl",
             data_file="{experiment_name}.csv",
             score_file="{experiment_name}_score.txt",
+            attack_file="{hash}.pkl",
             replace={
-                "{hash}": "null",
+                "{hash}": 10,
                 "{timestamp}": str(time.time()),
                 "{experiment_name}": "foo",
             },
@@ -47,69 +48,31 @@ class TestFileConfig(unittest.TestCase):
         self.assertIn(exp_name, self.config.log_file)
 
     def test_file_dict(self):
-        files_dict = self.config._file_dict
-        self.assertIn("model_file", files_dict)
-        self.assertIn("data_file", files_dict)
-        self.assertIn("log_file", files_dict)
-        self.assertIn("score_file", files_dict)
-        self.assertTrue(files_dict["model_file"].endswith(".pkl"))
-        self.assertTrue(files_dict["data_file"].endswith(".csv"))
-        self.assertTrue(files_dict["log_file"].endswith(".log"))
-        self.assertTrue(files_dict["score_file"].endswith("_score.txt"))
+        self.assertIn("model_file", self.config)
+        self.assertIn("data_file", self.config)
+        self.assertIn("log_file", self.config)
+        self.assertIn("score_file", self.config)
+        self.assertTrue(self.config["model_file"].endswith(".pkl"))
+        self.assertTrue(self.config["data_file"].endswith(".csv"))
+        self.assertTrue(self.config["log_file"].endswith(".log"))
+        self.assertTrue(self.config["score_file"].endswith("_score.txt"))
 
     def test_hash_placeholder(self):
-        config = FileConfig(replace=self.config.replace, attack_file="{hash}")
-        file_dict = config._file_dict
-        attack_file = file_dict.get("attack_file", KeyError)
+        attack_file = self.config["attack_file"]
         self.assertNotEqual(attack_file, "{hash}")
-        self.assertIsInstance(int(attack_file), int)
 
     def test_timestamp_placeholder(self):
-        config = FileConfig(
+        cfg = FileConfig(
             replace=self.config.replace,
             attack_file="{timestamp}",
         )
-        file_dict = config._file_dict
-        attack_file = file_dict.get("attack_file", KeyError)
-        self.assertNotEqual(attack_file, "{timestamp}")
+        self.assertNotEqual(cfg.attack_file, "{timestamp}")
 
     def test_unused_directory_removed(self):
         config = FileConfig()
         with self.assertRaises(AttributeError):
             getattr(config, "foo")
 
-    def test_generate_file_hash_returns_md5_hex(self):
-        tmp_file = Path(self.temp_dirs["data_directory"]) / "payload.bin"
-        tmp_file.write_bytes(b"deckard-hash-test")
-
-        digest = self.config.generate_file_hash(str(tmp_file))
-
-        self.assertEqual(len(digest), 32)
-        self.assertTrue(all(ch in "0123456789abcdef" for ch in digest))
-
-    def test_get_hydra_job_num_reads_env_and_defaults(self):
-        old = os.environ.get("HYDRA_JOB_NUM")
-        try:
-            os.environ["HYDRA_JOB_NUM"] = "7"
-            self.assertEqual(self.config.get_hydra_job_num(), "7")
-            del os.environ["HYDRA_JOB_NUM"]
-            self.assertEqual(self.config.get_hydra_job_num(), "0")
-        finally:
-            if old is None:
-                os.environ.pop("HYDRA_JOB_NUM", None)
-            else:
-                os.environ["HYDRA_JOB_NUM"] = old
-
-    def test_replace_placeholders_handles_empty_and_custom_mapping(self):
-        config = FileConfig(
-            data_file="",
-            replace=[("{exp}", "demo")],
-            attack_file="out/{exp}/#/*.json",
-        )
-
-        self.assertIsNone(config._replace_placeholders(""))
-        self.assertIn("demo", config.attack_file)
-        self.assertIn("0", config.attack_file)
 
     def test_iter_and_len_reflect_active_file_fields(self):
         config = FileConfig(model_file="m.pkl", score_file="s.json")

@@ -1,227 +1,238 @@
-"""File path configuration utilities for deckard experiments.
+from __future__ import annotations
 
-``FileConfig`` centralizes the paths used to persist datasets, models,
-predictions, attack outputs, parameters, scores, and logs across the deckard
-pipeline.
-"""
-
-from dataclasses import dataclass, field
+from hydra.core.hydra_config import HydraConfig
+from typing import Any, TypedDict
+from uuid import uuid4
 import time
-import hashlib
-import logging
-from typing import Any, Dict, Optional
+
+# -----------------------------------------------------------------------------
+# TypedDict definitions unchanged
+# -----------------------------------------------------------------------------
+
+class ModelFiles(TypedDict, total=False):
+    model_file: str
+    training_predictions_file: str
+    test_predictions_file: str
+    training_probabilities_file: str
+    test_probabilities_file: str
+    score_file: str
 
 
-from .utils import ConfigBase, safe_store
+class AttackFiles(TypedDict, total=False):
+    attack_file: str
+    attack_predictions_file: str
+    score_file: str
 
-logger = logging.getLogger(__name__)
 
-data_files = ["data_file", "score_file"]
-model_files = [
-    "model_file",
-    "training_predictions_file",
-    "test_predictions_file",
-    "training_probabilities_file",
-    "test_probabilities_file",
-    "score_file",
-]
-defense_files = [
-    "training_predictions_file",
-    "test_predictions_file",
-    "training_probabilities_file",
-    "test_probabilities_file",
-    "score_file",
-]
-log_files = ["log_file", "error_file"]
-attack_files = [
-    "attack_file",
-    "attack_predictions_file",
-    "score_file",
-]
-other_files = ["score_file", "params_file"]
-all_files = (
-    data_files + model_files + defense_files + log_files + attack_files + other_files
+class LogFiles(TypedDict, total=False):
+    log_file: str
+    error_file: str
+
+
+class BaseFiles(TypedDict, total=False):
+    data_file: str
+    params_file: str
+    score_file: str
+
+
+class DefenseFiles(TypedDict, total=False):
+    model_file: str
+    defended_predictions_file: str
+    defended_probabilities_file: str
+    score_file: str
+
+
+class DetectorFiles(TypedDict, total=False):
+    model_file: str
+    detected_predictions_file: str
+    detected_probabilities_file: str
+    score_file: str
+
+
+# -----------------------------------------------------------------------------
+# key registry
+# -----------------------------------------------------------------------------
+
+def collect_typed_dict_keys(*td_classes: type[TypedDict]) -> set[str]:
+    keys: set[str] = set()
+    for cls in td_classes:
+        keys |= set(cls.__annotations__.keys())
+    return keys
+
+
+_ALLOWED_KEYS = collect_typed_dict_keys(
+    ModelFiles,
+    AttackFiles,
+    LogFiles,
+    BaseFiles,
+    DefenseFiles,
+    DetectorFiles,
 )
 
-__all__ = [
-    "FileConfig",
-    "data_files",
-    "model_files",
-    "defense_files",
-    "log_files",
-    "attack_files",
-    "other_files",
-    "all_files",
-]
+
+# -----------------------------------------------------------------------------
+# error
+# -----------------------------------------------------------------------------
+
+class FileConfigError(TypeError):
+    pass
 
 
-FILES_DEFAULT = {
-    "data_file": "data/${hash:${data}}.pkl",
-    "model_file": "model/${hash:${data},${model}}.pkl",
-    "attack_file": "attack/${hash:${data},${model},${attack}}.pkl",
-}
+# -----------------------------------------------------------------------------
+# resolver
+# -----------------------------------------------------------------------------
 
-safe_store(group="files", name="default", node=FILES_DEFAULT)
+class PlaceholderResolverMixin:
+    replace: dict[str, str]
+    
+    
+    
+    @property
+    def num(self) -> str:
+        """Returns the serial job number in a multirun sweep. Uses uuid as fallback if Hydra is not enabled."""
+        try:
+            return str(HydraConfig.get().job.num)
+        except ValueError:
+            return uuid4().hex
 
-
-@dataclass(eq=False)
-class FileConfig(ConfigBase):
-    """Configuration object for deckard artifact and log file paths."""
-
-    data_file: str = field(
-        default_factory=str,
-        metadata={"help": "Path to the data file."},
-    )
-    model_file: str = field(
-        default_factory=str,
-        metadata={"help": "Path to the model file."},
-    )
-    defense_file: str = field(
-        default_factory=str,
-        metadata={"help": "Path to the defense file."},
-    )
-    attack_file: str = field(
-        default_factory=str,
-        metadata={"help": "Path to the attack file."},
-    )
-    log_file: str = field(
-        default_factory=str,
-        metadata={"help": "Path to the log file."},
-    )
-    error_file: str = field(
-        default_factory=str,
-        metadata={"help": "Path to the log file."},
-    )
-    training_predictions_file: str = field(
-        default_factory=str,
-        metadata={"help": "Path to the training predictions file."},
-    )
-    test_predictions_file: str = field(
-        default_factory=str,
-        metadata={"help": "Path to the test predictions file."},
-    )
-    training_probabilities_file: str = field(
-        default_factory=str,
-        metadata={"help": "Path to the training probabilities file."},
-    )
-    test_probabilities_file: str = field(
-        default_factory=str,
-        metadata={"help": "Path to the test probabilities file."},
-    )
-    attack_predictions_file: str = field(
-        default_factory=str,
-        metadata={"help": "Path to the attack predictions file."},
-    )
-    score_file: str = field(
-        default_factory=str,
-        metadata={"help": "Path to the score file."},
-    )
-    params_file: str = field(
-        default_factory=str,
-        metadata={"help": "Path to the params file."},
-    )
-    replace: Dict[str, str] = field(
-        metadata={"help": "Dictionary for placeholder replacements."},
-        default_factory=dict,
-    )
-
-    def __post_init__(self) -> None:
-        super().__post_init__()
-        if self.replace is None:
-            self.replace = {}
-        elif not isinstance(self.replace, dict):
-            self.replace = dict(self.replace)
-        self._file_dict = self._get_file_dict()
-        self._resolve_paths()
-
-        for file in self._file_dict:
-            setattr(self, file, self._file_dict[file])
-        for k, v in self._file_dict.items():
-            setattr(self, k, v)
-
-    def generate_file_hash(self, file_path: str) -> str:
-        """
-        Generate a hash for the object in the given file path.
-
-        Args:
-            file_path (str): The path to the file.
-
-        Returns:
-            int: The hash of the file contents.
-        """
-        # Using MD5 hash for simplicity; the impact of hash collisions is minimal here
-        hash_md5 = hashlib.md5()
-        with open(file_path, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hash_md5.update(chunk)
-        return hash_md5.hexdigest()
-
-    def get_hydra_job_num(self) -> str:
-        """Get the Hydra job number from the environment variable."""
-        import os
-
-        job_num = os.getenv("HYDRA_JOB_NUM")
-        if job_num is not None:
-            return str(int(job_num))
-        else:
-            return "0"
-
-    def _replace_placeholders(self, path: Optional[str]) -> Optional[str]:
-        if path is None or len(path) == 0:
+    @property
+    def id(self) -> str:
+        """Returns the specific launcher or cluster job ID. Uses uuid as fallback if Hydra is not enabled"""
+        try:
+            return str(HydraConfig.get().job.num)
+        except ValueError:
+            return uuid4().hex
+        
+    
+    def _resolve(self, value: str | None) -> str | None:
+        if not value:
             return None
 
-        assert isinstance(path, str)
+        
+        value = value.replace("{num}", self.num)
+        value = value.replace("{#}", self.num)
+        value = value.replace("{timestamp}", time.strftime("%Y%m%d-%H%M%S"))
+        value = value.replace("{hash}", self.id)
+        value = value.replace("{*}", self.id)
+        
 
-        # Built-in placeholders (always applied)
-        path = path.replace("{num}", self.get_hydra_job_num())
-        path = path.replace("{timestamp}", time.strftime("%Y%m%d-%H%M%S"))
-        path = path.replace("{hash}", str(hash(self)))
-        path = path.replace("#", self.get_hydra_job_num())
-        path = path.replace("*", self.get_hydra_job_num())
+        for k, v in getattr(self, "replace", {}).items():
+            value = value.replace(k, str(v))
 
-        # User-defined placeholders
-        placeholder_dict = self.replace or {}
-        if not isinstance(placeholder_dict, dict):
-            placeholder_dict = dict(placeholder_dict)
+        return value
 
-        for placeholder, value in placeholder_dict.items():
-            path = path.replace(placeholder, str(value))
 
-        return path
+# -----------------------------------------------------------------------------
+# FIXED FILE CONFIG
+# -----------------------------------------------------------------------------
+class FileConfig(PlaceholderResolverMixin):
+    """
+    Dynamic file-path configuration container.
 
-    def _resolve_paths(self) -> None:
-        """Resolve file paths by replacing placeholders with actual values."""
-        for file_attr in all_files:
-            file_path = getattr(self, file_attr)
-            if file_path is not None and len(file_path) > 0:
-                resolved_path = self._replace_placeholders(file_path)
-                setattr(self, file_attr, resolved_path)
-            else:
-                logger.debug(
-                    f"File attribute {file_attr} is None or empty; skipping placeholder replacement.",
-                )
+    `FileConfig` manages resolved artifact paths for datasets, models,
+    predictions, logs, attacks, and scores.
 
-    def _get_file_dict(self) -> dict:
-        """Return a dictionary of file paths."""
-        file_dict = {}
-        for file_attr in all_files:
-            file_path = getattr(self, file_attr)
-            if file_path is not None and len(file_path) > 0:
-                file_path = self._replace_placeholders(file_path)
-                file_dict[file_attr] = file_path
-        return file_dict
+    File fields are validated against the configured file schema and stored
+    internally in `_files`.
 
-    def __iter__(self) -> Any:
-        for path in self._file_dict:
-            yield path
+    Placeholder expansion is applied automatically to all string values.
 
-    # Define the len method to count non-None file attributes
+    Supported placeholders:
+
+    - `{num}` → Hydra job number (`HYDRA_JOB_NUM`, default `0`)
+    - `{timestamp}` → current timestamp (`YYYYMMDD-HHMMSS`)
+    - `{hash}` → hash of the `FileConfig` instance
+    - `#` → alias for `{num}`
+    - `*` → alias for `{num}`
+
+    User-defined replacements may also be provided through `replace`.
+
+    Example
+    -------
+
+    ```python
+    config = FileConfig(
+        replace={"{exp}": "demo"},
+        model_file="models/{exp}/{hash}.pt",
+        attack_file="attacks/#/*.json",
+    )
+
+    print(config.model_file)
+    print(config.attack_file)
+    ```
+
+    Parameters
+    ----------
+    replace
+        Optional placeholder replacement mapping.
+
+    **files
+        File-path keyword arguments matching the configured schema, such as
+        `data_file`, `model_file`, `log_file`, or `attack_file`.
+
+    Raises
+    ------
+    FileConfigError
+        Raised when an unknown file key is provided.
+
+    Notes
+    -----
+    This class separates:
+
+    - **schema layer**: `TypedDict` definitions for IDE support
+    - **runtime layer**: validated dynamic file storage
+    - **resolution layer**: placeholder substitution
+
+    `TypedDict` definitions are used only for static typing and validation.
+    Runtime file values are stored in `_files`.
+    """
+
+    def __init__(self, *, replace: dict[str, str] | None = None, **files: Any):
+        self.replace = replace or {}
+        self._files: dict[str, Any] = {}
+
+        for k, v in files.items():
+            self._validate_key(k)
+            self._set(k, v)
+
+    # -------------------------------------------------------------------------
+    # validation
+    # -------------------------------------------------------------------------
+
+    def _validate_key(self, key: str) -> None:
+        if key not in _ALLOWED_KEYS:
+            raise FileConfigError(f"Invalid file key: {key}")
+
+    # -------------------------------------------------------------------------
+    # assignment
+    # -------------------------------------------------------------------------
+
+    def _set(self, key: str, value: Any) -> None:
+        if isinstance(value, str):
+            value = self._resolve(value)
+
+        self._files[key] = value
+        setattr(self, key, value)
+
+    # -------------------------------------------------------------------------
+    # public API
+    # -------------------------------------------------------------------------
+
+    def update(self, **kwargs: Any) -> None:
+        for k, v in kwargs.items():
+            self._validate_key(k)
+            self._set(k, v)
+
+    def as_dict(self) -> dict[str, Any]:
+        return dict(self._files)
+
+    def __getitem__(self, key: str) -> Any:
+        return self._files[key]
+
+    def __iter__(self):
+        return iter(self._files)
+
     def __len__(self) -> int:
-        count = 0
-        for file_attr in all_files:
-            if getattr(self, file_attr) is not None:
-                count += 1
-        return count
-
-    def __hash__(self) -> int:
-        return super().__hash__()
+        return len(self._files)
+    
+    
