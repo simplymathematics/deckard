@@ -10,7 +10,7 @@ test_size: 0.2
 random_state: 42
 classifier: true
 stratify: false
-_target_: deckard.data.anjana.AnjanaDataConfig
+_target_: deckard.plugins.anjana.data.AnjanaDataConfig
 alias: anjana
 sample: split
 anjana_defense:

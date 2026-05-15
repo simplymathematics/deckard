@@ -8,7 +8,7 @@ hydra:
       ++defense.init_params.library: anjana
       ++defense.init_params.type: data
       ++defense.init_params.class: anonymization
-      ++data._target_: deckard.data.anjana.AnjanaDataConfig
+      ++data._target_: deckard.plugins.anjana.data.AnjanaDataConfig
       ++data.alias: anjana
       ++data.dataset_name: make_classification
       ++data.classifier: bool(True)

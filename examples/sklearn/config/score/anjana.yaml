@@ -1,8 +1,8 @@
-_target_: deckard.score.anjana.DefaultAnjanaScorerConfig
+_target_: deckard.plugins.anjana.score.DefaultAnjanaScorerConfig
 scorers:
   k_anonymity:
-    score_function: deckard.score.anjana.anjana_k_anonymity_score
+    score_function: deckard.plugins.anjana.score.anjana_k_anonymity_score
   l_diversity:
-    score_function: deckard.score.anjana.anjana_l_diversity_score
+    score_function: deckard.plugins.anjana.score.anjana_l_diversity_score
   t_closeness:
-    score_function: deckard.score.anjana.anjana_t_closeness_score
+    score_function: deckard.plugins.anjana.score.anjana_t_closeness_score

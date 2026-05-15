@@ -10,8 +10,8 @@ scorers:
   r2:
     score_function: sklearn.metrics.r2_score
   group_mean_prediction_difference:
-    score_function: deckard.score.fairness_group_mean_prediction_difference
+    score_function: deckard.plugins.fairlearn.score.fairness_group_mean_prediction_difference
   group_mae_difference:
-    score_function: deckard.score.fairness_group_mae_difference
+    score_function: deckard.plugins.fairlearn.score.fairness_group_mae_difference
   group_mse_difference:
-    score_function: deckard.score.fairness_group_mse_difference
+    score_function: deckard.plugins.fairlearn.score.fairness_group_mse_difference

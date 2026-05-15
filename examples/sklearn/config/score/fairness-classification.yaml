@@ -17,6 +17,6 @@ scorers:
       average: weighted
       zero_division: 0
   demographic_parity_difference:
-    score_function: deckard.score.fairness_demographic_parity_difference
+    score_function: deckard.plugins.fairlearn.score.fairness_demographic_parity_difference
   equalized_odds_difference:
-    score_function: deckard.score.fairness_equalized_odds_difference
+    score_function: deckard.plugins.fairlearn.score.fairness_equalized_odds_difference

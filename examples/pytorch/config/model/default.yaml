@@ -7,7 +7,7 @@ model_params:
     num_channels: 1 # For grayscale images like MNIST
     num_classes: 10 # Number of classes in the dataset
 classifier : True
-_target_ : deckard.pytorch.model.PytorchModelConfig
+_target_ : deckard.frameworks.pytorch.model.PytorchModelConfig
 fit_params:
   nb_epochs: 3
   batch_size: 1024
