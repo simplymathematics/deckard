@@ -36,7 +36,7 @@ def test_sklearn_data_profile_anjana_composes():
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
 
     assert data_cfg["dataset_name"] == "make_classification"
-    assert data_cfg["_target_"] == "deckard.data.anjana.AnjanaDataConfig"
+    assert data_cfg["_target_"] == "deckard.plugins.anjana.data.AnjanaDataConfig"
     assert data_cfg["alias"] == "anjana"
 
 
@@ -63,5 +63,5 @@ def test_pytorch_data_profile_torch_mnist_composes():
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
 
     assert data_cfg["dataset_name"] == "torch_mnist"
-    assert data_cfg["_target_"] == "deckard.pytorch.data.PytorchDataConfig"
+    assert data_cfg["_target_"] == "deckard.frameworks.pytorch.data.PytorchDataConfig"
     assert data_cfg["alias"] == "torch_mnist"

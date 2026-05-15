@@ -80,7 +80,7 @@ def test_sklearn_model_config_composes(config_name: str, expected_fields: dict):
         pytest.param(
             "model/tinynet",
             {
-                "model_type": "deckard.pytorch.model.TinyNet",
+                "model_type": "deckard.frameworks.pytorch.model.TinyNet",
                 "classifier": True,
                 "alias": "tinynet",
             },

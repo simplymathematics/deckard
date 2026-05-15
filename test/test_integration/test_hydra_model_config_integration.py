@@ -64,6 +64,6 @@ def test_pytorch_model_profile_tinynet_composes():
     cfg = _compose_pytorch("model/tinynet")
     model_cfg = OmegaConf.to_container(cfg.model, resolve=True)
 
-    assert model_cfg["model_type"] == "deckard.pytorch.model.TinyNet"
+    assert model_cfg["model_type"] == "deckard.frameworks.pytorch.model.TinyNet"
     assert model_cfg["classifier"] is True
     assert model_cfg["alias"] == "tinynet"

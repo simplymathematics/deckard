@@ -54,7 +54,7 @@ def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
             "data/anjana",
             {
                 "dataset_name": "make_classification",
-                "_target_": "deckard.data.anjana.AnjanaDataConfig",
+                "_target_": "deckard.plugins.anjana.data.AnjanaDataConfig",
                 "alias": "anjana",
             },
             id="sklearn-anjana",
