@@ -13,7 +13,7 @@ for privacy-preserving machine-learning workflows.
 
 ## API Reference
 
-.. automodule:: deckard.data.anjana
+.. automodule:: deckard.Anjana
    :members:
    :show-inheritance:
 

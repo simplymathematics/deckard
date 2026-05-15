@@ -60,7 +60,7 @@ measure how adversarial robustness varies across groups.
 
 ### Privacy And Anonymization
 
-Quantify privacy-utility tradeoffs via :mod:`deckard.data.anjana` and
+Quantify privacy-utility tradeoffs via :mod:`deckard.Anjana` and
 :mod:`deckard.score.anjana`. Configure anonymization strategies (suppression,
 bucketing, noise, generalization) and measure information loss, privacy
 guarantees, and accuracy impact.
