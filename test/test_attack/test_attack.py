@@ -3360,7 +3360,7 @@ class TestFairlearnAttackScorer(unittest.TestCase):
     def test_fairlearn_attack_scorer_instantiates(self):
         from deckard.score.attack import FairlearnAttackScorerConfig
         from deckard.score.base import DefaultClassifierConfig
-        from deckard.score.fairness import FairlearnScoreDictConfig
+        from deckard.plugins.fairlearn.score import FairlearnScoreDictConfig
 
         scorer = FairlearnAttackScorerConfig(evasion=DefaultClassifierConfig())
         self.assertIsInstance(scorer.evasion, FairlearnScoreDictConfig)

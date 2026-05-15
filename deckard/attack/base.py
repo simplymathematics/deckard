@@ -449,6 +449,27 @@ class AttackConfig(AttackContractMixin, ConfigBase, FrameworkAttackConfig):
                 "AttackConfig scorer must expose a '_score' method.",
             )
 
+    def _validate_poisoning_params(self) -> None:
+        """Validate poisoning-specific configuration parameters."""
+        attack_type = (self.attack_family or "").lower()
+        if attack_type != "poisoning":
+            return
+        if str(self.attack_type).endswith("PoisoningAttackSVM"):
+            return
+        required_keys = ("class_source", "class_target")
+        missing_keys = [k for k in required_keys if k not in self.attack_params]
+        if missing_keys:
+            raise ValueError(
+                "Poisoning attacks require attack_params to include "
+                f"{required_keys}. Missing: {tuple(missing_keys)}",
+            )
+        class_source = int(self.attack_params["class_source"])
+        class_target = int(self.attack_params["class_target"])
+        if class_source == class_target:
+            raise ValueError(
+                "Poisoning attacks require class_source and class_target to differ.",
+            )
+
     def _initialize_runtime_device(self) -> None:
         """Resolve and normalize runtime device selection."""
         self.device = str(resolve_torch_device(self.device))
@@ -522,29 +543,7 @@ class AttackConfig(AttackContractMixin, ConfigBase, FrameworkAttackConfig):
             attack_subtype=attack_subtype,
         )
 
-    def _validate_poisoning_params(self):
-        """Validate poisoning-specific configuration parameters."""
-        attack_type = (self.attack_family or "").lower()
-        if attack_type != "poisoning":
-            return
-
-        if str(self.attack_type).endswith("PoisoningAttackSVM"):
-            return
-
-        required_keys = ("class_source", "class_target")
-        missing_keys = [k for k in required_keys if k not in self.attack_params]
-        if missing_keys:
-            raise ValueError(
-                "Poisoning attacks require attack_params to include "
-                f"{required_keys}. Missing: {tuple(missing_keys)}",
-            )
-
-        class_source = int(self.attack_params["class_source"])
-        class_target = int(self.attack_params["class_target"])
-        if class_source == class_target:
-            raise ValueError(
-                "Poisoning attacks require class_source and class_target to differ.",
-            )
+    
 
     def set_mode(self, mode: Literal["auto", "train", "test", "val"]) -> "AttackConfig":
         """Set attack scoring/evaluation split mode explicitly."""
