@@ -3,9 +3,9 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from deckard.plugins.defense import DefenseTypePlugin
 from .defend import (
     DefensePipelineConfig,
-    DefenseTypePlugin,
     _DefenseMixin,
     _is_art_torch_wrapper,
     _is_torch_model_instance,
@@ -64,7 +64,7 @@ class _TrainerDefenseMixin(_DefenseMixin):
         return defense, defended_estimator
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class TrainerDefenseConfig(_TrainerDefenseMixin, DefensePipelineConfig):
     """Configuration for trainer-based defenses (adversarial training).
 

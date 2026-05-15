@@ -12,6 +12,7 @@ from omegaconf import DictConfig, ListConfig, OmegaConf
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
 from ..data import DataConfig
+from ..frameworks import ModelDefenseContractMixin
 from .base import ModelConfig
 from ..utils import (
     ConfigBase,
@@ -347,7 +348,7 @@ class _DefensePipelineConfigBehaviorMixin:
 
             if isinstance(defense_obj, FairlearnDefenseConfig):
                 return False
-        except ImportError:
+        except Exception:
             pass
         if isinstance(defense_obj, DefenseConfig):
             return True
@@ -362,7 +363,7 @@ class _DefensePipelineConfigBehaviorMixin:
 
             if isinstance(defense_obj, FairlearnDefenseConfig):
                 return True
-        except ImportError:
+        except Exception:
             pass
         return False
 
@@ -624,103 +625,7 @@ class _PassthroughDefenseMixin(_DefenseMixin):
         return None, defended_estimator
 
 
-@dataclass(eq=False)
-class DefenseTypePlugin:
-    """Generic defense plugin that binds one mixin to one defense family/subtype.
 
-    Initialization fields
-    ---------------------
-    mixin_type : Any
-        Mixin class (or import path) implementing runtime ``__call__``.
-    defense_type : str | None
-        Defense family this plugin matches.
-    defense_subtype : str | None
-        Optional subtype constraint.
-    excluded_subtypes : tuple[str, ...]
-        Subtypes explicitly excluded from this plugin match.
-    init_params : dict[str, Any]
-        Metadata-only declaration payload for class/type/library docs.
-    """
-
-    mixin_type: Any
-    defense_type: Union[str, None]
-    defense_subtype: Union[str, None] = None
-    excluded_subtypes: tuple[str, ...] = field(default_factory=tuple)
-    init_params: dict[str, Any] = field(default_factory=dict)
-
-    def _resolve_mixin_type(self) -> type:
-        if isinstance(self.mixin_type, str):
-            resolved = resolve_class(self.mixin_type)
-            self.mixin_type = resolved
-            return resolved
-        return self.mixin_type
-
-    def _matches(
-        self,
-        *,
-        defense_type: Union[str, None],
-        defense_subtype: Union[str, None],
-    ) -> bool:
-        if (defense_type or "").lower() != (self.defense_type or "").lower():
-            return False
-        subtype = (defense_subtype or "").lower()
-        if self.defense_subtype is not None and subtype != self.defense_subtype.lower():
-            return False
-        if subtype in {item.lower() for item in self.excluded_subtypes}:
-            return False
-        return True
-
-    def resolve_defense_mixins(
-        self,
-        runtime: "DefensePipelineConfig",
-        *,
-        defense_type: Union[str, None],
-        defense_subtype: Union[str, None],
-        default_mixins: tuple[type, ...],
-    ) -> tuple[type, ...]:
-        """Return mixin tuple for matching defense family/subtype."""
-        _ = (runtime, default_mixins)
-        if not self._matches(
-            defense_type=defense_type,
-            defense_subtype=defense_subtype,
-        ):
-            return tuple()
-        mixin = self._resolve_mixin_type()
-        return (mixin,)
-
-    def resolve_defense_handler(
-        self,
-        runtime: "DefensePipelineConfig",
-        *,
-        defense_type: Union[str, None],
-        defense_subtype: Union[str, None],
-        default_handler: Any,
-        default_mixins: tuple[type, ...],
-    ) -> Any:
-        """Return callable runtime handler for matching defense family/subtype."""
-        _ = (default_handler, default_mixins)
-        if not self._matches(
-            defense_type=defense_type,
-            defense_subtype=defense_subtype,
-        ):
-            return None
-        return lambda *args, **kwargs: self(runtime, *args, **kwargs)
-
-    def __call__(self, runtime: "DefensePipelineConfig", *args, **kwargs) -> tuple[Any, Any]:
-        """Delegate runtime defense execution to configured mixin handler.
-
-        Parameters
-        ----------
-        runtime : DefensePipelineConfig
-            Runtime defense config instance orchestrating dispatch.
-        *args : Any
-            Positional runtime args forwarded to mixin ``__call__``.
-        **kwargs : Any
-            Keyword runtime args forwarded to mixin ``__call__``.
-        """
-        mixin = self._resolve_mixin_type()
-        handler = mixin(runtime)
-        return handler(*args, **kwargs)
 
 
 class _DefenseBehaviorMixin:
@@ -967,7 +872,7 @@ class _DefenseBehaviorMixin:
         return art_class(base_estimator, **art_params)
 
 
-class _DefensePipelineMixin:
+class ModelDefenseMixin(ModelDefenseContractMixin):
     """Reusable defense pipeline orchestration mixed into config shells."""
 
     def get_model(self) -> BaseEstimator:
@@ -1268,7 +1173,11 @@ class _DefensePipelineMixin:
         )
 
 
-@dataclass(eq=False)
+# Backward-compatible alias for internal imports.
+_DefensePipelineMixin = ModelDefenseMixin
+
+
+@dataclass(eq=False, kw_only=True)
 class DefensePipelineConfig(_DefensePipelineConfigBehaviorMixin, ConfigBase):
     """Runtime owner for applying an ordered chain of defense specs."""
 
@@ -1296,7 +1205,7 @@ class DefensePipelineConfig(_DefensePipelineConfigBehaviorMixin, ConfigBase):
 
 
 @dataclass(kw_only=True)
-class DefenseConfig(_DefenseBehaviorMixin, _DefensePipelineMixin, ConfigBase):
+class DefenseConfig(_DefenseBehaviorMixin, ModelDefenseMixin, ConfigBase):
     """Concrete defense config dataclass that uses shared defense behavior mixin.
 
     Parameter layers

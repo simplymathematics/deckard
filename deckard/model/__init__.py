@@ -13,7 +13,7 @@ from .defense import (
     DefaultPytorchDefenseConfig,
     DefaultSklearnDefenseConfig,
 )
-from .defend import DefenseConfig, DefensePipelineConfig
+from .defend import DefenseConfig, DefensePipelineConfig, ModelDefenseMixin
 from .detector import DetectorDefenseConfig
 from .preprocessor import PreprocessorDefenseConfig
 from .postprocessor import PostprocessorDefenseConfig
@@ -67,6 +67,7 @@ __all__ = [
     "DefaultPytorchDefenseConfig",
     "DefenseConfig",
     "DefensePipelineConfig",
+    "ModelDefenseMixin",
     "DetectorDefenseConfig",
     "PreprocessorDefenseConfig",
     "PostprocessorDefenseConfig",

@@ -3,7 +3,8 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from .defend import DefensePipelineConfig, DefenseTypePlugin, _DefenseMixin
+from deckard.plugins.defense import DefenseTypePlugin
+from .defend import DefensePipelineConfig, _DefenseMixin
 from ..utils import safe_store
 
 
@@ -30,7 +31,7 @@ class _RegularizerDefenseMixin(_DefenseMixin):
         )
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class RegularizerDefenseConfig(_RegularizerDefenseMixin, DefensePipelineConfig):
     """Configuration for regularizer-based defenses.
 

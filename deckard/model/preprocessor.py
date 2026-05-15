@@ -3,7 +3,8 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from .defend import DefensePipelineConfig, DefenseTypePlugin, _DefenseMixin
+from deckard.plugins.defense import DefenseTypePlugin
+from .defend import DefensePipelineConfig, _DefenseMixin
 from ..utils import safe_store
 
 
@@ -37,7 +38,7 @@ class _PreprocessorDefenseMixin(_DefenseMixin):
         return defense, defended_estimator
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class PreprocessorDefenseConfig(_PreprocessorDefenseMixin, DefensePipelineConfig):
     """Configuration for preprocessor-based defenses.
 
