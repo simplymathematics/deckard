@@ -68,6 +68,6 @@ def resolve_yt_yp(
             y_pred = getattr(attack, "attack_predictions", None)
     elif mode == "pre-sample":
         if data is not None:
-            y_true = getattr(data, "_y", y_true)
-            y_pred = getattr(data, "_X", y_pred)
+            y_true = getattr(data, "y", getattr(data, "_y", y_true))
+            y_pred = getattr(data, "X", getattr(data, "_X", y_pred))
     return y_true, y_pred

@@ -326,20 +326,40 @@ class ModelConfig(
         """Set the internal fitted estimator directly."""
         self._model = estimator
 
+    @property
+    def model(self) -> EstimatorLike | None:
+        """Public accessor for the runtime estimator payload."""
+        return self._model
+
+    @model.setter
+    def model(self, value: EstimatorLike | None) -> None:
+        """Set the runtime estimator payload."""
+        self._model = value
+
     def __hash__(self) -> int:
         return super().__hash__()
 
     def _require_defense_pipeline(self):
         """Return configured defense pipeline or raise on invalid type."""
         if self.defense is None:
-            self._defense_pipeline = None
+            self.defense_pipeline = None
             return None
 
         from .defend import DefensePipelineConfig
 
         self.defense = DefensePipelineConfig.coerce(self.defense)
-        self._defense_pipeline = self.defense
+        self.defense_pipeline = self.defense
+        return self.defense_pipeline
+
+    @property
+    def defense_pipeline(self) -> Any:
+        """Public accessor for the resolved defense pipeline runtime object."""
         return self._defense_pipeline
+
+    @defense_pipeline.setter
+    def defense_pipeline(self, value: Any) -> None:
+        """Set the resolved defense pipeline runtime object."""
+        self._defense_pipeline = value
 
     def compose_defense_pipeline(self):
         """Compose defense pipeline behavior only when defense config is present."""
@@ -432,6 +452,36 @@ class ModelConfig(
             return self._model.model
         else:
             return self._model
+
+    @property
+    def fitted_estimator(self) -> EstimatorLike | None:
+        """Public accessor for the trained runtime estimator payload."""
+        return self.model
+
+    @fitted_estimator.setter
+    def fitted_estimator(self, value: EstimatorLike | None) -> None:
+        """Set the trained runtime estimator payload."""
+        self.model = value
+
+    @property
+    def test_predictions(self) -> Any:
+        """Compatibility alias for test split predictions."""
+        return self.predictions
+
+    @test_predictions.setter
+    def test_predictions(self, value: Any) -> None:
+        """Compatibility alias setter for test split predictions."""
+        self.predictions = value
+
+    @property
+    def test_probabilities(self) -> Any:
+        """Compatibility alias for test split probabilities."""
+        return self.probabilities
+
+    @test_probabilities.setter
+    def test_probabilities(self, value: Any) -> None:
+        """Compatibility alias setter for test split probabilities."""
+        self.probabilities = value
 
     def _apply_defense(self, data: "DataConfig") -> EstimatorLike:
         """Delegate defense application to DefensePipelineConfig."""

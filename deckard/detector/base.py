@@ -64,7 +64,7 @@ class DetectorConfig(DetectorContractMixin, ConfigBase, FrameworkDetectorConfig)
     ] = None
     alias: str = field(default_factory=str)
 
-    detector: Any = None
+    _detector: Any = None
     score_dict: dict[str, float | int] = field(default_factory=dict)
     detector_training_time: Union[float, None] = None
     detector_detection_time: Union[float, None] = None
@@ -117,6 +117,26 @@ class DetectorConfig(DetectorContractMixin, ConfigBase, FrameworkDetectorConfig)
         if isinstance(value, dict):
             return ModelConfig(**value)
         raise TypeError(f"Unsupported detector_model type: {type(value)}")
+
+    @property
+    def detector(self) -> Any:
+        """Public accessor for the instantiated detector runtime object."""
+        return self._detector
+
+    @detector.setter
+    def detector(self, value: Any) -> None:
+        """Set the instantiated detector runtime object."""
+        self._detector = value
+
+    @property
+    def detector_instance(self) -> Any:
+        """Compatibility alias for detector runtime object."""
+        return self.detector
+
+    @detector_instance.setter
+    def detector_instance(self, value: Any) -> None:
+        """Compatibility alias setter for detector runtime object."""
+        self.detector = value
 
     @staticmethod
     def _to_numpy(value: Any) -> np.ndarray:

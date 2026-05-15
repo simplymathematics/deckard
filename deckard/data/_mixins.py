@@ -117,15 +117,13 @@ class _SensitiveColumnsMixin:
         if getattr(self, "data", None) is None:
             return None
         if split == "train":
-            return getattr(self.data, "_sensitive_train", None)
+            return getattr(self.data, "sensitive_train", None)
         if split == "test":
-            return getattr(self.data, "_sensitive_test", None)
+            return getattr(self.data, "sensitive_test", None)
         if split == "all":
-            return getattr(self.data, "_sensitive_all", None)
+            return getattr(self.data, "sensitive_all", None)
         if split == "val":
-            raise NotImplementedError(
-                "Validation sensitive features are not implemented yet",
-            )
+            return getattr(self.data, "sensitive_val", None)
         raise ValueError(f"Unsupported fairness split: {split}")
 
     def _resolve_scoring_split(self, mode: str) -> str:

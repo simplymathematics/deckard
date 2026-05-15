@@ -104,6 +104,7 @@ class _FairnessBehaviorMixin:
 
         raw_pred = self._predict(X)
         return probabilities_from_model_outputs(raw_pred)
+    
 
 
 @dataclass(eq=False, kw_only=True)

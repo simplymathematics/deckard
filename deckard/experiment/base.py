@@ -333,8 +333,8 @@ class ExperimentConfig(
 
     def _resolve_data_mode_inputs(self, mode: str) -> tuple[Any, Any]:
         if mode == "pre-sample":
-            y_true = getattr(self.data, "_y", None)
-            y_pred = getattr(self.data, "_X", None)
+            y_true = getattr(self.data, "y", None)
+            y_pred = getattr(self.data, "X", None)
         elif mode == "train":
             y_true = getattr(self.data, "y_train", None)
             y_pred = getattr(self.data, "X_train", None)
@@ -459,7 +459,7 @@ class ExperimentConfig(
             and active_mode in {"train", "test", "val"}
         ):
             self.model.score_mode = active_mode
-        attack_chain = getattr(self, "_attack_chain", None)
+        attack_chain = self.attack_chain
         if attack_chain is None:
             attack_chain = [self.attack] if self.attack is not None else []
         for attack_cfg in attack_chain:
@@ -609,7 +609,7 @@ class ExperimentConfig(
 
     def _apply_attack_profile_scorer(self, scorer) -> None:
         """Apply an _AttackProfileScorer to the configured attack chain."""
-        attack_chain = getattr(self, "_attack_chain", [])
+        attack_chain = self.attack_chain or []
         profile_attr = getattr(scorer, "_profile_attr", "evasion")
         for attack_cfg in attack_chain:
             if hasattr(attack_cfg, "scorer") and attack_cfg.scorer is not None:
@@ -1131,11 +1131,11 @@ class ExperimentConfig(
 
     def _initialize_attack_chain(self) -> None:
         """Normalize configured attacks and establish primary attack view."""
-        self._attack_chain = self._normalize_attack_chain(self.attack)
-        self._validate_multi_attack_aliases(self._attack_chain)
-        if len(self._attack_chain) > 0:
+        self.attack_chain = self._normalize_attack_chain(self.attack)
+        self._validate_multi_attack_aliases(self.attack_chain)
+        if len(self.attack_chain) > 0:
             # Preserve backward compatibility for single-attack call sites.
-            self.attack = self._attack_chain[0]
+            self.attack = self.attack_chain[0]
         else:
             self.attack = None
 
@@ -1201,8 +1201,8 @@ class ExperimentConfig(
             config_list = [self.data]
             if self.model:
                 config_list.append(self.model)
-            if len(self._attack_chain) > 0:
-                config_list.extend(self._attack_chain)
+            if len(self.attack_chain) > 0:
+                config_list.extend(self.attack_chain)
             if self.detector and isinstance(self.detector, ConfigBase):
                 config_list.append(self.detector)
             if self.score:
@@ -1329,7 +1329,7 @@ class ExperimentConfig(
         else:
             logger.info("No model config provided, skipping model training.")
 
-        attack_chain = getattr(self, "_attack_chain", None)
+        attack_chain = self.attack_chain
         if attack_chain is None:
             attack_chain = [self.attack] if self.attack is not None else []
 
@@ -1440,6 +1440,28 @@ class ExperimentConfig(
             except (TypeError, ValueError):
                 aggregated[key] = values[-1]
         return aggregated
+
+    @property
+    def runtime_scores(self) -> dict[str, Any]:
+        """Public accessor for the latest experiment score payload."""
+        if self.score_dict is None:
+            self.score_dict = {}
+        return self.score_dict
+
+    @runtime_scores.setter
+    def runtime_scores(self, value: dict[str, Any] | None) -> None:
+        """Set the latest experiment score payload."""
+        self.score_dict = value or {}
+
+    @property
+    def attack_chain(self) -> list[AttackConfig] | None:
+        """Public accessor for normalized attack chain runtime state."""
+        return getattr(self, "_attack_chain", None)
+
+    @attack_chain.setter
+    def attack_chain(self, value: list[AttackConfig] | None) -> None:
+        """Set normalized attack chain runtime state."""
+        self._attack_chain = value
 
     def compose_file_output_behavior(self) -> tuple[dict, dict, dict, dict]:
         """Compose runtime file-output mappings for data/model/attack stages."""

@@ -4,650 +4,1752 @@ rootdir: /Users/c.meyers/Documents/deckard
 configfile: pyproject.toml
 plugins: hydra-core-1.4.0.dev1, cov-7.1.0, xdist-3.8.0, anyio-4.13.0
 created: 12/12 workers
-12 workers [1322 items]
+12 workers [1527 items]
 
-........................................................................ [  5%]
-........................................................................ [ 10%]
-........................................................................ [ 16%]
-........................................................................ [ 21%]
-........................................................................ [ 27%]
-........................................sss............................. [ 32%]
-........................................................................ [ 38%]
-........................................................................ [ 43%]
-........................................................................ [ 49%]
-........................................................................ [ 54%]
-........................................................................ [ 59%]
-........................................................................ [ 65%]
-........................................................................ [ 70%]
-........................................................................ [ 76%]
-........................................................................ [ 81%]
-....................................................................s... [ 87%]
-...s........s.s......................................................... [ 92%]
-........................................................................ [ 98%]
-..........................                                               [100%]
+........................................................................ [  4%]
+........................................................................ [  9%]
+..........................................................F..s.ss....... [ 14%]
+...............................................F........................ [ 18%]
+....................................EEEEEE.............................. [ 23%]
+........................................................................ [ 28%]
+.................sssss..F.............................F................. [ 33%]
+.............................................................F.......... [ 37%]
+.............F.......................................................... [ 42%]
+........................................................................ [ 47%]
+........................................................................ [ 51%]
+F....................................................................... [ 56%]
+............................................F........................... [ 61%]
+...........F............................................................ [ 66%]
+..........................................................F............. [ 70%]
+..F..F.F..............................................................F. [ 75%]
+........................................................................ [ 80%]
+........................................................................ [ 84%]
+..........................................................s............. [ 89%]
+s....ss.........................FFFFFFF.F............................... [ 94%]
+.............................X...............F.......................... [ 99%]
+...............                                                          [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of TestFairlearnAttackScorer.test_evasion_attack_with_fairlearn_scorer_end_to_end _
+[gw9] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+file /Users/c.meyers/Documents/deckard/test/test_frameworks/test_pytorch/test_pytorch_attack.py, line 2754
+      def test_evasion_attack_with_fairlearn_scorer_end_to_end(self):
+E       fixture 'require_fairlearn' not found
+>       available fixtures: _unittest_setUpClass_fixture_TestFairlearnAttackScorer, anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cov, doctest_namespace, dummy_conf, dummy_files, dummy_storage, dummy_study, dummy_trial, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, hydra_restore_singletons, hydra_sweep_runner, hydra_task_runner, monkeypatch, no_cover, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, set_test_max_samples_env, subtests, testrun_uid, tiny_data, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, worker_id
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/c.meyers/Documents/deckard/test/test_frameworks/test_pytorch/test_pytorch_attack.py:2754
+_ ERROR at setup of TestFairlearnAttackScorer.test_fairlearn_attack_scorer_instantiates _
+[gw9] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+file /Users/c.meyers/Documents/deckard/test/test_frameworks/test_pytorch/test_pytorch_attack.py, line 2677
+      def test_fairlearn_attack_scorer_instantiates(self):
+E       fixture 'require_fairlearn' not found
+>       available fixtures: _unittest_setUpClass_fixture_TestFairlearnAttackScorer, anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cov, doctest_namespace, dummy_conf, dummy_files, dummy_storage, dummy_study, dummy_trial, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, hydra_restore_singletons, hydra_sweep_runner, hydra_task_runner, monkeypatch, no_cover, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, set_test_max_samples_env, subtests, testrun_uid, tiny_data, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, worker_id
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/c.meyers/Documents/deckard/test/test_frameworks/test_pytorch/test_pytorch_attack.py:2677
+_ ERROR at setup of TestFairlearnAttackScorer.test_membership_inference_with_fairlearn_scorer_end_to_end _
+[gw9] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+file /Users/c.meyers/Documents/deckard/test/test_frameworks/test_pytorch/test_pytorch_attack.py, line 2776
+      def test_membership_inference_with_fairlearn_scorer_end_to_end(self):
+E       fixture 'require_fairlearn' not found
+>       available fixtures: _unittest_setUpClass_fixture_TestFairlearnAttackScorer, anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cov, doctest_namespace, dummy_conf, dummy_files, dummy_storage, dummy_study, dummy_trial, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, hydra_restore_singletons, hydra_sweep_runner, hydra_task_runner, monkeypatch, no_cover, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, set_test_max_samples_env, subtests, testrun_uid, tiny_data, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, worker_id
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/c.meyers/Documents/deckard/test/test_frameworks/test_pytorch/test_pytorch_attack.py:2776
+_ ERROR at setup of TestFairlearnAttackScorer.test_score_attribute_with_sensitive_features_produces_group_metrics _
+[gw9] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+file /Users/c.meyers/Documents/deckard/test/test_frameworks/test_pytorch/test_pytorch_attack.py, line 2731
+      def test_score_attribute_with_sensitive_features_produces_group_metrics(self):
+E       fixture 'require_fairlearn' not found
+>       available fixtures: _unittest_setUpClass_fixture_TestFairlearnAttackScorer, anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cov, doctest_namespace, dummy_conf, dummy_files, dummy_storage, dummy_study, dummy_trial, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, hydra_restore_singletons, hydra_sweep_runner, hydra_task_runner, monkeypatch, no_cover, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, set_test_max_samples_env, subtests, testrun_uid, tiny_data, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, worker_id
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/c.meyers/Documents/deckard/test/test_frameworks/test_pytorch/test_pytorch_attack.py:2731
+_ ERROR at setup of TestFairlearnAttackScorer.test_score_evasion_with_sensitive_features_produces_group_metrics _
+[gw9] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+file /Users/c.meyers/Documents/deckard/test/test_frameworks/test_pytorch/test_pytorch_attack.py, line 2687
+      def test_score_evasion_with_sensitive_features_produces_group_metrics(self):
+E       fixture 'require_fairlearn' not found
+>       available fixtures: _unittest_setUpClass_fixture_TestFairlearnAttackScorer, anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cov, doctest_namespace, dummy_conf, dummy_files, dummy_storage, dummy_study, dummy_trial, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, hydra_restore_singletons, hydra_sweep_runner, hydra_task_runner, monkeypatch, no_cover, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, set_test_max_samples_env, subtests, testrun_uid, tiny_data, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, worker_id
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/c.meyers/Documents/deckard/test/test_frameworks/test_pytorch/test_pytorch_attack.py:2687
+_ ERROR at setup of TestFairlearnAttackScorer.test_score_membership_with_sensitive_features_produces_group_metrics _
+[gw9] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+file /Users/c.meyers/Documents/deckard/test/test_frameworks/test_pytorch/test_pytorch_attack.py, line 2710
+      def test_score_membership_with_sensitive_features_produces_group_metrics(self):
+E       fixture 'require_fairlearn' not found
+>       available fixtures: _unittest_setUpClass_fixture_TestFairlearnAttackScorer, anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cov, doctest_namespace, dummy_conf, dummy_files, dummy_storage, dummy_study, dummy_trial, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, hydra_restore_singletons, hydra_sweep_runner, hydra_task_runner, monkeypatch, no_cover, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, set_test_max_samples_env, subtests, testrun_uid, tiny_data, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, worker_id
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/c.meyers/Documents/deckard/test/test_frameworks/test_pytorch/test_pytorch_attack.py:2710
+=================================== FAILURES ===================================
+_ TestInitializeAttackBranches.test_model_with_sensitive_features_predict_wraps_with_wrapper _
+[gw3] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+self = <test_attack.TestInitializeAttackBranches testMethod=test_model_with_sensitive_features_predict_wraps_with_wrapper>
+
+    def test_model_with_sensitive_features_predict_wraps_with_wrapper(self):
+        """Cover the SensitiveFeaturesWrapper path in _initialize_attack."""
+        from sklearn.base import BaseEstimator, ClassifierMixin
+    
+        class _SFModel(BaseEstimator, ClassifierMixin):
+            classes_ = [0, 1]
+    
+            def fit(self, X, y):
+                self.fitted_ = True
+                return self
+    
+            def predict(self, X, sensitive_features=None):
+                return np.zeros(len(X), dtype=int)
+    
+        model = _SFModel().fit(
+            self.data.X_train.values,
+            self.data.y_train.values,
+        )
+        self.data._sensitive_test = np.zeros(len(self.data.X_test))
+        attack = AttackConfig(
+            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_params={"eps": 0.1},
+        )
+        fake_fgm = MagicMock()
+        fake_fgm.return_value = MagicMock()
+        with patch("deckard.attack.base.resolve_class", return_value=fake_fgm):
+>           result = attack._initialize_attack(model, self.data)
+
+test/test_attack/test_attack.py:1751: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+deckard/attack/base.py:867: in _initialize_attack
+    art_model = sklearn_dict["sklearn-classifier"](model)
+.venv/lib/python3.10/site-packages/art/estimators/classification/scikitlearn.py:140: in __init__
+    nb_classes = self._get_nb_classes()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ScikitlearnClassifier(model=_SFModel(), clip_values=None, preprocessing=StandardisationMeanStd(mean=0.0, std=1.0, appl...tions=[StandardisationMeanStd(mean=0.0, std=1.0, apply_fit=True, apply_predict=True)], nb_classes=-1, input_shape=None)
+
+    def _get_nb_classes(self) -> int:
+        if hasattr(self.model, "n_classes_"):
+            _nb_classes = self.model.n_classes_
+        elif hasattr(self.model, "classes_"):
+>           _nb_classes = self.model.classes_.shape[0]
+E           AttributeError: 'list' object has no attribute 'shape'
+
+.venv/lib/python3.10/site-packages/art/estimators/classification/scikitlearn.py:258: AttributeError
+------------------------------ Captured log call -------------------------------
+WARNING  art.estimators.scikitlearn:scikitlearn.py:54 Input shape not recognised. The model might not have been fitted.
+_ TestInitializeAttackBranches.test_sensitive_features_fallback_uses_sensitive_train _
+[gw3] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+self = <test_attack.TestInitializeAttackBranches testMethod=test_sensitive_features_fallback_uses_sensitive_train>
+
+    def test_sensitive_features_fallback_uses_sensitive_train(self):
+        """Cover _sensitive_train fallback branch (line 452)."""
+        from sklearn.base import BaseEstimator, ClassifierMixin
+    
+        class _SFModel(BaseEstimator, ClassifierMixin):
+            classes_ = [0, 1]
+    
+            def fit(self, X, y):
+                self.fitted_ = True
+                return self
+    
+            def predict(self, X, sensitive_features=None):
+                return np.zeros(len(X), dtype=int)
+    
+        model = _SFModel().fit(self.data.X_train.values, self.data.y_train.values)
+        self.data._sensitive_test = None
+        self.data._sensitive_train = np.zeros(len(self.data.X_train))
+        attack = AttackConfig(
+            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_params={"eps": 0.1},
+        )
+        fake_attack_cls = MagicMock(return_value=MagicMock())
+        with patch("deckard.attack.base.resolve_class", return_value=fake_attack_cls):
+>           result = attack._initialize_attack(model, self.data)
+
+test/test_attack/test_attack.py:1832: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+deckard/attack/base.py:867: in _initialize_attack
+    art_model = sklearn_dict["sklearn-classifier"](model)
+.venv/lib/python3.10/site-packages/art/estimators/classification/scikitlearn.py:140: in __init__
+    nb_classes = self._get_nb_classes()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ScikitlearnClassifier(model=_SFModel(), clip_values=None, preprocessing=StandardisationMeanStd(mean=0.0, std=1.0, appl...tions=[StandardisationMeanStd(mean=0.0, std=1.0, apply_fit=True, apply_predict=True)], nb_classes=-1, input_shape=None)
+
+    def _get_nb_classes(self) -> int:
+        if hasattr(self.model, "n_classes_"):
+            _nb_classes = self.model.n_classes_
+        elif hasattr(self.model, "classes_"):
+>           _nb_classes = self.model.classes_.shape[0]
+E           AttributeError: 'list' object has no attribute 'shape'
+
+.venv/lib/python3.10/site-packages/art/estimators/classification/scikitlearn.py:258: AttributeError
+------------------------------ Captured log call -------------------------------
+WARNING  art.estimators.scikitlearn:scikitlearn.py:54 Input shape not recognised. The model might not have been fitted.
+_ TestInitializeAttackBranches.test_model_with_sensitive_features_predict_wraps_with_wrapper _
+[gw2] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+self = <test_pytorch_attack.TestInitializeAttackBranches testMethod=test_model_with_sensitive_features_predict_wraps_with_wrapper>
+
+    def test_model_with_sensitive_features_predict_wraps_with_wrapper(self):
+        """Cover the SensitiveFeaturesWrapper path in _initialize_attack."""
+        from sklearn.base import BaseEstimator, ClassifierMixin
+    
+        class _SFModel(BaseEstimator, ClassifierMixin):
+            classes_ = [0, 1]
+    
+            def fit(self, X, y):
+                self.fitted_ = True
+                return self
+    
+            def predict(self, X, sensitive_features=None):
+                return np.zeros(len(X), dtype=int)
+    
+        model = _SFModel().fit(
+            self.data.X_train.values,
+            self.data.y_train.values,
+        )
+        self.data._sensitive_test = np.zeros(len(self.data.X_test))
+        attack = AttackConfig(
+            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_params={"eps": 0.1},
+        )
+        fake_fgm = MagicMock()
+        fake_fgm.return_value = MagicMock()
+        with patch("deckard.attack.base.resolve_class", return_value=fake_fgm):
+>           result = attack._initialize_attack(model, self.data)
+
+test/test_frameworks/test_pytorch/test_pytorch_attack.py:1068: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+deckard/attack/base.py:867: in _initialize_attack
+    art_model = sklearn_dict["sklearn-classifier"](model)
+.venv/lib/python3.10/site-packages/art/estimators/classification/scikitlearn.py:140: in __init__
+    nb_classes = self._get_nb_classes()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ScikitlearnClassifier(model=_SFModel(), clip_values=None, preprocessing=StandardisationMeanStd(mean=0.0, std=1.0, appl...tions=[StandardisationMeanStd(mean=0.0, std=1.0, apply_fit=True, apply_predict=True)], nb_classes=-1, input_shape=None)
+
+    def _get_nb_classes(self) -> int:
+        if hasattr(self.model, "n_classes_"):
+            _nb_classes = self.model.n_classes_
+        elif hasattr(self.model, "classes_"):
+>           _nb_classes = self.model.classes_.shape[0]
+E           AttributeError: 'list' object has no attribute 'shape'
+
+.venv/lib/python3.10/site-packages/art/estimators/classification/scikitlearn.py:258: AttributeError
+------------------------------ Captured log call -------------------------------
+WARNING  art.estimators.scikitlearn:scikitlearn.py:54 Input shape not recognised. The model might not have been fitted.
+_ TestInitializeAttackBranches.test_sensitive_features_fallback_uses_sensitive_train _
+[gw2] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+self = <test_pytorch_attack.TestInitializeAttackBranches testMethod=test_sensitive_features_fallback_uses_sensitive_train>
+
+    def test_sensitive_features_fallback_uses_sensitive_train(self):
+        """Cover _sensitive_train fallback branch (line 452)."""
+        from sklearn.base import BaseEstimator, ClassifierMixin
+    
+        class _SFModel(BaseEstimator, ClassifierMixin):
+            classes_ = [0, 1]
+    
+            def fit(self, X, y):
+                self.fitted_ = True
+                return self
+    
+            def predict(self, X, sensitive_features=None):
+                return np.zeros(len(X), dtype=int)
+    
+        model = _SFModel().fit(self.data.X_train.values, self.data.y_train.values)
+        self.data._sensitive_test = None
+        self.data._sensitive_train = np.zeros(len(self.data.X_train))
+        attack = AttackConfig(
+            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_params={"eps": 0.1},
+        )
+        fake_attack_cls = MagicMock(return_value=MagicMock())
+        with patch("deckard.attack.base.resolve_class", return_value=fake_attack_cls):
+>           result = attack._initialize_attack(model, self.data)
+
+test/test_frameworks/test_pytorch/test_pytorch_attack.py:1149: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+deckard/attack/base.py:867: in _initialize_attack
+    art_model = sklearn_dict["sklearn-classifier"](model)
+.venv/lib/python3.10/site-packages/art/estimators/classification/scikitlearn.py:140: in __init__
+    nb_classes = self._get_nb_classes()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ScikitlearnClassifier(model=_SFModel(), clip_values=None, preprocessing=StandardisationMeanStd(mean=0.0, std=1.0, appl...tions=[StandardisationMeanStd(mean=0.0, std=1.0, apply_fit=True, apply_predict=True)], nb_classes=-1, input_shape=None)
+
+    def _get_nb_classes(self) -> int:
+        if hasattr(self.model, "n_classes_"):
+            _nb_classes = self.model.n_classes_
+        elif hasattr(self.model, "classes_"):
+>           _nb_classes = self.model.classes_.shape[0]
+E           AttributeError: 'list' object has no attribute 'shape'
+
+.venv/lib/python3.10/site-packages/art/estimators/classification/scikitlearn.py:258: AttributeError
+------------------------------ Captured log call -------------------------------
+WARNING  art.estimators.scikitlearn:scikitlearn.py:54 Input shape not recognised. The model might not have been fitted.
+___________ test_art_last_ordering_no_warning_for_wrapper_only_chain ___________
+[gw10] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+caplog = <_pytest.logging.LogCaptureFixture object at 0x16db759f0>
+
+    def test_art_last_ordering_no_warning_for_wrapper_only_chain(caplog):
+        import logging
+    
+>       fairlearn_defense = _make_torch_fairlearn_defense_from_yaml(
+            yaml_file="fairlearn-adversarial-classifier.yaml",
+        )
+
+test/test_frameworks/test_pytorch/test_pytorch_experiment.py:300: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+test/test_frameworks/test_pytorch/test_pytorch_experiment.py:88: in _make_torch_fairlearn_defense_from_yaml
+    cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
+../../.pyenv/versions/3.10.20/lib/python3.10/pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/c.meyers/Documents/deckard/test/examples/pytorch/config/defense/fairlearn-adversarial-classifier.yaml')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/c.meyers/Documents/deckard/test/examples/pytorch/config/defense/fairlearn-adversarial-classifier.yaml'
+
+../../.pyenv/versions/3.10.20/lib/python3.10/pathlib.py:1119: FileNotFoundError
+_________________ test_optimize_main_executes_once_in_multirun _________________
+[gw2] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x32f2aa3b0>
+
+    def test_optimize_main_executes_once_in_multirun(monkeypatch):
+        class DummyBase:
+            pass
+    
+        class DummyExperiment(DummyBase):
+            def execute_without_mercy(self):
+                captured["calls"] += 1
+                return {"best": 0.1, "aux": 3.0}
+    
+        conf_obj = DummyExperiment()
+        captured = {"calls": 0}
+    
+        def fake_instantiate(cfg):
+            captured["cfg"] = cfg
+            return conf_obj
+    
+        hydra_cfg = SimpleNamespace(
+            mode="RunMode.MULTIRUN",
+            sweeper={"storage": "sqlite:///db.sqlite3", "study_name": "demo-study"},
+        )
+    
+        monkeypatch.setattr(optimize_module, "ConfigBase", DummyBase)
+        monkeypatch.setattr(optimize_module, "ExperimentConfig", DummyExperiment)
+        monkeypatch.setattr(optimize_module, "instantiate", fake_instantiate)
+        monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
+    
+        result = optimize_module.optimize_main(OmegaConf.create({"name": "demo"}))
+    
+        assert result == {"best": 0.1, "aux": 3.0}
+        assert captured["calls"] == 1
+        assert isinstance(captured["cfg"], dict)
+>       assert captured["cfg"]["name"] == "demo"
+E       KeyError: 'name'
+
+test/test_layers/test_optimize.py:985: KeyError
+_________ test_defense_behavior_defaults_signature_and_apply_to_paths __________
+[gw6] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x31adb0670>
+
+    def test_defense_behavior_defaults_signature_and_apply_to_paths(monkeypatch):
+        defense = DefenseConfig.__new__(DefenseConfig)
+        defense.model_type = None
+        defense.classifier = True
+        defense.model_params = {}
+        defense.probability = False
+        defense.alias = ""
+        defense.defense_name = "art.defences.postprocessor.HighConfidence"
+        defense.defense_params = None
+        defense.score_dict = None
+        defense._target_ = None
+    
+        defense.__post_init__()
+    
+        assert defense._model is None
+        assert defense.score_dict == {}
+        assert defense._target_ == "deckard.DefenseConfig"
+        assert defense.defense_params == {}
+    
+        defense.defense_params = OmegaConf.create(
+            {"outer": {"inner": [1, {"value": 2}]}, "flat": [3, 4]},
+        )
+        signature = defense._defense_signature()
+        assert signature[0] == "art.defences.postprocessor.HighConfidence"
+        assert isinstance(signature[1], tuple)
+    
+        with pytest.raises(ValueError, match="Model is not fitted yet"):
+            defense.get_model()
+    
+        with pytest.raises(ValueError, match="estimator must be provided"):
+            defense.apply_to(estimator=None, data=object())
+    
+        defense._model_config = SimpleNamespace(_model=None)
+        monkeypatch.setattr(
+            DefenseConfig,
+            "apply_defense",
+            lambda self, data: {"data": data, "model": self._model},
+        )
+        estimator = object()
+        result = defense.apply_to(estimator=estimator, data="payload")
+        assert result == {"data": "payload", "model": estimator}
+>       assert defense._model_config._model is estimator
+E       assert None is <object object at 0x31818b620>
+E        +  where None = namespace(_model=None, model=<object object at 0x31818b620>)._model
+E        +    where namespace(_model=None, model=<object object at 0x31818b620>) = <[AttributeError("'DefenseConfig' object has no attribute 'init_params'") raised in repr()] DefenseConfig object at 0x31adb3910>._model_config
+
+test/test_model/test_model_defense_pipeline.py:212: AssertionError
+_____________ test_repository_enforcement_frameworks_scope_passes ______________
+[gw4] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+    def test_repository_enforcement_frameworks_scope_passes() -> None:
+>       _run_enforcement("deckard/frameworks")
+
+test/test_package/test_repository_wide_enforcement.py:43: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+scope = 'deckard/frameworks'
+
+    def _run_enforcement(scope: str) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        cmd = [
+            "python",
+            "scripts/repository_enforcement.py",
+            "--scope",
+            scope,
+        ]
+        result = subprocess.run(
+            cmd,
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+>       assert result.returncode == 0, result.stdout + "\n" + result.stderr
+E       AssertionError: 
+E         Traceback (most recent call last):
+E           File "/Users/c.meyers/Documents/deckard/scripts/repository_enforcement.py", line 348, in <module>
+E             raise SystemExit(main())
+E           File "/Users/c.meyers/Documents/deckard/scripts/repository_enforcement.py", line 333, in main
+E             violations = collect_violations(
+E           File "/Users/c.meyers/Documents/deckard/scripts/repository_enforcement.py", line 315, in collect_violations
+E             violations.extend(validate_file(path, strict_docs_types=strict_docs_types))
+E           File "/Users/c.meyers/Documents/deckard/scripts/repository_enforcement.py", line 114, in validate_file
+E             tree = ast.parse(source, filename=rel)
+E           File "/Users/c.meyers/.pyenv/versions/3.10.20/lib/python3.10/ast.py", line 50, in parse
+E             return compile(source, filename, mode, flags,
+E           File "deckard/frameworks/pytorch/sample.py", line 81
+E             n_train = 
+E                       ^
+E         SyntaxError: invalid syntax
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['python', 'scripts/repository_enforcement.py', '--scope', 'deckard/frameworks'], returncode=1, ... File "deckard/frameworks/pytorch/sample.py", line 81\n    n_train = \n              ^\nSyntaxError: invalid syntax\n').returncode
+
+test/test_package/test_repository_wide_enforcement.py:35: AssertionError
+__________ TestAttackConfig.test_real_model_inversion_attack_executes __________
+[gw8] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+self = <test_pytorch_attack.TestAttackConfig testMethod=test_real_model_inversion_attack_executes>
+
+    def test_real_model_inversion_attack_executes(self):
+        torch = pytest.importorskip("torch")
+        nn = pytest.importorskip("torch.nn")
+    
+        class TinyLinear(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.linear = nn.Linear(3, 2)
+    
+            def forward(self, x):
+                return self.linear(x)
+    
+        class TinyData:
+            pass
+    
+        rng = np.random.default_rng(7)
+        X_train = torch.tensor(rng.normal(size=(20, 3)), dtype=torch.float32)
+        y_train = torch.tensor(rng.integers(0, 2, size=(20,)), dtype=torch.long)
+        X_test = torch.tensor(rng.normal(size=(12, 3)), dtype=torch.float32)
+        y_test = torch.tensor(rng.integers(0, 2, size=(12,)), dtype=torch.long)
+    
+        data = TinyData()
+        data.X_train = X_train
+        data.y_train = y_train
+        data.X_test = X_test
+        data.y_test = y_test
+    
+        model = TinyLinear()
+>       attack = self._load_pytorch_model_inversion_config()
+
+test/test_frameworks/test_pytorch/test_pytorch_attack.py:318: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+test/test_frameworks/test_pytorch/test_pytorch_attack.py:45: in _load_pytorch_model_inversion_config
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+../../.pyenv/versions/3.10.20/lib/python3.10/pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/c.meyers/Documents/deckard/test/examples/pytorch/config/attack/model-inversion.yaml')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/c.meyers/Documents/deckard/test/examples/pytorch/config/attack/model-inversion.yaml'
+
+../../.pyenv/versions/3.10.20/lib/python3.10/pathlib.py:1119: FileNotFoundError
+_ TestFairlearnModelConfig.test_train_passes_sensitive_features_when_supported _
+[gw9] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+self = <test_model_fairness.TestFairlearnModelConfig testMethod=test_train_passes_sensitive_features_when_supported>
+
+    def test_train_passes_sensitive_features_when_supported(self):
+        class SensitiveFitEstimator:
+            def __init__(self):
+                self.received_sensitive = None
+    
+            def fit(self, X, y, sensitive_features=None):
+                self.received_sensitive = sensitive_features
+                return self
+    
+            def predict(self, X, sensitive_features=None):
+                return pd.Series([0] * len(X))
+    
+        fairness_data = Mock(spec=FairlearnDataConfig)
+        fairness_data._sensitive_train = self.sensitive_test
+        fairness_data._sensitive_test = self.sensitive_test
+        fairness_data._sensitive_all = self.sensitive_test
+    
+        model = FairlearnModelConfig(
+            model_type=self.model_type,
+            classifier=True,
+            model_params={"n_estimators": 10},
+            data=fairness_data,
+        )
+        model._model = SensitiveFitEstimator()
+    
+        model._train(self.X_test, self.y_test)
+    
+>       self.assertIsNotNone(model._model.received_sensitive)
+E       AssertionError: unexpectedly None
+
+test/test_plugins/test_fairlearn/test_model_fairness.py:203: AssertionError
+__________ test_runtime_sensitive_source_and_split_resolution_errors ___________
+[gw5] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+    def test_runtime_sensitive_source_and_split_resolution_errors():
+        d = _DummyMixin()
+        d.data = _dummy_data()
+    
+>       assert list(d._resolve_runtime_sensitive_source("train")) == ["a", "b"]
+E       TypeError: 'NoneType' object is not iterable
+
+test/test_plugins/test_fairlearn/test_fairness_mixin_unit.py:39: TypeError
+__________ test_infer_and_resolve_sensitive_features_for_batch_paths ___________
+[gw5] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x337ce7310>
+
+    def test_infer_and_resolve_sensitive_features_for_batch_paths(monkeypatch):
+        d = _DummyMixin()
+        d.data = _dummy_data()
+    
+        # Test all valid scoring modes
+        assert d._infer_split_from_batch(d.data.X_train, scoring_mode="train") == "train"
+        assert (
+            d._infer_split_from_batch(d.data.X_test.copy(), scoring_mode="test") == "test"
+        )
+        # For 'val', just call and check result (should not raise)
+        result_val = d._infer_split_from_batch(d.data.X_train, scoring_mode="val")
+        assert result_val == "val"
+        # For 'all', should work if implemented, else raise if not supported
+        try:
+            result = d._infer_split_from_batch(d.data.X_train, scoring_mode="all")
+            assert result == "all"
+        except NotImplementedError:
+            pass
+    
+        batch = pd.DataFrame({"x": [1, 2]})
+>       assert d._resolve_sensitive_features_for_batch(batch, split="train") is not None
+E       AssertionError: assert None is not None
+E        +  where None = _resolve_sensitive_features_for_batch(   x\n0  1\n1  2, split='train')
+E        +    where _resolve_sensitive_features_for_batch = _DummyMixin(sensitive_columns=None, fairness_defense=None)._resolve_sensitive_features_for_batch
+
+test/test_plugins/test_fairlearn/test_fairness_mixin_unit.py:91: AssertionError
+______________________ test_fit_defended_estimator_paths _______________________
+[gw5] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+    def test_fit_defended_estimator_paths():
+        d = _DummyMixin()
+        data = _dummy_data()
+    
+        class FitWithSensitive:
+            def __init__(self):
+                self.calls = []
+    
+            def fit(self, x, y, sensitive_features=None):
+                self.calls.append((x, y, sensitive_features))
+                return self
+    
+        class FitPlain:
+            def __init__(self):
+                self.calls = []
+    
+            def fit(self, x, y):
+                self.calls.append((x, y))
+                return self
+    
+        f1 = FitWithSensitive()
+        out1 = d._fit_defended_estimator(f1, data)
+        assert out1 is f1
+        assert len(f1.calls) == 1
+>       assert f1.calls[0][2] is not None
+E       assert None is not None
+
+test/test_plugins/test_fairlearn/test_fairness_mixin_unit.py:149: AssertionError
+_ TestFairlearnModelConfig.test_predict_passes_sensitive_features_when_supported _
+[gw3] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+self = <test_model_fairness.TestFairlearnModelConfig testMethod=test_predict_passes_sensitive_features_when_supported>
+
+    def test_predict_passes_sensitive_features_when_supported(self):
+        class SensitivePredictEstimator:
+            def fit(self, X, y):
+                return self
+    
+            def predict(self, X, sensitive_features=None):
+                if sensitive_features is None:
+                    raise AssertionError("sensitive_features was not provided")
+                return pd.Series([0] * len(X))
+    
+        fairness_data = Mock(spec=FairlearnDataConfig)
+        fairness_data._sensitive_test = self.sensitive_test
+        fairness_data._sensitive_train = None
+        fairness_data._sensitive_all = None
+    
+        model = FairlearnModelConfig(
+            model_type=self.model_type,
+            classifier=True,
+            model_params={"n_estimators": 10},
+            data=fairness_data,
+        )
+        model._model = SensitivePredictEstimator()
+    
+>       y_pred = model._predict(self.X_test)
+
+test/test_plugins/test_fairlearn/test_model_fairness.py:229: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+deckard/plugins/fairlearn/model.py:76: in _predict
+    return self._call_with_optional_sensitive(
+deckard/data/_mixins.py:207: in _call_with_optional_sensitive
+    return method(X)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_model_fairness.TestFairlearnModelConfig.test_predict_passes_sensitive_features_when_supported.<locals>.SensitivePredictEstimator object at 0x31f79d750>
+X =    feature1  feature2 group
+0         6         7     A
+1         7         8     B
+2         8         9     A
+3         9        10     B
+sensitive_features = None
+
+    def predict(self, X, sensitive_features=None):
+        if sensitive_features is None:
+>           raise AssertionError("sensitive_features was not provided")
+E           AssertionError: sensitive_features was not provided
+
+test/test_plugins/test_fairlearn/test_model_fairness.py:213: AssertionError
+_ TestRetrainingDefensePipeline.test_binary_input_detector_rejects_non_neural_network_models _
+[gw11] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+self = <test_pytorch_defenses.TestRetrainingDefensePipeline testMethod=test_binary_input_detector_rejects_non_neural_network_models>
+
+    def test_binary_input_detector_rejects_non_neural_network_models(self):
+>       data = DummyDataConfig(
+            X_train=pd.DataFrame(np.random.rand(20, 4)),
+            y_train=pd.Series(np.random.randint(0, 2, size=20)),
+            X_test=pd.DataFrame(np.random.rand(8, 4)),
+            y_test=pd.Series(np.random.randint(0, 2, size=8)),
+        )
+E       NameError: name 'DummyDataConfig' is not defined
+
+test/test_frameworks/test_pytorch/test_pytorch_defenses.py:153: NameError
+_ TestRetrainingDefensePipeline.test_defensive_distillation_rejects_non_neural_network_models _
+[gw11] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+self = <test_pytorch_defenses.TestRetrainingDefensePipeline testMethod=test_defensive_distillation_rejects_non_neural_network_models>
+
+    def test_defensive_distillation_rejects_non_neural_network_models(self):
+>       data = DummyDataConfig(
+            X_train=pd.DataFrame(np.random.rand(20, 4)),
+            y_train=pd.Series(np.random.randint(0, 2, size=20)),
+            X_test=pd.DataFrame(np.random.rand(8, 4)),
+            y_test=pd.Series(np.random.randint(0, 2, size=8)),
+        )
+E       NameError: name 'DummyDataConfig' is not defined
+
+test/test_frameworks/test_pytorch/test_pytorch_defenses.py:263: NameError
+_ TestRetrainingDefensePipeline.test_neural_cleanse_rejects_non_neural_network_models _
+[gw11] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+self = <test_pytorch_defenses.TestRetrainingDefensePipeline testMethod=test_neural_cleanse_rejects_non_neural_network_models>
+
+    def test_neural_cleanse_rejects_non_neural_network_models(self):
+>       data = DummyDataConfig(
+            X_train=pd.DataFrame(np.random.rand(20, 4)),
+            y_train=pd.Series(np.random.randint(0, 2, size=20)),
+            X_test=pd.DataFrame(np.random.rand(8, 4)),
+            y_test=pd.Series(np.random.randint(0, 2, size=8)),
+        )
+E       NameError: name 'DummyDataConfig' is not defined
+
+test/test_frameworks/test_pytorch/test_pytorch_defenses.py:284: NameError
+_ TestRetrainingDefensePipeline.test_real_adversarial_retraining_executes_with_pytorch_model _
+[gw11] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+self = <test_pytorch_defenses.TestRetrainingDefensePipeline testMethod=test_real_adversarial_retraining_executes_with_pytorch_model>
+
+    def test_real_adversarial_retraining_executes_with_pytorch_model(self):
+        torch = pytest.importorskip("torch")
+        nn = pytest.importorskip("torch.nn")
+    
+        class TinyLinear(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.linear = nn.Linear(3, 2)
+    
+            def forward(self, x):
+                return self.linear(x)
+    
+        data = SimpleNamespace(
+            X_train=torch.rand(16, 3, dtype=torch.float32),
+            y_train=torch.randint(0, 2, (16,), dtype=torch.long),
+            X_test=torch.rand(8, 3, dtype=torch.float32),
+            y_test=torch.randint(0, 2, (8,), dtype=torch.long),
+        )
+    
+        config_path = (
+            Path(__file__).resolve().parents[2]
+            / "examples"
+            / "pytorch"
+            / "config"
+            / "defense"
+            / "adversarial_retraining.yaml"
+        )
+>       defense_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+
+test/test_frameworks/test_pytorch/test_pytorch_defenses.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../.pyenv/versions/3.10.20/lib/python3.10/pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/c.meyers/Documents/deckard/test/examples/pytorch/config/defense/adversarial_retraining.yaml')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/c.meyers/Documents/deckard/test/examples/pytorch/config/defense/adversarial_retraining.yaml'
+
+../../.pyenv/versions/3.10.20/lib/python3.10/pathlib.py:1119: FileNotFoundError
+_ TestRetrainingDefensePipeline.test_real_defensive_distillation_executes_with_pytorch_model _
+[gw11] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+self = <test_pytorch_defenses.TestRetrainingDefensePipeline testMethod=test_real_defensive_distillation_executes_with_pytorch_model>
+
+    def test_real_defensive_distillation_executes_with_pytorch_model(self):
+        torch = pytest.importorskip("torch")
+        nn = pytest.importorskip("torch.nn")
+    
+        class TinyLinear(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.linear = nn.Linear(3, 2)
+    
+            def forward(self, x):
+                return self.linear(x)
+    
+        data = SimpleNamespace(
+            X_train=torch.rand(16, 3, dtype=torch.float32),
+            y_train=torch.randint(0, 2, (16,), dtype=torch.long),
+            X_test=torch.rand(8, 3, dtype=torch.float32),
+            y_test=torch.randint(0, 2, (8,), dtype=torch.long),
+        )
+    
+        config_path = (
+            Path(__file__).resolve().parents[2]
+            / "examples"
+            / "pytorch"
+            / "config"
+            / "defense"
+            / "defensive_distillation.yaml"
+        )
+>       defense_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+
+test/test_frameworks/test_pytorch/test_pytorch_defenses.py:331: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../.pyenv/versions/3.10.20/lib/python3.10/pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/c.meyers/Documents/deckard/test/examples/pytorch/config/defense/defensive_distillation.yaml')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/c.meyers/Documents/deckard/test/examples/pytorch/config/defense/defensive_distillation.yaml'
+
+../../.pyenv/versions/3.10.20/lib/python3.10/pathlib.py:1119: FileNotFoundError
+_ TestRetrainingDefensePipeline.test_real_neural_cleanse_reports_backend_incompatibility_for_pytorch_model _
+[gw11] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+self = <test_pytorch_defenses.TestRetrainingDefensePipeline testMethod=test_real_neural_cleanse_reports_backend_incompatibility_for_pytorch_model>
+
+    def test_real_neural_cleanse_reports_backend_incompatibility_for_pytorch_model(
+        self,
+    ):
+        torch = pytest.importorskip("torch")
+        nn = pytest.importorskip("torch.nn")
+    
+        class TinyLinear(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.linear = nn.Linear(3, 2)
+    
+            def forward(self, x):
+                return self.linear(x)
+    
+        data = SimpleNamespace(
+            X_train=torch.rand(16, 3, dtype=torch.float32),
+            y_train=torch.randint(0, 2, (16,), dtype=torch.long),
+            X_test=torch.rand(8, 3, dtype=torch.float32),
+            y_test=torch.randint(0, 2, (8,), dtype=torch.long),
+        )
+    
+        config_path = (
+            Path(__file__).resolve().parents[2]
+            / "examples"
+            / "pytorch"
+            / "config"
+            / "defense"
+            / "neural_cleanse.yaml"
+        )
+>       defense_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+
+test/test_frameworks/test_pytorch/test_pytorch_defenses.py:374: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../.pyenv/versions/3.10.20/lib/python3.10/pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/c.meyers/Documents/deckard/test/examples/pytorch/config/defense/neural_cleanse.yaml')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/c.meyers/Documents/deckard/test/examples/pytorch/config/defense/neural_cleanse.yaml'
+
+../../.pyenv/versions/3.10.20/lib/python3.10/pathlib.py:1119: FileNotFoundError
+_ TestRetrainingDefensePipeline.test_retraining_defense_is_reordered_last_with_warning _
+[gw11] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+self = <test_pytorch_defenses.TestRetrainingDefensePipeline testMethod=test_retraining_defense_is_reordered_last_with_warning>
+
+    def test_retraining_defense_is_reordered_last_with_warning(self):
+        order = []
+        retraining = _OrderTrackingDefense(
+            "art.defences.trainer.AdversarialTrainerMadryPGD",
+            order,
+        )
+        postprocessor = _OrderTrackingDefense(
+            "art.defences.postprocessor.GaussianNoise",
+            order,
+        )
+        pipeline = DefensePipelineConfig(defenses=[retraining, postprocessor])
+    
+>       with self.assertRaises(ModuleNotFoundError):
+E       AssertionError: ModuleNotFoundError not raised
+
+test/test_frameworks/test_pytorch/test_pytorch_defenses.py:26: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  deckard.model.defend:defend.py:456 Adversarial retraining defenses must run last in the defense chain. deckard will automatically move retraining defenses to the end.
+_ TestRetrainingDefensePipeline.test_retraining_rejects_non_neural_network_models _
+[gw11] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+self = <test_pytorch_defenses.TestRetrainingDefensePipeline testMethod=test_retraining_rejects_non_neural_network_models>
+
+    def test_retraining_rejects_non_neural_network_models(self):
+>       data = DummyDataConfig(
+            X_train=pd.DataFrame(np.random.rand(20, 4)),
+            y_train=pd.Series(np.random.randint(0, 2, size=20)),
+            X_test=pd.DataFrame(np.random.rand(8, 4)),
+            y_test=pd.Series(np.random.randint(0, 2, size=8)),
+        )
+E       NameError: name 'DummyDataConfig' is not defined
+
+test/test_frameworks/test_pytorch/test_pytorch_defenses.py:38: NameError
+_ test_framework_contracts_declare_ordered_lifecycle[_StubFrameworkModelConfig-expected_execution_steps2] _
+[gw1] darwin -- Python 3.10.20 /Users/c.meyers/Documents/deckard/.venv/bin/python
+
+cfg_cls = <class 'test_frameworks_package._StubFrameworkModelConfig'>
+expected_execution_steps = ['load_defaults', 'load', 'load_cached', 'resolve_context', 'init_model', 'fit_model', ...]
+
+    @pytest.mark.parametrize(
+        "cfg_cls,expected_execution_steps",
+        [
+            (
+                _StubFrameworkDataConfig,
+                [
+                    "load_defaults",
+                    "load",
+                    "load_cached",
+                    "resolve_context",
+                    "load_data",
+                    "sample_data",
+                    "fit_presample",
+                    "fit_X",
+                    "fit_y",
+                    "fit_Xy",
+                    "score",
+                    "save",
+                ],
+            ),
+            (
+                _StubFrameworkDataPipelineConfig,
+                [
+                    "load_defaults",
+                    "load",
+                    "load_cached",
+                    "resolve_context",
+                    "load_data",
+                    "sample_data",
+                    "fit_presample",
+                    "fit_X",
+                    "fit_y",
+                    "fit_Xy",
+                    "build_pipeline",
+                    "run_pipeline",
+                    "score",
+                    "save",
+                ],
+            ),
+            (
+                _StubFrameworkModelConfig,
+                [
+                    "load_defaults",
+                    "load",
+                    "load_cached",
+                    "resolve_context",
+                    "init_model",
+                    "fit_model",
+                    "score",
+                    "save",
+                ],
+            ),
+            (
+                _StubFrameworkAttackConfig,
+                [
+                    "load_defaults",
+                    "load",
+                    "load_cached",
+                    "resolve_context",
+                    "build_attack",
+                    "score",
+                    "save",
+                ],
+            ),
+            (
+                _StubFrameworkDetectorConfig,
+                [
+                    "load_defaults",
+                    "load",
+                    "load_cached",
+                    "resolve_context",
+                    "build_detector",
+                    "score",
+                    "save",
+                ],
+            ),
+            (
+                _StubFrameworkExperimentConfig,
+                [
+                    "load_defaults",
+                    "load",
+                    "load_cached",
+                    "resolve_context",
+                    "run_experiment",
+                    "score",
+                    "save",
+                ],
+            ),
+            (
+                _StubFrameworkScorerConfig,
+                [
+                    "load_defaults",
+                    "load",
+                    "load_cached",
+                    "resolve_context",
+                    "score",
+                    "save",
+                ],
+            ),
+        ],
+    )
+    def test_framework_contracts_declare_ordered_lifecycle(cfg_cls, expected_execution_steps):
+        cfg = cfg_cls()
+    
+>       assert cfg.call_log == [
+            "init_loading",
+            "init_persistence",
+            "init_scoring",
+            "init_context",
+            "validate",
+        ]
+E       AssertionError: assert ['init_loadin...', 'validate'] == ['init_loadin...', 'validate']
+E         
+E         At index 2 diff: 'init_context' != 'init_scoring'
+E         Use -v to get more diff
+
+test/test_package/test_frameworks_package.py:368: AssertionError
 =============================== warnings summary ===============================
-test/test_plot/test_seaborn.py::TestSeabornPlots::test_cat_plot_returns_real_axis
+test/test_plugins/test_searborn/test_seaborn.py::TestSeabornPlots::test_cat_plot_returns_real_axis
   /Users/c.meyers/Documents/deckard/.venv/lib/python3.10/site-packages/seaborn/categorical.py:700: PendingDeprecationWarning: vert: bool will be deprecated in a future version. Use orientation: {'vertical', 'horizontal'} instead.
     artists = ax.bxp(**boxplot_kws)
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=================================== XPASSES ====================================
 ================================ tests coverage ================================
 ______________ coverage: platform darwin, python 3.10.20-final-0 _______________
 
 Name                                          Stmts   Miss  Cover
 -----------------------------------------------------------------
-deckard/__init__.py                              83      1    99%
-deckard/__main__.py                              98      7    93%
-deckard/attack/__init__.py                       13      2    85%
-deckard/attack/base.py                          722    122    83%
-deckard/attack/declarations.py                   14      0   100%
+deckard/__init__.py                              80      0   100%
+deckard/__main__.py                             101      8    92%
+deckard/attack/__init__.py                       12      4    67%
+deckard/attack/base.py                          751    126    83%
+deckard/attack/declarations.py                   14     14     0%
 deckard/attack/evasion.py                       101     17    83%
 deckard/attack/extraction.py                     64      6    91%
 deckard/attack/inference.py                     269     17    94%
 deckard/attack/poisoning.py                     187     29    84%
 deckard/attack/reconstruction.py                 12      1    92%
-deckard/data/__init__.py                         25      2    92%
-deckard/data/_mixins.py                          53     13    75%
-deckard/data/anjana.py                          220     12    95%
-deckard/data/base.py                            926    209    77%
-deckard/data/declarations.py                      5      0   100%
-deckard/data/fairlearn.py                         1      0   100%
-deckard/data/fairness.py                         99      5    95%
-deckard/data/lifelines.py                         1      0   100%
-deckard/data/pipeline/__init__.py                 5      0   100%
+deckard/data/__init__.py                         18      2    89%
+deckard/data/_mixins.py                         252     70    72%
+deckard/data/base.py                            852    179    79%
+deckard/data/declarations.py                      0      0   100%
+deckard/data/pipeline/__init__.py                10      0   100%
 deckard/data/pipeline/core.py                    12      0   100%
 deckard/data/sample.py                          107      4    96%
-deckard/data/survival.py                         72      0   100%
 deckard/declarations.py                         114     13    89%
 deckard/detector/__init__.py                      2      0   100%
-deckard/detector/base.py                        151     13    91%
+deckard/detector/base.py                        181     16    91%
 deckard/detector/default.py                       2      0   100%
-deckard/experiment/__init__.py                   16      0   100%
-deckard/experiment/base.py                      766    130    83%
+deckard/experiment/__init__.py                   24      1    96%
+deckard/experiment/base.py                      806    136    83%
 deckard/experiment/declarations.py                3      0   100%
-deckard/experiment/survival.py                  375     60    84%
-deckard/file.py                                  98      2    98%
-deckard/frameworks/__init__.py                    2      0   100%
-deckard/frameworks/core.py                       25      0   100%
-deckard/frameworks/pytorch/__init__.py           21      2    90%
+deckard/file.py                                  93      4    96%
+deckard/frameworks/__init__.py                    3      0   100%
+deckard/frameworks/adapters.py                  260    123    53%
+deckard/frameworks/core.py                      298     30    90%
+deckard/frameworks/pytorch/__init__.py           21      3    86%
 deckard/frameworks/pytorch/attack.py             43     14    67%
-deckard/frameworks/pytorch/data.py              429     44    90%
-deckard/frameworks/pytorch/data_pipeline.py       2      2     0%
+deckard/frameworks/pytorch/data.py              540    130    76%
+deckard/frameworks/pytorch/declarations.py       50     50     0%
 deckard/frameworks/pytorch/defense.py             2      0   100%
-deckard/frameworks/pytorch/experiment.py        103      7    93%
-deckard/frameworks/pytorch/fairness_data.py     170     95    44%
-deckard/frameworks/pytorch/model.py             573     51    91%
+deckard/frameworks/pytorch/experiment.py        105      7    93%
+deckard/frameworks/pytorch/fairness_data.py     172     95    45%
+deckard/frameworks/pytorch/model.py             575     50    91%
+deckard/frameworks/pytorch/pipeline.py           51     51     0%
 deckard/frameworks/pytorch/score.py             135    104    23%
 deckard/frameworks/pytorch/torch_utils.py        71      0   100%
 deckard/frameworks/sklearn/__init__.py            3      0   100%
 deckard/frameworks/sklearn/defense.py             2      0   100%
 deckard/layers/__init__.py                       18      0   100%
 deckard/layers/compile_results.py                84      2    98%
-deckard/layers/optimize.py                      510     38    93%
+deckard/layers/optimize.py                      521     38    93%
 deckard/layers/pareto.py                        157      7    96%
-deckard/layers/plot.py                          216      2    99%
+deckard/layers/plot.py                          221      2    99%
 deckard/layers/progress_bar.py                  314     15    95%
 deckard/layers/rerun_failed_studies.py           95      1    99%
 deckard/layers/survival.py                      109     41    62%
-deckard/model/__init__.py                        36      4    89%
-deckard/model/anjana.py                          21      1    95%
-deckard/model/base.py                           537     54    90%
-deckard/model/declarations.py                    10      0   100%
-deckard/model/defend.py                         576     71    88%
+deckard/model/__init__.py                        73     15    79%
+deckard/model/_mixins.py                         59     11    81%
+deckard/model/base.py                           583     65    89%
+deckard/model/declarations.py                    10     10     0%
+deckard/model/defend.py                         553     45    92%
 deckard/model/defense/__init__.py                14      0   100%
 deckard/model/defense/default.py                  3      0   100%
-deckard/model/detector.py                        28      0   100%
-deckard/model/fairlearn.py                        1      0   100%
-deckard/model/fairness.py                       351    129    63%
-deckard/model/lifelines.py                        1      0   100%
-deckard/model/postprocessor.py                   15      0   100%
-deckard/model/preprocessor.py                    15      0   100%
-deckard/model/regularizer.py                     11      0   100%
-deckard/model/survival.py                       225      5    98%
-deckard/model/trainer.py                         24      2    92%
-deckard/model/transformer.py                     32      0   100%
-deckard/plot/__init__.py                         44      2    95%
+deckard/model/detector.py                        29      0   100%
+deckard/model/postprocessor.py                   16      0   100%
+deckard/model/preprocessor.py                    16      0   100%
+deckard/model/regularizer.py                     12      0   100%
+deckard/model/trainer.py                         25      2    92%
+deckard/model/transformer.py                     33      0   100%
+deckard/plot/__init__.py                         63     10    84%
 deckard/plot/base.py                             74     41    45%
-deckard/plot/declarations.py                      8      0   100%
-deckard/plot/seaborn_plots.py                   183     77    58%
-deckard/plot/survival.py                        198     62    69%
-deckard/plot/yellowbrick_plots.py               623    386    38%
-deckard/plugins/__init__.py                       1      0   100%
-deckard/plugins/anjana/__init__.py                4      0   100%
-deckard/plugins/anjana/data.py                    3      0   100%
-deckard/plugins/anjana/model.py                   2      0   100%
-deckard/plugins/anjana/score.py                   2      0   100%
+deckard/plot/declarations.py                      6      6     0%
+deckard/plugins/__init__.py                      48     11    77%
+deckard/plugins/anjana/__init__.py                5      0   100%
+deckard/plugins/anjana/data.py                  228     12    95%
+deckard/plugins/anjana/model.py                  22      1    95%
+deckard/plugins/anjana/score.py                  73      2    97%
+deckard/plugins/data.py                           2      2     0%
+deckard/plugins/defense.py                       40     26    35%
 deckard/plugins/fairlearn/__init__.py             4      0   100%
-deckard/plugins/fairlearn/data.py                 3      0   100%
-deckard/plugins/fairlearn/model.py                2      0   100%
-deckard/plugins/fairlearn/score.py                2      0   100%
-deckard/plugins/lifelines/__init__.py             6      0   100%
-deckard/plugins/lifelines/data.py                 2      0   100%
-deckard/plugins/lifelines/experiment.py           2      0   100%
-deckard/plugins/lifelines/model.py                2      0   100%
-deckard/plugins/lifelines/plot.py                 2      0   100%
-deckard/plugins/lifelines/score.py                2      0   100%
+deckard/plugins/fairlearn/data.py               116     10    91%
+deckard/plugins/fairlearn/model.py              190     77    59%
+deckard/plugins/fairlearn/score.py              454    140    69%
+deckard/plugins/lifelines/__init__.py             3      0   100%
+deckard/plugins/lifelines/data.py                73      0   100%
+deckard/plugins/lifelines/experiment.py         385     63    84%
+deckard/plugins/lifelines/model.py              227      5    98%
+deckard/plugins/lifelines/plot.py               198     62    69%
+deckard/plugins/lifelines/score.py               45      2    96%
 deckard/plugins/seaborn/__init__.py               2      0   100%
-deckard/plugins/seaborn/plot.py                   2      0   100%
+deckard/plugins/seaborn/plot.py                 183     77    58%
 deckard/plugins/yellowbrick/__init__.py           2      0   100%
-deckard/plugins/yellowbrick/plot.py               2      0   100%
+deckard/plugins/yellowbrick/plot.py             623    386    38%
 deckard/pytorch/__init__.py                       2      0   100%
 deckard/pytorch/attack.py                         2      2     0%
-deckard/pytorch/data.py                           3      0   100%
+deckard/pytorch/data.py                           3      3     0%
 deckard/pytorch/data_pipeline.py                  2      2     0%
 deckard/pytorch/experiment.py                     2      2     0%
-deckard/pytorch/fairness_data.py                  2      0   100%
+deckard/pytorch/fairness_data.py                  2      2     0%
 deckard/pytorch/model.py                          2      0   100%
-deckard/score/__init__.py                        27      2    93%
-deckard/score/anjana.py                          71      1    99%
+deckard/score/__init__.py                        74     36    51%
+deckard/score/_runtime.py                        54     14    74%
 deckard/score/attack.py                         199     10    95%
-deckard/score/base.py                           533    125    77%
+deckard/score/base.py                           497     97    80%
 deckard/score/data.py                           114      0   100%
-deckard/score/declarations.py                    15      0   100%
-deckard/score/declarations_fairness.py            4      4     0%
-deckard/score/declarations_survival.py            3      3     0%
-deckard/score/fairness.py                       448    144    68%
-deckard/score/survival.py                        45      2    96%
+deckard/score/declarations_fairness.py            3      3     0%
+deckard/score/declarations_survival.py            2      2     0%
 deckard/utils.py                                779     92    88%
 -----------------------------------------------------------------
-TOTAL                                         13030   2313    82%
+TOTAL                                         14146   2756    81%
 ============================== slowest durations ===============================
-28.60s call     test/test_experiment/test_pytorch_experiment.py::test_deckard_optimize_torch_poisoning_gradient_matching_smoke_matrix
-26.35s call     test/test_experiment/test_pytorch_experiment.py::test_deckard_optimize_torch_art_smoke_matrix
-14.69s setup    test/test_integration/test_base_integration.py::test_adult_all_attack_types_base[<lambda>-evasion_]
-11.41s call     test/test_integration/test_survival_integration.py::test_survival_cli_in_examples_sklearn[leukemia-weibull]
-8.43s call     test/test_layers/test_optimize.py::test_deckard_optimize_hydra_multirun_cli_smoke
-8.42s call     test/test_integration/test_survival_integration.py::test_survival_cli_in_examples_sklearn[lung-cox]
-8.41s call     test/test_integration/test_survival_integration.py::test_survival_cli_in_examples_sklearn[lifelines_diabetes-weibull]
-8.12s call     test/test_integration/test_survival_integration.py::test_survival_cli_in_examples_sklearn[diabetes-weibull]
-8.11s call     test/test_integration/test_survival_integration.py::test_survival_cli_in_examples_sklearn[lifelines_diabetes-cox]
-7.63s call     test/test_experiment/test_experiment.py::TestPoisoningExperimentIntegration::test_deckard_optimize_help_smoke
-7.49s call     test/test_experiment/test_anjana_experiment.py::test_deckard_optimize_subcommand_help_in_sklearn_dir
-7.28s call     test/test_experiment/test_pytorch_experiment.py::test_deckard_optimize_subcommand_help_in_pytorch_dir
-6.22s call     test/test_integration/test_hydra_score_config_integration.py::test_score_experiment_execution_via_optimize_cli
-6.11s call     test/test_integration/test_hydra_score_config_integration.py::test_score_compose_via_optimize_cfg_job_cli
-5.64s call     test/test_integration/test_anjana_integration.py::test_joblib_launcher_syncs_scores_and_attrs_sklearn
-5.49s call     test/test_integration/test_anjana_integration.py::test_deckard_optimize_hydra_multirun_syncs_optuna_trial_attrs_sklearn
-5.21s call     test/test_experiment/test_pytorch_experiment.py::test_deckard_optimize_torch_fairness_smoke_matrix
-5.18s call     test/test_package/test_framework_isolation.py::test_pytorch_framework_importable_without_sklearn_module
-5.14s call     test/test_experiment/test_pytorch_experiment.py::test_deckard_optimize_help_in_examples_pytorch
-5.07s call     test/test_package/test_framework_isolation.py::test_sklearn_framework_importable_without_pytorch_module
-4.89s call     test/test_integration/test_anjana_integration.py::test_cli_score_chain_with_fairness_sklearn
-4.85s call     test/test_integration/test_anjana_integration.py::test_cli_score_chain_data_anjana_evasion_sklearn
-4.78s call     test/test_integration/test_anjana_integration.py::test_deckard_optimize_help_in_examples_sklearn
-4.59s call     test/test_integration/test_anjana_integration.py::test_deckard_optimize_smoke_matrix_sklearn
-3.91s call     test/test_integration/test_anjana_integration.py::test_cli_score_chain_with_model_without_attack_sklearn
-3.78s call     test/test_integration/test_anjana_integration.py::test_cli_score_chain_without_model_or_attack_sklearn
-3.01s call     test/test_integration/test_base_integration.py::test_adult_all_attack_types_base[<lambda>-database_reconstruction_]
-2.34s call     test/test_layers/test_pareto.py::TestParetoMain::test_multi_objective_produces_pareto_front
-1.17s call     test/test_integration/test_base_integration.py::test_cli_attack_composition_database_reconstruction_smoke
-1.14s call     test/test_declarations.py::TestRegisterConfigs::test_register_configs_idempotent
-1.01s call     test/test_attack/test_attack.py::TestFairlearnAttackScorer::test_membership_inference_with_fairlearn_scorer_end_to_end
-0.65s call     test/test_declarations.py::TestRegisterConfigs::test_register_configs_with_external_dirs
-0.60s call     test/test_layers/test_progress_bar_layer.py::test_collect_storage_finished_counts_reads_trials_and_earliest
-0.57s call     test/test_data/test_pytorch.py::TestPytorchDataConfig::test_load_data_alias_and_numpy_fallback_paths
-0.52s call     test/test_plot/test_yellowbrick.py::TestYellowbrickPlots::test_clustering_plots
-0.52s call     test/test_declarations.py::TestRegisterConfigs::test_register_configs_runs_without_error
-0.50s call     test/test_attack/test_attack.py::TestAttackConfig::test_real_database_reconstruction_attack_executes
-0.48s call     test/test_layers/test_optimize.py::test_seed_experiment_uuid_for_current_trial_tags_trial
-0.45s call     test/test_layers/test_progress_bar_layer.py::test_progress_bar_main_integration_reads_dvc_and_optuna_db
-0.42s call     test/test_integration/test_base_integration.py::test_cli_data_model_composition_adult_logistic
-0.42s call     test/test_attack/test_attack.py::TestFairlearnAttackScorer::test_evasion_attack_with_fairlearn_scorer_end_to_end
-0.41s call     test/test_experiment/test_experiment.py::TestExperimentScorerModePermutations::test_data_profile_scorer_supports_all_mode_permutations
-0.39s call     test/test_model/test_model_fairness.py::TestFairlearnModelConfig::test_sensitive_fairness_scores_naming_convention
-0.39s call     test/test_layers/test_survival_modes_integration.py::TestMode1NativeSurvivalData::test_native_survival_with_lifelines_diabetes
-0.37s call     test/test_integration/test_base_integration.py::test_adult_all_attack_types_base[<lambda>-membership_inference_]
-0.37s call     test/test_plot/test_yellowbrick.py::TestYellowbrickPlots::test_single_plot_applies_rc_config
-0.35s call     test/test_data/test_data.py::TestDataConfig::test_digits_data_loading_and_sampling
-0.34s call     test/test_data/test_data_pipeline_compose.py::test_sklearn_pipeline_yaml_configs_compose_and_instantiate
-0.34s call     test/test_layers/test_optimize.py::test_parallel_jobs_do_not_break_synchronization
-0.34s call     test/test_data/test_data.py::TestDataConfigAdditional::test_digits_data_loading_and_sampling
-0.34s call     test/test_data/test_data.py::TestDataPipelineConfig::test_pipeline_fit_time
-0.34s call     test/test_layers/test_optimize.py::test_job_restarts_do_not_break_syncrhonization
-0.33s call     test/test_attack/test_attack.py::TestExtractBranches::test_initialize_attack_builds_neural_art_classifier_for_extraction
-0.32s call     test/test_data/test_data.py::TestFairlearnDataPipelineConfig::test_pipeline_fit_time
-0.30s call     test/test_model/test_pytorch_serialization.py::test_pytorch_model_checkpointing_preserves_post_fit_defense_stage
+15.72s setup    test/test_integration/test_base_integration.py::test_adult_all_attack_types_base[<lambda>-evasion_]
+10.49s call     test/test_layers/test_optimize.py::test_deckard_optimize_hydra_multirun_cli_smoke
+8.82s call     test/test_experiment/test_experiment.py::TestPoisoningExperimentIntegration::test_deckard_optimize_help_smoke
+8.11s call     test/test_integration/test_hydra_score_config_integration.py::test_score_experiment_execution_via_optimize_cli
+7.94s call     test/test_plugins/test_anjana/test_anjana_experiment.py::test_deckard_optimize_subcommand_help_in_sklearn_dir
+6.90s call     test/test_plugins/test_anjana/test_anjana_integration.py::test_cli_score_chain_without_model_or_attack_sklearn
+6.74s call     test/test_plugins/test_lifelines/test_survival_integration.py::test_survival_cli_in_examples_sklearn[diabetes-weibull]
+6.67s call     test/test_integration/test_hydra_score_config_integration.py::test_score_compose_via_optimize_cfg_job_cli
+6.64s call     test/test_plugins/test_lifelines/test_survival_integration.py::test_survival_cli_in_examples_sklearn[lifelines_diabetes-cox]
+6.47s call     test/test_package/test_core_package_isolation.py::test_core_packages_do_not_eagerly_import_plugin_families[deckard.data]
+6.32s call     test/test_package/test_plugin_family_isolation.py::test_score_plugin_family_importable_without_sibling_families[deckard.plugins.anjana.score-DefaultAnjanaScorerConfig-blocked_prefixes0]
+5.75s call     test/test_plugins/test_anjana/test_anjana_integration.py::test_deckard_optimize_hydra_multirun_syncs_optuna_trial_attrs_sklearn
+5.63s call     test/test_plugins/test_anjana/test_anjana_integration.py::test_joblib_launcher_syncs_scores_and_attrs_sklearn
+5.44s call     test/test_plugins/test_anjana/test_anjana_integration.py::test_deckard_optimize_help_in_examples_sklearn
+5.16s call     test/test_plugins/test_anjana/test_anjana_integration.py::test_cli_score_chain_data_anjana_evasion_sklearn
+4.98s call     test/test_plugins/test_anjana/test_anjana_integration.py::test_deckard_optimize_smoke_matrix_sklearn
+4.95s call     test/test_plugins/test_anjana/test_anjana_integration.py::test_cli_score_chain_with_fairness_sklearn
+4.82s call     test/test_plugins/test_anjana/test_anjana_integration.py::test_cli_score_chain_with_model_without_attack_sklearn
+4.80s call     test/test_plugins/test_lifelines/test_survival_integration.py::test_survival_cli_in_examples_sklearn[leukemia-weibull]
+4.52s call     test/test_package/test_core_package_isolation.py::test_core_packages_do_not_eagerly_import_plugin_families[deckard.model]
+4.51s call     test/test_package/test_plugin_family_isolation.py::test_score_plugin_family_importable_without_sibling_families[deckard.plugins.fairlearn.score-DefaultFairlearnScorerConfig-blocked_prefixes1]
+4.47s call     test/test_plugins/test_lifelines/test_survival_integration.py::test_survival_cli_in_examples_sklearn[lung-cox]
+3.99s call     test/test_plugins/test_lifelines/test_survival_integration.py::test_survival_cli_in_examples_sklearn[lifelines_diabetes-weibull]
+3.50s call     test/test_package/test_core_package_isolation.py::test_core_packages_do_not_eagerly_import_plugin_families[deckard.attack]
+3.50s call     test/test_package/test_plugin_family_isolation.py::test_score_plugin_family_importable_without_sibling_families[deckard.plugins.lifelines.score-DefaultLifelinesConfig-blocked_prefixes2]
+3.37s call     test/test_package/test_framework_isolation.py::test_sklearn_framework_importable_without_pytorch_module
+3.33s call     test/test_package/test_core_package_isolation.py::test_core_packages_do_not_eagerly_import_plugin_families[deckard.detector]
+3.23s call     test/test_package/test_framework_isolation.py::test_pytorch_framework_importable_without_sklearn_module
+3.22s call     test/test_integration/test_base_integration.py::test_adult_all_attack_types_base[<lambda>-database_reconstruction_]
+3.15s call     test/test_package/test_core_package_isolation.py::test_core_packages_do_not_eagerly_import_plugin_families[deckard.experiment]
+3.14s call     test/test_layers/test_pareto.py::TestParetoMain::test_multi_objective_produces_pareto_front
+3.14s call     test/test_package/test_core_package_isolation.py::test_core_packages_do_not_eagerly_import_plugin_families[deckard.score]
+2.00s call     test/test_frameworks/test_pytorch/test_pytorch_data.py::TestPytorchDataConfig::test_load_data_alias_and_numpy_fallback_paths
+1.99s call     test/test_declarations.py::TestRegisterConfigs::test_register_configs_runs_without_error
+1.51s call     test/test_plugins/test_lifelines/test_survival_modes_integration.py::TestMode1NativeSurvivalData::test_native_survival_with_lifelines_diabetes
+1.43s call     test/test_plugins/test_fairlearn/test_fairness_integration.py::test_mixed_fairlearn_and_art_defenses_apply_with_type_checks
+1.41s call     test/test_layers/test_optimize.py::test_seed_experiment_uuid_for_current_trial_tags_trial
+1.34s call     test/test_layers/test_progress_bar_layer.py::test_collect_storage_finished_counts_reads_trials_and_earliest
+1.27s call     test/test_integration/test_base_integration.py::test_cli_attack_composition_database_reconstruction_smoke
+1.27s call     test/test_package/test_repository_wide_enforcement.py::test_runtime_declaration_registration_is_idempotent
+1.05s call     test/test_declarations.py::TestRegisterConfigs::test_register_configs_idempotent
+0.81s call     test/test_attack/test_attack.py::TestFairlearnAttackScorer::test_membership_inference_with_fairlearn_scorer_end_to_end
+0.62s call     test/test_declarations.py::TestRegisterConfigs::test_register_configs_with_external_dirs
+0.56s call     test/test_attack/test_attack.py::TestExtractBranches::test_initialize_attack_builds_neural_art_classifier_for_extraction
+0.55s call     test/test_attack/test_attack.py::TestAttackConfig::test_real_database_reconstruction_attack_executes
+0.54s call     test/test_plugins/test_yellowbrick/test_yellowbrick.py::TestYellowbrickPlots::test_clustering_plots
+0.53s call     test/test_package/test_repository_wide_enforcement.py::test_repository_enforcement_plugins_scope_passes
+0.52s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestAttackConfig::test_real_database_reconstruction_attack_executes
+0.50s call     test/test_experiment/test_experiment.py::TestExperimentScorerModePermutations::test_data_profile_scorer_supports_all_mode_permutations
+0.50s call     test/test_integration/test_base_integration.py::test_cli_data_model_composition_adult_logistic
+0.47s call     test/test_utils/test_base_utils.py::TestTopLevelSaveLoadData::test_save_and_load_parquet
+0.45s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestExtractBranches::test_initialize_attack_builds_neural_art_classifier_for_extraction
+0.42s call     test/test_data/test_data.py::TestDataConfigAdditional::test_digits_data_loading_and_sampling
+0.42s call     test/test_package/test_repository_wide_enforcement.py::test_repository_enforcement_frameworks_scope_passes
+0.41s call     test/test_layers/test_progress_bar_layer.py::test_progress_bar_main_integration_reads_dvc_and_optuna_db
+0.40s call     test/test_data/test_data.py::TestDataConfig::test_digits_data_loading_and_sampling
+0.40s call     test/test_integration/test_base_integration.py::test_adult_all_attack_types_base[<lambda>-membership_inference_]
+0.38s call     test/test_plugins/test_fairlearn/test_model_fairness.py::TestFairlearnModelConfig::test_sensitive_fairness_scores_naming_convention
+0.37s call     test/test_layers/test_optimize.py::test_parallel_jobs_do_not_break_synchronization
+0.37s call     test/test_plugins/test_yellowbrick/test_yellowbrick.py::TestYellowbrickPlots::test_single_plot_applies_rc_config
+0.36s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_pytorch_experiment_hash_stable_after_execution
+0.35s call     test/test_model/test_model_core.py::TestModelConfig::test_call_training_and_prediction
+0.35s call     test/test_attack/test_attack.py::TestFairlearnAttackScorer::test_evasion_attack_with_fairlearn_scorer_end_to_end
+0.35s call     test/test_layers/test_optimize.py::test_job_restarts_do_not_break_syncrhonization
+0.34s call     test/test_data/test_data.py::TestFairlearnDataPipelineConfig::test_pipeline_fit_time
+0.33s call     test/test_plugins/test_anjana/test_pytorch_anjana_integration.py::test_torch_model_scores_include_benign_metrics_for_chain_readiness
+0.33s call     test/test_data/test_data.py::TestDataPipelineConfig::test_pipeline_fit_time
+0.32s call     test/test_integration/test_base_integration.py::test_cli_plot_composition_smoke
+0.32s call     test/test_plugins/test_yellowbrick/test_yellowbrick.py::TestYellowbrickPlots::test_one_clustering_plot
+0.31s call     test/test_data/test_data_pipeline_compose.py::test_sklearn_pipeline_yaml_configs_compose_and_instantiate
+0.29s call     test/test_data/test_data.py::TestFairlearnDataPipelineConfig::test_pipeline_transform_time
 0.29s call     test/test_data/test_data.py::TestDataPipelineConfig::test_pipeline_transform_time
-0.29s call     test/test_model/test_model_core.py::TestModelConfig::test_call_training_and_prediction
-0.28s call     test/test_plot/test_yellowbrick.py::TestYellowbrickPlots::test_one_clustering_plot
-0.27s call     test/test_data/test_data.py::TestFairlearnDataPipelineConfig::test_pipeline_transform_time
-0.26s call     test/test_plot/test_yellowbrick.py::TestYellowbrickPlots::test_one_regression_plot
+0.28s call     test/test_experiment/test_experiment.py::TestDataConfigResolutionMixin::test_pytorch_pipeline_yaml_compose_instantiates_pipeline_config
+0.26s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_pytorch_model_trains_on_synthetic_data
 0.26s call     test/test_layers/test_optimize.py::test_optimize_main_runs_hydra_configured_pytorch_experiment
-0.25s call     test/test_attack/test_attack.py::TestAttackConfig::test_real_membership_inference_attack_executes
-0.22s call     test/test_model/test_pytorch_serialization.py::test_pytorch_model_loss_decreases_during_training
-0.22s call     test/test_experiment/test_pytorch_experiment.py::test_pytorch_model_trains_on_synthetic_data
-0.22s call     test/test_model/test_pytorch_serialization.py::test_pytorch_model_checkpoint_records_track_epochs
-0.20s call     test/test_integration/test_base_integration.py::test_cli_data_model_composition_diabetes_rf
-0.20s call     test/test_model/test_pytorch_serialization.py::test_pytorch_model_checkpointing_scores_and_caches_models
-0.19s call     test/test_experiment/test_experiment.py::TestDataConfigResolutionMixin::test_sklearn_pipeline_yaml_compose_instantiates_pipeline_configs
-0.18s call     test/test_data/test_data.py::TestFairlearnDataPipelineConfig::test_pipeline_fit_and_transform
-0.17s call     test/test_experiment/test_pytorch_experiment.py::test_pytorch_experiment_hash_stable_after_execution
-0.17s call     test/test_integration/test_base_integration.py::test_cli_full_experiment_composition
-0.17s call     test/test_integration/test_base_integration.py::test_cli_attack_composition_fgm
-0.17s call     test/test_utils/test_base_utils.py::TestTopLevelSaveLoadData::test_save_and_load_parquet
-0.17s call     test/test_score/test_score.py::TestDataInspectionScorers::test_data_classification_default_scores
-0.17s call     test/test_integration/test_base_integration.py::test_cli_full_experiment_composition_database_reconstruction_end_to_end
-0.16s call     test/test_integration/test_base_integration.py::test_base_data_model_attack_end_to_end[data_cfg1-model_cfg1-attack_cfg1-False-evasion_]
-0.16s call     test/test_model/test_pytorch_serialization.py::test_pytorch_checkpoint_filename_format_appends_epoch_before_extension
-0.15s call     test/test_data/test_fairlearn_data_config.py::TestLoadData::test_load_data_missing_X_raises_assertion
-0.14s call     test/test_integration/test_base_integration.py::test_cli_experiment_tuning_mode_emits_test_scores
-0.14s call     test/test_model/test_pytorch_serialization.py::test_pytorch_model_different_batch_sizes
+0.24s call     test/test_integration/test_hydra_score_config_integration.py::test_scorer_dict_config_hash_stable_after_scoring
+0.23s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_model_checkpointing_scores_and_caches_models
+0.23s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestAttackConfig::test_real_membership_inference_attack_executes
+0.20s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_model_checkpointing_preserves_post_fit_defense_stage
+0.20s call     test/test_experiment/test_experiment.py::TestDataConfigResolutionMixin::test_sklearn_pipeline_yaml_compose_instantiates_pipeline_configs
+0.19s call     test/test_integration/test_base_integration.py::test_cli_full_experiment_composition
+0.19s call     test/test_integration/test_base_integration.py::test_cli_data_model_composition_diabetes_rf
+0.19s call     test/test_attack/test_attack.py::TestAttackConfig::test_real_membership_inference_attack_executes
+0.19s call     test/test_utils/test_base_utils.py::TestConfigBaseSaveLoadData::test_save_data_parquet
+0.19s call     test/test_integration/test_base_integration.py::test_cli_attack_composition_fgm
+0.19s call     test/test_plugins/test_fairlearn/test_fairness_integration.py::test_fairness_defense_config_apply_to_trained_model
+0.18s call     test/test_plugins/test_fairlearn/test_fairness_integration.py::test_fairness_model_config_object_pickle_roundtrip
+0.17s call     test/test_integration/test_base_integration.py::test_base_data_model_attack_end_to_end[data_cfg1-model_cfg1-attack_cfg1-False-evasion_]
+0.17s call     test/test_integration/test_base_integration.py::test_cli_experiment_tuning_mode_emits_test_scores
+0.17s call     test/test_attack/test_attack.py::TestFairlearnAttackScorer::test_score_attribute_with_sensitive_features_produces_group_metrics
+0.17s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_model_loss_decreases_during_training
+0.16s call     test/test_integration/test_base_integration.py::test_cli_full_experiment_composition_database_reconstruction_end_to_end
+0.16s call     test/test_plugins/test_yellowbrick/test_yellowbrick.py::TestYellowbrickPlots::test_one_classification_plot
+0.15s call     test/test_model/test_model_core.py::TestModelConfig::test_call_skips_scoring_when_scorer_none
+0.15s call     test/test_plugins/test_fairlearn/test_fairness_integration.py::test_fairness_data_and_model_scores
+0.15s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_model_checkpoint_records_track_epochs
+0.15s call     test/test_plugins/test_yellowbrick/test_yellowbrick.py::TestYellowbrickPlots::test_one_regression_plot
+0.14s call     test/test_plugins/test_fairlearn/test_fairness_integration.py::test_fairness_model_config_hash_stable_after_training
+0.14s call     test/test_integration/test_hydra_model_config_integration.py::test_sklearn_default_can_switch_to_test_logistic_model_profile
+0.13s call     test/test_plugins/test_anjana/test_anjana_experiment.py::test_anjana_fairness_data_and_art_model_chain
+0.13s call     test/test_plugins/test_searborn/test_seaborn.py::TestSeabornPlots::test_scatter_plot_saves_and_sets_labels
 0.13s call     test/test_integration/test_hydra_score_config_integration.py::test_fairness_score_group_executes_end_to_end
-0.13s call     test/test_model/test_model_core.py::TestModelConfig::test_call_skips_scoring_when_scorer_none
-0.13s call     test/test_model/test_pytorch_serialization.py::test_pytorch_model_config_save_and_load_roundtrip
+0.13s call     test/test_data/test_data.py::TestFairlearnDataPipelineConfig::test_pipeline_fit_and_transform
 0.13s call     test/test_integration/test_base_integration.py::test_cli_defense_composition_feature_squeezing
-0.13s call     test/test_plot/test_yellowbrick.py::TestYellowbrickPlots::test_one_classification_plot
-0.12s call     test/test_utils/test_base_utils.py::TestConfigBaseSaveLoadData::test_save_data_parquet
-0.12s call     test/test_integration/test_pytorch_anjana_integration.py::test_torch_model_scores_include_benign_metrics_for_chain_readiness
-0.11s call     test/test_data/test_fairlearn_data_config.py::TestLoadData::test_load_data_missing_y_raises_assertion
+0.12s setup    test/test_plugins/test_fairlearn/test_fairness_integration.py::test_generate_fairness_data_model_with_and_without_attack[False]
+0.12s call     test/test_integration/test_hydra_score_config_integration.py::test_classification_score_group_executes_end_to_end
 0.11s call     test/test_integration/test_hydra_score_config_integration.py::test_scorer_dict_config_object_pickle_roundtrip
-0.11s call     test/test_plot/test_seaborn.py::TestSeabornPlots::test_scatter_plot_saves_and_sets_labels
-0.11s call     test/test_data/test_fairlearn_data_config.py::TestClassificationFeatureScoresForGroup::test_classification_scores_contains_required_metrics
-0.11s call     test/test_integration/test_hydra_score_config_integration.py::test_default_can_switch_to_fairness_score_group
-0.10s call     test/test_integration/test_hydra_score_config_integration.py::test_classification_score_group_executes_end_to_end
-0.10s call     test/test_integration/test_base_integration.py::test_cli_plot_composition_smoke
-0.10s call     test/test_experiment/test_experiment.py::TestDataConfigResolutionMixin::test_pytorch_pipeline_yaml_compose_instantiates_pipeline_config
+0.11s call     test/test_integration/test_hydra_score_config_integration.py::test_regression_score_group_executes_end_to_end
+0.11s call     test/test_integration/test_hydra_score_config_integration.py::test_scorer_dict_config_scores_persist_and_reload
+0.11s call     test/test_plugins/test_anjana/test_anjana_experiment.py::test_anjana_defense_applied_before_split
+0.11s call     test/test_plugins/test_anjana/test_anjana_integration.py::test_anjana_attack_chain_type_and_scores
+0.10s call     test/test_integration/test_compose_attack_configs.py::test_sklearn_default_includes_attack_config
+0.10s call     test/test_integration/test_hydra_score_config_integration.py::test_default_can_switch_to_fairness_score_group
 0.10s call     test/test_integration/test_compose_model_configs.py::test_sklearn_default_can_override_model_profile
-0.10s call     test/test_package/test_framework_compose.py::test_sklearn_framework_defense_yaml_composes_in_isolation
-0.10s call     test/test_integration/test_hydra_score_config_integration.py::test_scorer_dict_config_hash_stable_after_scoring
-0.10s call     test/test_integration/test_hydra_score_config_integration.py::test_scorer_dict_config_scores_persist_and_reload
-0.10s call     test/test_model/test_pytorch_serialization.py::test_pytorch_model_training_records_optimizer_loss_and_serializes_it
-0.10s call     test/test_integration/test_hydra_model_config_integration.py::test_sklearn_default_can_switch_to_test_logistic_model_profile
-0.10s call     test/test_integration/test_hydra_score_config_integration.py::test_scorer_dict_config_equal_content_produces_equal_hash
-0.10s call     test/test_integration/test_compose_score_configs.py::test_sklearn_score_config_composes[sklearn-classification]
-0.09s call     test/test_integration/test_hydra_score_config_integration.py::test_regression_score_group_executes_end_to_end
-0.09s call     test/test_integration/test_compose_data_configs.py::test_sklearn_data_config_composes[sklearn-adult]
-0.09s call     test/test_model/test_pytorch_serialization.py::test_pytorch_epoch_attack_scoring_runs_each_epoch_and_keeps_convention
-0.09s call     test/test_integration/test_compose_attack_configs.py::test_sklearn_default_includes_attack_config
-0.09s call     test/test_experiment/test_anjana_experiment.py::test_anjana_data_with_attack_scoring
-0.08s call     test/test_score/test_score.py::TestFairnessScorers::test_metric_frame_fairness_score_dict_supports_full_metricframe_kwargs
-0.08s call     test/test_plot/test_yellowbrick.py::TestYellowbrickPlots::test_single_plot_prepares_experiment_only_once
-0.08s call     test/test_integration/test_anjana_integration.py::test_anjana_attack_chain_type_and_scores
-0.08s call     test/test_experiment/test_anjana_experiment.py::test_anjana_fairness_data_and_art_model_chain
-0.08s call     test/test_data/test_data.py::TestDataConfig::test_load_self
-0.08s call     test/test_data/test_data.py::TestDataConfigAdditional::test_save_data_file
-0.07s call     test/test_score/test_score.py::TestDataInspectionScorers::test_data_regression_default_scores_include_ecdf
-0.07s call     test/test_data/test_data_base_unit.py::test_score_and_feature_score_branches
-0.07s call     test/test_data/test_data.py::TestDataConfig::test_save_data_file
-0.07s call     test/test_plot/test_seaborn.py::TestSeabornPlots::test_cat_plot_returns_real_axis
-0.07s call     test/test_experiment/test_experiment.py::TestExperimentValidationScoring::test_report_mode_emits_validation_scores
-0.07s call     test/test_experiment/test_experiment.py::TestKFoldExperiment::test_mean_equals_average_of_folds
-0.07s call     test/test_package/test_classifier_refactor.py::test_string_distance_transformer_basic_shapes
-0.07s call     test/test_experiment/test_anjana_experiment.py::test_anjana_experiment_end_to_end
+0.10s call     test/test_data/test_data.py::TestDataConfig::test_diabetes_data_loading_and_sampling
+0.10s call     test/test_experiment/test_experiment.py::TestExperimentScoreFileHandling::test_existing_score_file_is_merged
+0.10s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_pytorch_experiment_scores_persist_via_file_config
+0.10s call     test/test_plugins/test_fairlearn/test_fairlearn_data_config.py::TestLoadData::test_load_data_missing_X_raises_assertion
+0.09s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_model_config_save_and_load_roundtrip
+0.09s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_checkpoint_filename_format_appends_epoch_before_extension
+0.09s call     test/test_integration/test_hydra_score_config_integration.py::test_scorer_dict_config_equal_content_produces_equal_hash
+0.09s call     test/test_data/test_data.py::TestDataConfig::test_save_self
+0.09s call     test/test_detector/test_detector.py::test_real_art_poisoning_detector_executes
+0.09s call     test/test_integration/test_compose_score_configs.py::test_sklearn_score_config_composes[sklearn-classification]
+0.09s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_model_different_batch_sizes
+0.09s call     test/test_plugins/test_anjana/test_anjana_integration.py::test_anjana_fairness_and_art_chain_type_and_transform
+0.09s call     test/test_integration/test_compose_data_configs.py::test_sklearn_data_config_composes[sklearn-anjana]
+0.09s call     test/test_experiment/test_experiment.py::TestShuffleExperiment::test_per_split_keys_present
+0.09s call     test/test_plugins/test_fairlearn/test_pytorch_fairness_integration.py::test_pytorch_model_training_with_fairness_style_data
+0.09s call     test/test_plugins/test_fairlearn/test_fairlearn_data_config.py::TestLoadData::test_load_data_missing_y_raises_assertion
+0.09s call     test/test_package/test_framework_compose.py::test_sklearn_framework_defense_yaml_composes_in_isolation
+0.09s call     test/test_experiment/test_experiment.py::TestKFoldExperiment::test_per_fold_keys_present
+0.08s call     test/test_detector/test_detector.py::test_real_art_evasion_binary_input_detector_executes
+0.08s call     test/test_plugins/test_fairlearn/test_fairlearn_score.py::TestFairnessScorers::test_metric_frame_fairness_score_dict_supports_full_metricframe_kwargs
+0.08s call     test/test_integration/test_hydra_score_config_integration.py::test_survival_score_group_executes_end_to_end
+0.08s call     test/test_plugins/test_searborn/test_seaborn.py::TestSeabornPlots::test_cat_plot_returns_real_axis
+0.08s call     test/test_experiment/test_experiment.py::TestShuffleExperiment::test_mean_equals_average_of_splits
+0.08s call     test/test_package/test_classifier_refactor.py::test_string_distance_transformer_basic_shapes
+0.07s call     test/test_score/test_score.py::test_model_and_data_default_profiles_infer_task_from_context
 0.07s call     test/test_experiment/test_experiment.py::TestKFoldExperiment::test_kfold_mean_key_present
+0.07s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_pytorch_experiment_end_to_end
+0.07s call     test/test_plugins/test_fairlearn/test_fairlearn_data_config.py::TestClassificationFeatureScoresForGroup::test_classification_scores_contains_required_metrics
+0.07s call     test/test_data/test_data.py::TestDataConfigAdditional::test_diabetes_data_loading_and_sampling
 0.07s call     test/test_integration/test_hydra_score_config_integration.py::test_survival_config_uses_survival_score_group
-0.07s call     test/test_data/test_data.py::TestDataConfigAdditional::test_save_score_dict
-0.07s call     test/test_model/test_pytorch_serialization.py::test_pytorch_model_serialization_preserves_optimizer_config
+0.07s call     test/test_plugins/test_anjana/test_anjana_experiment.py::test_anjana_data_with_attack_scoring
 0.07s call     test/test_experiment/test_experiment.py::TestShuffleExperiment::test_shuffle_mean_key_present
-0.07s call     test/test_integration/test_hydra_score_config_integration.py::test_survival_score_group_executes_end_to_end
-0.06s call     test/test_experiment/test_experiment.py::TestKFoldExperiment::test_per_fold_keys_present
-0.06s call     test/test_attack/test_attack.py::TestAttackConfig::test_initialize_attack_rejects_unsupported_type
-0.06s call     test/test_attack/test_attack.py::TestCallCachingPaths::test_score_file_loaded_when_exists
-0.06s call     test/test_score/test_score.py::test_model_and_data_default_profiles_infer_task_from_context
-0.06s call     test/test_experiment/test_experiment.py::TestShuffleExperiment::test_mean_equals_average_of_splits
-0.06s call     test/test_integration/test_anjana_integration.py::test_anjana_fairness_and_art_chain_type_and_transform
-0.06s call     test/test_experiment/test_experiment.py::TestShuffleExperiment::test_per_split_keys_present
-0.06s call     test/test_experiment/test_pytorch_experiment.py::test_pytorch_experiment_scores_persist_via_file_config
-0.06s call     test/test_integration/test_compose_data_configs.py::test_sklearn_data_config_composes[sklearn-lifelines]
-0.06s call     test/test_data/test_pytorch.py::TestPytorchCustomDataConfig::test_custom_sample_handles_sensitive_batches_and_invalid_batch_shapes
-0.06s call     test/test_integration/test_hydra_data_config_integration.py::test_sklearn_data_profile_adult_composes
-0.06s call     test/test_model/test_pytorch_serialization.py::test_pytorch_model_serialization_with_different_input_sizes
-0.06s call     test/test_integration/test_compose_attack_configs.py::test_pytorch_torch_default_includes_attack_config
-0.06s call     test/test_integration/test_base_integration.py::test_base_data_model_end_to_end_without_attack[data_cfg1-model_cfg1-accuracy]
-0.06s call     test/test_integration/test_hydra_data_config_integration.py::test_sklearn_data_profile_anjana_composes
+0.07s call     test/test_integration/test_compose_attack_configs.py::test_pytorch_torch_default_includes_attack_config
+0.06s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_pytorch_scores_persist_to_json
+0.06s call     test/test_integration/test_compose_model_configs.py::test_pytorch_model_config_composes[pytorch-tinynet]
 0.06s call     test/test_integration/test_compose_score_configs.py::test_sklearn_survival_score_group_composes
-0.05s call     test/test_package/test_classifier_refactor.py::test_string_distance_transformer_preserves_dataframe_row_count
-0.05s call     test/test_score/test_score.py::TestFairnessScorers::test_fairness_regression_scores
-0.05s call     test/test_integration/test_hydra_data_config_integration.py::test_sklearn_data_profile_lifelines_composes
-0.05s call     test/test_model/test_pytorch_serialization.py::test_pytorch_model_with_adam_optimizer
-0.05s call     test/test_package/test_framework_compose.py::test_pytorch_framework_defense_yaml_composes_in_isolation
-0.05s call     test/test_integration/test_hydra_data_config_integration.py::test_sklearn_data_profile_fairlearn_composes
-0.05s call     test/test_experiment/test_anjana_experiment.py::test_anjana_experiment_scores_persist_to_json
-0.05s call     test/test_experiment/test_experiment.py::TestExperimentScoreFileHandling::test_existing_score_file_is_merged
-0.05s call     test/test_integration/test_defense_pipeline_integration.py::test_model_config_accepts_legacy_single_defense_yaml[examples/sklearn/config/defense/feature-squeezing.yaml-expected_preprocessors0-expected_postprocessors0-art.defences.preprocessor.FeatureSqueezing]
-0.05s call     test/test_integration/test_hydra_data_config_integration.py::test_pytorch_data_profile_torch_mnist_composes
-0.05s call     test/test_data/test_data_pipeline_compose.py::test_pytorch_pipeline_yaml_config_compose_and_instantiate
-0.05s call     test/test_experiment/test_anjana_experiment.py::test_anjana_experiment_with_defense
-0.05s call     test/test_utils/test_base_utils.py::TestConfigBaseSaveLoadData::test_load_data_delegates_to_top_level
-0.05s call     test/test_integration/test_compose_data_configs.py::test_sklearn_data_config_composes[sklearn-anjana]
-0.05s call     test/test_detector/test_detector.py::test_real_art_evasion_binary_input_detector_executes
-0.05s call     test/test_integration/test_hydra_model_config_integration.py::test_pytorch_model_profile_tinynet_composes
-0.05s call     test/test_experiment/test_experiment.py::TestExperimentDetectorPhase::test_detector_phase_runs_after_attack
-0.05s call     test/test_data/test_data.py::TestDataConfig::test_save_score_dict
-0.05s call     test/test_integration/test_compose_model_configs.py::test_pytorch_model_config_composes[pytorch-tinynet]
-0.05s call     test/test_score/test_score.py::test_data_default_score_profile_executes_from_yaml_defaults
-0.05s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_extraction_requires_nn_classifier
-0.05s call     test/test_integration/test_compose_model_configs.py::test_sklearn_model_config_composes[sklearn-cox]
-0.05s call     test/test_utils/test_base_utils.py::TestConfigBaseScores::test_save_and_load_scores_csv
-0.05s call     test/test_experiment/test_experiment.py::TestPoisoningExperimentIntegration::test_poisoning_experiment_emits_benign_and_poisoned_accuracy
+0.06s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_epoch_attack_scoring_runs_each_epoch_and_keeps_convention
+0.06s call     test/test_experiment/test_experiment.py::TestExperimentScoreFileHandling::test_score_file_is_created
+0.06s call     test/test_score/test_score.py::test_data_default_score_profile_executes_from_yaml_defaults
+0.06s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_pytorch_model_with_art_preprocessor_defense
+0.06s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_model_training_records_optimizer_loss_and_serializes_it
+0.06s call     test/test_experiment/test_experiment.py::TestKFoldExperiment::test_mean_equals_average_of_folds
+0.06s call     test/test_attack/test_attack.py::TestAttackConfig::test_initialize_attack_rejects_unsupported_type
+0.06s call     test/test_score/test_score.py::TestDataInspectionScorers::test_data_classification_default_scores
+0.06s call     test/test_integration/test_compose_data_configs.py::test_pytorch_data_config_composes[pytorch-mnist]
+0.06s call     test/test_plugins/test_yellowbrick/test_yellowbrick.py::TestYellowbrickPlots::test_single_plot_prepares_experiment_only_once
+0.06s call     test/test_model/test_model_core.py::TestModelConfig::test_call_saves_test_probabilities_when_file_requested
+0.06s call     test/test_integration/test_hydra_model_config_integration.py::test_pytorch_model_profile_tinynet_composes
+0.05s call     test/test_data/test_sample.py::TestSplitSampler::test_regression_val_score
 0.05s call     test/test_integration/test_hydra_model_config_integration.py::test_sklearn_model_profile_logistic_composes
-0.04s call     test/test_model/test_pytorch_serialization.py::test_pytorch_model_get_model_save_load_error_paths
-0.04s call     test/test_experiment/test_pytorch_experiment.py::test_pytorch_scores_persist_to_json
-0.04s call     test/test_model/test_model_core.py::TestModelConfig::test_call_saves_test_probabilities_when_file_requested
+0.05s call     test/test_model/test_model_core.py::TestModelConfig::test_call_saves_train_and_test_predictions_when_requested
+0.05s call     test/test_experiment/test_experiment.py::TestExperimentValidationScoring::test_report_mode_emits_validation_scores
+0.05s call     test/test_integration/test_hydra_data_config_integration.py::test_sklearn_data_profile_lifelines_composes
+0.05s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestInitializeAttackBranches::test_attack_model_string_path
+0.05s call     test/test_package/test_framework_compose.py::test_pytorch_framework_defense_yaml_composes_in_isolation
+0.05s call     test/test_experiment/test_experiment.py::TestRunSinglePipelineBranchesExtra::test_data_file_path_loads_object_and_saves_score_file
+0.05s call     test/test_integration/test_hydra_data_config_integration.py::test_sklearn_data_profile_anjana_composes
+0.05s call     test/test_integration/test_hydra_model_config_integration.py::test_sklearn_model_profile_cox_composes
+0.05s call     test/test_integration/test_compose_model_configs.py::test_sklearn_model_config_composes[sklearn-cox]
+0.05s call     test/test_model/test_model_core.py::TestModelConfig::test_call_saves_test_predictions_when_file_requested
+0.05s call     test/test_integration/test_hydra_data_config_integration.py::test_sklearn_data_profile_adult_composes
+0.05s call     test/test_plugins/test_anjana/test_anjana_experiment.py::test_anjana_experiment_scores_persist_to_json
+0.05s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_pytorch_model_with_art_postprocessor_defense
+0.05s call     test/test_data/test_data_pipeline_compose.py::test_pytorch_pipeline_yaml_config_compose_and_instantiate
+0.05s call     test/test_data/test_data_base_unit.py::test_load_data_routes_lifelines_aliases_and_csv_options
+0.05s call     test/test_integration/test_compose_data_configs.py::test_sklearn_data_config_composes[sklearn-adult]
+0.05s call     test/test_plugins/test_fairlearn/test_pytorch_fairness_integration.py::test_pytorch_fairlearn_attack_scorer_metric_frame_evasion_group_accuracy_keys
+0.05s call     test/test_integration/test_hydra_data_config_integration.py::test_sklearn_data_profile_fairlearn_composes
+0.05s call     test/test_plugins/test_fairlearn/test_pytorch_fairness_integration.py::test_torch_pipeline_applies_fairlearn_and_art_style_defense_steps_in_order
+0.05s call     test/test_experiment/test_experiment.py::TestExperimentValidationScoring::test_report_mode_without_validation_split_raises
+0.05s call     test/test_integration/test_compose_data_configs.py::test_sklearn_data_config_composes[sklearn-lifelines]
+0.05s call     test/test_plugins/test_anjana/test_anjana_experiment.py::test_anjana_experiment_end_to_end
+0.05s call     test/test_integration/test_base_integration.py::test_base_data_model_end_to_end_without_attack[data_cfg1-model_cfg1-accuracy]
+0.05s call     test/test_experiment/test_experiment.py::TestPoisoningExperimentIntegration::test_poisoning_experiment_emits_benign_and_poisoned_accuracy
+0.05s call     test/test_integration/test_base_integration.py::test_model_config_scores_persist_and_reload
+0.05s call     test/test_experiment/test_experiment.py::TestExperimentValidationScoring::test_tuning_mode_emits_test_scores
+0.04s call     test/test_integration/test_base_integration.py::test_model_config_object_pickle_roundtrip
+0.04s call     test/test_data/test_data.py::TestDataConfig::test_load_self
 0.04s call     test/test_integration/test_compose_model_configs.py::test_sklearn_model_config_composes[sklearn-logistic]
-0.04s call     test/test_data/test_data.py::TestDataConfigAdditional::test_save_self
+0.04s call     test/test_plugins/test_searborn/test_seaborn.py::TestSeabornPlots::test_call_uses_passed_axes
+0.04s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_pytorch_model_hash_stable_after_training
 0.04s call     test/test_integration/test_compose_data_configs.py::test_sklearn_data_config_composes[sklearn-fairlearn]
-0.04s call     test/test_integration/test_compose_data_configs.py::test_pytorch_data_config_composes[pytorch-mnist]
-0.04s call     test/test_experiment/test_experiment.py::TestExperimentScoreFileHandling::test_score_file_is_created
-0.04s call     test/test_model/test_model_core.py::TestModelConfig::test_call_saves_train_and_test_predictions_when_requested
-0.04s call     test/test_experiment/test_anjana_experiment.py::test_anjana_data_with_art_model_defense_chain
-0.04s call     test/test_data/test_data.py::TestDataConfigAdditional::test_plugin_can_augment_scores
-0.04s call     test/test_model/test_pytorch_serialization.py::test_pytorch_model_with_mse_loss
-0.04s call     test/test_experiment/test_pytorch_experiment.py::test_pytorch_experiment_end_to_end
-0.04s call     test/test_integration/test_hydra_model_config_integration.py::test_sklearn_model_profile_cox_composes
-0.04s call     test/test_experiment/test_anjana_experiment.py::test_anjana_experiment_hash_stable_after_execution
-0.04s call     test/test_experiment/test_experiment.py::TestExperimentValidationScoring::test_report_mode_without_validation_split_raises
-0.04s call     test/test_experiment/test_pytorch_experiment.py::test_pytorch_model_hash_stable_after_training
-0.04s call     test/test_experiment/test_anjana_experiment.py::test_anjana_defense_applied_before_split
-0.04s call     test/test_experiment/test_pytorch_experiment.py::test_pytorch_model_with_art_postprocessor_defense
-0.04s call     test/test_attack/test_attack.py::TestInitializeAttackBranches::test_attack_model_string_path
-0.04s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_extraction_requires_classification_task
-0.04s call     test/test_model/test_model_core.py::TestModelConfig::test_hash_stable_after_call_for_model_config
-0.04s call     test/test_experiment/test_experiment.py::TestExperimentValidationScoring::test_tuning_mode_emits_test_scores
-0.04s call     test/test_data/test_data.py::TestDataConfig::test_save_self
-0.04s call     test/test_experiment/test_experiment.py::TestRunSinglePipelineBranchesExtra::test_data_file_path_loads_object_and_saves_score_file
-0.04s call     test/test_integration/test_base_integration.py::test_experiment_config_with_attack_end_to_end
-0.04s call     test/test_experiment/test_pytorch_experiment.py::test_art_last_ordering_no_warning_for_wrapper_only_chain
-0.04s call     test/test_utils/test_base_utils.py::TestConfigBaseSaveLoadObject::test_load_object_corrupt_with_delete_removes_file
 0.04s call     test/test_model/test_model_core.py::TestModelConfig::test_call_saves_train_probabilities_when_file_requested
-0.04s call     test/test_data/test_data.py::TestDataConfig::test_load_lifelines_lung_dataset
-0.04s call     test/test_integration/test_base_integration.py::test_model_config_scores_persist_and_reload
-0.03s call     test/test_experiment/test_pytorch_experiment.py::test_pytorch_model_with_art_preprocessor_defense
-0.03s call     test/test_integration/test_base_integration.py::test_experiment_config_scores_persist_and_reload
+0.04s call     test/test_integration/test_hydra_data_config_integration.py::test_pytorch_data_profile_torch_mnist_composes
+0.04s call     test/test_plugins/test_fairlearn/test_pytorch_fairness_integration.py::test_pytorch_art_defense_pipeline_runs_with_real_art_defense
+0.04s call     test/test_data/test_data.py::TestDataConfigAdditional::test_save_data_file
+0.04s call     test/test_plugins/test_anjana/test_anjana_experiment.py::test_anjana_data_with_art_model_defense_chain
+0.04s call     test/test_plugins/test_fairlearn/test_pytorch_fairness_integration.py::test_pytorch_fairness_model_fit_and_score
+0.04s call     test/test_integration/test_base_integration.py::test_attack_config_hash_stable_after_execution
+0.04s call     test/test_integration/test_base_integration.py::test_experiment_config_scores_persist_and_reload
+0.04s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_model_with_adam_optimizer
+0.04s call     test/test_integration/test_base_integration.py::test_experiment_config_with_attack_end_to_end
+0.04s call     test/test_experiment/test_experiment.py::TestExperimentDetectorPhase::test_detector_phase_runs_after_attack
+0.04s call     test/test_plugins/test_fairlearn/test_fairlearn_pytorch.py::test_sensitive_extraction
+0.04s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_model_serialization_preserves_optimizer_config
+0.04s call     test/test_layers/test_plot_layer.py::test_plot_main_validation_errors
 0.03s call     test/test_integration/test_base_integration.py::test_base_data_model_attack_end_to_end[data_cfg0-model_cfg0-attack_cfg0-False-evasion_]
-0.03s call     test/test_model/test_model_core.py::TestModelConfig::test_call_saves_test_predictions_when_file_requested
-0.03s call     test/test_attack/test_attack.py::TestCallCachingPaths::test_attack_predictions_file_saved_after_call
-0.03s call     test/test_integration/test_base_integration.py::test_attack_config_hash_stable_after_execution
-0.03s call     test/test_data/test_data.py::TestDataConfigAdditional::test_load_self
-0.03s call     test/test_integration/test_base_integration.py::test_model_config_object_pickle_roundtrip
-0.03s call     test/test_experiment/test_experiment.py::TestExperimentValidationScoring::test_tuning_mode_without_validation_split_uses_test_scores
-0.03s call     test/test_experiment/test_experiment.py::TestSetRandomSeed::test_set_random_seed_pytorch
-0.03s call     test/test_plot/test_seaborn.py::TestSeabornPlots::test_heatmap_plot_uses_matrix_data
 0.03s call     test/test_model/test_model_core.py::TestModelConfig::test_call_saves_train_predictions_when_file_requested
-0.03s call     test/test_experiment/test_experiment.py::TestRunSinglePipelineBranchesExtra::test_val_score_mode_resamples_loaded_data_for_validation_split
-0.03s call     test/test_experiment/test_anjana_experiment.py::test_anjana_data_config_hash_stable_after_load
-0.03s call     test/test_attack/test_attack.py::TestAttackConfig::test_hash_stable_after_call_for_attack_config
-0.03s call     test/test_integration/test_base_integration.py::test_attack_scorer_with_data_and_model_context
-0.03s call     test/test_experiment/test_experiment.py::TestExperimentScorerModePermutations::test_non_data_profile_rejects_presample_mode
-0.03s call     test/test_data/test_data.py::TestDataConfig::test_diabetes_data_loading_and_sampling
-0.03s call     test/test_experiment/test_experiment.py::TestPoisoningExperimentIntegration::test_single_pass_with_attack_runs_experiment_scorer_once
-0.03s call     test/test_integration/test_base_integration.py::test_defense_config_apply_to_trained_model
-0.03s call     test/test_data/test_sample.py::TestKFoldSampler::test_caps_produce_expected_sizes_for_1200_samples
-0.03s call     test/test_integration/test_defense_pipeline_integration.py::test_defense_pipeline_scores_persist_and_reload
-0.03s call     test/test_experiment/test_pytorch_experiment.py::test_pytorch_model_config_initialises
+0.03s call     test/test_plugins/test_anjana/test_anjana_experiment.py::test_anjana_experiment_with_defense
+0.03s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_model_with_mse_loss
+0.03s call     test/test_experiment/test_experiment.py::TestExperimentValidationScoring::test_tuning_mode_without_validation_split_uses_test_scores
+0.03s call     test/test_experiment/test_experiment.py::TestExperimentPostInitMoreBranches::test_attack_as_str_yaml
+0.03s call     test/test_package/test_classifier_refactor.py::test_string_distance_transformer_preserves_dataframe_row_count
 0.03s call     test/test_model/test_model_core.py::TestLoadOrTrainModel::test_model_file_present_loads_from_file
-0.03s call     test/test_integration/test_defense_pipeline_integration.py::test_model_config_accepts_legacy_single_defense_yaml[examples/sklearn/config/defense/gaussian-noise.yaml-expected_preprocessors1-expected_postprocessors1-art.defences.postprocessor.GaussianNoise]
-0.03s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_extraction_scores_victim_and_extracted_classifiers
-0.03s call     test/test_layers/test_plot_layer.py::test_plot_main_validation_errors
-0.03s call     test/test_utils/test_base_utils.py::TestTopLevelSaveLoadData::test_save_and_load_pkl
-0.03s call     test/test_integration/test_defense_pipeline_integration.py::test_defense_pipeline_config_hash_stable_after_apply
-0.03s call     test/test_plot/test_seaborn.py::TestSeabornPlots::test_call_uses_passed_axes
-0.03s call     test/test_integration/test_base_integration.py::test_experiment_config_hash_stable_after_execution
-0.03s call     test/test_integration/test_base_integration.py::test_model_config_hash_stable_after_training
+0.03s call     test/test_layers/test_pareto.py::TestParetoMain::test_single_objective_maximize_saves_file
+0.03s call     test/test_plugins/test_searborn/test_seaborn.py::TestSeabornPlots::test_heatmap_plot_uses_matrix_data
+0.03s call     test/test_experiment/test_experiment.py::TestExperimentPostInitMoreBranches::test_model_as_str_yaml
+0.03s call     test/test_layers/test_optimize.py::test_hydra_optuna_callback_on_job_end_writes_score_file
+0.03s call     test/test_plugins/test_fairlearn/test_fairness_integration.py::test_generate_fairness_data_model_with_and_without_attack[True]
+0.03s call     test/test_model/test_model_core.py::TestModelConfig::test_hash_stable_after_call_for_model_config
+0.03s call     test/test_frameworks/test_pytorch/test_pytorch_data.py::TestPytorchCustomDataConfig::test_custom_sample_handles_sensitive_batches_and_invalid_batch_shapes
+0.03s call     test/test_integration/test_base_integration.py::test_attack_scorer_with_data_and_model_context
+0.03s call     test/test_plugins/test_anjana/test_anjana_experiment.py::test_anjana_experiment_hash_stable_after_execution
+0.03s call     test/test_plugins/test_fairlearn/test_fairness_integration.py::test_fairness_regression_data_and_metric_frame_scores
+0.03s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_model_serialization_with_different_input_sizes
+0.03s call     test/test_experiment/test_experiment.py::TestExperimentScorerModePermutations::test_non_data_profile_rejects_presample_mode
 0.03s call     test/test_integration/test_base_integration.py::test_data_analysis_scorer_classification_with_reference_column
+0.03s call     test/test_integration/test_defense_pipeline_integration.py::test_defense_pipeline_scores_persist_and_reload
+0.03s call     test/test_integration/test_base_integration.py::test_defense_config_apply_to_trained_model
+0.03s call     test/test_data/test_data.py::TestDataConfig::test_save_data_file
+0.03s call     test/test_integration/test_base_integration.py::test_data_config_scores_persist_and_reload
+0.03s call     test/test_data/test_sample.py::TestSplitSampler::test_integration_with_dataconfig
+0.03s call     test/test_model/test_model_core.py::TestGetArtClassAndModel::test_get_art_model_no_defense_returns_art_wrapper
+0.03s call     test/test_plugins/test_fairlearn/test_fairness_integration.py::test_fairness_data_config_scores_persist_and_reload
+0.03s call     test/test_experiment/test_experiment.py::TestPoisoningExperimentIntegration::test_single_pass_with_attack_runs_experiment_scorer_once
 0.03s call     test/test_integration/test_base_integration.py::test_base_data_model_end_to_end_without_attack[data_cfg0-model_cfg0-accuracy]
-0.02s call     test/test_layers/test_progress_bar_layer.py::test_calculate_number_of_studies_per_stage_and_missing_stage
-0.02s call     test/test_experiment/test_experiment.py::TestExperimentPostInitMoreBranches::test_attack_as_str_yaml
-0.02s call     test/test_attack/test_attack.py::TestAttackConfig::test_real_model_inversion_attack_executes
-0.02s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_load_class_colon_path_success
-0.02s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_import_class_from_file_success
-0.02s call     test/test_data/test_data.py::TestDataConfigAdditional::test_diabetes_data_loading_and_sampling
-0.02s call     test/test_experiment/test_experiment.py::TestDataConfigResolutionMixin::test_data_to_dict_with_yaml_path
-0.02s call     test/test_utils/test_base_utils.py::TestTopLevelSaveLoadData::test_save_and_load_json
-0.02s call     test/test_integration/test_base_integration.py::test_data_config_scores_persist_and_reload
-0.02s call     test/test_data/test_fairness_pytorch.py::test_sensitive_extraction
-0.02s call     test/test_integration/test_defense_pipeline_integration.py::test_model_config_with_defense_hash_stable_after_apply
-0.02s call     test/test_integration/test_defense_pipeline_integration.py::test_defense_pipeline_applies_expected_art_wrapper_defenses[defenses2-expected_preprocessors2-expected_postprocessors2]
-0.02s call     test/test_model/test_pytorch_serialization.py::test_pytorch_model_hash_stable_after_load_roundtrip_runtime_mutation
-0.02s call     test/test_data/test_sample.py::TestShuffleSampler::test_integration_with_dataconfig
-0.02s call     test/test_utils/test_base_utils.py::TestExecuteWithoutMercy::test_exception_path_returns_score_dict
-0.02s teardown test/test_data/test_pytorch.py::TestPytorchCustomDataConfig::test_truncate_dataset
-0.02s call     test/test_data/test_data_base_unit.py::test_load_data_routes_lifelines_aliases_and_csv_options
-0.02s call     test/test_model/test_model_core.py::TestCopyRuntimeStateTo::test_copies_all_runtime_fields
-0.02s call     test/test_model/test_model_core.py::TestModelConfig::test_load_or_train_model_trains_when_not_fitted_even_if_training_time_set
-0.02s call     test/test_data/test_data.py::TestDataPipelineConfig::test_pipeline_fit_and_transform
-0.02s call     test/test_attack/test_attack.py::TestCallCachingPaths::test_attack_predictions_file_load_oserror_falls_through
-0.02s call     test/test_layers/test_compile_results_layer.py::TestCompileResultsMain::test_with_schema_yaml_file
-0.02s call     test/test_model/test_model_core.py::TestModelConfig::test_score
-0.02s call     test/test_model/test_model_core.py::TestGetArtClassAndModel::test_get_art_model_no_defense_returns_art_wrapper
-0.02s call     test/test_integration/test_defense_pipeline_integration.py::test_get_art_model_does_not_duplicate_apply_fit_preprocessor_defense
-0.02s call     test/test_data/test_sample.py::TestKFoldSampler::test_different_folds_have_different_val_sets
-0.02s call     test/test_integration/test_base_integration.py::test_data_analysis_scorer_regression_with_reference_column
-0.02s call     test/test_experiment/test_experiment.py::TestExperimentScoreFileHandling::test_no_score_file_runs_without_saving
-0.02s call     test/test_file/test_file.py::TestFileConfig::test_file_dict
-0.02s call     test/test_model/test_model_core.py::TestModelLoadOrTrainBranches::test_load_or_train_existing_file_not_fitted_applies_defense
-0.02s call     test/test_model/test_model_defense_pipeline.py::TestRetrainingDefensePipeline::test_retraining_defense_is_reordered_last_with_warning
-0.02s call     test/test_utils/test_base_utils.py::TestConfigBaseSaveLoadObject::test_load_object_corrupt_with_ignore_returns_none
-0.02s call     test/test_attack/test_attack.py::TestAttackConfig::test_real_evasion_attack_executes
-0.02s call     test/test_data/test_data.py::TestDataConfigAdditional::test_make_classification_data_loading_and_sampling
-0.02s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_execute_returns_fallback_score_dict_on_exception
-0.02s call     test/test_utils/test_base_utils.py::TestConfigBaseSaveLoadData::test_save_data_html
-0.02s call     test/test_layers/test_progress_bar_layer.py::test_get_hydra_sweeper_config_grid_sampler_and_errors
-0.02s call     test/test_data/test_sample.py::TestSplitSampler::test_score_dict_contains_val_fields
-0.02s call     test/test_data/test_sample.py::TestSplitSampler::test_integration_with_dataconfig
-0.02s call     test/test_attack/test_attack.py::TestAttackConfig::test_save_and_load_attack
-0.02s call     test/test_declarations.py::TestIterConfigFiles::test_enumerate_yaml_files
-0.02s call     test/test_experiment/test_anjana_experiment.py::test_anjana_defense_transforms_x_and_y_before_split
+0.03s call     test/test_data/test_data.py::TestDataConfig::test_save_score_dict
+0.03s call     test/test_integration/test_base_integration.py::test_model_config_hash_stable_after_training
+0.03s call     test/test_experiment/test_experiment.py::TestRunSinglePipelineBranchesExtra::test_val_score_mode_resamples_loaded_data_for_validation_split
+0.03s call     test/test_utils/test_base_utils.py::TestConfigBaseSaveLoadData::test_load_data_delegates_to_top_level
+0.03s call     test/test_model/test_model_core.py::TestModelConfig::test_load_or_train_model_trains_when_not_fitted_even_if_training_time_set
+0.03s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_art_last_ordering_no_warning_when_already_last
+0.03s call     test/test_data/test_data.py::TestDataConfigAdditional::test_load_self
+0.03s call     test/test_data/test_data.py::TestDataConfigAdditional::test_save_score_dict
+0.03s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_torch_experiment_coerces_data_batch_size_from_model_fit_params
+0.03s call     test/test_attack/test_attack.py::TestAttackConfig::test_real_model_inversion_attack_executes
+0.03s call     test/test_integration/test_base_integration.py::test_experiment_config_hash_stable_after_execution
+0.03s call     test/test_data/test_data.py::TestDataConfigAdditional::test_save_self
+0.02s call     test/test_integration/test_defense_pipeline_integration.py::test_model_config_accepts_legacy_single_defense_yaml[examples/sklearn/config/defense/feature-squeezing.yaml-expected_preprocessors0-expected_postprocessors0-art.defences.preprocessor.FeatureSqueezing]
 0.02s call     test/test_data/test_data.py::TestDataConfig::test_load_data_raises_value_error_for_csv_without_target
-0.02s call     test/test_utils/test_base_utils.py::TestTopLevelSaveLoadData::test_save_and_load_csv
+0.02s call     test/test_layers/test_optimize.py::test_hydra_optuna_callback_on_compose_config_writes_params_file
+0.02s call     test/test_frameworks/test_pytorch/test_pytorch_data.py::TestPytorchDataConfig::test_pytorch_data_hash_stable_after_call_and_runtime_mutation
+0.02s call     test/test_layers/test_compile_results_layer.py::TestParseStudies::test_multiple_studies_concatenated
+0.02s call     test/test_plugins/test_fairlearn/test_fairlearn_score.py::TestFairnessScorers::test_fairness_regression_scores
+0.02s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestAttackConfig::test_real_evasion_attack_executes
+0.02s call     test/test_data/test_sample.py::TestKFoldSampler::test_caps_produce_expected_sizes_for_1200_samples
+0.02s call     test/test_plugins/test_fairlearn/test_pytorch_fairness_integration.py::test_pytorch_fairlearn_attack_scorer_metric_frame_membership_group_accuracy_keys
+0.02s call     test/test_attack/test_attack.py::TestAttackConfig::test_real_evasion_attack_executes
+0.02s call     test/test_attack/test_attack.py::TestAttackConfig::test_hash_stable_after_call_for_attack_config
+0.02s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_torch_experiment_post_init_rejects_non_pytorch_library
+0.02s call     test/test_integration/test_defense_pipeline_integration.py::test_model_config_with_defense_hash_stable_after_apply
+0.02s call     test/test_experiment/test_experiment.py::TestExperimentScoreFileHandling::test_no_score_file_runs_without_saving
+0.02s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_torch_experiment_raises_on_batch_size_mismatch
+0.02s call     test/test_model/test_model_core.py::TestCopyRuntimeStateTo::test_copies_all_runtime_fields
 0.02s call     test/test_layers/test_pareto.py::TestParetoMain::test_single_objective_minimize_selects_lowest
-0.02s call     test/test_attack/test_attack.py::TestFairlearnAttackScorer::test_score_membership_with_sensitive_features_produces_group_metrics
-0.02s call     test/test_data/test_sample.py::TestKFoldSampler::test_integration_with_dataconfig
+0.02s call     test/test_integration/test_base_integration.py::test_data_analysis_scorer_regression_with_reference_column
+0.02s call     test/test_frameworks/test_pytorch/test_pytorch_data.py::TestPytorchDataConfig::test_pytorch_data_score_persistence_roundtrip
+0.02s call     test/test_plugins/test_fairlearn/test_pytorch_fairness_integration.py::test_pytorch_model_with_fairness_defense_instantiation
+0.02s call     test/test_model/test_model_core.py::TestModelConfig::test_score
+0.02s call     test/test_integration/test_defense_pipeline_integration.py::test_defense_pipeline_config_hash_stable_after_apply
+0.02s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_pytorch_model_config_initialises
+0.02s call     test/test_layers/test_progress_bar_layer.py::test_progress_bar_main_polls_until_completion
+0.02s call     test/test_layers/test_rerun_failed_studies.py::test_load_meta_schema_success_and_errors
+0.02s call     test/test_plugins/test_fairlearn/test_fairness_integration.py::test_fairness_data_config_hash_stable_after_execution
+0.02s call     test/test_integration/test_defense_pipeline_integration.py::test_get_art_model_does_not_duplicate_apply_fit_preprocessor_defense
+0.02s call     test/test_model/test_model_core.py::TestModelConfig::test_load_predictions
+0.02s call     test/test_integration/test_defense_pipeline_integration.py::test_model_config_accepts_legacy_single_defense_yaml[examples/sklearn/config/defense/gaussian-noise.yaml-expected_preprocessors1-expected_postprocessors1-art.defences.postprocessor.GaussianNoise]
+0.02s setup    test/test_package/test_main.py::test_get_configuration_paths_returns_expected_values
+0.02s call     test/test_utils/test_base_utils.py::TestConfigBaseSaveLoadData::test_save_data_html
+0.02s call     test/test_layers/test_plot_layer.py::test_plot_main_seaborn_multi_accepts_top_level_list_and_merges_defaults
+0.02s call     test/test_frameworks/test_pytorch/test_pytorch_data.py::TestPytorchDataConfig::test_call_with_score_file_saves_json
+0.02s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestAttackConfig::test_hash_stable_after_call_for_attack_config
+0.02s call     test/test_plugins/test_anjana/test_anjana_experiment.py::test_anjana_data_config_hash_stable_after_load
+0.02s call     test/test_plugins/test_anjana/test_pytorch_anjana_integration.py::test_torch_data_supports_anjana_style_data_scoring_payload_shape
+0.02s call     test/test_file/test_file.py::TestFileConfig::test_timestamp_placeholder
+0.02s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_extraction_scores_victim_and_extracted_classifiers
 0.02s call     test/test_integration/test_defense_pipeline_integration.py::test_defense_pipeline_applies_expected_art_wrapper_defenses[defenses0-expected_preprocessors0-expected_postprocessors0]
 0.02s call     test/test_integration/test_defense_pipeline_integration.py::test_defense_pipeline_applies_expected_art_wrapper_defenses[defenses1-expected_preprocessors1-expected_postprocessors1]
-0.02s call     test/test_data/test_sample.py::TestSplitSampler::test_sample_dict_spec
-0.02s call     test/test_attack/test_attack.py::TestInitializeAttackBranches::test_not_fitted_sklearn_model_triggers_fit
-0.02s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_attribute_inference
-0.02s call     test/test_integration/test_base_integration.py::test_base_data_model_end_to_end_without_attack[data_cfg2-model_cfg2-mse]
-0.02s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_read_scores_from_disk_missing_file_creates_directory
+0.02s call     test/test_data/test_data.py::TestDataConfigAdditional::test_load_data_raises_value_error_for_csv_without_target
+0.02s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_model_inversion_executes_real_infer_model_inversion
+0.02s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_import_class_from_file_success
+0.02s call     test/test_data/test_sample.py::TestLegacySplitUnchanged::test_score_dict_no_val_fields_without_val_size
+0.02s call     test/test_utils/test_base_utils.py::TestTopLevelSaveLoadData::test_save_and_load_json
+0.02s call     test/test_attack/test_attack.py::TestAttackConfig::test_poison_attack_metrics
+0.02s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_save_data_top_level_and_load_data_roundtrip_pickle
+0.02s call     test/test_detector/test_detector.py::test_detector_runs_and_emits_scores_with_mock_detector
+0.02s call     test/test_plugins/test_fairlearn/test_pytorch_fairness_integration.py::test_pytorch_fairlearn_attack_scorer_metric_frame_attribute_group_accuracy_keys
+0.02s call     test/test_integration/test_defense_pipeline_integration.py::test_defense_pipeline_applies_expected_art_wrapper_defenses[defenses2-expected_preprocessors2-expected_postprocessors2]
 0.02s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_val_mode_resamples_when_validation_split_missing
-0.02s call     test/test_score/test_score.py::test_model_default_score_profile_executes_from_yaml_defaults
-0.02s call     test/test_attack/test_attack.py::TestAttackConfig::test_attack_metrics
-0.02s call     test/test_layers/test_pareto.py::TestParetoMain::test_single_objective_maximize_saves_file
-0.02s call     test/test_attack/test_attack.py::TestAttackConfig::test_evade_includes_benign_scores
+0.02s call     test/test_attack/test_attack.py::TestCallCachingPaths::test_score_file_loaded_when_exists
+0.02s call     test/test_data/test_data.py::TestDataConfig::test_load_lifelines_lung_dataset
+0.02s call     test/test_plugins/test_fairlearn/test_fairness_integration.py::test_fairlearn_attack_scorer_metric_frame_membership_group_accuracy_keys
+0.02s call     test/test_attack/test_attack.py::TestFairlearnAttackScorer::test_score_membership_with_sensitive_features_produces_group_metrics
+0.02s call     test/test_data/test_sample.py::TestKFoldSampler::test_integration_with_dataconfig
+0.02s setup    test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestResolveEvalSplit::test_test_mode_with_missing_data_raises
+0.02s call     test/test_plugins/test_lifelines/test_survival_integration.py::test_lifelines_data_config_scores_persist_and_reload
+0.02s call     test/test_data/test_sample.py::TestShuffleSampler::test_integration_with_dataconfig
+0.02s call     test/test_attack/test_attack.py::TestFairlearnAttackScorer::test_score_evasion_with_sensitive_features_produces_group_metrics
 0.02s call     test/test_model/test_model_core.py::TestModelLoadOrTrainBranches::test_load_or_train_trains_when_model_file_exists_but_not_fitted
-0.01s call     test/test_data/test_data_base_unit.py::test_prepare_data_file_existing_and_new
-0.01s call     test/test_attack/test_attack.py::TestFairlearnAttackScorer::test_score_attribute_with_sensitive_features_produces_group_metrics
-0.01s call     test/test_data/test_pytorch.py::TestPytorchDataConfig::test_pytorch_data_score_persistence_roundtrip
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_poison_attack_metrics
-0.01s call     test/test_layers/test_pareto.py::TestParetoMainDefaultsAndValidation::test_infers_objectives_and_directions_when_omitted
-0.01s call     test/test_experiment/test_experiment.py::TestSetRandomSeed::test_set_random_seed_truly_unsupported_library_raises
-0.01s call     test/test_attack/test_attack.py::TestFairlearnAttackScorer::test_score_evasion_with_sensitive_features_produces_group_metrics
-0.01s call     test/test_attack/test_attack.py::TestEvadeBranches::test_adversarial_patch_branch
-0.01s call     test/test_layers/test_compile_results_layer.py::TestCompileResultsMain::test_creates_nested_output_dir
-0.01s call     test/test_model/test_model_fairness.py::TestFairlearnModelConfig::test_apply_defense_supports_mixed_defense_pipeline
-0.01s call     test/test_model/test_model_core.py::TestModelConfig::test_load_predictions
-0.01s call     test/test_attack/test_attack.py::TestStaticHelpers::test_save_method_appends_pkl
-0.01s call     test/test_experiment/test_pytorch_experiment.py::test_torch_experiment_coerces_data_batch_size_from_model_fit_params
-0.01s call     test/test_model/test_survival_model.py::test_survival_probability_calibration_left_censor_and_delta_fallback
-0.01s call     test/test_data/test_data.py::TestDataConfigAdditional::test_multiple_plugins_run_in_order
-0.01s call     test/test_data/test_data.py::TestDataConfig::test_make_classification_data_loading_and_sampling
-0.01s call     test/test_model/test_pytorch_serialization.py::test_pytorch_model_hash_stable_after_training_and_runtime_updates
-0.01s call     test/test_attack/test_attack.py::TestCallCachingPaths::test_attack_file_save_pickle_error_continues
-0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_applies_defense_before_predict_and_merges_scores
-0.01s call     test/test_data/test_data.py::TestDataConfigAdditional::test_call_returns_expected_shapes_for_make_classification
-0.01s call     test/test_data/test_sample.py::TestSplitSampler::test_regression_val_score
-0.01s call     test/test_data/test_data.py::TestDataConfig::test_hash_stable_after_call_for_data_config
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_poisoning_svm_initialization_injects_train_and_val_arrays
-0.01s call     test/test_detector/test_detector.py::test_real_art_poisoning_detector_executes
-0.01s call     test/test_model/test_model_core.py::TestModelLoadOrTrainBranches::test_load_or_train_with_none_model_and_missing_file_trains
-0.01s call     test/test_utils/test_base_utils.py::TestTopLevelSaveLoadData::test_save_data_unsupported_raises
-0.01s call     test/test_data/test_data.py::TestDataConfig::test_call_returns_expected_shapes_for_make_classification
-0.01s call     test/test_model/test_model_core.py::TestModelConfig::test_decode_predictions_for_persistence_converts_2d_classifier_output
-0.01s call     test/test_experiment/test_experiment.py::TestExperimentPostInitMoreBranches::test_model_as_str_yaml
-0.01s call     test/test_model/test_model_core.py::TestModelConfig::test_predict_proba
-0.01s call     test/test_model/test_pytorch_serialization.py::test_pytorch_score_helpers_classification_and_regression
-0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_with_no_test_data_raises
-0.01s call     test/test_model/test_model_core.py::TestLoadOrTrainModel::test_no_model_no_file_raises_value_error
-0.01s call     test/test_data/test_data.py::TestDataConfig::test_private_max_samples_caps_loaded_dataset
-0.01s call     test/test_model/test_model_core.py::TestPredictProbaBranches::test_predict_proba_not_probability_raises
+0.02s call     test/test_plugins/test_fairlearn/test_fairness_integration.py::test_fairlearn_attack_scorer_metric_frame_attribute_group_accuracy_keys
+0.02s call     test/test_utils/test_base_utils.py::TestConfigBaseSaveLoadObject::test_load_object_corrupt_with_ignore_returns_none
+0.02s call     test/test_attack/test_attack.py::TestCallCachingPaths::test_attack_predictions_file_load_oserror_falls_through
+0.02s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestCallCachingPaths::test_attack_predictions_file_load_oserror_falls_through
+0.02s call     test/test_attack/test_attack.py::TestInitializeAttackBranches::test_attack_model_string_path
+0.01s call     test/test_layers/test_progress_bar_layer.py::test_get_hydra_sweeper_config_grid_sampler_and_errors
+0.01s call     test/test_integration/test_base_integration.py::test_base_data_model_end_to_end_without_attack[data_cfg2-model_cfg2-mse]
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestCallCachingPaths::test_score_file_loaded_when_exists
+0.01s call     test/test_data/test_sample.py::TestSplitSampler::test_sample_dict_spec
+0.01s call     test/test_declarations.py::TestIterConfigFiles::test_enumerate_yaml_files
 0.01s call     test/test_data/test_sample.py::TestLegacySplitUnchanged::test_val_size_none_gives_two_way_split
-0.01s call     test/test_data/test_sample.py::TestKFoldSampler::test_integer_test_size_guardrail_raises
-0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_raises_when_train_predictions_none
-0.01s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_coerce_config_yaml_path_to_dict
-0.01s call     test/test_experiment/test_pytorch_experiment.py::test_pytorch_auto_device_propagates_to_all_components
+0.01s call     test/test_data/test_sample.py::TestSplitSampler::test_score_dict_contains_val_fields
+0.01s call     test/test_layers/test_pareto.py::TestParetoMainDefaultsAndValidation::test_infers_objectives_and_directions_when_omitted
 0.01s call     test/test_data/test_sample.py::TestLegacySplitUnchanged::test_no_val_set_when_no_val_size
-0.01s call     test/test_model/test_model_core.py::TestGetArtClassAndModel::test_get_art_class_sklearn_no_input_shape
-0.01s call     test/test_plot/test_yellowbrick.py::TestYellowbrickPlots::test_plot_list_reuses_prepared_experiment_for_children
-0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_training_loss_curve_key_removed
-0.01s call     test/test_score/test_score.py::TestFairnessScorers::test_metric_frame_fairness_score_dict_regression
-0.01s call     test/test_data/test_pytorch.py::TestPytorchDataConfig::test_call_accepts_existing_data_and_score_paths
-0.01s call     test/test_plot/test_yellowbrick.py::TestYellowbrickPlots::test_parse_cv_defaults_to_kfold_for_regressor
-0.01s call     test/test_layers/test_progress_bar_layer.py::test_progress_bar_main_raises_for_unknown_stage
-0.01s call     test/test_experiment/test_experiment.py::TestExperimentScoreFileHandling::test_model_none_runs_data_only_pipeline
-0.01s call     test/test_data/test_sample.py::TestGetStratifyCol::test_stratify_column_name
-0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_predict_proba_typeerror_fallback_uses_numpy_cast
-0.01s call     test/test_model/test_model_core.py::TestModelLoadOrTrainBranches::test_load_or_train_raises_notfitted_when_model_missing_after_train
-0.01s call     test/test_model/test_model_core.py::TestModelConfig::test_train_and_predict
+0.01s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_load_class_colon_path_success
+0.01s call     test/test_score/test_score.py::TestDataInspectionScorers::test_data_regression_default_scores_include_ecdf
+0.01s call     test/test_package/test_init_module.py::test_importing_deckard_does_not_register_configs
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_model_hash_stable_after_load_roundtrip_runtime_mutation
+0.01s call     test/test_score/test_score.py::test_model_default_score_profile_executes_from_yaml_defaults
+0.01s call     test/test_plugins/test_fairlearn/test_fairness_integration.py::test_fairlearn_attack_scorer_metric_frame_evasion_group_accuracy_keys
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestAttackConfig::test_call_extraction_scores_victim_and_extracted_classifiers
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_data.py::TestPytorchDataConfig::test_call_accepts_existing_data_and_score_paths
+0.01s call     test/test_data/test_data.py::TestDataConfigAdditional::test_call_returns_expected_shapes_for_make_classification
 0.01s call     test/test_integration/test_base_integration.py::test_adult_all_attack_types_base[<lambda>-evasion_]
-0.01s call     test/test_data/test_sample.py::TestLegacySplitUnchanged::test_score_dict_no_val_fields_without_val_size
-0.01s setup    test/test_layers/test_progress_bar_layer.py::test_progress_bar_main_raises_for_unknown_stage
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_infer_database_reconstruction_scores_reconstruction
-0.01s call     test/test_data/test_sample.py::TestSplitSampler::test_regression_no_stratify
-0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_training_probability_typeerror_reraises
-0.01s call     test/test_attack/test_attack.py::TestExtractBranches::test_extract_uses_val_split
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_target_to_class_labels_invalid_shape_raises
-0.01s setup    test/test_experiment/test_experiment_survival_config.py::test_make_survival_model_table_handles_none_models_and_metric_failures
-0.01s call     test/test_plot/test_yellowbrick.py::TestYellowbrickPlots::test_plot_list_applies_rc_config
-0.01s call     test/test_score/test_score.py::TestFairnessScorers::test_metric_frame_fairness_score_dict_classification
-0.01s call     test/test_model/test_model_defense_pipeline.py::TestRetrainingDefensePipeline::test_real_adversarial_retraining_executes_with_pytorch_model
-0.01s call     test/test_data/test_data.py::TestDataConfigAdditional::test_load_data_raises_value_error_for_csv_without_target
-0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_probability_persistence_valueerror_sets_none
-0.01s call     test/test_experiment/test_pytorch_experiment.py::test_pytorch_device_propagates_from_model_when_only_one_specified
-0.01s setup    test/test_score/test_score_data_and_declarations.py::test_score_declarations_loader_skips_bad_yaml
-0.01s call     test/test_layers/test_pareto.py::TestParetoMain::test_diff_direction_single_raises
-0.01s teardown test/test_data/test_pytorch.py::TestPytorchDataConfig::test_call_accepts_existing_data_and_score_paths
-0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_initializes_score_dict_when_none
-0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_test_probability_typeerror_reraises
-0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_probability_persistence_without_predict_proba_uses_predict
-0.01s call     test/test_integration/test_base_integration.py::test_data_config_hash_stable_after_execution
-0.01s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_read_scores_from_disk_existing_file_merges
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_database_reconstruction_executes_real_infer_database_reconstruction
-0.01s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_save_scores_and_load_scores_json
-0.01s call     test/test_package/test_init_module.py::test_file_resolver_reads_nested_key
-0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_uses_preexisting_predictions
-0.01s call     test/test_experiment/test_pytorch_experiment.py::test_pytorch_device_propagates_from_experiment
-0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_with_no_test_labels_raises
-0.01s call     test/test_layers/test_compile_results_layer.py::TestParseStudies::test_multiple_studies_concatenated
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_model_inversion_executes_real_infer_model_inversion
-0.01s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_load_type_mismatch_raises
-0.01s call     test/test_attack/test_attack.py::TestPoisonBranches::test_class_source_fallback_when_no_samples
-0.01s call     test/test_utils/test_base_utils.py::TestConfigBaseScores::test_save_scores_csv_saves_file
-0.01s call     test/test_utils/test_base_utils.py::TestConfigBaseSaveLoadData::test_save_data_unsupported_raises
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_attack_path_properties_and_kind
-0.01s call     test/test_experiment/test_pytorch_experiment.py::test_art_last_ordering_no_warning_when_already_last
-0.01s call     test/test_attack/test_attack.py::TestInitializeAttackBranches::test_attack_model_dictconfig_path
-0.01s teardown test/test_plot/test_yellowbrick.py::TestYellowbrickPlots::test_one_clustering_plot
-0.01s call     test/test_package/test_classifier_refactor.py::test_pre_sample_fit_generates_and_persists_full_matrix
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_membership_inference
-0.01s call     test/test_experiment/test_pytorch_experiment.py::test_torch_experiment_raises_on_batch_size_mismatch
-0.01s call     test/test_layers/test_plot_layer.py::test_load_experiment_config_and_yaml_helpers
-0.01s call     test/test_data/test_pytorch.py::TestPytorchDataConfig::test_hash_method
-0.01s call     test/test_experiment/test_pytorch_experiment.py::test_torch_experiment_post_init_rejects_non_pytorch_library
-0.01s call     test/test_model/test_model_fairness.py::TestFairlearnModelConfig::test_apply_defense_rejects_legacy_defense_list
-0.01s call     test/test_plot/test_yellowbrick.py::TestYellowbrickPlots::test_parse_cv_defaults_to_stratifiedkfold_for_classifier
-0.01s call     test/test_integration/test_survival_integration.py::test_lifelines_data_config_scores_persist_and_reload
-0.01s call     test/test_declarations.py::TestParseConfigFile::test_parse_valid_yaml
-0.01s teardown test/test_plot/test_seaborn.py::TestSeabornPlots::test_scatter_plot_saves_and_sets_labels
-0.01s call     test/test_layers/test_optimize.py::test_save_params_file_writes_config_without_params
-0.01s setup    test/test_experiment/test_experiment_survival_config.py::test_call_requires_optuna_db_when_optuna_mode
-0.01s call     test/test_layers/test_progress_bar_layer.py::test_infer_stages_from_dvc_raises_when_no_multirun
-0.01s call     test/test_utils/test_base_utils.py::TestConfigBaseScores::test_load_scores_unsupported_extension_raises
-0.01s call     test/test_layers/test_plot_layer.py::test_plot_main_seaborn_multi_accepts_top_level_list_and_merges_defaults
-0.01s call     test/test_layers/test_compile_results_layer.py::TestCompileResultsMain::test_creates_csv_output
-0.01s call     test/test_layers/test_plot_layer.py::test_plot_main_seaborn_single_and_multi
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_post_init_scorer_dict_and_poisoning_validation_paths
-0.01s teardown test/test_data/test_pytorch.py::TestPytorchCustomDataConfig::test_custom_config_post_init_and_hash_defaults
-0.01s call     test/test_layers/test_progress_bar_layer.py::test_infer_stages_from_dvc_selects_multirun_only
-0.01s call     test/test_data/test_pytorch.py::TestPytorchCustomDataConfig::test_custom_call_uses_cached_paths_and_persists_outputs
-0.01s call     test/test_model/test_model_defense_pipeline.py::TestDefenseConfig::test_apply_to_trained_model
-0.01s setup    test/test_data/test_data_base_unit.py::test_load_data_routes_lifelines_aliases_and_csv_options
-0.01s call     test/test_data/test_pytorch.py::TestPytorchDataConfig::test_call_with_score_file_saves_json
-0.01s call     test/test_data/test_sample.py::TestKFoldSampler::test_fold_none_defaults_to_zero
-0.01s call     test/test_layers/test_progress_bar_layer.py::test_get_hydra_sweeper_config_supports_flat_or_nested_hydra
-0.01s call     test/test_score/test_score_data_and_declarations.py::test_score_declarations_loader_skips_bad_yaml
-0.01s call     test/test_model/test_model_fairness.py::TestFairlearnModelConfig::test_fairness_model_config_is_configbase_with_hash
-0.01s setup    test/test_data/test_pytorch.py::TestPytorchDataConfig::test_call_with_score_file_saves_json
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_real_attribute_inference_attack_executes
-0.01s call     test/test_plot/test_seaborn.py::TestSeabornPlots::test_plot_config_list_call_current_behavior
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_rejects_regression_evasion_early
-0.01s call     test/test_layers/test_rerun_failed_studies.py::test_rerun_failed_studies_main_dry_run_and_execute
-0.01s call     test/test_attack/test_attack.py::TestPytorchAttackConfig::test_torch_evasion_uses_art_boundary_conversion
-0.01s teardown test/test_data/test_pytorch.py::TestPytorchDataConfig::test_train_test_exceed_total_raises
-0.01s setup    test/test_layers/test_optimize.py::test_hydra_optuna_callback_on_compose_config_writes_params_file
-0.01s call     test/test_score/test_score.py::TestAttackScorers::test_attack_scorer_attribute_classification
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_attack
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_infer_model_inversion_scores_reconstruction
-0.01s call     test/test_integration/test_survival_integration.py::test_lifelines_data_config_object_pickle_roundtrip
-0.01s call     test/test_data/test_fairlearn_data_config.py::TestLoadData::test_load_data_validates_sensitive_columns
-0.01s call     test/test_data/test_sample.py::TestShuffleSampler::test_no_stratify
-0.01s call     test/test_data/test_data.py::TestDataConfig::test_make_regression_data_loading_and_sampling
-0.01s call     test/test_data/test_data.py::TestDataConfigAdditional::test_make_regression_data_loading_and_sampling
-0.01s call     test/test_layers/test_progress_bar_layer.py::test_progress_bar_main_polls_until_completion
-0.01s call     test/test_attack/test_attack.py::TestPoisonBranches::test_poisoning_svm_branch_scores_benign_and_poisoned_accuracy
-0.01s call     test/test_experiment/test_experiment_survival_config.py::test_make_survival_model_table_handles_none_models_and_metric_failures
-0.01s call     test/test_declarations.py::TestDiscoverConfigRoots::test_external_roots_from_env
-0.01s call     test/test_attack/test_attack.py::TestInferAttributeBranches::test_list_targeted_attribute_executes
-0.01s call     test/test_integration/test_defense_pipeline_integration.py::test_defense_pipeline_config_object_pickle_roundtrip
-0.01s call     test/test_layers/test_optimize.py::test_hydra_optuna_callback_on_compose_config_uses_constructor_params_file
-0.01s call     test/test_layers/test_pareto.py::TestParetoMainDefaultsAndValidation::test_raises_when_optimizers_and_directions_lengths_mismatch
-0.01s call     test/test_data/test_sample.py::TestSplitSampler::test_two_way_split_without_val_size
-0.01s setup    test/test_plot/test_yellowbrick.py::TestYellowbrickPlots::test_clustering_plots
-0.01s call     test/test_attack/test_attack.py::TestPoisonBranches::test_val_mode_used_when_available
-0.01s call     test/test_utils/test_base_utils.py::TestTopLevelSaveLoadData::test_load_data_unsupported_raises
-0.01s setup    test/test_data/test_data_base_unit.py::test_pipeline_call_saves_scores_and_handles_y_pipeline
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_select_extraction_scorer_falls_back_for_logits
-0.01s setup    test/test_layers/test_plot_layer.py::test_load_experiment_config_and_yaml_helpers
-0.01s call     test/test_model/test_model_fairness.py::TestFairlearnModelConfig::test_predict_passes_sensitive_features_when_supported
-0.01s setup    test/test_data/test_pytorch.py::TestPytorchCustomDataConfig::test_custom_load_data_handles_callable_transforms_and_default_lengths
-0.01s call     test/test_model/test_model_core.py::TestModelConfig::test_predict_falls_back_when_wrapped_output_matrix_is_invalid
-0.01s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_save_data_top_level_and_load_data_roundtrip_pickle
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_inference_unknown_subtype_raises
-0.01s setup    test/test_experiment/test_anjana_experiment.py::test_anjana_experiment_scores_persist_to_json
-0.01s call     test/test_score/test_score_data_and_declarations.py::test_score_declarations_loader_returns_when_examples_missing
-0.01s call     test/test_experiment/test_experiment.py::TestExperimentPostInitMoreBranches::test_score_as_scorer_dict_config
-0.01s call     test/test_score/test_score_base_unit.py::test_scorer_dict_call_mode_and_probability_routing
-0.01s call     test/test_model/test_model_fairness.py::TestFairlearnDefenseConfigApplyDefense::test_apply_defense_unsupported_fairlearn_submodule_raises
-0.01s call     test/test_score/test_score.py::TestDataInspectionScorers::test_data_classification_reference_column_override
-0.01s call     test/test_model/test_model_core.py::TestLoadScoreFile::test_load_score_file_existing_merges_scores
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_poisoning_requires_source_and_target_classes
-0.01s call     test/test_experiment/test_experiment.py::TestExperimentPostInitMoreBranches::test_multi_attack_sets_primary_attack_and_chain
-0.01s call     test/test_layers/test_progress_bar_layer.py::test_resolve_hydra_config_for_stage_absolute_and_not_found
-0.01s call     test/test_model/test_model_fairness.py::TestFairlearnModelConfig::test_fairness_model_config_initialization_without_data
-0.01s call     test/test_data/test_sample.py::TestGetStratifyCol::test_stratify_none_returns_none
-0.01s setup    test/test_data/test_data_base_unit.py::test_prepare_data_file_existing_and_new
-0.01s call     test/test_utils/test_base_utils.py::TestCoerceHelpers::test_coerce_config_yaml_path_returns_dict
-0.01s call     test/test_layers/test_rerun_failed_studies.py::test_load_meta_schema_success_and_errors
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_score_and_static_normalizers
-0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_infer_task_is_classification_and_compatibility_guard
-0.01s call     test/test_experiment/test_experiment.py::TestExperimentValidationScoring::test_propagation_of_modes_to_children
-0.01s call     test/test_detector/test_detector.py::test_detector_runs_and_emits_scores_with_mock_detector
-0.01s setup    test/test_plot/test_yellowbrick.py::TestYellowbrickPlots::test_one_regression_plot
-0.01s call     test/test_experiment/test_experiment.py::TestExperimentPostInitModelTypes::test_attack_as_dictconfig
-0.01s setup    test/test_package/test_classifier_refactor.py::test_pre_sample_fit_generates_and_persists_full_matrix
-0.01s setup    test/test_package/test_classifier_refactor.py::test_string_distance_transformer_full_matrix_slicing
-0.01s call     test/test_experiment/test_experiment.py::TestFileResolver::test_key_lookup_returns_sub_value
-0.01s call     test/test_data/test_sample.py::TestShuffleSampler::test_raises_without_val_size
-0.01s call     test/test_experiment/test_experiment.py::TestExperimentPostInitModelTypes::test_model_as_dict
-0.01s setup    test/test_data/test_fairlearn_data_config.py::TestLoadData::test_load_data_validates_sensitive_columns
-0.01s call     test/test_score/test_score.py::TestDefaultScorerDicts::test_default_classifier_dict
-0.01s call     test/test_experiment/test_pytorch_experiment.py::test_pytorch_model_config_hash_stable_before_training
-0.01s call     test/test_package/test_classifier_refactor.py::test_string_distance_transformer_full_matrix_slicing
+0.01s call     test/test_model/test_model_core.py::TestModelLoadOrTrainBranches::test_load_or_train_existing_file_not_fitted_applies_defense
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_model_hash_stable_after_training_and_runtime_updates
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_data.py::TestPytorchDataConfig::test_call
 0.01s call     test/test_declarations.py::TestParseConfigFile::test_parse_invalid_yaml
-0.01s call     test/test_score/test_score.py::TestAttackScorers::test_attack_scorer_membership
-0.01s call     test/test_experiment/test_anjana_experiment.py::test_anjana_data_with_fairlearn_model_chain
-0.01s call     test/test_experiment/test_anjana_experiment.py::test_anjana_hierarchy_dict_generates_levels
-0.01s setup    test/test_model/test_survival_model.py::test_make_survival_model_table_writes_csv_and_restores_t0
+0.01s call     test/test_data/test_data.py::TestDataConfig::test_call_returns_expected_shapes_for_make_classification
+0.01s call     test/test_model/test_model_core.py::TestLoadOrTrainModel::test_no_model_no_file_raises_value_error
+0.01s call     test/test_plugins/test_lifelines/test_survival_model.py::test_survival_probability_calibration_left_censor_and_delta_fallback
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_score_helpers_classification_and_regression
+0.01s call     test/test_layers/test_progress_bar_layer.py::test_get_hydra_sweeper_config_supports_flat_or_nested_hydra
+0.01s call     test/test_data/test_data.py::TestDataConfig::test_make_classification_data_loading_and_sampling
+0.01s call     test/test_plugins/test_yellowbrick/test_yellowbrick.py::TestYellowbrickPlots::test_plot_list_applies_rc_config
+0.01s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_execute_returns_fallback_score_dict_on_exception
+0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_real_attribute_inference_attack_executes
+0.01s call     test/test_data/test_data.py::TestDataConfig::test_load_lifelines_diabetes_dataset_with_prefix
+0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_post_init_scorer_dict_and_poisoning_validation_paths
+0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_initializes_score_dict_when_none
+0.01s call     test/test_model/test_model_core.py::TestModelLoadOrTrainBranches::test_load_or_train_with_none_model_and_missing_file_trains
+0.01s call     test/test_experiment/test_experiment.py::TestSetRandomSeed::test_set_random_seed_pytorch
+0.01s call     test/test_layers/test_plot_layer.py::test_plot_main_seaborn_single_and_multi
+0.01s setup    test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_pytorch_experiment_scores_persist_via_file_config
+0.01s call     test/test_model/test_model_core.py::TestGetArtClassAndModel::test_get_art_class_sklearn_no_input_shape
+0.01s call     test/test_utils/test_base_utils.py::TestConfigBaseScores::test_save_scores_csv_saves_file
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestStaticHelpers::test_save_method_appends_pkl
+0.01s call     test/test_file/test_file.py::TestFileConfig::test_file_dict
+0.01s setup    test/test_layers/test_optimize.py::test_parallel_jobs_do_not_break_synchronization
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_data.py::TestPytorchDataConfig::test_hash_method
+0.01s call     test/test_integration/test_defense_pipeline_integration.py::test_defense_pipeline_config_object_pickle_roundtrip
+0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_with_no_test_labels_raises
+0.01s call     test/test_data/test_data.py::TestDataConfigAdditional::test_make_classification_data_loading_and_sampling
+0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_probability_persistence_valueerror_sets_none
+0.01s call     test/test_model/test_model_core.py::TestModelLoadOrTrainBranches::test_load_or_train_raises_notfitted_when_model_missing_after_train
+0.01s call     test/test_data/test_data.py::TestDataConfig::test_hash_stable_after_call_for_data_config
+0.01s teardown test/test_plugins/test_yellowbrick/test_yellowbrick.py::TestYellowbrickPlots::test_parse_cv_defaults_to_kfold_for_regressor
+0.01s call     test/test_model/test_model_core.py::TestModelConfig::test_train_and_predict
+0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_with_no_test_data_raises
+0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_predict_proba_typeerror_fallback_uses_numpy_cast
+0.01s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_save_scores_and_load_scores_json
+0.01s call     test/test_data/test_data.py::TestDataConfig::test_private_max_samples_caps_loaded_dataset
+0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_raises_when_train_predictions_none
+0.01s call     test/test_data/test_data.py::TestDataConfigAdditional::test_plugin_can_augment_scores
+0.01s call     test/test_model/test_model_core.py::TestPredictProbaBranches::test_predict_proba_not_probability_raises
+0.01s call     test/test_layers/test_pareto.py::TestParetoMain::test_diff_direction_single_raises
+0.01s call     test/test_attack/test_attack.py::TestExtractBranches::test_extract_uses_val_split
+0.01s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_load_type_mismatch_raises
+0.01s call     test/test_model/test_model_core.py::TestModelConfig::test_predict_proba
+0.01s call     test/test_experiment/test_experiment.py::TestExperimentScoreFileHandling::test_model_none_runs_data_only_pipeline
+0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_save_and_load_attack
+0.01s call     test/test_integration/test_base_integration.py::test_data_config_hash_stable_after_execution
+0.01s call     test/test_experiment/test_experiment.py::TestDataConfigResolutionMixin::test_data_to_dict_with_yaml_path
+0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_test_probability_typeerror_reraises
+0.01s call     test/test_plugins/test_fairlearn/test_fairlearn_score.py::TestFairnessScorers::test_metric_frame_fairness_score_dict_regression
+0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_training_loss_curve_key_removed
+0.01s call     test/test_plugins/test_fairlearn/test_fairlearn_score.py::TestFairnessScorers::test_metric_frame_fairness_score_dict_classification
+0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_applies_defense_before_predict_and_merges_scores
+0.01s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_coerce_config_yaml_path_to_dict
+0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_uses_preexisting_predictions
+0.01s call     test/test_data/test_data.py::TestDataConfigAdditional::test_multiple_plugins_run_in_order
+0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_evade_includes_benign_scores
+0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_training_probability_typeerror_reraises
+0.01s call     test/test_data/test_sample.py::TestKFoldSampler::test_different_folds_have_different_val_sets
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestAttackConfig::test_real_attribute_inference_attack_executes
+0.01s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_read_scores_from_disk_existing_file_merges
+0.01s call     test/test_model/test_model_core.py::TestModelEvaluateAndScoreBranches::test_evaluate_probability_persistence_without_predict_proba_uses_predict
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestExtractBranches::test_extract_uses_val_split
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestPytorchAttackConfig::test_torch_evasion_uses_art_boundary_conversion
+0.01s call     test/test_attack/test_attack.py::TestPytorchAttackConfig::test_torch_evasion_uses_art_boundary_conversion
+0.01s call     test/test_utils/test_base_utils.py::TestCoerceHelpers::test_coerce_config_yaml_path_returns_dict
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_save_refuses_to_overwrite_existing_file
+0.01s call     test/test_utils/test_base_utils.py::TestConfigBaseSaveLoadObject::test_load_object_corrupt_with_delete_removes_file
+0.01s call     test/test_score/test_score.py::TestDefaultScorerDicts::test_default_classifier_dict
+0.01s call     test/test_declarations.py::TestShouldRegisterConfig::test_generic_config_always_registered
+0.01s call     test/test_layers/test_compile_results_layer.py::TestCompileResultsMain::test_with_schema_yaml_file
+0.01s call     test/test_declarations.py::TestDiscoverConfigRoots::test_external_roots_from_env
+0.01s call     test/test_layers/test_progress_bar_layer.py::test_infer_stages_from_dvc_selects_multirun_only
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestAttackConfig::test_call_extraction_requires_nn_classifier
+0.01s call     test/test_plugins/test_yellowbrick/test_yellowbrick.py::TestYellowbrickPlots::test_parse_cv_uses_explicit_integer
+0.01s call     test/test_attack/test_attack.py::TestInitializeAttackBranches::test_attack_model_dictconfig_path
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestPoisonBranches::test_class_source_fallback_when_no_samples
+0.01s call     test/test_attack/test_attack.py::TestPoisonBranches::test_class_source_fallback_when_no_samples
+0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_attack_metrics
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_serialization.py::test_pytorch_model_get_model_save_load_error_paths
+0.01s call     test/test_layers/test_plot_layer.py::test_load_experiment_config_and_yaml_helpers
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestEvadeBranches::test_adversarial_patch_branch
+0.01s call     test/test_plugins/test_lifelines/test_survival_integration.py::test_lifelines_data_config_object_pickle_roundtrip
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_data.py::TestPytorchCustomDataConfig::test_custom_call_uses_cached_paths_and_persists_outputs
+0.01s call     test/test_file/test_file.py::TestFileConfig::test_unused_directory_removed
+0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_database_reconstruction_executes_real_infer_database_reconstruction
+0.01s call     test/test_layers/test_progress_bar_layer.py::test_progress_bar_main_raises_for_unknown_stage
+0.01s call     test/test_attack/test_attack.py::TestEvadeBranches::test_adversarial_patch_branch
+0.01s call     test/test_attack/test_attack.py::TestInferAttributeBranches::test_list_targeted_attribute_executes
+0.01s call     test/test_data/test_data_base_unit.py::test_prepare_data_file_existing_and_new
+0.01s call     test/test_data/test_sample.py::TestKFoldSampler::test_fold_none_defaults_to_zero
+0.01s call     test/test_model/test_model_core.py::TestLoadAllPredictionsBranches::test_test_predictions_loaded_without_time_asserts
+0.01s call     test/test_data/test_sample.py::TestSplitSampler::test_regression_no_stratify
+0.01s call     test/test_experiment/test_experiment.py::TestFileResolver::test_key_lookup_returns_sub_value
+0.01s call     test/test_score/test_score.py::TestDefaultScorerDicts::test_default_classifier_dict_requires_probabilities_for_probability_metrics
+0.01s call     test/test_layers/test_pareto.py::TestParetoMain::test_no_complete_trials_raises
+0.01s setup    test/test_layers/test_optimize.py::test_execute_runtime_object_executes_without_mercy_once
+0.01s call     test/test_utils/test_base_utils.py::TestTopLevelSaveLoadData::test_save_and_load_csv
+0.01s call     test/test_plugins/test_searborn/test_seaborn.py::TestSeabornPlots::test_post_init_raises_for_missing_columns
+0.01s call     test/test_data/test_data.py::TestDataPipelineConfig::test_pipeline_fit_and_transform
+0.01s call     test/test_plugins/test_yellowbrick/test_yellowbrick.py::TestYellowbrickPlots::test_plot_list_reuses_prepared_experiment_for_children
+0.01s call     test/test_model/test_model_core.py::TestLoadScoreFile::test_load_score_file_existing_merges_scores
+0.01s call     test/test_utils/test_base_utils.py::TestConfigBaseScores::test_save_and_load_scores_csv
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestPoisonBranches::test_val_mode_used_when_available
+0.01s call     test/test_plugins/test_fairlearn/test_pytorch_fairness_integration.py::test_deckard_rc_environment_loading
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestPoisonBranches::test_poisoning_svm_branch_scores_benign_and_poisoned_accuracy
+0.01s call     test/test_package/test_init_module.py::test_load_yaml_file_reads_content
+0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_inference_unknown_subtype_raises
+0.01s call     test/test_plugins/test_yellowbrick/test_yellowbrick.py::TestYellowbrickPlots::test_parse_cv_defaults_to_stratifiedkfold_for_classifier
+0.01s call     test/test_plugins/test_anjana/test_anjana_experiment.py::test_anjana_data_with_fairlearn_model_chain
+0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_infer_model_inversion_scores_reconstruction
+0.01s call     test/test_plugins/test_fairlearn/test_model_fairness.py::TestFairlearnModelConfig::test_apply_defense_supports_mixed_defense_pipeline
+0.01s call     test/test_attack/test_attack.py::TestCallCachingPaths::test_attack_predictions_file_saved_after_call
+0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_poisoning_svm_initialization_injects_train_and_val_arrays
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_data.py::TestPytorchCustomDataConfig::test_sample_creates_train_test_loaders
+0.01s setup    test/test_data/test_data_base_unit.py::test_prepare_data_file_existing_and_new
+0.01s call     test/test_layers/test_rerun_failed_studies.py::test_rerun_failed_studies_main_dry_run_and_execute
+0.01s setup    test/test_layers/test_optimize.py::test_prepare_multirun_file_paths_without_to_dict
+0.01s call     test/test_score/test_score.py::TestAttackScorers::test_attack_scorer_attribute_classification
+0.01s call     test/test_plugins/test_yellowbrick/test_yellowbrick.py::TestYellowbrickPlots::test_parse_cv_defaults_to_kfold_for_regressor
+0.01s call     test/test_package/test_frameworks_package.py::test_adapter_mixin_methods_access_no_private_attributes
+0.01s call     test/test_plugins/test_fairlearn/test_model_fairness.py::TestFairlearnModelConfig::test_apply_defense_rejects_legacy_defense_list
+0.01s call     test/test_plugins/test_anjana/test_anjana_experiment.py::test_anjana_defense_transforms_x_and_y_before_split
+0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_membership_inference
+0.01s call     test/test_data/test_sample.py::TestShuffleSampler::test_raises_without_val_size
+0.01s call     test/test_utils/test_base_utils.py::TestExecuteWithoutMercy::test_exception_path_returns_score_dict
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestInferMembershipBranches::test_sensitive_features_present_builds_big_sensitive
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestInitializeAttackBranches::test_attack_model_dictconfig_path
+0.01s call     test/test_attack/test_attack.py::TestPoisonBranches::test_val_mode_used_when_available
+0.01s call     test/test_data/test_data.py::TestDataConfig::test_make_regression_data_loading_and_sampling
+0.01s call     test/test_data/test_data.py::TestFairlearnDataPipelineConfig::test_pipeline_selector_initialization
+0.01s call     test/test_data/test_data.py::TestDataConfigAdditional::test_make_regression_data_loading_and_sampling
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestAttackConfig::test_call_extraction_requires_classification_task
+0.01s call     test/test_data/test_sample.py::TestKFoldSampler::test_fold_out_of_range_raises
+0.01s call     test/test_layers/test_optimize.py::test_save_params_file_writes_config_without_params
+0.01s call     test/test_attack/test_attack.py::TestPoisonBranches::test_poisoning_svm_branch_scores_benign_and_poisoned_accuracy
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_pytorch_auto_device_propagates_to_all_components
+0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_infer_task_is_classification_and_compatibility_guard
+0.01s call     test/test_model/test_model_defense_pipeline.py::TestDefenseConfig::test_apply_to_trained_model
+0.01s call     test/test_declarations.py::TestShouldRegisterConfig::test_pytorch_config_with_torch
+0.01s call     test/test_file/test_file.py::TestFileConfig::test_file_paths_contain_experiment_name
+0.01s call     test/test_score/test_score_base_unit.py::test_scorer_dict_call_mode_and_probability_routing
+0.01s call     test/test_plugins/test_fairlearn/test_fairlearn_data_config.py::TestLoadData::test_load_data_validates_sensitive_columns
+0.01s call     test/test_model/test_model_core.py::TestModelConfig::test_decode_predictions_for_persistence_converts_2d_classifier_output
+0.01s call     test/test_plugins/test_fairlearn/test_model_fairness.py::TestFairlearnModelConfig::test_fairness_model_config_initialization
+0.01s call     test/test_package/test_init_module.py::test_file_resolver_reads_nested_key
+0.01s call     test/test_utils/test_base_utils.py::TestTopLevelSaveLoadData::test_save_and_load_pkl
+0.01s call     test/test_plugins/test_fairlearn/test_pytorch_fairness_integration.py::test_pytorch_fairness_defense_receives_sensitive_features
+0.01s call     test/test_plugins/test_fairlearn/test_model_fairness.py::TestFairlearnModelConfig::test_train_passes_sensitive_features_when_supported
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestCallCachingPaths::test_attack_predictions_file_saved_after_call
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestPytorchAttackConfig::test_prepare_features_dataframe_to_numpy
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestInitializeAttackBranches::test_attack_model_modelconfig_instance_path
+0.01s call     test/test_data/test_sample.py::TestShuffleSampler::test_total_covers_dataset
+0.01s setup    test/test_frameworks/test_pytorch/test_pytorch_data.py::TestPytorchDataConfig::test_call
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_pytorch_device_propagates_from_experiment
+0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_score_and_static_normalizers
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestAttackConfig::test_real_model_inversion_attack_executes
+0.01s call     test/test_integration/test_base_integration.py::test_adult_all_attack_types_base[<lambda>-inferred_age_]
+0.01s call     test/test_plugins/test_anjana/test_anjana_integration.py::test_wrapper_defenses_reordered_last_with_warning
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestAttackConfig::test_call_rejects_regression_evasion_early
+0.01s call     test/test_attack/test_attack.py::TestCallCachingPaths::test_attack_file_save_pickle_error_continues
+0.01s call     test/test_plugins/test_fairlearn/test_fairlearn_data_config.py::TestFairlearnDataConfigInit::test_init_with_fairness_defense_list_later_wins
+0.01s call     test/test_detector/test_detector.py::test_detector_constructor_fallback_and_detect_poison_indices
+0.01s call     test/test_declarations.py::TestShouldRegisterConfig::test_sklearn_config_without_sklearn
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestInferMembershipBranches::test_axis_error_fallback_is_used
+0.01s call     test/test_package/test_init_module.py::test_file_resolver_raises_for_missing_key
+0.01s setup    test/test_package/test_main.py::test_get_configuration_paths_raises_for_missing_config_file
+0.01s call     test/test_score/test_score.py::TestDataInspectionScorers::test_data_classification_reference_column_override
+0.01s setup    test/test_layers/test_progress_bar_layer.py::test_get_hydra_sweeper_config_supports_flat_or_nested_hydra
+0.01s call     test/test_layers/test_compile_results_layer.py::TestCompileResultsMain::test_creates_nested_output_dir
+0.01s call     test/test_utils/test_base_utils.py::TestTopLevelSaveLoadData::test_save_data_converts_non_dataframe
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestCallCachingPaths::test_attack_file_save_pickle_error_continues
+0.01s call     test/test_plugins/test_fairlearn/test_model_fairness.py::TestFairlearnModelConfig::test_predict_passes_sensitive_features_when_supported
+0.01s call     test/test_data/test_data_base_unit.py::test_post_init_normalizes_scorer_string_and_dict
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_data.py::TestPytorchDataConfig::test_float_train_test_sizes
+0.01s call     test/test_plugins/test_fairlearn/test_fairlearn_data_config.py::TestScore::test_score_returns_dict
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_pytorch_device_propagates_from_model_when_only_one_specified
+0.01s call     test/test_attack/test_attack.py::TestInferMembershipBranches::test_axis_error_fallback_is_used
+0.01s call     test/test_attack/test_attack.py::TestAttackConfig::test_call_poisoning_requires_source_and_target_classes
+0.01s call     test/test_utils/test_base_utils.py::TestUtilsAdditional::test_read_scores_from_disk_missing_file_creates_directory
+0.01s call     test/test_plugins/test_anjana/test_anjana.py::test_anjana_data_defense_auto_injects_generated_hierarchies
+0.01s call     test/test_plugins/test_fairlearn/test_model_fairness.py::TestFairlearnModelConfig::test_fairness_model_config_is_configbase_with_hash
+0.01s call     test/test_detector/test_detector.py::test_detector_requires_attack_predictions
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_data.py::TestPytorchDataConfig::test_sample
+0.01s call     test/test_data/test_data.py::TestDataPipelineConfig::test_pipeline_selector_initialization
+0.01s setup    test/test_plugins/test_fairlearn/test_fairness_integration.py::test_fairness_data_and_model_scores
+0.01s call     test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_pytorch_model_config_hash_stable_before_training
+0.01s call     test/test_layers/test_progress_bar_layer.py::test_calculate_number_of_studies_per_stage_and_missing_stage
+0.01s call     test/test_plugins/test_searborn/test_seaborn.py::TestSeabornPlots::test_plot_config_list_call_current_behavior
+0.01s call     test/test_experiment/test_experiment.py::TestExperimentPostInitMoreBranches::test_multi_attack_sets_primary_attack_and_chain
+0.01s call     test/test_data/test_sample.py::TestShuffleSampler::test_no_stratify
 
-(3480 durations < 0.005s hidden.  Use -vv to show these durations.)
+(4041 durations < 0.005s hidden.  Use -vv to show these durations.)
 =========================== short test summary info ============================
-SKIPPED [1] test/test_integration/test_fairness_integration.py:26: fairlearn model configs are unavailable
-SKIPPED [1] test/test_integration/test_pytorch_fairness_integration.py:25: fairlearn pytorch model configs are unavailable
-SKIPPED [1] test/test_experiment/test_experiment.py:1635: could not import 'tensorflow': No module named 'tensorflow'
-SKIPPED [1] test/test_experiment/test_experiment.py:1662: could not import 'tensorflow': No module named 'tensorflow'
-SKIPPED [1] test/test_experiment/test_experiment.py:1646: could not import 'tensorflow': No module named 'tensorflow'
+SKIPPED [1] test/test_experiment/test_experiment.py:1589: could not import 'tensorflow': No module named 'tensorflow'
+SKIPPED [1] test/test_experiment/test_experiment.py:1616: could not import 'tensorflow': No module named 'tensorflow'
+SKIPPED [1] test/test_experiment/test_experiment.py:1600: could not import 'tensorflow': No module named 'tensorflow'
+SKIPPED [1] test/test_frameworks/test_pytorch/test_pytorch_experiment.py:589: examples/pytorch/.deckard_rc not found
+SKIPPED [1] test/test_frameworks/test_pytorch/test_pytorch_experiment.py:607: examples/pytorch/.deckard_rc not found
+SKIPPED [1] test/test_frameworks/test_pytorch/test_pytorch_experiment.py:624: examples/pytorch/.deckard_rc not found
+SKIPPED [1] test/test_frameworks/test_pytorch/test_pytorch_experiment.py:664: examples/pytorch/.deckard_rc not found
+SKIPPED [1] test/test_frameworks/test_pytorch/test_pytorch_experiment.py:710: examples/pytorch/.deckard_rc not found
 SKIPPED [1] test/test_utils/test_base_utils.py:640: openpyxl not installed
-SKIPPED [1] test/test_utils/test_base_utils.py:680: openpyxl not installed
 SKIPPED [1] test/test_utils/test_base_utils.py:804: lxml not installed
+SKIPPED [1] test/test_utils/test_base_utils.py:680: openpyxl not installed
 SKIPPED [1] test/test_utils/test_base_utils.py:815: openpyxl not installed
-============ 1315 passed, 9 skipped, 1 warning in 123.09s (0:02:03) ============
+XPASS test/test_plugins/test_anjana/test_anjana.py::test_anjana_data_defense_applies_callable_and_updates_xy - Unsure if test is accurate.
+ERROR test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestFairlearnAttackScorer::test_evasion_attack_with_fairlearn_scorer_end_to_end
+ERROR test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestFairlearnAttackScorer::test_fairlearn_attack_scorer_instantiates
+ERROR test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestFairlearnAttackScorer::test_membership_inference_with_fairlearn_scorer_end_to_end
+ERROR test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestFairlearnAttackScorer::test_score_attribute_with_sensitive_features_produces_group_metrics
+ERROR test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestFairlearnAttackScorer::test_score_evasion_with_sensitive_features_produces_group_metrics
+ERROR test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestFairlearnAttackScorer::test_score_membership_with_sensitive_features_produces_group_metrics
+FAILED test/test_attack/test_attack.py::TestInitializeAttackBranches::test_model_with_sensitive_features_predict_wraps_with_wrapper
+FAILED test/test_attack/test_attack.py::TestInitializeAttackBranches::test_sensitive_features_fallback_uses_sensitive_train
+FAILED test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestInitializeAttackBranches::test_model_with_sensitive_features_predict_wraps_with_wrapper
+FAILED test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestInitializeAttackBranches::test_sensitive_features_fallback_uses_sensitive_train
+FAILED test/test_frameworks/test_pytorch/test_pytorch_experiment.py::test_art_last_ordering_no_warning_for_wrapper_only_chain
+FAILED test/test_layers/test_optimize.py::test_optimize_main_executes_once_in_multirun
+FAILED test/test_model/test_model_defense_pipeline.py::test_defense_behavior_defaults_signature_and_apply_to_paths
+FAILED test/test_package/test_repository_wide_enforcement.py::test_repository_enforcement_frameworks_scope_passes
+FAILED test/test_frameworks/test_pytorch/test_pytorch_attack.py::TestAttackConfig::test_real_model_inversion_attack_executes
+FAILED test/test_plugins/test_fairlearn/test_model_fairness.py::TestFairlearnModelConfig::test_train_passes_sensitive_features_when_supported
+FAILED test/test_plugins/test_fairlearn/test_fairness_mixin_unit.py::test_runtime_sensitive_source_and_split_resolution_errors
+FAILED test/test_plugins/test_fairlearn/test_fairness_mixin_unit.py::test_infer_and_resolve_sensitive_features_for_batch_paths
+FAILED test/test_plugins/test_fairlearn/test_fairness_mixin_unit.py::test_fit_defended_estimator_paths
+FAILED test/test_plugins/test_fairlearn/test_model_fairness.py::TestFairlearnModelConfig::test_predict_passes_sensitive_features_when_supported
+FAILED test/test_frameworks/test_pytorch/test_pytorch_defenses.py::TestRetrainingDefensePipeline::test_binary_input_detector_rejects_non_neural_network_models
+FAILED test/test_frameworks/test_pytorch/test_pytorch_defenses.py::TestRetrainingDefensePipeline::test_defensive_distillation_rejects_non_neural_network_models
+FAILED test/test_frameworks/test_pytorch/test_pytorch_defenses.py::TestRetrainingDefensePipeline::test_neural_cleanse_rejects_non_neural_network_models
+FAILED test/test_frameworks/test_pytorch/test_pytorch_defenses.py::TestRetrainingDefensePipeline::test_real_adversarial_retraining_executes_with_pytorch_model
+FAILED test/test_frameworks/test_pytorch/test_pytorch_defenses.py::TestRetrainingDefensePipeline::test_real_defensive_distillation_executes_with_pytorch_model
+FAILED test/test_frameworks/test_pytorch/test_pytorch_defenses.py::TestRetrainingDefensePipeline::test_real_neural_cleanse_reports_backend_incompatibility_for_pytorch_model
+FAILED test/test_frameworks/test_pytorch/test_pytorch_defenses.py::TestRetrainingDefensePipeline::test_retraining_defense_is_reordered_last_with_warning
+FAILED test/test_frameworks/test_pytorch/test_pytorch_defenses.py::TestRetrainingDefensePipeline::test_retraining_rejects_non_neural_network_models
+FAILED test/test_package/test_frameworks_package.py::test_framework_contracts_declare_ordered_lifecycle[_StubFrameworkModelConfig-expected_execution_steps2]
+= 23 failed, 1485 passed, 12 skipped, 1 xpassed, 1 warning, 6 errors in 56.25s =

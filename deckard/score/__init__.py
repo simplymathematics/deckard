@@ -1,52 +1,139 @@
-"""Scoring configuration exports and Hydra registrations."""
+"""Scoring configuration exports and lazy optional plugin symbol loading."""
 
-import logging
+from __future__ import annotations
 
-from .base import (  # noqa: F401
-    DefaultModelScorerConfig,
+import importlib.util
+
+from .attack import (
+    AttackScorerConfig,
+    DefaultAttributeInferenceAttackScorerConfig,
+    DefaultAttributeInferenceRegressionAttackScorerConfig,
+    DefaultEvasionAttackScorerConfig,
+    DefaultEvasionRegressionAttackScorerConfig,
+    DefaultMembershipInferenceAttackScorerConfig,
+    FairlearnAttackScorerConfig,
+)
+from .base import (
     DefaultClassifierConfig,
-    DefaultPytorchScorerConfig,
+    DefaultModelScorerConfig,
     DefaultPytorchClassifierConfig,
     DefaultPytorchRegressorConfig,
+    DefaultPytorchScorerConfig,
     DefaultRegressorConfig,
     ScorerConfig,
     ScorerDictConfig,
     build_scorer,
     build_scorer_dict,
 )
-
-from .attack import (  # noqa: E402
-    AttackScorerConfig,
-    FairlearnAttackScorerConfig,
-    DefaultEvasionAttackScorerConfig,
-    DefaultEvasionRegressionAttackScorerConfig,
-    DefaultMembershipInferenceAttackScorerConfig,
-    DefaultAttributeInferenceAttackScorerConfig,
-    DefaultAttributeInferenceRegressionAttackScorerConfig,
-)
-from .data import (  # noqa: E402
-    DefaultDataScorerConfig,
+from .data import (
     DefaultDataClassificationConfig,
     DefaultDataRegressionConfig,
-    data_num_classes_score,
-    data_class_count_min_score,
+    DefaultDataScorerConfig,
     data_class_count_max_score,
+    data_class_count_min_score,
     data_class_imbalance_ratio_score,
-    data_mutual_information_mean_score,
-    data_mutual_information_max_score,
     data_empirical_cdf_function_score,
+    data_mutual_information_max_score,
+    data_mutual_information_mean_score,
+    data_num_classes_score,
 )
 
 
-logger = logging.getLogger(__name__)
-
-survival_concordance_score = None
-survival_aic_score = None
-survival_bic_score = None
+def _is_available(module_name: str) -> bool:
+    """Return ``True`` when an optional dependency appears installed."""
+    return importlib.util.find_spec(module_name) is not None
 
 
-def _load_lifelines_score_symbol(symbol_name):
-    from ..plugins.lifelines.score import (  # noqa: WPS433
+def _load_fairlearn_score_symbols() -> bool:
+    try:
+        from ..plugins.fairlearn.score import (
+            DefaultFairlearnClassificationConfig,
+            DefaultFairlearnDataScorerConfig,
+            DefaultFairlearnRegressionConfig,
+            DefaultFairlearnScorerConfig,
+            FairlearnScoreDictConfig,
+        )
+    except Exception:  # pragma: no cover
+        return False
+
+    globals().update(
+        {
+            "DefaultFairlearnClassificationConfig": DefaultFairlearnClassificationConfig,
+            "DefaultFairlearnDataScorerConfig": DefaultFairlearnDataScorerConfig,
+            "DefaultFairlearnRegressionConfig": DefaultFairlearnRegressionConfig,
+            "DefaultFairlearnScorerConfig": DefaultFairlearnScorerConfig,
+            "FairlearnScoreDictConfig": FairlearnScoreDictConfig,
+        },
+    )
+    return True
+
+
+def _load_anjana_score_symbols() -> bool:
+    try:
+        from ..plugins.anjana.score import (
+            DefaultAnjanaDataScorerConfig,
+            DefaultAnjanaModelScorerConfig,
+            DefaultAnjanaScorerConfig,
+        )
+    except Exception:  # pragma: no cover
+        return False
+
+    globals().update(
+        {
+            "DefaultAnjanaScorerConfig": DefaultAnjanaScorerConfig,
+            "DefaultAnjanaDataScorerConfig": DefaultAnjanaDataScorerConfig,
+            "DefaultAnjanaModelScorerConfig": DefaultAnjanaModelScorerConfig,
+        },
+    )
+    return True
+
+
+def _load_lifelines_score_symbols() -> bool:
+    try:
+        from ..plugins.lifelines.score import DefaultLifelinesConfig
+    except Exception:  # pragma: no cover
+        return False
+
+    globals().update({"DefaultLifelinesConfig": DefaultLifelinesConfig})
+    return True
+
+
+def _load_fairlearn_score_symbol(symbol_name: str):
+    from ..plugins.fairlearn.score import (
+        fairness_demographic_parity_difference as _fairness_demographic_parity_difference,
+        fairness_equalized_odds_difference as _fairness_equalized_odds_difference,
+        fairness_group_mae_difference as _fairness_group_mae_difference,
+        fairness_group_mean_prediction_difference as _fairness_group_mean_prediction_difference,
+        fairness_group_mse_difference as _fairness_group_mse_difference,
+    )
+
+    symbols = {
+        "fairness_demographic_parity_difference": _fairness_demographic_parity_difference,
+        "fairness_equalized_odds_difference": _fairness_equalized_odds_difference,
+        "fairness_group_mean_prediction_difference": _fairness_group_mean_prediction_difference,
+        "fairness_group_mae_difference": _fairness_group_mae_difference,
+        "fairness_group_mse_difference": _fairness_group_mse_difference,
+    }
+    return symbols[symbol_name]
+
+
+def _load_anjana_score_symbol(symbol_name: str):
+    from ..plugins.anjana.score import (
+        anjana_k_anonymity_score as _anjana_k_anonymity_score,
+        anjana_l_diversity_score as _anjana_l_diversity_score,
+        anjana_t_closeness_score as _anjana_t_closeness_score,
+    )
+
+    symbols = {
+        "anjana_k_anonymity_score": _anjana_k_anonymity_score,
+        "anjana_l_diversity_score": _anjana_l_diversity_score,
+        "anjana_t_closeness_score": _anjana_t_closeness_score,
+    }
+    return symbols[symbol_name]
+
+
+def _load_lifelines_score_symbol(symbol_name: str):
+    from ..plugins.lifelines.score import (
         survival_aic_score as _survival_aic_score,
         survival_bic_score as _survival_bic_score,
         survival_concordance_score as _survival_concordance_score,
@@ -60,181 +147,63 @@ def _load_lifelines_score_symbol(symbol_name):
     return symbols[symbol_name]
 
 
-if survival_concordance_score is None:
-
-    def survival_concordance_score(*args, **kwargs):
-        return _load_lifelines_score_symbol("survival_concordance_score")(
-            *args,
-            **kwargs,
-        )
-
-
-if survival_aic_score is None:
-
-    def survival_aic_score(*args, **kwargs):
-        return _load_lifelines_score_symbol("survival_aic_score")(
-            *args,
-            **kwargs,
-        )
-
-
-if survival_bic_score is None:
-
-    def survival_bic_score(*args, **kwargs):
-        return _load_lifelines_score_symbol("survival_bic_score")(
-            *args,
-            **kwargs,
-        )
-
-try:
-    from ..plugins.fairlearn.score import (  # noqa: E402
-        DefaultFairlearnClassificationConfig,
-        DefaultFairlearnRegressionConfig,
-        DefaultFairlearnDataScorerConfig,
-        FairlearnScoreDictConfig,
-        fairness_demographic_parity_difference,
-        fairness_equalized_odds_difference,
-        fairness_group_mae_difference,
-        fairness_group_mean_prediction_difference,
-        fairness_group_mse_difference,
+def fairness_demographic_parity_difference(*args, **kwargs):
+    return _load_fairlearn_score_symbol("fairness_demographic_parity_difference")(
+        *args,
+        **kwargs,
     )
 
-    _ = (
-        DefaultFairlearnClassificationConfig,
-        DefaultFairlearnRegressionConfig,
-        DefaultFairlearnDataScorerConfig,
-        FairlearnScoreDictConfig,
-        fairness_demographic_parity_difference,
-        fairness_equalized_odds_difference,
-        fairness_group_mae_difference,
-        fairness_group_mean_prediction_difference,
-        fairness_group_mse_difference,
-    )
-except ImportError:  # pragma: no cover - optional dependency
-    DefaultFairlearnClassificationConfig = None
-    DefaultFairlearnRegressionConfig = None
-    DefaultFairlearnDataScorerConfig = None
-    FairlearnScoreDictConfig = None
-    fairness_demographic_parity_difference = None
-    fairness_equalized_odds_difference = None
-    fairness_group_mae_difference = None
-    fairness_group_mean_prediction_difference = None
-    fairness_group_mse_difference = None
-    logger.debug("Fairlearn not found. Fairness score configs are unavailable.")
 
-
-def _load_fairlearn_score_symbol(symbol_name):
-    from ..plugins.fairlearn.score import (  # noqa: WPS433
-        fairness_demographic_parity_difference as _fairness_demographic_parity_difference,
-        fairness_equalized_odds_difference as _fairness_equalized_odds_difference,
-        fairness_group_mae_difference as _fairness_group_mae_difference,
-        fairness_group_mean_prediction_difference as _fairness_group_mean_prediction_difference,
-        fairness_group_mse_difference as _fairness_group_mse_difference,
+def fairness_equalized_odds_difference(*args, **kwargs):
+    return _load_fairlearn_score_symbol("fairness_equalized_odds_difference")(
+        *args,
+        **kwargs,
     )
 
-    symbols = {
-        "fairness_demographic_parity_difference": _fairness_demographic_parity_difference,
-        "fairness_equalized_odds_difference": _fairness_equalized_odds_difference,
-        "fairness_group_mae_difference": _fairness_group_mae_difference,
-        "fairness_group_mean_prediction_difference": _fairness_group_mean_prediction_difference,
-        "fairness_group_mse_difference": _fairness_group_mse_difference,
-    }
-    return symbols[symbol_name]
 
-
-if fairness_demographic_parity_difference is None:
-
-    def fairness_demographic_parity_difference(*args, **kwargs):
-        return _load_fairlearn_score_symbol("fairness_demographic_parity_difference")(
-            *args,
-            **kwargs,
-        )
-
-
-if fairness_equalized_odds_difference is None:
-
-    def fairness_equalized_odds_difference(*args, **kwargs):
-        return _load_fairlearn_score_symbol("fairness_equalized_odds_difference")(
-            *args,
-            **kwargs,
-        )
-
-
-if fairness_group_mae_difference is None:
-
-    def fairness_group_mae_difference(*args, **kwargs):
-        return _load_fairlearn_score_symbol("fairness_group_mae_difference")(
-            *args,
-            **kwargs,
-        )
-
-
-if fairness_group_mean_prediction_difference is None:
-
-    def fairness_group_mean_prediction_difference(*args, **kwargs):
-        return _load_fairlearn_score_symbol(
-            "fairness_group_mean_prediction_difference",
-        )(*args, **kwargs)
-
-
-if fairness_group_mse_difference is None:
-
-    def fairness_group_mse_difference(*args, **kwargs):
-        return _load_fairlearn_score_symbol("fairness_group_mse_difference")(
-            *args,
-            **kwargs,
-        )
-
-try:
-    from ..plugins.anjana.score import (  # noqa: E402
-        DefaultAnjanaScorerConfig,
-        DefaultAnjanaDataScorerConfig,
-        DefaultAnjanaModelScorerConfig,
-        anjana_k_anonymity_score,
-        anjana_l_diversity_score,
-        anjana_t_closeness_score,
+def fairness_group_mean_prediction_difference(*args, **kwargs):
+    return _load_fairlearn_score_symbol("fairness_group_mean_prediction_difference")(
+        *args,
+        **kwargs,
     )
 
-    _ = (
-        DefaultAnjanaScorerConfig,
-        DefaultAnjanaDataScorerConfig,
-        DefaultAnjanaModelScorerConfig,
-        anjana_k_anonymity_score,
-        anjana_l_diversity_score,
-        anjana_t_closeness_score,
-    )
-except ImportError:  # pragma: no cover - optional dependency
-    DefaultAnjanaScorerConfig = None
-    DefaultAnjanaDataScorerConfig = None
-    DefaultAnjanaModelScorerConfig = None
-    anjana_k_anonymity_score = None
-    anjana_l_diversity_score = None
-    anjana_t_closeness_score = None
-    logger.debug("Anjana not found. Anjana score configs are unavailable.")
 
-try:
-    from ..plugins.lifelines.score import (  # noqa: E402
-        DefaultLifelinesConfig,
-        survival_aic_score,
-        survival_bic_score,
-        survival_concordance_score,
+def fairness_group_mae_difference(*args, **kwargs):
+    return _load_fairlearn_score_symbol("fairness_group_mae_difference")(
+        *args,
+        **kwargs,
     )
 
-    _ = (
-        DefaultLifelinesConfig,
-        survival_aic_score,
-        survival_bic_score,
-        survival_concordance_score,
+
+def fairness_group_mse_difference(*args, **kwargs):
+    return _load_fairlearn_score_symbol("fairness_group_mse_difference")(
+        *args,
+        **kwargs,
     )
-except ImportError:  # pragma: no cover - optional dependency
-    DefaultLifelinesConfig = None
-    logger.debug("Lifelines not found. Survival score configs are unavailable.")
 
-if "FairlearnScoreDictConfig" in globals() and FairlearnScoreDictConfig is not None:
-    pass
 
-if "DefaultLifelinesConfig" in globals() and DefaultLifelinesConfig is not None:
-    pass
+def anjana_k_anonymity_score(*args, **kwargs):
+    return _load_anjana_score_symbol("anjana_k_anonymity_score")(*args, **kwargs)
+
+
+def anjana_l_diversity_score(*args, **kwargs):
+    return _load_anjana_score_symbol("anjana_l_diversity_score")(*args, **kwargs)
+
+
+def anjana_t_closeness_score(*args, **kwargs):
+    return _load_anjana_score_symbol("anjana_t_closeness_score")(*args, **kwargs)
+
+
+def survival_concordance_score(*args, **kwargs):
+    return _load_lifelines_score_symbol("survival_concordance_score")(*args, **kwargs)
+
+
+def survival_aic_score(*args, **kwargs):
+    return _load_lifelines_score_symbol("survival_aic_score")(*args, **kwargs)
+
+
+def survival_bic_score(*args, **kwargs):
+    return _load_lifelines_score_symbol("survival_bic_score")(*args, **kwargs)
 
 
 __all__ = [
@@ -263,6 +232,14 @@ __all__ = [
     "data_mutual_information_mean_score",
     "data_mutual_information_max_score",
     "data_empirical_cdf_function_score",
+    "fairness_demographic_parity_difference",
+    "fairness_equalized_odds_difference",
+    "fairness_group_mean_prediction_difference",
+    "fairness_group_mae_difference",
+    "fairness_group_mse_difference",
+    "anjana_k_anonymity_score",
+    "anjana_l_diversity_score",
+    "anjana_t_closeness_score",
     "survival_concordance_score",
     "survival_aic_score",
     "survival_bic_score",
@@ -270,43 +247,50 @@ __all__ = [
     "build_scorer_dict",
 ]
 
-if "FairlearnScoreDictConfig" in globals() and FairlearnScoreDictConfig is not None:
+
+if _is_available("fairlearn"):
     __all__.extend(
         [
-            "DefaultFairlearnClassificationConfig",
             "DefaultFairlearnScorerConfig",
-            "DefaultFairlearnDataScorerConfig",
+            "DefaultFairlearnClassificationConfig",
             "DefaultFairlearnRegressionConfig",
+            "DefaultFairlearnDataScorerConfig",
             "FairlearnScoreDictConfig",
-            "fairness_demographic_parity_difference",
-            "fairness_equalized_odds_difference",
-            "fairness_group_mean_prediction_difference",
-            "fairness_group_mae_difference",
-            "fairness_group_mse_difference",
         ],
     )
 
-if (
-    "DefaultAnjanaDataScorerConfig" in globals()
-    and DefaultAnjanaDataScorerConfig is not None
-):
+if _is_available("pycanon"):
     __all__.extend(
         [
             "DefaultAnjanaScorerConfig",
             "DefaultAnjanaDataScorerConfig",
             "DefaultAnjanaModelScorerConfig",
-            "anjana_k_anonymity_score",
-            "anjana_l_diversity_score",
-            "anjana_t_closeness_score",
         ],
     )
 
-if "DefaultLifelinesConfig" in globals() and DefaultLifelinesConfig is not None:
-    __all__.extend(
-        [
-            "DefaultLifelinesConfig",
-            "survival_concordance_score",
-            "survival_aic_score",
-            "survival_bic_score",
-        ],
-    )
+if _is_available("lifelines"):
+    __all__.append("DefaultLifelinesConfig")
+
+
+def __getattr__(name: str):
+    fairlearn_symbols = {
+        "DefaultFairlearnScorerConfig",
+        "DefaultFairlearnClassificationConfig",
+        "DefaultFairlearnRegressionConfig",
+        "DefaultFairlearnDataScorerConfig",
+        "FairlearnScoreDictConfig",
+    }
+    anjana_symbols = {
+        "DefaultAnjanaScorerConfig",
+        "DefaultAnjanaDataScorerConfig",
+        "DefaultAnjanaModelScorerConfig",
+    }
+    lifelines_symbols = {"DefaultLifelinesConfig"}
+
+    if name in fairlearn_symbols and _load_fairlearn_score_symbols():
+        return globals()[name]
+    if name in anjana_symbols and _load_anjana_score_symbols():
+        return globals()[name]
+    if name in lifelines_symbols and _load_lifelines_score_symbols():
+        return globals()[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

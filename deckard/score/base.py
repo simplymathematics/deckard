@@ -565,6 +565,16 @@ class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
     def __getitem__(self, key):
         return self.scorers[key]
 
+    @property
+    def configured_scorers(self) -> dict[str, ScorerConfig]:
+        """Public accessor for configured scorer definitions."""
+        return self.scorers
+
+    @configured_scorers.setter
+    def configured_scorers(self, value: dict[str, ScorerConfig] | None) -> None:
+        """Set configured scorer definitions."""
+        self.scorers = value or {}
+
     def get_callables(self):
         return {key: scorer for key, scorer in self.scorers.items()}
 
@@ -637,7 +647,7 @@ class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
         if mode in {"val", "attack-val"}:
             return getattr(data, "X_val", None)
         if mode == "pre-sample":
-            return getattr(data, "_X", None)
+            return getattr(data, "X", getattr(data, "_X", None))
         return None
 
     @staticmethod
@@ -668,7 +678,7 @@ class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
             except Exception:
                 estimator = None
         if estimator is None:
-            estimator = getattr(model, "_model", None)
+            estimator = getattr(model, "model", getattr(model, "_model", None))
 
         # Try predict_proba or _predict_proba on the model
         for proba_method in ("predict_proba", "_predict_proba"):
@@ -676,7 +686,7 @@ class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
             if callable(predict_proba):
                 return predict_proba(X)
         # Try estimator if available
-        estimator = getattr(model, "_model", None)
+        estimator = getattr(model, "model", getattr(model, "_model", None))
         if estimator is not None:
             for proba_method in ("predict_proba", "_predict_proba"):
                 predict_proba = getattr(estimator, proba_method, None)
@@ -792,11 +802,11 @@ class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
                 ind = attack.attack_predictions
             elif mode == "pre-sample":
                 assert data is not None
-                dep = getattr(data, "_y", None)
-                ind = getattr(data, "_X", None)
+                dep = getattr(data, "y", getattr(data, "_y", None))
+                ind = getattr(data, "X", getattr(data, "_X", None))
                 if dep is None or ind is None:
                     raise ValueError(
-                        "pre-sample mode requires data._X and data._y to be loaded",
+                        "pre-sample mode requires data.X/data.y (or data._X/data._y) to be loaded",
                     )
             elif dep is None:
                 raise AssertionError("y_true must be provided if mode is None")
@@ -804,7 +814,11 @@ class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
         if attack is not None:
             for key, value in kwargs.items():
                 if value == "{attack}":
-                    kwargs[key] = attack._attack
+                    kwargs[key] = getattr(
+                        attack,
+                        "attack",
+                        getattr(attack, "_attack", None),
+                    )
 
         y_proba = kwargs.pop("y_proba", None)
 

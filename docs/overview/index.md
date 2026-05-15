@@ -19,13 +19,14 @@ The following pages are ordered for progressive onboarding:
 1. [`quickstart`](./quickstart)
 2. [`summary`](./summary)
 3. [`extensions`](./extensions)
-4. [`installation`](./installation)
-5. [`notebooks`](../notebooks/)
-6. [`api`](../api/)
-7. [`development`](./development)
-8. [`build_docs`](./build_docs)
-9. [`docker`](./docker)
-10. [`changelog`](./changelog)
+4. [`core_plugin_boundaries`](./core_plugin_boundaries)
+5. [`installation`](./installation)
+6. [`notebooks`](../notebooks/)
+7. [`api`](../api/)
+8. [`development`](./development)
+9. [`build_docs`](./build_docs)
+10. [`docker`](./docker)
+11. [`changelog`](./changelog)
 
 ## Navigation Notes
 
@@ -47,6 +48,7 @@ for a structured introduction.
 quickstart
 summary
 extensions
+core_plugin_boundaries
 installation
 notebooks
 api

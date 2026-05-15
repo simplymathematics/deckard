@@ -405,6 +405,16 @@ class AttackConfig(AttackContractMixin, ConfigBase, FrameworkAttackConfig):
     def __hash__(self):
         return super().__hash__()
 
+    @property
+    def attack_instance(self) -> Any:
+        """Compatibility alias for the instantiated attack runtime object."""
+        return self.attack
+
+    @attack_instance.setter
+    def attack_instance(self, value: Any) -> None:
+        """Compatibility alias setter for the attack runtime object."""
+        self.attack = value
+
     def __post_init__(self):
         """Initialize and normalize attack runtime configuration."""
         self._initialize_target_reference()
@@ -843,9 +853,9 @@ class AttackConfig(AttackContractMixin, ConfigBase, FrameworkAttackConfig):
 
                 predict_sig = inspect.signature(model.predict)
                 if "sensitive_features" in predict_sig.parameters:
-                    sensitive = getattr(data, "_sensitive_test", None)
+                    sensitive = getattr(data, "sensitive_test", None)
                     if sensitive is None:
-                        sensitive = getattr(data, "_sensitive_train", None)
+                        sensitive = getattr(data, "sensitive_train", None)
                     if sensitive is not None:
                         model = SensitiveFeaturesWrapper(model, sensitive)
                 if isinstance(model, RegressorMixin) and not isinstance(

@@ -461,6 +461,89 @@ class DataConfig(
         """Set the loaded target vector."""
         self._y = value
 
+    @property
+    def split_indices(self) -> tuple[list | None, list | None, list | None]:
+        """Return the active train/test/val split index triplet."""
+        return (self.train_indices, self.test_indices, self.val_indices)
+
+    @split_indices.setter
+    def split_indices(self, value: tuple[list | None, list | None, list | None]) -> None:
+        """Set the active train/test/val split index triplet."""
+        train_idx, test_idx, val_idx = value
+        self.train_indices = train_idx
+        self.test_indices = test_idx
+        self.val_indices = val_idx
+
+    @property
+    def train_split(self) -> list | None:
+        """Convenience alias for train split indices."""
+        return self.train_indices
+
+    @train_split.setter
+    def train_split(self, value: list | None) -> None:
+        """Set train split indices."""
+        self.train_indices = value
+
+    @property
+    def test_split(self) -> list | None:
+        """Convenience alias for test split indices."""
+        return self.test_indices
+
+    @test_split.setter
+    def test_split(self, value: list | None) -> None:
+        """Set test split indices."""
+        self.test_indices = value
+
+    @property
+    def val_split(self) -> list | None:
+        """Convenience alias for validation split indices."""
+        return self.val_indices
+
+    @val_split.setter
+    def val_split(self, value: list | None) -> None:
+        """Set validation split indices."""
+        self.val_indices = value
+
+    @property
+    def sensitive_train(self) -> Any:
+        """Public accessor for training split sensitive features."""
+        return getattr(self, "_sensitive_train", None)
+
+    @sensitive_train.setter
+    def sensitive_train(self, value: Any) -> None:
+        """Set training split sensitive features."""
+        self._sensitive_train = value
+
+    @property
+    def sensitive_test(self) -> Any:
+        """Public accessor for test split sensitive features."""
+        return getattr(self, "_sensitive_test", None)
+
+    @sensitive_test.setter
+    def sensitive_test(self, value: Any) -> None:
+        """Set test split sensitive features."""
+        self._sensitive_test = value
+
+    @property
+    def sensitive_val(self) -> Any:
+        """Public accessor for validation split sensitive features."""
+        return getattr(self, "_sensitive_val", None)
+
+    @sensitive_val.setter
+    def sensitive_val(self, value: Any) -> None:
+        """Set validation split sensitive features."""
+        self._sensitive_val = value
+
+    @property
+    def sensitive_all(self) -> Any:
+        """Public accessor for full-dataset sensitive features."""
+        return getattr(self, "_sensitive_all", None)
+
+    @sensitive_all.setter
+    def sensitive_all(self, value: Any) -> None:
+        """Set full-dataset sensitive features."""
+        self._sensitive_all = value
+
     def _get_stratify_col(self):
         """Return the stratification array (or ``None``) based on ``self.stratify``.
 

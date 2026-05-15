@@ -246,7 +246,7 @@ class DataPipelineContractMixin(BaseContractMixin):
     pipeline: dict[str, RuntimeValue]
     pre_sample_transform: bool
 
-    def _normalize_step_hooks(self, raw_hooks: RuntimeValue) -> list[str]:
+    def normalize_step_hooks(self, raw_hooks: RuntimeValue) -> list[str]:
         """Normalize `plugin_hook` declarations from pipeline step config."""
         if raw_hooks is None:
             return []
@@ -266,18 +266,18 @@ class DataPipelineContractMixin(BaseContractMixin):
                 normalized.append(text)
         return normalized
 
-    def _pipeline_declares_hook(self, hook_name: str) -> bool:
+    def pipeline_declares_hook(self, hook_name: str) -> bool:
         """Return True when any pipeline step declares the requested hook."""
         target_hook = str(hook_name).strip().lower()
         for _, step_config in getattr(self, "pipeline", {}).items():
-            hooks = self._normalize_step_hooks(step_config.get("plugin_hook", None))
+            hooks = self.normalize_step_hooks(step_config.get("plugin_hook", None))
             if target_hook in hooks:
                 return True
         return False
 
     def declares_hook(self, hook_name: str) -> bool:
         """Expose pipeline hook declaration checks for plugin dispatch."""
-        return self._pipeline_declares_hook(hook_name)
+        return self.pipeline_declares_hook(hook_name)
 
     def build_pipeline(self) -> RuntimeValue:
         """Build a pipeline object through a framework hook.

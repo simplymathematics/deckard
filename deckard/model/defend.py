@@ -754,26 +754,26 @@ class _DefenseBehaviorMixin:
         return default_handler
 
     def _get_model_config(self) -> ModelConfig:
-        if getattr(self, "_model_config", None) is None:
-            self._model_config = ModelConfig(
+        if getattr(self, "model_config", None) is None:
+            self.model_config = ModelConfig(
                 model_type=self.model_type,
                 classifier=self.classifier,
                 model_params=self.model_params,
                 probability=self.probability,
                 alias=self.alias,
             )
-            self._model_config.defense = None
-        assert self._model_config is not None
-        return self._model_config
+            self.model_config.defense = None
+        assert self.model_config is not None
+        return self.model_config
 
     def __post_init__(self):
         if not is_null_config_value(self.model_type, allow_empty=True):
             model_cfg = self._get_model_config()
             self.classifier = model_cfg.classifier
             self.model_params = model_cfg.model_params
-            self._model = model_cfg._model
+            self.model = model_cfg.model
         elif not hasattr(self, "_model"):
-            self._model = None
+            self.model = None
 
         if not hasattr(self, "score_dict") or self.score_dict is None:
             self.score_dict = {}
@@ -826,28 +826,28 @@ class _DefenseBehaviorMixin:
         setattr(estimator, "_deckard_applied_defense_signatures", existing)
 
     def _extract_art_wrapper_context(self, art_class, init_params):
-        base_estimator = self._model
+        base_estimator = self.model
         art_params = dict(init_params or {})
         existing_preprocessors = []
         existing_postprocessors = []
-        if hasattr(self._model, "model") and hasattr(
-            self._model,
+        if hasattr(self.model, "model") and hasattr(
+            self.model,
             "preprocessing_defences",
         ):
-            base_estimator = getattr(self._model, "model")
-            art_class = self._model.__class__
+            base_estimator = getattr(self.model, "model")
+            art_class = self.model.__class__
             existing_preprocessors = list(
-                getattr(self._model, "preprocessing_defences", []) or [],
+                getattr(self.model, "preprocessing_defences", []) or [],
             )
             existing_postprocessors = list(
-                getattr(self._model, "postprocessing_defences", []) or [],
+                getattr(self.model, "postprocessing_defences", []) or [],
             )
             art_params["preprocessing"] = getattr(
-                self._model,
+                self.model,
                 "preprocessing",
                 art_params.get("preprocessing"),
             )
-            clip_values = getattr(self._model, "clip_values", None)
+            clip_values = getattr(self.model, "clip_values", None)
             if clip_values is not None:
                 art_params["clip_values"] = clip_values
         return (
@@ -875,6 +875,26 @@ class _DefenseBehaviorMixin:
 class ModelDefenseMixin(ModelDefenseContractMixin):
     """Reusable defense pipeline orchestration mixed into config shells."""
 
+    @property
+    def model(self) -> BaseEstimator | None:
+        """Public accessor for the runtime estimator payload."""
+        return getattr(self, "_model", None)
+
+    @model.setter
+    def model(self, value: BaseEstimator | None) -> None:
+        """Set the runtime estimator payload."""
+        self._model = value
+
+    @property
+    def model_config(self) -> ModelConfig | None:
+        """Public accessor for the lazily built model config shell."""
+        return getattr(self, "_model_config", None)
+
+    @model_config.setter
+    def model_config(self, value: ModelConfig | None) -> None:
+        """Set the lazily built model config shell."""
+        self._model_config = value
+
     def get_model(self) -> BaseEstimator:
         """Get the model's estimator.
 
@@ -883,9 +903,9 @@ class ModelDefenseMixin(ModelDefenseContractMixin):
         BaseEstimator
             The model's estimator.
         """
-        if self._model is None:
+        if self.model is None:
             raise ValueError("Model is not fitted yet.")
-        return self._model
+        return self.model
 
     def apply_to(
         self,
@@ -897,10 +917,10 @@ class ModelDefenseMixin(ModelDefenseContractMixin):
             raise ValueError(
                 "estimator must be provided before applying defense",
             )
-        self._model = estimator
-        model_cfg = getattr(self, "_model_config", None)
+        self.model = estimator
+        model_cfg = self.model_config
         if model_cfg is not None:
-            model_cfg._model = estimator
+            model_cfg.model = estimator
         return self.apply_defense(data)
 
     def apply_defense(self, data: Any) -> "BaseEstimator":
@@ -916,30 +936,30 @@ class ModelDefenseMixin(ModelDefenseContractMixin):
             If the model is not fitted before applying the defense.
         """
 
-        if self._model is None:
+        if self.model is None:
             raise ValueError(
                 "ModelConfig must have a fitted estimator before applying defense",
             )
         elif (
-            not isinstance(self._model, BaseEstimator)
-            and not _is_torch_model_instance(self._model)
+            not isinstance(self.model, BaseEstimator)
+            and not _is_torch_model_instance(self.model)
             and not hasattr(
-                self._model,
+                self.model,
                 "model",
             )
         ):
             assert isinstance(
-                self._model,
+                self.model,
                 BaseEstimator,
             ), "ModelConfig's _model must be a scikit-learn BaseEstimator"
 
         defense_signature = self._defense_signature()
         if defense_signature in self._get_applied_defense_signatures(
-            self._model,
+            self.model,
         ):
             self._apply_fit = False
             self.defense_application_time = 0.0
-            return self._model
+            return self.model
 
         # Dynamically import the defense class with defense_params as kwargs
         defense_type, defense_subtype, defense_class = self.parse_defense_name()
@@ -1017,9 +1037,9 @@ class ModelDefenseMixin(ModelDefenseContractMixin):
             defended_estimator=defended_estimator,
             defense_application_time=self.defense_application_time,
         )
-        model_cfg = getattr(self, "_model_config", None)
+        model_cfg = self.model_config
         if model_cfg is not None:
-            model_cfg._model = defended_estimator
+            model_cfg.model = defended_estimator
         return defended_estimator
 
     def parse_defense_name(self) -> tuple:

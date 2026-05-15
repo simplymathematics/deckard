@@ -102,8 +102,6 @@ def _load_torch_model_symbols() -> bool:
         __all__.append("PytorchModelConfig")
     return True
 
-_load_optional_model_symbols()
-
 
 __all__ = [
     "ModelConfig",
