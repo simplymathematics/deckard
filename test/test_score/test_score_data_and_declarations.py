@@ -93,7 +93,7 @@ def test_score_data_mutual_information_raises_when_no_features_left():
     with pytest.raises(ValueError, match="No feature columns available"):
         score_data._feature_mutual_information_vector(
             y_true=y,
-            y_pred=X,
+            X=X,
             reference_column="label",
         )
 
@@ -123,6 +123,6 @@ def test_score_data_empirical_cdf_empty_reference_raises():
     with pytest.raises(ValueError, match="Reference vector is empty"):
         score_data.data_empirical_cdf_function_score(
             y_true=y,
-            y_pred=X,
+            X=X,
             reference=[np.nan, np.nan],
         )

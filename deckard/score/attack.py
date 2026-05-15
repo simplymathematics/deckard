@@ -42,7 +42,7 @@ def evasion_success_score(
     return float(1 - accuracy_score(ben_pred_labels, y_pred))
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultEvasionAttackScorerConfig(
     _TaskAwareScorerMixin,
     _AttackProfileScorer,
@@ -147,7 +147,7 @@ class DefaultEvasionAttackScorerConfig(
         super().__post_init__()
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultEvasionRegressionAttackScorerConfig(DefaultEvasionAttackScorerConfig):
     """Default scorer set for evasion attacks against regression models.
 
@@ -172,7 +172,7 @@ class DefaultEvasionRegressionAttackScorerConfig(DefaultEvasionAttackScorerConfi
     classifier: Union[bool, str] = False
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultMembershipInferenceAttackScorerConfig(
     _TaskAwareScorerMixin,
     _AttackProfileScorer,
@@ -252,7 +252,7 @@ class DefaultMembershipInferenceAttackScorerConfig(
         super().__post_init__()
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultAttributeInferenceAttackScorerConfig(
     _TaskAwareScorerMixin,
     _AttackProfileScorer,
@@ -351,7 +351,7 @@ class DefaultAttributeInferenceAttackScorerConfig(
         super().__post_init__()
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultAttributeInferenceRegressionAttackScorerConfig(
     DefaultAttributeInferenceAttackScorerConfig,
 ):
@@ -378,7 +378,7 @@ class DefaultAttributeInferenceRegressionAttackScorerConfig(
     classifier: Union[bool, str] = False
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class AttackScorerConfig(ConfigBase):
     """Owns all attack scoring logic and profile-specific scorer configs."""
 
@@ -633,7 +633,7 @@ safe_store(
 )
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class FairlearnEvasionAttackScorerConfig:
     """Per-sensitive-group evasion scorer (classification) via MetricFrame."""
 
@@ -652,7 +652,7 @@ class FairlearnEvasionAttackScorerConfig:
     )
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class FairlearnMembershipInferenceAttackScorerConfig:
     """Per-sensitive-group membership inference scorer via MetricFrame."""
 
@@ -671,7 +671,7 @@ class FairlearnMembershipInferenceAttackScorerConfig:
     )
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class FairlearnAttributeInferenceAttackScorerConfig:
     """Per-sensitive-group attribute inference scorer (classification) via MetricFrame."""
 
@@ -690,7 +690,7 @@ class FairlearnAttributeInferenceAttackScorerConfig:
     )
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class FairlearnAttributeInferenceRegressionAttackScorerConfig:
     """Per-sensitive-group attribute inference scorer (regression) via MetricFrame."""
 
@@ -710,7 +710,7 @@ class FairlearnAttributeInferenceRegressionAttackScorerConfig:
     )
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class FairlearnAttackScorerConfig(AttackScorerConfig):
     """AttackScorerConfig that computes attack metrics stratified by sensitive group.
 

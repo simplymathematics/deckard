@@ -22,6 +22,8 @@ from ..utils import (
     merge_list_of_dicts,
     load_class,
 )
+from ..frameworks import ScorerContractMixin, FrameworkDataScorer
+from ..frameworks.core import ArrayLike, MatrixLike
 
 if TYPE_CHECKING:
     from ..data import DataConfig
@@ -135,7 +137,7 @@ class _ScorerMixin:
         )
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class ScorerTypePlugin:
     """Generic scorer plugin that binds one mixin to one scoring family/subtype.
 
@@ -600,8 +602,8 @@ class ScorerConfig:
         return cast(MetricResult, score_function(y_true, y_pred, **params))
 
 
-@dataclass(eq=False)
-class ScorerDictConfig(ConfigBase):
+@dataclass(eq=False, kw_only=True)
+class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
     """Container of named ScorerConfig instances."""
 
     scorers: dict[str, ScorerConfig] = field(
@@ -676,6 +678,42 @@ class ScorerDictConfig(ConfigBase):
 
     def get_callables(self):
         return {key: scorer for key, scorer in self.scorers.items()}
+
+    def score(
+        self,
+        ind: MatrixLike,
+        dep: ArrayLike,
+        *args: Any,
+        data: "DataConfig | None" = None,
+        model: Any = None,
+        attack: Any = None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Compute metrics from matrix-like independent and array-like dependent data.
+
+        Args:
+            ind: Matrix-like independent/reference payload.
+            dep: Array-like dependent/target payload.
+            *args: Additional positional runtime scoring payloads.
+            data: Optional data context.
+            model: Optional model context.
+            attack: Optional attack context.
+            **kwargs: Additional keyword scoring payloads. Supports `mode`.
+
+        Returns:
+            Metric outputs keyed by score name.
+        """
+        _ = args
+        mode = kwargs.pop("mode", "test")
+        return self.__call__(
+            mode=mode,
+            data=data,
+            model=model,
+            attack=attack,
+            y_pred=ind,
+            y_true=dep,
+            **kwargs,
+        )
 
     @classmethod
     def merge(cls, items):
@@ -1099,7 +1137,7 @@ def _default_pytorch_classification_scorers() -> dict[str, ScorerConfig]:
     }
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultModelScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     """Default model scorer family with optional task inheritance."""
 
@@ -1118,17 +1156,17 @@ class DefaultModelScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
         super().__post_init__()
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultClassifierConfig(DefaultModelScorerConfig):
     classifier: Union[bool, str, None] = True
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultRegressorConfig(DefaultModelScorerConfig):
     classifier: Union[bool, str, None] = False
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultPytorchScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     """Default PyTorch scorer family with optional task inheritance."""
 
@@ -1147,7 +1185,7 @@ class DefaultPytorchScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
         super().__post_init__()
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultPytorchClassifierConfig(DefaultPytorchScorerConfig):
     """Default classifier scorers for PyTorch models.
 
@@ -1159,7 +1197,7 @@ class DefaultPytorchClassifierConfig(DefaultPytorchScorerConfig):
     classifier: Union[bool, str, None] = True
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultPytorchRegressorConfig(DefaultPytorchScorerConfig):
     """Default regressor scorers for PyTorch models."""
 

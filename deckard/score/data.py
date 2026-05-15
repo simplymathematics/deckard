@@ -1,7 +1,7 @@
 """Dataset analysis scorers and ConfigStore registrations.
 
 These scorers are intended for inspecting dataset properties without training a
-model. They accept feature matrices through ``y_pred`` and support optional
+model. They accept feature matrices through ``X`` and support optional
 reference-column overrides so analysis can target a non-label column.
 """
 
@@ -29,12 +29,12 @@ FeatureMatrix = Union[np.ndarray, pd.Series, pd.DataFrame, Sequence[Sequence[flo
 KwargMap = dict[str, Any]
 
 
-def _coerce_features_dataframe(y_pred: FeatureMatrix) -> pd.DataFrame:
-    if isinstance(y_pred, pd.DataFrame):
-        return y_pred
-    if isinstance(y_pred, pd.Series):
-        return pd.DataFrame({y_pred.name or "feature_0": y_pred})
-    arr = np.asarray(y_pred)
+def _coerce_features_dataframe(X: FeatureMatrix) -> pd.DataFrame:
+    if isinstance(X, pd.DataFrame):
+        return X
+    if isinstance(X, pd.Series):
+        return pd.DataFrame({X.name or "feature_0": X})
+    arr = np.asarray(X)
     if arr.ndim == 1:
         return pd.DataFrame({"feature_0": arr})
     return pd.DataFrame(
@@ -83,10 +83,10 @@ def _is_discrete_reference(values: np.ndarray) -> bool:
 
 def _feature_mutual_information_vector(
     y_true: LabelVector,
-    y_pred: FeatureMatrix,
+    X: FeatureMatrix,
     **kwargs: Any,
 ) -> np.ndarray:
-    X = _coerce_features_dataframe(y_pred)
+    X = _coerce_features_dataframe(X)
     reference, X = _resolve_reference_vector(y_true=y_true, X=X, **kwargs)
     if X.shape[1] == 0:
         raise ValueError(
@@ -107,7 +107,7 @@ def _feature_mutual_information_vector(
 
 def data_num_classes_score(
     y_true: LabelVector,
-    y_pred: FeatureMatrix,
+    X: FeatureMatrix,
     **kwargs: Any,
 ) -> int:
     """Count the number of unique classes in ``y_true``.
@@ -116,7 +116,7 @@ def data_num_classes_score(
     ----------
     y_true : array-like
         Ground-truth target labels.
-    y_pred : array-like
+    X : matrix-like
         Predicted values (unused; present for scorer interface compatibility).
     **kwargs
         Additional keyword arguments (unused).
@@ -126,13 +126,13 @@ def data_num_classes_score(
     int
         Number of distinct classes in ``y_true`` including NaN if present.
     """
-    _ = y_pred, kwargs
+    _ = X, kwargs
     return int(pd.Series(y_true).nunique(dropna=False))
 
 
 def data_class_count_min_score(
     y_true: LabelVector,
-    y_pred: FeatureMatrix,
+    X: FeatureMatrix,
     **kwargs: Any,
 ) -> int:
     """Return the count of the least-frequent class in ``y_true``.
@@ -141,7 +141,7 @@ def data_class_count_min_score(
     ----------
     y_true : array-like
         Ground-truth target labels.
-    y_pred : array-like
+    X : matrix-like
         Predicted values (unused; present for scorer interface compatibility).
     **kwargs
         Additional keyword arguments (unused).
@@ -151,14 +151,14 @@ def data_class_count_min_score(
     int
         Sample count of the rarest class, or 0 when ``y_true`` is empty.
     """
-    _ = y_pred, kwargs
+    _ = X, kwargs
     counts = pd.Series(y_true).value_counts(dropna=False)
     return int(counts.min()) if len(counts) else 0
 
 
 def data_class_count_max_score(
     y_true: LabelVector,
-    y_pred: FeatureMatrix,
+    X: FeatureMatrix,
     **kwargs: Any,
 ) -> int:
     """Return the count of the most-frequent class in ``y_true``.
@@ -167,7 +167,7 @@ def data_class_count_max_score(
     ----------
     y_true : array-like
         Ground-truth target labels.
-    y_pred : array-like
+    X : matrix-like
         Predicted values (unused; present for scorer interface compatibility).
     **kwargs
         Additional keyword arguments (unused).
@@ -177,14 +177,14 @@ def data_class_count_max_score(
     int
         Sample count of the most common class, or 0 when ``y_true`` is empty.
     """
-    _ = y_pred, kwargs
+    _ = X, kwargs
     counts = pd.Series(y_true).value_counts(dropna=False)
     return int(counts.max()) if len(counts) else 0
 
 
 def data_class_imbalance_ratio_score(
     y_true: LabelVector,
-    y_pred: FeatureMatrix,
+    X: FeatureMatrix,
     **kwargs: Any,
 ) -> float:
     """Return the ratio of the most-frequent to the least-frequent class.
@@ -193,7 +193,7 @@ def data_class_imbalance_ratio_score(
     ----------
     y_true : array-like
         Ground-truth target labels.
-    y_pred : array-like
+    X : matrix-like
         Predicted values (unused; present for scorer interface compatibility).
     **kwargs
         Additional keyword arguments (unused).
@@ -204,7 +204,7 @@ def data_class_imbalance_ratio_score(
         ``max_count / min_count``.  Returns ``0.0`` when ``y_true`` is empty
         and ``float('inf')`` when the minority class has zero samples.
     """
-    _ = y_pred, kwargs
+    _ = X, kwargs
     counts = pd.Series(y_true).value_counts(dropna=False)
     if len(counts) == 0:
         return 0.0
@@ -217,7 +217,7 @@ def data_class_imbalance_ratio_score(
 
 def data_mutual_information_mean_score(
     y_true: LabelVector,
-    y_pred: FeatureMatrix,
+    X: FeatureMatrix,
     **kwargs: Any,
 ) -> float:
     """Return the mean mutual information between features and the reference vector.
@@ -227,7 +227,7 @@ def data_mutual_information_mean_score(
     y_true : array-like
         Ground-truth labels used as the reference vector unless ``reference``
         or ``reference_column`` is supplied in *kwargs*.
-    y_pred : array-like or pd.DataFrame
+    X : matrix-like or pd.DataFrame
         Feature matrix.  Non-DataFrame inputs are coerced automatically.
     **kwargs
         Forwarded to :func:`_feature_mutual_information_vector`.  Accepts
@@ -241,7 +241,7 @@ def data_mutual_information_mean_score(
     """
     mi = _feature_mutual_information_vector(
         y_true=y_true,
-        y_pred=y_pred,
+        X=X,
         **kwargs,
     )
     return float(np.mean(mi))
@@ -249,7 +249,7 @@ def data_mutual_information_mean_score(
 
 def data_mutual_information_max_score(
     y_true: LabelVector,
-    y_pred: FeatureMatrix,
+    X: FeatureMatrix,
     **kwargs: Any,
 ) -> float:
     """Return the maximum mutual information between any single feature and the reference.
@@ -259,7 +259,7 @@ def data_mutual_information_max_score(
     y_true : array-like
         Ground-truth labels used as the reference vector unless ``reference``
         or ``reference_column`` is supplied in *kwargs*.
-    y_pred : array-like or pd.DataFrame
+    X : matrix-like or pd.DataFrame
         Feature matrix.  Non-DataFrame inputs are coerced automatically.
     **kwargs
         Forwarded to :func:`_feature_mutual_information_vector`.  Accepts
@@ -273,7 +273,7 @@ def data_mutual_information_max_score(
     """
     mi = _feature_mutual_information_vector(
         y_true=y_true,
-        y_pred=y_pred,
+        X=X,
         **kwargs,
     )
     return float(np.max(mi))
@@ -281,7 +281,7 @@ def data_mutual_information_max_score(
 
 def data_empirical_cdf_function_score(
     y_true: LabelVector,
-    y_pred: FeatureMatrix,
+    X: FeatureMatrix,
     **kwargs: Any,
 ) -> Callable[[np.ndarray], np.ndarray]:
     """Return an empirical CDF function fitted to the reference vector.
@@ -295,7 +295,7 @@ def data_empirical_cdf_function_score(
     y_true : array-like
         Ground-truth values used as the reference unless ``reference`` or
         ``reference_column`` is provided in *kwargs*.
-    y_pred : array-like or pd.DataFrame
+    X : matrix-like or pd.DataFrame
         Feature matrix (used only when resolving ``reference_column``).
     **kwargs
         Forwarded to :func:`_resolve_reference_vector`.  Accepts
@@ -312,7 +312,7 @@ def data_empirical_cdf_function_score(
     ValueError
         If the resolved reference vector is empty after dropping NaN values.
     """
-    X = _coerce_features_dataframe(y_pred)
+    X = _coerce_features_dataframe(X)
     reference, _ = _resolve_reference_vector(y_true=y_true, X=X, **kwargs)
     ref = pd.Series(reference).dropna().astype(float).to_numpy()
     if ref.size == 0:
@@ -328,7 +328,7 @@ def data_empirical_cdf_function_score(
     return ecdf
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultDataScorerConfig(
     _DataScorerMarker,
     _TaskAwareScorerMixin,
@@ -435,7 +435,7 @@ class DefaultDataScorerConfig(
         super().__post_init__()
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultDataClassificationConfig(DefaultDataScorerConfig):
     """Default dataset-analysis scorers for classification datasets.
 
@@ -456,7 +456,7 @@ class DefaultDataClassificationConfig(DefaultDataScorerConfig):
     classifier: Union[bool, str, None] = True
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultDataRegressionConfig(DefaultDataScorerConfig):
     """Default dataset-analysis scorers for regression datasets.
 

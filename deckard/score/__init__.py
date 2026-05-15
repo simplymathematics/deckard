@@ -39,6 +39,52 @@ from .data import (  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
+survival_concordance_score = None
+survival_aic_score = None
+survival_bic_score = None
+
+
+def _load_lifelines_score_symbol(symbol_name):
+    from ..plugins.lifelines.score import (  # noqa: WPS433
+        survival_aic_score as _survival_aic_score,
+        survival_bic_score as _survival_bic_score,
+        survival_concordance_score as _survival_concordance_score,
+    )
+
+    symbols = {
+        "survival_concordance_score": _survival_concordance_score,
+        "survival_aic_score": _survival_aic_score,
+        "survival_bic_score": _survival_bic_score,
+    }
+    return symbols[symbol_name]
+
+
+if survival_concordance_score is None:
+
+    def survival_concordance_score(*args, **kwargs):
+        return _load_lifelines_score_symbol("survival_concordance_score")(
+            *args,
+            **kwargs,
+        )
+
+
+if survival_aic_score is None:
+
+    def survival_aic_score(*args, **kwargs):
+        return _load_lifelines_score_symbol("survival_aic_score")(
+            *args,
+            **kwargs,
+        )
+
+
+if survival_bic_score is None:
+
+    def survival_bic_score(*args, **kwargs):
+        return _load_lifelines_score_symbol("survival_bic_score")(
+            *args,
+            **kwargs,
+        )
+
 from .declarations import (  # noqa: E402
     SCORER_PLUGIN_MODEL_BASE,
     SCORER_PLUGIN_MODEL_CLASSIFIER,
@@ -73,7 +119,79 @@ try:
         fairness_group_mse_difference,
     )
 except ImportError:  # pragma: no cover - optional dependency
+    DefaultFairlearnClassificationConfig = None
+    DefaultFairlearnRegressionConfig = None
+    DefaultFairlearnDataScorerConfig = None
+    FairlearnScoreDictConfig = None
+    fairness_demographic_parity_difference = None
+    fairness_equalized_odds_difference = None
+    fairness_group_mae_difference = None
+    fairness_group_mean_prediction_difference = None
+    fairness_group_mse_difference = None
     logger.debug("Fairlearn not found. Fairness score configs are unavailable.")
+
+
+def _load_fairlearn_score_symbol(symbol_name):
+    from ..plugins.fairlearn.score import (  # noqa: WPS433
+        fairness_demographic_parity_difference as _fairness_demographic_parity_difference,
+        fairness_equalized_odds_difference as _fairness_equalized_odds_difference,
+        fairness_group_mae_difference as _fairness_group_mae_difference,
+        fairness_group_mean_prediction_difference as _fairness_group_mean_prediction_difference,
+        fairness_group_mse_difference as _fairness_group_mse_difference,
+    )
+
+    symbols = {
+        "fairness_demographic_parity_difference": _fairness_demographic_parity_difference,
+        "fairness_equalized_odds_difference": _fairness_equalized_odds_difference,
+        "fairness_group_mae_difference": _fairness_group_mae_difference,
+        "fairness_group_mean_prediction_difference": _fairness_group_mean_prediction_difference,
+        "fairness_group_mse_difference": _fairness_group_mse_difference,
+    }
+    return symbols[symbol_name]
+
+
+if fairness_demographic_parity_difference is None:
+
+    def fairness_demographic_parity_difference(*args, **kwargs):
+        return _load_fairlearn_score_symbol("fairness_demographic_parity_difference")(
+            *args,
+            **kwargs,
+        )
+
+
+if fairness_equalized_odds_difference is None:
+
+    def fairness_equalized_odds_difference(*args, **kwargs):
+        return _load_fairlearn_score_symbol("fairness_equalized_odds_difference")(
+            *args,
+            **kwargs,
+        )
+
+
+if fairness_group_mae_difference is None:
+
+    def fairness_group_mae_difference(*args, **kwargs):
+        return _load_fairlearn_score_symbol("fairness_group_mae_difference")(
+            *args,
+            **kwargs,
+        )
+
+
+if fairness_group_mean_prediction_difference is None:
+
+    def fairness_group_mean_prediction_difference(*args, **kwargs):
+        return _load_fairlearn_score_symbol(
+            "fairness_group_mean_prediction_difference",
+        )(*args, **kwargs)
+
+
+if fairness_group_mse_difference is None:
+
+    def fairness_group_mse_difference(*args, **kwargs):
+        return _load_fairlearn_score_symbol("fairness_group_mse_difference")(
+            *args,
+            **kwargs,
+        )
 
 try:
     from ..plugins.anjana.score import (  # noqa: E402
@@ -94,6 +212,12 @@ try:
         anjana_t_closeness_score,
     )
 except ImportError:  # pragma: no cover - optional dependency
+    DefaultAnjanaScorerConfig = None
+    DefaultAnjanaDataScorerConfig = None
+    DefaultAnjanaModelScorerConfig = None
+    anjana_k_anonymity_score = None
+    anjana_l_diversity_score = None
+    anjana_t_closeness_score = None
     logger.debug("Anjana not found. Anjana score configs are unavailable.")
 
 try:
@@ -111,12 +235,13 @@ try:
         survival_concordance_score,
     )
 except ImportError:  # pragma: no cover - optional dependency
+    DefaultLifelinesConfig = None
     logger.debug("Lifelines not found. Survival score configs are unavailable.")
 
-if "DefaultFairlearnScoreDictConfig" in globals():
+if "FairlearnScoreDictConfig" in globals() and FairlearnScoreDictConfig is not None:
     pass
 
-if "DefaultLifelinesConfig" in globals():
+if "DefaultLifelinesConfig" in globals() and DefaultLifelinesConfig is not None:
     pass
 
 
@@ -146,11 +271,14 @@ __all__ = [
     "data_mutual_information_mean_score",
     "data_mutual_information_max_score",
     "data_empirical_cdf_function_score",
+    "survival_concordance_score",
+    "survival_aic_score",
+    "survival_bic_score",
     "build_scorer",
     "build_scorer_dict",
 ]
 
-if "DefaultFairlearnScoreDictConfig" in globals():
+if "FairlearnScoreDictConfig" in globals() and FairlearnScoreDictConfig is not None:
     __all__.extend(
         [
             "DefaultFairlearnClassificationConfig",
@@ -166,7 +294,10 @@ if "DefaultFairlearnScoreDictConfig" in globals():
         ],
     )
 
-if "DefaultAnjanaDataScorerConfig" in globals():
+if (
+    "DefaultAnjanaDataScorerConfig" in globals()
+    and DefaultAnjanaDataScorerConfig is not None
+):
     __all__.extend(
         [
             "DefaultAnjanaScorerConfig",
@@ -178,7 +309,7 @@ if "DefaultAnjanaDataScorerConfig" in globals():
         ],
     )
 
-if "DefaultLifelinesConfig" in globals():
+if "DefaultLifelinesConfig" in globals() and DefaultLifelinesConfig is not None:
     __all__.extend(
         [
             "DefaultLifelinesConfig",
