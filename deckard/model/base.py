@@ -113,6 +113,9 @@ def _is_art_model_instance(model_obj: Any) -> bool:
 
 @dataclass(eq=False, kw_only=True)
 class ModelConfig(
+    ModelTrainingMixin,
+    PretrainedModelMixin,
+    ModelPrunerMixin,
     ModelHookRuntimeMixin, #Allows for user-configured plugins
     ModelContractMixin, #Ensures that the final object has necessary components, according to the Hook
     ConfigBase, # Persistence, Hashing, 
@@ -477,9 +480,7 @@ class ModelConfig(
         if self._model is None:
             raise ValueError("Model not initialized")
         start_time = time.process_time()
-        assert hasattr(self._model, "fit"), "Model does not have a fit method"
-        fit_params = {} if not hasattr(self, "fit_params") else self.fit_params
-        self._model.fit(X, y, **fit_params)
+        self.train_model(X, y)
         end_time = time.process_time()
         self.training_time = end_time - start_time
         self.training_n = len(y)

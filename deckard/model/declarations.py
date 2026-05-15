@@ -15,14 +15,14 @@ Reference dictionaries are kept below for documentation only.
 # Reference dictionaries for documentation (no longer registered via safe_store)
 
 TINYNET_MODEL = {
-    "model_type": "deckard.pytorch.model.TinyNet",
+    "model_type": "deckard.frameworks.pytorch.model.TinyNet",
     "classifier": True,
     "model_params": {
         "input_dim": 10,  # Set default, should be overridden by data shape
         "hidden_dim": 16,
         "output_dim": 2,
     },
-    "_target_": "deckard.pytorch.model.PytorchModelConfig",
+    "_target_": "deckard.frameworks.pytorch.model.PytorchModelConfig",
     "alias": "tinynet",
 }
 
