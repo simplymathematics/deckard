@@ -15,7 +15,7 @@ import pytest
 
 from helpers import load_canonical_data_profile, make_runtime_env
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 EXAMPLES_SKLEARN_DIR = ROOT / "examples" / "sklearn"
 DECKARD_RC_PATH = EXAMPLES_SKLEARN_DIR / ".deckard_rc"
 

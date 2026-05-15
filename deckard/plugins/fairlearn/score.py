@@ -4,7 +4,7 @@ import logging
 import traceback
 from collections.abc import Sized
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, Literal, Protocol, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, Literal, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -24,6 +24,7 @@ from ...score.base import (
 )
 from ...score._runtime import resolve_yt_yp, series_like_to_float_dict
 from ...data import DataConfig
+from ...data._mixins import RuntimePayload
 from ...utils import coerce_to_list, merge_list_of_dicts
 
 # TODO: Remove this
@@ -71,10 +72,6 @@ SampleParamsLike = Union[dict[str, Any], dict[str, dict[str, Any]], None]
 RandomStateLike = Union[int, np.random.RandomState, None]
 RuntimeScalar = str | int | float | bool | None
 RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
-
-
-class RuntimePayload(Protocol):
-    """Opaque marker protocol for runtime plugin payloads."""
 
 
 def fairness_data_class_count(

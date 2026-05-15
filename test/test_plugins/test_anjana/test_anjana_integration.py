@@ -18,7 +18,7 @@ from deckard.model import DefensePipelineConfig, ModelConfig
 from helpers import make_runtime_env
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 EXAMPLES_SKLEARN_DIR = ROOT / "examples" / "sklearn"
 DECKARD_RC_PATH = EXAMPLES_SKLEARN_DIR / ".deckard_rc"
 
@@ -53,8 +53,21 @@ def _run_optimize_and_load_scores(
         for item in overrides
     )
     final_overrides = list(overrides)
+    for alias_override in (
+        "~data_alias",
+        "~model_alias",
+        "~attack_alias",
+        "~defense_alias",
+    ):
+        if alias_override not in final_overrides:
+            final_overrides.append(alias_override)
     if not has_score_override:
         final_overrides.append(score_override)
+    if not any(
+        isinstance(item, str) and item.startswith(("hydra.job.num=", "+hydra.job.num="))
+        for item in final_overrides
+    ):
+        final_overrides.append("hydra.job.num=0")
 
     cmd = [sys.executable, "-m", "deckard", "optimize", *final_overrides]
     result = subprocess.run(
@@ -185,6 +198,10 @@ def test_deckard_optimize_smoke_matrix_sklearn():
         "defense=class-labels",
         "score=classification",
         "experiment_name=sklearn_smoke_chain",
+        "~data_alias",
+        "~model_alias",
+        "~attack_alias",
+        "~defense_alias",
     ]
     result = subprocess.run(
         cmd,
@@ -238,6 +255,10 @@ def test_joblib_launcher_syncs_scores_and_attrs_sklearn(tmp_path):
         "hydra.sweeper.n_jobs=1",
         f"hydra.sweeper.study_name={study_name}",
         f"hydra.sweeper.storage={storage}",
+        "~data_alias",
+        "~model_alias",
+        "~attack_alias",
+        "~defense_alias",
     ]
 
     result = subprocess.run(
@@ -291,6 +312,10 @@ def test_deckard_optimize_hydra_multirun_syncs_optuna_trial_attrs_sklearn(tmp_pa
         "hydra.sweeper.n_jobs=1",
         f"hydra.sweeper.study_name={study_name}",
         f"hydra.sweeper.storage={storage}",
+        "~data_alias",
+        "~model_alias",
+        "~attack_alias",
+        "~defense_alias",
     ]
     result = subprocess.run(
         cmd,

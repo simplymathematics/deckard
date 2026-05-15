@@ -1,6 +1,6 @@
 import inspect
 from dataclasses import dataclass, field
-from typing import Any, Dict, Literal, Optional, Protocol, Union, cast
+from typing import Any, Dict, Literal, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,7 @@ from omegaconf import DictConfig
 
 from deckard.plugins import HookPlugin
 from ...data.base import DataPipelineConfig
-from ...data._mixins import _SensitiveColumnsMixin
+from ...data._mixins import RuntimePayload, _SensitiveColumnsMixin
 from ...utils import (
     is_default_config_value,
     load_class,
@@ -19,11 +19,6 @@ from ...utils import (
 
 RuntimeScalar = str | int | float | bool | None
 RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
-
-
-class RuntimePayload(Protocol):
-    """Opaque marker protocol for runtime plugin payloads."""
-
 @dataclass(eq=False, kw_only=True)
 class _PrivacyBehaviorMixin:
     """Reusable privacy behavior mixed into data pipeline configs."""
@@ -303,6 +298,10 @@ class _PrivacyBehaviorMixin:
             return
 
         self.pipeline = {step_name: step_config, **self.pipeline}
+
+    def _inject_fairness_defense_step(self) -> None:
+        """Backward-compatible bridge for fairness-defense pipeline injection."""
+        self._inject_privacy_defense_step()
 
     def _build_privacy_frame(self) -> pd.DataFrame:
         frame = getattr(self, "_X", None)

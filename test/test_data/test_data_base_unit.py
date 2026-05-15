@@ -133,7 +133,6 @@ def test_post_init_normalizes_scorer_string_and_dict(monkeypatch):
     dict_cfg = _basic_data_config(scorer=OmegaConf.create({"scorers": {}}))
     assert isinstance(dict_cfg.scorer, ScorerDictConfig)
 
-@pytest.mark.xfail(condition=True, reason ="Plugin test broken becase pkg. Plugin isn't real.")
 def test_plugin_instantiation_and_hook_paths(monkeypatch):
     calls = []
 
@@ -143,8 +142,10 @@ def test_plugin_instantiation_and_hook_paths(monkeypatch):
             return {"plugin": True}
 
     plugin_object = PluginType()
+    import deckard.data._mixins as data_mixins
+
     monkeypatch.setattr(
-        data_base,
+        data_mixins,
         "load_class",
         lambda path, **kwargs: PluginType() if path else None,
     )
@@ -196,8 +197,9 @@ def test_get_stratify_col_branches():
     with pytest.raises(ValueError):
         cfg._get_stratify_col()
 
-@pytest.mark.xfail(condition=True, reason ="Plugin test broken becase pkg. Plugin isn't real.")
 def test_resolve_sample_branches(monkeypatch):
+    import deckard.data._mixins as data_mixins
+
     cfg = _basic_data_config(sample="split")
     assert cfg._resolve_sample().__class__.__name__ == "SplitSampler"
 
@@ -205,7 +207,11 @@ def test_resolve_sample_branches(monkeypatch):
     assert cfg._resolve_sample() is None
 
     loaded = object()
-    monkeypatch.setattr(data_base, "load_class", lambda path, **kwargs: (path, kwargs))
+    monkeypatch.setattr(
+        data_mixins,
+        "load_class",
+        lambda path, **kwargs: (path, kwargs),
+    )
     cfg.sample = {"name": "pkg.Sample", "folds": 3}
     assert cfg._resolve_sample() == ("pkg.Sample", {"folds": 3})
 

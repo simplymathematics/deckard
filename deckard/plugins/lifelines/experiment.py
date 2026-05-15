@@ -5,6 +5,7 @@ This module contains SurvivalExperimentConfig for survival workflows and plottin
 
 import logging
 from pathlib import Path
+from dataclasses import dataclass
 from typing import Any, Literal, Mapping, Optional, Union, cast
 
 import matplotlib
@@ -58,6 +59,7 @@ def _lifelines_dataset_loaders() -> dict[str, Any]:
     }
 
 
+@dataclass(eq=False, kw_only=True)
 class SurvivalExperimentConfig(ExperimentConfig):
     """ExperimentConfig specialization for survival-analysis workflows.
 
@@ -306,17 +308,27 @@ class SurvivalExperimentConfig(ExperimentConfig):
 
     def _before_post_init(self) -> None:
         if self.data is not None and not isinstance(self.data, DataConfig):
-            self.data = self.coerce_component(
-                self.data,
-                DataConfig,
-                default_target="deckard.data.DataConfig",
-            )
+            try:
+                self.data = self.coerce_component(
+                    self.data,
+                    DataConfig,
+                    default_target="deckard.data.DataConfig",
+                )
+            except Exception as exc:
+                raise TypeError(
+                    f"Expected data to resolve to DataConfig, got {type(self.data)}",
+                ) from exc
         if self.aux_model is not None and not isinstance(self.aux_model, ModelConfig):
-            self.aux_model = self.coerce_component(
-                self.aux_model,
-                ModelConfig,
-                default_target="deckard.model.ModelConfig",
-            )
+            try:
+                self.aux_model = self.coerce_component(
+                    self.aux_model,
+                    ModelConfig,
+                    default_target="deckard.model.ModelConfig",
+                )
+            except Exception as exc:
+                raise TypeError(
+                    f"Expected aux_model to resolve to ModelConfig, got {type(self.aux_model)}",
+                ) from exc
 
     def _validate_survival_fields(self) -> None:
         self._require_non_empty_str("duration_col", self.duration_col)
@@ -330,6 +342,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
             TypeError: If ``covariates`` is provided but is not list-like.
             ValueError: If required survival fields are missing or invalid.
         """
+        self._before_post_init()
         self._validate_survival_data_model()
         self._validate_survival_fields()
         if self.covariates is not None:
@@ -615,7 +628,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
         schema: Optional[Union[str, dict]] = None,
         query: Optional[str] = None,
     ) -> pd.DataFrame:
-        from ..layers.compile_results import parse_studies
+        from ...layers.compile_results import parse_studies
 
         frame = parse_studies(optuna_db=optuna_db, schema=schema or {})
         if query is not None:

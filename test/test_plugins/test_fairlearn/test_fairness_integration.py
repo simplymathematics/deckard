@@ -8,7 +8,11 @@ from deckard.attack import AttackConfig
 from deckard.plugins.fairlearn.data import FairlearnDataConfig
 import deckard.model as model_module
 from deckard.score.attack import FairlearnAttackScorerConfig
-from deckard.score import FairlearnScoreDictConfig, ScorerConfig
+from deckard.score import ScorerConfig
+from deckard.plugins.fairlearn.score import (
+    DefaultFairlearnDataScorerConfig,
+    FairlearnScoreDictConfig,
+)
 
 
 pytest.importorskip("fairlearn")
@@ -28,8 +32,6 @@ if FairlearnDefenseConfig is None or FairlearnModelConfig is None:
 
 @pytest.fixture(scope="module")
 def generate_fairness_data():
-    from deckard.score import DefaultFairlearnDataScorerConfig
-
     cfg = FairlearnDataConfig(
         dataset_name="make_classification",
         data_params={
@@ -64,14 +66,35 @@ def test_fairness_data_and_model_scores(generate_fairness_data):
     )
     model(data)
 
-    # Data-level scorer: check for training_class_count or training_mutual_info
+    # Data-level scorer: check for current fairlearn data score keys.
     assert any(
         key in data.score_dict
-        for key in ("training_class_count", "training_mutual_info")
+        for key in (
+            "class_count",
+            "mutual_info",
+            "training_class_count",
+            "training_mutual_info",
+        )
     )
     # Model-level scorer: check for accuracy
     assert "accuracy" in model.score_dict
     assert any(key.endswith("_accuracy") for key in model.score_dict)
+    assert any(
+        key.endswith("_difference") for key in model.score_dict
+    ), f"Expected at least one group reduction metric in score_dict: {list(model.score_dict.keys())}"
+
+    # Group-scoring: verify per-group metric keys exist for observed sensitive groups.
+    sensitive = getattr(data, "_sensitive_test", None)
+    assert sensitive is not None, "Expected _sensitive_test to be populated"
+    unique_groups = set(str(group) for group in set(sensitive))
+    assert unique_groups, "Expected at least one sensitive group"
+    assert any(
+        any(key.startswith(f"{group}_") for key in model.score_dict)
+        for group in unique_groups
+    ), (
+        "Expected per-group scoring keys in model.score_dict; "
+        f"groups={sorted(unique_groups)}, keys={list(model.score_dict.keys())}"
+    )
 
 
 def test_fairness_regression_data_and_metric_frame_scores():
@@ -235,10 +258,15 @@ def test_generate_fairness_data_model_with_and_without_attack(
     generate_fairness_model,
 ):
 
-    # Data-level scorer: check for training_class_count or training_mutual_info
+    # Data-level scorer: check for current fairlearn data score keys.
     assert any(
         key in generate_fairness_data.score_dict
-        for key in ("training_class_count", "training_mutual_info")
+        for key in (
+            "class_count",
+            "mutual_info",
+            "training_class_count",
+            "training_mutual_info",
+        )
     )
 
     # Model-level scorer: check for accuracy and group metrics

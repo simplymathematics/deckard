@@ -1,10 +1,10 @@
 import unittest
 import numpy as np
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import accuracy_score, mean_squared_error
 
 from deckard.plugins.fairlearn.score import DefaultFairlearnClassificationConfig, DefaultFairlearnRegressionConfig
 from deckard.plugins.fairlearn.score import  FairlearnScoreDictConfig
-from deckard.score import ScorerConfig
+from deckard.score import ScorerConfig, ScorerDictConfig
 
 import pytest
 
@@ -50,11 +50,11 @@ class TestFairnessScorers(unittest.TestCase):
     def test_score_profile_classes_available(self):
         self.assertIsInstance(
             DefaultFairlearnClassificationConfig(),
-            ScorerConfig,
+            FairlearnScoreDictConfig,
         )
         self.assertIsInstance(
             DefaultFairlearnRegressionConfig(),
-            ScorerConfig,
+            FairlearnScoreDictConfig,
         )
         
     def test_metric_frame_fairness_score_dict_classification(self):

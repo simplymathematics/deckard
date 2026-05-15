@@ -9,7 +9,7 @@ from deckard.frameworks.pytorch.data import PytorchDataConfig
 from deckard.frameworks.pytorch.model import PytorchModelConfig
 
 torch = pytest.importorskip("torch")
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 EXAMPLES_PYTORCH_DIR = ROOT / "examples" / "pytorch"
 
 

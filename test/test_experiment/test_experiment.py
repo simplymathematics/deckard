@@ -614,17 +614,33 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
         result = exp._resolve_data_config()
         self.assertIs(result, dc)
 
-    @pytest.mark.xfail(condition=True, reason="Broken import")
     def test_select_data_cls_anjana_missing_dependency_raises(self):
+        import builtins
+
         data_dict = {"quasi_identifiers": ["age"]}
-        with patch("deckard.plugins.anjana.AnjanaDataConfig", None):
+        original_import = builtins.__import__
+
+        def _raise_for_anjana(name, *args, **kwargs):
+            if name == "deckard.plugins.anjana.data":
+                raise ImportError("missing anjana")
+            return original_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", side_effect=_raise_for_anjana):
             with self.assertRaises(ImportError):
                 self.mixin._select_data_cls(data_dict)
                 
-    @pytest.mark.xfail(True, reason="No idea")
     def test_select_data_cls_fairness_missing_dependency_raises(self):
+        import builtins
+
         data_dict = {"sensitive_columns": ["gender"]}
-        with patch("deckard.plugins.fairlearn.FairlearnDataConfig", None):
+        original_import = builtins.__import__
+
+        def _raise_for_fairlearn(name, *args, **kwargs):
+            if name == "deckard.plugins.fairlearn.data":
+                raise ImportError("missing fairlearn")
+            return original_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", side_effect=_raise_for_fairlearn):
             with self.assertRaises(ImportError):
                 self.mixin._select_data_cls(data_dict)
 

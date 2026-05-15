@@ -1,5 +1,6 @@
 import logging
 import argparse
+import inspect
 import json
 from pathlib import Path
 import yaml
@@ -605,6 +606,7 @@ def optimize_main(
     # Some config compositions can leak a root `_target_` from global search
     # overrides; force the correct root target to avoid mis-instantiation.
     cfg_dict["_target_"] = "deckard.ExperimentConfig"
+    cfg_dict = _filter_experiment_config_kwargs(cfg_dict)
 
     conf_obj = instantiate(cfg_dict)
     assert isinstance(
@@ -624,6 +626,23 @@ def optimize_main(
         pass
 
     return scores
+
+
+def _filter_experiment_config_kwargs(cfg_dict: dict[str, Any]) -> dict[str, Any]:
+    """Drop root keys that are not accepted by ``ExperimentConfig``.
+
+    Compose-only metadata keys (for example aliases or optimizer labels) can be
+    present at the root config level but are not constructor params for
+    ``ExperimentConfig``. Keeping them causes Hydra instantiation to fail.
+    """
+    allowed = set(inspect.signature(ExperimentConfig).parameters.keys())
+    filtered = {"_target_": cfg_dict.get("_target_", "deckard.ExperimentConfig")}
+    for key, value in cfg_dict.items():
+        if key == "_target_":
+            continue
+        if key in allowed:
+            filtered[key] = value
+    return filtered
 
 
 def _coerce_cfg_to_dict(cfg: Any) -> dict[str, Any]:

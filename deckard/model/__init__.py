@@ -25,39 +25,84 @@ ScorerDictConfig = Any
 
 logger = logging.getLogger(__name__)
 
-try:
-    from ..plugins.lifelines.model import SurvivalModelConfig
 
-    _ = SurvivalModelConfig
-except ImportError:  # pragma: no cover
-    logger.debug("Lifelines not found. Survival model configs are unavailable.")
+def _load_optional_model_symbols() -> None:
+    """Best-effort eager load of optional model symbols.
 
-try:
-    from ..plugins.fairlearn.model import (
-        FairlearnDefenseConfig,
-        FairlearnModelConfig,
-        FairlearnPytorchModelConfig,
-    )
+    This avoids hard failures at import time while still populating globals
+    when optional dependencies are available.
+    """
+    _load_fairlearn_model_symbols()
+    _load_lifelines_model_symbols()
+    _load_anjana_model_symbols()
+    _load_torch_model_symbols()
 
-    _ = (FairlearnDefenseConfig, FairlearnModelConfig, FairlearnPytorchModelConfig)
-except ImportError:  # pragma: no cover
-    logger.debug(
-        "Fairlearn not found. Fairlearn model configs are unavailable.",
-    )
 
-try:
-    from ..plugins.anjana.model import AnjanaModelConfig
+def _load_fairlearn_model_symbols() -> bool:
+    """Best-effort loader for optional fairlearn model configs.
 
-    _ = AnjanaModelConfig
-except ImportError:  # pragma: no cover
-    logger.debug("Anjana not found. Anjana model configs are unavailable.")
+    Returns:
+        True when symbols were loaded into module globals, else False.
+    """
+    try:
+        from ..plugins.fairlearn.model import (
+            FairlearnDefenseConfig,
+            FairlearnModelConfig,
+            FairlearnPytorchModelConfig,
+        )
+    except ImportError:  # pragma: no cover
+        return False
 
-try:
-    from ..frameworks.pytorch.model import PytorchModelConfig
+    globals()["FairlearnDefenseConfig"] = FairlearnDefenseConfig
+    globals()["FairlearnModelConfig"] = FairlearnModelConfig
+    globals()["FairlearnPytorchModelConfig"] = FairlearnPytorchModelConfig
+    if "__all__" in globals():
+        for symbol in (
+            "FairlearnDefenseConfig",
+            "FairlearnModelConfig",
+            "FairlearnPytorchModelConfig",
+        ):
+            if symbol not in __all__:
+                __all__.append(symbol)
+    return True
 
-    _ = PytorchModelConfig
-except ImportError:
-    logger.debug("Torch not found. Cannot use torch features.")
+
+def _load_lifelines_model_symbols() -> bool:
+    try:
+        from ..plugins.lifelines.model import SurvivalModelConfig
+    except ImportError:  # pragma: no cover
+        return False
+
+    globals()["SurvivalModelConfig"] = SurvivalModelConfig
+    if "__all__" in globals() and "SurvivalModelConfig" not in __all__:
+        __all__.append("SurvivalModelConfig")
+    return True
+
+
+def _load_anjana_model_symbols() -> bool:
+    try:
+        from ..plugins.anjana.model import AnjanaModelConfig
+    except ImportError:  # pragma: no cover
+        return False
+
+    globals()["AnjanaModelConfig"] = AnjanaModelConfig
+    if "__all__" in globals() and "AnjanaModelConfig" not in __all__:
+        __all__.append("AnjanaModelConfig")
+    return True
+
+
+def _load_torch_model_symbols() -> bool:
+    try:
+        from ..frameworks.pytorch.model import PytorchModelConfig
+    except ImportError:  # pragma: no cover
+        return False
+
+    globals()["PytorchModelConfig"] = PytorchModelConfig
+    if "__all__" in globals() and "PytorchModelConfig" not in __all__:
+        __all__.append("PytorchModelConfig")
+    return True
+
+_load_optional_model_symbols()
 
 
 __all__ = [
@@ -88,3 +133,26 @@ if "AnjanaModelConfig" in globals():
     __all__.extend(["AnjanaModelConfig"])
 if "PytorchModelConfig" in globals():
     __all__.extend(["PytorchModelConfig"])
+if "SurvivalModelConfig" in globals():
+    __all__.extend(["SurvivalModelConfig"])
+
+
+def __getattr__(name: str):
+    """Lazily resolve optional model symbols on first attribute access."""
+    fairlearn_symbols = {
+        "FairlearnDefenseConfig",
+        "FairlearnModelConfig",
+        "FairlearnPytorchModelConfig",
+    }
+    lifelines_symbols = {"SurvivalModelConfig"}
+    anjana_symbols = {"AnjanaModelConfig"}
+    torch_symbols = {"PytorchModelConfig"}
+    if name in fairlearn_symbols and _load_fairlearn_model_symbols():
+        return globals()[name]
+    if name in lifelines_symbols and _load_lifelines_model_symbols():
+        return globals()[name]
+    if name in anjana_symbols and _load_anjana_model_symbols():
+        return globals()[name]
+    if name in torch_symbols and _load_torch_model_symbols():
+        return globals()[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

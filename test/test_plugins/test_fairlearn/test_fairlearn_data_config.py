@@ -1,5 +1,6 @@
 import pytest
 import pandas as pd
+import numpy as np
 from unittest.mock import patch
 
 from helpers import load_canonical_data_profile
@@ -161,10 +162,12 @@ class TestScore:
         config.classifier = True
         config.score_dict = {}
         config.data_load_time = 0.0  # Prevent base _load_data from reloading adult dataset
+        config.scorer = lambda **_: {"ok": 1}
 
         config()  # Ensure sensitive features are set up
         scores = config.score_dict
         assert isinstance(scores, dict)
+        assert scores.get("ok") == 1
 
 
 class TestComputeClassCounts:
@@ -206,16 +209,24 @@ class TestClassificationFeatureScoresForGroup:
         config._X = df
         config._y = y
 
-        config.X_train = df
+        # Fairlearn classification scorer expects label predictions in y_pred and
+        # probability predictions via y_proba for probability-based metrics.
+        config.X_train = y.copy()
         config.y_train = y
-        config.X_test = df
+        config.X_test = y.copy()
         config.y_test = y
+        config._sensitive_train = df["gender"].reset_index(drop=True)
+        config._sensitive_test = df["gender"].reset_index(drop=True)
+        config._sensitive_all = df["gender"].reset_index(drop=True)
 
-        scores = config.compute_score()
+        y_proba = np.column_stack([1 - y.to_numpy(), y.to_numpy()])
 
-        assert "class_counts" in scores
-        assert "mutual_info_classif" in scores
-        assert "f_classif" in scores
+        scores = config.compute_score(y_proba=y_proba)
+
+        assert "training_accuracy" in scores
+        assert "training_precision" in scores
+        assert "training_recall" in scores
+        assert "training_roc_auc" in scores
 
 
 class TestFairlearnDataConfigHashStability:

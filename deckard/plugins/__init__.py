@@ -1,9 +1,12 @@
 """Plugin namespace package.
 
-Framework-agnostic plugin implementations are migrated here by plugin family.
+Framework-agnostic plugin implementations live under plugin-family modules.
+Plugin modules are loaded lazily to avoid importing optional dependencies at
+package import time.
 """
 
 from dataclasses import dataclass, field
+from importlib import import_module
 from typing import Any
 
 
@@ -44,7 +47,11 @@ class HookPlugin:
 		return self._invoke(runtime, **kwargs)
 
 	def __getattr__(self, attr_name: str):
-		if attr_name != self.hook_name:
+		try:
+			hook_name = object.__getattribute__(self, "hook_name")
+		except AttributeError:
+			raise AttributeError(attr_name)
+		if attr_name != hook_name:
 			raise AttributeError(attr_name)
 
 		def _hook(runtime: Any, *args: Any, **kwargs: Any):
@@ -53,47 +60,53 @@ class HookPlugin:
 		return _hook
 
 
-__all__ = ["HookPlugin", "anjana", "fairlearn", "lifelines", "seaborn", "yellowbrick"]
-"""
-Optional plugin system.
-
-Do NOT import plugin modules here at package import time.
-Plugins are imported lazily to avoid hard dependencies.
-"""
-
-from importlib import import_module
-
-__all__ = [
-    "get_plugin",
-]
-
-
 _PLUGIN_MAP = {
-    "anjana": "deckard.plugins.anjana",
-    "fairlearn": "deckard.plugins.fairlearn",
-    "lifelines": "deckard.plugins.lifelines",
-    "seaborn": "deckard.plugins.seaborn",
-    "yellowbrick": "deckard.plugins.yellowbrick",
+	"anjana": "deckard.plugins.anjana",
+	"fairlearn": "deckard.plugins.fairlearn",
+	"lifelines": "deckard.plugins.lifelines",
+	"seaborn": "deckard.plugins.seaborn",
+	"yellowbrick": "deckard.plugins.yellowbrick",
 }
 
 
 def get_plugin(name: str):
-    """
-    Lazily import a plugin package.
+	"""Lazily import a plugin package by family name.
 
-    Raises:
-        ImportError: if plugin is not installed or missing dependency.
-        KeyError: if plugin name is unknown.
-    """
-    if name not in _PLUGIN_MAP:
-        raise KeyError(f"Unknown plugin: {name}")
+	Raises:
+		ImportError: If plugin is unavailable or optional dependency is missing.
+		KeyError: If plugin name is unknown.
+	"""
+	if name not in _PLUGIN_MAP:
+		raise KeyError(f"Unknown plugin: {name}")
 
-    module_name = _PLUGIN_MAP[name]
+	module_name = _PLUGIN_MAP[name]
 
-    try:
-        return import_module(module_name)
-    except ImportError as e:
-        raise ImportError(
-            f"Plugin '{name}' is not available. "
-            f"Install optional dependencies for it (e.g. deckard[{name}])."
-        ) from e
+	try:
+		return import_module(module_name)
+	except ImportError as e:
+		raise ImportError(
+			f"Plugin '{name}' is not available. "
+			f"Install optional dependencies for it (e.g. deckard[{name}])."
+		) from e
+
+
+def __getattr__(name: str):
+	"""Lazily resolve plugin-family module attributes.
+
+	Allows attribute access like ``deckard.plugins.fairlearn`` without eagerly
+	importing optional plugin dependencies at package import time.
+	"""
+	if name in _PLUGIN_MAP:
+		return get_plugin(name)
+	raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+__all__ = [
+	"HookPlugin",
+	"get_plugin",
+	"anjana",
+	"fairlearn",
+	"lifelines",
+	"seaborn",
+	"yellowbrick",
+]

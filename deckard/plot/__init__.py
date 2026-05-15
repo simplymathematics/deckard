@@ -46,6 +46,44 @@ except ImportError:  # pragma: no cover
     YellowbrickPlotConfig = None
 
 
+def _refresh_seaborn_configs() -> None:
+    """Attempt to resolve seaborn plot config classes after module import time."""
+    global SeabornPlotConfig, SeabornPlotConfigList
+    if SeabornPlotConfig is not None and SeabornPlotConfigList is not None:
+        return
+    try:
+        from ..plugins.seaborn.plot import (
+            SeabornPlotConfig as _SeabornPlotConfig,
+            SeabornPlotConfigList as _SeabornPlotConfigList,
+        )
+
+        if SeabornPlotConfig is None:
+            SeabornPlotConfig = _SeabornPlotConfig
+        if SeabornPlotConfigList is None:
+            SeabornPlotConfigList = _SeabornPlotConfigList
+    except ImportError:  # pragma: no cover
+        pass
+
+
+def _refresh_yellowbrick_configs() -> None:
+    """Attempt to resolve yellowbrick plot config classes after module import time."""
+    global YellowbrickPlotConfig, YellowbrickConfigList
+    if YellowbrickPlotConfig is not None and YellowbrickConfigList is not None:
+        return
+    try:
+        from ..plugins.yellowbrick.plot import (
+            YellowbrickConfigList as _YellowbrickConfigList,
+            YellowbrickPlotConfig as _YellowbrickPlotConfig,
+        )
+
+        if YellowbrickConfigList is None:
+            YellowbrickConfigList = _YellowbrickConfigList
+        if YellowbrickPlotConfig is None:
+            YellowbrickPlotConfig = _YellowbrickPlotConfig
+    except ImportError:  # pragma: no cover
+        pass
+
+
 @dataclass(eq=False, kw_only=True)
 class PlotConfig(ConfigBase):
     """Wrapper that routes to appropriate plot config (Seaborn or Yellowbrick).
@@ -82,6 +120,7 @@ class PlotConfig(ConfigBase):
             )
 
         if has_experiment:
+            _refresh_yellowbrick_configs()
             if YellowbrickPlotConfig is None or YellowbrickConfigList is None:
                 raise ImportError(
                     "Yellowbrick plotting requires optional dependency deckard[yellowbrick]",
@@ -92,6 +131,7 @@ class PlotConfig(ConfigBase):
                 else YellowbrickPlotConfig
             )
         else:
+            _refresh_seaborn_configs()
             if SeabornPlotConfig is None or SeabornPlotConfigList is None:
                 raise ImportError(
                     "Seaborn plotting requires optional dependency deckard[seaborn]",

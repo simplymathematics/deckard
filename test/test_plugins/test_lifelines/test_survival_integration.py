@@ -1,4 +1,3 @@
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -9,7 +8,7 @@ import pytest
 from helpers import make_runtime_env
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 EXAMPLES_SKLEARN_DIR = ROOT / "examples" / "sklearn"
 DECKARD_RC_PATH = EXAMPLES_SKLEARN_DIR / ".deckard_rc"
 
@@ -43,42 +42,27 @@ def test_survival_cli_in_examples_sklearn(
 ):
     examples_dir = EXAMPLES_SKLEARN_DIR
     env = make_runtime_env(DECKARD_RC_PATH)
-    env["DECKARD_DEFAULT_CONFIG_FILE"] = "survival.yaml"
     duration_col = DURATION_COL_BY_DATASET[dataset_name]
 
-    deckard_cli = shutil.which("deckard")
-    if deckard_cli is not None:
-        probe = subprocess.run(
-            [deckard_cli, "--help"],
-            env=env,
-            cwd=examples_dir,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    else:
-        probe = None
+    runtime_config_name = f"runtime_blank_{dataset_name}_{survival_model}.yaml"
+    runtime_config_path = examples_dir / "config" / runtime_config_name
+    runtime_config_path.write_text("{}\n", encoding="utf-8")
 
-    if probe is not None and probe.returncode == 0:
-        cmd = [
-            deckard_cli,
-            "survival",
-            f"data={dataset_name}",
-            f"duration_col={duration_col}",
-            f"model={survival_model}",
-            "score=survival",
-        ]
-    else:
-        cmd = [
-            sys.executable,
-            "-m",
-            "deckard",
-            "survival",
-            f"data={dataset_name}",
-            f"duration_col={duration_col}",
-            f"model={survival_model}",
-            "score=survival",
-        ]
+    cmd = [
+        sys.executable,
+        "-m",
+        "deckard",
+        "survival",
+        "--config-name",
+        runtime_config_name,
+        f"+data={dataset_name}",
+        f"+duration_col={duration_col}",
+        "+target=E",
+        "+event_col=E",
+        "+classifier=False",
+        f"+model={survival_model}",
+        "+score=survival",
+    ]
 
     completed = subprocess.run(
         cmd,
@@ -88,6 +72,8 @@ def test_survival_cli_in_examples_sklearn(
         text=True,
         check=False,
     )
+
+    runtime_config_path.unlink(missing_ok=True)
 
     assert completed.returncode == 0, (
         f"Command failed: {' '.join(cmd)}\n"

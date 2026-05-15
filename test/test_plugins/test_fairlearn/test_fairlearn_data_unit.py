@@ -107,10 +107,11 @@ def test_sample_populates_sensitive_val_when_present(monkeypatch):
     cfg.sensitive_columns = ["group"]
 
     def _noop_sample(self, run_hooks: bool = True):
-        self.X_train = pd.DataFrame({"group": ["a", "b"], "x": [1, 2]})
-        self.X_test = pd.DataFrame({"group": ["b"], "x": [3]})
-        self._X = pd.DataFrame({"group": ["a", "b", "b"], "x": [1, 2, 3]})
-        self.X_val = pd.DataFrame({"group": ["a"], "x": [4]})
+        _ = run_hooks
+        self._X = pd.DataFrame({"group": ["a", "b", "b", "a"], "x": [1, 2, 3, 4]})
+        self.train_indices = [0, 1]
+        self.test_indices = [2]
+        self.val_indices = [3]
 
     monkeypatch.setattr(DataPipelineConfig, "_sample", _noop_sample)
 
@@ -120,6 +121,9 @@ def test_sample_populates_sensitive_val_when_present(monkeypatch):
     assert cfg._sensitive_test is not None
     assert cfg._sensitive_all is not None
     assert cfg._sensitive_val is not None
+    assert cfg._sensitive_train.tolist() == ["a", "b"]
+    assert cfg._sensitive_test.tolist() == ["b"]
+    assert cfg._sensitive_val.tolist() == ["a"]
 
 
 def test_score_none_and_non_callable_paths():

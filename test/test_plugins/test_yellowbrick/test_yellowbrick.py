@@ -117,8 +117,7 @@ class TestYellowbrickPlots(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        this_file = Path(__file__)
-        config_dir = this_file.parent.parent.parent / "examples" / "sklearn" / "config"
+        config_dir = Path(__file__).resolve().parents[3] / "examples" / "sklearn" / "config"
         config_dir = Path(config_dir).resolve().as_posix() + "/"
         cls.classification_data_config = config_dir + "data/classification.yaml"
         cls.classification_model_config = config_dir + "model/logistic.yaml"

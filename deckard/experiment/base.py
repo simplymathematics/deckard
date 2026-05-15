@@ -1464,12 +1464,10 @@ class ExperimentConfig(
 
     def compose_data_loading_behavior(self, data_file_outputs: dict) -> None:
         """Compose data loading behavior based on cache presence and repeat strategy."""
-        if (
-            "data_file" in data_file_outputs
-            and Path(data_file_outputs["data_file"]).exists()
-        ):
+        data_file = data_file_outputs.get("data_file")
+        if data_file and Path(data_file).exists():
             configured_data = self.data
-            self.data = self.load_object(data_file_outputs["data_file"])
+            self.data = self.load_object(data_file)
             self._apply_runtime_data_split_overrides(self.data, configured_data)
             return
 

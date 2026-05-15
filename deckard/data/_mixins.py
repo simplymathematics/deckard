@@ -3,18 +3,31 @@
 These mixins contain only generic behavior that does not depend on any
 optional plugin library (anjana, fairlearn, lifelines, yellowbrick, etc.).
 Plugin-specific behavior lives in the corresponding plugin module instead.
+
+This module also defines the shared ``RuntimePayload`` protocol marker used by
+plugin runtime call signatures to avoid duplicate local protocol declarations.
 """
 
 from __future__ import annotations
 
 import copy
+import inspect
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Protocol, Union
 
+import numpy as np
 import pandas as pd
 
 from ..frameworks import DataPipelineContractMixin
 from ..utils import instantiate_plugin_spec, load_class, normalize_plugin_specs
+
+
+class RuntimePayload(Protocol):
+    """Central runtime payload marker for plugin/data/mode call signatures.
+
+    This protocol is intentionally opaque and shared across plugin families to
+    avoid repeating local marker protocols in each module.
+    """
 
 
 @dataclass(eq=False, kw_only=True)
@@ -99,6 +112,160 @@ class _SensitiveColumnsMixin:
         if sensitive_series.astype(str).str.strip().eq("").all():
             raise ValueError(f"Sensitive features are blank during {context}")
         return sensitive_series
+
+    def _resolve_runtime_sensitive_source(self, split: str):
+        if getattr(self, "data", None) is None:
+            return None
+        if split == "train":
+            return getattr(self.data, "_sensitive_train", None)
+        if split == "test":
+            return getattr(self.data, "_sensitive_test", None)
+        if split == "all":
+            return getattr(self.data, "_sensitive_all", None)
+        if split == "val":
+            raise NotImplementedError(
+                "Validation sensitive features are not implemented yet",
+            )
+        raise ValueError(f"Unsupported fairness split: {split}")
+
+    def _resolve_scoring_split(self, mode: str) -> str:
+        if mode == "train":
+            return "train"
+        if mode in {"test", "attack"}:
+            return "test"
+        if mode in {"val", "attack-val"}:
+            raise NotImplementedError(
+                "Validation fairness scoring is not implemented yet",
+            )
+        if mode == "all":
+            return "all"
+        raise ValueError(f"Unsupported fairness scoring mode: {mode}")
+
+    def _validate_sensitive_series(self, sensitive, context: str):
+        if sensitive is None:
+            return None
+        return self._validate_sensitive_runtime(sensitive, context)
+
+    def _infer_split_from_batch(
+        self,
+        batch,
+        scoring_mode: Optional[str] = None,
+    ):
+        valid_splits = {"train", "test", "val", "all"}
+        if scoring_mode is None:
+            raise ValueError(
+                "scoring_mode must be explicitly provided (one of 'train', 'test', 'val', 'all')",
+            )
+        if scoring_mode not in valid_splits:
+            raise ValueError(
+                f"Invalid scoring_mode '{scoring_mode}'. Must be one of {valid_splits}.",
+            )
+        return scoring_mode
+
+    def _resolve_sensitive_features_for_batch(
+        self,
+        batch,
+        split: Optional[str] = None,
+        scoring_mode: Optional[str] = None,
+    ):
+        if getattr(self, "data", None) is None:
+            return None
+
+        n_rows = len(batch)
+        batch_index = getattr(batch, "index", None)
+        resolved_split = scoring_mode or split or self._infer_split_from_batch(batch)
+        if resolved_split is None:
+            return None
+
+        sensitive = self._resolve_runtime_sensitive_source(resolved_split)
+        sensitive_series = self._validate_sensitive_series(sensitive, "runtime")
+        if sensitive_series is None or len(sensitive_series) != n_rows:
+            return None
+        if batch_index is not None:
+            try:
+                aligned = sensitive_series.reindex(batch_index)
+                if len(aligned) == n_rows and aligned.notna().all():
+                    return aligned.reset_index(drop=True)
+            except Exception:
+                return None
+        return sensitive_series.reset_index(drop=True)
+
+    def _method_accepts_sensitive_features(self, method) -> bool:
+        try:
+            params = inspect.signature(method).parameters
+            if "sensitive_features" in params:
+                return True
+            return any(
+                p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()
+            )
+        except (TypeError, ValueError):
+            return False
+
+    def _call_with_optional_sensitive(self, method, X, sensitive):
+        if sensitive is not None and self._method_accepts_sensitive_features(
+            method,
+        ):
+            return method(X, sensitive_features=sensitive)
+        return method(X)
+
+    def _move_torch_model_to_device(self, model_obj, device):
+        _ = device
+        return model_obj
+
+    def get_model(self):
+        if getattr(self, "_model", None) is None:
+            raise ValueError("Model is not fitted yet.")
+        if hasattr(self._model, "model"):
+            return self._model.model
+        return self._model
+
+    def _fit_defended_estimator(self, defended_estimator, data):
+        if data is None or not hasattr(defended_estimator, "fit"):
+            return defended_estimator
+
+        if getattr(self, "data", None) is None:
+            self.data = data
+
+        sensitive = self._resolve_sensitive_features_for_batch(
+            data.y_train,
+            split="train",
+        )
+        fit_method = defended_estimator.fit
+
+        X = data.X_train
+        y = data.y_train
+
+        def _check_shape_consistency(arr, name):
+            if isinstance(arr, (list, tuple)):
+                shapes = [np.shape(v) for v in arr]
+                if len(set(shapes)) > 1:
+                    raise ValueError(
+                        f"Inconsistent shapes in {name}: {shapes}. All elements must have the same shape.",
+                    )
+
+        _check_shape_consistency(X, "X_train")
+        _check_shape_consistency(y, "y_train")
+        if hasattr(X, "numpy"):
+            X = X.numpy()
+        elif hasattr(X, "detach"):
+            X = X.detach().cpu().numpy()
+        if hasattr(y, "numpy"):
+            y = y.numpy()
+        elif hasattr(y, "detach"):
+            y = y.detach().cpu().numpy()
+
+        fit_params = getattr(self, "fit_params", None)
+        fit_params = fit_params if fit_params is not None else {}
+        if sensitive is not None and self._method_accepts_sensitive_features(
+            fit_method,
+        ):
+            sensitive_arg = (
+                sensitive.to_numpy() if hasattr(sensitive, "to_numpy") else sensitive
+            )
+            fit_method(X, y, sensitive_features=sensitive_arg, **fit_params)
+        else:
+            fit_method(X, y, **fit_params)
+        return defended_estimator
 
 
 @dataclass(eq=False, kw_only=True)
@@ -278,6 +445,7 @@ class DataScoreMixin:
 
 
 __all__ = [
+    "RuntimePayload",
     "_SensitiveColumnsMixin",
     "DataPipelineMixin",
     "DataLoaderMixin",

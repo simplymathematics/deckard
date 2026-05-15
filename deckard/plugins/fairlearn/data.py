@@ -1,12 +1,12 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, Protocol, Union
+from typing import Any, Dict, Optional, Union
 
 import pandas as pd
 from omegaconf import DictConfig, ListConfig
 
 from deckard.plugins import HookPlugin
 from ...data.base import DataPipelineConfig
-from ...data._mixins import _SensitiveColumnsMixin
+from ...data._mixins import RuntimePayload, _SensitiveColumnsMixin
 from ...utils import (
 	coerce_to_list,
 	is_default_config_value,
@@ -15,10 +15,6 @@ from ...utils import (
 
 RuntimeScalar = str | int | float | bool | None
 RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
-
-
-class RuntimePayload(Protocol):
-	"""Opaque marker protocol for runtime plugin payloads."""
 from ...plugins.fairlearn.score import (
 	DefaultFairlearnClassificationConfig,
 	DefaultFairlearnRegressionConfig,

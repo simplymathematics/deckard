@@ -364,7 +364,7 @@ def test_call_raises_when_aux_runtime_split_missing(monkeypatch, tmp_path):
                 ),
             }
 
-    from deckard.plot import survival as plot_survival_mod
+    from deckard.plugins.lifelines import plot as plot_survival_mod
 
     monkeypatch.setattr(
         plot_survival_mod,

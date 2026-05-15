@@ -25,7 +25,7 @@ if FairlearnPytorchModelConfig is None:
     pytest.skip("fairlearn pytorch model configs are unavailable", allow_module_level=True)
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 EXAMPLES_PYTORCH_DIR = ROOT / "examples" / "pytorch"
 DECKARD_RC_PATH = EXAMPLES_PYTORCH_DIR / ".deckard_rc"
 
