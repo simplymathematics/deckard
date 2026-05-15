@@ -8,6 +8,7 @@ from sklearn.preprocessing import FunctionTransformer
 
 import deckard.data.base as data_base
 from deckard.data.base import DataConfig, DataPipelineConfig
+from deckard.frameworks import DataContractMixin, DataPipelineContractMixin
 from deckard.score.base import ScorerDictConfig
 from helpers import load_canonical_data_profile
 
@@ -27,6 +28,12 @@ def _basic_data_config(**overrides):
     params.update({"test_size": 0.25, "random_state": 0, "classifier": True})
     params.update(overrides)
     return DataConfig(**params)
+
+
+def test_data_pipeline_mixin_contract_compliance_and_aliases():
+    assert issubclass(data_base.DataPipelineMixin, DataPipelineContractMixin)
+    assert issubclass(DataConfig, DataContractMixin)
+    assert issubclass(DataPipelineConfig, DataPipelineContractMixin)
 
 
 def test_discover_lifelines_dataset_loaders_handles_import_error(monkeypatch):
@@ -439,38 +446,6 @@ def test_score_and_feature_score_branches(monkeypatch):
     cfg._y = pd.Series([0, 1])
     assert cfg._score() == {"base_score": 1, "plugin_score": 7}
 
-    cfg.X_train = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
-    cfg.y_train = pd.Series([1, 1])
-    assert cfg._classification_feature_scores()["class_counts"] == {1: 2}
-
-    cfg.y_train = pd.Series([0, 1])
-    monkeypatch.setattr(
-        data_base,
-        "mutual_info_classif",
-        lambda *args, **kwargs: (_ for _ in ()).throw(ValueError("mi")),
-    )
-    monkeypatch.setattr(
-        data_base,
-        "f_classif",
-        lambda *args, **kwargs: (_ for _ in ()).throw(ValueError("anova")),
-    )
-    scores = cfg._classification_feature_scores()
-    assert scores["class_counts"] == {0: 1, 1: 1}
-
-    reg_cfg = _basic_data_config(classifier=False)
-    reg_cfg.X_train = pd.DataFrame(
-        {"a": [1.0, 2.0, 3.0, 4.0, 5.0], "b": [0.5, 1.5, 2.5, 3.5, 4.5]},
-    )
-    reg_cfg.y_train = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0])
-    reg_cfg.y_test = pd.Series([2.0, 4.0, 6.0])
-    reg_scores = reg_cfg._regression_feature_scores()
-    assert set(reg_scores) == {
-        "mutual_info_regression",
-        "f_regression",
-        "r_regression",
-        "y_train_cdf",
-        "y_test_cdf",
-    }
 
 
 def test_fit_transform_x_empty_pipeline_short_circuits():

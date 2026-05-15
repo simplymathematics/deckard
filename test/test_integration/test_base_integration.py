@@ -5,6 +5,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 from hydra import compose, initialize_config_dir
+from hydra.core.config_store import ConfigStore
+from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf
 
 os.environ.setdefault("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "1")
@@ -30,6 +32,15 @@ def _load_or_skip(cfg):
 def _train_model_or_skip(model_cfg, data_cfg):
     model_cfg(data_cfg)
     return model_cfg
+
+
+def _reset_hydra_state() -> None:
+    if GlobalHydra.instance().is_initialized():
+        GlobalHydra.instance().clear()
+    config_store = ConfigStore.instance()
+    for key in list(config_store.repo.keys()):
+        if key not in {"hydra", "_dummy_empty_config_.yaml"}:
+            config_store.repo.pop(key, None)
 
 
 def _base_classification_data():
@@ -660,6 +671,7 @@ def test_cli_data_model_composition_adult_logistic():
     config_dir = (
         Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
     )
+    _reset_hydra_state()
     with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
         cfg = compose(
             config_name="default",
@@ -695,6 +707,7 @@ def test_cli_data_model_composition_diabetes_rf():
     config_dir = (
         Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
     )
+    _reset_hydra_state()
     with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
         cfg = compose(
             config_name="default",
@@ -728,6 +741,7 @@ def test_cli_defense_composition_feature_squeezing():
     config_dir = (
         Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
     )
+    _reset_hydra_state()
     with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
         cfg = compose(
             config_name="default",
@@ -763,6 +777,7 @@ def test_cli_attack_composition_fgm():
     config_dir = (
         Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
     )
+    _reset_hydra_state()
     with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
         cfg = compose(
             config_name="default",
@@ -800,6 +815,7 @@ def test_cli_attack_composition_database_reconstruction_smoke():
     config_dir = (
         Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
     )
+    _reset_hydra_state()
     with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
         cfg = compose(
             config_name="default",
@@ -836,6 +852,7 @@ def test_cli_full_experiment_composition():
     config_dir = (
         Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
     )
+    _reset_hydra_state()
     with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
         cfg = compose(
             config_name="default",
@@ -874,6 +891,7 @@ def test_cli_full_experiment_composition_database_reconstruction_end_to_end():
     config_dir = (
         Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
     )
+    _reset_hydra_state()
     with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
         cfg = compose(
             config_name="default",
@@ -910,6 +928,7 @@ def test_cli_experiment_tuning_mode_emits_test_scores():
     config_dir = (
         Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
     )
+    _reset_hydra_state()
     with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
         cfg = compose(
             config_name="default",
@@ -951,6 +970,7 @@ def test_cli_plot_composition_smoke():
     config_dir = (
         Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
     )
+    _reset_hydra_state()
     with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
         cfg = compose(
             config_name="attack-default",

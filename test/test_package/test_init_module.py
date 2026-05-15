@@ -4,6 +4,22 @@ from omegaconf import OmegaConf
 import deckard
 
 
+def test_importing_deckard_does_not_register_configs(monkeypatch):
+    calls = []
+
+    monkeypatch.setattr(
+        "deckard.declarations.register_configs",
+        lambda: calls.append("register"),
+        raising=True,
+    )
+
+    import importlib
+
+    importlib.reload(deckard)
+
+    assert calls == []
+
+
 def test_load_yaml_file_reads_content(tmp_path):
     cfg_file = tmp_path / "sample.yaml"
     cfg_file.write_text("root:\n  child: 3\n")

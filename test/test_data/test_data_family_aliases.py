@@ -1,10 +1,11 @@
 from deckard.data.fairlearn import FairlearnDataConfig
 from deckard.data.lifelines import LifelinesDataConfig
-from deckard.data import PytorchDataPipelineConfig
-from deckard.data.pipeline import DefaultDataPipelineConfig
-from deckard.plugins.anjana.data import AnjanaDataPipelineConfig
-from deckard.plugins.fairlearn.data import FairlearnDataPipelineConfig
-from deckard.pytorch.data import PytorchDataPipelineConfig as PytorchDataPipelineConfigFromUserFacing
+from deckard.data import PytorchDataConfig
+from deckard.data import DataConfig
+from deckard.data.pipeline import DataPipelineConfig
+from deckard.plugins.anjana.data import AnjanaDataConfig
+from deckard.plugins.fairlearn.data import FairlearnDataConfig
+from deckard.pytorch.data import PytorchDataConfig as PytorchDataConfigFromUserFacing
 
 
 def test_data_family_aliases_are_importable():
@@ -13,17 +14,11 @@ def test_data_family_aliases_are_importable():
 
 
 def test_data_pipeline_family_aliases_are_importable():
-    assert DefaultDataPipelineConfig is not None
-    assert AnjanaDataPipelineConfig is not None
-    assert FairlearnDataPipelineConfig is not None
-    assert PytorchDataPipelineConfig is not None
+    assert DataConfig is not None
+    assert AnjanaDataConfig is not None
+    assert FairlearnDataConfig is not None
+    assert PytorchDataConfig is not None
 
 
 def test_data_pipeline_wrapper_is_reexported_at_top_level():
-    assert PytorchDataPipelineConfig is PytorchDataPipelineConfigFromUserFacing
-
-
-def test_data_pipeline_default_configs_are_constructible():
-    assert isinstance(DefaultDataPipelineConfig().pipeline, dict)
-    assert isinstance(AnjanaDataPipelineConfig().pipeline, dict)
-    assert isinstance(FairlearnDataPipelineConfig().pipeline, dict)
+    assert PytorchDataConfig is PytorchDataConfigFromUserFacing

@@ -215,7 +215,7 @@ def test_mixed_fairlearn_and_art_defenses_apply_with_type_checks(
 
 @pytest.fixture(scope="module")
 def generate_fairness_model(generate_fairness_data):
-    from deckard.score import DefaultFairlearnClassificationConfig
+    from deckard.plugins.fairlearn.score import DefaultFairlearnClassificationConfig
 
     model = FairlearnModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",

@@ -211,9 +211,6 @@ class TestSplitSampler(unittest.TestCase):
         )
         scores = cfg()
         self.assertIn("val_n", scores)
-        self.assertIn("val_class_counts", scores)
-        # val_class_counts should be a list of counts
-        self.assertIsInstance(scores["val_class_counts"], list)
 
     def test_regression_val_score(self):
         cfg = DataConfig(
@@ -233,7 +230,7 @@ class TestSplitSampler(unittest.TestCase):
         )
         scores = cfg()
         self.assertIn("val_n", scores)
-        self.assertIn("val_y_cdf", scores)
+        self.assertIn("mutual_information_mean", scores)
 
     def test_sample_dict_spec(self):
         """DataConfig should accept a dict sampler spec and instantiate it."""

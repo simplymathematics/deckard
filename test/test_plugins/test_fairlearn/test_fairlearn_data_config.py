@@ -158,12 +158,8 @@ class TestScore:
         config._y = pd.Series([0, 1, 0, 1])
         config.classifier = True
 
-        config._sample()  # Ensure sensitive features are set up
-
-        with patch.object(config, "_classification_feature_scores", return_value={}):
-            with patch.object(config, "scorer", return_value={"fairness_scores": {}}):
-                scores = config._score()
-
+        config()  # Ensure sensitive features are set up
+        scores = config.score_dict
         assert isinstance(scores, dict)
 
 
@@ -211,7 +207,7 @@ class TestClassificationFeatureScoresForGroup:
         config.X_test = df
         config.y_test = y
 
-        scores = config._classification_feature_scores()
+        scores = config.compute_score()
 
         assert "class_counts" in scores
         assert "mutual_info_classif" in scores

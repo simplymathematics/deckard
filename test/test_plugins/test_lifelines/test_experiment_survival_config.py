@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+import unittest
 
 import numpy as np
 import pandas as pd
@@ -8,6 +9,68 @@ from deckard.data import DataConfig
 from deckard.experiment.base import ExperimentConfig
 from deckard.experiment.survival import SurvivalExperimentConfig
 from deckard.model import ModelConfig
+
+
+
+
+class TestSurvivalExperimentConfig(unittest.TestCase):
+    def test_allows_survival_only_config_without_attack(self):
+        config = SurvivalExperimentConfig(
+            data=DataConfig(dataset_name="make_regression", classifier=False),
+            model="cox",
+            target="E",
+            classifier=False,
+            duration_col="T",
+            event_col="E",
+        )
+        self.assertIsInstance(config, SurvivalExperimentConfig)
+        self.assertEqual(config.model, "cox")
+
+    def test_requires_attack_when_aux_model_present(self):
+        with self.assertRaises(ValueError):
+            SurvivalExperimentConfig(
+                data=DataConfig(
+                    dataset_name="make_regression",
+                    classifier=False,
+                ),
+                model="cox",
+                target="E",
+                classifier=False,
+                aux_model=ModelConfig(
+                    model_type="sklearn.linear_model.LogisticRegression",
+                    classifier=True,
+                    model_params={"max_iter": 10},
+                ),
+                duration_col="T",
+                event_col="E",
+            )
+
+    def test_requires_data_config(self):
+        with self.assertRaises(ValueError):
+            SurvivalExperimentConfig(
+                data=None,
+                model="cox",
+                target="E",
+                duration_col="T",
+                event_col="E",
+                classifier=False,
+            )
+
+    def test_survival_config_initializes(self):
+        config = SurvivalExperimentConfig(
+            data=DataConfig(
+                dataset_name="make_regression",
+                classifier=False,
+                target=None,
+            ),
+            model="cox",
+            target="E",
+            classifier=False,
+            duration_col="T",
+            event_col="E",
+        )
+        self.assertIsInstance(config, SurvivalExperimentConfig)
+        self.assertEqual(config.model, "cox")
 
 
 def _bare_instance():

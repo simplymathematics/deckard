@@ -43,14 +43,20 @@ def test_score_declarations_loader_skips_bad_yaml(tmp_path, monkeypatch):
 def test_data_declarations_register_sampler_configs_exception_path(monkeypatch):
     import deckard.data.sample as sample_mod
 
+    calls = []
+
+    def _record_call():
+        calls.append("register")
+
     monkeypatch.setattr(
         sample_mod,
         "register_sampler_configs",
-        lambda: (_ for _ in ()).throw(RuntimeError("boom")),
+        _record_call,
     )
     reloaded = importlib.reload(data_declarations)
 
     assert reloaded is not None
+    assert calls == []
 
 
 def test_score_data_coerce_features_dataframe_series_and_vector():
