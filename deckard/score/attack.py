@@ -722,7 +722,7 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
     :class:`~deckard.attack.base.AttackConfig` injects them automatically
     when the data object exposes ``_sensitive_test`` / ``_sensitive_train``
     (i.e. the data object is a
-    :class:`~deckard.plugins.fairlearn.data.FairlearnDataConfig`).
+    :class:`~deckard.plugins.fairlearn.FairlearnDataConfig`).
     """
 
     evasion: Union[ScorerDictConfig, dict, None] = None

@@ -20,12 +20,16 @@ from ...score.base import (
     ScorerConfig,
     ScorerDictConfig,
     _TaskAwareScorerMixin,
-    _resolve_yt_yp,
     safe_store,
-    _series_like_to_float_dict,
 )
+from ...score._runtime import resolve_yt_yp, series_like_to_float_dict
 from ...data import DataConfig
 from ...utils import coerce_to_list, merge_list_of_dicts
+
+# TODO: Remove this
+# Backward-compatible aliases used in existing tests and downstream imports.
+_series_like_to_float_dict = series_like_to_float_dict
+_resolve_yt_yp = resolve_yt_yp
 
 try:
     from fairlearn.metrics import MetricFrame
@@ -201,7 +205,7 @@ def _resolve_sensitive_features(
         sensitive = getattr(data, "_sensitive_test", None)
     elif mode in {"val", "attack-val"}:
         sensitive = getattr(data, "_sensitive_val", None)
-    elif mode == "all":
+    elif mode in {"all", "pre-sample"}:
         sensitive = getattr(data, "_sensitive_all", None)
     else:
         raise ValueError(f"Unsupported fairness scoring mode: {mode}")
@@ -533,7 +537,7 @@ class _FairnessScorerMixin:
             raise ValueError(
                 "data must be provided when y_true/y_pred are not passed directly",
             )
-        resolved_y_true, resolved_y_pred = _resolve_yt_yp(
+        resolved_y_true, resolved_y_pred = resolve_yt_yp(
             mode,
             cast(DataConfig, data),
             model,
@@ -607,7 +611,7 @@ class _FairnessScorerMixin:
                 for metric_name, value in overall.items():
                     results[f"{metric_name}_overall"] = float(value)
             else:
-                overall_series = _series_like_to_float_dict(cast(Any, overall))
+                overall_series = series_like_to_float_dict(cast(Any, overall))
                 if len(overall_series) == 1 and "value" in overall_series:
                     overall_value = overall_series["value"]
                     for metric_name in self_cfg.group_scorers.keys():
@@ -654,12 +658,12 @@ class _FairnessScorerMixin:
 
         if self_cfg.group_reduction == "difference":
             reduced = metric_frame.difference(method=self_cfg.group_reduction_method)
-            for metric_name, value in _series_like_to_float_dict(reduced).items():
+            for metric_name, value in series_like_to_float_dict(reduced).items():
                 if is_scalar_metric(metric_name):
                     results[f"{metric_name}_difference"] = value
         elif self_cfg.group_reduction == "ratio":
             reduced = metric_frame.ratio(method=self_cfg.group_reduction_method)
-            for metric_name, value in _series_like_to_float_dict(reduced).items():
+            for metric_name, value in series_like_to_float_dict(reduced).items():
                 if is_scalar_metric(metric_name):
                     results[f"{metric_name}_ratio"] = value
         elif self_cfg.group_reduction != "none":
@@ -757,7 +761,7 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
             raise ValueError(
                 "data must be provided when y_true/y_pred are not passed directly",
             )
-        resolved_y_true, resolved_y_pred = _resolve_yt_yp(
+        resolved_y_true, resolved_y_pred = resolve_yt_yp(
             mode,
             cast(DataConfig, data),
             model,
@@ -836,7 +840,7 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
                 for metric_name, value in overall.items():
                     results[f"{metric_name}_overall"] = float(value)
             else:
-                overall_series = _series_like_to_float_dict(cast(Any, overall))
+                overall_series = series_like_to_float_dict(cast(Any, overall))
                 if len(overall_series) == 1 and "value" in overall_series:
                     overall_value = overall_series["value"]
                     for metric_name in self_cfg.group_scorers.keys():
@@ -908,12 +912,12 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
         # Only apply reduction to metrics that are scalar per group (not group metric functions)
         if self_cfg.group_reduction == "difference":
             reduced = metric_frame.difference(method=self_cfg.group_reduction_method)
-            for metric_name, value in _series_like_to_float_dict(reduced).items():
+            for metric_name, value in series_like_to_float_dict(reduced).items():
                 if is_scalar_metric(metric_name):
                     results[f"{metric_name}_difference"] = value
         elif self_cfg.group_reduction == "ratio":
             reduced = metric_frame.ratio(method=self_cfg.group_reduction_method)
-            for metric_name, value in _series_like_to_float_dict(reduced).items():
+            for metric_name, value in series_like_to_float_dict(reduced).items():
                 if is_scalar_metric(metric_name):
                     results[f"{metric_name}_ratio"] = value
         elif self_cfg.group_reduction != "none":

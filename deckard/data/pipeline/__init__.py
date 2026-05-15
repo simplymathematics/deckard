@@ -4,7 +4,8 @@ This package centralizes pipeline-oriented config classes while maintaining
 backward compatibility with DataPipelineConfig in data.base.
 """
 
-import sys
+import logging
+
 
 from ..base import DataPipelineConfig
 from .core import (
@@ -12,7 +13,15 @@ from .core import (
     DefaultDataPipelineConfig,
     FairlearnDataPipelineConfig,
 )
-from ...frameworks.pytorch.data import PytorchDataPipelineConfig
+
+logger = logging.getLogger(__name__)
+
+try:
+    from ...frameworks.pytorch.data import PytorchDataPipelineConfig
+
+    _ = PytorchDataPipelineConfig
+except Exception:  # pragma: no cover
+    logger.debug("Torch not found. PytorchDataPipelineConfig is unavailable.")
 
 
 __all__ = [
@@ -20,5 +29,7 @@ __all__ = [
     "DefaultDataPipelineConfig",
     "AnjanaDataPipelineConfig",
     "FairlearnDataPipelineConfig",
-    "PytorchDataPipelineConfig",
 ]
+
+if "PytorchDataPipelineConfig" in globals():
+    __all__.append("PytorchDataPipelineConfig")

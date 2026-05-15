@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 # Imports
 import pandas as pd
 import time
@@ -13,33 +16,365 @@ from typing import Any, Union, List, Optional, Callable
 # PyTorch
 import torch
 from torch import Tensor
-from torch.utils.data import DataLoader, Dataset, Subset
+from torch.utils.data import DataLoader, Dataset, IterableDataset, Subset, TensorDataset
 
 # deckard
 from ...utils import load_class, resolve_torch_device
 from ...data.base import DataConfig, DataPipelineConfig
+from ..adapters import BaseContractMixin
 import numpy as np
 
 # Setup logger
 logger = logging.getLogger(__name__)
 
 
-@dataclass(eq=False)
+from typing import Literal
+
+from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
+from torch.utils.data import Dataset, Subset
+
+
+class TorchDatasetSamplingMixin:
+    """Sampling adapter returning Dataset objects.
+
+    Required attrs:
+        dataset: Dataset
+        test_size: float
+        train_size: float
+        val_size: float
+        random_state: int
+        sample: Literal["split", "fold", "shuffle"]
+        stratify: bool
+    """
+
+    dataset: Dataset
+    test_size: float
+    train_size: float
+    val_size: float
+    random_state: int
+    sample: Literal["split", "fold", "shuffle"]
+    stratify: bool
+
+    def _get_targets(self) -> list:
+        """Extract labels for stratified sampling."""
+        ds = self.dataset
+
+        if hasattr(ds, "targets"):
+            return list(ds.targets)
+
+        if hasattr(ds, "labels"):
+            return list(ds.labels)
+
+        raise AttributeError(
+            "Stratified sampling requires dataset.targets or dataset.labels.",
+        )
+
+    def _validate_sizes(self) -> None:
+        total = self.train_size + self.val_size + self.test_size
+
+        if abs(total - 1.0) > 1e-8:
+            raise ValueError(
+                "train_size + val_size + test_size must equal 1.0",
+            )
+
+    def sample(self, *, n_splits: int = 5):
+        """
+        Modes:
+            split   -> (train_ds, val_ds, test_ds)
+            fold    -> list[(train_ds, val_ds)]
+            shuffle -> dataset
+        """
+        ds = self.dataset
+
+        if not isinstance(ds, Dataset):
+            raise TypeError(
+                "dataset must be torch.utils.data.Dataset",
+            )
+
+        self._validate_sizes()
+        indices = list(range(len(ds)))
+
+        if self.sample == "split":
+            return self._sample_split(ds, indices)
+
+        if self.sample == "fold":
+            return self._sample_fold(
+                ds,
+                indices,
+                n_splits=n_splits,
+            )
+
+        if self.sample == "shuffle":
+            return self._sample_shuffle(ds)
+
+        raise ValueError(
+            "sample must be 'split', 'fold', or 'shuffle'",
+        )
+
+    def _sample_split(
+        self,
+        ds: Dataset,
+        indices: list[int],
+    ) -> tuple[Subset, Subset, Subset]:
+        """Return train/val/test subsets."""
+        y = self._get_targets() if self.stratify else None
+
+        trainval_idx, test_idx = train_test_split(
+            indices,
+            test_size=self.test_size,
+            random_state=self.random_state,
+            stratify=y,
+        )
+
+        y_trainval = (
+            [y[i] for i in trainval_idx]
+            if y is not None
+            else None
+        )
+
+        val_fraction = self.val_size / (
+            self.train_size + self.val_size
+        )
+
+        train_idx, val_idx = train_test_split(
+            trainval_idx,
+            test_size=val_fraction,
+            random_state=self.random_state,
+            stratify=y_trainval,
+        )
+
+        self.train_dataset = Subset(ds, train_idx)
+        self.val_dataset = Subset(ds, val_idx)
+        self.test_dataset = Subset(ds, test_idx)
+
+        return (
+            self.train_dataset,
+            self.val_dataset,
+            self.test_dataset,
+        )
+
+    def _sample_fold(
+        self,
+        ds: Dataset,
+        indices: list[int],
+        *,
+        n_splits: int,
+    ) -> list[tuple[Subset, Subset]]:
+        """Return K-fold dataset subsets."""
+        y = self._get_targets() if self.stratify else None
+
+        splitter = (
+            StratifiedKFold(
+                n_splits=n_splits,
+                shuffle=True,
+                random_state=self.random_state,
+            )
+            if self.stratify
+            else KFold(
+                n_splits=n_splits,
+                shuffle=True,
+                random_state=self.random_state,
+            )
+        )
+
+        split_iter = (
+            splitter.split(indices, y)
+            if self.stratify
+            else splitter.split(indices)
+        )
+
+        folds = []
+
+        for train_idx, val_idx in split_iter:
+            train_ds = Subset(ds, train_idx)
+            val_ds = Subset(ds, val_idx)
+            folds.append((train_ds, val_ds))
+
+        self.folds = folds
+        return folds
+
+    def _sample_shuffle(
+        self,
+        ds: Dataset,
+    ) -> Dataset:
+        """
+        Return the full dataset unchanged.
+
+        Shuffling is deferred to DataLoader.
+        """
+        return ds
+@dataclass(eq=False, kw_only=True)
 class PytorchDataPipelineConfig(DataPipelineConfig):
     pass
 
 
-@dataclass(eq=False)
-class PytorchDataConfig(DataConfig):
 
-    def __call__(self, *args, **kwargs):  # noqa: F811
-        # Always load data and sample to set X_train, X_test, y_train, y_test
-        self._load_data()
-        self._sample()
-        # Optionally call parent __call__ for scoring or further processing
-        if hasattr(super(), "__call__"):
-            return super().__call__(*args, **kwargs)
-        return {}
+class TorchDatasetMixin(BaseContractMixin):
+    """PyTorch adapter methods for FrameworkDataConfig compliance."""
+
+    sampler: Union[str, dict, Callable[..., Any], None]
+    sampler_params: dict[str, Any]
+    dataset_type: Union[str, None]
+    n_splits: int
+
+    def _resolve_dataset_type(self, dataset_obj: Any) -> str:
+        """Classify runtime dataset shape for downstream sampling behavior."""
+        if isinstance(dataset_obj, TensorDataset):
+            return "tensor"
+        if isinstance(dataset_obj, IterableDataset):
+            return "iterable"
+        if isinstance(dataset_obj, Dataset):
+            return "map"
+        return "unknown"
+
+    def _normalize_sampler_spec(self) -> tuple[Union[str, None], dict[str, Any]]:
+        """Resolve sampler name and params from string/dict/callable specs."""
+        sampler_spec = getattr(self, "sampler", None)
+        params = dict(getattr(self, "sampler_params", {}) or {})
+
+        if sampler_spec is None:
+            return None, params
+        if isinstance(sampler_spec, str):
+            return sampler_spec.strip().lower(), params
+        if isinstance(sampler_spec, dict):
+            name = sampler_spec.get("name", sampler_spec.get("_target_", "split"))
+            if not isinstance(name, str):
+                raise TypeError(
+                    f"sampler name must be a string, got {type(name)}",
+                )
+            merged_params = {
+                k: v
+                for k, v in sampler_spec.items()
+                if k not in {"name", "_target_"}
+            }
+            merged_params.update(params)
+            return name.strip().lower(), merged_params
+        if callable(sampler_spec):
+            return "callable", params
+        raise TypeError(
+            f"Unsupported sampler specification type: {type(sampler_spec)}",
+        )
+
+    def _sample_with_configurable_sampler(
+        self,
+        dataset_obj: Dataset,
+        labels: Tensor,
+    ) -> tuple[Tensor, Tensor]:
+        """Return train/test index tensors based on configured sampler."""
+        sampler_name, params = self._normalize_sampler_spec()
+        num_samples = len(labels)
+
+        # Default path keeps existing PyTorch behavior.
+        if sampler_name in {None, "default", "split", "random_split"}:
+            return self._sample_train_test_indices(num_samples)
+
+        if sampler_name in {"fold", "kfold", "stratifiedkfold", "shuffle"}:
+            val_size = params.get("val_size", getattr(self, "val_size", None))
+            if val_size is None:
+                val_size = 0.0
+            runtime = TorchDatasetSamplingMixin()
+            runtime.dataset = dataset_obj
+            runtime.test_size = (
+                float(self.test_size)
+                if isinstance(self.test_size, (int, float))
+                else 0.2
+            )
+            runtime.train_size = (
+                float(self.train_size)
+                if isinstance(self.train_size, (int, float))
+                else 0.8
+            )
+            runtime.val_size = float(val_size)
+            runtime.random_state = int(self.random_state)
+            runtime.sample = "fold" if sampler_name in {"fold", "kfold", "stratifiedkfold"} else "shuffle"
+            runtime.stratify = bool(self.stratify)
+
+            if runtime.sample == "shuffle":
+                # Shuffle mode leaves dataset unchanged; fall back to train/test indices.
+                return self._sample_train_test_indices(num_samples)
+
+            folds = runtime.sample(n_splits=int(params.get("n_splits", getattr(self, "n_splits", 5))))
+            if not folds:
+                raise ValueError("Configured fold sampler produced no folds")
+            train_subset, test_subset = folds[0]
+            train_idx = torch.as_tensor(train_subset.indices, dtype=torch.long)
+            test_idx = torch.as_tensor(test_subset.indices, dtype=torch.long)
+            return train_idx, test_idx
+
+        if sampler_name == "callable" and callable(getattr(self, "sampler", None)):
+            result = self.sampler(
+                num_samples=num_samples,
+                labels=labels,
+                random_state=self.random_state,
+                train_size=self.train_size,
+                test_size=self.test_size,
+                **params,
+            )
+            if not isinstance(result, (tuple, list)) or len(result) < 2:
+                raise ValueError(
+                    "Callable sampler must return (train_idx, test_idx)",
+                )
+            train_idx = torch.as_tensor(result[0], dtype=torch.long)
+            test_idx = torch.as_tensor(result[1], dtype=torch.long)
+            return train_idx, test_idx
+
+        if "." in sampler_name or ":" in sampler_name:
+            sampler_callable = load_class(sampler_name)
+            result = sampler_callable(
+                num_samples=num_samples,
+                labels=labels,
+                random_state=self.random_state,
+                train_size=self.train_size,
+                test_size=self.test_size,
+                **params,
+            )
+            if not isinstance(result, (tuple, list)) or len(result) < 2:
+                raise ValueError(
+                    "Loaded sampler callable must return (train_idx, test_idx)",
+                )
+            return (
+                torch.as_tensor(result[0], dtype=torch.long),
+                torch.as_tensor(result[1], dtype=torch.long),
+            )
+
+        raise ValueError(f"Unsupported sampler mode: {sampler_name}")
+
+    def _sample_train_test_indices(self, num_samples: int) -> tuple[Tensor, Tensor]:
+        """Default random train/test split index generation."""
+        indices = torch.arange(num_samples)
+        perm = torch.randperm(
+            num_samples,
+            generator=torch.Generator().manual_seed(self.random_state),
+        )
+        indices = indices[perm]
+
+        if self.train_size is None and self.test_size is None:
+            raise ValueError("Either train_size or test_size must be specified.")
+
+        if self.train_size is None:
+            test_size = int(self.test_size * num_samples) if isinstance(self.test_size, float) else int(self.test_size)
+            train_size = num_samples - test_size
+        elif self.test_size is None:
+            train_size = int(self.train_size * num_samples) if isinstance(self.train_size, float) else int(self.train_size)
+            test_size = num_samples - train_size
+        else:
+            train_size = int(self.train_size * num_samples) if isinstance(self.train_size, float) else int(self.train_size)
+            test_size = int(self.test_size * num_samples) if isinstance(self.test_size, float) else int(self.test_size)
+
+        if train_size + test_size > num_samples:
+            raise ValueError("Train size and test size exceed total samples.")
+
+        train_idx = indices[:train_size]
+        test_idx = indices[train_size : train_size + test_size]  # noqa E203
+        return train_idx, test_idx
+
+    pass
+
+
+
+
+@dataclass(eq=False, kw_only=True)
+class PytorchDataConfig(TorchDatasetMixin, DataConfig):
 
     """Configuration for PyTorch datasets.
 
@@ -62,29 +397,17 @@ class PytorchDataConfig(DataConfig):
     train_size: Union[float, int, None] = 0.7
     random_state: int = 42
     stratify: Union[None, str, bool] = True
-    pipeline: Union[PytorchDataPipelineConfig, None] = None
+    pipeline: dict[str, Any] = field(default_factory=dict)
     classifier: bool = True
     target: Optional[str] = None
     data_params: dict = field(default_factory=dict)
     drop: List[str] = field(default_factory=list)
     keep: List[str] = field(default_factory=list)
-
-    def _fit_transform_X(
-        self,
-        X_train,
-        X_test,
-        y_train,
-        y_test,
-        pipeline,
-    ):
-        """Bypass pipeline fit/transform for torch types. Returns inputs unchanged, sets timing fields."""
-        if len(pipeline) > 0:
-            raise NotImplementedError("Pytorch data pipelines not yet implemented.")
-        self.pipeline_fit_time = 0.0
-        self.pipeline_fit_n = len(X_train) if hasattr(X_train, "__len__") else 0
-        self.pipeline_transform_time = 0.0
-        self.pipeline_transform_n = len(X_test) if hasattr(X_test, "__len__") else 0
-        return X_train, X_test, y_train, y_test
+    sampler: Union[str, dict, Callable[..., Any], None] = "split"
+    sampler_params: dict[str, Any] = field(default_factory=dict)
+    dataset_type: Union[str, None] = None
+    n_splits: int = 5
+    
 
     def _normalize_sensitive_item(self, sensitive_item: Any) -> Any:
         if isinstance(sensitive_item, torch.Tensor):
@@ -213,6 +536,7 @@ class PytorchDataConfig(DataConfig):
             }
             full_dataset = load_class(dataset_name, **dataset_params)
             self.dataset_obj = full_dataset
+            self.dataset_type = self._resolve_dataset_type(full_dataset)
 
             # Extract data and labels from dataset. For very large datasets,
             # _max_samples can cap materialization for fast iteration.
@@ -298,9 +622,7 @@ class PytorchDataConfig(DataConfig):
             logger.error(f"Failed to load dataset {self.dataset_name}: {e}")
             raise
 
-    def _sample(
-        self,
-    ):
+    def _sample(self, run_hooks: bool = True):
         """
         Samples training and testing indices from the loaded dataset, optionally using stratification.
 
@@ -321,65 +643,24 @@ class PytorchDataConfig(DataConfig):
         if self._X is None or self._y is None:
             raise ValueError("Data not loaded. Call _load_data first.")
 
+        _ = run_hooks
         num_samples = len(self._X)
-        indices = torch.arange(num_samples)
         # Determine stratification
         if self.stratify not in (None, True, False):
             raise ValueError(
                 f"stratify must be None, True, or False for PyTorch datasets; got {self.stratify}.",
             )
 
-        # Calculate train and test sizes
-        train_size: int
-        test_size: int
-
-        if self.train_size is None and self.test_size is None:
-            raise ValueError(
-                "Either train_size or test_size must be specified.",
-            )
-
-        if self.train_size is None:
-            test_size = (
-                int(self.test_size * num_samples)
-                if isinstance(self.test_size, float)
-                else self.test_size
-            )
-            train_size = num_samples - test_size
-        elif self.test_size is None:
-            train_size = (
-                int(self.train_size * num_samples)
-                if isinstance(self.train_size, float)
-                else self.train_size
-            )
-            test_size = num_samples - train_size
-        else:
-            train_size = (
-                int(self.train_size * num_samples)
-                if isinstance(self.train_size, float)
-                else self.train_size
-            )
-            test_size = (
-                int(self.test_size * num_samples)
-                if isinstance(self.test_size, float)
-                else self.test_size
-            )
-
-        if train_size + test_size > num_samples:
-            raise ValueError("Train size and test size exceed total samples.")
-
         start_time = time.process_time()
 
-        # Randomly shuffle indices
-        perm = torch.randperm(
-            num_samples,
-            generator=torch.Generator().manual_seed(self.random_state),
-        )
-        indices = indices[perm]
-
-        # The first train_size indices are for training
-        train_idx = indices[:train_size]
-        # The next test_size indices are for testing
-        test_idx = indices[train_size : train_size + test_size]  # noqa E203
+        dataset_obj = getattr(self, "dataset_obj", None)
+        if isinstance(dataset_obj, Dataset):
+            train_idx, test_idx = self._sample_with_configurable_sampler(
+                dataset_obj=dataset_obj,
+                labels=self._y,
+            )
+        else:
+            train_idx, test_idx = self._sample_train_test_indices(num_samples)
 
         # Store indices as attributes for downstream compatibility
         self.train_indices = train_idx
@@ -438,112 +719,20 @@ class PytorchDataConfig(DataConfig):
             (Tensor, Dataset),
         ), "y_test must be a Tensor or Dataset"
 
-    def _classification_feature_scores(self):
-        """
-        Computes feature importance scores for classification tasks using various statistical methods.
-
-        Returns
-        -------
-        dict
-        A dictionary containing feature importance scores from different methods:
-        - 'mutual_info_classif': Mutual information scores.
-        - 'chi2': Chi-squared scores.
-        - 'f_classif': ANOVA F-value scores.
-        - 'class_counts': Counts of each class in the training target.
-        """
-
-        # Exit early if data already scores:
-        if "class_counts" in getattr(self, "score_dict", {}):
-            return {}
-
-        score_dict = {}
-
-        # Class counts
-        y_train_np = (
-            self.y_train.cpu().numpy()
-            if isinstance(self.y_train, Tensor)
-            else self.y_train
-        )
-        y_train_series = pd.Series(y_train_np)
-        score_dict["class_counts"] = self._compute_class_counts(y_train_series)
-        return score_dict
-
-    def _regression_feature_scores(self):
-        """ "
-        Computes feature importance scores for regression tasks using various statistical methods.
-
-        Returns
-        -------
-        dict
-            A dictionary containing feature importance scores from different methods:
-            - 'mutual_info_regression': Mutual information scores.
-            - 'f_regression': F-value scores.
-            - 'r_regression': Pearson correlation coefficients.
-            - 'y_train_cdf': Empirical CDF of the training target.
-            - 'y_test_cdf': Empirical CDF of the testing target.
-        """
-
-        # Exit early if data already scores:
-        if "y_test_cdf" in getattr(self, "score_dict", {}):
-            return {}
-
-        # Ensure data is on CPU for compatibility with sklearn
-        y_train_np = (
-            self.y_train.cpu().numpy()
-            if isinstance(self.y_train, Tensor)
-            else self.y_train
-        )
-        y_test_np = (
-            self.y_test.cpu().numpy()
-            if isinstance(self.y_test, Tensor)
-            else self.y_test
-        )
-
-        score_dict = {}
-        # Compute metrics
-        # Empirical CDFs
-        y_train_sorted = np.sort(y_train_np)
-        y_test_sorted = np.sort(y_test_np)
-        y_train_cdf = np.arange(1, len(y_train_sorted) + 1) / len(
-            y_train_sorted,
-        )
-        y_test_cdf = np.arange(1, len(y_test_sorted) + 1) / len(y_test_sorted)
-        score_dict["y_train_cdf"] = y_train_cdf.tolist()
-        score_dict["y_test_cdf"] = y_test_cdf.tolist()
-        return score_dict
-
-    def _score(self) -> dict:
-        """Computes feature importance scores based on the type of task (classification or regression).
-
-        Returns:
-            dict: A dictionary containing feature importance scores.
-        """
-        if self.classifier:
-            result = self._classification_feature_scores()
-        else:
-            result = self._regression_feature_scores()
-        return result
 
     def __call__(  # noqa: F811
         self,
         data_file: Union[str, None] = None,
         score_file: Union[str, None] = None,
     ) -> dict:
-        """
-        Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.
-        Parameters
-        ----------
-        data_file : Union[str, None]
-            Path to save loaded data as CSV. If None, data is not saved.
-        score_file : Union[str, None]
-            Path to save scores as CSV. If None, scores are not saved.
-        Returns
-        -------
-        dict:
-            A dictionary containing:
-            - 'data_load_time': Time taken to load the data.
-            - 'data_sample_time': Time taken to sample/split the data.
-            - Additional times/scores can be added in the future.
+        """Load, sample, and optionally persist torch data artifacts and scores.
+
+        Args:
+            data_file: Optional path used to load/save serialized data runtime state.
+            score_file: Optional path used to load/save serialized scoring outputs.
+
+        Returns:
+            A score dictionary augmented with runtime timing metrics.
         """
         if data_file is not None:
             assert isinstance(
@@ -595,7 +784,7 @@ class PytorchDataConfig(DataConfig):
         return all_scores
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class PytorchCustomDataConfig(PytorchDataConfig):
     """Configuration for HuggingFace datasets loaded via DataLoader.
 
@@ -609,8 +798,8 @@ class PytorchCustomDataConfig(PytorchDataConfig):
     test_transform: str | None = field(default_factory=str)
     train_transform: str | None = field(default_factory=str)
     loaders: list = field(init=False, repr=False)
-    data_load_time: float = field(init=False, repr=True)
-    data_sample_time: float = field(init=False, repr=True)
+    data_load_time: Union[float, None] = None
+    data_sample_time: Union[float, None] = None
     transform_params: dict = field(default_factory=dict)
     score_dict: dict = field(init=False, repr=False)
 
@@ -856,26 +1045,44 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         end = time.process_time()
         self.data_sample_time = end - start
 
-    def __call__(self, data_file=None, score_file=None):
+    def __call__(self, data_file: str | None = None, score_file: str | None = None, mode:Union[str, None]="test", *args, **kwargs) -> dict:
+        """Load torch custom data, run sampling/scoring, and persist optional outputs.
+
+        Args:
+            data_file: Optional path to serialized runtime data state.
+            score_file: Optional path to serialized score output.
+
+        Returns:
+            Dictionary of computed and/or loaded scoring values.
+        """
+        cached_scores = None
         if data_file is not None and Path(data_file).exists():
             self = self.load_object(data_file)
         if score_file is not None and Path(score_file).exists():
-            scores = self.load_scores(score_file)
-        else:
-            scores = {}
+            cached_scores = self.load_scores(score_file)
+
+        if cached_scores is not None:
+            scores = dict(cached_scores)
+            self.score_dict = scores
+            if score_file is not None:
+                self.save_scores(scores, filepath=score_file)
+            if data_file is not None:
+                self.save_object(self, data_file)
+            return scores
+
+        scores = {}
         if not hasattr(self, "_X") or self._X is None:
             self._load_data()
         if getattr(self, "X_train", None) is None:
             self._sample()
-        if not hasattr(self, "score_dict"):
-            new_scores = self._classification_feature_scores()
-            time_dict = {
-                "data_load_time": self.data_load_time,
-                "data_sample_time": self.data_sample_time,
-                "data_score_time": self.data_score_time,
-            }
-            scores.update(**new_scores, **time_dict)
-            self.score_dict = scores
+        time_dict = {
+            "data_load_time": self.data_load_time,
+            "data_sample_time": self.data_sample_time,
+            "data_score_time": self.data_score_time,
+        }
+        new_scores = self.compute_score(mode=mode, *args, **kwargs)
+        scores.update(**time_dict, **new_scores)
+        self.score_dict = scores
         if score_file is not None:
             self.save_scores(scores, filepath=score_file)
         if data_file is not None:

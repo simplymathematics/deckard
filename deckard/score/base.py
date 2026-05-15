@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Core scoring primitives and default scorer profiles."""
 
 import inspect
@@ -24,35 +25,17 @@ from ..utils import (
 )
 from ..frameworks import ScorerContractMixin, FrameworkDataScorer
 from ..frameworks.core import ArrayLike, MatrixLike
+from ..frameworks.pytorch.score import to_numpy_if_torch
+from ._runtime import series_like_to_float_dict as _series_like_to_float_dict
 
 if TYPE_CHECKING:
     from ..data import DataConfig
-
-from ..frameworks.pytorch.score import to_numpy_if_torch
 
 logger = logging.getLogger(__name__)
 
 MetricScalar = Union[float, int, np.floating, np.integer]
 MetricResult = Union[MetricScalar, np.ndarray]
 ScoreFunction = Callable[..., MetricResult]
-
-
-# Utility to flatten Series/DataFrame/Scalar to dict of floats (for scorer outputs)
-def _series_like_to_float_dict(values: Any) -> dict[str, float]:
-    if isinstance(values, pd.DataFrame):
-        flattened = {}
-        for row_key, row_values in values.to_dict(orient="index").items():
-            if isinstance(row_key, tuple):
-                row_label = "_".join(str(g) for g in row_key)
-            else:
-                row_label = str(row_key)
-            for col_key, col_val in row_values.items():
-                flattened[f"{row_label}_{col_key}"] = float(col_val)
-        return flattened
-    if isinstance(values, pd.Series):
-        return {str(key): float(value) for key, value in values.items()}
-    scalar_value = values
-    return {"value": float(scalar_value)}
 
 
 class _DataScorerMarker:
@@ -343,68 +326,9 @@ class _TaskAwareScorerMixin:
         classifier = self.resolve_classifier(default=default)
         self.scorers = self._build_default_scorers(classifier=classifier)
 
-
-def _resolve_yt_yp(
-    mode: Union[
-        Literal["test", "train", "attack", "val", "attack-val", "pre-sample"],
-        None,
-    ],
-    data: "DataConfig | None",
-    model: Any,
-    attack: Any,
-    y_pred: Any,
-    y_true: Any,
-) -> tuple[Any, Any]:
-    """Resolve y_true and y_pred from mode + context when not explicitly provided.
-
-    This mirrors the resolution logic inside ``ScorerDictConfig.__call__`` so that
-    mixin overrides (e.g. ``_FairnessScorerMixin``) can access the resolved values
-    after delegating to ``super().__call__()``.
-    """
-    if y_pred is not None:
-        return y_true, y_pred
-    if mode == "test":
-        if data is not None:
-            y_true = getattr(data, "y_test", y_true)
-        if model is not None:
-            y_pred = getattr(model, "test_predictions", None) or getattr(
-                model,
-                "predictions",
-                None,
-            )
-    elif mode == "train":
-        if data is not None:
-            y_true = getattr(data, "y_train", y_true)
-        if model is not None:
-            y_pred = getattr(model, "training_predictions", None)
-    elif mode == "attack":
-        if data is not None and attack is not None:
-            y_test = np.asarray(getattr(data, "y_test", y_true))
-            attack_size = getattr(attack, "attack_size", None)
-            y_true = y_test[:attack_size] if attack_size is not None else y_test
-        if attack is not None:
-            y_pred = getattr(attack, "attack_predictions", None)
-    elif mode == "val":
-        if data is not None:
-            y_true = getattr(data, "y_val", y_true)
-        if model is not None:
-            y_pred = getattr(model, "val_predictions", None)
-    elif mode == "attack-val":
-        if data is not None:
-            y_true = getattr(data, "y_val", y_true)
-        if attack is not None:
-            y_pred = getattr(attack, "attack_predictions", None)
-    elif mode == "pre-sample":
-        if data is not None:
-            y_true = getattr(data, "_y", y_true)
-            y_pred = getattr(data, "_X", y_pred)
-    return y_true, y_pred
-
-
 @dataclass
 class ScorerConfig:
     """Atomic scorer configuration."""
-
     score_name: str
     score_function: Any
     score_params: dict[str, Any] = field(default_factory=dict)
@@ -445,10 +369,8 @@ class ScorerConfig:
             self.score_params = {}
 
     def _validate_probability_input(self, y_true, y_pred):
-        """Validate probability-like inputs before metric execution."""
         y_true_arr = np.asarray(to_numpy_if_torch(y_true))
         y_pred_arr = np.asarray(to_numpy_if_torch(y_pred))
-
         if y_pred_arr.ndim not in (1, 2):
             raise ValueError(
                 f"Probability scorer '{self.score_name}' requires 1D/2D probability input; got shape {y_pred_arr.shape}",
@@ -459,17 +381,15 @@ class ScorerConfig:
             )
         if not np.issubdtype(y_pred_arr.dtype, np.number):
             raise ValueError(
-                f"Probability scorer '{self.score_name}' requires numeric probabilities",
+                f"Probability scorer '{self.score_name}' requires numeric probabilities; got dtype {y_pred_arr.dtype}",
             )
         if np.nanmin(y_pred_arr) < -1e-12 or np.nanmax(y_pred_arr) > 1.0 + 1e-12:
             raise ValueError(
-                f"Probability scorer '{self.score_name}' requires values in [0, 1]",
+                f"Probability scorer '{self.score_name}' requires values in [0, 1]; got min={np.nanmin(y_pred_arr)} max={np.nanmax(y_pred_arr)}",
             )
 
-    def _normalize_predictions_for_metric(self, y_true, y_pred):
-        """Convert score/probability matrices to class labels for label-only metrics, and apply softmax to logits for probability metrics if needed."""
-        import numpy as np
-
+    def _normalize_predictions_for_metric(self, dep, ind):
+        """Normalize probabilities/logits to metric-compatible labels when needed."""
         metric_name = getattr(self.score_function, "__name__", "")
         label_metrics = {
             "accuracy_score",
@@ -480,100 +400,68 @@ class ScorerConfig:
             "jaccard_score",
             "matthews_corrcoef",
             "cohen_kappa_score",
-            # Fairlearn group metrics (all expect 1D labels, not logits)
             "demographic_parity_difference",
             "equalized_odds_difference",
             "group_mean_prediction_difference",
             "group_mae_difference",
             "group_mse_difference",
         }
-
-        is_label_metric = (
-            metric_name in label_metrics or self.score_name in label_metrics
-        )
-
-        logger.debug(
-            f" _normalize_predictions_for_metric: metric_name={metric_name}, score_name={self.score_name}, is_label_metric={is_label_metric}",
-        )
-        logger.debug(
-            f" y_true type={type(y_true)}, shape={getattr(y_true, 'shape', None)}, y_pred type={type(y_pred)}, shape={getattr(y_pred, 'shape', None)}",
-        )
+        is_label_metric = metric_name in label_metrics or self.score_name in label_metrics
 
         if self.needs_proba:
-            y_pred_arr = np.asarray(to_numpy_if_torch(y_pred))
-            # If values are not in [0, 1], apply softmax to logits
-            if y_pred_arr.ndim == 2 and (
-                np.nanmin(y_pred_arr) < 0.0 or np.nanmax(y_pred_arr) > 1.0
+            ind_arr = np.asarray(to_numpy_if_torch(ind))
+            if ind_arr.ndim == 2 and (
+                np.nanmin(ind_arr) < 0.0 or np.nanmax(ind_arr) > 1.0
             ):
-                logger.debug(
-                    "Applying softmax to logits for probability-based metric.",
-                )
-                exp_logits = np.exp(
-                    y_pred_arr - np.max(y_pred_arr, axis=1, keepdims=True),
-                )
-                y_pred_arr = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
-            self._validate_probability_input(y_true=y_true, y_pred=y_pred_arr)
-            logger.debug(
-                f" needs_proba=True, y_pred_arr.shape={y_pred_arr.shape}, min={np.nanmin(y_pred_arr)}, max={np.nanmax(y_pred_arr)}",
-            )
-            if y_pred_arr.ndim == 2 and metric_name == "roc_auc_score":
-                if y_pred_arr.shape[1] == 1:
-                    return y_pred_arr.reshape(-1)
-                if y_pred_arr.shape[1] == 2:
-                    return y_pred_arr[:, 1]
-            return y_pred_arr
-        if not is_label_metric:
-            logger.debug("[DEBUG] Not a label metric, returning y_pred unchanged.")
-            return y_pred
-        y_true_arr = np.asarray(to_numpy_if_torch(y_true))
-        y_pred_arr = np.asarray(to_numpy_if_torch(y_pred))
-        logger.debug(
-            f" y_true_arr.shape={y_true_arr.shape}, y_pred_arr.shape={y_pred_arr.shape}, y_pred_arr.dtype={y_pred_arr.dtype}",
-        )
-        if y_true_arr.ndim != 1 or y_pred_arr.ndim != 2:
-            logger.debug(
-                f" Skipping normalization: y_true_arr.ndim={y_true_arr.ndim}, y_pred_arr.ndim={y_pred_arr.ndim}",
-            )
-            return y_pred
-        if not np.issubdtype(y_pred_arr.dtype, np.number):
-            logger.debug(
-                f" Skipping normalization: y_pred_arr.dtype={y_pred_arr.dtype} is not numeric",
-            )
-            return y_pred
+                exp_logits = np.exp(ind_arr - np.max(ind_arr, axis=1, keepdims=True))
+                ind_arr = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+            self._validate_probability_input(y_true=dep, y_pred=ind_arr)
+            if ind_arr.ndim == 2 and metric_name == "roc_auc_score":
+                if ind_arr.shape[1] == 1:
+                    return ind_arr.reshape(-1)
+                if ind_arr.shape[1] == 2:
+                    return ind_arr[:, 1]
+            return ind_arr
 
-        if y_pred_arr.shape[1] == 1:
-            binary_scores = y_pred_arr.reshape(-1)
+        if not is_label_metric:
+            return ind
+
+        dep_arr = np.asarray(to_numpy_if_torch(dep))
+        ind_arr = np.asarray(to_numpy_if_torch(ind))
+        if dep_arr.ndim != 1 or ind_arr.ndim != 2:
+            return ind
+        if not np.issubdtype(ind_arr.dtype, np.number):
+            return ind
+        if ind_arr.shape[1] == 1:
+            binary_scores = ind_arr.reshape(-1)
             threshold = 0.5
             if np.nanmin(binary_scores) < 0.0 or np.nanmax(binary_scores) > 1.0:
                 threshold = 0.0
-            logger.debug(
-                f" Binary scores normalization: threshold={threshold}, min={np.nanmin(binary_scores)}, max={np.nanmax(binary_scores)}",
-            )
-            result = (binary_scores >= threshold).astype(int)
-            logger.debug(f" Normalized binary result: unique={np.unique(result)}")
-            return result
-
-        result = np.argmax(y_pred_arr, axis=1)
-        logger.debug(
-            f" Argmax normalization: result.shape={result.shape}, unique={np.unique(result)}",
-        )
-        return result
+            return (binary_scores >= threshold).astype(int)
+        return np.argmax(ind_arr, axis=1)
 
     def __call__(
         self,
-        y_true: Any,
-        y_pred: Any,
+        dep: Any = None,
+        ind: Any = None,
         swap: bool = False,
         **kwargs: Any,
     ) -> MetricResult:
+        """Execute one scorer using generic dependent/independent payload names."""
+        if dep is None and "y_true" in kwargs:
+            dep = kwargs.pop("y_true")
+        if ind is None and "y_pred" in kwargs:
+            ind = kwargs.pop("y_pred")
+        if dep is None or ind is None:
+            raise ValueError("ScorerConfig requires both dep and ind inputs")
+
         if swap:
-            y_true, y_pred = y_pred, y_true
-        y_true = to_numpy_if_torch(y_true)
-        y_pred = to_numpy_if_torch(y_pred)
-        y_pred = self._normalize_predictions_for_metric(
-            y_true=y_true,
-            y_pred=y_pred,
-        )
+            dep, ind = ind, dep
+
+        dep = to_numpy_if_torch(dep)
+        ind = to_numpy_if_torch(ind)
+        ind = self._normalize_predictions_for_metric(dep=dep, ind=ind)
+
         params = {**self.score_params, **kwargs}
         score_function = self.score_function
         if not callable(score_function):
@@ -598,9 +486,10 @@ class ScorerConfig:
             }
             accepted.discard("y_true")
             accepted.discard("y_pred")
+            accepted.discard("dep")
+            accepted.discard("ind")
             params = {k: v for k, v in params.items() if k in accepted}
-        return cast(MetricResult, score_function(y_true, y_pred, **params))
-
+        return cast(MetricResult, score_function(dep, ind, **params))
 
 @dataclass(eq=False, kw_only=True)
 class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
@@ -710,8 +599,8 @@ class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
             data=data,
             model=model,
             attack=attack,
-            y_pred=ind,
-            y_true=dep,
+            ind=ind,
+            dep=dep,
             **kwargs,
         )
 
@@ -738,7 +627,7 @@ class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
         return cls(scorers=merged_scorers)
 
     @staticmethod
-    def _resolve_mode_features(mode, data):
+    def resolve_mode_features(mode, data):
         if data is None:
             return None
         if mode == "train":
@@ -752,7 +641,7 @@ class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
         return None
 
     @staticmethod
-    def _is_classification_labels(y):
+    def is_classification_labels(y):
         # Returns True if y is integer/binary labels, False if continuous
         y_arr = np.asarray(to_numpy_if_torch(y))
         if y_arr.dtype.kind in {"i", "u", "b"}:
@@ -765,7 +654,7 @@ class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
         return False
 
     @staticmethod
-    def _predict_proba_from_model(model, X, y_true=None, y_pred=None):
+    def predict_proba_from_model(model, X, y_true=None, y_pred=None):
         """
         For torch models, use the model's raw output (logits) as the probability input for normalization if predict_proba is not available.
         """
@@ -850,8 +739,8 @@ class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
         data: "DataConfig | None" = None,
         model: Any = None,
         attack: Any = None,
-        y_pred=None,
-        y_true=None,
+        ind=None,
+        dep=None,
         score_file=None,
         **kwargs: Any,
     ) -> dict[str, Any]:
@@ -859,52 +748,57 @@ class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
         if score_file is not None and Path(score_file).exists():
             results = self.load_scores(score_file)
 
-        if y_pred is not None:
-            if y_true is None:
+        if ind is None and "y_pred" in kwargs:
+            ind = kwargs.pop("y_pred")
+        if dep is None and "y_true" in kwargs:
+            dep = kwargs.pop("y_true")
+
+        if ind is not None:
+            if dep is None:
                 raise AssertionError(
                     "If y_pred is provided, y_true must also be provided.",
                 )
         else:
             if mode == "test":
                 assert data is not None
-                y_true = data.y_test
-                y_pred = getattr(model, "test_predictions", None)
-                if y_pred is None:
-                    y_pred = getattr(model, "predictions", None)
+                dep = data.y_test
+                ind = getattr(model, "test_predictions", None)
+                if ind is None:
+                    ind = getattr(model, "predictions", None)
             elif mode == "train":
                 assert data is not None and model is not None
-                y_true = data.y_train
-                y_pred = model.training_predictions
+                dep = data.y_train
+                ind = model.training_predictions
             elif mode == "attack":
                 assert data is not None and attack is not None
-                y_true = getattr(attack, "attacked_labels", None)
-                if y_true is None:
+                dep = getattr(attack, "attacked_labels", None)
+                if dep is None:
                     y_test = getattr(data, "y_test", None)
                     if y_test is None:
                         raise ValueError(
                             "attack mode requires attack.attacked_labels or data.y_test",
                         )
-                    y_true = y_test[: attack.attack_size]
-                y_pred = attack.attack_predictions
+                    dep = y_test[: attack.attack_size]
+                ind = attack.attack_predictions
             elif mode == "val":
                 assert data is not None and model is not None
-                y_true = data.y_val
-                y_pred = model.val_predictions
+                dep = data.y_val
+                ind = model.val_predictions
             elif mode == "attack-val":
                 assert data is not None and attack is not None
-                y_true = getattr(attack, "attacked_labels", None)
-                if y_true is None:
-                    y_true = data.y_val
-                y_pred = attack.attack_predictions
+                dep = getattr(attack, "attacked_labels", None)
+                if dep is None:
+                    dep = data.y_val
+                ind = attack.attack_predictions
             elif mode == "pre-sample":
                 assert data is not None
-                y_true = getattr(data, "_y", None)
-                y_pred = getattr(data, "_X", None)
-                if y_true is None or y_pred is None:
+                dep = getattr(data, "_y", None)
+                ind = getattr(data, "_X", None)
+                if dep is None or ind is None:
                     raise ValueError(
                         "pre-sample mode requires data._X and data._y to be loaded",
                     )
-            elif y_true is None:
+            elif dep is None:
                 raise AssertionError("y_true must be provided if mode is None")
 
         if attack is not None:
@@ -934,7 +828,7 @@ class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
             elif mode == "attack":
                 scored_key = f"attack_{key}"
             if results.get(scored_key) is None:
-                metric_input = y_pred
+                metric_input = ind
                 if scorer.needs_proba:
                     if mode == "pre-sample":
                         raise ValueError(
@@ -943,16 +837,16 @@ class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
                     if y_proba is not None:
                         metric_input = y_proba
                     else:
-                        X_mode = self._resolve_mode_features(
+                        X_mode = self.resolve_mode_features(
                             mode=mode,
                             data=data,
                         )
                         if X_mode is not None and model is not None:
-                            metric_input = self._predict_proba_from_model(
+                            metric_input = self.predict_proba_from_model(
                                 model=model,
                                 X=X_mode,
-                                y_true=y_true,
-                                y_pred=y_pred,
+                                y_true=dep,
+                                y_pred=ind,
                             )
                         else:
                             raise ValueError(
@@ -967,8 +861,8 @@ class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
                         )
                 # Debug print: show raw output from each scorer
                 value = scorer(
-                    y_true=y_true,
-                    y_pred=metric_input,
+                    dep=dep,
+                    ind=metric_input,
                     **runtime_kwargs,
                 )
                 logger.debug(
@@ -1243,7 +1137,6 @@ __all__ = [
     "_DataScorerMarker",
     "_AttackProfileScorer",
     "_TaskAwareScorerMixin",
-    "_resolve_yt_yp",
     "ScorerConfig",
     "ScorerDictConfig",
     "DefaultModelScorerConfig",
@@ -1255,3 +1148,5 @@ __all__ = [
     "build_scorer",
     "build_scorer_dict",
 ]
+
+

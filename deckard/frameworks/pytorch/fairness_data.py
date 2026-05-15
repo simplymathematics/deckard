@@ -22,6 +22,9 @@ from .data import PytorchCustomDataConfig
 
 logger = logging.getLogger(__name__)
 
+RuntimeScalar = str | int | float | bool | None
+RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
+
 
 class TinyFairness(Dataset):
     """Minimal synthetic dataset for fairness testing."""
@@ -88,7 +91,7 @@ class SyntheticImageSensitiveDataset(Dataset):
         return self.images[idx], self.labels[idx]
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
     """Fairlearn-compatible DataConfig for PyTorch Datasets with sensitive features."""
 
@@ -215,7 +218,16 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
     # Scoring
     # ------------------------------------------------------------------
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: object, **kwargs: object) -> dict[str, RuntimeValue]:
+        """Run fairness-aware torch data execution with a default scorer fallback.
+
+        Args:
+            *args: Positional runtime arguments forwarded to the parent call.
+            **kwargs: Keyword runtime arguments forwarded to the parent call.
+
+        Returns:
+            Lifecycle outputs returned by the parent data configuration.
+        """
         from ...utils import is_default_config_value
 
         if (

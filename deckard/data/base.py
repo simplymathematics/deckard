@@ -22,13 +22,6 @@ from sklearn.datasets import (
     load_diabetes,
     load_iris,
 )
-from sklearn.feature_selection import (
-    mutual_info_classif,
-    mutual_info_regression,
-    f_classif,
-    f_regression,
-    r_regression,
-)
 from sklearn.pipeline import Pipeline
 from sklearn.compose import make_column_selector, ColumnTransformer
 
@@ -43,6 +36,15 @@ from ..utils import (
     merge_list_of_dicts,
     normalize_plugin_specs,
     instantiate_plugin_spec,
+)
+from ..frameworks import DataContractMixin, FrameworkDataConfig
+from ..frameworks.core import ArrayLike, MatrixLike
+from ._mixins import (
+    DataLoaderMixin,
+    DataPipelineMixin,
+    DataPluginRuntimeMixin,
+    DataSamplerMixin,
+    DataScoreMixin,
 )
 
 # Setup logger
@@ -105,148 +107,17 @@ def _yellowbrick_dataset_loaders() -> dict:
 SUPPORTED_DATA_SCORING_MODES = ["train", "test", "val", "pre-sample"]
 
 
-class _DataPipelineMixin:
-    """Reusable pipeline application behavior mixed into data pipeline configs."""
-
-    def declares_hook(self, hook_name: str) -> bool:
-        return self._pipeline_declares_hook(hook_name)
-
-    def apply_to(self, data: "DataConfig", mode: str = None, **kwargs):
-        """Apply this pipeline config to a data config instance."""
-        runtime = copy.copy(self)
-        runtime.__dict__.update(data.__dict__)
-        runtime.plugins = list(getattr(data, "plugins", []) or [])
-
-        if not hasattr(runtime, "data_load_time") or runtime.data_load_time is None:
-            runtime._load_data()
-
-        run_before_sample_pipeline = runtime.pre_sample_transform or runtime._pipeline_declares_hook(
-            "before_sample",
-        )
-        if run_before_sample_pipeline:
-            runtime._run_plugin_hook("before_sample")
-            pre_sample_pipeline, _ = runtime._init_pipeline()
-            runtime._run_pre_sample_transformations(
-                pre_sample_pipeline,
-                force=run_before_sample_pipeline,
-            )
-            runtime._sample(run_hooks=False)
-            runtime._run_plugin_hook("after_sample")
-        else:
-            runtime._sample()
-
-        X_pipeline, y_pipeline = runtime._init_pipeline()
-        runtime._inject_sample_indices(X_pipeline)
-        runtime.X_train, runtime.X_test, runtime.y_train, runtime.y_test = (
-            runtime._fit_transform_X(
-                runtime.X_train,
-                runtime.X_test,
-                runtime.y_train,
-                runtime.y_test,
-                X_pipeline,
-            )
-        )
-        if getattr(runtime, "X_val", None) is not None and X_pipeline.steps:
-            if isinstance(runtime.X_val, pd.DataFrame):
-                val_cols = runtime.X_val.columns
-            elif isinstance(runtime.X_val, pd.Series):
-                val_cols = [runtime.X_val.name]
-            else:
-                val_cols = [f"feature_{i}" for i in range(runtime.X_val.shape[1])]
-            X_val_transformed = X_pipeline.transform(runtime.X_val)
-            from scipy.sparse import issparse
-
-            if issparse(X_val_transformed):
-                X_val_transformed = X_val_transformed.toarray()
-            try:
-                val_cols_out = list(X_pipeline.get_feature_names_out(val_cols))
-            except AttributeError:
-                n_features = X_val_transformed.shape[1]
-                val_cols_out = (
-                    list(val_cols)
-                    if len(val_cols) == n_features
-                    else [f"feature_{i}" for i in range(n_features)]
-                )
-            runtime.X_val = pd.DataFrame(X_val_transformed, columns=val_cols_out)
-        if y_pipeline is not None:
-            runtime.X_train, runtime.X_test, runtime.y_train, runtime.y_test = (
-                runtime._fit_transform_y(
-                    runtime.X_train,
-                    runtime.X_test,
-                    runtime.y_train,
-                    runtime.y_test,
-                    y_pipeline,
-                )
-            )
-
-        runtime._copy_runtime_state_to(data)
-        return data
-
-
-@dataclass(eq=False)
-class DataHookPlugin:
-    """Generic data plugin that delegates one hook to one runtime method.
-
-    Initialization fields
-    ---------------------
-    hook_name : str
-        Hook method name exposed to runtime (e.g., ``before_sample``).
-    method_name : str
-        Runtime method name invoked when the hook runs.
-    method_kwargs : dict[str, Any]
-        Default kwargs merged into hook invocation kwargs.
-    init_params : dict[str, Any]
-        Metadata-only declaration payload for class/type/library docs.
-    """
-
-    hook_name: str
-    method_name: str
-    method_kwargs: dict[str, Any] = field(default_factory=dict)
-    init_params: dict[str, Any] = field(default_factory=dict)
-
-    def declares_hook(self, hook_name: str) -> bool:
-        return hook_name == self.hook_name
-
-    def _invoke(self, runtime: "DataConfig", **kwargs):
-        method = getattr(runtime, self.method_name, None)
-        if not callable(method):
-            raise AttributeError(
-                f"Runtime '{type(runtime).__name__}' has no callable '{self.method_name}'",
-            )
-        call_kwargs = dict(self.method_kwargs)
-        call_kwargs.update(kwargs)
-        return method(**call_kwargs)
-
-    def __call__(self, runtime: "DataConfig", *args, **kwargs):
-        """Common plugin callable contract used across runtime adapters.
-
-        Parameters
-        ----------
-        runtime : DataConfig
-            Runtime data config instance orchestrating plugin hooks.
-        *args : Any
-            Positional runtime args (reserved for contract parity).
-        **kwargs : Any
-            Hook runtime kwargs. Optional ``hook_name`` filters execution.
-        """
-        _ = args
-        hook_name = kwargs.pop("hook_name", None)
-        if hook_name is not None and hook_name != self.hook_name:
-            return None
-        return self._invoke(runtime, **kwargs)
-
-    def __getattr__(self, attr_name: str):
-        if attr_name != self.hook_name:
-            raise AttributeError(attr_name)
-
-        def _hook(runtime: "DataConfig", *args, **kwargs):
-            return self(runtime, *args, hook_name=attr_name, **kwargs)
-
-        return _hook
-
-
-@dataclass(eq=False)
-class DataConfig(ConfigBase):
+@dataclass(eq=False, kw_only=True)
+class DataConfig(
+    DataPluginRuntimeMixin,
+    DataLoaderMixin,
+    DataSamplerMixin,
+    DataScoreMixin,
+    DataContractMixin,
+    DataPipelineMixin,
+    ConfigBase,
+    FrameworkDataConfig,
+):
     """
     Configuration and utility class for loading, preprocessing, and splitting datasets for machine learning tasks.
 
@@ -269,7 +140,7 @@ class DataConfig(ConfigBase):
         cross-validation or shuffle splitting
         (e.g. :class:`~deckard.data.sample.KFoldSampler` or
         :class:`~deckard.data.sample.ShuffleSampler`).  Defaults to ``0``.
-    sample : Union[callable, dict, None]
+    sample : Union[str, Any]
         Optional pluggable sampler.  When ``None`` (default) the legacy 2-way
         ``train_test_split`` is used.  Can be an instantiated sampler object, a subclass
         of :class:`~deckard.data.sample.BaseSampler`, or a Hydra-style dict with a
@@ -335,7 +206,7 @@ class DataConfig(ConfigBase):
         or file readers).
     plugins : list
         Plugin specs resolved at runtime and invoked through hook names.
-        For :class:`DataHookPlugin`, initialization fields are:
+        For :class:`HookPlugin`, initialization fields are:
         ``hook_name``, ``method_name``, ``method_kwargs``, and ``init_params``
         (metadata only).
     init_params (plugin metadata)
@@ -364,7 +235,7 @@ class DataConfig(ConfigBase):
     ``before_load_data``, ``after_load_data``, ``before_sample``,
     ``after_sample``, ``before_score``, and ``after_score``.
     Hook kwargs are phase-specific runtime objects supplied by the caller;
-    DataHookPlugin forwards them to ``method_name`` after merging
+    HookPlugin forwards them to ``method_name`` after merging
     ``method_kwargs``.
 
     Methods
@@ -434,7 +305,7 @@ class DataConfig(ConfigBase):
     train_size: Union[float, int, None] = None
     val_size: Union[float, int, None] = None
     split: Union[int, None] = None
-    sample: Union[str, Any] = "split"
+    sample: str = "split"
     random_state: int = 42
     stratify: Union[None, str, bool] = True
     classifier: Union[bool, str] = True
@@ -443,7 +314,7 @@ class DataConfig(ConfigBase):
     keep: list = None
     plugins: list = field(default_factory=list)
     alias: Union[str, None] = None
-    scorer: Any = AUTO_SCORER
+    scorer: str | dict | None = AUTO_SCORER
     score_mode: Literal["train", "test", "val", "pre-sample"] = "pre-sample"
 
     # Runtime state fields
@@ -557,38 +428,6 @@ class DataConfig(ConfigBase):
 
         self._y = self._y.iloc[:sample_cap].copy()
 
-    def _copy_runtime_state_to(self, target) -> None:
-        runtime_fields = [
-            "score_dict",
-            "data_load_time",
-            "data_sample_time",
-            "_X",
-            "_y",
-            "train_indices",
-            "test_indices",
-            "val_indices",
-            "X_train",
-            "y_train",
-            "X_test",
-            "y_test",
-            "X_val",
-            "y_val",
-            "train_n",
-            "test_n",
-            "val_n",
-            "pipeline_fit_n",
-            "pipeline_transform_n",
-            "pipeline_fit_time",
-            "pipeline_transform_time",
-            "pipeline_y_fit_n",
-            "pipeline_y_fit_time",
-            "pipeline_y_transform_n",
-            "pipeline_y_transform_time",
-        ]
-        for attr in runtime_fields:
-            if hasattr(self, attr):
-                setattr(target, attr, getattr(self, attr, None))
-
     def __post_init__(self):
         self._validate_init()
         self.scorer = _coerce_scorer_config(
@@ -603,39 +442,24 @@ class DataConfig(ConfigBase):
         )
 
     @property
-    def X(self):
+    def X(self) -> MatrixLike | None:
         """Convenience alias for the loaded feature matrix."""
         return self._X
 
     @property
-    def y(self):
+    def y(self) -> ArrayLike | None:
         """Convenience alias for the loaded target vector."""
         return self._y
 
-    def _instantiate_plugin(self, plugin_spec: Any):
-        return instantiate_plugin_spec(plugin_spec, loader=load_class)
+    @X.setter
+    def X(self, value: MatrixLike | None) -> None:
+        """Set the loaded feature matrix."""
+        self._X = value
 
-    def _get_plugins(self) -> list:
-        if not hasattr(self, "_plugin_objects") or self._plugin_objects is None:
-            plugin_specs = normalize_plugin_specs(self.plugins)
-            self._plugin_objects = [
-                self._instantiate_plugin(spec) for spec in plugin_specs
-            ]
-        return self._plugin_objects
-
-    def _run_plugin_hook(self, hook_name: str, **kwargs) -> list[Any]:
-        """Execute one plugin hook across all instantiated plugins.
-
-        Supported DataConfig hook names used by the runtime include:
-        ``before_load_data``, ``after_load_data``, ``before_sample``,
-        ``after_sample``, ``before_score``, and ``after_score``.
-        """
-        hook_outputs = []
-        for plugin in self._get_plugins():
-            hook = getattr(plugin, hook_name, None)
-            if callable(hook):
-                hook_outputs.append(hook(self, **kwargs))
-        return hook_outputs
+    @y.setter
+    def y(self, value: ArrayLike | None) -> None:
+        """Set the loaded target vector."""
+        self._y = value
 
     def _get_stratify_col(self):
         """Return the stratification array (or ``None``) based on ``self.stratify``.
@@ -664,71 +488,6 @@ class DataConfig(ConfigBase):
                 f"Stratify column '{self.stratify}' not found in data columns",
             )
         raise ValueError("stratify must be None, True, False, or a column name")
-
-    def _resolve_sample(self):
-        """Instantiate and return the sampler object.
-
-        Accepts:
-        - ``"split"`` / ``"kfold"`` / ``"shuffle"`` -> corresponding sampler class
-        - An already-instantiated sampler object (returned as-is)
-        - A plain :class:`dict` or OmegaConf :class:`~omegaconf.DictConfig` with a
-          ``name`` or ``_target_`` key pointing to the sampler class
-        - A :class:`type` subclass of :class:`BaseSampler` (instantiated with no args)
-
-        Returns
-        -------
-        callable
-        """
-        from .sample import KFoldSampler, ShuffleSampler, SplitSampler
-
-        _SAMPLER_ALIASES = {
-            "split": SplitSampler,
-            "kfold": KFoldSampler,
-            "shuffle": ShuffleSampler,
-        }
-
-        if isinstance(self.sample, str):
-            key = self.sample.lower()
-            if key not in _SAMPLER_ALIASES:
-                raise ValueError(
-                    f"Unknown sampler '{self.sample}'. Must be one of {list(_SAMPLER_ALIASES)}.",
-                )
-            return _SAMPLER_ALIASES[key]()
-
-        spec = self.sample
-
-        # 1. Convert OmegaConf DictConfig to a plain dict first so subsequent
-        #    checks can rely on isinstance(spec, dict).
-        try:
-            from omegaconf import DictConfig, OmegaConf
-
-            if isinstance(spec, DictConfig):
-                spec = OmegaConf.to_container(spec, resolve=True)
-        except ImportError:
-            pass
-
-        # 2. Resolve dict / plain-dict spec (supports 'name' or '_target_' key).
-        if isinstance(spec, dict):
-            # Treat empty dict as None (no sampler)
-            if not spec:
-                return None
-            spec = dict(spec)
-            class_path = spec.pop("name", spec.pop("_target_", None))
-            if class_path is None:
-                raise ValueError(
-                    "sample dict must include 'name' or '_target_'",
-                )
-            return load_class(class_path, **spec)
-
-        # 3. Already an instantiated callable (e.g. a sampler instance).
-        if callable(spec) and not isinstance(spec, type):
-            return spec
-
-        # 4. A bare class – instantiate with no arguments.
-        if isinstance(spec, type):
-            return spec()
-
-        raise ValueError(f"Unsupported sample specification: {type(spec)}")
 
     def __hash__(self):
         return super().__hash__()
@@ -980,7 +739,7 @@ class DataConfig(ConfigBase):
 
         start_time = time.process_time()
 
-        sampler_obj = self._resolve_sample()
+        sampler_obj = self.compose_sampling_behavior()
         train_idx, test_idx, val_idx = sampler_obj(self)
         self.train_indices = train_idx
         self.test_indices = test_idx
@@ -1288,7 +1047,8 @@ class DataConfig(ConfigBase):
             )
         if self.dataset_name in supported_datasets:
             start_time = time.process_time()
-            supported_datasets[self.dataset_name](**self.data_params)
+            params = self.data_params or {}
+            supported_datasets[self.dataset_name](**params)
         elif filetype == ".openml":
             start_time = time.process_time()
             dataset_base_name = Path(self.dataset_name).stem
@@ -1402,103 +1162,8 @@ class DataConfig(ConfigBase):
         self.plugins = [*pipeline_plugins, *existing_plugins]
         return self
 
-    def _compute_class_counts(self, y: pd.Series) -> dict:
-        if isinstance(y, pd.Series):
-            class_dict = y.value_counts()
 
-        else:
-            class_dict = pd.Series(y).value_counts()
-        class_counts = class_dict.to_dict()
-        return class_counts
 
-    def _classification_feature_scores(self) -> dict:
-        """
-        Computes feature importance scores for classification tasks using various statistical methods.
-
-        Returns
-        -------
-        dict
-            A dictionary containing feature importance scores from different methods:
-            - 'mutual_info_classif': Mutual information scores.
-            - 'chi2': Chi-squared scores.
-            - 'f_classif': ANOVA F-value scores.
-            - 'class_counts': Counts of each class in the training target.
-        """
-        scores = {}
-        if self.y_train.nunique() > 1:
-            try:
-                scores["mutual_info_classif"] = mutual_info_classif(
-                    self.X_train,
-                    self.y_train,
-                    random_state=self.random_state,
-                ).tolist()
-            except ValueError as e:
-                logger.warning(
-                    f"Mutual information could not be computed: {e}. Skipping mutual_info_classif scoring.",
-                )
-            try:
-                scores["f_classif"] = f_classif(self.X_train, self.y_train)[0].tolist()
-            except ValueError as e:
-                logger.warning(
-                    f"ANOVA F-value could not be computed: {e}. Skipping f_classif scoring.",
-                )
-        else:
-            logger.warning(
-                "Only one class present in y_train; skipping classification feature scoring.",
-            )
-        # Class counts
-        scores["class_counts"] = self._compute_class_counts(self.y_train)
-        for score, value in scores.items():
-            logger.info(f"Classification feature score - {score}: {value}")
-        return scores
-
-    def _empirical_cdf(self, data: pd.Series) -> pd.Series:
-        """
-        Computes the empirical cumulative distribution function (CDF) for a given pandas Series.
-
-        Parameters
-        ----------
-        data : pd.Series
-            The input data for which to compute the empirical CDF.
-
-        Returns
-        -------
-        pd.Series
-            A pandas Series representing the empirical CDF values corresponding to the input data.
-        """
-        sorted_data = data.sort_values().reset_index(drop=True)
-        cdf_values = (sorted_data.rank(method="first") / len(sorted_data)).values
-        cdf_series = pd.Series(cdf_values, index=sorted_data.index)
-        return cdf_series
-
-    def _regression_feature_scores(self) -> dict:
-        """
-        Computes feature importance scores for regression tasks using various statistical methods.
-
-        Returns
-        -------
-        dict
-            A dictionary containing feature importance scores from different methods:
-            - 'mutual_info_regression': Mutual information scores.
-            - 'f_regression': F-value scores.
-            - 'r_regression': Pearson correlation coefficients.
-            - 'y_train_cdf': Empirical CDF of the training target.
-            - 'y_test_cdf': Empirical CDF of the testing target.
-        """
-        scores = {}
-        scores["mutual_info_regression"] = mutual_info_regression(
-            self.X_train,
-            self.y_train,
-            random_state=self.random_state,
-        ).tolist()
-        scores["f_regression"] = f_regression(self.X_train, self.y_train)[0].tolist()
-        scores["r_regression"] = r_regression(
-            self.X_train,
-            self.y_train,
-        ).tolist()
-        scores["y_train_cdf"] = self._empirical_cdf(self.y_train).tolist()
-        scores["y_test_cdf"] = self._empirical_cdf(self.y_test).tolist()
-        return scores
 
     def _prepare_data_file(self, data_file: Union[str, None]) -> bool:
         """
@@ -1521,6 +1186,30 @@ class DataConfig(ConfigBase):
         logger.debug("No data_file provided, data will not be saved")
         return False
 
+    def prepare_data_file(self, data_file: str | None) -> bool:
+        """Public wrapper for data-file load/save preparation behavior."""
+        return self._prepare_data_file(data_file=data_file)
+
+    def ensure_data_loaded(self) -> None:
+        """Ensure raw data is loaded for downstream orchestration."""
+        if not hasattr(self, "data_load_time") or self.data_load_time is None:
+            self.load_raw_data()
+
+    def ensure_data_sampled(self) -> None:
+        """Ensure train/test/(optional val) splits are materialized."""
+        if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
+            self.split_data()
+
+    def build_data_time_dict(self) -> dict:
+        """Build timing/count metadata dictionary for data runtime outputs."""
+        time_dict = {"data_load_time": self.data_load_time}
+        time_dict["data_sample_time"] = self.data_sample_time
+        time_dict["train_n"] = self.train_n
+        time_dict["test_n"] = self.test_n
+        if self.val_n is not None:
+            time_dict["val_n"] = self.val_n
+        return time_dict
+
     def __call__(
         self,
         *args,
@@ -1533,21 +1222,12 @@ class DataConfig(ConfigBase):
         Strictly validates that all output values are flat and serializable.
         """
 
-        save_flag = self._prepare_data_file(data_file=data_file)
+        save_flag = self.prepare_data_file(data_file=data_file)
         scores = dict(getattr(self, "score_dict", {}) or {})
-        # Load data if not already loaded
-        if not hasattr(self, "data_load_time") or self.data_load_time is None:
-            self._load_data()
-            logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
-        time_dict = {"data_load_time": self.data_load_time}
-        # Sample data if not already sampled
-        if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
-            self._sample()
-        time_dict["data_sample_time"] = (self.data_sample_time,)
-        time_dict["train_n"] = self.train_n
-        time_dict["test_n"] = self.test_n
-        if self.val_n is not None:
-            time_dict["val_n"] = self.val_n
+        self.ensure_data_loaded()
+        logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
+        self.ensure_data_sampled()
+        time_dict = self.build_data_time_dict()
         if self.X_val is not None:
             logger.info(
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}, "
@@ -1557,27 +1237,7 @@ class DataConfig(ConfigBase):
             logger.info(
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
             )
-        data_scores = self._score(*args, **kwargs)
-        if self.y_val is not None:
-            if self.classifier:
-                class_counts = self._compute_class_counts(self.y_val)
-                # Always store as a flat list for output validation
-                if isinstance(class_counts, dict):
-                    # Sort by label for deterministic output
-                    flat_counts = [
-                        class_counts[k] for k in sorted(class_counts.keys())
-                    ]
-                else:
-                    flat_counts = list(class_counts)
-                data_scores.setdefault(
-                    "val_class_counts",
-                    flat_counts,
-                )
-            else:
-                data_scores.setdefault(
-                    "val_y_cdf",
-                    self._empirical_cdf(self.y_val).tolist(),
-                )
+        data_scores = self.compute_score(*args, **kwargs)
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
@@ -1675,8 +1335,8 @@ class DataPipelineStep:
         return config
 
 
-@dataclass(eq=False)
-class DataPipelineConfig(_DataPipelineMixin, DataConfig):
+@dataclass(eq=False, kw_only=True)
+class DataPipelineConfig(DataConfig):
     """Initializes a data pipeline configuration and fits it to the data in the call() method."""
 
     pipeline: dict = field(default_factory=dict)
@@ -1945,6 +1605,82 @@ class DataPipelineConfig(_DataPipelineMixin, DataConfig):
             y_pipeline = None
         return X_pipeline, y_pipeline
 
+    def compose_pipeline_behavior(self):
+        """Compose feature/target pipeline runtime behavior as needed for this config."""
+        return self.create_pipeline()
+
+    def should_run_pre_sample_pipeline(self) -> bool:
+        """Determine whether pre-sample pipeline behavior is composed for this run."""
+        return self.pre_sample_transform or self._pipeline_declares_hook("before_sample")
+
+    def run_sampling_with_pipeline_hooks(self) -> None:
+        """Compose sampling behavior with optional pre-sample pipeline hooks."""
+        run_before_sample_pipeline = self.should_run_pre_sample_pipeline()
+        if run_before_sample_pipeline:
+            self._run_plugin_hook("before_sample")
+            pre_sample_pipeline, _ = self.compose_pipeline_behavior()
+            self._run_pre_sample_transformations(
+                pre_sample_pipeline,
+                force=run_before_sample_pipeline,
+            )
+            self._sample(run_hooks=False)
+            self._run_plugin_hook("after_sample")
+            return
+        self._sample()
+
+    def _transform_validation_with_pipeline(self, X_pipeline: Pipeline) -> None:
+        """Apply the fitted feature pipeline to validation inputs when present."""
+        if getattr(self, "X_val", None) is None or not X_pipeline.steps:
+            return
+        if isinstance(self.X_val, pd.DataFrame):
+            val_cols = self.X_val.columns
+        elif isinstance(self.X_val, pd.Series):
+            val_cols = [self.X_val.name]
+        else:
+            val_cols = [f"feature_{i}" for i in range(self.X_val.shape[1])]
+        X_val_transformed = X_pipeline.transform(self.X_val)
+        from scipy.sparse import issparse
+
+        if issparse(X_val_transformed):
+            X_val_transformed = X_val_transformed.toarray()
+        try:
+            val_cols_out = list(X_pipeline.get_feature_names_out(val_cols))
+        except AttributeError:
+            n_features = X_val_transformed.shape[1]
+            val_cols_out = (
+                list(val_cols)
+                if len(val_cols) == n_features
+                else [f"feature_{i}" for i in range(n_features)]
+            )
+        self.X_val = pd.DataFrame(X_val_transformed, columns=val_cols_out)
+
+    def apply_pipeline_behavior(self) -> None:
+        """Compose and apply feature/target pipeline behavior to sampled splits."""
+        X_pipeline, y_pipeline = self.compose_pipeline_behavior()
+        self._inject_sample_indices(X_pipeline)
+        self.X_train, self.X_test, self.y_train, self.y_test = self._fit_transform_X(
+            self.X_train,
+            self.X_test,
+            self.y_train,
+            self.y_test,
+            X_pipeline,
+        )
+        self._transform_validation_with_pipeline(X_pipeline)
+        if y_pipeline is not None:
+            self.X_train, self.X_test, self.y_train, self.y_test = (
+                self._fit_transform_y(
+                    self.X_train,
+                    self.X_test,
+                    self.y_train,
+                    self.y_test,
+                    y_pipeline,
+                )
+            )
+
+    def create_pipeline(self):
+        """Public entry-point for pipeline initialisation. Delegates to `_init_pipeline()`."""
+        return self._init_pipeline()
+
 
     def _fit_transform_X(
         self,
@@ -2148,66 +1884,10 @@ class DataPipelineConfig(_DataPipelineMixin, DataConfig):
             logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
         time_dict = {"data_load_time": self.data_load_time}
         if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
-            run_before_sample_pipeline = self.pre_sample_transform or self._pipeline_declares_hook(
-                "before_sample",
-            )
-            if run_before_sample_pipeline:
-                self._run_plugin_hook("before_sample")
-                pre_sample_pipeline, _ = self._init_pipeline()
-                self._run_pre_sample_transformations(
-                    pre_sample_pipeline,
-                    force=run_before_sample_pipeline,
-                )
-                self._sample(run_hooks=False)
-                self._run_plugin_hook("after_sample")
-            else:
-                self._sample()
+            self.run_sampling_with_pipeline_hooks()
         time_dict["data_sample_time"] = (self.data_sample_time,)
 
-        X_pipeline, y_pipeline = self._init_pipeline()
-        self._inject_sample_indices(X_pipeline)
-        # Fit X pipeline
-        self.X_train, self.X_test, self.y_train, self.y_test = self._fit_transform_X(
-            self.X_train,
-            self.X_test,
-            self.y_train,
-            self.y_test,
-            X_pipeline,
-        )
-        # Apply fitted pipeline to validation set when present
-        if getattr(self, "X_val", None) is not None and X_pipeline.steps:
-            if isinstance(self.X_val, pd.DataFrame):
-                val_cols = self.X_val.columns
-            elif isinstance(self.X_val, pd.Series):
-                val_cols = [self.X_val.name]
-            else:
-                val_cols = [f"feature_{i}" for i in range(self.X_val.shape[1])]
-            X_val_transformed = X_pipeline.transform(self.X_val)
-            from scipy.sparse import issparse
-
-            if issparse(X_val_transformed):
-                X_val_transformed = X_val_transformed.toarray()
-            try:
-                val_cols_out = list(X_pipeline.get_feature_names_out(val_cols))
-            except AttributeError:
-                n_features = X_val_transformed.shape[1]
-                val_cols_out = (
-                    list(val_cols)
-                    if len(val_cols) == n_features
-                    else [f"feature_{i}" for i in range(n_features)]
-                )
-            self.X_val = pd.DataFrame(X_val_transformed, columns=val_cols_out)
-        # Fit y pipeline
-        if y_pipeline is not None:
-            self.X_train, self.X_test, self.y_train, self.y_test = (
-                self._fit_transform_y(
-                    self.X_train,
-                    self.X_test,
-                    self.y_train,
-                    self.y_test,
-                    y_pipeline,
-                )
-            )
+        self.apply_pipeline_behavior()
         time_dict = {
             "data_load_time": self.data_load_time,
             "data_sample_time": self.data_sample_time,

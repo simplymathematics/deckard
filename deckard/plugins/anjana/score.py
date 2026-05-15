@@ -347,7 +347,7 @@ class DefaultAnjanaDataScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     scorers: dict[str, ScorerConfig] = field(default_factory=dict)
 
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
-        from .data import DefaultDataClassificationConfig, DefaultDataRegressionConfig
+        from ...score.data import DefaultDataClassificationConfig, DefaultDataRegressionConfig
 
         base_scorers = (
             DefaultDataClassificationConfig().scorers

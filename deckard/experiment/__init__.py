@@ -14,7 +14,7 @@ try:
     from ..frameworks.pytorch.experiment import TorchExperimentConfig
 
     _ = TorchExperimentConfig
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover
     logger.debug(
         "PyTorch not found. TorchExperimentConfig is unavailable.",
     )
@@ -23,7 +23,7 @@ try:
     from ..plugins.lifelines.experiment import SurvivalExperimentConfig
 
     _ = SurvivalExperimentConfig
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover
     logger.debug(
         "Lifelines not found. SurvivalExperimentConfig is unavailable.",
     )

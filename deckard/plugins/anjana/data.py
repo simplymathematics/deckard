@@ -205,7 +205,7 @@ class _PrivacyBehaviorMixin:
                 f"Configured ANJANA defense '{defense_name}' is not callable",
             )
 
-        frame = self._build_anjana_frame()
+        frame = self._build_privacy_frame()
         call_kwargs = dict(defense_cfg)
         call_kwargs.setdefault("data", frame)
         call_kwargs.setdefault("ident", self.identifiers or [])
@@ -426,15 +426,21 @@ class AnjanaDataConfig(_PrivacyBehaviorMixin, _SensitiveColumnsMixin, DataPipeli
                     delattr(self, attr_name)
             return
 
-        if getattr(self, "X_train", None) is None or getattr(self, "X_test", None) is None:
+        train_indices = getattr(self, "train_indices", None)
+        test_indices = getattr(self, "test_indices", None)
+        if train_indices is None or test_indices is None:
             self._sensitive_train = None
             self._sensitive_test = None
             self._sensitive_all = None
             self._sensitive_val = getattr(self, "_sensitive_val", None)
             return
 
-        self._sensitive_train = self._sensitive_labels_from_frame(self.X_train)
-        self._sensitive_test = self._sensitive_labels_from_frame(self.X_test)
+        self._sensitive_train = self._sensitive_labels_from_frame(
+            self._X.iloc[train_indices].reset_index(drop=True),
+        )
+        self._sensitive_test = self._sensitive_labels_from_frame(
+            self._X.iloc[test_indices].reset_index(drop=True),
+        )
         self._sensitive_all = self._sensitive_labels_from_frame(self._X)
         self._sensitive_train = self._validate_sensitive_runtime(
             self._sensitive_train,
@@ -448,8 +454,11 @@ class AnjanaDataConfig(_PrivacyBehaviorMixin, _SensitiveColumnsMixin, DataPipeli
             self._sensitive_all,
             "full-data sampling",
         )
-        if getattr(self, "X_val", None) is not None:
-            self._sensitive_val = self._sensitive_labels_from_frame(self.X_val)
+        val_indices = getattr(self, "val_indices", None)
+        if val_indices is not None and len(val_indices) > 0:
+            self._sensitive_val = self._sensitive_labels_from_frame(
+                self._X.iloc[val_indices].reset_index(drop=True),
+            )
             self._sensitive_val = self._validate_sensitive_runtime(
                 self._sensitive_val,
                 "val sampling",

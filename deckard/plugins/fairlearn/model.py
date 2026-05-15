@@ -30,7 +30,7 @@ except ImportError:
 
 
 @dataclass(eq=False, kw_only=True)
-class _SensitiveBehaviorMixin:
+class _SensitiveColumnsMixin:
     """Model/defense mixin for explicit fairness-aware training and scoring."""
 
     data: Any = None
@@ -450,7 +450,7 @@ class RuntimePayload(Protocol):
 
 
 @dataclass(eq=False, kw_only=True)
-class FairlearnModelConfig(_SensitiveBehaviorMixin, ModelConfig):
+class FairlearnModelConfig(_SensitiveColumnsMixin, ModelConfig):
     """Fairness-aware model config for sklearn models.
 
     Inherits sklearn training/prediction from ModelConfig and adds
@@ -462,7 +462,7 @@ class FairlearnModelConfig(_SensitiveBehaviorMixin, ModelConfig):
 
 
 @dataclass(eq=False, kw_only=True)
-class FairlearnPytorchModelConfig(_SensitiveBehaviorMixin, PytorchModelConfig):
+class FairlearnPytorchModelConfig(_SensitiveColumnsMixin, PytorchModelConfig):
     """Fairness-aware model config for PyTorch models.
 
     Inherits all torch training/prediction/defense from PytorchModelConfig
@@ -506,7 +506,7 @@ class BinaryLogitAdapter:
 
 
 @dataclass(eq=False, kw_only=True)
-class FairlearnDefenseConfig(_SensitiveBehaviorMixin, DefenseConfig):
+class FairlearnDefenseConfig(_SensitiveColumnsMixin, DefenseConfig):
     """Fairness-aware defense config that inherits DefenseConfig."""
 
     data: Union[FairlearnDataConfig, None] = None
@@ -585,7 +585,7 @@ class FairlearnDefenseConfig(_SensitiveBehaviorMixin, DefenseConfig):
 
 
 __all__ = [
-    "_SensitiveBehaviorMixin",
+    "_SensitiveColumnsMixin",
     "FairlearnModelConfig",
     "FairlearnPytorchModelConfig",
     "FairlearnDefenseConfig",

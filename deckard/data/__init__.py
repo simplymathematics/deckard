@@ -7,12 +7,11 @@ Optional exports are only available when their dependencies are installed.
 
 import logging
 
-from .base import DataConfig, DataPipelineConfig
+from .base import DataConfig, DataPipelineConfig, DataPipelineMixin
 from .pipeline import (
     AnjanaDataPipelineConfig,
     DefaultDataPipelineConfig,
     FairlearnDataPipelineConfig,
-    PytorchDataPipelineConfig,
 )
 from .sample import (
     BaseSampler,
@@ -25,34 +24,29 @@ from .sample import (
 logger = logging.getLogger(__name__)
 
 try:
-    from ..plugins.fairlearn.data import FairlearnDataConfig
+    from .pipeline import PytorchDataPipelineConfig
 
-    _ = FairlearnDataConfig
-except ImportError:  # pragma: no cover
-    logger.debug("Fairlearn not found. FairlearnDataConfig is unavailable.")
+    _ = PytorchDataPipelineConfig
+except Exception:  # pragma: no cover
+    logger.debug("Torch not found. PytorchDataPipelineConfig is unavailable.")
 
-try:
-    from ..plugins.anjana.data import AnjanaDataConfig
 
-    _ = AnjanaDataConfig
-except ImportError:  # pragma: no cover
-    logger.debug("Anjana not found. AnjanaDataConfig is unavailable.")
 
 try:
     from ..frameworks.pytorch.data import PytorchDataConfig, PytorchCustomDataConfig
 
     _ = (PytorchDataConfig, PytorchCustomDataConfig)
-except ImportError:
+except Exception:
     logger.debug("Torch not found.")
 
 
 __all__ = [
     "DataConfig",
     "DataPipelineConfig",
+    "DataPipelineMixin",
     "DefaultDataPipelineConfig",
     "AnjanaDataPipelineConfig",
     "FairlearnDataPipelineConfig",
-    "PytorchDataPipelineConfig",
     "BaseSampler",
     "SplitSampler",
     "KFoldSampler",
@@ -60,9 +54,9 @@ __all__ = [
     "register_sampler_configs",
 ]
 
-if "FairlearnDataConfig" in globals():
-    __all__.append("FairlearnDataConfig")
-if "AnjanaDataConfig" in globals():
-    __all__.append("AnjanaDataConfig")
+if "PytorchDataPipelineConfig" in globals():
+    __all__.append("PytorchDataPipelineConfig")
+
+
 if "PytorchDataConfig" in globals():
     __all__.extend(["PytorchDataConfig", "PytorchCustomDataConfig"])

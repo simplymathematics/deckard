@@ -15,13 +15,14 @@ from ..score.base import (
     coerce_scorer_config,
 )
 from ..utils import ConfigBase, coerce_config, resolve_class
+from ..frameworks import DetectorContractMixin, FrameworkDetectorConfig
 
 if TYPE_CHECKING:
     from ..attack import AttackConfig
     from ..data import DataConfig
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DetectorScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     """Task-aware scorer config for detector outputs."""
 
@@ -47,8 +48,8 @@ class DetectorScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
         super().__post_init__()
 
 
-@dataclass(eq=False)
-class DetectorConfig(ConfigBase):
+@dataclass(eq=False, kw_only=True)
+class DetectorConfig(DetectorContractMixin, ConfigBase, FrameworkDetectorConfig):
     """Auxiliary detector runtime for adversarial-vs-clean detection tasks."""
 
     detector_type: str = "art.defences.detector.evasion.BinaryInputDetector"
@@ -70,12 +71,28 @@ class DetectorConfig(ConfigBase):
     _target_: Union[str, None] = None
 
     def __post_init__(self):
+        self._initialize_target_reference()
+        self._initialize_runtime_defaults()
+        self._initialize_detector_model_config()
+        self._initialize_detector_scorer()
+
+    def _initialize_target_reference(self) -> None:
+        """Set canonical runtime target path."""
         if self._target_ is None:
             self._target_ = "deckard.detector.DetectorConfig"
+
+    def _initialize_runtime_defaults(self) -> None:
+        """Normalize mutable runtime defaults."""
         self.detector_params = self.detector_params or {}
         self.fit_params = self.fit_params or {}
         self.score_dict = self.score_dict or {}
+
+    def _initialize_detector_model_config(self) -> None:
+        """Coerce detector-model config into a runtime ModelConfig object."""
         self.detector_model = self._coerce_detector_model(self.detector_model)
+
+    def _initialize_detector_scorer(self) -> None:
+        """Coerce detector scorer into a supported scorer config."""
         self.scorer = self._coerce_scorer(self.scorer)
 
     def _coerce_detector_model(
@@ -182,39 +199,60 @@ class DetectorConfig(ConfigBase):
         )
         return detector_model_cfg.get_art_model(data_stub)
 
-    def __call__(
+    def compose_detector_dataset_behavior(
         self,
         data: "DataConfig",
-        model: ModelConfig | None = None,
-        attack: "AttackConfig | None" = None,
-    ) -> dict[str, float | int]:
-        _ = model
-        x, y, n = self._build_detector_dataset(data=data, attack=attack)
+        attack: "AttackConfig",
+    ) -> tuple[np.ndarray, np.ndarray, int]:
+        """Compose detector dataset behavior from clean/adversarial samples."""
+        return self._build_detector_dataset(data=data, attack=attack)
 
-        backend = self._build_detector_backend(x_train=x, y_train=y)
+    def compose_detector_backend_behavior(
+        self,
+        x_train: np.ndarray,
+        y_train: np.ndarray,
+    ) -> Any:
+        """Compose backend detector-estimator behavior from configured model."""
+        return self._build_detector_backend(x_train=x_train, y_train=y_train)
+
+    def compose_detector_runtime_behavior(
+        self,
+        backend: Any,
+        x: np.ndarray,
+        y: np.ndarray,
+        fit_kwargs: dict[str, Any],
+    ) -> Any:
+        """Compose concrete detector runtime object for evasion/poison APIs."""
         detector_cls = resolve_class(self.detector_type)
-        fit_kwargs = {k: v for k, v in self.fit_params.items() if k != "split"}
         # Detector constructors differ between evasion and poisoning detectors.
         try:
-            detector = detector_cls(detector=backend, **self.detector_params)
+            return detector_cls(detector=backend, **self.detector_params)
         except TypeError:
             try:
-                detector = detector_cls(
+                return detector_cls(
                     classifier=backend,
                     x_train=x,
                     y_train=y,
                     **self.detector_params,
                 )
             except TypeError:
-                detector = detector_cls(backend, **self.detector_params)
+                return detector_cls(backend, **self.detector_params)
 
-        y_pred = None
+    def execute_detector_behavior(
+        self,
+        detector: Any,
+        x: np.ndarray,
+        y: np.ndarray,
+        fit_kwargs: dict[str, Any],
+    ) -> np.ndarray:
+        """Execute detector fit/predict behavior and return detector labels."""
         if hasattr(detector, "fit") and callable(getattr(detector, "fit")):
             start = time.process_time()
             detector.fit(x, y, **fit_kwargs)
             self.detector_training_time = time.process_time() - start
 
         start = time.process_time()
+        y_pred = None
         if hasattr(detector, "detect") and callable(getattr(detector, "detect")):
             _, is_adversarial = detector.detect(
                 x,
@@ -248,6 +286,31 @@ class DetectorConfig(ConfigBase):
 
         if y_pred is None:
             raise RuntimeError("Detector prediction output was not produced.")
+        return y_pred
+
+    def __call__(
+        self,
+        data: "DataConfig",
+        model: ModelConfig | None = None,
+        attack: "AttackConfig | None" = None,
+    ) -> dict[str, float | int]:
+        _ = model
+        x, y, n = self.compose_detector_dataset_behavior(data=data, attack=attack)
+
+        backend = self.compose_detector_backend_behavior(x_train=x, y_train=y)
+        fit_kwargs = {k: v for k, v in self.fit_params.items() if k != "split"}
+        detector = self.compose_detector_runtime_behavior(
+            backend=backend,
+            x=x,
+            y=y,
+            fit_kwargs=fit_kwargs,
+        )
+        y_pred = self.execute_detector_behavior(
+            detector=detector,
+            x=x,
+            y=y,
+            fit_kwargs=fit_kwargs,
+        )
         y_true = y.reshape(-1).astype(int)
 
         self.detector = detector

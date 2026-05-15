@@ -9,6 +9,7 @@ Supports ART PyTorchClassifier and PyTorchRegressor wrappers for defenses.
 
 import logging
 from typing import Any, Union
+from dataclasses import dataclass
 
 from ...experiment.base import ExperimentConfig
 from ...utils import is_default_config_value, is_null_config_value, resolve_torch_device
@@ -26,6 +27,7 @@ except ImportError:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 
+@dataclass(eq=False, kw_only=True)
 class TorchExperimentConfig(ExperimentConfig):
     """Experiment configuration for PyTorch models.
 
@@ -182,7 +184,14 @@ class TorchExperimentConfig(ExperimentConfig):
             return
 
     def set_device(self, device: Union[str, int] = "auto") -> None:
-        """Configure the PyTorch device for this experiment."""
+        """Configure the PyTorch device for this experiment.
+
+        Args:
+            device: Requested device identifier or ``"auto"`` for auto-detection.
+
+        Returns:
+            None.
+        """
         torch_device = resolve_torch_device(device)
         self.torch_device = torch_device
         self.device = str(torch_device)

@@ -1,3 +1,4 @@
+from __future__ import annotations
 # OS imports
 import copy
 import inspect
@@ -8,9 +9,13 @@ from pathlib import Path
 # Typing imports
 from dataclasses import dataclass, field
 from omegaconf import DictConfig
-from typing import Any, Union
+from typing import Any, Protocol, Union, TYPE_CHECKING
 import numpy as np
 
+
+
+if TYPE_CHECKING:
+    import torch
 # Torch imports (optional dependency)
 try:
     import torch
@@ -45,6 +50,10 @@ ScorerDictConfig = Any
 ModelType = Union[str, type[torch.nn.Module], torch.nn.Module]
 
 __all__ = ["PytorchModelConfig"]
+
+
+class RuntimeAttackPayload(Protocol):
+    """Opaque marker protocol for runtime epoch-attack configuration payloads."""
 
 
 # TinyNet: Minimal torch model for binary classification
@@ -112,7 +121,7 @@ def initialize_optimizer(optimizer_spec, model_params):
         )
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class PytorchModelConfig(ModelConfig):
     """Configuration for PyTorch models using load_class for generic instantiation.
 
@@ -308,7 +317,15 @@ class PytorchModelConfig(ModelConfig):
 
         return art_estimator
 
-    def set_epoch_attack(self, attack_config: Any) -> None:
+    def set_epoch_attack(self, attack_config: RuntimeAttackPayload) -> None:
+        """Attach an optional per-epoch adversarial attack configuration.
+
+        Args:
+            attack_config: Runtime attack configuration payload used during training.
+
+        Returns:
+            None.
+        """
         self._epoch_attack = attack_config
 
     def _initialize_model(self):
@@ -334,14 +351,25 @@ class PytorchModelConfig(ModelConfig):
             f"Initialized model {self.model_type} on device {self.device}",
         )
 
-    def get_model(self) -> Any:
-        """Return the underlying PyTorch model."""
+    def get_model(self) -> ModelType:
+        """Return the underlying PyTorch model.
+
+        Returns:
+            The initialized torch model instance.
+        """
         if self._model is None:
             raise ValueError("Model not initialized")
         return self._model
 
     def save(self, filepath: str) -> None:
-        """Serialize PyTorch model state and config metadata."""
+        """Serialize PyTorch model state and config metadata.
+
+        Args:
+            filepath: Output path for the serialized model payload.
+
+        Returns:
+            None.
+        """
         if self._model is None:
             raise ValueError("Model not initialized")
         path = Path(filepath)
@@ -373,7 +401,14 @@ class PytorchModelConfig(ModelConfig):
         torch.save(payload, path)
 
     def load(self, filepath: str) -> "PytorchModelConfig":
-        """Load PyTorch model state and config metadata."""
+        """Load PyTorch model state and config metadata.
+
+        Args:
+            filepath: Input path for the serialized model payload.
+
+        Returns:
+            The current model config instance with restored model state.
+        """
         path = Path(filepath)
         if not path.exists():
             raise FileNotFoundError(filepath)
@@ -1064,8 +1099,15 @@ class PytorchModelConfig(ModelConfig):
         }
         return scores
 
-    def get_art_model(self, data: "DataConfig") -> Any:
-        """Get ART-compatible model wrapper for adversarial robustness."""
+    def get_art_model(self, data: "DataConfig") -> PyTorchClassifier | PyTorchRegressor:
+        """Get ART-compatible model wrapper for adversarial robustness.
+
+        Args:
+            data: Runtime data configuration used for shape and loader inference.
+
+        Returns:
+            ART classifier or regressor wrapper around the configured torch model.
+        """
         if self.clip_values is None or len(self.clip_values) == 0:
             clip_values = (0.0, 1.0)
         else:

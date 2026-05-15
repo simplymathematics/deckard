@@ -19,7 +19,7 @@ class _AnjanaModelInitMixin:
 			self.data = self.coerce_component(
 				self.data,
 				AnjanaDataConfig,
-				default_target="deckard.plugins.anjana.data.AnjanaDataConfig",
+				default_target="deckard.plugins.anjana.AnjanaDataConfig",
 			)
 
 

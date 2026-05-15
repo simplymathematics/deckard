@@ -1,5 +1,6 @@
 import logging
 import argparse
+import importlib
 from pathlib import Path
 from typing import Any, Dict
 
@@ -297,10 +298,12 @@ def plot_main(cfg: Any) -> dict:
             plot_params = loaded
 
         # Import lazily so this layer can be listed even when optional plotting deps are missing.
-        from ..plugins.yellowbrick.plot import (
-            YellowbrickConfigList,
-            YellowbrickPlotConfig,
+        yellowbrick_module = importlib.import_module(
+            "deckard.plugins.yellowbrick.plot",
         )
+
+        YellowbrickConfigList = yellowbrick_module.YellowbrickConfigList
+        YellowbrickPlotConfig = yellowbrick_module.YellowbrickPlotConfig
 
         if plot_type:
             default_folder = Path(plot_folder) if plot_folder else Path.cwd()
@@ -351,7 +354,10 @@ def plot_main(cfg: Any) -> dict:
         }
 
     # Seaborn backend: designed for aggregated/tabular outputs from many experiments.
-    from ..plugins.seaborn.plot import SeabornPlotConfig, SeabornPlotConfigList
+    seaborn_module = importlib.import_module("deckard.plugins.seaborn.plot")
+
+    SeabornPlotConfig = seaborn_module.SeabornPlotConfig
+    SeabornPlotConfigList = seaborn_module.SeabornPlotConfigList
 
     kwargs = {}
     if kwargs_file:

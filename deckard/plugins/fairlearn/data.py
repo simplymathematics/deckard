@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(eq=False, kw_only=True)
-class _SensitiveBehaviorMixin(_SensitiveColumnsMixin):
+class _FairnessBehaviorMixin(_SensitiveColumnsMixin):
 	"""Fairlearn-specific sensitive-feature behavior for data configs.
 
 	Extends the framework-independent :class:`_SensitiveColumnsMixin` with
@@ -89,8 +89,21 @@ class _SensitiveBehaviorMixin(_SensitiveColumnsMixin):
 	def _sample(self, run_hooks: bool = True):
 		super()._sample(run_hooks=run_hooks)
 
-		self._sensitive_train = self._sensitive_labels_from_frame(self.X_train)
-		self._sensitive_test = self._sensitive_labels_from_frame(self.X_test)
+		train_indices = getattr(self, "train_indices", None)
+		test_indices = getattr(self, "test_indices", None)
+		if train_indices is None or test_indices is None:
+			self._sensitive_train = None
+			self._sensitive_test = None
+			self._sensitive_all = None
+			self._sensitive_val = getattr(self, "_sensitive_val", None)
+			return
+
+		self._sensitive_train = self._sensitive_labels_from_frame(
+			self._X.iloc[train_indices].reset_index(drop=True),
+		)
+		self._sensitive_test = self._sensitive_labels_from_frame(
+			self._X.iloc[test_indices].reset_index(drop=True),
+		)
 		self._sensitive_all = self._sensitive_labels_from_frame(self._X)
 		self._sensitive_train = self._validate_sensitive_runtime(
 			self._sensitive_train,
@@ -104,8 +117,11 @@ class _SensitiveBehaviorMixin(_SensitiveColumnsMixin):
 			self._sensitive_all,
 			"full-data sampling",
 		)
-		if getattr(self, "X_val", None) is not None:
-			self._sensitive_val = self._sensitive_labels_from_frame(self.X_val)
+		val_indices = getattr(self, "val_indices", None)
+		if val_indices is not None and len(val_indices) > 0:
+			self._sensitive_val = self._sensitive_labels_from_frame(
+				self._X.iloc[val_indices].reset_index(drop=True),
+			)
 			self._sensitive_val = self._validate_sensitive_runtime(
 				self._sensitive_val,
 				"val sampling",
@@ -115,7 +131,7 @@ class _SensitiveBehaviorMixin(_SensitiveColumnsMixin):
 
 
 @dataclass(eq=False, kw_only=True)
-class FairlearnDataConfig(_SensitiveBehaviorMixin, DataPipelineConfig):
+class FairlearnDataConfig(_FairnessBehaviorMixin, DataPipelineConfig):
 	"""Data pipeline config with fairlearn-sensitive feature support.
 
 	Initialization params
@@ -239,12 +255,16 @@ class FairlearnDataConfig(_SensitiveBehaviorMixin, DataPipelineConfig):
 			)
 		# Use train mode by default to preserve DataConfig key prefixes
 		scorer_mode = mode if mode is not None else "train"
-		y_true = (
-			self.y_train if getattr(self, "y_train", None) is not None else self._y
-		)
-		y_pred = (
-			self.X_train if getattr(self, "X_train", None) is not None else self._X
-		)
+		if mode == "pre-sample":
+			y_true = getattr(self, "_y", None)
+			y_pred = getattr(self, "_X", None)
+		else:
+			y_true = (
+				self.y_train if getattr(self, "y_train", None) is not None else self._y
+			)
+			y_pred = (
+				self.X_train if getattr(self, "X_train", None) is not None else self._X
+			)
 		fairness_scores = self.scorer(
 			*args,
 			y_true=y_true,

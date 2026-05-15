@@ -9,7 +9,7 @@ from ...attack.base import AttackConfig
 from .torch_utils import is_tensor, tensor_to_numpy
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class PytorchAttackConfig(AttackConfig):
     """Attack config variant that preserves torch tensors for attack execution.
 

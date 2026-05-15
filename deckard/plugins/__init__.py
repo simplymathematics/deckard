@@ -54,3 +54,46 @@ class HookPlugin:
 
 
 __all__ = ["HookPlugin", "anjana", "fairlearn", "lifelines", "seaborn", "yellowbrick"]
+"""
+Optional plugin system.
+
+Do NOT import plugin modules here at package import time.
+Plugins are imported lazily to avoid hard dependencies.
+"""
+
+from importlib import import_module
+
+__all__ = [
+    "get_plugin",
+]
+
+
+_PLUGIN_MAP = {
+    "anjana": "deckard.plugins.anjana",
+    "fairlearn": "deckard.plugins.fairlearn",
+    "lifelines": "deckard.plugins.lifelines",
+    "seaborn": "deckard.plugins.seaborn",
+    "yellowbrick": "deckard.plugins.yellowbrick",
+}
+
+
+def get_plugin(name: str):
+    """
+    Lazily import a plugin package.
+
+    Raises:
+        ImportError: if plugin is not installed or missing dependency.
+        KeyError: if plugin name is unknown.
+    """
+    if name not in _PLUGIN_MAP:
+        raise KeyError(f"Unknown plugin: {name}")
+
+    module_name = _PLUGIN_MAP[name]
+
+    try:
+        return import_module(module_name)
+    except ImportError as e:
+        raise ImportError(
+            f"Plugin '{name}' is not available. "
+            f"Install optional dependencies for it (e.g. deckard[{name}])."
+        ) from e

@@ -37,6 +37,7 @@ from .data import (  # noqa: E402
     data_empirical_cdf_function_score,
 )
 
+
 logger = logging.getLogger(__name__)
 
 survival_concordance_score = None
@@ -84,15 +85,6 @@ if survival_bic_score is None:
             *args,
             **kwargs,
         )
-
-from .declarations import (  # noqa: E402
-    SCORER_PLUGIN_MODEL_BASE,
-    SCORER_PLUGIN_MODEL_CLASSIFIER,
-    SCORER_PLUGIN_MODEL_REGRESSOR,
-    SCORER_PLUGIN_DATA_BASE,
-    SCORER_PLUGIN_DATA_CLASSIFIER,
-    SCORER_PLUGIN_DATA_REGRESSOR,
-)
 
 try:
     from ..plugins.fairlearn.score import (  # noqa: E402

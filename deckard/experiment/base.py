@@ -7,6 +7,7 @@ model, defense, attack, files, and scorers into a single executable unit.
 import logging
 import warnings
 import hashlib
+from dataclasses import dataclass
 from typing import List, Union, Literal, Any
 from omegaconf import DictConfig, ListConfig, OmegaConf
 import os
@@ -20,15 +21,12 @@ from hydra.utils import instantiate
 from ..data import DataConfig, DataPipelineConfig
 from ..model import ModelConfig
 
-try:
-    from ..data import FairlearnDataConfig
-except ImportError:  # pragma: no cover
-    FairlearnDataConfig = None
+
 from ..model.defend import DefensePipelineConfig
 from ..attack import AttackConfig
 from ..detector import DetectorConfig
 from ..score import ScorerDictConfig
-from ..file import FileConfig, data_files, model_files, attack_files
+from ..file import FileConfig, BaseFiles, ModelFiles, AttackFiles
 from ..utils import (
     ConfigBase,
     coerce_config,
@@ -42,6 +40,7 @@ from ..utils import (
 )
 from ..score.base import coerce_scorer_config, _DataScorerMarker, _AttackProfileScorer
 from ..data.sample import KFoldSampler, ShuffleSampler
+from ..frameworks import ExperimentContractMixin, FrameworkExperimentConfig
 
 try:
     import tensorflow as tf
@@ -53,10 +52,7 @@ try:
 except ImportError:  # pragma: no cover
     torch = None
 
-try:
-    from ..data import AnjanaDataConfig
-except ImportError:  # pragma: no cover
-    AnjanaDataConfig = None
+
 
 
 try:
@@ -190,19 +186,26 @@ class DataConfigResolutionMixin:
 
     def _select_data_cls(self, data_dict: dict):
         if any(key in data_dict for key in self._anjana_keys):
-            if AnjanaDataConfig is None:
+            try:
+                from deckard.plugins.anjana.data import AnjanaDataConfig
+            except ImportError:
                 raise ImportError(
-                    "AnjanaDataConfig requires optional anjana dependencies. Install deckard[anjana] to enable anjana data configs.",
+                    "Privacy features need `anjana`. Install with `pip install deckard[anjana]`"
                 )
             return AnjanaDataConfig
+
         if any(key in data_dict for key in self._fairness_keys):
-            if FairlearnDataConfig is None:
+            try:
+                from deckard.plugins.fairlearn.data import FairlearnDataConfig
+            except ImportError:
                 raise ImportError(
-                    "FairlearnDataConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn data configs.",
+                    "Fairness features need `fairlearn`. Install with `pip install deckard[fairlearn]`"
                 )
             return FairlearnDataConfig
+
         if "pipeline" in data_dict:
             return DataPipelineConfig
+
         return DataConfig
 
     def _resolve_data_config(self):
@@ -237,7 +240,13 @@ class DataConfigResolutionMixin:
         return data_obj
 
 
-class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
+@dataclass(eq=False, kw_only=True)
+class ExperimentConfig(
+    DataConfigResolutionMixin,
+    ExperimentContractMixin,
+    ConfigBase,
+    FrameworkExperimentConfig,
+):
     """Compose and execute a complete deckard experiment.
 
     An experiment coordinates data loading, optional defense application, model
@@ -1071,7 +1080,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         if self.model is None:
             return
 
-        if FairlearnDataConfig is not None and isinstance(
+        from deckard.plugins.fairlearn.data import FairlearnDataConfig
+        if isinstance(
             self.data,
             FairlearnDataConfig,
         ):
@@ -1431,6 +1441,165 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 aggregated[key] = values[-1]
         return aggregated
 
+    def compose_file_output_behavior(self) -> tuple[dict, dict, dict, dict]:
+        """Compose runtime file-output mappings for data/model/attack stages."""
+        file_dict = self.files.as_dict()
+        base_keys = set(BaseFiles.__annotations__.keys())
+        model_keys = set(ModelFiles.__annotations__.keys())
+        attack_keys = set(AttackFiles.__annotations__.keys())
+        data_file_outputs = {
+            file: getattr(self.files, file, None) for file in base_keys if file in file_dict
+        }
+        model_file_outputs = {
+            file: getattr(self.files, file, None)
+            for file in model_keys
+            if file in file_dict
+        }
+        attack_file_outputs = {
+            file: getattr(self.files, file, None)
+            for file in attack_keys
+            if file in file_dict
+        }
+        return file_dict, data_file_outputs, model_file_outputs, attack_file_outputs
+
+    def compose_data_loading_behavior(self, data_file_outputs: dict) -> None:
+        """Compose data loading behavior based on cache presence and repeat strategy."""
+        if (
+            "data_file" in data_file_outputs
+            and Path(data_file_outputs["data_file"]).exists()
+        ):
+            configured_data = self.data
+            self.data = self.load_object(data_file_outputs["data_file"])
+            self._apply_runtime_data_split_overrides(self.data, configured_data)
+            return
+
+        # Load raw data only (no sample yet when evaluating repeated splits)
+        n_repeats, _ = self._detect_n_repeats()
+        if n_repeats > 1:
+            self.data._load_data()
+            return
+        self.data(**data_file_outputs)
+
+    def compose_repeat_strategy(self) -> tuple[int, str]:
+        """Compose repeat strategy from configured sampler behavior."""
+        return self._detect_n_repeats()
+
+    def _reset_data_runtime_for_repeat(self, run_idx: int) -> None:
+        """Reset split-dependent runtime state before a repeated split run."""
+        self.data.split = run_idx
+        self.data.data_sample_time = None
+        for attr in (
+            "train_indices",
+            "test_indices",
+            "val_indices",
+            "X_train",
+            "y_train",
+            "X_test",
+            "y_test",
+            "X_val",
+            "y_val",
+            "train_n",
+            "test_n",
+            "val_n",
+            "pipeline_fit_n",
+            "pipeline_transform_n",
+            "pipeline_fit_time",
+            "pipeline_transform_time",
+            "pipeline_y_fit_n",
+            "pipeline_y_transform_n",
+            "pipeline_y_fit_time",
+            "pipeline_y_transform_time",
+        ):
+            setattr(self.data, attr, None)
+        self.data.score_dict = {}
+
+    def _run_repeated_pipeline_behavior(
+        self,
+        n_repeats: int,
+        run_suffix: str,
+        model_file_outputs: dict,
+        attack_file_outputs: dict,
+    ) -> dict:
+        """Compose repeated split/fold pipeline behavior and aggregate scores."""
+        logger.info(
+            f"Running {n_repeats} repeated {run_suffix} evaluations.",
+        )
+        per_run_scores: list = []
+        for run_idx in range(n_repeats):
+            logger.info(f"  {run_suffix.title()} {run_idx + 1}/{n_repeats}")
+            self._reset_data_runtime_for_repeat(run_idx)
+            # Run full data runtime per split/fold so pipeline hooks and
+            # transformations execute in the same path as normal single runs.
+            self.data(
+                data_file=None,
+                score_file=None,
+            )
+            self.data.score_dict.update(
+                data_load_time=self.data.data_load_time,
+                data_sample_time=self.data.data_sample_time,
+                train_n=self.data.train_n,
+                test_n=self.data.test_n,
+            )
+            split_scores = self._run_single_pipeline(
+                model_file_outputs,
+                attack_file_outputs,
+            )
+            per_run_scores.append(split_scores)
+        return self._aggregate_repeated_scores(per_run_scores, run_suffix)
+
+    def _run_single_pass_pipeline_behavior(
+        self,
+        model_file_outputs: dict,
+        attack_file_outputs: dict,
+    ) -> dict:
+        """Compose single-pass pipeline behavior."""
+        assert hasattr(
+            self.data,
+            "X_train",
+        ), "data must return an object with X_train attribute"
+        assert hasattr(
+            self.data,
+            "y_train",
+        ), "data must return an object with y_train attribute"
+        assert hasattr(
+            self.data,
+            "X_test",
+        ), "data must return an object with X_test attribute"
+        assert hasattr(
+            self.data,
+            "y_test",
+        ), "data must return an object with y_test attribute"
+        assert hasattr(
+            self.data,
+            "score_dict",
+        ), "data must have score_dict attribute after loading"
+        scores = self._run_single_pipeline(
+            model_file_outputs,
+            attack_file_outputs,
+        )
+        if self.model is None:
+            self.model = None
+        return scores
+
+    def compose_pipeline_execution_behavior(
+        self,
+        model_file_outputs: dict,
+        attack_file_outputs: dict,
+    ) -> dict:
+        """Compose experiment pipeline execution across repeated/single strategies."""
+        n_repeats, run_suffix = self.compose_repeat_strategy()
+        if n_repeats > 1:
+            return self._run_repeated_pipeline_behavior(
+                n_repeats=n_repeats,
+                run_suffix=run_suffix,
+                model_file_outputs=model_file_outputs,
+                attack_file_outputs=attack_file_outputs,
+            )
+        return self._run_single_pass_pipeline_behavior(
+            model_file_outputs=model_file_outputs,
+            attack_file_outputs=attack_file_outputs,
+        )
+
     def __call__(
         self,
     ) -> dict:
@@ -1441,39 +1610,12 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         # Set device
         if self.library not in ["sklearn"]:
             self.set_device()
-        # Get file paths
-        file_dict = self.files._get_file_dict()
-        data_file_outputs = {
-            file: getattr(self.files, file) for file in data_files if file in file_dict
-        }
-        model_file_outputs = {
-            file: getattr(self.files, file)
-            for file in model_files
-            if file in file_dict
-        }
-        attack_file_outputs = {
-            file: getattr(self.files, file)
-            for file in attack_files
-            if file in file_dict
-        }
+        file_dict, data_file_outputs, model_file_outputs, attack_file_outputs = (
+            self.compose_file_output_behavior()
+        )
 
-        # ------------------------------------------------------------------
-        # Data loading (always done once; sampling may repeat per fold)
-        # ------------------------------------------------------------------
-        if (
-            "data_file" in data_file_outputs
-            and Path(data_file_outputs["data_file"]).exists()
-        ):
-            configured_data = self.data
-            self.data = self.load_object(data_file_outputs["data_file"])
-            self._apply_runtime_data_split_overrides(self.data, configured_data)
-        else:
-            # Load raw data only (no sample yet when evaluating repeated splits)
-            n_repeats, _ = self._detect_n_repeats()
-            if n_repeats > 1:
-                self.data._load_data()
-            else:
-                self.data(**data_file_outputs)
+        # Data loading (always done once; sampling may repeat per split/fold)
+        self.compose_data_loading_behavior(data_file_outputs)
 
         assert hasattr(self.data, "X_train") or hasattr(
             self.data,
@@ -1482,94 +1624,10 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
         self._ensure_active_mode_split_available()
 
-        n_repeats, run_suffix = self._detect_n_repeats()
-
-        if n_repeats > 1:
-            # ------------------------------------------------------------------
-            # Repeated split evaluation: run one pipeline pass per split/fold
-            # ------------------------------------------------------------------
-            logger.info(
-                f"Running {n_repeats} repeated {run_suffix} evaluations.",
-            )
-            per_run_scores: list = []
-            for run_idx in range(n_repeats):
-                logger.info(f"  {run_suffix.title()} {run_idx + 1}/{n_repeats}")
-                # Reset sampling state so _sample() runs fresh for this run
-                self.data.split = run_idx
-                self.data.data_sample_time = None
-                for attr in (
-                    "train_indices",
-                    "test_indices",
-                    "val_indices",
-                    "X_train",
-                    "y_train",
-                    "X_test",
-                    "y_test",
-                    "X_val",
-                    "y_val",
-                    "train_n",
-                    "test_n",
-                    "val_n",
-                    "pipeline_fit_n",
-                    "pipeline_transform_n",
-                    "pipeline_fit_time",
-                    "pipeline_transform_time",
-                    "pipeline_y_fit_n",
-                    "pipeline_y_transform_n",
-                    "pipeline_y_fit_time",
-                    "pipeline_y_transform_time",
-                ):
-                    setattr(self.data, attr, None)
-                self.data.score_dict = {}
-                # Run full data runtime per fold so DataPipelineConfig hooks and
-                # transformations (e.g., StringDistanceTransformer) execute.
-                self.data(
-                    data_file=None,
-                    score_file=None,
-                )
-                self.data.score_dict.update(
-                    data_load_time=self.data.data_load_time,
-                    data_sample_time=self.data.data_sample_time,
-                    train_n=self.data.train_n,
-                    test_n=self.data.test_n,
-                )
-                fold_scores = self._run_single_pipeline(
-                    model_file_outputs,
-                    attack_file_outputs,
-                )
-                per_run_scores.append(fold_scores)
-
-            scores = self._aggregate_repeated_scores(per_run_scores, run_suffix)
-        else:
-            # ------------------------------------------------------------------
-            # Single-pass (non-fold) pipeline
-            # ------------------------------------------------------------------
-            assert hasattr(
-                self.data,
-                "X_train",
-            ), "data must return an object with X_train attribute"
-            assert hasattr(
-                self.data,
-                "y_train",
-            ), "data must return an object with y_train attribute"
-            assert hasattr(
-                self.data,
-                "X_test",
-            ), "data must return an object with X_test attribute"
-            assert hasattr(
-                self.data,
-                "y_test",
-            ), "data must return an object with y_test attribute"
-            assert hasattr(
-                self.data,
-                "score_dict",
-            ), "data must have score_dict attribute after loading"
-            scores = self._run_single_pipeline(
-                model_file_outputs,
-                attack_file_outputs,
-            )
-            if self.model is None:
-                self.model = None
+        scores = self.compose_pipeline_execution_behavior(
+            model_file_outputs=model_file_outputs,
+            attack_file_outputs=attack_file_outputs,
+        )
 
         if "score_file" in file_dict:
             scores = self.merge_and_persist_scores(
