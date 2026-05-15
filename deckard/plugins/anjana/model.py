@@ -23,7 +23,7 @@ class _AnjanaModelInitMixin:
 			)
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class AnjanaModelConfig(_AnjanaModelInitMixin, ModelConfig):
 	"""ANJANA-aware model config for data anonymization scoring."""
 

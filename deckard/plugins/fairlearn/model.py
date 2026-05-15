@@ -2,7 +2,7 @@ from ...utils import is_default_config_value
 import inspect
 import time
 from dataclasses import dataclass, field
-from typing import Any, Optional, Union
+from typing import Any, Optional, Protocol, Union
 
 import numpy as np
 import pandas as pd
@@ -29,6 +29,7 @@ except ImportError:
     nn_module = None
 
 
+@dataclass(eq=False, kw_only=True)
 class _SensitiveBehaviorMixin:
     """Model/defense mixin for explicit fairness-aware training and scoring."""
 
@@ -146,11 +147,20 @@ class _SensitiveBehaviorMixin:
         return model_obj
 
     def get_model(self) -> BaseEstimator:
+        """Return the underlying estimator instance.
+
+        Returns:
+            The fitted estimator, unwrapped from ART wrappers when needed.
+        """
         if self._model is None:
             raise ValueError("Model is not fitted yet.")
         if hasattr(self._model, "model"):
             return self._model.model
         return self._model
+
+
+class RuntimePayload(Protocol):
+    """Opaque marker protocol for runtime plugin payloads."""
 
     def _fit_defended_estimator(self, defended_estimator, data):
         if data is None or not hasattr(defended_estimator, "fit"):
@@ -439,7 +449,7 @@ class _SensitiveBehaviorMixin:
             super_post_init()
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class FairlearnModelConfig(_SensitiveBehaviorMixin, ModelConfig):
     """Fairness-aware model config for sklearn models.
 
@@ -451,7 +461,7 @@ class FairlearnModelConfig(_SensitiveBehaviorMixin, ModelConfig):
     fit_params: dict = field(default_factory=dict)
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class FairlearnPytorchModelConfig(_SensitiveBehaviorMixin, PytorchModelConfig):
     """Fairness-aware model config for PyTorch models.
 
@@ -495,13 +505,21 @@ class BinaryLogitAdapter:
         )
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class FairlearnDefenseConfig(_SensitiveBehaviorMixin, DefenseConfig):
     """Fairness-aware defense config that inherits DefenseConfig."""
 
     data: Union[FairlearnDataConfig, None] = None
 
-    def apply_defense(self, data: Any) -> "BaseEstimator":
+    def apply_defense(self, data: RuntimePayload) -> "BaseEstimator":
+        """Apply configured fairness defense and return the defended estimator.
+
+        Args:
+            data: Runtime data payload consumed by the selected defense.
+
+        Returns:
+            Defended estimator instance.
+        """
         defense_name, _ = self._resolve_fairness_defense_spec()
         if not defense_name or not defense_name.startswith("fairlearn."):
             return super().apply_defense(data)

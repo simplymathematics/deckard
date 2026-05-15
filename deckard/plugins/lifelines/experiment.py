@@ -10,6 +10,7 @@ from typing import Any, Literal, Mapping, Optional, Union, cast
 import matplotlib
 import numpy as np
 import pandas as pd
+from matplotlib.axes import Axes
 from lifelines.fitters import RegressionFitter
 
 from ...attack import AttackConfig
@@ -102,8 +103,21 @@ class SurvivalExperimentConfig(ExperimentConfig):
         *,
         execution_mode: str = "auto",
         attack_optuna_db: Optional[str] = None,
-        attack: Optional[Union[dict[str, Any], AttackConfig]] = None,
+        attack: Optional[Union[Mapping[str, str], AttackConfig]] = None,
     ) -> str:
+        """Resolve which execution mode to use.
+
+        Args:
+            execution_mode: Requested mode, or ``"auto"`` to infer from config.
+            attack_optuna_db: Optional Optuna database path for attack results.
+            attack: Optional attack config or attack mapping.
+
+        Returns:
+            The resolved execution mode.
+
+        Raises:
+            ValueError: If ``execution_mode`` is not a supported value.
+        """
         allowed = {"auto", "native", "auxiliary", "optuna"}
         if execution_mode not in allowed:
             raise ValueError(
@@ -127,7 +141,20 @@ class SurvivalExperimentConfig(ExperimentConfig):
         folder: Optional[str] = None,
         **kwargs,
     ) -> RegressionFitter:
-        """Fit a survival model and optionally persist its summary."""
+        """Fit a lifelines survival model.
+
+        Args:
+            df: Training frame that includes event and duration columns.
+            event_col: Event indicator column.
+            duration_col: Duration/time column.
+            mtype: Lifelines model key (for example, ``"weibull"``).
+            summary_file: Optional summary output file name.
+            folder: Optional output folder for artifacts.
+            **kwargs: Extra fitter keyword arguments.
+
+        Returns:
+            The fitted lifelines regression fitter.
+        """
         config = SurvivalModelConfig(
             model_type="lifelines",
             classifier=False,
@@ -147,12 +174,29 @@ class SurvivalExperimentConfig(ExperimentConfig):
         model: "RegressionFitter",
         df: pd.DataFrame,
         t0: float,
-        ax: Any = None,
+        ax: Optional[Axes] = None,
         color: str = "red",
         return_curve: bool = False,
         plot: bool = True,
-    ) -> Any:
-        """Compute survival calibration metrics and optionally render a calibration curve."""
+    ) -> Union[
+        tuple[Optional[Axes], float, float],
+        tuple[Optional[Axes], float, float, pd.DataFrame],
+    ]:
+        """Compute survival calibration metrics and optionally render a curve.
+
+        Args:
+            model: Fitted lifelines regression fitter.
+            df: Data used for calibration.
+            t0: Time horizon used by calibration.
+            ax: Optional axis for plotting.
+            color: Calibration curve color.
+            return_curve: Whether to return the calibration curve dataframe.
+            plot: Whether to render the calibration plot.
+
+        Returns:
+            A tuple containing axis, ICI, and E50. If ``return_curve`` is true,
+            returns a 4-tuple with the calibration curve dataframe appended.
+        """
         config = SurvivalModelConfig(
             model_type="lifelines",
             classifier=False,
@@ -172,11 +216,21 @@ class SurvivalExperimentConfig(ExperimentConfig):
     @staticmethod
     def clean_data_for_aft(
         data: pd.DataFrame,
-        covariate_list: list,
+        covariate_list: list[str],
         target: str = "adv_failure_rate",
-        dummy_dict: Optional[dict] = None,
+        dummy_dict: Optional[dict[str, str]] = None,
     ) -> pd.DataFrame:
-        """Clean and encode tabular data for AFT-style survival fitting."""
+        """Clean and encode tabular data for AFT-style survival fitting.
+
+        Args:
+            data: Input dataframe.
+            covariate_list: Covariate columns to retain.
+            target: Target/event column name.
+            dummy_dict: Optional mapping from categorical columns to dummy prefixes.
+
+        Returns:
+            A cleaned dataframe ready for lifelines model fitting.
+        """
         return SurvivalModelConfig.clean_data_for_aft(
             data,
             covariate_list,
@@ -191,7 +245,16 @@ class SurvivalExperimentConfig(ExperimentConfig):
         attack_config: Optional[AttackConfig] = None,
         benign_metric: str = "accuracy",
     ) -> pd.DataFrame:
-        """Public class-level helper for failure derivation without caller-managed state."""
+        """Derive failure-count columns from attack metrics.
+
+        Args:
+            data: Input dataframe containing benign or adversarial metrics.
+            attack_config: Optional attack configuration for defaults.
+            benign_metric: Column used to compute benign failure rate.
+
+        Returns:
+            Dataframe with failure-count columns added when derivable.
+        """
         config = cls(
             data=DataConfig(dataset_name="toy"),
             model="weibull",
@@ -261,6 +324,12 @@ class SurvivalExperimentConfig(ExperimentConfig):
         self._require_non_empty_str("event_col", self.event_col)
 
     def __post_init__(self) -> None:
+        """Validate and normalize survival experiment configuration fields.
+
+        Raises:
+            TypeError: If ``covariates`` is provided but is not list-like.
+            ValueError: If required survival fields are missing or invalid.
+        """
         self._validate_survival_data_model()
         self._validate_survival_fields()
         if self.covariates is not None:
@@ -369,7 +438,17 @@ class SurvivalExperimentConfig(ExperimentConfig):
         attack_config: Optional["AttackConfig"] = None,
         benign_metric: str = "accuracy",
     ) -> pd.DataFrame:
-        """Optionally derive ben/adv failure counts from attack-specific accuracy metrics."""
+        """Compute benign and adversarial failures from attack metrics.
+
+        Args:
+            data: Input dataframe containing score columns.
+            attack_config: Optional attack configuration for fallback metadata.
+            benign_metric: Metric column used for benign failures.
+
+        Returns:
+            Dataframe with derived ``ben_failures`` and/or ``adv_failures`` when
+            sufficient data exists.
+        """
         output = data.copy()
         if benign_metric in output.columns and "ben_failures" not in output.columns:
             if "attack_size" in output.columns:
@@ -447,12 +526,22 @@ class SurvivalExperimentConfig(ExperimentConfig):
 
     def make_survival_model_table(
         self,
-        models: dict,
+        models: Mapping[str, RegressionFitter],
         X_test: pd.DataFrame,
         folder: str = ".",
-        t0s: Optional[dict] = None,
+        t0s: Optional[Mapping[str, float]] = None,
     ) -> pd.DataFrame:
-        """Build comparison table with AIC/BIC/Concordance/ICI/E50 columns."""
+        """Build a survival model comparison table.
+
+        Args:
+            models: Mapping of model names to fitted lifelines models.
+            X_test: Evaluation dataframe.
+            folder: Output folder for the generated CSV table.
+            t0s: Optional per-model calibration time horizons.
+
+        Returns:
+            A dataframe containing model comparison metrics.
+        """
         t0s = t0s or {}
         comparison_data = []
 
@@ -637,7 +726,16 @@ class SurvivalExperimentConfig(ExperimentConfig):
         *,
         data_cfg: DataConfig,
         survival_config: "SurvivalExperimentConfig",
-    ) -> tuple[pd.DataFrame, Optional[AttackConfig], Any]:
+    ) -> tuple[pd.DataFrame, Optional[AttackConfig], Optional[ModelConfig]]:
+        """Load data for native lifelines execution.
+
+        Args:
+            data_cfg: Data configuration used to load raw features.
+            survival_config: Active survival experiment configuration.
+
+        Returns:
+            Loaded dataframe, optional attack config, and optional auxiliary model.
+        """
         loaded_data = cls._load_data_with_config(
             data_cfg=data_cfg,
             target=survival_config.target,
@@ -650,7 +748,16 @@ class SurvivalExperimentConfig(ExperimentConfig):
         *,
         data_cfg: DataConfig,
         survival_config: "SurvivalExperimentConfig",
-    ) -> tuple[pd.DataFrame, Optional[AttackConfig], Any]:
+    ) -> tuple[pd.DataFrame, Optional[AttackConfig], Optional[ModelConfig]]:
+        """Load data and include attack/auxiliary model context.
+
+        Args:
+            data_cfg: Data configuration used to load raw features.
+            survival_config: Active survival experiment configuration.
+
+        Returns:
+            Loaded dataframe, optional attack config, and optional auxiliary model.
+        """
         loaded_data = cls._load_data_with_config(
             data_cfg=data_cfg,
             target=survival_config.target,
@@ -664,7 +771,17 @@ class SurvivalExperimentConfig(ExperimentConfig):
         attack_optuna_db: str,
         attack_schema: Optional[Union[str, dict[str, Any]]] = None,
         attack_query: Optional[str] = None,
-    ) -> tuple[pd.DataFrame, Optional[AttackConfig], Any]:
+    ) -> tuple[pd.DataFrame, Optional[AttackConfig], Optional[ModelConfig]]:
+        """Load survival-ready data from Optuna attack studies.
+
+        Args:
+            attack_optuna_db: Path to the Optuna studies database.
+            attack_schema: Optional schema mapping for parsing studies.
+            attack_query: Optional pandas query for filtering studies.
+
+        Returns:
+            Loaded dataframe, optional attack config, and optional auxiliary model.
+        """
         loaded_data = cls._load_optuna_frame(
             optuna_db=attack_optuna_db,
             schema=attack_schema,
@@ -725,7 +842,12 @@ class SurvivalExperimentConfig(ExperimentConfig):
             raise ValueError(f"{self.duration_col} not in cleaned columns")
         return cleaned
 
-    def __call__(self) -> dict[str, Any]:
+    def __call__(self) -> dict[str, pd.DataFrame | dict[str, RegressionFitter] | Optional[dict[str, float]]]:
+        """Run the configured survival experiment workflow.
+
+        Returns:
+            Mapping with ``aft_table``, ``model_scores``, and fitted ``models``.
+        """
         from .plot import SurvivalSeabornPlotConfigList
 
         logging.basicConfig(level=logging.INFO)

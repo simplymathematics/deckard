@@ -6,7 +6,7 @@ This module contains the survival plotting classes that used to live in
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Mapping, Optional
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -36,12 +36,30 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
 
     @staticmethod
     def _resolve_output_path(folder: str, file: str, filetype: str) -> Path:
+        """Build an output path under a folder with a default suffix.
+
+        Args:
+            folder: Destination folder for artifacts.
+            file: File name or relative path.
+            filetype: Default suffix applied when ``file`` has no suffix.
+
+        Returns:
+            Fully resolved output path.
+        """
         file_path = Path(file)
         if file_path.suffix == "":
             file_path = file_path.with_suffix(filetype)
         return Path(folder) / file_path
 
     def build_coefficients_plot(self, summary: pd.DataFrame) -> SeabornPlotConfig:
+        """Create a bar-plot config for model coefficient p-values.
+
+        Args:
+            summary: Lifelines summary dataframe from a fitted model.
+
+        Returns:
+            A seaborn plot config for coefficient p-value bars.
+        """
         summary_df = pd.DataFrame(summary).copy()
         if isinstance(summary_df.index, pd.MultiIndex):
             summary_df["covariate"] = summary_df.index.get_level_values(1)
@@ -64,6 +82,17 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
         )
 
     def build_calibration_plot(self, calibration: pd.DataFrame) -> SeabornPlotConfig:
+        """Create a line-plot config for calibration curves.
+
+        Args:
+            calibration: Calibration dataframe with predicted and observed columns.
+
+        Returns:
+            A seaborn plot config for calibration rendering.
+
+        Raises:
+            ValueError: If calibration data is empty.
+        """
         calibration_df = pd.DataFrame(calibration).copy()
         if calibration_df.empty:
             raise ValueError("Calibration data is empty")
@@ -87,11 +116,27 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
         file: str,
         xlabel: str,
         ylabel: str,
-        replacement_dict: dict,
-        dummy_dict: dict,
+        replacement_dict: Mapping[str, str],
+        dummy_dict: Mapping[str, str],
         folder: str,
         filetype: str = ".pdf",
-    ):
+    ) -> Axes:
+        """Render and save a fitted-model coefficient plot.
+
+        Args:
+            aft: Fitted lifelines model.
+            title: Plot title.
+            file: Output file name.
+            xlabel: X-axis label.
+            ylabel: Y-axis label.
+            replacement_dict: Label replacement mapping.
+            dummy_dict: Dummy-prefix mapping used to filter columns.
+            folder: Output folder.
+            filetype: Default output suffix.
+
+        Returns:
+            The rendered matplotlib axis.
+        """
         file_path = self._resolve_output_path(folder, file, filetype)
 
         try:
@@ -135,11 +180,27 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
         file: str,
         xlabel: str,
         ylabel: str,
-        replacement_dict: dict,
-        dummy_dict: dict,
+        replacement_dict: Mapping[str, str],
+        dummy_dict: Mapping[str, str],
         folder: str,
         filetype: str = ".pdf",
-    ):
+    ) -> Axes:
+        """Render and save a summary p-value bar plot.
+
+        Args:
+            aft: Fitted lifelines model.
+            title: Plot title.
+            file: Output file name.
+            xlabel: X-axis label.
+            ylabel: Y-axis label.
+            replacement_dict: Label replacement mapping.
+            dummy_dict: Optional dummy replacement mapping.
+            folder: Output folder.
+            filetype: Default output suffix.
+
+        Returns:
+            The rendered matplotlib axis.
+        """
         file_path = self._resolve_output_path(folder, file, filetype)
 
         summary = aft.summary.copy().reset_index()
@@ -190,7 +251,26 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
         folder: str,
         ax: Optional[Axes] = None,
         filetype: str = ".pdf",
-    ):
+    ) -> Axes:
+        """Render and save survival calibration (QQ-style) curves.
+
+        Args:
+            aft: Fitted lifelines model.
+            X_train: Training dataframe.
+            X_test: Optional test dataframe.
+            t0: Calibration horizon.
+            title: Plot title.
+            file: Output file name.
+            xlabel: X-axis label.
+            ylabel: Y-axis label.
+            calibration_fn: Callable that returns a calibration dataframe.
+            folder: Output folder.
+            ax: Optional existing axis.
+            filetype: Default output suffix.
+
+        Returns:
+            The rendered matplotlib axis.
+        """
         calibration_data = calibration_fn(aft, X_train, X_test, t0)
         file_path = self._resolve_output_path(folder, file, filetype)
         cfg = self.build_calibration_plot(calibration_data)
@@ -213,15 +293,31 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
         self,
         *,
         aft: Any,
-        covariate_array: list,
-        values: list,
+        covariate_array: list[Any],
+        values: list[Any],
         title: str,
         file: str,
         xlabel: str,
         ylabel: str,
         folder: str,
         filetype: str = ".pdf",
-    ):
+    ) -> Axes:
+        """Render and save partial-effects plots for a fitted model.
+
+        Args:
+            aft: Fitted lifelines model.
+            covariate_array: Covariates passed to lifelines partial-effects API.
+            values: Covariate values used to evaluate effects.
+            title: Plot title.
+            file: Output file name.
+            xlabel: X-axis label.
+            ylabel: Y-axis label.
+            folder: Output folder.
+            filetype: Default output suffix.
+
+        Returns:
+            The rendered matplotlib axis.
+        """
         file_path = self._resolve_output_path(folder, file, filetype)
         ax = aft.plot_partial_effects_on_outcome(covariate_array, values=values)
         ax.set_title(title)
@@ -396,34 +492,47 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
         )
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class SurvivalSeabornPlotConfigList(ConfigBase):
     """Container for multiple survival model plots from SurvivalSeabornPlotterConfig."""
 
-    plots_by_model: dict = field(default_factory=dict)
-    models: dict = field(default_factory=dict)
-    t0s: dict = field(default_factory=dict)
+    plots_by_model: dict[str, list[Any]] = field(default_factory=dict)
+    models: dict[str, Any] = field(default_factory=dict)
+    t0s: dict[str, float] = field(default_factory=dict)
     runtime_data: Any = None
 
     def add_model_plots(
         self,
         model_type: str,
         model: Any,
-        plots: list,
+        plots: list[Any],
         t0: float = 0.35,
     ) -> None:
+        """Store rendered model artifacts for later table/plot assembly.
+
+        Args:
+            model_type: Model key used in configuration.
+            model: Fitted model object.
+            plots: Rendered plot artifacts for the model.
+            t0: Calibration horizon used for this model.
+        """
         self.plots_by_model[model_type] = plots
         self.models[model_type] = model
         self.t0s[model_type] = t0
 
-    def render_all(self) -> dict:
-        results = {"by_model": {}, "all_plots": []}
+    def render_all(self) -> dict[str, Any]:
+        """Flatten stored plots into grouped and aggregate views.
+
+        Returns:
+            Mapping containing per-model and merged plot lists.
+        """
+        results: dict[str, Any] = {"by_model": {}, "all_plots": []}
         for model_type, plots in self.plots_by_model.items():
             results["by_model"][model_type] = plots
             results["all_plots"].extend(plots)
         return results
 
-    def __call__(self, *args: Any, **kwargs: Any) -> dict:
+    def __call__(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """Render all configured model variants when the config list is called."""
         if args:
             kwargs = {
@@ -439,15 +548,29 @@ class SurvivalSeabornPlotConfigList(ConfigBase):
 
     def _render_all_models(
         self,
-        model_config: dict,
+        model_config: Mapping[str, Any],
         data: pd.DataFrame,
         survival_config: "SurvivalExperimentConfig",
         dataset: Optional[str],
         test_size: float = 0.25,
         folder: str = ".",
-        dummy_dict: Optional[dict] = None,
-    ) -> dict:
-        dummy_dict = dummy_dict or {}
+        dummy_dict: Optional[dict[str, str]] = None,
+    ) -> dict[str, Any]:
+        """Render all configured survival models and build a comparison table.
+
+        Args:
+            model_config: Mapping of model names to per-model config blocks.
+            data: Input dataframe used to build train/test splits.
+            survival_config: Parent survival experiment config.
+            dataset: Dataset label used for runtime data metadata.
+            test_size: Holdout fraction in (0, 1).
+            folder: Output folder for generated artifacts.
+            dummy_dict: Optional dummy-prefix mapping for plotting.
+
+        Returns:
+            Mapping with fitted models, plots, summary table, and runtime data.
+        """
+        dummy_dict = dict(dummy_dict or {})
         plotter = SurvivalSeabornPlotterConfig()
 
         target = survival_config.target
@@ -534,15 +657,28 @@ class SurvivalSeabornPlotConfigList(ConfigBase):
 
     def orchestrate_survival_models(
         self,
-        model_config: dict,
+        model_config: Mapping[str, Any],
         data: pd.DataFrame,
         survival_config: "SurvivalExperimentConfig",
         dataset: Optional[str],
         test_size: float = 0.25,
         folder: str = ".",
-        dummy_dict: Optional[dict] = None,
-    ) -> dict:
-        """Backward-compatible alias for multi-model survival rendering."""
+        dummy_dict: Optional[dict[str, str]] = None,
+    ) -> dict[str, Any]:
+        """Backward-compatible alias for multi-model survival rendering.
+
+        Args:
+            model_config: Mapping of model names to per-model config blocks.
+            data: Input dataframe used to build train/test splits.
+            survival_config: Parent survival experiment config.
+            dataset: Dataset label used for runtime data metadata.
+            test_size: Holdout fraction in (0, 1).
+            folder: Output folder for generated artifacts.
+            dummy_dict: Optional dummy-prefix mapping for plotting.
+
+        Returns:
+            Mapping with fitted models, plots, summary table, and runtime data.
+        """
         return self._render_all_models(
             model_config=model_config,
             data=data,

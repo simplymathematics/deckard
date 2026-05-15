@@ -352,7 +352,7 @@ class SeabornPlotConfig(_SeabornPlotterMarker, ConfigBase):
         return ax
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class SeabornPlotConfigList(ConfigBase):
     """Container for multiple seaborn plot configurations.
 

@@ -4,7 +4,7 @@ import logging
 import traceback
 from collections.abc import Sized
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, Literal, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, Literal, Protocol, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -42,8 +42,8 @@ except ImportError:  # pragma: no cover
     equalized_odds_difference = None
 
 if TYPE_CHECKING:
-    from ..attack import AttackConfig
-    from ..model import ModelConfig
+    from ...attack import AttackConfig
+    from ...model import ModelConfig
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +65,12 @@ FairnessMode = Literal["test", "train", "attack", "val", "attack-val", "all"]
 ControlFeaturesLike = Union[pd.Series, pd.DataFrame, np.ndarray, None]
 SampleParamsLike = Union[dict[str, Any], dict[str, dict[str, Any]], None]
 RandomStateLike = Union[int, np.random.RandomState, None]
+RuntimeScalar = str | int | float | bool | None
+RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
+
+
+class RuntimePayload(Protocol):
+    """Opaque marker protocol for runtime plugin payloads."""
 
 
 def fairness_data_class_count(
@@ -87,7 +93,7 @@ def fairness_data_mutual_info_self(
     return float(mutual_info_score(y_true_arr, y_true_arr))
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultFairlearnDataScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     """Default fairness data scoring: class count, mutual information, etc.
 
@@ -328,7 +334,7 @@ class _FairnessScorerMixin:
 
     Composition example::
 
-        @dataclass(eq=False)
+        @dataclass(eq=False, kw_only=True)
         class FairnessClassifier(_FairnessScorerMixin, DefaultClassifierConfig):
             group_scorers: dict = field(default_factory=lambda: { ... })
             group_reduction: str = "difference"
@@ -502,11 +508,26 @@ class _FairnessScorerMixin:
         data: DataConfig | None = None,
         model: "ModelConfig | None" = None,
         attack: "AttackConfig | None" = None,
-        y_pred: Any | None = None,
-        y_true: Any | None = None,
+        y_pred: RuntimePayload | None = None,
+        y_true: RuntimePayload | None = None,
         score_file: str | None = None,
-        **kwargs: Any,
-    ) -> dict[str, Any]:
+        **kwargs: RuntimePayload,
+    ) -> dict[str, RuntimeValue]:
+        """Compute fairness metrics for resolved predictions and sensitive features.
+
+        Args:
+            mode: Runtime scoring mode.
+            data: Optional data runtime used for resolving labels and sensitive features.
+            model: Optional model runtime used for prediction resolution.
+            attack: Optional attack runtime used for attack-aware scoring.
+            y_pred: Optional explicit prediction payload.
+            y_true: Optional explicit ground-truth payload.
+            score_file: Optional path for score persistence.
+            **kwargs: Additional runtime keyword inputs including sensitive features.
+
+        Returns:
+            Dictionary containing computed fairness metrics.
+        """
         # Step 1: resolve y_true/y_pred for both main and group metrics.
         if data is None and (y_true is None or y_pred is None):
             raise ValueError(
@@ -649,7 +670,7 @@ class _FairnessScorerMixin:
         return results
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
     """ScorerDictConfig variant that computes fairness metrics through MetricFrame.
 
@@ -695,11 +716,26 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
         data: "DataConfig | None" = None,
         model: "ModelConfig | None" = None,
         attack: "AttackConfig | None" = None,
-        y_pred: Any | None = None,
-        y_true: Any | None = None,
+        y_pred: RuntimePayload | None = None,
+        y_true: RuntimePayload | None = None,
         score_file: str | None = None,
-        **kwargs: Any,
-    ) -> dict[str, Any]:
+        **kwargs: RuntimePayload,
+    ) -> dict[str, RuntimeValue]:
+        """Compute fairlearn group metrics from resolved predictions and labels.
+
+        Args:
+            mode: Runtime scoring mode.
+            data: Optional data runtime used for resolving labels and sensitive features.
+            model: Optional model runtime used for prediction resolution.
+            attack: Optional attack runtime used for attack-aware scoring.
+            y_pred: Optional explicit prediction payload.
+            y_true: Optional explicit ground-truth payload.
+            score_file: Optional path for score persistence.
+            **kwargs: Additional runtime keyword inputs including sensitive features.
+
+        Returns:
+            Dictionary containing overall and group fairness metrics.
+        """
         sensitive_features_diag = kwargs.get("sensitive_features", None)
         print(
             f"[DIAGNOSE] FairlearnScoreDictConfig.__call__: type(sensitive_features)={type(sensitive_features_diag)}, sensitive_features={repr(sensitive_features_diag)[:200]}",
@@ -1058,7 +1094,7 @@ def fairness_group_mse_difference(
     )
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultFairlearnScorerConfig(_TaskAwareScorerMixin, FairlearnScoreDictConfig):
     """Default fairness scorer family with optional task inheritance.
 
@@ -1163,7 +1199,7 @@ class DefaultFairlearnScorerConfig(_TaskAwareScorerMixin, FairlearnScoreDictConf
         super().__post_init__()
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultFairlearnClassificationConfig(DefaultFairlearnScorerConfig):
     """Default scorer set for classification fairness workflows.
 
@@ -1191,7 +1227,7 @@ class DefaultFairlearnClassificationConfig(DefaultFairlearnScorerConfig):
     classifier: Union[bool, str, None] = True
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultFairlearnRegressionConfig(DefaultFairlearnScorerConfig):
     """Default scorer set for regression fairness workflows.
 

@@ -69,7 +69,11 @@ def _resolve_frame_and_context(
     if isinstance(quasi_ident, str):
         quasi_ident = [quasi_ident]
     if not isinstance(quasi_ident, list) or len(quasi_ident) == 0:
-        raise ValueError("ANJANA scorers require quasi_ident identifiers")
+        if sens_att is not None:
+            quasi_ident = sens_att
+        else:
+            raise ValueError("ANJANA scorers require quasi_ident identifiers")
+        
     quasi_ident = [str(identifier) for identifier in quasi_ident]
     return cast(pd.DataFrame, frame), quasi_ident, sens_att
 
@@ -241,7 +245,7 @@ class _AnjanaScorerMixin(_DataScorerMarker):
     """
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultAnjanaScorerConfig(_AnjanaScorerMixin, ScorerDictConfig):
     """Default privacy scorer set for ANJANA anonymization analysis.
 
@@ -303,7 +307,7 @@ class DefaultAnjanaScorerConfig(_AnjanaScorerMixin, ScorerDictConfig):
     )
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultAnjanaDataScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     """Default data-analysis scorers plus ANJANA privacy scorers.
 
@@ -359,7 +363,7 @@ class DefaultAnjanaDataScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
         super().__post_init__()
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultAnjanaModelScorerConfig(DefaultAnjanaScorerConfig):
     """Model-scope privacy scorer set for ANJANA anonymization analysis.
 

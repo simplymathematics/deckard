@@ -70,7 +70,7 @@ def survival_bic_score(y_true: Any, y_pred: Any, **kwargs: Any) -> float:
     )
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class DefaultLifelinesConfig(ScorerDictConfig):
     """Default scorer set for survival workflows.
 

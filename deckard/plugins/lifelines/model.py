@@ -9,11 +9,12 @@ import logging
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Mapping, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.axes import Axes
 from lifelines import (
 	AalenAdditiveFitter,
 	CRCSplineFitter,
@@ -50,7 +51,7 @@ class _SurvivalModelInitMixin:
 	"""Reusable initialization behavior for survival model configs."""
 
 	# Declared for static analyzers; concrete dataclass provides these fields.
-	score_dict: dict
+	score_dict: dict[str, Any]
 
 	def _initialize_runtime_fields(self) -> None:
 		if not hasattr(self, "score_dict") or self.score_dict is None:
@@ -77,7 +78,7 @@ class _SurvivalModelInitMixin:
 			self._target_ = "deckard.plugins.lifelines.model.SurvivalModelConfig"
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class SurvivalModelConfig(_SurvivalModelInitMixin, ModelConfig):
 	"""Configuration for survival analysis models using lifelines.
 
@@ -103,8 +104,12 @@ class SurvivalModelConfig(_SurvivalModelInitMixin, ModelConfig):
 	survival_model: str = "weibull"
 	t0: float = 0.35
 
-	def __post_init__(self):
-		"""Initialize SurvivalModelConfig without loading a model through Hydra."""
+	def __post_init__(self) -> None:
+		"""Initialize runtime state without hydra model loading.
+
+		Returns:
+			None.
+		"""
 		# Survival models are always regression models regardless of what was passed.
 		self.classifier = False
 		# Skip ModelConfig's __post_init__ which tries to load a model.
@@ -112,7 +117,10 @@ class SurvivalModelConfig(_SurvivalModelInitMixin, ModelConfig):
 		self._initialize_target()
 
 	@staticmethod
-	def _initialize_aft_fitter(mtype: str, kwargs: dict) -> RegressionFitter:
+	def _initialize_aft_fitter(
+		mtype: str,
+		kwargs: dict[str, Any],
+	) -> RegressionFitter:
 		"""Initialize a lifelines AFT fitter with appropriate defaults."""
 		if mtype not in AFT_MODEL_TYPES:
 			raise ValueError(
@@ -147,7 +155,17 @@ class SurvivalModelConfig(_SurvivalModelInitMixin, ModelConfig):
 		folder: Optional[str] = None,
 		**kwargs,
 	) -> RegressionFitter:
-		"""Fit a survival model and optionally persist its summary."""
+		"""Fit the configured lifelines survival model.
+
+		Args:
+			df: Training dataframe with duration and event columns.
+			summary_file: Optional summary output file name.
+			folder: Optional folder used when writing summary output.
+			**kwargs: Additional fitter keyword arguments.
+
+		Returns:
+			A fitted lifelines regression fitter.
+		"""
 		if self.duration_col not in df.columns:
 			raise ValueError(f"Column {self.duration_col} not found in data")
 		if self.event_col is not None and self.event_col not in df.columns:
@@ -197,7 +215,7 @@ class SurvivalModelConfig(_SurvivalModelInitMixin, ModelConfig):
 		y_pred: RegressionFitter,
 		mode: str = "test",
 		**kwargs,
-	) -> dict:
+	) -> dict[str, Any]:
 		"""Compute survival model scores (calibration metrics).
 
 		For survival models, y_pred is the fitted fitter and y_true contains
@@ -254,15 +272,28 @@ class SurvivalModelConfig(_SurvivalModelInitMixin, ModelConfig):
 		self,
 		model: RegressionFitter,
 		df: pd.DataFrame,
-		ax=None,
+		ax: Optional[Axes] = None,
 		color: str = "red",
 		return_curve: bool = False,
 		plot: bool = True,
 	) -> Union[
-		tuple[Any, float, float],
-		tuple[Any, float, float, pd.DataFrame],
+		tuple[Optional[Axes], float, float],
+		tuple[Optional[Axes], float, float, pd.DataFrame],
 	]:
-		"""Compute survival calibration metrics and optionally render curve."""
+		"""Compute survival calibration metrics and optionally render a curve.
+
+		Args:
+			model: Fitted lifelines regression fitter.
+			df: Calibration dataframe.
+			ax: Optional axis for plotting.
+			color: Line color for the calibration curve.
+			return_curve: Whether to include the calibration curve dataframe.
+			plot: Whether to draw the calibration chart.
+
+		Returns:
+			A tuple of axis, ICI, and E50. If ``return_curve`` is true, the
+			calibration curve dataframe is appended.
+		"""
 		if plot:
 			if not ax:
 				_, ax = plt.subplots()
@@ -394,11 +425,24 @@ class SurvivalModelConfig(_SurvivalModelInitMixin, ModelConfig):
 	@staticmethod
 	def clean_data_for_aft(
 		data: pd.DataFrame,
-		covariate_list: list,
+		covariate_list: list[str],
 		target: str = "adv_failure_rate",
-		dummy_dict: Optional[dict] = None,
+		dummy_dict: Optional[dict[str, str]] = None,
 	) -> pd.DataFrame:
-		"""Clean and encode tabular data for AFT-style survival fitting."""
+		"""Clean and encode tabular data for AFT-style survival fitting.
+
+		Args:
+			data: Source dataframe.
+			covariate_list: Covariate columns to keep.
+			target: Target/event column.
+			dummy_dict: Optional mapping of categorical columns to prefixes.
+
+		Returns:
+			A cleaned dataframe suitable for lifelines fitting.
+
+		Raises:
+			ValueError: If the target is missing before or after cleaning.
+		"""
 		dummy_dict = dummy_dict or {}
 		if target not in data.columns:
 			raise ValueError(f"Target {target} not in dataframe")
@@ -444,14 +488,26 @@ class SurvivalModelConfig(_SurvivalModelInitMixin, ModelConfig):
 
 	def make_survival_model_table(
 		self,
-		models: dict,
+		models: Mapping[str, RegressionFitter],
 		dataset: Optional[str],
 		X_train: pd.DataFrame,
 		X_test: pd.DataFrame,
 		folder: str = ".",
-		t0s: Optional[dict] = None,
+		t0s: Optional[Mapping[str, float]] = None,
 	) -> pd.DataFrame:
-		"""Build comparison table with AIC/BIC/Concordance/ICI/E50 columns."""
+		"""Build a comparison table across fitted survival models.
+
+		Args:
+			models: Mapping of model names to fitted models.
+			dataset: Dataset label preserved for compatibility.
+			X_train: Training dataframe reserved for compatibility.
+			X_test: Test dataframe used for metrics.
+			folder: Output folder for ``aft_comparison.csv``.
+			t0s: Optional per-model calibration horizons.
+
+		Returns:
+			A dataframe with AIC/BIC/concordance/calibration metrics.
+		"""
 		t0s = t0s or {}
 		comparison_data = []
 

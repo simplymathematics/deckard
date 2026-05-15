@@ -1,16 +1,24 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Protocol, Union
 
 import pandas as pd
 from omegaconf import DictConfig, ListConfig
 
-from ...data.base import DataHookPlugin, DataPipelineConfig
+from deckard.plugins import HookPlugin
+from ...data.base import DataPipelineConfig
 from ...data._mixins import _SensitiveColumnsMixin
 from ...utils import (
 	coerce_to_list,
 	is_default_config_value,
 	merge_list_of_dicts,
 )
+
+RuntimeScalar = str | int | float | bool | None
+RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
+
+
+class RuntimePayload(Protocol):
+	"""Opaque marker protocol for runtime plugin payloads."""
 from ...plugins.fairlearn.score import (
 	DefaultFairlearnClassificationConfig,
 	DefaultFairlearnRegressionConfig,
@@ -22,7 +30,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class _SensitiveBehaviorMixin(_SensitiveColumnsMixin):
 	"""Fairlearn-specific sensitive-feature behavior for data configs.
 
@@ -106,7 +114,7 @@ class _SensitiveBehaviorMixin(_SensitiveColumnsMixin):
 			self._sensitive_val = None
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class FairlearnDataConfig(_SensitiveBehaviorMixin, DataPipelineConfig):
 	"""Data pipeline config with fairlearn-sensitive feature support.
 
@@ -118,9 +126,9 @@ class FairlearnDataConfig(_SensitiveBehaviorMixin, DataPipelineConfig):
 	fairness_defense : dict[str, Any] | list[dict[str, Any]] | bool | None
 		Fairness-defense step specification consumed by
 		``_inject_fairness_defense_step``.
-	plugins : list[DataHookPlugin]
+	plugins : list[HookPlugin]
 		Declarative runtime plugin specs. Default contains one
-		``DataHookPlugin`` configured with:
+		``HookPlugin`` configured with:
 		``hook_name: str = 'before_sample'``,
 		``method_name: str = '_inject_fairness_defense_step'``, and
 		``init_params: dict[str, Any]`` metadata.
@@ -135,13 +143,22 @@ class FairlearnDataConfig(_SensitiveBehaviorMixin, DataPipelineConfig):
 		runtime train buffers when available.
 	"""
 
-	def __call__(self, *args, **kwargs):
+	def __call__(self, *args: RuntimePayload, **kwargs: RuntimePayload) -> dict[str, RuntimeValue]:
+		"""Execute fairness-aware data runtime with scorer auto-selection.
+
+		Args:
+			*args: Positional runtime arguments forwarded to the parent pipeline runtime.
+			**kwargs: Keyword runtime arguments forwarded to the parent pipeline runtime.
+
+		Returns:
+			Runtime score dictionary produced by the parent pipeline config.
+		"""
 		# Auto-select fairness-compatible scorer if not set
 		if (
 			is_default_config_value(self.scorer, include_best=False)
 			or self.scorer is None
 		):
-			from deckard.score import (
+			from deckard.plugins.fairlearn.score import (
 				DefaultFairlearnClassificationConfig,
 				DefaultFairlearnRegressionConfig,
 			)
@@ -159,7 +176,7 @@ class FairlearnDataConfig(_SensitiveBehaviorMixin, DataPipelineConfig):
 
 	plugins: list = field(
 		default_factory=lambda: [
-			DataHookPlugin(
+			HookPlugin(
 				hook_name="before_sample",
 				method_name="_inject_fairness_defense_step",
 				init_params={

@@ -1,12 +1,13 @@
 import inspect
 from dataclasses import dataclass, field
-from typing import Any, Dict, Literal, Optional, Union, cast
+from typing import Any, Dict, Literal, Optional, Protocol, Union, cast
 
 import numpy as np
 import pandas as pd
 from omegaconf import DictConfig
 
-from ...data.base import DataHookPlugin, DataPipelineConfig
+from deckard.plugins import HookPlugin
+from ...data.base import DataPipelineConfig
 from ...data._mixins import _SensitiveColumnsMixin
 from ...utils import (
     is_default_config_value,
@@ -16,7 +17,14 @@ from ...utils import (
     normalize_optional_mapping_or_steps as _normalize_optional_mapping_or_steps,
 )
 
-@dataclass(eq=False)
+RuntimeScalar = str | int | float | bool | None
+RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
+
+
+class RuntimePayload(Protocol):
+    """Opaque marker protocol for runtime plugin payloads."""
+
+@dataclass(eq=False, kw_only=True)
 class _PrivacyBehaviorMixin:
     """Reusable privacy behavior mixed into data pipeline configs."""
 
@@ -99,7 +107,18 @@ class _PrivacyBehaviorMixin:
         quasi_identifiers: Optional[Union[str, list]] = None,
         interval_sizes: Optional[Dict[str, Union[int, list]]] = None,
         fill_value: Optional[str] = None,
-    ) -> Dict[str, Dict[int, Any]]:
+    ) -> Dict[str, Dict[int, RuntimeValue]]:
+        """Generate interval or categorical hierarchies for ANJANA quasi-identifiers.
+
+        Args:
+            frame: Optional source DataFrame. Defaults to runtime ``_X``.
+            quasi_identifiers: Optional list of quasi-identifier column names.
+            interval_sizes: Optional per-column numeric interval specification.
+            fill_value: Optional replacement label for missing values.
+
+        Returns:
+            Per-column hierarchy dictionaries keyed by hierarchy level.
+        """
         source = frame if frame is not None else getattr(self, "_X", None)
         if not isinstance(source, pd.DataFrame):
             raise TypeError(
@@ -239,7 +258,7 @@ class _PrivacyBehaviorMixin:
 
         self._X = transformed
 
-    def _inject_fairness_defense_step(self) -> None:
+    def _inject_privacy_defense_step(self) -> None:
         if self.fairness_defense in [None, False]:
             return
         if self.fairness_defense is True:
@@ -285,7 +304,7 @@ class _PrivacyBehaviorMixin:
 
         self.pipeline = {step_name: step_config, **self.pipeline}
 
-    def _build_anjana_frame(self) -> pd.DataFrame:
+    def _build_privacy_frame(self) -> pd.DataFrame:
         frame = getattr(self, "_X", None)
         if not isinstance(frame, pd.DataFrame):
             raise TypeError(
@@ -297,7 +316,7 @@ class _PrivacyBehaviorMixin:
         return frame
 
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class AnjanaDataConfig(_PrivacyBehaviorMixin, _SensitiveColumnsMixin, DataPipelineConfig):
     """Data pipeline config with ANJANA anonymization support.
 
@@ -322,9 +341,9 @@ class AnjanaDataConfig(_PrivacyBehaviorMixin, _SensitiveColumnsMixin, DataPipeli
         Interval-size controls used when synthesizing hierarchies.
     hierarchy_fill_value : str
         Fill token used for generalized values.
-    plugins : list[DataHookPlugin]
+    plugins : list[HookPlugin]
         Declarative runtime plugin specs. Default contains one
-        ``DataHookPlugin`` configured with:
+        ``HookPlugin`` configured with:
         ``hook_name: str = 'after_load_data'``,
         ``method_name: str = '_apply_anjana_defense'``, and
         ``init_params: dict[str, Any]`` metadata.
@@ -341,7 +360,7 @@ class AnjanaDataConfig(_PrivacyBehaviorMixin, _SensitiveColumnsMixin, DataPipeli
 
     plugins: list = field(
         default_factory=lambda: [
-            DataHookPlugin(
+            HookPlugin(
                 hook_name="after_load_data",
                 method_name="_apply_anjana_defense",
                 init_params={
@@ -358,18 +377,27 @@ class AnjanaDataConfig(_PrivacyBehaviorMixin, _SensitiveColumnsMixin, DataPipeli
         self._before_post_init()
         if is_default_config_value(self.scorer, include_best=False):
             self.scorer = load_class(
-                "deckard.plugins.anjana.score.DefaultAnjanaDataScorerConfig",
+                "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
             )
         super().__post_init__()
         self._validate_init()
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: RuntimePayload, **kwargs: RuntimePayload) -> dict[str, RuntimeValue]:
+        """Execute ANJANA data runtime with scorer auto-resolution.
+
+        Args:
+            *args: Positional runtime arguments forwarded to the pipeline runtime.
+            **kwargs: Keyword runtime arguments forwarded to the pipeline runtime.
+
+        Returns:
+            Runtime score dictionary from the underlying pipeline config.
+        """
         if (
             is_default_config_value(self.scorer, include_best=False)
             or self.scorer is None
         ):
             self.scorer = load_class(
-                "deckard.plugins.anjana.score.DefaultAnjanaDataScorerConfig",
+                "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
             )
         return DataPipelineConfig.__call__(self, *args, **kwargs)
 
@@ -439,7 +467,7 @@ class AnjanaDataConfig(_PrivacyBehaviorMixin, _SensitiveColumnsMixin, DataPipeli
             return {}
         if is_default_config_value(self.scorer, include_best=False):
             self.scorer = load_class(
-                "deckard.plugins.anjana.score.DefaultAnjanaDataScorerConfig",
+                "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
             )
         if not hasattr(self, "plugins"):
             if not callable(self.scorer):
