@@ -1,7 +1,7 @@
 dataset_name: adult
 test_size: 0.2
 random_state: 42
-_target_: deckard.data.FairlearnDataConfig
+_target_: deckard.plugins.fairlearn.FairlearnDataConfig
 classifier: True
 stratify: False
 alias: fair-adult-fairlearn

@@ -4,8 +4,8 @@ from torchvision import models
 
 from dataclasses import dataclass
 
-from deckard.pytorch.data import PytorchDataConfig
-from deckard.pytorch.model import PytorchModelConfig
+from deckard.frameworks.pytorch.data import PytorchDataConfig
+from deckard.frameworks.pytorch.model import PytorchModelConfig
 from deckard.utils import hash_conf_values
 
 __all__ = [
