@@ -42,4 +42,4 @@ def _sensitive_labels_from_frame(self, frame: pd.DataFrame) -> pd.Series:
 
 ---
 
-**Related:** [Mixin and Plugin Rules](mixin_plugin_rules.md) | [Refactor Plan](refactor_plan.md)
+**Related:** [Mixin and Plugin Rules](mixin_plugin_rules) | [Refactor Plan](refactor_plan)

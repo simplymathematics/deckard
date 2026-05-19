@@ -56,7 +56,7 @@ bash scripts/manage_dvc_cache.sh [command]
 
 ### 4. Documentation
 
-#### `docs/developers/gh_actions_cache.md`
+#### `docs/developers/gh_actions_cache`
 Comprehensive guide covering:
 - How caching works locally and in CI
 - Local development workflow
@@ -65,7 +65,7 @@ Comprehensive guide covering:
 - Troubleshooting common issues
 - Performance expectations
 
-#### `scripts/README.md`
+#### `scripts/README`
 Updated with new DVC cache management section
 
 ## How It Works

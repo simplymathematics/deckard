@@ -2,7 +2,7 @@
 
 Use this page as the actionable TODO checklist. Keep detailed design/spec text in the dedicated developer docs linked below.
 
-See `.github/refactor_plan.md` for detailed status notes and historical tracking.
+See `.github/refactor_plan` for detailed status notes and historical tracking.
 
 ## TODO Checklist
 
@@ -15,8 +15,8 @@ See `.github/refactor_plan.md` for detailed status notes and historical tracking
 - [ ] Refactor tests to compose canonical configs via Hydra (compose-first, unit, experiment).
 - [ ] Enforce naming conventions (`*Config`, `Default*ScoreConfig`, `*Mixin`, `*Plugin`, `snake-case.yaml`).
 - [ ] Verify adapter/public-attribute boundaries and core/framework/plugin isolation tests.
-- [ ] Run coverage + focused refactor test suites and update `.github/refactor_plan.md` progress.
+- [ ] Run coverage + focused refactor test suites and update `.github/refactor_plan` progress.
 
 ---
 
-**Design Specs:** [Config Declaration Architecture](config_declaration_architecture.md) | [Naming Conventions](naming_conventions.md) | [Adapter Contract](adapter_contract.md) | [Core/Framework/Plugin Boundaries](core_framework_plugin_boundaries.md)
+**Design Specs:** [Config Declaration Architecture](config_declaration_architecture) | [Naming Conventions](naming_conventions) | [Adapter Contract](adapter_contract) | [Core/Framework/Plugin Boundaries](core_framework_plugin_boundaries)

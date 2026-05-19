@@ -25,4 +25,4 @@
 
 ---
 
-**Related:** [Naming Conventions](naming_conventions.md) | [Docstring Standard](docstring_standard.md)
+**Related:** [Naming Conventions](naming_conventions) | [Docstring Standard](docstring_standard)

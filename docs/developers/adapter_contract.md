@@ -14,4 +14,4 @@ Adapter mixins in `deckard/frameworks/adapters.py` are the only permitted cross-
 
 ---
 
-**Related:** [Core/Framework/Plugin Boundaries](core_framework_plugin_boundaries.md) | [Mixin and Plugin Rules](mixin_plugin_rules.md)
+**Related:** [Core/Framework/Plugin Boundaries](core_plugin_boundaries) | [Mixin and Plugin Rules](mixin_plugin_rules)

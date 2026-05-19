@@ -5,17 +5,18 @@ Welcome to the Deckard developer documentation. This section contains all design
 
 ## Contents
 
-- [Design Principles](design_principles.md)
-- [Development Workflow](development.md)
-- [Refactor Plan](refactor_plan.md)
-- [Config Declaration Architecture](config_declaration_architecture.md)
-- [Core/Framework/Plugin Boundaries](core_framework_plugin_boundaries.md)
-- [Core Plugin Boundaries (Legacy)](core_plugin_boundaries.md)
-- [Naming Conventions](naming_conventions.md)
-- [Adapter Contract](adapter_contract.md)
-- [Mixin and Plugin Rules](mixin_plugin_rules.md)
-- [Docstring Standard](docstring_standard.md)
-- [GH Actions Cache Setup](gh_actions_cache.md)
+- [Design Principles](design_principles)
+- [Development Workflow](development)
+- [GitHub Actions Workflows](workflows)
+- [Refactor Plan](refactor_plan)
+- [Config Declaration Architecture](config_declaration_architecture)
+- [Core/Framework/Plugin Boundaries](core_framework_plugin_boundaries)
+- [Core Plugin Boundaries (Legacy)](core_plugin_boundaries)
+- [Naming Conventions](naming_conventions)
+- [Adapter Contract](adapter_contract)
+- [Mixin and Plugin Rules](mixin_plugin_rules)
+- [Docstring Standard](docstring_standard)
+- [GH Actions Cache Setup](gh_actions_cache)
 
 ```{toctree}
 :maxdepth: 2
@@ -23,6 +24,7 @@ Welcome to the Deckard developer documentation. This section contains all design
 
 design_principles
 development
+workflows
 refactor_plan
 config_declaration_architecture
 core_framework_plugin_boundaries
@@ -34,11 +36,11 @@ docstring_standard
 gh_actions_cache
 ```
 
-For user-facing documentation, see the [Overview](../overview/index.md) and [Notebooks](../notebooks/index.md).
+For user-facing documentation, see the [Overview](../overview/index) and [Notebooks](../notebooks/index).
 
 ---
 
 **Quick links:**
-- [API Reference](../api/modules.md)
-- [Notebook Index](../notebooks/index.md)
-- [Build Docs](../overview/build_docs.md)
+- [API Reference](../api/modules)
+- [Notebook Index](../notebooks/index)
+- [Build Docs](../overview/build_docs)

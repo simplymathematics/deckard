@@ -24,4 +24,4 @@ Deckard enforces strict naming conventions for all config, plugin, and mixin obj
 
 ---
 
-**Related:** [Refactor Plan](refactor_plan.md) | [Mixin and Plugin Rules](mixin_plugin_rules.md)
+**Related:** [Refactor Plan](refactor_plan) | [Mixin and Plugin Rules](mixin_plugin_rules)

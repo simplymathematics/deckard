@@ -171,5 +171,5 @@ make html
 ```
 
 For DVC notebook caching behavior in local/CI docs builds, see
-[DVC Cache Setup Summary](gh_actions_cache.md) and
-[DVC Cache and Notebook Workflow Guide](gh_actions_cache.md).
+[DVC Cache Setup Summary](gh_actions_cache) and
+[DVC Cache and Notebook Workflow Guide](gh_actions_cache).

@@ -52,4 +52,4 @@ YAML declaration file names should use `snake-case.yaml`.
 
 ---
 
-**Related:** [Refactor Plan](refactor_plan.md) | [Naming Conventions](naming_conventions.md) | [Mixin and Plugin Rules](mixin_plugin_rules.md)
+**Related:** [Refactor Plan](refactor_plan) | [Naming Conventions](naming_conventions) | [Mixin and Plugin Rules](mixin_plugin_rules)
