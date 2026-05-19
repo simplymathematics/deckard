@@ -41,7 +41,7 @@ jobs:
     - name : build docs
       run: |
         cd docs
-        make html
+        make html DVC_REPRO_ARGS=--force
     - name: Push DVC cache
       run: |
         cd docs/notebooks
