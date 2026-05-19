@@ -36,14 +36,14 @@ class BaseFiles(TypedDict, total=False):
 
 
 class DefenseFiles(TypedDict, total=False):
-    model_file: str
+    defended_model_file: str
     defended_predictions_file: str
     defended_probabilities_file: str
     score_file: str
 
 
 class DetectorFiles(TypedDict, total=False):
-    model_file: str
+    detector_model_file: str
     detected_predictions_file: str
     detected_probabilities_file: str
     score_file: str

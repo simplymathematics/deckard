@@ -78,11 +78,13 @@ def _load_yaml_file(path: Path):
 def _file_resolver(arg: str):
     """Resolve ``${file:...}`` OmegaConf interpolations relative to deckard config.
 
-    Supported forms::
+    Example:
 
-        ${file:search/rf.yaml:model_search}
-        ${file:./configs/search/rf.yaml:model_search.subkey}
-        ${file:/abs/path/to/file.yaml}
+    ```text
+    ${file:search/rf.yaml:model_search}
+    ${file:./configs/search/rf.yaml:model_search.subkey}
+    ${file:/abs/path/to/file.yaml}
+    ```
     """
     if not arg:
         raise ValueError(

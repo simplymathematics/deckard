@@ -17,9 +17,11 @@ all three concrete samplers under the ``sample`` Hydra config group. Defaults
 are registered with names ``split``, ``kfold``, and ``shuffle``. A ``none``
 entry (empty config / no sampler) is also registered for opt-out.
 
-Example CLI usage::
+Example CLI usage:
 
-    python -m deckard data=adult data@sample=kfold
+```text
+python -m deckard data=adult data@sample=kfold
+```
 
 """
 
@@ -391,12 +393,14 @@ def register_sampler_configs() -> None:
     Call this function once at application startup (e.g. in your ``@hydra.main``
     script) to make the ``sample`` config group available.
 
-    After calling this function, the following CLI overrides are available::
+    Example:
 
-        sample=split
-        sample=kfold
-        sample=shuffle
-        sample=none    # disables the sampler (legacy 2-way split)
+    ```text
+    sample=split
+    sample=kfold
+    sample=shuffle
+    sample=none    # disables the sampler (legacy 2-way split)
+    ```
 
     When a sampler is selected, the config is placed under ``data.sample``
     via the ``@data.sample`` package override.

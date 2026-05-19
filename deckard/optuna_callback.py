@@ -16,6 +16,16 @@ output_file = "optuna.csv"
 
 @dataclass
 class OptunaStudyDumpCallback(Callback):
+    """
+    Optuna callback to dump study results to CSV after multirun.
+
+    Args:
+        storage (str): Optuna storage URI.
+        study_name (str): Name of the Optuna study.
+        metric_names (Union[str, ListConfig, list]): Metric names to track.
+        directions (Union[str, ListConfig, list]): Optimization directions.
+        output_file (str): Path to output CSV file.
+    """
     def __init__(
         self,
         storage: str,
@@ -24,6 +34,16 @@ class OptunaStudyDumpCallback(Callback):
         directions: Union[str, ListConfig, list],
         output_file: str,
     ):
+        """
+        Initialize the OptunaStudyDumpCallback.
+
+        Args:
+            storage (str): Optuna storage URI.
+            study_name (str): Name of the Optuna study.
+            metric_names (Union[str, ListConfig, list]): Metric names to track.
+            directions (Union[str, ListConfig, list]): Optimization directions.
+            output_file (str): Path to output CSV file.
+        """
         self.storage = storage
         self.study_name = study_name
         # Make sure the folder exists
@@ -51,11 +71,17 @@ class OptunaStudyDumpCallback(Callback):
         super().__init__()
 
     def on_multirun_start(self, config: DictConfig, **kwargs) -> None:
-        # delete the study if it exists
+        """
+        Called at the start of a multirun. Deletes existing study and creates a new one.
+
+        Args:
+            config (DictConfig): Hydra config.
+            **kwargs: Additional keyword arguments.
+        """
         try:
             study = optuna.load_study(self.study_name, storage=self.storage)
             study.delete_study(study_name=self.study_name, storage=self.storage)
-        except:  # noqa E722
+        except Exception:
             pass
         if len(self.directions) == 1:
             direction = self.directions[0]
@@ -80,6 +106,13 @@ class OptunaStudyDumpCallback(Callback):
             print("Cannot set metric names")
 
     def on_multirun_end(self, config: DictConfig, **kwargs) -> None:
+        """
+        Called at the end of a multirun. Saves the study trials to CSV.
+
+        Args:
+            config (DictConfig): Hydra config.
+            **kwargs: Additional keyword arguments.
+        """
         study = optuna.load_study(self.study_name, storage=self.storage)
         df = study.trials_dataframe()
         df.to_csv(self.output_file, index=False)

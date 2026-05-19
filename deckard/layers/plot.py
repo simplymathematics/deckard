@@ -17,7 +17,7 @@ PLOT_MAIN_DEFAULTS = {
     "backend": "auto",
     "plot_type": "",
     "plots": "",
-    "plots_file": "",
+    "plot_params_file": "",
     "plot_file": "",
     "plot_folder": "",
     "features": "all",
@@ -32,7 +32,6 @@ PLOT_MAIN_DEFAULTS = {
     "xscale": "",
     "yscale": "",
     "legend_title": "",
-    "plot_params_file": "",
     "kwargs_file": "",
     "rc_config_file": "",
 }
@@ -176,10 +175,10 @@ def _extract_backend(
     if backend not in {"auto", "yellowbrick", "seaborn"}:
         raise ValueError("backend must be one of: auto, yellowbrick, seaborn")
     if backend == "auto":
-        if data_file:
-            return "seaborn"
         if experiment_config or experiment_cfg:
             return "yellowbrick"
+        if data_file:
+            return "seaborn"
         raise ValueError(
             "Could not infer backend: provide plot.data_file or plot.experiment_config/experiment cfg",
         )
@@ -201,8 +200,8 @@ def plot_main(cfg: Any) -> dict:
             Plot type for single-plot mode.
     plots:
             Comma-separated plot types for multi-plot mode.
-    plots_file:
-            YAML file containing a list of Seaborn plot configurations under `plots` or as a top-level list.
+    plot_params_file:
+                YAML file containing Yellowbrick `plot_params` when an experiment config is present, or Seaborn plot specifications when no experiment config is present.
     plot_file:
             Output path for single-plot mode or optional combined figure in Seaborn list mode.
     plot_folder:
@@ -217,8 +216,6 @@ def plot_main(cfg: Any) -> dict:
             Optional custom plot title.
     xlabel, ylabel, xscale, yscale, legend_title:
             Optional Seaborn axis/legend formatting.
-    plot_params_file:
-            Optional YAML file containing Yellowbrick `plot_params`.
     kwargs_file:
             Optional YAML file containing Seaborn `kwargs`.
     rc_config_file:
@@ -238,7 +235,7 @@ def plot_main(cfg: Any) -> dict:
 
     plot_type = resolved["plot_type"]
     plots = resolved["plots"]
-    plots_file = resolved["plots_file"]
+    plot_params_file = resolved["plot_params_file"]
     plot_file = resolved["plot_file"]
     plot_folder = resolved["plot_folder"]
     features = resolved["features"]
@@ -253,7 +250,6 @@ def plot_main(cfg: Any) -> dict:
     xscale = resolved["xscale"]
     yscale = resolved["yscale"]
     legend_title = resolved["legend_title"]
-    plot_params_file = resolved["plot_params_file"]
     kwargs_file = resolved["kwargs_file"]
     rc_config_file = resolved["rc_config_file"]
 
@@ -265,23 +261,6 @@ def plot_main(cfg: Any) -> dict:
     if backend == "seaborn" and not data_file:
         raise ValueError("seaborn backend requires plot.data_file")
 
-    if not plot_type and not plots and not plots_file:
-        if backend == "yellowbrick":
-            plots = "all"
-        else:
-            raise ValueError(
-                "Provide one of plot.plot_type, plot.plots, or plot.plots_file.",
-            )
-    if sum(bool(x) for x in [plot_type, plots, plots_file]) > 1:
-        raise ValueError(
-            "Provide only one of plot.plot_type, plot.plots, or plot.plots_file.",
-        )
-
-    if backend == "yellowbrick" and plots_file:
-        raise ValueError(
-            "plot.plots_file is only supported for seaborn backend.",
-        )
-
     if backend == "yellowbrick":
         exp_cfg = (
             extracted_experiment_cfg
@@ -289,6 +268,9 @@ def plot_main(cfg: Any) -> dict:
             else _load_experiment_config(experiment_config)
         )
         exp_obj = _instantiate_experiment_cfg(exp_cfg)
+
+        if not plot_type and not plots:
+            plots = "all"
 
         plot_params = {}
         if plot_params_file:
@@ -373,6 +355,21 @@ def plot_main(cfg: Any) -> dict:
             raise TypeError("rc_config_file must contain a dictionary.")
         rc_config = loaded
 
+    if plot_type and plots:
+        raise ValueError(
+            "Provide only one of plot.plot_type or plot.plots for seaborn backend.",
+        )
+
+    if not plot_type and not plot_params_file:
+        raise ValueError(
+            "Provide one of plot.plot_type or plot.plot_params_file for seaborn backend.",
+        )
+
+    if plot_type and plot_params_file:
+        raise ValueError(
+            "Provide only one of plot.plot_type or plot.plot_params_file for seaborn backend.",
+        )
+
     if plot_type:
         if not x or not y:
             raise ValueError(
@@ -403,23 +400,20 @@ def plot_main(cfg: Any) -> dict:
             "plot_file": plot_file or None,
         }
 
-    if not plots_file:
-        raise ValueError("seaborn multi-plot mode requires plot.plots_file")
-
-    loaded = _load_yaml(plots_file)
+    loaded = _load_yaml(plot_params_file)
     if isinstance(loaded, dict) and "plots" in loaded:
         plot_specs = loaded["plots"]
     elif isinstance(loaded, list):
         plot_specs = loaded
     else:
         raise TypeError(
-            "plots_file must contain a list or a dict with key 'plots'.",
+            "plot_params_file must contain a list or a dict with key 'plots'.",
         )
 
     plot_cfgs = []
     for spec in plot_specs:
         if not isinstance(spec, dict):
-            raise TypeError("Each item in plots_file must be a dictionary.")
+            raise TypeError("Each item in plot_params_file must be a dictionary.")
         merged = dict(spec)
         merged.setdefault("data_file", data_file)
         if "kwargs" not in merged and kwargs:
@@ -435,7 +429,7 @@ def plot_main(cfg: Any) -> dict:
     return {
         "backend": "seaborn",
         "mode": "multi",
-        "plots_file": str(Path(plots_file).resolve()),
+        "plot_params_file": str(Path(plot_params_file).resolve()),
         "plot_file": plot_file or None,
         "num_plots": len(plot_cfgs),
     }

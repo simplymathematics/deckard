@@ -333,17 +333,20 @@ class _FairnessScorerMixin:
     * ``control_features``, ``sample_params``, ``n_boot``, ``ci_quantiles``,
       ``random_state`` – forwarded to MetricFrame as-is.
 
-    Composition example::
+    Example:
 
-        @dataclass(eq=False, kw_only=True)
-        class FairnessClassifier(_FairnessScorerMixin, DefaultClassifierConfig):
-            group_scorers: dict = field(default_factory=lambda: { ... })
-            group_reduction: str = "difference"
-            ...
-            def __post_init__(self):
-                super().__post_init__()
-                self._normalize_group_scorers_input()
-                self._coerce_group_scorers()
+    ```python
+    @dataclass(eq=False, kw_only=True)
+    class FairnessClassifier(_FairnessScorerMixin, DefaultClassifierConfig):
+        group_scorers: dict = field(default_factory=lambda: { ... })
+        group_reduction: str = "difference"
+        ...
+
+        def __post_init__(self):
+            super().__post_init__()
+            self._normalize_group_scorers_input()
+            self._coerce_group_scorers()
+    ```
     """
 
     def _normalize_group_scorers_input(self) -> None:

@@ -29,11 +29,11 @@ logger = logging.getLogger(__name__)
 
 
 def discover_config_roots() -> List[Path]:
-    """Discover all active config root directories.
+    """
+    Discover all active config root directories.
 
     Returns:
-        List[Path]: Ordered list of config root paths to scan. Built-in roots
-                    are prioritized before external roots.
+        List[Path]: Ordered list of config root paths to scan. Built-in roots are prioritized before external roots.
 
     Notes:
         - Built-in roots: examples/sklearn/config, examples/pytorch/config
@@ -76,13 +76,14 @@ def discover_config_roots() -> List[Path]:
 
 
 def iter_config_files(root: Path) -> Iterator[Path]:
-    """Recursively enumerate YAML configuration files in a root directory.
+    """
+    Recursively enumerate YAML configuration files in a root directory.
 
     Args:
-        root: Root directory to scan for .yaml files
+        root (Path): Root directory to scan for .yaml files.
 
     Yields:
-        Path: Paths to .yaml files found in root and subdirectories
+        Path: Paths to .yaml files found in root and subdirectories.
 
     Notes:
         - Only yields files with .yaml extension
@@ -102,13 +103,14 @@ def iter_config_files(root: Path) -> Iterator[Path]:
 
 
 def parse_config_file(path: Path) -> Optional[Dict]:
-    """Parse a YAML configuration file safely.
+    """
+    Parse a YAML configuration file safely.
 
     Args:
-        path: Path to YAML file to parse
+        path (Path): Path to YAML file to parse.
 
     Returns:
-        Optional[Dict]: Parsed YAML as dictionary, or None if parsing fails
+        Optional[Dict]: Parsed YAML as dictionary, or None if parsing fails.
 
     Notes:
         - Returns None on parse errors (logs warning)
@@ -131,13 +133,14 @@ def parse_config_file(path: Path) -> Optional[Dict]:
 
 
 def is_package_available(package_name: str) -> bool:
-    """Check if an optional package is installed.
+    """
+    Check if an optional package is installed.
 
     Args:
-        package_name: Name of package to check (e.g., 'torch', 'sklearn')
+        package_name (str): Name of package to check (e.g., 'torch', 'sklearn').
 
     Returns:
-        bool: True if package is available, False otherwise
+        bool: True if package is available, False otherwise.
 
     Notes:
         - Uses importlib.util.find_spec for reliable detection
@@ -151,13 +154,14 @@ def is_package_available(package_name: str) -> bool:
 
 
 def _should_register_config(path: Path) -> bool:
-    """Check if a config should be registered based on package availability.
+    """
+    Check if a config should be registered based on package availability.
 
     Args:
-        path: Path to config file
+        path (Path): Path to config file.
 
     Returns:
-        bool: True if config should be registered, False if dependencies missing
+        bool: True if config should be registered, False if dependencies missing.
 
     Notes:
         - Pytorch configs require torch to be installed
@@ -182,16 +186,17 @@ def _should_register_config(path: Path) -> bool:
 
 
 def _get_config_group_and_name(path: Path, root: Path) -> tuple:
-    """Compute Hydra group and config name from file path.
+    """
+    Compute Hydra group and config name from file path.
 
     Args:
-        path: Full path to config file
-        root: Root config directory
+        path (Path): Full path to config file.
+        root (Path): Root config directory.
 
     Returns:
-        tuple: (group, name) where group is Hydra config group and name is config name
+        tuple: (group, name) where group is Hydra config group and name is config name.
 
-    Examples:
+    Example:
         path: /root/model/sklearn/random_forest.yaml
         root: /root
         returns: ("model/sklearn", "random_forest")
@@ -209,15 +214,16 @@ def _get_config_group_and_name(path: Path, root: Path) -> tuple:
 
 
 def register_configs() -> None:
-    """Discover, parse, and register all configs with Hydra ConfigStore.
+    """
+    Discover, parse, and register all configs with Hydra ConfigStore.
 
     This is the main entry point for runtime config registration. It:
-    1. Discovers all config roots (built-in + external)
-    2. Iterates through all YAML files
-    3. Checks package availability for conditional registration
-    4. Parses YAML files safely
-    5. Registers configs with Hydra ConfigStore using safe_store
-    6. Logs progress and warnings
+        1. Discovers all config roots (built-in + external)
+        2. Iterates through all YAML files
+        3. Checks package availability for conditional registration
+        4. Parses YAML files safely
+        5. Registers configs with Hydra ConfigStore using safe_store
+        6. Logs progress and warnings
 
     Notes:
         - Safe to call multiple times (logs but doesn't error on duplicates)

@@ -21,12 +21,18 @@ logger = logging.getLogger(__name__)
 
 
 def _forward_hydra_control_args(parsed_args) -> list[str]:
-    """Rebuild Hydra control CLI flags parsed by Hydra's own parser.
+    """
+    Rebuild Hydra control CLI flags parsed by Hydra's own parser.
 
-    `get_args_parser()` consumes flags like `--multirun` and `--cfg` into
-    parsed_args fields. When we later rebuild `sys.argv` for `@hydra.main`,
-    these flags must be forwarded explicitly or Hydra falls back to single-run
-    mode.
+    Args:
+        parsed_args (argparse.Namespace): Parsed arguments from Hydra's parser.
+
+    Returns:
+        list[str]: List of CLI flags to forward to Hydra.
+
+    Example:
+        >>> _forward_hydra_control_args(parsed_args)
+        ['--multirun', '--cfg', 'config.yaml']
     """
     forwarded: list[str] = []
 
@@ -57,7 +63,15 @@ def _forward_hydra_control_args(parsed_args) -> list[str]:
 
 
 def get_configuration_paths():
-    """ """
+    """
+    Discover and validate the configuration directory and file paths.
+
+    Returns:
+        tuple[str, str]: Tuple of (config_dir, config_file) as absolute paths.
+
+    Raises:
+        FileNotFoundError: If the config file does not exist in the specified directory.
+    """
     # Get config dir from environment variable if set
     config_dir = os.environ.get(
         "DECKARD_CONFIG_DIR",
@@ -99,7 +113,12 @@ def get_configuration_paths():
 
 
 def _build_router() -> argparse.ArgumentParser:
-    """Minimal routing parser: recognises the subcommand name and passes everything else through."""
+    """
+    Build a minimal routing parser for deckard CLI subcommands.
+
+    Returns:
+        argparse.ArgumentParser: Argument parser with subcommands for each supported layer.
+    """
     parser = argparse.ArgumentParser(
         prog="deckard",
         description="deckard command-line interface",
@@ -116,6 +135,12 @@ def _build_router() -> argparse.ArgumentParser:
 
 
 def main():
+    """
+    Main entry point for the deckard CLI.
+
+    Handles config directory setup, runtime config registration, and dispatches
+    to the appropriate layer entrypoint based on CLI arguments.
+    """
     parser = _build_router()
 
     config_dir = os.environ.get("DECKARD_CONFIG_DIR", "config")
@@ -148,7 +173,15 @@ def main():
 
 
 def generate_hydra_main(layer):
-    """Run the parser and main entrypoint for the specified layer via Hydra."""
+    """
+    Run the parser and main entrypoint for the specified layer via Hydra.
+
+    Args:
+        layer (str): Name of the layer to execute.
+
+    Raises:
+        ValueError: If the specified layer is not supported.
+    """
     if layer not in layer_dict:
         logger.error(
             f"Unsupported layer: {layer}. Supported layers are: {list(layer_dict)}",

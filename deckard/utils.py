@@ -65,14 +65,31 @@ DEFAULT_CONFIG_TOKENS = frozenset({"auto", "default", "best"})
 
 
 def normalize_config_token(value: Any) -> str | None:
-    """Normalize a config token to lower-case text for keyword matching."""
+    """
+    Normalize a config token to lower-case text for keyword matching.
+
+    Args:
+        value (Any): The value to normalize.
+
+    Returns:
+        Optional[str]: Normalized string or None if input is None.
+    """
     if value is None:
         return None
     return str(value).strip().lower()
 
 
 def is_null_config_value(value: Any, *, allow_empty: bool = True) -> bool:
-    """Return True when *value* represents an explicit null-like config token."""
+    """
+    Return True when value represents an explicit null-like config token.
+
+    Args:
+        value (Any): Value to check.
+        allow_empty (bool, optional): Whether to treat empty string as null. Defaults to True.
+
+    Returns:
+        bool: True if value is null-like, False otherwise.
+    """
     token = normalize_config_token(value)
     if token is None:
         return True
@@ -82,7 +99,16 @@ def is_null_config_value(value: Any, *, allow_empty: bool = True) -> bool:
 
 
 def is_default_config_value(value: Any, *, include_best: bool = True) -> bool:
-    """Return True when *value* requests default/auto config behavior."""
+    """
+    Return True when value requests default/auto config behavior.
+
+    Args:
+        value (Any): Value to check.
+        include_best (bool, optional): Whether to include 'best' as default. Defaults to True.
+
+    Returns:
+        bool: True if value is a default/auto config token, False otherwise.
+    """
     token = normalize_config_token(value)
     if token is None:
         return False
@@ -141,6 +167,19 @@ def _auto_torch_device_from_backends(torch_module):
 
 
 def resolve_torch_device(requested_device: Any = None) -> Any:
+    """
+    Resolve the best torch device given a user/device request.
+
+    Args:
+        requested_device (Any, optional): Device specifier (int, str, torch.device, or None).
+
+    Returns:
+        Any: torch.device or string representing the resolved device.
+
+    Example:
+        >>> resolve_torch_device('cuda:0')
+        device(type='cuda', index=0)
+    """
     try:
         import torch
     except ImportError:
@@ -226,7 +265,14 @@ def resolve_torch_device(requested_device: Any = None) -> Any:
 
 
 def safe_store(group: str, name: str, node: Any) -> None:
-    """Register a Hydra config node while tolerating duplicate registrations."""
+    """
+    Register a Hydra config node while tolerating duplicate registrations.
+
+    Args:
+        group (str): Hydra config group.
+        name (str): Config name.
+        node (Any): Config node to register.
+    """
     cs = ConfigStore.instance()
     try:
         cs.store(group=group, name=name, node=node)
@@ -236,22 +282,17 @@ def safe_store(group: str, name: str, node: Any) -> None:
 
 
 def coerce_to_list(items: Union[list, Any]) -> list:
-    """Normalize a ``list`` or OmegaConf ``ListConfig`` to a plain Python list.
+    """
+    Normalize a list or OmegaConf ListConfig to a plain Python list.
 
-    Parameters
-    ----------
-    items:
-        A ``list`` or OmegaConf ``ListConfig``.
+    Args:
+        items (Union[list, Any]): A list or OmegaConf ListConfig.
 
-    Returns
-    -------
-    list
-        A plain Python list whose elements are the same objects as *items*.
+    Returns:
+        list: A plain Python list whose elements are the same objects as items.
 
-    Raises
-    ------
-    TypeError
-        If *items* is neither a ``list`` nor a ``ListConfig``.
+    Raises:
+        TypeError: If items is neither a list nor a ListConfig.
     """
     from omegaconf import ListConfig
 

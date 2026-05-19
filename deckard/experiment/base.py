@@ -748,21 +748,23 @@ class ExperimentConfig(
 
         Routing rules (applied after Hydra config resolution):
 
-        **Scoped dict** (Hydra ``@`` package syntax)::
+                Example:
 
-            +score@score.data=data-classification
-            +score@score.model=classification
-            +score@score.attack=evasion-classification
+                ```text
+                Scoped dict (Hydra @ package syntax):
+                    +score@score.data=data-classification
+                    +score@score.model=classification
+                    +score@score.attack=evasion-classification
 
-        Produces ``score: {data: {...}, model: {...}, attack: {...}}``.
-        Each sub-key is routed directly to its component via
-        :meth:`_route_scorer_to_scope` without any type-inference.
+                Produces score: {data: {...}, model: {...}, attack: {...}}.
+                Each sub-key is routed directly to its component via
+                _route_scorer_to_scope without any type-inference.
 
-        **Single config** (type-based fallback)::
-
-            score=classification              # -> model.scorer
-            score=data-classification        # -> data.scorer (_DataScorerMarker)
-            score=evasion-classification     # -> attack scorer (_AttackProfileScorer)
+                Single config (type-based fallback):
+                    score=classification              # -> model.scorer
+                    score=data-classification         # -> data.scorer (_DataScorerMarker)
+                    score=evasion-classification      # -> attack scorer (_AttackProfileScorer)
+                ```
 
         **Null / auto / default** -> components self-configure from their own defaults.
         """

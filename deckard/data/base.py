@@ -285,17 +285,20 @@ class DataConfig(
     >>> y_test = config.y_test
     >>> score_dict = config.score_dict
 
-    Using a pluggable sampler for 3-way splits::
+    Example:
 
-        from deckard.data.sample import SplitSampler
-        config = DataConfig(
-            dataset_name="digits",
-            test_size=0.2,
-            val_size=0.1,
-            sample=SplitSampler(),
-        )
-        config()
-        X_val, y_val = config.X_val, config.y_val
+    ```python
+    from deckard.data.sample import SplitSampler
+
+    config = DataConfig(
+        dataset_name="digits",
+        test_size=0.2,
+        val_size=0.1,
+        sample=SplitSampler(),
+    )
+    config()
+    X_val, y_val = config.X_val, config.y_val
+    ```
     """
 
     # Configuration fields
