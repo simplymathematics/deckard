@@ -9,6 +9,7 @@ import time
 # TypedDict definitions unchanged
 # -----------------------------------------------------------------------------
 
+
 class ModelFiles(TypedDict, total=False):
     model_file: str
     training_predictions_file: str
@@ -53,6 +54,7 @@ class DetectorFiles(TypedDict, total=False):
 # key registry
 # -----------------------------------------------------------------------------
 
+
 def collect_typed_dict_keys(*td_classes: type[TypedDict]) -> set[str]:
     keys: set[str] = set()
     for cls in td_classes:
@@ -74,6 +76,7 @@ _ALLOWED_KEYS = collect_typed_dict_keys(
 # error
 # -----------------------------------------------------------------------------
 
+
 class FileConfigError(TypeError):
     pass
 
@@ -82,11 +85,10 @@ class FileConfigError(TypeError):
 # resolver
 # -----------------------------------------------------------------------------
 
+
 class PlaceholderResolverMixin:
     replace: dict[str, str]
-    
-    
-    
+
     @property
     def num(self) -> str:
         """Returns the serial job number in a multirun sweep. Uses uuid as fallback if Hydra is not enabled."""
@@ -102,19 +104,16 @@ class PlaceholderResolverMixin:
             return str(HydraConfig.get().job.num)
         except ValueError:
             return uuid4().hex
-        
-    
+
     def _resolve(self, value: str | None) -> str | None:
         if not value:
             return None
 
-        
         value = value.replace("{num}", self.num)
         value = value.replace("{#}", self.num)
         value = value.replace("{timestamp}", time.strftime("%Y%m%d-%H%M%S"))
         value = value.replace("{hash}", self.id)
         value = value.replace("{*}", self.id)
-        
 
         for k, v in getattr(self, "replace", {}).items():
             value = value.replace(k, str(v))
@@ -234,5 +233,3 @@ class FileConfig(PlaceholderResolverMixin):
 
     def __len__(self) -> int:
         return len(self._files)
-    
-    

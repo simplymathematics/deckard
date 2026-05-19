@@ -8,8 +8,6 @@ from ..plugins import HookPlugin
 from ..utils import instantiate_plugin_spec, load_class, normalize_plugin_specs
 
 
-
-
 class ModelTrainingMixin:
     """Reusable model training behavior for non-pretrained model flows."""
 
@@ -60,7 +58,9 @@ class PretrainedModelMixin:
 class ModelPrunerMixin:
     """Reusable Optuna-style pruning behavior."""
 
-    def check_prune(self, trial, value: Any | None = None, step: int | None = None) -> bool:
+    def check_prune(
+        self, trial, value: Any | None = None, step: int | None = None
+    ) -> bool:
         """Report an intermediate value and ask a trial whether it should prune.
 
         Args:
@@ -134,7 +134,6 @@ class ModelHookRuntimeMixin:
         ]
         for attr in runtime_fields:
             setattr(target, attr, getattr(self, attr, None))
-
 
 
 __all__ = [

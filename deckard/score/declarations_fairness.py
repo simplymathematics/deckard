@@ -2,7 +2,6 @@
 
 from .base import safe_store
 
-
 safe_store(
     group="score",
     name="fairlearn-classification",

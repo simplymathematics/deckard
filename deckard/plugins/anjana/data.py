@@ -19,6 +19,8 @@ from ...utils import (
 
 RuntimeScalar = str | int | float | bool | None
 RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
+
+
 @dataclass(eq=False, kw_only=True)
 class _PrivacyBehaviorMixin:
     """Reusable privacy behavior mixed into data pipeline configs."""
@@ -316,7 +318,9 @@ class _PrivacyBehaviorMixin:
 
 
 @dataclass(eq=False, kw_only=True)
-class AnjanaDataConfig(_PrivacyBehaviorMixin, _SensitiveColumnsMixin, DataPipelineConfig):
+class AnjanaDataConfig(
+    _PrivacyBehaviorMixin, _SensitiveColumnsMixin, DataPipelineConfig
+):
     """Data pipeline config with ANJANA anonymization support.
 
     Initialization params
@@ -381,7 +385,9 @@ class AnjanaDataConfig(_PrivacyBehaviorMixin, _SensitiveColumnsMixin, DataPipeli
         super().__post_init__()
         self._validate_init()
 
-    def __call__(self, *args: RuntimePayload, **kwargs: RuntimePayload) -> dict[str, RuntimeValue]:
+    def __call__(
+        self, *args: RuntimePayload, **kwargs: RuntimePayload
+    ) -> dict[str, RuntimeValue]:
         """Execute ANJANA data runtime with scorer auto-resolution.
 
         Args:

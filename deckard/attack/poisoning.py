@@ -13,8 +13,6 @@ from .base import AttackConfig, AttackTypePlugin, _AttackMixin
 from ..frameworks.pytorch.torch_utils import is_torch_model
 from ..score.base import DefaultClassifierConfig, ScorerDictConfig
 
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -362,8 +360,10 @@ class _PoisoningAttackMixin(_AttackMixin):
             X_train = getattr(data, "X_train", None)
             y_train = getattr(data, "y_train", None)
             if X_train is not None and y_train is not None:
-                 return "train", X_train, y_train
-            logger.warning("Attack mode='val' requested but validation split is unavailable; falling back to test split.",)
+                return "train", X_train, y_train
+            logger.warning(
+                "Attack mode='val' requested but validation split is unavailable; falling back to test split.",
+            )
         X_test = getattr(data, "X_test", None)
         y_test = getattr(data, "y_test", None)
         if X_test is None or y_test is None:
@@ -408,4 +408,3 @@ class PoisoningAttackConfig(_PoisoningAttackMixin, AttackConfig):
             )
         ]
     )
-

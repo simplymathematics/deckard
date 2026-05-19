@@ -236,7 +236,9 @@ class DeclarativeConfigContract(ABC):
         return results
 
     @staticmethod
-    def _validate_declared_step_names(step_names: Sequence[str], *, phase: str) -> None:
+    def _validate_declared_step_names(
+        step_names: Sequence[str], *, phase: str
+    ) -> None:
         duplicate_steps = {
             step_name for step_name in step_names if step_names.count(step_name) > 1
         }
@@ -578,7 +580,7 @@ class FrameworkModelConfig(
             *cls.loading_steps(),
             *cls.context_steps(),
             "init_model",
-            "fit_model", #if pretrained, set this to None
+            "fit_model",  # if pretrained, set this to None
             *cls.scoring_steps(),
             *cls.persistence_steps(),
         )
@@ -619,8 +621,6 @@ class FrameworkModelConfig(
         Returns:
             Trained model runtime object.
         """
-    
-    
 
 
 @dataclass(eq=False, kw_only=True)
@@ -731,7 +731,9 @@ class FrameworkDetectorConfig(
         """
 
     @abstractmethod
-    def build_detector(self, model: "ModelConfig", attack: "AttackConfig") -> RuntimeValue:
+    def build_detector(
+        self, model: "ModelConfig", attack: "AttackConfig"
+    ) -> RuntimeValue:
         """Construct detector runtime for model/attack outputs.
 
         Args:

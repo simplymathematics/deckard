@@ -21,8 +21,6 @@ from ..frameworks.pytorch.torch_utils import (
     tensor_to_numpy,
 )
 
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -266,5 +264,3 @@ class EvasionAttackConfig(_EvasionAttackMixin, AttackConfig):
             )
         ]
     )
-
-

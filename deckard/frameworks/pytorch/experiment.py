@@ -12,7 +12,11 @@ from typing import Any, Union
 from dataclasses import dataclass
 
 from ...experiment.base import ExperimentConfig
-from ...utils import is_default_config_value, is_null_config_value, resolve_torch_device
+from ...utils import (
+    is_default_config_value,
+    is_null_config_value,
+    resolve_torch_device,
+)
 
 try:
     from .data import PytorchDataConfig

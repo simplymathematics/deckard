@@ -73,7 +73,7 @@ def _resolve_frame_and_context(
             quasi_ident = sens_att
         else:
             raise ValueError("ANJANA scorers require quasi_ident identifiers")
-        
+
     quasi_ident = [str(identifier) for identifier in quasi_ident]
     return cast(pd.DataFrame, frame), quasi_ident, sens_att
 
@@ -347,7 +347,10 @@ class DefaultAnjanaDataScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     scorers: dict[str, ScorerConfig] = field(default_factory=dict)
 
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
-        from ...score.data import DefaultDataClassificationConfig, DefaultDataRegressionConfig
+        from ...score.data import (
+            DefaultDataClassificationConfig,
+            DefaultDataRegressionConfig,
+        )
 
         base_scorers = (
             DefaultDataClassificationConfig().scorers

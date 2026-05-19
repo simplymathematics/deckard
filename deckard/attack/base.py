@@ -56,8 +56,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-
-
 def _sensitive_slice(sensitive, n):
     """Return the first *n* rows of *sensitive*, or None if unavailable."""
     if sensitive is None:
@@ -114,13 +112,13 @@ class SensitiveFeaturesWrapper(BaseEstimator):
         if "sensitive_features" in params:
             self._sensitive = np.asarray(params["sensitive_features"])
         return self
+
     def _sensitive_slice(self, sensitive, n):
         """Return the first *n* rows of *sensitive*, or None if unavailable."""
         if sensitive is None:
             return None
         arr = np.asarray(sensitive)
         return arr[:n]
-
 
 
 supported_attacks = [
@@ -520,7 +518,9 @@ class AttackConfig(AttackContractMixin, ConfigBase, FrameworkAttackConfig):
         """Initialize attack runtime objects and resolved attack family metadata."""
         return self._initialize_attack(model, data)
 
-    def resolve_attack_runtime_handler(self, runtime, attack_type: str, attack_subtype: str):
+    def resolve_attack_runtime_handler(
+        self, runtime, attack_type: str, attack_subtype: str
+    ):
         """Resolve the runtime handler function for this attack family/subtype."""
         handler = runtime._resolve_attack_handler(
             attack_type=attack_type,
@@ -553,9 +553,9 @@ class AttackConfig(AttackContractMixin, ConfigBase, FrameworkAttackConfig):
             attack_subtype=attack_subtype,
         )
 
-    
-
-    def set_mode(self, mode: Literal["auto", "train", "test", "val"]) -> "AttackConfig":
+    def set_mode(
+        self, mode: Literal["auto", "train", "test", "val"]
+    ) -> "AttackConfig":
         """Set attack scoring/evaluation split mode explicitly."""
         canonical = str(mode).strip().lower()
         if canonical not in {"auto", "train", "test", "val"}:
@@ -1048,12 +1048,18 @@ class AttackConfig(AttackContractMixin, ConfigBase, FrameworkAttackConfig):
         )
         self.validate_attack_runtime_inputs(data, model)
 
-        attack, art_model, attack_type, attack_subtype = self.initialize_attack_runtime(
-            model,
-            data,
+        attack, art_model, attack_type, attack_subtype = (
+            self.initialize_attack_runtime(
+                model,
+                data,
+            )
         )
-        runtime = self._with_attack_context(attack_type=attack_type, attack_subtype=attack_subtype)
-        handler = self.resolve_attack_runtime_handler(runtime, attack_type, attack_subtype)
+        runtime = self._with_attack_context(
+            attack_type=attack_type, attack_subtype=attack_subtype
+        )
+        handler = self.resolve_attack_runtime_handler(
+            runtime, attack_type, attack_subtype
+        )
 
         before_outputs = runtime._run_plugin_hook(
             "before_attack_dispatch",

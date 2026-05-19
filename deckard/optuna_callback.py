@@ -26,6 +26,7 @@ class OptunaStudyDumpCallback(Callback):
         directions (Union[str, ListConfig, list]): Optimization directions.
         output_file (str): Path to output CSV file.
     """
+
     def __init__(
         self,
         storage: str,

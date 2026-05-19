@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 # Imports
 import time
 import logging
@@ -15,7 +14,13 @@ from typing import Any, Union, List, Optional, Callable
 # PyTorch
 import torch
 from torch import Tensor
-from torch.utils.data import DataLoader, Dataset, IterableDataset, Subset, TensorDataset
+from torch.utils.data import (
+    DataLoader,
+    Dataset,
+    IterableDataset,
+    Subset,
+    TensorDataset,
+)
 
 # deckard
 from ...utils import load_class, resolve_torch_device
@@ -125,15 +130,9 @@ class TorchDatasetSamplingMixin:
             stratify=y,
         )
 
-        y_trainval = (
-            [y[i] for i in trainval_idx]
-            if y is not None
-            else None
-        )
+        y_trainval = [y[i] for i in trainval_idx] if y is not None else None
 
-        val_fraction = self.val_size / (
-            self.train_size + self.val_size
-        )
+        val_fraction = self.val_size / (self.train_size + self.val_size)
 
         train_idx, val_idx = train_test_split(
             trainval_idx,
@@ -177,9 +176,7 @@ class TorchDatasetSamplingMixin:
         )
 
         split_iter = (
-            splitter.split(indices, y)
-            if self.stratify
-            else splitter.split(indices)
+            splitter.split(indices, y) if self.stratify else splitter.split(indices)
         )
 
         folds = []
@@ -202,10 +199,11 @@ class TorchDatasetSamplingMixin:
         Shuffling is deferred to DataLoader.
         """
         return ds
+
+
 @dataclass(eq=False, kw_only=True)
 class PytorchDataPipelineConfig(DataPipelineConfig):
     pass
-
 
 
 class TorchDatasetMixin(BaseContractMixin):
@@ -242,9 +240,7 @@ class TorchDatasetMixin(BaseContractMixin):
                     f"sampler name must be a string, got {type(name)}",
                 )
             merged_params = {
-                k: v
-                for k, v in sampler_spec.items()
-                if k not in {"name", "_target_"}
+                k: v for k, v in sampler_spec.items() if k not in {"name", "_target_"}
             }
             merged_params.update(params)
             return name.strip().lower(), merged_params
@@ -285,14 +281,20 @@ class TorchDatasetMixin(BaseContractMixin):
             )
             runtime.val_size = float(val_size)
             runtime.random_state = int(self.random_state)
-            runtime.sample = "fold" if sampler_name in {"fold", "kfold", "stratifiedkfold"} else "shuffle"
+            runtime.sample = (
+                "fold"
+                if sampler_name in {"fold", "kfold", "stratifiedkfold"}
+                else "shuffle"
+            )
             runtime.stratify = bool(self.stratify)
 
             if runtime.sample == "shuffle":
                 # Shuffle mode leaves dataset unchanged; fall back to train/test indices.
                 return self._sample_train_test_indices(num_samples)
 
-            folds = runtime.sample(n_splits=int(params.get("n_splits", getattr(self, "n_splits", 5))))
+            folds = runtime.sample(
+                n_splits=int(params.get("n_splits", getattr(self, "n_splits", 5)))
+            )
             if not folds:
                 raise ValueError("Configured fold sampler produced no folds")
             train_subset, test_subset = folds[0]
@@ -351,14 +353,30 @@ class TorchDatasetMixin(BaseContractMixin):
             raise ValueError("Either train_size or test_size must be specified.")
 
         if self.train_size is None:
-            test_size = int(self.test_size * num_samples) if isinstance(self.test_size, float) else int(self.test_size)
+            test_size = (
+                int(self.test_size * num_samples)
+                if isinstance(self.test_size, float)
+                else int(self.test_size)
+            )
             train_size = num_samples - test_size
         elif self.test_size is None:
-            train_size = int(self.train_size * num_samples) if isinstance(self.train_size, float) else int(self.train_size)
+            train_size = (
+                int(self.train_size * num_samples)
+                if isinstance(self.train_size, float)
+                else int(self.train_size)
+            )
             test_size = num_samples - train_size
         else:
-            train_size = int(self.train_size * num_samples) if isinstance(self.train_size, float) else int(self.train_size)
-            test_size = int(self.test_size * num_samples) if isinstance(self.test_size, float) else int(self.test_size)
+            train_size = (
+                int(self.train_size * num_samples)
+                if isinstance(self.train_size, float)
+                else int(self.train_size)
+            )
+            test_size = (
+                int(self.test_size * num_samples)
+                if isinstance(self.test_size, float)
+                else int(self.test_size)
+            )
 
         if train_size + test_size > num_samples:
             raise ValueError("Train size and test size exceed total samples.")
@@ -370,11 +388,8 @@ class TorchDatasetMixin(BaseContractMixin):
     pass
 
 
-
-
 @dataclass(eq=False, kw_only=True)
 class PytorchDataConfig(TorchDatasetMixin, DataConfig):
-
     """Configuration for PyTorch datasets.
 
     Attributes:
@@ -406,7 +421,6 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
     sampler_params: dict[str, Any] = field(default_factory=dict)
     dataset_type: Union[str, None] = None
     n_splits: int = 5
-    
 
     def _normalize_sensitive_item(self, sensitive_item: Any) -> Any:
         if isinstance(sensitive_item, torch.Tensor):
@@ -717,7 +731,6 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             self.y_test,
             (Tensor, Dataset),
         ), "y_test must be a Tensor or Dataset"
-
 
     def __call__(  # noqa: F811
         self,
@@ -1044,7 +1057,14 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         end = time.process_time()
         self.data_sample_time = end - start
 
-    def __call__(self, data_file: str | None = None, score_file: str | None = None, mode:Union[str, None]="test", *args, **kwargs) -> dict:
+    def __call__(
+        self,
+        data_file: str | None = None,
+        score_file: str | None = None,
+        mode: Union[str, None] = "test",
+        *args,
+        **kwargs,
+    ) -> dict:
         """Load torch custom data, run sampling/scoring, and persist optional outputs.
 
         Args:

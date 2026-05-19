@@ -95,7 +95,9 @@ class SyntheticImageSensitiveDataset(Dataset):
 class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
     """Fairlearn-compatible DataConfig for PyTorch Datasets with sensitive features."""
 
-    _target_: str = "deckard.frameworks.pytorch.fairness_data.FairlearnPytorchDataConfig"
+    _target_: str = (
+        "deckard.frameworks.pytorch.fairness_data.FairlearnPytorchDataConfig"
+    )
     scorer: Any = None
 
     # ------------------------------------------------------------------

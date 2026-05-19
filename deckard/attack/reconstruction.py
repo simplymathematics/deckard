@@ -7,8 +7,6 @@ from .base import AttackConfig, AttackTypePlugin
 from .inference import _InferenceAttackMixin
 
 
-
-
 class _ReconstructionAttackMixin(_InferenceAttackMixin):
     """Reusable database reconstruction attack behavior."""
 
@@ -66,4 +64,3 @@ class ReconstructionAttackConfig(_ReconstructionAttackMixin, AttackConfig):
             )
         ]
     )
-

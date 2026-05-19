@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Union
 
+
 @dataclass(eq=False, kw_only=True)
 class DefenseTypePlugin:
     """Generic defense plugin that binds one mixin to one defense family/subtype.
@@ -29,6 +30,7 @@ class DefenseTypePlugin:
         if isinstance(self.mixin_type, str):
             # Assume resolve_class is available in the runtime context
             from deckard.utils import resolve_class
+
             resolved = resolve_class(self.mixin_type)
             self.mixin_type = resolved
             return resolved
@@ -43,7 +45,10 @@ class DefenseTypePlugin:
         if (defense_type or "").lower() != (self.defense_type or "").lower():
             return False
         subtype = (defense_subtype or "").lower()
-        if self.defense_subtype is not None and subtype != self.defense_subtype.lower():
+        if (
+            self.defense_subtype is not None
+            and subtype != self.defense_subtype.lower()
+        ):
             return False
         if subtype in {item.lower() for item in self.excluded_subtypes}:
             return False

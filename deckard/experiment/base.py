@@ -53,8 +53,6 @@ except ImportError:  # pragma: no cover
     torch = None
 
 
-
-
 try:
     from ..model import FairlearnModelConfig, FairlearnPytorchModelConfig
 except ImportError:  # pragma: no cover
@@ -277,7 +275,11 @@ class ExperimentConfig(
     device: Any = None
     classifier: Union[str, bool] = True
     evaluation_mode: Literal["standard", "tuning", "report"] = "standard"
-    score_mode: Union[Literal["train", "test", "val", "pre-sample"], list[Literal["train", "test", "val", "pre-sample"]], None] = None
+    score_mode: Union[
+        Literal["train", "test", "val", "pre-sample"],
+        list[Literal["train", "test", "val", "pre-sample"]],
+        None,
+    ] = None
 
     def _validate_mode_configuration(self) -> None:
         """Ensure exactly one experiment mode-routing strategy is active."""
@@ -318,7 +320,9 @@ class ExperimentConfig(
         elif self.evaluation_mode == "report":
             raw_modes = ["train", "test", "val"]
         else:
-            raise NotImplementedError(f"Evaluation mode: {self.evaluation_mode} not implemented")
+            raise NotImplementedError(
+                f"Evaluation mode: {self.evaluation_mode} not implemented"
+            )
 
         allowed = {"pre-sample", "train", "test", "val"}
         modes = []
@@ -709,9 +713,13 @@ class ExperimentConfig(
             score_fn = spec.get("score_function")
         else:
             score_fn = getattr(spec, "score_function", None)
-        return isinstance(score_fn, str) and "deckard.plugins.anjana.score." in score_fn
+        return (
+            isinstance(score_fn, str) and "deckard.plugins.anjana.score." in score_fn
+        )
 
-    def _split_merged_score_profiles(self, plain: dict) -> tuple[dict | None, dict | None]:
+    def _split_merged_score_profiles(
+        self, plain: dict
+    ) -> tuple[dict | None, dict | None]:
         scorers = plain.get("scorers")
         if not isinstance(scorers, dict):
             return None, plain
@@ -725,9 +733,7 @@ class ExperimentConfig(
             return None, plain
 
         remaining_scorers = {
-            key: value
-            for key, value in scorers.items()
-            if key not in data_scorers
+            key: value for key, value in scorers.items() if key not in data_scorers
         }
 
         data_cfg = {
@@ -1083,6 +1089,7 @@ class ExperimentConfig(
             return
 
         from deckard.plugins.fairlearn.data import FairlearnDataConfig
+
         if isinstance(
             self.data,
             FairlearnDataConfig,
@@ -1492,7 +1499,9 @@ class ExperimentConfig(
         model_keys = set(ModelFiles.__annotations__.keys())
         attack_keys = set(AttackFiles.__annotations__.keys())
         data_file_outputs = {
-            file: getattr(self.files, file, None) for file in base_keys if file in file_dict
+            file: getattr(self.files, file, None)
+            for file in base_keys
+            if file in file_dict
         }
         model_file_outputs = {
             file: getattr(self.files, file, None)

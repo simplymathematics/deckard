@@ -12,7 +12,12 @@ import pandas as pd
 from seaborn import scatterplot, lineplot, histplot, catplot, barplot, heatmap
 
 from ...utils import load_data, ConfigBase
-from ...plot.base import _PlotterMixin, _SeabornPlotterMarker, PlotTypePlugin, safe_store
+from ...plot.base import (
+    _PlotterMixin,
+    _SeabornPlotterMarker,
+    PlotTypePlugin,
+    safe_store,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -106,10 +111,10 @@ class _SeabornPlotterMixin(_PlotterMixin):
             }
             if self.runtime.hue is not None:
                 plot_kwargs["hue"] = self.runtime.hue
-            if (
-                self.runtime.style is not None
-                and self.runtime.plot_type in ["scatter", "line"]
-            ):
+            if self.runtime.style is not None and self.runtime.plot_type in [
+                "scatter",
+                "line",
+            ]:
                 plot_kwargs["style"] = self.runtime.style
 
         if self.runtime.plot_type == "cat":

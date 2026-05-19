@@ -13,8 +13,6 @@ from .defend import (
 from ..utils import safe_store
 
 
-
-
 class _TransformerDefenseMixin(_DefenseMixin):
     """Reusable transformer defense behavior."""
 

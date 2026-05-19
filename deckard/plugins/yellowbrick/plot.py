@@ -69,7 +69,12 @@ from yellowbrick.model_selection import (
 
 from ...utils import ConfigBase
 from ...experiment import ExperimentConfig
-from ...plot.base import _PlotterMixin, _YellowbrickPlotterMarker, PlotTypePlugin, safe_store
+from ...plot.base import (
+    _PlotterMixin,
+    _YellowbrickPlotterMarker,
+    PlotTypePlugin,
+    safe_store,
+)
 from ...frameworks.pytorch.score import (  # noqa: F401
     to_numpy as _to_numpy,
     is_dataloader_like as _is_dataloader_like,

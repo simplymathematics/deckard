@@ -28,6 +28,7 @@ except ImportError:
     torch_module = None
     nn_module = None
 
+
 class _FairnessBehaviorMixin:
     """Shared fairness-aware model behavior used by sklearn and PyTorch configs."""
 
@@ -109,11 +110,11 @@ class _FairnessBehaviorMixin:
             sensitive,
         )
 
-    
-
 
 @dataclass(eq=False, kw_only=True)
-class FairlearnModelConfig(_SensitiveColumnsMixin, _FairnessBehaviorMixin, ModelConfig):
+class FairlearnModelConfig(
+    _SensitiveColumnsMixin, _FairnessBehaviorMixin, ModelConfig
+):
     """Fairness-aware model config for sklearn models.
 
     Inherits sklearn training/prediction from ModelConfig and adds

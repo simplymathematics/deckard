@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 # OS imports
 import copy
 import inspect
@@ -11,8 +12,6 @@ from dataclasses import dataclass, field
 from omegaconf import DictConfig
 from typing import Any, Protocol, Union, TYPE_CHECKING
 import numpy as np
-
-
 
 if TYPE_CHECKING:
     import torch
@@ -1099,7 +1098,9 @@ class PytorchModelConfig(ModelConfig):
         }
         return scores
 
-    def get_art_model(self, data: "DataConfig") -> PyTorchClassifier | PyTorchRegressor:
+    def get_art_model(
+        self, data: "DataConfig"
+    ) -> PyTorchClassifier | PyTorchRegressor:
         """Get ART-compatible model wrapper for adversarial robustness.
 
         Args:

@@ -318,7 +318,7 @@ class _DefensePipelineConfigBehaviorMixin:
         **context: Any,
     ) -> str:
         stage = default_stage
-        #TODO: make this context aware since art defenses have _apply_fit and _apply_predict
+        # TODO: make this context aware since art defenses have _apply_fit and _apply_predict
         hook_outputs = self._run_plugin_hook(
             "resolve_defense_stage",
             default_stage=default_stage,
@@ -623,9 +623,6 @@ class _PassthroughDefenseMixin(_DefenseMixin):
             postprocessing_defences=existing_postprocessors,
         )
         return None, defended_estimator
-
-
-
 
 
 class _DefenseBehaviorMixin:

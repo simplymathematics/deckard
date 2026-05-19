@@ -8,8 +8,6 @@ from .defend import DefensePipelineConfig, _DefenseMixin
 from ..utils import safe_store
 
 
-
-
 class _PreprocessorDefenseMixin(_DefenseMixin):
     """Reusable preprocessor defense behavior."""
 

@@ -13,8 +13,6 @@ from .defend import (
 from ..utils import safe_store
 
 
-
-
 class _DetectorDefenseMixin(_DefenseMixin):
     """Reusable detector defense behavior."""
 
@@ -34,7 +32,9 @@ class _DetectorDefenseMixin(_DefenseMixin):
         assert defense_class is not None
         subtype = (defense_subtype or "").lower()
         if subtype == "evasion":
-            if not _is_torch_model_instance(base_estimator) and not _is_art_torch_wrapper(
+            if not _is_torch_model_instance(
+                base_estimator
+            ) and not _is_art_torch_wrapper(
                 self._model,
             ):
                 raise ValueError(

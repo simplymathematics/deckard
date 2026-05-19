@@ -4,15 +4,15 @@ from . import data, model, score
 from .data import AnjanaDataConfig
 from .model import AnjanaModelConfig
 from .score import (
-	DefaultAnjanaDataScorerConfig,
-	DefaultAnjanaModelScorerConfig,
-	DefaultAnjanaScorerConfig,
+    DefaultAnjanaDataScorerConfig,
+    DefaultAnjanaModelScorerConfig,
+    DefaultAnjanaScorerConfig,
 )
 
 __all__ = [
-	"AnjanaDataConfig",
-	"AnjanaModelConfig",
-	"DefaultAnjanaScorerConfig",
-	"DefaultAnjanaDataScorerConfig",
-	"DefaultAnjanaModelScorerConfig",
+    "AnjanaDataConfig",
+    "AnjanaModelConfig",
+    "DefaultAnjanaScorerConfig",
+    "DefaultAnjanaDataScorerConfig",
+    "DefaultAnjanaModelScorerConfig",
 ]

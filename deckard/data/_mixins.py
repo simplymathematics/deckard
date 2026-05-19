@@ -271,7 +271,9 @@ class DataPipelineMixin(DataPipelineContractMixin):
     """Reusable pipeline application behavior for data pipeline configs."""
 
     def declares_hook(self, hook_name: str) -> bool:
-        return hasattr(self, "_pipeline_declares_hook") and self._pipeline_declares_hook(
+        return hasattr(
+            self, "_pipeline_declares_hook"
+        ) and self._pipeline_declares_hook(
             hook_name,
         )
 
@@ -367,7 +369,9 @@ class DataSamplerMixin:
 
             sampler_obj = SplitSampler()
         if not callable(sampler_obj):
-            raise TypeError(f"Composed sampler must be callable, got {type(sampler_obj)}")
+            raise TypeError(
+                f"Composed sampler must be callable, got {type(sampler_obj)}"
+            )
         return sampler_obj
 
 

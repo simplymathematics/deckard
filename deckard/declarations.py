@@ -179,7 +179,9 @@ def _should_register_config(path: Path) -> bool:
     # Check sklearn-specific configs
     if "sklearn" in path_str:
         if not is_package_available("sklearn"):
-            logger.debug(f"Skipping scikit-learn config (sklearn not installed): {path}")
+            logger.debug(
+                f"Skipping scikit-learn config (sklearn not installed): {path}"
+            )
             return False
 
     return True

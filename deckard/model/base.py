@@ -116,10 +116,10 @@ class ModelConfig(
     ModelTrainingMixin,
     PretrainedModelMixin,
     ModelPrunerMixin,
-    ModelHookRuntimeMixin, #Allows for user-configured plugins
-    ModelContractMixin, #Ensures that the final object has necessary components, according to the Hook
-    ConfigBase, # Persistence, Hashing, 
-    FrameworkModelConfig, # Defines order of operations
+    ModelHookRuntimeMixin,  # Allows for user-configured plugins
+    ModelContractMixin,  # Ensures that the final object has necessary components, according to the Hook
+    ConfigBase,  # Persistence, Hashing,
+    FrameworkModelConfig,  # Defines order of operations
 ):
     """
     Runtime model configuration with plugin-aware training/evaluation orchestration.

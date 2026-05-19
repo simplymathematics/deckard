@@ -578,7 +578,10 @@ class DefaultPytorchDataScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
 safe_store(
     group="score",
     name="data-classification",
-    node={"_target_": "deckard.score.data.DefaultDataScorerConfig", "classifier": True},
+    node={
+        "_target_": "deckard.score.data.DefaultDataScorerConfig",
+        "classifier": True,
+    },
 )
 safe_store(
     group="score",

@@ -8,8 +8,6 @@ from .defend import DefensePipelineConfig, _DefenseMixin
 from ..utils import safe_store
 
 
-
-
 class _RegularizerDefenseMixin(_DefenseMixin):
     """Reusable regularizer defense behavior."""
 

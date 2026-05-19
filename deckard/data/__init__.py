@@ -31,7 +31,6 @@ except Exception:  # pragma: no cover
     logger.debug("Torch not found. PytorchDataPipelineConfig is unavailable.")
 
 
-
 try:
     from ..frameworks.pytorch.data import PytorchDataConfig, PytorchCustomDataConfig
 

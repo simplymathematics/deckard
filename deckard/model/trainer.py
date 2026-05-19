@@ -13,8 +13,6 @@ from .defend import (
 from ..utils import safe_store
 
 
-
-
 class _TrainerDefenseMixin(_DefenseMixin):
     """Reusable trainer defense behavior (adversarial training)."""
 

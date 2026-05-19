@@ -346,7 +346,9 @@ class DataConfig(
         return (self.train_indices, self.test_indices, self.val_indices)
 
     @split_indices.setter
-    def split_indices(self, value: tuple[list | None, list | None, list | None]) -> None:
+    def split_indices(
+        self, value: tuple[list | None, list | None, list | None]
+    ) -> None:
         """Set the active train/test/val split index triplet."""
         train_idx, test_idx, val_idx = value
         self.train_indices = train_idx
@@ -1119,13 +1121,12 @@ class DataConfig(
         """Attach a pipeline-like plugin object to this data config."""
         if pipeline is None:
             return self
-        pipeline_plugins = [pipeline] if not isinstance(pipeline, list) else list(pipeline)
+        pipeline_plugins = (
+            [pipeline] if not isinstance(pipeline, list) else list(pipeline)
+        )
         existing_plugins = list(self.plugins or [])
         self.plugins = [*pipeline_plugins, *existing_plugins]
         return self
-
-
-
 
     def _prepare_data_file(self, data_file: Union[str, None]) -> bool:
         """
@@ -1208,14 +1209,15 @@ class DataConfig(
             self.save(data_file)
         return self.score_dict
 
+
 @dataclass
 class DataPipelineStep:
     """
     Represents a step in a data pipeline with optional metadata.
-    
+
     This dataclass normalizes and documents the optional parameters that
     configure how a step integrates with the pipeline runtime.
-    
+
     Attributes
     ----------
     name : str
@@ -1232,29 +1234,29 @@ class DataPipelineStep:
         Hook name(s) that trigger when this step runs. Supported hooks:
         - "before_sample": Run this step's pre_sample_fit before KFold sampling.
     """
-    
+
     name: str
     fit_y: bool = False
     dtype: Optional[str] = None
     plugin_hook: Union[str, list, None] = None
-    
+
     @classmethod
     def from_config(cls, step_name: str, step_config: dict) -> "DataPipelineStep":
         """
         Extract DataPipelineStep from a pipeline step config dict.
-        
+
         Parameters
         ----------
         step_name : str
             Name of the step (key in pipeline.steps dict).
         step_config : dict
             Configuration dict for the step.
-            
+
         Returns
         -------
         DataPipelineStep
             Parsed step metadata.
-            
+
         Raises
         ------
         ValueError
@@ -1263,29 +1265,29 @@ class DataPipelineStep:
         step_class = step_config.get("name")
         if step_class is None:
             raise ValueError(f"Step {step_name} missing required 'name' key")
-        
+
         fit_y = step_config.get("fit_y", False)
         fit_xy = step_config.get("fit_xy", False)
-        
+
         if fit_xy is True:
             raise ValueError("fit_xy pipeline steps are no longer supported.")
-        
+
         return cls(
             name=step_class,
             fit_y=fit_y,
             dtype=step_config.get("dtype", None),
             plugin_hook=step_config.get("plugin_hook", None),
         )
-    
+
     def stripped_config(self, step_config: dict) -> dict:
         """
         Remove DataPipelineStep metadata from a step config dict.
-        
+
         Parameters
         ----------
         step_config : dict
             Original step configuration.
-            
+
         Returns
         -------
         dict
@@ -1307,7 +1309,6 @@ class DataPipelineConfig(DataConfig):
     def __post_init__(self):
         self._validate_init()
         # Allow a list of step-dicts: merge them in order (later wins on key conflict)
-        
 
         if isinstance(self.pipeline, (list, ListConfig)):
             self.pipeline = merge_list_of_dicts(coerce_to_list(self.pipeline))
@@ -1383,16 +1384,16 @@ class DataPipelineConfig(DataConfig):
 
     def _resolve_step_config(self, step_class: str, step_config: dict) -> dict:
         """Resolve fold-specific paths in step config for precomputed matrices.
-        
+
         For StringDistanceTransformer, resolves ${data.split} placeholders in
         distance_matrix_train and distance_matrix_test paths using self.split.
         """
         resolved_config = {**step_config}
-        
+
         # Only process StringDistanceTransformer configs
         if "StringDistanceTransformer" not in step_class:
             return resolved_config
-        
+
         # Resolve distance_matrix_full path if present
         if "distance_matrix_full" in resolved_config:
             path = resolved_config["distance_matrix_full"]
@@ -1420,7 +1421,7 @@ class DataPipelineConfig(DataConfig):
                     resolved_config["distance_matrix_train"] = path.replace(
                         "${item.fold}", str(self.split)
                     )
-        
+
         # Resolve distance_matrix_test path if present
         if "distance_matrix_test" in resolved_config:
             path = resolved_config["distance_matrix_test"]
@@ -1434,11 +1435,9 @@ class DataPipelineConfig(DataConfig):
                     resolved_config["distance_matrix_test"] = path.replace(
                         "${item.fold}", str(self.split)
                     )
-        
+
         return resolved_config
 
-    
-    
     def _run_pre_sample_transformations(self, pipeline: Pipeline, force: bool = False):
         if not (self.pre_sample_transform or force):
             return
@@ -1448,9 +1447,9 @@ class DataPipelineConfig(DataConfig):
         val_size = getattr(self, "val_size", None) or 0
         # Only cap when sizes are integers (fractional sizes are not capped)
         if (
-            isinstance(train_size, int) and
-            isinstance(test_size, int) and
-            isinstance(val_size, int)
+            isinstance(train_size, int)
+            and isinstance(test_size, int)
+            and isinstance(val_size, int)
         ):
             budget = train_size + test_size + val_size
         else:
@@ -1503,22 +1502,22 @@ class DataPipelineConfig(DataConfig):
         for step_name, step_config in self.pipeline.items():
             # Parse step metadata (name, fit_y, dtype, plugin_hook)
             step = DataPipelineStep.from_config(step_name, step_config)
-            
+
             # Register hooks if present
             step_hooks = self._normalize_step_hooks(step.plugin_hook)
             if step_hooks:
                 self._pipeline_step_hooks[step_name] = step_hooks
-            
+
             # Get clean config (metadata removed, ready for instantiation)
             step_config_clean = step.stripped_config(step_config)
-            
+
             # Resolve fold-specific paths before instantiation
             step_config_clean = self._resolve_step_config(step.name, step_config_clean)
-            
+
             # Instantiate the transformer
             step_instance = load_class(step.name, **step_config_clean)
             dtypes.append(step.dtype)
-            
+
             if step.fit_y is not True:
                 X_pipeline_steps.append((step_name, step_instance))
             else:
@@ -1573,7 +1572,9 @@ class DataPipelineConfig(DataConfig):
 
     def should_run_pre_sample_pipeline(self) -> bool:
         """Determine whether pre-sample pipeline behavior is composed for this run."""
-        return self.pre_sample_transform or self._pipeline_declares_hook("before_sample")
+        return self.pre_sample_transform or self._pipeline_declares_hook(
+            "before_sample"
+        )
 
     def run_sampling_with_pipeline_hooks(self) -> None:
         """Compose sampling behavior with optional pre-sample pipeline hooks."""
@@ -1642,7 +1643,6 @@ class DataPipelineConfig(DataConfig):
     def create_pipeline(self):
         """Public entry-point for pipeline initialisation. Delegates to `_init_pipeline()`."""
         return self._init_pipeline()
-
 
     def _fit_transform_X(
         self,

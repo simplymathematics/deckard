@@ -12,8 +12,6 @@ from numpy.exceptions import AxisError
 
 from .base import AttackConfig, AttackTypePlugin, _AttackMixin, _sensitive_slice
 
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -540,5 +538,3 @@ class InferenceAttackConfig(_InferenceAttackMixin, AttackConfig):
             )
         ]
     )
-
-

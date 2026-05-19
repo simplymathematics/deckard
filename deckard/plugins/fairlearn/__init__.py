@@ -2,16 +2,16 @@
 
 from .data import FairlearnDataConfig
 from .model import (
-	FairlearnDefenseConfig,
-	FairlearnModelConfig,
-	FairlearnPytorchModelConfig,
+    FairlearnDefenseConfig,
+    FairlearnModelConfig,
+    FairlearnPytorchModelConfig,
 )
 from .score import DefaultFairlearnScorerConfig
 
 __all__ = [
-	"FairlearnDataConfig",
-	"DefaultFairlearnScorerConfig",
-	"FairlearnDefenseConfig",
-	"FairlearnModelConfig",
-	"FairlearnPytorchModelConfig",
+    "FairlearnDataConfig",
+    "DefaultFairlearnScorerConfig",
+    "FairlearnDefenseConfig",
+    "FairlearnModelConfig",
+    "FairlearnPytorchModelConfig",
 ]

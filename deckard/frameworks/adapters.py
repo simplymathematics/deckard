@@ -144,7 +144,9 @@ class DataContractMixin(BaseContractMixin):
         """Data-level default for joint X/y transform stage."""
         return X, y
 
-    def load_data(self, filepath: str | None = None) -> RuntimeValue | tuple[MatrixLike, ArrayLike]:
+    def load_data(
+        self, filepath: str | None = None
+    ) -> RuntimeValue | tuple[MatrixLike, ArrayLike]:
         """Load or materialize runtime data.
 
         Args:
@@ -349,8 +351,6 @@ class DataPipelineContractMixin(BaseContractMixin):
             Unmodified `(X, y)` tuple.
         """
         return X, y
-
-    
 
     def run_pipeline(self, pipeline: RuntimeValue | None = None) -> RuntimeValue:
         """Execute or passthrough a prepared pipeline payload.
@@ -561,7 +561,9 @@ class DetectorContractMixin(BaseContractMixin):
     detector: RuntimeValue
     score_dict: dict[str, RuntimeValue]
 
-    def build_detector(self, model: ModelConfig, attack: AttackConfig) -> RuntimeValue | None:
+    def build_detector(
+        self, model: ModelConfig, attack: AttackConfig
+    ) -> RuntimeValue | None:
         """Build or fetch detector payload.
 
         Args:
@@ -670,13 +672,13 @@ class ScorerContractMixin(BaseContractMixin):
         return cast(
             ScoreMap,
             run(
-            ind,
-            dep,
-            *args,
-            data=data,
-            model=model,
-            attack=attack,
-            **kwargs,
+                ind,
+                dep,
+                *args,
+                data=data,
+                model=model,
+                attack=attack,
+                **kwargs,
             ),
         )
 

@@ -855,7 +855,11 @@ class SurvivalExperimentConfig(ExperimentConfig):
             raise ValueError(f"{self.duration_col} not in cleaned columns")
         return cleaned
 
-    def __call__(self) -> dict[str, pd.DataFrame | dict[str, RegressionFitter] | Optional[dict[str, float]]]:
+    def __call__(
+        self,
+    ) -> dict[
+        str, pd.DataFrame | dict[str, RegressionFitter] | Optional[dict[str, float]]
+    ]:
         """Run the configured survival experiment workflow.
 
         Returns:

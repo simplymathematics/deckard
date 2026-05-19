@@ -10,8 +10,6 @@ from typing import TYPE_CHECKING
 from .base import AttackConfig, AttackTypePlugin
 from .poisoning import _PoisoningAttackMixin
 
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -184,4 +182,3 @@ class ExtractionAttackConfig(_ExtractionAttackMixin, AttackConfig):
             )
         ]
     )
-

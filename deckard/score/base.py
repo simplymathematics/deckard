@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """Core scoring primitives and default scorer profiles."""
 
 import inspect
@@ -167,7 +168,10 @@ class ScorerTypePlugin:
         if (scoring_type or "").lower() != (self.scoring_type or "").lower():
             return False
         subtype = (scoring_subtype or "").lower()
-        if self.scoring_subtype is not None and subtype != self.scoring_subtype.lower():
+        if (
+            self.scoring_subtype is not None
+            and subtype != self.scoring_subtype.lower()
+        ):
             return False
         if subtype in {item.lower() for item in self.excluded_subtypes}:
             return False
@@ -326,9 +330,11 @@ class _TaskAwareScorerMixin:
         classifier = self.resolve_classifier(default=default)
         self.scorers = self._build_default_scorers(classifier=classifier)
 
+
 @dataclass
 class ScorerConfig:
     """Atomic scorer configuration."""
+
     score_name: str
     score_function: Any
     score_params: dict[str, Any] = field(default_factory=dict)
@@ -406,7 +412,9 @@ class ScorerConfig:
             "group_mae_difference",
             "group_mse_difference",
         }
-        is_label_metric = metric_name in label_metrics or self.score_name in label_metrics
+        is_label_metric = (
+            metric_name in label_metrics or self.score_name in label_metrics
+        )
 
         if self.needs_proba:
             ind_arr = np.asarray(to_numpy_if_torch(ind))
@@ -490,6 +498,7 @@ class ScorerConfig:
             accepted.discard("ind")
             params = {k: v for k, v in params.items() if k in accepted}
         return cast(MetricResult, score_function(dep, ind, **params))
+
 
 @dataclass(eq=False, kw_only=True)
 class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
@@ -1162,5 +1171,3 @@ __all__ = [
     "build_scorer",
     "build_scorer_dict",
 ]
-
-
