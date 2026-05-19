@@ -1,0 +1,48 @@
+name: Notify Workflow Failures
+
+on:
+  workflow_run:
+    workflows:
+      - Python application
+      - Test Optional Dependencies (Matrix)
+      - Build Package (Multi-Platform Matrix)
+      - Security Scan
+      - Push Docs Check
+      - Test Docker Images
+      - Create and publish Docker images
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - name: Create GitHub issue on failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const name = context.payload.workflow_run.name;
+            const branch = context.payload.workflow_run.head_branch;
+            const runUrl = context.payload.workflow_run.html_url;
+            const title = `[CI Failure] ${name} (${branch})`;
+            const body = [
+              `Workflow: ${name}`,
+              `Branch: ${branch}`,
+              `Run: ${runUrl}`,
+              '',
+              'This issue was automatically created by notify-failures.yml.'
+            ].join('\n');
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['ci', 'automated']
+            });

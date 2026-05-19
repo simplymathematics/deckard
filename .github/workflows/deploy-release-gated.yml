@@ -1,0 +1,42 @@
+name: Deploy Release (Gated)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to deploy (e.g., v1.2.3)"
+        required: true
+        type: string
+      confirm_production:
+        description: "Type DEPLOY to approve production deployment"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  gated-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Manual production confirmation
+        run: |
+          if [[ "${{ github.event.inputs.confirm_production }}" != "DEPLOY" ]]; then
+            echo "Deployment not confirmed. Set confirm_production=DEPLOY to continue."
+            exit 1
+          fi
+      - name: Validate tag format
+        run: |
+          if [[ ! "${{ github.event.inputs.tag }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid tag format: ${{ github.event.inputs.tag }}"
+            exit 1
+          fi
+
+      - name: Trigger release-package workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run release-package.yml --ref main
+          echo "Triggered release-package.yml after production environment approval gate."

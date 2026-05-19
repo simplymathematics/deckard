@@ -1,0 +1,70 @@
+name: Test Optional Dependencies (Matrix)
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  test-optional-deps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dep_name: fairlearn
+            dep_group: fairlearn
+            test_paths: test/test_plugins/test_fairlearn
+          - dep_name: lifelines
+            dep_group: lifelines
+            test_paths: test/test_plugins/test_lifelines
+          - dep_name: seaborn
+            dep_group: seaborn
+            test_paths: test/test_plugins/test_searborn/test_seaborn.py
+          - dep_name: torch
+            dep_group: torch
+            test_paths: test/test_frameworks/test_pytorch test/test_attack/test_attack.py
+          - dep_name: yellowbrick
+            dep_group: "seaborn,yellowbrick"
+            test_paths: test/test_plugins/test_yellowbrick/test_yellowbrick.py
+          # TODO: test anjana
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    - name: Cache pip packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: pip-${{ runner.os }}-optional-${{ matrix.dep_name }}-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          pip-${{ runner.os }}-optional-${{ matrix.dep_name }}-
+    - name: Install base dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m pip install .[test]
+        python3 -m pip install pytest-cov
+    - name: Install optional dependency [${{ matrix.dep_group }}]
+      run: |
+        python3 -m pip install .[${{ matrix.dep_group }}]
+    - name: Test ${{ matrix.dep_name }}
+      run: |
+        python3 -m pytest ${{ matrix.test_paths }} -v \
+          --cov=deckard \
+          --cov-report=xml:coverage-${{ matrix.dep_name }}.xml
+    - name: Upload coverage artifact
+      if: ${{ always() && env.ACT != 'true' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-${{ matrix.dep_name }}
+        path: coverage-${{ matrix.dep_name }}.xml
+        retention-days: 30
+    - name: Report step timing
+      if: always()
+      run: |
+        echo "::notice title=Step Timing::${{ matrix.dep_name }} tests completed in $SECONDS seconds"

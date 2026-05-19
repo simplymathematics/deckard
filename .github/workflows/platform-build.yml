@@ -2,9 +2,9 @@ name: Build Package (Multi-Platform Matrix)
 
 on:
   push:
-    branches: [main, refactor-squashed]
+    branches: [main]
   pull_request:
-    branches: [main, refactor-squashed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:

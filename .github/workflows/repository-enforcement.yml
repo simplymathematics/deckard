@@ -2,9 +2,9 @@ name: Repository Enforcement
 
 on:
   pull_request:
-    branches: [main, refactor-squashed]
+    branches: [main]
   push:
-    branches: [main, refactor-squashed]
+    branches: [main]
 
 permissions:
   contents: read

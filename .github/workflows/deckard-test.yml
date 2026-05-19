@@ -5,11 +5,12 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   base-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python 3.10
@@ -20,6 +21,7 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip
         python3 -m pip install .[test]
+        python3 -m pip install pytest-cov
     - name: Test base dependencies only
       run: |
         python3 -m pytest test \
@@ -30,4 +32,19 @@ jobs:
           --ignore test/test_model/test_model_fairness.py \
           --ignore test/test_plot/test_seaborn.py \
           --ignore test/test_plot/test_yellowbrick.py \
-          --ignore test/test_plot/test_init.py
+          --ignore test/test_plot/test_init.py \
+          --cov=deckard \
+          --cov-report=xml:coverage-base.xml \
+          --cov-report=term-missing
+    - name: Upload coverage artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-base
+        path: coverage-base.xml
+        retention-days: 30
+    - name: Report job timing
+      if: always()
+      run: |
+        echo "::notice::Job completed in $SECONDS seconds" > /tmp/timing.txt
+        cat /tmp/timing.txt
