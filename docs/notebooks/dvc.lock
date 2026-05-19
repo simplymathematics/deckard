@@ -93,34 +93,34 @@ stages:
       nfiles: 4
     - path: seaborn.ipynb
       hash: md5
-      md5: 500b7fff943cc83910c785ced6f161e1
-      size: 254035
+      md5: caf3a5600a86412cf2b70c40e8f3f836
+      size: 476500
     outs:
     - path: ./build/seaborn/bar_bar_plot_from_make_blobs.png
       hash: md5
-      md5: 7b572e30300ef727eaaef7ca6e37245f
-      size: 15536
+      md5: 961d9d4bf3034d809a78ad02497e1e5b
+      size: 17765
     - path: ./build/seaborn/cat_categorical_plot_from_make_moons.png
       hash: md5
-      md5: b5174c25a0e782fcda27a8527cc4e5dd
-      size: 14804
+      md5: ad5b197f1ae722647e0656a49ad68beb
+      size: 17524
     - path: 
         ./build/seaborn/heatmap_heatmap_from_make_classification_correlations.png
       hash: md5
-      md5: 955525f1608af072efb99ac27a0d5d6a
-      size: 30485
+      md5: fcddafb0b522b12ceca32086c4ce6ed0
+      size: 35128
     - path: ./build/seaborn/hist_histogram_plot_from_make_friedman1.png
       hash: md5
-      md5: 8cddeabe1bdc5e251462440cabc97311
-      size: 20462
+      md5: 2ade1a9779bc50a30cfc4b6033352b3e
+      size: 24733
     - path: ./build/seaborn/line_line_plot_from_make_regression.png
       hash: md5
-      md5: 7bb2b9feee80f8502a9600c2c9ea3dac
-      size: 38648
+      md5: 295405f93cdb5b879c14063d7a360685
+      size: 42808
     - path: ./build/seaborn/scatter_scatter_plot_from_make_classification.png
       hash: md5
-      md5: fda37e246386cc117f6e9a0bb9033fae
-      size: 49824
+      md5: 84ed7aba8482137bd5ef1d9aae69e96c
+      size: 54442
   notebook_yellowbrick:
     cmd: jupyter nbconvert --to notebook --execute --inplace yellowbrick.ipynb
     deps:
