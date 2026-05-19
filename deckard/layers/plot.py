@@ -357,7 +357,7 @@ def plot_main(cfg: Any) -> dict:
 
     if plot_type and plots:
         raise ValueError(
-            "Provide only one of plot.plot_type or plot.plots for seaborn backend.",
+            "Provide only one of plot.plot_type or plot.plots",
         )
 
     if not plot_type and not plot_params_file:

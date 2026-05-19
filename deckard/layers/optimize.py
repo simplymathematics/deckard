@@ -27,7 +27,23 @@ logger = logging.getLogger(__name__)
 
 
 class OptunaStudyCallback(HydraCallback):
-    """Hydra-native callback that syncs study setup and metric names for multirun."""
+    """
+    Hydra-native callback that syncs study setup and metric names for multirun.
+
+    Args:
+        directions: List of optimization directions ("minimize"/"maximize").
+        optimizers: List of optimizer names.
+        study_name: Optional Optuna study name.
+        storage: Optional Optuna storage URI.
+        directory: Optional output directory.
+        log_file: Optional log file path.
+        params_file: Optional params file path.
+        error_file: Optional error file path.
+        score_file: Optional score file path.
+
+    Note:
+        Resolved per-job file paths are set during `on_compose_config`.
+    """
 
     def __init__(
         self,
@@ -58,7 +74,16 @@ class OptunaStudyCallback(HydraCallback):
         self._resolved_error_file: str | None = None
 
     def on_multirun_start(self, config: DictConfig, **kwargs: Any) -> None:
-        """Create the Optuna study and initialize objective metric names."""
+        """
+        Create the Optuna study and initialize objective metric names.
+
+        Args:
+            config: Hydra config for the multirun.
+            **kwargs: Additional keyword arguments.
+
+        Raises:
+            ValueError: If `study_name` or `storage` is not provided.
+        """
         hydra_cfg = HydraConfig.get()
         sweeper = _get_sweeper_cfg(hydra_cfg)
         study_name = self.study_name or (
@@ -84,7 +109,16 @@ class OptunaStudyCallback(HydraCallback):
         )
 
     def on_compose_config(self, config: DictConfig, **kwargs: Any) -> None:
-        """Prepare per-job naming, output paths, and persist params.yaml."""
+        """
+        Prepare per-job naming, output paths, and persist params.yaml.
+
+        Args:
+            config: Hydra config for the current job.
+            **kwargs: Additional keyword arguments.
+
+        Note:
+            Writes params.yaml after resolving file paths.
+        """
         hydra_cfg = HydraConfig.get()
         _normalize_mode_cfg(config, hydra_cfg, include_file_paths=True)
         _seed_experiment_uuid_for_current_trial(
@@ -142,7 +176,13 @@ class OptunaStudyCallback(HydraCallback):
                 )
 
     def on_run_start(self, config: DictConfig, **kwargs: Any) -> None:
-        """Validate and normalize run-mode config early in the Hydra lifecycle."""
+        """
+        Validate and normalize run-mode config early in the Hydra lifecycle.
+
+        Args:
+            config: Hydra config for the run.
+            **kwargs: Additional keyword arguments.
+        """
         hydra_cfg = HydraConfig.get()
         _normalize_mode_cfg(config, hydra_cfg, include_file_paths=False)
         set_study_metric_names(
@@ -152,12 +192,24 @@ class OptunaStudyCallback(HydraCallback):
         )
 
     def on_run_end(self, config: DictConfig, **kwargs: Any) -> None:
-        """No-op run hook kept for parity with multirun lifecycle wiring."""
+        """
+        No-op run hook kept for parity with multirun lifecycle wiring.
+
+        Args:
+            config: Hydra config for the run.
+            **kwargs: Additional keyword arguments.
+        """
         _ = config
         _ = kwargs
 
     def on_multirun_end(self, config: DictConfig, **kwargs: Any) -> None:
-        """Ensure metric names remain attached after the multirun completes."""
+        """
+        Ensure metric names remain attached after the multirun completes.
+
+        Args:
+            config: Hydra config for the multirun.
+            **kwargs: Additional keyword arguments.
+        """
         if self.study is None:
             return
         set_study_metric_names(
@@ -167,7 +219,13 @@ class OptunaStudyCallback(HydraCallback):
         )
 
     def on_job_start(self, config: DictConfig, **kwargs: Any) -> None:
-        """Seed experiment UUID for the current trial before execution."""
+        """
+        Seed experiment UUID for the current trial before execution.
+
+        Args:
+            config: Hydra config for the job.
+            **kwargs: Additional keyword arguments.
+        """
         hydra_cfg = HydraConfig.get()
         _seed_experiment_uuid_for_current_trial(
             hydra_cfg=hydra_cfg,
@@ -181,7 +239,14 @@ class OptunaStudyCallback(HydraCallback):
         job_return,
         **kwargs: Any,
     ) -> None:
-        """Persist per-job score payload after execution when available."""
+        """
+        Persist per-job score payload after execution when available.
+
+        Args:
+            config: Hydra config for the job.
+            job_return: Return value from the job execution.
+            **kwargs: Additional keyword arguments.
+        """
         hydra_cfg = HydraConfig.get()
         score_file = self._resolved_score_file
         if not score_file:
@@ -248,7 +313,18 @@ class OptunaStudyCallback(HydraCallback):
 
     @staticmethod
     def execute_runtime_object(conf_obj: Any) -> dict[str, Any]:
-        """Execute runtime object once and normalize its score payload to a dict."""
+        """
+        Execute runtime object once and normalize its score payload to a dict.
+
+        Args:
+            conf_obj: Callable config object or object with `execute_without_mercy`.
+
+        Returns:
+            dict[str, Any]: Score payload as a dictionary.
+
+        Raises:
+            TypeError: If the object is not callable or does not return a dict.
+        """
         if callable(conf_obj):
             scores = conf_obj()
         elif hasattr(conf_obj, "execute_without_mercy") and callable(
@@ -578,19 +654,19 @@ def set_study_attributes(
 def optimize_main(
     cfg: Any,
 ) -> dict[str, Any]:
-    """Run the optimize layer entrypoint and return an unfiltered score dictionary.
+    """
+    Run the optimize layer entrypoint and return an unfiltered score dictionary.
 
-    Parameters
-    ----------
-    cfg : Any
-        Layer configuration payload. This may be a ``DictConfig`` or any
-        mapping-like object that can be normalized into a dictionary and then
-        instantiated via Hydra.
+    Args:
+        cfg: Layer configuration payload. This may be a `DictConfig` or any
+            mapping-like object that can be normalized into a dictionary and then
+            instantiated via Hydra.
 
-    Returns
-    -------
-    dict[str, Any]
-        Unfiltered score payload produced by the instantiated runtime object.
+    Returns:
+        dict[str, Any]: Unfiltered score payload produced by the instantiated runtime object.
+
+    Raises:
+        AssertionError: If the config cannot be coerced to a dictionary or instantiated.
     """
     hydra_cfg = HydraConfig.get()
     cfg_dict = _coerce_cfg_to_dict(cfg)

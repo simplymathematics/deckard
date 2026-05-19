@@ -121,184 +121,60 @@ class DataConfig(
     """
     Configuration and utility class for loading, preprocessing, and splitting datasets for machine learning tasks.
 
-    Attributes
-    -------
-    dataset_name : str
-        Name of the dataset to load or path to a data file.
-    data_params : dict
-        Additional parameters for data loading or generation.
-    test_size : float
-        Proportion of the dataset to include in the test split (between 0 and 1).
-    train_size : float
-        Proportion or count of samples to include in the training split.
-    val_size : Union[float, int, None]
-        Proportion or count of samples to include in the validation split when a
-        ``sample`` is provided (e.g. :class:`~deckard.data.sample.SplitSampler` or
-        :class:`~deckard.data.sample.ShuffleSampler`).  Unused in legacy mode.
-    split : Union[int, None]
-        Which split index to use as the validation set when ``sample`` performs
-        cross-validation or shuffle splitting
-        (e.g. :class:`~deckard.data.sample.KFoldSampler` or
-        :class:`~deckard.data.sample.ShuffleSampler`).  Defaults to ``0``.
-    sample : Union[str, Any]
-        Optional pluggable sampler.  When ``None`` (default) the legacy 2-way
-        ``train_test_split`` is used.  Can be an instantiated sampler object, a subclass
-        of :class:`~deckard.data.sample.BaseSampler`, or a Hydra-style dict with a
-        ``name``/``_target_`` key pointing to the sampler class.
-    random_state : int
-        Seed for random number generation to ensure reproducibility.
-    stratify : Union[None, str, bool]
-        Specifies stratification for sampling; can be None, True (use target), or a column name.
-    classifier: bool
-        Whether the task is classification (True) or regression (False).
-    drop: list
-        List of columns to drop from the dataset.
-    target: Union[str, None]
-        Name of the target column in the dataset (if applicable).
-    keep: list
-        List of columns to keep in the dataset.
-    plugins : list
-        Optional data plugin specifications executed during load/sample/score hooks.
-    _X : pd.DataFrame
-        Loaded feature matrix.
-    _y : pd.Series
-        Loaded target vector.
-    data_load_time : float
-        Time taken to load the data.
-    data_sample_time : float
-        Time taken to sample/split the data.
-    train_n : int
-        Number of training samples.
-    test_n : int
-        Number of testing samples.
-    val_n : int
-        Number of validation samples (set only when a sampler is used).
-    alias: str
-        Optional alias for the dataset configuration.
-    train_indices : list
-        Indices for training samples.
-    test_indices : list
-        Indices for testing samples.
-    val_indices : list
-        Indices for validation samples (set only when a sampler is used).
-    X_train : pd.DataFrame
-        Training feature matrix.
-    y_train : pd.Series
-        Training target vector.
-    X_test : pd.DataFrame
-        Testing feature matrix.
-    y_test : pd.Series
-        Testing target vector.
-    X_val : pd.DataFrame
-        Validation feature matrix (set only when a sampler is used).
-    y_val : pd.Series
-        Validation target vector (set only when a sampler is used).
-    score_dict : dict
-        Dictionary to store scores or metrics.
-    _target_ : str
-        Internal identifier for the class.
+    Args:
+        dataset_name: Name of the dataset to load or path to a data file.
+        data_params: Additional parameters for data loading or generation.
+        test_size: Proportion of the dataset to include in the test split (between 0 and 1).
+        train_size: Proportion or count of samples to include in the training split.
+        val_size: Proportion or count of samples to include in the validation split when a sampler is provided.
+        split: Which split index to use as the validation set when sampler performs cross-validation or shuffle splitting. Defaults to 0.
+        sample: Optional pluggable sampler. When None (default) the legacy 2-way train_test_split is used. Can be an instantiated sampler object, a subclass of {class}`deckard.data.sample.BaseSampler`, or a Hydra-style dict with a `name`/`_target_` key pointing to the sampler class.
+        random_state: Seed for random number generation to ensure reproducibility.
+        stratify: Specifies stratification for sampling; can be None, True (use target), or a column name.
+        classifier: Whether the task is classification (True) or regression (False).
+        drop: List of columns to drop from the dataset.
+        target: Name of the target column in the dataset (if applicable).
+        keep: List of columns to keep in the dataset.
+        plugins: Optional data plugin specifications executed during load/sample/score hooks.
+        alias: Optional alias for the dataset configuration.
+        scorer: Scorer specification or AUTO_SCORER.
+        score_mode: Which split to score ("train", "test", "val", "pre-sample").
 
-    Parameter layers
-    ----------------
-    data_params : dict
-        Dataset loader/generator kwargs consumed by the selected data source
-        (for example sklearn loaders, OpenML fetchers, synthetic generators,
-        or file readers).
-    plugins : list
-        Plugin specs resolved at runtime and invoked through hook names.
-        For :class:`HookPlugin`, initialization fields are:
-        ``hook_name``, ``method_name``, ``method_kwargs``, and ``init_params``
-        (metadata only).
-    init_params (plugin metadata)
-        Plugin declaration metadata (class/type/library docs). This is not
-        interpreted by DataConfig orchestration logic directly.
+    Attributes:
+        _X: Loaded feature matrix.
+        _y: Loaded target vector.
+        data_load_time: Time taken to load the data.
+        data_sample_time: Time taken to sample/split the data.
+        train_indices: Indices for training samples.
+        test_indices: Indices for testing samples.
+        val_indices: Indices for validation samples (set only when a sampler is used).
+        X_train: Training feature matrix.
+        y_train: Training target vector.
+        X_test: Testing feature matrix.
+        y_test: Testing target vector.
+        X_val: Validation feature matrix (set only when a sampler is used).
+        y_val: Validation target vector (set only when a sampler is used).
+        train_n: Number of training samples.
+        test_n: Number of testing samples.
+        val_n: Number of validation samples (set only when a sampler is used).
+        score_dict: Dictionary to store scores or metrics.
+        _target_: Internal identifier for the class.
 
-    Family-specific parameter semantics
-    ----------------------------------
-    sklearn loader datasets
-        ``data_params`` are forwarded to sklearn dataset loader callables
-        (for example ``as_frame=True``).
-    OpenML/fetch datasets
-        ``data_params`` typically include source-identifying keys (for example
-        ``name``, ``version``, ``as_frame``) and are passed to fetch helpers.
-    synthetic generators
-        ``data_params`` are generation controls (for example
-        ``n_samples``, ``n_features``, ``n_classes``).
-    file-backed datasets
-        ``data_params`` may include read-time options used by pandas/file
-        loading utilities.
+    Returns:
+        DataConfig: Instantiated and prepared data configuration object.
 
-    Plugin hook runtime params
-    --------------------------
-    Hooks are orchestrated by ``_run_plugin_hook(hook_name, **kwargs)``.
-    Core hook names used by DataConfig runtime are:
-    ``before_load_data``, ``after_load_data``, ``before_sample``,
-    ``after_sample``, ``before_score``, and ``after_score``.
-    Hook kwargs are phase-specific runtime objects supplied by the caller;
-    HookPlugin forwards them to ``method_name`` after merging
-    ``method_kwargs``.
+    Raises:
+        ValueError: For invalid parameter values or missing data.
+        NotImplementedError: For unsupported datasets or file types.
 
-    Methods
-    -------
-    __post_init__()
-        Post-initialization method to validate parameters and initialize internal attributes.
-    __hash__()
-        Computes a hash value for the instance based on non-private attributes.
-    _get_stratify_col()
-        Returns the stratification array (or None) based on ``self.stratify``.
-    _resolve_sample()
-        Instantiates and returns the sampler object, or None for legacy mode.
-    _load_adult_income_data()
-        Loads and preprocesses the Adult Income dataset from OpenML.
-    _load_generic_sklearn(loader_func, **loader_params)
-        Loads a dataset using a generic scikit-learn loader function.
-    _load_generic_openml(dataset_name, version=1, **loader_params)
-        Loads a dataset from OpenML using the specified dataset name and version.
-    _make_classification_data()
-        Generates a synthetic classification dataset.
-    _make_regression_data()
-        Generates a synthetic regression dataset.
-    _sample()
-        Splits the loaded dataset into training, testing, and optionally validation sets.
-    _load_data()
-        Loads the dataset based on the specified name or file type.
-    __call__(filepath=None)
-        Loads and samples the dataset, splits it into training and testing sets, and returns the corresponding features and labels.
-    save(filepath)
-        Saves the current state of the DataConfig instance to a file.
-    load(filepath)
-        Loads the state of the DataConfig instance from a file.
-    Raises
-    ------
-    ValueError
-        For invalid parameter values or missing data.
-    NotImplementedError
-        For unsupported datasets or file types.
-
-    Examples
-    --------
-    >>> config = DataConfig(dataset_name="adult", **kwargs)
-    >>> config()
-    >>> X_train = config.X_train
-    >>> y_train = config.y_train
-    >>> X_test = config.X_test
-    >>> y_test = config.y_test
-    >>> score_dict = config.score_dict
+    Note:
+        Hooks are orchestrated by `_run_plugin_hook(hook_name, **kwargs)`. Core hook names used by DataConfig runtime are: `before_load_data`, `after_load_data`, `before_sample`, `after_sample`, `before_score`, and `after_score`. Hook kwargs are phase-specific runtime objects supplied by the caller; HookPlugin forwards them to `method_name` after merging `method_kwargs`.
 
     Example:
-
-    ```python
-    from deckard.data.sample import SplitSampler
-
-    config = DataConfig(
-        dataset_name="digits",
-        test_size=0.2,
-        val_size=0.1,
-        sample=SplitSampler(),
-    )
-    config()
-    X_val, y_val = config.X_val, config.y_val
-    ```
+        >>> from deckard.data.sample import SplitSampler
+        >>> config = DataConfig(dataset_name="digits", test_size=0.2, val_size=0.1, sample=SplitSampler())
+        >>> config()
+        >>> X_val, y_val = config.X_val, config.y_val
     """
 
     # Configuration fields

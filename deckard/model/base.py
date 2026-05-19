@@ -121,65 +121,52 @@ class ModelConfig(
     ConfigBase, # Persistence, Hashing, 
     FrameworkModelConfig, # Defines order of operations
 ):
-    """Runtime model configuration with plugin-aware training/evaluation orchestration.
+    """
+    Runtime model configuration with plugin-aware training/evaluation orchestration.
 
-    Model behavior is resolved from ``model_type`` and runtime context. This
-    class owns model instantiation, training/load flow, prediction, scoring,
-    persistence, and optional defense-pipeline integration.
+    Args:
+        model_type: Model type string or None.
+        classifier: Whether the model is a classifier (True/False or str).
+        model_params: Model-constructor kwargs passed to the resolved estimator/class.
+        probability: Whether to enable probability prediction.
+        alias: Optional alias for the model configuration.
+        defense: Optional defense pipeline/config applied after model training or load.
+        plugins: Plugin specs resolved at runtime and invoked through hook names.
+        scorer: Scorer specification or AUTO_SCORER.
+        score_mode: Which split to score ("train", "test", "val").
 
-    Plugin hooks
-    ------------
-    before_load_score(self, *, data, score_file)
-        Runs before reading persisted score/timing artifacts.
-    after_load_score(self, *, data, score_file, times)
-        Runs after reading persisted score/timing artifacts.
-    before_load_predictions(self, *, data, train_predictions_file, test_predictions_file)
-        Runs before loading persisted predictions/probabilities.
-    after_load_predictions(self, *, data, train_predictions_file, test_predictions_file, times)
-        Runs after loading persisted predictions/probabilities.
-    before_train_or_load_model(self, *, data, model_file, times)
-        Runs before model load-or-train resolution.
-    after_train_or_load_model(self, *, data, model_file, times)
-        Runs after model load-or-train resolution.
-    before_evaluate(self, *, data, times)
-        Runs before evaluation/scoring.
-    after_evaluate(self, *, data, times)
-        Runs after evaluation/scoring. Dict returns are merged into
-        ``score_dict``.
-    before_persist(self, *, data, times, model_file, test_predictions_file, train_predictions_file, training_probabilities_file, test_probabilities_file, score_file)
-        Runs before persistence of model artifacts and score outputs.
-    after_persist(self, *, data, times, model_file, test_predictions_file, train_predictions_file, training_probabilities_file, test_probabilities_file, score_file)
-        Runs after persistence. Dict returns are merged into ``score_dict``.
+    Attributes:
+        _model: Instantiated model object.
+        score_dict: Dictionary to store scores or metrics.
+        training_time: Time taken for model training.
+        prediction_time: Time taken for prediction.
+        val_prediction_time: Time taken for validation prediction.
+        training_prediction_time: Time taken for training prediction.
+        training_score_time: Time taken for training score computation.
+        prediction_score_time: Time taken for prediction score computation.
+        val_score_time: Time taken for validation score computation.
+        defense_application_time: Time taken to apply defense pipeline.
+        training_n: Number of training samples.
+        prediction_n: Number of prediction samples.
+        val_n: Number of validation samples.
+        training_predictions: Training predictions.
+        predictions: Test predictions.
+        val_predictions: Validation predictions.
+        training_probabilities: Training probabilities.
+        probabilities: Test probabilities.
+        val_probabilities: Validation probabilities.
+        _target_: Internal identifier for the class.
 
-    Parameter layers
-    ----------------
-    model_params : dict
-        Model-constructor kwargs passed to the resolved estimator/class.
-    defense : Any
-        Optional defense pipeline/config applied after model training or load.
-    plugins : list
-        Plugin specs resolved at runtime and invoked through hook names.
+    Note:
+        Model behavior is resolved from `model_type` and runtime context. This class owns model instantiation, training/load flow, prediction, scoring, persistence, and optional defense-pipeline integration.
 
-    Family-specific parameter semantics
-    ----------------------------------
-    sklearn estimators
-        ``model_params`` are forwarded directly to estimator constructors.
-    wrapped or custom model classes
-        ``model_params`` may be split between wrapper setup and underlying
-        model kwargs.
-    defense-enabled runs
-        ``defense`` controls post-training estimator wrapping/application.
+        Hooks are orchestrated by `_run_plugin_hook(hook_name, **kwargs)`. Core hook names used by ModelConfig runtime are: `before_load_score`, `after_load_score`, `before_load_predictions`, `after_load_predictions`, `before_train_or_load_model`, `after_train_or_load_model`, `before_evaluate`, `after_evaluate`, `before_persist`, and `after_persist`. Hook kwargs are phase-specific runtime objects supplied by model orchestration.
 
-    Plugin hook runtime params
-    --------------------------
-    Hooks are orchestrated by ``_run_plugin_hook(hook_name, **kwargs)``.
-    Core hook names used by ModelConfig runtime are:
-    ``before_load_score``, ``after_load_score``, ``before_load_predictions``,
-    ``after_load_predictions``, ``before_train_or_load_model``,
-    ``after_train_or_load_model``, ``before_evaluate``, ``after_evaluate``,
-    ``before_persist``, and ``after_persist``.
-    Hook kwargs are phase-specific runtime objects supplied by model
-    orchestration.
+    Example:
+        >>> config = ModelConfig(model_type="logistic_regression", model_params={"C": 1.0})
+        >>> config.initialize_model()
+        >>> config.train(X_train, y_train)
+        >>> y_pred = config.model.predict(X_test)
     """
 
     # Configuration fields
