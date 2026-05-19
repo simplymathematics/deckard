@@ -1,12 +1,15 @@
 # Utils
 
-The :mod:`deckard.utils` module contains shared utilities used across the
+The {mod}`deckard.utils` module contains shared utilities used across the
 public API, including stable config hashing, serialization helpers, dynamic
 class loading, and parser generation helpers.
 
+```{eval-rst}
 .. automodule:: deckard.utils
    :members:
    :show-inheritance:
+```
+
 
 ## Overview
 
@@ -24,13 +27,14 @@ Key responsibilities include:
 
 ## Examples
 
-.. seealso::
+```{seealso}
 
    Utility helpers are exercised throughout the executable notebooks, including:
 
-   - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
-   - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
+   - {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
+   - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
+```
 ## Internals
 
 The module emphasizes deterministic normalization (for hashing and persistence)
@@ -44,6 +48,6 @@ and defensive loading behavior so configs are portable across environments.
 
 ### See also
 
-* :doc:`experiment`
-* :doc:`file`
-* :doc:`layers`
+* {doc}`experiment`
+* {doc}`file`
+* {doc}`layers`

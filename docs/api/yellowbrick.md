@@ -1,22 +1,22 @@
 # Yellowbrick Visualization
 
 deckard provides single-run model diagnostics through the Yellowbrick library
-via :class:`deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig`. The
+via {class}`deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig`. The
 Yellowbrick backend operates on a composed
-:class:`~deckard.experiment.ExperimentConfig` and renders visualizers directly
+{class}`~deckard.experiment.ExperimentConfig` and renders visualizers directly
 from the trained model and prepared dataset.
 
-.. _yellowbrick-overview:
+(yellowbrick-overview)=
 
 ## Overview
 
-The :mod:`deckard.plugins.yellowbrick.plot` module provides:
+The {mod}`deckard.plugins.yellowbrick.plot` module provides:
 
-- :class:`~deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig` — single-plot
-  config that wraps an :class:`~deckard.experiment.ExperimentConfig` with a
+- {class}`~deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig` — single-plot
+  config that wraps an {class}`~deckard.experiment.ExperimentConfig` with a
   Yellowbrick visualizer
-- :class:`~deckard.plugins.yellowbrick.plot.YellowbrickConfigList` — ordered list
-  of :class:`~deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig` instances
+- {class}`~deckard.plugins.yellowbrick.plot.YellowbrickConfigList` — ordered list
+  of {class}`~deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig` instances
   that share a common experiment
 
 Yellowbrick plots are selected by ``plot_type`` and are grouped by category:
@@ -44,19 +44,20 @@ Yellowbrick plots are selected by ``plot_type`` and are grouped by category:
 
 ## Examples
 
-.. seealso::
+```{seealso}
 
   Notebook-based Yellowbrick visual diagnostics are documented in:
 
-  - :doc:`notebooks/yellowbrick.ipynb </notebooks/yellowbrick>`
-  - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
+  - {doc}`notebooks/yellowbrick.ipynb </notebooks/yellowbrick>`
+  - {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
 
+```
 ### Troubleshooting
 
 - **Import error**: install yellowbrick with
   ``pip install yellowbrick`` or ``pip install "deckard[plot]"``.
 - **Missing experiment outputs**: call ``experiment()`` before passing it to
-  :class:`~deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig`; the config
+  {class}`~deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig`; the config
   calls ``_ensure_experiment_prepared``
   lazily but explicit preparation is cleaner.
 - **Unsupported plot type**: check the valid ``plot_type`` values listed in the
@@ -68,7 +69,7 @@ Yellowbrick plots are selected by ``plot_type`` and are grouped by category:
 
 ### See also
 
-* :doc:`plot` — general plotting documentation
-* :doc:`seaborn` — multi-run aggregation visualization
-* :doc:`experiment` — experiment orchestration
-* :doc:`model` — model configuration and training
+* {doc}`plot` — general plotting documentation
+* {doc}`seaborn` — multi-run aggregation visualization
+* {doc}`experiment` — experiment orchestration
+* {doc}`model` — model configuration and training

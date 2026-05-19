@@ -1,11 +1,14 @@
 # Layers
 
-The :mod:`deckard.layers` package exposes CLI layer parser/main pairs and the
+The {mod}`deckard.layers` package exposes CLI layer parser/main pairs and the
 registry used by the top-level CLI router.
 
+```{eval-rst}
 .. automodule:: deckard.layers
    :members:
    :show-inheritance:
+```
+
 
 ## Overview
 
@@ -22,14 +25,15 @@ Each layer is registered in :data:`deckard.layers.layer_dict` as a
 
 ## Examples
 
-.. seealso::
+```{seealso}
 
    Notebook-driven layer execution appears throughout:
 
-   - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
-   - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
-   - :doc:`notebooks/seaborn.ipynb </notebooks/seaborn>`
+   - {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
+   - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
+   - {doc}`notebooks/seaborn.ipynb </notebooks/seaborn>`
 
+```
 ## Internals
 
 Layer functions are intentionally small wrappers that parse runtime arguments,
@@ -43,6 +47,6 @@ delegate to domain modules, and normalize outputs for CLI and automation.
 
 ### See also
 
-* :doc:`experiment`
-* :doc:`plot`
-* :doc:`utils`
+* {doc}`experiment`
+* {doc}`plot`
+* {doc}`utils`

@@ -4,16 +4,16 @@ deckard provides specialized support for survival analysis through the optional
 Lifelines integration. This enables time-to-event modeling, risk stratification,
 and adversarial robustness studies on survival models.
 
-.. _lifelines-overview:
+(lifelines-overview)=
 
 ## Overview
 
 The Lifelines integration consists of four main modules:
 
-- :mod:`deckard.data.survival` — survival dataset configuration with time/event pairs
-- :mod:`deckard.plugins.lifelines.model` — lifelines estimator training and evaluation
-- :mod:`deckard.plugins.survival.score` — survival-specific metrics (concordance, AIC, BIC)
-- :mod:`deckard.experiment.survival` — end-to-end survival experiment orchestration
+- {mod}`deckard.plugins.lifelines.data` — survival dataset configuration with time/event pairs
+- {mod}`deckard.plugins.lifelines.model` — lifelines estimator training and evaluation
+- {mod}`deckard.plugins.lifelines.score` — survival-specific metrics (concordance, AIC, BIC)
+- {mod}`deckard.plugins.lifelines.experiment` — end-to-end survival experiment orchestration
 
 These modules support adversarial robustness studies on time-to-event models,
 including attacks that perturb event times or event status.
@@ -31,25 +31,25 @@ including attacks that perturb event times or event status.
 
 Extension docs:
 
-- :doc:`pytorch`
-- :doc:`plot`
+- {doc}`pytorch`
+- {doc}`plot`
 
 ### Score Types Available
 
 The default survival scorer profile is
-:class:`deckard.plugins.survival.score.DefaultLifelinesConfig` and includes:
+{class}`deckard.plugins.lifelines.score.DefaultLifelinesConfig` and includes:
 
-- ``concordance`` via :func:`~deckard.plugins.survival.score.survival_concordance_score`
-- ``aic`` via :func:`~deckard.plugins.survival.score.survival_aic_score`
-- ``bic`` via :func:`~deckard.plugins.survival.score.survival_bic_score`
+- ``concordance`` via :func:`~deckard.plugins.lifelines.score.survival_concordance_score`
+- ``aic`` via :func:`~deckard.plugins.lifelines.score.survival_aic_score`
+- ``bic`` via :func:`~deckard.plugins.lifelines.score.survival_bic_score`
 
 These are also provided in the sklearn example score profile at
 `examples/sklearn/config/score/survival.yaml <../examples/sklearn/config/score/survival.yaml>`_.
 
 ### Survival Data
 
-The :class:`~deckard.plugins.liflines.data.LifelinesDataConfig` extends
-:class:`deckard.data.DataConfig` with survival-specific fields:
+The {class}`~deckard.plugins.lifelines.data.LifelinesDataConfig` extends
+{class}`deckard.data.DataConfig` with survival-specific fields:
 
 - **duration_col** (str): column name for event times (durations)
 - **event_col** (str): column name for event indicators (0 = censored, 1 = event)
@@ -58,7 +58,7 @@ The :class:`~deckard.plugins.liflines.data.LifelinesDataConfig` extends
 - **stratify_by** (str, optional): column for stratified cross-validation
 
 Survival data mode support is explicit in
-:class:`deckard.plugins.liflines.data.LifelinesDataConfig`:
+{class}`deckard.plugins.lifelines.data.LifelinesDataConfig`:
 
 - ``native``: dataset already has duration/event columns
 - ``auxiliary_model``: derive failure events from a benign model metric
@@ -67,12 +67,12 @@ Survival data mode support is explicit in
 
 ### Data pipeline and sampling support
 
-Because :class:`~deckard.plugins.liflines.data.LifelinesDataConfig` extends
-:class:`~deckard.data.DataConfig` (through the deckard data
+Because {class}`~deckard.plugins.lifelines.data.LifelinesDataConfig` extends
+{class}`~deckard.data.DataConfig` (through the deckard data
 stack), survival workflows can still use the standard data pipeline and sampler
 interfaces:
 
-- preprocessing pipelines from :class:`~deckard.data.DataPipelineConfig`
+- preprocessing pipelines from {class}`~deckard.data.DataPipelineConfig`
 - split/k-fold/shuffle samplers via `examples/sklearn/config/sample <../examples/sklearn/config/sample>`_
 - train/test/validation flow from core data config fields
 
@@ -81,7 +81,7 @@ deckard preprocessing and split strategies.
 
 ### Survival Models
 
-The :class:`~deckard.plugins.lifelines.model.SurvivalModelConfig` supports:
+The {class}`~deckard.plugins.lifelines.model.SurvivalModelConfig` supports:
 
 - Lifelines estimators: KaplanMeierFitter, CoxPHFitter, WeibullAFTFitter, etc.
 - Parametric and non-parametric models
@@ -91,7 +91,7 @@ The :class:`~deckard.plugins.lifelines.model.SurvivalModelConfig` supports:
 
 ### Scoring and Metrics
 
-The :mod:`deckard.plugins.survival.score` module provides:
+The {mod}`deckard.plugins.lifelines.score` module provides:
 
 - **concordance_index**: measure of prediction accuracy on time-to-event data
 - **log_likelihood**: model fit quality
@@ -99,14 +99,14 @@ The :mod:`deckard.plugins.survival.score` module provides:
 - **median_survival_time**: group-wise survival time estimates
 - **survival_at_time_t**: proportion surviving at specific timepoints
 
-When using :class:`deckard.plugins.lifelines.model.SurvivalModelConfig` without a custom
+When using {class}`deckard.plugins.lifelines.model.SurvivalModelConfig` without a custom
 scorer override, model scoring still emits calibration-oriented metrics (for
 example ``concordance``, ``ici``, ``e50``) where available.
 
 ### Defenses in survival workflows
 
 Survival models can use deckard's defense pipeline from
-:class:`deckard.model.defend.DefensePipelineConfig` just like other model types.
+{class}`deckard.model.defend.DefensePipelineConfig` just like other model types.
 Supported defense families include ART preprocessors, postprocessors,
 detectors, and trainers.
 
@@ -118,7 +118,7 @@ Typical usage pattern:
 
 ### Survival experiment contract
 
-:class:`~deckard.experiment.survival.SurvivalExperimentConfig` requires these
+{class}`~deckard.plugins.lifelines.experiment.SurvivalExperimentConfig` requires these
 fields at construction time:
 
 - ``data``
@@ -132,13 +132,14 @@ custom user-provided regression fitters can be imported reliably.
 
 ## Examples
 
-.. seealso::
+```{seealso}
 
    Notebook-based survival workflows (lifelines estimators, survival scoring,
    and survival plotting) are documented in:
 
-  - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
+  - {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
 
+```
 ### Troubleshooting
 
 - **Missing lifelines**: install via ``pip install lifelines`` or
@@ -152,11 +153,11 @@ custom user-provided regression fitters can be imported reliably.
 
 ### See also
 
-* :doc:`data` — general data configuration including :mod:`deckard.data.survival`
-* :doc:`model` — general model configuration including :mod:`deckard.plugins.lifelines.model`
-* :doc:`score` — scoring framework including :mod:`deckard.plugins.survival.score`
-* :doc:`experiment` — experiment orchestration including
-  :class:`~deckard.experiment.survival.SurvivalExperimentConfig`
-* :doc:`plot` — visualization including survival curve plotting
-* :doc:`pytorch` — optional deep learning survival models
-* :doc:`modules` — overview of all extensions
+* {doc}`data` — general data configuration including {mod}`deckard.plugins.lifelines.data`
+* {doc}`model` — general model configuration including {mod}`deckard.plugins.lifelines.model`
+* {doc}`score` — scoring framework including {mod}`deckard.plugins.lifelines.score`
+* {doc}`experiment` — experiment orchestration including
+  {class}`~deckard.plugins.lifelines.experiment.SurvivalExperimentConfig`
+* {doc}`plot` — visualization including survival curve plotting
+* {doc}`pytorch` — optional deep learning survival models
+* {doc}`modules` — overview of all extensions

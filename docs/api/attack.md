@@ -14,25 +14,32 @@ It provides:
 
 ## Examples
 
-.. seealso::
+```{seealso}
 
    Notebook-based attack workflows are documented in:
 
-   - :doc:`notebooks/art_attacks.ipynb </notebooks/art_attacks>`
-   - :doc:`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
-   - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
+   - {doc}`notebooks/art_attacks.ipynb </notebooks/art_attacks>`
+   - {doc}`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
+   - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
+```
 ## API Reference
 
 
 
+```{eval-rst}
 .. automodule:: deckard.attack.base
    :members:
    :show-inheritance:
+```
 
-.. automodule:: deckard.franeworks.pytorch.attack
+
+```{eval-rst}
+.. automodule:: deckard.frameworks.pytorch.attack
    :members:
    :show-inheritance:
+```
+
 
 ## Troubleshooting
 
@@ -42,7 +49,7 @@ It provides:
 
 ### See also
 
-* :doc:`experiment` — experiment orchestration
-* :doc:`model` — model configuration and execution
-* :doc:`data` — data loading and split handling
-* :doc:`score` — attack scoring profiles
+* {doc}`experiment` — experiment orchestration
+* {doc}`model` — model configuration and execution
+* {doc}`data` — data loading and split handling
+* {doc}`score` — attack scoring profiles

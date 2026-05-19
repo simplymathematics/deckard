@@ -1,17 +1,17 @@
 # Fairlearn Integration
 
 deckard provides support for fairness-aware machine learning through the optional Fairlearn extension modules. This integration enables fairness evaluation and mitigation workflows within the deckard framework.
-See also: :doc:`pytorch` for torch-backed fairness workflows.
+See also: {doc}`pytorch` for torch-backed fairness workflows.
 
-.. _fairlearn-overview:
+(fairlearn-overview)=
 
 ## Overview
 
 The Fairlearn integration consists of three main extension modules:
 
-- :mod:`deckard.plugins.fairlearn.data` — fairness-aware dataset configuration
-- :mod:`deckard.plugins.fairlearn.model` — fairness-aware model training and evaluation
-- :mod:`deckard.plugins.fairlearn.score` — fairness-aware scoring metrics
+- {mod}`deckard.plugins.fairlearn.data` — fairness-aware dataset configuration
+- {mod}`deckard.plugins.fairlearn.model` — fairness-aware model training and evaluation
+- {mod}`deckard.plugins.fairlearn.score` — fairness-aware scoring metrics
 
 These modules support fairness analysis and mitigation by quantifying and reducing bias in model predictions.
 
@@ -25,10 +25,10 @@ These modules support fairness analysis and mitigation by quantifying and reduci
 
 ### Score Types Available
 
-Fairness scoring in deckard is provided by :mod:`deckard.plugins.fairlearn.score` with the default scorer profiles:
+Fairness scoring in deckard is provided by {mod}`deckard.plugins.fairlearn.score` with the default scorer profiles:
 
-- :class:`~deckard.plugins.fairlearn.score.DefaultFairnessDataScoreConfig`
-- :class:`~deckard.plugins.fairlearn.score.DefaultFairnessModelScoreConfig`
+- {class}`~deckard.plugins.fairlearn.score.DefaultFairnessDataScoreConfig`
+- {class}`~deckard.plugins.fairlearn.score.DefaultFairnessModelScoreConfig`
 
 These include:
 
@@ -41,7 +41,7 @@ The scorers operate on pandas DataFrame-backed data and can resolve context from
 
 ### Data Configuration
 
-The :class:`~deckard.plugins.fairlearn.data.FairlearnDataConfig` extends :class:`deckard.data.DataConfig` with fairness parameters:
+The {class}`~deckard.plugins.fairlearn.data.FairlearnDataConfig` extends {class}`deckard.data.DataConfig` with fairness parameters:
 
 - Specify sensitive features for fairness analysis
 - Define mitigation strategies (preprocessing, in-processing, postprocessing)
@@ -50,8 +50,8 @@ The :class:`~deckard.plugins.fairlearn.data.FairlearnDataConfig` extends :class:
 
 ### Data pipeline and preprocessing support
 
-:class:`~deckard.plugins.fairlearn.data.FairlearnDataConfig` extends
-:class:`~deckard.data.DataPipelineConfig`, so it keeps standard deckard
+{class}`~deckard.plugins.fairlearn.data.FairlearnDataConfig` extends
+{class}`~deckard.data.DataPipelineConfig`, so it keeps standard deckard
 pipeline capabilities while adding fairness hooks:
 
 - configurable preprocessing pipeline steps from core data config
@@ -62,7 +62,7 @@ pipeline capabilities while adding fairness hooks:
 
 ### Model Configuration
 
-The :class:`~deckard.plugins.fairlearn.model.FairlearnModelConfig` supports:
+The {class}`~deckard.plugins.fairlearn.model.FairlearnModelConfig` supports:
 
 - Standard model training with fairness constraints
 - Optional group fairness measurement
@@ -70,29 +70,30 @@ The :class:`~deckard.plugins.fairlearn.model.FairlearnModelConfig` supports:
 - Integration with fairness-aware loss functions
 - Checkpoint management for fairness tracking
 
-:class:`~deckard.plugins.fairlearn.model.FairlearnModelConfig` wraps
-:class:`~deckard.model.ModelConfig` behavior and can still use deckard's
+{class}`~deckard.plugins.fairlearn.model.FairlearnModelConfig` wraps
+{class}`~deckard.model.ModelConfig` behavior and can still use deckard's
 general model defenses via ``model.defense`` (ART preprocessors,
 postprocessors, trainers, and detector pipelines) where compatible with the
 selected backend/model.
 
 ### Scoring and Metrics
 
-The :mod:`deckard.plugins.fairlearn.score` module provides:
+The {mod}`deckard.plugins.fairlearn.score` module provides:
 
-- :class:`~deckard.plugins.fairlearn.score.DefaultFairnessDataScoreConfig` — data-level fairness metrics (group parity, bias)
-- :class:`~deckard.plugins.fairlearn.score.DefaultFairnessModelScoreConfig` — model-level fairness and utility metrics (accuracy, group fairness)
+- {class}`~deckard.plugins.fairlearn.score.DefaultFairnessDataScoreConfig` — data-level fairness metrics (group parity, bias)
+- {class}`~deckard.plugins.fairlearn.score.DefaultFairnessModelScoreConfig` — model-level fairness and utility metrics (accuracy, group fairness)
 
 ## Examples
 
-.. seealso::
+```{seealso}
 
    Notebook-based Fairlearn workflows, including fairness-aware model training,
    data transforms, and fairness attack scoring, are documented in:
 
-   - :doc:`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
-   - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
+   - {doc}`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
+   - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
+```
 ### Troubleshooting
 
 - **No sensitive features**: Ensure sensitive_features list is non-empty and matches actual column names in the data.
@@ -102,8 +103,8 @@ The :mod:`deckard.plugins.fairlearn.score` module provides:
 
 ### See also
 
-* :doc:`data` — general data configuration including :mod:`deckard.plugins.fairlearn.data`
-* :doc:`model` — general model configuration including :mod:`deckard.plugins.fairlearn.model`
-* :doc:`score` — scoring framework including :mod:`deckard.plugins.fairlearn.score`
-* :doc:`pytorch` — optional PyTorch integration with Fairlearn
-* :doc:`modules` — overview of all extensions
+* {doc}`data` — general data configuration including {mod}`deckard.plugins.fairlearn.data`
+* {doc}`model` — general model configuration including {mod}`deckard.plugins.fairlearn.model`
+* {doc}`score` — scoring framework including {mod}`deckard.plugins.fairlearn.score`
+* {doc}`pytorch` — optional PyTorch integration with Fairlearn
+* {doc}`modules` — overview of all extensions

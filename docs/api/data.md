@@ -1,26 +1,32 @@
 # Data
 
-The :mod:`deckard.data` module defines the :class:`~deckard.data.DataConfig` dataclass,
+The {mod}`deckard.data` module defines the {class}`~deckard.data.DataConfig` dataclass,
 which provides a unified interface for loading, generating, preprocessing, and
 splitting datasets for machine learning experiments.  
 It supports both real and synthetic datasets, as well as YAML/Hydra-based configuration.
 
+```{eval-rst}
 .. automodule:: deckard.data
    :members:
    :show-inheritance:
+```
+
 
 ## Data Sampling
 
-The :mod:`deckard.data.sample` module provides pluggable sampling strategies via :class:`~deckard.data.sample.BaseSampler`
+The {mod}`deckard.data.sample` module provides pluggable sampling strategies via {class}`~deckard.data.sample.BaseSampler`
 for robust train/test/validation splits.
 
+```{eval-rst}
 .. automodule:: deckard.data.sample
    :members:
    :show-inheritance:
+```
+
 
 ## Data Preprocessing Pipelines
 
-The :class:`~deckard.data.DataPipelineConfig` wraps scikit-learn's :class:`~sklearn.pipeline.Pipeline`
+The {class}`~deckard.data.DataPipelineConfig` wraps scikit-learn's {class}`~sklearn.pipeline.Pipeline`
 to enable configurable feature preprocessing with timing instrumentation.
 
 ## Extensions
@@ -28,41 +34,50 @@ to enable configurable feature preprocessing with timing instrumentation.
 ### Pipeline Extension
 
 deckard exposes a configurable pipeline layer for data preprocessing via
-:class:`~deckard.data.DataPipelineConfig`.
+{class}`~deckard.data.DataPipelineConfig`.
 
 ### Fairlearn Plugin
 
 The fairlearn plugin adds group-aware sampling and fairness metrics with
 ``fairlearn`` integration.
-See also: :doc:`fairlearn`.
+See also: {doc}`fairlearn`.
 
+```{eval-rst}
 .. automodule:: deckard.plugins.fairlearn.data
    :members:
    :show-inheritance:
+```
+
 
 ### Torch Framework
 
 The torch framework provides dataset loading and sampling for PyTorch and
 torchvision-backed workflows.
-See also: :doc:`pytorch`.
+See also: {doc}`pytorch`.
 
+```{eval-rst}
 .. automodule:: deckard.frameworks.pytorch.data
    :members:
    :show-inheritance:
+```
+
 
 ## Lifelines plugin
 
 Survival-specific experiment orchestration is split into a dedicated optional
 module.
-See also: :doc:`lifelines`.
+See also: {doc}`lifelines`.
 
+```{eval-rst}
 .. automodule:: deckard.plugins.lifelines.data
    :members:
    :show-inheritance:
+```
+
 
 ## Overview
 
-:class:`~deckard.data.DataConfig` can load well-known datasets such as:
+{class}`~deckard.data.DataConfig` can load well-known datasets such as:
 
 - **Adult Income** (via OpenML)
 - **Diabetes** and **Digits** (from scikit-learn)
@@ -74,7 +89,7 @@ timing instrumentation, and hashing for config tracking.
 
 ### Data scoring mode
 
-:class:`~deckard.data.DataConfig` supports mode-aware dataset scoring via
+{class}`~deckard.data.DataConfig` supports mode-aware dataset scoring via
 ``score_mode`` with
 values:
 
@@ -89,22 +104,23 @@ partition.
 
 ## Examples
 
-.. seealso::
+```{seealso}
 
    Notebook-based examples for data loading, splitting, fairness/survival data workflows,
    and PyTorch datasets are documented in:
 
-   - :doc:`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
-   - :doc:`notebooks/lifelines.ipynb </notebooks/lifelines>`
-   - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
-   - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
+   - {doc}`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
+   - {doc}`notebooks/lifelines.ipynb </notebooks/lifelines>`
+   - {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
+   - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
    
 
+```
 ## Internals
 
 ### Timing and logging
 The data loading and splitting process is timed, and the duration is stored in
-the `_data_load_time` and `_data_sample_time` attributes of the :class:`~deckard.data.DataConfig` instance. This can be useful for comparing the run-time efficiency of different datasets of various methods. 
+the `_data_load_time` and `_data_sample_time` attributes of the {class}`~deckard.data.DataConfig` instance. This can be useful for comparing the run-time efficiency of different datasets of various methods. 
 Logging is performed at key steps.
 
 
@@ -115,11 +131,11 @@ If you encounter issues with dataset loading, ensure that:
 - Otherwise, use one of the built-in datasets or synthetic data generation options.
 
 ### See also
-* :doc:`model` — model configuration and training
-* :doc:`experiment` — experiment orchestration
-* :doc:`attack` — attack configuration
-* :doc:`score` — scoring framework
-* :doc:`pytorch` — PyTorch data integration
-* :doc:`anjana` — anonymization-aware data
-* :doc:`lifelines` — survival analysis data configuration
-* :doc:`utils` — utility functions
+* {doc}`model` — model configuration and training
+* {doc}`experiment` — experiment orchestration
+* {doc}`attack` — attack configuration
+* {doc}`score` — scoring framework
+* {doc}`pytorch` — PyTorch data integration
+* {doc}`anjana` — anonymization-aware data
+* {doc}`lifelines` — survival analysis data configuration
+* {doc}`utils` — utility functions

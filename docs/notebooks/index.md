@@ -32,10 +32,10 @@ For reproducibility in CI and local testing, notebooks are also wired into DVC s
 ## Security and Robustness
 - [art_attacks](art_attacks) - Adversarial attack workflows.
 - [art_defenses](art_defenses) - Defense pipeline workflows.
-- [detector](detector) - Detector training and evaluation workflows.
+- {doc}`detector <detector>` - Detector training and evaluation workflows.
 
 ## Privacy-aware models and metrics
-- [anjana](anjana) - Anjana anonymization-aware workflows.
+- {doc}`anjana <anjana>` - Anjana anonymization-aware workflows.
 
 ## Survival Analysis
 - [lifelines](lifelines) - Survival analysis and time-to-event modeling.
@@ -57,12 +57,12 @@ For general onboarding:
 1. [sklearn](sklearn)
 2. [pytorch](pytorch)
 3. [fairlearn](fairlearn)
-4. [anjana](anjana)
+4. {doc}`anjana <anjana>`
 
 For robustness-first users:
 1. [art_attacks](art_attacks)
 2. [art_defenses](art_defenses)
-3. [detector](detector)
+3. {doc}`detector <detector>`
 
 For reporting, explainability, and diagnostics:
 1. [seaborn](seaborn)

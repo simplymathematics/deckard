@@ -4,29 +4,38 @@
 
 The plotting package exposes two public entry points:
 
-- :class:`~deckard.plot.PlotConfig` chooses between the Seaborn and Yellowbrick backends.
-- :class:`~deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig` and
-   :class:`~deckard.plugins.yellowbrick.plot.YellowbrickConfigList` behave like
+- {class}`~deckard.plot.PlotConfig` chooses between the Seaborn and Yellowbrick backends.
+- {class}`~deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig` and
+   {class}`~deckard.plugins.yellowbrick.plot.YellowbrickConfigList` behave like
    experiment configs and prepare experiment outputs at most once before
    rendering plots.
 
+```{eval-rst}
 .. automodule:: deckard.plot
    :members:
    :undoc-members:
    :show-inheritance:
+```
+
 
 ## Survival Plot Extension
 
 Survival plotting configs are provided in a dedicated optional module.
-See also: :doc:`lifelines`.
+See also: {doc}`lifelines`.
 
-.. automodule:: deckard.plot.survival
+```{eval-rst}
+.. automodule:: deckard.plugins.lifelines.plot
    :members:
    :show-inheritance:
+```
 
+
+```{eval-rst}
 .. automodule:: deckard.plugins.yellowbrick.plot
    :members:
    :show-inheritance:
+```
+
 
 ## Overview
 
@@ -39,15 +48,16 @@ Plot configs separate plotting intent from execution details. They support:
 
 ## Examples
 
-.. seealso::
+```{seealso}
 
    Notebook-based plotting examples for Yellowbrick and Seaborn are documented
    in:
 
-   - :doc:`notebooks/yellowbrick.ipynb </notebooks/yellowbrick>`
-   - :doc:`notebooks/seaborn.ipynb </notebooks/seaborn>`
-   - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
+   - {doc}`notebooks/yellowbrick.ipynb </notebooks/yellowbrick>`
+   - {doc}`notebooks/seaborn.ipynb </notebooks/seaborn>`
+   - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
+```
 ## Internals
 
 The plotting module routes to backend-specific config objects and ensures
@@ -66,8 +76,8 @@ experiment context lazily before rendering to avoid repeated setup.
 
 ### See also
 
-* :doc:`experiment` — experiment orchestration and result generation
-* :doc:`score` — scoring framework that produces plotting data
-* :doc:`seaborn` — statistical visualization with Seaborn
-* :doc:`yellowbrick` — model interpretability visualizations
-* :doc:`layers` — advanced workflows
+* {doc}`experiment` — experiment orchestration and result generation
+* {doc}`score` — scoring framework that produces plotting data
+* {doc}`seaborn` — statistical visualization with Seaborn
+* {doc}`yellowbrick` — model interpretability visualizations
+* {doc}`layers` — advanced workflows

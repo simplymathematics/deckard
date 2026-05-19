@@ -83,44 +83,44 @@ stages:
     deps:
     - path: ../../deckard/plot/
       hash: md5
-      md5: b96874aabecc5b932a9acf40a86f165e.dir
-      size: 16982
-      nfiles: 4
+      md5: e94497f6cbbc6c4a1c062894e2b69a8e.dir
+      size: 58105
+      nfiles: 13
     - path: ../../deckard/plugins/seaborn/
       hash: md5
-      md5: 9148c2f5d8978f8785a578eae5f9550c.dir
-      size: 14444
-      nfiles: 2
+      md5: dce0485c21ef6d1a7c3ca9295239ffaa.dir
+      size: 26409
+      nfiles: 4
     - path: seaborn.ipynb
       hash: md5
-      md5: 5f598d2b7c5220d918eb171bd721b7da
-      size: 273550
+      md5: 500b7fff943cc83910c785ced6f161e1
+      size: 254035
     outs:
     - path: ./build/seaborn/bar_bar_plot_from_make_blobs.png
       hash: md5
-      md5: 6b6df3076d00a1c4192bb65437b0a9e1
-      size: 16545
+      md5: 7b572e30300ef727eaaef7ca6e37245f
+      size: 15536
     - path: ./build/seaborn/cat_categorical_plot_from_make_moons.png
       hash: md5
-      md5: 4f600dd29eb221e4e6e95a3719d62a3a
-      size: 16823
+      md5: b5174c25a0e782fcda27a8527cc4e5dd
+      size: 14804
     - path: 
         ./build/seaborn/heatmap_heatmap_from_make_classification_correlations.png
       hash: md5
-      md5: 821b1b2286d759f1f57e0e54f3b43a6a
-      size: 32944
+      md5: 955525f1608af072efb99ac27a0d5d6a
+      size: 30485
     - path: ./build/seaborn/hist_histogram_plot_from_make_friedman1.png
       hash: md5
-      md5: 9647e293ce7e6a923e1ae925ba23a878
-      size: 23263
+      md5: 8cddeabe1bdc5e251462440cabc97311
+      size: 20462
     - path: ./build/seaborn/line_line_plot_from_make_regression.png
       hash: md5
-      md5: 3ce0cf11e7bde1a0322c3e136e527647
-      size: 41422
+      md5: 7bb2b9feee80f8502a9600c2c9ea3dac
+      size: 38648
     - path: ./build/seaborn/scatter_scatter_plot_from_make_classification.png
       hash: md5
-      md5: 8cf60eab79ccc3bcc6d87bf8920aafda
-      size: 53404
+      md5: fda37e246386cc117f6e9a0bb9033fae
+      size: 49824
   notebook_yellowbrick:
     cmd: jupyter nbconvert --to notebook --execute --inplace yellowbrick.ipynb
     deps:

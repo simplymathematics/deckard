@@ -2,7 +2,7 @@
 
 ## Overview
 
-The :mod:`deckard.file` module handles persistence for artifacts produced
+The {mod}`deckard.file` module handles persistence for artifacts produced
 throughout deckard runs.
 
 It provides helpers for:
@@ -14,18 +14,22 @@ It provides helpers for:
 
 ## Examples
 
-.. seealso::
+```{seealso}
 
    Notebook-based file/artifact workflows are documented in:
 
-   - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
-   - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
+   - {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
+   - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
+```
 ## API Reference
 
+```{eval-rst}
 .. automodule:: deckard.file
    :members:
    :show-inheritance:
+```
+
 
 ## Typical Workflow
 
@@ -41,7 +45,7 @@ It provides helpers for:
 
 ### See also
 
-* :doc:`experiment` — experiment orchestration
-* :doc:`data` — dataset artifacts
-* :doc:`model` — model artifacts
-* :doc:`score` — score persistence and loading
+* {doc}`experiment` — experiment orchestration
+* {doc}`data` — dataset artifacts
+* {doc}`model` — model artifacts
+* {doc}`score` — score persistence and loading

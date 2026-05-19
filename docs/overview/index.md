@@ -20,15 +20,14 @@ The following pages are ordered for progressive onboarding:
 1. [Quickstart](quickstart.md)
 2. [Summary](summary.md)
 3. [Extensions](extensions.md)
-4. [Core/Framework/Plugin Boundaries](../developers/core_framework_plugin_boundaries.md)
-5. [Installation](installation.md)
-6. [Notebooks](../notebooks/index.md)
-7. [API Reference](../api/modules.md)
-8. [Developer Docs](../developers/index.md)
-9. [Development](../developers/development)
-10. [Build Docs](build_docs.md)
-11. [Docker](docker.md)
-12. [Changelog](changelog.md)
+4. [Installation](installation.md)
+5. [Notebooks](../notebooks/index.md)
+6. [API Reference](../api/modules.md)
+7. [Developer Docs](../developers/index.md)
+8. [Development](../developers/development)
+9. [Build Docs](build_docs.md)
+10. [Docker](docker.md)
+11. [Changelog](changelog.md)
 
 ## Navigation Notes
 
@@ -50,12 +49,7 @@ for a structured introduction.
 quickstart
 summary
 extensions
-../developers/core_framework_plugin_boundaries
 installation
-../notebooks/index
-../api/modules
-../developers/index
-../developers/development
 build_docs
 docker
 changelog

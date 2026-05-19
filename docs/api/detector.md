@@ -10,18 +10,22 @@ metrics from benign and attacked samples.
 
 ## Examples
 
-.. seealso::
+```{seealso}
 
    Notebook-based detector workflows are documented in:
 
-   - :doc:`notebooks/detector.ipynb </notebooks/detector>`
-   - :doc:`notebooks/art_attacks.ipynb </notebooks/art_attacks>`
+   - {doc}`notebooks/detector.ipynb </notebooks/detector>`
+   - {doc}`notebooks/art_attacks.ipynb </notebooks/art_attacks>`
 
+```
 ## API Reference
 
+```{eval-rst}
 .. automodule:: deckard.detector
    :members:
    :show-inheritance:
+```
+
 
 
 ## Typical Workflow
@@ -38,6 +42,6 @@ metrics from benign and attacked samples.
 
 ### See also
 
-* :doc:`experiment` — experiment orchestration
-* :doc:`attack` — attack generation and attack outputs
-* :doc:`score` — scoring framework including detector metrics
+* {doc}`experiment` — experiment orchestration
+* {doc}`attack` — attack generation and attack outputs
+* {doc}`score` — scoring framework including detector metrics

@@ -24,7 +24,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
-    "sphinx_autodoc_typehints",
     "myst_nb",
 ]
 
@@ -101,6 +100,13 @@ html_sidebars = {
 # ---------------------------------------------------------------------------
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
+
+# Keep type hints readable in generated API docs without third-party
+# typehint post-processing that can leak raw rst tokens.
+autodoc_typehints = "description"
+autodoc_typehints_format = "short"
+autodoc_preserve_defaults = True
+napoleon_use_rtype = False
 
 
 # ---------------------------------------------------------------------------

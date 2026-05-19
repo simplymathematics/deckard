@@ -7,15 +7,19 @@ for privacy-preserving machine-learning workflows.
 
 ## Notebook Example
 
-.. seealso::
+```{seealso}
 
-   End-to-end examples are documented in :doc:`/notebooks/anjana`.
+   End-to-end examples are documented in {doc}`/notebooks/anjana`.
 
+```
 ## API Reference
 
+```{eval-rst}
 .. automodule:: deckard.plugins.anjana
    :members:
    :show-inheritance:
+```
+
 
 
 ## Typical Workflow

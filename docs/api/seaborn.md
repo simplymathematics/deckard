@@ -1,21 +1,21 @@
 # Seaborn Visualization
 
 deckard provides statistical visualization through Seaborn via the
-:class:`deckard.plugins.seaborn.plot.SeabornPlotConfig` class. The Seaborn
+{class}`deckard.plugins.seaborn.plot.SeabornPlotConfig` class. The Seaborn
 backend is designed for **multi-run aggregation plots** — visualizing compiled
 results across many experiment runs stored in a tabular data file (CSV,
 Parquet, etc.).
 
-.. _seaborn-overview:
+(seaborn-overview)=
 
 ## Overview
 
-The :mod:`deckard.plugins.seaborn.plot` module provides:
+The {mod}`deckard.plugins.seaborn.plot` module provides:
 
-- :class:`~deckard.plugins.seaborn.plot.SeabornPlotConfig` — single-plot
+- {class}`~deckard.plugins.seaborn.plot.SeabornPlotConfig` — single-plot
   configuration with x/y columns, plot type, and optional hue/style
-- :class:`~deckard.plugins.seaborn.plot.SeabornPlotConfigList` — ordered list of
-  :class:`~deckard.plugins.seaborn.plot.SeabornPlotConfig` instances sharing a
+- {class}`~deckard.plugins.seaborn.plot.SeabornPlotConfigList` — ordered list of
+  {class}`~deckard.plugins.seaborn.plot.SeabornPlotConfig` instances sharing a
   common ``data_file``
 
 These configs are intended for post-hoc visualization of compiled experiment
@@ -34,26 +34,27 @@ The ``plot_type`` field accepts:
 
 ## Examples
 
-.. seealso::
+```{seealso}
 
   Notebook-based Seaborn plotting workflows are documented in:
 
-  - :doc:`notebooks/seaborn.ipynb </notebooks/seaborn>`
-  - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
+  - {doc}`notebooks/seaborn.ipynb </notebooks/seaborn>`
+  - {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
 
+```
 ### Troubleshooting
 
 - **AssertionError on column names**: verify that ``x``, ``y``, ``hue``, and
   ``style`` match column names in the data file exactly.
 - **File not found**: ensure ``data_file`` path exists before constructing
-  :class:`~deckard.plugins.seaborn.plot.SeabornPlotConfig`; directories for
+  {class}`~deckard.plugins.seaborn.plot.SeabornPlotConfig`; directories for
   ``plot_file`` are created automatically.
 - **Import error**: install the optional plotting dependencies with
   ``pip install "deckard[plot]"``.
 
 ### See also
 
-* :doc:`plot` — general plotting documentation
-* :doc:`yellowbrick` — single-run diagnostics (ROC, confusion matrix, etc.)
-* :doc:`layers` — CLI layer registry (compile_results, plot)
-* :doc:`experiment` — experiment orchestration that produces scored outputs
+* {doc}`plot` — general plotting documentation
+* {doc}`yellowbrick` — single-run diagnostics (ROC, confusion matrix, etc.)
+* {doc}`layers` — CLI layer registry (compile_results, plot)
+* {doc}`experiment` — experiment orchestration that produces scored outputs
