@@ -1,3 +1,4 @@
+
 # deckard
 
 deckard is a configuration-driven framework for evaluating machine learning
@@ -13,6 +14,13 @@ This documentation is organized so you can move from concepts to execution:
 	visualization stacks.
 - Use Notebooks for executable, end-to-end examples.
 
+
+## Docstring and API Documentation Standard
+
+All public APIs in Deckard use [MyST-native Google-style docstrings](https://myst-parser.readthedocs.io/en/latest/syntax/optional.html#google-style-docstrings) rendered via `sphinx.ext.napoleon` and MyST-NB. See the [Docstring Standard](developers/docstring_standard.md) for canonical format, required sections, and syntax rules.
+
+API documentation is generated directly from these docstrings. See [Core API](api/modules) for module-level documentation and [Notebooks](notebooks/index) for executable examples.
+
 If you are new to the project, begin with:
 
 1. [Overview -> Quickstart](overview/quickstart)
@@ -25,14 +33,18 @@ If you are extending the framework, begin with:
 2. [Overview -> development](overview/development)
 3. [Extensions](overview/extensions)
 
+overview/index
+overview/extensions
+
 ```{toctree}
 :maxdepth: 2
 :caption: Overview
 :hidden:
 
 overview/index
+notebooks/index
+developers/index
 ```
-
 
 ```{toctree}
 :maxdepth: 2
@@ -49,6 +61,7 @@ api/modules
 
 overview/extensions
 ```
+
 
 ```{toctree}
 :maxdepth: 2

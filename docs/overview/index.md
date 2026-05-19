@@ -16,17 +16,19 @@ It is intended for:
 
 The following pages are ordered for progressive onboarding:
 
-1. [`quickstart`](./quickstart)
-2. [`summary`](./summary)
-3. [`extensions`](./extensions)
-4. [`core_plugin_boundaries`](./core_plugin_boundaries)
-5. [`installation`](./installation)
-6. [`notebooks`](../notebooks/)
-7. [`api`](../api/)
-8. [`development`](./development)
-9. [`build_docs`](./build_docs)
-10. [`docker`](./docker)
-11. [`changelog`](./changelog)
+
+1. [Quickstart](quickstart.md)
+2. [Summary](summary.md)
+3. [Extensions](extensions.md)
+4. [Core/Framework/Plugin Boundaries](../developers/core_framework_plugin_boundaries.md)
+5. [Installation](installation.md)
+6. [Notebooks](../notebooks/index.md)
+7. [API Reference](../api/modules.md)
+8. [Developer Docs](../developers/index.md)
+9. [Development](development.md)
+10. [Build Docs](build_docs.md)
+11. [Docker](docker.md)
+12. [Changelog](changelog.md)
 
 ## Navigation Notes
 
@@ -48,10 +50,11 @@ for a structured introduction.
 quickstart
 summary
 extensions
-core_plugin_boundaries
+../developers/core_framework_plugin_boundaries
 installation
-notebooks
-api
+notebooks/index
+api/modules
+developers/index
 development
 build_docs
 docker

@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "deckard"
 copyright = "2026, simplymathematics"
 author = "simplymathematics"
-release = "0.98"
+release = "0.98.1"
 
 # ---------------------------------------------------------------------------
 # General configuration
@@ -41,9 +41,6 @@ templates_path = []
 exclude_patterns = [
     "build",
     "**.ipynb_checkpoints",
-    "notebooks/deckard.ipynb",
-    "notebooks/hydra.ipynb",
-    "notebooks/lifelines.ipynb",
     "notebooks/build",
     "notebooks/dvc.lock",
     "notebooks/dvc.yaml",
@@ -61,8 +58,6 @@ nb_execution_timeout = 1800
 nb_execution_raise_on_error = False
 nb_execution_excludepatterns = [
     "deckard.ipynb",
-    "hydra.ipynb",
-    "lifelines.ipynb",
 ]
 
 nb_kernel_name = "python3"
@@ -101,7 +96,7 @@ html_sidebars = {
 # Napoleon settings
 # ---------------------------------------------------------------------------
 napoleon_google_docstring = True
-napoleon_numpy_docstring = True
+napoleon_numpy_docstring = False
 
 
 # ---------------------------------------------------------------------------

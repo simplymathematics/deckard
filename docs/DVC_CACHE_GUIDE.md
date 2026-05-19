@@ -1,4 +1,8 @@
-# DVC Cache and Notebook Workflow Guide
+# DVC Cache Guide
+
+
+API documentation is generated from these docstrings and available in the [Core API](api/modules) section. For executable examples, see [Notebooks](notebooks/index).
+
 
 This document describes how to use DVC caching for efficient local and CI notebook builds.
 

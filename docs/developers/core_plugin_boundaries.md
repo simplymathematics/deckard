@@ -16,7 +16,7 @@ Core modules under `deckard/data`, `deckard/model`, `deckard/attack`,
 Core packages should not eagerly import sibling plugin families during module
 import. Optional plugin and framework symbols should be lazily resolved.
 
-## Framework Layer
+## Framework Layer (WIP)
 
 Framework modules under `deckard/frameworks/<framework>` provide:
 
