@@ -6,22 +6,18 @@ This document summarizes the execution boundaries and responsibilities for each 
 - Public orchestration `*Config` APIs
 - Deterministic lifecycle execution (`__post_init__`, `__call__`)
 - Framework-agnostic defaults and shared behavior
+- Reusable chunks exist as Mixins so that sampling/training/defense behavior can be composed at run-time
 
-## Framework Layer
+## Frameworks
 - Concrete implementations of shared contracts (see `deckard/frameworks/core.py`)
 - Adapter bridge logic from core configs to framework runtime objects
 - Optional dependency logic local to each framework
 
-## Plugin Layer
+## Plugins
 - Optional domain integrations (e.g., fairlearn, anjana, lifelines)
 - Family-specific extensions to data/model/score/experiment/plot
 - Runtime hooks and plugin-specific composition logic
 
-## Adapter Boundary Rule
-- Adapter mixins in `deckard/frameworks/adapters.py` are the only cross-boundary translation layer
-- Adapter methods must access only public attributes or methods on target config objects
-- No reading or mutating underscore-prefixed target attributes
-- All runtime state exchanged through typed public fields/accessors
 
 ---
 

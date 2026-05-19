@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 from omegaconf import OmegaConf
 
-from deckard.frameworks import ModelDefenseContractMixin
 from deckard.model.base import ModelConfig
 from deckard.model.defend import (
     DefenseConfig,
@@ -124,9 +123,9 @@ class TestDefenseConfig(unittest.TestCase):
 
 
 def test_model_defense_mixin_contract_compliance_and_aliases():
-    assert issubclass(ModelDefenseMixin, ModelDefenseContractMixin)
+    assert not hasattr(ModelDefenseMixin, "__abstractmethods__")
     assert _DefensePipelineMixin is ModelDefenseMixin
-    assert issubclass(DefenseConfig, ModelDefenseContractMixin)
+    assert issubclass(DefenseConfig, ModelDefenseMixin)
 
 
 class TestDefensePipelineConfigListCoerce(unittest.TestCase):

@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from omegaconf import DictConfig, ListConfig
 from scipy.sparse import csr_matrix
-from sklearn.compose import ColumnTransformer, make_column_selector
+from sklearn.compose import make_column_selector, make_column_transformer
 
 # Scikit-learn
 from sklearn.datasets import (
@@ -24,8 +24,7 @@ from sklearn.datasets import (
 )
 from sklearn.pipeline import Pipeline
 
-from ..frameworks import DataContractMixin, FrameworkDataConfig
-from ..frameworks.core import ArrayLike, MatrixLike
+from ..frameworks.types import ArrayLike, MatrixLike
 
 # deckard
 from ..utils import (
@@ -109,10 +108,8 @@ class DataConfig(
     DataLoaderMixin,
     DataSamplerMixin,
     DataScoreMixin,
-    DataContractMixin,
     DataPipelineMixin,
     ConfigBase,
-    FrameworkDataConfig,
 ):
     """
     Configuration and utility class for loading, preprocessing, and splitting datasets for machine learning tasks.
@@ -1197,7 +1194,7 @@ class DataConfig(
             logger.info(
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
             )
-        data_scores = self.compute_score(*args, **kwargs)
+        data_scores = self.score(*args, **kwargs)
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
@@ -1233,9 +1230,15 @@ class DataPipelineStep:
     """
 
     name: str
+    fit_X: bool = True
     fit_y: bool = False
+    fit_Xy: bool = False
+    fit_pre_sample: bool = False
+    fit_post_sample: bool = True
     dtype: Optional[str] = None
     plugin_hook: Union[str, list, None] = None
+    args: list[Any] = field(default_factory=list)
+    kwargs: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_config(cls, step_name: str, step_config: dict) -> "DataPipelineStep":
@@ -1263,17 +1266,36 @@ class DataPipelineStep:
         if step_class is None:
             raise ValueError(f"Step {step_name} missing required 'name' key")
 
-        fit_y = step_config.get("fit_y", False)
-        fit_xy = step_config.get("fit_xy", False)
-
-        if fit_xy is True:
-            raise ValueError("fit_xy pipeline steps are no longer supported.")
+        fit_y = bool(step_config.get("fit_y", False))
+        fit_xy = bool(step_config.get("fit_Xy", step_config.get("fit_xy", False)))
+        fit_pre_sample = bool(
+            step_config.get(
+                "fit_pre-sample",
+                step_config.get("fit_pre_sample", step_config.get("fit_presample", False)),
+            ),
+        )
+        fit_post_sample = bool(
+            step_config.get(
+                "fit_post-sample",
+                step_config.get(
+                    "fit_post_sample",
+                    step_config.get("fit_postsample", True),
+                ),
+            ),
+        )
+        fit_x = bool(step_config.get("fit_X", True))
 
         return cls(
             name=step_class,
+            fit_X=fit_x,
             fit_y=fit_y,
+            fit_Xy=fit_xy,
+            fit_pre_sample=fit_pre_sample,
+            fit_post_sample=fit_post_sample,
             dtype=step_config.get("dtype", None),
             plugin_hook=step_config.get("plugin_hook", None),
+            args=list(step_config.get("args", []) or []),
+            kwargs=dict(step_config.get("kwargs", {}) or {}),
         )
 
     def stripped_config(self, step_config: dict) -> dict:
@@ -1291,7 +1313,23 @@ class DataPipelineStep:
             New dict with metadata keys removed, ready for transformer instantiation.
         """
         config = dict(step_config)
-        for key in {"name", "fit_y", "fit_xy", "dtype", "plugin_hook"}:
+        for key in {
+            "name",
+            "fit_X",
+            "fit_y",
+            "fit_Xy",
+            "fit_xy",
+            "fit_pre-sample",
+            "fit_pre_sample",
+            "fit_presample",
+            "fit_post-sample",
+            "fit_post_sample",
+            "fit_postsample",
+            "dtype",
+            "plugin_hook",
+            "args",
+            "kwargs",
+        }:
             config.pop(key, None)
         return config
 
@@ -1483,6 +1521,11 @@ class DataPipelineConfig(DataConfig):
             if callable(pre_sample_fit):
                 pre_sample_fit(X_hook, y=y_hook, data=self)
 
+        # Apply declarative pre-sample fit/transform stages from pipeline step flags.
+        X_hook_t, y_hook_t = self.fit_presample(X_hook, y_hook)
+        self._X = X_hook_t
+        self._y = y_hook_t
+
     def _inject_sample_indices(self, pipeline: Pipeline):
         if not hasattr(self, "train_indices") or self.train_indices is None:
             return
@@ -1514,16 +1557,21 @@ class DataPipelineConfig(DataConfig):
             # Get clean config (metadata removed, ready for instantiation)
             step_config_clean = step.stripped_config(step_config)
 
+            # Merge explicit kwargs object after stripped config (kwargs wins).
+            step_config_clean.update(step.kwargs)
+
             # Resolve fold-specific paths before instantiation
             step_config_clean = self._resolve_step_config(step.name, step_config_clean)
 
             # Instantiate the transformer
-            step_instance = load_class(step.name, **step_config_clean)
-            dtypes.append(step.dtype)
+            step_instance = load_class(step.name, *step.args, **step_config_clean)
 
-            if step.fit_y is not True:
+            if not step.fit_post_sample:
+                continue
+            if step.fit_X:
                 X_pipeline_steps.append((step_name, step_instance))
-            else:
+                dtypes.append(step.dtype)
+            if step.fit_y:
                 y_pipeline_steps.append((step_name, step_instance))
 
         if dtypes is not None and any(x is not None for x in dtypes):
@@ -1546,20 +1594,23 @@ class DataPipelineConfig(DataConfig):
                 else:
                     continue  # skip unknown dtype
 
-                transformers.append((name, transformer, selector))
+                transformers.append((transformer, selector))
 
-            X_pipeline = Pipeline(
-                steps=[
-                    (
-                        "preprocess",
-                        ColumnTransformer(
-                            transformers=transformers,
-                            remainder="passthrough",
-                            verbose_feature_names_out=False,
+            if transformers:
+                X_pipeline = Pipeline(
+                    steps=[
+                        (
+                            "preprocess",
+                            make_column_transformer(
+                                *transformers,
+                                remainder="passthrough",
+                                verbose_feature_names_out=False,
+                            ),
                         ),
-                    ),
-                ],
-            )
+                    ],
+                )
+            else:
+                X_pipeline = Pipeline(steps=X_pipeline_steps)
 
         else:
             X_pipeline = Pipeline(steps=X_pipeline_steps)
@@ -1624,23 +1675,31 @@ class DataPipelineConfig(DataConfig):
         """Compose and apply feature/target pipeline behavior to sampled splits."""
         X_pipeline, y_pipeline = self.compose_pipeline_behavior()
         self._inject_sample_indices(X_pipeline)
-        self.X_train, self.X_test, self.y_train, self.y_test = self._fit_transform_X(
-            self.X_train,
-            self.X_test,
-            self.y_train,
-            self.y_test,
-            X_pipeline,
-        )
-        self._transform_validation_with_pipeline(X_pipeline)
-        if y_pipeline is not None:
-            self.X_train, self.X_test, self.y_train, self.y_test = (
-                self._fit_transform_y(
-                    self.X_train,
-                    self.X_test,
-                    self.y_train,
-                    self.y_test,
-                    y_pipeline,
-                )
+
+        start_fit = time.process_time()
+        self.X_train, self.y_train = self.fit_X(self.X_train, self.y_train)
+        self.X_train, self.y_train = self.fit_Xy(self.X_train, self.y_train)
+        self.X_train, self.y_train = self.fit_y(self.X_train, self.y_train)
+        end_fit = time.process_time()
+        self.pipeline_fit_time = end_fit - start_fit
+        self.pipeline_fit_n = len(self.X_train) if hasattr(self.X_train, "__len__") else None
+
+        start_transform = time.process_time()
+        self.X_test, self.y_test = self.run_pipeline((self.X_test, self.y_test))
+        if getattr(self, "X_val", None) is not None:
+            self.X_val, self.y_val = self.run_pipeline((self.X_val, self.y_val))
+        end_transform = time.process_time()
+        self.pipeline_transform_time = end_transform - start_transform
+        self.pipeline_transform_n = len(self.X_test) if hasattr(self.X_test, "__len__") else None
+
+        # Keep legacy path active for explicit y-only sklearn pipelines from create_pipeline().
+        if y_pipeline is not None and not getattr(self, "_fitted_pipeline_y", None):
+            self.X_train, self.X_test, self.y_train, self.y_test = self._fit_transform_y(
+                self.X_train,
+                self.X_test,
+                self.y_train,
+                self.y_test,
+                y_pipeline,
             )
 
     def create_pipeline(self):

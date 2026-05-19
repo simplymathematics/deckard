@@ -14,7 +14,6 @@ CORE_MODULES = [
     "deckard.detector.base",
     "deckard.experiment.base",
     "deckard.score.base",
-    "deckard.frameworks.core",
 ]
 
 

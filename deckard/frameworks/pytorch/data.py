@@ -28,7 +28,6 @@ from ...data.base import DataConfig, DataPipelineConfig
 
 # deckard
 from ...utils import load_class, resolve_torch_device
-from ..adapters import BaseContractMixin
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -202,15 +201,15 @@ class PytorchDataPipelineConfig(DataPipelineConfig):
     pass
 
 
-class TorchDatasetMixin(BaseContractMixin):
-    """PyTorch adapter methods for FrameworkDataConfig compliance."""
+class TorchDatasetMixin(TorchDatasetSamplingMixin):
+    """PyTorch data mixin with dataset-aware sampling behavior."""
 
     sampler: Union[str, dict, Callable[..., Any], None]
     sampler_params: dict[str, Any]
     dataset_type: Union[str, None]
     n_splits: int
 
-    def _resolve_dataset_type(self, dataset_obj: Any) -> str:
+    def resolve_dataset_type(self, dataset_obj: Any) -> str:
         """Classify runtime dataset shape for downstream sampling behavior."""
         if isinstance(dataset_obj, TensorDataset):
             return "tensor"
@@ -219,6 +218,8 @@ class TorchDatasetMixin(BaseContractMixin):
         if isinstance(dataset_obj, Dataset):
             return "map"
         return "unknown"
+
+
 
     def _normalize_sampler_spec(self) -> tuple[Union[str, None], dict[str, Any]]:
         """Resolve sampler name and params from string/dict/callable specs."""
@@ -545,7 +546,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             }
             full_dataset = load_class(dataset_name, **dataset_params)
             self.dataset_obj = full_dataset
-            self.dataset_type = self._resolve_dataset_type(full_dataset)
+            self.dataset_type = self.resolve_dataset_type(full_dataset)
 
             # Extract data and labels from dataset. For very large datasets,
             # _max_samples can cap materialization for fast iteration.
@@ -661,7 +662,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             )
 
         start_time = time.process_time()
-
+        # TODO: deprecate this for new sampling config. make consistent with ModelConfig
         dataset_obj = getattr(self, "dataset_obj", None)
         if isinstance(dataset_obj, Dataset):
             train_idx, test_idx = self._sample_with_configurable_sampler(

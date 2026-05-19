@@ -7,14 +7,13 @@ import logging
 from torch import Tensor
 
 # Local / project
-from ..adapters import BaseContractMixin
-from ..core import RuntimeValue
+from ..types import RuntimeValue
 
 # Logger
 logger = logging.getLogger(__name__)
 
 
-class TorchDataPipelineMixin(BaseContractMixin):
+class TorchDataPipelineMixin:
     """PyTorch adapter methods for FrameworkDataPipelineConfig."""
 
     def build_pipeline(self) -> RuntimeValue:

@@ -9,7 +9,6 @@ from sklearn.preprocessing import FunctionTransformer
 
 import deckard.data.base as data_base
 from deckard.data.base import DataConfig, DataPipelineConfig
-from deckard.frameworks import DataContractMixin, DataPipelineContractMixin
 from deckard.score.base import ScorerDictConfig
 
 
@@ -30,10 +29,13 @@ def _basic_data_config(**overrides):
     return DataConfig(**params)
 
 
-def test_data_pipeline_mixin_contract_compliance_and_aliases():
-    assert issubclass(data_base.DataPipelineMixin, DataPipelineContractMixin)
-    assert issubclass(DataConfig, DataContractMixin)
-    assert issubclass(DataPipelineConfig, DataPipelineContractMixin)
+def test_data_pipeline_mixin_is_standalone():
+    from deckard.data._mixins import DataPipelineMixin
+    assert hasattr(DataPipelineMixin, "normalize_step_hooks")
+    assert hasattr(DataPipelineMixin, "pipeline_declares_hook")
+    assert hasattr(DataPipelineMixin, "build_pipeline")
+    assert hasattr(DataPipelineMixin, "fit_presample")
+    assert hasattr(DataPipelineConfig, "apply_to")
 
 
 def test_discover_lifelines_dataset_loaders_handles_import_error(monkeypatch):
@@ -425,8 +427,9 @@ def test_pipeline_config_invalid_and_fit_y_paths(monkeypatch):
     cfg.pipeline = {
         "bad": {"name": "sklearn.preprocessing.FunctionTransformer", "fit_xy": True},
     }
-    with pytest.raises(ValueError):
-        cfg._init_pipeline()
+    x_pipeline, y_pipeline = cfg._init_pipeline()
+    assert isinstance(x_pipeline, data_base.Pipeline)
+    assert y_pipeline is None
 
     cfg.pipeline = "invalid"
     with pytest.raises(ValueError):

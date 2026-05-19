@@ -14,7 +14,6 @@ from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
 
 from ..data import DataConfig
-from ..frameworks import ModelDefenseContractMixin
 from ..utils import (
     ConfigBase,
     coerce_config,
@@ -871,7 +870,7 @@ class _DefenseBehaviorMixin:
         return art_class(base_estimator, **art_params)
 
 
-class ModelDefenseMixin(ModelDefenseContractMixin):
+class ModelDefenseMixin:
     """Reusable defense pipeline orchestration mixed into config shells."""
 
     @property
@@ -920,6 +919,8 @@ class ModelDefenseMixin(ModelDefenseContractMixin):
         model_cfg = self.model_config
         if model_cfg is not None:
             model_cfg.model = estimator
+            if hasattr(model_cfg, "_model"):
+                model_cfg._model = estimator
         return self.apply_defense(data)
 
     def apply_defense(self, data: Any) -> "BaseEstimator":

@@ -14,8 +14,7 @@ import pandas as pd
 from hydra.utils import instantiate
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
-from ..frameworks import FrameworkDataScorer, ScorerContractMixin
-from ..frameworks.core import ArrayLike, MatrixLike
+from ..frameworks.types import ArrayLike, MatrixLike
 from ..frameworks.pytorch.score import to_numpy_if_torch
 from ..utils import (
     ConfigBase,
@@ -501,7 +500,7 @@ class ScorerConfig:
 
 
 @dataclass(eq=False, kw_only=True)
-class ScorerDictConfig(ScorerContractMixin, ConfigBase, FrameworkDataScorer):
+class ScorerDictConfig(ConfigBase):
     """Container of named ScorerConfig instances."""
 
     scorers: dict[str, ScorerConfig] = field(

@@ -12,13 +12,13 @@ from __future__ import annotations
 
 import copy
 import inspect
+import warnings
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Protocol, Union
 
 import numpy as np
 import pandas as pd
 
-from ..frameworks import DataPipelineContractMixin
 from ..utils import instantiate_plugin_spec, load_class, normalize_plugin_specs
 
 
@@ -301,16 +301,275 @@ class _SensitiveColumnsMixin:
                 )
 
 @dataclass(eq=False, kw_only=True)
-class DataPipelineMixin(DataPipelineContractMixin):
+class DataPipelineMixin:
     """Reusable pipeline application behavior for data pipeline configs."""
 
-    def declares_hook(self, hook_name: str) -> bool:
-        return hasattr(
-            self,
-            "_pipeline_declares_hook",
-        ) and self._pipeline_declares_hook(
-            hook_name,
+    _PIPELINE_META_KEYS = {
+        "name",
+        "args",
+        "kwargs",
+        "fit_X",
+        "fit_y",
+        "fit_Xy",
+        "fit_xy",
+        "fit_pre-sample",
+        "fit_pre_sample",
+        "fit_presample",
+        "fit_post-sample",
+        "fit_post_sample",
+        "fit_postsample",
+        "dtype",
+        "plugin_hook",
+    }
+
+    def normalize_step_hooks(self, raw_hooks: Any) -> list[str]:
+        """Normalize ``plugin_hook`` declarations from pipeline step config."""
+        if raw_hooks is None:
+            return []
+        if isinstance(raw_hooks, str):
+            hooks = [raw_hooks]
+        elif isinstance(raw_hooks, (list, tuple, set)):
+            hooks = list(raw_hooks)
+        else:
+            raise TypeError(
+                f"plugin_hook must be None, str, or list-like. Got {type(raw_hooks)}",
+            )
+        return [str(h).strip().lower() for h in hooks if str(h).strip()]
+
+    def pipeline_declares_hook(self, hook_name: str) -> bool:
+        """Return True when any pipeline step declares the requested hook."""
+        target_hook = str(hook_name).strip().lower()
+        for _, step_config in getattr(self, "pipeline", {}).items():
+            hooks = self.normalize_step_hooks(step_config.get("plugin_hook", None))
+            if target_hook in hooks:
+                return True
+        return False
+
+    def build_pipeline(self) -> Any:
+        """Build a pipeline object through a framework hook."""
+        create_pipeline = getattr(self, "create_pipeline", None)
+        if callable(create_pipeline):
+            return create_pipeline()
+        raise AttributeError(
+            f"{type(self).__name__} must define create_pipeline() for pipeline support.",
         )
+
+    def fit_presample(self, X: Any, y: Any) -> tuple:
+        """Run pre-sample X-transform pipeline steps on ``X`` when configured."""
+        return self._apply_configured_pipeline_stage(X, y, stage="pre_sample")
+
+    def fit_X(self, X: Any, y: Any) -> tuple:
+        """Run post-sample X-transform pipeline steps on ``X`` when configured."""
+        return self._apply_configured_pipeline_stage(X, y, stage="X")
+
+    def fit_y(self, X: Any, y: Any) -> tuple:
+        """Run post-sample y-transform pipeline steps on ``y`` when configured."""
+        return self._apply_configured_pipeline_stage(X, y, stage="y")
+
+    def fit_Xy(self, X: Any, y: Any) -> tuple:
+        """Run post-sample joint X/y pipeline steps when configured."""
+        return self._apply_configured_pipeline_stage(X, y, stage="Xy")
+
+    def run_pipeline(self, pipeline: Any = None) -> Any:
+        """Transform runtime payloads using fitted post-sample X/y pipelines."""
+        if pipeline is None:
+            return None
+        if not isinstance(pipeline, tuple) or len(pipeline) != 2:
+            return pipeline
+        X, y = pipeline
+        xy_pipe = getattr(self, "_fitted_pipeline_Xy", None)
+        x_pipe = getattr(self, "_fitted_pipeline_X", None)
+        y_pipe = getattr(self, "_fitted_pipeline_y", None)
+        if xy_pipe is not None:
+            X = self._transform_with_pipeline(xy_pipe, X)
+        if x_pipe is not None:
+            X = self._transform_with_pipeline(x_pipe, X)
+        if y_pipe is not None:
+            y = self._transform_with_y_pipeline(y_pipe, y)
+        return X, y
+
+    def _step_flag(self, step_config: dict[str, Any], flag: str, default: bool) -> bool:
+        aliases: dict[str, tuple[str, ...]] = {
+            "fit_X": ("fit_X",),
+            "fit_y": ("fit_y",),
+            "fit_Xy": ("fit_Xy", "fit_xy"),
+            "fit_pre_sample": (
+                "fit_pre-sample",
+                "fit_pre_sample",
+                "fit_presample",
+            ),
+            "fit_post_sample": (
+                "fit_post-sample",
+                "fit_post_sample",
+                "fit_postsample",
+            ),
+        }
+        for key in aliases[flag]:
+            if key in step_config:
+                return bool(step_config[key])
+        return default
+
+    def _instantiate_pipeline_step(self, step_name: str, step_config: dict[str, Any]) -> Any:
+        class_name = step_config.get("name")
+        if not class_name:
+            raise ValueError(f"Pipeline step '{step_name}' must define a 'name'")
+        args = list(step_config.get("args", []) or [])
+        kwargs = dict(step_config.get("kwargs", {}) or {})
+        extra_kwargs = {
+            k: v for k, v in dict(step_config).items() if k not in self._PIPELINE_META_KEYS
+        }
+        kwargs.update(extra_kwargs)
+        return load_class(class_name, *args, **kwargs)
+
+    def _collect_stage_steps(
+        self,
+        stage: str,
+    ) -> tuple[list[tuple[str, Any, Any]], list[tuple[str, Any]]]:
+        pipeline_cfg = getattr(self, "pipeline", {}) or {}
+        if not isinstance(pipeline_cfg, dict):
+            return [], []
+
+        x_steps: list[tuple[str, Any, Any]] = []
+        y_steps: list[tuple[str, Any]] = []
+        for step_name, raw_step_cfg in pipeline_cfg.items():
+            if not isinstance(raw_step_cfg, dict):
+                continue
+            cfg = dict(raw_step_cfg)
+            fit_x = self._step_flag(cfg, "fit_X", True)
+            fit_y = self._step_flag(cfg, "fit_y", False)
+            fit_xy = self._step_flag(cfg, "fit_Xy", False)
+            fit_pre = self._step_flag(cfg, "fit_pre_sample", False)
+            fit_post = self._step_flag(cfg, "fit_post_sample", True)
+
+            if stage == "pre_sample" and not fit_pre:
+                continue
+            if stage in {"X", "y", "Xy"} and not fit_post:
+                continue
+            if stage == "X" and not fit_x:
+                continue
+            if stage == "y" and not fit_y:
+                continue
+            if stage == "Xy" and not fit_xy:
+                continue
+
+            step_obj = self._instantiate_pipeline_step(step_name, cfg)
+            if stage in {"X", "pre_sample"}:
+                x_steps.append((step_name, step_obj, cfg.get("dtype", None)))
+            elif stage == "y":
+                y_steps.append((step_name, step_obj))
+            elif stage == "Xy":
+                x_steps.append((step_name, step_obj, cfg.get("dtype", None)))
+        return x_steps, y_steps
+
+    def _build_x_pipeline(self, x_steps: list[tuple[str, Any, Any]]) -> Any:
+        if not x_steps:
+            return None
+        from sklearn.compose import make_column_selector, make_column_transformer
+        from sklearn.pipeline import Pipeline
+
+        typed_steps = [(n, t, d) for n, t, d in x_steps if d is not None]
+        if typed_steps:
+            transforms = []
+            for name, transformer, dtype in typed_steps:
+                dtype_text = str(dtype).strip().lower()
+                if dtype_text in {"num", "numeric", "float", "int"}:
+                    selector = make_column_selector(dtype_include=np.number)
+                elif dtype_text in {"object", "string", "category"}:
+                    selector = make_column_selector(dtype_include=object)
+                else:
+                    continue
+                transforms.append((transformer, selector))
+            if transforms:
+                return Pipeline(
+                    steps=[
+                        (
+                            "preprocess",
+                            make_column_transformer(
+                                *transforms,
+                                remainder="passthrough",
+                                verbose_feature_names_out=False,
+                            ),
+                        ),
+                    ],
+                )
+        return Pipeline(steps=[(name, transformer) for name, transformer, _ in x_steps])
+
+    def _fit_transform_with_pipeline(self, pipeline_obj: Any, X: Any, y: Any) -> Any:
+        if pipeline_obj is None:
+            return X
+        if y is not None:
+            pipeline_obj.fit(X, y)
+        else:
+            pipeline_obj.fit(X)
+        return self._transform_with_pipeline(pipeline_obj, X)
+
+    def _transform_with_pipeline(self, pipeline_obj: Any, X: Any) -> Any:
+        transformed = pipeline_obj.transform(X)
+        if hasattr(transformed, "toarray"):
+            transformed = transformed.toarray()
+        if isinstance(X, pd.DataFrame):
+            try:
+                cols = list(pipeline_obj.get_feature_names_out(X.columns))
+            except Exception:
+                cols = [f"feature_{i}" for i in range(np.asarray(transformed).shape[1])]
+            return pd.DataFrame(transformed, columns=cols, index=X.index)
+        return transformed
+
+    def _transform_with_y_pipeline(self, y_pipeline: list[tuple[str, Any]], y: Any) -> Any:
+        y_frame = y.to_frame() if isinstance(y, pd.Series) else pd.DataFrame(y)
+        for _, stage in y_pipeline:
+            y_frame = stage.transform(y_frame)
+            if hasattr(y_frame, "toarray"):
+                y_frame = y_frame.toarray()
+            if not isinstance(y_frame, pd.DataFrame):
+                y_frame = pd.DataFrame(y_frame)
+        if y_frame.shape[1] == 1:
+            return y_frame.iloc[:, 0]
+        return y_frame
+
+    def _fit_transform_y_pipeline(self, y_steps: list[tuple[str, Any]], y: Any) -> Any:
+        if not y_steps:
+            return y
+        y_frame = y.to_frame() if isinstance(y, pd.Series) else pd.DataFrame(y)
+        for _, stage in y_steps:
+            stage.fit(y_frame)
+            y_frame = stage.transform(y_frame)
+            if hasattr(y_frame, "toarray"):
+                y_frame = y_frame.toarray()
+            if not isinstance(y_frame, pd.DataFrame):
+                y_frame = pd.DataFrame(y_frame)
+        if y_frame.shape[1] == 1:
+            return y_frame.iloc[:, 0]
+        return y_frame
+
+    def _apply_configured_pipeline_stage(self, X: Any, y: Any, stage: str) -> tuple:
+        x_steps, y_steps = self._collect_stage_steps(stage=stage)
+        if stage in {"X", "pre_sample"}:
+            x_pipeline = self._build_x_pipeline(x_steps)
+            if x_pipeline is None:
+                return X, y
+            X_t = self._fit_transform_with_pipeline(x_pipeline, X, y)
+            if stage == "X":
+                self._fitted_pipeline_X = x_pipeline
+            return X_t, y
+        if stage == "y":
+            if not y_steps:
+                return X, y
+            y_t = self._fit_transform_y_pipeline(y_steps, y)
+            self._fitted_pipeline_y = y_steps
+            return X, y_t
+        if stage == "Xy":
+            # For joint stages, prefer estimators that accept fit(X, y) and transform(X).
+            x_pipeline = self._build_x_pipeline(x_steps)
+            if x_pipeline is None:
+                return X, y
+            X_t = self._fit_transform_with_pipeline(x_pipeline, X, y)
+            self._fitted_pipeline_Xy = x_pipeline
+            return X_t, y
+        return X, y
+
+    def declares_hook(self, hook_name: str) -> bool:
+        return self.pipeline_declares_hook(hook_name)
 
     def apply_to(self, data: Any, mode: Optional[str] = None, **kwargs: Any) -> Any:
         """Apply this pipeline config to a data config instance."""
@@ -471,14 +730,28 @@ class DataPluginRuntimeMixin:
 class DataScoreMixin:
     """Reusable score-wrapper behavior for data configs."""
 
+    def score(
+        self,
+        *args: Any,
+        mode: str | None = None,
+        **kwargs: Any,
+    ) -> dict:
+        """Canonical public entry-point for dataset scoring."""
+        return self._score(*args, mode=mode, **kwargs)
+
     def compute_score(
         self,
         *args: Any,
         mode: str | None = None,
         **kwargs: Any,
     ) -> dict:
-        """Public entry-point for dataset scoring."""
-        return self._score(*args, mode=mode, **kwargs)
+        """Deprecated score entry-point; forwards to ``score``."""
+        warnings.warn(
+            "DataScoreMixin.compute_score() is deprecated; use score() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.score(*args, mode=mode, **kwargs)
 
 
 __all__ = [

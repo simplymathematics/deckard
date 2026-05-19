@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any, Union
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
 
-from ..frameworks import DetectorContractMixin, FrameworkDetectorConfig
 from ..model import ModelConfig
 from ..score.base import (
     DefaultModelScorerConfig,
@@ -49,7 +48,7 @@ class DetectorScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
 
 
 @dataclass(eq=False, kw_only=True)
-class DetectorConfig(DetectorContractMixin, ConfigBase, FrameworkDetectorConfig):
+class DetectorConfig(ConfigBase):
     """Auxiliary detector runtime for adversarial-vs-clean detection tasks."""
 
     detector_type: str = "art.defences.detector.evasion.BinaryInputDetector"

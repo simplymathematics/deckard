@@ -24,7 +24,6 @@ from ..data import DataConfig, DataPipelineConfig
 from ..data.sample import KFoldSampler, ShuffleSampler
 from ..detector import DetectorConfig
 from ..file import AttackFiles, BaseFiles, FileConfig, ModelFiles
-from ..frameworks import ExperimentContractMixin, FrameworkExperimentConfig
 from ..model import ModelConfig
 from ..model.defend import DefensePipelineConfig
 from ..score import ScorerDictConfig
@@ -240,9 +239,7 @@ class DataConfigResolutionMixin:
 @dataclass(eq=False, kw_only=True)
 class ExperimentConfig(
     DataConfigResolutionMixin,
-    ExperimentContractMixin,
     ConfigBase,
-    FrameworkExperimentConfig,
 ):
     """Compose and execute a complete deckard experiment.
 

@@ -16,8 +16,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
 
-from ..frameworks import AttackContractMixin, FrameworkAttackConfig
-from ..frameworks.core import EstimatorLike
+from ..frameworks.types import EstimatorLike
 from ..frameworks.pytorch.torch_utils import (
     build_torch_art_model,
     collect_subset_from_dataloader,
@@ -290,7 +289,7 @@ def _get_supported_models() -> tuple[type, ...]:
 
 
 @dataclass(eq=False, kw_only=True)
-class AttackConfig(AttackContractMixin, ConfigBase, FrameworkAttackConfig):
+class AttackConfig(ConfigBase):
     """Runtime attack configuration with plugin-driven dispatch.
 
     Attack behavior is resolved at runtime via mixins and optional plugins.

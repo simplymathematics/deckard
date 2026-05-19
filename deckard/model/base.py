@@ -13,8 +13,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
 
 from ..data import DataConfig
-from ..frameworks import FrameworkModelConfig, ModelContractMixin
-from ..frameworks.core import ArrayLike, EstimatorLike, MatrixLike
+from ..frameworks.types import ArrayLike, EstimatorLike, MatrixLike
 from ..score.base import (  # noqa: F401
     ScorerDictConfig,
 )
@@ -117,9 +116,7 @@ class ModelConfig(
     PretrainedModelMixin,
     ModelPrunerMixin,
     ModelHookRuntimeMixin,  # Allows for user-configured plugins
-    ModelContractMixin,  # Ensures that the final object has necessary components, according to the Hook
     ConfigBase,  # Persistence, Hashing,
-    FrameworkModelConfig,  # Defines order of operations
 ):
     """
     Runtime model configuration with plugin-aware training/evaluation orchestration.
