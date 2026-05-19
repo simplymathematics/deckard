@@ -154,9 +154,18 @@ def test_extract_backend_modes_and_validation():
     assert (
         plot_module._extract_backend(
             {"backend": "auto"},
-            data_file="",
+            data_file="scores.csv",
             experiment_cfg={"data": {}},
             experiment_config="",
+        )
+        == "yellowbrick"
+    )
+    assert (
+        plot_module._extract_backend(
+            {"backend": "auto"},
+            data_file="scores.csv",
+            experiment_cfg={},
+            experiment_config="exp.yaml",
         )
         == "yellowbrick"
     )
@@ -205,10 +214,10 @@ def test_plot_main_seaborn_single_and_multi(monkeypatch, tmp_path):
 
     kwargs_file = tmp_path / "kwargs.yaml"
     rc_file = tmp_path / "rc.yaml"
-    plots_file = tmp_path / "plots.yaml"
+    plot_params_file = tmp_path / "plots.yaml"
     kwargs_file.write_text("alpha: 0.5\n")
     rc_file.write_text("font.size: 10\n")
-    plots_file.write_text(
+    plot_params_file.write_text(
         "plots:\n" "  - plot_type: scatterplot\n" "    x: a\n" "    y: b\n",
     )
 
@@ -231,7 +240,7 @@ def test_plot_main_seaborn_single_and_multi(monkeypatch, tmp_path):
         "plot": {
             "backend": "seaborn",
             "data_file": "scores.csv",
-            "plots_file": str(plots_file),
+            "plot_params_file": str(plot_params_file),
             "plot_file": str(tmp_path / "combined.png"),
         },
     }
@@ -239,6 +248,70 @@ def test_plot_main_seaborn_single_and_multi(monkeypatch, tmp_path):
     assert multi["backend"] == "seaborn"
     assert multi["mode"] == "multi"
     assert multi["num_plots"] == 1
+
+
+def test_plot_main_experiment_presence_prefers_yellowbrick(monkeypatch, tmp_path):
+    _install_fake_plot_modules(monkeypatch)
+    monkeypatch.setattr(
+        plot_module,
+        "_instantiate_experiment_cfg",
+        lambda exp_cfg: SimpleNamespace(cfg=exp_cfg),
+    )
+
+    out = plot_module.plot_main(
+        {
+            "plot": {
+                "backend": "auto",
+                "data_file": "scores.csv",
+                "plot_type": "classification_report",
+                "plot_folder": str(tmp_path / "plots"),
+                "experiment": {"data": {}, "model": {}},
+            },
+        },
+    )
+
+    assert out["backend"] == "yellowbrick"
+    assert out["mode"] == "single"
+
+
+def test_plot_main_plot_params_file_drives_both_backends(monkeypatch, tmp_path):
+    _install_fake_plot_modules(monkeypatch)
+    monkeypatch.setattr(
+        plot_module,
+        "_instantiate_experiment_cfg",
+        lambda exp_cfg: SimpleNamespace(cfg=exp_cfg),
+    )
+
+    yb_params = tmp_path / "yb_params.yaml"
+    yb_params.write_text("plot_params:\n  alpha: 0.5\n")
+
+    seaborn_params = tmp_path / "sns_params.yaml"
+    seaborn_params.write_text("plots:\n  - plot_type: scatterplot\n    x: a\n    y: b\n")
+
+    yb = plot_module.plot_main(
+        {
+            "plot": {
+                "backend": "auto",
+                "experiment": {"data": {}, "model": {}},
+                "plot_type": "classification_report",
+                "plot_params_file": str(yb_params),
+            },
+        },
+    )
+    assert yb["backend"] == "yellowbrick"
+
+    sns = plot_module.plot_main(
+        {
+            "plot": {
+                "backend": "seaborn",
+                "data_file": "scores.csv",
+                "plot_params_file": str(seaborn_params),
+                "plot_file": str(tmp_path / "combined.png"),
+            },
+        },
+    )
+    assert sns["backend"] == "seaborn"
+    assert sns["mode"] == "multi"
 
 
 def test_plot_main_validation_errors(monkeypatch, tmp_path):
@@ -280,7 +353,10 @@ def test_plot_main_validation_errors(monkeypatch, tmp_path):
             },
         )
 
-    with pytest.raises(ValueError, match="requires plot.plots_file"):
+    with pytest.raises(
+        ValueError,
+        match="Provide one of plot.plot_type or plot.plot_params_file for seaborn backend",
+    ):
         plot_module.plot_main(
             {
                 "plot": {
@@ -296,16 +372,20 @@ def test_plot_main_validation_errors(monkeypatch, tmp_path):
             {"plot": {"backend": "seaborn", "data_file": "scores.csv"}},
         )
 
-    with pytest.raises(ValueError, match="only supported for seaborn backend"):
-        plot_module.plot_main(
-            {
-                "plot": {
-                    "backend": "yellowbrick",
-                    "plots_file": str(tmp_path / "plots.yaml"),
-                    "experiment": {"data": {}, "model": {}},
-                },
+    yb_plot_params = tmp_path / "yb_plot_params.yaml"
+    yb_plot_params.write_text("plot_params:\n  alpha: 0.5\n")
+    yb_out = plot_module.plot_main(
+        {
+            "plot": {
+                "backend": "yellowbrick",
+                "plot_type": "classification_report",
+                "plot_params_file": str(yb_plot_params),
+                "experiment": {"data": {}, "model": {}},
             },
-        )
+        },
+    )
+    assert yb_out["backend"] == "yellowbrick"
+    assert yb_out["mode"] == "single"
 
     with pytest.raises(ValueError, match="must contain at least one plot type"):
         plot_module.plot_main(
@@ -356,7 +436,7 @@ def test_plot_main_validation_errors(monkeypatch, tmp_path):
                 "plot": {
                     "backend": "seaborn",
                     "data_file": "scores.csv",
-                    "plots_file": str(bad_plots),
+                    "plot_params_file": str(bad_plots),
                 },
             },
         )
@@ -388,7 +468,7 @@ def test_plot_main_validation_errors(monkeypatch, tmp_path):
                 "plot": {
                     "backend": "seaborn",
                     "data_file": "scores.csv",
-                    "plots_file": str(bad_format),
+                    "plot_params_file": str(bad_format),
                 },
             },
         )
@@ -402,17 +482,17 @@ def test_plot_main_seaborn_multi_accepts_top_level_list_and_merges_defaults(
 
     kwargs_file = tmp_path / "kwargs.yaml"
     rc_file = tmp_path / "rc.yaml"
-    plots_file = tmp_path / "plots_list.yaml"
+    plot_params_file = tmp_path / "plots_list.yaml"
     kwargs_file.write_text("alpha: 0.5\n")
     rc_file.write_text("font.size: 10\n")
-    plots_file.write_text("- plot_type: scatterplot\n  x: a\n  y: b\n")
+    plot_params_file.write_text("- plot_type: scatterplot\n  x: a\n  y: b\n")
 
     out = plot_module.plot_main(
         {
             "plot": {
                 "backend": "seaborn",
                 "data_file": "scores.csv",
-                "plots_file": str(plots_file),
+                "plot_params_file": str(plot_params_file),
                 "kwargs_file": str(kwargs_file),
                 "rc_config_file": str(rc_file),
             },
