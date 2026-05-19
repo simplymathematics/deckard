@@ -9,8 +9,6 @@ from hydra.core.config_store import ConfigStore
 from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf
 
-os.environ.setdefault("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "1")
-
 from deckard.attack import AttackConfig
 from deckard.data import DataConfig, DataPipelineConfig
 from deckard.experiment import ExperimentConfig
@@ -22,6 +20,8 @@ from deckard.score import (
     DefaultDataRegressionConfig,
 )
 from deckard.score.attack import AttackScorerConfig
+
+os.environ.setdefault("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "1")
 
 
 def _load_or_skip(cfg):

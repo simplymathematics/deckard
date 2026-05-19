@@ -244,7 +244,7 @@ class AttackTypePlugin:
         """Return mixin tuple for matching attack family/subtype."""
         _ = (runtime, default_mixins)
         if not self._matches(attack_type=attack_type, attack_subtype=attack_subtype):
-            return tuple()
+            return ()
         mixin = self._resolve_mixin_type()
         return (mixin,)
 

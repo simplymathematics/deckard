@@ -161,7 +161,7 @@ class PlotTypePlugin:
             plot_backend=plot_backend,
             plot_family=plot_family,
         ):
-            return tuple()
+            return ()
         mixin = self._resolve_mixin_type()
         return (mixin,)
 

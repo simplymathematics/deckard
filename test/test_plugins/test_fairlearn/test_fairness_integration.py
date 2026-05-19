@@ -11,14 +11,16 @@ from deckard.plugins.fairlearn.score import (
     DefaultFairlearnDataScorerConfig,
     FairlearnScoreDictConfig,
 )
+from deckard.score.attack import FairlearnAttackScorerConfig
 from deckard.score import ScorerConfig
-
 
 pytest.importorskip("fairlearn")
 pytest.importorskip("art")
 
-from art.estimators.classification.scikitlearn import ScikitlearnClassifier
-from fairlearn.reductions import ExponentiatedGradient
+from art.estimators.classification.scikitlearn import (  # noqa: E402
+    ScikitlearnClassifier,
+)
+from fairlearn.reductions import ExponentiatedGradient  # noqa: E402
 
 DefenseConfig = model_module.DefenseConfig
 DefensePipelineConfig = model_module.DefensePipelineConfig
@@ -26,7 +28,10 @@ FairlearnDefenseConfig = getattr(model_module, "FairlearnDefenseConfig", None)
 FairlearnModelConfig = getattr(model_module, "FairlearnModelConfig", None)
 
 if FairlearnDefenseConfig is None or FairlearnModelConfig is None:
-    pytest.skip("fairlearn model configs are unavailable", allow_module_level=True)
+    pytest.skip(
+        "fairlearn model configs are unavailable",
+        allow_module_level=True,
+    )
 
 
 @pytest.fixture(scope="module")
@@ -78,11 +83,13 @@ def test_fairness_data_and_model_scores(generate_fairness_data):
     # Model-level scorer: check for accuracy
     assert "accuracy" in model.score_dict
     assert any(key.endswith("_accuracy") for key in model.score_dict)
-    assert any(
-        key.endswith("_difference") for key in model.score_dict
-    ), f"Expected at least one group reduction metric in score_dict: {list(model.score_dict.keys())}"
+    assert any(key.endswith("_difference") for key in model.score_dict), (
+        "Expected at least one group reduction metric in score_dict: "
+        f"{list(model.score_dict.keys())}"
+    )
 
-    # Group-scoring: verify per-group metric keys exist for observed sensitive groups.
+    # Group-scoring: verify per-group metric keys exist
+    # for observed sensitive groups.
     sensitive = getattr(data, "_sensitive_test", None)
     assert sensitive is not None, "Expected _sensitive_test to be populated"
     unique_groups = set(str(group) for group in set(sensitive))
@@ -144,7 +151,9 @@ def test_fairness_regression_data_and_metric_frame_scores():
     assert any(key.endswith("_mse") for key in model.score_dict)
 
 
-def test_fairness_defense_config_apply_to_trained_model(generate_fairness_data):
+def test_fairness_defense_config_apply_to_trained_model(
+    generate_fairness_data,
+):
     data = generate_fairness_data
 
     model = FairlearnModelConfig(
@@ -237,7 +246,9 @@ def test_mixed_fairlearn_and_art_defenses_apply_with_type_checks(
 
 @pytest.fixture(scope="module")
 def generate_fairness_model(generate_fairness_data):
-    from deckard.plugins.fairlearn.score import DefaultFairlearnClassificationConfig
+    from deckard.plugins.fairlearn.score import (
+        DefaultFairlearnClassificationConfig,
+    )
 
     model = FairlearnModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
@@ -275,7 +286,10 @@ def test_generate_fairness_data_model_with_and_without_attack(
     assert any(
         any(key.startswith(f"{group}_") for key in generate_fairness_model.score_dict)
         for group in unique_groups
-    ), f"No group metric keys found in model.score_dict: {list(generate_fairness_model.score_dict.keys())}"
+    ), (
+        "No group metric keys found in model.score_dict: "
+        f"{list(generate_fairness_model.score_dict.keys())}"
+    )
     # Model-level: check for group difference metric
     assert any(
         key.endswith("_difference") for key in generate_fairness_model.score_dict
@@ -301,7 +315,10 @@ def test_generate_fairness_data_model_with_and_without_attack(
         attack_size=5,
         scorer=FairlearnAttackScorerConfig(),
     )
-    scores = attack_cfg(data=generate_fairness_data, model=generate_fairness_model)
+    scores = attack_cfg(
+        data=generate_fairness_data,
+        model=generate_fairness_model,
+    )
 
     # Attack-level: check for group metrics and difference
     assert any(key.startswith("evasion_") for key in scores)
@@ -309,7 +326,7 @@ def test_generate_fairness_data_model_with_and_without_attack(
     assert any(
         any(key.startswith(f"evasion_{group}_") for key in scores)
         for group in unique_groups
-    ), f"No group metric keys found in attack scores: {list(scores.keys())}"
+    ), ("No group metric keys found in attack scores: " f"{list(scores.keys())}")
     assert any(key.endswith("_difference") for key in scores)
 
 

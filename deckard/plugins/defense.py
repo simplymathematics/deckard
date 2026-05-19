@@ -67,7 +67,7 @@ class DefenseTypePlugin:
             defense_type=defense_type,
             defense_subtype=defense_subtype,
         ):
-            return tuple()
+            return ()
         mixin = self._resolve_mixin_type()
         return (mixin,)
 

@@ -9,18 +9,18 @@ from typing import Literal
 import torch
 from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 from torch import Tensor
-from torch.utils.data import DataLoader, Dataset, Subset
+from torch.utils.data import (
+    DataLoader,
+    Dataset,
+    Subset,
+    TensorDataset,
+    random_split,
+)
 
 # Local / project
 
 # Logger
 logger = logging.getLogger(__name__)
-
-
-from torch.utils.data import (
-    TensorDataset,
-    random_split,
-)
 
 MatrixLike = Tensor
 ArrayLike = Tensor
@@ -39,6 +39,7 @@ class TorchDataLoaderMixin:
         Returns:
             (train_loader, test_loader)
         """
+        dataset = getattr(self, "dataset", None)
         if dataset is None:
 
             if not hasattr(self, "X") or not hasattr(self, "y"):
@@ -54,10 +55,7 @@ class TorchDataLoaderMixin:
 
         n_total = len(dataset)
         n_test = int(n_total * self.test_size)
-        if self.val_size:
-            n_test = n_total - self.val_size
-        else:
-            n_val = 0
+        n_val = int(n_total * self.val_size) if self.val_size else 0
         n_train = n_total - n_test - n_val
         generator = torch.Generator().manual_seed(self.random_seed)
 
@@ -81,15 +79,15 @@ class TorchDataLoaderMixin:
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
-            pin_memory=self.in_memory,
+            pin_memory=self.pin_memory,
             drop_last=False,
         )
         self.val_loader = DataLoader(
             val_ds,
-            batch_size=batch_size,
+            batch_size=self.batch_size,
             shuffle=False,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
             drop_last=False,
         )
         return self.train_loader, self.test_loader, self.val_loader

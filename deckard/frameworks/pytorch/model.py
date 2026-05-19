@@ -9,13 +9,11 @@ import time
 # Typing imports
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol, Union
+from typing import Any, Protocol, Union
 
 import numpy as np
 from omegaconf import DictConfig
 
-if TYPE_CHECKING:
-    import torch
 # Torch imports (optional dependency)
 try:
     import torch

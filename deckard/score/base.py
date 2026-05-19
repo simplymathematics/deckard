@@ -191,7 +191,7 @@ class ScorerTypePlugin:
             scoring_type=scoring_type,
             scoring_subtype=scoring_subtype,
         ):
-            return tuple()
+            return ()
         mixin = self._resolve_mixin_type()
         return (mixin,)
 

@@ -10,6 +10,8 @@ import yaml
 from deckard.model.base import ModelConfig
 from deckard.model.defend import DefenseConfig, DefensePipelineConfig
 
+DummyDataConfig = SimpleNamespace
+
 
 class TestRetrainingDefensePipeline(unittest.TestCase):
     def test_retraining_defense_is_reordered_last_with_warning(self):

@@ -18,6 +18,7 @@ from sklearn.svm import SVC
 
 from deckard.attack import AttackConfig
 from deckard.attack.base import SensitiveFeaturesWrapper, _sensitive_slice
+from deckard.score.attack import FairlearnAttackScorerConfig
 
 
 class TestAttackConfig(unittest.TestCase):
@@ -3401,7 +3402,6 @@ class TestFairlearnAttackScorer(unittest.TestCase):
 
     def test_fairlearn_attack_scorer_instantiates(self):
         from deckard.plugins.fairlearn.score import FairlearnScoreDictConfig
-        from deckard.plugins.fairlearn.AttackScorerConfig
         from deckard.score.base import DefaultClassifierConfig
 
         scorer = FairlearnAttackScorerConfig(evasion=DefaultClassifierConfig())
@@ -3410,8 +3410,6 @@ class TestFairlearnAttackScorer(unittest.TestCase):
         self.assertIsInstance(scorer.attribute_inference, FairlearnScoreDictConfig)
 
     def test_score_evasion_with_sensitive_features_produces_group_metrics(self):
-        from deckard.plugins.fairlearn.AttackScorerConfig
-
         scorer = FairlearnAttackScorerConfig()
         rng = np.random.default_rng(1)
         n = 20
@@ -3433,8 +3431,6 @@ class TestFairlearnAttackScorer(unittest.TestCase):
         )
 
     def test_score_membership_with_sensitive_features_produces_group_metrics(self):
-        from deckard.plugins.fairlearn.AttackScorerConfig
-
         scorer = FairlearnAttackScorerConfig()
         rng = np.random.default_rng(2)
         n = 20
@@ -3454,8 +3450,6 @@ class TestFairlearnAttackScorer(unittest.TestCase):
         )
 
     def test_score_attribute_with_sensitive_features_produces_group_metrics(self):
-        from deckard.plugins.fairlearn.AttackScorerConfig
-
         scorer = FairlearnAttackScorerConfig()
         rng = np.random.default_rng(3)
         n = 20
@@ -3477,8 +3471,6 @@ class TestFairlearnAttackScorer(unittest.TestCase):
         )
 
     def test_evasion_attack_with_fairlearn_scorer_end_to_end(self):
-        from deckard.plugins.fairlearn.AttackScorerConfig
-
         pytest.importorskip("art")
         data = self._make_data_with_sensitive()
         model = LogisticRegression(max_iter=200).fit(
@@ -3499,8 +3491,6 @@ class TestFairlearnAttackScorer(unittest.TestCase):
         )
 
     def test_membership_inference_with_fairlearn_scorer_end_to_end(self):
-        from deckard.plugins.fairlearn.AttackScorerConfig
-
         pytest.importorskip("art")
         data = self._make_data_with_sensitive()
         model = LogisticRegression(max_iter=200).fit(

@@ -14,11 +14,11 @@ from hydra.core.config_store import ConfigStore
 from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf
 
-os.environ.setdefault("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "1")
-
 from helpers import make_runtime_env, reset_hydra_state
 
 from deckard.score import ScorerDictConfig
+
+os.environ.setdefault("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "1")
 
 CONFIG_DIR = Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
 EXAMPLES_SKLEARN_DIR = Path(__file__).resolve().parents[2] / "examples" / "sklearn"

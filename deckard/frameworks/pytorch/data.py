@@ -7,9 +7,10 @@ import tempfile
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, List, Literal, Optional, Union
 
 import numpy as np
+from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 
 # PyTorch
 import torch
@@ -31,11 +32,6 @@ from ..adapters import BaseContractMixin
 
 # Setup logger
 logger = logging.getLogger(__name__)
-
-
-from typing import Literal
-
-from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 
 
 class TorchDatasetSamplingMixin:

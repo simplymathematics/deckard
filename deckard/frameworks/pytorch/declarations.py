@@ -1,7 +1,7 @@
 try:
     import torchvision.models as models
     from torch import nn
-except:
+except Exception:
     nn = None
     models = None
 

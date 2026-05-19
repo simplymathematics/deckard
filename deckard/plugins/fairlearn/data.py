@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import logging
 from typing import Any, Dict
 
 import pandas as pd
@@ -13,16 +14,14 @@ from ...utils import (
     is_default_config_value,
     merge_list_of_dicts,
 )
-
-RuntimeScalar = str | int | float | bool | None
-RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
-import logging
-
 from ...data.pipeline.core import FairlearnDataPipelineConfig
 from ...plugins.fairlearn.score import (
     DefaultFairlearnClassificationConfig,
     DefaultFairlearnRegressionConfig,
 )
+
+RuntimeScalar = str | int | float | bool | None
+RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
 
 logger = logging.getLogger(__name__)
 

@@ -8,6 +8,7 @@ from torch import Tensor
 
 # Local / project
 from ..adapters import BaseContractMixin
+from ..core import RuntimeValue
 
 # Logger
 logger = logging.getLogger(__name__)
