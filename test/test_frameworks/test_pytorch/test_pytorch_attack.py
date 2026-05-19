@@ -1060,7 +1060,7 @@ class TestInitializeAttackBranches(unittest.TestCase):
         from sklearn.base import BaseEstimator, ClassifierMixin
 
         class _SFModel(BaseEstimator, ClassifierMixin):
-            classes_ = [0, 1]
+            classes_ = np.array([0, 1])
 
             def fit(self, X, y):
                 self.fitted_ = True
@@ -1144,7 +1144,7 @@ class TestInitializeAttackBranches(unittest.TestCase):
         from sklearn.base import BaseEstimator, ClassifierMixin
 
         class _SFModel(BaseEstimator, ClassifierMixin):
-            classes_ = [0, 1]
+            classes_ = np.array([0, 1])
 
             def fit(self, X, y):
                 self.fitted_ = True

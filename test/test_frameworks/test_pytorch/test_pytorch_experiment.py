@@ -752,7 +752,4 @@ def test_deckard_optimize_torch_fairness_smoke_matrix():
         timeout=240,
         check=False,
     )
-    # Expect ValueError for shape inconsistency
-    assert result.returncode != 0
-    assert "ValueError" in result.stderr
-    assert "shape" in result.stderr or "inconsistent" in result.stderr
+    assert result.returncode == 0

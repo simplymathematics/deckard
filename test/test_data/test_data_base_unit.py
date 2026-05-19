@@ -436,6 +436,118 @@ def test_pipeline_config_invalid_and_fit_y_paths(monkeypatch):
         cfg._init_pipeline()
 
 
+def test_pipeline_step_rejects_fit_y_and_fit_xy_both_true():
+    with pytest.raises(ValueError, match="cannot enable both fit_y and fit_Xy"):
+        data_base.DataPipelineStep.from_config(
+            "bad",
+            {
+                "name": "sklearn.preprocessing.FunctionTransformer",
+                "fit_y": True,
+                "fit_xy": True,
+            },
+        )
+
+
+def test_pipeline_stage_flags_apply_only_to_declared_stages(monkeypatch):
+    import deckard.data._mixins as data_mixins
+
+    class AddConstantTransformer:
+        def __init__(self, amount):
+            self.amount = amount
+
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X):
+            frame = X.copy()
+            return frame + self.amount
+
+    def _fake_load_class(name, *args, **kwargs):
+        _ = (args, kwargs)
+        amounts = {
+            "test.Pre": 100,
+            "test.X": 1,
+            "test.Xy": 5,
+            "test.Y": 10,
+        }
+        return AddConstantTransformer(amounts[name])
+
+    monkeypatch.setattr(data_mixins, "load_class", _fake_load_class)
+
+    cfg = DataPipelineConfig(
+        pipeline={
+            "pre": {
+                "name": "test.Pre",
+                "fit_pre_sample": True,
+                "fit_post_sample": False,
+            },
+            "x": {"name": "test.X", "fit_X": True},
+            "xy": {"name": "test.Xy", "fit_Xy": True},
+            "y": {"name": "test.Y", "fit_y": True, "fit_X": False},
+        },
+        scorer="none",
+    )
+
+    X = pd.DataFrame({"a": [1.0, 2.0]})
+    y = pd.Series([1.0, 2.0])
+
+    X_pre, y_pre = cfg.fit_presample(X, y)
+    assert X_pre["a"].tolist() == [101.0, 102.0]
+    assert y_pre.tolist() == [1.0, 2.0]
+
+    X_x, y_x = cfg.fit_X(X_pre, y_pre)
+    assert X_x["a"].tolist() == [102.0, 103.0]
+    assert y_x.tolist() == [1.0, 2.0]
+
+    X_xy, y_xy = cfg.fit_Xy(X_x, y_x)
+    assert X_xy["a"].tolist() == [107.0, 108.0]
+    assert y_xy.tolist() == [1.0, 2.0]
+
+    X_y, y_y = cfg.fit_y(X_xy, y_xy)
+    assert X_y["a"].tolist() == [107.0, 108.0]
+    assert y_y.tolist() == [11.0, 12.0]
+
+
+def test_pipeline_dtype_routing_keeps_untyped_steps(monkeypatch):
+    import deckard.data._mixins as data_mixins
+
+    class IdentityTransformer:
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X):
+            return X
+
+    monkeypatch.setattr(
+        data_mixins,
+        "load_class",
+        lambda name, *args, **kwargs: IdentityTransformer(),
+    )
+
+    cfg = DataPipelineConfig(
+        pipeline={
+            "typed": {
+                "name": "typed.Transformer",
+                "dtype": "num",
+                "fit_X": True,
+            },
+            "untagged": {
+                "name": "untagged.Transformer",
+                "fit_X": True,
+            },
+        },
+        scorer="none",
+    )
+
+    X = pd.DataFrame({"a": [1.0, 2.0], "b": [3.0, 4.0]})
+    y = pd.Series([0, 1])
+    cfg.fit_X(X, y)
+
+    fitted = cfg._fitted_pipeline_X
+    assert fitted is not None
+    assert [name for name, _ in fitted.steps] == ["preprocess", "untagged"]
+
+
 def test_score_and_feature_score_branches(monkeypatch):
     cfg = _basic_data_config(scorer=None)
     assert cfg._score() == {}

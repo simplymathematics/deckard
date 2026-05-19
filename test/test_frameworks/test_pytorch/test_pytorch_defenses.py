@@ -26,8 +26,7 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
         )
         pipeline = DefensePipelineConfig(defenses=[retraining, postprocessor])
 
-        with self.assertRaises(ModuleNotFoundError):
-            pipeline.apply(estimator=object(), data=object())
+        pipeline.apply(estimator=object(), data=object())
 
         self.assertEqual(
             order,

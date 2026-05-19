@@ -1,8 +1,8 @@
 import pandas as pd
 
 from deckard.data import DataConfig
-from deckard.experiment.declarations import LIFELINES_DATASETS, SURVIVAL_MODELS
 from deckard.layers.survival import survival_main
+from deckard.plugins.lifelines.experiment import LIFELINES_DATASETS, SURVIVAL_MODELS
 
 
 def _empty_dataconfig() -> DataConfig:

@@ -983,7 +983,8 @@ def test_optimize_main_executes_once_in_multirun(monkeypatch):
     assert result == {"best": 0.1, "aux": 3.0}
     assert captured["calls"] == 1
     assert isinstance(captured["cfg"], dict)
-    assert captured["cfg"]["name"] == "demo"
+    assert captured["cfg"]["_target_"] == "deckard.ExperimentConfig"
+    assert "name" not in captured["cfg"]
 
 
 def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):

@@ -1406,6 +1406,32 @@ class TestCoerceScorerConfig(unittest.TestCase):
         self.assertIsNotNone(exp.model.scorer)
         self.assertIsNone(exp.score)
 
+    def test_score_dict_with_scoring_type_routes_to_data_scope(self):
+        from sklearn.metrics import accuracy_score
+
+        exp = ExperimentConfig(
+            data=self._data(),
+            model=ModelConfig(
+                model_type="sklearn.tree.DecisionTreeClassifier",
+                classifier=True,
+                model_params={"max_depth": 2},
+            ),
+            score={
+                "scoring_type": "data",
+                "scorers": {
+                    "accuracy": {
+                        "score_name": "accuracy",
+                        "score_function": accuracy_score,
+                    },
+                },
+            },
+            files=FileConfig(),
+        )
+
+        self.assertIsNone(exp.score)
+        self.assertIsNotNone(exp.data.scorer)
+        self.assertIn("accuracy", exp.data.scorer.scorers)
+
 
 class TestRunSinglePipelineBranchesExtra(unittest.TestCase):
     def _exp_stub(self):
