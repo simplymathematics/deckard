@@ -91,7 +91,7 @@ class PlaceholderResolverMixin:
         """Returns the serial job number in a multirun sweep. Uses uuid as fallback if Hydra is not enabled."""
         try:
             return str(HydraConfig.get().job.num)
-        except ValueError:
+        except Exception:
             return uuid4().hex
 
     @property
@@ -99,7 +99,7 @@ class PlaceholderResolverMixin:
         """Returns the specific launcher or cluster job ID. Uses uuid as fallback if Hydra is not enabled"""
         try:
             return str(HydraConfig.get().job.num)
-        except ValueError:
+        except Exception:
             return uuid4().hex
 
     def _resolve(self, value: str | None) -> str | None:
