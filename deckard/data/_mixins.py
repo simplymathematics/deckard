@@ -122,8 +122,8 @@ class _SensitiveColumnsMixin:
             return getattr(self.data, "sensitive_test", None)
         if split == "all":
             return getattr(self.data, "sensitive_all", None)
-        if split == "val":
-            return getattr(self.data, "sensitive_val", None)
+        if split in {"val", "attack-val"}:
+            return getattr(self.data, "_sensitive_val", None)
         raise ValueError(f"Unsupported fairness split: {split}")
 
     def _resolve_scoring_split(self, mode: str) -> str:
@@ -132,9 +132,7 @@ class _SensitiveColumnsMixin:
         if mode in {"test", "attack"}:
             return "test"
         if mode in {"val", "attack-val"}:
-            raise NotImplementedError(
-                "Validation fairness scoring is not implemented yet",
-            )
+            return "val"
         if mode == "all":
             return "all"
         raise ValueError(f"Unsupported fairness scoring mode: {mode}")
@@ -233,16 +231,46 @@ class _SensitiveColumnsMixin:
         X = data.X_train
         y = data.y_train
 
-        def _check_shape_consistency(arr, name):
-            if isinstance(arr, (list, tuple)):
-                shapes = [np.shape(v) for v in arr]
-                if len(set(shapes)) > 1:
-                    raise ValueError(
-                        f"Inconsistent shapes in {name}: {shapes}. All elements must have the same shape.",
-                    )
-
-        _check_shape_consistency(X, "X_train")
-        _check_shape_consistency(y, "y_train")
+        # Some fairness datasets emit tuple-like rows (features, label, sensitive).
+        # Normalize into homogeneous feature matrix and optional sensitive vector.
+        if (
+            isinstance(X, (list, tuple))
+            and len(X) > 0
+            and isinstance(X[0], (list, tuple))
+        ):
+            rows = list(X)
+            X = [row[0] for row in rows]
+            if sensitive is None and len(rows[0]) >= 3:
+                sensitive = np.asarray([row[2] for row in rows])
+        elif (
+            isinstance(X, np.ndarray)
+            and X.ndim == 2
+            and X.shape[1] >= 2
+            and X.dtype == object
+        ):
+            rows = X.tolist()
+            X = [row[0] for row in rows]
+            if sensitive is None and len(rows[0]) >= 3:
+                sensitive = np.asarray([row[2] for row in rows])
+        elif hasattr(X, "__len__") and hasattr(X, "__getitem__") and len(X) > 0:
+            first_row = None
+            if hasattr(X, "iloc"):
+                try:
+                    first_row = X.iloc[0]
+                except Exception:
+                    first_row = None
+            else:
+                try:
+                    first_row = X[0]
+                except Exception:
+                    first_row = None
+            if isinstance(first_row, (list, tuple)):
+                rows = [X[i] for i in range(len(X))]
+                X = [row[0] for row in rows]
+                if sensitive is None and len(rows[0]) >= 3:
+                    sensitive = np.asarray([row[2] for row in rows])
+        self._check_shape_consistency(X, "X_train")
+        self._check_shape_consistency(y, "y_train")
         if hasattr(X, "numpy"):
             X = X.numpy()
         elif hasattr(X, "detach"):
@@ -264,7 +292,13 @@ class _SensitiveColumnsMixin:
         else:
             fit_method(X, y, **fit_params)
         return defended_estimator
-
+    def _check_shape_consistency(self, arr, name):
+        if isinstance(arr, (list, tuple)):
+            shapes = [np.shape(v) for v in arr]
+            if len(set(shapes)) > 1:
+                raise ValueError(
+                    f"Inconsistent shapes in {name}: {shapes}. All elements must have the same shape.",
+                )
 
 @dataclass(eq=False, kw_only=True)
 class DataPipelineMixin(DataPipelineContractMixin):
