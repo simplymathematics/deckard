@@ -26,205 +26,276 @@ stages:
   notebook_seaborn:
     cmd: jupyter nbconvert --to notebook --execute --inplace seaborn.ipynb
     deps:
-      - seaborn.ipynb
-      - ../../deckard/plot/
-      - ../../deckard/plugins/seaborn/
+    - seaborn.ipynb
+    - ../../deckard/plot/
+    - ../../deckard/plugins/seaborn/
     plots:
-      - ./build/seaborn/bar_bar_plot_from_make_blobs.png
-      - ./build/seaborn/cat_categorical_plot_from_make_moons.png
-      - ./build/seaborn/heatmap_heatmap_from_make_classification_correlations.png
-      - ./build/seaborn/hist_histogram_plot_from_make_friedman1.png
-      - ./build/seaborn/line_line_plot_from_make_regression.png
-      - ./build/seaborn/scatter_scatter_plot_from_make_classification.png
+    - ./build/seaborn/bar_bar_plot_from_make_blobs.png
+    - ./build/seaborn/cat_categorical_plot_from_make_moons.png
+    - ./build/seaborn/heatmap_heatmap_from_make_classification_correlations.png
+    - ./build/seaborn/hist_histogram_plot_from_make_friedman1.png
+    - ./build/seaborn/line_line_plot_from_make_regression.png
+    - ./build/seaborn/scatter_scatter_plot_from_make_classification.png
   notebook_yellowbrick:
     cmd: jupyter nbconvert --to notebook --execute --inplace yellowbrick.ipynb
     deps:
-      - yellowbrick.ipynb
-      - ../../deckard/plot/
-      - ../../deckard/experiment/
-      - ../../deckard/plugins/yellowbrick/
+    - yellowbrick.ipynb
+    - ../../deckard/plot/
+    - ../../deckard/experiment/
+    - ../../deckard/plugins/yellowbrick/
     outs:
-      - ./build/yellowbrick/plots/all_types_balanced_binning_reference.png
-      - ./build/yellowbrick/plots/all_types_class_balance.png
-      - ./build/yellowbrick/plots/all_types_class_prediction_error.png
-      - ./build/yellowbrick/plots/all_types_classification_report.png
-      - ./build/yellowbrick/plots/all_types_cv_scores.png
-      - ./build/yellowbrick/plots/all_types_discrimination_threshold.png
-      - ./build/yellowbrick/plots/all_types_dropping_curve.png
-      - ./build/yellowbrick/plots/all_types_feature_correlation.png
-      - ./build/yellowbrick/plots/all_types_feature_importances.png
-      - ./build/yellowbrick/plots/all_types_intercluster_distance.png
-      - ./build/yellowbrick/plots/all_types_jointplot.png
-      - ./build/yellowbrick/plots/all_types_k_elbow.png
-      - ./build/yellowbrick/plots/all_types_learning_curve.png
-      - ./build/yellowbrick/plots/all_types_pca.png
-      - ./build/yellowbrick/plots/all_types_pcoords.png
-      - ./build/yellowbrick/plots/all_types_precision_recall_curve.png
-      - ./build/yellowbrick/plots/all_types_prediction_error.png
-      - ./build/yellowbrick/plots/all_types_radviz.png
-      - ./build/yellowbrick/plots/all_types_rank1d.png
-      - ./build/yellowbrick/plots/all_types_rank2d.png
-      - ./build/yellowbrick/plots/all_types_residuals_plot.png
-      - ./build/yellowbrick/plots/all_types_rfecv.png
-      - ./build/yellowbrick/plots/all_types_roc_auc.png
-      - ./build/yellowbrick/plots/all_types_silhouette.png
-      - ./build/yellowbrick/plots/all_types_validation_curve.png
-      - ./build/yellowbrick/plots/torch_classification_report.png
-      - ./build/yellowbrick/plots/torch_precision_recall_curve.png
-      - ./build/yellowbrick/plots/torch_roc_auc.png
-      - ./build/yellowbrick/plots/plotlist_demo/class_balance.png
-      - ./build/yellowbrick/plots/plotlist_demo/classification_report.png
-      - ./build/yellowbrick/plots/plotlist_demo/precision_recall_curve.png
-      - ./build/yellowbrick/plots/plotlist_demo/rank1d.png
-      - ./build/yellowbrick/plots/plotlist_demo/roc_auc.png
+    - ./build/yellowbrick/plots/all_types_balanced_binning_reference.png
+    - ./build/yellowbrick/plots/all_types_class_balance.png
+    - ./build/yellowbrick/plots/all_types_class_prediction_error.png
+    - ./build/yellowbrick/plots/all_types_classification_report.png
+    - ./build/yellowbrick/plots/all_types_cv_scores.png
+    - ./build/yellowbrick/plots/all_types_discrimination_threshold.png
+    - ./build/yellowbrick/plots/all_types_dropping_curve.png
+    - ./build/yellowbrick/plots/all_types_feature_correlation.png
+    - ./build/yellowbrick/plots/all_types_feature_importances.png
+    - ./build/yellowbrick/plots/all_types_intercluster_distance.png
+    - ./build/yellowbrick/plots/all_types_jointplot.png
+    - ./build/yellowbrick/plots/all_types_k_elbow.png
+    - ./build/yellowbrick/plots/all_types_learning_curve.png
+    - ./build/yellowbrick/plots/all_types_pca.png
+    - ./build/yellowbrick/plots/all_types_pcoords.png
+    - ./build/yellowbrick/plots/all_types_precision_recall_curve.png
+    - ./build/yellowbrick/plots/all_types_prediction_error.png
+    - ./build/yellowbrick/plots/all_types_radviz.png
+    - ./build/yellowbrick/plots/all_types_rank1d.png
+    - ./build/yellowbrick/plots/all_types_rank2d.png
+    - ./build/yellowbrick/plots/all_types_residuals_plot.png
+    - ./build/yellowbrick/plots/all_types_rfecv.png
+    - ./build/yellowbrick/plots/all_types_roc_auc.png
+    - ./build/yellowbrick/plots/all_types_silhouette.png
+    - ./build/yellowbrick/plots/all_types_validation_curve.png
+    - ./build/yellowbrick/plots/torch_classification_report.png
+    - ./build/yellowbrick/plots/torch_precision_recall_curve.png
+    - ./build/yellowbrick/plots/torch_roc_auc.png
+    - ./build/yellowbrick/plots/plotlist_demo/class_balance.png
+    - ./build/yellowbrick/plots/plotlist_demo/classification_report.png
+    - ./build/yellowbrick/plots/plotlist_demo/precision_recall_curve.png
+    - ./build/yellowbrick/plots/plotlist_demo/rank1d.png
+    - ./build/yellowbrick/plots/plotlist_demo/roc_auc.png
 
   notebook_detector:
     cmd: jupyter nbconvert --to notebook --execute --inplace detector.ipynb
     deps:
-      - detector.ipynb
-      - ../../deckard/attack/
-      - ../../deckard/data/
-      - ../../deckard/model/
-      - ../../deckard/file.py
-      - ../../deckard/utils.py
+    - detector.ipynb
+    - ../../deckard/attack/
+    - ../../deckard/data/
+    - ../../deckard/model/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
     metrics:
-      - ./build/detector/canonical_attack_examples.csv
+    - ./build/detector/canonical_attack_examples.csv
   notebook_art_attacks:
     cmd: jupyter nbconvert --to notebook --execute --inplace art_attacks.ipynb
     deps:
-      - art_attacks.ipynb
-      - ../../deckard/attack/
-      - ../../deckard/data/
-      - ../../deckard/model/
-      - ../../deckard/file.py
-      - ../../deckard/utils.py
+    - art_attacks.ipynb
+    - ../../deckard/attack/
+    - ../../deckard/data/
+    - ../../deckard/model/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
     plots:
-      - ./build/art_attacks/plot.png
+    - ./build/art_attacks/plot.png
     outs:
-      - ./build/art_attacks/sklearn_data.pkl
-      - ./build/art_attacks/sklearn_attribute_attack.pkl
-      - ./build/art_attacks/hsj_evasion_attack_file.pkl
-      - ./build/art_attacks/fgm_evasion_attack_file.pkl 
-      - ./build/art_attacks/boundary_evasion_attack_file.pkl 
-      - ./build/art_attacks/sklearn_membership_attack.pkl
-      - ./build/art_attacks/sklearn_model.pkl
-      - ./build/art_attacks/svm.pkl
-      - ./build/art_attacks/torch_evasion_attack.pkl
-      - ./build/art_attacks/torch_model.pt
-      - ./build/art_attacks/torch_extraction_model.pt
+    - ./build/art_attacks/sklearn_data.pkl
+    - ./build/art_attacks/sklearn_attribute_attack.pkl
+    - ./build/art_attacks/hsj_evasion_attack_file.pkl
+    - ./build/art_attacks/fgm_evasion_attack_file.pkl
+    - ./build/art_attacks/boundary_evasion_attack_file.pkl
+    - ./build/art_attacks/sklearn_membership_attack.pkl
+    - ./build/art_attacks/sklearn_model.pkl
+    - ./build/art_attacks/svm.pkl
+    - ./build/art_attacks/torch_evasion_attack.pkl
+    - ./build/art_attacks/torch_model.pt
+    - ./build/art_attacks/torch_extraction_model.pt
     metrics:
-      - ./build/art_attacks/membership_scores.csv
-      - ./build/art_attacks/torch_scores.csv
-      - ./build/art_attacks/sklearn_scores.csv
+    - ./build/art_attacks/membership_scores.csv
+    - ./build/art_attacks/torch_scores.csv
+    - ./build/art_attacks/sklearn_scores.csv
   notebook_art_defenses:
     cmd: jupyter nbconvert --to notebook --execute --inplace art_defenses.ipynb
     deps:
-      - art_defenses.ipynb
-      - ../../deckard/attack/
-      - ../../deckard/data/
-      - ../../deckard/model/
-      - ../../deckard/file.py
-      - ../../deckard/utils.py
+    - art_defenses.ipynb
+    - ../../deckard/attack/
+    - ../../deckard/data/
+    - ../../deckard/model/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
     metrics:
-      - ./build/art_defenses/defense_chain_order.csv
-      - ./build/art_defenses/defense_chain_result.csv
-      - ./build/art_defenses/sklearn_defense_results.csv
-      - ./build/art_defenses/torch_defense_results.csv
+    - ./build/art_defenses/defense_chain_order.csv
+    - ./build/art_defenses/defense_chain_result.csv
+    - ./build/art_defenses/sklearn_defense_results.csv
+    - ./build/art_defenses/torch_defense_results.csv
 
   notebook_sklearn:
     cmd: jupyter nbconvert --to notebook --execute --inplace sklearn.ipynb
     deps:
-      - sklearn.ipynb
-      - ../../deckard/attack/
-      - ../../deckard/data/
-      - ../../deckard/model/
-      - ../../deckard/detector/
-      - ../../deckard/experiment/
-      - ../../deckard/score/
-      - ../../deckard/plot/
-      - ../../deckard/file.py
-      - ../../deckard/utils.py
-    outs: 
-      - ./build/sklearn/experiment_data_lr.pkl
-      - ./build/sklearn/experiment_model_lr.pkl
+    - sklearn.ipynb
+    - ../../deckard/attack/
+    - ../../deckard/data/
+    - ../../deckard/model/
+    - ../../deckard/detector/
+    - ../../deckard/experiment/
+    - ../../deckard/score/
+    - ../../deckard/plot/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
+    outs:
+    - ./build/sklearn/experiment_data_lr.pkl
+    - ./build/sklearn/experiment_model_lr.pkl
     metrics:
-      - ./build/sklearn/experiment_scores_lr.json
-      - ./build/sklearn/seaborn_results.csv
+    - ./build/sklearn/experiment_scores_lr.json
+    - ./build/sklearn/seaborn_results.csv
     plots:
-      - ./build/sklearn/plots/seaborn_line.png
-      - ./build/sklearn/plots/seaborn_scatter.png
-      - ./build/sklearn/plots/yellowbrick_roc_auc.png
+    - ./build/sklearn/plots/seaborn_line.png
+    - ./build/sklearn/plots/seaborn_scatter.png
+    - ./build/sklearn/plots/yellowbrick_roc_auc.png
 
   notebook_pytorch:
     cmd: jupyter nbconvert --to notebook --execute --inplace pytorch.ipynb
     deps:
-      - pytorch.ipynb
-      - ../../deckard/attack/
-      - ../../deckard/data/
-      - ../../deckard/model/
-      - ../../deckard/experiment/
-      - ../../deckard/score/
-      - ../../deckard/plot/
-      - ../../deckard/file.py
-      - ../../deckard/utils.py
+    - pytorch.ipynb
+    - ../../deckard/attack/
+    - ../../deckard/data/
+    - ../../deckard/model/
+    - ../../deckard/experiment/
+    - ../../deckard/score/
+    - ../../deckard/plot/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
     metrics:
-      - ./build/pytorch/pytorch_results.csv
+    - ./build/pytorch/pytorch_results.csv
     plots:
-      - ./build/pytorch/plots/pytorch_line.png
-      - ./build/pytorch/plots/pytorch_roc_auc.png
-      - ./build/pytorch/plots/pytorch_scatter.png 
+    - ./build/pytorch/plots/pytorch_line.png
+    - ./build/pytorch/plots/pytorch_roc_auc.png
+    - ./build/pytorch/plots/pytorch_scatter.png
     outs:
-      - ./build/pytorch/exp_model.pt
-      - ./build/pytorch/checkpoints/
-      - ./build/pytorch/raw_data/
+    - ./build/pytorch/exp_model.pt
+    - ./build/pytorch/checkpoints/
+    - ./build/pytorch/raw_data/
+  notebook_hydra:
+    cmd: jupyter nbconvert --to notebook --execute --inplace hydra.ipynb
+    deps:
+    - hydra.ipynb
+    - ../../deckard/attack/
+    - ../../deckard/data/
+    - ../../deckard/model/
+    - ../../deckard/experiment/
+    - ../../deckard/score/
+    - ../../deckard/plot/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
+    # No outs/metrics: hydra.ipynb does not persist outputs
+
+  notebook_optuna:
+    cmd: jupyter nbconvert --to notebook --execute --inplace optuna.ipynb
+    deps:
+    - optuna.ipynb
+    - ../../deckard/layers/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
+    outs:
+    - ./build/notebook_artifacts/optuna/single_study.pkl
+    - ./build/notebook_artifacts/optuna/multi_study.pkl
+    - ./build/notebook_artifacts/optuna/single_best_params.json
+    - ./build/notebook_artifacts/optuna/multi_best_params.json
+    metrics:
+    - ./build/notebook_artifacts/optuna/db_summary.json
+
+  notebook_lifelines:
+    cmd: jupyter nbconvert --to notebook --execute --inplace lifelines.ipynb
+    deps:
+    - lifelines.ipynb
+    - ../../deckard/data/
+    - ../../deckard/attack/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
+    outs:
+    - ./build/notebook_artifacts/lifelines/mode2_aux_model.csv
+    - ./build/notebook_artifacts/lifelines/mode3_aux_attack.csv
+    metrics:
+    - ./build/notebook_artifacts/lifelines/summary.json
+
+  notebook_artifacts:
+    cmd: jupyter nbconvert --to notebook --execute --inplace artifacts.ipynb
+    deps:
+    - artifacts.ipynb
+    - ../../deckard/attack/
+    - ../../deckard/data/
+    - ../../deckard/model/
+    - ../../deckard/plot/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
+    outs:
+    - ./build/notebook_artifacts/sklearn/data.pkl
+    - ./build/notebook_artifacts/sklearn/pretrained_model.pkl
+    - ./build/notebook_artifacts/sklearn/attack.pkl
+    - ./build/notebook_artifacts/torch/data.pkl
+    - ./build/notebook_artifacts/torch/pretrained_model.pt
+    - ./build/notebook_artifacts/torch/attack.pkl
+    - ./build/notebook_artifacts/sklearn/accuracy_clean_vs_adv.csv
+    - ./build/notebook_artifacts/torch/accuracy_clean_vs_adv.csv
+    - ./build/notebook_artifacts/torch/training_loss.csv
+    plots:
+    - ./build/notebook_artifacts/sklearn/accuracy_clean_vs_adv.png
+    - ./build/notebook_artifacts/torch/accuracy_clean_vs_adv.png
+    - ./build/notebook_artifacts/torch/training_loss.png
+    metrics:
+    - ./build/notebook_artifacts/sklearn/scores.json
+    - ./build/notebook_artifacts/torch/scores.json
+
   notebook_fairlearn:
     cmd: jupyter nbconvert --to notebook --execute --inplace fairlearn.ipynb
     deps:
-      - fairlearn.ipynb
-      - ../../deckard/attack/
-      - ../../deckard/data/
-      - ../../deckard/model/
-      - ../../deckard/experiment/
-      - ../../deckard/score/
-      - ../../deckard/plot/
-      - ../../deckard/file.py
-      - ../../deckard/utils.py
+    - fairlearn.ipynb
+    - ../../deckard/attack/
+    - ../../deckard/data/
+    - ../../deckard/model/
+    - ../../deckard/experiment/
+    - ../../deckard/score/
+    - ../../deckard/plot/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
     outs:
-      - ./build/fairlearn/torch_fair_data.pkl
+    - ./build/fairlearn/torch_fair_data.pkl
 
   notebook_anjana:
     cmd: jupyter nbconvert --to notebook --execute --inplace anjana.ipynb
     deps:
-      - anjana.ipynb
-      - ../../deckard/data/
-      - ../../deckard/model/
-      - ../../deckard/attack/
-      - ../../deckard/experiment/
-      - ../../deckard/score/
-      - ../../deckard/plot/
-      - ../../deckard/file.py
-      - ../../deckard/utils.py
+    - anjana.ipynb
+    - ../../deckard/data/
+    - ../../deckard/model/
+    - ../../deckard/attack/
+    - ../../deckard/experiment/
+    - ../../deckard/score/
+    - ../../deckard/plot/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
     outs:
-      - ./build/anjana/anjana_attack_baseline.pkl
-      - ./build/anjana/anjana_attack_defended.pkl
-      - ./build/anjana/anjana_baseline_data.pkl
-      - ./build/anjana/anjana_baseline_sklearn_model.pkl
-      - ./build/anjana/anjana_defended_data.pkl
-      - ./build/anjana/anjana_defended_sklearn_model.pkl
-      - ./build/anjana/baseline_experiment_data.pkl
-      - ./build/anjana/baseline_experiment_model.pkl
-      - ./build/anjana/defended_experiment_data.pkl
+    - ./build/anjana/anjana_attack_baseline.pkl
+    - ./build/anjana/anjana_attack_defended.pkl
+    - ./build/anjana/anjana_baseline_data.pkl
+    - ./build/anjana/anjana_baseline_sklearn_model.pkl
+    - ./build/anjana/anjana_defended_data.pkl
+    - ./build/anjana/anjana_defended_sklearn_model.pkl
+    - ./build/anjana/baseline_experiment_data.pkl
+    - ./build/anjana/baseline_experiment_model.pkl
+    - ./build/anjana/defended_experiment_data.pkl
     metrics:
-      - ./build/anjana/anjana_baseline_scores.csv
-      - ./build/anjana/anjana_data_scores_compare.csv
-      - ./build/anjana/anjana_defended_scores.csv
-      - ./build/anjana/baseline_experiment_scores.json
-      - ./build/anjana/defended_experiment_scores.json
+    - ./build/anjana/anjana_baseline_scores.csv
+    - ./build/anjana/anjana_data_scores_compare.csv
+    - ./build/anjana/anjana_defended_scores.csv
+    - ./build/anjana/baseline_experiment_scores.json
+    - ./build/anjana/defended_experiment_scores.json
     plots:
-      - ./build/anjana/plots/anjana_attack_compare_bar.png
-      - ./build/anjana/plots/anjana_data_compare_bar_side_by_side.png
-      - ./build/anjana/plots/anjana_data_scores_bar.png
-      - ./build/anjana/plots/anjana_yellowbrick_roc_auc.png
+    - ./build/anjana/plots/anjana_attack_compare_bar.png
+    - ./build/anjana/plots/anjana_data_compare_bar_side_by_side.png
+    - ./build/anjana/plots/anjana_data_scores_bar.png
+    - ./build/anjana/plots/anjana_yellowbrick_roc_auc.png
 
   # notebook_lifelines:
   #   cmd: >
