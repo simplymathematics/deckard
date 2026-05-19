@@ -12,7 +12,7 @@ from deckard.plugins.fairlearn.score import (
     FairlearnScoreDictConfig,
 )
 from deckard.score import ScorerConfig
-from deckard.plugins.fairlearn.AttackScorerConfig
+
 
 pytest.importorskip("fairlearn")
 pytest.importorskip("art")
@@ -284,7 +284,6 @@ def test_generate_fairness_data_model_with_and_without_attack(
     if not use_attack:
         return
 
-    from deckard.plugins.fairlearn.AttackScorerConfig
 
     attack_cfg = AttackConfig(
         attack_type="art.attacks.evasion.BoundaryAttack",
