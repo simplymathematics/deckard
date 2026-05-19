@@ -2,13 +2,17 @@ name: Repository Enforcement
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, refactor-squashed]
   push:
     branches: [main, refactor-squashed]
+
+permissions:
+  contents: read
 
 jobs:
   enforcement:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 

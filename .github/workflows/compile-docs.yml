@@ -2,6 +2,7 @@ name: "Push Docs Check"
 on:
   push:
     branches:
+      - main
       - refactor-squashed
   workflow_dispatch:
     inputs:
@@ -18,13 +19,12 @@ permissions:
 jobs:
   docs:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     env:
       # Bump this from workflow_dispatch to force a fresh cache lineage after major updates.
       CACHE_FLUSH_TOKEN: ${{ github.event.inputs.cache_flush_token || 'stable' }}
     steps:
     - uses: actions/checkout@v4
-      with:
-        ref: refactor-squashed
     - uses: actions/setup-python@v5
       with:
         python-version: '3.10'
