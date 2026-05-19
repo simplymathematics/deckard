@@ -17,6 +17,7 @@ else
   ARCH="linux/amd64"
 fi
 PLATFORM_IMAGE="ghcr.io/catthehacker/ubuntu:full-latest"
+CONTAINER_OPTIONS=""
 LIST_ONLY=0
 DRY_RUN=0
 VERBOSE=0
@@ -36,6 +37,7 @@ Options:
       --event-file <path>     Use a custom event payload JSON
       --arch <value>          Container architecture (default: host-native)
       --platform <image>      Image for ubuntu-latest
+      --container-options <s> Extra options passed to act runner containers
       --list                  List available workflow files and exit
       --verbose               Enable verbose act output (includes docker pull details)
       --github-token <token>  GitHub token for act (fallback: GITHUB_TOKEN or GH_TOKEN env)
@@ -49,6 +51,18 @@ Examples:
   GITHUB_TOKEN=ghp_xxx scripts/test_workflow.sh --workflow compile-docs.yml --job docs
   scripts/test_workflow.sh --workflow docker-test.yml --gpu-mode cpu
   scripts/test_workflow.sh -w .github/workflows/deckard-test.yml -e pull_request
+
+Optional env passthrough for Docker builds (local act runs):
+  DECKARD_APT_MIRROR_PORTS    Replace ports.ubuntu.com apt mirror
+  DECKARD_APT_MIRROR_ARCHIVE  Replace archive/security apt mirror
+  DECKARD_APT_HTTP_PROXY      Apt HTTP proxy URL
+  DECKARD_APT_HTTPS_PROXY     Apt HTTPS proxy URL
+  DECKARD_APT_NO_PROXY        Comma-separated no_proxy list
+
+Example with proxy + no_proxy:
+  DECKARD_APT_HTTP_PROXY=http://proxy.local:3128 \
+  DECKARD_APT_NO_PROXY=localhost,127.0.0.1,.internal \
+  scripts/test_workflow.sh --workflow docker-test.yml --event pull_request --gpu-mode mps
 EOF
 }
 
@@ -143,6 +157,10 @@ while [[ $# -gt 0 ]]; do
       PLATFORM_IMAGE="$2"
       shift 2
       ;;
+    --container-options)
+      CONTAINER_OPTIONS="$2"
+      shift 2
+      ;;
     --list)
       LIST_ONLY=1
       shift
@@ -182,6 +200,14 @@ fi
 
 WORKFLOW_PATH="$(resolve_workflow_path "$WORKFLOW")"
 detect_gpu_mode
+
+if [[ -z "$CONTAINER_OPTIONS" ]]; then
+  WORKFLOW_BASENAME="$(basename "$WORKFLOW_PATH")"
+  if [[ "$WORKFLOW_BASENAME" == docker-* ]]; then
+    # Docker-in-Docker actions in act need root to access /var/run/docker.sock.
+    CONTAINER_OPTIONS="--user 0:0"
+  fi
+fi
 
 if [[ -z "$REF_NAME" ]]; then
   REF_NAME="$(git -C "$ROOT_DIR" rev-parse --abbrev-ref HEAD)"
@@ -235,6 +261,17 @@ CMD=(
   --env "DECKARD_GPU_MODE=$RESOLVED_GPU_MODE"
 )
 
+for passthrough_var in \
+  DECKARD_APT_MIRROR_PORTS \
+  DECKARD_APT_MIRROR_ARCHIVE \
+  DECKARD_APT_HTTP_PROXY \
+  DECKARD_APT_HTTPS_PROXY \
+  DECKARD_APT_NO_PROXY; do
+  if [[ -n "${!passthrough_var:-}" ]]; then
+    CMD+=( --env "$passthrough_var=${!passthrough_var}" )
+  fi
+done
+
 if [[ "$RESOLVED_GPU_MODE" == "cuda" ]]; then
   CMD+=( --env "DECKARD_DOCKER_IMAGE_TAG=deckard:cuda" )
   CMD+=( --env "DECKARD_DOCKER_BUILD_ARGS=--build-arg ENABLE_CUDA=1 --build-arg BASE_IMAGE=nvidia/cuda:12.0.0-runtime-ubuntu20.04" )
@@ -252,6 +289,10 @@ fi
 
 if [[ "$VERBOSE" -eq 1 ]]; then
   CMD+=( --verbose )
+fi
+
+if [[ -n "$CONTAINER_OPTIONS" ]]; then
+  CMD+=( --container-options "$CONTAINER_OPTIONS" )
 fi
 
 if [[ -n "$GITHUB_TOKEN_VALUE" ]]; then

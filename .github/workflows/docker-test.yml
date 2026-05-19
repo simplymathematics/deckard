@@ -10,6 +10,11 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  DECKARD_APT_MIRROR_PORTS: ${{ vars.DECKARD_APT_MIRROR_PORTS || '' }}
+  DECKARD_APT_MIRROR_ARCHIVE: ${{ vars.DECKARD_APT_MIRROR_ARCHIVE || '' }}
+  DECKARD_APT_HTTP_PROXY: ${{ vars.DECKARD_APT_HTTP_PROXY || '' }}
+  DECKARD_APT_HTTPS_PROXY: ${{ vars.DECKARD_APT_HTTPS_PROXY || '' }}
+  DECKARD_APT_NO_PROXY: ${{ vars.DECKARD_APT_NO_PROXY || '' }}
 
 # There is a single job in this workflow. It's configured to run on the latest available version of Ubuntu.
 jobs:
@@ -27,19 +32,17 @@ jobs:
           - variant: cuda
             enable_cuda: "1"
             base_image: nvidia/cuda:12.0.0-runtime-ubuntu20.04
-    if: ${{ !env.DECKARD_GPU_MODE || env.DECKARD_GPU_MODE == 'auto' || env.DECKARD_GPU_MODE == matrix.variant }}
-    # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
+
     permissions:
       contents: read
       packages: read
-      # 
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      # This step uses the `docker/build-push-action` action to build the image, based on your repository's `Dockerfile`. If the build succeeds, it pushes the image to GitHub Packages.
-      # It uses the `context` parameter to define the build's context as the set of files located in the specified path. For more information, see "[Usage](https://github.com/docker/build-push-action#usage)" in the README of the `docker/build-push-action` repository.
-      # It builds CPU, MPS, and CUDA variants to validate Docker build paths.
+
       - name: Build Docker image (${{ matrix.variant }})
+        if: ${{ env.DECKARD_GPU_MODE == '' || env.DECKARD_GPU_MODE == 'auto' || env.DECKARD_GPU_MODE == matrix.variant }}
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
           context: .
@@ -47,5 +50,10 @@ jobs:
           build-args: |
             ENABLE_CUDA=${{ matrix.enable_cuda }}
             BASE_IMAGE=${{ matrix.base_image }}
+            APT_MIRROR_PORTS=${{ env.DECKARD_APT_MIRROR_PORTS }}
+            APT_MIRROR_ARCHIVE=${{ env.DECKARD_APT_MIRROR_ARCHIVE }}
+            APT_HTTP_PROXY=${{ env.DECKARD_APT_HTTP_PROXY }}
+            APT_HTTPS_PROXY=${{ env.DECKARD_APT_HTTPS_PROXY }}
+            APT_NO_PROXY=${{ env.DECKARD_APT_NO_PROXY }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:ci-${{ github.run_id }}-${{ matrix.variant }}

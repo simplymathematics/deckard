@@ -3,6 +3,12 @@ on:
   push:
     branches:
       - refactor-squashed
+  workflow_dispatch:
+    inputs:
+      cache_flush_token:
+        description: "Optional cache namespace override to force a clean docs/DVC cache (e.g. 2026-05-major-refactor)"
+        required: false
+        default: "stable"
 
 permissions:
   contents: write
@@ -12,6 +18,9 @@ permissions:
 jobs:
   docs:
     runs-on: ubuntu-latest
+    env:
+      # Bump this from workflow_dispatch to force a fresh cache lineage after major updates.
+      CACHE_FLUSH_TOKEN: ${{ github.event.inputs.cache_flush_token || 'stable' }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -26,9 +35,9 @@ jobs:
         path: |
           docs/notebooks/build/
           .dvc/cache/
-        key: dvc-cache-${{ hashFiles('docs/notebooks/dvc.lock', 'dvc.lock') }}
+        key: dvc-cache-${{ runner.os }}-${{ env.CACHE_FLUSH_TOKEN }}-${{ hashFiles('docs/notebooks/dvc.lock', 'dvc.lock', 'pyproject.toml') }}
         restore-keys: |
-          dvc-cache-
+          dvc-cache-${{ runner.os }}-${{ env.CACHE_FLUSH_TOKEN }}-
     - name : install dependencies
       run: |
         python -m pip install --upgrade pip
