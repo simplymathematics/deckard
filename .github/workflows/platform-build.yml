@@ -1,0 +1,60 @@
+name: Build Package (Multi-Platform Matrix)
+
+on:
+  push:
+    branches: [main, refactor-squashed]
+  pull_request:
+    branches: [main, refactor-squashed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            platform: ubuntu
+            artifact_name: deckard-dist-ubuntu
+          - runner: macos-latest
+            platform: macos
+            artifact_name: deckard-dist-macos
+          - runner: windows-latest
+            platform: windows
+            artifact_name: deckard-dist-windows
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+
+      - name: Build package using pyproject.toml
+        run: python -m build
+
+      - name: Upload artifact
+        if: ${{ env.ACT != 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: dist/
+          retention-days: 7
+
+      - name: Report build timing
+        if: always()
+        run: |
+          echo "::notice title=${{ matrix.platform }} Build::${{ matrix.platform }} build completed in $SECONDS seconds"

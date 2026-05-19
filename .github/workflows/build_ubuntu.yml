@@ -11,6 +11,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout code
@@ -30,7 +31,9 @@ jobs:
         run: python -m build
 
       - name: Upload artifact
+        if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v4
         with:
-          name: deckard-dist
+          name: deckard-dist-ubuntu
           path: dist/
+          retention-days: 7
