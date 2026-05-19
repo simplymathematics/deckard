@@ -114,254 +114,236 @@ stages:
   notebook_seaborn:
     cmd: jupyter nbconvert --to notebook --execute --inplace seaborn.ipynb
     deps:
-    - path: ../../deckard/plot/__init__.py
+    - path: ../../deckard/plot/
       hash: md5
-      md5: e411c1561a7a7f9c00f63ccc1c2639d1
-      size: 3968
-    - path: ../../deckard/plot/declarations.py
+      md5: 4130ef651b7aabf6f13cfd4fae3b8ed3.dir
+      size: 89480
+      nfiles: 12
+    - path: ../../deckard/plugins/seaborn/
       hash: md5
-      md5: 7e68397d5e900649827e08970eeaac4a
-      size: 1377
-    - path: ../../deckard/plot/seaborn_plots.py
-      hash: md5
-      md5: ae99e9072c5bf8177bda8d72cb9621af
-      size: 6239
+      md5: 2b73602de18f9ffd1e9a00c186c8450e.dir
+      size: 26474
+      nfiles: 4
     - path: seaborn.ipynb
       hash: md5
-      md5: 31aab153bd725c5438eb2c7391b1ad1c
-      size: 273548
+      md5: deda224f7dc9c7c8b3506f9f93dd6d63
+      size: 254022
     outs:
     - path: ./build/seaborn/bar_bar_plot_from_make_blobs.png
       hash: md5
-      md5: 6b6df3076d00a1c4192bb65437b0a9e1
-      size: 16545
+      md5: 7b572e30300ef727eaaef7ca6e37245f
+      size: 15536
     - path: ./build/seaborn/cat_categorical_plot_from_make_moons.png
       hash: md5
-      md5: 4f600dd29eb221e4e6e95a3719d62a3a
-      size: 16823
+      md5: b5174c25a0e782fcda27a8527cc4e5dd
+      size: 14804
     - path: 
         ./build/seaborn/heatmap_heatmap_from_make_classification_correlations.png
       hash: md5
-      md5: 821b1b2286d759f1f57e0e54f3b43a6a
-      size: 32944
+      md5: 955525f1608af072efb99ac27a0d5d6a
+      size: 30485
     - path: ./build/seaborn/hist_histogram_plot_from_make_friedman1.png
       hash: md5
-      md5: 9647e293ce7e6a923e1ae925ba23a878
-      size: 23263
+      md5: 8cddeabe1bdc5e251462440cabc97311
+      size: 20462
     - path: ./build/seaborn/line_line_plot_from_make_regression.png
       hash: md5
-      md5: 3ce0cf11e7bde1a0322c3e136e527647
-      size: 41422
+      md5: 7bb2b9feee80f8502a9600c2c9ea3dac
+      size: 38648
     - path: ./build/seaborn/scatter_scatter_plot_from_make_classification.png
       hash: md5
-      md5: 8cf60eab79ccc3bcc6d87bf8920aafda
-      size: 53404
+      md5: fda37e246386cc117f6e9a0bb9033fae
+      size: 49824
   notebook_yellowbrick:
     cmd: jupyter nbconvert --to notebook --execute --inplace yellowbrick.ipynb
     deps:
-    - path: ../../deckard/data/
-      hash: md5
-      md5: e934e2c5b8d38bfff723b577c170cfc8.dir
-      size: 159626
-      nfiles: 9
     - path: ../../deckard/experiment/
       hash: md5
-      md5: 87da97315bb6da6135196993eb1f50f3.dir
-      size: 93473
-      nfiles: 5
-    - path: ../../deckard/file.py
+      md5: bae87f8c196f0c0f2a573d04b1dbcece.dir
+      size: 118623
+      nfiles: 10
+    - path: ../../deckard/plot/
       hash: md5
-      md5: abf96e34a774fa4b96865c3529e5deff
-      size: 7011
-    - path: ../../deckard/model/
+      md5: 4130ef651b7aabf6f13cfd4fae3b8ed3.dir
+      size: 89480
+      nfiles: 12
+    - path: ../../deckard/plugins/yellowbrick/
       hash: md5
-      md5: 8992d52461c26adf62ffb6a4bbd48b00.dir
-      size: 189132
-      nfiles: 8
-    - path: ../../deckard/plot/__init__.py
-      hash: md5
-      md5: e411c1561a7a7f9c00f63ccc1c2639d1
-      size: 3968
-    - path: ../../deckard/plot/declarations.py
-      hash: md5
-      md5: 7e68397d5e900649827e08970eeaac4a
-      size: 1377
-    - path: ../../deckard/plot/yellowbrick_plots.py
-      hash: md5
-      md5: 76a62188d5d5e85c683bb571f35ca0ca
-      size: 42078
+      md5: 26173fbbbf59c37ae3de73251751fa49.dir
+      size: 79208
+      nfiles: 4
     - path: yellowbrick.ipynb
       hash: md5
-      md5: f8a811fe458e9195cd10f7fb1419711b
-      size: 2731314
+      md5: b9ad6b9a5572118fa0b70617acceb8f8
+      size: 2510624
     outs:
     - path: ./build/yellowbrick/plots/all_types_balanced_binning_reference.png
       hash: md5
-      md5: 0aaad9c717dc27d5ceeab3c0e074a10a
-      size: 24907
+      md5: efd3e21fa12ae7e099a0223820f8ff14
+      size: 20901
     - path: ./build/yellowbrick/plots/all_types_class_balance.png
       hash: md5
-      md5: 2ba8934aaa17a67d9a972288e3ff3f44
-      size: 21934
+      md5: d71bb5b363133b9f1b04a4fdf000ae55
+      size: 18971
     - path: ./build/yellowbrick/plots/all_types_class_prediction_error.png
       hash: md5
-      md5: 7e97a08859a4fa406af5e0f7130eebd5
-      size: 28320
+      md5: 64ca0b807fd3ba3f10643adefc284e48
+      size: 24345
     - path: ./build/yellowbrick/plots/all_types_classification_report.png
       hash: md5
-      md5: 0fd101d16c9b581e825d4e7efbe2c185
-      size: 28839
+      md5: f197cec51a72981b8a23c13bafeab7bc
+      size: 24625
     - path: ./build/yellowbrick/plots/all_types_cv_scores.png
       hash: md5
-      md5: 1d6d2394f75a0d17475c9dcecc6c1a5e
-      size: 25804
+      md5: 125b65175935a679c88df5aae4631e73
+      size: 22917
     - path: ./build/yellowbrick/plots/all_types_discrimination_threshold.png
       hash: md5
-      md5: 140be73da24bc68609b87a46a2e9b92c
-      size: 83201
+      md5: 69d7460ddee2cd9c3a7bab2230fe2fab
+      size: 77008
     - path: ./build/yellowbrick/plots/all_types_dropping_curve.png
       hash: md5
-      md5: c621edee2d87714b4b89e5164f0bb2bf
-      size: 67868
+      md5: 9a00a36a90bfb3124e3a14028d504904
+      size: 55487
     - path: ./build/yellowbrick/plots/all_types_feature_correlation.png
       hash: md5
-      md5: 6a7eaa368ab2a467b79e3c7898a129dd
-      size: 24305
+      md5: 5e6d60084435a2230cb4b926e6db999a
+      size: 19848
     - path: ./build/yellowbrick/plots/all_types_feature_importances.png
       hash: md5
-      md5: 63df63fe29d4b8b8fa6a78c00166f160
-      size: 25755
+      md5: 3bb77d0859415915795c96c4f3f61e9c
+      size: 21351
     - path: ./build/yellowbrick/plots/all_types_intercluster_distance.png
       hash: md5
-      md5: fa3c4db9e5c018148f5d91300348837d
-      size: 70834
+      md5: e8f339ec29a1070eb92a92ca190884a9
+      size: 65136
     - path: ./build/yellowbrick/plots/all_types_jointplot.png
       hash: md5
-      md5: c7371ecd449242570fad2186179bc5ff
-      size: 197489
+      md5: e250b8561a166f3c2f52bf94c5c23439
+      size: 187488
     - path: ./build/yellowbrick/plots/all_types_k_elbow.png
       hash: md5
-      md5: 5cd588f1e5eac871a05153d865d63bb2
-      size: 70435
+      md5: e6d52e2634a9678b09245b91f82ed933
+      size: 59458
     - path: ./build/yellowbrick/plots/all_types_learning_curve.png
       hash: md5
-      md5: cc8de31df27802673894dc23ec0c26f6
-      size: 67416
+      md5: 85ff36e4b8f7b3dcf1158be06329468d
+      size: 61663
     - path: ./build/yellowbrick/plots/all_types_pca.png
       hash: md5
-      md5: 2f5c1459134fc8025122de1e431ef5ae
-      size: 223803
+      md5: 2440dfe46c4ab7adfa99e01fe52dbd47
+      size: 215596
     - path: ./build/yellowbrick/plots/all_types_pcoords.png
       hash: md5
-      md5: ef8920a98863ef506cd2af8292218ade
-      size: 266979
+      md5: 273cfd1b80fb22dcae2f9f4d51e842b8
+      size: 262133
     - path: ./build/yellowbrick/plots/all_types_precision_recall_curve.png
       hash: md5
-      md5: 5b6b01a496ea8f642cab3b6764d5580a
-      size: 34733
+      md5: 98a52bd90b2ddbc0281c7f367d666690
+      size: 31447
     - path: ./build/yellowbrick/plots/all_types_prediction_error.png
       hash: md5
-      md5: 295244fdb0bb49c0e38544a4070ff864
-      size: 63025
+      md5: 41da11b406ef820f93e93bdb87c1fc70
+      size: 57230
     - path: ./build/yellowbrick/plots/all_types_radviz.png
       hash: md5
-      md5: 2bb387329663c3136bd9db76d62a4ff8
-      size: 50916
+      md5: c577655607e1dc92d5d4e75ef2c40bae
+      size: 44883
     - path: ./build/yellowbrick/plots/all_types_rank1d.png
       hash: md5
-      md5: d74d9a7720c7f762659aa4c884a35a49
-      size: 20864
+      md5: f25832b64f6fd61bab7817abe5ebc319
+      size: 17521
     - path: ./build/yellowbrick/plots/all_types_rank2d.png
       hash: md5
-      md5: 5400289b60f6a9028a0d3ddbe0b077ba
-      size: 32494
+      md5: 8590af38365eb52e8f90fe01edc3f780
+      size: 29399
     - path: ./build/yellowbrick/plots/all_types_residuals_plot.png
       hash: md5
-      md5: ca1af1de136c4070893a13364dcfd2ee
-      size: 107183
+      md5: b82a5f56828dce7da6fb284974c91e6e
+      size: 101160
     - path: ./build/yellowbrick/plots/all_types_rfecv.png
       hash: md5
-      md5: 252ac32cf03dd86341ea7e1bb3d07dcd
-      size: 49470
+      md5: 88046591193c0c4c09d1d09697ddd427
+      size: 44919
     - path: ./build/yellowbrick/plots/all_types_roc_auc.png
       hash: md5
-      md5: e12a6876c655429a04e7cb672d943351
-      size: 57041
+      md5: de3eb16a96929c374441405b7d99786c
+      size: 50237
     - path: ./build/yellowbrick/plots/all_types_silhouette.png
       hash: md5
-      md5: ecc56a72cebd0d62ef80164261a9a66a
-      size: 50897
+      md5: 1a7762042d143514a3c73f03403de0a8
+      size: 47110
     - path: ./build/yellowbrick/plots/all_types_validation_curve.png
       hash: md5
-      md5: e7581d789958c9b74cecf4ca7d02da28
-      size: 40130
+      md5: a98acbabb53691de1331631be22fcbf7
+      size: 34855
     - path: ./build/yellowbrick/plots/plotlist_demo/class_balance.png
       hash: md5
-      md5: dbd0a9a3f9b8fd46a8f8f5b0db5ea3e3
-      size: 16509
+      md5: 4e8aaad8cd5c061f4c78279c20c125a0
+      size: 15601
     - path: ./build/yellowbrick/plots/plotlist_demo/classification_report.png
       hash: md5
-      md5: ce4b2dca0e8b1f1c716c8a089fb3e4f9
-      size: 23281
+      md5: be568cd14bcf0057f6218f9961be4dcb
+      size: 21278
     - path: ./build/yellowbrick/plots/plotlist_demo/precision_recall_curve.png
       hash: md5
-      md5: 5bf3fdaf689497e344c87640f1f187b5
-      size: 29736
+      md5: 4cf071a5c268c34c5af770b84a77398c
+      size: 28102
     - path: ./build/yellowbrick/plots/plotlist_demo/rank1d.png
       hash: md5
-      md5: f6fd7c55f59318a2e79976cb887188b3
-      size: 15034
+      md5: 27278b79e5983fe44c09192346057d0b
+      size: 13853
     - path: ./build/yellowbrick/plots/plotlist_demo/roc_auc.png
       hash: md5
-      md5: 0b8d0181c78d5ab05ff23910b4e83134
-      size: 51424
+      md5: 3998ccdbbae17b3afdaa0d8ab9509521
+      size: 46682
     - path: ./build/yellowbrick/plots/torch_classification_report.png
       hash: md5
-      md5: 59c7cbcc85f08e7000a6918a141ff050
-      size: 26032
+      md5: 2e9ae2ad26378f5f4de219bae37629cb
+      size: 23494
     - path: ./build/yellowbrick/plots/torch_precision_recall_curve.png
       hash: md5
-      md5: d60090875f90283907de8cd75db046f4
-      size: 27267
+      md5: eb4a96659c7d03b7eb9fcb3ed216292d
+      size: 25444
     - path: ./build/yellowbrick/plots/torch_roc_auc.png
       hash: md5
-      md5: dabc9a486059d43c2bfb562fe3b67ecf
-      size: 68858
+      md5: 7949558bf595ff490c1b39853fd169bf
+      size: 62994
   notebook_detector:
     cmd: jupyter nbconvert --to notebook --execute --inplace detector.ipynb
     deps:
     - path: ../../deckard/attack/
       hash: md5
-      md5: fa9d9fc26b8fb7daa35fbc0a8f21adad.dir
-      size: 103595
-      nfiles: 5
+      md5: 8e7b6364419a7cd28254c9cdbdd67b56.dir
+      size: 229700
+      nfiles: 19
     - path: ../../deckard/data/
       hash: md5
-      md5: e934e2c5b8d38bfff723b577c170cfc8.dir
-      size: 159626
-      nfiles: 9
+      md5: 02c3710c745f359838ab7197b8799420.dir
+      size: 291242
+      nfiles: 29
     - path: ../../deckard/file.py
       hash: md5
-      md5: abf96e34a774fa4b96865c3529e5deff
-      size: 7011
+      md5: 9e3b8216c19a1531fd788d4d9cfe5e1a
+      size: 6670
     - path: ../../deckard/model/
       hash: md5
-      md5: 8992d52461c26adf62ffb6a4bbd48b00.dir
-      size: 189132
-      nfiles: 8
+      md5: 2bdfa65df00c6225066c812cd935becc.dir
+      size: 312875
+      nfiles: 35
     - path: ../../deckard/utils.py
       hash: md5
-      md5: d84aca341538a9ad3e8ac4d20c554ea0
-      size: 51407
+      md5: f1d968fab3d7b1c9ba1f7e60f2206934
+      size: 54339
     - path: detector.ipynb
       hash: md5
-      md5: 9ff47c27c81b9cbc62e4d04bd31b2a38
-      size: 82182
+      md5: 4692e3edb386b2d360ab0cd038ca06b1
+      size: 74889
     outs:
     - path: ./build/detector/canonical_attack_examples.csv
       hash: md5
-      md5: d884368577578ff45a36af4e1a66e98e
-      size: 419
+      md5: 27e32e272b1e1d63e4acf9a7ff6ff2f9
+      size: 430
   notebook_art_attacks:
     cmd: jupyter nbconvert --to notebook --execute --inplace art_attacks.ipynb
     deps:

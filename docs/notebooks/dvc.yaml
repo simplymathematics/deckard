@@ -27,9 +27,8 @@ stages:
     cmd: jupyter nbconvert --to notebook --execute --inplace seaborn.ipynb
     deps:
       - seaborn.ipynb
-      - ../../deckard/plot/seaborn_plots.py
-      - ../../deckard/plot/declarations.py
-      - ../../deckard/plot/__init__.py
+      - ../../deckard/plot/
+      - ../../deckard/plugins/seaborn/
     plots:
       - ./build/seaborn/bar_bar_plot_from_make_blobs.png
       - ./build/seaborn/cat_categorical_plot_from_make_moons.png
@@ -41,13 +40,9 @@ stages:
     cmd: jupyter nbconvert --to notebook --execute --inplace yellowbrick.ipynb
     deps:
       - yellowbrick.ipynb
-      - ../../deckard/data/
-      - ../../deckard/model/
+      - ../../deckard/plot/
       - ../../deckard/experiment/
-      - ../../deckard/file.py
-      - ../../deckard/plot/yellowbrick_plots.py
-      - ../../deckard/plot/declarations.py
-      - ../../deckard/plot/__init__.py
+      - ../../deckard/plugins/yellowbrick/
     outs:
       - ./build/yellowbrick/plots/all_types_balanced_binning_reference.png
       - ./build/yellowbrick/plots/all_types_class_balance.png
