@@ -51,9 +51,9 @@ class _EvasionAttackMixin(_AttackMixin):
             raise ValueError(
                 f"_EvasionAttackMixin received unsupported attack type: {attack_type}",
             )
-        return self._evade(data, art_model, attack)
+        return self.evade(data, art_model, attack)
 
-    def _evade(self, data, art_model, attack) -> dict:
+    def evade(self, data, art_model, attack) -> dict:
         """
         Executes an evasion attack on a given dataset using the specified ART model and attack method.
 
@@ -254,7 +254,7 @@ class EvasionAttackConfig(_EvasionAttackMixin, AttackConfig):
     --------------
     _EvasionAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> dict
         Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
-    _EvasionAttackMixin._evade(self, data: Any, art_model: Any, attack: Any) -> dict
+    _EvasionAttackMixin.evade(self, data: Any, art_model: Any, attack: Any) -> dict
         Generates adversarial examples and returns score payload.
     """
 

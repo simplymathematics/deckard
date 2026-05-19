@@ -49,9 +49,9 @@ class _ExtractionAttackMixin(_PoisoningAttackMixin):
             raise ValueError(
                 f"_ExtractionAttackMixin received unsupported attack type: {attack_type}",
             )
-        return self._extract(data=data, art_model=art_model, attack=attack)
+        return self.extract(data=data, art_model=art_model, attack=attack)
 
-    def _extract(self, data, art_model, attack) -> dict:
+    def extract(self, data, art_model, attack) -> dict:
         """Execute a model extraction attack and score victim vs extracted classifiers."""
         task_is_classification = self._infer_task_is_classification(
             data,
@@ -172,7 +172,7 @@ class ExtractionAttackConfig(_ExtractionAttackMixin, AttackConfig):
     --------------
     _ExtractionAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> dict
         Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
-    _ExtractionAttackMixin._extract(self, data: Any, art_model: Any, attack: Any) -> dict
+    _ExtractionAttackMixin.extract(self, data: Any, art_model: Any, attack: Any) -> dict
         Executes extraction flow and returns score payload.
     """
 

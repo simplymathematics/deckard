@@ -3,7 +3,6 @@
 import time
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -39,24 +38,24 @@ class _InferenceAttackMixin(_AttackMixin):
             )
         subtype = (attack_subtype or "").lower()
         if subtype == "membership_inference":
-            return self._infer_membership(data=data, attack=attack)
+            return self.infer_membership(data=data, attack=attack)
         if subtype == "attribute_inference":
             assert (
                 self.targeted_attribute is not None
             ), "targeted_attribute must be specified for inference attacks"
-            return self._infer_attribute(
+            return self.infer_attribute(
                 data=data,
                 art_model=art_model,
                 attack=attack,
                 targeted_attribute=self.targeted_attribute,
             )
         if subtype == "model_inversion":
-            return self._infer_model_inversion(data=data, attack=attack)
+            return self.infer_model_inversion(data=data, attack=attack)
         if subtype == "reconstruction":
-            return self._infer_database_reconstruction(data=data, attack=attack)
+            return self.infer_database_reconstruction(data=data, attack=attack)
         raise ValueError(f"Unsupported inference attack subtype: {attack_subtype}")
 
-    def _infer_attribute(
+    def infer_attribute(
         self,
         data,
         art_model,
@@ -179,7 +178,7 @@ class _InferenceAttackMixin(_AttackMixin):
         self.attacked_labels = target
         return self.score_dict
 
-    def _infer_membership(self, data, attack) -> dict:
+    def infer_membership(self, data, attack) -> dict:
         start_time = time.process_time()
         y_train_raw = self._prepare_labels_for_attack(getattr(data, "y_train"))
         y_train_values = self._to_numpy_array(y_train_raw)
@@ -273,7 +272,7 @@ class _InferenceAttackMixin(_AttackMixin):
         self.attack = inferred
         return self.score_dict
 
-    def _infer_model_inversion(self, data, attack) -> dict:
+    def infer_model_inversion(self, data, attack) -> dict:
         split = str(self.attack_params.get("split", "test")).lower()
         if split not in {"train", "test"}:
             raise ValueError(
@@ -388,7 +387,7 @@ class _InferenceAttackMixin(_AttackMixin):
         }
         return self.score_dict
 
-    def _infer_database_reconstruction(self, data, attack) -> dict:
+    def infer_database_reconstruction(self, data, attack) -> dict:
         split = str(self.attack_params.get("split", "train")).lower()
         if split not in {"train", "test"}:
             raise ValueError(
@@ -524,11 +523,11 @@ class InferenceAttackConfig(_InferenceAttackMixin, AttackConfig):
     --------------
     _InferenceAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> dict
         Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
-    _InferenceAttackMixin._infer_membership(self, data: Any, attack: Any) -> dict
+    _InferenceAttackMixin.infer_membership(self, data: Any, attack: Any) -> dict
         Membership-inference runtime handler.
-    _InferenceAttackMixin._infer_attribute(self, data: Any, art_model: Any, attack: Any, targeted_attribute: str | int) -> dict
+    _InferenceAttackMixin.infer_attribute(self, data: Any, art_model: Any, attack: Any, targeted_attribute: str | int) -> dict
         Attribute-inference runtime handler.
-    _InferenceAttackMixin._infer_model_inversion(self, data: Any, attack: Any) -> dict
+    _InferenceAttackMixin.infer_model_inversion(self, data: Any, attack: Any) -> dict
         Model-inversion runtime handler.
     """
 

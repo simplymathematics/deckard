@@ -35,9 +35,9 @@ class _PoisoningAttackMixin(_AttackMixin):
             raise ValueError(
                 f"_PoisoningAttackMixin received unsupported attack type: {attack_type}",
             )
-        return self._poison(data=data, art_model=art_model, attack=attack)
+        return self.poison(data=data, art_model=art_model, attack=attack)
 
-    def _poison(self, data, art_model, attack) -> dict:
+    def poison(self, data, art_model, attack) -> dict:
         """Execute a poisoning attack and score benign vs poisoned model accuracy."""
         attack_name = type(attack).__name__.lower()
         if "poisoningattacksvm" in attack_name:
@@ -345,7 +345,7 @@ class _PoisoningAttackMixin(_AttackMixin):
 
     def _resolve_eval_split(self, data):
         requested_mode = str(self.mode or "test").lower()
-        if requested_mode not in {"test", "val"}:
+        if requested_mode not in {"train", "test", "val", "auto"}:
             raise ValueError(
                 f"Unsupported attack mode '{self.mode}'. Expected 'test' or 'val'.",
             )
@@ -358,7 +358,12 @@ class _PoisoningAttackMixin(_AttackMixin):
             logger.warning(
                 "Attack mode='val' requested but validation split is unavailable; falling back to test split.",
             )
-
+        elif requested_mode == "train":
+            X_train = getattr(data, "X_train", None)
+            y_train = getattr(data, "y_train", None)
+            if X_train is not None and y_train is not None:
+                 return "train", X_train, y_train
+            logger.warning("Attack mode='val' requested but validation split is unavailable; falling back to test split.",)
         X_test = getattr(data, "X_test", None)
         y_test = getattr(data, "y_test", None)
         if X_test is None or y_test is None:
@@ -391,7 +396,7 @@ class PoisoningAttackConfig(_PoisoningAttackMixin, AttackConfig):
     --------------
     _PoisoningAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> dict
         Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
-    _PoisoningAttackMixin._poison(self, data: Any, art_model: Any, attack: Any) -> dict
+    _PoisoningAttackMixin.poison(self, data: Any, art_model: Any, attack: Any) -> dict
         Executes poisoning flow and returns score payload.
     """
 

@@ -28,7 +28,7 @@ class _ReconstructionAttackMixin(_InferenceAttackMixin):
             raise ValueError(
                 "_ReconstructionAttackMixin requires inference.reconstruction attack subtype",
             )
-        return self._infer_database_reconstruction(data=data, attack=attack)
+        return self.infer_database_reconstruction(data=data, attack=attack)
 
 
 @dataclass(eq=False, kw_only=True)

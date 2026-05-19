@@ -341,7 +341,7 @@ class TestAttackConfig(unittest.TestCase):
                 return x
 
         runtime = attack._with_attack_context(attack_type="evasion", attack_subtype="")
-        result = runtime._evade(
+        result = runtime.evade(
             data=_TinyData(),
             art_model=_FakeArtModel(),
             attack=_FakeEvasionAttack(),
@@ -547,7 +547,7 @@ class TestAttackConfig(unittest.TestCase):
         self.assertIn("inferred_age_accuracy", result)
         self.assertIn("attack_prediction_time", result)
 
-    def test_infer_model_inversion_scores_reconstruction(self):
+    def testinfer_model_inversion_scores_reconstruction(self):
         attack = self._load_pytorch_model_inversion_config()
         attack.attack_size = 2
         attack.attack_params["split"] = "test"
@@ -573,7 +573,7 @@ class TestAttackConfig(unittest.TestCase):
             attack_type="inference",
             attack_subtype="model_inversion",
         )
-        scores = runtime._infer_model_inversion(
+        scores = runtime.infer_model_inversion(
             data=_TinyData(),
             attack=_FakeModelInversionAttack(),
         )
@@ -584,7 +584,7 @@ class TestAttackConfig(unittest.TestCase):
         self.assertEqual(scores["model_inversion_num_targets"], 2)
         self.assertGreaterEqual(scores["model_inversion_mse"], 0.0)
 
-    def test_call_model_inversion_executes_real_infer_model_inversion(self):
+    def test_call_model_inversion_executes_realinfer_model_inversion(self):
         attack = self._load_pytorch_model_inversion_config()
         attack.attack_size = 2
         attack.attack_params["split"] = "test"
@@ -633,7 +633,7 @@ class TestAttackConfig(unittest.TestCase):
         self.assertIn("attack_prediction_time", result)
         self.assertIn("attack_score_time", result)
 
-    def test_infer_database_reconstruction_scores_reconstruction(self):
+    def testinfer_database_reconstruction_scores_reconstruction(self):
         attack = self._load_pytorch_database_reconstruction_config()
         attack.attack_params["split"] = "train"
         attack.attack_params["missing_index"] = 1
@@ -663,7 +663,7 @@ class TestAttackConfig(unittest.TestCase):
             attack_type="inference",
             attack_subtype="reconstruction",
         )
-        scores = runtime._infer_database_reconstruction(
+        scores = runtime.infer_database_reconstruction(
             data=_TinyData(),
             attack=_FakeDatabaseReconstructionAttack(),
         )
@@ -674,7 +674,7 @@ class TestAttackConfig(unittest.TestCase):
         self.assertIn("database_reconstruction_missing_index", scores)
         self.assertGreaterEqual(scores["database_reconstruction_feature_mse"], 0.0)
 
-    def test_call_database_reconstruction_executes_real_infer_database_reconstruction(
+    def test_call_database_reconstruction_executes_realinfer_database_reconstruction(
         self,
     ):
         attack = self._load_pytorch_database_reconstruction_config()
@@ -1189,7 +1189,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
         )
 
         runtime = cfg._with_attack_context(attack_type="evasion", attack_subtype="")
-        scores = runtime._evade(data, _DummyArtModel(), _DummyAttack())
+        scores = runtime.evade(data, _DummyArtModel(), _DummyAttack())
         self.assertIn("evasion_accuracy", scores)
         self.assertIsInstance(runtime.attack, np.ndarray)
         self.assertEqual(runtime.attack.shape[0], 8)
@@ -2240,7 +2240,7 @@ class TestEvadeBranches(unittest.TestCase):
 
         fake_attack_obj = AdversarialPatch()
         runtime = attack._with_attack_context(attack_type="evasion", attack_subtype="")
-        result = runtime._evade(
+        result = runtime.evade(
             data=_TinyData(),
             art_model=_FakeModel(),
             attack=fake_attack_obj,
@@ -2269,7 +2269,7 @@ class TestEvadeBranches(unittest.TestCase):
                 return np.asarray(x).copy() + 0.01
 
         runtime = attack._with_attack_context(attack_type="evasion", attack_subtype="")
-        result = runtime._evade(
+        result = runtime.evade(
             data=_TinyData(),
             art_model=_RegressionArtModel(),
             attack=_FakeEvasionAttack(),
@@ -2278,7 +2278,7 @@ class TestEvadeBranches(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# _infer_attribute: list targeted_attribute path
+# infer_attribute: list targeted_attribute path
 # ---------------------------------------------------------------------------
 
 
@@ -2362,7 +2362,7 @@ class TestInferAttributeBranches(unittest.TestCase):
             attack_subtype="attribute_inference",
         )
         with self.assertRaises((AssertionError, ValueError, KeyError)):
-            runtime._infer_attribute(
+            runtime.infer_attribute(
                 data,
                 _FakeArt(),
                 _FakeAttribAttack(),
@@ -2397,7 +2397,7 @@ class TestInferAttributeBranches(unittest.TestCase):
             attack_subtype="attribute_inference",
         )
         with self.assertRaises((ValueError, AssertionError)):
-            runtime._infer_attribute(
+            runtime.infer_attribute(
                 data,
                 _FakeArt(),
                 _FakeAttribAttack(),
@@ -2406,13 +2406,13 @@ class TestInferAttributeBranches(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# _infer_membership: AxisError fallback + sensitive features
+# infer_membership: AxisError fallback + sensitive features
 # ---------------------------------------------------------------------------
 
 
 class TestInferMembershipBranches(unittest.TestCase):
     def test_axis_error_fallback_is_used(self):
-        """Cover the AxisError fallback in _infer_membership."""
+        """Cover the AxisError fallback in infer_membership."""
         data = _make_tiny_data()
         attack = AttackConfig(
             attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
@@ -2435,7 +2435,7 @@ class TestInferMembershipBranches(unittest.TestCase):
             attack_type="inference",
             attack_subtype="membership_inference",
         )
-        result = runtime._infer_membership(data=data, attack=_FakeMIAttack())
+        result = runtime.infer_membership(data=data, attack=_FakeMIAttack())
         self.assertIsInstance(result, dict)
 
     def test_sensitive_features_present_builds_big_sensitive(self):
@@ -2459,12 +2459,12 @@ class TestInferMembershipBranches(unittest.TestCase):
             attack_type="inference",
             attack_subtype="membership_inference",
         )
-        result = runtime._infer_membership(data=data, attack=_FakeMIAttack())
+        result = runtime.infer_membership(data=data, attack=_FakeMIAttack())
         self.assertIsInstance(result, dict)
 
 
 # ---------------------------------------------------------------------------
-# _infer_model_inversion init modes
+# infer_model_inversion init modes
 # ---------------------------------------------------------------------------
 
 
@@ -2498,7 +2498,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_type="inference",
             attack_subtype="model_inversion",
         )
-        result = runtime._infer_model_inversion(
+        result = runtime.infer_model_inversion(
             data=self._make_data(),
             attack=self._fake_attack(),
         )
@@ -2510,7 +2510,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_type="inference",
             attack_subtype="model_inversion",
         )
-        result = runtime._infer_model_inversion(
+        result = runtime.infer_model_inversion(
             data=self._make_data(),
             attack=self._fake_attack(),
         )
@@ -2522,7 +2522,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_type="inference",
             attack_subtype="model_inversion",
         )
-        result = runtime._infer_model_inversion(
+        result = runtime.infer_model_inversion(
             data=self._make_data(),
             attack=self._fake_attack(),
         )
@@ -2534,7 +2534,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_type="inference",
             attack_subtype="model_inversion",
         )
-        result = runtime._infer_model_inversion(
+        result = runtime.infer_model_inversion(
             data=self._make_data(),
             attack=self._fake_attack(),
         )
@@ -2547,7 +2547,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_subtype="model_inversion",
         )
         with self.assertRaises(ValueError):
-            runtime._infer_model_inversion(
+            runtime.infer_model_inversion(
                 data=self._make_data(),
                 attack=self._fake_attack(),
             )
@@ -2562,7 +2562,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_type="inference",
             attack_subtype="model_inversion",
         )
-        result = runtime._infer_model_inversion(
+        result = runtime.infer_model_inversion(
             data=self._make_data(),
             attack=self._fake_attack(),
         )
@@ -2579,7 +2579,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_subtype="model_inversion",
         )
         with self.assertRaises(ValueError):
-            runtime._infer_model_inversion(
+            runtime.infer_model_inversion(
                 data=self._make_data(),
                 attack=self._fake_attack(),
             )
@@ -2596,7 +2596,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_subtype="model_inversion",
         )
         with self.assertRaises(ValueError):
-            runtime._infer_model_inversion(data=d, attack=self._fake_attack())
+            runtime.infer_model_inversion(data=d, attack=self._fake_attack())
 
     def test_explicit_targets_param(self):
         cfg = AttackConfig(
@@ -2608,7 +2608,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_type="inference",
             attack_subtype="model_inversion",
         )
-        result = runtime._infer_model_inversion(
+        result = runtime.infer_model_inversion(
             data=self._make_data(),
             attack=self._fake_attack(),
         )
@@ -2630,7 +2630,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_type="inference",
             attack_subtype="model_inversion",
         )
-        result = runtime._infer_model_inversion(data=d, attack=self._fake_attack())
+        result = runtime.infer_model_inversion(data=d, attack=self._fake_attack())
         self.assertIn("model_inversion_mse", result)
 
     def test_x_init_length_mismatch_raises(self):
@@ -2650,10 +2650,10 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_subtype="model_inversion",
         )
         with self.assertRaises(ValueError):
-            runtime._infer_model_inversion(data=d, attack=self._fake_attack())
+            runtime.infer_model_inversion(data=d, attack=self._fake_attack())
 
     def test_type_error_fallback_on_infer(self):
-        """Cover the TypeError fallback path in _infer_model_inversion."""
+        """Cover the TypeError fallback path in infer_model_inversion."""
         cfg = self._make_mi_attack_config("average")
         call_count = {"n": 0}
 
@@ -2668,7 +2668,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_type="inference",
             attack_subtype="model_inversion",
         )
-        result = runtime._infer_model_inversion(data=self._make_data(), attack=_A())
+        result = runtime.infer_model_inversion(data=self._make_data(), attack=_A())
         self.assertIn("model_inversion_mse", result)
 
     def test_empty_target_labels_raises(self):
@@ -2683,14 +2683,14 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_subtype="model_inversion",
         )
         with self.assertRaises(ValueError):
-            runtime._infer_model_inversion(
+            runtime.infer_model_inversion(
                 data=self._make_data(),
                 attack=self._fake_attack(),
             )
 
 
 # ---------------------------------------------------------------------------
-# _infer_database_reconstruction branches
+# infer_database_reconstruction branches
 # ---------------------------------------------------------------------------
 
 
@@ -2725,7 +2725,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             attack_type="inference",
             attack_subtype="reconstruction",
         )
-        result = runtime._infer_database_reconstruction(
+        result = runtime.infer_database_reconstruction(
             data=self._make_data(),
             attack=_FakeAttack(),
         )
@@ -2747,7 +2747,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             attack_subtype="reconstruction",
         )
         with self.assertRaises(ValueError):
-            runtime._infer_database_reconstruction(
+            runtime.infer_database_reconstruction(
                 data=self._make_data(),
                 attack=_FakeAttack(),
             )
@@ -2768,7 +2768,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             attack_subtype="reconstruction",
         )
         with self.assertRaises(ValueError):
-            runtime._infer_database_reconstruction(
+            runtime.infer_database_reconstruction(
                 data=self._make_data(),
                 attack=_FakeAttack(),
             )
@@ -2792,7 +2792,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             attack_subtype="reconstruction",
         )
         with self.assertRaises(ValueError):
-            runtime._infer_database_reconstruction(data=d, attack=_FakeAttack())
+            runtime.infer_database_reconstruction(data=d, attack=_FakeAttack())
 
     def test_y_reconstructed_none_skips_label_scoring(self):
         """Cover the path where reconstructed tuple has only x."""
@@ -2811,7 +2811,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             attack_type="inference",
             attack_subtype="reconstruction",
         )
-        result = runtime._infer_database_reconstruction(
+        result = runtime.infer_database_reconstruction(
             data=self._make_data(),
             attack=_FakeAttack(),
         )
@@ -2837,7 +2837,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             attack_type="inference",
             attack_subtype="reconstruction",
         )
-        result = runtime._infer_database_reconstruction(data=d, attack=_FakeAttack())
+        result = runtime.infer_database_reconstruction(data=d, attack=_FakeAttack())
         self.assertIn("database_reconstruction_label_mae", result)
 
     def test_type_error_fallback_on_reconstruct(self):
@@ -2860,7 +2860,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             attack_type="inference",
             attack_subtype="reconstruction",
         )
-        result = runtime._infer_database_reconstruction(
+        result = runtime.infer_database_reconstruction(
             data=self._make_data(),
             attack=_FakeAttack(),
         )
@@ -2882,7 +2882,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             attack_type="inference",
             attack_subtype="reconstruction",
         )
-        result = runtime._infer_database_reconstruction(
+        result = runtime.infer_database_reconstruction(
             data=self._make_data(),
             attack=_FakeAttack(),
         )
@@ -3006,7 +3006,7 @@ class TestPoisonBranches(unittest.TestCase):
                 return np.asarray(x_train), np.asarray(y_train)
 
         runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="gradient_matching_attack")
-        result = runtime._poison(
+        result = runtime.poison(
             data=self._make_data(),
             art_model=_FakeArtModel(),
             attack=_FakePoisonAttack(),
@@ -3039,7 +3039,7 @@ class TestPoisonBranches(unittest.TestCase):
                 return np.asarray(x_train), np.asarray(y_train)
 
         runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="gradient_matching_attack")
-        result = runtime._poison(
+        result = runtime.poison(
             data=self._make_data(),
             art_model=_FakeArtModel(),
             attack=_FakePoisonAttack(),
@@ -3078,7 +3078,7 @@ class TestPoisonBranches(unittest.TestCase):
                 return np.asarray(x), np.asarray(y)
 
         runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="PoisoningAttackSVM")
-        result = runtime._poison(
+        result = runtime.poison(
             data=self._make_data(),
             art_model=_FakeArtModel(),
             attack=_FakePoisoningAttackSVM(),
@@ -3206,7 +3206,7 @@ class TestExtractBranches(unittest.TestCase):
             return_value=(MagicMock(), MagicMock(), "unknown_type", ""),
         ):
 
-            def _fake_evade(*a, **kw):
+            def _fakeevade(*a, **kw):
                 attack.attack_time = 0.1
                 attack.attack_prediction_time = 0.1
                 attack.attack_score_time = 0.1
