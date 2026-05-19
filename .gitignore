@@ -121,6 +121,12 @@ old_papers
 
 build/lib/deckard/*
 docs/build/
+
+# Sphinx deployment artifacts (GH Actions/local builds)
+build/docs/
+build/docs/**
+build/jupyter_execute/
+build/.jupyter_cache/
 .python-version
 .DS_Store
 
