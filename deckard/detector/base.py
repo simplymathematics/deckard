@@ -282,7 +282,7 @@ class DetectorConfig(DetectorContractMixin, ConfigBase, FrameworkDetectorConfig)
         elif hasattr(detector, "detect_poison") and callable(
             getattr(detector, "detect_poison"),
         ):
-            _, is_clean = detector.detectpoison(**fit_kwargs)
+            _, is_clean = detector.detect_poison(**fit_kwargs)
             is_clean_arr = np.asarray(is_clean)
             if is_clean_arr.ndim == 1 and len(is_clean_arr) == len(y):
                 clean_mask = is_clean_arr.astype(int)
@@ -300,7 +300,7 @@ class DetectorConfig(DetectorContractMixin, ConfigBase, FrameworkDetectorConfig)
             y_pred = 1 - clean_mask.reshape(-1)
         else:
             raise AttributeError(
-                f"Detector {self.detector_type} exposes neither detect() nor detectpoison().",
+                f"Detector {self.detector_type} exposes neither detect() nor detect_poison().",
             )
         self.detector_detection_time = time.process_time() - start
 
