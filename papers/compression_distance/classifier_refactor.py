@@ -421,7 +421,10 @@ class StringDistanceTransformer(BaseEstimator, TransformerMixin):
             return pickle.load(f)
 
     def set_split_indices(
-        self, train_indices=None, test_indices=None, val_indices=None
+        self,
+        train_indices=None,
+        test_indices=None,
+        val_indices=None,
     ):
         if train_indices is not None:
             self.train_indices = list(train_indices)
@@ -488,7 +491,7 @@ class StringDistanceTransformer(BaseEstimator, TransformerMixin):
             if self._full_matrix is None:
                 try:
                     self._full_matrix = self._load_matrix_file(
-                        self.distance_matrix_full
+                        self.distance_matrix_full,
                     )
                 except (FileNotFoundError, OSError, ValueError):
                     self.pre_sample_fit(X, y=y)

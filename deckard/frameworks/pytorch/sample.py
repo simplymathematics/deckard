@@ -78,8 +78,7 @@ class TorchDataLoaderMixin:
             n_test = n_total - self.val_size
         else:
             n_val = 0
-        n_train = 
-
+        n_train = n_total - n_test - n_val
         generator = torch.Generator().manual_seed(self.random_seed)
 
         train_ds, test_ds, val_ds = random_split(

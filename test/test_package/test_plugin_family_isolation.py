@@ -8,7 +8,8 @@ from helpers import make_runtime_env
 
 
 def _run_import_with_blocks(
-    blocked_prefixes: tuple[str, ...], import_stmt: str
+    blocked_prefixes: tuple[str, ...],
+    import_stmt: str,
 ) -> None:
     repo_root = Path(__file__).resolve().parents[2]
     script = f"""

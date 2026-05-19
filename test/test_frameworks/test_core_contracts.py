@@ -37,7 +37,7 @@ def test_framework_contracts_are_abstract(contract_cls):
         abstract_methods
     ), f"{contract_cls.__name__} should define abstract API methods"
     assert inspect.isabstract(
-        contract_cls
+        contract_cls,
     ), f"{contract_cls.__name__} must remain abstract to enforce shared interface compliance"
 
 

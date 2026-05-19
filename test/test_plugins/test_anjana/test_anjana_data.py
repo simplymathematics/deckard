@@ -208,7 +208,9 @@ def test_apply_anjana_defense_signature_filtering_and_defaults(monkeypatch):
         return data.copy()
 
     monkeypatch.setattr(
-        anjana_data_module, "resolve_class", lambda _: _strict_k_anonymity_like
+        anjana_data_module,
+        "resolve_class",
+        lambda _: _strict_k_anonymity_like,
     )
 
     cfg._apply_anjana_defense()

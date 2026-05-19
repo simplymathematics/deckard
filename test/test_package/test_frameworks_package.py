@@ -245,7 +245,8 @@ class _DefenseContractStubBase:
 
 @dataclass(eq=False, kw_only=True)
 class _StubFrameworkModelDefenseConfig(
-    _DefenseContractStubBase, FrameworkModelDefenseConfig
+    _DefenseContractStubBase,
+    FrameworkModelDefenseConfig,
 ):
     def _validate_model_defense_contract(self):
         self.call_log.append("validate")
@@ -365,7 +366,8 @@ class _StubFrameworkDataSamplerContract(FrameworkDataSamplerContract):
     ],
 )
 def test_framework_contracts_declare_ordered_lifecycle(
-    cfg_cls, expected_execution_steps
+    cfg_cls,
+    expected_execution_steps,
 ):
     cfg = cfg_cls()
 

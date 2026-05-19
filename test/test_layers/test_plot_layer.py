@@ -287,7 +287,7 @@ def test_plot_main_plot_params_file_drives_both_backends(monkeypatch, tmp_path):
 
     seaborn_params = tmp_path / "sns_params.yaml"
     seaborn_params.write_text(
-        "plots:\n  - plot_type: scatterplot\n    x: a\n    y: b\n"
+        "plots:\n  - plot_type: scatterplot\n    x: a\n    y: b\n",
     )
 
     yb = plot_module.plot_main(

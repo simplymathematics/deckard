@@ -391,7 +391,8 @@ class TestPytorchDataConfig(unittest.TestCase):
             return ArrayFallbackDataset()
 
         with patch(
-            "deckard.frameworks.pytorch.data.load_class", side_effect=fake_load_class
+            "deckard.frameworks.pytorch.data.load_class",
+            side_effect=fake_load_class,
         ):
             cfg._load_data()
 
@@ -439,7 +440,8 @@ class TestPytorchDataConfig(unittest.TestCase):
         y = torch.randint(0, 2, (4,))
         bad_sensitive = MismatchedSensitiveDataset(X, y)
         with patch(
-            "deckard.frameworks.pytorch.data.load_class", return_value=bad_sensitive
+            "deckard.frameworks.pytorch.data.load_class",
+            return_value=bad_sensitive,
         ):
             with self.assertRaises((ValueError, RuntimeError)):
                 cfg._load_data()

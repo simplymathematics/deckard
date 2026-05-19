@@ -59,7 +59,8 @@ def test_string_distance_transformer_full_matrix_slicing(tmp_path: Path):
 
 
 def test_pre_sample_fit_generates_and_persists_full_matrix(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path,
+    monkeypatch,
 ):
     matrix_path = tmp_path / "generated_full.npz"
     expected = np.array([[0.0, 1.0], [1.0, 0.0]])
@@ -75,7 +76,8 @@ def test_pre_sample_fit_generates_and_persists_full_matrix(
     )
 
     tr = StringDistanceTransformer(
-        metric="gzip", distance_matrix_full=str(matrix_path)
+        metric="gzip",
+        distance_matrix_full=str(matrix_path),
     )
     tr.pre_sample_fit(np.array(["left", "right"]))
 

@@ -133,19 +133,28 @@ def validate_file(path: Path, *, strict_docs_types: bool = False) -> list[Violat
         ):
             violations.append(
                 Violation(
-                    rel, node.lineno, "NAME001", f"{class_name} must end with 'Config'"
+                    rel,
+                    node.lineno,
+                    "NAME001",
+                    f"{class_name} must end with 'Config'",
                 ),
             )
         if has_mixin_token and not class_name.endswith("Mixin"):
             violations.append(
                 Violation(
-                    rel, node.lineno, "NAME002", f"{class_name} must end with 'Mixin'"
+                    rel,
+                    node.lineno,
+                    "NAME002",
+                    f"{class_name} must end with 'Mixin'",
                 ),
             )
         if has_plugin_token and not class_name.endswith("Plugin"):
             violations.append(
                 Violation(
-                    rel, node.lineno, "NAME003", f"{class_name} must end with 'Plugin'"
+                    rel,
+                    node.lineno,
+                    "NAME003",
+                    f"{class_name} must end with 'Plugin'",
                 ),
             )
 
@@ -320,7 +329,9 @@ def validate_file(path: Path, *, strict_docs_types: bool = False) -> list[Violat
 
 
 def collect_violations(
-    scope: str, *, strict_docs_types: bool = False
+    scope: str,
+    *,
+    strict_docs_types: bool = False,
 ) -> list[Violation]:
     base = ROOT / scope
     violations: list[Violation] = []
@@ -331,7 +342,7 @@ def collect_violations(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Run repository-wide enforcement checks"
+        description="Run repository-wide enforcement checks",
     )
     parser.add_argument(
         "--scope",

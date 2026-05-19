@@ -53,7 +53,8 @@ class TestDiscoverConfigRoots:
 
             # Set environment variable
             with mock.patch.dict(
-                os.environ, {"DECKARD_CONFIG_DIRS": f"{ext_dir1}:{ext_dir2}"}
+                os.environ,
+                {"DECKARD_CONFIG_DIRS": f"{ext_dir1}:{ext_dir2}"},
             ):
                 roots = discover_config_roots()
                 # Check that external roots are in the list
@@ -205,44 +206,57 @@ class TestShouldRegisterConfig:
     def test_pytorch_config_with_torch(self):
         """Test PyTorch config is registered when torch available."""
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".yaml", dir=None, prefix="torch_"
+            mode="w",
+            suffix=".yaml",
+            dir=None,
+            prefix="torch_",
         ) as f:
             path = Path(f.name)
             with mock.patch(
-                "deckard.declarations.is_package_available", return_value=True
+                "deckard.declarations.is_package_available",
+                return_value=True,
             ):
                 assert _should_register_config(path)
 
     def test_pytorch_config_without_torch(self):
         """Test PyTorch config is skipped when torch unavailable."""
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".yaml", prefix="torch_"
+            mode="w",
+            suffix=".yaml",
+            prefix="torch_",
         ) as f:
             path = Path(f.name)
             with mock.patch(
-                "deckard.declarations.is_package_available", return_value=False
+                "deckard.declarations.is_package_available",
+                return_value=False,
             ):
                 assert not _should_register_config(path)
 
     def test_sklearn_config_with_sklearn(self):
         """Test sklearn config is registered when sklearn available."""
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".yaml", prefix="sklearn_"
+            mode="w",
+            suffix=".yaml",
+            prefix="sklearn_",
         ) as f:
             path = Path(f.name)
             with mock.patch(
-                "deckard.declarations.is_package_available", return_value=True
+                "deckard.declarations.is_package_available",
+                return_value=True,
             ):
                 assert _should_register_config(path)
 
     def test_sklearn_config_without_sklearn(self):
         """Test sklearn config is skipped when sklearn unavailable."""
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".yaml", prefix="sklearn_"
+            mode="w",
+            suffix=".yaml",
+            prefix="sklearn_",
         ) as f:
             path = Path(f.name)
             with mock.patch(
-                "deckard.declarations.is_package_available", return_value=False
+                "deckard.declarations.is_package_available",
+                return_value=False,
             ):
                 assert not _should_register_config(path)
 
@@ -250,7 +264,8 @@ class TestShouldRegisterConfig:
         """Framework pytorch configs should be skipped when torch is unavailable."""
         path = Path("/tmp/frameworks/pytorch/default_defense.yaml")
         with mock.patch(
-            "deckard.declarations.is_package_available", return_value=False
+            "deckard.declarations.is_package_available",
+            return_value=False,
         ):
             assert not _should_register_config(path)
 
@@ -258,18 +273,22 @@ class TestShouldRegisterConfig:
         """Framework sklearn configs should be skipped when sklearn is unavailable."""
         path = Path("/tmp/frameworks/sklearn/default_defense.yaml")
         with mock.patch(
-            "deckard.declarations.is_package_available", return_value=False
+            "deckard.declarations.is_package_available",
+            return_value=False,
         ):
             assert not _should_register_config(path)
 
     def test_generic_config_always_registered(self):
         """Test generic configs are always registered regardless of deps."""
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".yaml", prefix="config_"
+            mode="w",
+            suffix=".yaml",
+            prefix="config_",
         ) as f:
             path = Path(f.name)
             with mock.patch(
-                "deckard.declarations.is_package_available", return_value=False
+                "deckard.declarations.is_package_available",
+                return_value=False,
             ):
                 # Even with all packages unavailable, generic configs are registered
                 assert _should_register_config(path)
@@ -340,5 +359,5 @@ class TestRegisterConfigs:
                     register_configs()
                 except Exception as e:
                     pytest.fail(
-                        f"register_configs with external dirs raised {type(e).__name__}: {e}"
+                        f"register_configs with external dirs raised {type(e).__name__}: {e}",
                     )
