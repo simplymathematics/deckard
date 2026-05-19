@@ -4,9 +4,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
 from helpers import make_runtime_env
-
 
 ROOT = Path(__file__).resolve().parents[3]
 EXAMPLES_SKLEARN_DIR = ROOT / "examples" / "sklearn"

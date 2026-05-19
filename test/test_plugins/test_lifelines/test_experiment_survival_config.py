@@ -1,5 +1,5 @@
-from types import SimpleNamespace
 import unittest
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
@@ -7,8 +7,8 @@ import pytest
 
 from deckard.data import DataConfig
 from deckard.experiment.base import ExperimentConfig
-from deckard.plugins.lifelines.experiment import SurvivalExperimentConfig
 from deckard.model import ModelConfig
+from deckard.plugins.lifelines.experiment import SurvivalExperimentConfig
 
 
 class TestSurvivalExperimentConfig(unittest.TestCase):

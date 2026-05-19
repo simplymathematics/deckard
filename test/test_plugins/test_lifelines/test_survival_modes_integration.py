@@ -5,10 +5,10 @@ import pytest
 
 from deckard.attack import AttackConfig
 from deckard.data import DataConfig
-from deckard.plugins.lifelines.data import LifelinesDataConfig, LifelinesDataMode
-from deckard.experiment.declarations import LIFELINES_DATASETS, SURVIVAL_MODELS
 from deckard.experiment import SurvivalExperimentConfig
+from deckard.experiment.declarations import LIFELINES_DATASETS, SURVIVAL_MODELS
 from deckard.layers.survival import survival_main
+from deckard.plugins.lifelines.data import LifelinesDataConfig, LifelinesDataMode
 
 
 class TestMode1NativeSurvivalData:

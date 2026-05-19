@@ -1,28 +1,30 @@
 # A BaseConfig class for Configuration of Models using adversarial-robustness-toolbox (ART)
 # https://adversarial-robustness-toolbox.readthedocs.io/en/latest
 
-import time
 import logging
+import time
 import warnings
-from sklearn.base import BaseEstimator
 from dataclasses import dataclass, field
-from typing import Any, cast, Union
 from functools import lru_cache
+from typing import Any, Union, cast
+
 from omegaconf import DictConfig, ListConfig, OmegaConf
-from sklearn.utils.validation import check_is_fitted
+from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
+from sklearn.utils.validation import check_is_fitted
+
 from ..data import DataConfig
 from ..frameworks import ModelDefenseContractMixin
-from .base import ModelConfig
 from ..utils import (
     ConfigBase,
     coerce_config,
-    resolve_class,
     coerce_to_list,
+    instantiate_plugin_spec,
     is_null_config_value,
     normalize_plugin_specs,
-    instantiate_plugin_spec,
+    resolve_class,
 )
+from .base import ModelConfig
 
 warnings.filterwarnings("ignore", category=UserWarning)
 logger = logging.getLogger(__name__)
@@ -30,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 @lru_cache(maxsize=1)
 def _get_art_symbols() -> dict[str, Any]:
+    from art.estimators.classification import PyTorchClassifier
     from art.estimators.classification.scikitlearn import (
         ScikitlearnAdaBoostClassifier,
         ScikitlearnBaggingClassifier,
@@ -41,12 +44,11 @@ def _get_art_symbols() -> dict[str, Any]:
         ScikitlearnRandomForestClassifier,
         ScikitlearnSVC,
     )
+    from art.estimators.regression import PyTorchRegressor
     from art.estimators.regression.scikitlearn import (
         ScikitlearnDecisionTreeRegressor,
         ScikitlearnRegressor,
     )
-    from art.estimators.classification import PyTorchClassifier
-    from art.estimators.regression import PyTorchRegressor
 
     classifier_dict = {
         "SVC": ScikitlearnSVC,

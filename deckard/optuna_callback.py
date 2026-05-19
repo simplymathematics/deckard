@@ -1,11 +1,12 @@
 # Script to query the database
 
-from omegaconf import DictConfig, ListConfig, OmegaConf
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Union
+
 import optuna
 from hydra.experimental.callback import Callback
-from typing import Union
-from pathlib import Path
+from omegaconf import DictConfig, ListConfig, OmegaConf
 
 storage = "sqlite:///optuna.db"
 study_name = "gzip_knn_20-0"

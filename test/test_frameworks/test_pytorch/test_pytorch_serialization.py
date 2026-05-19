@@ -2,13 +2,13 @@ import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 
-import pytest
 import numpy as np
+import pytest
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
-from deckard.model.defend import DefensePipelineConfig
 from deckard.frameworks.pytorch import model as pytorch_module
+from deckard.model.defend import DefensePipelineConfig
 
 PytorchModelConfig = pytest.importorskip(
     "deckard.frameworks.pytorch.model",

@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-# Imports
-import time
 import logging
 import tempfile
-from tqdm.auto import tqdm
-from pathlib import Path
 
-
+# Imports
+import time
 from dataclasses import dataclass, field
-from typing import Any, Union, List, Optional, Callable
+from pathlib import Path
+from typing import Any, Callable, List, Optional, Union
+
+import numpy as np
 
 # PyTorch
 import torch
@@ -21,12 +21,13 @@ from torch.utils.data import (
     Subset,
     TensorDataset,
 )
+from tqdm.auto import tqdm
+
+from ...data.base import DataConfig, DataPipelineConfig
 
 # deckard
 from ...utils import load_class, resolve_torch_device
-from ...data.base import DataConfig, DataPipelineConfig
 from ..adapters import BaseContractMixin
-import numpy as np
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -35,7 +36,6 @@ logger = logging.getLogger(__name__)
 from typing import Literal
 
 from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
-from torch.utils.data import Dataset, Subset
 
 
 class TorchDatasetSamplingMixin:

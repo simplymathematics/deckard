@@ -12,10 +12,11 @@ import pytest
 torch = pytest.importorskip("torch")
 pytest.importorskip("fairlearn")
 
-from deckard.data import PytorchDataConfig
-import deckard.model as model_module
-from deckard.score.attack import FairlearnAttackScorerConfig
 from helpers import load_env_from_deckard_rc
+
+import deckard.model as model_module
+from deckard.data import PytorchDataConfig
+from deckard.score.attack import FairlearnAttackScorerConfig
 
 DefensePipelineConfig = model_module.DefensePipelineConfig
 PytorchModelConfig = model_module.PytorchModelConfig

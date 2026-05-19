@@ -1,5 +1,5 @@
-from torchvision import models
 import torch
+from torchvision import models
 
 __all__ = [
     "ResNet18",

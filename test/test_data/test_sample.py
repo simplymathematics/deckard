@@ -1,7 +1,7 @@
 """Tests for deckard/data/sample.py and the sampler integration in DataConfig."""
 
-import unittest
 import os
+import unittest
 from unittest.mock import patch
 
 import numpy as np
@@ -9,13 +9,12 @@ import pandas as pd
 from helpers import load_canonical_data_profile
 
 from deckard.data import (
-    DataConfig,
     BaseSampler,
+    DataConfig,
     KFoldSampler,
     ShuffleSampler,
     SplitSampler,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -608,8 +607,9 @@ class TestConfigStoreRegistration(unittest.TestCase):
         register_sampler_configs()
 
     def test_configstore_has_expected_groups(self):
-        from deckard.data.sample import register_sampler_configs
         from hydra.core.config_store import ConfigStore
+
+        from deckard.data.sample import register_sampler_configs
 
         register_sampler_configs()
         cs = ConfigStore.instance()

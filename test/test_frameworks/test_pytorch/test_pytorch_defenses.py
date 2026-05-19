@@ -1,13 +1,14 @@
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+
 import numpy as np
 import pandas as pd
 import pytest
 import yaml
-from omegaconf import OmegaConf
-from deckard.model.defend import DefenseConfig, DefensePipelineConfig
+
 from deckard.model.base import ModelConfig
+from deckard.model.defend import DefenseConfig, DefensePipelineConfig
 
 
 class TestRetrainingDefensePipeline(unittest.TestCase):

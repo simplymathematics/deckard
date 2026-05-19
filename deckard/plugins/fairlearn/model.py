@@ -1,4 +1,3 @@
-from ...utils import is_default_config_value
 import time
 from dataclasses import dataclass, field
 from typing import Any, Union
@@ -8,18 +7,16 @@ import pandas as pd
 from art.config import ART_NUMPY_DTYPE
 from sklearn.base import BaseEstimator
 
+from ...data._mixins import RuntimePayload, _SensitiveColumnsMixin
 from ...model.base import ModelConfig, logger
 from ...model.defend import DefenseConfig
 from ...pytorch.model import PytorchModelConfig
-from ...data._mixins import RuntimePayload, _SensitiveColumnsMixin
-from .data import FairlearnDataConfig
 from ...utils import (
-    ConfigBase,
+    is_default_config_value,
     load_class,
-    probabilities_from_model_outputs,
     resolve_class,
 )
-from ...score import ScorerDictConfig
+from .data import FairlearnDataConfig
 
 try:
     import torch as torch_module

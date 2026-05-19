@@ -1,20 +1,19 @@
+import argparse
+import logging
 import random
 import string
+from itertools import combinations, product
 from pathlib import Path
-from tqdm import tqdm
-import numpy as np
 from typing import Literal
-from itertools import product, combinations
-import logging
-import argparse
 
-import seaborn as sns
+import numpy as np
 import pandas as pd
+import seaborn as sns
+from gzip_classifier import compressors
 
 # Parallelize the for loop using joblib
 from joblib import Parallel, delayed
-
-from gzip_classifier import compressors
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 

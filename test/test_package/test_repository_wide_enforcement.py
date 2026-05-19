@@ -9,10 +9,10 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from deckard.plugins import HookPlugin
 from deckard.declarations import (
     register_configs,
 )
+from deckard.plugins import HookPlugin
 from deckard.plugins.anjana.data import AnjanaDataConfig
 from deckard.plugins.fairlearn.data import FairlearnDataConfig
 

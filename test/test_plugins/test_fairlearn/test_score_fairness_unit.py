@@ -1,20 +1,21 @@
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
+
 from deckard.plugins.fairlearn import score as fairness
 from deckard.plugins.fairlearn.score import (
-    as_group_scorer,
-    _resolve_sensitive_features,
-    fairness_demographic_parity_difference,
-    fairness_equalized_odds_difference,
-    fairness_group_mean_prediction_difference,
-    fairness_group_mae_difference,
-    fairness_group_mse_difference,
-    _flatten_metric_frame_by_group,
-    _series_like_to_float_dict,
-    FairlearnScoreDictConfig,
     DefaultFairlearnClassificationConfig,
     DefaultFairlearnRegressionConfig,
+    FairlearnScoreDictConfig,
+    _flatten_metric_frame_by_group,
+    _resolve_sensitive_features,
+    _series_like_to_float_dict,
+    as_group_scorer,
+    fairness_demographic_parity_difference,
+    fairness_equalized_odds_difference,
+    fairness_group_mae_difference,
+    fairness_group_mean_prediction_difference,
+    fairness_group_mse_difference,
 )
 from deckard.score.base import ScorerConfig, ScorerDictConfig
 

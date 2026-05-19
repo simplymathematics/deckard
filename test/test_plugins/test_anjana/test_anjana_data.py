@@ -3,9 +3,9 @@ import pandas as pd
 import pytest
 from omegaconf import OmegaConf
 
-from deckard.plugins.anjana.data import AnjanaDataConfig
-from deckard.plugins.anjana import data as anjana_data_module
 from deckard.data.base import DataPipelineConfig
+from deckard.plugins.anjana import data as anjana_data_module
+from deckard.plugins.anjana.data import AnjanaDataConfig
 
 
 def _bare_cfg():

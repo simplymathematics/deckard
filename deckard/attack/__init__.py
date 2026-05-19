@@ -6,9 +6,9 @@ This subpackage exposes the attack-side configuration objects used by
 
 from .base import AttackConfig, SensitiveFeaturesWrapper
 from .evasion import EvasionAttackConfig
+from .extraction import ExtractionAttackConfig
 from .inference import InferenceAttackConfig
 from .poisoning import PoisoningAttackConfig
-from .extraction import ExtractionAttackConfig
 from .reconstruction import ReconstructionAttackConfig
 
 

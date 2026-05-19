@@ -1,23 +1,20 @@
 import logging
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, List, Literal, Optional
 
-
-from pathlib import Path
 import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
 import pandas as pd
+from matplotlib.axes import Axes
 
 # Supported plot types
-from seaborn import scatterplot, lineplot, histplot, catplot, barplot, heatmap
+from seaborn import barplot, catplot, heatmap, histplot, lineplot, scatterplot
 
-from ...utils import load_data, ConfigBase
 from ...plot.base import (
     _PlotterMixin,
     _SeabornPlotterMarker,
-    PlotTypePlugin,
-    safe_store,
 )
+from ...utils import ConfigBase, load_data
 
 logger = logging.getLogger(__name__)
 

@@ -4,29 +4,31 @@ This module contains the base experiment configuration object that ties data,
 model, defense, attack, files, and scorers into a single executable unit.
 """
 
-import logging
-import warnings
 import hashlib
-from dataclasses import dataclass
-from typing import List, Union, Literal, Any
-from omegaconf import DictConfig, ListConfig, OmegaConf
+import logging
 import os
-import yaml
-import numpy as np
-import pandas as pd
+import warnings
+from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any, List, Literal, Union
+
+import numpy as np
+import pandas as pd
+import yaml
 from hydra.utils import instantiate
+from omegaconf import DictConfig, ListConfig, OmegaConf
 
-from ..data import DataConfig, DataPipelineConfig
-from ..model import ModelConfig
-
-
-from ..model.defend import DefensePipelineConfig
 from ..attack import AttackConfig
+from ..data import DataConfig, DataPipelineConfig
+from ..data.sample import KFoldSampler, ShuffleSampler
 from ..detector import DetectorConfig
+from ..file import AttackFiles, BaseFiles, FileConfig, ModelFiles
+from ..frameworks import ExperimentContractMixin, FrameworkExperimentConfig
+from ..model import ModelConfig
+from ..model.defend import DefensePipelineConfig
 from ..score import ScorerDictConfig
-from ..file import FileConfig, BaseFiles, ModelFiles, AttackFiles
+from ..score.base import _AttackProfileScorer, _DataScorerMarker, coerce_scorer_config
 from ..utils import (
     ConfigBase,
     coerce_config,
@@ -38,9 +40,6 @@ from ..utils import (
     merge_scores_with_collision_suffix,
     split_comma_separated_tokens,
 )
-from ..score.base import coerce_scorer_config, _DataScorerMarker, _AttackProfileScorer
-from ..data.sample import KFoldSampler, ShuffleSampler
-from ..frameworks import ExperimentContractMixin, FrameworkExperimentConfig
 
 try:
     import tensorflow as tf
@@ -1106,7 +1105,11 @@ class ExperimentConfig(
                 try:
                     from ..model import (
                         FairlearnModelConfig as _FairlearnModelConfig,
+                    )
+                    from ..model import (
                         FairlearnPytorchModelConfig as _FairlearnPytorchModelConfig,
+                    )
+                    from ..model import (
                         PytorchModelConfig as _PytorchModelConfig,
                     )
                 except ImportError as exc:

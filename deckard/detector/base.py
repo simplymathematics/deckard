@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Union
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
 
+from ..frameworks import DetectorContractMixin, FrameworkDetectorConfig
 from ..model import ModelConfig
 from ..score.base import (
     DefaultModelScorerConfig,
@@ -15,7 +16,6 @@ from ..score.base import (
     coerce_scorer_config,
 )
 from ..utils import ConfigBase, coerce_config, resolve_class
-from ..frameworks import DetectorContractMixin, FrameworkDetectorConfig
 
 if TYPE_CHECKING:
     from ..attack import AttackConfig

@@ -1,42 +1,25 @@
 # Standard library imports
 import copy
-import pickle
 import logging
-
-from pathlib import Path
-import pandas as pd
+import pickle
 
 # Typing imports
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
-# Sklearn and numpy imports
-from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
-from sklearn.utils.validation import check_is_fitted
-from sklearn.exceptions import NotFittedError
 import numpy as np
+import pandas as pd
 
 # ART imports
 from art.config import ART_NUMPY_DTYPE
-
 from omegaconf import DictConfig, OmegaConf
 
-from ..model import ModelConfig
-from ..model.defend import _get_art_symbols
-from ..score.base import (
-    DefaultClassifierConfig,
-    ScorerDictConfig,
-)
-from ..utils import (
-    ConfigBase,
-    is_default_config_value,
-    is_null_config_value,
-    load_class,
-    normalize_plugin_specs,
-    instantiate_plugin_spec,
-    resolve_class,
-    resolve_torch_device,
-)
+# Sklearn and numpy imports
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
+from sklearn.exceptions import NotFittedError
+from sklearn.utils.validation import check_is_fitted
+
 from ..frameworks import AttackContractMixin, FrameworkAttackConfig
 from ..frameworks.core import EstimatorLike
 from ..frameworks.pytorch.torch_utils import (
@@ -46,6 +29,22 @@ from ..frameworks.pytorch.torch_utils import (
     is_tensor,
     is_torch_model,
     tensor_to_numpy,
+)
+from ..model import ModelConfig
+from ..model.defend import _get_art_symbols
+from ..score.base import (
+    DefaultClassifierConfig,
+    ScorerDictConfig,
+)
+from ..utils import (
+    ConfigBase,
+    instantiate_plugin_spec,
+    is_default_config_value,
+    is_null_config_value,
+    load_class,
+    normalize_plugin_specs,
+    resolve_class,
+    resolve_torch_device,
 )
 
 if TYPE_CHECKING:
@@ -1556,7 +1555,7 @@ class AttackConfig(AttackContractMixin, ConfigBase, FrameworkAttackConfig):
         n = self.attack_size
         x_ = data.X_test if test is True else data.X_train
         y_ = data.y_test if test is True else data.y_train
-        from torch.utils.data import Dataset, DataLoader, Subset
+        from torch.utils.data import Dataset, Subset
 
         if isinstance(x_, (pd.Series, np.ndarray, pd.DataFrame)) or is_tensor(x_):
             return lambda: (x_[:n], y_[:n])

@@ -5,8 +5,9 @@ import pandas as pd
 from omegaconf import DictConfig, ListConfig
 
 from deckard.plugins import HookPlugin
-from ...data.base import DataPipelineConfig
+
 from ...data._mixins import RuntimePayload, _SensitiveColumnsMixin
+from ...data.base import DataPipelineConfig
 from ...utils import (
     coerce_to_list,
     is_default_config_value,
@@ -15,13 +16,13 @@ from ...utils import (
 
 RuntimeScalar = str | int | float | bool | None
 RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
+import logging
+
+from ...data.pipeline.core import FairlearnDataPipelineConfig
 from ...plugins.fairlearn.score import (
     DefaultFairlearnClassificationConfig,
     DefaultFairlearnRegressionConfig,
 )
-from ...data.pipeline.core import FairlearnDataPipelineConfig
-
-import logging
 
 logger = logging.getLogger(__name__)
 

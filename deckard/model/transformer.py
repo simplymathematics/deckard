@@ -4,13 +4,14 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from deckard.plugins.defense import DefenseTypePlugin
+
+from ..utils import safe_store
 from .defend import (
     DefensePipelineConfig,
     _DefenseMixin,
     _is_art_torch_wrapper,
     _is_torch_model_instance,
 )
-from ..utils import safe_store
 
 
 class _TransformerDefenseMixin(_DefenseMixin):

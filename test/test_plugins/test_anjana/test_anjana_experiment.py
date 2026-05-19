@@ -12,7 +12,6 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-
 from helpers import load_canonical_data_profile, make_runtime_env
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -361,10 +360,11 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
     from art.estimators.classification.scikitlearn import (
         ScikitlearnLogisticRegression,
     )
-    from deckard.plugins.anjana.data import AnjanaDataConfig
+
     from deckard.experiment import ExperimentConfig
     from deckard.file import FileConfig
     from deckard.model import DefensePipelineConfig, ModelConfig
+    from deckard.plugins.anjana.data import AnjanaDataConfig
 
     def _drop_half_rows(data, **kwargs):
         _ = kwargs
@@ -490,8 +490,8 @@ def test_anjana_data_with_fairlearn_model_chain(monkeypatch):
     """
     pytest.importorskip("fairlearn")
 
-    from deckard.plugins.anjana.data import AnjanaDataConfig
     from deckard.model import DefensePipelineConfig
+    from deckard.plugins.anjana.data import AnjanaDataConfig
 
     def _stub_k_anon(data, **kwargs):
         _ = kwargs

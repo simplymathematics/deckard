@@ -2,11 +2,11 @@
 
 import tempfile
 import unittest
-import yaml
 from pathlib import Path
 
 import optuna
 import pandas as pd
+import yaml
 
 from deckard.layers.compile_results import (
     clean_column_names,

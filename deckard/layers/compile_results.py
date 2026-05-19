@@ -1,12 +1,13 @@
-import warnings
-import optuna
 import logging
-import pandas as pd
-from typing import Any, Union
+import warnings
 from pathlib import Path
+from typing import Any, Union
+
+import optuna
+import pandas as pd
 import yaml
 
-from ..utils import save_data, create_parser_from_function
+from ..utils import create_parser_from_function, save_data
 
 # suppress future warning
 warnings.filterwarnings("ignore", category=FutureWarning)

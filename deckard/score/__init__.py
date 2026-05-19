@@ -102,9 +102,17 @@ def _load_lifelines_score_symbols() -> bool:
 def _load_fairlearn_score_symbol(symbol_name: str):
     from ..plugins.fairlearn.score import (
         fairness_demographic_parity_difference as _fairness_demographic_parity_difference,
+    )
+    from ..plugins.fairlearn.score import (
         fairness_equalized_odds_difference as _fairness_equalized_odds_difference,
+    )
+    from ..plugins.fairlearn.score import (
         fairness_group_mae_difference as _fairness_group_mae_difference,
+    )
+    from ..plugins.fairlearn.score import (
         fairness_group_mean_prediction_difference as _fairness_group_mean_prediction_difference,
+    )
+    from ..plugins.fairlearn.score import (
         fairness_group_mse_difference as _fairness_group_mse_difference,
     )
 
@@ -121,7 +129,11 @@ def _load_fairlearn_score_symbol(symbol_name: str):
 def _load_anjana_score_symbol(symbol_name: str):
     from ..plugins.anjana.score import (
         anjana_k_anonymity_score as _anjana_k_anonymity_score,
+    )
+    from ..plugins.anjana.score import (
         anjana_l_diversity_score as _anjana_l_diversity_score,
+    )
+    from ..plugins.anjana.score import (
         anjana_t_closeness_score as _anjana_t_closeness_score,
     )
 
@@ -136,7 +148,11 @@ def _load_anjana_score_symbol(symbol_name: str):
 def _load_lifelines_score_symbol(symbol_name: str):
     from ..plugins.lifelines.score import (
         survival_aic_score as _survival_aic_score,
+    )
+    from ..plugins.lifelines.score import (
         survival_bic_score as _survival_bic_score,
+    )
+    from ..plugins.lifelines.score import (
         survival_concordance_score as _survival_concordance_score,
     )
 

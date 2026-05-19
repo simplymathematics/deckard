@@ -1,8 +1,8 @@
 import logging
+from dataclasses import dataclass
+
 import torch.nn as nn
 from torchvision import models
-
-from dataclasses import dataclass
 
 from deckard.frameworks.pytorch.data import PytorchDataConfig
 from deckard.frameworks.pytorch.model import PytorchModelConfig

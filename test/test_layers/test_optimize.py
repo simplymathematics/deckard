@@ -1,17 +1,18 @@
-import json
 import contextlib
-from pathlib import Path
+import json
 import subprocess
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
+
 import optuna
 import pytest
-from omegaconf import OmegaConf
 import torch
-from deckard.layers import optimize as optimize_module
 from helpers import make_runtime_env
+from omegaconf import OmegaConf
 
+from deckard.layers import optimize as optimize_module
 
 ROOT = Path(__file__).resolve().parents[2]
 EXAMPLES_SKLEARN_DIR = ROOT / "examples" / "sklearn"

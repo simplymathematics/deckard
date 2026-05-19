@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import Model
-from tensorflow.keras.layers import Dense, Flatten, Conv2D, MaxPool2D
-
+from tensorflow.keras.layers import Conv2D, Dense, Flatten, MaxPool2D
 
 __all__ = [
     "TFNet",

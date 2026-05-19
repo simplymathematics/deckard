@@ -1,7 +1,7 @@
 """Survival-specific scoring helpers and default scorer configuration."""
 
-from dataclasses import dataclass, field
 import math
+from dataclasses import dataclass, field
 from typing import Any, Union
 
 from ...score.base import ScorerConfig, ScorerDictConfig, safe_store

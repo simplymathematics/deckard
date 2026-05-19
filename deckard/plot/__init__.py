@@ -54,6 +54,8 @@ def _refresh_seaborn_configs() -> None:
     try:
         from ..plugins.seaborn.plot import (
             SeabornPlotConfig as _SeabornPlotConfig,
+        )
+        from ..plugins.seaborn.plot import (
             SeabornPlotConfigList as _SeabornPlotConfigList,
         )
 
@@ -73,6 +75,8 @@ def _refresh_yellowbrick_configs() -> None:
     try:
         from ..plugins.yellowbrick.plot import (
             YellowbrickConfigList as _YellowbrickConfigList,
+        )
+        from ..plugins.yellowbrick.plot import (
             YellowbrickPlotConfig as _YellowbrickPlotConfig,
         )
 

@@ -15,9 +15,9 @@ from .pipeline import (
 )
 from .sample import (
     BaseSampler,
-    SplitSampler,
     KFoldSampler,
     ShuffleSampler,
+    SplitSampler,
     register_sampler_configs,
 )
 
@@ -32,7 +32,7 @@ except Exception:  # pragma: no cover
 
 
 try:
-    from ..frameworks.pytorch.data import PytorchDataConfig, PytorchCustomDataConfig
+    from ..frameworks.pytorch.data import PytorchCustomDataConfig, PytorchDataConfig
 
     _ = (PytorchDataConfig, PytorchCustomDataConfig)
 except Exception:

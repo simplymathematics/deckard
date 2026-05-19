@@ -1,33 +1,33 @@
-import unittest
+import os
 import subprocess
 import sys
-import os
 import tempfile
+import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
 import numpy as np
 import pytest
+from helpers import make_runtime_env
 from hydra import compose, initialize_config_dir
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
 from deckard.attack import AttackConfig
+from deckard.attack.base import resolve_class as base_resolve_class
 from deckard.data import DataConfig
 from deckard.experiment import ExperimentConfig, SurvivalExperimentConfig
-from deckard.frameworks.pytorch.experiment import TorchExperimentConfig
 from deckard.experiment.base import (
     DataConfigResolutionMixin,
     _file_resolver,
     _merge_resolver,
 )
 from deckard.file import FileConfig
+from deckard.frameworks.pytorch.experiment import TorchExperimentConfig
 from deckard.model import ModelConfig
 from deckard.score import DefaultClassifierConfig, DefaultDataClassificationConfig
 from deckard.utils import ConfigBase
-from helpers import make_runtime_env
-from deckard.attack.base import resolve_class as base_resolve_class
 
 
 def test_experiment_family_aliases_are_importable():
@@ -1286,7 +1286,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
 
     def test_score_as_scorer_dict_config(self):
         """Cover scorer config path where score is ScorerDictConfig."""
-        from deckard.score import ScorerDictConfig, ScorerConfig
+        from deckard.score import ScorerConfig, ScorerDictConfig
 
         scorer = ScorerDictConfig(
             scorers={

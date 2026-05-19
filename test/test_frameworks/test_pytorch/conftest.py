@@ -1,7 +1,5 @@
 import pytest
-
 from helpers import TinyFairness
-
 
 TinyData = TinyFairness
 

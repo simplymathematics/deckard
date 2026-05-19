@@ -1,10 +1,12 @@
 import unittest
 from unittest.mock import Mock, patch
+
 import pytest
 
 try:
     import seaborn  # noqa: F401
     import yellowbrick  # noqa: F401
+
     from deckard.plot import PlotConfig
     from deckard.utils import ConfigBase
 except Exception:

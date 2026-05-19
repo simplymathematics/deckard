@@ -1,15 +1,15 @@
 import unittest
+
 import numpy as np
+import pytest
 from sklearn.metrics import accuracy_score, mean_squared_error
 
 from deckard.plugins.fairlearn.score import (
     DefaultFairlearnClassificationConfig,
     DefaultFairlearnRegressionConfig,
+    FairlearnScoreDictConfig,
 )
-from deckard.plugins.fairlearn.score import FairlearnScoreDictConfig
 from deckard.score import ScorerConfig, ScorerDictConfig
-
-import pytest
 
 
 class TestFairnessScorers(unittest.TestCase):

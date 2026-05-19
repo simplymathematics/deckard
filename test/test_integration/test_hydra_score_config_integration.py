@@ -1,23 +1,24 @@
-from pathlib import Path
-import os
 import importlib.util
 import math
+import os
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 from uuid import uuid4
 
+import optuna
 import pytest
 from hydra import compose, initialize_config_dir
 from hydra.core.config_store import ConfigStore
 from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf
-import optuna
 
 os.environ.setdefault("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "1")
 
-from deckard.score import ScorerDictConfig
 from helpers import make_runtime_env, reset_hydra_state
+
+from deckard.score import ScorerDictConfig
 
 CONFIG_DIR = Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
 EXAMPLES_SKLEARN_DIR = Path(__file__).resolve().parents[2] / "examples" / "sklearn"

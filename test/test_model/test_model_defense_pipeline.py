@@ -1,13 +1,19 @@
 import unittest
 from types import SimpleNamespace
+
 import numpy as np
 import pandas as pd
 import pytest
 from omegaconf import OmegaConf
-from deckard.model.defend import DefenseConfig, DefensePipelineConfig
-from deckard.model.defend import ModelDefenseMixin, _DefensePipelineMixin
-from deckard.model.base import ModelConfig
+
 from deckard.frameworks import ModelDefenseContractMixin
+from deckard.model.base import ModelConfig
+from deckard.model.defend import (
+    DefenseConfig,
+    DefensePipelineConfig,
+    ModelDefenseMixin,
+    _DefensePipelineMixin,
+)
 
 
 class DummyDataConfig:

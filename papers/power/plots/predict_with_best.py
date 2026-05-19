@@ -1,13 +1,13 @@
 import argparse
 from pathlib import Path
+
 import pandas as pd
 import yaml
 from deckard.layers.aft import (
-    fit_aft,
-    clean_data_for_aft,
     calculate_raw_failures,
+    clean_data_for_aft,
+    fit_aft,
 )
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data", type=str, required=True)

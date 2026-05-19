@@ -4,16 +4,15 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+import deckard.model as model_module
 from deckard.attack import AttackConfig
 from deckard.plugins.fairlearn.data import FairlearnDataConfig
-import deckard.model as model_module
-from deckard.score.attack import FairlearnAttackScorerConfig
-from deckard.score import ScorerConfig
 from deckard.plugins.fairlearn.score import (
     DefaultFairlearnDataScorerConfig,
     FairlearnScoreDictConfig,
 )
-
+from deckard.score import ScorerConfig
+from deckard.score.attack import FairlearnAttackScorerConfig
 
 pytest.importorskip("fairlearn")
 pytest.importorskip("art")

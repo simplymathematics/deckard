@@ -4,8 +4,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from deckard.plugins.defense import DefenseTypePlugin
-from .defend import DefensePipelineConfig, _DefenseMixin
+
 from ..utils import safe_store
+from .defend import DefensePipelineConfig, _DefenseMixin
 
 
 class _RegularizerDefenseMixin(_DefenseMixin):

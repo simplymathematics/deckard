@@ -1,20 +1,19 @@
 #!/usr/bin/env python
 
 import argparse
+import inspect
 import logging
 import os
 import sys
-import inspect
-import hydra
-from omegaconf import DictConfig
 from pathlib import Path
 
+import hydra
+from omegaconf import DictConfig
 
 from . import DECKARD_CONFIG_DIR, DECKARD_DEFAULT_CONFIG_FILE
 from .declarations import register_configs
-from .utils import normalize_hydra_list_overrides
-
 from .layers import SUPPORTED_LAYERS, layer_dict
+from .utils import normalize_hydra_list_overrides
 
 # Set up logging
 logger = logging.getLogger(__name__)

@@ -1,13 +1,14 @@
 # Queries the optuna database to find the best trial for a given study.
 
-import optuna
-from pathlib import Path
-import yaml
 import argparse
 import logging
-from tqdm import tqdm
-from omegaconf import OmegaConf
+from pathlib import Path
+
+import optuna
+import yaml
 from hydra import compose, initialize
+from omegaconf import OmegaConf
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 

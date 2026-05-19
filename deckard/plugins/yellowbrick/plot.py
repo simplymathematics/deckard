@@ -7,27 +7,57 @@ then reuse that prepared state across multiple plot renders.
 import logging
 import warnings
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Optional, Union, Final, get_args
-
-import numpy as np
 from pathlib import Path
+from typing import Any, Dict, Final, List, Literal, Optional, Union, get_args
+
 import matplotlib.pyplot as plt
+import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.model_selection import (
     KFold,
-    TimeSeriesSplit,
-    StratifiedKFold,
     ShuffleSplit,
+    StratifiedKFold,
+    TimeSeriesSplit,
 )
+
+# Classifier Visualizers
+from yellowbrick.classifier import (
+    ROCAUC,
+    ClassificationReport,
+    ClassPredictionError,
+    DiscriminationThreshold,
+    PrecisionRecallCurve,
+)
+
+# Clustering Visualizers
+from yellowbrick.cluster import (
+    InterclusterDistance,
+    KElbowVisualizer,
+    SilhouetteVisualizer,
+)
+from yellowbrick.features.jointplot import JointPlotVisualizer
+from yellowbrick.features.manifold import Manifold
+from yellowbrick.features.pca import PCADecomposition
+from yellowbrick.features.pcoords import ParallelCoordinates
+from yellowbrick.features.radviz import RadViz
 
 # yellow brick imports
 # Feature Visualizers
 from yellowbrick.features.rankd import Rank1D, Rank2D
-from yellowbrick.features.radviz import RadViz
-from yellowbrick.features.pcoords import ParallelCoordinates
-from yellowbrick.features.jointplot import JointPlotVisualizer
-from yellowbrick.features.pca import PCADecomposition
-from yellowbrick.features.manifold import Manifold
+
+# Model Selection Visualizers
+from yellowbrick.model_selection import (
+    RFECV,
+    CVScores,
+    DroppingCurve,
+    FeatureImportances,
+    LearningCurve,
+    ValidationCurve,
+)
+
+# Regressor Visualizers
+from yellowbrick.regressor import PredictionError, ResidualsPlot
+from yellowbrick.regressor.alphas import ManualAlphaSelection
 
 # Target Visualizers Imports
 from yellowbrick.target import (
@@ -36,53 +66,27 @@ from yellowbrick.target import (
     FeatureCorrelation,
 )
 
-# Regressor Visualizers
-from yellowbrick.regressor import PredictionError, ResidualsPlot
-from yellowbrick.regressor.alphas import ManualAlphaSelection
-
-# Classifier Visualizers
-from yellowbrick.classifier import (
-    ROCAUC,
-    PrecisionRecallCurve,
-    ClassificationReport,
-    ClassPredictionError,
-    DiscriminationThreshold,
-)
-
-# Clustering Visualizers
-from yellowbrick.cluster import (
-    KElbowVisualizer,
-    SilhouetteVisualizer,
-    InterclusterDistance,
-)
-
-# Model Selection Visualizers
-from yellowbrick.model_selection import (
-    ValidationCurve,
-    LearningCurve,
-    CVScores,
-    FeatureImportances,
-    RFECV,
-    DroppingCurve,
-)
-
-
-from ...utils import ConfigBase
 from ...experiment import ExperimentConfig
-from ...plot.base import (
-    _PlotterMixin,
-    _YellowbrickPlotterMarker,
-    PlotTypePlugin,
-    safe_store,
+from ...frameworks.pytorch.score import (
+    get_dataset_shape as _get_shape,
+)
+from ...frameworks.pytorch.score import (
+    is_dataloader_like as _is_dataloader_like,
+)
+from ...frameworks.pytorch.score import (
+    is_dataset_like as _is_dataset_like,
+)
+from ...frameworks.pytorch.score import (
+    materialize_dataset as _materialize_dataset_features_labels,
 )
 from ...frameworks.pytorch.score import (  # noqa: F401
     to_numpy as _to_numpy,
-    is_dataloader_like as _is_dataloader_like,
-    is_dataset_like as _is_dataset_like,
-    get_dataset_shape as _get_shape,
-    materialize_dataset as _materialize_dataset_features_labels,
-    HAS_TORCH,
 )
+from ...plot.base import (
+    _PlotterMixin,
+    _YellowbrickPlotterMarker,
+)
+from ...utils import ConfigBase
 
 try:
     from torch.utils.data import Subset

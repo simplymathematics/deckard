@@ -1,12 +1,13 @@
-import pytest
-import pandas as pd
-import numpy as np
 from unittest.mock import patch
 
+import numpy as np
+import pandas as pd
+import pytest
 from helpers import load_canonical_data_profile
 
 try:
     import fairlearn  # noqa: F401
+
     from deckard.plugins.fairlearn.data import FairlearnDataConfig
 except Exception:
     pytest.skip(

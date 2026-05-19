@@ -1,6 +1,6 @@
 """Lifelines plugin package exports."""
 
-from .model import SurvivalModelConfig
 from .data import LifelinesDataConfig, LifelinesDataMode
+from .model import SurvivalModelConfig
 
 __all__ = ["SurvivalModelConfig", "LifelinesDataConfig", "LifelinesDataMode"]

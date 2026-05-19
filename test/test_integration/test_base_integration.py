@@ -17,11 +17,11 @@ from deckard.experiment import ExperimentConfig
 from deckard.file import FileConfig
 from deckard.model import DefenseConfig, ModelConfig
 from deckard.model.defend import DefensePipelineConfig
-from deckard.score.attack import AttackScorerConfig
 from deckard.score import (
     DefaultDataClassificationConfig,
     DefaultDataRegressionConfig,
 )
+from deckard.score.attack import AttackScorerConfig
 
 
 def _load_or_skip(cfg):

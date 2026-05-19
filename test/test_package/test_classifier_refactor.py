@@ -4,9 +4,8 @@ import importlib.util
 from pathlib import Path
 
 import numpy as np
-import pytest
 import pandas as pd
-
+import pytest
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[2]

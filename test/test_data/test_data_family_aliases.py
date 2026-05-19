@@ -1,12 +1,10 @@
-from deckard.plugins.fairlearn.data import FairlearnDataConfig
-from deckard.plugins.lifelines.data import LifelinesDataConfig
-from deckard.data import PytorchDataConfig
-from deckard.data import DataConfig
+from deckard.data import DataConfig, PytorchDataConfig
 from deckard.frameworks.pytorch.data import (
     PytorchDataConfig as PytorchDataConfigFromFramework,
 )
 from deckard.plugins.anjana.data import AnjanaDataConfig
 from deckard.plugins.fairlearn.data import FairlearnDataConfig
+from deckard.plugins.lifelines.data import LifelinesDataConfig
 
 
 def test_data_family_aliases_are_importable():

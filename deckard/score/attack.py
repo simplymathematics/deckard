@@ -1,7 +1,7 @@
 """Attack-specific scoring helpers and default scorer configuration."""
 
-from dataclasses import dataclass, field
 import time
+from dataclasses import dataclass, field
 from typing import Any, Literal, Union
 
 from sklearn.metrics import accuracy_score

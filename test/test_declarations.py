@@ -19,13 +19,13 @@ import pytest
 import yaml
 
 from deckard.declarations import (
+    _get_config_group_and_name,
+    _should_register_config,
     discover_config_roots,
     is_package_available,
     iter_config_files,
     parse_config_file,
     register_configs,
-    _get_config_group_and_name,
-    _should_register_config,
 )
 
 

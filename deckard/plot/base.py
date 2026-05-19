@@ -8,7 +8,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Union
 
-from ..utils import ConfigBase, resolve_class, safe_store
+from ..utils import ConfigBase, resolve_class
 
 logger = logging.getLogger(__name__)
 

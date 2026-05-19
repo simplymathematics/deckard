@@ -7,18 +7,19 @@ dependencies are installed.
 
 import logging
 from typing import Any
+
 from .base import ModelConfig
+from .defend import DefenseConfig, DefensePipelineConfig, ModelDefenseMixin
 from .defense import (
     DefaultDefenseConfig,
     DefaultPytorchDefenseConfig,
     DefaultSklearnDefenseConfig,
 )
-from .defend import DefenseConfig, DefensePipelineConfig, ModelDefenseMixin
 from .detector import DetectorDefenseConfig
-from .preprocessor import PreprocessorDefenseConfig
 from .postprocessor import PostprocessorDefenseConfig
-from .trainer import TrainerDefenseConfig
+from .preprocessor import PreprocessorDefenseConfig
 from .regularizer import RegularizerDefenseConfig
+from .trainer import TrainerDefenseConfig
 from .transformer import TransformerDefenseConfig
 
 ScorerDictConfig = Any

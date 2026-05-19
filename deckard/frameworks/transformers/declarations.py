@@ -1,5 +1,4 @@
 import torch
-from hydra.core.hydra_config import HydraConfig
 
 try:
     from torch import nn

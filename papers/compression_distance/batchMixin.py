@@ -1,10 +1,9 @@
-from tqdm import tqdm
 import logging
-import numpy as np
-
-
 from pathlib import Path
 from time import time
+
+import numpy as np
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 

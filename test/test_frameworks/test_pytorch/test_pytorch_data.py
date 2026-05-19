@@ -1,11 +1,11 @@
-import unittest
-import tempfile
 import shutil
+import tempfile
+import unittest
 from pathlib import Path
-import pytest
-from torch.utils.data import Dataset
 from unittest.mock import patch
 
+import pytest
+from torch.utils.data import Dataset
 
 torch = pytest.importorskip("torch")
 Tensor = pytest.importorskip("torch").Tensor
@@ -701,8 +701,9 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
             bad_cfg._sample()
 
     def test_custom_call_uses_cached_paths_and_persists_outputs(self):
-        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
         import json
+
+        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
 
         data_path = Path(self.temp_dir) / "custom_data.pkl"
         score_path = Path(self.temp_dir) / "custom_scores.json"

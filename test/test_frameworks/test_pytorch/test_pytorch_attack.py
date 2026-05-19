@@ -1,19 +1,21 @@
-import unittest
-from pathlib import Path
 import os
 import pickle
-import tempfile
 import shutil
+import tempfile
+import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pandas as pd
 import pytest
 import yaml
+from conftest import TinyData
 from numpy.exceptions import AxisError
 from sklearn.linear_model import LinearRegression, LogisticRegression
+
 from deckard.attack import AttackConfig
 from deckard.attack.base import SensitiveFeaturesWrapper, _sensitive_slice
-from conftest import TinyData
 
 pytest.importorskip("torch")
 
@@ -484,6 +486,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
     def test_torch_evasion_uses_art_boundary_conversion(self):
         self._skip_if_no_torch()
         from types import SimpleNamespace
+
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         class _DummyArtModel:
@@ -550,8 +553,9 @@ class TestTorchUtils(unittest.TestCase):
         self.assertTrue(is_torch_model(model))
 
     def test_is_torch_model_false_for_sklearn(self):
-        from deckard.frameworks.pytorch.torch_utils import is_torch_model
         from sklearn.linear_model import LogisticRegression
+
+        from deckard.frameworks.pytorch.torch_utils import is_torch_model
 
         self.assertFalse(is_torch_model(LogisticRegression()))
 
@@ -1081,8 +1085,8 @@ class TestInitializeAttackBranches(unittest.TestCase):
 
     def test_not_fitted_sklearn_model_triggers_fit(self):
         """Cover NotFittedError branch for sklearn_dict models (lines 436-438)."""
-        from sklearn.linear_model import LogisticRegression
         from sklearn.exceptions import NotFittedError
+        from sklearn.linear_model import LogisticRegression
 
         model = LogisticRegression(max_iter=200)
         attack = AttackConfig(
@@ -2716,9 +2720,9 @@ class TestFairlearnAttackScorer(unittest.TestCase):
         return data
 
     def test_fairlearn_attack_scorer_instantiates(self):
+        from deckard.plugins.fairlearn.score import FairlearnScoreDictConfig
         from deckard.score.attack import FairlearnAttackScorerConfig
         from deckard.score.base import DefaultClassifierConfig
-        from deckard.plugins.fairlearn.score import FairlearnScoreDictConfig
 
         scorer = FairlearnAttackScorerConfig(evasion=DefaultClassifierConfig())
         self.assertIsInstance(scorer.evasion, FairlearnScoreDictConfig)

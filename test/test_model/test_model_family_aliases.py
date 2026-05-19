@@ -1,5 +1,9 @@
-from deckard.plugins.fairlearn.model import FairlearnModelConfig
-from deckard.plugins.lifelines.model import SurvivalModelConfig
+from deckard.frameworks.pytorch.defense import (
+    DefaultPytorchDefenseConfig as DefaultPytorchDefenseConfigFromModule,
+)
+from deckard.frameworks.sklearn.defense import (
+    DefaultSklearnDefenseConfig as DefaultSklearnDefenseConfigFromModule,
+)
 from deckard.model import (
     DefaultDefenseConfig,
     DefaultPytorchDefenseConfig,
@@ -8,12 +12,8 @@ from deckard.model import (
 from deckard.model.defense.default import (
     DefaultDefenseConfig as DefaultDefenseConfigFromModule,
 )
-from deckard.frameworks.pytorch.defense import (
-    DefaultPytorchDefenseConfig as DefaultPytorchDefenseConfigFromModule,
-)
-from deckard.frameworks.sklearn.defense import (
-    DefaultSklearnDefenseConfig as DefaultSklearnDefenseConfigFromModule,
-)
+from deckard.plugins.fairlearn.model import FairlearnModelConfig
+from deckard.plugins.lifelines.model import SurvivalModelConfig
 
 
 def test_model_family_aliases_are_importable():

@@ -1,6 +1,9 @@
 import ast
 import inspect
 import pathlib
+from dataclasses import dataclass
+
+import pytest
 
 from deckard.frameworks import (
     DeclarativeConfigContract,
@@ -10,13 +13,10 @@ from deckard.frameworks import (
     FrameworkDataSamplerContract,
     FrameworkDetectorConfig,
     FrameworkExperimentConfig,
-    FrameworkModelDefenseConfig,
     FrameworkModelConfig,
+    FrameworkModelDefenseConfig,
     FrameworkScorerConfig,
 )
-from dataclasses import dataclass
-
-import pytest
 
 
 def test_framework_contract_exports_are_importable():

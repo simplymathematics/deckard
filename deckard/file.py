@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from hydra.core.hydra_config import HydraConfig
+import time
 from typing import Any, TypedDict
 from uuid import uuid4
-import time
+
+from hydra.core.hydra_config import HydraConfig
 
 # -----------------------------------------------------------------------------
 # TypedDict definitions unchanged

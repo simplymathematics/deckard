@@ -5,13 +5,14 @@ import copy
 import inspect
 import logging
 import time
-from pathlib import Path
 
 # Typing imports
 from dataclasses import dataclass, field
-from omegaconf import DictConfig
-from typing import Any, Protocol, Union, TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Protocol, Union
+
 import numpy as np
+from omegaconf import DictConfig
 
 if TYPE_CHECKING:
     import torch
@@ -27,20 +28,19 @@ except ImportError:
 
 
 # Sklearn imports
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-)
-
 # ART imports
 from art.config import ART_NUMPY_DTYPE
 from art.estimators.classification import PyTorchClassifier
 from art.estimators.regression import PyTorchRegressor
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+)
 
-from ...model.base import ModelConfig
 from ...data.base import DataConfig
+from ...model.base import ModelConfig
 from ...utils import is_default_config_value, load_class, resolve_torch_device
 
 logger = logging.getLogger(__name__)
@@ -846,7 +846,7 @@ class PytorchModelConfig(ModelConfig):
     def _validate_torch_data(self, data) -> None:
         """Raise TypeError if data contains non-torch tensors/DataLoaders."""
         bad_attrs = []
-        from torch.utils.data import Subset, Dataset
+        from torch.utils.data import Dataset, Subset
 
         data_loader_types = (TorchDataLoader,) if TorchDataLoader is not None else ()
         for attr in ("X_train", "X_test", "y_train", "y_test"):

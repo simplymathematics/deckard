@@ -1,9 +1,10 @@
+import shutil
+import tempfile
+import time
 import unittest
 from pathlib import Path
+
 from deckard.file import FileConfig
-import tempfile
-import shutil
-import time
 
 
 class TestFileConfig(unittest.TestCase):

@@ -1,14 +1,14 @@
 """Configuration for inference attacks (membership, attribute, model inversion)."""
 
-import time
 import logging
+import time
 from dataclasses import dataclass, field
 
 import numpy as np
 import pandas as pd
 from art.config import ART_NUMPY_DTYPE
-from omegaconf import ListConfig, OmegaConf
 from numpy.exceptions import AxisError
+from omegaconf import ListConfig, OmegaConf
 
 from .base import AttackConfig, AttackTypePlugin, _AttackMixin, _sensitive_slice
 

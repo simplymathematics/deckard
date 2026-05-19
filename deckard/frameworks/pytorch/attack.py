@@ -2,10 +2,10 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
-
 from art.config import ART_NUMPY_DTYPE
-from ...score.attack import AttackScorerConfig  # noqa: F401
+
 from ...attack.base import AttackConfig
+from ...score.attack import AttackScorerConfig  # noqa: F401
 from .torch_utils import is_tensor, tensor_to_numpy
 
 

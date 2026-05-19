@@ -23,7 +23,6 @@ from typing import Dict, Iterator, List, Optional, Set
 
 import yaml
 from hydra.core.config_store import ConfigStore
-from omegaconf import OmegaConf
 
 logger = logging.getLogger(__name__)
 

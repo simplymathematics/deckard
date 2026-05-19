@@ -16,15 +16,15 @@ try:
 except Exception:
     torch = None
 
+from ...data import DataConfig
+from ...data._mixins import RuntimePayload
+from ...score._runtime import resolve_yt_yp, series_like_to_float_dict
 from ...score.base import (
     ScorerConfig,
     ScorerDictConfig,
     _TaskAwareScorerMixin,
     safe_store,
 )
-from ...score._runtime import resolve_yt_yp, series_like_to_float_dict
-from ...data import DataConfig
-from ...data._mixins import RuntimePayload
 from ...utils import coerce_to_list, merge_list_of_dicts
 
 # TODO: Remove this

@@ -1,9 +1,8 @@
 from pathlib import Path
 
+from helpers import reset_hydra_state
 from hydra import compose, initialize_config_dir
 from omegaconf import OmegaConf
-
-from helpers import reset_hydra_state
 
 SKLEARN_CONFIG_DIR = (
     Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"

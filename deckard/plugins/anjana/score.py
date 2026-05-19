@@ -5,6 +5,7 @@ from typing import Any, cast
 
 import pandas as pd
 
+from ...data import DataConfig
 from ...score.base import (
     ScorerConfig,
     ScorerDictConfig,
@@ -12,7 +13,6 @@ from ...score.base import (
     _TaskAwareScorerMixin,
     safe_store,
 )
-from ...data import DataConfig
 
 __all__ = [
     "anjana_k_anonymity_score",

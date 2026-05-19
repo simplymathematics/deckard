@@ -1,40 +1,40 @@
-import time
 import logging
-from typing import Any, Literal, Union
-from pathlib import Path
+import time
 from dataclasses import dataclass, field
 from functools import lru_cache
-from omegaconf import DictConfig
+from pathlib import Path
+from typing import Any, Literal, Union
 
 import numpy as np
 import pandas as pd
-
-
+from omegaconf import DictConfig
+from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
-from sklearn.base import BaseEstimator
 
 from ..data import DataConfig
+from ..frameworks import FrameworkModelConfig, ModelContractMixin
+from ..frameworks.core import ArrayLike, EstimatorLike, MatrixLike
 from ..score.base import (  # noqa: F401
     ScorerDictConfig,
+)
+from ..score.base import (
     coerce_scorer_config as _coerce_scorer_config,
 )
 from ..utils import (
     ConfigBase,
+    is_null_config_value,
     load_class,
+    normalize_plugin_specs,
     probabilities_from_model_outputs,
     round_scores,
-    normalize_plugin_specs,
-    is_null_config_value,
 )
-from ..frameworks import ModelContractMixin, FrameworkModelConfig
 from ._mixins import (
     ModelHookRuntimeMixin,
     ModelPrunerMixin,
     ModelTrainingMixin,
     PretrainedModelMixin,
 )
-from ..frameworks.core import ArrayLike, EstimatorLike, MatrixLike
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +45,7 @@ __all__ = ["ModelConfig"]
 
 @lru_cache(maxsize=1)
 def _get_art_symbols() -> dict[str, Any]:
+    from art.estimators.classification import PyTorchClassifier
     from art.estimators.classification.scikitlearn import (
         ScikitlearnAdaBoostClassifier,
         ScikitlearnBaggingClassifier,
@@ -56,12 +57,11 @@ def _get_art_symbols() -> dict[str, Any]:
         ScikitlearnRandomForestClassifier,
         ScikitlearnSVC,
     )
+    from art.estimators.regression import PyTorchRegressor
     from art.estimators.regression.scikitlearn import (
         ScikitlearnDecisionTreeRegressor,
         ScikitlearnRegressor,
     )
-    from art.estimators.classification import PyTorchClassifier
-    from art.estimators.regression import PyTorchRegressor
 
     classifier_dict = {
         "SVC": ScikitlearnSVC,

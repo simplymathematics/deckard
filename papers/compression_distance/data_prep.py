@@ -1,6 +1,7 @@
-import pandas as pd
-from pathlib import Path
 import logging
+from pathlib import Path
+
+import pandas as pd
 from imblearn.under_sampling import RandomUnderSampler
 
 try:

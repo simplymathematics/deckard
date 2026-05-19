@@ -1,9 +1,10 @@
-import pandas as pd
 from pathlib import Path
-import seaborn as sns
+
 import matplotlib.pyplot as plt
-from matplotlib import ticker
+import pandas as pd
+import seaborn as sns
 from deckard.layers.plots import set_matplotlib_vars
+from matplotlib import ticker
 
 set_matplotlib_vars()
 

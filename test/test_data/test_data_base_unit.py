@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import numpy as np
 import pandas as pd
 import pytest
+from helpers import load_canonical_data_profile
 from omegaconf import OmegaConf
 from sklearn.preprocessing import FunctionTransformer
 
@@ -10,7 +11,6 @@ import deckard.data.base as data_base
 from deckard.data.base import DataConfig, DataPipelineConfig
 from deckard.frameworks import DataContractMixin, DataPipelineContractMixin
 from deckard.score.base import ScorerDictConfig
-from helpers import load_canonical_data_profile
 
 
 def _basic_data_config(**overrides):

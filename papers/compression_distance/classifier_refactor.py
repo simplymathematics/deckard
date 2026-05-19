@@ -1,16 +1,15 @@
-from typing import Literal
-import logging
-import numpy as np
-import pickle
-import gzip
-import lzma
 import bz2
+import gzip
+import logging
+import lzma
+import pickle
 from pathlib import Path
+from typing import Literal
+
+import numpy as np
 from joblib import Parallel, delayed
-from tqdm import tqdm
-
 from sklearn.base import BaseEstimator, TransformerMixin
-
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +26,10 @@ except ImportError:  # pragma: no cover - optional dependency
 try:
     from Levenshtein import (  # type: ignore[reportMissingImports]
         distance,
-        ratio,
         hamming,
         jaro,
         jaro_winkler,
+        ratio,
         seqratio,
     )
 except ImportError:  # pragma: no cover - optional dependency

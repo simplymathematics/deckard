@@ -1,9 +1,9 @@
 import sys
 from pathlib import Path
 
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 
 # Make test-local helpers importable regardless of --import-mode
 sys.path.insert(0, str(Path(__file__).parent))

@@ -1,7 +1,8 @@
-import pandas as pd
-from tqdm import tqdm
-import seaborn as sns
 from pathlib import Path
+
+import pandas as pd
+import seaborn as sns
+from tqdm import tqdm
 
 # Set seaborn theme to paper using times new roman font
 sns.set_theme(

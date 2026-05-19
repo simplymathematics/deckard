@@ -1,11 +1,11 @@
-from pathlib import Path
-import numpy as np
-import logging
 import argparse
-import seaborn as sns
-import pandas as pd
-import matplotlib.pyplot as plt
+import logging
+from pathlib import Path
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)

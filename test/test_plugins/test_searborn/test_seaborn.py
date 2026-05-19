@@ -1,16 +1,17 @@
+import shutil
 import unittest
 from pathlib import Path
 from tempfile import mkdtemp
-import shutil
-import pytest
-import matplotlib
-from matplotlib.axes import Axes
-import pandas as pd
 
+import matplotlib
 import matplotlib.pyplot as plt
+import pandas as pd
+import pytest
+from matplotlib.axes import Axes
 
 try:
     import seaborn  # noqa: F401
+
     from deckard.plugins.seaborn.plot import (
         SeabornPlotConfig,
         SeabornPlotConfigList,

@@ -14,11 +14,10 @@ from typing import Any, Mapping, Optional, Union
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.axes import Axes
 from lifelines import (
     AalenAdditiveFitter,
-    CRCSplineFitter,
     CoxPHFitter,
+    CRCSplineFitter,
     GeneralizedGammaRegressionFitter,
     LogLogisticAFTFitter,
     LogNormalAFTFitter,
@@ -28,6 +27,7 @@ from lifelines import (
 from lifelines.exceptions import ConvergenceError
 from lifelines.fitters import RegressionFitter
 from lifelines.utils import CensoringType
+from matplotlib.axes import Axes
 
 from ...model.base import ModelConfig
 from ...utils import save_data

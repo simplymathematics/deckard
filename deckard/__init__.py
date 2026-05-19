@@ -17,13 +17,14 @@ who construct experiments from Python instead of the CLI.
 
 import logging
 import os
-from pathlib import Path
 import warnings
+from pathlib import Path
+
 import numpy as np
-from sklearn.exceptions import UndefinedMetricWarning, ConvergenceWarning
-from optuna.exceptions import ExperimentalWarning
-from omegaconf import OmegaConf
 import yaml
+from omegaconf import OmegaConf
+from optuna.exceptions import ExperimentalWarning
+from sklearn.exceptions import ConvergenceWarning, UndefinedMetricWarning
 
 # Install library warning filters before importing deckard submodules, since
 # those imports can transitively import sklearn/art and emit warnings.

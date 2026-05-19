@@ -6,7 +6,6 @@ backward compatibility with DataPipelineConfig in data.base.
 
 import logging
 
-
 from ..base import DataPipelineConfig
 from .core import (
     AnjanaDataPipelineConfig,

@@ -4,21 +4,21 @@ from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
-import pytest
-from unittest.mock import MagicMock
 from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf
+from sklearn.metrics import accuracy_score, mean_squared_error, precision_score
+
 from deckard.score import (
-    ScorerConfig,
-    ScorerDictConfig,
-    DefaultClassifierConfig,
-    DefaultRegressorConfig,
     AttackScorerConfig,
+    DefaultClassifierConfig,
     DefaultDataClassificationConfig,
     DefaultDataRegressionConfig,
-    survival_concordance_score,
+    DefaultRegressorConfig,
+    ScorerConfig,
+    ScorerDictConfig,
     survival_aic_score,
     survival_bic_score,
+    survival_concordance_score,
 )
 from deckard.score.base import (
     DefaultModelScorerConfig,
@@ -26,8 +26,6 @@ from deckard.score.base import (
     coerce_scorer_config,
 )
 from deckard.score.data import DefaultDataScorerConfig
-
-from sklearn.metrics import accuracy_score, mean_squared_error, precision_score
 
 
 class TestScorerDictConfigMerge(unittest.TestCase):

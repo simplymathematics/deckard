@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 
-
 from deckard.frameworks.pytorch.data import PytorchDataConfig
 from deckard.frameworks.pytorch.model import PytorchModelConfig
 

@@ -8,8 +8,8 @@ Supports ART PyTorchClassifier and PyTorchRegressor wrappers for defenses.
 """
 
 import logging
-from typing import Any, Union
 from dataclasses import dataclass
+from typing import Any, Union
 
 from ...experiment.base import ExperimentConfig
 from ...utils import (

@@ -1,6 +1,7 @@
 import unittest
-import pandas as pd
 from unittest.mock import MagicMock
+
+import pandas as pd
 
 
 class TestAnjanaScorers(unittest.TestCase):

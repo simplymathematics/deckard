@@ -14,19 +14,19 @@ import pandas as pd
 from hydra.utils import instantiate
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
+from ..frameworks import FrameworkDataScorer, ScorerContractMixin
+from ..frameworks.core import ArrayLike, MatrixLike
+from ..frameworks.pytorch.score import to_numpy_if_torch
 from ..utils import (
     ConfigBase,
     coerce_config,
     is_default_config_value,
     is_null_config_value,
+    load_class,
+    merge_list_of_dicts,
     resolve_class,
     safe_store,
-    merge_list_of_dicts,
-    load_class,
 )
-from ..frameworks import ScorerContractMixin, FrameworkDataScorer
-from ..frameworks.core import ArrayLike, MatrixLike
-from ..frameworks.pytorch.score import to_numpy_if_torch
 from ._runtime import series_like_to_float_dict as _series_like_to_float_dict
 
 if TYPE_CHECKING:

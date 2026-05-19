@@ -1,15 +1,17 @@
+import shutil
 import unittest
 from pathlib import Path
 from tempfile import mkdtemp
-import shutil
 from unittest.mock import patch
-from omegaconf import OmegaConf
+
 import pytest
+from omegaconf import OmegaConf
 from sklearn.datasets import make_classification
 from sklearn.model_selection import KFold, StratifiedKFold
 
 try:
     import yellowbrick  # noqa: F401
+
     from deckard.data import DataConfig
     from deckard.experiment import ExperimentConfig
     from deckard.file import FileConfig
@@ -17,8 +19,8 @@ try:
     from deckard.plugins.yellowbrick.plot import (
         YellowbrickConfigList,
         YellowbrickPlotConfig,
-        model_selection_viz_types,
         cluster_viz_types,
+        model_selection_viz_types,
     )
 except Exception:
     pytest.skip(

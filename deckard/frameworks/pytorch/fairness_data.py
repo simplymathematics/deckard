@@ -1,24 +1,26 @@
-import logging
 import collections
-
+import logging
 from dataclasses import dataclass
 from typing import Any
-import torch
-import numpy as np
-from torch.utils.data import Dataset
-from torch.utils.data import Subset  # Ensure Subset is always in scope
 
-from ...plugins.fairlearn.score import DefaultFairlearnDataScorerConfig
-from .score import (
-    resolve_sensitive_features,
-    coerce_to_numpy,
-    materialize_dataset,
-    is_dataset_like,
-    is_dataloader_like,
+import numpy as np
+import torch
+from torch.utils.data import (
+    Dataset,
+    Subset,  # Ensure Subset is always in scope
 )
-from ...utils import probabilities_from_model_outputs
+
 from ...plugins.fairlearn.data import FairlearnDataConfig
+from ...plugins.fairlearn.score import DefaultFairlearnDataScorerConfig
+from ...utils import probabilities_from_model_outputs
 from .data import PytorchCustomDataConfig
+from .score import (
+    coerce_to_numpy,
+    is_dataloader_like,
+    is_dataset_like,
+    materialize_dataset,
+    resolve_sensitive_features,
+)
 
 logger = logging.getLogger(__name__)
 

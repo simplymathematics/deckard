@@ -1,17 +1,15 @@
-import unittest
-import pandas as pd
-import tempfile
-import shutil
-from unittest.mock import Mock
-import pytest
 import logging
+import shutil
+import tempfile
+import unittest
+from unittest.mock import Mock
 
-from deckard.plugins.fairlearn.model import FairlearnModelConfig
+import pandas as pd
+import pytest
+
+from deckard.model.defend import DefenseConfig, DefensePipelineConfig
 from deckard.plugins.fairlearn.data import FairlearnDataConfig
-from deckard.plugins.fairlearn.model import FairlearnDefenseConfig
-from deckard.model.defend import DefenseConfig
-from deckard.model.defend import DefensePipelineConfig
-
+from deckard.plugins.fairlearn.model import FairlearnDefenseConfig, FairlearnModelConfig
 
 logger = logging.getLogger(__name__)
 

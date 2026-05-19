@@ -1,6 +1,6 @@
 try:
-    from torch import nn
     import torchvision.models as models
+    from torch import nn
 except:
     nn = None
     models = None

@@ -1,8 +1,8 @@
 import pandas as pd
+import pytest
 
 from deckard.plugins.anjana.data import AnjanaDataConfig
 from deckard.plugins.anjana.score import DefaultAnjanaDataScorerConfig
-import pytest
 
 
 def _fake_anjana_defense(data, **kwargs):

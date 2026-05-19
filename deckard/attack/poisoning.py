@@ -1,16 +1,16 @@
 """Configuration for poisoning attacks (backdoor, trojan)."""
 
-import time
 import logging
+import time
 from dataclasses import dataclass, field
 
 import numpy as np
 from art.config import ART_NUMPY_DTYPE
 from art.estimators.classification.classifier import ClassifierNeuralNetwork
 
-from .base import AttackConfig, AttackTypePlugin, _AttackMixin
 from ..frameworks.pytorch.torch_utils import is_torch_model
 from ..score.base import DefaultClassifierConfig, ScorerDictConfig
+from .base import AttackConfig, AttackTypePlugin, _AttackMixin
 
 logger = logging.getLogger(__name__)
 

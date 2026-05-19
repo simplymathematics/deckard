@@ -1,7 +1,4 @@
 import pytest
-from torch.utils.data import Dataset
-from unittest.mock import patch
-
 
 torch = pytest.importorskip("torch")
 Tensor = pytest.importorskip("torch").Tensor
@@ -11,5 +8,3 @@ PytorchDataConfig = pytest.importorskip(
 PytorchCustomDataConfig = pytest.importorskip(
     "deckard.frameworks.pytorch.data",
 ).PytorchCustomDataConfig
-
-# TODO Canonical ModelConfig tests for dataset/tensor/Dataloader classification and regression

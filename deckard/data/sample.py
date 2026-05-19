@@ -29,7 +29,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Tuple
 
 import numpy as np
-
+from hydra.core.config_store import ConfigStore
 from sklearn.model_selection import (
     KFold,
     ShuffleSplit,
@@ -37,7 +37,6 @@ from sklearn.model_selection import (
     StratifiedShuffleSplit,
     train_test_split,
 )
-from hydra.core.config_store import ConfigStore
 
 if TYPE_CHECKING:
     from .base import DataConfig

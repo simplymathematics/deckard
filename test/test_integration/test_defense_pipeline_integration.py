@@ -1,5 +1,5 @@
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
 import pytest
 from omegaconf import OmegaConf
@@ -7,8 +7,7 @@ from omegaconf import OmegaConf
 from deckard.data import DataConfig
 from deckard.experiment import ExperimentConfig
 from deckard.file import FileConfig
-from deckard.model import ModelConfig, DefensePipelineConfig
-
+from deckard.model import DefensePipelineConfig, ModelConfig
 
 ROOT = Path(__file__).resolve().parents[2]
 

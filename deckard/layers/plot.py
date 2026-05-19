@@ -1,12 +1,12 @@
-import logging
 import argparse
 import importlib
+import logging
 from pathlib import Path
 from typing import Any, Dict
 
-from omegaconf import DictConfig, OmegaConf
 from hydra._internal.utils import get_args_parser
 from hydra.utils import instantiate
+from omegaconf import DictConfig, OmegaConf
 
 logger = logging.getLogger(__name__)
 

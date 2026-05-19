@@ -1,15 +1,17 @@
-import unittest
-import numpy as np
-import pandas as pd
-import tempfile
 import os
 import shutil
+import tempfile
+import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
-from deckard.model import ModelConfig
-from deckard.data import DataConfig
+
+import numpy as np
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
+
+from deckard.data import DataConfig
+from deckard.model import ModelConfig
 
 
 class TestModelConfig(unittest.TestCase):

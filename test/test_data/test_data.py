@@ -1,13 +1,14 @@
-import unittest
 import tempfile
-import pandas as pd
-import pytest
+import unittest
 from pathlib import Path
-from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
 from unittest.mock import patch
 
 import numpy as np
+import pandas as pd
+import pytest
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+
 from deckard.data import DataConfig, DataPipelineConfig
 
 try:

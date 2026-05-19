@@ -8,9 +8,9 @@ from collections.abc import Callable
 from typing import TypeAlias
 
 from .compile_results import compile_results_main, compile_results_parser
-from .progress_bar import progress_bar_main, progress_bar_parser
+from .optimize import hydra_parser, optimize_main
 from .plot import plot_main, plot_parser
-from .optimize import optimize_main, hydra_parser
+from .progress_bar import progress_bar_main, progress_bar_parser
 from .rerun_failed_studies import (
     rerun_failed_studies_main,
     rerun_failed_studies_parser,

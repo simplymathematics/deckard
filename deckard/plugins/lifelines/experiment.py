@@ -4,20 +4,20 @@ This module contains SurvivalExperimentConfig for survival workflows and plottin
 """
 
 import logging
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Literal, Mapping, Optional, Union, cast
 
 import matplotlib
 import numpy as np
 import pandas as pd
-from matplotlib.axes import Axes
 from lifelines.fitters import RegressionFitter
+from matplotlib.axes import Axes
 
 from ...attack import AttackConfig
 from ...data import DataConfig
-from ...model import ModelConfig, SurvivalModelConfig
 from ...experiment.base import ExperimentConfig
+from ...model import ModelConfig, SurvivalModelConfig
 
 
 def _lifelines_dataset_loaders() -> dict[str, Any]:

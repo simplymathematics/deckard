@@ -1,25 +1,25 @@
 """Configuration for evasion attacks (adversarial examples)."""
 
-import time
 import logging
+import time
 from dataclasses import dataclass, field
 from typing import Any, Union
 
 import numpy as np
 from art.config import ART_NUMPY_DTYPE
 
-from .base import AttackConfig, AttackTypePlugin, _AttackMixin, _sensitive_slice
-from ..score.base import (
-    DefaultClassifierConfig,
-    DefaultRegressorConfig,
-    ScorerDictConfig,
-)
 from ..frameworks.pytorch.torch_utils import (
     collect_subset_from_dataloader,
     is_dataloader,
     is_tensor,
     tensor_to_numpy,
 )
+from ..score.base import (
+    DefaultClassifierConfig,
+    DefaultRegressorConfig,
+    ScorerDictConfig,
+)
+from .base import AttackConfig, AttackTypePlugin, _AttackMixin, _sensitive_slice
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,6 @@ class _EvasionAttackMixin(_AttackMixin):
         dict
             A dictionary containing the scores and metrics of the attack evaluation.
         """
-        import pandas as pd
 
         start_time = time.process_time()
         active_mode = self.resolve_mode_for_attack_kind("evasion")
@@ -194,7 +193,7 @@ class _EvasionAttackMixin(_AttackMixin):
     def get_attack_subset(self, data: Any, test: bool = True) -> tuple:
         """Get a subset of data for attack (supports multiple data types)."""
         import pandas as pd
-        from torch.utils.data import Dataset, DataLoader, Subset
+        from torch.utils.data import DataLoader, Dataset, Subset
 
         n = self.attack_size
         if test is True:

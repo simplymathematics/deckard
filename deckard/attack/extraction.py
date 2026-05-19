@@ -1,10 +1,9 @@
 """Configuration for extraction attacks (model stealing)."""
 
 import copy
-import time
 import logging
-from dataclasses import dataclass
-from dataclasses import field
+import time
+from dataclasses import dataclass, field
 
 from .base import AttackConfig, AttackTypePlugin
 from .poisoning import _PoisoningAttackMixin

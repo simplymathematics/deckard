@@ -5,8 +5,8 @@ model. They accept feature matrices through ``X`` and support optional
 reference-column overrides so analysis can target a non-label column.
 """
 
-from dataclasses import dataclass, field
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass, field
 from typing import Any, Union
 
 import numpy as np

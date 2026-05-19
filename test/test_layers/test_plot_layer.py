@@ -1,5 +1,5 @@
-from types import ModuleType, SimpleNamespace
 import sys
+from types import ModuleType, SimpleNamespace
 
 import pytest
 from omegaconf import OmegaConf

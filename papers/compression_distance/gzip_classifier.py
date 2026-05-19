@@ -15,35 +15,35 @@ python -m gzip_classifier --compressor gzip --k 3 --m 100 --method random --dist
 # sudo apt-get install python3-pip
 # python -m pip install numpy scikit-learn tqdm scikit-learn-extra pandas imbalanced-learn
 
-import numpy as np
-import warnings
+import argparse
 import gzip
-from tqdm import tqdm
-from pathlib import Path
 import logging
 import time
-import argparse
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.multiclass import unique_labels
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import fetch_20newsgroups, make_classification
-from sklearn.preprocessing import LabelBinarizer, LabelEncoder
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
-from Levenshtein import distance, ratio, hamming, jaro, jaro_winkler, seqratio
-import pandas as pd
+import warnings
 from multiprocessing import cpu_count
-from sklearn.model_selection import (
-    StratifiedKFold,
-    cross_validate,
-    GridSearchCV,
-)
-from joblib import Parallel, delayed
+from pathlib import Path
 from typing import Literal
 
+import numpy as np
+import pandas as pd
+from joblib import Parallel, delayed
+from Levenshtein import distance, hamming, jaro, jaro_winkler, ratio, seqratio
+from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.datasets import fetch_20newsgroups, make_classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import (
+    GridSearchCV,
+    StratifiedKFold,
+    cross_validate,
+    train_test_split,
+)
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder
+from sklearn.svm import SVC
+from sklearn.utils.multiclass import unique_labels
+from sklearn.utils.validation import check_is_fitted
+from tqdm import tqdm
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=UserWarning)

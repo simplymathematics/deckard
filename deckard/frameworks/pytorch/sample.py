@@ -2,47 +2,29 @@ from __future__ import annotations
 
 # Standard library
 import logging
-import tempfile
-import time
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any, Callable, Literal, Optional, Union, List
+from dataclasses import dataclass
+from typing import Literal
 
 # Third-party
-import numpy as np
-import pandas as pd
 import torch
+from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 from torch import Tensor
 from torch.utils.data import DataLoader, Dataset, Subset
 
-from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
-from tqdm.auto import tqdm
-
 # Local / project
-from ...data.base import DataConfig, DataPipelineConfig
-from ...utils import load_class, resolve_torch_device
 
 # Logger
 logger = logging.getLogger(__name__)
 
 
-
-from typing import Any
-import torch
-from torch import Tensor
 from torch.utils.data import (
-    DataLoader,
-    Dataset,
     TensorDataset,
     random_split,
 )
+
 MatrixLike = Tensor
 ArrayLike = Tensor
 
-from typing import Literal
-
-from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
-from torch.utils.data import Dataset, Subset
 
 
 
@@ -104,7 +86,7 @@ class TorchDataLoaderMixin:
             pin_memory=self.in_memory,
             drop_last=False,
         )
-        self.val_loader =  DataLoader(
+        self.val_loader = DataLoader(
             val_ds,
             batch_size=batch_size,
             shuffle=False,
@@ -113,6 +95,7 @@ class TorchDataLoaderMixin:
             drop_last=False,
         )
         return self.train_loader, self.test_loader, self.val_loader
+
 
 class TorchDataLoaderSamplingMixin:
     """Sampling adapter for torch Dataset objects.
@@ -261,15 +244,9 @@ class TorchDataLoaderSamplingMixin:
         )
 
         # Step 2: split remaining into train/val
-        y_trainval = (
-            [y[i] for i in trainval_idx]
-            if y is not None
-            else None
-        )
+        y_trainval = [y[i] for i in trainval_idx] if y is not None else None
 
-        val_fraction = self.val_size / (
-            self.train_size + self.val_size
-        )
+        val_fraction = self.val_size / (self.train_size + self.val_size)
 
         train_idx, val_idx = train_test_split(
             trainval_idx,
@@ -338,9 +315,7 @@ class TorchDataLoaderSamplingMixin:
         )
 
         split_iter = (
-            splitter.split(indices, y)
-            if self.stratify
-            else splitter.split(indices)
+            splitter.split(indices, y) if self.stratify else splitter.split(indices)
         )
 
         folds: list[tuple[DataLoader, DataLoader]] = []
@@ -386,4 +361,4 @@ class TorchDataLoaderSamplingMixin:
             pin_memory=pin_memory,
             drop_last=drop_last,
         )
-        return self.loader@dataclass(eq=False, kw_only=True)
+        return self.loader @ dataclass(eq=False, kw_only=True)
