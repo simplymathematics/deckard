@@ -10,7 +10,12 @@ JOB=""
 EVENT_NAME="push"
 REF_NAME=""
 EVENT_FILE=""
-ARCH="linux/amd64"
+# Default to host-native architecture so Apple Silicon doesn't emulate amd64 by default.
+if [[ "$(uname -m)" == "arm64" || "$(uname -m)" == "aarch64" ]]; then
+  ARCH="linux/arm64"
+else
+  ARCH="linux/amd64"
+fi
 PLATFORM_IMAGE="ghcr.io/catthehacker/ubuntu:full-latest"
 LIST_ONLY=0
 DRY_RUN=0
@@ -29,7 +34,7 @@ Options:
   -e, --event <event_name>    Event type for act (default: push)
   -r, --ref <branch>          Branch name for event payload (default: current git branch)
       --event-file <path>     Use a custom event payload JSON
-      --arch <value>          Container architecture (default: linux/amd64)
+      --arch <value>          Container architecture (default: host-native)
       --platform <image>      Image for ubuntu-latest
       --list                  List available workflow files and exit
       --verbose               Enable verbose act output (includes docker pull details)
