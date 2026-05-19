@@ -1,1 +1,18 @@
-build/doctrees
+# Sphinx and docs build artifacts (generated in CI for deployment)
+build/
+_build/
+build/doctrees/
+build/html/
+_build/doctrees/
+_build/html/
+build/.jupyter_cache/
+_build/.jupyter_cache/
+notebooks/build/
+
+# Notebook execution artifacts under docs/
+notebooks/.ipynb_checkpoints/
+notebooks/*.log
+notebooks/error.log
+
+# macOS / editor noise in docs tree
+.DS_Store

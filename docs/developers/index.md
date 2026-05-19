@@ -6,6 +6,7 @@ Welcome to the Deckard developer documentation. This section contains all design
 ## Contents
 
 - [Design Principles](design_principles.md)
+- [Development Workflow](development.md)
 - [Refactor Plan](refactor_plan.md)
 - [Core/Framework/Plugin Boundaries](core_framework_plugin_boundaries.md)
 - [Naming Conventions](naming_conventions.md)
@@ -18,6 +19,7 @@ Welcome to the Deckard developer documentation. This section contains all design
 :hidden:
 
 design_principles
+development
 refactor_plan
 core_framework_plugin_boundaries
 naming_conventions

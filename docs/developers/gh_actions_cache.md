@@ -56,7 +56,7 @@ bash scripts/manage_dvc_cache.sh [command]
 
 ### 4. Documentation
 
-#### `docs/DVC_CACHE_GUIDE.md`
+#### `docs/dvc_cache_guide.md`
 Comprehensive guide covering:
 - How caching works locally and in CI
 - Local development workflow
@@ -169,7 +169,7 @@ View cache usage in GitHub Actions:
 
 ## See Also
 
-- [DVC Caching Guide](docs/DVC_CACHE_GUIDE.md)
+- [DVC Caching Guide](../dvc_cache_guide.md)
 - [GitHub Actions Caching Docs](https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows)
 - [DVC Documentation](https://dvc.org/doc)
-- [Project Makefile](docs/Makefile)
+- [Project Makefile](../Makefile)
