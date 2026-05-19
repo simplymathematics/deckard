@@ -65,26 +65,10 @@ class _TrainerDefenseMixin(_DefenseMixin):
 
 @dataclass(eq=False, kw_only=True)
 class TrainerDefenseConfig(_TrainerDefenseMixin, DefensePipelineConfig):
-    """Configuration for trainer-based defenses (adversarial training).
+    """Configuration for trainer-based defenses.
 
-    Initialization params
-    ---------------------
-    defense_name : str | None
-        Defense class path inherited from ``DefensePipelineConfig``.
-    defense_params : dict[str, Any]
-        Constructor kwargs forwarded to resolved trainer defense class.
-    init_params : dict[str, Any]
-        Runtime ART-wrapper kwargs resolved by defense orchestration.
-    plugins : list[DefenseTypePlugin]
-        Declarative runtime plugin specs. Default contains one
-        ``DefenseTypePlugin`` configured with:
-        ``mixin_type: type = _TrainerDefenseMixin`` and
-        ``defense_type: str = 'trainer'``.
-
-    Runtime params
-    --------------
-    _TrainerDefenseMixin.__call__(self, *, data: Any, defense_type: str | None, defense_subtype: str | None, defense_class: Any, art_class: Any, init_params: dict, base_estimator: Any, existing_preprocessors: list, existing_postprocessors: list) -> tuple[Any, Any]
-        Runtime dispatch entrypoint invoked by defense orchestration.
+    Registers trainer defense behavior and plugin metadata used during defense
+    runtime dispatch.
     """
 
     plugins: list = field(

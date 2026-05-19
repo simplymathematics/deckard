@@ -123,52 +123,19 @@ class SplitSampler(BaseSampler):
 class KFoldSampler(BaseSampler):
     """Cross-validation sampler with disjoint validation folds.
 
-     Behavior summary
-     ----------------
-     1. A fold is selected by ``cfg.split`` from ``n_splits`` CV folds.
-     2. The selected fold is the initial validation set.
-     3. ``cfg.val_size`` is treated as a *cap* on that validation set.
-         - If the fold has more rows than ``val_size``, it is downsampled.
-         - If the fold has fewer rows than ``val_size``, it is left unchanged.
-     4. The non-validation pool is rebuilt as the complement of the (possibly
-         capped) validation indices.
-     5. ``cfg.train_size`` is treated as a *cap* on this non-validation pool.
-         - If the pool is larger than ``train_size``, it is downsampled.
-         - If smaller, it is left unchanged.
-     6. The capped non-validation pool is split into train/test using
-         ``cfg.test_size``.
+    Behavior summary:
+    - Select fold ``cfg.split`` from ``n_splits`` CV folds as validation.
+    - Treat ``cfg.val_size`` as a cap on validation rows.
+    - Rebuild the non-validation pool after capping validation rows.
+    - Treat ``cfg.train_size`` as a cap on the non-validation pool.
+    - Split capped non-validation rows into train/test by ``cfg.test_size``.
 
-     Guardrail
-     ---------
-     For integer sizing, this sampler enforces:
+    Guardrail:
+    - For integer sizing, enforce ``test_size <= train_size // n_splits``.
 
-     ``test_size <= train_size // n_splits``
-
-     and raises ``ValueError`` if violated.
-
-     Notes
-     -----
-     - Under this sampler, ``train_size`` is the cap for the *train+test pool*
-        before the final train/test split, not the final train row count.
-     - The final train size is therefore typically:
-
-        ``final_train = capped_train_pool - test_size``
-
-     Example
-     -------
-     With ``n_samples=1200``, ``train_size=1000``, ``val_size=200``,
-     ``test_size=200``, ``n_splits=5``:
-
-     - validation cap: 200
-     - capped train+test pool: 1000
-     - final train/test/val per split: ``800 / 200 / 200``
-
-    Parameters
-    ----------
-    n_splits : int, default 5
-        Number of folds.
-    shuffle : bool, default True
-        Whether to shuffle the data before splitting into folds.
+    Notes:
+    - ``train_size`` caps the train+test pool before the final split.
+    - Final train size is typically ``capped_train_pool - test_size``.
     """
 
     n_splits: int = 5

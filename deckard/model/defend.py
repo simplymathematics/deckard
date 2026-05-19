@@ -923,16 +923,16 @@ class ModelDefenseMixin(ModelDefenseContractMixin):
         return self.apply_defense(data)
 
     def apply_defense(self, data: Any) -> "BaseEstimator":
-        """Apply the specified defense to the model's estimator.
+        """Apply the configured defense to the current estimator.
 
-        Returns
-        -------
-        BaseEstimator
-            The estimator wrapped with the specified defense.
-        Raises
-        ------
-        ValueError
-            If the model is not fitted before applying the defense.
+        Args:
+            data: Runtime data payload used to build defense context.
+
+        Returns:
+            The defended estimator.
+
+        Raises:
+            ValueError: If the model is not fitted before applying defense.
         """
 
         if self.model is None:
@@ -1225,46 +1225,15 @@ class DefensePipelineConfig(_DefensePipelineConfigBehaviorMixin, ConfigBase):
 
 @dataclass(kw_only=True)
 class DefenseConfig(_DefenseBehaviorMixin, ModelDefenseMixin, ConfigBase):
-    """Concrete defense config dataclass that uses shared defense behavior mixin.
+    """Concrete defense configuration used by defense runtime mixins.
 
-    Parameter layers
-    ----------------
-    model_params : dict
-        Base model-constructor kwargs (owned by model runtime).
-    defense_params : dict
-        Defense-constructor or defense-call kwargs passed to the resolved
-        defense class/callable.
-    init_params : dict
-        Declaration metadata for class/type/library docs. Runtime ART wrapper
-        kwargs are resolved by ``get_art_class`` and passed to mixin handlers as
-        ``init_params`` in ``_DefenseMixin.__call__``.
+    Main parameter groups:
+    - ``model_params``: base model-constructor kwargs.
+    - ``defense_params``: kwargs passed to the resolved defense implementation.
+    - ``init_params``: runtime metadata used to build ART wrapper context.
 
-    Family-specific parameter semantics
-    ----------------------------------
-    sklearn ART wrappers
-        Typically empty wrapper kwargs (plus ``preprocessing=None`` fallback).
-    torch ART wrappers
-        Include runtime wrapper kwargs such as ``input_shape`` and
-        ``nb_classes`` (when classification is enabled), then merged with
-        defense-specific params by mixin handlers.
-    detector
-        ``defense_params`` often configures detector constructor kwargs while
-        runtime wrapper init kwargs come from resolved ART wrapper context.
-    preprocessor/postprocessor
-        ``defense_params`` configures transformation object behavior; runtime
-        wrapper kwargs remain ART-estimator concerns.
-    trainer/transformer/regularizer
-        ``defense_params`` configures training-time behavior; runtime
-        wrapper kwargs are still sourced from model/ART context.
-
-    Plugin hook runtime params
-    --------------------------
-    Hooks are orchestrated by ``_run_plugin_hook(hook_name, **kwargs)``.
-    Core hook names used by DefenseConfig runtime are:
-    ``resolve_defense_mixins``, ``resolve_defense_handler``,
-    ``before_defense_dispatch``, and ``after_defense_dispatch``.
-    Hook kwargs are phase-specific runtime objects supplied by defense
-    orchestration.
+    Runtime orchestration is plugin-aware through ``_run_plugin_hook`` and
+    supports handler/mixin resolution plus before/after dispatch hooks.
     """
 
     model_type: Union[str, None] = None

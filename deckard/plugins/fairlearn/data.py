@@ -128,31 +128,15 @@ class _FairnessBehaviorMixin(_SensitiveColumnsMixin):
 
 @dataclass(eq=False, kw_only=True)
 class FairlearnDataConfig(_FairnessBehaviorMixin, DataPipelineConfig):
-    """Data pipeline config with fairlearn-sensitive feature support.
+    """Fairlearn-aware data pipeline configuration.
 
-    Initialization params
-    ---------------------
-    sensitive_columns : str | list[str] | None
-            Sensitive-feature column name(s) used for fairness metrics and
-            mitigation transforms. This value is required.
-    fairness_defense : dict[str, Any] | list[dict[str, Any]] | bool | None
-            Fairness-defense step specification consumed by
-            ``_inject_fairness_defense_step``.
-    plugins : list[HookPlugin]
-            Declarative runtime plugin specs. Default contains one
-            ``HookPlugin`` configured with:
-            ``hook_name: str = 'before_sample'``,
-            ``method_name: str = '_inject_fairness_defense_step'``, and
-            ``init_params: dict[str, Any]`` metadata.
+    This extends ``DataPipelineConfig`` with sensitive feature handling,
+    fairness-defense pipeline injection, and fairness-oriented scorer defaults.
 
-    Runtime params
-    --------------
-    __call__(self, *args: Any, **kwargs: Any) -> Any
-            Resolves default fairness scorer when needed and delegates to
-            ``DataPipelineConfig.__call__``.
-    _score(self, mode: str | None = None) -> dict
-            Computes fairness scores with ``y_true`` and ``y_pred`` sourced from
-            runtime train buffers when available.
+    Key fields:
+    - ``sensitive_columns``: required sensitive feature column name(s).
+    - ``fairness_defense``: optional transform/mitigation config.
+    - ``plugins``: runtime hook plugins for fairness pipeline behavior.
     """
 
     def __call__(
@@ -286,4 +270,4 @@ class FairlearnDataConfig(_FairnessBehaviorMixin, DataPipelineConfig):
             return {"fairness_score": fairness_scores}
 
 
-__all__ = ["FairlearnDataConfig", "FairlearnDataPipelineConfig"]
+__all__ = ["FairlearnDataConfig"]

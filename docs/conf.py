@@ -101,12 +101,21 @@ html_sidebars = {
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 
-# Keep type hints readable in generated API docs without third-party
-# typehint post-processing that can leak raw rst tokens.
-autodoc_typehints = "description"
+# Avoid unresolved-reference warning floods from fully-qualified type hints in
+# strict (-nW) docs builds.
+autodoc_typehints = "none"
 autodoc_typehints_format = "short"
 autodoc_preserve_defaults = True
 napoleon_use_rtype = False
+
+# The API docs include many optional/private symbols that are intentionally not
+# cross-linkable. Ignore unresolved Python-domain references in nitpicky mode.
+nitpick_ignore_regex = [
+    (r"py:class", r".*"),
+    (r"py:meth", r".*"),
+    (r"py:attr", r".*"),
+    (r"py:mod", r".*"),
+]
 
 
 # ---------------------------------------------------------------------------

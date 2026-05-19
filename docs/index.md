@@ -33,17 +33,12 @@ If you are extending the framework, begin with:
 2. [Developer Docs -> development](developers/development)
 3. [Extensions](overview/extensions)
 
-overview/index
-overview/extensions
-
 ```{toctree}
 :maxdepth: 2
 :caption: Overview
 :hidden:
 
 overview/index
-notebooks/index
-developers/index
 ```
 
 ```{toctree}
@@ -53,15 +48,6 @@ developers/index
 
 api/modules
 ```
-
-```{toctree}
-:maxdepth: 2
-:caption: Extensions
-:hidden:
-
-overview/extensions
-```
-
 
 ```{toctree}
 :maxdepth: 2

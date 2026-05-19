@@ -41,24 +41,8 @@ class _PreprocessorDefenseMixin(_DefenseMixin):
 class PreprocessorDefenseConfig(_PreprocessorDefenseMixin, DefensePipelineConfig):
     """Configuration for preprocessor-based defenses.
 
-    Initialization params
-    ---------------------
-    defense_name : str | None
-        Defense class path inherited from ``DefensePipelineConfig``.
-    defense_params : dict[str, Any]
-        Constructor kwargs forwarded to resolved preprocessor defense class.
-    init_params : dict[str, Any]
-        Runtime ART-wrapper kwargs resolved by defense orchestration.
-    plugins : list[DefenseTypePlugin]
-        Declarative runtime plugin specs. Default contains one
-        ``DefenseTypePlugin`` configured with:
-        ``mixin_type: type = _PreprocessorDefenseMixin`` and
-        ``defense_type: str = 'preprocessor'``.
-
-    Runtime params
-    --------------
-    _PreprocessorDefenseMixin.__call__(self, *, data: Any, defense_type: str | None, defense_subtype: str | None, defense_class: Any, art_class: Any, init_params: dict, base_estimator: Any, existing_preprocessors: list, existing_postprocessors: list) -> tuple[Any, Any]
-        Runtime dispatch entrypoint invoked by defense orchestration.
+    Registers preprocessor defense behavior and plugin metadata used during
+    defense runtime dispatch.
     """
 
     plugins: list = field(

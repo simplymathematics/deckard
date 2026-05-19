@@ -330,42 +330,10 @@ class AnjanaDataConfig(
 ):
     """Data pipeline config with ANJANA anonymization support.
 
-    Initialization params
-    ---------------------
-    identifiers : str | list[str] | None
-        Explicit identifier columns used by anonymization.
-    quasi_identifiers : str | list[str] | None
-        Quasi-identifier columns used for hierarchy-based generalization.
-    sensitive_attribute : str | None
-        Logical sensitive-attribute name used by ANJANA helpers.
-    anjana_defense : dict[str, Any] | list[dict[str, Any]] | bool | None
-        ANJANA defense step specification consumed by
-        ``_apply_anjana_defense``.
-    sensitive_columns : str | list[str] | None
-        Sensitive feature column name(s) used for fairness-aware scoring.
-    fairness_defense : dict[str, Any] | list[dict[str, Any]] | bool | None
-        Optional fairness preprocessing specification.
-    hierarchies : dict[str, dict[int, Any]] | None
-        Optional precomputed generalization hierarchies.
-    hierarchy_interval_sizes : dict[str, int | list[int]] | None
-        Interval-size controls used when synthesizing hierarchies.
-    hierarchy_fill_value : str
-        Fill token used for generalized values.
-    plugins : list[HookPlugin]
-        Declarative runtime plugin specs. Default contains one
-        ``HookPlugin`` configured with:
-        ``hook_name: str = 'after_load_data'``,
-        ``method_name: str = '_apply_anjana_defense'``, and
-        ``init_params: dict[str, Any]`` metadata.
-
-    Runtime params
-    --------------
-    __call__(self, *args: Any, **kwargs: Any) -> Any
-        Ensures scorer defaults are resolved, then delegates to
-        ``DataPipelineConfig.__call__``.
-    _score(self, mode: Literal['train', 'test', 'val', 'pre-sample'] | None = None, **kwargs: Any) -> dict
-        Delegates score computation to the active scorer with mode-aware
-        behavior.
+    This config extends ``DataPipelineConfig`` with optional privacy
+    anonymization and fairness-preprocessing hooks. The default plugin setup
+    executes ``_apply_anjana_defense`` after data load when an ANJANA defense
+    configuration is provided.
     """
 
     plugins: list = field(

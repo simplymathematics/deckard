@@ -1132,19 +1132,14 @@ class ConfigBase:
         return load_data(filepath, **kwargs)
 
     def save_object(self, obj: Any, filepath: str) -> None:
-        """
-        Saves a Serializable object to a file using pickle.
+        """Save a Python object to a pickle file.
 
-        Parameters
-        ----------
-        obj : Any
-            The object to save.
-        filepath : str
-            The path to the file where the object will be saved.
-        Raises
-        ------
-        ValueError
-            If the file extension is not supported. Supported types are .pkl and .pickle.
+        Args:
+            obj: Object to serialize.
+            filepath: Destination path (must end with ``.pkl`` or ``.pickle``).
+
+        Raises:
+            ValueError: If the file extension is unsupported.
         """
         Path(filepath).parent.mkdir(parents=True, exist_ok=True)
         suffix = Path(filepath).suffix
@@ -1415,27 +1410,18 @@ def save_data(
 
 
 def load_data(filepath: str, **kwargs) -> pd.DataFrame:
-    """
-    Loads data from a CSV, JSON, Excel, Parquet, Pickle, NPZ, or HTML file into a pandas DataFrame.
+    """Load tabular data into a DataFrame from a supported file type.
 
-    Parameters
-    ----------
-    filepath : str
-        Path to the data file.
-    **kwargs
-        Additional keyword arguments to pass to the pandas read function.
+    Args:
+        filepath: Source data file path.
+        **kwargs: Extra keyword args forwarded to pandas readers.
 
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame containing the loaded data.
+    Returns:
+        Loaded dataframe.
 
-    Raises
-    ------
-    FileNotFoundError
-        If the specified file does not exist.
-    ValueError
-        If the file extension is not supported. Supported types are .csv, .json, .
+    Raises:
+        FileNotFoundError: If ``filepath`` is ``None``.
+        ValueError: If the file extension is unsupported.
     """
 
     if filepath is None:
@@ -1618,30 +1604,19 @@ def create_parser_from_function(
     exclude: Optional[list] = None,
     **kwargs: Any,
 ) -> argparse.ArgumentParser:
-    """
-    Creates an argparse.ArgumentParser from a function's signature.
+    """Create an ``argparse.ArgumentParser`` from a function signature.
 
-    Parameters
-    ----------
-    func: callable
-        The function to create the parser from.
-    parser : argparse.ArgumentParser, optional
-        An existing parser to add arguments to. If None, a new parser is created.
-    exclude: list, optional
-        List of parameter names to exclude from the parser.
-    **kwargs
-        Additional keyword arguments to pass to the ArgumentParser constructor if a new parser is created.
+    Args:
+        func: Callable used to derive CLI arguments.
+        parser: Existing parser to extend. When ``None``, a new parser is created.
+        exclude: Optional parameter names to skip.
+        **kwargs: Extra parser-constructor kwargs when ``parser`` is ``None``.
 
-    Raises
-    ------
-    ValueError
-        If func is not callable or if parser is not an instance of argparse.ArgumentParser.
+    Returns:
+        Parser populated with arguments derived from ``func``.
 
-
-    Returns
-    -------
-    argparse.ArgumentParser
-        The updated parser with arguments corresponding to the function's signature.
+    Raises:
+        ValueError: If ``func`` is not callable or parser input is invalid.
     """
     if not callable(func):
         raise ValueError(f"func must be callable. Got {type(func)}")

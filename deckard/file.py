@@ -6,10 +6,6 @@ from uuid import uuid4
 
 from hydra.core.hydra_config import HydraConfig
 
-# -----------------------------------------------------------------------------
-# TypedDict definitions unchanged
-# -----------------------------------------------------------------------------
-
 
 class ModelFiles(TypedDict, total=False):
     model_file: str
@@ -126,65 +122,23 @@ class PlaceholderResolverMixin:
 # FIXED FILE CONFIG
 # -----------------------------------------------------------------------------
 class FileConfig(PlaceholderResolverMixin):
-    """
-    Dynamic file-path configuration container.
+    """Dynamic file-path configuration container.
 
-    `FileConfig` manages resolved artifact paths for datasets, models,
+    ``FileConfig`` stores validated artifact paths for datasets, models,
     predictions, logs, attacks, and scores.
 
-    File fields are validated against the configured file schema and stored
-    internally in `_files`.
+    Placeholder expansion is applied to string values. Supported placeholders:
+    - ``{num}``: Hydra job number.
+    - ``{timestamp}``: Current timestamp (``YYYYMMDD-HHMMSS``).
+    - ``{hash}``: Hash/job id for the file config.
+    - ``{#}`` and ``{*}``: Alias placeholders.
 
-    Placeholder expansion is applied automatically to all string values.
+    Args:
+        replace: Optional mapping used for additional placeholder replacements.
+        **files: File-path keyword arguments matching the configured schema.
 
-    Supported placeholders:
-
-    - `{num}` → Hydra job number (`HYDRA_JOB_NUM`, default `0`)
-    - `{timestamp}` → current timestamp (`YYYYMMDD-HHMMSS`)
-    - `{hash}` → hash of the `FileConfig` instance
-    - `#` → alias for `{num}`
-    - `*` → alias for `{num}`
-
-    User-defined replacements may also be provided through `replace`.
-
-    Example
-    -------
-
-    ```python
-    config = FileConfig(
-        replace={"{exp}": "demo"},
-        model_file="models/{exp}/{hash}.pt",
-        attack_file="attacks/#/*.json",
-    )
-
-    print(config.model_file)
-    print(config.attack_file)
-    ```
-
-    Parameters
-    ----------
-    replace
-        Optional placeholder replacement mapping.
-
-    **files
-        File-path keyword arguments matching the configured schema, such as
-        `data_file`, `model_file`, `log_file`, or `attack_file`.
-
-    Raises
-    ------
-    FileConfigError
-        Raised when an unknown file key is provided.
-
-    Notes
-    -----
-    This class separates:
-
-    - **schema layer**: `TypedDict` definitions for IDE support
-    - **runtime layer**: validated dynamic file storage
-    - **resolution layer**: placeholder substitution
-
-    `TypedDict` definitions are used only for static typing and validation.
-    Runtime file values are stored in `_files`.
+    Raises:
+        FileConfigError: If an unknown file key is provided.
     """
 
     def __init__(self, *, replace: dict[str, str] | None = None, **files: Any):

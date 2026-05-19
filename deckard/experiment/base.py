@@ -246,19 +246,8 @@ class ExperimentConfig(
 ):
     """Compose and execute a complete deckard experiment.
 
-    An experiment coordinates data loading, optional defense application, model
-    training or loading, adversarial attack execution, scoring, and artifact
-        persistence through ``FileConfig``.
-
-        Mode policy
-        -----------
-        ``evaluation_mode`` and ``score_mode`` are mutually exclusive to prevent
-        ambiguous routing. Use exactly one strategy:
-
-        - ``evaluation_mode``: high-level preset routing (``standard`` (train + test), ``tuning`` (test),
-            ``report`` (train + test + val)).
-        - ``score_mode``: explicit split routing (``train``, ``test``, ``val``,
-            ``pre-sample``), optionally a list for multi-pass experiment scoring.
+    This config coordinates data loading, optional defenses, model runtime,
+    attacks, scoring, and artifact persistence through ``FileConfig``.
     """
 
     data: Union[DataConfig, DataPipelineConfig]

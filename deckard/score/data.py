@@ -136,7 +136,7 @@ def data_num_classes_score(
         Ground-truth target labels.
     X : matrix-like
         Predicted values (unused; present for scorer interface compatibility).
-    **kwargs
+    kwargs
         Additional keyword arguments (unused).
 
     Returns
@@ -161,7 +161,7 @@ def data_class_count_min_score(
         Ground-truth target labels.
     X : matrix-like
         Predicted values (unused; present for scorer interface compatibility).
-    **kwargs
+    kwargs
         Additional keyword arguments (unused).
 
     Returns
@@ -187,7 +187,7 @@ def data_class_count_max_score(
         Ground-truth target labels.
     X : matrix-like
         Predicted values (unused; present for scorer interface compatibility).
-    **kwargs
+    kwargs
         Additional keyword arguments (unused).
 
     Returns
@@ -213,7 +213,7 @@ def data_class_imbalance_ratio_score(
         Ground-truth target labels.
     X : matrix-like
         Predicted values (unused; present for scorer interface compatibility).
-    **kwargs
+    kwargs
         Additional keyword arguments (unused).
 
     Returns
@@ -247,7 +247,7 @@ def data_mutual_information_mean_score(
         or ``reference_column`` is supplied in *kwargs*.
     X : matrix-like or pd.DataFrame
         Feature matrix.  Non-DataFrame inputs are coerced automatically.
-    **kwargs
+    kwargs
         Forwarded to :func:`_feature_mutual_information_vector`.  Accepts
         ``reference``, ``reference_column``, ``random_state``, and
         ``discrete_reference``.
@@ -279,7 +279,7 @@ def data_mutual_information_max_score(
         or ``reference_column`` is supplied in *kwargs*.
     X : matrix-like or pd.DataFrame
         Feature matrix.  Non-DataFrame inputs are coerced automatically.
-    **kwargs
+    kwargs
         Forwarded to :func:`_feature_mutual_information_vector`.  Accepts
         ``reference``, ``reference_column``, ``random_state``, and
         ``discrete_reference``.
@@ -315,7 +315,7 @@ def data_empirical_cdf_function_score(
         ``reference_column`` is provided in *kwargs*.
     X : matrix-like or pd.DataFrame
         Feature matrix (used only when resolving ``reference_column``).
-    **kwargs
+    kwargs
         Forwarded to :func:`_resolve_reference_vector`.  Accepts
         ``reference`` and ``reference_column``.
 
@@ -507,7 +507,7 @@ def pytorch_split_count_score(
         Labels for the active split.
     X : matrix-like
         Feature matrix for the active split.
-    **kwargs
+    kwargs
         Additional scorer keyword arguments (unused).
 
     Returns
