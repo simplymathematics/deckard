@@ -258,6 +258,8 @@ CMD=(
   -e "$EVENT_FILE"
   --container-architecture "$ARCH"
   -P "ubuntu-latest=$PLATFORM_IMAGE"
+  -P "macos-latest=$PLATFORM_IMAGE"
+  -P "windows-latest=$PLATFORM_IMAGE"
   --env "DECKARD_GPU_MODE=$RESOLVED_GPU_MODE"
 )
 
