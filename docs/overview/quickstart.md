@@ -14,7 +14,7 @@ If your goal is to run an experiment quickly:
 
 If your goal is to extend deckard:
 
-1. Read [Developer Docs](development).
+1. Read [Developer Docs](../developers/development).
 2. Review [API](../api/modules).
 3. Review extension APIs in [Extensions](extensions).
 
@@ -38,7 +38,7 @@ Installation instructions for users.
 ## [API](../api/modules)
 Core package documentation
 
-## [Developer Docs](development)
+## [Developer Docs](../developers/development)
 Documentation for testing and extending this package.
 
 ## [Docs Docs](build_docs)

@@ -160,5 +160,5 @@ This requires additional scripting; contact maintainers for setup.
 
 - [DVC Documentation](https://dvc.org/doc)
 - [GitHub Actions Cache](https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows)
-- [Project Makefile](docs/Makefile) for all available targets
-- [DVC Pipeline](docs/notebooks/dvc.yaml) for stage definitions
+- [Project Makefile](https://github.com/simplymathematics/deckard/blob/main/docs/Makefile) for all available targets
+- [DVC Pipeline](https://github.com/simplymathematics/deckard/blob/main/docs/notebooks/dvc.yaml) for stage definitions

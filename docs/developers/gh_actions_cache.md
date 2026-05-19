@@ -169,7 +169,7 @@ View cache usage in GitHub Actions:
 
 ## See Also
 
-- [DVC Caching Guide](../dvc_cache_guide.md)
+- [DVC Caching Guide](../dvc_cache_guide)
 - [GitHub Actions Caching Docs](https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows)
 - [DVC Documentation](https://dvc.org/doc)
 - [Project Makefile](../Makefile)

@@ -30,7 +30,7 @@ If you are new to the project, begin with:
 If you are extending the framework, begin with:
 
 1. [Core API -> modules](api/modules)
-2. [Overview -> development](overview/development)
+2. [Developer Docs -> development](developers/development)
 3. [Extensions](overview/extensions)
 
 overview/index

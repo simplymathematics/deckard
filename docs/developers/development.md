@@ -172,4 +172,4 @@ make html
 
 For DVC notebook caching behavior in local/CI docs builds, see
 [DVC Cache Setup Summary](gh_actions_cache.md) and
-[DVC Cache and Notebook Workflow Guide](../dvc_cache_guide.md).
+[DVC Cache and Notebook Workflow Guide](../dvc_cache_guide).

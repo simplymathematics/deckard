@@ -183,4 +183,4 @@ See also:
 - [API Reference](../api/modules)
 - [Extensions](extensions.md)
 - [Notebooks](../notebooks/index)
-- [Developer Docs](development.md)
+- [Developer Docs](../developers/development)
