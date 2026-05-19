@@ -16,7 +16,7 @@ from helpers import load_env_from_deckard_rc
 
 import deckard.model as model_module
 from deckard.data import PytorchDataConfig
-from deckard.score.attack import FairlearnAttackScorerConfig
+from deckard.plugins.fairlearn import AttackScorerConfig
 
 DefensePipelineConfig = model_module.DefensePipelineConfig
 PytorchModelConfig = model_module.PytorchModelConfig

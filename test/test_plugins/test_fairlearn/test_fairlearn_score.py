@@ -161,7 +161,7 @@ class TestFairnessScorers(unittest.TestCase):
 
     def test_fairlearn_attack_scorer_accepts_plain_scorerdict_profiles(self):
         pytest.importorskip("fairlearn")
-        from deckard.score.attack import FairlearnAttackScorerConfig
+        from deckard.plugins.fairlearn.AttackScorerConfig
 
         profile = ScorerDictConfig(
             scorers={

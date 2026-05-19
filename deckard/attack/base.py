@@ -1,9 +1,7 @@
-# Standard library imports
 import copy
 import logging
 import pickle
 
-# Typing imports
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Optional, Union
@@ -11,11 +9,9 @@ from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 import numpy as np
 import pandas as pd
 
-# ART imports
 from art.config import ART_NUMPY_DTYPE
 from omegaconf import DictConfig, OmegaConf
 
-# Sklearn and numpy imports
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
