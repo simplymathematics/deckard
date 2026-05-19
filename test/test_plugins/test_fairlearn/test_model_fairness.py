@@ -187,9 +187,9 @@ class TestFairlearnModelConfig(unittest.TestCase):
                 return pd.Series([0] * len(X))
 
         fairness_data = Mock(spec=FairlearnDataConfig)
-        fairness_data._sensitive_train = self.sensitive_test
-        fairness_data._sensitive_test = self.sensitive_test
-        fairness_data._sensitive_all = self.sensitive_test
+        fairness_data.sensitive_train = self.sensitive_test
+        fairness_data.sensitive_test = self.sensitive_test
+        fairness_data.sensitive_all = self.sensitive_test
 
         model = FairlearnModelConfig(
             model_type=self.model_type,
@@ -215,9 +215,9 @@ class TestFairlearnModelConfig(unittest.TestCase):
                 return pd.Series([0] * len(X))
 
         fairness_data = Mock(spec=FairlearnDataConfig)
-        fairness_data._sensitive_test = self.sensitive_test
-        fairness_data._sensitive_train = None
-        fairness_data._sensitive_all = None
+        fairness_data.sensitive_test = self.sensitive_test
+        fairness_data.sensitive_train = None
+        fairness_data.sensitive_all = None
 
         model = FairlearnModelConfig(
             model_type=self.model_type,
@@ -236,9 +236,9 @@ class TestFairlearnModelConfig(unittest.TestCase):
         from deckard.utils import ConfigBase
 
         fairness_data = Mock(spec=FairlearnDataConfig)
-        fairness_data._sensitive_test = self.sensitive_test
-        fairness_data._sensitive_train = self.sensitive_test
-        fairness_data._sensitive_all = self.sensitive_test
+        fairness_data.sensitive_test = self.sensitive_test
+        fairness_data.sensitive_train = self.sensitive_test
+        fairness_data.sensitive_all = self.sensitive_test
 
         model = FairlearnModelConfig(
             model_type=self.model_type,

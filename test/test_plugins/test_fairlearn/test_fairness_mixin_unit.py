@@ -23,11 +23,13 @@ def _dummy_data():
     return SimpleNamespace(
         X_train=pd.DataFrame({"x": [1, 2]}, index=[0, 1]),
         X_test=pd.DataFrame({"x": [3, 4]}, index=[10, 11]),
+        X_val=pd.DataFrame({"x": [7, 8]}, index=[30, 31]),
         _X=pd.DataFrame({"x": [5, 6]}, index=[20, 21]),
         y_train=pd.Series([0, 1]),
-        _sensitive_train=pd.Series(["a", "b"]),
-        _sensitive_test=pd.Series(["a", "b"]),
-        _sensitive_all=pd.Series(["a", "b"]),
+        sensitive_train=pd.Series(["a", "b"]),
+        sensitive_test=pd.Series(["a", "b"]),
+        _sensitive_val=pd.Series(["a", "b"]),
+        sensitive_all=pd.Series(["a", "b"]),
     )
 
 
@@ -37,19 +39,18 @@ def test_runtime_sensitive_source_and_split_resolution_errors():
 
     assert list(d._resolve_runtime_sensitive_source("train")) == ["a", "b"]
     assert list(d._resolve_runtime_sensitive_source("test")) == ["a", "b"]
+    assert list(d._resolve_runtime_sensitive_source("val")) == ["a", "b"]
+    assert list(d._resolve_runtime_sensitive_source("attack-val")) == ["a", "b"]
     assert list(d._resolve_runtime_sensitive_source("all")) == ["a", "b"]
-
-    with pytest.raises(NotImplementedError):
-        d._resolve_runtime_sensitive_source("val")
     with pytest.raises(ValueError):
         d._resolve_runtime_sensitive_source("bad")
 
     assert d._resolve_scoring_split("train") == "train"
     assert d._resolve_scoring_split("test") == "test"
     assert d._resolve_scoring_split("attack") == "test"
+    assert d._resolve_scoring_split("val") == "val"
+    assert d._resolve_scoring_split("attack-val") == "val"
     assert d._resolve_scoring_split("all") == "all"
-    with pytest.raises(NotImplementedError):
-        d._resolve_scoring_split("val")
     with pytest.raises(ValueError):
         d._resolve_scoring_split("unknown")
 
@@ -89,10 +90,10 @@ def test_infer_and_resolve_sensitive_features_for_batch_paths(monkeypatch):
     batch = pd.DataFrame({"x": [1, 2]})
     assert d._resolve_sensitive_features_for_batch(batch, split="train") is not None
 
-    d.data._sensitive_train = pd.Series(["a"])  # length mismatch
+    d.data.sensitive_train = pd.Series(["a"])  # length mismatch
     assert d._resolve_sensitive_features_for_batch(batch, split="train") is None
 
-    d.data._sensitive_train = pd.Series(["a", "b"])
+    d.data.sensitive_train = pd.Series(["a", "b"])
     monkeypatch.setattr(
         pd.Series,
         "reindex",
