@@ -26,8 +26,6 @@ MatrixLike = Tensor
 ArrayLike = Tensor
 
 
-
-
 class TorchDataLoaderMixin:
     """Adapter that overloads `.sample()` for PyTorch DataLoaders."""
 

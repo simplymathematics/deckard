@@ -284,7 +284,6 @@ def test_generate_fairness_data_model_with_and_without_attack(
     if not use_attack:
         return
 
-
     attack_cfg = AttackConfig(
         attack_type="art.attacks.evasion.BoundaryAttack",
         attack_params={

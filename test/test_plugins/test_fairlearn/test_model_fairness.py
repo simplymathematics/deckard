@@ -9,7 +9,10 @@ import pytest
 
 from deckard.model.defend import DefenseConfig, DefensePipelineConfig
 from deckard.plugins.fairlearn.data import FairlearnDataConfig
-from deckard.plugins.fairlearn.model import FairlearnDefenseConfig, FairlearnModelConfig
+from deckard.plugins.fairlearn.model import (
+    FairlearnDefenseConfig,
+    FairlearnModelConfig,
+)
 
 logger = logging.getLogger(__name__)
 
