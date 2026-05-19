@@ -1,7 +1,7 @@
 # Yellowbrick Visualization
 
 deckard provides single-run model diagnostics through the Yellowbrick library
-via :class:`deckard.plot.yellowbrick_plots.YellowbrickPlotConfig`. The
+via :class:`deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig`. The
 Yellowbrick backend operates on a composed
 :class:`~deckard.experiment.ExperimentConfig` and renders visualizers directly
 from the trained model and prepared dataset.
@@ -10,13 +10,13 @@ from the trained model and prepared dataset.
 
 ## Overview
 
-The :mod:`deckard.plot.yellowbrick_plots` module provides:
+The :mod:`deckard.plugins.yellowbrick.plot` module provides:
 
-- :class:`~deckard.plot.yellowbrick_plots.YellowbrickPlotConfig` — single-plot
+- :class:`~deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig` — single-plot
   config that wraps an :class:`~deckard.experiment.ExperimentConfig` with a
   Yellowbrick visualizer
-- :class:`~deckard.plot.yellowbrick_plots.YellowbrickConfigList` — ordered list
-  of :class:`~deckard.plot.yellowbrick_plots.YellowbrickPlotConfig` instances
+- :class:`~deckard.plugins.yellowbrick.plot.YellowbrickConfigList` — ordered list
+  of :class:`~deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig` instances
   that share a common experiment
 
 Yellowbrick plots are selected by ``plot_type`` and are grouped by category:
@@ -56,7 +56,7 @@ Yellowbrick plots are selected by ``plot_type`` and are grouped by category:
 - **Import error**: install yellowbrick with
   ``pip install yellowbrick`` or ``pip install "deckard[plot]"``.
 - **Missing experiment outputs**: call ``experiment()`` before passing it to
-  :class:`~deckard.plot.yellowbrick_plots.YellowbrickPlotConfig`; the config
+  :class:`~deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig`; the config
   calls ``_ensure_experiment_prepared``
   lazily but explicit preparation is cleaner.
 - **Unsupported plot type**: check the valid ``plot_type`` values listed in the

@@ -52,8 +52,8 @@ evaluation concerns:
 
 ### Fairness And Group-Aware Analysis
 
-Evaluate model behavior across sensitive groups using :mod:`deckard.data.fairness`,
-:mod:`deckard.model.fairness`, and :mod:`deckard.score.fairness`. These modules
+Evaluate model behavior across sensitive groups using :mod:`deckard.plugins.fairlearn.data`,
+:mod:`deckard.plugins.fairlearn.model`, and :mod:`deckard.plugins.fairlearn.score`. These modules
 integrate fairlearn for disparate impact, equalized odds, and demographic parity
 measurement. Use :class:`~deckard.score.attack.FairlearnAttackScorerConfig` to
 measure how adversarial robustness varies across groups.
@@ -76,8 +76,8 @@ Combine with fairness analysis for group-aware robustness metrics.
 ### Survival And Failure Modeling
 
 Model time-to-event outcomes for both raw data processes and ML pipeline
-failures using :mod:`deckard.data.survival`, :mod:`deckard.model.survival`, and
-:mod:`deckard.score.survival`. This supports benign failure analysis (natural
+failures using :mod:`deckard.data.survival`, :mod:`deckard.plugins.lifelines.model`, and
+:mod:`deckard.plugins.survival.score`. This supports benign failure analysis (natural
 performance degradation or operational failures) and adversarial failure
 analysis (attack-induced failure events) within the same reproducible workflow.
 

@@ -24,15 +24,13 @@ It provides:
 
 ## API Reference
 
-.. automodule:: deckard.attack
-   :members:
-   :show-inheritance:
+
 
 .. automodule:: deckard.attack.base
    :members:
    :show-inheritance:
 
-.. automodule:: deckard.attack.pytorch
+.. automodule:: deckard.franeworks.pytorch.attack
    :members:
    :show-inheritance:
 

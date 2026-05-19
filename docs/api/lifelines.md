@@ -11,8 +11,8 @@ and adversarial robustness studies on survival models.
 The Lifelines integration consists of four main modules:
 
 - :mod:`deckard.data.survival` — survival dataset configuration with time/event pairs
-- :mod:`deckard.model.survival` — lifelines estimator training and evaluation
-- :mod:`deckard.score.survival` — survival-specific metrics (concordance, AIC, BIC)
+- :mod:`deckard.plugins.lifelines.model` — lifelines estimator training and evaluation
+- :mod:`deckard.plugins.survival.score` — survival-specific metrics (concordance, AIC, BIC)
 - :mod:`deckard.experiment.survival` — end-to-end survival experiment orchestration
 
 These modules support adversarial robustness studies on time-to-event models,
@@ -37,18 +37,18 @@ Extension docs:
 ### Score Types Available
 
 The default survival scorer profile is
-:class:`deckard.score.survival.DefaultLifelinesConfig` and includes:
+:class:`deckard.plugins.survival.score.DefaultLifelinesConfig` and includes:
 
-- ``concordance`` via :func:`~deckard.score.survival.survival_concordance_score`
-- ``aic`` via :func:`~deckard.score.survival.survival_aic_score`
-- ``bic`` via :func:`~deckard.score.survival.survival_bic_score`
+- ``concordance`` via :func:`~deckard.plugins.survival.score.survival_concordance_score`
+- ``aic`` via :func:`~deckard.plugins.survival.score.survival_aic_score`
+- ``bic`` via :func:`~deckard.plugins.survival.score.survival_bic_score`
 
 These are also provided in the sklearn example score profile at
 `examples/sklearn/config/score/survival.yaml <../examples/sklearn/config/score/survival.yaml>`_.
 
 ### Survival Data
 
-The :class:`~deckard.data.survival.LifelinesDataConfig` extends
+The :class:`~deckard.plugins.liflines.data.LifelinesDataConfig` extends
 :class:`deckard.data.DataConfig` with survival-specific fields:
 
 - **duration_col** (str): column name for event times (durations)
@@ -58,7 +58,7 @@ The :class:`~deckard.data.survival.LifelinesDataConfig` extends
 - **stratify_by** (str, optional): column for stratified cross-validation
 
 Survival data mode support is explicit in
-:class:`deckard.data.survival.LifelinesDataConfig`:
+:class:`deckard.plugins.liflines.data.LifelinesDataConfig`:
 
 - ``native``: dataset already has duration/event columns
 - ``auxiliary_model``: derive failure events from a benign model metric
@@ -67,7 +67,7 @@ Survival data mode support is explicit in
 
 ### Data pipeline and sampling support
 
-Because :class:`~deckard.data.survival.LifelinesDataConfig` extends
+Because :class:`~deckard.plugins.liflines.data.LifelinesDataConfig` extends
 :class:`~deckard.data.DataConfig` (through the deckard data
 stack), survival workflows can still use the standard data pipeline and sampler
 interfaces:
@@ -81,7 +81,7 @@ deckard preprocessing and split strategies.
 
 ### Survival Models
 
-The :class:`~deckard.model.survival.SurvivalModelConfig` supports:
+The :class:`~deckard.plugins.lifelines.model.SurvivalModelConfig` supports:
 
 - Lifelines estimators: KaplanMeierFitter, CoxPHFitter, WeibullAFTFitter, etc.
 - Parametric and non-parametric models
@@ -91,7 +91,7 @@ The :class:`~deckard.model.survival.SurvivalModelConfig` supports:
 
 ### Scoring and Metrics
 
-The :mod:`deckard.score.survival` module provides:
+The :mod:`deckard.plugins.survival.score` module provides:
 
 - **concordance_index**: measure of prediction accuracy on time-to-event data
 - **log_likelihood**: model fit quality
@@ -99,7 +99,7 @@ The :mod:`deckard.score.survival` module provides:
 - **median_survival_time**: group-wise survival time estimates
 - **survival_at_time_t**: proportion surviving at specific timepoints
 
-When using :class:`deckard.model.survival.SurvivalModelConfig` without a custom
+When using :class:`deckard.plugins.lifelines.model.SurvivalModelConfig` without a custom
 scorer override, model scoring still emits calibration-oriented metrics (for
 example ``concordance``, ``ici``, ``e50``) where available.
 
@@ -153,8 +153,8 @@ custom user-provided regression fitters can be imported reliably.
 ### See also
 
 * :doc:`data` — general data configuration including :mod:`deckard.data.survival`
-* :doc:`model` — general model configuration including :mod:`deckard.model.survival`
-* :doc:`score` — scoring framework including :mod:`deckard.score.survival`
+* :doc:`model` — general model configuration including :mod:`deckard.plugins.lifelines.model`
+* :doc:`score` — scoring framework including :mod:`deckard.plugins.survival.score`
 * :doc:`experiment` — experiment orchestration including
   :class:`~deckard.experiment.survival.SurvivalExperimentConfig`
 * :doc:`plot` — visualization including survival curve plotting

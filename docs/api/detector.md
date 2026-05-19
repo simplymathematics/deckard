@@ -23,9 +23,6 @@ metrics from benign and attacked samples.
    :members:
    :show-inheritance:
 
-.. automodule:: deckard.detector.base
-   :members:
-   :show-inheritance:
 
 ## Typical Workflow
 

@@ -11,33 +11,33 @@ and integration with the :mod:`deckard.data` module.
 
 ## Extensions
 
-### Fairness Extension
+### Fairlearn Extension
 
-The fairness extension provides fairness-aware model behavior, including
+The fairlearn extension provides fairness-aware model behavior, including
 group-sensitive fitting, scoring, and fairlearn defense wrappers.
 See also: :doc:`fairlearn`.
 
-.. automodule:: deckard.model.fairness
+.. automodule:: deckard.plugins.fairlearn.model
    :members:
    :show-inheritance:
 
-### Torch Extension
+### Pytorch extesion
 
-The torch extension provides PyTorch-native model training, prediction, and
+The Pytorch extesion provides PyTorch-native model training, prediction, and
 scoring through a :class:`~deckard.model.ModelConfig`-compatible API.
 See also: :doc:`pytorch`.
 
-.. automodule:: deckard.model.pytorch
+.. automodule:: deckard.frameworks.pytorch.model
    :members:
    :show-inheritance:
 
-## Survival Extension
+## Lifelines plugin
 
 Survival-specific experiment orchestration is split into a dedicated optional
 module.
 See also: :doc:`lifelines`.
 
-.. automodule:: deckard.model.survival
+.. automodule:: deckard.plugins.lifelines.model
    :members:
    :show-inheritance:
 
@@ -68,9 +68,9 @@ performed on the active split selected by experiment scoring policy.
 Currently supports:
 
 - **scikit-learn** — via :class:`~deckard.model.ModelConfig`
-- **PyTorch** — via :class:`~deckard.model.pytorch.PytorchModelConfig`
-- **Fairlearn (sklearn)** — via :class:`~deckard.model.fairness.FairlearnModelConfig`
-- **Fairlearn (PyTorch)** — via :class:`~deckard.model.fairness.FairlearnPytorchModelConfig`
+- **PyTorch** — via :class:`~deckard.frameworks.pytorch.model.PytorchModelConfig`
+- **Fairlearn (sklearn)** — via :class:`~deckard.plugins.fairlearn.model.FairlearnModelConfig`
+- **Fairlearn (PyTorch)** — via :class:`~deckard.plugins.fairlearn.model.FairlearnPytorchModelConfig`
 
 ## Examples
 
@@ -105,7 +105,7 @@ For scikit-learn-backed :class:`~deckard.model.ModelConfig`, persisted models
 use the framework's object serialization path via the config base save/load
 machinery.
 
-For :class:`~deckard.model.pytorch.PytorchModelConfig`, persistence is explicit
+For :class:`~deckard.frameworks.pytorch.model.PytorchModelConfig`, persistence is explicit
 and torch-native:
 
 - ``save`` writes a checkpoint payload with model metadata plus

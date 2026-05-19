@@ -1,7 +1,7 @@
 # Seaborn Visualization
 
 deckard provides statistical visualization through Seaborn via the
-:class:`deckard.plot.seaborn_plots.SeabornPlotConfig` class. The Seaborn
+:class:`deckard.plugins.seaborn.plot.SeabornPlotConfig` class. The Seaborn
 backend is designed for **multi-run aggregation plots** — visualizing compiled
 results across many experiment runs stored in a tabular data file (CSV,
 Parquet, etc.).
@@ -10,12 +10,12 @@ Parquet, etc.).
 
 ## Overview
 
-The :mod:`deckard.plot.seaborn_plots` module provides:
+The :mod:`deckard.plugins.seaborn.plot` module provides:
 
-- :class:`~deckard.plot.seaborn_plots.SeabornPlotConfig` — single-plot
+- :class:`~deckard.plugins.seaborn.plot.SeabornPlotConfig` — single-plot
   configuration with x/y columns, plot type, and optional hue/style
-- :class:`~deckard.plot.seaborn_plots.SeabornPlotConfigList` — ordered list of
-  :class:`~deckard.plot.seaborn_plots.SeabornPlotConfig` instances sharing a
+- :class:`~deckard.plugins.seaborn.plot.SeabornPlotConfigList` — ordered list of
+  :class:`~deckard.plugins.seaborn.plot.SeabornPlotConfig` instances sharing a
   common ``data_file``
 
 These configs are intended for post-hoc visualization of compiled experiment
@@ -46,7 +46,7 @@ The ``plot_type`` field accepts:
 - **AssertionError on column names**: verify that ``x``, ``y``, ``hue``, and
   ``style`` match column names in the data file exactly.
 - **File not found**: ensure ``data_file`` path exists before constructing
-  :class:`~deckard.plot.seaborn_plots.SeabornPlotConfig`; directories for
+  :class:`~deckard.plugins.seaborn.plot.SeabornPlotConfig`; directories for
   ``plot_file`` are created automatically.
 - **Import error**: install the optional plotting dependencies with
   ``pip install "deckard[plot]"``.

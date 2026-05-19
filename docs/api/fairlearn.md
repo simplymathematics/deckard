@@ -9,9 +9,9 @@ See also: :doc:`pytorch` for torch-backed fairness workflows.
 
 The Fairlearn integration consists of three main extension modules:
 
-- :mod:`deckard.data.fairness` — fairness-aware dataset configuration
-- :mod:`deckard.model.fairness` — fairness-aware model training and evaluation
-- :mod:`deckard.score.fairness` — fairness-aware scoring metrics
+- :mod:`deckard.plugins.fairlearn.data` — fairness-aware dataset configuration
+- :mod:`deckard.plugins.fairlearn.model` — fairness-aware model training and evaluation
+- :mod:`deckard.plugins.fairlearn.score` — fairness-aware scoring metrics
 
 These modules support fairness analysis and mitigation by quantifying and reducing bias in model predictions.
 
@@ -25,10 +25,10 @@ These modules support fairness analysis and mitigation by quantifying and reduci
 
 ### Score Types Available
 
-Fairness scoring in deckard is provided by :mod:`deckard.score.fairness` with the default scorer profiles:
+Fairness scoring in deckard is provided by :mod:`deckard.plugins.fairlearn.score` with the default scorer profiles:
 
-- :class:`~deckard.score.fairness.DefaultFairnessDataScoreConfig`
-- :class:`~deckard.score.fairness.DefaultFairnessModelScoreConfig`
+- :class:`~deckard.plugins.fairlearn.score.DefaultFairnessDataScoreConfig`
+- :class:`~deckard.plugins.fairlearn.score.DefaultFairnessModelScoreConfig`
 
 These include:
 
@@ -41,7 +41,7 @@ The scorers operate on pandas DataFrame-backed data and can resolve context from
 
 ### Data Configuration
 
-The :class:`~deckard.data.fairness.FairlearnDataConfig` extends :class:`deckard.data.DataConfig` with fairness parameters:
+The :class:`~deckard.plugins.fairlearn.data.FairlearnDataConfig` extends :class:`deckard.data.DataConfig` with fairness parameters:
 
 - Specify sensitive features for fairness analysis
 - Define mitigation strategies (preprocessing, in-processing, postprocessing)
@@ -50,7 +50,7 @@ The :class:`~deckard.data.fairness.FairlearnDataConfig` extends :class:`deckard.
 
 ### Data pipeline and preprocessing support
 
-:class:`~deckard.data.fairness.FairlearnDataConfig` extends
+:class:`~deckard.plugins.fairlearn.data.FairlearnDataConfig` extends
 :class:`~deckard.data.DataPipelineConfig`, so it keeps standard deckard
 pipeline capabilities while adding fairness hooks:
 
@@ -62,7 +62,7 @@ pipeline capabilities while adding fairness hooks:
 
 ### Model Configuration
 
-The :class:`~deckard.model.fairness.FairlearnModelConfig` supports:
+The :class:`~deckard.plugins.fairlearn.model.FairlearnModelConfig` supports:
 
 - Standard model training with fairness constraints
 - Optional group fairness measurement
@@ -70,7 +70,7 @@ The :class:`~deckard.model.fairness.FairlearnModelConfig` supports:
 - Integration with fairness-aware loss functions
 - Checkpoint management for fairness tracking
 
-:class:`~deckard.model.fairness.FairlearnModelConfig` wraps
+:class:`~deckard.plugins.fairlearn.model.FairlearnModelConfig` wraps
 :class:`~deckard.model.ModelConfig` behavior and can still use deckard's
 general model defenses via ``model.defense`` (ART preprocessors,
 postprocessors, trainers, and detector pipelines) where compatible with the
@@ -78,10 +78,10 @@ selected backend/model.
 
 ### Scoring and Metrics
 
-The :mod:`deckard.score.fairness` module provides:
+The :mod:`deckard.plugins.fairlearn.score` module provides:
 
-- :class:`~deckard.score.fairness.DefaultFairnessDataScoreConfig` — data-level fairness metrics (group parity, bias)
-- :class:`~deckard.score.fairness.DefaultFairnessModelScoreConfig` — model-level fairness and utility metrics (accuracy, group fairness)
+- :class:`~deckard.plugins.fairlearn.score.DefaultFairnessDataScoreConfig` — data-level fairness metrics (group parity, bias)
+- :class:`~deckard.plugins.fairlearn.score.DefaultFairnessModelScoreConfig` — model-level fairness and utility metrics (accuracy, group fairness)
 
 ## Examples
 
@@ -102,8 +102,8 @@ The :mod:`deckard.score.fairness` module provides:
 
 ### See also
 
-* :doc:`data` — general data configuration including :mod:`deckard.data.fairness`
-* :doc:`model` — general model configuration including :mod:`deckard.model.fairness`
-* :doc:`score` — scoring framework including :mod:`deckard.score.fairness`
+* :doc:`data` — general data configuration including :mod:`deckard.plugins.fairlearn.data`
+* :doc:`model` — general model configuration including :mod:`deckard.plugins.fairlearn.model`
+* :doc:`score` — scoring framework including :mod:`deckard.plugins.fairlearn.score`
 * :doc:`pytorch` — optional PyTorch integration with Fairlearn
 * :doc:`modules` — overview of all extensions

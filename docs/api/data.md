@@ -30,33 +30,33 @@ to enable configurable feature preprocessing with timing instrumentation.
 deckard exposes a configurable pipeline layer for data preprocessing via
 :class:`~deckard.data.DataPipelineConfig`.
 
-### Fairness Extension
+### Fairlearn Plugin
 
-The fairness extension adds group-aware sampling and fairness metrics with
+The fairlearn plugin adds group-aware sampling and fairness metrics with
 ``fairlearn`` integration.
 See also: :doc:`fairlearn`.
 
-.. automodule:: deckard.data.fairness
+.. automodule:: deckard.plugins.fairlearn.data
    :members:
    :show-inheritance:
 
-### Torch Extension
+### Torch Framework
 
-The torch extension provides dataset loading and sampling for PyTorch and
+The torch framework provides dataset loading and sampling for PyTorch and
 torchvision-backed workflows.
 See also: :doc:`pytorch`.
 
-.. automodule:: deckard.data.pytorch
+.. automodule:: deckard.frameworks.pytorch.data
    :members:
    :show-inheritance:
 
-## Survival Extension
+## Lifelines plugin
 
 Survival-specific experiment orchestration is split into a dedicated optional
 module.
 See also: :doc:`lifelines`.
 
-.. automodule:: deckard.data.survival
+.. automodule:: deckard.plugins.lifelines.data
    :members:
    :show-inheritance:
 
@@ -91,12 +91,14 @@ partition.
 
 .. seealso::
 
-   Notebook-based examples for data loading, splitting, fairness data workflows,
+   Notebook-based examples for data loading, splitting, fairness/survival data workflows,
    and PyTorch datasets are documented in:
 
-   - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
    - :doc:`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
+   - :doc:`notebooks/lifelines.ipynb </notebooks/lifelines>`
+   - :doc:`notebooks/sklearn.ipynb </notebooks/sklearn>`
    - :doc:`notebooks/pytorch.ipynb </notebooks/pytorch>`
+   
 
 ## Internals
 

@@ -1,7 +1,7 @@
 # PyTorch Integration
 
 deckard provides native support for PyTorch models, data, and experiments through
-the optional PyTorch extension modules. This integration enables seamless use of
+the optional Pypytorch extesion modules. This integration enables seamless use of
 PyTorch-based workflows within the deckard framework.
 
 .. _pytorch-overview:
@@ -10,9 +10,9 @@ PyTorch-based workflows within the deckard framework.
 
 The PyTorch integration consists of three main extension modules:
 
-- :mod:`deckard.data.pytorch` — PyTorch dataset and DataLoader configuration
-- :mod:`deckard.model.pytorch` — PyTorch model training and evaluation
-- :mod:`deckard.experiment.torch_experiment` — end-to-end PyTorch experiment orchestration
+- :mod:`deckard.frameworks.pytorch.data` — PyTorch dataset and DataLoader configuration
+- :mod:`deckard.frameworks.pytorch.model` — PyTorch model training and evaluation
+- :mod:`deckard.frameworks.pytorch.experiment` — end-to-end PyTorch experiment orchestration
 
 These modules are fully integrated with deckard's attack, defense, and scoring
 pipelines, allowing adversarial robustness studies on PyTorch models.
@@ -21,10 +21,10 @@ pipelines, allowing adversarial robustness studies on PyTorch models.
 
 - **Device reconciliation**: automatic CPU/CUDA/MPS device selection and validation
 - **ART integration**: PyTorch models wrap as ART estimators for attack/defense
-- **Fairness support**: compatible with :mod:`deckard.data.fairness` and attack
-- **Fairness support**: :class:`~deckard.model.fairness.FairlearnPytorchModelConfig`
-  inherits :class:`~deckard.model.pytorch.PytorchModelConfig` directly and adds
-  fairness-aware scoring; compatible with :mod:`deckard.data.fairness` and
+- **Fairness support**: compatible with :mod:`deckard.plugins.fairlearn.data` and attack
+- **Fairness support**: :class:`~deckard.plugins.fairlearn.model.FairlearnPytorchModelConfig`
+  inherits :class:`~deckard.frameworks.pytorch.model.PytorchModelConfig` directly and adds
+  fairness-aware scoring; compatible with :mod:`deckard.plugins.fairlearn.data` and
   attack stratification by sensitive features
 - **Survival analysis**: optional integration with lifelines-based survival experiments
 - **Standard scorers**: classification, regression, and attack metrics via
@@ -32,17 +32,17 @@ pipelines, allowing adversarial robustness studies on PyTorch models.
 
 ### Data Loading
 
-The :class:`~deckard.data.pytorch.PytorchDataConfig` extends :class:`deckard.data.DataConfig`
+The :class:`~deckard.frameworks.pytorch.data.PytorchDataConfig` extends :class:`deckard.data.DataConfig`
 with PyTorch-specific behavior:
 
 - Wraps datasets as :class:`torch.utils.data.Dataset` instances
 - Provides configurable :class:`torch.utils.data.DataLoader` for batching
 - Supports device placement for GPU-accelerated data loading
-- Integrates with :mod:`deckard.data.fairness` for stratified sampling
+- Integrates with :mod:`deckard.plugins.fairlearn.data` for stratified sampling
 
 ### Model Configuration
 
-The :class:`~deckard.model.pytorch.PytorchModelConfig` supports:
+The :class:`~deckard.frameworks.pytorch.model.PytorchModelConfig` supports:
 
 - Any PyTorch :class:`torch.nn.Module` via import path specification
 - Configurable optimizers (SGD, Adam, AdamW, etc.)
@@ -54,7 +54,7 @@ The :class:`~deckard.model.pytorch.PytorchModelConfig` supports:
 
 ### Experiment Orchestration
 
-The :class:`~deckard.experiment.torch_experiment.TorchExperimentConfig` enforces:
+The :class:`~deckard.frameworks.pytorch.experiment.TorchExperimentConfig` enforces:
 
 - All data/model/attack components use PyTorch backend
 - Unified device selection across all components
@@ -74,7 +74,7 @@ The :class:`~deckard.experiment.torch_experiment.TorchExperimentConfig` enforces
 ### Troubleshooting
 
 - **Device mismatch errors**: Verify all components use compatible devices. The
-  :class:`~deckard.experiment.torch_experiment.TorchExperimentConfig` will raise
+  :class:`~deckard.frameworks.pytorch.experiment.TorchExperimentConfig` will raise
   an error if conflicts are detected.
 - **Out of memory (OOM)**: Reduce batch_size, model size, or use gradient
   checkpointing. Consider using mixed precision training.
@@ -85,8 +85,8 @@ The :class:`~deckard.experiment.torch_experiment.TorchExperimentConfig` enforces
 
 ### See also
 
-* :doc:`data` — general data configuration including :mod:`deckard.data.pytorch`
-* :doc:`model` — general model configuration including :mod:`deckard.model.pytorch`
+* :doc:`data` — general data configuration including :mod:`deckard.frameworks.pytorch.data`
+* :doc:`model` — general model configuration including :mod:`deckard.frameworks.pytorch.model`
 * :doc:`experiment` — experiment orchestration including :class:`TorchExperimentConfig`
 * :doc:`attack` — attack configuration and execution
 * :doc:`plot` — visualization support including training history plots

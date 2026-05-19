@@ -5,8 +5,8 @@
 The plotting package exposes two public entry points:
 
 - :class:`~deckard.plot.PlotConfig` chooses between the Seaborn and Yellowbrick backends.
-- :class:`~deckard.plot.yellowbrick_plots.YellowbrickPlotConfig` and
-   :class:`~deckard.plot.yellowbrick_plots.YellowbrickConfigList` behave like
+- :class:`~deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig` and
+   :class:`~deckard.plugins.yellowbrick.plot.YellowbrickConfigList` behave like
    experiment configs and prepare experiment outputs at most once before
    rendering plots.
 
@@ -24,7 +24,7 @@ See also: :doc:`lifelines`.
    :members:
    :show-inheritance:
 
-.. automodule:: deckard.plot.yellowbrick_plots
+.. automodule:: deckard.plugins.yellowbrick.plot
    :members:
    :show-inheritance:
 
