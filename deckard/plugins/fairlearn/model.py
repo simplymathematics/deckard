@@ -1,7 +1,7 @@
 from ...utils import is_default_config_value
 import time
 from dataclasses import dataclass, field
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import numpy as np
 import pandas as pd
@@ -113,7 +113,9 @@ class _FairnessBehaviorMixin:
 
 @dataclass(eq=False, kw_only=True)
 class FairlearnModelConfig(
-    _SensitiveColumnsMixin, _FairnessBehaviorMixin, ModelConfig
+    _SensitiveColumnsMixin,
+    _FairnessBehaviorMixin,
+    ModelConfig,
 ):
     """Fairness-aware model config for sklearn models.
 

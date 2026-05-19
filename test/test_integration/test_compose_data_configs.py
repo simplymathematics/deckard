@@ -13,8 +13,12 @@ from hydra.core.config_store import ConfigStore
 from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf
 
-SKLEARN_CONFIG_DIR = Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
-PYTORCH_CONFIG_DIR = Path(__file__).resolve().parents[2] / "examples" / "pytorch" / "config"
+SKLEARN_CONFIG_DIR = (
+    Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
+)
+PYTORCH_CONFIG_DIR = (
+    Path(__file__).resolve().parents[2] / "examples" / "pytorch" / "config"
+)
 
 
 def _reset_hydra_state():

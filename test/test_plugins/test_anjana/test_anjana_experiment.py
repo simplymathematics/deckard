@@ -158,6 +158,7 @@ def test_anjana_defense_applied_before_split(monkeypatch):
 
 def test_anjana_defense_transforms_x_and_y_before_split(monkeypatch):
     """After anjana defense, X and y should reflect the transformed frame."""
+
     def _fake_defense_drop_half(data, **kwargs):
         _ = kwargs
         return data.iloc[: len(data) // 2].copy()

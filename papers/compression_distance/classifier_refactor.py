@@ -360,10 +360,17 @@ class StringDistanceTransformer(BaseEstimator, TransformerMixin):
         """Convert tabular or array-like input into a 1D array of sample strings."""
         if hasattr(X, "itertuples"):
             return np.asarray(
-                [" ".join(map(str, row)) for row in X.itertuples(index=False, name=None)],
+                [
+                    " ".join(map(str, row))
+                    for row in X.itertuples(index=False, name=None)
+                ],
                 dtype=object,
             )
-        if hasattr(X, "tolist") and hasattr(X, "shape") and len(getattr(X, "shape", ())) == 2:
+        if (
+            hasattr(X, "tolist")
+            and hasattr(X, "shape")
+            and len(getattr(X, "shape", ())) == 2
+        ):
             rows = X.tolist()
             return np.asarray([" ".join(map(str, row)) for row in rows], dtype=object)
         return np.asarray([str(x) for x in X], dtype=object)
@@ -413,7 +420,9 @@ class StringDistanceTransformer(BaseEstimator, TransformerMixin):
         with open(path, "rb") as f:
             return pickle.load(f)
 
-    def set_split_indices(self, train_indices=None, test_indices=None, val_indices=None):
+    def set_split_indices(
+        self, train_indices=None, test_indices=None, val_indices=None
+    ):
         if train_indices is not None:
             self.train_indices = list(train_indices)
         if test_indices is not None:
@@ -478,7 +487,9 @@ class StringDistanceTransformer(BaseEstimator, TransformerMixin):
         if self.distance_matrix_full:
             if self._full_matrix is None:
                 try:
-                    self._full_matrix = self._load_matrix_file(self.distance_matrix_full)
+                    self._full_matrix = self._load_matrix_file(
+                        self.distance_matrix_full
+                    )
                 except (FileNotFoundError, OSError, ValueError):
                     self.pre_sample_fit(X, y=y)
             if self._full_matrix is not None:
@@ -501,7 +512,7 @@ class StringDistanceTransformer(BaseEstimator, TransformerMixin):
                 return self
             except (FileNotFoundError, OSError):
                 pass  # Fall back to on-the-fly calculation
-        
+
         if self.lower_triangle:
             self.calculate_fit_matrix = calculate_lower_triangular_distance_matrix
             self.lower_triangle = True
@@ -539,7 +550,7 @@ class StringDistanceTransformer(BaseEstimator, TransformerMixin):
                 return self._load_matrix_file(self.distance_matrix_test)
             except (FileNotFoundError, OSError):
                 pass  # Fall back to on-the-fly calculation
-        
+
         mtx = self.calculate_distance_matrix(
             X,
             self.X_,
@@ -584,14 +595,17 @@ class DistanceMatrixKernelizer(BaseEstimator, TransformerMixin):
         coef0: float = 0,
         degree: int | None = None,
         gamma=1,
-        form: Literal[
-            "exp",
-            "exp_neg",
-            "poly",
-            "quadratic",
-            "rational",
-            "multiquadric",
-        ] | None = None,
+        form: (
+            Literal[
+                "exp",
+                "exp_neg",
+                "poly",
+                "quadratic",
+                "rational",
+                "multiquadric",
+            ]
+            | None
+        ) = None,
     ):
         self.coef0 = coef0
         self.gamma = gamma
@@ -632,9 +646,7 @@ class DistanceMatrixKernelizer(BaseEstimator, TransformerMixin):
             if self.degree is None:
                 raise ValueError("degree must be set for poly form")
             degree = self.degree
-            self.kernel_function = (
-                lambda x: (self.gamma * x + self.coef0) ** degree
-            )
+            self.kernel_function = lambda x: (self.gamma * x + self.coef0) ** degree
         elif self.form == "quadratic":
             assert self.degree == 2, "Degree must be 2 for quadratic form"
             assert self.gamma == 1, "Gamma must be 1 for quadratic form"

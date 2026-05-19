@@ -74,8 +74,12 @@ def test_mixin_composition_order_is_explicit() -> None:
     anjana_mro = [cls.__name__ for cls in AnjanaDataConfig.__mro__]
     fairlearn_mro = [cls.__name__ for cls in FairlearnDataConfig.__mro__]
 
-    assert anjana_mro.index("_PrivacyBehaviorMixin") < anjana_mro.index("DataPipelineConfig")
-    assert fairlearn_mro.index("_FairnessBehaviorMixin") < fairlearn_mro.index("DataPipelineConfig")
+    assert anjana_mro.index("_PrivacyBehaviorMixin") < anjana_mro.index(
+        "DataPipelineConfig"
+    )
+    assert fairlearn_mro.index("_FairnessBehaviorMixin") < fairlearn_mro.index(
+        "DataPipelineConfig"
+    )
 
 
 def test_runtime_declaration_registration_is_idempotent() -> None:

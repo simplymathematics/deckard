@@ -11,8 +11,12 @@ from hydra import compose, initialize_config_dir
 from hydra.core.config_store import ConfigStore
 from hydra.core.global_hydra import GlobalHydra
 
-SKLEARN_CONFIG_DIR = Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
-PYTORCH_CONFIG_DIR = Path(__file__).resolve().parents[2] / "examples" / "pytorch" / "config"
+SKLEARN_CONFIG_DIR = (
+    Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
+)
+PYTORCH_CONFIG_DIR = (
+    Path(__file__).resolve().parents[2] / "examples" / "pytorch" / "config"
+)
 
 
 def _reset_hydra_state():
@@ -56,5 +60,3 @@ def test_pytorch_torch_default_includes_attack_config():
     assert "attack" in cfg
     # Default attack is fgm
     assert cfg.attack.alias == "fgm"
-
-

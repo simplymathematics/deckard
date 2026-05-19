@@ -5,7 +5,9 @@ from deckard.model import (
     DefaultPytorchDefenseConfig,
     DefaultSklearnDefenseConfig,
 )
-from deckard.model.defense.default import DefaultDefenseConfig as DefaultDefenseConfigFromModule
+from deckard.model.defense.default import (
+    DefaultDefenseConfig as DefaultDefenseConfigFromModule,
+)
 from deckard.frameworks.pytorch.defense import (
     DefaultPytorchDefenseConfig as DefaultPytorchDefenseConfigFromModule,
 )

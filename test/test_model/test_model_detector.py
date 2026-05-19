@@ -54,7 +54,9 @@ def test_detector_defense_evasion_builds_detector_with_kwarg_ctor(monkeypatch):
     wrapped = SimpleNamespace(name="wrapped")
 
     cfg._build_art_wrapper = lambda **kwargs: wrapped
-    monkeypatch.setattr("deckard.model.detector._is_torch_model_instance", lambda _m: True)
+    monkeypatch.setattr(
+        "deckard.model.detector._is_torch_model_instance", lambda _m: True
+    )
 
     defense, returned_wrapper = cfg(
         data=None,
@@ -78,7 +80,9 @@ def test_detector_defense_evasion_supports_positional_ctor_fallback(monkeypatch)
     wrapped = SimpleNamespace(name="wrapped")
 
     cfg._build_art_wrapper = lambda **kwargs: wrapped
-    monkeypatch.setattr("deckard.model.detector._is_torch_model_instance", lambda _m: True)
+    monkeypatch.setattr(
+        "deckard.model.detector._is_torch_model_instance", lambda _m: True
+    )
 
     defense, returned_wrapper = cfg(
         data=None,

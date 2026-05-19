@@ -20,8 +20,3 @@
 - Add licenses, hyperlinks, and paper references throughout the docs
 - Remove adapter layer, move sklearn-only logic to framworks, ensure *Config objects adhere to contract
 - Update survival, art_attacks, art_defenses notebooks for clarity and scope
-
-
-
-
-

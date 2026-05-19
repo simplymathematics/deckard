@@ -432,18 +432,11 @@ def test_scorer_dict_pre_sample_rejects_probability_metrics():
         scorer_dict(mode="pre-sample", data=data)
 
 
-
 import numpy as np
 import pandas as pd
 import pytest
 
 import deckard.score.data as score_data
-
-
-
-
-
-
 
 
 def test_score_data_coerce_features_dataframe_series_and_vector():

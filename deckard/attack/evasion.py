@@ -3,7 +3,7 @@
 import time
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Union
+from typing import Any, Union
 
 import numpy as np
 from art.config import ART_NUMPY_DTYPE
@@ -261,6 +261,6 @@ class EvasionAttackConfig(_EvasionAttackMixin, AttackConfig):
             AttackTypePlugin(
                 mixin_type=_EvasionAttackMixin,
                 attack_type="evasion",
-            )
-        ]
+            ),
+        ],
     )

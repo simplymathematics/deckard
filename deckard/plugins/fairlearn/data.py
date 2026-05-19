@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict
 
 import pandas as pd
 from omegaconf import DictConfig, ListConfig
@@ -156,7 +156,9 @@ class FairlearnDataConfig(_FairnessBehaviorMixin, DataPipelineConfig):
     """
 
     def __call__(
-        self, *args: RuntimePayload, **kwargs: RuntimePayload
+        self,
+        *args: RuntimePayload,
+        **kwargs: RuntimePayload,
     ) -> dict[str, RuntimeValue]:
         """Execute fairness-aware data runtime with scorer auto-selection.
 
@@ -198,8 +200,8 @@ class FairlearnDataConfig(_FairnessBehaviorMixin, DataPipelineConfig):
                     "type": "data",
                     "class": "CorrelationRemover",
                 },
-            )
-        ]
+            ),
+        ],
     )
 
     def __post_init__(self):

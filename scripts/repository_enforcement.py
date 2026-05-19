@@ -86,11 +86,7 @@ def _is_public_method(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
 
 
 def _has_user_parameters(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
-    positional = [
-        arg
-        for arg in fn.args.args
-        if arg.arg not in {"self", "cls"}
-    ]
+    positional = [arg for arg in fn.args.args if arg.arg not in {"self", "cls"}]
     keyword_only = list(fn.args.kwonlyargs)
     has_variadics = fn.args.vararg is not None or fn.args.kwarg is not None
     return bool(positional or keyword_only or has_variadics)
@@ -126,21 +122,31 @@ def validate_file(path: Path, *, strict_docs_types: bool = False) -> list[Violat
         has_mixin_token = "Mixin" in class_name
         has_plugin_token = "Plugin" in class_name
 
-        if has_config_token and not has_mixin_token and not (
-            class_name.endswith("Config")
-            or class_name.endswith("ConfigList")
-            or class_name.endswith("Contract")
+        if (
+            has_config_token
+            and not has_mixin_token
+            and not (
+                class_name.endswith("Config")
+                or class_name.endswith("ConfigList")
+                or class_name.endswith("Contract")
+            )
         ):
             violations.append(
-                Violation(rel, node.lineno, "NAME001", f"{class_name} must end with 'Config'"),
+                Violation(
+                    rel, node.lineno, "NAME001", f"{class_name} must end with 'Config'"
+                ),
             )
         if has_mixin_token and not class_name.endswith("Mixin"):
             violations.append(
-                Violation(rel, node.lineno, "NAME002", f"{class_name} must end with 'Mixin'"),
+                Violation(
+                    rel, node.lineno, "NAME002", f"{class_name} must end with 'Mixin'"
+                ),
             )
         if has_plugin_token and not class_name.endswith("Plugin"):
             violations.append(
-                Violation(rel, node.lineno, "NAME003", f"{class_name} must end with 'Plugin'"),
+                Violation(
+                    rel, node.lineno, "NAME003", f"{class_name} must end with 'Plugin'"
+                ),
             )
 
         if class_name.endswith("Config"):
@@ -203,7 +209,12 @@ def validate_file(path: Path, *, strict_docs_types: bool = False) -> list[Violat
             call = next((m for m in methods if m.name == "__call__"), None)
             if call is None:
                 violations.append(
-                    Violation(rel, node.lineno, "PLG001", f"{class_name} must implement __call__"),
+                    Violation(
+                        rel,
+                        node.lineno,
+                        "PLG001",
+                        f"{class_name} must implement __call__",
+                    ),
                 )
             else:
                 if not _has_vararg_and_kwarg(call):
@@ -308,7 +319,9 @@ def validate_file(path: Path, *, strict_docs_types: bool = False) -> list[Violat
     return violations
 
 
-def collect_violations(scope: str, *, strict_docs_types: bool = False) -> list[Violation]:
+def collect_violations(
+    scope: str, *, strict_docs_types: bool = False
+) -> list[Violation]:
     base = ROOT / scope
     violations: list[Violation] = []
     for path in _iter_python_files(base):
@@ -317,7 +330,9 @@ def collect_violations(scope: str, *, strict_docs_types: bool = False) -> list[V
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run repository-wide enforcement checks")
+    parser = argparse.ArgumentParser(
+        description="Run repository-wide enforcement checks"
+    )
     parser.add_argument(
         "--scope",
         default="deckard/plugins",

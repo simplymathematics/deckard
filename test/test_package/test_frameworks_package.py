@@ -244,7 +244,9 @@ class _DefenseContractStubBase:
 
 
 @dataclass(eq=False, kw_only=True)
-class _StubFrameworkModelDefenseConfig(_DefenseContractStubBase, FrameworkModelDefenseConfig):
+class _StubFrameworkModelDefenseConfig(
+    _DefenseContractStubBase, FrameworkModelDefenseConfig
+):
     def _validate_model_defense_contract(self):
         self.call_log.append("validate")
 
@@ -362,7 +364,9 @@ class _StubFrameworkDataSamplerContract(FrameworkDataSamplerContract):
         ),
     ],
 )
-def test_framework_contracts_declare_ordered_lifecycle(cfg_cls, expected_execution_steps):
+def test_framework_contracts_declare_ordered_lifecycle(
+    cfg_cls, expected_execution_steps
+):
     cfg = cfg_cls()
 
     assert cfg.call_log == [
@@ -476,7 +480,7 @@ def _collect_private_attr_accesses(tree: ast.AST, class_names: set) -> list[str]
                     and not sub.args[1].value.startswith("__")
                 ):
                     violations.append(
-                        f"{node.name}.{item.name}: getattr(self, '{sub.args[1].value}', ...)"
+                        f"{node.name}.{item.name}: getattr(self, '{sub.args[1].value}', ...)",
                     )
     return violations
 

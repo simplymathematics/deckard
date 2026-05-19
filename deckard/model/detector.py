@@ -1,7 +1,7 @@
 """Configuration for detector defenses (adversarial detector)."""
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from deckard.plugins.defense import DefenseTypePlugin
 from .defend import (
@@ -33,7 +33,7 @@ class _DetectorDefenseMixin(_DefenseMixin):
         subtype = (defense_subtype or "").lower()
         if subtype == "evasion":
             if not _is_torch_model_instance(
-                base_estimator
+                base_estimator,
             ) and not _is_art_torch_wrapper(
                 self._model,
             ):
@@ -108,8 +108,8 @@ class DetectorDefenseConfig(_DetectorDefenseMixin, DefensePipelineConfig):
             DefenseTypePlugin(
                 mixin_type=_DetectorDefenseMixin,
                 defense_type="detector",
-            )
-        ]
+            ),
+        ],
     )
 
 

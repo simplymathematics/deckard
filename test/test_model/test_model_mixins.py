@@ -1,5 +1,3 @@
-from types import SimpleNamespace
-
 import numpy as np
 
 from deckard.model.base import ModelConfig

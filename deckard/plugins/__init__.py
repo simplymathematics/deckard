@@ -86,7 +86,7 @@ def get_plugin(name: str):
     except ImportError as e:
         raise ImportError(
             f"Plugin '{name}' is not available. "
-            f"Install optional dependencies for it (e.g. deckard[{name}])."
+            f"Install optional dependencies for it (e.g. deckard[{name}]).",
         ) from e
 
 

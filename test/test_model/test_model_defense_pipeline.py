@@ -165,9 +165,6 @@ class TestDefensePipelineConfigListCoerce(unittest.TestCase):
         self.assertEqual(len(result.defenses), 1)
 
 
-
-
-
 def test_defense_behavior_defaults_signature_and_apply_to_paths(monkeypatch):
     defense = DefenseConfig.__new__(DefenseConfig)
     defense.model_type = None

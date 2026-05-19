@@ -25,7 +25,7 @@ class GenericFlexibleTransformer(nn.Module if nn else object):
     ):
         if nn is None or AutoModel is None:
             raise ImportError(
-                "GenericFlexibleTransformer requires 'torch' and 'transformers'."
+                "GenericFlexibleTransformer requires 'torch' and 'transformers'.",
             )
         super().__init__()
 
@@ -45,12 +45,14 @@ class GenericFlexibleTransformer(nn.Module if nn else object):
 
         if self.hidden_dim is None:
             raise ValueError(
-                "Could not automatically determine backbone hidden_size dimension."
+                "Could not automatically determine backbone hidden_size dimension.",
             )
 
         # 2. Configure downstream task headers (Features & Classes)
         self.feature_extractor = nn.Sequential(
-            nn.Linear(self.hidden_dim, out_features), nn.GELU(), nn.Dropout(p=0.1)
+            nn.Linear(self.hidden_dim, out_features),
+            nn.GELU(),
+            nn.Dropout(p=0.1),
         )
         self.classifier = nn.Linear(out_features, num_classes)
 
@@ -95,7 +97,8 @@ class GenericFlexibleTransformer(nn.Module if nn else object):
 
         # Pool downstream outputs into a flat context vector
         pooled_features = self._pool_hidden_states(
-            outputs, attention_mask=attention_mask
+            outputs,
+            attention_mask=attention_mask,
         )
 
         # Pass through the target projection layers

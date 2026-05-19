@@ -6,7 +6,7 @@ enabling flexible composition of plot configurations with experiment state.
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Union, cast
+from typing import Any, Union
 
 from ..utils import ConfigBase, resolve_class, safe_store
 

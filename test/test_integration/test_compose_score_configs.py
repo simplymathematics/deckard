@@ -13,8 +13,12 @@ from hydra.core.config_store import ConfigStore
 from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf
 
-SKLEARN_CONFIG_DIR = Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
-PYTORCH_CONFIG_DIR = Path(__file__).resolve().parents[2] / "examples" / "pytorch" / "config"
+SKLEARN_CONFIG_DIR = (
+    Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
+)
+PYTORCH_CONFIG_DIR = (
+    Path(__file__).resolve().parents[2] / "examples" / "pytorch" / "config"
+)
 
 
 def _reset_hydra_state():
@@ -50,13 +54,16 @@ def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
             ["accuracy", "precision", "recall", "f1"],
             id="sklearn-classification",
             marks=pytest.mark.parametrize(
-                "overrides", [["score=classification"]], indirect=False
+                "overrides",
+                [["score=classification"]],
+                indirect=False,
             ),
         ),
     ],
 )
 def test_sklearn_score_config_composes(
-    config_name: str, expected_scorers: list[str]
+    config_name: str,
+    expected_scorers: list[str],
 ):
     """Test sklearn score config profiles compose correctly."""
     cfg = _compose_sklearn(config_name, overrides=["score=classification"])

@@ -4,10 +4,12 @@ from deckard.plugins.anjana.data import AnjanaDataConfig
 from deckard.plugins.anjana.score import DefaultAnjanaDataScorerConfig
 import pytest
 
+
 def _fake_anjana_defense(data, **kwargs):
     _ = kwargs
     # Keep first 3 rows to simulate suppression/anonymization filtering.
     return data.iloc[:3].copy()
+
 
 @pytest.mark.xfail(reason="Unsure if test is accurate.")
 def test_anjana_data_defense_applies_callable_and_updates_xy(monkeypatch):

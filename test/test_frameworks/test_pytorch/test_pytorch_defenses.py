@@ -382,6 +382,7 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
         with self.assertRaises(ValueError):
             defense.apply_to(estimator=TinyLinear(), data=data)
 
+
 class _OrderTrackingDefense:
     def __init__(self, defense_name, order):
         self.defense_name = defense_name

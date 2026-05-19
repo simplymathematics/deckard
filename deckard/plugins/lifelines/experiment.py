@@ -858,7 +858,8 @@ class SurvivalExperimentConfig(ExperimentConfig):
     def __call__(
         self,
     ) -> dict[
-        str, pd.DataFrame | dict[str, RegressionFitter] | Optional[dict[str, float]]
+        str,
+        pd.DataFrame | dict[str, RegressionFitter] | Optional[dict[str, float]],
     ]:
         """Run the configured survival experiment workflow.
 

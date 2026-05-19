@@ -145,7 +145,8 @@ class DataContractMixin(BaseContractMixin):
         return X, y
 
     def load_data(
-        self, filepath: str | None = None
+        self,
+        filepath: str | None = None,
     ) -> RuntimeValue | tuple[MatrixLike, ArrayLike]:
         """Load or materialize runtime data.
 
@@ -562,7 +563,9 @@ class DetectorContractMixin(BaseContractMixin):
     score_dict: dict[str, RuntimeValue]
 
     def build_detector(
-        self, model: ModelConfig, attack: AttackConfig
+        self,
+        model: ModelConfig,
+        attack: AttackConfig,
     ) -> RuntimeValue | None:
         """Build or fetch detector payload.
 

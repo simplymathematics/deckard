@@ -38,8 +38,9 @@ class TestDiscoverConfigRoots:
         # Should find at least sklearn root if it exists
         root_strs = [str(r) for r in roots]
         # At least one of the built-in roots should be found
-        assert any("sklearn" in r or "pytorch" in r for r in root_strs), \
-            "Expected at least one built-in config root"
+        assert any(
+            "sklearn" in r or "pytorch" in r for r in root_strs
+        ), "Expected at least one built-in config root"
 
     def test_external_roots_from_env(self):
         """Test DECKARD_CONFIG_DIRS environment variable."""
@@ -51,22 +52,27 @@ class TestDiscoverConfigRoots:
             ext_dir2.mkdir()
 
             # Set environment variable
-            with mock.patch.dict(os.environ, {"DECKARD_CONFIG_DIRS": f"{ext_dir1}:{ext_dir2}"}):
+            with mock.patch.dict(
+                os.environ, {"DECKARD_CONFIG_DIRS": f"{ext_dir1}:{ext_dir2}"}
+            ):
                 roots = discover_config_roots()
                 # Check that external roots are in the list
                 root_strs = [str(r) for r in roots]
-                assert any(str(ext_dir1) in r for r in root_strs), \
-                    f"External root {ext_dir1} not found"
-                assert any(str(ext_dir2) in r for r in root_strs), \
-                    f"External root {ext_dir2} not found"
+                assert any(
+                    str(ext_dir1) in r for r in root_strs
+                ), f"External root {ext_dir1} not found"
+                assert any(
+                    str(ext_dir2) in r for r in root_strs
+                ), f"External root {ext_dir2} not found"
 
     def test_external_roots_with_nonexistent_paths(self):
         """Test that nonexistent external roots are skipped with warning."""
         with mock.patch.dict(os.environ, {"DECKARD_CONFIG_DIRS": "/nonexistent/path"}):
             roots = discover_config_roots()
             # Should not include nonexistent path
-            assert not any("/nonexistent" in str(r) for r in roots), \
-                "Nonexistent path should not be included"
+            assert not any(
+                "/nonexistent" in str(r) for r in roots
+            ), "Nonexistent path should not be included"
 
     def test_empty_deckard_config_dirs(self):
         """Test empty DECKARD_CONFIG_DIRS is handled gracefully."""
@@ -120,20 +126,20 @@ class TestParseConfigFile:
 
     def test_parse_valid_yaml(self):
         """Test parsing of valid YAML file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            yaml.dump({'key': 'value', 'nested': {'a': 1}}, f)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            yaml.dump({"key": "value", "nested": {"a": 1}}, f)
             f.flush()
             path = Path(f.name)
 
         try:
             result = parse_config_file(path)
-            assert result == {'key': 'value', 'nested': {'a': 1}}
+            assert result == {"key": "value", "nested": {"a": 1}}
         finally:
             path.unlink()
 
     def test_parse_empty_yaml(self):
         """Test parsing of empty YAML file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write("")
             f.flush()
             path = Path(f.name)
@@ -146,7 +152,7 @@ class TestParseConfigFile:
 
     def test_parse_invalid_yaml(self):
         """Test that invalid YAML returns None."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write("{ invalid yaml: ][")
             f.flush()
             path = Path(f.name)
@@ -198,49 +204,73 @@ class TestShouldRegisterConfig:
 
     def test_pytorch_config_with_torch(self):
         """Test PyTorch config is registered when torch available."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', dir=None, prefix='torch_') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", dir=None, prefix="torch_"
+        ) as f:
             path = Path(f.name)
-            with mock.patch('deckard.declarations.is_package_available', return_value=True):
+            with mock.patch(
+                "deckard.declarations.is_package_available", return_value=True
+            ):
                 assert _should_register_config(path)
 
     def test_pytorch_config_without_torch(self):
         """Test PyTorch config is skipped when torch unavailable."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', prefix='torch_') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", prefix="torch_"
+        ) as f:
             path = Path(f.name)
-            with mock.patch('deckard.declarations.is_package_available', return_value=False):
+            with mock.patch(
+                "deckard.declarations.is_package_available", return_value=False
+            ):
                 assert not _should_register_config(path)
 
     def test_sklearn_config_with_sklearn(self):
         """Test sklearn config is registered when sklearn available."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', prefix='sklearn_') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", prefix="sklearn_"
+        ) as f:
             path = Path(f.name)
-            with mock.patch('deckard.declarations.is_package_available', return_value=True):
+            with mock.patch(
+                "deckard.declarations.is_package_available", return_value=True
+            ):
                 assert _should_register_config(path)
 
     def test_sklearn_config_without_sklearn(self):
         """Test sklearn config is skipped when sklearn unavailable."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', prefix='sklearn_') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", prefix="sklearn_"
+        ) as f:
             path = Path(f.name)
-            with mock.patch('deckard.declarations.is_package_available', return_value=False):
+            with mock.patch(
+                "deckard.declarations.is_package_available", return_value=False
+            ):
                 assert not _should_register_config(path)
 
     def test_framework_pytorch_config_without_torch(self):
         """Framework pytorch configs should be skipped when torch is unavailable."""
         path = Path("/tmp/frameworks/pytorch/default_defense.yaml")
-        with mock.patch('deckard.declarations.is_package_available', return_value=False):
+        with mock.patch(
+            "deckard.declarations.is_package_available", return_value=False
+        ):
             assert not _should_register_config(path)
 
     def test_framework_sklearn_config_without_sklearn(self):
         """Framework sklearn configs should be skipped when sklearn is unavailable."""
         path = Path("/tmp/frameworks/sklearn/default_defense.yaml")
-        with mock.patch('deckard.declarations.is_package_available', return_value=False):
+        with mock.patch(
+            "deckard.declarations.is_package_available", return_value=False
+        ):
             assert not _should_register_config(path)
 
     def test_generic_config_always_registered(self):
         """Test generic configs are always registered regardless of deps."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', prefix='config_') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", prefix="config_"
+        ) as f:
             path = Path(f.name)
-            with mock.patch('deckard.declarations.is_package_available', return_value=False):
+            with mock.patch(
+                "deckard.declarations.is_package_available", return_value=False
+            ):
                 # Even with all packages unavailable, generic configs are registered
                 assert _should_register_config(path)
 
@@ -302,11 +332,13 @@ class TestRegisterConfigs:
             model_dir = ext_dir / "model"
             model_dir.mkdir()
             config_file = model_dir / "test_model.yaml"
-            with open(config_file, 'w') as f:
-                yaml.dump({'_target_': 'some.Model'}, f)
+            with open(config_file, "w") as f:
+                yaml.dump({"_target_": "some.Model"}, f)
 
             with mock.patch.dict(os.environ, {"DECKARD_CONFIG_DIRS": str(ext_dir)}):
                 try:
                     register_configs()
                 except Exception as e:
-                    pytest.fail(f"register_configs with external dirs raised {type(e).__name__}: {e}")
+                    pytest.fail(
+                        f"register_configs with external dirs raised {type(e).__name__}: {e}"
+                    )

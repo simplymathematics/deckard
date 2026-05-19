@@ -1,7 +1,6 @@
 """Configuration for reconstruction attacks (database reconstruction)."""
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Union
 
 from .base import AttackConfig, AttackTypePlugin
 from .inference import _InferenceAttackMixin
@@ -61,6 +60,6 @@ class ReconstructionAttackConfig(_ReconstructionAttackMixin, AttackConfig):
                 mixin_type=_ReconstructionAttackMixin,
                 attack_type="inference",
                 attack_subtype="reconstruction",
-            )
-        ]
+            ),
+        ],
     )

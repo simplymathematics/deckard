@@ -237,7 +237,9 @@ class DeclarativeConfigContract(ABC):
 
     @staticmethod
     def _validate_declared_step_names(
-        step_names: Sequence[str], *, phase: str
+        step_names: Sequence[str],
+        *,
+        phase: str,
     ) -> None:
         duplicate_steps = {
             step_name for step_name in step_names if step_names.count(step_name) > 1
@@ -732,7 +734,9 @@ class FrameworkDetectorConfig(
 
     @abstractmethod
     def build_detector(
-        self, model: "ModelConfig", attack: "AttackConfig"
+        self,
+        model: "ModelConfig",
+        attack: "AttackConfig",
     ) -> RuntimeValue:
         """Construct detector runtime for model/attack outputs.
 

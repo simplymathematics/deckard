@@ -19,10 +19,14 @@ from helpers import load_env_from_deckard_rc
 
 DefensePipelineConfig = model_module.DefensePipelineConfig
 PytorchModelConfig = model_module.PytorchModelConfig
-FairlearnPytorchModelConfig = getattr(model_module, "FairlearnPytorchModelConfig", None)
+FairlearnPytorchModelConfig = getattr(
+    model_module, "FairlearnPytorchModelConfig", None
+)
 
 if FairlearnPytorchModelConfig is None:
-    pytest.skip("fairlearn pytorch model configs are unavailable", allow_module_level=True)
+    pytest.skip(
+        "fairlearn pytorch model configs are unavailable", allow_module_level=True
+    )
 
 
 ROOT = Path(__file__).resolve().parents[3]

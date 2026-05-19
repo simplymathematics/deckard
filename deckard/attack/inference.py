@@ -535,6 +535,6 @@ class InferenceAttackConfig(_InferenceAttackMixin, AttackConfig):
                 mixin_type=_InferenceAttackMixin,
                 attack_type="inference",
                 excluded_subtypes=("reconstruction",),
-            )
-        ]
+            ),
+        ],
     )

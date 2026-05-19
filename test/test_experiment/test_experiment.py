@@ -295,8 +295,6 @@ class TestExperimentDetectorPhase(unittest.TestCase):
         self.assertIn("detector_n", scores)
 
 
-
-
 class TestPoisoningExperimentIntegration(unittest.TestCase):
     def test_poisoning_experiment_emits_benign_and_poisoned_accuracy(self):
         exp = ExperimentConfig(
@@ -594,6 +592,7 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
 
     def test_select_data_cls_pipeline_key(self):
         from deckard.data import DataPipelineConfig
+
         data_dict = {"pipeline": {}}
         cls = self.mixin._select_data_cls(data_dict)
         self.assertIs(cls, DataPipelineConfig)
@@ -628,7 +627,7 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
         with patch("builtins.__import__", side_effect=_raise_for_anjana):
             with self.assertRaises(ImportError):
                 self.mixin._select_data_cls(data_dict)
-                
+
     def test_select_data_cls_fairness_missing_dependency_raises(self):
         import builtins
 

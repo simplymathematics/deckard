@@ -319,7 +319,9 @@ class _PrivacyBehaviorMixin:
 
 @dataclass(eq=False, kw_only=True)
 class AnjanaDataConfig(
-    _PrivacyBehaviorMixin, _SensitiveColumnsMixin, DataPipelineConfig
+    _PrivacyBehaviorMixin,
+    _SensitiveColumnsMixin,
+    DataPipelineConfig,
 ):
     """Data pipeline config with ANJANA anonymization support.
 
@@ -371,8 +373,8 @@ class AnjanaDataConfig(
                     "type": "data",
                     "class": "anonymization",
                 },
-            )
-        ]
+            ),
+        ],
     )
 
     def __post_init__(self):
@@ -386,7 +388,9 @@ class AnjanaDataConfig(
         self._validate_init()
 
     def __call__(
-        self, *args: RuntimePayload, **kwargs: RuntimePayload
+        self,
+        *args: RuntimePayload,
+        **kwargs: RuntimePayload,
     ) -> dict[str, RuntimeValue]:
         """Execute ANJANA data runtime with scorer auto-resolution.
 

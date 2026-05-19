@@ -1099,7 +1099,8 @@ class PytorchModelConfig(ModelConfig):
         return scores
 
     def get_art_model(
-        self, data: "DataConfig"
+        self,
+        data: "DataConfig",
     ) -> PyTorchClassifier | PyTorchRegressor:
         """Get ART-compatible model wrapper for adversarial robustness.
 

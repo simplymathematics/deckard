@@ -64,7 +64,8 @@ def _run_optimize_and_load_scores(
     if not has_score_override:
         final_overrides.append(score_override)
     if not any(
-        isinstance(item, str) and item.startswith(("hydra.job.num=", "+hydra.job.num="))
+        isinstance(item, str)
+        and item.startswith(("hydra.job.num=", "+hydra.job.num="))
         for item in final_overrides
     ):
         final_overrides.append("hydra.job.num=0")

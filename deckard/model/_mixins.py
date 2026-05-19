@@ -59,7 +59,10 @@ class ModelPrunerMixin:
     """Reusable Optuna-style pruning behavior."""
 
     def check_prune(
-        self, trial, value: Any | None = None, step: int | None = None
+        self,
+        trial,
+        value: Any | None = None,
+        step: int | None = None,
     ) -> bool:
         """Report an intermediate value and ask a trial whether it should prune.
 

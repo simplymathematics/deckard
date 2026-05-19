@@ -85,7 +85,9 @@ def test_transformer_defense_kwarg_ctor_and_get_classifier(monkeypatch):
     cfg = _make_config()
     wrapped = SimpleNamespace(name="wrapped")
     cfg._build_art_wrapper = lambda **kwargs: wrapped
-    monkeypatch.setattr("deckard.model.transformer._is_torch_model_instance", lambda _m: True)
+    monkeypatch.setattr(
+        "deckard.model.transformer._is_torch_model_instance", lambda _m: True
+    )
 
     defense, defended_estimator = cfg(
         data=None,
@@ -107,7 +109,9 @@ def test_transformer_defense_positional_ctor_fallback(monkeypatch):
     cfg = _make_config()
     wrapped = SimpleNamespace(name="wrapped")
     cfg._build_art_wrapper = lambda **kwargs: wrapped
-    monkeypatch.setattr("deckard.model.transformer._is_torch_model_instance", lambda _m: True)
+    monkeypatch.setattr(
+        "deckard.model.transformer._is_torch_model_instance", lambda _m: True
+    )
 
     defense, defended_estimator = cfg(
         data=None,
@@ -128,7 +132,9 @@ def test_transformer_defense_positional_ctor_fallback(monkeypatch):
 def test_transformer_defense_not_implemented_mapped_to_value_error_kwarg(monkeypatch):
     cfg = _make_config()
     cfg._build_art_wrapper = lambda **kwargs: SimpleNamespace(name="wrapped")
-    monkeypatch.setattr("deckard.model.transformer._is_torch_model_instance", lambda _m: True)
+    monkeypatch.setattr(
+        "deckard.model.transformer._is_torch_model_instance", lambda _m: True
+    )
 
     with pytest.raises(ValueError, match="initialization failed"):
         cfg(
@@ -144,10 +150,14 @@ def test_transformer_defense_not_implemented_mapped_to_value_error_kwarg(monkeyp
         )
 
 
-def test_transformer_defense_not_implemented_mapped_to_value_error_positional(monkeypatch):
+def test_transformer_defense_not_implemented_mapped_to_value_error_positional(
+    monkeypatch,
+):
     cfg = _make_config()
     cfg._build_art_wrapper = lambda **kwargs: SimpleNamespace(name="wrapped")
-    monkeypatch.setattr("deckard.model.transformer._is_torch_model_instance", lambda _m: True)
+    monkeypatch.setattr(
+        "deckard.model.transformer._is_torch_model_instance", lambda _m: True
+    )
 
     with pytest.raises(ValueError, match="initialization failed"):
         cfg(
@@ -168,7 +178,9 @@ def test_transformer_defense_typeerror_then_notimplemented_maps_to_value_error(
 ):
     cfg = _make_config()
     cfg._build_art_wrapper = lambda **kwargs: SimpleNamespace(name="wrapped")
-    monkeypatch.setattr("deckard.model.transformer._is_torch_model_instance", lambda _m: True)
+    monkeypatch.setattr(
+        "deckard.model.transformer._is_torch_model_instance", lambda _m: True
+    )
 
     with pytest.raises(ValueError, match="initialization failed"):
         cfg(
@@ -188,7 +200,9 @@ def test_transformer_defense_without_get_classifier_returns_wrapper(monkeypatch)
     cfg = _make_config()
     wrapped = SimpleNamespace(name="wrapped")
     cfg._build_art_wrapper = lambda **kwargs: wrapped
-    monkeypatch.setattr("deckard.model.transformer._is_torch_model_instance", lambda _m: True)
+    monkeypatch.setattr(
+        "deckard.model.transformer._is_torch_model_instance", lambda _m: True
+    )
 
     defense, defended_estimator = cfg(
         data=None,

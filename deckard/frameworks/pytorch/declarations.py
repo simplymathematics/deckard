@@ -33,18 +33,22 @@ class FlexNet(nn.Module if nn else object):
     """
 
     def __init__(
-        self, backbone_name="resnet18", num_channels=3, num_classes=2, pretrained=True
+        self,
+        backbone_name="resnet18",
+        num_channels=3,
+        num_classes=2,
+        pretrained=True,
     ):
         if nn is None or models is None:
             raise ImportError(
-                "FlexibleNet requires torch and torchvision to be installed."
+                "FlexibleNet requires torch and torchvision to be installed.",
             )
         super().__init__()
 
         # 1. Load the pre-trained backbone dynamically
         if not hasattr(models, backbone_name):
             raise ValueError(
-                f"Backbone '{backbone_name}' not found in torchvision.models."
+                f"Backbone '{backbone_name}' not found in torchvision.models.",
             )
 
         weights = "DEFAULT" if pretrained else None
@@ -74,7 +78,8 @@ class FlexNet(nn.Module if nn else object):
                 bias=old_conv.bias is not None,
             )
         elif hasattr(self.backbone, "features") and isinstance(
-            self.backbone.features[0], nn.Conv2d
+            self.backbone.features[0],
+            nn.Conv2d,
         ):  # VGG / ConvNeXt style
             old_conv = self.backbone.features[0]
             self.backbone.features[0] = nn.Conv2d(
@@ -87,7 +92,7 @@ class FlexNet(nn.Module if nn else object):
             )
         else:
             raise NotImplementedError(
-                "Channel adaptation not automatically supported for this backbone architecture."
+                "Channel adaptation not automatically supported for this backbone architecture.",
             )
 
     def _adapt_output_classes(self, num_classes) -> int:
@@ -96,23 +101,26 @@ class FlexNet(nn.Module if nn else object):
             in_features = self.backbone.fc.in_features
             self.backbone.fc = nn.Linear(in_features, num_classes)
         elif hasattr(self.backbone, "classifier") and isinstance(
-            self.backbone.classifier, nn.Sequential
+            self.backbone.classifier,
+            nn.Sequential,
         ):  # VGG style
             in_features = self.backbone.classifier[-1].in_features
             self.backbone.classifier[-1] = nn.Linear(in_features, num_classes)
         elif hasattr(self.backbone, "classifier") and isinstance(
-            self.backbone.classifier, nn.Linear
+            self.backbone.classifier,
+            nn.Linear,
         ):  # MobileNet style
             in_features = self.backbone.classifier.in_features
             self.backbone.classifier = nn.Linear(in_features, num_classes)
         elif hasattr(self.backbone, "heads") and hasattr(
-            self.backbone.heads, "head"
+            self.backbone.heads,
+            "head",
         ):  # ViT style
             in_features = self.backbone.heads.head.in_features
             self.backbone.heads.head = nn.Linear(in_features, num_classes)
         else:
             raise NotImplementedError(
-                "Classification head adaptation not supported for this backbone architecture."
+                "Classification head adaptation not supported for this backbone architecture.",
             )
         return in_features
 

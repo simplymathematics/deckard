@@ -293,7 +293,7 @@ class TorchDatasetMixin(BaseContractMixin):
                 return self._sample_train_test_indices(num_samples)
 
             folds = runtime.sample(
-                n_splits=int(params.get("n_splits", getattr(self, "n_splits", 5)))
+                n_splits=int(params.get("n_splits", getattr(self, "n_splits", 5))),
             )
             if not folds:
                 raise ValueError("Configured fold sampler produced no folds")

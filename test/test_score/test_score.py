@@ -277,8 +277,6 @@ def _load_score_profile(name: str):
     return coerce_scorer_config(OmegaConf.to_container(cfg, resolve=True))
 
 
-
-
 def test_model_default_score_profile_executes_from_yaml_defaults():
     scorer = _load_score_profile("classification")
 
@@ -387,9 +385,6 @@ def test_model_and_data_default_profiles_infer_task_from_context():
     def test_survival_bic_score_raises_when_unavailable(self):
         with self.assertRaises(ValueError):
             survival_bic_score(y_true=None, y_pred=object())
-
-
-
 
 
 class TestAttackScorers(unittest.TestCase):
@@ -522,8 +517,6 @@ class TestAttackScorers(unittest.TestCase):
             AttackScorerConfig(evasion=123)
 
 
-
-
 class TestDataInspectionScorers(unittest.TestCase):
     def test_data_classification_default_scores(self):
         y_true = np.array([0, 0, 1, 1, 1, 0, 1, 0])
@@ -596,10 +589,6 @@ class TestDataInspectionScorers(unittest.TestCase):
             DefaultDataRegressionConfig(),
             DefaultDataRegressionConfig,
         )
-
-    
-
-
 
 
 if __name__ == "__main__":

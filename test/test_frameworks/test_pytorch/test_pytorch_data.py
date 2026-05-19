@@ -123,7 +123,6 @@ class InvalidBatchDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.values[idx]
-    
 
 
 class TestPytorchDataConfig(unittest.TestCase):
@@ -289,7 +288,6 @@ class TestPytorchDataConfig(unittest.TestCase):
         self.assertTrue(len(loaded) > 0)
         self.assertIn("num_classes", loaded)
 
-
     def test_call_with_score_file_saves_json(self):
         score_path = str(Path(self.temp_dir) / "pytorch_scores.json")
         scores = self.config(score_file=score_path)
@@ -392,7 +390,9 @@ class TestPytorchDataConfig(unittest.TestCase):
             seen["kwargs"] = kwargs
             return ArrayFallbackDataset()
 
-        with patch("deckard.frameworks.pytorch.data.load_class", side_effect=fake_load_class):
+        with patch(
+            "deckard.frameworks.pytorch.data.load_class", side_effect=fake_load_class
+        ):
             cfg._load_data()
 
         self.assertEqual(seen["name"], "torchvision.datasets.MNIST")
@@ -410,7 +410,10 @@ class TestPytorchDataConfig(unittest.TestCase):
             data_params={},
         )
 
-        with patch("deckard.frameworks.pytorch.data.load_class", return_value=IntImageDataset()):
+        with patch(
+            "deckard.frameworks.pytorch.data.load_class",
+            return_value=IntImageDataset(),
+        ):
             cfg._load_data()
 
         self.assertEqual(tuple(cfg._X.shape), (6, 1, 2, 2))
@@ -435,7 +438,9 @@ class TestPytorchDataConfig(unittest.TestCase):
         X = torch.randn(4, 2)
         y = torch.randint(0, 2, (4,))
         bad_sensitive = MismatchedSensitiveDataset(X, y)
-        with patch("deckard.frameworks.pytorch.data.load_class", return_value=bad_sensitive):
+        with patch(
+            "deckard.frameworks.pytorch.data.load_class", return_value=bad_sensitive
+        ):
             with self.assertRaises((ValueError, RuntimeError)):
                 cfg._load_data()
 
@@ -471,7 +476,6 @@ class TestPytorchDataConfig(unittest.TestCase):
         with self.assertRaises(ValueError):
             cfg._sample()
 
-
     def test_call_accepts_existing_data_and_score_paths(self):
         data_path = Path(self.temp_dir) / "existing_data.pkl"
         score_path = Path(self.temp_dir) / "existing_scores.json"
@@ -492,7 +496,6 @@ class TestPytorchDataConfig(unittest.TestCase):
         load_scores.assert_not_called()
         save_scores.assert_called_once()
         self.assertIn("data_load_time", scores)
-        
 
 
 class TestPytorchCustomDataConfig(unittest.TestCase):
@@ -730,7 +733,11 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
         with patch.object(cfg, "load_object", return_value=loaded) as load_object:
             with patch.object(loaded, "save_scores") as save_scores:
                 with patch.object(loaded, "save_object") as save_object:
-                    scores = cfg(data_file=str(data_path), score_file=str(score_path), mode="pre-sample")
+                    scores = cfg(
+                        data_file=str(data_path),
+                        score_file=str(score_path),
+                        mode="pre-sample",
+                    )
 
         load_object.assert_called_once()
         save_scores.assert_called_once()
@@ -742,14 +749,15 @@ class TestPytorchCustomDatasetConfig(unittest.TestCase):
     # TODO Implement mixin for using a dataloader object and test it here
     pass
 
+
 class TestPytorchCustomDataLoaderConfig(unittest.TestCase):
     # TODO Implement mixin for using a dataloader object and test it here
     pass
 
+
 class TestPytorchCustomTensorSetConfig(unittest.TestCase):
     # TODO Implement mixin for using a custom tensor data object and test it here
     pass
-
 
 
 if __name__ == "__main__":

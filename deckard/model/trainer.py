@@ -1,7 +1,7 @@
 """Configuration for trainer defenses (adversarial training)."""
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from deckard.plugins.defense import DefenseTypePlugin
 from .defend import (
@@ -91,8 +91,8 @@ class TrainerDefenseConfig(_TrainerDefenseMixin, DefensePipelineConfig):
             DefenseTypePlugin(
                 mixin_type=_TrainerDefenseMixin,
                 defense_type="trainer",
-            )
-        ]
+            ),
+        ],
     )
 
 

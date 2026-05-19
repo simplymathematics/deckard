@@ -1,7 +1,7 @@
 """Configuration for postprocessor defenses (output transformation)."""
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from deckard.plugins.defense import DefenseTypePlugin
 from .defend import DefensePipelineConfig, _DefenseMixin
@@ -65,8 +65,8 @@ class PostprocessorDefenseConfig(_PostprocessorDefenseMixin, DefensePipelineConf
             DefenseTypePlugin(
                 mixin_type=_PostprocessorDefenseMixin,
                 defense_type="postprocessor",
-            )
-        ]
+            ),
+        ],
     )
 
 

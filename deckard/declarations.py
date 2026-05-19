@@ -180,7 +180,7 @@ def _should_register_config(path: Path) -> bool:
     if "sklearn" in path_str:
         if not is_package_available("sklearn"):
             logger.debug(
-                f"Skipping scikit-learn config (sklearn not installed): {path}"
+                f"Skipping scikit-learn config (sklearn not installed): {path}",
             )
             return False
 
@@ -267,7 +267,7 @@ def register_configs() -> None:
             registration_key = f"{group}/{name}" if group else name
             if registration_key in registered:
                 logger.warning(
-                    f"Duplicate config registration (later registration ignored): {registration_key}"
+                    f"Duplicate config registration (later registration ignored): {registration_key}",
                 )
                 continue
 
@@ -287,7 +287,7 @@ def register_configs() -> None:
     logger.info(
         f"Config registration complete: {registered_count} registered, "
         f"{skipped_count} skipped (missing deps), {error_count} errors, "
-        f"{total_files} total files"
+        f"{total_files} total files",
     )
 
 

@@ -161,7 +161,9 @@ class TestScore:
         config._y = pd.Series([0, 1, 0, 1])
         config.classifier = True
         config.score_dict = {}
-        config.data_load_time = 0.0  # Prevent base _load_data from reloading adult dataset
+        config.data_load_time = (
+            0.0  # Prevent base _load_data from reloading adult dataset
+        )
         config.scorer = lambda **_: {"ok": 1}
 
         config()  # Ensure sensitive features are set up

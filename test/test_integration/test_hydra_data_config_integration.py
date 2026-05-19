@@ -5,8 +5,12 @@ from omegaconf import OmegaConf
 
 from helpers import reset_hydra_state
 
-SKLEARN_CONFIG_DIR = Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
-PYTORCH_CONFIG_DIR = Path(__file__).resolve().parents[2] / "examples" / "pytorch" / "config"
+SKLEARN_CONFIG_DIR = (
+    Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
+)
+PYTORCH_CONFIG_DIR = (
+    Path(__file__).resolve().parents[2] / "examples" / "pytorch" / "config"
+)
 
 
 def _compose_sklearn(config_name: str, overrides: list[str] | None = None):

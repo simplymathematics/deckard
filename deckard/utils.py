@@ -363,7 +363,7 @@ def normalize_plugin_specs(plugins: Any) -> list:
     if isinstance(plugins, (ListConfig, list)):
         return list(plugins)
     raise TypeError(
-        f"plugins must be a list or None, got {type(plugins).__name__!r}: {plugins!r}"
+        f"plugins must be a list or None, got {type(plugins).__name__!r}: {plugins!r}",
     )
 
 

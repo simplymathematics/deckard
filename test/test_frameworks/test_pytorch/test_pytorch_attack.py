@@ -17,7 +17,8 @@ from conftest import TinyData
 
 pytest.importorskip("torch")
 
-#TOOD Create PytorchAttackConfig and test it here rather than a generic one.
+# TOOD Create PytorchAttackConfig and test it here rather than a generic one.
+
 
 class TestAttackConfig(unittest.TestCase):
     def setUp(self):
@@ -35,6 +36,7 @@ class TestAttackConfig(unittest.TestCase):
 
     def _load_pytorch_model_inversion_config(self):
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
+
         config_path = (
             Path(__file__).resolve().parents[3]
             / "examples"
@@ -48,6 +50,7 @@ class TestAttackConfig(unittest.TestCase):
 
     def _load_pytorch_database_reconstruction_config(self):
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
+
         config_path = (
             Path(__file__).resolve().parents[3]
             / "examples"
@@ -63,7 +66,6 @@ class TestAttackConfig(unittest.TestCase):
         self.assertTrue(hasattr(self.attack, "attack_type"))
         self.assertTrue(hasattr(self.attack, "attack_params"))
 
-    
     def test_select_extraction_scorer_falls_back_for_logits(self):
         scorer, use_proba = AttackConfig._select_extraction_scorer(
             benign_pred=np.array([[0.8, 0.2], [0.1, 0.9]]),
@@ -206,7 +208,6 @@ class TestAttackConfig(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 attack(data, model)
-
 
     def test_real_evasion_attack_executes(self):
         torch = pytest.importorskip("torch")
@@ -628,7 +629,9 @@ class TestTorchUtils(unittest.TestCase):
                 build_torch_art_model(object(), object())
 
     def test_collect_subset_raises_when_torch_flag_disabled(self):
-        from deckard.frameworks.pytorch.torch_utils import collect_subset_from_dataloader
+        from deckard.frameworks.pytorch.torch_utils import (
+            collect_subset_from_dataloader,
+        )
 
         with patch("deckard.frameworks.pytorch.torch_utils.HAS_TORCH", False):
             with self.assertRaises(ImportError):
@@ -728,7 +731,9 @@ class TestTorchUtils(unittest.TestCase):
         self._skip_if_no_torch()
         from torch.utils.data import DataLoader, TensorDataset
 
-        from deckard.frameworks.pytorch.torch_utils import collect_subset_from_dataloader
+        from deckard.frameworks.pytorch.torch_utils import (
+            collect_subset_from_dataloader,
+        )
 
         X = self.torch.randn(10, 3)
         y = self.torch.randint(0, 2, (10,))
@@ -742,7 +747,9 @@ class TestTorchUtils(unittest.TestCase):
         self._skip_if_no_torch()
         from torch.utils.data import DataLoader, TensorDataset
 
-        from deckard.frameworks.pytorch.torch_utils import collect_subset_from_dataloader
+        from deckard.frameworks.pytorch.torch_utils import (
+            collect_subset_from_dataloader,
+        )
 
         X = self.torch.randn(5, 2)
         y = self.torch.randint(0, 2, (5,))
@@ -753,7 +760,9 @@ class TestTorchUtils(unittest.TestCase):
 
     def test_collect_subset_raises_for_non_dataloader(self):
         self._skip_if_no_torch()
-        from deckard.frameworks.pytorch.torch_utils import collect_subset_from_dataloader
+        from deckard.frameworks.pytorch.torch_utils import (
+            collect_subset_from_dataloader,
+        )
 
         with self.assertRaises(TypeError):
             collect_subset_from_dataloader([1, 2, 3], n=2)
@@ -2227,7 +2236,9 @@ class TestResolveEvalSplit(unittest.TestCase):
             X_test = np.zeros((4, 2))
             y_test = np.array([0, 1, 0, 1])
 
-        runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="gradient_matching_attack")
+        runtime = attack._with_attack_context(
+            attack_type="poisoning", attack_subtype="gradient_matching_attack"
+        )
         mode, x, y = runtime._resolve_eval_split(_Data())
         self.assertEqual(mode, "val")
 
@@ -2242,7 +2253,9 @@ class TestResolveEvalSplit(unittest.TestCase):
             X_test = np.zeros((4, 2))
             y_test = np.array([0, 1, 0, 1])
 
-        runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="gradient_matching_attack")
+        runtime = attack._with_attack_context(
+            attack_type="poisoning", attack_subtype="gradient_matching_attack"
+        )
         mode, x, y = runtime._resolve_eval_split(_Data())
         self.assertEqual(mode, "test")
 
@@ -2257,7 +2270,9 @@ class TestResolveEvalSplit(unittest.TestCase):
             X_test = np.zeros((4, 2))
             y_test = np.array([0, 1, 0, 1])
 
-        runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="gradient_matching_attack")
+        runtime = attack._with_attack_context(
+            attack_type="poisoning", attack_subtype="gradient_matching_attack"
+        )
         with self.assertRaises(ValueError):
             runtime._resolve_eval_split(_Data())
 
@@ -2272,7 +2287,9 @@ class TestResolveEvalSplit(unittest.TestCase):
             X_test = None
             y_test = None
 
-        runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="gradient_matching_attack")
+        runtime = attack._with_attack_context(
+            attack_type="poisoning", attack_subtype="gradient_matching_attack"
+        )
         with self.assertRaises(ValueError):
             runtime._resolve_eval_split(_Data())
 
@@ -2324,7 +2341,9 @@ class TestPoisonBranches(unittest.TestCase):
             def poison(self, x_trigger, y_trigger, x_train, y_train):
                 return np.asarray(x_train), np.asarray(y_train)
 
-        runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="gradient_matching_attack")
+        runtime = attack._with_attack_context(
+            attack_type="poisoning", attack_subtype="gradient_matching_attack"
+        )
         result = runtime.poison(
             data=self._make_data(),
             art_model=_FakeArtModel(),
@@ -2357,7 +2376,9 @@ class TestPoisonBranches(unittest.TestCase):
             def poison(self, x_trigger, y_trigger, x_train, y_train):
                 return np.asarray(x_train), np.asarray(y_train)
 
-        runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="gradient_matching_attack")
+        runtime = attack._with_attack_context(
+            attack_type="poisoning", attack_subtype="gradient_matching_attack"
+        )
         result = runtime.poison(
             data=self._make_data(),
             art_model=_FakeArtModel(),
@@ -2396,7 +2417,9 @@ class TestPoisonBranches(unittest.TestCase):
                 _ = kwargs
                 return np.asarray(x), np.asarray(y)
 
-        runtime = attack._with_attack_context(attack_type="poisoning", attack_subtype="PoisoningAttackSVM")
+        runtime = attack._with_attack_context(
+            attack_type="poisoning", attack_subtype="PoisoningAttackSVM"
+        )
         result = runtime.poison(
             data=self._make_data(),
             art_model=_FakeArtModel(),
@@ -2466,7 +2489,9 @@ class TestExtractBranches(unittest.TestCase):
 
         self.assertEqual(attack_type, "extraction")
         self.assertEqual(attack_subtype, "CopycatCNN")
-        runtime = attack._with_attack_context(attack_type="extraction", attack_subtype="CopycatCNN")
+        runtime = attack._with_attack_context(
+            attack_type="extraction", attack_subtype="CopycatCNN"
+        )
         self.assertTrue(runtime._is_nn_art_classifier(art_model))
         self.assertIs(initialized_attack.classifier, art_model)
 
@@ -2606,7 +2631,9 @@ class TestStaticHelpers(unittest.TestCase):
 
     def test_is_nn_art_classifier_returns_false_for_plain_object(self):
         attack = AttackConfig(attack_type="art.attacks.extraction.CopycatCNN")
-        runtime = attack._with_attack_context(attack_type="extraction", attack_subtype="CopycatCNN")
+        runtime = attack._with_attack_context(
+            attack_type="extraction", attack_subtype="CopycatCNN"
+        )
         self.assertFalse(runtime._is_nn_art_classifier(object()))
 
     def test_is_nn_art_classifier_returns_true_for_pytorch_name(self):
@@ -2614,7 +2641,9 @@ class TestStaticHelpers(unittest.TestCase):
             _model = None
 
         attack = AttackConfig(attack_type="art.attacks.extraction.CopycatCNN")
-        runtime = attack._with_attack_context(attack_type="extraction", attack_subtype="CopycatCNN")
+        runtime = attack._with_attack_context(
+            attack_type="extraction", attack_subtype="CopycatCNN"
+        )
         self.assertTrue(runtime._is_nn_art_classifier(PyTorchClassifier()))
 
     def test_normalize_inferred_output_higher_dim_reference(self):

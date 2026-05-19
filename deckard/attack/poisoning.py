@@ -3,7 +3,6 @@
 import time
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 import numpy as np
 from art.config import ART_NUMPY_DTYPE
@@ -405,6 +404,6 @@ class PoisoningAttackConfig(_PoisoningAttackMixin, AttackConfig):
             AttackTypePlugin(
                 mixin_type=_PoisoningAttackMixin,
                 attack_type="poisoning",
-            )
-        ]
+            ),
+        ],
     )

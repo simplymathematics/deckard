@@ -35,7 +35,9 @@ def _make_clf_config(**kwargs):
             "n_clusters_per_class": 1,
         },
     )
-    defaults.update({"test_size": 0.2, "random_state": 42, "stratify": True, "classifier": True})
+    defaults.update(
+        {"test_size": 0.2, "random_state": 42, "stratify": True, "classifier": True}
+    )
     defaults.update(kwargs)
     cfg = DataConfig(**defaults)
     cfg._load_data()
@@ -53,7 +55,9 @@ def _make_reg_config(**kwargs):
             "random_state": 1,
         },
     )
-    defaults.update({"test_size": 0.2, "random_state": 1, "stratify": False, "classifier": False})
+    defaults.update(
+        {"test_size": 0.2, "random_state": 1, "stratify": False, "classifier": False}
+    )
     defaults.update(kwargs)
     cfg = DataConfig(**defaults)
     cfg._load_data()

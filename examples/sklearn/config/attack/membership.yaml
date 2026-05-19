@@ -8,4 +8,3 @@ attack_params:
   attack_model: ${model}
 _target_ : deckard.attack.AttackConfig
 alias: membership
-

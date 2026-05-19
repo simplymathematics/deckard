@@ -188,7 +188,7 @@ class DataConfigResolutionMixin:
                 from deckard.plugins.anjana.data import AnjanaDataConfig
             except ImportError:
                 raise ImportError(
-                    "Privacy features need `anjana`. Install with `pip install deckard[anjana]`"
+                    "Privacy features need `anjana`. Install with `pip install deckard[anjana]`",
                 )
             return AnjanaDataConfig
 
@@ -197,7 +197,7 @@ class DataConfigResolutionMixin:
                 from deckard.plugins.fairlearn.data import FairlearnDataConfig
             except ImportError:
                 raise ImportError(
-                    "Fairness features need `fairlearn`. Install with `pip install deckard[fairlearn]`"
+                    "Fairness features need `fairlearn`. Install with `pip install deckard[fairlearn]`",
                 )
             return FairlearnDataConfig
 
@@ -321,7 +321,7 @@ class ExperimentConfig(
             raw_modes = ["train", "test", "val"]
         else:
             raise NotImplementedError(
-                f"Evaluation mode: {self.evaluation_mode} not implemented"
+                f"Evaluation mode: {self.evaluation_mode} not implemented",
             )
 
         allowed = {"pre-sample", "train", "test", "val"}
@@ -718,7 +718,8 @@ class ExperimentConfig(
         )
 
     def _split_merged_score_profiles(
-        self, plain: dict
+        self,
+        plain: dict,
     ) -> tuple[dict | None, dict | None]:
         scorers = plain.get("scorers")
         if not isinstance(scorers, dict):

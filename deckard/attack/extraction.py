@@ -5,7 +5,6 @@ import time
 import logging
 from dataclasses import dataclass
 from dataclasses import field
-from typing import TYPE_CHECKING
 
 from .base import AttackConfig, AttackTypePlugin
 from .poisoning import _PoisoningAttackMixin
@@ -179,6 +178,6 @@ class ExtractionAttackConfig(_ExtractionAttackMixin, AttackConfig):
             AttackTypePlugin(
                 mixin_type=_ExtractionAttackMixin,
                 attack_type="extraction",
-            )
-        ]
+            ),
+        ],
     )

@@ -1,6 +1,5 @@
 # Imports
 import os
-import copy
 import pandas as pd
 import time
 import logging
@@ -347,7 +346,8 @@ class DataConfig(
 
     @split_indices.setter
     def split_indices(
-        self, value: tuple[list | None, list | None, list | None]
+        self,
+        value: tuple[list | None, list | None, list | None],
     ) -> None:
         """Set the active train/test/val split index triplet."""
         train_idx, test_idx, val_idx = value
@@ -1400,12 +1400,14 @@ class DataPipelineConfig(DataConfig):
             if isinstance(path, str) and "${data.split}" in path:
                 if self.split is not None:
                     resolved_config["distance_matrix_full"] = path.replace(
-                        "${data.split}", str(self.split)
+                        "${data.split}",
+                        str(self.split),
                     )
             elif isinstance(path, str) and "${item.fold}" in path:
                 if self.split is not None:
                     resolved_config["distance_matrix_full"] = path.replace(
-                        "${item.fold}", str(self.split)
+                        "${item.fold}",
+                        str(self.split),
                     )
 
         # Resolve distance_matrix_train path if present
@@ -1414,12 +1416,14 @@ class DataPipelineConfig(DataConfig):
             if isinstance(path, str) and "${data.split}" in path:
                 if self.split is not None:
                     resolved_config["distance_matrix_train"] = path.replace(
-                        "${data.split}", str(self.split)
+                        "${data.split}",
+                        str(self.split),
                     )
             elif isinstance(path, str) and "${item.fold}" in path:
                 if self.split is not None:
                     resolved_config["distance_matrix_train"] = path.replace(
-                        "${item.fold}", str(self.split)
+                        "${item.fold}",
+                        str(self.split),
                     )
 
         # Resolve distance_matrix_test path if present
@@ -1428,12 +1432,14 @@ class DataPipelineConfig(DataConfig):
             if isinstance(path, str) and "${data.split}" in path:
                 if self.split is not None:
                     resolved_config["distance_matrix_test"] = path.replace(
-                        "${data.split}", str(self.split)
+                        "${data.split}",
+                        str(self.split),
                     )
             elif isinstance(path, str) and "${item.fold}" in path:
                 if self.split is not None:
                     resolved_config["distance_matrix_test"] = path.replace(
-                        "${item.fold}", str(self.split)
+                        "${item.fold}",
+                        str(self.split),
                     )
 
         return resolved_config
@@ -1467,7 +1473,7 @@ class DataPipelineConfig(DataConfig):
             else:
                 y_hook = self._y[keep_idx]
             logger.info(
-                f"Subsetting data from {n_samples} to {budget} samples before pre_sample_fit."
+                f"Subsetting data from {n_samples} to {budget} samples before pre_sample_fit.",
             )
         else:
             X_hook = self._X
@@ -1573,7 +1579,7 @@ class DataPipelineConfig(DataConfig):
     def should_run_pre_sample_pipeline(self) -> bool:
         """Determine whether pre-sample pipeline behavior is composed for this run."""
         return self.pre_sample_transform or self._pipeline_declares_hook(
-            "before_sample"
+            "before_sample",
         )
 
     def run_sampling_with_pipeline_hooks(self) -> None:

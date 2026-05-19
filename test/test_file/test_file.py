@@ -4,7 +4,6 @@ from deckard.file import FileConfig
 import tempfile
 import shutil
 import time
-import os
 
 
 class TestFileConfig(unittest.TestCase):
@@ -72,7 +71,6 @@ class TestFileConfig(unittest.TestCase):
         config = FileConfig()
         with self.assertRaises(AttributeError):
             getattr(config, "foo")
-
 
     def test_iter_and_len_reflect_active_file_fields(self):
         config = FileConfig(model_file="m.pkl", score_file="s.json")

@@ -133,6 +133,7 @@ def test_post_init_normalizes_scorer_string_and_dict(monkeypatch):
     dict_cfg = _basic_data_config(scorer=OmegaConf.create({"scorers": {}}))
     assert isinstance(dict_cfg.scorer, ScorerDictConfig)
 
+
 def test_plugin_instantiation_and_hook_paths(monkeypatch):
     calls = []
 
@@ -196,6 +197,7 @@ def test_get_stratify_col_branches():
     cfg.stratify = 3
     with pytest.raises(ValueError):
         cfg._get_stratify_col()
+
 
 def test_resolve_sample_branches(monkeypatch):
     import deckard.data._mixins as data_mixins
@@ -451,7 +453,6 @@ def test_score_and_feature_score_branches(monkeypatch):
     cfg._X = pd.DataFrame({"a": [1, 2]})
     cfg._y = pd.Series([0, 1])
     assert cfg._score() == {"base_score": 1, "plugin_score": 7}
-
 
 
 def test_fit_transform_x_empty_pipeline_short_circuits():

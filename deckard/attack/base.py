@@ -1,7 +1,6 @@
 # Standard library imports
 import copy
 import pickle
-import time
 import logging
 
 from pathlib import Path
@@ -519,7 +518,10 @@ class AttackConfig(AttackContractMixin, ConfigBase, FrameworkAttackConfig):
         return self._initialize_attack(model, data)
 
     def resolve_attack_runtime_handler(
-        self, runtime, attack_type: str, attack_subtype: str
+        self,
+        runtime,
+        attack_type: str,
+        attack_subtype: str,
     ):
         """Resolve the runtime handler function for this attack family/subtype."""
         handler = runtime._resolve_attack_handler(
@@ -554,7 +556,8 @@ class AttackConfig(AttackContractMixin, ConfigBase, FrameworkAttackConfig):
         )
 
     def set_mode(
-        self, mode: Literal["auto", "train", "test", "val"]
+        self,
+        mode: Literal["auto", "train", "test", "val"],
     ) -> "AttackConfig":
         """Set attack scoring/evaluation split mode explicitly."""
         canonical = str(mode).strip().lower()
@@ -1055,10 +1058,13 @@ class AttackConfig(AttackContractMixin, ConfigBase, FrameworkAttackConfig):
             )
         )
         runtime = self._with_attack_context(
-            attack_type=attack_type, attack_subtype=attack_subtype
+            attack_type=attack_type,
+            attack_subtype=attack_subtype,
         )
         handler = self.resolve_attack_runtime_handler(
-            runtime, attack_type, attack_subtype
+            runtime,
+            attack_type,
+            attack_subtype,
         )
 
         before_outputs = runtime._run_plugin_hook(

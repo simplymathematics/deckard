@@ -11,8 +11,6 @@ from deckard.plugins.lifelines.experiment import SurvivalExperimentConfig
 from deckard.model import ModelConfig
 
 
-
-
 class TestSurvivalExperimentConfig(unittest.TestCase):
     def test_allows_survival_only_config_without_attack(self):
         config = SurvivalExperimentConfig(
