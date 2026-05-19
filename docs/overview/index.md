@@ -52,10 +52,10 @@ summary
 extensions
 ../developers/core_framework_plugin_boundaries
 installation
-notebooks/index
-api/modules
-developers/index
-development
+../notebooks/index
+../api/modules
+../developers/index
+../developers/development
 build_docs
 docker
 changelog

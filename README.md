@@ -37,7 +37,7 @@ python -m pip install -e .
 For full installation options and platform notes, see:
 
 - [Installation guide](docs/overview/installation.md)
-- [Developer setup](docs/overview/development.md)
+- [Developer setup](docs/developers/index.md)
 
 ## Repository layout:
 
@@ -65,7 +65,7 @@ Canonical documentation lives in `docs/` and is built with Sphinx.
 
 - [Documentation overview](docs/overview/build_docs.md)
 - [Installation](docs/overview/installation.md)
-- [Development](docs/overview/development.md)
+- [Development](docs/developers/index.md)
 - [Concepts chapter](docs/concepts.md)
 - [API hub](docs/source/index.md)
 - [Package overview](docs/source/modules.md)

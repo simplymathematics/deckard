@@ -50,6 +50,10 @@ exclude_patterns = [
 
 root_doc = "index"
 
+# Notebook markdown cells intentionally start at H2 in many guides.
+# Suppress style-only heading warnings during strict CI docs builds.
+suppress_warnings = ["myst.header"]
+
 # ---------------------------------------------------------------------------
 # myst-nb settings
 # ---------------------------------------------------------------------------

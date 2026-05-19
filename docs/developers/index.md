@@ -10,10 +10,12 @@ Welcome to the Deckard developer documentation. This section contains all design
 - [Refactor Plan](refactor_plan.md)
 - [Config Declaration Architecture](config_declaration_architecture.md)
 - [Core/Framework/Plugin Boundaries](core_framework_plugin_boundaries.md)
+- [Core Plugin Boundaries (Legacy)](core_plugin_boundaries.md)
 - [Naming Conventions](naming_conventions.md)
 - [Adapter Contract](adapter_contract.md)
 - [Mixin and Plugin Rules](mixin_plugin_rules.md)
 - [Docstring Standard](docstring_standard.md)
+- [GH Actions Cache Setup](gh_actions_cache.md)
 
 ```{toctree}
 :maxdepth: 2
@@ -24,10 +26,12 @@ development
 refactor_plan
 config_declaration_architecture
 core_framework_plugin_boundaries
+core_plugin_boundaries
 naming_conventions
 adapter_contract
 mixin_plugin_rules
 docstring_standard
+gh_actions_cache
 ```
 
 For user-facing documentation, see the [Overview](../overview/index.md) and [Notebooks](../notebooks/index.md).

@@ -71,13 +71,3 @@ A history of changes.
 The pages linked here focus on documentation and architecture orientation.
 Executable examples and reproducible runs are covered in notebooks and examples
 directories, while module-level behavior is captured in API references.
-
-```{toctree}
-:hidden:
-summary
-installation
-development
-build_docs
-extensions
-changelog
-```

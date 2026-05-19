@@ -44,6 +44,7 @@ overview/extensions
 overview/index
 notebooks/index
 developers/index
+dvc_cache_guide
 ```
 
 ```{toctree}
