@@ -31,16 +31,34 @@ KwargMap = dict[str, Any]
 
 def _coerce_features_dataframe(X: FeatureMatrix) -> pd.DataFrame:
     if isinstance(X, pd.DataFrame):
-        return X
+        frame = X.copy()
+        for column in frame.columns:
+            if not pd.api.types.is_numeric_dtype(frame[column]):
+                codes, _ = pd.factorize(frame[column], sort=True)
+                frame[column] = codes
+        return frame
     if isinstance(X, pd.Series):
-        return pd.DataFrame({X.name or "feature_0": X})
+        if pd.api.types.is_numeric_dtype(X):
+            return pd.DataFrame({X.name or "feature_0": X})
+        codes, _ = pd.factorize(X, sort=True)
+        return pd.DataFrame({X.name or "feature_0": codes})
     arr = np.asarray(X)
+    if arr.ndim > 2:
+        arr = arr.reshape(arr.shape[0], -1)
     if arr.ndim == 1:
-        return pd.DataFrame({"feature_0": arr})
-    return pd.DataFrame(
+        frame = pd.DataFrame({"feature_0": arr})
+        if not pd.api.types.is_numeric_dtype(frame["feature_0"]):
+            frame["feature_0"] = pd.factorize(frame["feature_0"], sort=True)[0]
+        return frame
+    frame = pd.DataFrame(
         arr,
         columns=[f"feature_{i}" for i in range(arr.shape[1])],
     )
+    for column in frame.columns:
+        if not pd.api.types.is_numeric_dtype(frame[column]):
+            codes, _ = pd.factorize(frame[column], sort=True)
+            frame[column] = codes
+    return frame
 
 
 def _resolve_reference_vector(
@@ -476,6 +494,87 @@ class DefaultDataRegressionConfig(DefaultDataScorerConfig):
     classifier: Union[bool, str, None] = False
 
 
+def pytorch_split_count_score(
+    y_true: LabelVector,
+    X: FeatureMatrix,
+    **kwargs: Any,
+) -> int:
+    """Return the number of samples available in the active split.
+
+    Parameters
+    ----------
+    y_true : array-like
+        Labels for the active split.
+    X : matrix-like
+        Feature matrix for the active split.
+    **kwargs
+        Additional scorer keyword arguments (unused).
+
+    Returns
+    -------
+    int
+        Number of samples in the active split.
+    """
+    _ = X, kwargs
+    return int(len(np.asarray(y_true)))
+
+
+@dataclass(eq=False, kw_only=True)
+class DefaultPytorchDataScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
+    """Default tensor-aware data scorer family for PyTorch datasets.
+
+    This scorer avoids feature-level mutual-information metrics, which are
+    better suited to tabular sklearn-style data, and instead focuses on split
+    counts plus task-appropriate dataset summaries.
+    """
+
+    classifier: Union[bool, str, None] = None
+    scorers: dict[str, Union[ScorerConfig, KwargMap]] = field(default_factory=dict)
+
+    def _build_default_scorers(
+        self,
+        classifier: bool,
+    ) -> dict[str, Union[ScorerConfig, KwargMap]]:
+        if classifier:
+            return {
+                "split_count": ScorerConfig(
+                    score_name="split_count",
+                    score_function="deckard.score.data.pytorch_split_count_score",
+                ),
+                "num_classes": ScorerConfig(
+                    score_name="num_classes",
+                    score_function="deckard.score.data.data_num_classes_score",
+                ),
+                "class_count_min": ScorerConfig(
+                    score_name="class_count_min",
+                    score_function="deckard.score.data.data_class_count_min_score",
+                ),
+                "class_count_max": ScorerConfig(
+                    score_name="class_count_max",
+                    score_function="deckard.score.data.data_class_count_max_score",
+                ),
+                "class_imbalance_ratio": ScorerConfig(
+                    score_name="class_imbalance_ratio",
+                    score_function="deckard.score.data.data_class_imbalance_ratio_score",
+                    greater_is_better=False,
+                ),
+            }
+        return {
+            "split_count": ScorerConfig(
+                score_name="split_count",
+                score_function="deckard.score.data.pytorch_split_count_score",
+            ),
+            "empirical_cdf": ScorerConfig(
+                score_name="empirical_cdf",
+                score_function="deckard.score.data.data_empirical_cdf_function_score",
+            ),
+        }
+
+    def __post_init__(self):
+        self._initialize_task_aware_scorers(default=True)
+        super().__post_init__()
+
+
 safe_store(
     group="score",
     name="data-classification",
@@ -499,7 +598,9 @@ __all__ = [
     "data_mutual_information_mean_score",
     "data_mutual_information_max_score",
     "data_empirical_cdf_function_score",
+    "pytorch_split_count_score",
     "DefaultDataScorerConfig",
     "DefaultDataClassificationConfig",
     "DefaultDataRegressionConfig",
+    "DefaultPytorchDataScorerConfig",
 ]

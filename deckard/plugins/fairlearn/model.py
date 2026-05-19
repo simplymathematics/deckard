@@ -53,17 +53,20 @@ class _FairnessBehaviorMixin:
     def _train(self, X: pd.DataFrame, y: pd.Series):
         if self._model is None:
             raise ValueError("Model not initialized")
+        fit_method = getattr(self._model, "fit", None)
+        if not callable(fit_method):
+            return super()._train(X, y)
+
         start_time = time.process_time()
-        assert hasattr(self._model, "fit"), "Model does not have a fit method"
         fit_params = getattr(self, "fit_params", None) or {}
         sensitive = self._resolve_sensitive_features_for_batch(y, split="train")
         if (
             sensitive is not None
-            and self._method_accepts_sensitive_features(self._model.fit)
+            and self._method_accepts_sensitive_features(fit_method)
             and "sensitive_features" not in fit_params
         ):
             fit_params = {**fit_params, "sensitive_features": sensitive}
-        self._model.fit(X, y, **fit_params)
+        fit_method(X, y, **fit_params)
         self.training_time = time.process_time() - start_time
         self.training_n = len(y)
         logger.info(f"Model trained in {self.training_time:.2f} seconds")
@@ -71,10 +74,13 @@ class _FairnessBehaviorMixin:
     def _predict(self, X: pd.DataFrame) -> Any:
         if self._model is None:
             raise ValueError("Model not initialized")
+        predict_method = getattr(self._model, "predict", None)
+        if not callable(predict_method):
+            return super()._predict(X)
         sensitive = self._resolve_sensitive_features_for_batch(X, split="test")
         try:
             return self._call_with_optional_sensitive(
-                self._model.predict,
+                predict_method,
                 X,
                 sensitive,
             )
@@ -93,17 +99,16 @@ class _FairnessBehaviorMixin:
     def _predict_proba(self, X: pd.DataFrame) -> Any:
         if self._model is None:
             raise ValueError("Model not initialized")
-        sensitive = self._resolve_sensitive_features_for_batch(X, split="test")
         predict_proba = getattr(self._model, "predict_proba", None)
-        if callable(predict_proba):
-            return self._call_with_optional_sensitive(
-                predict_proba,
-                X,
-                sensitive,
-            )
+        if not callable(predict_proba):
+            return super()._predict_proba(X)
+        sensitive = self._resolve_sensitive_features_for_batch(X, split="test")
+        return self._call_with_optional_sensitive(
+            predict_proba,
+            X,
+            sensitive,
+        )
 
-        raw_pred = self._predict(X)
-        return probabilities_from_model_outputs(raw_pred)
     
 
 

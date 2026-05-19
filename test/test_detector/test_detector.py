@@ -217,7 +217,7 @@ def test_real_art_poisoning_detector_executes():
         expected_pp_poison=0.2,
         batch_size=16,
     )
-    report, is_clean = detector.detect_poison()
+    report, is_clean = detector.detectpoison()
 
     is_clean = np.asarray(is_clean).reshape(-1).astype(int)
     assert isinstance(report, dict)
@@ -307,7 +307,7 @@ def test_detector_constructor_fallback_and_detect_poison_indices(monkeypatch):
         def fit(self, x, y, **kwargs):
             _ = x, y, kwargs
 
-        def detect_poison(self, **kwargs):
+        def detectpoison(self, **kwargs):
             _ = kwargs
             # Return poison indices, not full-length clean mask.
             return {"mock": True}, np.array([0, 2])
@@ -342,7 +342,7 @@ def test_detector_detect_poison_invalid_shape_raises(monkeypatch):
         def __init__(self, classifier, x_train, y_train, **kwargs):
             _ = classifier, x_train, y_train, kwargs
 
-        def detect_poison(self, **kwargs):
+        def detectpoison(self, **kwargs):
             _ = kwargs
             return {"mock": True}, np.ones((2, 2), dtype=int)
 

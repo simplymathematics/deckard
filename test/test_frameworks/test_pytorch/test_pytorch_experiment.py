@@ -27,7 +27,7 @@ from deckard.model.defend import DefenseConfig
 from deckard.frameworks.pytorch.model import PytorchModelConfig
 
 torch = pytest.importorskip("torch")
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 EXAMPLES_PYTORCH_DIR = ROOT / "examples" / "pytorch"
 DECKARD_RC_PATH = EXAMPLES_PYTORCH_DIR / ".deckard_rc"
 

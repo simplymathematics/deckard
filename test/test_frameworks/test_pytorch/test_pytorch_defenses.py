@@ -75,7 +75,7 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
         )
 
         config_path = (
-            Path(__file__).resolve().parents[2]
+            Path(__file__).resolve().parents[3]
             / "examples"
             / "pytorch"
             / "config"
@@ -321,7 +321,7 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
         )
 
         config_path = (
-            Path(__file__).resolve().parents[2]
+            Path(__file__).resolve().parents[3]
             / "examples"
             / "pytorch"
             / "config"
@@ -364,7 +364,7 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
         )
 
         config_path = (
-            Path(__file__).resolve().parents[2]
+            Path(__file__).resolve().parents[3]
             / "examples"
             / "pytorch"
             / "config"

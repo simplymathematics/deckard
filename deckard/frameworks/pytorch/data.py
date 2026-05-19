@@ -2,7 +2,6 @@ from __future__ import annotations
 
 
 # Imports
-import pandas as pd
 import time
 import logging
 import tempfile

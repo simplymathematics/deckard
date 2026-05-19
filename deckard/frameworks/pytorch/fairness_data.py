@@ -243,7 +243,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
 
     def _score(self, mode: str | None = None) -> dict:
         """Compute fairness scores using canonical helpers for sensitive-feature lookup."""
-        from ..utils import is_default_config_value
+        from ...utils import is_default_config_value
 
         if (
             is_default_config_value(self.scorer, include_best=False)

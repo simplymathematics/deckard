@@ -116,6 +116,32 @@ def test_pytorch_model_with_fairness_defense_instantiation():
     assert isinstance(model.get_model(), torch.nn.Module)
 
 
+def test_pytorch_fairlearn_model_trains_with_torch_fallback():
+    """Test that FairlearnPytorchModelConfig falls back to PyTorch training."""
+    data = _torch_fairness_data()
+
+    data.X_train = data._X_train.reshape(data._X_train.shape[0], -1)
+    data.y_train = data._y_train
+    data.X_test = data._X_test.reshape(data._X_test.shape[0], -1)
+    data.y_test = data._y_test
+
+    model = FairlearnPytorchModelConfig(
+        model_type="torch.nn.Linear",
+        model_params={"in_features": 3 * 32 * 32, "out_features": 2},
+        classifier=True,
+        fit_params={"nb_epochs": 1, "batch_size": 8},
+        criterion="CrossEntropyLoss",
+        optimizer={"name": "SGD", "lr": 0.01},
+        data=data,
+    )
+
+    model(data)
+
+    assert isinstance(model.get_model(), torch.nn.Module)
+    assert "training_time" in model.score_dict
+    assert "prediction_time" in model.score_dict
+
+
 def test_pytorch_model_training_with_fairness_style_data():
     """Test that a real torch model trains against fairness-style pytorch data."""
     data = _torch_fairness_data()

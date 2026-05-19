@@ -5,8 +5,47 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+
 from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf
+
+
+class TinyFairness:
+    """Minimal fairness dataset example with explicit sensitive features."""
+
+    def __init__(self, seed: int = 11) -> None:
+        self.rng = np.random.default_rng(seed)
+        self.X_train = pd.DataFrame(
+            {
+                "feature": self.rng.normal(size=40),
+                "sensitive": self.rng.integers(0, 2, size=40),
+                "other": self.rng.normal(size=40),
+            },
+        )
+        self.y_train = pd.Series(
+            (self.X_train["feature"] + self.X_train["other"] > 0).astype(int),
+            name="target",
+        )
+        self.X_test = pd.DataFrame(
+            {
+                "feature": self.rng.normal(size=24),
+                "sensitive": self.rng.integers(0, 2, size=24),
+                "other": self.rng.normal(size=24),
+            },
+        )
+        self.y_test = pd.Series(
+            (self.X_test["feature"] + self.X_test["other"] > 0).astype(int),
+            name="target",
+        )
+        self.sensitive_train = self.X_train["sensitive"].reset_index(drop=True)
+        self.sensitive_test = self.X_test["sensitive"].reset_index(drop=True)
+        self._sensitive_train = self.sensitive_train
+        self._sensitive_test = self.sensitive_test
+
+
+TinyData = TinyFairness
 
 
 def load_env_from_deckard_rc(path: Path) -> dict[str, str]:

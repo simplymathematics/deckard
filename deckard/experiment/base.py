@@ -1085,23 +1085,43 @@ class ExperimentConfig(
             self.data,
             FairlearnDataConfig,
         ):
-            if FairlearnModelConfig is None:
+            fairlearn_model_cls = FairlearnModelConfig
+            fairlearn_pytorch_model_cls = FairlearnPytorchModelConfig
+            pytorch_model_cls = PytorchModelConfig
+            if (
+                fairlearn_model_cls is None
+                or fairlearn_pytorch_model_cls is None
+                or pytorch_model_cls is None
+            ):
+                try:
+                    from ..model import (
+                        FairlearnModelConfig as _FairlearnModelConfig,
+                        FairlearnPytorchModelConfig as _FairlearnPytorchModelConfig,
+                        PytorchModelConfig as _PytorchModelConfig,
+                    )
+                except ImportError as exc:
+                    raise ImportError(
+                        "FairlearnModelConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn model configs.",
+                    ) from exc
+
+                fairlearn_model_cls = _FairlearnModelConfig
+                fairlearn_pytorch_model_cls = _FairlearnPytorchModelConfig
+                pytorch_model_cls = _PytorchModelConfig
+
+            if fairlearn_model_cls is None:
                 raise ImportError(
                     "FairlearnModelConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn model configs.",
                 )
 
-            is_torch_model = PytorchModelConfig is not None and isinstance(
+            is_torch_model = pytorch_model_cls is not None and isinstance(
                 self.model,
-                PytorchModelConfig,
+                pytorch_model_cls,
             )
             target_model_cls = (
-                FairlearnPytorchModelConfig if is_torch_model else FairlearnModelConfig
+                fairlearn_pytorch_model_cls if is_torch_model else fairlearn_model_cls
             )
 
-            if (
-                target_model_cls is FairlearnPytorchModelConfig
-                and target_model_cls is None
-            ):
+            if is_torch_model and target_model_cls is None:
                 raise ImportError(
                     "FairlearnPytorchModelConfig requires optional fairness and torch dependencies. "
                     "Install deckard[fairlearn,torch] to enable fairness-aware pytorch model configs.",
@@ -1109,7 +1129,7 @@ class ExperimentConfig(
 
             fairness_types = tuple(
                 cfg
-                for cfg in (FairlearnModelConfig, FairlearnPytorchModelConfig)
+                for cfg in (fairlearn_model_cls, fairlearn_pytorch_model_cls)
                 if cfg is not None
             )
 
