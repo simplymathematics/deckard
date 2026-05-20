@@ -91,6 +91,11 @@ def get_configuration_paths():
     logger.info(f"Current working directory: {working_dir}")
     logger.info("Starting deckard with Hydra configuration.")
     logger.info(f"Config directory: {Path(config_dir).resolve()}")
+    while not Path(config_dir).exists():
+        config_dir = input(
+            f"Config directory '{config_dir}' does not exist. "
+            "Please enter a valid config directory path: ",
+        )
     if not Path(config_dir).is_absolute():
         config_dir = os.path.relpath(config_dir, working_dir)
     requested_config_path = Path(config_dir, requested_config_file)
