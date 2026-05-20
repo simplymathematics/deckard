@@ -492,26 +492,27 @@ def test_pipeline_stage_flags_apply_only_to_declared_stages(monkeypatch):
     y = pd.Series([1.0, 2.0])
 
     X_pre, y_pre = cfg.fit_presample(X, y)
-    assert X_pre["a"].tolist() == [101.0, 102.0]
+    assert X_pre.iloc[:, 0].tolist() == [101.0, 102.0]
     assert y_pre.tolist() == [1.0, 2.0]
 
     X_x, y_x = cfg.fit_X(X_pre, y_pre)
-    assert X_x["a"].tolist() == [102.0, 103.0]
+    assert X_x.iloc[:, 0].tolist() == [102.0, 103.0]
     assert y_x.tolist() == [1.0, 2.0]
 
     X_xy, y_xy = cfg.fit_Xy(X_x, y_x)
-    assert X_xy["a"].tolist() == [107.0, 108.0]
+    assert X_xy.iloc[:, 0].tolist() == [107.0, 108.0]
     assert y_xy.tolist() == [1.0, 2.0]
 
     X_y, y_y = cfg.fit_y(X_xy, y_xy)
-    assert X_y["a"].tolist() == [107.0, 108.0]
+    assert X_y.iloc[:, 0].tolist() == [107.0, 108.0]
     assert y_y.tolist() == [11.0, 12.0]
 
 
 def test_pipeline_dtype_routing_keeps_untyped_steps(monkeypatch):
     import deckard.data._mixins as data_mixins
+    from sklearn.base import BaseEstimator, TransformerMixin
 
-    class IdentityTransformer:
+    class IdentityTransformer(BaseEstimator, TransformerMixin):
         def fit(self, X, y=None):
             return self
 

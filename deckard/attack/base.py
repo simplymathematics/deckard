@@ -4,7 +4,7 @@ import pickle
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -29,7 +29,9 @@ from ..model import ModelConfig
 from ..model.defend import _get_art_symbols
 from ..score.base import (
     DefaultClassifierConfig,
+    DefaultRegressorConfig,
     ScorerDictConfig,
+    SUPPORTED_SCORING_STAGES,
 )
 from ..utils import (
     ConfigBase,
@@ -316,7 +318,7 @@ class AttackConfig(ConfigBase):
     alias: Union[str, None] = None
     plugins: list = field(default_factory=list)
     device: Union[str, None] = None
-    mode: Literal["auto", "train", "test", "val"] = "auto"
+    mode: str = "auto"
 
     # Runtime state fields
     attack_time: Union[float, None] = None
@@ -496,27 +498,153 @@ class AttackConfig(ConfigBase):
 
     def set_mode(
         self,
-        mode: Literal["auto", "train", "test", "val"],
+        mode: str,
     ) -> "AttackConfig":
         """Set attack scoring/evaluation split mode explicitly."""
         canonical = str(mode).strip().lower()
-        if canonical not in {"auto", "train", "test", "val"}:
+        if canonical not in {"auto", "train", "test", "val", *SUPPORTED_SCORING_STAGES}:
             raise ValueError(
-                f"Unsupported attack mode '{mode}'. Expected one of: auto, train, test, val.",
+                f"Unsupported attack mode '{mode}'. Expected one of: {sorted({'auto', 'train', 'test', 'val', *SUPPORTED_SCORING_STAGES})}.",
             )
         self.mode = canonical
         return self
+
+    @staticmethod
+    def _stage_to_runtime_mode(stage_or_mode: str) -> str:
+        token = str(stage_or_mode or "").strip().lower()
+        stage_to_mode = {
+            "train": "train",
+            "test": "test",
+            "val": "val",
+            "pre-defense": "test",
+            "post-defense": "test",
+            "post-pipeline": "test",
+            "post-sample": "test",
+            "benign": "test",
+            "adversarial": "test",
+            "pre-filter": "test",
+            "post-filter": "test",
+            "pre-sample": "test",
+        }
+        if token not in stage_to_mode:
+            raise ValueError(
+                f"Unsupported attack mode/stage '{stage_or_mode}'. Expected one of: {sorted(stage_to_mode)}.",
+            )
+        return stage_to_mode[token]
+
+    @staticmethod
+    def _default_stage_for_attack_kind(
+        attack_kind: Optional[str],
+        resolved_mode: str,
+    ) -> str:
+        kind = (attack_kind or "").strip().lower()
+        if kind == "evasion":
+            return "adversarial"
+        return resolved_mode
+
+    def resolve_score_stage_for_attack_kind(
+        self,
+        attack_kind: Optional[str],
+        resolved_mode: str,
+    ) -> str:
+        token = str(self.mode or "auto").strip().lower()
+        if token == "auto":
+            return self._default_stage_for_attack_kind(attack_kind, resolved_mode)
+        if token in SUPPORTED_SCORING_STAGES or token in {"train", "test", "val"}:
+            return token
+        raise ValueError(
+            f"Unsupported attack score stage '{self.mode}'. Expected one of auto/train/test/val or {sorted(SUPPORTED_SCORING_STAGES)}.",
+        )
 
     def resolve_mode_for_attack_kind(
         self,
         attack_kind: Optional[str],
     ) -> Literal["train", "test", "val"]:
         """Resolve active split mode from explicit mode or attack-kind default."""
-        if self.mode in {"train", "test", "val"}:
-            return self.mode
+        mode_token = str(self.mode or "auto").strip().lower()
+        if mode_token != "auto":
+            resolved = self._stage_to_runtime_mode(mode_token)
+            if resolved in {"train", "test", "val"}:
+                return cast(Literal["train", "test", "val"], resolved)
+            raise ValueError(
+                f"Unsupported attack mode '{self.mode}'. Expected one of auto/train/test/val or a supported stage alias.",
+            )
         if attack_kind == "attribute":
             return "train"
         return "test"
+
+    def _resolve_comparison_scorer(self, default_scorer):
+        """Resolve optional subtype comparison scorer override from attack_params."""
+        scorer_spec = self.attack_params.get("comparison_scorer", None)
+        if scorer_spec is None:
+            return default_scorer
+        if isinstance(scorer_spec, DictConfig):
+            scorer_spec = OmegaConf.to_container(scorer_spec, resolve=True)
+        if isinstance(scorer_spec, ScorerDictConfig):
+            return scorer_spec
+        if isinstance(scorer_spec, dict):
+            spec = dict(scorer_spec)
+            scorer_target = spec.pop("_target_", spec.pop("name", None))
+            if scorer_target is not None:
+                return load_class(scorer_target, **spec)
+            return ScorerDictConfig(**spec)
+        if isinstance(scorer_spec, str):
+            return load_class(scorer_spec)
+        if isinstance(scorer_spec, type):
+            return scorer_spec()
+        if callable(scorer_spec):
+            return scorer_spec
+        raise TypeError(
+            "attack_params['comparison_scorer'] must be a scorer config, class, import path, or callable.",
+        )
+
+    @staticmethod
+    def _unwrap_mode_or_stage_scores(
+        scores: dict[str, Any],
+        *,
+        mode: str | None,
+        stage: str | None,
+    ) -> dict[str, Any]:
+        if not isinstance(scores, dict):
+            return {}
+        if stage is not None and stage in scores and isinstance(scores.get(stage), dict):
+            return dict(scores[stage])
+        if mode is not None and mode in scores and isinstance(scores.get(mode), dict):
+            return dict(scores[mode])
+        return dict(scores)
+
+    def _score_comparison(
+        self,
+        *,
+        y_true,
+        y_pred,
+        stage: str,
+        prefix: str,
+        is_classification: bool,
+        mode: str = "test",
+        y_proba: Any = None,
+    ) -> dict[str, Any]:
+        base_scorer = (
+            DefaultClassifierConfig() if is_classification else DefaultRegressorConfig()
+        )
+        scorer = self._resolve_comparison_scorer(base_scorer)
+
+        call_kwargs = {
+            "y_true": y_true,
+            "y_pred": y_pred,
+            "mode": mode,
+            "stage": stage,
+        }
+        if y_proba is not None:
+            call_kwargs["y_proba"] = y_proba
+
+        raw_scores = scorer(**call_kwargs)
+        flat_scores = self._unwrap_mode_or_stage_scores(
+            raw_scores,
+            mode=mode,
+            stage=stage,
+        )
+        return {f"{prefix}_{key}": value for key, value in flat_scores.items()}
 
     def _parse_attack_path(self) -> tuple[str, str]:
         parts = (self.attack_type or "").split("attacks.")[-1].split(".")
@@ -569,6 +697,19 @@ class AttackConfig(ConfigBase):
         for output in hook_outputs:
             if isinstance(output, dict):
                 self.score_dict.update(output)
+
+    @staticmethod
+    def _flatten_stage_scores(scores: dict[str, Any]) -> dict[str, Any]:
+        if not isinstance(scores, dict):
+            return {}
+        flat: dict[str, Any] = {}
+        for key, value in scores.items():
+            if isinstance(value, dict):
+                for metric_name, metric_value in value.items():
+                    flat[f"{key}_{metric_name}"] = metric_value
+            else:
+                flat[key] = value
+        return flat
 
     def _resolve_runtime_attack_mixins(
         self,
@@ -1243,11 +1384,19 @@ class AttackConfig(ConfigBase):
         if y_proba is None:
             y_proba = self.score_y_proba
 
+        resolved_mode = self.resolve_mode_for_attack_kind(attack_kind)
+        resolved_stage = self.resolve_score_stage_for_attack_kind(
+            attack_kind,
+            resolved_mode,
+        )
+
         score_kwargs = {
             "attack_kind": attack_kind,
             "y_true": y_true,
             "y_pred": y_pred,
             "attack_size": self.attack_size,
+            "mode": resolved_mode,
+            "stage": resolved_stage,
             **kwargs,
         }
         if y_proba is not None:

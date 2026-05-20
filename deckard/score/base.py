@@ -8,7 +8,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Union, cast
+from typing import TYPE_CHECKING, Any, List, Literal, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
 from ..frameworks.types import ArrayLike, MatrixLike
-from ..frameworks.pytorch.score import to_numpy_if_torch
+from ..frameworks.pytorch.score import normalize_scoring_mode, to_numpy_if_torch
 from ..utils import (
     ConfigBase,
     coerce_config,
@@ -152,7 +152,7 @@ CANON_SCORING_STAGE_ENUMS: tuple[type[Enum], ...] = (
     ScoringDetectorStage,
 )
 
-SUPPORTED_STAGES: frozenset[str] = frozenset(
+SUPPORTED_SCORING_STAGES: frozenset[str] = frozenset(
     str(member.value).strip().lower()
     for enum_cls in CANON_SCORING_STAGE_ENUMS
     for member in enum_cls
@@ -482,7 +482,7 @@ class ScorerConfig:
     score_name: str
     score_function: Any
     score_params: dict[str, Any] = field(default_factory=dict)
-    stage: Union[str, List[str]] = ""
+    stage: List[str] = field(default_factory=list)
     greater_is_better: bool = True
     needs_proba: bool = False
 
@@ -518,6 +518,7 @@ class ScorerConfig:
             )
         if self.score_params is None:
             self.score_params = {}
+        self.stage = ScorerDictConfig._normalize_stage_field(self.stage)
 
     def _validate_probability_input(self, y_true, y_pred):
         y_true_arr = np.asarray(to_numpy_if_torch(y_true))
@@ -653,7 +654,7 @@ class ScorerDictConfig(ConfigBase):
     ----------
     scorers : dict[str, ScorerConfig]
         Mapping of scorer name to ScorerConfig instances.
-    stage : Union[str, list[str]], optional
+    stage : list[str], optional
         Generic stage selector for this scorer profile. Supports a single stage
         token (e.g., ``"test"``) or multiple stage tokens
         (e.g., ``["post-defense", "post-pipeline"]``).
@@ -662,7 +663,7 @@ class ScorerDictConfig(ConfigBase):
     scorers: dict[str, ScorerConfig] = field(
         default_factory=dict,
     )
-    stage: Union[str, list[str]] = ""
+    stage: List[str] = field(default_factory=list)
 
     def __post_init__(self):
         self.stage = self._normalize_stage_field(self.stage)
@@ -684,7 +685,7 @@ class ScorerDictConfig(ConfigBase):
                     score_name=str(raw_score_name),
                     score_function=scorer_data.pop("score_function"),
                     score_params=dict(raw_score_params),
-                    stage=raw_stage,
+                    stage=self._normalize_stage_field(raw_stage),
                     greater_is_better=bool(
                         scorer_data.pop(
                             "greater_is_better",
@@ -711,7 +712,7 @@ class ScorerDictConfig(ConfigBase):
                     score_name=str(raw_score_name),
                     score_function=scorer_data.pop("score_function"),
                     score_params=dict(raw_score_params),
-                    stage=raw_stage,
+                    stage=self._normalize_stage_field(raw_stage),
                     greater_is_better=bool(
                         scorer_data.pop(
                             "greater_is_better",
@@ -724,28 +725,29 @@ class ScorerDictConfig(ConfigBase):
                 raise TypeError(
                     f"Value for key '{key}' must be ScorerConfig or dict, got {type(value)}",
                 )
+            scorer.stage = self._normalize_stage_field(getattr(scorer, "stage", ""))
             normalized[key] = scorer
         self.scorers = normalized
 
     @staticmethod
     def _normalize_stage_field(
         stage_value: Union[str, list[str], tuple[str, ...], None],
-    ) -> Union[str, list[str]]:
+    ) -> List[str]:
         if stage_value is None:
-            return ""
+            return []
         if isinstance(stage_value, str):
-            normalized = stage_value.strip()
+            normalized_text = stage_value.strip().lower()
             ScorerDictConfig._validate_stage_tokens(
-                ScorerDictConfig._stage_tokens(normalized),
+                ScorerDictConfig._stage_tokens(normalized_text),
                 field_name="stage",
             )
-            return normalized
+            return [normalized_text] if normalized_text != "" else []
         if isinstance(stage_value, tuple):
             stage_value = list(stage_value)
         if isinstance(stage_value, list):
             normalized: list[str] = []
             for item in stage_value:
-                text = str(item).strip()
+                text = str(item).strip().lower()
                 if text != "":
                     normalized.append(text)
             ScorerDictConfig._validate_stage_tokens(
@@ -753,22 +755,22 @@ class ScorerDictConfig(ConfigBase):
                 field_name="stage",
             )
             return normalized
-        normalized = str(stage_value).strip()
+        normalized_text = str(stage_value).strip().lower()
         ScorerDictConfig._validate_stage_tokens(
-            ScorerDictConfig._stage_tokens(normalized),
+            ScorerDictConfig._stage_tokens(normalized_text),
             field_name="stage",
         )
-        return normalized
+        return [normalized_text] if normalized_text != "" else []
 
     @staticmethod
     def _validate_stage_tokens(stage_tokens: set[str], field_name: str) -> None:
         if len(stage_tokens) == 0:
             return
-        unsupported = sorted(stage_tokens - SUPPORTED_STAGES)
+        unsupported = sorted(stage_tokens - SUPPORTED_SCORING_STAGES)
         if unsupported:
             raise ValueError(
                 f"Unsupported {field_name} token(s): {unsupported}. "
-                f"Supported stages: {sorted(SUPPORTED_STAGES)}",
+                f"Supported stages: {sorted(SUPPORTED_SCORING_STAGES)}",
             )
 
     @staticmethod
@@ -804,6 +806,19 @@ class ScorerDictConfig(ConfigBase):
     ) -> set[str]:
         mode_token = "" if mode is None else str(mode).strip().lower()
         tokens: set[str] = set()
+        valid_modes = {
+            "test",
+            "train",
+            "attack",
+            "val",
+            "attack-val",
+            "pre-sample",
+            "",
+        }
+        if mode_token not in valid_modes:
+            raise KeyError(
+                f"Unsupported scoring mode '{mode}'. Expected one of: {sorted(valid_modes - {''})}",
+            )
         if mode_token:
             tokens.add(mode_token)
 
@@ -873,6 +888,14 @@ class ScorerDictConfig(ConfigBase):
         ],
         requested_stage: Union[str, list[str], None] = None,
     ) -> str:
+        stage_tokens = ScorerDictConfig._stage_tokens(requested_stage)
+        ScorerDictConfig._validate_stage_tokens(
+            stage_tokens,
+            field_name="runtime stage",
+        )
+        if len(stage_tokens) == 1:
+            return next(iter(stage_tokens))
+
         if mode is not None:
             stage_key = str(mode).strip().lower()
             valid_modes = {
@@ -883,19 +906,79 @@ class ScorerDictConfig(ConfigBase):
                 "attack-val",
                 "pre-sample",
             }
+            if stage_key in SUPPORTED_SCORING_STAGES:
+                return stage_key
             if stage_key not in valid_modes:
                 raise KeyError(
                     f"Unsupported scoring mode '{mode}'. Expected one of: {sorted(valid_modes)}",
                 )
             return stage_key
 
-        if isinstance(requested_stage, str) and requested_stage.strip() != "":
-            return requested_stage.strip().lower()
-        if isinstance(requested_stage, list) and len(requested_stage) == 1:
-            token = str(requested_stage[0]).strip().lower()
-            if token != "":
-                return token
+        return "test"
 
+    @staticmethod
+    def _resolve_runtime_mode(
+        mode: Literal[
+            "test",
+            "train",
+            "attack",
+            "val",
+            "attack-val",
+            "pre-sample",
+            None,
+        ],
+        requested_stage: Union[str, list[str], None] = None,
+    ) -> Literal["test", "train", "attack", "val", "attack-val", "pre-sample"]:
+        if mode is not None:
+            mode_token = str(mode).strip().lower()
+            if mode_token in {"train", "attack", "val", "attack-val", "pre-sample"}:
+                return cast(
+                    Literal[
+                        "test",
+                        "train",
+                        "attack",
+                        "val",
+                        "attack-val",
+                        "pre-sample",
+                    ],
+                    mode_token,
+                )
+            if mode_token == "test":
+                return "test"
+
+            stage_to_runtime: dict[str, Literal["test", "train", "attack", "val", "attack-val", "pre-sample"]] = {
+                ScoringModelStage.MODEL_TRAIN.value: "train",
+                ScoringModelStage.MODEL_TEST.value: "test",
+                ScoringModelStage.MODEL_VAL.value: "val",
+                ScoringDataStage.PRE_SAMPLE.value: "pre-sample",
+                ScoringAttackStage.PRE_ATTACK.value: "test",
+                ScoringAttackStage.POST_ATTACK.value: "attack",
+                ScoringDefenseStage.PRE_DEFENSE.value: "test",
+                ScoringDefenseStage.POST_DEFENSE.value: "test",
+                ScoringPipelineStage.POST_PIPELINE.value: "test",
+                ScoringDataStage.POST_SAMPLE.value: "test",
+                ScoringDetectorStage.PRE_FILTER.value: "test",
+                ScoringDetectorStage.POST_FILTER.value: "test",
+            }
+            if mode_token in stage_to_runtime:
+                return stage_to_runtime[mode_token]
+            raise KeyError(
+                f"Unsupported scoring mode '{mode}'.",
+            )
+
+        stage_tokens = ScorerDictConfig._stage_tokens(requested_stage)
+        ScorerDictConfig._validate_stage_tokens(
+            stage_tokens,
+            field_name="runtime stage",
+        )
+        if ScoringModelStage.MODEL_TRAIN.value in stage_tokens:
+            return "train"
+        if ScoringDataStage.PRE_SAMPLE.value in stage_tokens:
+            return "pre-sample"
+        if ScoringAttackStage.POST_ATTACK.value in stage_tokens:
+            return "attack"
+        if ScoringModelStage.MODEL_VAL.value in stage_tokens:
+            return "val"
         return "test"
 
     def __iter__(self):
@@ -982,13 +1065,14 @@ class ScorerDictConfig(ConfigBase):
     def resolve_mode_features(mode, data):
         if data is None:
             return None
-        if mode == "train":
+        resolved_mode = normalize_scoring_mode(mode)
+        if resolved_mode == "train":
             return getattr(data, "X_train", None)
-        if mode == "test":
+        if resolved_mode == "test":
             return getattr(data, "X_test", None)
-        if mode in {"val", "attack-val"}:
+        if resolved_mode == "val":
             return getattr(data, "X_val", None)
-        if mode == "pre-sample":
+        if resolved_mode in {"pre-sample", "all"}:
             return getattr(data, "X", getattr(data, "_X", None))
         return None
 
@@ -1110,7 +1194,10 @@ class ScorerDictConfig(ConfigBase):
             raise AssertionError("y_true must be provided if mode is None")
 
         nested_output = mode is not None or runtime_stage is not None
-        effective_mode = "test" if mode is None else mode
+        effective_mode = self._resolve_runtime_mode(
+            mode=mode,
+            requested_stage=runtime_stage,
+        )
 
         if score_file is not None and Path(score_file).exists():
             results = self.load_scores(score_file)
@@ -1119,7 +1206,7 @@ class ScorerDictConfig(ConfigBase):
             results = {}
 
         stage_key = self._resolve_stage_key(
-            mode=effective_mode,
+            mode=mode,
             requested_stage=runtime_stage,
         )
         existing_stage = results.get(stage_key)
@@ -1533,7 +1620,7 @@ safe_store(
 
 __all__ = [
     "safe_store",
-    "SUPPORTED_STAGES",
+    "SUPPORTED_SCORING_STAGES",
     "SUPPORTED_DATA_SCORE_MODES",
     "SUPPORTED_MODEL_SCORE_MODES",
     "SUPPORTED_EXPERIMENT_DEFENSE_SCORING_STAGES",

@@ -1,7 +1,7 @@
 import time
 from dataclasses import dataclass, field
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any, Literal, Union
 
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
@@ -333,18 +333,40 @@ class DetectorConfig(ConfigBase):
         y_true = y.reshape(-1).astype(int)
 
         self.detector = detector
-        metric_scores = self.scorer(
-            mode=None,
+        scorer_mode = str(self.fit_params.get("split", "test") or "test").strip().lower()
+        if scorer_mode not in {"train", "test", "val"}:
+            scorer_mode = "test"
+        pre_filter_scores = self.scorer(
+            mode=scorer_mode,
+            stage="pre-filter",
+            y_true=y_true,
+            y_pred=y_true,
+            data=data,
+            model=model,
+            attack=attack,
+        )
+        post_filter_scores = self.scorer(
+            mode=scorer_mode,
+            stage="post-filter",
             y_true=y_true,
             y_pred=y_pred,
             data=data,
             model=model,
             attack=attack,
         )
+
+        metric_scores = {
+            **self._flatten_stage_scores(pre_filter_scores),
+            **self._flatten_stage_scores(post_filter_scores),
+        }
         prefixed_scores = {}
         for key, value in metric_scores.items():
             score_key = key if str(key).startswith("detector_") else f"detector_{key}"
             prefixed_scores[score_key] = float(value)
+            post_prefix = "detector_post-filter_"
+            if score_key.startswith(post_prefix):
+                compatibility_key = f"detector_{score_key[len(post_prefix):]}"
+                prefixed_scores.setdefault(compatibility_key, float(value))
 
         self.score_dict = {
             **self.score_dict,
@@ -356,3 +378,16 @@ class DetectorConfig(ConfigBase):
             "detector_detection_time": float(self.detector_detection_time),
         }
         return self.score_dict
+
+    @staticmethod
+    def _flatten_stage_scores(scores: dict[str, Any]) -> dict[str, Any]:
+        if not isinstance(scores, dict):
+            return {}
+        flat: dict[str, Any] = {}
+        for key, value in scores.items():
+            if isinstance(value, dict):
+                for metric_name, metric_value in value.items():
+                    flat[f"{key}_{metric_name}"] = metric_value
+            else:
+                flat[key] = value
+        return flat

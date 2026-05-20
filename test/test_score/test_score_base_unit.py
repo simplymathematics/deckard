@@ -12,6 +12,7 @@ from deckard.score.base import (
     DefaultRegressorConfig,
     ScorerConfig,
     ScorerDictConfig,
+    SUPPORTED_SCORING_STAGES,
     build_scorer,
     build_scorer_dict,
 )
@@ -439,6 +440,68 @@ def test_scorer_dict_pre_sample_rejects_probability_metrics():
         scorer_dict(mode="pre-sample", data=data)
 
 
+def test_runtime_stage_tokens_rejects_unknown_mode():
+    with pytest.raises(KeyError, match="Unsupported scoring mode"):
+        ScorerDictConfig._runtime_stage_tokens(mode="unsupported", stage=None)
+
+
+def test_stage_alias_uses_default_scorer_for_runtime_mode():
+    scorer_dict = ScorerDictConfig(
+        default_scorer="val",
+        scorers={
+            "sum_true": ScorerConfig(
+                score_name="sum_true",
+                score_function=lambda y_true, y_pred: float(np.sum(y_true)),
+            ),
+        },
+    )
+
+    data = SimpleNamespace(
+        y_val=np.array([9.0]),
+        X_val=np.array([[9.0]]),
+    )
+    model = SimpleNamespace(val_predictions=np.array([1.0]))
+
+    out = scorer_dict(mode="post-defense", stage="post-defense", data=data, model=model)
+    assert out["post-defense"]["sum_true"] == 9.0
+
+
+def test_stage_matrix_routes_split_and_uses_stage_key():
+    scorer_dict = ScorerDictConfig(
+        scorers={
+            "sum_true": ScorerConfig(
+                score_name="sum_true",
+                score_function=lambda y_true, y_pred: float(np.sum(y_true)),
+            ),
+        },
+    )
+
+    data = SimpleNamespace(
+        _y=np.array([1.0, 2.0]),
+        _X=np.array([[0.0], [1.0]]),
+        y_train=np.array([3.0]),
+        X_train=np.array([[3.0]]),
+        y_test=np.array([4.0]),
+        X_test=np.array([[4.0]]),
+        y_val=np.array([5.0]),
+        X_val=np.array([[5.0]]),
+    )
+    model = SimpleNamespace(
+        training_predictions=np.array([3.0]),
+        test_predictions=np.array([4.0]),
+    )
+
+    matrix = [
+        ("pre-sample", "pre-sample", 3.0),
+        ("train", "pre-defense", 3.0),
+        ("test", "post-filter", 4.0),
+    ]
+    for mode, stage, expected in matrix:
+        out = scorer_dict(mode=mode, stage=stage, data=data, model=model)
+        assert stage in out
+        assert out[stage]["sum_true"] == expected
+
+
 def test_score_data_coerce_features_dataframe_series_and_vector():
     s = pd.Series([1.0, 2.0], name="named")
     out_series = score_data._coerce_features_dataframe(s)
@@ -510,7 +573,7 @@ def test_score_data_empirical_cdf_empty_reference_raises():
 
 def test_scoring_defense_stage_enum_values():
     """Test that ScoringDefenseStage enum has correct values."""
-    from deckard.score import ScoringDefenseStage
+    from deckard.score.base import ScoringDefenseStage
     
     assert ScoringDefenseStage.PRE_DEFENSE.value == "pre-defense"
     assert ScoringDefenseStage.POST_DEFENSE.value == "post-defense"
@@ -526,7 +589,7 @@ def test_scorer_dict_config_accepts_generic_stage_string():
         stage="post-defense",
     )
 
-    assert cfg.stage == "post-defense"
+    assert cfg.stage == ["post-defense"]
 
 
 def test_scorer_dict_config_accepts_generic_stage_list():
@@ -539,6 +602,40 @@ def test_scorer_dict_config_accepts_generic_stage_list():
     )
 
     assert cfg.stage == ["post-defense", "post-pipeline"]
+
+
+def test_scorer_config_stage_is_optional_and_normalized():
+    scorer = ScorerConfig(
+        score_name="acc",
+        score_function="sklearn.metrics.accuracy_score",
+        stage=None,
+    )
+    assert scorer.stage == []
+
+
+def test_scorer_config_accepts_multiple_stages_and_matches_either():
+    cfg = ScorerDictConfig(
+        scorers={
+            "acc": {
+                "score_function": "sklearn.metrics.accuracy_score",
+                "stage": ["post-defense", "post-pipeline"],
+            },
+        },
+    )
+
+    data = SimpleNamespace(
+        y_test=np.array([0, 1]),
+        X_test=np.array([[1.0], [2.0]]),
+    )
+    model = SimpleNamespace(predictions=np.array([0, 1]))
+
+    out_defense = cfg(mode="test", stage="post-defense", data=data, model=model)
+    out_pipeline = cfg(mode="test", stage="post-pipeline", data=data, model=model)
+
+    assert "post-defense" in out_defense
+    assert "acc" in out_defense["post-defense"]
+    assert "post-pipeline" in out_pipeline
+    assert "acc" in out_pipeline["post-pipeline"]
 
 
 def test_scorer_dict_config_stage_matching_filters_scorers_by_mode():
@@ -621,8 +718,29 @@ def test_scorer_dict_config_stage_override_kwarg_enables_matching():
         data=data,
         model=model,
     )
-    assert "test" in result
-    assert "acc" in result["test"]
+    assert "post-defense" in result
+    assert "acc" in result["post-defense"]
+
+
+def test_scorer_dict_config_persists_mode_stage_token_as_output_key():
+    cfg = ScorerDictConfig(
+        scorers={
+            "acc": {
+                "score_function": "sklearn.metrics.accuracy_score",
+            },
+        },
+    )
+
+    data = SimpleNamespace(
+        y_test=np.array([0, 1]),
+        X_test=np.array([[1.0], [2.0]]),
+    )
+    model = SimpleNamespace(predictions=np.array([0, 1]))
+
+    result = cfg(mode="post-defense", data=data, model=model)
+
+    assert "post-defense" in result
+    assert "acc" in result["post-defense"]
 
 
 def test_scorer_dict_config_rejects_unsupported_stage_tokens():
@@ -633,4 +751,47 @@ def test_scorer_dict_config_rejects_unsupported_stage_tokens():
             },
             stage="not-a-real-stage",
         )
+
+
+def test_scorer_dict_config_supports_all_SUPPORTED_SCORING_STAGES():
+    cfg = ScorerDictConfig(
+        scorers={
+            "acc": {"score_function": "sklearn.metrics.accuracy_score"},
+        },
+    )
+
+    data = SimpleNamespace(
+        y_test=np.array([0, 1]),
+        y_train=np.array([0, 1]),
+        y_val=np.array([0, 1]),
+        _y=np.array([0, 1]),
+        X_test=np.array([[1.0], [2.0]]),
+        X_train=np.array([[1.0], [2.0]]),
+        X_val=np.array([[1.0], [2.0]]),
+        _X=np.array([[1.0], [2.0]]),
+    )
+    model = SimpleNamespace(
+        predictions=np.array([0, 1]),
+        test_predictions=np.array([0, 1]),
+        training_predictions=np.array([0, 1]),
+        val_predictions=np.array([0, 1]),
+    )
+    attack = SimpleNamespace(
+        attack_size=2,
+        attacked_labels=np.array([0, 1]),
+        attack_predictions=np.array([0, 1]),
+    )
+
+    for stage in sorted(SUPPORTED_SCORING_STAGES):
+        kwargs = {
+            "mode": stage,
+            "data": data,
+            "model": model,
+        }
+        if stage == "adversarial":
+            kwargs["attack"] = attack
+
+        result = cfg(**kwargs)
+        assert stage in result
+        assert "acc" in result[stage]
 

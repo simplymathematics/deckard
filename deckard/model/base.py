@@ -19,6 +19,7 @@ from ..score.base import (  # noqa: F401
 )
 from ..score.base import (
     SUPPORTED_MODEL_SCORE_MODES,
+    SUPPORTED_SCORING_STAGES,
     coerce_scorer_config as _coerce_scorer_config,
 )
 from ..utils import (
@@ -212,10 +213,13 @@ class ModelConfig(
         self._initialize_target_reference()
         self._normalize_classifier_flag()
         self.score_mode = str(self.score_mode or "test").strip().lower()
-        if self.score_mode not in SUPPORTED_MODEL_SCORE_MODES:
+        if (
+            self.score_mode not in SUPPORTED_MODEL_SCORE_MODES
+            and self.score_mode not in SUPPORTED_SCORING_STAGES
+        ):
             raise ValueError(
                 f"Unsupported ModelConfig score_mode '{self.score_mode}'. "
-                f"Expected one of: {sorted(SUPPORTED_MODEL_SCORE_MODES)}",
+                f"Expected one of: {sorted(SUPPORTED_MODEL_SCORE_MODES | SUPPORTED_SCORING_STAGES)}",
             )
         self._initialize_default_scorer()
         self._normalize_plugins()
@@ -653,12 +657,14 @@ class ModelConfig(
                 f"ModelConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
         y_proba = kwargs.pop("y_proba", None)
+        stage = kwargs.pop("stage", None)
         scores = self.scorer(
             *args,
             y_true=y_true,
             y_pred=y_pred,
             y_proba=y_proba,
             mode=mode,
+            stage=stage,
             **kwargs,
         )
         if (
@@ -667,30 +673,41 @@ class ModelConfig(
             and isinstance(scores.get(mode), dict)
         ):
             scores = dict(scores[mode])
+        elif (
+            isinstance(scores, dict)
+            and isinstance(stage, str)
+            and stage in scores
+            and isinstance(scores.get(stage), dict)
+        ):
+            scores = dict(scores[stage])
         return round_scores(
             scores=scores,
             n_samples=len(y_true),
             logger_obj=logger,
         )
 
-    def compute_score(
-        self,
-        y_true: ArrayLike,
-        y_pred: ArrayLike,
-        *args: Any,
-        mode: str = "test",
-        **kwargs: Any,
-    ) -> dict:
-        """Public entry-point for model scoring. Delegates to _score()."""
-        return self._score(y_true, y_pred, *args, mode=mode, **kwargs)
+
 
     def _canonical_score_mode(self) -> Literal["train", "test", "val"]:
-        mode = str(getattr(self, "score_mode", "test") or "test").lower()
-        if mode not in SUPPORTED_MODEL_SCORE_MODES:
+        runtime_mode, _ = self._resolve_score_mode_and_stage()
+        if runtime_mode not in SUPPORTED_MODEL_SCORE_MODES:
             raise ValueError(
                 f"Unsupported ModelConfig score_mode '{self.score_mode}'. Expected one of: train, test, val.",
             )
-        return mode
+        return runtime_mode
+
+    def _resolve_score_mode_and_stage(self) -> tuple[Literal["train", "test", "val"], str]:
+        stage = str(getattr(self, "score_mode", "test") or "test").strip().lower()
+        resolved_mode = ScorerDictConfig._resolve_runtime_mode(
+            mode=stage,
+            requested_stage=None,
+        )
+        if resolved_mode not in SUPPORTED_MODEL_SCORE_MODES:
+            raise ValueError(
+                f"Unsupported ModelConfig score_mode '{self.score_mode}'. Expected one of train/test/val or a model-compatible stage token.",
+            )
+        stage_key = stage if stage in SUPPORTED_SCORING_STAGES else str(resolved_mode)
+        return resolved_mode, stage_key
 
     @staticmethod
     def _mode_score_prefix(mode: str) -> str:
@@ -1256,7 +1273,7 @@ class ModelConfig(
                 )
                 self.training_probabilities = None
 
-        score_mode = self._canonical_score_mode()
+        score_mode, score_stage = self._resolve_score_mode_and_stage()
 
         X_mode, y_mode = self._mode_split_data(data, score_mode)
         names = self._mode_runtime_names(score_mode)
@@ -1348,6 +1365,7 @@ class ModelConfig(
                 mode_predictions,
                 y_proba=mode_probabilities,
                 mode=score_mode,
+                stage=score_stage,
                 data=data,
                 model=self,
             )

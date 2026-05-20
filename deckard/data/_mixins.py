@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import copy
 import inspect
-import warnings
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Protocol, Union
 
@@ -435,6 +434,7 @@ class DataPipelineMixin:
             if not isinstance(raw_step_cfg, dict):
                 continue
             cfg = dict(raw_step_cfg)
+            fit_x_explicit = "fit_X" in cfg
             fit_x = self._step_flag(cfg, "fit_X", True)
             fit_y = self._step_flag(cfg, "fit_y", False)
             fit_xy = self._step_flag(cfg, "fit_Xy", False)
@@ -446,6 +446,8 @@ class DataPipelineMixin:
             if stage in {"X", "y", "Xy"} and not fit_post:
                 continue
             if stage == "X" and not fit_x:
+                continue
+            if stage == "X" and fit_xy and not fit_x_explicit:
                 continue
             if stage == "y" and not fit_y:
                 continue
@@ -517,6 +519,10 @@ class DataPipelineMixin:
         if hasattr(transformed, "toarray"):
             transformed = transformed.toarray()
         if isinstance(X, pd.DataFrame):
+            if isinstance(transformed, pd.DataFrame):
+                out = transformed.copy()
+                out.index = X.index
+                return out
             try:
                 cols = list(pipeline_obj.get_feature_names_out(X.columns))
             except Exception:
@@ -747,21 +753,6 @@ class DataScoreMixin:
     ) -> dict:
         """Canonical public entry-point for dataset scoring."""
         return self._score(*args, mode=mode, **kwargs)
-
-    def compute_score(
-        self,
-        *args: Any,
-        mode: str | None = None,
-        **kwargs: Any,
-    ) -> dict:
-        """Deprecated score entry-point; forwards to ``score``."""
-        warnings.warn(
-            "DataScoreMixin.compute_score() is deprecated; use score() instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.score(*args, mode=mode, **kwargs)
-
 
 __all__ = [
     "RuntimePayload",

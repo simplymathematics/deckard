@@ -5,6 +5,9 @@ import logging
 import time
 from dataclasses import dataclass, field
 
+import numpy as np
+from ..score.base import DefaultClassifierConfig, ScorerDictConfig
+
 from .base import AttackConfig, AttackTypePlugin
 from .poisoning import _PoisoningAttackMixin
 
@@ -118,43 +121,39 @@ class _ExtractionAttackMixin(_PoisoningAttackMixin):
         extracted_labels = self._labels_from_classifier_predictions(extracted_pred)
 
         start_time = time.process_time()
-        classification_scorer, use_proba_metrics = self._select_extraction_scorer(
+        _, use_proba_metrics = self._select_extraction_scorer(
             benign_pred,
             extracted_pred,
         )
-        benign_kwargs = {
-            "y_true": y_eval,
-            "y_pred": benign_labels,
-            "mode": None,
-        }
-        extracted_kwargs = {
-            "y_true": y_eval,
-            "y_pred": extracted_labels,
-            "mode": None,
-        }
-        if use_proba_metrics:
-            benign_kwargs["y_proba"] = self._to_numpy_array(benign_pred)
-            extracted_kwargs["y_proba"] = self._to_numpy_array(extracted_pred)
-
-        benign_scores = classification_scorer(
+        benign_scores = self._score_comparison(
             y_true=y_eval,
-            **{k: v for k, v in benign_kwargs.items() if k != "y_true"},
+            y_pred=benign_labels,
+            stage="benign",
+            prefix="benign",
+            is_classification=True,
+            y_proba=self._to_numpy_array(benign_pred) if use_proba_metrics else None,
+            mode=mode_used,
         )
-        extracted_scores = classification_scorer(
+        extracted_scores = self._score_comparison(
             y_true=y_eval,
-            **{k: v for k, v in extracted_kwargs.items() if k != "y_true"},
+            y_pred=extracted_labels,
+            stage="adversarial",
+            prefix="extracted",
+            is_classification=True,
+            y_proba=(
+                self._to_numpy_array(extracted_pred) if use_proba_metrics else None
+            ),
+            mode=mode_used,
         )
         self.attack_score_time = time.process_time() - start_time
 
-        prefixed_benign = {f"benign_{k}": v for k, v in benign_scores.items()}
-        prefixed_extracted = {f"extracted_{k}": v for k, v in extracted_scores.items()}
         self.attack_predictions = extracted_pred
         self.attacked_labels = y_eval
         self.attack = extracted_classifier
         self.score_dict = {
             **self.score_dict,
-            **prefixed_benign,
-            **prefixed_extracted,
+            **benign_scores,
+            **extracted_scores,
             "attack_size": n,
             "extraction_mode": mode_used,
         }

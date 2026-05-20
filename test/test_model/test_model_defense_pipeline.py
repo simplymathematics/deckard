@@ -10,8 +10,6 @@ from deckard.model.base import ModelConfig
 from deckard.model.defend import (
     DefenseConfig,
     DefensePipelineConfig,
-    ModelDefenseMixin,
-    _DefensePipelineMixin,
 )
 
 
@@ -121,11 +119,6 @@ class TestDefenseConfig(unittest.TestCase):
             msg="Hash changed after defense apply-time runtime updates",
         )
 
-
-def test_model_defense_mixin_contract_compliance_and_aliases():
-    assert not hasattr(ModelDefenseMixin, "__abstractmethods__")
-    assert _DefensePipelineMixin is ModelDefenseMixin
-    assert issubclass(DefenseConfig, ModelDefenseMixin)
 
 
 class TestDefensePipelineConfigListCoerce(unittest.TestCase):

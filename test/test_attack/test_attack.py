@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.svm import SVC
 
-from deckard.attack import AttackConfig
+from deckard.attack import AttackConfig, ExtractionAttackConfig
 from deckard.attack.base import SensitiveFeaturesWrapper, _sensitive_slice
 from deckard.score.attack import FairlearnAttackScorerConfig
 
@@ -205,7 +205,7 @@ class TestAttackConfig(unittest.TestCase):
         )
 
     def test_select_extraction_scorer_falls_back_for_logits(self):
-        scorer, use_proba = AttackConfig._select_extraction_scorer(
+        scorer, use_proba = ExtractionAttackConfig._select_extraction_scorer(
             benign_pred=np.array([[0.8, 0.2], [0.1, 0.9]]),
             extracted_pred=np.array([[1.5, -0.2], [-0.4, 2.1]]),
         )
@@ -278,12 +278,46 @@ class TestAttackConfig(unittest.TestCase):
         )
         self.assertEqual(norm.shape[1], 2)
 
-        scorer_cfg, has_proba = attack._select_extraction_scorer(
+        scorer_cfg, has_proba = ExtractionAttackConfig._select_extraction_scorer(
             np.array([0, 1]),
             np.array([0, 1]),
         )
         self.assertFalse(has_proba)
         self.assertIsNotNone(scorer_cfg)
+
+    def test_attack_mode_stage_aliases_are_accepted_and_resolved(self):
+        attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
+        attack.set_mode("post-defense")
+        self.assertEqual(attack.mode, "post-defense")
+        self.assertEqual(attack.resolve_mode_for_attack_kind("evasion"), "test")
+
+        attack.set_mode("val")
+        self.assertEqual(attack.resolve_mode_for_attack_kind("evasion"), "val")
+
+    def test_attack_score_forwards_mode_and_stage_context(self):
+        class _DummyScorer:
+            def __init__(self):
+                self.last_kwargs = None
+
+            def _score(self, *args, **kwargs):
+                _ = args
+                self.last_kwargs = kwargs
+                return {"attack_score_time": 0.01, "evasion_success": 0.2}
+
+        attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
+        dummy = _DummyScorer()
+        attack.scorer = dummy
+
+        out = attack._score(
+            "evasion",
+            y_true=np.array([0, 1]),
+            y_pred=np.array([1, 0]),
+            ben_pred_labels=np.array([0, 1]),
+        )
+
+        self.assertIn("evasion_success", out)
+        self.assertEqual(dummy.last_kwargs.get("mode"), "test")
+        self.assertEqual(dummy.last_kwargs.get("stage"), "adversarial")
 
     def test_target_to_class_labels_invalid_shape_raises(self):
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
@@ -3318,7 +3352,10 @@ class TestStaticHelpers(unittest.TestCase):
     def test_select_extraction_scorer_with_probabilities(self):
         benign = np.array([[0.3, 0.7], [0.6, 0.4]])
         extracted = np.array([[0.4, 0.6], [0.5, 0.5]])
-        scorer, has_proba = AttackConfig._select_extraction_scorer(benign, extracted)
+        scorer, has_proba = ExtractionAttackConfig._select_extraction_scorer(
+            benign,
+            extracted,
+        )
         self.assertTrue(has_proba)
         self.assertIsNotNone(scorer)
 

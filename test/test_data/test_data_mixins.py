@@ -6,4 +6,4 @@ def test_data_config_exposes_data_mixins():
 
     assert callable(getattr(cfg, "load_raw_data"))
     assert callable(getattr(cfg, "split_data"))
-    assert callable(getattr(cfg, "compute_score"))
+    assert callable(getattr(cfg, "score"))

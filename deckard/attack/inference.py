@@ -367,21 +367,29 @@ class _InferenceAttackMixin(_AttackMixin):
                 prototypes.append(fallback_proto)
         proto_arr = np.asarray(prototypes, dtype=ART_NUMPY_DTYPE)
 
-        mse = float(np.mean((inferred_flat - proto_arr) ** 2))
-        mae = float(np.mean(np.abs(inferred_flat - proto_arr)))
-        self.attack_score_time = time.process_time() - start_time
+        score_dict = self._score(
+            attack_kind="attribute",
+            y_true=proto_arr,
+            y_pred=inferred_flat,
+            targeted_attribute="model_inversion",
+            is_classification=False,
+            attack_generation_time=self.attack_time,
+        )
+        self.attack_score_time = float(score_dict.get("attack_score_time", 0.0))
 
         self.attack_predictions = inferred_arr
         self.attacked_labels = target_labels
         self.attack = inferred_arr
 
+        model_inversion_scores = {
+            "model_inversion_mse": score_dict.get("inferred_model_inversion_mse"),
+            "model_inversion_mae": score_dict.get("inferred_model_inversion_mae"),
+            "model_inversion_num_targets": int(len(target_labels)),
+        }
         self.score_dict = {
             **self.score_dict,
-            "model_inversion_mse": mse,
-            "model_inversion_mae": mae,
-            "model_inversion_num_targets": int(len(target_labels)),
-            "attack_size": int(len(target_labels)),
-            "attack_score_time": float(self.attack_score_time),
+            **score_dict,
+            **model_inversion_scores,
         }
         return self.score_dict
 
@@ -452,8 +460,15 @@ class _InferenceAttackMixin(_AttackMixin):
         x_true = x_true_missing.reshape(1, -1)
 
         x_pred_row = x_pred[:1]
-        feature_mse = float(np.mean((x_pred_row - x_true) ** 2))
-        feature_mae = float(np.mean(np.abs(x_pred_row - x_true)))
+
+        feature_scores = self._score(
+            attack_kind="attribute",
+            y_true=x_true,
+            y_pred=x_pred_row,
+            targeted_attribute="database_reconstruction_feature",
+            is_classification=False,
+            attack_generation_time=self.attack_time,
+        )
 
         label_score = {}
         if y_reconstructed is not None and y_true_missing is not None:
@@ -464,17 +479,32 @@ class _InferenceAttackMixin(_AttackMixin):
                 )
                 y_pred_first = y_pred[0]
                 if task_is_classification:
+                    raw_label_scores = self._score(
+                        attack_kind="attribute",
+                        y_true=np.asarray([int(y_true_missing)]),
+                        y_pred=np.asarray([int(y_pred_first)]),
+                        targeted_attribute="database_reconstruction_label",
+                        is_classification=True,
+                    )
                     label_score = {
-                        "database_reconstruction_label_accuracy": float(
-                            int(y_pred_first) == int(y_true_missing),
+                        "database_reconstruction_label_accuracy": raw_label_scores.get(
+                            "inferred_database_reconstruction_label_accuracy",
                         ),
                     }
                 else:
+                    raw_label_scores = self._score(
+                        attack_kind="attribute",
+                        y_true=np.asarray([float(y_true_missing)]),
+                        y_pred=np.asarray([float(y_pred_first)]),
+                        targeted_attribute="database_reconstruction_label",
+                        is_classification=False,
+                    )
                     label_score = {
-                        "database_reconstruction_label_mae": float(
-                            np.abs(float(y_pred_first) - float(y_true_missing)),
+                        "database_reconstruction_label_mae": raw_label_scores.get(
+                            "inferred_database_reconstruction_label_mae",
                         ),
                     }
+                    feature_scores = {**feature_scores, **raw_label_scores}
 
         self.attack_score_time = time.process_time() - start_time
 
@@ -482,10 +512,18 @@ class _InferenceAttackMixin(_AttackMixin):
         self.attacked_labels = x_true_missing
         self.attack = x_reconstructed
 
+        compatibility_scores = {
+            "database_reconstruction_feature_mse": feature_scores.get(
+                "inferred_database_reconstruction_feature_mse",
+            ),
+            "database_reconstruction_feature_mae": feature_scores.get(
+                "inferred_database_reconstruction_feature_mae",
+            ),
+        }
         self.score_dict = {
             **self.score_dict,
-            "database_reconstruction_feature_mse": feature_mse,
-            "database_reconstruction_feature_mae": feature_mae,
+            **feature_scores,
+            **compatibility_scores,
             "database_reconstruction_num_features": int(x_true.shape[1]),
             "database_reconstruction_num_known_rows": int(len(x_known)),
             "database_reconstruction_missing_index": int(missing_index),

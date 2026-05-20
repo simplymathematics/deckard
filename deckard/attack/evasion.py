@@ -14,11 +14,6 @@ from ..frameworks.pytorch.torch_utils import (
     is_tensor,
     tensor_to_numpy,
 )
-from ..score.base import (
-    DefaultClassifierConfig,
-    DefaultRegressorConfig,
-    ScorerDictConfig,
-)
 from .base import AttackConfig, AttackTypePlugin, _AttackMixin, _sensitive_slice
 
 logger = logging.getLogger(__name__)
@@ -148,26 +143,15 @@ class _EvasionAttackMixin(_AttackMixin):
             y_subset,
             is_regression=is_regression,
         )
-        if is_regression:
-            benign_scorer = DefaultRegressorConfig()
-            benign_scores = benign_scorer(
-                y_true=y_test_numeric,
-                y_pred=ben_pred_labels,
-                mode=None,
-            )
-        else:
-            full_classifier = DefaultClassifierConfig()
-            label_only = {
-                name: scorer
-                for name, scorer in full_classifier.scorers.items()
-                if not scorer.needs_proba
-            }
-            benign_scorer = ScorerDictConfig(scorers=label_only)
-            benign_scores = benign_scorer(
-                y_true=y_test_numeric,
-                y_pred=ben_pred_labels,
-                mode=None,
-            )
+        benign_scores = self._score_comparison(
+            y_true=y_test_numeric,
+            y_pred=ben_pred_labels,
+            stage="benign",
+            prefix="benign",
+            is_classification=not is_regression,
+            y_proba=None if is_regression else ben_preds,
+            mode=active_mode,
+        )
 
         score_dict = self._score(
             attack_kind="evasion",
@@ -183,8 +167,7 @@ class _EvasionAttackMixin(_AttackMixin):
         logger.info(
             f"Attack scoring took {self.attack_score_time} seconds for {len(adv_pred_labels)} samples and {len(self.score_dict)} scores.",
         )
-        prefixed_benign = {f"benign_{k}": v for k, v in benign_scores.items()}
-        self.score_dict = {**self.score_dict, **prefixed_benign, **score_dict}
+        self.score_dict = {**self.score_dict, **benign_scores, **score_dict}
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
         self.attack = adv_pred

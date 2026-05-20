@@ -9,7 +9,6 @@ from art.config import ART_NUMPY_DTYPE
 from art.estimators.classification.classifier import ClassifierNeuralNetwork
 
 from ..frameworks.pytorch.torch_utils import is_torch_model
-from ..score.base import DefaultClassifierConfig, ScorerDictConfig
 from .base import AttackConfig, AttackTypePlugin, _AttackMixin
 
 logger = logging.getLogger(__name__)
@@ -172,31 +171,23 @@ class _PoisoningAttackMixin(_AttackMixin):
         )
 
         start_time = time.process_time()
-        full_classifier = DefaultClassifierConfig()
-        label_only = {
-            name: scorer
-            for name, scorer in full_classifier.scorers.items()
-            if not scorer.needs_proba
-        }
-        classifier_scorer = ScorerDictConfig(scorers=label_only)
-        benign_kwargs = {
-            "y_true": y_eval,
-            "y_pred": benign_labels,
-            "mode": None,
-        }
-        poisoned_kwargs = {
-            "y_true": y_eval,
-            "y_pred": poisoned_labels,
-            "mode": None,
-        }
-
-        benign_scores = classifier_scorer(
+        benign_scores = self._score_comparison(
             y_true=y_eval,
-            **{k: v for k, v in benign_kwargs.items() if k != "y_true"},
+            y_pred=benign_labels,
+            stage="benign",
+            prefix="benign",
+            is_classification=True,
+            y_proba=benign_pred,
+            mode=mode_used,
         )
-        poisoned_scores = classifier_scorer(
+        poisoned_scores = self._score_comparison(
             y_true=y_eval,
-            **{k: v for k, v in poisoned_kwargs.items() if k != "y_true"},
+            y_pred=poisoned_labels,
+            stage="adversarial",
+            prefix="poisoned",
+            is_classification=True,
+            y_proba=poisoned_pred,
+            mode=mode_used,
         )
 
         trigger_pred = art_model.predict(x_trigger)
@@ -208,8 +199,8 @@ class _PoisoningAttackMixin(_AttackMixin):
         self.attack = art_model
         self.score_dict = {
             **self.score_dict,
-            **{f"benign_{k}": v for k, v in benign_scores.items()},
-            **{f"poisoned_{k}": v for k, v in poisoned_scores.items()},
+            **benign_scores,
+            **poisoned_scores,
             "poison_attack_target_class": class_target,
             "poison_attack_source_class": class_source,
             "poison_trigger_index": trigger_idx,
@@ -272,22 +263,23 @@ class _PoisoningAttackMixin(_AttackMixin):
         )
 
         start_time = time.process_time()
-        full_classifier = DefaultClassifierConfig()
-        label_only = {
-            name: scorer
-            for name, scorer in full_classifier.scorers.items()
-            if not scorer.needs_proba
-        }
-        classifier_scorer = ScorerDictConfig(scorers=label_only)
-        benign_scores = classifier_scorer(
+        benign_scores = self._score_comparison(
             y_true=y_eval,
             y_pred=benign_labels,
-            mode=None,
+            stage="benign",
+            prefix="benign",
+            is_classification=True,
+            y_proba=benign_pred,
+            mode=mode_used,
         )
-        poisoned_scores = classifier_scorer(
+        poisoned_scores = self._score_comparison(
             y_true=y_eval,
             y_pred=poisoned_labels,
-            mode=None,
+            stage="adversarial",
+            prefix="poisoned",
+            is_classification=True,
+            y_proba=poisoned_pred,
+            mode=mode_used,
         )
         self.attack_score_time = time.process_time() - start_time
 
@@ -296,8 +288,8 @@ class _PoisoningAttackMixin(_AttackMixin):
         self.attack = art_model
         self.score_dict = {
             **self.score_dict,
-            **{f"benign_{k}": v for k, v in benign_scores.items()},
-            **{f"poisoned_{k}": v for k, v in poisoned_scores.items()},
+            **benign_scores,
+            **poisoned_scores,
             "poisoning_attack_points": int(len(x_adv)),
             "poison_mode": mode_used,
             "attack_size": int(len(x_adv)),
@@ -341,11 +333,7 @@ class _PoisoningAttackMixin(_AttackMixin):
         )
 
     def _resolve_eval_split(self, data):
-        requested_mode = str(self.mode or "test").lower()
-        if requested_mode not in {"train", "test", "val", "auto"}:
-            raise ValueError(
-                f"Unsupported attack mode '{self.mode}'. Expected 'test' or 'val'.",
-            )
+        requested_mode = self.resolve_mode_for_attack_kind("poisoning")
 
         if requested_mode == "val":
             X_val = getattr(data, "X_val", None)
@@ -361,7 +349,7 @@ class _PoisoningAttackMixin(_AttackMixin):
             if X_train is not None and y_train is not None:
                 return "train", X_train, y_train
             logger.warning(
-                "Attack mode='val' requested but validation split is unavailable; falling back to test split.",
+                "Attack mode='train' requested but training split is unavailable; falling back to test split.",
             )
         X_test = getattr(data, "X_test", None)
         y_test = getattr(data, "y_test", None)

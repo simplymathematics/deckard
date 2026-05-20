@@ -27,7 +27,7 @@ from ..file import AttackFiles, BaseFiles, FileConfig, ModelFiles
 from ..model import ModelConfig
 from ..model.defend import DefensePipelineConfig
 from ..score import ScorerDictConfig
-from ..score.base import _AttackProfileScorer, _DataScorerMarker, coerce_scorer_config, SUPPORTED_STAGES
+from ..score.base import _AttackProfileScorer, _DataScorerMarker, coerce_scorer_config, SUPPORTED_SCORING_STAGES
 from ..utils import (
     ConfigBase,
     coerce_config,
@@ -320,7 +320,7 @@ class ExperimentConfig(
                 f"Evaluation mode: {self.evaluation_mode} not implemented",
             )
 
-        allowed = SUPPORTED_STAGES
+        allowed = SUPPORTED_SCORING_STAGES
         modes = []
         for raw_mode in raw_modes:
             mode = str(raw_mode).strip().lower()
@@ -470,6 +470,51 @@ class ExperimentConfig(
             ):
                 attack_cfg.set_mode(active_mode)
         return active_mode
+
+    def _propagate_scoring_defense_stage(self) -> Union[str, None]:
+        """Validate and propagate configured scoring defense stage to scorer configs."""
+        stage = self.scoring_defense_stage
+        score_cfg = getattr(self, "score", None)
+        if stage is None and score_cfg is not None:
+            stage = getattr(score_cfg, "scoring_defense_stage", None)
+        if stage is None:
+            for owner in (self.data, self.model):
+                scoped_scorer = getattr(owner, "scorer", None)
+                if scoped_scorer is not None and hasattr(
+                    scoped_scorer,
+                    "scoring_defense_stage",
+                ):
+                    scoped_stage = getattr(
+                        scoped_scorer,
+                        "scoring_defense_stage",
+                        None,
+                    )
+                    if scoped_stage is not None:
+                        stage = scoped_stage
+                        break
+
+        if stage is None:
+            return None
+
+        stage_text = str(stage).strip().lower()
+        allowed = {"pre-defense", "post-defense", "post-sample"}
+        if stage_text not in allowed:
+            raise ValueError(
+                f"Unsupported scoring_defense_stage '{stage}'. Expected one of {sorted(allowed)}.",
+            )
+
+        self.scoring_defense_stage = stage_text
+        if score_cfg is not None and hasattr(score_cfg, "scoring_defense_stage"):
+            score_cfg.scoring_defense_stage = stage_text
+            self.score = score_cfg
+        for owner in (self.data, self.model):
+            scoped_scorer = getattr(owner, "scorer", None)
+            if scoped_scorer is not None and hasattr(
+                scoped_scorer,
+                "scoring_defense_stage",
+            ):
+                scoped_scorer.scoring_defense_stage = stage_text
+        return stage_text
 
     @staticmethod
     def _normalize_mode_score_keys(mode: str, mode_scores: dict) -> dict:
@@ -793,6 +838,8 @@ class ExperimentConfig(
         )
 
         if isinstance(plain, dict):
+            if "scoring_defense_stage" in plain and self.scoring_defense_stage is None:
+                self.scoring_defense_stage = plain.get("scoring_defense_stage")
             # Auto-configure sentinel (from score/auto.yaml).
             if plain.get("_auto_configure"):
                 self.score = None
@@ -1446,14 +1493,14 @@ class ExperimentConfig(
     @staticmethod
     def _merge_stage_aware_scores(base_scores: dict, incoming_scores: dict | None) -> dict:
         """Merge score payloads while flattening stage-nested scorer results."""
-        from ..score.base import SUPPORTED_STAGES
+        from ..score.base import SUPPORTED_SCORING_STAGES
         merged = dict(base_scores or {})
         if not isinstance(incoming_scores, dict):
             return merged
 
         for key, value in incoming_scores.items():
             normalized_key = str(key).strip().lower()
-            if normalized_key in SUPPORTED_STAGES and isinstance(value, dict):
+            if normalized_key in SUPPORTED_SCORING_STAGES and isinstance(value, dict):
                 stage_suffix = normalized_key.replace("-", "_")
                 for metric_name, metric_value in value.items():
                     if normalized_key == "train":

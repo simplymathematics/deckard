@@ -91,6 +91,28 @@ def test_detector_runs_and_emits_scores_with_mock_detector():
     assert scores["detector_n"] == 2 * len(attack.attack_predictions)
 
 
+def test_detector_emits_stage_scoped_pre_and_post_filter_scores():
+    data, attack = _make_data_and_attack()
+    detector = DetectorConfig(
+        detector_model={
+            "model_type": "sklearn.linear_model.LogisticRegression",
+            "classifier": True,
+            "model_params": {"max_iter": 20},
+        },
+        fit_params={"batch_size": 4},
+    )
+
+    with patch(
+        "deckard.detector.base.resolve_class",
+        return_value=_FakeBinaryInputDetector,
+    ):
+        scores = detector(data=data, model=None, attack=attack)
+
+    assert "detector_pre-filter_accuracy" in scores
+    assert "detector_post-filter_accuracy" in scores
+    assert "detector_accuracy" in scores
+
+
 def test_real_art_evasion_binary_input_detector_executes():
     torch = pytest.importorskip("torch")
     nn = pytest.importorskip("torch.nn")

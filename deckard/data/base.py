@@ -109,6 +109,38 @@ def _supported_data_score_modes() -> set[str]:
     return set(SUPPORTED_DATA_SCORE_MODES)
 
 
+def _supported_scoring_stages() -> set[str]:
+    # Import lazily to avoid deckard.data <-> deckard.score import cycles at module import time.
+    from ..score.base import SUPPORTED_SCORING_STAGES
+
+    return set(SUPPORTED_SCORING_STAGES)
+
+
+def _canonical_data_score_mode(
+    stage_or_mode: str,
+) -> str:
+    token = str(stage_or_mode or "").strip().lower()
+    stage_to_mode = {
+        "train": "train",
+        "test": "test",
+        "val": "val",
+        "pre-sample": "pre-sample",
+        "pre-defense": "test",
+        "post-defense": "test",
+        "post-pipeline": "test",
+        "post-sample": "test",
+        "benign": "test",
+        "pre-filter": "test",
+        "post-filter": "test",
+    }
+    if token not in stage_to_mode:
+        raise ValueError(
+            f"Unsupported data score mode/stage '{stage_or_mode}'. "
+            f"Expected one of {sorted(stage_to_mode)}.",
+        )
+    return stage_to_mode[token]
+
+
 @dataclass(eq=False, kw_only=True)
 class DataConfig(
     DataPluginRuntimeMixin,
@@ -197,7 +229,7 @@ class DataConfig(
     score_mode: str = "pre-sample"
 
     # Runtime state fields
-    score_dict: dict = field(init=False, repr=True)
+    score_dict: dict = field(default_factory=dict, repr=True)
     data_load_time: Union[float, None] = None
     data_sample_time: Union[float, None] = None
     _X: Union[pd.DataFrame, pd.Series, None] = None
@@ -1071,6 +1103,7 @@ class DataConfig(
         self,
         *args,
         mode: Optional[str] = None,
+        stage: Optional[str] = None,
         **kwargs,
     ) -> dict:
         """
@@ -1084,9 +1117,30 @@ class DataConfig(
             raise TypeError(
                 f"DataConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
-        scorer_mode = str(
+        requested_mode = str(
             mode or getattr(self, "score_mode", None) or "pre-sample",
         ).lower()
+        stage_or_mode = str(stage or requested_mode).lower()
+        if requested_mode not in _supported_scoring_stages() and requested_mode not in {
+            "train",
+            "test",
+            "val",
+            "pre-sample",
+        }:
+            raise ValueError(
+                f"DataConfig score_mode '{requested_mode}' is unsupported.",
+            )
+        if stage_or_mode not in _supported_scoring_stages() and stage_or_mode not in {
+            "train",
+            "test",
+            "val",
+            "pre-sample",
+        }:
+            raise ValueError(
+                f"DataConfig stage '{stage_or_mode}' is unsupported.",
+            )
+        scorer_mode = _canonical_data_score_mode(requested_mode)
+
         allowed = _supported_data_score_modes()
         if scorer_mode not in allowed:
             raise ValueError(f"DataConfig score_mode '{scorer_mode}' not in {allowed}")
@@ -1113,6 +1167,7 @@ class DataConfig(
             y_true=y_true,
             y_pred=y_pred,
             mode=scorer_mode,
+            stage=stage_or_mode,
             data=self,
             **kwargs,
         )
@@ -1123,6 +1178,12 @@ class DataConfig(
             and isinstance(result_dict.get(scorer_mode), dict)
         ):
             result_dict = dict(result_dict[scorer_mode])
+        elif (
+            isinstance(result_dict, dict)
+            and stage_or_mode in result_dict
+            and isinstance(result_dict.get(stage_or_mode), dict)
+        ):
+            result_dict = dict(result_dict[stage_or_mode])
         plugin_scores = self._run_plugin_hook("after_score", scores=result_dict)
         for plugin_score in plugin_scores:
             if isinstance(plugin_score, dict):
@@ -1201,6 +1262,10 @@ class DataConfig(
         scores = dict(getattr(self, "score_dict", {}) or {})
         self.ensure_data_loaded()
         logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
+        score_kwargs = dict(kwargs)
+        requested_mode = score_kwargs.pop("mode", None)
+        pre_sample_scores = {}
+
         self.ensure_data_sampled()
         time_dict = self.build_data_time_dict()
         if self.X_val is not None:
@@ -1212,8 +1277,16 @@ class DataConfig(
             logger.info(
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
             )
-        data_scores = self.score(*args, **kwargs)
-        all_scores = {**scores, **data_scores, **time_dict}
+        resolved_mode = str(
+            requested_mode or getattr(self, "score_mode", "test"),
+        ).lower()
+        post_sample_scores = self._score(
+            *args,
+            mode=resolved_mode,
+            stage="post-sample",
+            **score_kwargs,
+        )
+        all_scores = {**scores, **pre_sample_scores, **post_sample_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
         all_scores = self.merge_and_persist_scores(all_scores, score_file)
@@ -1936,6 +2009,10 @@ class DataPipelineConfig(DataConfig):
             self._load_data()
             logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
         time_dict = {"data_load_time": self.data_load_time}
+        score_kwargs = dict(kwargs)
+        requested_mode = score_kwargs.pop("mode", mode)
+        pre_sample_scores = {}
+
         if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
             self.run_sampling_with_pipeline_hooks()
         time_dict["data_sample_time"] = (self.data_sample_time,)
@@ -1962,9 +2039,18 @@ class DataPipelineConfig(DataConfig):
             )
         self.score_dict.update(**time_dict)
         # Respect explicit mode first, then configured score_mode, then _score fallback.
-        resolved_mode = mode if mode is not None else getattr(self, "score_mode", None)
-        data_scores = self._score(*args, mode=resolved_mode, **kwargs)
-        all_scores = {**scores, **data_scores, **time_dict}
+        resolved_mode = (
+            requested_mode
+            if requested_mode is not None
+            else getattr(self, "score_mode", None)
+        )
+        post_sample_scores = self._score(
+            *args,
+            mode=resolved_mode,
+            stage="post-sample",
+            **score_kwargs,
+        )
+        all_scores = {**scores, **pre_sample_scores, **post_sample_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
 

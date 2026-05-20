@@ -444,14 +444,31 @@ class AttackScorerConfig(ConfigBase):
         y_pred,
         prefix: str,
         n_samples: int,
+        mode: str | None = None,
+        stage: str | None = None,
         **kwargs,
     ) -> dict:
         raw_scores = profile(
             y_true=y_true,
             y_pred=y_pred,
-            mode=None,
+            mode=mode,
+            stage=stage,
             **kwargs,
         )
+        if (
+            isinstance(raw_scores, dict)
+            and mode is not None
+            and mode in raw_scores
+            and isinstance(raw_scores.get(mode), dict)
+        ):
+            raw_scores = dict(raw_scores[mode])
+        elif (
+            isinstance(raw_scores, dict)
+            and stage is not None
+            and stage in raw_scores
+            and isinstance(raw_scores.get(stage), dict)
+        ):
+            raw_scores = dict(raw_scores[stage])
         prefixed_scores = self._prefix_scores(raw_scores, prefix=prefix)
         return round_scores(prefixed_scores, n_samples=n_samples)
 
@@ -461,6 +478,8 @@ class AttackScorerConfig(ConfigBase):
         y_true,
         y_pred,
         attack_size: int,
+        mode: str | None = None,
+        stage: str | None = None,
         ben_pred_labels=None,
         is_classification: Union[bool, None] = None,
         targeted_attribute: Union[str, None] = None,
@@ -476,6 +495,8 @@ class AttackScorerConfig(ConfigBase):
                 y_true=y_true,
                 attack_size=attack_size,
                 is_classification=is_classification,
+                mode=mode,
+                stage=stage,
                 sensitive_features=sensitive_features,
             )
         if attack_kind == "membership":
@@ -483,6 +504,8 @@ class AttackScorerConfig(ConfigBase):
                 labels=y_true,
                 inferred=y_pred,
                 attack_size=attack_size,
+                mode=mode,
+                stage=stage,
                 sensitive_features=sensitive_features,
             )
         if attack_kind == "attribute":
@@ -500,6 +523,8 @@ class AttackScorerConfig(ConfigBase):
                 attack_size=attack_size,
                 targeted_attribute=targeted_attribute,
                 is_classification=is_classification,
+                mode=mode,
+                stage=stage,
                 attack_generation_time=attack_generation_time,
                 sensitive_features=sensitive_features,
             )
@@ -512,6 +537,8 @@ class AttackScorerConfig(ConfigBase):
         y_true,
         attack_size: int,
         is_classification: bool = True,
+        mode: str | None = None,
+        stage: str | None = None,
         sensitive_features=None,
     ):
         start_time = time.process_time()
@@ -527,6 +554,8 @@ class AttackScorerConfig(ConfigBase):
             y_pred=adv_pred_labels,
             prefix="evasion",
             n_samples=len(adv_pred_labels),
+            mode=mode,
+            stage=stage,
             **score_kwargs,
         )
         attack_score_time = time.process_time() - start_time
@@ -539,6 +568,8 @@ class AttackScorerConfig(ConfigBase):
         labels,
         inferred,
         attack_size: int,
+        mode: str | None = None,
+        stage: str | None = None,
         sensitive_features=None,
     ):
         start_time = time.process_time()
@@ -551,6 +582,8 @@ class AttackScorerConfig(ConfigBase):
             y_pred=inferred,
             prefix="membership_inference",
             n_samples=len(labels),
+            mode=mode,
+            stage=stage,
             **score_kwargs,
         )
         attack_score_time = time.process_time() - start_time
@@ -565,6 +598,8 @@ class AttackScorerConfig(ConfigBase):
         attack_size: int,
         targeted_attribute: str,
         is_classification: bool,
+        mode: str | None = None,
+        stage: str | None = None,
         attack_generation_time=None,
         sensitive_features=None,
     ):
@@ -580,6 +615,8 @@ class AttackScorerConfig(ConfigBase):
                 y_pred=inferred,
                 prefix=prefix,
                 n_samples=len(target),
+                mode=mode,
+                stage=stage,
                 **score_kwargs,
             )
         else:
@@ -589,6 +626,8 @@ class AttackScorerConfig(ConfigBase):
                 y_pred=inferred,
                 prefix=prefix,
                 n_samples=len(target),
+                mode=mode,
+                stage=stage,
                 **score_kwargs,
             )
         attack_score_time = time.process_time() - start_time
