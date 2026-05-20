@@ -66,9 +66,10 @@ def _validate_raw_data_model_specs(survival_cfg: dict) -> None:
     model_spec = survival_cfg.get("model")
 
     if isinstance(data_spec, str):
-        raise TypeError(
-            "survival.data must be a DataConfig object or instantiable mapping, not a string",
-        )
+        if data_spec.strip() == "":
+            raise ValueError(
+                "survival.data must be a non-empty dataset/config string when provided as text",
+            )
     if isinstance(model_spec, str):
         if model_spec.strip() == "":
             raise ValueError(

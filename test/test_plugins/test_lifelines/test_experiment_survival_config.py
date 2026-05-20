@@ -91,9 +91,10 @@ def test_post_init_validates_data_model_and_duration(monkeypatch):
         cfg.__post_init__()
 
     cfg = _bare_instance()
-    cfg.data = "not-data-config"
-    with pytest.raises(TypeError, match="Expected data to resolve to DataConfig"):
-        cfg.__post_init__()
+    cfg.model = "weibull"
+    cfg.data = "lifelines-diabetes"
+    cfg.__post_init__()
+    assert isinstance(cfg.data, DataConfig)
 
     cfg = _bare_instance()
     cfg.model = ModelConfig(

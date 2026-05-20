@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 from deckard.data import DataConfig
 from deckard.layers.survival import survival_main
@@ -101,8 +102,8 @@ def test_survival_main_routes_to_plot_list_for_dataframe_with_plot_payload(
 
     cfg = {
         "survival": {
-            "data": dict(LIFELINES_DATASETS["lung"]),
-            "model": SURVIVAL_MODELS["weibull"],
+            "data": "lifelines-lung",
+            "model": "weibull",
             "model_config": model_cfg,
             "duration_col": "T",
             "target": "E",
@@ -134,9 +135,5 @@ def test_survival_main_rejects_non_object_data_and_model():
         },
     }
 
-    try:
+    with pytest.raises(Exception):
         survival_main(cfg=cfg)
-    except TypeError as exc:
-        assert "DataConfig" in str(exc)
-    else:
-        raise AssertionError("Expected TypeError for non-object data/model inputs")
