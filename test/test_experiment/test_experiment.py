@@ -1432,6 +1432,143 @@ class TestCoerceScorerConfig(unittest.TestCase):
         self.assertIsNotNone(exp.data.scorer)
         self.assertIn("accuracy", exp.data.scorer.scorers)
 
+    def test_scoring_defense_stage_propagates_to_scorers(self):
+        """Test that scoring_defense_stage is propagated to scorer configs."""
+        from sklearn.metrics import accuracy_score
+
+        exp = ExperimentConfig(
+            data=self._data(),
+            model=ModelConfig(
+                model_type="sklearn.tree.DecisionTreeClassifier",
+                classifier=True,
+                model_params={"max_depth": 2},
+            ),
+            score={
+                "scoring_defense_stage": "post-defense",
+                "scorers": {
+                    "accuracy": {
+                        "score_name": "accuracy",
+                        "score_function": accuracy_score,
+                    },
+                },
+            },
+            files=FileConfig(),
+        )
+
+        # Defense stage should propagate through _propagate_scoring_defense_stage()
+        resolved_stage = exp._propagate_scoring_defense_stage()
+        self.assertEqual(resolved_stage, "post-defense")
+
+    def test_scoring_defense_stage_accepts_pre_defense(self):
+        """Test pre-defense scoring stage configuration."""
+        from sklearn.metrics import accuracy_score
+
+        exp = ExperimentConfig(
+            data=self._data(),
+            model=ModelConfig(
+                model_type="sklearn.tree.DecisionTreeClassifier",
+                classifier=True,
+                model_params={"max_depth": 2},
+            ),
+            score={
+                "scoring_defense_stage": "pre-defense",
+                "scorers": {
+                    "accuracy": {
+                        "score_name": "accuracy",
+                        "score_function": accuracy_score,
+                    },
+                },
+            },
+            files=FileConfig(),
+        )
+
+        resolved_stage = exp._propagate_scoring_defense_stage()
+        self.assertEqual(resolved_stage, "pre-defense")
+        if exp.score is not None:
+            self.assertEqual(
+                exp.score.scoring_defense_stage,
+                "pre-defense",
+            )
+
+    def test_scoring_defense_stage_accepts_post_sample(self):
+        """Test post-sample scoring stage configuration."""
+        from sklearn.metrics import accuracy_score
+
+        exp = ExperimentConfig(
+            data=self._data(),
+            model=ModelConfig(
+                model_type="sklearn.tree.DecisionTreeClassifier",
+                classifier=True,
+                model_params={"max_depth": 2},
+            ),
+            score={
+                "scoring_defense_stage": "post-sample",
+                "scorers": {
+                    "accuracy": {
+                        "score_name": "accuracy",
+                        "score_function": accuracy_score,
+                    },
+                },
+            },
+            files=FileConfig(),
+        )
+
+        resolved_stage = exp._propagate_scoring_defense_stage()
+        self.assertEqual(resolved_stage, "post-sample")
+
+    def test_scoring_defense_stage_invalid_raises(self):
+        """Test that invalid defense stage raises ValueError."""
+        from sklearn.metrics import accuracy_score
+
+        exp = ExperimentConfig(
+            data=self._data(),
+            model=ModelConfig(
+                model_type="sklearn.tree.DecisionTreeClassifier",
+                classifier=True,
+                model_params={"max_depth": 2},
+            ),
+            score={
+                "scoring_defense_stage": "invalid-stage",
+                "scorers": {
+                    "accuracy": {
+                        "score_name": "accuracy",
+                        "score_function": accuracy_score,
+                    },
+                },
+            },
+            files=FileConfig(),
+        )
+
+        with self.assertRaises(ValueError) as context:
+            exp._propagate_scoring_defense_stage()
+        self.assertIn("Unsupported scoring_defense_stage", str(context.exception))
+
+    def test_scoring_defense_stage_none_is_allowed(self):
+        """Test that None defense stage is allowed (no requirement)."""
+        from sklearn.metrics import accuracy_score
+
+        exp = ExperimentConfig(
+            data=self._data(),
+            model=ModelConfig(
+                model_type="sklearn.tree.DecisionTreeClassifier",
+                classifier=True,
+                model_params={"max_depth": 2},
+            ),
+            score={
+                "scoring_defense_stage": None,
+                "scorers": {
+                    "accuracy": {
+                        "score_name": "accuracy",
+                        "score_function": accuracy_score,
+                    },
+                },
+            },
+            files=FileConfig(),
+        )
+
+        resolved_stage = exp._propagate_scoring_defense_stage()
+        self.assertIsNone(resolved_stage)
+
 
 class TestRunSinglePipelineBranchesExtra(unittest.TestCase):
     def _exp_stub(self):

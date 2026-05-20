@@ -20,8 +20,10 @@ from .base import (
     DefaultPytorchRegressorConfig,
     DefaultPytorchScorerConfig,
     DefaultRegressorConfig,
+    SUPPORTED_STAGES,
     ScorerConfig,
     ScorerDictConfig,
+    ScoringDefenseStage,
     build_scorer,
     build_scorer_dict,
 )

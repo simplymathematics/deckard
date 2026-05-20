@@ -102,6 +102,13 @@ def _yellowbrick_dataset_loaders() -> dict:
 SUPPORTED_DATA_SCORING_MODES = ["train", "test", "val", "pre-sample"]
 
 
+def _supported_data_score_modes() -> set[str]:
+    # Import lazily to avoid deckard.data <-> deckard.score import cycles at module import time.
+    from ..score.base import SUPPORTED_DATA_SCORE_MODES
+
+    return set(SUPPORTED_DATA_SCORE_MODES)
+
+
 @dataclass(eq=False, kw_only=True)
 class DataConfig(
     DataPluginRuntimeMixin,
@@ -187,7 +194,7 @@ class DataConfig(
     plugins: list = field(default_factory=list)
     alias: Union[str, None] = None
     scorer: str | dict | None = AUTO_SCORER
-    score_mode: Literal["train", "test", "val", "pre-sample"] = "pre-sample"
+    score_mode: str = "pre-sample"
 
     # Runtime state fields
     score_dict: dict = field(init=False, repr=True)
@@ -233,6 +240,10 @@ class DataConfig(
                     self.train_size = None
                 else:
                     raise ValueError("test_size must be a float or int")
+
+        if self.score_mode is None:
+            self.score_mode = "pre-sample"
+        self.score_mode = str(self.score_mode).strip().lower()
         self.data_params = self.data_params if self.data_params is not None else {}
         self.drop = [] if not hasattr(self, "drop") or self.drop is None else self.drop
         self.keep = [] if not hasattr(self, "keep") or self.keep is None else self.keep
@@ -1059,7 +1070,7 @@ class DataConfig(
     def _score(
         self,
         *args,
-        mode: Literal["train", "test", "val", "pre-sample"] = None,
+        mode: Optional[str] = None,
         **kwargs,
     ) -> dict:
         """
@@ -1076,7 +1087,7 @@ class DataConfig(
         scorer_mode = str(
             mode or getattr(self, "score_mode", None) or "pre-sample",
         ).lower()
-        allowed = {"pre-sample", "train", "test", "val"}
+        allowed = _supported_data_score_modes()
         if scorer_mode not in allowed:
             raise ValueError(f"DataConfig score_mode '{scorer_mode}' not in {allowed}")
         if scorer_mode == "pre-sample":
@@ -1105,6 +1116,13 @@ class DataConfig(
             data=self,
             **kwargs,
         )
+        # Keep backward compatibility for DataConfig callers expecting a flat dict.
+        if (
+            isinstance(result_dict, dict)
+            and scorer_mode in result_dict
+            and isinstance(result_dict.get(scorer_mode), dict)
+        ):
+            result_dict = dict(result_dict[scorer_mode])
         plugin_scores = self._run_plugin_hook("after_score", scores=result_dict)
         for plugin_score in plugin_scores:
             if isinstance(plugin_score, dict):
@@ -1268,6 +1286,10 @@ class DataPipelineStep:
 
         fit_y = bool(step_config.get("fit_y", False))
         fit_xy = bool(step_config.get("fit_Xy", step_config.get("fit_xy", False)))
+        if fit_y and fit_xy:
+            raise ValueError(
+                f"Step {step_name} cannot enable both fit_y and fit_Xy/fit_xy",
+            )
         fit_pre_sample = bool(
             step_config.get(
                 "fit_pre-sample",
@@ -1568,7 +1590,7 @@ class DataPipelineConfig(DataConfig):
 
             if not step.fit_post_sample:
                 continue
-            if step.fit_X:
+            if step.fit_X or step.fit_Xy:
                 X_pipeline_steps.append((step_name, step_instance))
                 dtypes.append(step.dtype)
             if step.fit_y:
@@ -1580,35 +1602,42 @@ class DataPipelineConfig(DataConfig):
             num_dtypes = {"num", "numeric", "float", "int"}
 
             transformers = []
+            passthrough_steps = []
 
             for (name, transformer), dtype in zip(X_pipeline_steps, dtypes):
+                if dtype is None:
+                    passthrough_steps.append((name, transformer))
+                    continue
 
-                if dtype in num_dtypes:
+                dtype_text = str(dtype).strip().lower()
+
+                if dtype_text in num_dtypes:
                     selector = make_column_selector(dtype_include=np.number)
 
-                elif dtype in string_dtypes:
+                elif dtype_text in string_dtypes:
                     selector = make_column_selector(
                         dtype_include=object,
                     )  # or "string" depending on your data
 
                 else:
-                    continue  # skip unknown dtype
+                    passthrough_steps.append((name, transformer))
+                    continue
 
                 transformers.append((transformer, selector))
 
             if transformers:
-                X_pipeline = Pipeline(
-                    steps=[
-                        (
-                            "preprocess",
-                            make_column_transformer(
-                                *transformers,
-                                remainder="passthrough",
-                                verbose_feature_names_out=False,
-                            ),
+                pipeline_steps = [
+                    (
+                        "preprocess",
+                        make_column_transformer(
+                            *transformers,
+                            remainder="passthrough",
+                            verbose_feature_names_out=False,
                         ),
-                    ],
-                )
+                    ),
+                ]
+                pipeline_steps.extend(passthrough_steps)
+                X_pipeline = Pipeline(steps=pipeline_steps)
             else:
                 X_pipeline = Pipeline(steps=X_pipeline_steps)
 

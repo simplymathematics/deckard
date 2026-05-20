@@ -6,6 +6,7 @@ import inspect
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Union, cast
 
@@ -38,6 +39,150 @@ MetricResult = Union[MetricScalar, np.ndarray]
 ScoreFunction = Callable[..., MetricResult]
 
 
+class ScoringDefenseStage(str, Enum):
+    """Enum representing the defense stage for scoring context.
+
+    Attributes
+    ----------
+    PRE_DEFENSE : str
+        Score operates on original data before defense application.
+    POST_DEFENSE : str
+        Score operates on data after defense application (fitted/transformed).
+    VAL_DEFENSE : str
+        Score operates on validation data for defense evaluation.
+    """
+
+    PRE_DEFENSE = "pre-defense"
+    POST_DEFENSE = "post-defense"
+    VAL_DEFENSE = "val"
+
+
+class ScoringPipelineStage(str, Enum):
+    """Enum representing the pipeline stage for scoring context.
+
+    Attributes
+    ----------
+    POST_PIPELINE : str
+        Score operates after the full processing pipeline has been applied.
+    VAL_PIPELINE : str
+        Score operates on validation data for pipeline evaluation.
+    """
+
+    POST_PIPELINE = "post-pipeline"
+    VAL_PIPELINE = "val"
+
+
+class ScoringAttackStage(str, Enum):
+    """Enum representing the attack stage for scoring context.
+
+    Attributes
+    ----------
+    PRE_ATTACK : str
+        Score operates on benign (non-adversarial) input data.
+    POST_ATTACK : str
+        Score operates on adversarially modified input data.
+    VAL_ATTACK : str
+        Score operates on validation data for attack evaluation.
+    """
+
+    PRE_ATTACK = "benign"
+    POST_ATTACK = "adversarial"
+    VAL_ATTACK = "val"
+
+
+class ScoringDataStage(str, Enum):
+    """Enum representing the data transformation stage for scoring context.
+
+    Attributes
+    ----------
+    PRE_SAMPLE : str
+        Score operates on original data before sampling or transformation.
+    POST_SAMPLE : str
+        Score operates on data after sampling or transformation.
+    VAL_ATTACK : str
+        Score operates on validation data.
+    """
+
+    PRE_SAMPLE = "pre-sample"
+    POST_SAMPLE = "post-sample"
+    VAL_ATTACK = "val"
+
+
+class ScoringModelStage(str, Enum):
+    """Enum representing the model stage for scoring context.
+
+    Attributes
+    ----------
+    MODEL_TRAIN : str
+        Score operates on training data during model development.
+    MODEL_TEST : str
+        Score operates on test data for final model evaluation.
+    MODEL_VAL : str
+        Score operates on validation data for model tuning and selection.
+    """
+
+    MODEL_TRAIN = "train"
+    MODEL_TEST = "test"
+    MODEL_VAL = "val"
+
+class ScoringDetectorStage(str, Enum):
+    """Enum representing the detector stage for scoring context.
+
+    Attributes
+    ----------
+    PRE_FILTER : str
+        Score operates on data before detector-based filtering is applied.
+    POST_FILTER : str
+        Score operates on data after detector-based filtering is applied.
+    POST_FILTER : str
+        Score operates on validation data.
+    """
+
+    PRE_FILTER = "pre-filter"
+    POST_FILTER = "post-filter"
+    VAL_FILTER = "val"
+
+
+CANON_SCORING_STAGE_ENUMS: tuple[type[Enum], ...] = (
+    ScoringDefenseStage,
+    ScoringPipelineStage,
+    ScoringAttackStage,
+    ScoringDataStage,
+    ScoringModelStage,
+    ScoringDetectorStage,
+)
+
+SUPPORTED_STAGES: frozenset[str] = frozenset(
+    str(member.value).strip().lower()
+    for enum_cls in CANON_SCORING_STAGE_ENUMS
+    for member in enum_cls
+)
+
+SUPPORTED_DATA_SCORE_MODES: frozenset[str] = frozenset(
+    {
+        ScoringDataStage.PRE_SAMPLE.value,
+        ScoringModelStage.MODEL_TRAIN.value,
+        ScoringModelStage.MODEL_TEST.value,
+        ScoringModelStage.MODEL_VAL.value,
+    },
+)
+
+SUPPORTED_MODEL_SCORE_MODES: frozenset[str] = frozenset(
+    {
+        ScoringModelStage.MODEL_TRAIN.value,
+        ScoringModelStage.MODEL_TEST.value,
+        ScoringModelStage.MODEL_VAL.value,
+    },
+)
+
+SUPPORTED_EXPERIMENT_DEFENSE_SCORING_STAGES: frozenset[str] = frozenset(
+    {
+        ScoringDefenseStage.PRE_DEFENSE.value,
+        ScoringDefenseStage.POST_DEFENSE.value,
+        ScoringDataStage.POST_SAMPLE.value,
+    },
+)
+    
 class _DataScorerMarker:
     """Mixin that marks a ScorerDictConfig as operating on data rather than model predictions.
 
@@ -337,6 +482,7 @@ class ScorerConfig:
     score_name: str
     score_function: Any
     score_params: dict[str, Any] = field(default_factory=dict)
+    stage: Union[str, List[str]] = ""
     greater_is_better: bool = True
     needs_proba: bool = False
 
@@ -501,13 +647,26 @@ class ScorerConfig:
 
 @dataclass(eq=False, kw_only=True)
 class ScorerDictConfig(ConfigBase):
-    """Container of named ScorerConfig instances."""
+    """Container of named ScorerConfig instances.
+    
+    Attributes
+    ----------
+    scorers : dict[str, ScorerConfig]
+        Mapping of scorer name to ScorerConfig instances.
+    stage : Union[str, list[str]], optional
+        Generic stage selector for this scorer profile. Supports a single stage
+        token (e.g., ``"test"``) or multiple stage tokens
+        (e.g., ``["post-defense", "post-pipeline"]``).
+    """
 
     scorers: dict[str, ScorerConfig] = field(
         default_factory=dict,
     )
+    stage: Union[str, list[str]] = ""
 
     def __post_init__(self):
+        self.stage = self._normalize_stage_field(self.stage)
+
         normalized = {}
         for key, value in self.scorers.items():
             if isinstance(value, ScorerConfig):
@@ -516,6 +675,7 @@ class ScorerDictConfig(ConfigBase):
                 scorer_data = dict(value)
                 raw_score_name = scorer_data.pop("score_name", key)
                 raw_score_params = scorer_data.pop("score_params", {})
+                raw_stage = scorer_data.pop("stage", "")
                 if not isinstance(raw_score_params, dict):
                     raise TypeError(
                         f"score_params for '{key}' must be a dictionary, got {type(raw_score_params)}",
@@ -524,6 +684,7 @@ class ScorerDictConfig(ConfigBase):
                     score_name=str(raw_score_name),
                     score_function=scorer_data.pop("score_function"),
                     score_params=dict(raw_score_params),
+                    stage=raw_stage,
                     greater_is_better=bool(
                         scorer_data.pop(
                             "greater_is_better",
@@ -541,6 +702,7 @@ class ScorerDictConfig(ConfigBase):
                 scorer_data = dict(raw_value)
                 raw_score_name = scorer_data.pop("score_name", key)
                 raw_score_params = scorer_data.pop("score_params", {})
+                raw_stage = scorer_data.pop("stage", "")
                 if not isinstance(raw_score_params, dict):
                     raise TypeError(
                         f"score_params for '{key}' must be a dictionary, got {type(raw_score_params)}",
@@ -549,6 +711,7 @@ class ScorerDictConfig(ConfigBase):
                     score_name=str(raw_score_name),
                     score_function=scorer_data.pop("score_function"),
                     score_params=dict(raw_score_params),
+                    stage=raw_stage,
                     greater_is_better=bool(
                         scorer_data.pop(
                             "greater_is_better",
@@ -563,6 +726,177 @@ class ScorerDictConfig(ConfigBase):
                 )
             normalized[key] = scorer
         self.scorers = normalized
+
+    @staticmethod
+    def _normalize_stage_field(
+        stage_value: Union[str, list[str], tuple[str, ...], None],
+    ) -> Union[str, list[str]]:
+        if stage_value is None:
+            return ""
+        if isinstance(stage_value, str):
+            normalized = stage_value.strip()
+            ScorerDictConfig._validate_stage_tokens(
+                ScorerDictConfig._stage_tokens(normalized),
+                field_name="stage",
+            )
+            return normalized
+        if isinstance(stage_value, tuple):
+            stage_value = list(stage_value)
+        if isinstance(stage_value, list):
+            normalized: list[str] = []
+            for item in stage_value:
+                text = str(item).strip()
+                if text != "":
+                    normalized.append(text)
+            ScorerDictConfig._validate_stage_tokens(
+                ScorerDictConfig._stage_tokens(normalized),
+                field_name="stage",
+            )
+            return normalized
+        normalized = str(stage_value).strip()
+        ScorerDictConfig._validate_stage_tokens(
+            ScorerDictConfig._stage_tokens(normalized),
+            field_name="stage",
+        )
+        return normalized
+
+    @staticmethod
+    def _validate_stage_tokens(stage_tokens: set[str], field_name: str) -> None:
+        if len(stage_tokens) == 0:
+            return
+        unsupported = sorted(stage_tokens - SUPPORTED_STAGES)
+        if unsupported:
+            raise ValueError(
+                f"Unsupported {field_name} token(s): {unsupported}. "
+                f"Supported stages: {sorted(SUPPORTED_STAGES)}",
+            )
+
+    @staticmethod
+    def _stage_tokens(stage_value: Any) -> set[str]:
+        if stage_value is None:
+            return set()
+        if isinstance(stage_value, Enum):
+            return {str(stage_value.value).strip().lower()}
+        if isinstance(stage_value, str):
+            tokens = [token.strip().lower() for token in stage_value.split(",")]
+            return {token for token in tokens if token != ""}
+        if isinstance(stage_value, (list, tuple, set, ListConfig)):
+            merged: set[str] = set()
+            for item in stage_value:
+                merged.update(ScorerDictConfig._stage_tokens(item))
+            return merged
+        return {str(stage_value).strip().lower()}
+
+    @classmethod
+    def _runtime_stage_tokens(
+        cls,
+        *,
+        mode: Literal[
+            "test",
+            "train",
+            "attack",
+            "val",
+            "attack-val",
+            "pre-sample",
+            None,
+        ],
+        stage: Union[str, list[str], None] = None,
+    ) -> set[str]:
+        mode_token = "" if mode is None else str(mode).strip().lower()
+        tokens: set[str] = set()
+        if mode_token:
+            tokens.add(mode_token)
+
+        stage_tokens = cls._stage_tokens(stage)
+        cls._validate_stage_tokens(stage_tokens, field_name="runtime stage")
+
+        mode_aliases: dict[str, set[str]] = {
+            "train": {
+                ScoringModelStage.MODEL_TRAIN.value,
+            },
+            "test": {
+                ScoringModelStage.MODEL_TEST.value,
+                ScoringAttackStage.PRE_ATTACK.value,
+            },
+            "val": {
+                ScoringModelStage.MODEL_VAL.value,
+                ScoringDefenseStage.VAL_DEFENSE.value,
+                ScoringPipelineStage.VAL_PIPELINE.value,
+                ScoringAttackStage.VAL_ATTACK.value,
+                ScoringDataStage.VAL_ATTACK.value,
+                ScoringDetectorStage.VAL_FILTER.value,
+            },
+            "attack": {
+                ScoringAttackStage.POST_ATTACK.value,
+            },
+            "attack-val": {
+                ScoringAttackStage.POST_ATTACK.value,
+                ScoringAttackStage.VAL_ATTACK.value,
+                ScoringModelStage.MODEL_VAL.value,
+                ScoringDefenseStage.VAL_DEFENSE.value,
+                ScoringPipelineStage.VAL_PIPELINE.value,
+                ScoringDataStage.VAL_ATTACK.value,
+                ScoringDetectorStage.VAL_FILTER.value,
+            },
+            "pre-sample": {
+                ScoringDataStage.PRE_SAMPLE.value,
+            },
+        }
+
+        tokens.update(mode_aliases.get(mode_token, set()))
+        tokens.update(stage_tokens)
+        return tokens
+
+    @classmethod
+    def _stage_matches(
+        cls,
+        configured_stage: Any,
+        runtime_stage_tokens: set[str],
+    ) -> bool:
+        configured = cls._stage_tokens(configured_stage)
+        if len(configured) == 0:
+            return True
+        if len(runtime_stage_tokens) == 0:
+            return False
+        return not configured.isdisjoint(runtime_stage_tokens)
+
+    @staticmethod
+    def _resolve_stage_key(
+        mode: Literal[
+            "test",
+            "train",
+            "attack",
+            "val",
+            "attack-val",
+            "pre-sample",
+            None,
+        ],
+        requested_stage: Union[str, list[str], None] = None,
+    ) -> str:
+        if mode is not None:
+            stage_key = str(mode).strip().lower()
+            valid_modes = {
+                "test",
+                "train",
+                "attack",
+                "val",
+                "attack-val",
+                "pre-sample",
+            }
+            if stage_key not in valid_modes:
+                raise KeyError(
+                    f"Unsupported scoring mode '{mode}'. Expected one of: {sorted(valid_modes)}",
+                )
+            return stage_key
+
+        if isinstance(requested_stage, str) and requested_stage.strip() != "":
+            return requested_stage.strip().lower()
+        if isinstance(requested_stage, list) and len(requested_stage) == 1:
+            token = str(requested_stage[0]).strip().lower()
+            if token != "":
+                return token
+
+        return "test"
 
     def __iter__(self):
         return iter(self.scorers.items())
@@ -753,7 +1087,7 @@ class ScorerDictConfig(ConfigBase):
             "attack-val",
             "pre-sample",
             None,
-        ] = "test",
+        ] = None,
         data: "DataConfig | None" = None,
         model: Any = None,
         attack: Any = None,
@@ -762,9 +1096,50 @@ class ScorerDictConfig(ConfigBase):
         score_file=None,
         **kwargs: Any,
     ) -> dict[str, Any]:
-        results = {}
+        results: dict[str, Any] = {}
+        runtime_stage = kwargs.pop("stage", None)
+
+        if (
+            mode is None
+            and runtime_stage is None
+            and ind is None
+            and dep is None
+            and "y_pred" not in kwargs
+            and "y_true" not in kwargs
+        ):
+            raise AssertionError("y_true must be provided if mode is None")
+
+        nested_output = mode is not None or runtime_stage is not None
+        effective_mode = "test" if mode is None else mode
+
         if score_file is not None and Path(score_file).exists():
             results = self.load_scores(score_file)
+
+        if not isinstance(results, dict):
+            results = {}
+
+        stage_key = self._resolve_stage_key(
+            mode=effective_mode,
+            requested_stage=runtime_stage,
+        )
+        existing_stage = results.get(stage_key)
+        if isinstance(existing_stage, dict):
+            stage_results: dict[str, Any] = dict(existing_stage)
+        elif len(results) > 0 and all(not isinstance(v, dict) for v in results.values()):
+            # Backward compatibility for legacy flat score-file payloads.
+            stage_results = dict(results)
+        else:
+            stage_results = {}
+
+        runtime_stage_tokens = self._runtime_stage_tokens(
+            mode=effective_mode,
+            stage=runtime_stage,
+        )
+        if not self._stage_matches(self.stage, runtime_stage_tokens):
+            raise KeyError(
+                "ScorerDictConfig stage filter did not match requested stage. "
+                f"configured={self.stage}, runtime={sorted(runtime_stage_tokens)}",
+            )
 
         if ind is None and "y_pred" in kwargs:
             ind = kwargs.pop("y_pred")
@@ -777,17 +1152,17 @@ class ScorerDictConfig(ConfigBase):
                     "If y_pred is provided, y_true must also be provided.",
                 )
         else:
-            if mode == "test":
+            if effective_mode == "test":
                 assert data is not None
                 dep = data.y_test
                 ind = getattr(model, "test_predictions", None)
                 if ind is None:
                     ind = getattr(model, "predictions", None)
-            elif mode == "train":
+            elif effective_mode == "train":
                 assert data is not None and model is not None
                 dep = data.y_train
                 ind = model.training_predictions
-            elif mode == "attack":
+            elif effective_mode == "attack":
                 assert data is not None and attack is not None
                 dep = getattr(attack, "attacked_labels", None)
                 if dep is None:
@@ -798,17 +1173,17 @@ class ScorerDictConfig(ConfigBase):
                         )
                     dep = y_test[: attack.attack_size]
                 ind = attack.attack_predictions
-            elif mode == "val":
+            elif effective_mode == "val":
                 assert data is not None and model is not None
                 dep = data.y_val
                 ind = model.val_predictions
-            elif mode == "attack-val":
+            elif effective_mode == "attack-val":
                 assert data is not None and attack is not None
                 dep = getattr(attack, "attacked_labels", None)
                 if dep is None:
                     dep = data.y_val
                 ind = attack.attack_predictions
-            elif mode == "pre-sample":
+            elif effective_mode == "pre-sample":
                 assert data is not None
                 dep = getattr(data, "y", getattr(data, "_y", None))
                 ind = getattr(data, "X", getattr(data, "_X", None))
@@ -835,7 +1210,7 @@ class ScorerDictConfig(ConfigBase):
             "data": data,
             "model": model,
             "attack": attack,
-            "mode": mode,
+            "mode": effective_mode,
         }
 
         if not self.scorers:
@@ -844,15 +1219,13 @@ class ScorerDictConfig(ConfigBase):
             )
 
         for key, scorer in self.scorers.items():
+            if not self._stage_matches(getattr(scorer, "stage", ""), runtime_stage_tokens):
+                continue
             scored_key = key
-            if mode == "train":
-                scored_key = f"training_{key}"
-            elif mode == "attack":
-                scored_key = f"attack_{key}"
-            if results.get(scored_key) is None:
+            if stage_results.get(scored_key) is None:
                 metric_input = ind
                 if scorer.needs_proba:
-                    if mode == "pre-sample":
+                    if effective_mode == "pre-sample":
                         raise ValueError(
                             f"Scorer '{key}' requires probabilities but pre-sample mode is reserved for full-dataset diagnostics.",
                         )
@@ -860,7 +1233,7 @@ class ScorerDictConfig(ConfigBase):
                         metric_input = y_proba
                     else:
                         X_mode = self.resolve_mode_features(
-                            mode=mode,
+                            mode=effective_mode,
                             data=data,
                         )
                         if X_mode is not None and model is not None:
@@ -893,18 +1266,22 @@ class ScorerDictConfig(ConfigBase):
                 if isinstance(value, (dict, pd.Series, pd.DataFrame)):
                     flat_scores = _series_like_to_float_dict(value)
                     for k, v in flat_scores.items():
-                        # Use informative keys: f"{scored_key}_{k}"
-                        results[f"{scored_key}_{k}"] = v
+                        stage_results[f"{scored_key}_{k}"] = v
                 else:
-                    results[scored_key] = value
+                    stage_results[scored_key] = value
+
+        if not stage_results:
+            raise KeyError(
+                f"No scores found for requested stage '{stage_key}'.",
+            )
+
+        results[stage_key] = stage_results
 
         if score_file is not None:
             self.save_scores(results, score_file)
-        if not results:
-            raise ValueError(
-                "ScorerDictConfig.__call__ did not produce any results; ensure at least one scorer is defined and executed.",
-            )
-        return results
+        if nested_output:
+            return {stage_key: results[stage_key]}
+        return results[stage_key]
 
 
 def coerce_scorer_config(scorer_obj, *, default_factory=None):
@@ -1156,6 +1533,10 @@ safe_store(
 
 __all__ = [
     "safe_store",
+    "SUPPORTED_STAGES",
+    "SUPPORTED_DATA_SCORE_MODES",
+    "SUPPORTED_MODEL_SCORE_MODES",
+    "SUPPORTED_EXPERIMENT_DEFENSE_SCORING_STAGES",
     "_DataScorerMarker",
     "_AttackProfileScorer",
     "_TaskAwareScorerMixin",

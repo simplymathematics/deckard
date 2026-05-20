@@ -245,6 +245,13 @@ class ExperimentConfig(
 
     This config coordinates data loading, optional defenses, model runtime,
     attacks, scoring, and artifact persistence through ``FileConfig``.
+    
+    Attributes
+    ----------
+    scoring_stage : str, optional
+        Defense pipeline stage for which scoring is configured.
+        Supports "pre-defense", "post-defense", or "post-sample".
+        When set, propagated to all scorers to establish context.
     """
 
     data: Union[DataConfig, DataPipelineConfig]
@@ -263,6 +270,10 @@ class ExperimentConfig(
     score_mode: Union[
         Literal["train", "test", "val", "pre-sample"],
         list[Literal["train", "test", "val", "pre-sample"]],
+        None,
+    ] = None
+    scoring_defense_stage: Union[
+        Literal["pre-defense", "post-defense", "post-sample"],
         None,
     ] = None
 
@@ -1319,7 +1330,7 @@ class ExperimentConfig(
         Returns the accumulated score dict for this pipeline pass.
         """
         scores = {}
-        scores.update(**self.data.score_dict)
+        scores = self._merge_stage_aware_scores(scores, self.data.score_dict)
         self._propagate_score_mode()
 
         if self.model:

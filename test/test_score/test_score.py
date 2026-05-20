@@ -304,12 +304,13 @@ def test_data_default_score_profile_executes_from_yaml_defaults():
 
     scores = scorer(data=data, mode="pre-sample")
 
-    assert "num_classes" in scores
-    assert "class_count_min" in scores
-    assert "class_count_max" in scores
-    assert "class_imbalance_ratio" in scores
-    assert "mutual_information_mean" in scores
-    assert "mutual_information_max" in scores
+    assert "pre-sample" in scores
+    assert "num_classes" in scores["pre-sample"]
+    assert "class_count_min" in scores["pre-sample"]
+    assert "class_count_max" in scores["pre-sample"]
+    assert "class_imbalance_ratio" in scores["pre-sample"]
+    assert "mutual_information_mean" in scores["pre-sample"]
+    assert "mutual_information_max" in scores["pre-sample"]
 
 
 def test_model_and_data_default_profiles_infer_task_from_context():
@@ -332,7 +333,8 @@ def test_model_and_data_default_profiles_infer_task_from_context():
         ),
         mode="pre-sample",
     )
-    assert "num_classes" in data_scores
+    assert "pre-sample" in data_scores
+    assert "num_classes" in data_scores["pre-sample"]
 
     def test_survival_concordance_requires_attribute(self):
         with self.assertRaises(ValueError):

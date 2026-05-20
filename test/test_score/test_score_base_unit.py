@@ -295,8 +295,9 @@ def test_scorer_dict_call_mode_and_probability_routing(tmp_path, monkeypatch):
         attack=None,
         score_file=score_file.as_posix(),
     )
-    assert result_test["accuracy"] == 0.9
-    assert "roc_auc" in result_test
+    assert "test" in result_test
+    assert result_test["test"]["accuracy"] == 0.9
+    assert "roc_auc" in result_test["test"]
     assert saved
 
     result_train = scorer_dict(
@@ -305,8 +306,9 @@ def test_scorer_dict_call_mode_and_probability_routing(tmp_path, monkeypatch):
         model=model,
         y_proba=np.array([0.2, 0.8]),
     )
-    assert "training_accuracy" in result_train
-    assert "training_roc_auc" in result_train
+    assert "train" in result_train
+    assert "accuracy" in result_train["train"]
+    assert "roc_auc" in result_train["train"]
 
     result_attack = scorer_dict(
         mode="attack",
@@ -315,8 +317,9 @@ def test_scorer_dict_call_mode_and_probability_routing(tmp_path, monkeypatch):
         attack=attack,
         y_proba=np.array([0.7]),
     )
-    assert "attack_accuracy" in result_attack
-    assert "attack_roc_auc" in result_attack
+    assert "attack" in result_attack
+    assert "accuracy" in result_attack["attack"]
+    assert "roc_auc" in result_attack["attack"]
 
     result_val = scorer_dict(
         mode="val",
@@ -324,14 +327,16 @@ def test_scorer_dict_call_mode_and_probability_routing(tmp_path, monkeypatch):
         model=model,
         y_proba=np.array([0.6, 0.6]),
     )
-    assert "accuracy" in result_val
+    assert "val" in result_val
+    assert "accuracy" in result_val["val"]
     result_attack_val = scorer_dict(
         mode="attack-val",
         data=data,
         model=model,
         attack=attack_val,
     )
-    assert "accuracy" in result_attack_val
+    assert "attack-val" in result_attack_val
+    assert "accuracy" in result_attack_val["attack-val"]
 
     with pytest.raises(AssertionError, match="y_true must also be provided"):
         scorer_dict(y_pred=np.array([0, 1]))
@@ -391,7 +396,7 @@ def test_scorer_dict_attack_mode_prefers_attack_attacked_labels():
 
     result = scorer_dict(mode="attack", data=data, attack=attack)
 
-    assert result["attack_accuracy"] == 1.0
+    assert result["attack"]["accuracy"] == 1.0
 
 
 def test_scorer_dict_pre_sample_mode_uses_full_dataset_vectors():
@@ -411,7 +416,7 @@ def test_scorer_dict_pre_sample_mode_uses_full_dataset_vectors():
 
     result = scorer_dict(mode="pre-sample", data=data)
 
-    assert result["n"] == 4
+    assert result["pre-sample"]["n"] == 4
 
 
 def test_scorer_dict_pre_sample_rejects_probability_metrics():
@@ -501,3 +506,131 @@ def test_score_data_empirical_cdf_empty_reference_raises():
             X=X,
             reference=[np.nan, np.nan],
         )
+
+
+def test_scoring_defense_stage_enum_values():
+    """Test that ScoringDefenseStage enum has correct values."""
+    from deckard.score import ScoringDefenseStage
+    
+    assert ScoringDefenseStage.PRE_DEFENSE.value == "pre-defense"
+    assert ScoringDefenseStage.POST_DEFENSE.value == "post-defense"
+    assert ScoringDefenseStage.VAL_DEFENSE.value == "val"
+
+
+def test_scorer_dict_config_accepts_generic_stage_string():
+    """Test that ScorerDictConfig accepts a generic stage string."""
+    cfg = ScorerDictConfig(
+        scorers={
+            "acc": {"score_function": "sklearn.metrics.accuracy_score"},
+        },
+        stage="post-defense",
+    )
+
+    assert cfg.stage == "post-defense"
+
+
+def test_scorer_dict_config_accepts_generic_stage_list():
+    """Test that ScorerDictConfig accepts a generic stage list."""
+    cfg = ScorerDictConfig(
+        scorers={
+            "acc": {"score_function": "sklearn.metrics.accuracy_score"},
+        },
+        stage=["post-defense", "post-pipeline"],
+    )
+
+    assert cfg.stage == ["post-defense", "post-pipeline"]
+
+
+def test_scorer_dict_config_stage_matching_filters_scorers_by_mode():
+    """Test stage filtering using mode-derived runtime stage tokens."""
+    cfg = ScorerDictConfig(
+        scorers={
+            "acc": {
+                "score_function": "sklearn.metrics.accuracy_score",
+                "stage": "test",
+            },
+            "train_acc": {
+                "score_function": "sklearn.metrics.accuracy_score",
+                "stage": "train",
+            },
+        },
+        stage="",
+    )
+    
+    data = SimpleNamespace(
+        y_test=np.array([0, 1]),
+        y_train=np.array([0, 1]),
+        X_test=np.array([[1.0], [2.0]]),
+        X_train=np.array([[1.0], [2.0]]),
+    )
+    model = SimpleNamespace(
+        predictions=np.array([0, 1]),
+        training_predictions=np.array([0, 1]),
+    )
+
+    test_results = cfg(mode="test", data=data, model=model)
+    assert "test" in test_results
+    assert "acc" in test_results["test"]
+    assert "train_acc" not in test_results["test"]
+
+    train_results = cfg(mode="train", data=data, model=model)
+    assert "train" in train_results
+    assert "train_acc" in train_results["train"]
+    assert "acc" not in train_results["train"]
+
+
+def test_scorer_dict_config_stage_gate_blocks_non_matching_runtime():
+    """Test config-level stage gate rejects non-matching runtime stages."""
+    cfg = ScorerDictConfig(
+        scorers={
+            "acc": {"score_function": "sklearn.metrics.accuracy_score"},
+        },
+        stage="post-defense",
+    )
+
+    data = SimpleNamespace(
+        y_test=np.array([0, 1]),
+        X_test=np.array([[1.0], [2.0]]),
+    )
+    model = SimpleNamespace(predictions=np.array([0, 1]))
+
+    with pytest.raises(KeyError, match="stage filter did not match requested stage"):
+        cfg(mode="test", data=data, model=model)
+
+
+def test_scorer_dict_config_stage_override_kwarg_enables_matching():
+    """Test explicit stage override can satisfy stage filters generically."""
+    cfg = ScorerDictConfig(
+        scorers={
+            "acc": {
+                "score_function": "sklearn.metrics.accuracy_score",
+                "stage": "post-defense",
+            },
+        },
+    )
+
+    data = SimpleNamespace(
+        y_test=np.array([0, 1]),
+        X_test=np.array([[1.0], [2.0]]),
+    )
+    model = SimpleNamespace(predictions=np.array([0, 1]))
+
+    result = cfg(
+        mode="test",
+        stage="post-defense",
+        data=data,
+        model=model,
+    )
+    assert "test" in result
+    assert "acc" in result["test"]
+
+
+def test_scorer_dict_config_rejects_unsupported_stage_tokens():
+    with pytest.raises(ValueError, match="Unsupported stage token"):
+        ScorerDictConfig(
+            scorers={
+                "acc": {"score_function": "sklearn.metrics.accuracy_score"},
+            },
+            stage="not-a-real-stage",
+        )
+

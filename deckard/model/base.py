@@ -18,6 +18,7 @@ from ..score.base import (  # noqa: F401
     ScorerDictConfig,
 )
 from ..score.base import (
+    SUPPORTED_MODEL_SCORE_MODES,
     coerce_scorer_config as _coerce_scorer_config,
 )
 from ..utils import (
@@ -175,7 +176,7 @@ class ModelConfig(
     defense: Any = None
     plugins: Union[list, None] = None
     scorer: Any = AUTO_SCORER
-    score_mode: Literal["train", "test", "val"] = "test"
+    score_mode: str = "test"
 
     # Runtime/model state fields
     _model: Any = None
@@ -210,6 +211,12 @@ class ModelConfig(
         self._initialize_runtime_defaults()
         self._initialize_target_reference()
         self._normalize_classifier_flag()
+        self.score_mode = str(self.score_mode or "test").strip().lower()
+        if self.score_mode not in SUPPORTED_MODEL_SCORE_MODES:
+            raise ValueError(
+                f"Unsupported ModelConfig score_mode '{self.score_mode}'. "
+                f"Expected one of: {sorted(SUPPORTED_MODEL_SCORE_MODES)}",
+            )
         self._initialize_default_scorer()
         self._normalize_plugins()
         self._coerce_defense_config()
@@ -654,6 +661,12 @@ class ModelConfig(
             mode=mode,
             **kwargs,
         )
+        if (
+            isinstance(scores, dict)
+            and mode in scores
+            and isinstance(scores.get(mode), dict)
+        ):
+            scores = dict(scores[mode])
         return round_scores(
             scores=scores,
             n_samples=len(y_true),
@@ -673,7 +686,7 @@ class ModelConfig(
 
     def _canonical_score_mode(self) -> Literal["train", "test", "val"]:
         mode = str(getattr(self, "score_mode", "test") or "test").lower()
-        if mode not in {"train", "test", "val"}:
+        if mode not in SUPPORTED_MODEL_SCORE_MODES:
             raise ValueError(
                 f"Unsupported ModelConfig score_mode '{self.score_mode}'. Expected one of: train, test, val.",
             )
