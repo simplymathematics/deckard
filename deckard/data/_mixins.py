@@ -470,6 +470,7 @@ class DataPipelineMixin:
         typed_steps = [(n, t, d) for n, t, d in x_steps if d is not None]
         if typed_steps:
             transforms = []
+            passthrough_steps = []
             for name, transformer, dtype in typed_steps:
                 dtype_text = str(dtype).strip().lower()
                 if dtype_text in {"num", "numeric", "float", "int"}:
@@ -477,9 +478,15 @@ class DataPipelineMixin:
                 elif dtype_text in {"object", "string", "category"}:
                     selector = make_column_selector(dtype_include=object)
                 else:
+                    passthrough_steps.append((name, transformer))
                     continue
                 transforms.append((transformer, selector))
             if transforms:
+                untyped_steps = [
+                    (name, transformer)
+                    for name, transformer, dtype in x_steps
+                    if dtype is None
+                ]
                 return Pipeline(
                     steps=[
                         (
@@ -490,6 +497,8 @@ class DataPipelineMixin:
                                 verbose_feature_names_out=False,
                             ),
                         ),
+                        *untyped_steps,
+                        *passthrough_steps,
                     ],
                 )
         return Pipeline(steps=[(name, transformer) for name, transformer, _ in x_steps])
