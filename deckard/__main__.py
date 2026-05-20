@@ -10,7 +10,7 @@ from pathlib import Path
 import hydra
 from omegaconf import DictConfig
 
-from . import DECKARD_CONFIG_DIR, DECKARD_DEFAULT_CONFIG_FILE
+from . import DECKARD_CONFIG_DIR
 from .declarations import register_configs
 from .layers import SUPPORTED_LAYERS, layer_dict
 from .utils import normalize_hydra_list_overrides
@@ -81,27 +81,29 @@ def get_configuration_paths():
             "DECKARD_CONFIG_DIR must be specified as an environment variable.",
         )
         sys.exit(1)
-    while not Path(config_dir).exists():
-        # Deckard_config dir does not exist, have the user set it using input()
-        config_dir = input(
-            f"The provided config directory path '{config_dir}' does not exist. Please enter a valid config directory path: ",
-        )
-        # Prompt user to confirm the path exists
-        if not Path(config_dir).exists():
-            config_dir = None
+
     logger.debug("No optional arguments provided.")
-    config_file = Path(
-        os.environ.get(
-            "DECKARD_DEFAULT_CONFIG_FILE",
-            DECKARD_DEFAULT_CONFIG_FILE,
-        ),
+    requested_config_file = Path(
+        os.environ.get("DECKARD_DEFAULT_CONFIG_FILE") or "default.yaml",
     ).as_posix()
+    config_file = requested_config_file
     working_dir = os.getcwd()
     logger.info(f"Current working directory: {working_dir}")
     logger.info("Starting deckard with Hydra configuration.")
     logger.info(f"Config directory: {Path(config_dir).resolve()}")
     if not Path(config_dir).is_absolute():
         config_dir = os.path.relpath(config_dir, working_dir)
+    requested_config_path = Path(config_dir, requested_config_file)
+    if not requested_config_path.exists() and requested_config_file != "default.yaml":
+        fallback_config_path = Path(config_dir, "default.yaml")
+        if fallback_config_path.exists():
+            logger.warning(
+                "Configured default file '%s' not found in '%s'; falling back to 'default.yaml'.",
+                requested_config_file,
+                config_dir,
+            )
+            config_file = "default.yaml"
+
     logger.info(f"Resolved config file path: {config_file}")
     if not Path(config_dir, config_file).exists():
         logger.error(
@@ -128,6 +130,7 @@ def _build_router() -> argparse.ArgumentParser:
             name,
             help=f"Run the {name} layer",
             add_help=False,
+            #TODO: add comprehensive CLI help strings.
         )
         sub.add_argument("remainder", nargs=argparse.REMAINDER)
     return parser
