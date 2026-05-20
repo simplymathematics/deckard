@@ -390,7 +390,12 @@ def _resolve_multirun_sweep_paths(hydra_cfg) -> dict:
 
 
 def _resolve_run_paths(hydra_cfg) -> dict[str, str]:
-    run_dir = Path(hydra_cfg.run.dir)
+    run_dir_value = getattr(getattr(hydra_cfg, "run", None), "dir", None)
+    if run_dir_value is None:
+        run_dir_value = getattr(getattr(hydra_cfg, "runtime", None), "output_dir", None)
+    if run_dir_value is None:
+        return {}
+    run_dir = Path(run_dir_value)
     job_name = getattr(getattr(hydra_cfg, "job", None), "name", "run")
     return {
         "log_file": (run_dir / f"{job_name}.log").as_posix(),
@@ -402,6 +407,9 @@ def _resolve_run_paths(hydra_cfg) -> dict[str, str]:
 
 def _resolve_multirun_paths(hydra_cfg) -> dict[str, str]:
     """Resolve output paths from Hydra run.dir or sweep.dir/sweep.subdir."""
+    if not _is_multirun_mode(hydra_cfg):
+        return _resolve_run_paths(hydra_cfg)
+
     has_multirun_paths = (
         hasattr(hydra_cfg, "sweep")
         and hasattr(hydra_cfg, "job")
