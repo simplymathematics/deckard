@@ -626,7 +626,7 @@ class _PassthroughDefenseMixin(_DefenseMixin):
         return None, defended_estimator
 
 
-class _DefenseBehaviorMixin:
+class _ARTDefenseBehaviorMixin:
     """Reusable defense workflow behavior mixed into concrete config dataclasses."""
 
     # Declared for static analyzers; concrete dataclass provides these fields.
@@ -868,10 +868,6 @@ class _DefenseBehaviorMixin:
         art_params["preprocessing_defences"] = preprocessing_defences or None
         art_params["postprocessing_defences"] = postprocessing_defences or None
         return art_class(base_estimator, **art_params)
-
-
-class ModelDefenseMixin:
-    """Reusable defense pipeline orchestration mixed into config shells."""
 
     @property
     def model(self) -> BaseEstimator | None:
@@ -1193,10 +1189,6 @@ class ModelDefenseMixin:
         )
 
 
-# Backward-compatible alias for internal imports.
-_DefensePipelineMixin = ModelDefenseMixin
-
-
 @dataclass(eq=False, kw_only=True)
 class DefensePipelineConfig(_DefensePipelineConfigBehaviorMixin, ConfigBase):
     """Runtime owner for applying an ordered chain of defense specs."""
@@ -1225,13 +1217,12 @@ class DefensePipelineConfig(_DefensePipelineConfigBehaviorMixin, ConfigBase):
 
 
 @dataclass(kw_only=True)
-class DefenseConfig(_DefenseBehaviorMixin, ModelDefenseMixin, ConfigBase):
+class DefenseConfig(_ARTDefenseBehaviorMixin, ConfigBase):
     """Concrete defense configuration used by defense runtime mixins.
 
     Main parameter groups:
     - ``model_params``: base model-constructor kwargs.
     - ``defense_params``: kwargs passed to the resolved defense implementation.
-    - ``init_params``: runtime metadata used to build ART wrapper context.
 
     Runtime orchestration is plugin-aware through ``_run_plugin_hook`` and
     supports handler/mixin resolution plus before/after dispatch hooks.
@@ -1257,12 +1248,6 @@ class DefenseConfig(_DefenseBehaviorMixin, ModelDefenseMixin, ConfigBase):
     defense_params: dict = field(
         default_factory=dict,
         metadata={"help": "Parameters for the defense."},
-    )
-    init_params: dict = field(
-        default_factory=dict,
-        metadata={
-            "help": "Initialization metadata for defense class/type/library declaration.",
-        },
     )
     alias: str = field(default_factory=str)
     plugins: list = field(default_factory=list)

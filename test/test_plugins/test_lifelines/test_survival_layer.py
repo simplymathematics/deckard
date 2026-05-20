@@ -2,7 +2,6 @@ import pandas as pd
 
 from deckard.data import DataConfig
 from deckard.layers.survival import survival_main
-from deckard.plugins.lifelines.experiment import LIFELINES_DATASETS, SURVIVAL_MODELS
 
 
 def _empty_dataconfig() -> DataConfig:
@@ -47,8 +46,8 @@ def test_survival_main_routes_to_experiment_when_no_plot_payload(monkeypatch):
 
     cfg = {
         "survival": {
-            "data": dict(LIFELINES_DATASETS["lung"]),
-            "model": SURVIVAL_MODELS["weibull"],
+            "data": "lifelines-lung",
+            "model": "weibull",
             "target": "E",
             "duration_col": "T",
             "event_col": "E",

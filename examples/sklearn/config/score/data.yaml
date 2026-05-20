@@ -1,5 +1,1 @@
 _target_: deckard.score.data.DefaultDataScorerConfig
-init_params:
-  library: deckard
-  type: scorer
-  class: data

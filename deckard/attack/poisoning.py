@@ -383,8 +383,6 @@ class PoisoningAttackConfig(_PoisoningAttackMixin, AttackConfig):
         ``poisoning``.
     attack_params : dict[str, Any]
         Constructor kwargs forwarded to resolved ART poisoning attack classes.
-    init_params : dict[str, Any]
-        Metadata-only declaration payload for class/type/library docs.
     plugins : list[AttackTypePlugin]
         Declarative runtime plugin specs. Default contains one
         ``AttackTypePlugin`` configured with:

@@ -1,8 +1,4 @@
 attack_type : "art.attacks.evasion.ZooAttack"
-init_params:
-  library: art
-  type: evasion
-  class: ZooAttack
 attack_params : 
   confidence: 0.0
   targeted: false

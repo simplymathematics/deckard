@@ -46,7 +46,23 @@ class _ExtractionAttackMixin(_PoisoningAttackMixin):
                 f"_ExtractionAttackMixin received unsupported attack type: {attack_type}",
             )
         return self.extract(data=data, art_model=art_model, attack=attack)
-
+    @staticmethod
+    def _select_extraction_scorer(benign_pred, extracted_pred):
+        """Use full classifier metrics when probabilities are available, else label-only metrics."""
+        preds = [np.asarray(benign_pred), np.asarray(extracted_pred)]
+        has_probabilities = all(
+            AttackConfig._looks_like_probabilities(pred) for pred in preds
+        )
+        if has_probabilities:
+            return DefaultClassifierConfig(), True
+        full_classifier = DefaultClassifierConfig()
+        label_only = {
+            name: scorer
+            for name, scorer in full_classifier.scorers.items()
+            if not scorer.needs_proba
+        }
+        return ScorerDictConfig(scorers=label_only), False
+    
     def extract(self, data, art_model, attack) -> dict:
         """Execute a model extraction attack and score victim vs extracted classifiers."""
         task_is_classification = self._infer_task_is_classification(
@@ -156,8 +172,6 @@ class ExtractionAttackConfig(_ExtractionAttackMixin, AttackConfig):
         ``extraction``.
     attack_params : dict[str, Any]
         Constructor kwargs and runtime controls used by extraction attacks.
-    init_params : dict[str, Any]
-        Metadata-only declaration payload for class/type/library docs.
     plugins : list[AttackTypePlugin]
         Declarative runtime plugin specs. Default contains one
         ``AttackTypePlugin`` configured with:

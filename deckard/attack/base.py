@@ -296,8 +296,6 @@ class AttackConfig(ConfigBase):
     This class owns orchestration, timing, scoring, and plugin hook execution.
 
     ``attack_params`` holds constructor kwargs for the selected attack class.
-    ``init_params`` stores declaration metadata used by config registration and
-    is not passed directly to ART constructors.
     """
 
     # Configuration fields
@@ -305,12 +303,6 @@ class AttackConfig(ConfigBase):
     attack_params: dict = field(
         default_factory=dict,
         metadata={"help": "Parameters for the attack."},
-    )
-    init_params: dict = field(
-        default_factory=dict,
-        metadata={
-            "help": "Initialization metadata for attack class/type/library declaration.",
-        },
     )
     attack_size: int = field(
         default=1000,
@@ -1464,22 +1456,7 @@ class AttackConfig(ConfigBase):
         row_sums = pred.sum(axis=1)
         return np.allclose(row_sums, 1.0, atol=1e-4)
 
-    @staticmethod
-    def _select_extraction_scorer(benign_pred, extracted_pred):
-        """Use full classifier metrics when probabilities are available, else label-only metrics."""
-        preds = [np.asarray(benign_pred), np.asarray(extracted_pred)]
-        has_probabilities = all(
-            AttackConfig._looks_like_probabilities(pred) for pred in preds
-        )
-        if has_probabilities:
-            return DefaultClassifierConfig(), True
-        full_classifier = DefaultClassifierConfig()
-        label_only = {
-            name: scorer
-            for name, scorer in full_classifier.scorers.items()
-            if not scorer.needs_proba
-        }
-        return ScorerDictConfig(scorers=label_only), False
+    
 
     def _score_attack_legacy(
         self,

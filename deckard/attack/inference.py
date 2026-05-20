@@ -508,8 +508,6 @@ class InferenceAttackConfig(_InferenceAttackMixin, AttackConfig):
     attack_params : dict[str, Any]
         Constructor kwargs and runtime controls for membership, attribute,
         model-inversion, and related inference subtypes.
-    init_params : dict[str, Any]
-        Metadata-only declaration payload for class/type/library docs.
     plugins : list[AttackTypePlugin]
         Declarative runtime plugin specs. Default contains one
         ``AttackTypePlugin`` configured with:

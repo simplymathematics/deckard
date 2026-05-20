@@ -1,8 +1,4 @@
 defense_name: fairlearn.reductions.ExponentiatedGradient
-init_params:
-  library: fairlearn
-  type: reductions
-  class: ExponentiatedGradient
 defense_params:
   constraints: fairlearn.reductions.DemographicParity
   eps: 0.05

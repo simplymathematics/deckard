@@ -1,8 +1,4 @@
 attack_type : "art.attacks.evasion.FastGradientMethod"
-init_params:
-  library: art
-  type: evasion
-  class: FastGradientMethod
 attack_params : 
   eps_step: .01
   norm: inf

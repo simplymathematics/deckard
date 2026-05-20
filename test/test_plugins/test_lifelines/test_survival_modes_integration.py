@@ -7,7 +7,6 @@ from deckard.attack import AttackConfig
 from deckard.data import DataConfig
 from deckard.experiment import SurvivalExperimentConfig
 from deckard.layers.survival import survival_main
-from deckard.plugins.lifelines.experiment import LIFELINES_DATASETS, SURVIVAL_MODELS
 from deckard.plugins.lifelines.data import LifelinesDataConfig, LifelinesDataMode
 
 
@@ -21,8 +20,8 @@ class TestMode1NativeSurvivalData:
 
         cfg = {
             "survival": {
-                "data": dict(LIFELINES_DATASETS["diabetes"]),
-                "model": SURVIVAL_MODELS["weibull"],
+                "data": "lifelines-diabetes",
+                "model": "weibull",
                 "plots_folder": str(output_folder),
                 "duration_col": "right",
                 "target": "E",

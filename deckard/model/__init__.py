@@ -9,7 +9,7 @@ import logging
 from typing import Any
 
 from .base import ModelConfig
-from .defend import DefenseConfig, DefensePipelineConfig, ModelDefenseMixin
+from .defend import DefenseConfig, DefensePipelineConfig
 from .defense import (
     DefaultDefenseConfig,
     DefaultPytorchDefenseConfig,
@@ -111,7 +111,6 @@ __all__ = [
     "DefaultPytorchDefenseConfig",
     "DefenseConfig",
     "DefensePipelineConfig",
-    "ModelDefenseMixin",
     "DetectorDefenseConfig",
     "PreprocessorDefenseConfig",
     "PostprocessorDefenseConfig",

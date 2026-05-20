@@ -1,8 +1,4 @@
 defense_name: art.defences.preprocessor.FeatureSqueezing
-init_params:
-    library: art
-    type: preprocessor
-    class: FeatureSqueezing
 defense_params:
     apply_fit : False
     apply_predict : True

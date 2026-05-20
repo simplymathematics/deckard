@@ -27,7 +27,7 @@ from ..file import AttackFiles, BaseFiles, FileConfig, ModelFiles
 from ..model import ModelConfig
 from ..model.defend import DefensePipelineConfig
 from ..score import ScorerDictConfig
-from ..score.base import _AttackProfileScorer, _DataScorerMarker, coerce_scorer_config
+from ..score.base import _AttackProfileScorer, _DataScorerMarker, coerce_scorer_config, SUPPORTED_STAGES
 from ..utils import (
     ConfigBase,
     coerce_config,
@@ -70,7 +70,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 DECKARD_CONFIG_DIR = os.environ.get("DECKARD_CONFIG_DIR", "config")
 DECKARD_DEFAULT_CONFIG_FILE = os.environ.get(
     "DECKARD_DEFAULT_CONFIG_FILE",
-    "default_experiment.yaml",
+    "default.yaml",
 )
 
 
@@ -320,7 +320,7 @@ class ExperimentConfig(
                 f"Evaluation mode: {self.evaluation_mode} not implemented",
             )
 
-        allowed = {"pre-sample", "train", "test", "val"}
+        allowed = SUPPORTED_STAGES
         modes = []
         for raw_mode in raw_modes:
             mode = str(raw_mode).strip().lower()
@@ -333,25 +333,25 @@ class ExperimentConfig(
 
     def _resolve_data_mode_inputs(self, mode: str) -> tuple[Any, Any]:
         if mode == "pre-sample":
-            y_true = getattr(self.data, "y", None)
-            y_pred = getattr(self.data, "X", None)
+            dep = getattr(self.data, "y", None)
+            ind = getattr(self.data, "X", None)
         elif mode == "train":
-            y_true = getattr(self.data, "y_train", None)
-            y_pred = getattr(self.data, "X_train", None)
+            dep = getattr(self.data, "y_train", None)
+            ind = getattr(self.data, "X_train", None)
         elif mode == "test":
-            y_true = getattr(self.data, "y_test", None)
-            y_pred = getattr(self.data, "X_test", None)
+            dep = getattr(self.data, "y_test", None)
+            ind = getattr(self.data, "X_test", None)
         elif mode == "val":
-            y_true = getattr(self.data, "y_val", None)
-            y_pred = getattr(self.data, "X_val", None)
+            dep = getattr(self.data, "y_val", None)
+            ind = getattr(self.data, "X_val", None)
         else:
             raise ValueError(f"Unsupported data scoring mode '{mode}'")
 
-        if y_true is None or y_pred is None:
+        if dep is None or ind is None:
             raise ValueError(
                 f"Scoring mode '{mode}' requested but required dataset split is unavailable.",
             )
-        return y_true, y_pred
+        return dep, ind
 
     @staticmethod
     def _apply_runtime_data_split_overrides(
@@ -434,7 +434,7 @@ class ExperimentConfig(
         # For multi-mode evaluations (e.g. standard/report), prefer test-mode
         # component scoring so model metrics retain canonical keys like
         # ``accuracy`` instead of ``training_accuracy``.
-        for preferred in ("test", "val", "train", "pre-sample"):
+        for preferred in ("val", "test", "train", "pre-sample"):
             if preferred in modes:
                 return preferred
         return "test"
@@ -442,7 +442,7 @@ class ExperimentConfig(
     def _propagate_score_mode(self) -> Literal["train", "test", "val", "pre-sample"]:
         """
         Propagate score mode to data, model, and attack configs.
-        - DataConfig: supports pre-sample/train/test/val
+        - DataConfig: supports pre-sample/train/test/val.
         - ModelConfig: supports train/test/val (no pre-sample)
         - AttackConfig: supports test/val only
         """
@@ -473,6 +473,10 @@ class ExperimentConfig(
 
     @staticmethod
     def _normalize_mode_score_keys(mode: str, mode_scores: dict) -> dict:
+        if isinstance(mode_scores, dict) and mode in mode_scores and isinstance(mode_scores.get(mode), dict):
+            mode_scores = dict(mode_scores[mode])
+        if mode == "train":
+            return {f"training_{k}": v for k, v in mode_scores.items()}
         if mode == "val":
             return {f"validation_{k}": v for k, v in mode_scores.items()}
         if mode == "pre-sample":
@@ -794,6 +798,18 @@ class ExperimentConfig(
                 self.score = None
                 return
 
+            _SCOPE_KEYS = {"data", "model", "attack", "detector", "experiment"}
+            explicit_scope = str(plain.get("scoring_type", "")).strip().lower()
+            if explicit_scope in _SCOPE_KEYS:
+                scoped_cfg = dict(plain)
+                scoped_cfg.pop("scoring_type", None)
+                self._route_scorer_to_scope(
+                    explicit_scope,
+                    coerce_scorer_config(scoped_cfg),
+                )
+                if explicit_scope != "experiment":
+                    self.score = None
+                return
             split_data_cfg, split_model_cfg = self._split_merged_score_profiles(plain)
             if split_data_cfg is not None:
                 data_scorer = coerce_scorer_config(split_data_cfg)
@@ -1351,7 +1367,7 @@ class ExperimentConfig(
                 self.model,
                 "score_dict",
             ), "model must have score_dict attribute after training"
-            scores.update(**self.model.score_dict)
+            scores = self._merge_stage_aware_scores(scores, self.model.score_dict)
             if hasattr(self.model, "set_epoch_attack") and callable(
                 getattr(self.model, "set_epoch_attack"),
             ):
@@ -1417,15 +1433,48 @@ class ExperimentConfig(
                 self.detector,
                 "score_dict",
             ), "detector must have score_dict attribute after execution"
-            scores.update(**self.detector.score_dict)
+            scores = self._merge_stage_aware_scores(scores, self.detector.score_dict)
         else:
             logger.info("No detector config provided, skipping detector phase.")
 
         custom_scores = self._run_experiment_scorer_modes(score_file=None)
         if custom_scores:
-            scores = {**scores, **custom_scores}
+            scores = self._merge_stage_aware_scores(scores, custom_scores)
 
         return scores
+
+    @staticmethod
+    def _merge_stage_aware_scores(base_scores: dict, incoming_scores: dict | None) -> dict:
+        """Merge score payloads while flattening stage-nested scorer results."""
+        from ..score.base import SUPPORTED_STAGES
+        merged = dict(base_scores or {})
+        if not isinstance(incoming_scores, dict):
+            return merged
+
+        for key, value in incoming_scores.items():
+            normalized_key = str(key).strip().lower()
+            if normalized_key in SUPPORTED_STAGES and isinstance(value, dict):
+                stage_suffix = normalized_key.replace("-", "_")
+                for metric_name, metric_value in value.items():
+                    if normalized_key == "train":
+                        merged[f"training_{metric_name}"] = metric_value
+                    elif normalized_key == "val":
+                        merged[f"validation_{metric_name}"] = metric_value
+                    elif normalized_key == "pre-sample":
+                        merged[f"presample_{metric_name}"] = metric_value
+                    elif normalized_key == "test" and metric_name not in merged:
+                        merged[metric_name] = metric_value
+                    elif normalized_key == "test":
+                        merged[f"{metric_name}_test"] = metric_value
+                    else:
+                        merged[f"{metric_name}_{stage_suffix}"] = metric_value
+                continue
+            if normalized_key == "validation_val" and isinstance(value, dict):
+                for metric_name, metric_value in value.items():
+                    merged[f"validation_{metric_name}"] = metric_value
+                continue
+            merged[key] = value
+        return merged
 
     @staticmethod
     def _aggregate_repeated_scores(

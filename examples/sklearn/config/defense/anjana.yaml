@@ -2,9 +2,5 @@ defense_name: null
 defense_params:
   name: anjana.anonymity.k_anonymity
   k: 2
-init_params:
-  library: anjana
-  type: data
-  class: anonymization
 _target_: deckard.DefenseConfig
 alias: anjana

@@ -190,42 +190,7 @@ class _EvasionAttackMixin(_AttackMixin):
         self.attack = adv_pred
         return self.score_dict
 
-    def get_attack_subset(self, data: Any, test: bool = True) -> tuple:
-        """Get a subset of data for attack (supports multiple data types)."""
-        import pandas as pd
-        from torch.utils.data import DataLoader, Dataset, Subset
-
-        n = self.attack_size
-        if test is True:
-            x_ = data.X_test
-            y_ = data.y_test
-        else:
-            x_ = data.X_train
-            y_ = data.y_train
-        # Accept Subset/Dataset and convert to tensor
-        if isinstance(x_, (pd.Series, np.ndarray, pd.DataFrame)) or is_tensor(x_):
-            x_subset = x_[:n]
-            y_subset = y_[:n]
-        elif isinstance(x_, (Dataset, Subset)):
-            # Convert to tensor
-            loader = DataLoader(x_, batch_size=n, shuffle=False)
-            batch = next(iter(loader))
-            if isinstance(batch, (tuple, list)):
-                x_subset = batch[0]
-                y_subset = batch[1]
-            else:
-                x_subset = batch
-                y_subset = None
-        elif is_dataloader(x_):
-            x_subset, y_subset = collect_subset_from_dataloader(x_, n=n)
-        else:
-            raise ValueError(
-                f"Expected data.X_test to be a pd.Series, np.ndarray, torch Tensor, torch DataLoader, or torch Dataset/Subset. Got: {type(data.X_test)}",
-            )
-        # Do not flatten x_subset; preserve original shape for torch/ART models
-        if y_subset is not None and is_tensor(y_subset) and y_subset.ndim > 1:
-            y_subset = y_subset.view(-1)
-        return n, x_subset, y_subset
+    
 
 
 @dataclass(eq=False, kw_only=True)
@@ -239,8 +204,6 @@ class EvasionAttackConfig(_EvasionAttackMixin, AttackConfig):
         ``evasion``.
     attack_params : dict[str, Any]
         Constructor kwargs forwarded to resolved ART evasion attack classes.
-    init_params : dict[str, Any]
-        Metadata-only declaration payload for class/type/library docs.
     plugins : list[AttackTypePlugin]
         Declarative runtime plugin specs. Default contains one
         ``AttackTypePlugin`` configured with:

@@ -1,8 +1,4 @@
 attack_type : "art.attacks.evasion.BoundaryAttack"
-init_params:
-  library: art
-  type: evasion
-  class: BoundaryAttack
 attack_params : 
   batch_size : ${..attack_size}
   targeted: false
