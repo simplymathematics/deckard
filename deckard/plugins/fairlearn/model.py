@@ -242,6 +242,10 @@ class FairlearnDefenseConfig(_SensitiveColumnsMixin, DefenseConfig):
                 estimator=base_estimator,
                 **defense_params,
             )
+        elif fairlearn_submodule == "adversarial":
+            if constraints is not None and "constraints" not in defense_params:
+                defense_params["constraints"] = constraints
+            defended_estimator = defense_class(**defense_params)
         else:
             raise NotImplementedError(
                 f"Fairlearn submodule '{fairlearn_submodule}' is not supported. "
