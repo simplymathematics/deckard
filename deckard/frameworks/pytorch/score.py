@@ -129,9 +129,7 @@ def get_dataset_shape(obj: Any) -> tuple:
 _SENSITIVE_ATTR: dict = {
     "train": "_sensitive_train",
     "test": "_sensitive_test",
-    "attack": "_sensitive_test",  # attack uses test-split features
     "val": "_sensitive_val",
-    "attack-val": "_sensitive_val",
     "all": "_sensitive_all",
     "pre-sample": "_sensitive_all",  # pre-sample falls back to all
 }
@@ -140,15 +138,55 @@ _SENSITIVE_ATTR: dict = {
 _SPLIT_ATTRS: dict = {
     "train": ("X_train", "y_train"),
     "test": ("X_test", "y_test"),
-    "attack": ("X_test", "y_test"),
     "val": ("X_val", "y_val"),
-    "attack-val": ("X_val", "y_val"),
     "all": ("_X", "_y"),
     "pre-sample": ("_X", "_y"),
 }
 
 
-def resolve_sensitive_features(data: Any, mode: str) -> Optional[Any]:
+
+def normalize_scoring_mode(
+    mode: Optional[str],
+    *,
+    stage_to_split_mode: Optional[dict[str, str]] = None,
+) -> str:
+    """Normalise scoring stage/mode tokens into canonical split modes.
+
+    Callers may override stage aliases by supplying ``stage_to_split_mode``.
+    For example, ``{"adversarial": "val"}`` routes adversarial scoring to
+    validation split arrays/sensitive features.
+    """
+    token = str(mode or "test").strip().lower()
+    alias_map: dict[str, str] = {
+        "train": "train",
+        "test": "test",
+        "val": "val",
+        "attack-val": "val",
+        "all": "all",
+        "pre-sample": "pre-sample",
+    }
+    if stage_to_split_mode:
+        alias_map.update(
+            {
+                str(k).strip().lower(): str(v).strip().lower()
+                for k, v in stage_to_split_mode.items()
+            },
+        )
+    resolved = alias_map.get(token, token)
+    if resolved not in _SENSITIVE_ATTR:
+        raise ValueError(
+            f"Unsupported fairness scoring mode: '{mode}'. "
+            f"Expected one of {sorted(alias_map)}",
+        )
+    return resolved
+
+
+def resolve_sensitive_features(
+    data: Any,
+    mode: str,
+    *,
+    stage_to_split_mode: Optional[dict[str, str]] = None,
+) -> Optional[Any]:
     """Return the sensitive-feature array for *data* at *mode*, or ``None``.
 
     This is the single canonical lookup used by the score, data, and model
@@ -156,16 +194,20 @@ def resolve_sensitive_features(data: Any, mode: str) -> Optional[Any]:
     """
     if data is None:
         return None
-    attr = _SENSITIVE_ATTR.get(mode)
-    if attr is None:
-        raise ValueError(
-            f"Unsupported fairness scoring mode: '{mode}'. "
-            f"Expected one of {list(_SENSITIVE_ATTR)}",
-        )
+    resolved_mode = normalize_scoring_mode(
+        mode,
+        stage_to_split_mode=stage_to_split_mode,
+    )
+    attr = _SENSITIVE_ATTR[resolved_mode]
     return getattr(data, attr, None)
 
 
-def resolve_split_arrays(data: Any, mode: str) -> Tuple[Any, Any]:
+def resolve_split_arrays(
+    data: Any,
+    mode: str,
+    *,
+    stage_to_split_mode: Optional[dict[str, str]] = None,
+) -> Tuple[Any, Any]:
     """Return the (X, y) arrays for *data* at *mode*.
 
     Uses ``_SPLIT_ATTRS`` to locate the right attribute names, then calls
@@ -174,7 +216,11 @@ def resolve_split_arrays(data: Any, mode: str) -> Tuple[Any, Any]:
     """
     if data is None:
         return None, None
-    x_attr, y_attr = _SPLIT_ATTRS.get(mode, ("X_test", "y_test"))
+    resolved_mode = normalize_scoring_mode(
+        mode,
+        stage_to_split_mode=stage_to_split_mode,
+    )
+    x_attr, y_attr = _SPLIT_ATTRS.get(resolved_mode, ("X_test", "y_test"))
     return getattr(data, x_attr, None), getattr(data, y_attr, None)
 
 

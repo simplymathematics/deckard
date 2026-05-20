@@ -11,7 +11,10 @@ from torch.utils.data import (
 )
 
 from ...plugins.fairlearn.data import FairlearnDataConfig
-from ...plugins.fairlearn.score import DefaultFairlearnDataScorerConfig
+from ...plugins.fairlearn.score import (
+    DefaultFairlearnDataScorerConfig,
+    fairness_stage_to_split_mode,
+)
 from ...utils import probabilities_from_model_outputs
 from .data import PytorchCustomDataConfig
 from .score import (
@@ -19,6 +22,7 @@ from .score import (
     is_dataloader_like,
     is_dataset_like,
     materialize_dataset,
+    resolve_split_arrays,
     resolve_sensitive_features,
 )
 
@@ -262,6 +266,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             )
 
         scorer_mode = mode if mode is not None else "train"
+        stage_to_split_mode = fairness_stage_to_split_mode(scorer_mode)
 
         # Map "pre-sample" -> dataset-level summary (no model predictions needed).
         if scorer_mode == "pre-sample":
@@ -273,7 +278,11 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             }
 
         # Canonical sensitive-feature lookup.
-        sensitive = resolve_sensitive_features(self, scorer_mode)
+        sensitive = resolve_sensitive_features(
+            self,
+            scorer_mode,
+            stage_to_split_mode=stage_to_split_mode,
+        )
         if sensitive is None:
             logger.warning(
                 "No sensitive features for mode '%s'; skipping fairness scoring.",
@@ -282,7 +291,10 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             return {}
 
         # Extract (X, y) arrays for the requested split.
-        X, y_true = self._get_split_arrays(scorer_mode)
+        X, y_true = self._get_split_arrays(
+            scorer_mode,
+            stage_to_split_mode=stage_to_split_mode,
+        )
         if y_true is None:
             return {}
 
@@ -316,16 +328,21 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _get_split_arrays(self, mode: str):
+    def _get_split_arrays(
+        self,
+        mode: str,
+        *,
+        stage_to_split_mode: dict[str, str] | None = None,
+    ):
         """Return ``(X_array, y_array)`` numpy arrays for the given split *mode*.
 
         Handles Subset / DataLoader via ``materialize_dataset``.
         """
-        from .score import _SPLIT_ATTRS
-
-        x_attr, y_attr = _SPLIT_ATTRS.get(mode, ("X_test", "y_test"))
-        X_raw = getattr(self, x_attr, None)
-        y_raw = getattr(self, y_attr, None)
+        X_raw, y_raw = resolve_split_arrays(
+            self,
+            mode,
+            stage_to_split_mode=stage_to_split_mode,
+        )
 
         if is_dataset_like(X_raw) or is_dataloader_like(X_raw):
             X_arr, y_from_ds = materialize_dataset(X_raw)
