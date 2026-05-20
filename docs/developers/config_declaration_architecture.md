@@ -28,16 +28,17 @@ Expected responsibilities:
 
 Use canonical Hydra groups with this structure:
 
-- `<domain>/<type>/<implementation>`
+- `<group>/<plugin>_<alias-name>`
 
 Examples:
 
-- `model/classifier/sklearn-random-forest`
-- `attack/evasion/fgsm`
+- `model@defense=fairlearn_exponeniated-gradient.yaml`
+- `attack/evasion_fgsm`
 
-YAML declaration file names should use `snake-case.yaml`.
+YAML declaration file names should use `modified_snake-case.yaml`.
+Separate logical groups with `_`. 
+Use `-` in multi-word aliases.
 
-## Migration Rules
 
 - Prefer YAML declarations over Python hardcoded `ConfigStore` calls.
 - Remove duplicated declarations in module-local declaration files once YAML equivalents exist.
