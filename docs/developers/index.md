@@ -13,7 +13,6 @@ Welcome to the Deckard developer documentation. This section contains all design
 - [Core/Framework/Plugin Boundaries](core_framework_plugin_boundaries)
 - [Core Plugin Boundaries (Legacy)](core_plugin_boundaries)
 - [Naming Conventions](naming_conventions)
-- [Adapter Contract](adapter_contract)
 - [Mixin and Plugin Rules](mixin_plugin_rules)
 - [Docstring Standard](docstring_standard)
 - [GH Actions Cache Setup](gh_actions_cache)
@@ -27,10 +26,9 @@ development
 workflows
 refactor_plan
 config_declaration_architecture
-core_framework_plugin_boundaries
+core_plugin_boundaries
 core_plugin_boundaries
 naming_conventions
-adapter_contract
 mixin_plugin_rules
 docstring_standard
 gh_actions_cache

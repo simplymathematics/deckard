@@ -14,9 +14,8 @@ See `.github/refactor_plan` for detailed status notes and historical tracking.
 - [ ] Consolidate per-module declarations (`data`, `model`, `attack`, `defense`, `plot`, `layers`, `experiment`) into canonical YAML groups.
 - [ ] Refactor tests to compose canonical configs via Hydra (compose-first, unit, experiment).
 - [ ] Enforce naming conventions (`*Config`, `Default*ScoreConfig`, `*Mixin`, `*Plugin`, `snake-case.yaml`).
-- [ ] Verify adapter/public-attribute boundaries and core/framework/plugin isolation tests.
 - [ ] Run coverage + focused refactor test suites and update `.github/refactor_plan` progress.
 
 ---
 
-**Design Specs:** [Config Declaration Architecture](config_declaration_architecture) | [Naming Conventions](naming_conventions) | [Adapter Contract](adapter_contract) | [Core/Framework/Plugin Boundaries](core_framework_plugin_boundaries)
+**Design Specs:** [Config Declaration Architecture](config_declaration_architecture) | [Naming Conventions](naming_conventions) | [Core/Framework/Plugin Boundaries](core_framework_plugin_boundaries)

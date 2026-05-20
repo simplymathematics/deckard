@@ -14,4 +14,4 @@ See the [Refactor Plan](refactor_plan) for implementation details and ongoing go
 
 ---
 
-**Related:** [Naming Conventions](naming_conventions) | [Adapter Contract](adapter_contract) | [Mixin and Plugin Rules](mixin_plugin_rules)
+**Related:** [Naming Conventions](naming_conventions) | [Mixin and Plugin Rules](mixin_plugin_rules)
