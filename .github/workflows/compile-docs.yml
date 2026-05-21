@@ -23,6 +23,10 @@ jobs:
     env:
       # Bump this from workflow_dispatch to force a fresh cache lineage after major updates.
       CACHE_FLUSH_TOKEN: ${{ github.event.inputs.cache_flush_token || 'stable' }}
+      HF_HOME: ~/.cache/huggingface
+      HUGGINGFACE_HUB_CACHE: ~/.cache/huggingface/hub
+      TRANSFORMERS_CACHE: ~/.cache/huggingface/transformers
+      HF_DATASETS_CACHE: ~/.cache/huggingface/datasets
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -34,7 +38,11 @@ jobs:
       with:
         path: |
           docs/notebooks/build/
-          .dvc/cache/
+          docs/notebooks/.dvc/cache/
+          ~/.cache/huggingface/
+          ~/.cache/huggingface/hub/
+          ~/.cache/huggingface/transformers/
+          ~/.cache/huggingface/datasets/
         key: dvc-cache-${{ runner.os }}-${{ env.CACHE_FLUSH_TOKEN }}-${{ hashFiles('docs/notebooks/dvc.lock', 'dvc.lock', 'pyproject.toml') }}
         restore-keys: |
           dvc-cache-${{ runner.os }}-${{ env.CACHE_FLUSH_TOKEN }}-
@@ -43,9 +51,9 @@ jobs:
         python -m pip install --upgrade pip
         # Install docs + required notebook stacks, then pin anjana/pycanon to
         # versions compatible with the current Sphinx/docutils toolchain.
-        pip install '.[lifelines,fairlearn,seaborn,yellowbrick,docs,datasets]'
-        pip install 'docutils==0.21.2' 'pycanon==1.0.3' 'anjana==1.1.0'
-        pip install --index-url https://download.pytorch.org/whl/cpu --force-reinstall torch torchvision torchaudio
+        pip install --no-cache-dir '.[lifelines,fairlearn,seaborn,yellowbrick,docs,datasets]'
+        pip install --no-cache-dir 'docutils==0.21.2' 'pycanon==1.0.3' 'anjana==1.1.0'
+        pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 'torch==2.4.1' 'torchvision==0.19.1' 'torchaudio==2.4.1'
     - name: Pull DVC cache
       run: |
         cd docs/notebooks
