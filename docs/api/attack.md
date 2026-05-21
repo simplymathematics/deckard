@@ -76,6 +76,7 @@ Related Deckard docs:
    - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
 ```
+
 ## Minimal YAML Example
 
 ```yaml
@@ -88,8 +89,6 @@ attack:
 ```
 
 ## API Reference
-
-
 
 ```{eval-rst}
 .. automodule:: deckard.attack.base
@@ -127,13 +126,11 @@ attack:
    :show-inheritance:
 ```
 
-
 ```{eval-rst}
 .. automodule:: deckard.frameworks.pytorch.attack
    :members:
    :show-inheritance:
 ```
-
 
 ## Troubleshooting
 
@@ -143,9 +140,9 @@ attack:
 
 ### See also
 
-* {doc}`experiment` — experiment orchestration
-* {doc}`model` — model configuration and execution
-* {doc}`defend` — defense pipeline configuration and mixin behavior
-* {doc}`data` — data loading and split handling
-* {doc}`sample` — sampling/split strategy definitions
-* {doc}`score` — attack scoring profiles
+- {doc}`experiment` — experiment orchestration
+- {doc}`model` — model configuration and execution
+- {doc}`defend` — defense pipeline configuration and mixin behavior
+- {doc}`data` — data loading and split handling
+- {doc}`sample` — sampling/split strategy definitions
+- {doc}`score` — attack scoring profiles

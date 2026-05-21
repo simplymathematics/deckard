@@ -13,6 +13,6 @@ Deckard is built on a set of architectural and design principles that ensure rep
 
 See the [Refactor Plan](refactor_plan) for implementation details and ongoing goals.
 
----
+______________________________________________________________________
 
 **Related:** [Naming Conventions](naming_conventions) | [Mixin and Plugin Rules](mixin_plugin_rules)

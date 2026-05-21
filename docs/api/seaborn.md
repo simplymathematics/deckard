@@ -16,7 +16,7 @@ The {mod}`deckard.plugins.seaborn.plot` module provides:
   configuration with x/y columns, plot type, and optional hue/style
 - {class}`~deckard.plugins.seaborn.plot.SeabornPlotConfigList` — ordered list of
   {class}`~deckard.plugins.seaborn.plot.SeabornPlotConfig` instances sharing a
-  common ``data_file``
+  common `data_file`
 
 These configs are intended for post-hoc visualization of compiled experiment
 results rather than single-run diagnostics.
@@ -35,14 +35,14 @@ Related Deckard docs:
 
 ### Supported plot types
 
-The ``plot_type`` field accepts:
+The `plot_type` field accepts:
 
-- ``scatter`` — scatter plot (``seaborn.scatterplot``)
-- ``line`` — line plot (``seaborn.lineplot``)
-- ``hist`` — histogram (``seaborn.histplot``)
-- ``cat`` — categorical plot (``seaborn.catplot``)
-- ``bar`` — bar plot (``seaborn.barplot``)
-- ``heatmap`` — heatmap (``seaborn.heatmap``)
+- `scatter` — scatter plot (`seaborn.scatterplot`)
+- `line` — line plot (`seaborn.lineplot`)
+- `hist` — histogram (`seaborn.histplot`)
+- `cat` — categorical plot (`seaborn.catplot`)
+- `bar` — bar plot (`seaborn.barplot`)
+- `heatmap` — heatmap (`seaborn.heatmap`)
 
 ## Examples
 
@@ -54,19 +54,20 @@ The ``plot_type`` field accepts:
   - {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
 
 ```
+
 ### Troubleshooting
 
-- **AssertionError on column names**: verify that ``x``, ``y``, ``hue``, and
-  ``style`` match column names in the data file exactly.
-- **File not found**: ensure ``data_file`` path exists before constructing
+- **AssertionError on column names**: verify that `x`, `y`, `hue`, and
+  `style` match column names in the data file exactly.
+- **File not found**: ensure `data_file` path exists before constructing
   {class}`~deckard.plugins.seaborn.plot.SeabornPlotConfig`; directories for
-  ``plot_file`` are created automatically.
+  `plot_file` are created automatically.
 - **Import error**: install the optional plotting dependencies with
-  ``pip install "deckard[plot]"``.
+  `pip install "deckard[plot]"`.
 
 ### See also
 
-* {doc}`plot` — general plotting documentation
-* {doc}`yellowbrick` — single-run diagnostics (ROC, confusion matrix, etc.)
-* {doc}`layers` — CLI layer registry (compile_results, plot)
-* {doc}`experiment` — experiment orchestration that produces scored outputs
+- {doc}`plot` — general plotting documentation
+- {doc}`yellowbrick` — single-run diagnostics (ROC, confusion matrix, etc.)
+- {doc}`layers` — CLI layer registry (compile_results, plot)
+- {doc}`experiment` — experiment orchestration that produces scored outputs

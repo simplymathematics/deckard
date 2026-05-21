@@ -40,12 +40,12 @@ Fairness scoring in deckard is provided by {mod}`deckard.plugins.fairlearn.score
 
 These include:
 
-- ``demographic_parity_difference``
-- ``equalized_odds_difference``
-- ``statistical_parity_difference``
-- ``disparate_impact``
+- `demographic_parity_difference`
+- `equalized_odds_difference`
+- `statistical_parity_difference`
+- `disparate_impact`
 
-The scorers operate on pandas DataFrame-backed data and can resolve context from ``y_pred`` or from ``data._X`` together with sensitive attribute configuration.
+The scorers operate on pandas DataFrame-backed data and can resolve context from `y_pred` or from `data._X` together with sensitive attribute configuration.
 
 ### Data Configuration
 
@@ -63,8 +63,8 @@ The {class}`~deckard.plugins.fairlearn.data.FairlearnDataConfig` extends {class}
 pipeline capabilities while adding fairness hooks:
 
 - configurable preprocessing pipeline steps from core data config
-- optional Fairlearn mitigation transform via ``fairness_defense`` callable config
-- optional ANJANA anonymization insertion via ``anjana_defense``
+- optional Fairlearn mitigation transform via `fairness_defense` callable config
+- optional ANJANA anonymization insertion via `anjana_defense`
 - group-aware sampling and stratification
 - standard split/k-fold/shuffle sampling through the base data stack
 
@@ -80,7 +80,7 @@ The {class}`~deckard.plugins.fairlearn.model.FairlearnModelConfig` supports:
 
 {class}`~deckard.plugins.fairlearn.model.FairlearnModelConfig` wraps
 {class}`~deckard.model.ModelConfig` behavior and can still use deckard's
-general model defenses via ``model.defense`` (ART preprocessors,
+general model defenses via `model.defense` (ART preprocessors,
 postprocessors, trainers, and detector pipelines) where compatible with the
 selected backend/model.
 
@@ -116,14 +116,14 @@ return MetricFrame(
 Parameter semantics in Deckard runtime:
 
 - `metrics`: normalized metric callables from `group_scorers` on
-   {class}`~deckard.plugins.fairlearn.score.FairlearnScoreDictConfig`.
+  {class}`~deckard.plugins.fairlearn.score.FairlearnScoreDictConfig`.
 - `y_true`: resolved labels from the active scoring mode (`train`, `test`,
-   `val`, `attack`, or `attack-val`).
+  `val`, `attack`, or `attack-val`).
 - `y_pred`: resolved predictions aligned to `y_true`.
 - `sensitive_features`: protected/group attributes resolved from
-   {class}`~deckard.data.DataConfig` (or explicitly passed at call-time).
+  {class}`~deckard.data.DataConfig` (or explicitly passed at call-time).
 - `control_features`: optional conditioning columns for conditional group
-   evaluation (forwarded directly to MetricFrame).
+  evaluation (forwarded directly to MetricFrame).
 - `sample_params`: optional per-metric sample kwargs mapping forwarded as-is.
 - `n_boot`: optional bootstrap iteration count for confidence intervals.
 - `ci_quantiles`: optional quantiles to report when bootstrap is enabled.
@@ -151,6 +151,7 @@ attack-time fairness scoring.
    - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
 ```
+
 ### Troubleshooting
 
 - **No sensitive features**: Ensure sensitive_features list is non-empty and matches actual column names in the data.
@@ -160,8 +161,8 @@ attack-time fairness scoring.
 
 ### See also
 
-* {doc}`data` — general data configuration including {mod}`deckard.plugins.fairlearn.data`
-* {doc}`model` — general model configuration including {mod}`deckard.plugins.fairlearn.model`
-* {doc}`score` — scoring framework including {mod}`deckard.plugins.fairlearn.score`
-* {doc}`pytorch` — optional PyTorch integration with Fairlearn
-* {doc}`modules` — overview of all extensions
+- {doc}`data` — general data configuration including {mod}`deckard.plugins.fairlearn.data`
+- {doc}`model` — general model configuration including {mod}`deckard.plugins.fairlearn.model`
+- {doc}`score` — scoring framework including {mod}`deckard.plugins.fairlearn.score`
+- {doc}`pytorch` — optional PyTorch integration with Fairlearn
+- {doc}`modules` — overview of all extensions

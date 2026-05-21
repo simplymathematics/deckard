@@ -70,13 +70,13 @@ composition.
 
 ### Persistence Contract
 
-- ``save``/``load`` on {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig`
+- `save`/`load` on {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig`
   persist config state as YAML.
-- ``save_model``/``load_model`` persist runtime torch model state artifacts.
-- Runtime torch artifacts use ``.pt`` (and optionally pickle-compatible payloads
+- `save_model`/`load_model` persist runtime torch model state artifacts.
+- Runtime torch artifacts use `.pt` (and optionally pickle-compatible payloads
   where supported by the runtime loader).
 - During checkpointing, YAML config records include references to runtime
-  ``model_state_file`` entries.
+  `model_state_file` entries.
 
 ### Experiment Orchestration
 
@@ -98,6 +98,7 @@ The {class}`~deckard.frameworks.pytorch.experiment.TorchExperimentConfig` enforc
   - {doc}`notebooks/fairlearn.ipynb </notebooks/fairlearn>`
 
 ```
+
 ### Troubleshooting
 
 - **Device mismatch errors**: Verify all components use compatible devices. The
@@ -106,18 +107,18 @@ The {class}`~deckard.frameworks.pytorch.experiment.TorchExperimentConfig` enforc
 - **Out of memory (OOM)**: Reduce batch_size, model size, or use gradient
   checkpointing. Consider using mixed precision training.
 - **Missing PyTorch modules**: Ensure torchvision is installed for common models
-  like ResNet. Install via ``pip install "deckard[pytorch]"`` or similar.
+  like ResNet. Install via `pip install "deckard[pytorch]"` or similar.
 - **ART compatibility**: Use ART-supported model architectures. Custom modules may
   need additional ART estimator wrapping.
-- **Artifact extension mismatch**: Use YAML for config objects and ``.pt`` for
+- **Artifact extension mismatch**: Use YAML for config objects and `.pt` for
   runtime PyTorch model-state artifacts.
 
 ### See also
 
-* {doc}`data` — general data configuration including {mod}`deckard.frameworks.pytorch.data`
-* {doc}`model` — general model configuration including {mod}`deckard.frameworks.pytorch.model`
-* {doc}`experiment` — experiment orchestration including {class}`TorchExperimentConfig`
-* {doc}`attack` — attack configuration and execution
-* {doc}`plot` — visualization support including training history plots
-* {doc}`lifelines` — optional survival analysis integration with PyTorch
-* {doc}`modules` — overview of all extensions
+- {doc}`data` — general data configuration including {mod}`deckard.frameworks.pytorch.data`
+- {doc}`model` — general model configuration including {mod}`deckard.frameworks.pytorch.model`
+- {doc}`experiment` — experiment orchestration including {class}`TorchExperimentConfig`
+- {doc}`attack` — attack configuration and execution
+- {doc}`plot` — visualization support including training history plots
+- {doc}`lifelines` — optional survival analysis integration with PyTorch
+- {doc}`modules` — overview of all extensions

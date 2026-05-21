@@ -44,9 +44,8 @@ Examples:
 - `attack/evasion_fgsm`
 
 YAML declaration file names should use `modified_snake-case.yaml`.
-Separate logical groups with `_`. 
+Separate logical groups with `_`.
 Use `-` in multi-word aliases.
-
 
 - Prefer YAML declarations over Python hardcoded `ConfigStore` calls.
 - Remove duplicated declarations in module-local declaration files once YAML equivalents exist.
@@ -56,13 +55,15 @@ Use `-` in multi-word aliases.
 ## Test Strategy
 
 - Compose-first tests: verify [Hydra](https://hydra.cc) composition for canonical declarations. Use:
+
 ```
-deckard optimize --cfg job 
+deckard optimize --cfg job
 ```
+
 - Unit tests: consume canonical composed configs instead of fixture-local declaration copies.
 
 - Experiment tests: validate end-to-end execution from composed canonical config stacks.
 
----
+______________________________________________________________________
 
 **Related:** [Refactor Plan](refactor_plan) | [Naming Conventions](naming_conventions) | [Mixin and Plugin Rules](mixin_plugin_rules)

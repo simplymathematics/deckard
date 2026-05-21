@@ -14,7 +14,6 @@ and verification. The project uses:
 - optional extras for modular installs
 - CLI entrypoint via `deckard`
 
-
 ## Dependency Model
 
 Core dependencies are defined in `[project].dependencies` in
@@ -51,10 +50,10 @@ Typical contributor loop:
 
 1. Identify the pipeline stage affected (`data`, `model`, `attack`, `score`,
    or `experiment`).
-2. Update implementation and associated declarations/config wiring.
-3. Add or update tests for behavior changes.
-4. Update notebooks/docs when the user-facing behavior changes.
-5. Re-run focused workflows (tests, docs build, notebook stage) before merge.
+1. Update implementation and associated declarations/config wiring.
+1. Add or update tests for behavior changes.
+1. Update notebooks/docs when the user-facing behavior changes.
+1. Re-run focused workflows (tests, docs build, notebook stage) before merge.
 
 ## Testing and Validation
 
@@ -83,6 +82,7 @@ mypy deckard/
 ```
 
 Tools used:
+
 - [`pre-commit`](https://pre-commit.com) — multi-language pre-commit hook framework
 - [`flake8`](https://flake8.pycqa.org) — Python style and lint checker
 - [`black`](https://black.readthedocs.io) — opinionated Python code formatter
@@ -142,11 +142,11 @@ Extension documentation:
 
 - Prefer shared utility helpers over duplicated conversion/normalization logic.
 - Keep configuration behavior deterministic and explicit rather than relying on
-	implicit fallback behavior.
+  implicit fallback behavior.
 - Keep metric naming stable, especially for multi-attack and extension metrics,
-	to preserve downstream report compatibility.
+  to preserve downstream report compatibility.
 - When modifying notebook-driven workflows, validate with the corresponding
-	[DVC](https://dvc.org) stage.
+  [DVC](https://dvc.org) stage.
 
 ## Documentation Responsibilities
 

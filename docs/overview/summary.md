@@ -35,7 +35,7 @@ difficult to audit.
 deckard addresses this by providing:
 
 - configuration-driven orchestration of full ML pipelines around
-	multi-objective optimization
+  multi-objective optimization
 - repeatable experiment execution with explicit run metadata
 - integrated result collection for comparison and reporting
 - [`Hydra`](https://hydra.cc) integration for command line configuration
@@ -151,7 +151,7 @@ Example coverage includes:
 
 - attack presets across evasion, inference, inversion, and reconstruction
 - scorer profiles for classification, regression, fairness, survival, and
-	attack-specific metrics
+  attack-specific metrics
 - plotting presets for Yellowbrick diagnostics and Seaborn score visualizations
 
 ## Experiment Management
@@ -163,12 +163,12 @@ record of what was run.
 Typical workflow composition includes:
 
 1. **Dataset Loading And Sampling**: Load data via :class:`~deckard.data.DataConfig`, apply data preprocessing pipelines via :class:`~deckard.data.DataPipelineConfig`, and sample via pluggable :class:`~deckard.data.sample.BaseSampler` strategies.
-2. **Preprocessing And Feature Handling**: Transform features via sklearn pipelines; automatically instrumented with timing metrics.
-3. **Model Training And Evaluation**: Train models via :class:`~deckard.model.ModelConfig` with configurable scorer profiles for classification, regression, fairness, and survival tasks.
-4. **Optional Defenses**: Apply adversarial robustness defenses via :class:`~deckard.model.DefensePipelineConfig` that chain ART-based preprocessing and postprocessing defenses.
-5. **Attack Execution**: Execute evasion or inference attacks via :class:`~deckard.attack.AttackConfig` with attack-specific scoring and metric aggregation.
-6. **Optional Detector Execution**: Train/evaluate auxiliary clean-vs-adversarial detectors via :class:`~deckard.detector.DetectorConfig`.
-7. **Scoring And Artifact Persistence**: Normalize metrics via :class:`~deckard.score.ScorerDictConfig` and persist results via :class:`~deckard.file.FileConfig`.
+1. **Preprocessing And Feature Handling**: Transform features via sklearn pipelines; automatically instrumented with timing metrics.
+1. **Model Training And Evaluation**: Train models via :class:`~deckard.model.ModelConfig` with configurable scorer profiles for classification, regression, fairness, and survival tasks.
+1. **Optional Defenses**: Apply adversarial robustness defenses via :class:`~deckard.model.DefensePipelineConfig` that chain ART-based preprocessing and postprocessing defenses.
+1. **Attack Execution**: Execute evasion or inference attacks via :class:`~deckard.attack.AttackConfig` with attack-specific scoring and metric aggregation.
+1. **Optional Detector Execution**: Train/evaluate auxiliary clean-vs-adversarial detectors via :class:`~deckard.detector.DetectorConfig`.
+1. **Scoring And Artifact Persistence**: Normalize metrics via :class:`~deckard.score.ScorerDictConfig` and persist results via :class:`~deckard.file.FileConfig`.
 
 By standardizing these stages, deckard reduces ambiguity in experiment setup
 and makes comparative benchmarking easier.
@@ -176,11 +176,11 @@ and makes comparative benchmarking easier.
 ## Optimization-First Workflow
 
 1. Define objective scorers in [Score API](../api/score).
-2. Compose experiment config via [Hydra](https://hydra.cc) config groups.
-3. Run single or multi-objective optimization through [Optuna](https://optuna.org).
-4. Persist predictions, scores, and metadata through [File API](../api/file).
-5. Run post-hoc layers for Pareto selection and visual diagnostics via
-	[Layers API](../api/layers).
+1. Compose experiment config via [Hydra](https://hydra.cc) config groups.
+1. Run single or multi-objective optimization through [Optuna](https://optuna.org).
+1. Persist predictions, scores, and metadata through [File API](../api/file).
+1. Run post-hoc layers for Pareto selection and visual diagnostics via
+   [Layers API](../api/layers).
 
 ## Reproducibility And Auditability
 
@@ -217,20 +217,20 @@ Because `joblib` is already a dependency in many deckard environments, the
 Joblib launcher is a practical default for local parallel sweeps:
 
 - Joblib launcher:
-	[Hydra plugin docs](https://hydra.cc/docs/plugins/joblib_launcher/) |
-	[upstream Joblib docs](https://joblib.readthedocs.io/)
+  [Hydra plugin docs](https://hydra.cc/docs/plugins/joblib_launcher/) |
+  [upstream Joblib docs](https://joblib.readthedocs.io/)
 - Ray launcher:
-	[Hydra plugin docs](https://hydra.cc/docs/plugins/ray_launcher/) |
-	[upstream Ray docs](https://docs.ray.io/en/latest/)
+  [Hydra plugin docs](https://hydra.cc/docs/plugins/ray_launcher/) |
+  [upstream Ray docs](https://docs.ray.io/en/latest/)
 - RQ launcher:
-	[Hydra plugin docs](https://hydra.cc/docs/plugins/rq_launcher/) |
-	[upstream RQ docs](https://python-rq.org/)
+  [Hydra plugin docs](https://hydra.cc/docs/plugins/rq_launcher/) |
+  [upstream RQ docs](https://python-rq.org/)
 - Submitit launcher:
-	[Hydra plugin docs](https://hydra.cc/docs/plugins/submitit_launcher/) |
-	[upstream Submitit project](https://github.com/facebookincubator/submitit)
-
+  [Hydra plugin docs](https://hydra.cc/docs/plugins/submitit_launcher/) |
+  [upstream Submitit project](https://github.com/facebookincubator/submitit)
 
 See also:
+
 - [Package Summary](summary.md).
 - [API Reference](../api/modules)
 - [Extensions](extensions.md)

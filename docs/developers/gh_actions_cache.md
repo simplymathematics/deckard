@@ -34,6 +34,7 @@ Added a caching step before building docs:
 ```
 
 **Benefits:**
+
 - Caches notebook outputs and DVC metadata between workflow runs
 - Cache key is based on `dvc.lock` hash (invalidates when dependencies change)
 - Fallback keys allow partial cache hits
@@ -48,6 +49,7 @@ bash scripts/manage_dvc_cache.sh [command]
 ```
 
 **Commands:**
+
 - `status` - View cache size and pipeline state
 - `list` - Show cached notebook stages
 - `clear` - Remove cache and force full rebuild
@@ -57,7 +59,9 @@ bash scripts/manage_dvc_cache.sh [command]
 ### 4. Documentation
 
 #### `docs/developers/gh_actions_cache`
+
 Comprehensive guide covering:
+
 - How caching works locally and in CI
 - Local development workflow
 - DVC cache management commands
@@ -66,6 +70,7 @@ Comprehensive guide covering:
 - Performance expectations
 
 #### `scripts/README`
+
 Updated with new DVC cache management section
 
 ## How It Works
@@ -73,22 +78,23 @@ Updated with new DVC cache management section
 ### Local Development
 
 1. Run `make html` in `docs/` directory
-2. DVC caches notebook outputs in `.dvc/cache/`
-3. Changed dependencies are detected from `dvc.lock`
-4. Only modified stages rerun
-5. Commit updated `dvc.lock` to preserve cache validity
+1. DVC caches notebook outputs in `.dvc/cache/`
+1. Changed dependencies are detected from `dvc.lock`
+1. Only modified stages rerun
+1. Commit updated `dvc.lock` to preserve cache validity
 
 ### CI Builds
 
 1. GitHub Actions checks out code
-2. **Cache step** restores previous `.dvc/cache/` if key matches
-3. Notebooks run (from cache if available)
-4. Updated `dvc.lock` is committed
-5. Cache is saved for next run
+1. **Cache step** restores previous `.dvc/cache/` if key matches
+1. Notebooks run (from cache if available)
+1. Updated `dvc.lock` is committed
+1. Cache is saved for next run
 
 ### Cache Invalidation
 
 Cache is automatically invalidated when:
+
 - `docs/notebooks/dvc.lock` changes (notebook dependencies updated)
 - `dvc.lock` changes (root project dependencies updated)
 - 7 days pass without accessing cache (GitHub default retention)
@@ -122,11 +128,12 @@ bash scripts/manage_dvc_cache.sh rebuild
 ### CI Monitoring
 
 View cache usage in GitHub Actions:
+
 1. Open Actions tab
-2. Click "Push Docs Check" workflow
-3. Select a run
-4. Find "Cache DVC artifacts and notebooks" step
-5. Check cache size and hit/miss status
+1. Click "Push Docs Check" workflow
+1. Select a run
+1. Find "Cache DVC artifacts and notebooks" step
+1. Check cache size and hit/miss status
 
 ## Performance Impact
 
@@ -147,21 +154,25 @@ View cache usage in GitHub Actions:
 ## Troubleshooting
 
 ### Cache not being used
+
 - Check `dvc.lock` hasn't unexpectedly changed
 - Verify cache wasn't evicted (7-day inactivity limit)
 - Use `bash scripts/manage_dvc_cache.sh status` to diagnose
 
 ### Stale notebook outputs
+
 - Run `bash scripts/manage_dvc_cache.sh rebuild` locally
 - Or run `make html DVC_REPRO_ARGS="--force"` in docs/
 
 ### Cache too large
+
 - Use `.dvcignore` to exclude unnecessary outputs
 - Manually clear with `bash scripts/manage_dvc_cache.sh clear`
 
 ## Next Steps
 
 **Optional future enhancements:**
+
 - Configure GitHub Releases as persistent DVC remote for team collaboration
 - Add cache warming strategy for long-running stages
 - Set up cache size monitoring and cleanup policies

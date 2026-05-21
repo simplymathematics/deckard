@@ -9,7 +9,6 @@ registry used by the top-level CLI router.
    :show-inheritance:
 ```
 
-
 ## Overview
 
 Layers are thin orchestration entrypoints for higher-level tasks, such as:
@@ -22,9 +21,9 @@ Layers are thin orchestration entrypoints for higher-level tasks, such as:
 - Pareto-front trial selection
 
 Each layer is registered in :data:`deckard.layers.layer_dict` as a
-``[parser, main]`` pair consumed by the top-level CLI.
+`[parser, main]` pair consumed by the top-level CLI.
 
-## Optimization 
+## Optimization
 
 The optimize layer is implemented in {mod}`deckard.layers.optimize` and
 coordinates optimization workflows.
@@ -97,8 +96,8 @@ delegate to domain modules, and normalize outputs for CLI and automation.
 
 ### See also
 
-* {doc}`experiment`
-* {doc}`plot`
-* {doc}`lifelines`
-* {doc}`file`
-* {doc}`utils`
+- {doc}`experiment`
+- {doc}`plot`
+- {doc}`lifelines`
+- {doc}`file`
+- {doc}`utils`

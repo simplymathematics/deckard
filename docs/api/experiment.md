@@ -9,7 +9,6 @@ entrypoints for end-to-end experiment execution.
    :show-inheritance:
 ```
 
-
 ## Torch Framework
 
 PyTorch-specific experiment orchestration is available via
@@ -31,7 +30,6 @@ See also: {doc}`lifelines`.
    :members:
    :show-inheritance:
 ```
-
 
 ## Overview
 
@@ -70,6 +68,7 @@ Available experiment entrypoints:
    - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
 ```
+
 ## Minimal YAML Example
 
 ```yaml
@@ -106,13 +105,13 @@ Hydra override patterns commonly used with experiments include:
 
 ### See also
 
-* {doc}`data` — data configuration and loading
-* {doc}`model` — model configuration and training
-* {doc}`attack` — attack configuration
-* {doc}`file` — result serialization
-* {doc}`score` — scoring framework
-* {doc}`plot` — backend plotting configuration and outputs
-* {doc}`layers` — CLI orchestration layers (including pareto and survival)
-* {doc}`pytorch` — PyTorch experiment orchestration
-* {doc}`lifelines` — survival experiment orchestration
-* {doc}`utils` — utility functions
+- {doc}`data` — data configuration and loading
+- {doc}`model` — model configuration and training
+- {doc}`attack` — attack configuration
+- {doc}`file` — result serialization
+- {doc}`score` — scoring framework
+- {doc}`plot` — backend plotting configuration and outputs
+- {doc}`layers` — CLI orchestration layers (including pareto and survival)
+- {doc}`pytorch` — PyTorch experiment orchestration
+- {doc}`lifelines` — survival experiment orchestration
+- {doc}`utils` — utility functions

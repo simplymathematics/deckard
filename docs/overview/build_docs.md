@@ -1,4 +1,5 @@
 # Developer Documentation
+
 ## Notebook Dependencies
 
 All example notebooks in `docs/notebooks/*.ipynb` require the full set of optional dependencies for the relevant extension stacks. To run all notebooks without errors, install:
@@ -41,12 +42,12 @@ To preview the exact command without running it:
 If Docker is installed but you see an error like `connect: no such file or directory` for `/var/run/docker.sock`, start a Docker engine first (Docker Desktop, `colima start`, or OrbStack), then rerun the script.
 
 # Layout
+
 Sphinx documentation entry points:
+
 - Landing page: [index](../index)
 - Software modules + extensions index: [api/modules](../api/modules)
 - Notebook guide index: [notebooks/index](../notebooks/index)
-
-
 
 ## Directory Structure
 
@@ -67,39 +68,39 @@ docs/
 |  |- extensions.md
 |  `- changelog.md
 |- build/
-`- 
-	|- modules.md
-	|- index.md
-	|- attack.md
-	|- data.md
-	|- detector.md
-	|- experiment.md
-	|- file.md
-	|- layers.md
-	|- lifelines.md
-	|- model.md
-	|- pytorch.md
-	|- plot.md
-	|- score.md
-	|- seaborn.md
-	`- utils.md
+`-
+    |- modules.md
+    |- index.md
+    |- attack.md
+    |- data.md
+    |- detector.md
+    |- experiment.md
+    |- file.md
+    |- layers.md
+    |- lifelines.md
+    |- model.md
+    |- pytorch.md
+    |- plot.md
+    |- score.md
+    |- seaborn.md
+    `- utils.md
 - docs/notebooks/
-	├── anjana.ipynb
-	├── art_attacks.ipynb
-	├── art_defenses.ipynb
-	├── build
-	├── deckard.ipynb
-	├── deckard.log
-	├── detector.ipynb
-	├── error.log
-	├── fairlearn.ipynb
-	├── hydra.ipynb
-	├── index.md
-	├── lifelines.ipynb
-	├── pytorch.ipynb
-	├── seaborn.ipynb
-	├── sklearn.ipynb
-	└── yellowbrick.ipynb
+    ├── anjana.ipynb
+    ├── art_attacks.ipynb
+    ├── art_defenses.ipynb
+    ├── build
+    ├── deckard.ipynb
+    ├── deckard.log
+    ├── detector.ipynb
+    ├── error.log
+    ├── fairlearn.ipynb
+    ├── hydra.ipynb
+    ├── index.md
+    ├── lifelines.ipynb
+    ├── pytorch.ipynb
+    ├── seaborn.ipynb
+    ├── sklearn.ipynb
+    └── yellowbrick.ipynb
 
 Related runnable example configs live under:
 
@@ -107,7 +108,6 @@ Related runnable example configs live under:
 - [examples/sklearn/config/score](../../examples/sklearn/config/score)
 - [examples/sklearn/config/plot](../../examples/sklearn/config/plot)
 ```
-
 
 ## Prerequisites
 
@@ -133,17 +133,18 @@ This installs the full documentation stack as defined in the `[project.optional-
 - jupyterlab
 - ipykernel
 - sphinxcontrib-bibtex
-- roman  # Required for Sphinx LaTeX builder
+- roman # Required for Sphinx LaTeX builder
 
 All of these will be installed automatically with the above pip command.
-
 
 ## Theme Version Requirement
 
 The documentation navigation header and sidebar require `pydata-sphinx-theme >= 0.14` for proper grouping and header support. This is pinned in the `[project.optional-dependencies] docs = [...]` section of `pyproject.toml`.
 If you see navigation issues, upgrade with:
 
-	pip install -U pydata-sphinx-theme
+```
+pip install -U pydata-sphinx-theme
+```
 
 ## Render the Docs
 
@@ -202,12 +203,12 @@ If you prefer to run `sphinx-autobuild` directly, use the equivalent command:
 
 ```bash
 sphinx-autobuild \
-	-j auto \
-	--port 8000 \
-	--pre-build "make notebooks" \
-	--watch ../deckard \
-	--watch ../examples \
-	--watch notebooks/dvc.yaml \
-	-D nb_execution_mode=off \
-	. build/html
+    -j auto \
+    --port 8000 \
+    --pre-build "make notebooks" \
+    --watch ../deckard \
+    --watch ../examples \
+    --watch notebooks/dvc.yaml \
+    -D nb_execution_mode=off \
+    . build/html
 ```

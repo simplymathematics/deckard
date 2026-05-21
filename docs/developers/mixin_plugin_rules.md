@@ -1,6 +1,7 @@
 # Mixin and Plugin Rules
 
 ## Mixins
+
 - Must be dataclasses
 - Encapsulate reusable behavior, parameters, and logic
 - Expose at least one public method
@@ -8,6 +9,7 @@
 - Must use MyST-native Google-style docstrings
 
 ## Plugins
+
 - Compose one or more mixins
 - Define deterministic execution order
 - Implement runtime execution hooks
@@ -16,6 +18,7 @@
 - No hidden runtime mutation
 
 ## Forbidden Patterns
+
 - Undocumented mixins
 - Private-only APIs
 - Implicit execution contracts
@@ -23,6 +26,6 @@
 - Hidden orchestration logic
 - Side-effect-only mixins
 
----
+______________________________________________________________________
 
 **Related:** [Naming Conventions](naming_conventions) | [Docstring Standard](docstring_standard)

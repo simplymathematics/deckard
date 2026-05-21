@@ -26,6 +26,7 @@ resolved config values.
    - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
 ```
+
 ## API Reference
 
 ```{eval-rst}
@@ -44,18 +45,17 @@ file:
    score_table_file: score_table.csv
 ```
 
-
 ## Typical Workflow
 
 1. Configure file outputs through the active experiment config.
-2. Execute experiment/model/attack/score layers.
-3. Persist and reload artifacts via file config helpers.
+1. Execute experiment/model/attack/score layers.
+1. Persist and reload artifacts via file config helpers.
 
 Hydra-focused workflow notes:
 
 1. Compose output roots via Hydra config groups and overrides.
-2. Resolve run-specific paths after OmegaConf interpolation.
-3. Keep artifact paths consistent across {doc}`experiment`, {doc}`plot`, and
+1. Resolve run-specific paths after OmegaConf interpolation.
+1. Keep artifact paths consistent across {doc}`experiment`, {doc}`plot`, and
    {doc}`layers` stages.
 
 ## Troubleshooting
@@ -66,9 +66,9 @@ Hydra-focused workflow notes:
 
 ### See also
 
-* {doc}`experiment` — experiment orchestration
-* {doc}`data` — dataset artifacts
-* {doc}`model` — model artifacts
-* {doc}`score` — score persistence and loading
-* {doc}`plot` — plot artifact outputs
-* {doc}`layers` — compile/plot/pareto layer outputs
+- {doc}`experiment` — experiment orchestration
+- {doc}`data` — dataset artifacts
+- {doc}`model` — model artifacts
+- {doc}`score` — score persistence and loading
+- {doc}`plot` — plot artifact outputs
+- {doc}`layers` — compile/plot/pareto layer outputs

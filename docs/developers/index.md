@@ -2,7 +2,6 @@
 
 Welcome to the Deckard developer documentation. This section contains all design docs, architectural standards, and contributor guidelines. All content here is intended for developers extending, maintaining, or integrating with Deckard.
 
-
 ## Contents
 
 - [Design Principles](design_principles)
@@ -32,9 +31,10 @@ gh_actions_cache
 
 For user-facing documentation, see the [Overview](../overview/index) and [Notebooks](../notebooks/index).
 
----
+______________________________________________________________________
 
 **Quick links:**
+
 - [API Reference](../api/modules)
 - [Notebook Index](../notebooks/index)
 - [Build Docs](../overview/build_docs)

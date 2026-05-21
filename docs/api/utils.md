@@ -10,7 +10,6 @@ class loading, and parser generation helpers.
    :show-inheritance:
 ```
 
-
 ## Overview
 
 Utilities provide the shared primitives that keep deckard configs and runtime
@@ -35,6 +34,7 @@ Key responsibilities include:
    - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
 ```
+
 ## Internals
 
 The module emphasizes deterministic normalization (for hashing and persistence)
@@ -48,6 +48,6 @@ and defensive loading behavior so configs are portable across environments.
 
 ### See also
 
-* {doc}`experiment`
-* {doc}`file`
-* {doc}`layers`
+- {doc}`experiment`
+- {doc}`file`
+- {doc}`layers`

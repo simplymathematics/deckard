@@ -11,7 +11,6 @@ and integration with the {mod}`deckard.data` module.
    :show-inheritance:
 ```
 
-
 ## Extensions
 
 ### Fairlearn Extension
@@ -26,7 +25,6 @@ See also: {doc}`fairlearn`.
    :show-inheritance:
 ```
 
-
 ### Pytorch extesion
 
 The Pytorch extesion provides PyTorch-native model training, prediction, and
@@ -38,7 +36,6 @@ See also: {doc}`pytorch`.
    :members:
    :show-inheritance:
 ```
-
 
 ## Lifelines plugin
 
@@ -52,32 +49,32 @@ See also: {doc}`lifelines`.
    :show-inheritance:
 ```
 
-
 ## Overview
 
 {class}`~deckard.model.ModelConfig` automates the following steps:
 
-* Dynamic instantiation of scikit-learn models via import strings (e.g. ``sklearn.svm.SVC``)
-* Training, prediction, and evaluation for both classification and regression
-* Timing instrumentation for training, prediction, and scoring
-* Config persistence via YAML state-machine artifacts
-* Runtime model persistence via framework-native artifacts
-* Hydra/YAML configuration for reproducibility and experiment management
-* CLI support for one-line model training and testing
+- Dynamic instantiation of scikit-learn models via import strings (e.g. `sklearn.svm.SVC`)
+- Training, prediction, and evaluation for both classification and regression
+- Timing instrumentation for training, prediction, and scoring
+- Config persistence via YAML state-machine artifacts
+- Runtime model persistence via framework-native artifacts
+- Hydra/YAML configuration for reproducibility and experiment management
+- CLI support for one-line model training and testing
 
 ### Model scoring mode
 
 {class}`~deckard.model.ModelConfig` supports split-aware scoring with
-``score_mode`` set to one of:
+`score_mode` set to one of:
 
-- ``train``
-- ``test``
-- ``val``
+- `train`
+- `test`
+- `val`
 
 The experiment layer can propagate this mode automatically so model scoring is
 performed on the active split selected by experiment scoring policy.
 
 ### Supported frameworks
+
 Currently supports:
 
 - **scikit-learn** — via {class}`~deckard.model.ModelConfig`
@@ -111,6 +108,7 @@ Common ART defense components referenced by deckard model defenses:
    - {doc}`notebooks/art_defenses.ipynb </notebooks/art_defenses>`
 
 ```
+
 ## Minimal YAML Example
 
 ```yaml
@@ -125,75 +123,78 @@ model:
 ## Internals
 
 ### Timing and logging
+
 All major operations (training, prediction, scoring, saving/loading) record wall-clock time
-and log via Python’s ``logging`` module.
+and log via Python’s `logging` module.
 
 ### Scoring
-* For classifiers: accuracy, precision, recall, and F1 score.
-* For regressors: MSE, RMSE, and MAE.
+
+- For classifiers: accuracy, precision, recall, and F1 score.
+- For regressors: MSE, RMSE, and MAE.
 
 ### Persistence
+
 Use the public model persistence interfaces:
 
 - :meth:`deckard.model.ModelConfig.save`
 - :meth:`deckard.model.ModelConfig.load`
 - :meth:`deckard.model.ModelConfig.save_model`
 - :meth:`deckard.model.ModelConfig.load_model`
-- ``model(data, model_file=...)`` for automatic load-or-train behavior
+- `model(data, model_file=...)` for automatic load-or-train behavior
 
 Canonical policy:
 
-- ``save``/``load`` persist and restore config objects as ``.yaml``/``.yml``.
-- ``save_model``/``load_model`` persist and restore runtime model objects.
+- `save`/`load` persist and restore config objects as `.yaml`/`.yml`.
+- `save_model`/`load_model` persist and restore runtime model objects.
 - Runtime model extensions are framework-specific:
-   - PyTorch runtime artifacts use ``.pt``.
-   - scikit-learn runtime artifacts use ``.pkl`` or ``.joblib``.
+  - PyTorch runtime artifacts use `.pt`.
+  - scikit-learn runtime artifacts use `.pkl` or `.joblib`.
 
 For {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig`, checkpointing
 produces YAML config records that reference runtime model-state artifacts:
 
-- ``model_file`` entries point to YAML config artifacts.
-- ``model_state_file`` entries point to ``.pt`` runtime state artifacts.
+- `model_file` entries point to YAML config artifacts.
+- `model_state_file` entries point to `.pt` runtime state artifacts.
 
 Public API example (automatic load-or-train): see the {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
 notebook for executed save/load examples.
 
 Public API example (PyTorch config + runtime save/load): see the {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
-notebook for executed YAML + ``save_model``/``load_model`` patterns.
+notebook for executed YAML + `save_model`/`load_model` patterns.
 
 #### Pre-trained torch models
 
 There are two supported patterns:
 
-1. Load a previously saved deckard PyTorch config via ``load(filepath)`` and
-   load runtime state via ``load_model(filepath)``.
-2. Point ``model_type`` to a custom constructor/class that returns an already
+1. Load a previously saved deckard PyTorch config via `load(filepath)` and
+   load runtime state via `load_model(filepath)`.
+1. Point `model_type` to a custom constructor/class that returns an already
    initialized {class}`torch.nn.Module` (for example, one that internally loads external
    pre-trained weights), then run normal deckard training/evaluation.
 
 If you want inference-only behavior from a pre-trained checkpoint, load it via
-``load`` + ``load_model`` and then call the model with ``model_file``/prediction outputs as
+`load` + `load_model` and then call the model with `model_file`/prediction outputs as
 needed, without requiring private methods.
 
 ## Troubleshooting
 
-* **Model not fitted error** — train the model before calling
-   :meth:`deckard.model.ModelConfig.save_model` or predictions.
-* **Hydra config not found** — ensure the YAML file path is valid or use inline overrides.
-* **Artifact deserialization errors** — verify runtime artifact type and extension
-  match the framework policy (PyTorch ``.pt``, sklearn ``.pkl``/``.joblib``).
-* **CLI argument conflicts** — use ``conflict_handler='resolve'`` when composing parsers.
-* **Probability prediction errors** — set ``--probability`` only for models that support ``predict_proba()``.
-
+- **Model not fitted error** — train the model before calling
+  :meth:`deckard.model.ModelConfig.save_model` or predictions.
+- **Hydra config not found** — ensure the YAML file path is valid or use inline overrides.
+- **Artifact deserialization errors** — verify runtime artifact type and extension
+  match the framework policy (PyTorch `.pt`, sklearn `.pkl`/`.joblib`).
+- **CLI argument conflicts** — use `conflict_handler='resolve'` when composing parsers.
+- **Probability prediction errors** — set `--probability` only for models that support `predict_proba()`.
 
 ### See also
-* {doc}`data` — data configuration and loading
-* {doc}`train` — training runtime mixins and trainer-defense behavior
-* {doc}`defend` — defense pipeline and defense-family mixins
-* {doc}`experiment` — experiment orchestration
-* {doc}`attack` — attack configuration
-* {doc}`score` — scoring framework
-* {doc}`pytorch` — PyTorch model integration
-* {doc}`anjana` — anonymization-aware models
-* {doc}`lifelines` — survival model configuration
-* {doc}`utils` — utility functions
+
+- {doc}`data` — data configuration and loading
+- {doc}`train` — training runtime mixins and trainer-defense behavior
+- {doc}`defend` — defense pipeline and defense-family mixins
+- {doc}`experiment` — experiment orchestration
+- {doc}`attack` — attack configuration
+- {doc}`score` — scoring framework
+- {doc}`pytorch` — PyTorch model integration
+- {doc}`anjana` — anonymization-aware models
+- {doc}`lifelines` — survival model configuration
+- {doc}`utils` — utility functions

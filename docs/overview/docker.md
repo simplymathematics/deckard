@@ -38,9 +38,9 @@ Build CUDA image:
 
 ```bash
 docker build \
-	--build-arg ENABLE_CUDA=1 \
-	--build-arg BASE_IMAGE=nvidia/cuda:12.0.0-runtime-ubuntu20.04 \
-	-t deckard:cuda .
+    --build-arg ENABLE_CUDA=1 \
+    --build-arg BASE_IMAGE=nvidia/cuda:12.0.0-runtime-ubuntu20.04 \
+    -t deckard:cuda .
 ```
 
 ## CI workflows

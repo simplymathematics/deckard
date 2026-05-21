@@ -157,7 +157,6 @@ Typical usage:
 - stage-aware attack metrics (`benign`, `adversarial`)
 - shared configurable comparison scoring for benign-vs-adversarial and victim-vs-extracted paths
 
-
 Example:
 
 ```python
@@ -258,11 +257,11 @@ scorers:
 - Keep scoring configurable via scorer configs, not ad-hoc subtype metric code.
 - Preserve compatibility aliases only at output boundaries.
 - Persist scorer outputs and metadata through [FileConfig](../api/file) so
-    optimization and post-hoc workflows consume the same artifacts.
+  optimization and post-hoc workflows consume the same artifacts.
 - Treat scorer definitions as objective contracts for
-    [Optuna](https://optuna.org) studies.
+  [Optuna](https://optuna.org) studies.
 - Use [Layers](../api/layers) for post-hoc Pareto selection and plotting once
-    optimization runs complete.
+  optimization runs complete.
 
 ## Quick Checklist
 

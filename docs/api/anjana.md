@@ -24,6 +24,7 @@ External references:
    End-to-end examples are documented in {doc}`/notebooks/anjana`.
 
 ```
+
 ## API Reference
 
 ```{eval-rst}
@@ -32,10 +33,8 @@ External references:
    :show-inheritance:
 ```
 
-
-
 ## Typical Workflow
 
 1. Configure an Anjana-aware data pipeline.
-2. Train a compatible model configuration.
-3. Score utility and privacy-sensitive outcomes.
+1. Train a compatible model configuration.
+1. Score utility and privacy-sensitive outcomes.

@@ -18,6 +18,7 @@ metrics from benign and attacked samples.
    - {doc}`notebooks/art_attacks.ipynb </notebooks/art_attacks>`
 
 ```
+
 ## API Reference
 
 ```{eval-rst}
@@ -34,13 +35,11 @@ detector:
    detector_type: art.defences.detector.evasion.BinaryInputDetector
 ```
 
-
-
 ## Typical Workflow
 
 1. Prepare model/data outputs via the experiment layer.
-2. Optionally generate attack artifacts.
-3. Run detector scoring on benign and attacked outputs.
+1. Optionally generate attack artifacts.
+1. Run detector scoring on benign and attacked outputs.
 
 ## Troubleshooting
 
@@ -50,6 +49,6 @@ detector:
 
 ### See also
 
-* {doc}`experiment` — experiment orchestration
-* {doc}`attack` — attack generation and attack outputs
-* {doc}`score` — scoring framework including detector metrics
+- {doc}`experiment` — experiment orchestration
+- {doc}`attack` — attack generation and attack outputs
+- {doc}`score` — scoring framework including detector metrics

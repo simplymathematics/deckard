@@ -1,4 +1,3 @@
-
 # deckard
 
 deckard is a configuration-driven framework for evaluating machine learning
@@ -8,12 +7,11 @@ fairness, privacy-aware preprocessing, and failure-aware analysis.
 This documentation is organized so you can move from concepts to execution:
 
 - Start in the Overview section for orientation, installation, and workflow
-	context.
+  context.
 - Use Core API for module-level behavior and extension points.
 - Use Extensions for optional subsystems such as PyTorch integrations and
-	visualization stacks.
+  visualization stacks.
 - Use Notebooks for executable, end-to-end examples.
-
 
 ## Docstring and API Documentation Standard
 
@@ -24,14 +22,14 @@ API documentation is generated directly from these docstrings. See [Core API](ap
 If you are new to the project, begin with:
 
 1. [Overview -> Quickstart](overview/quickstart)
-2. [Overview -> Summary](overview/summary)
-3. [Notebooks -> sklearn](notebooks/sklearn) or [Notebooks -> pytorch](notebooks/pytorch)
+1. [Overview -> Summary](overview/summary)
+1. [Notebooks -> sklearn](notebooks/sklearn) or [Notebooks -> pytorch](notebooks/pytorch)
 
 If you are extending the framework, begin with:
 
 1. [Core API -> modules](api/modules)
-2. [Developer Docs -> development](developers/development)
-3. [Extensions](overview/extensions)
+1. [Developer Docs -> development](developers/development)
+1. [Extensions](overview/extensions)
 
 ```{toctree}
 :maxdepth: 2

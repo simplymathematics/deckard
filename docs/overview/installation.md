@@ -63,8 +63,6 @@ source env/bin/activate  # On Windows use: env\Scripts\activate
 
 This command switches your shell to use the `env` environment, ensuring all Python packages are installed locally within it.
 
-
-
 ### 3. Install Dependencies
 
 ```bash
@@ -101,7 +99,7 @@ pip install -e '.[all]'
 ├── deckard <- Source directory
 ├── docs/developers/development.md <- Documentation for developers
 ├── Dockerfile <- A docker environment for testing and deployment
-├── docs <- The documentation 
+├── docs <- The documentation
 ├── examples <- Examples for each framework and optional extensions.
 ├── LICENSE  <- The software license file
 ├── docs/notebooks <- Examples, but as Jupyter Notebooks
@@ -125,26 +123,26 @@ python -m deckard plot --help
 Optimization-first run flow:
 
 1. Define scorers/objectives (see [Scoring](scoring)).
-2. Compose configs with [Hydra](https://hydra.cc).
-3. Run optimization with [Optuna](https://optuna.org).
-4. Persist outputs through [File API](../api/file).
-5. Run post-hoc analysis through [Layers API](../api/layers).
+1. Compose configs with [Hydra](https://hydra.cc).
+1. Run optimization with [Optuna](https://optuna.org).
+1. Persist outputs through [File API](../api/file).
+1. Run post-hoc analysis through [Layers API](../api/layers).
 
 Quick example:
 
 ```bash
 python -m deckard optimize --config-name experiment \
-	data.dataset_name=make_classification \
-	model.model_type=sklearn.ensemble.RandomForestClassifier \
-	attack.attack_type=art.attacks.evasion.FastGradientMethod \
-	attack.attack_params.eps=0.1
+    data.dataset_name=make_classification \
+    model.model_type=sklearn.ensemble.RandomForestClassifier \
+    attack.attack_type=art.attacks.evasion.FastGradientMethod \
+    attack.attack_params.eps=0.1
 ```
 
 Multi-attack example (single `attack` field with list syntax):
 
 ```bash
 python -m deckard optimize --config-name experiment \
-	'+attack=[{"attack_type":"art.attacks.evasion.FastGradientMethod","attack_params":{"eps":0.05},"attack_size":20,"alias":"fgm"},{"attack_type":"art.attacks.evasion.HopSkipJump","attack_params":{"max_iter":5},"attack_size":20,"alias":"hsj"}]'
+    '+attack=[{"attack_type":"art.attacks.evasion.FastGradientMethod","attack_params":{"eps":0.05},"attack_size":20,"alias":"fgm"},{"attack_type":"art.attacks.evasion.HopSkipJump","attack_params":{"max_iter":5},"attack_size":20,"alias":"hsj"}]'
 ```
 
 In multi-attack runs, aliases are required and colliding metric keys are
@@ -176,7 +174,9 @@ Post-hoc layer entry points:
 Sklearn examples include reusable presets for attacks, scorers, and plots:
 
 - Attacks: [examples/sklearn/config/attack](https://github.com/simplymathematics/deckard/tree/main/examples/sklearn/config/attack)
+
 - Scorers: [examples/sklearn/config/score](https://github.com/simplymathematics/deckard/tree/main/examples/sklearn/config/score)
+
 - Plots: [examples/sklearn/config/plot](https://github.com/simplymathematics/deckard/tree/main/examples/sklearn/config/plot)
 
-- Torch: 
+- Torch:

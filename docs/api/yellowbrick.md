@@ -19,7 +19,7 @@ The {mod}`deckard.plugins.yellowbrick.plot` module provides:
   of {class}`~deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig` instances
   that share a common experiment
 
-Yellowbrick plots are selected by ``plot_type`` and are grouped by category:
+Yellowbrick plots are selected by `plot_type` and are grouped by category:
 
 External references:
 
@@ -35,26 +35,26 @@ Related Deckard docs:
 - {doc}`score` for metric outputs commonly compared alongside yellowbrick plots
 - {doc}`experiment` for composed experiment execution prior to plotting
 
-**Feature analysis** (``visualize_features``):
-  ``rank1d``, ``rank2d``, ``radviz``, ``pcoords``, ``jointplot``, ``pca``,
-  ``manifold``
+**Feature analysis** (`visualize_features`):
+`rank1d`, `rank2d`, `radviz`, `pcoords`, `jointplot`, `pca`,
+`manifold`
 
-**Target / distribution** (``visualize_targets``):
-  ``class_balance``, ``balanced_binning_reference``, ``feature_correlation``
+**Target / distribution** (`visualize_targets`):
+`class_balance`, `balanced_binning_reference`, `feature_correlation`
 
-**Regression diagnostics** (``visualize_regressors``):
-  ``prediction_error``, ``residuals_plot``, ``alpha_selection``
+**Regression diagnostics** (`visualize_regressors`):
+`prediction_error`, `residuals_plot`, `alpha_selection`
 
-**Classification diagnostics** (``visualize_classifiers``):
-  ``classification_report``, ``roc_auc``, ``precision_recall_curve``,
-  ``class_prediction_error``, ``discrimination_threshold``
+**Classification diagnostics** (`visualize_classifiers`):
+`classification_report`, `roc_auc`, `precision_recall_curve`,
+`class_prediction_error`, `discrimination_threshold`
 
-**Clustering** (``visualize_clusters``):
-  ``k_elbow``, ``silhouette``, ``intercluster_distance``
+**Clustering** (`visualize_clusters`):
+`k_elbow`, `silhouette`, `intercluster_distance`
 
-**Model selection** (``visualize_model_selection``):
-  ``learning_curve``, ``validation_curve``, ``cv_scores``,
-  ``feature_importances``, ``rfecv``, ``dropping_curve``
+**Model selection** (`visualize_model_selection`):
+`learning_curve`, `validation_curve`, `cv_scores`,
+`feature_importances`, `rfecv`, `dropping_curve`
 
 ## Examples
 
@@ -66,24 +66,25 @@ Related Deckard docs:
   - {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
 
 ```
+
 ### Troubleshooting
 
 - **Import error**: install yellowbrick with
-  ``pip install yellowbrick`` or ``pip install "deckard[plot]"``.
-- **Missing experiment outputs**: call ``experiment()`` before passing it to
+  `pip install yellowbrick` or `pip install "deckard[plot]"`.
+- **Missing experiment outputs**: call `experiment()` before passing it to
   {class}`~deckard.plugins.yellowbrick.plot.YellowbrickPlotConfig`; the config
-  calls ``_ensure_experiment_prepared``
+  calls `_ensure_experiment_prepared`
   lazily but explicit preparation is cleaner.
-- **Unsupported plot type**: check the valid ``plot_type`` values listed in the
+- **Unsupported plot type**: check the valid `plot_type` values listed in the
   *Overview* section above.
-- **cv required**: model selection visualizers (``learning_curve``,
-  ``validation_curve``, etc.) require ``"cv"`` in ``plot_params``.
-- **Headless environments**: set ``matplotlib.use("Agg")`` before importing
+- **cv required**: model selection visualizers (`learning_curve`,
+  `validation_curve`, etc.) require `"cv"` in `plot_params`.
+- **Headless environments**: set `matplotlib.use("Agg")` before importing
   pyplot to avoid display errors in CI or server contexts.
 
 ### See also
 
-* {doc}`plot` — general plotting documentation
-* {doc}`seaborn` — multi-run aggregation visualization
-* {doc}`experiment` — experiment orchestration
-* {doc}`model` — model configuration and training
+- {doc}`plot` — general plotting documentation
+- {doc}`seaborn` — multi-run aggregation visualization
+- {doc}`experiment` — experiment orchestration
+- {doc}`model` — model configuration and training

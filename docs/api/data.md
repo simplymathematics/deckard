@@ -2,7 +2,7 @@
 
 The {mod}`deckard.data` module defines the {class}`~deckard.data.DataConfig` dataclass,
 which provides a unified interface for loading, generating, preprocessing, and
-splitting datasets for machine learning experiments.  
+splitting datasets for machine learning experiments.\
 It supports both real and synthetic datasets, as well as YAML/Hydra-based configuration.
 
 ```{eval-rst}
@@ -10,7 +10,6 @@ It supports both real and synthetic datasets, as well as YAML/Hydra-based config
    :members:
    :show-inheritance:
 ```
-
 
 ## Data Sampling
 
@@ -22,7 +21,6 @@ for robust train/test/validation splits.
    :members:
    :show-inheritance:
 ```
-
 
 ## Data Preprocessing Pipelines
 
@@ -50,7 +48,7 @@ deckard exposes a configurable pipeline layer for data preprocessing via
 ### Fairlearn Plugin
 
 The fairlearn plugin adds group-aware sampling and fairness metrics with
-``fairlearn`` integration.
+`fairlearn` integration.
 See also: {doc}`fairlearn`.
 
 ```{eval-rst}
@@ -58,7 +56,6 @@ See also: {doc}`fairlearn`.
    :members:
    :show-inheritance:
 ```
-
 
 ### Torch Framework
 
@@ -72,7 +69,6 @@ See also: {doc}`pytorch`.
    :show-inheritance:
 ```
 
-
 ## Lifelines plugin
 
 Survival-specific experiment orchestration is split into a dedicated optional
@@ -85,15 +81,14 @@ See also: {doc}`lifelines`.
    :show-inheritance:
 ```
 
-
 ## Overview
 
 {class}`~deckard.data.DataConfig` can load well-known datasets such as:
 
 - **Adult Income** (via OpenML)
 - **Diabetes** and **Digits** (from scikit-learn)
-- **Synthetic datasets** via ``make_classification`` or ``make_regression``
-- **pd.DataFrame files** that contain a ``target`` column or
+- **Synthetic datasets** via `make_classification` or `make_regression`
+- **pd.DataFrame files** that contain a `target` column or
 
 It also supports **reproducible splits** via `train_test_split` with optional stratification,
 timing instrumentation, and hashing for config tracking.
@@ -101,16 +96,16 @@ timing instrumentation, and hashing for config tracking.
 ### Data scoring mode
 
 {class}`~deckard.data.DataConfig` supports mode-aware dataset scoring via
-``score_mode`` with
+`score_mode` with
 values:
 
-- ``train``
-- ``test``
-- ``val``
-- ``pre-sample``
+- `train`
+- `test`
+- `val`
+- `pre-sample`
 
-``pre-sample`` runs data diagnostics against the full dataset before split
-selection (``_X`` / ``_y``), while split modes run diagnostics on the selected
+`pre-sample` runs data diagnostics against the full dataset before split
+selection (`_X` / `_y`), while split modes run diagnostics on the selected
 partition.
 
 ## Examples
@@ -124,9 +119,10 @@ partition.
    - {doc}`notebooks/lifelines.ipynb </notebooks/lifelines>`
    - {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
    - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
-   
+
 
 ```
+
 ## Minimal YAML Example
 
 ```yaml
@@ -143,25 +139,28 @@ data:
 ## Internals
 
 ### Timing and logging
+
 The data loading and splitting process is timed, and the duration is stored in
-the `_data_load_time` and `_data_sample_time` attributes of the {class}`~deckard.data.DataConfig` instance. This can be useful for comparing the run-time efficiency of different datasets of various methods. 
+the `_data_load_time` and `_data_sample_time` attributes of the {class}`~deckard.data.DataConfig` instance. This can be useful for comparing the run-time efficiency of different datasets of various methods.
 Logging is performed at key steps.
 
-
 ## Troubleshooting
+
 If you encounter issues with dataset loading, ensure that:
+
 - You have an active internet connection for datasets fetched from OpenML, etc.
 - The specified .csv/.html/.json file path is correct and the file is accessible.
 - Otherwise, use one of the built-in datasets or synthetic data generation options.
 
 ### See also
-* {doc}`model` — model configuration and training
-* {doc}`sample` — pluggable train/test/val samplers
-* {doc}`pipeline` — data pipeline config and DataPipelineMixin behavior
-* {doc}`experiment` — experiment orchestration
-* {doc}`attack` — attack configuration
-* {doc}`score` — scoring framework
-* {doc}`pytorch` — PyTorch data integration
-* {doc}`anjana` — anonymization-aware data
-* {doc}`lifelines` — survival analysis data configuration
-* {doc}`utils` — utility functions
+
+- {doc}`model` — model configuration and training
+- {doc}`sample` — pluggable train/test/val samplers
+- {doc}`pipeline` — data pipeline config and DataPipelineMixin behavior
+- {doc}`experiment` — experiment orchestration
+- {doc}`attack` — attack configuration
+- {doc}`score` — scoring framework
+- {doc}`pytorch` — PyTorch data integration
+- {doc}`anjana` — anonymization-aware data
+- {doc}`lifelines` — survival analysis data configuration
+- {doc}`utils` — utility functions

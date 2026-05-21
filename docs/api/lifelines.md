@@ -58,12 +58,12 @@ Extension docs:
 The default survival scorer profile is
 {class}`deckard.plugins.lifelines.score.DefaultLifelinesConfig` and includes:
 
-- ``concordance`` via :func:`~deckard.plugins.lifelines.score.survival_concordance_score`
-- ``aic`` via :func:`~deckard.plugins.lifelines.score.survival_aic_score`
-- ``bic`` via :func:`~deckard.plugins.lifelines.score.survival_bic_score`
+- `concordance` via :func:`~deckard.plugins.lifelines.score.survival_concordance_score`
+- `aic` via :func:`~deckard.plugins.lifelines.score.survival_aic_score`
+- `bic` via :func:`~deckard.plugins.lifelines.score.survival_bic_score`
 
 These are also provided in the sklearn example score profile at
-`examples/sklearn/config/score/survival.yaml <../examples/sklearn/config/score/survival.yaml>`_.
+`examples/sklearn/config/score/survival.yaml <../examples/sklearn/config/score/survival.yaml>`\_.
 
 ### Survival Data
 
@@ -79,10 +79,10 @@ The {class}`~deckard.plugins.lifelines.data.LifelinesDataConfig` extends
 Survival data mode support is explicit in
 {class}`deckard.plugins.lifelines.data.LifelinesDataConfig`:
 
-- ``native``: dataset already has duration/event columns
-- ``auxiliary_model``: derive failure events from a benign model metric
-- ``auxiliary_attack``: derive failures from attack outputs
-- ``optuna_db``: treat Optuna study outputs as time-to-event data
+- `native`: dataset already has duration/event columns
+- `auxiliary_model`: derive failure events from a benign model metric
+- `auxiliary_attack`: derive failures from attack outputs
+- `optuna_db`: treat Optuna study outputs as time-to-event data
 
 ### Data pipeline and sampling support
 
@@ -92,7 +92,7 @@ stack), survival workflows can still use the standard data pipeline and sampler
 interfaces:
 
 - preprocessing pipelines from {class}`~deckard.data.DataPipelineConfig`
-- split/k-fold/shuffle samplers via `examples/sklearn/config/sample <../examples/sklearn/config/sample>`_
+- split/k-fold/shuffle samplers via `examples/sklearn/config/sample <../examples/sklearn/config/sample>`\_
 - train/test/validation flow from core data config fields
 
 This lets users mix survival-specific fields (duration/event/mode) with normal
@@ -120,7 +120,7 @@ The {mod}`deckard.plugins.lifelines.score` module provides:
 
 When using {class}`deckard.plugins.lifelines.model.SurvivalModelConfig` without a custom
 scorer override, model scoring still emits calibration-oriented metrics (for
-example ``concordance``, ``ici``, ``e50``) where available.
+example `concordance`, `ici`, `e50`) where available.
 
 ### Defenses in survival workflows
 
@@ -131,8 +131,8 @@ detectors, and trainers.
 
 Typical usage pattern:
 
-- choose a survival model (for example ``lifelines.fitters.coxph_fitter.CoxPHFitter``)
-- attach ``model.defense`` entries from `examples/sklearn/config/defense <../examples/sklearn/config/defense>`_
+- choose a survival model (for example `lifelines.fitters.coxph_fitter.CoxPHFitter`)
+- attach `model.defense` entries from `examples/sklearn/config/defense <../examples/sklearn/config/defense>`\_
 - evaluate robustness with survival scores and optional attacks in the same run
 
 ### Survival experiment contract
@@ -140,13 +140,13 @@ Typical usage pattern:
 {class}`~deckard.plugins.lifelines.experiment.SurvivalExperimentConfig` requires these
 fields at construction time:
 
-- ``data``
-- ``model`` (string model name/alias, for example ``cox`` or ``weibull``)
-- ``target``
-- ``event_col``
-- ``duration_col``
+- `data`
+- `model` (string model name/alias, for example `cox` or `weibull`)
+- `target`
+- `event_col`
+- `duration_col`
 
-In YAML configs, ``model_type`` should be a fully-qualified import path so
+In YAML configs, `model_type` should be a fully-qualified import path so
 custom user-provided regression fitters can be imported reliably.
 
 ## Examples
@@ -159,12 +159,13 @@ custom user-provided regression fitters can be imported reliably.
   - {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
 
 ```
+
 ### Troubleshooting
 
-- **Missing lifelines**: install via ``pip install lifelines`` or
-  ``pip install "deckard[survival]"``
+- **Missing lifelines**: install via `pip install lifelines` or
+  `pip install "deckard[survival]"`
 - **Duration/event column not found**: verify column names match actual dataset;
-  check via ``data.X_train.columns``
+  check via `data.X_train.columns`
 - **Low concordance**: model may not fit data well; try different model types or
   feature engineering
 - **Convergence warnings**: check for highly sparse or skewed durations; reduce
@@ -172,13 +173,13 @@ custom user-provided regression fitters can be imported reliably.
 
 ### See also
 
-* {doc}`data` — general data configuration including {mod}`deckard.plugins.lifelines.data`
-* {doc}`model` — general model configuration including {mod}`deckard.plugins.lifelines.model`
-* {doc}`score` — scoring framework including {mod}`deckard.plugins.lifelines.score`
-* {doc}`experiment` — experiment orchestration including
+- {doc}`data` — general data configuration including {mod}`deckard.plugins.lifelines.data`
+- {doc}`model` — general model configuration including {mod}`deckard.plugins.lifelines.model`
+- {doc}`score` — scoring framework including {mod}`deckard.plugins.lifelines.score`
+- {doc}`experiment` — experiment orchestration including
   {class}`~deckard.plugins.lifelines.experiment.SurvivalExperimentConfig`
-* {doc}`plot` — visualization including survival curve plotting
-* {doc}`pipeline` — data-pipeline composition for survival datasets
-* {doc}`sample` — split and fold strategies used by survival runs
-* {doc}`pytorch` — optional deep learning survival models
-* {doc}`modules` — overview of all extensions
+- {doc}`plot` — visualization including survival curve plotting
+- {doc}`pipeline` — data-pipeline composition for survival datasets
+- {doc}`sample` — split and fold strategies used by survival runs
+- {doc}`pytorch` — optional deep learning survival models
+- {doc}`modules` — overview of all extensions

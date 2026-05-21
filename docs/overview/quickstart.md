@@ -9,23 +9,23 @@ use each page.
 If your goal is to run an experiment quickly:
 
 1. Read [Installation](installation) to create a working environment.
-2. Read [Summary](summary) for optimization-first architecture.
-3. Read [Scoring](scoring) to understand objective metrics and runtime outputs.
-4. Open the notebook guide in [Notebooks](../notebooks/index).
+1. Read [Summary](summary) for optimization-first architecture.
+1. Read [Scoring](scoring) to understand objective metrics and runtime outputs.
+1. Open the notebook guide in [Notebooks](../notebooks/index).
 
 If your goal is multi-objective optimization:
 
 1. Compose objective scorers in [Score API](../api/score).
-2. Run optimization with [Hydra](https://hydra.cc) overrides and
-	[Optuna](https://optuna.org) study storage.
-3. Persist artifacts via [File API](../api/file).
-4. Run post-hoc Pareto and plotting analysis via [Layers API](../api/layers).
+1. Run optimization with [Hydra](https://hydra.cc) overrides and
+   [Optuna](https://optuna.org) study storage.
+1. Persist artifacts via [File API](../api/file).
+1. Run post-hoc Pareto and plotting analysis via [Layers API](../api/layers).
 
 If your goal is to extend deckard:
 
 1. Read [Developer Docs](../developers/development).
-2. Review [API](../api/modules).
-3. Review extension APIs in [Extensions](extensions).
+1. Review [API](../api/modules).
+1. Review extension APIs in [Extensions](extensions).
 
 Core extension docs:
 
@@ -48,24 +48,31 @@ Base runtime config docs:
 ## Documentation Map
 
 ## [Summary](summary)
+
 A conceptual summary of the package.
 
 ## [Installation](installation)
+
 Installation instructions for users.
 
 ## [API](../api/modules)
+
 Core package documentation
 
 ## [Developer Docs](../developers/development)
+
 Documentation for testing and extending this package.
 
 ## [Docs Docs](build_docs)
+
 Documentation about how to build this documentation.
 
 ## [Extensions](extensions)
+
 Extension points and optional subsystems for additional workflows.
 
 ## [Changelog](changelog)
+
 A history of changes.
 
 ## Recommended Learning Paths
