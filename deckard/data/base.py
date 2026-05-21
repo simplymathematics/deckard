@@ -1342,6 +1342,7 @@ class DataConfig(ConfigBase):
         if scorer_mode == "post-defense":
             scorer_mode = "test"
         allowed = {
+            "all",
             "pre-sample",
             "train",
             "test",
@@ -1363,7 +1364,8 @@ class DataConfig(ConfigBase):
         elif scorer_mode == "val":
             y_true = getattr(self, "y_val", None)
             y_pred = getattr(self, "X_val", None)
-        elif scorer_mode in {"post-sample", "post-pipeline"}:
+        elif scorer_mode in {"post-sample", "post-pipeline", "all"}:
+            # TODO: Ensure that post-sample and post-pipeline are handled in pipeline stage correctly.
             y_train = getattr(self, "y_train", None)
             y_test = getattr(self, "y_test", None)
             X_train = getattr(self, "X_train", None)
