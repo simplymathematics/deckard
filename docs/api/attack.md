@@ -76,6 +76,17 @@ Related Deckard docs:
    - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
 ```
+## Minimal YAML Example
+
+```yaml
+attack:
+   _target_: deckard.attack.base.AttackConfig
+   attack_type: art.attacks.evasion.FastGradientMethod
+   attack_params:
+      eps: 0.1
+   attack_size: 100
+```
+
 ## API Reference
 
 

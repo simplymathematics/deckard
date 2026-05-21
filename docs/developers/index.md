@@ -10,7 +10,6 @@ Welcome to the Deckard developer documentation. This section contains all design
 - [GitHub Actions Workflows](workflows)
 - [Refactor Plan](refactor_plan)
 - [Config Declaration Architecture](config_declaration_architecture)
-- [Core/Framework/Plugin Boundaries](core_framework_plugin_boundaries)
 - [Naming Conventions](naming_conventions)
 - [Mixin and Plugin Rules](mixin_plugin_rules)
 - [Docstring Standard](docstring_standard)

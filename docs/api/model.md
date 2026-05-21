@@ -111,6 +111,17 @@ Common ART defense components referenced by deckard model defenses:
    - {doc}`notebooks/art_defenses.ipynb </notebooks/art_defenses>`
 
 ```
+## Minimal YAML Example
+
+```yaml
+model:
+   _target_: deckard.model.base.ModelConfig
+   model_type: sklearn.linear_model.LogisticRegression
+   classifier: true
+   model_params:
+      max_iter: 500
+```
+
 ## Internals
 
 ### Timing and logging

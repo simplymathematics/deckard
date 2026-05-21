@@ -24,10 +24,10 @@ Layers are thin orchestration entrypoints for higher-level tasks, such as:
 Each layer is registered in :data:`deckard.layers.layer_dict` as a
 ``[parser, main]`` pair consumed by the top-level CLI.
 
-## Pareto Layer
+## Optimization 
 
-The Pareto layer is implemented in {mod}`deckard.layers.pareto` and selects
-Pareto-optimal Optuna trials for multi-objective workflows.
+The optimize layer is implemented in {mod}`deckard.layers.optimize` and
+coordinates optimization workflows.
 
 It uses:
 
@@ -37,6 +37,10 @@ It uses:
 
 Hydra-driven optimization workflows can feed this layer by persisting Optuna
 study outputs and objective columns referenced by `optimizers` and `directions`.
+
+The full optimization walkthrough, including single-run/multi-run directory
+behavior, sweep parameters, sweeper configuration, and dashboard usage, is in
+[Overview: Optimization](../overview/optimize).
 
 ```{eval-rst}
 .. automodule:: deckard.layers.pareto
@@ -60,13 +64,26 @@ study outputs and objective columns referenced by `optimizers` and `directions`.
 
 ```{seealso}
 
-   Notebook-driven layer execution appears throughout:
+    Callback wiring used by optimization is implemented in
+    {class}`deckard.layers.optimize.OptunaStudyCallback`.
 
-   - {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
-   - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
-   - {doc}`notebooks/seaborn.ipynb </notebooks/seaborn>`
+    The canonical configuration lives in
+    [examples/sklearn/config/default.yaml](../../examples/sklearn/config/default.yaml).
 
+   For an end-to-end optimization guide, see
+   [Overview: Optimization](../overview/optimize).
 ```
+
+## Minimal YAML Example
+
+```yaml
+callbacks:
+   deckard_optuna:
+      _target_: deckard.layers.optimize.OptunaStudyCallback
+      directions: ${directions}
+      optimizers: ${optimizers}
+```
+
 ## Internals
 
 Layer functions are intentionally small wrappers that parse runtime arguments,

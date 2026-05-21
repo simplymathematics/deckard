@@ -42,6 +42,17 @@ Trainer defenses are configured separately through
    :show-inheritance:
 ```
 
+## Minimal YAML Example
+
+```yaml
+model:
+  _target_: deckard.model.base.ModelConfig
+  model_type: sklearn.ensemble.RandomForestClassifier
+  classifier: true
+  fit_params:
+    sample_weight: null
+```
+
 ## See also
 
 - {doc}`model`

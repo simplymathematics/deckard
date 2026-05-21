@@ -231,21 +231,17 @@ stages:
     - ../../deckard/file.py
     - ../../deckard/utils.py
     outs:
-    - ./build/notebook_artifacts/sklearn/data.pkl
-    - ./build/notebook_artifacts/sklearn/pretrained_model.pkl
-    - ./build/notebook_artifacts/sklearn/attack.pkl
     - ./build/notebook_artifacts/torch/data.pkl
-    - ./build/notebook_artifacts/torch/pretrained_model.pkl
+    - ./build/notebook_artifacts/torch/pretrained_model.pt
     - ./build/notebook_artifacts/torch/attack.pkl
-    - ./build/notebook_artifacts/sklearn/accuracy_clean_vs_adv.csv
+    - ./build/notebook_artifacts/signature_sync_demo/sklearn_estimator.pkl
+    - ./build/notebook_artifacts/signature_sync_demo/sklearn_modelconfig.pkl
     - ./build/notebook_artifacts/torch/accuracy_clean_vs_adv.csv
     - ./build/notebook_artifacts/torch/training_loss.csv
     plots:
-    - ./build/notebook_artifacts/sklearn/accuracy_clean_vs_adv.png
     - ./build/notebook_artifacts/torch/accuracy_clean_vs_adv.png
     - ./build/notebook_artifacts/torch/training_loss.png
     metrics:
-    - ./build/notebook_artifacts/sklearn/scores.json
     - ./build/notebook_artifacts/torch/scores.json
 
   notebook_fairlearn:

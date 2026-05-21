@@ -26,6 +26,14 @@ metrics from benign and attacked samples.
    :show-inheritance:
 ```
 
+## Minimal YAML Example
+
+```yaml
+detector:
+   _target_: deckard.detector.base.DetectorConfig
+   detector_type: art.defences.detector.evasion.BinaryInputDetector
+```
+
 
 
 ## Typical Workflow

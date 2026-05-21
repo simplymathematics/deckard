@@ -34,6 +34,16 @@ resolved config values.
    :show-inheritance:
 ```
 
+## Minimal YAML Example
+
+```yaml
+file:
+   _target_: deckard.file.FileConfig
+   output_dir: build/sklearn
+   score_dict_file: score_dict.json
+   score_table_file: score_table.csv
+```
+
 
 ## Typical Workflow
 

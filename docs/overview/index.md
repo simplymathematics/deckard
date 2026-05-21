@@ -31,16 +31,17 @@ The following pages are ordered for progressive onboarding:
 
 1. [Quickstart](quickstart.md)
 2. [Summary](summary.md)
-3. [Extensions](extensions.md)
-4. [Installation](installation.md)
-5. [Scoring](scoring.md)
-5. [Notebooks](../notebooks/index.md)
-6. [API Reference](../api/modules.md)
-7. [Developer Docs](../developers/index.md)
-8. [Development](../developers/index.md)
-9. [Build Docs](build_docs.md)
-10. [Docker](docker.md)
-11. [Changelog](changelog.md)
+3. [Optimization](optimize.md)
+4. [Extensions](extensions.md)
+5. [Installation](installation.md)
+6. [Scoring](scoring.md)
+7. [Notebooks](../notebooks/index.md)
+8. [API Reference](../api/modules.md)
+9. [Developer Docs](../developers/index.md)
+10. [Development](../developers/index.md)
+11. [Build Docs](build_docs.md)
+12. [Docker](docker.md)
+13. [Changelog](changelog.md)
 
 ## Navigation Notes
 
@@ -61,6 +62,8 @@ for a structured introduction.
 
 quickstart
 summary
+optimize
+scoring
 extensions
 installation
 build_docs

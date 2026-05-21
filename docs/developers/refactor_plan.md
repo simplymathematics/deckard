@@ -18,4 +18,4 @@ See `.github/refactor_plan` for detailed status notes and historical tracking.
 
 ---
 
-**Design Specs:** [Config Declaration Architecture](config_declaration_architecture) | [Naming Conventions](naming_conventions) | [Core/Framework/Plugin Boundaries](core_framework_plugin_boundaries)
+**Design Specs:** [Config Declaration Architecture](config_declaration_architecture) | [Naming Conventions](naming_conventions) | [Mixin and Plugin Rules](mixin_plugin_rules)

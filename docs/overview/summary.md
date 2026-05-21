@@ -212,6 +212,23 @@ for each execution backend, allowing researchers to focus only on the component
 that they are truly testing while gaining access to numerous mitigations,
 defenses, attacks, and metrics for validating ML pipelines.
 
+Hydra launcher backends provide execution-mode flexibility for these workflows.
+Because `joblib` is already a dependency in many deckard environments, the
+Joblib launcher is a practical default for local parallel sweeps:
+
+- Joblib launcher:
+	[Hydra plugin docs](https://hydra.cc/docs/plugins/joblib_launcher/) |
+	[upstream Joblib docs](https://joblib.readthedocs.io/)
+- Ray launcher:
+	[Hydra plugin docs](https://hydra.cc/docs/plugins/ray_launcher/) |
+	[upstream Ray docs](https://docs.ray.io/en/latest/)
+- RQ launcher:
+	[Hydra plugin docs](https://hydra.cc/docs/plugins/rq_launcher/) |
+	[upstream RQ docs](https://python-rq.org/)
+- Submitit launcher:
+	[Hydra plugin docs](https://hydra.cc/docs/plugins/submitit_launcher/) |
+	[upstream Submitit project](https://github.com/facebookincubator/submitit)
+
 
 See also:
 - [Package Summary](summary.md).

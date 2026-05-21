@@ -56,3 +56,11 @@ api/modules
 
 notebooks/index
 ```
+
+```{toctree}
+:maxdepth: 2
+:caption: Developer Docs
+:hidden:
+
+developers/index
+```

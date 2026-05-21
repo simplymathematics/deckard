@@ -69,6 +69,18 @@ composition context.
    - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
 ```
+## Minimal YAML Example
+
+```yaml
+plot:
+   _target_: deckard.plot.base.PlotConfig
+   backend: seaborn
+   data_file: build/sklearn/seaborn_results.csv
+   plot_type: scatter
+   x: benign_accuracy
+   y: evasion_accuracy
+```
+
 ## Internals
 
 The plotting module routes to backend-specific config objects and ensures

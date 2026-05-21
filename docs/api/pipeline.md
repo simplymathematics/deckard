@@ -49,6 +49,17 @@ Deckard pipeline configuration for data preprocessing is owned by
    :show-inheritance:
 ```
 
+## Minimal YAML Example
+
+```yaml
+data:
+  _target_: deckard.data.base.DataPipelineConfig
+  dataset_name: make_classification
+  pipeline:
+    scale:
+      name: sklearn.preprocessing.StandardScaler
+```
+
 ## See also
 
 - {doc}`data`

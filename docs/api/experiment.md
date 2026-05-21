@@ -70,6 +70,23 @@ Available experiment entrypoints:
    - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
 ```
+## Minimal YAML Example
+
+```yaml
+experiment:
+   _target_: deckard.experiment.base.ExperimentConfig
+   data:
+      _target_: deckard.data.base.DataConfig
+      dataset_name: make_classification
+   model:
+      _target_: deckard.model.base.ModelConfig
+      model_type: sklearn.linear_model.LogisticRegression
+      classifier: true
+   attack:
+      _target_: deckard.attack.base.AttackConfig
+      attack_type: art.attacks.evasion.FastGradientMethod
+```
+
 ## Internals
 
 The module resolves nested config objects, applies runtime overrides, and

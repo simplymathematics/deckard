@@ -36,6 +36,15 @@ Available sampler configs:
    :show-inheritance:
 ```
 
+## Minimal YAML Example
+
+```yaml
+sample:
+  name: deckard.data.sample.KFoldSampler
+  n_splits: 5
+  shuffle: true
+```
+
 ## See also
 
 - {doc}`data`

@@ -33,10 +33,10 @@ For reproducibility in CI and local testing, notebooks are also wired into [DVC]
 - Uses [Adversarial Robustness Toolbox (ART)](https://adversarial-robustness-toolbox.org/) backed attacks and defenses.
 - [art_attacks](art_attacks) - Adversarial attack workflows.
 - [art_defenses](art_defenses) - Defense pipeline workflows.
-- {doc}`detector <detector>` - Detector training and evaluation workflows.
+- {doc}`detector </notebooks/detector>` - Detector training and evaluation workflows.
 
 ## Privacy-aware models and metrics
-- {doc}`anjana <anjana>` - Anjana anonymization-aware workflows.
+- {doc}`anjana </notebooks/anjana>` - Anjana anonymization-aware workflows.
 
 ## Survival Analysis
 - [lifelines](lifelines) - Survival analysis and time-to-event modeling.
@@ -57,12 +57,14 @@ For general onboarding:
 
 1. [sklearn](sklearn)
 2. [pytorch](pytorch)
+3. [hydra](hydra)
+4. [optuna](optuna)
 
 For fairness-first users:
 1. [fairlearn](fairlearn)
 
 For privacy-first users:
-2. [anjana](anjana)
+1. {doc}`anjana </notebooks/anjana>`
 
 For command line usage:
 1. [hydra](hydra)
@@ -71,7 +73,7 @@ For command line usage:
 For robustness-first users:
 1. [art_attacks](art_attacks)
 2. [art_defenses](art_defenses)
-3. [detector](detector)
+3. {doc}`detector </notebooks/detector>`
 
 For reporting, explainability, and diagnostics:
 1. [seaborn](seaborn)

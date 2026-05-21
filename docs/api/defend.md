@@ -51,6 +51,18 @@ External ART references:
 - [ART postprocessor defenses](https://adversarial-robustness-toolbox.readthedocs.io/en/latest/modules/defences/postprocessor.html)
 - [ART trainer defenses](https://adversarial-robustness-toolbox.readthedocs.io/en/latest/modules/defences/trainer.html)
 
+## Minimal YAML Example
+
+```yaml
+model:
+  defense:
+    _target_: deckard.model.defend.DefensePipelineConfig
+    defenses:
+      - defense_name: art.defences.preprocessor.FeatureSqueezing
+        defense_params:
+          bit_depth: 4
+```
+
 ## API Reference
 
 ```{eval-rst}

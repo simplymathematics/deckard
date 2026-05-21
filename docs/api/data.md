@@ -127,6 +127,19 @@ partition.
    
 
 ```
+## Minimal YAML Example
+
+```yaml
+data:
+   _target_: deckard.data.base.DataConfig
+   dataset_name: make_classification
+   data_params:
+      n_samples: 200
+      n_features: 20
+   test_size: 0.2
+   random_state: 42
+```
+
 ## Internals
 
 ### Timing and logging

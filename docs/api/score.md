@@ -83,6 +83,17 @@ Frequently referenced metric callables include:
    - {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
 
 ```
+## Minimal YAML Example
+
+```yaml
+score:
+   _target_: deckard.score.base.ScorerDictConfig
+   scorers:
+      accuracy:
+         score_name: accuracy
+         score_function: sklearn.metrics.accuracy_score
+```
+
 ## Internals
 
 Score configs normalize definitions into callable maps and support both
