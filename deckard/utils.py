@@ -53,7 +53,7 @@ __all__ = [
     "normalize_optional_mapping_or_steps",
     "normalize_plugin_specs",
     "instantiate_plugin_spec",
-    "split_comma_separated_tokens",
+    "split_separated_tokens",
     "normalize_hydra_list_overrides",
     "merge_list_of_dicts",
     "merge_scores_with_collision_suffix",
@@ -312,6 +312,19 @@ def normalize_optional_list_value(
 
     Accepts null-like tokens, plain strings, ``list``, and OmegaConf
     ``ListConfig`` values.
+
+    Args:
+        value (Any): The value to normalize. Accepts ``None``, null-like
+            tokens, ``str``, ``list``, or ``ListConfig``.
+        field_name (str): Name of the field being normalized, used in error
+            messages. Defaults to ``"value"``.
+
+    Returns:
+        Optional[list]: A plain Python list, or ``None`` when *value* is
+            null-like.
+
+    Raises:
+        TypeError: If *value* is not a recognized type.
     """
     if is_null_config_value(value):
         return None
@@ -333,10 +346,23 @@ def normalize_optional_mapping_or_steps(
 ) -> Union[None, bool, dict[str, Any]]:
     """Normalize optional mapping-or-step-list config values.
 
-    - ``None`` / null-like tokens -> ``None``
-    - ``True`` / ``False`` -> same bool
-    - ``dict`` / ``DictConfig`` -> plain ``dict``
-    - ``list`` / ``ListConfig`` -> merged dict via ``merge_list_of_dicts``
+    Args:
+        value (Any): The value to normalize. Accepts ``None``, null-like
+            tokens, ``bool``, ``dict``, ``DictConfig``, ``list``, or
+            ``ListConfig``.
+        field_name (str): Name of the field being normalized, used in error
+            messages.
+
+    Returns:
+        Union[None, bool, dict]: ``None`` for null-like tokens, the original
+        ``bool`` unchanged, or a plain ``dict`` merged from mapping/list input.
+
+    Raises:
+        TypeError: If *value* is not a recognized type.
+
+    Note:
+        ``list`` / ``ListConfig`` values are merged via
+        {func}`deckard.utils.merge_list_of_dicts`.
     """
     if isinstance(value, (list, ListConfig)):
         return merge_list_of_dicts(coerce_to_list(value))
@@ -356,9 +382,17 @@ def normalize_optional_mapping_or_steps(
 def normalize_plugin_specs(plugins: Any) -> list:
     """Normalize plugin config values into a plain list.
 
-    Accepts ``None`` / null-like tokens, ``list`` and OmegaConf ``ListConfig``
-    values. Raises ``TypeError`` for bare non-list values (e.g. a plain string
-    or dict) since ``plugins`` must always be a list of specs.
+    Args:
+        plugins (Any): Plugin config value to normalize. Accepts ``None``,
+            null-like tokens, ``list``, and OmegaConf ``ListConfig``. Bare
+            non-list values (e.g. a plain string or dict) are rejected.
+
+    Returns:
+        list: A plain Python list of plugin specs (empty when *plugins* is
+            null-like).
+
+    Raises:
+        TypeError: If *plugins* is not ``None``, a list, or a ``ListConfig``.
     """
     if is_null_config_value(plugins):
         return []
@@ -376,7 +410,19 @@ def instantiate_plugin_spec(
 ) -> Any:
     """Instantiate one plugin spec using a caller-provided loader.
 
-    ``loader`` must accept ``loader(path, **kwargs)`` and return an instance.
+    Args:
+        plugin_spec (Any): A ``dict`` with ``name`` or ``_target_`` key, a
+            dotted import-path string, a class type, or an already-instantiated
+            object.
+        loader (callable): Callable with signature ``loader(path, **kwargs)``
+            used to resolve string/dict specs into instances.
+
+    Returns:
+        Any: The instantiated plugin object.
+
+    Raises:
+        ValueError: If *plugin_spec* is a dict without a ``name`` or
+            ``_target_`` key.
     """
     if isinstance(plugin_spec, dict):
         spec = dict(plugin_spec)
@@ -394,11 +440,19 @@ def instantiate_plugin_spec(
     return plugin_spec
 
 
-def split_comma_separated_tokens(value: Any) -> list[str]:
-    """Split a comma-separated string into trimmed, non-empty tokens."""
+def split_separated_tokens(value: Any, sep = ",") -> list[str]:
+    """Split a comma-separated string into trimmed, non-empty tokens.
+
+    Args:
+        value (Any): Value to split. Converted to ``str`` before splitting.
+            Returns an empty list when *value* is ``None``.
+
+    Returns:
+        list[str]: List of whitespace-stripped, non-empty token strings.
+    """
     if value is None:
         return []
-    return [item.strip() for item in str(value).split(",") if item.strip() != ""]
+    return [item.strip() for item in str(value).split(sep) if item.strip() != ""]
 
 
 def normalize_hydra_list_overrides(
@@ -406,10 +460,24 @@ def normalize_hydra_list_overrides(
     *,
     keys: tuple[str, ...] = ("score",),
 ) -> list[str]:
-    """Rewrite comma-separated Hydra override values into list syntax.
+    """Rewrite comma-separated [Hydra](https://hydra.cc) override values into list syntax.
 
-    Example: ``score=a,b`` becomes ``score=[a,b]``.
-    Existing bracketed list syntax is preserved unchanged.
+    Args:
+        overrides (list[str]): Raw Hydra override tokens from the CLI or
+            programmatic composition.
+        keys (tuple[str, ...]): Override keys whose comma-separated values
+            should be rewritten. Defaults to ``("score",)``.
+
+    Returns:
+        list[str]: Rewritten override list where matching keys use bracketed
+        list syntax (e.g. ``score=[a,b]``). Non-matching tokens are passed
+        through unchanged.
+
+    Example:
+        ```python
+        normalize_hydra_list_overrides(["score=a,b"])
+        # ["score=[a,b]"]
+        ```
     """
     normalized: list[str] = []
     normalized_keys = {str(key).strip() for key in keys}
@@ -431,7 +499,7 @@ def normalize_hydra_list_overrides(
             normalized.append(token)
             continue
 
-        items = split_comma_separated_tokens(stripped)
+        items = split_separated_tokens(stripped)
         normalized.append(f"{key}=[{','.join(items)}]")
 
     return normalized
@@ -479,11 +547,20 @@ def merge_scores_with_collision_suffix(
 ) -> dict:
     """Merge score dictionaries while preserving existing keys.
 
-    Behavior
-    --------
-    - Non-colliding keys are copied as-is.
-    - Colliding keys are only suffixed when ``alias`` is provided.
-    - If ``alias`` is ``None``, incoming collisions receive an underscore and an increment (e.g._1 for the 2nd key of the same name).
+    Args:
+        base_scores (dict): Existing scores to merge into.
+        incoming_scores (dict): New scores to add. Colliding keys are
+            disambiguated.
+        alias (Optional[str]): When provided, colliding keys are suffixed with
+            ``_<alias>`` (and ``_<alias>_2``, etc. for further collisions).
+            When ``None``, incoming values overwrite existing keys without
+            suffixing.
+
+    Returns:
+        dict: Merged score dictionary.
+
+    Raises:
+        TypeError: If *base_scores* or *incoming_scores* is not a ``dict``.
     """
     if not isinstance(base_scores, dict):
         raise TypeError(f"base_scores must be a dict, got {type(base_scores)}")
@@ -519,9 +596,18 @@ def coerce_config(config_obj: Any) -> Any:
     """Coerce config-like objects into plain Python structures when possible.
 
     Supported coercions:
-    - ``DictConfig`` -> ``dict``/``list`` via ``OmegaConf.to_container``
-    - ``ConfigBase`` -> ``dict`` via ``to_dict``
-    - existing YAML file path string -> loaded config container
+
+    - ``DictConfig`` → ``dict``/``list`` via ``OmegaConf.to_container``
+    - {class}`deckard.utils.ConfigBase` → ``dict`` via ``to_dict``
+    - existing YAML file path string → loaded config container via OmegaConf
+
+    Args:
+        config_obj (Any): Object to coerce. Returned unchanged when none of
+            the supported coercions apply.
+
+    Returns:
+        Any: A plain Python ``dict`` / ``list``, or the original object if no
+        coercion was applicable.
     """
     if config_obj is None:
         return None
@@ -545,11 +631,24 @@ def prepare_instantiation_dict(
     *,
     default_target: Optional[str] = None,
 ) -> dict[str, Any]:
-    """Normalize config-like input into an instantiation dictionary.
+    """Normalize config-like input into a [Hydra](https://hydra.cc) instantiation dictionary.
 
     When ``default_target`` is provided and the resulting mapping lacks a
     ``_target_`` key, the target is injected so Hydra can instantiate the
     canonical config class while still allowing user-specified overrides.
+
+    Args:
+        config_obj (Any): Config-like input coerced via
+            {func}`deckard.utils.coerce_config` before dict construction.
+        default_target (Optional[str]): Dotted import path injected as
+            ``_target_`` when the resolved mapping does not already contain
+            one.
+
+    Returns:
+        dict[str, Any]: Instantiation dictionary suitable for ``hydra.utils.instantiate``.
+
+    Raises:
+        TypeError: If *config_obj* does not resolve to a ``dict``.
     """
     config_obj = coerce_config(config_obj)
     if not isinstance(config_obj, dict):
@@ -569,7 +668,24 @@ def instantiate_config(
     *,
     default_target: Optional[str] = None,
 ) -> Any:
-    """Instantiate one config object, injecting a default Hydra target when needed."""
+    """Instantiate one config object via [Hydra](https://hydra.cc), injecting a default target when needed.
+
+    Args:
+        config_obj (Any): Config-like input to instantiate. Returned unchanged
+            when already an instance of *expected_type*. ``None`` returns
+            ``None``.
+        expected_type (type): Required type of the instantiated result.
+        default_target (Optional[str]): Dotted import path used as ``_target_``
+            when not already present. Defaults to the fully-qualified name of
+            *expected_type*.
+
+    Returns:
+        Any: Instantiated config object of type *expected_type*, or ``None``.
+
+    Raises:
+        TypeError: If the instantiated object is not an instance of
+            *expected_type*.
+    """
     if config_obj is None:
         return None
     if isinstance(config_obj, expected_type):
@@ -600,6 +716,17 @@ def round_scores(
 
     The number of decimal places is derived from ``log10(n_samples) + 1`` and
     clamped to at least one decimal place.
+
+    Args:
+        scores (dict): Score dictionary with numeric or non-numeric values.
+        n_samples (int): Number of samples used to determine rounding
+            precision. Values ``<= 0`` or ``None`` fall back to one decimal
+            place.
+        logger_obj (Optional[logging.Logger]): When provided, each rounded
+            value is logged at INFO level. Defaults to ``None``.
+
+    Returns:
+        dict: New score dictionary with numeric values rounded in-place.
     """
     if n_samples is None or n_samples <= 0:
         sig_figs = 1
@@ -628,8 +755,20 @@ def round_scores(
 def probabilities_from_model_outputs(outputs: Any) -> np.ndarray:
     """Convert classifier outputs into a 2D probability array.
 
-    Accepts logits/probabilities from torch or numpy outputs and returns
-    ``(n_samples, n_classes)`` probabilities for downstream scorers.
+    Accepts logits or probabilities from [PyTorch](https://pytorch.org) or
+    [NumPy](https://numpy.org) outputs and applies softmax (multi-class) or
+    sigmoid (binary) normalization as needed.
+
+    Args:
+        outputs (Any): Raw model outputs — a PyTorch tensor or NumPy array of
+            shape ``(n_samples,)`` or ``(n_samples, n_classes)``.
+
+    Returns:
+        np.ndarray: Array of shape ``(n_samples, n_classes)`` with
+        probabilities summing to 1 across the class axis.
+
+    Raises:
+        ValueError: If *outputs* has an unrecognized shape.
     """
     if hasattr(outputs, "detach") and hasattr(outputs, "cpu"):
         arr = outputs.detach().cpu().numpy()

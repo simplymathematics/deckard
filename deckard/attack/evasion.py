@@ -9,8 +9,6 @@ import numpy as np
 from art.config import ART_NUMPY_DTYPE
 
 from ..frameworks.pytorch.torch_utils import (
-    collect_subset_from_dataloader,
-    is_dataloader,
     is_tensor,
     tensor_to_numpy,
 )

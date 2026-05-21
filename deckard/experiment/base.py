@@ -39,7 +39,7 @@ from ..utils import (
     is_null_config_value,
     load_class,
     merge_scores_with_collision_suffix,
-    split_comma_separated_tokens,
+    split_separated_tokens,
 )
 from ..score.base import coerce_scorer_config, _DataScorerMarker, _AttackProfileScorer
 from ..data.sample import KFoldSampler, ShuffleSampler
@@ -840,7 +840,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         if isinstance(score_cfg, (list, ListConfig)):
             items = list(coerce_to_list(score_cfg))
         elif isinstance(score_cfg, str) and "," in score_cfg:
-            items = split_comma_separated_tokens(score_cfg)
+            items = split_separated_tokens(score_cfg)
         else:
             items = [score_cfg]
 
