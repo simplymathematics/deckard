@@ -1,6 +1,7 @@
 # Config Declaration Architecture
 
-This document defines the refactor design for [Hydra](https://hydra.cc) config declaration discovery and registration.
+This document defines the refactor design for [Hydra](https://hydra.cc) config
+declaration discovery and registration.
 
 ## Canonical Sources
 
@@ -18,7 +19,8 @@ Plugin declaration families that commonly register through these roots include:
 - [Yellowbrick plugin API](../api/yellowbrick)
 - [Anjana plugin API](../api/anjana)
 
-The `deckard/` Python package should provide runtime registration logic, not authoritative declaration content.
+The `deckard/` Python package should provide runtime registration logic, not
+authoritative declaration content.
 
 ## Runtime Registration Model
 
@@ -48,22 +50,28 @@ Separate logical groups with `_`.
 Use `-` in multi-word aliases.
 
 - Prefer YAML declarations over Python hardcoded `ConfigStore` calls.
-- Remove duplicated declarations in module-local declaration files once YAML equivalents exist.
+- Remove duplicated declarations in module-local declaration files once YAML
+  equivalents exist.
 - Keep registration deterministic and side-effect-safe for optional dependencies.
 - Keep declaration loading extensible for downstream users via `DECKARD_CONFIG_DIRS`.
 
 ## Test Strategy
 
-- Compose-first tests: verify [Hydra](https://hydra.cc) composition for canonical declarations. Use:
+- Compose-first tests: verify [Hydra](https://hydra.cc) composition for
+  canonical declarations.
+  Use:
 
-```
+```bash
 deckard optimize --cfg job
 ```
 
-- Unit tests: consume canonical composed configs instead of fixture-local declaration copies.
+- Unit tests: consume canonical composed configs instead of fixture-local
+  declaration copies.
 
-- Experiment tests: validate end-to-end execution from composed canonical config stacks.
+- Experiment tests: validate end-to-end execution from composed canonical config
+  stacks.
 
 ______________________________________________________________________
 
-**Related:** [Refactor Plan](refactor_plan) | [Naming Conventions](naming_conventions) | [Mixin and Plugin Rules](mixin_plugin_rules)
+**Related:** [Refactor Plan](refactor_plan) | [Naming
+Conventions](naming_conventions) | [Mixin and Plugin Rules](mixin_plugin_rules)

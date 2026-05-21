@@ -2,13 +2,16 @@
 
 ## Notebook Dependencies
 
-All example notebooks in `docs/notebooks/*.ipynb` require the full set of optional dependencies for the relevant extension stacks. To run all notebooks without errors, install:
+All example notebooks in `docs/notebooks/*.ipynb` require the full set of
+optional dependencies for the relevant extension stacks.
+To run all notebooks without errors, install:
 
 ```bash
 pip install -e '.[docs,test]'
 ```
 
-This will install all core, extension, and documentation dependencies as defined in the `[project.optional-dependencies]` section of `pyproject.toml`, including:
+This will install all core, extension, and documentation dependencies as defined
+in the `[project.optional-dependencies]` section of `pyproject.toml`, including:
 
 - torch, torchvision, torchaudio
 - anjana, pycanon
@@ -18,7 +21,9 @@ This will install all core, extension, and documentation dependencies as defined
 - lifelines
 - all Sphinx and Jupyter dependencies
 
-If you only install `pip install -e '.[docs]'`, some notebooks may fail to run due to missing ML or plotting libraries. For full reproducibility, always use the full stack above.
+If you only install `pip install -e '.[docs]'`, some notebooks may fail to run
+due to missing ML or plotting libraries.
+For full reproducibility, always use the full stack above.
 
 ## Test CI Docs Workflow Locally
 
@@ -34,14 +39,17 @@ This runs any existing workflow via `act` with branch-aware payload generation.
 To preview the exact command without running it:
 
 ```bash
-./scripts/test_workflow.sh --workflow compile-docs.yml --job docs --ref refactor-squashed --dry-run
+./scripts/test_workflow.sh --workflow compile-docs.yml --job docs \
+    --ref refactor-squashed --dry-run
 ```
 
 `act` runs require Docker and `act` (`brew install act`).
 
-If Docker is installed but you see an error like `connect: no such file or directory` for `/var/run/docker.sock`, start a Docker engine first (Docker Desktop, `colima start`, or OrbStack), then rerun the script.
+If Docker is installed but you see an error like `connect: no such file or
+directory` for `/var/run/docker.sock`, start a Docker engine first (Docker
+Desktop, `colima start`, or OrbStack), then rerun the script.
 
-# Layout
+## Layout
 
 Sphinx documentation entry points:
 
@@ -117,7 +125,9 @@ From the repository root, install documentation dependencies with:
 pip install -e '.[docs]'
 ```
 
-This installs the full documentation stack as defined in the `[project.optional-dependencies] docs` section of [pyproject.toml](../../pyproject.toml):
+This installs the full documentation stack as defined in the
+`[project.optional-dependencies] docs` section of
+[pyproject.toml](../../pyproject.toml):
 
 **Documentation dependencies:**
 
@@ -139,10 +149,13 @@ All of these will be installed automatically with the above pip command.
 
 ## Theme Version Requirement
 
-The documentation navigation header and sidebar require `pydata-sphinx-theme >= 0.14` for proper grouping and header support. This is pinned in the `[project.optional-dependencies] docs = [...]` section of `pyproject.toml`.
+The documentation navigation header and sidebar require `pydata-sphinx-theme >=
+0.14` for proper grouping and header support.
+This is pinned in the `[project.optional-dependencies] docs = [...]` section of
+`pyproject.toml`.
 If you see navigation issues, upgrade with:
 
-```
+```bash
 pip install -U pydata-sphinx-theme
 ```
 
@@ -176,15 +189,17 @@ From the [docs](../index.md) directory:
 make autobuild
 ```
 
-Default preview URL: http://127.0.0.1:8000
+Default preview URL: <http://127.0.0.1:8000>
 
 The `autobuild` target integrates the new DVC-backed notebook workflow:
 
 - `make notebooks` runs first as a `sphinx-autobuild` pre-build step.
 - DVC decides which notebook stages actually need to rerun based on `docs/notebooks/dvc.yaml`.
-- Sphinx then renders with `nb_execution_mode=off`, so MyST-NB does not execute notebooks a second time.
+- Sphinx then renders with `nb_execution_mode=off`, so MyST-NB does not execute
+  notebooks a second time.
 
-This gives you dependency tracking, cache reuse, and reproducible notebook outputs while keeping live preview updates.
+This gives you dependency tracking, cache reuse, and reproducible notebook
+outputs while keeping live preview updates.
 
 Useful variants:
 

@@ -1,11 +1,15 @@
 # `examples/sklearn/` — End-to-end deckard experiment (Scikit-learn pipeline)
 
-This example demonstrates a full deckard workflow using a scikit-learn-compatible experiment setup, including training, adversarial evaluation, fairness analysis, and visualization generation. It is a fully reproducible experiment workspace rather than a minimal tutorial.
+This example demonstrates a full deckard workflow using a
+scikit-learn-compatible experiment setup, including training, adversarial
+evaluation, fairness analysis, and visualization generation.
+It is a fully reproducible experiment workspace rather than a minimal tutorial.
 
----
+______________________________________________________________________
 
 ## Directory layout
-```
+
+```text
 examples/*/
 ├── pycache
 ├── attack/
@@ -21,10 +25,13 @@ examples/*/
 └── plots/
 └── .deckard_rc
 ```
+
 ## Configuration (`config/`)
 
-The `config/` directory is a Hydra-based configuration tree defining all aspects of the experiment. 
-Run `source .deckard_rc` in the target directory to set the environment variables that specify the default configuration folder and file. 
+The `config/` directory is a Hydra-based configuration tree defining all aspects
+of the experiment.
+Run `source .deckard_rc` in the target directory to set the environment
+variables that specify the default configuration folder and file.
 
 ### Core files
 
@@ -48,11 +55,11 @@ Run `source .deckard_rc` in the target directory to set the environment variable
 - `sample/` — sampling strategies
 - `files/` — file/path overrides
 
----
+______________________________________________________________________
 
 ## Artifacts (`data/`, `model/`, `attack/`)
 
-```
+```text
 data/
 └── c0be3853fdb3dc49358a957cbed21c68.pkl
 model/
@@ -68,7 +75,6 @@ attack/
 - intermediate artifacts
 - run-specific configuration snapshots
 
-
 ## Plots (`plots/`)
 
 Generated analysis and visualization outputs.
@@ -81,7 +87,6 @@ Generated analysis and visualization outputs.
 - `pcoords.png`
 - `rank1d.png`
 - `rank2d.png`
-
 
 ### Pareto analysis (multi-objective tradeoffs)
 
@@ -96,7 +101,7 @@ These visualize tradeoffs between:
 - evasion robustness
 - privacy leakage (membership inference)
 
----
+______________________________________________________________________
 
 ### Partial effect / sensitivity analysis
 
@@ -114,13 +119,13 @@ Used to analyze parameter sensitivity across:
 - adversarial robustness
 - privacy leakage
 
----
+______________________________________________________________________
 
 ### Survival analysis plots
 
 Survival modeling outputs (hazard curves, survival functions, time-to-event analysis).
 
----
+______________________________________________________________________
 
 ## Logs and tracking
 
@@ -128,7 +133,7 @@ Survival modeling outputs (hazard curves, survival functions, time-to-event anal
 - `error.log` — error traces and failures
 - `optuna.db` — Optuna hyperparameter optimization database
 
----
+______________________________________________________________________
 
 ## Pipeline definitions (DVC)
 
@@ -141,7 +146,7 @@ Supports:
 - reproducible training pipelines
 - cached computation graphs
 
----
+______________________________________________________________________
 
 ## Summary
 
@@ -156,11 +161,12 @@ This example is a full experimental pipeline integrating:
 - structured logging and artifact tracking
 - extensive visualization suite
 
-It represents a complete deckard research workflow from configuration -> execution -> evaluation -> analysis.
+It represents a complete deckard research workflow from configuration ->
+execution -> evaluation -> analysis.
 
-# See also:
+## See also
 
-[Installation help](../README.md)  
+[Installation help](../README.md)
 [Full Documentation](../docs/overview/build_docs.md)
 [Developer Documentation](../develop.md)
 [Jupyter Notebook Examples](../notebooks/README.md)

@@ -1,12 +1,15 @@
 # Notebook Index
 
-Welcome! This page links to all executable notebooks in Deckard, organized as a progressive, end-to-end story for non-developers and researchers.
+Welcome!
+This page links to all executable notebooks in Deckard, organized as a
+progressive, end-to-end story for non-developers and researchers.
 
 **How to use these notebooks:**
 
 - Start with the core workflows (sklearn, pytorch) to learn the basics.
 - Explore fairness, privacy, robustness, and visualization topics as needed.
-- Each notebook is self-contained, but together they form a reproducible research pipeline.
+- Each notebook is self-contained, but together they form a reproducible
+  research pipeline.
 
 Most notebooks follow this shape:
 
@@ -16,7 +19,10 @@ Most notebooks follow this shape:
 1. Adapt one configuration axis (model, attack, scorer, sampler) and rerun.
 
 ```{note}
-For reproducibility in CI and local testing, notebooks are also wired into [DVC](https://dvc.org) stages. When validating notebook updates, prefer forced stage execution for changed notebooks to avoid stale cached outputs.
+For reproducibility in CI and local testing, notebooks are also wired into
+[DVC](https://dvc.org) stages.
+When validating notebook updates, prefer forced stage execution for changed
+notebooks to avoid stale cached outputs.
 ```
 
 ## Core Workflows
@@ -33,7 +39,9 @@ For reproducibility in CI and local testing, notebooks are also wired into [DVC]
 
 ## Security and Robustness
 
-- Uses [Adversarial Robustness Toolbox (ART)](https://adversarial-robustness-toolbox.org/) backed attacks and defenses.
+- Uses [Adversarial Robustness Toolbox
+  (ART)](https://adversarial-robustness-toolbox.org/) backed attacks and
+  defenses.
 - [art_attacks](art_attacks) - Adversarial attack workflows.
 - [art_defenses](art_defenses) - Defense pipeline workflows.
 - {doc}`detector </notebooks/detector>` - Detector training and evaluation workflows.
@@ -96,7 +104,8 @@ For reporting, explainability, and diagnostics:
 - Re-run from top after dependency or environment changes.
 - Keep generated outputs versioned only when they are intentional documentation
   artifacts.
-- Use notebook logs and [DVC](https://dvc.org) stage output together when debugging failures.
+- Use notebook logs and [DVC](https://dvc.org) stage output together when
+  debugging failures.
 
 ```{toctree}
 :maxdepth: 1

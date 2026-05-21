@@ -1,6 +1,10 @@
 # Developer Documentation Index
 
-Welcome to the Deckard developer documentation. This section contains all design docs, architectural standards, and contributor guidelines. All content here is intended for developers extending, maintaining, or integrating with Deckard.
+Welcome to the Deckard developer documentation.
+This section contains all design docs, architectural standards, and contributor
+guidelines.
+All content here is intended for developers extending, maintaining, or
+integrating with Deckard.
 
 ## Contents
 

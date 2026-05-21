@@ -1,6 +1,7 @@
 # Docker Images and Runtime Variants
 
-Deckard publishes and tests multiple container variants so users can choose a runtime that matches their hardware.
+Deckard publishes and tests multiple container variants so users can choose a
+runtime that matches their hardware.
 
 ## Image tags
 
@@ -17,7 +18,9 @@ SHA-scoped tags are also published for each variant:
 ## What each variant means
 
 - `cpu`: Generic Ubuntu runtime, no CUDA packages.
-- `mps`: Mac-oriented tag for Apple Silicon workflows. This uses the CPU container path (no CUDA) but is tagged separately for clarity.
+- `mps`: Mac-oriented tag for Apple Silicon workflows.
+  This uses the CPU container path (no CUDA) but is tagged separately for
+  clarity.
 - `cuda`: NVIDIA CUDA runtime base image and CUDA Python runtime packages enabled.
 
 ## Local builds
@@ -28,7 +31,8 @@ Build CPU image:
 docker build -t deckard:cpu .
 ```
 
-Build MPS-tagged image (same build path as CPU since MacOS doesn't enable hardware-acceleration using containers):
+Build MPS-tagged image (same build path as CPU since MacOS doesn't enable
+hardware-acceleration using containers):
 
 ```bash
 docker build -t deckard:mps .
@@ -45,7 +49,11 @@ docker build \
 
 ## CI workflows
 
-- [docker-push.yml](../../.github/workflows/docker-push.yml) publishes `cpu`, `mps`, and `cuda` tags on pushes to `main`.
-- [docker-test.yml](../../.github/workflows/docker-test.yml) builds `cpu`, `mps`, and `cuda` variants on pull requests (no publish).
+- [docker-push.yml](../../.github/workflows/docker-push.yml) publishes `cpu`,
+  `mps`, and `cuda` tags on pushes to `main`.
+- [docker-test.yml](../../.github/workflows/docker-test.yml) builds `cpu`,
+  `mps`, and `cuda` variants on pull requests (no publish).
 
-For local workflow runner usage (`test_workflow.sh`), see the [scripts directory](https://github.com/simplymathematics/deckard/tree/main/scripts) for helper scripts and usage instructions.
+For local workflow runner usage (`test_workflow.sh`), see the [scripts
+directory](https://github.com/simplymathematics/deckard/tree/main/scripts) for
+helper scripts and usage instructions.

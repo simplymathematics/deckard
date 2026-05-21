@@ -1,14 +1,20 @@
 # GitHub Actions Workflows
 
-This document provides a comprehensive overview of all GitHub Actions workflows in the Deckard project, their purposes, triggers, and current status.
+This document provides a comprehensive overview of all GitHub Actions workflows
+in the Deckard project, their purposes, triggers, and current status.
 
 Related tooling and plugin references:
 
 - [DVC](https://dvc.org) for artifact and notebook cache management
 - [Hydra](https://hydra.cc) for config composition used by test and experiment workflows
-- [Optuna](https://optuna.org) for optimization-oriented notebook and experiment runs
-- [Adversarial Robustness Toolbox (ART)](https://adversarial-robustness-toolbox.org/) for attack/defense integrations
-- Plugin APIs: [Fairlearn](../api/fairlearn), [Lifelines](../api/lifelines), [Seaborn](../api/seaborn), [Yellowbrick](../api/yellowbrick), [Anjana](../api/anjana)
+- [Optuna](https://optuna.org) for optimization-oriented notebook and experiment
+  runs
+- [Adversarial Robustness Toolbox
+  (ART)](https://adversarial-robustness-toolbox.org/) for attack/defense
+  integrations
+- Plugin APIs: [Fairlearn](../api/fairlearn), [Lifelines](../api/lifelines),
+  [Seaborn](../api/seaborn), [Yellowbrick](../api/yellowbrick),
+  [Anjana](../api/anjana)
 
 ## Workflow Categories
 
@@ -64,7 +70,8 @@ These workflows test the package with specific optional dependencies:
 
 **Consolidated workflow (matrix-based):**
 
-- `test-optional-dependencies.yml` - Tests all optional dependencies using matrix strategy
+- `test-optional-dependencies.yml` - Tests all optional dependencies using
+  matrix strategy
   - Jobs run in parallel with one per optional dependency
   - Covers fairlearn, lifelines, seaborn, torch, yellowbrick
   - Legacy optional workflows were removed after migration
@@ -195,7 +202,8 @@ ______________________________________________________________________
 
 **Status:** Active (both legacy and consolidated versions available)
 
-**Recommendation:** Transition to `platform-build.yml` for faster parallel building and single maintenance point
+**Recommendation:** Transition to `platform-build.yml` for faster parallel
+building and single maintenance point
 
 ______________________________________________________________________
 
@@ -307,7 +315,7 @@ ______________________________________________________________________
 
 ## Workflow Dependency Graph
 
-```
+```text
 Pull Request → main branch:
 ├── black.yml (quick, ~1 min)
 ├── deckard-test.yml (base tests + coverage, ~5 min)
@@ -375,7 +383,8 @@ ______________________________________________________________________
 
 ### Using `needs` Clauses
 
-Workflows can specify dependencies using the `needs` clause to ensure proper sequencing and fail-fast behavior:
+Workflows can specify dependencies using the `needs` clause to ensure proper
+sequencing and fail-fast behavior:
 
 ```yaml
 jobs:
@@ -399,7 +408,7 @@ jobs:
 
 For pull requests, recommend this execution order to fail fast:
 
-```
+```text
 1. Quick checks (format, lint): black.yml, repository-enforcement.yml
    ↓
 2. Base tests: deckard-test.yml
@@ -422,9 +431,12 @@ For pull requests, recommend this execution order to fail fast:
 
 - COMPLETED: Artifact retention policies (7-day for builds)
 - COMPLETED: Step timing/profiling (job duration reporting)
-- COMPLETED: Consolidated workflows created and active (`test-optional-dependencies.yml`, `platform-build.yml`)
-- COMPLETED: Security scanning and dependency auditing added (`security-scan.yml`, Dependabot)
-- COMPLETED: Failure notification and benchmark reporting added (`notify-failures.yml`, `workflow-benchmarks.yml`)
+- COMPLETED: Consolidated workflows created and active
+  (`test-optional-dependencies.yml`, `platform-build.yml`)
+- COMPLETED: Security scanning and dependency auditing added
+  (`security-scan.yml`, Dependabot)
+- COMPLETED: Failure notification and benchmark reporting added
+  (`notify-failures.yml`, `workflow-benchmarks.yml`)
 - COMPLETED: Release gating and deployment control added (`deploy-release-gated.yml`)
 
 ______________________________________________________________________
@@ -433,12 +445,16 @@ ______________________________________________________________________
 
 All workflows have been audited for least-privilege access:
 
-- **Test workflows** (`black.yml`, `deckard-test.yml`, `test-optional-dependencies.yml`): `contents: read`
+- **Test workflows** (`black.yml`, `deckard-test.yml`,
+  `test-optional-dependencies.yml`): `contents: read`
 - **Build workflows** (build\_\*.yml): No explicit permissions (uses repository default)
-- **Documentation** (compile-docs.yml): `contents: write` (needed for potential cache updates), `pages: write`, `id-token: write` (for deployment)
+- **Documentation** (compile-docs.yml): `contents: write` (needed for potential
+  cache updates), `pages: write`, `id-token: write` (for deployment)
 - **Docker workflows** (docker-test.yml): `contents: read, packages: read` (read-only)
-- **Docker push** (docker-push.yml): `contents: read, packages: write` (only push capability)
-- **Release** (release-package.yml, release-package-tests.yml): `contents: write` (for release creation)
+- **Docker push** (docker-push.yml): `contents: read, packages: write` (only
+  push capability)
+- **Release** (release-package.yml, release-package-tests.yml): `contents:
+  write` (for release creation)
 - **Repository enforcement**: `contents: read` (audit only, no modifications)
 
 **Security improvements implemented:**
@@ -457,12 +473,10 @@ You can display workflow status in your README or other documentation:
 ```markdown
 ### CI/CD Status
 
-| Workflow | Badge |
-|----------|-------|
-| Tests | [![Python application](https://github.com/simplymathematics/deckard/actions/workflows/deckard-test.yml/badge.svg?branch=main)](https://github.com/simplymathematics/deckard/actions/workflows/deckard-test.yml) |
-| Code Format | [![Lint](https://github.com/simplymathematics/deckard/actions/workflows/black.yml/badge.svg?branch=main)](https://github.com/simplymathematics/deckard/actions/workflows/black.yml) |
-| Docs Build | [![Push Docs Check](https://github.com/simplymathematics/deckard/actions/workflows/compile-docs.yml/badge.svg?branch=main)](https://github.com/simplymathematics/deckard/actions/workflows/compile-docs.yml) |
-| Docker | [![Test Docker Images](https://github.com/simplymathematics/deckard/actions/workflows/docker-test.yml/badge.svg?branch=main)](https://github.com/simplymathematics/deckard/actions/workflows/docker-test.yml) |
+- Tests: [![Python application](<badge-url>)](<workflow-url>)
+- Code Format: [![Lint](<badge-url>)](<workflow-url>)
+- Docs Build: [![Push Docs Check](<badge-url>)](<workflow-url>)
+- Docker: [![Test Docker Images](<badge-url>)](<workflow-url>)
 ```
 
 **Customizing badges:**
@@ -559,7 +573,8 @@ ______________________________________________________________________
 
 ### Issue: Workflow Job Timeout
 
-**Symptom:** Job fails with message "The job running on runner X has exceeded the maximum execution time of N minutes."
+**Symptom:** Job fails with message "The job running on runner X has exceeded
+the maximum execution time of N minutes."
 
 **Root Causes:**
 
@@ -571,7 +586,8 @@ ______________________________________________________________________
 
 1. Check workflow run logs for which step is slow
 1. For test timeouts: Run locally to identify hanging test: `pytest test/ -v -s --timeout=30`
-1. For build timeouts: Increase timeout in workflow (but prefer fixing the actual issue)
+1. For build timeouts: Increase timeout in workflow (but prefer fixing the
+   actual issue)
 1. For docs: Check for notebooks with long execution time in `docs/notebooks/`
 1. Use GitHub Actions runner groups if organizational network is congested
 
@@ -590,7 +606,8 @@ ______________________________________________________________________
 **Solutions:**
 
 1. Verify `dvc.lock` and `pyproject.toml` haven't changed unexpectedly
-1. Force cache refresh: Dispatch `compile-docs.yml` with new `cache_flush_token` value (e.g., "2026-05-refresh-20")
+1. Force cache refresh: Dispatch `compile-docs.yml` with new `cache_flush_token`
+   value (e.g., "2026-05-refresh-20")
 1. Check DVC remote configuration (see {doc}`gh_actions_cache`)
 1. Verify DVC artifacts exist: `dvc status` and `dvc remote list`
 
@@ -598,7 +615,8 @@ ______________________________________________________________________
 
 ### Issue: Permission Denied / Authentication Failures
 
-**Symptom:** Workflow fails with "Permission denied", "authentication failed", or "403 Forbidden" errors.
+**Symptom:** Workflow fails with "Permission denied", "authentication failed",
+or "403 Forbidden" errors.
 
 **Root Causes:**
 
@@ -610,10 +628,12 @@ ______________________________________________________________________
 **Solutions:**
 
 1. For PyPI releases: Verify PyPI trusted publisher is configured
-1. For private dependencies: Add GitHub token to pip install: `pip install --index-url https://token:${{ secrets.GITHUB_TOKEN }}@github.com/...`
+1. For private dependencies: Add GitHub token to pip install: `pip install
+   --index-url https://token:${{ secrets.GITHUB_TOKEN }}@github.com/...`
 1. For Git SSH: Generate and add SSH keys to GitHub Actions secrets
 1. For Docker registry: Verify registry credentials in workflow permissions
-1. Check GitHub Actions secret scopes: some secrets only available in PRs from same repo
+1. Check GitHub Actions secret scopes: some secrets only available in PRs from
+   same repo
 
 ______________________________________________________________________
 
@@ -631,7 +651,8 @@ ______________________________________________________________________
 
 1. Check CI workflow uses same Python as local: `python --version`
 1. Test locally with CI's Python version: `pyenv install 3.10 && pyenv shell 3.10`
-1. For version-specific tests: Use `sys.version_info` checks or use tox for multiple versions
+1. For version-specific tests: Use `sys.version_info` checks or use tox for
+   multiple versions
 1. Run `pip freeze` locally and compare with CI environment setup
 
 ______________________________________________________________________

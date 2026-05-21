@@ -1,6 +1,7 @@
 # Naming Conventions
 
-Deckard enforces strict naming conventions for all config, plugin, and mixin objects to ensure clarity and composability.
+Deckard enforces strict naming conventions for all config, plugin, and mixin
+objects to ensure clarity and composability.
 
 ## Configs
 

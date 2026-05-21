@@ -15,7 +15,9 @@ Related Deckard docs:
 External references:
 
 - [Anjana package on PyPI](https://pypi.org/project/anjana/)
-- [scikit-learn Pipeline](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html) for transform composition patterns used with anonymization steps
+- [scikit-learn
+  Pipeline](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html)
+  for transform composition patterns used with anonymization steps
 
 ## Notebook Example
 

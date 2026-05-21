@@ -10,9 +10,11 @@ and adversarial robustness studies on survival models.
 
 The Lifelines integration consists of four main modules:
 
-- {mod}`deckard.plugins.lifelines.data` — survival dataset configuration with time/event pairs
+- {mod}`deckard.plugins.lifelines.data` — survival dataset configuration with
+  time/event pairs
 - {mod}`deckard.plugins.lifelines.model` — lifelines estimator training and evaluation
-- {mod}`deckard.plugins.lifelines.score` — survival-specific metrics (concordance, AIC, BIC)
+- {mod}`deckard.plugins.lifelines.score` — survival-specific metrics
+  (concordance, AIC, BIC)
 - {mod}`deckard.plugins.lifelines.experiment` — end-to-end survival experiment orchestration
 
 These modules support adversarial robustness studies on time-to-event models,
@@ -118,7 +120,8 @@ The {mod}`deckard.plugins.lifelines.score` module provides:
 - **median_survival_time**: group-wise survival time estimates
 - **survival_at_time_t**: proportion surviving at specific timepoints
 
-When using {class}`deckard.plugins.lifelines.model.SurvivalModelConfig` without a custom
+When using {class}`deckard.plugins.lifelines.model.SurvivalModelConfig` without
+a custom
 scorer override, model scoring still emits calibration-oriented metrics (for
 example `concordance`, `ici`, `e50`) where available.
 
@@ -137,7 +140,8 @@ Typical usage pattern:
 
 ### Survival experiment contract
 
-{class}`~deckard.plugins.lifelines.experiment.SurvivalExperimentConfig` requires these
+{class}`~deckard.plugins.lifelines.experiment.SurvivalExperimentConfig` requires
+these
 fields at construction time:
 
 - `data`

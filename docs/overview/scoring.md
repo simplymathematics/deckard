@@ -7,7 +7,8 @@ This guide documents scoring behavior for the base runtime configs:
 - `DetectorConfig`
 - `AttackConfig`
 
-It covers scoring defaults, `mode` and `stage` semantics, output conventions, and custom scorer examples.
+It covers scoring defaults, `mode` and `stage` semantics, output conventions,
+and custom scorer examples.
 
 Scoring is the primary objective-definition layer for
 [multi-objective optimization](https://optuna.readthedocs.io/en/stable/tutorial/20_recipes/002_multi_objective.html)
@@ -25,8 +26,11 @@ Related APIs:
 
 ### `mode` vs `stage`
 
-- `mode` selects the split/runtime context (`train`, `test`, `val`, plus scope-specific values like `attack` and `pre-sample`).
-- `stage` identifies lifecycle boundaries (`pre-sample`, `post-sample`, `pre-defense`, `post-defense`, `pre-filter`, `post-filter`, `benign`, `adversarial`, etc).
+- `mode` selects the split/runtime context (`train`, `test`, `val`, plus
+  scope-specific values like `attack` and `pre-sample`).
+- `stage` identifies lifecycle boundaries (`pre-sample`, `post-sample`,
+  `pre-defense`, `post-defense`, `pre-filter`, `post-filter`, `benign`,
+  `adversarial`, etc).
 
 Rule:
 
@@ -45,7 +49,8 @@ Most runtime scorers are `ScorerDictConfig` (or subclasses) receiving:
 
 ### Output Shape
 
-Scorers may produce nested stage/mode outputs internally. Runtime owners can flatten for backward compatibility.
+Scorers may produce nested stage/mode outputs internally.
+Runtime owners can flatten for backward compatibility.
 
 ## Defaults by Base Config
 
@@ -155,7 +160,8 @@ Typical usage:
 
 - attack-profile scoring for evasion/membership/attribute paths
 - stage-aware attack metrics (`benign`, `adversarial`)
-- shared configurable comparison scoring for benign-vs-adversarial and victim-vs-extracted paths
+- shared configurable comparison scoring for benign-vs-adversarial and
+  victim-vs-extracted paths
 
 Example:
 

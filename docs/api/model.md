@@ -1,8 +1,11 @@
 # Model
 
-The {mod}`~deckard.model` module defines the {class}`~deckard.model.ModelConfig` dataclass,
-which provides a complete pipeline for **model configuration, training, evaluation, and persistence**.
-It supports dynamic scikit-learn model instantiation, configurable parameters, CLI execution,
+The {mod}`~deckard.model` module defines the {class}`~deckard.model.ModelConfig`
+dataclass,
+which provides a complete pipeline for **model configuration, training,
+evaluation, and persistence**.
+It supports dynamic scikit-learn model instantiation, configurable parameters,
+CLI execution,
 and integration with the {mod}`deckard.data` module.
 
 ```{eval-rst}
@@ -124,7 +127,8 @@ model:
 
 ### Timing and logging
 
-All major operations (training, prediction, scoring, saving/loading) record wall-clock time
+All major operations (training, prediction, scoring, saving/loading) record
+wall-clock time
 and log via Python’s `logging` module.
 
 ### Scoring
@@ -156,10 +160,12 @@ produces YAML config records that reference runtime model-state artifacts:
 - `model_file` entries point to YAML config artifacts.
 - `model_state_file` entries point to `.pt` runtime state artifacts.
 
-Public API example (automatic load-or-train): see the {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
+Public API example (automatic load-or-train): see the
+{doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
 notebook for executed save/load examples.
 
-Public API example (PyTorch config + runtime save/load): see the {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
+Public API example (PyTorch config + runtime save/load): see the
+{doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
 notebook for executed YAML + `save_model`/`load_model` patterns.
 
 #### Pre-trained torch models
@@ -173,7 +179,8 @@ There are two supported patterns:
    pre-trained weights), then run normal deckard training/evaluation.
 
 If you want inference-only behavior from a pre-trained checkpoint, load it via
-`load` + `load_model` and then call the model with `model_file`/prediction outputs as
+`load` + `load_model` and then call the model with `model_file`/prediction
+outputs as
 needed, without requiring private methods.
 
 ## Troubleshooting
@@ -184,7 +191,8 @@ needed, without requiring private methods.
 - **Artifact deserialization errors** — verify runtime artifact type and extension
   match the framework policy (PyTorch `.pt`, sklearn `.pkl`/`.joblib`).
 - **CLI argument conflicts** — use `conflict_handler='resolve'` when composing parsers.
-- **Probability prediction errors** — set `--probability` only for models that support `predict_proba()`.
+- **Probability prediction errors** — set `--probability` only for models that
+  support `predict_proba()`.
 
 ### See also
 

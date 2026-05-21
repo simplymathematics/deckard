@@ -1,6 +1,9 @@
 # Fairlearn Integration
 
-deckard provides support for fairness-aware machine learning through the optional Fairlearn extension modules. This integration enables fairness evaluation and mitigation workflows within the deckard framework.
+deckard provides support for fairness-aware machine learning through the
+optional Fairlearn extension modules.
+This integration enables fairness evaluation and mitigation workflows within the
+deckard framework.
 See also: {doc}`pytorch` for torch-backed fairness workflows.
 
 (fairlearn-overview)=
@@ -13,7 +16,8 @@ The Fairlearn integration consists of three main extension modules:
 - {mod}`deckard.plugins.fairlearn.model` — fairness-aware model training and evaluation
 - {mod}`deckard.plugins.fairlearn.score` — fairness-aware scoring metrics
 
-These modules support fairness analysis and mitigation by quantifying and reducing bias in model predictions.
+These modules support fairness analysis and mitigation by quantifying and
+reducing bias in model predictions.
 
 External references:
 
@@ -21,7 +25,9 @@ External references:
 - [`fairlearn.metrics.demographic_parity_difference`](https://fairlearn.org/main/api_reference/generated/fairlearn.metrics.demographic_parity_difference.html)
 - [`fairlearn.metrics.equalized_odds_difference`](https://fairlearn.org/main/api_reference/generated/fairlearn.metrics.equalized_odds_difference.html)
 - [`fairlearn.reductions.ExponentiatedGradient`](https://fairlearn.org/main/api_reference/generated/fairlearn.reductions.ExponentiatedGradient.html)
-- [Adversarial Robustness Toolbox (ART)](https://adversarial-robustness-toolbox.org/) for paired attack/defense workflows
+- [Adversarial Robustness Toolbox
+  (ART)](https://adversarial-robustness-toolbox.org/) for paired attack/defense
+  workflows
 
 ### Key Features
 
@@ -33,7 +39,8 @@ External references:
 
 ### Score Types Available
 
-Fairness scoring in deckard is provided by {mod}`deckard.plugins.fairlearn.score` with the default scorer profiles:
+Fairness scoring in deckard is provided by
+{mod}`deckard.plugins.fairlearn.score` with the default scorer profiles:
 
 - {class}`~deckard.plugins.fairlearn.score.DefaultFairnessDataScoreConfig`
 - {class}`~deckard.plugins.fairlearn.score.DefaultFairnessModelScoreConfig`
@@ -45,11 +52,13 @@ These include:
 - `statistical_parity_difference`
 - `disparate_impact`
 
-The scorers operate on pandas DataFrame-backed data and can resolve context from `y_pred` or from `data._X` together with sensitive attribute configuration.
+The scorers operate on pandas DataFrame-backed data and can resolve context from
+`y_pred` or from `data._X` together with sensitive attribute configuration.
 
 ### Data Configuration
 
-The {class}`~deckard.plugins.fairlearn.data.FairlearnDataConfig` extends {class}`deckard.data.DataConfig` with fairness parameters:
+The {class}`~deckard.plugins.fairlearn.data.FairlearnDataConfig` extends
+{class}`deckard.data.DataConfig` with fairness parameters:
 
 - Specify sensitive features for fairness analysis
 - Define mitigation strategies (preprocessing, in-processing, postprocessing)
@@ -88,8 +97,10 @@ selected backend/model.
 
 The {mod}`deckard.plugins.fairlearn.score` module provides:
 
-- {class}`~deckard.plugins.fairlearn.score.DefaultFairnessDataScoreConfig` — data-level fairness metrics (group parity, bias)
-- {class}`~deckard.plugins.fairlearn.score.DefaultFairnessModelScoreConfig` — model-level fairness and utility metrics (accuracy, group fairness)
+- {class}`~deckard.plugins.fairlearn.score.DefaultFairnessDataScoreConfig` —
+  data-level fairness metrics (group parity, bias)
+- {class}`~deckard.plugins.fairlearn.score.DefaultFairnessModelScoreConfig` —
+  model-level fairness and utility metrics (accuracy, group fairness)
 
 ### How Deckard builds MetricFrame
 
@@ -154,9 +165,11 @@ attack-time fairness scoring.
 
 ### Troubleshooting
 
-- **No sensitive features**: Ensure sensitive_features list is non-empty and matches actual column names in the data.
+- **No sensitive features**: Ensure sensitive_features list is non-empty and
+  matches actual column names in the data.
 - **Mitigation ineffective**: Try a different mitigation_strategy or adjust group_names.
-- **Fairness metric not improving**: Tune fairness_loss_weight or try a different fairness_metric.
+- **Fairness metric not improving**: Tune fairness_loss_weight or try a
+  different fairness_metric.
 - **Memory issues with large datasets**: Consider batch-wise mitigation or sampling.
 
 ### See also

@@ -15,9 +15,15 @@ This documentation is organized so you can move from concepts to execution:
 
 ## Docstring and API Documentation Standard
 
-All public APIs in Deckard use [MyST-native Google-style docstrings](https://myst-parser.readthedocs.io/en/latest/syntax/optional.html#google-style-docstrings) rendered via `sphinx.ext.napoleon` and MyST-NB. See the [Docstring Standard](developers/docstring_standard.md) for canonical format, required sections, and syntax rules.
+All public APIs in Deckard use [MyST-native Google-style
+docstrings](https://myst-parser.readthedocs.io/en/latest/syntax/optional.html#google-style-docstrings)
+rendered via `sphinx.ext.napoleon` and MyST-NB.
+See the [Docstring Standard](developers/docstring_standard.md) for canonical
+format, required sections, and syntax rules.
 
-API documentation is generated directly from these docstrings. See [Core API](api/modules) for module-level documentation and [Notebooks](notebooks/index) for executable examples.
+API documentation is generated directly from these docstrings.
+See [Core API](api/modules) for module-level documentation and
+[Notebooks](notebooks/index) for executable examples.
 
 If you are new to the project, begin with:
 

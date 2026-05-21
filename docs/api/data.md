@@ -13,7 +13,8 @@ It supports both real and synthetic datasets, as well as YAML/Hydra-based config
 
 ## Data Sampling
 
-The {mod}`deckard.data.sample` module provides pluggable sampling strategies via {class}`~deckard.data.sample.BaseSampler`
+The {mod}`deckard.data.sample` module provides pluggable sampling strategies via
+{class}`~deckard.data.sample.BaseSampler`
 for robust train/test/validation splits.
 
 ```{eval-rst}
@@ -141,7 +142,10 @@ data:
 ### Timing and logging
 
 The data loading and splitting process is timed, and the duration is stored in
-the `_data_load_time` and `_data_sample_time` attributes of the {class}`~deckard.data.DataConfig` instance. This can be useful for comparing the run-time efficiency of different datasets of various methods.
+the `_data_load_time` and `_data_sample_time` attributes of the
+{class}`~deckard.data.DataConfig` instance.
+This can be useful for comparing the run-time efficiency of different datasets
+of various methods.
 Logging is performed at key steps.
 
 ## Troubleshooting

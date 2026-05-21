@@ -21,9 +21,11 @@ pipelines, allowing adversarial robustness studies on PyTorch models.
 
 - **Device reconciliation**: automatic CPU/CUDA/MPS device selection and validation
 - **ART integration**: PyTorch models wrap as ART estimators for attack/defense
-- **Fairness support**: compatible with {mod}`deckard.plugins.fairlearn.data` and attack
+- **Fairness support**: compatible with {mod}`deckard.plugins.fairlearn.data`
+  and attack
 - **Fairness support**: {class}`~deckard.plugins.fairlearn.model.FairlearnPytorchModelConfig`
-  inherits {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig` directly and adds
+inherits {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig` directly
+and adds
   fairness-aware scoring; compatible with {mod}`deckard.plugins.fairlearn.data` and
   attack stratification by sensitive features
 - **Survival analysis**: optional integration with lifelines-based survival experiments

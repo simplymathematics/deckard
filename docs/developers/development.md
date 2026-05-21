@@ -89,7 +89,9 @@ Tools used:
 - [`mypy`](https://mypy.readthedocs.io) — static type checker for Python
 - [`Hydra`](https://hydra.cc) — hierarchical configuration composition and overrides
 - [`Optuna`](https://optuna.org) — hyperparameter optimization and pruning workflows
-- [`Adversarial Robustness Toolbox (ART)`](https://adversarial-robustness-toolbox.org/) — adversarial attacks and defenses
+- [`Adversarial Robustness Toolbox
+  (ART)`](https://adversarial-robustness-toolbox.org/) — adversarial attacks and
+  defenses
 - [`DVC`](https://dvc.org) — data and artifact versioning for reproducible pipelines
 
 ## Coverage Script

@@ -2,7 +2,8 @@
 
 ## Overview
 
-GitHub Actions and GitHub cache have been configured to efficiently manage notebook execution and artifacts across local development and CI builds.
+GitHub Actions and GitHub cache have been configured to efficiently manage
+notebook execution and artifacts across local development and CI builds.
 
 ## Changes Made
 

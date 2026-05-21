@@ -39,13 +39,20 @@ deckard addresses this by providing:
 - repeatable experiment execution with explicit run metadata
 - integrated result collection for comparison and reporting
 - [`Hydra`](https://hydra.cc) integration for command line configuration
-- [`Optuna`](https://optuna.org) integration for search space sampling, experiment pruning, and multi-objective optimization
-- **Defense pipelines** that chain [Adversarial Robustness Toolbox (ART)](https://adversarial-robustness-toolbox.org/)-based defenses (preprocessors, postprocessors, trainers)
-- **Detector phase** for auxiliary adversarial/poison detection models executed after attacks
+- [`Optuna`](https://optuna.org) integration for search space sampling,
+  experiment pruning, and multi-objective optimization
+- **Defense pipelines** that chain [Adversarial Robustness Toolbox
+  (ART)](https://adversarial-robustness-toolbox.org/)-based defenses
+  (preprocessors, postprocessors, trainers)
+- **Detector phase** for auxiliary adversarial/poison detection models executed
+  after attacks
 - **Data sampling strategies** (split, k-fold, shuffle) for robust evaluation
-- **Scorer dictionaries** for unified metric management across data, model, and attack components
-- Numerous extensions for attacking, defending, and measuring various ML metrics (fairness, survival, PyTorch)
-- Designed to be easily extensible, but also provide reasonable defaults to minimize configuration needs
+- **Scorer dictionaries** for unified metric management across data, model, and
+  attack components
+- Numerous extensions for attacking, defending, and measuring various ML metrics
+  (fairness, survival, PyTorch)
+- Designed to be easily extensible, but also provide reasonable defaults to
+  minimize configuration needs
 
 Base runtime configuration objects used in most experiment graphs:
 
@@ -71,7 +78,9 @@ evaluation concerns:
 ### Fairness And Group-Aware Analysis
 
 Evaluate model behavior across sensitive groups using :mod:`deckard.plugins.fairlearn.data`,
-:mod:`deckard.plugins.fairlearn.model`, and :mod:`deckard.plugins.fairlearn.score`. These modules
+:mod:`deckard.plugins.fairlearn.model`, and
+:mod:`deckard.plugins.fairlearn.score`.
+These modules
 integrate fairlearn for disparate impact, equalized odds, and demographic parity
 measurement. Use :class:`~deckard.score.attack.FairlearnAttackScorerConfig` to
 measure how adversarial robustness varies across groups.
@@ -88,7 +97,9 @@ guarantees, and accuracy impact.
 ### Adversarial Robustness And Attacks
 
 Execute evasion, membership inference, attribute inference, and model inversion
-attacks via :class:`~deckard.attack.AttackConfig` with full [Adversarial Robustness Toolbox (ART)](https://adversarial-robustness-toolbox.org/) integration.
+attacks via :class:`~deckard.attack.AttackConfig` with full [Adversarial
+Robustness Toolbox (ART)](https://adversarial-robustness-toolbox.org/)
+integration.
 Chain defenses using :class:`~deckard.model.DefensePipelineConfig`. Measure
 attack success rates, defense effectiveness, and certified robustness bounds.
 Combine with fairness analysis for group-aware robustness metrics.
@@ -96,7 +107,8 @@ Combine with fairness analysis for group-aware robustness metrics.
 ### Survival And Failure Modeling
 
 Model time-to-event outcomes for both raw data processes and ML pipeline
-failures using :mod:`deckard.data.survival`, :mod:`deckard.plugins.lifelines.model`, and
+failures using :mod:`deckard.data.survival`,
+:mod:`deckard.plugins.lifelines.model`, and
 :mod:`deckard.plugins.survival.score`. This supports benign failure analysis (natural
 performance degradation or operational failures) and adversarial failure
 analysis (attack-induced failure events) within the same reproducible workflow.
@@ -162,13 +174,26 @@ record of what was run.
 
 Typical workflow composition includes:
 
-1. **Dataset Loading And Sampling**: Load data via :class:`~deckard.data.DataConfig`, apply data preprocessing pipelines via :class:`~deckard.data.DataPipelineConfig`, and sample via pluggable :class:`~deckard.data.sample.BaseSampler` strategies.
-1. **Preprocessing And Feature Handling**: Transform features via sklearn pipelines; automatically instrumented with timing metrics.
-1. **Model Training And Evaluation**: Train models via :class:`~deckard.model.ModelConfig` with configurable scorer profiles for classification, regression, fairness, and survival tasks.
-1. **Optional Defenses**: Apply adversarial robustness defenses via :class:`~deckard.model.DefensePipelineConfig` that chain ART-based preprocessing and postprocessing defenses.
-1. **Attack Execution**: Execute evasion or inference attacks via :class:`~deckard.attack.AttackConfig` with attack-specific scoring and metric aggregation.
-1. **Optional Detector Execution**: Train/evaluate auxiliary clean-vs-adversarial detectors via :class:`~deckard.detector.DetectorConfig`.
-1. **Scoring And Artifact Persistence**: Normalize metrics via :class:`~deckard.score.ScorerDictConfig` and persist results via :class:`~deckard.file.FileConfig`.
+1. **Dataset Loading And Sampling**: Load data via
+   :class:`~deckard.data.DataConfig`, apply data preprocessing pipelines via
+   :class:`~deckard.data.DataPipelineConfig`, and sample via pluggable
+   :class:`~deckard.data.sample.BaseSampler` strategies.
+1. **Preprocessing And Feature Handling**: Transform features via sklearn
+   pipelines; automatically instrumented with timing metrics.
+1. **Model Training And Evaluation**: Train models via
+   :class:`~deckard.model.ModelConfig` with configurable scorer profiles for
+   classification, regression, fairness, and survival tasks.
+1. **Optional Defenses**: Apply adversarial robustness defenses via
+   :class:`~deckard.model.DefensePipelineConfig` that chain ART-based
+   preprocessing and postprocessing defenses.
+1. **Attack Execution**: Execute evasion or inference attacks via
+   :class:`~deckard.attack.AttackConfig` with attack-specific scoring and metric
+   aggregation.
+1. **Optional Detector Execution**: Train/evaluate auxiliary
+   clean-vs-adversarial detectors via :class:`~deckard.detector.DetectorConfig`.
+1. **Scoring And Artifact Persistence**: Normalize metrics via
+   :class:`~deckard.score.ScorerDictConfig` and persist results via
+   :class:`~deckard.file.FileConfig`.
 
 By standardizing these stages, deckard reduces ambiguity in experiment setup
 and makes comparative benchmarking easier.
