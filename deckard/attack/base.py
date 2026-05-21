@@ -1,7 +1,6 @@
 # Standard library imports
 import copy
 import pickle
-import time
 import logging
 
 from pathlib import Path
@@ -51,8 +50,6 @@ if TYPE_CHECKING:
     from ..score.attack import AttackScorerConfig
 
 logger = logging.getLogger(__name__)
-
-
 
 
 def _sensitive_slice(sensitive, n):
@@ -111,13 +108,13 @@ class SensitiveFeaturesWrapper(BaseEstimator):
         if "sensitive_features" in params:
             self._sensitive = np.asarray(params["sensitive_features"])
         return self
+
     def _sensitive_slice(self, sensitive, n):
         """Return the first *n* rows of *sensitive*, or None if unavailable."""
         if sensitive is None:
             return None
         arr = np.asarray(sensitive)
         return arr[:n]
-
 
 
 supported_attacks = [
@@ -249,7 +246,7 @@ class AttackTypePlugin:
         """Return mixin tuple for matching attack family/subtype."""
         _ = (runtime, default_mixins)
         if not self._matches(attack_type=attack_type, attack_subtype=attack_subtype):
-            return tuple()
+            return ()
         mixin = self._resolve_mixin_type()
         return (mixin,)
 
@@ -486,7 +483,10 @@ class AttackConfig(ConfigBase):
                 "Poisoning attacks require class_source and class_target to differ.",
             )
 
-    def set_mode(self, mode: Literal["auto", "train", "test", "val"]) -> "AttackConfig":
+    def set_mode(
+        self,
+        mode: Literal["auto", "train", "test", "val"],
+    ) -> "AttackConfig":
         """Set attack scoring/evaluation split mode explicitly."""
         canonical = str(mode).strip().lower()
         valid_modes = {"auto", "train", "test", "val"}
@@ -1028,7 +1028,10 @@ class AttackConfig(ConfigBase):
             model,
             data,
         )
-        runtime = self._with_attack_context(attack_type=attack_type, attack_subtype=attack_subtype)
+        runtime = self._with_attack_context(
+            attack_type=attack_type,
+            attack_subtype=attack_subtype,
+        )
         handler = runtime._resolve_attack_handler(
             attack_type=attack_type,
             attack_subtype=attack_subtype,

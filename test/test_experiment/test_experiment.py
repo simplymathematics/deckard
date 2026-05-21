@@ -1401,6 +1401,7 @@ class TestCoerceScorerConfig(unittest.TestCase):
         # Updated to check for 'num_classes' instead of 'accuracy'
         self.assertIn("num_classes", exp.data.scorer.scorers)
 
+
 class TestRunSinglePipelineBranchesExtra(unittest.TestCase):
     def _exp_stub(self):
         exp = ExperimentConfig.__new__(ExperimentConfig)

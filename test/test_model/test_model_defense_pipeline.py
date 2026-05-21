@@ -120,7 +120,6 @@ class TestDefenseConfig(unittest.TestCase):
         )
 
 
-
 class TestDefensePipelineConfigListCoerce(unittest.TestCase):
     """DefensePipelineConfig.coerce() with a list should chain all specs."""
 

@@ -23,6 +23,7 @@ from deckard.utils import ConfigBase
     ],
 )
 def test_runtime_configs_inherit_config_base(runtime_cls):
-    assert issubclass(runtime_cls, ConfigBase), (
-        f"{runtime_cls.__name__} must inherit ConfigBase"
-    )
+    assert issubclass(
+        runtime_cls,
+        ConfigBase,
+    ), f"{runtime_cls.__name__} must inherit ConfigBase"

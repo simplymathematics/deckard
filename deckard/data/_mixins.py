@@ -295,6 +295,7 @@ class _SensitiveColumnsMixin:
         else:
             fit_method(X, y, **fit_params)
         return defended_estimator
+
     def _check_shape_consistency(self, arr, name):
         if isinstance(arr, (list, tuple)):
             shapes = [np.shape(v) for v in arr]
@@ -302,6 +303,7 @@ class _SensitiveColumnsMixin:
                 raise ValueError(
                     f"Inconsistent shapes in {name}: {shapes}. All elements must have the same shape.",
                 )
+
 
 @dataclass(eq=False, kw_only=True)
 class DataPipelineMixin:
@@ -390,7 +392,12 @@ class DataPipelineMixin:
             y = self._transform_with_y_pipeline(y_pipe, y)
         return X, y
 
-    def _step_flag(self, step_config: dict[str, Any], flag: str, default: bool) -> bool:
+    def _step_flag(
+        self,
+        step_config: dict[str, Any],
+        flag: str,
+        default: bool,
+    ) -> bool:
         aliases: dict[str, tuple[str, ...]] = {
             "fit_X": ("fit_X",),
             "fit_y": ("fit_y",),
@@ -411,14 +418,20 @@ class DataPipelineMixin:
                 return bool(step_config[key])
         return default
 
-    def _instantiate_pipeline_step(self, step_name: str, step_config: dict[str, Any]) -> Any:
+    def _instantiate_pipeline_step(
+        self,
+        step_name: str,
+        step_config: dict[str, Any],
+    ) -> Any:
         class_name = step_config.get("name")
         if not class_name:
             raise ValueError(f"Pipeline step '{step_name}' must define a 'name'")
         args = list(step_config.get("args", []) or [])
         kwargs = dict(step_config.get("kwargs", {}) or {})
         extra_kwargs = {
-            k: v for k, v in dict(step_config).items() if k not in self._PIPELINE_META_KEYS
+            k: v
+            for k, v in dict(step_config).items()
+            if k not in self._PIPELINE_META_KEYS
         }
         kwargs.update(extra_kwargs)
         return load_class(class_name, *args, **kwargs)
@@ -506,7 +519,9 @@ class DataPipelineMixin:
                         *passthrough_steps,
                     ],
                 )
-        return Pipeline(steps=[(name, transformer) for name, transformer, _ in x_steps])
+        return Pipeline(
+            steps=[(name, transformer) for name, transformer, _ in x_steps],
+        )
 
     def _fit_transform_with_pipeline(self, pipeline_obj: Any, X: Any, y: Any) -> Any:
         if pipeline_obj is None:
@@ -529,11 +544,17 @@ class DataPipelineMixin:
             try:
                 cols = list(pipeline_obj.get_feature_names_out(X.columns))
             except Exception:
-                cols = [f"feature_{i}" for i in range(np.asarray(transformed).shape[1])]
+                cols = [
+                    f"feature_{i}" for i in range(np.asarray(transformed).shape[1])
+                ]
             return pd.DataFrame(transformed, columns=cols, index=X.index)
         return transformed
 
-    def _transform_with_y_pipeline(self, y_pipeline: list[tuple[str, Any]], y: Any) -> Any:
+    def _transform_with_y_pipeline(
+        self,
+        y_pipeline: list[tuple[str, Any]],
+        y: Any,
+    ) -> Any:
         y_frame = y.to_frame() if isinstance(y, pd.Series) else pd.DataFrame(y)
         for _, stage in y_pipeline:
             y_frame = stage.transform(y_frame)
@@ -756,6 +777,7 @@ class DataScoreMixin:
     ) -> dict:
         """Canonical public entry-point for dataset scoring."""
         return self._score(*args, mode=mode, **kwargs)
+
 
 __all__ = [
     "RuntimePayload",

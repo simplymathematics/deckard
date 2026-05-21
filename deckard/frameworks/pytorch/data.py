@@ -219,8 +219,6 @@ class TorchDatasetMixin(TorchDatasetSamplingMixin):
             return "map"
         return "unknown"
 
-
-
     def _normalize_sampler_spec(self) -> tuple[Union[str, None], dict[str, Any]]:
         """Resolve sampler name and params from string/dict/callable specs."""
         sampler_spec = getattr(self, "sampler", None)

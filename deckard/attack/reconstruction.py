@@ -8,9 +8,10 @@ from .inference import _InferenceAttackMixin
 
 class _ReconstructionAttackMixin(_InferenceAttackMixin):
     """Reusable database reconstruction attack behavior."""
+
     def infer_database_reconstruction(self, data, attack) -> dict:
         return super().infer_database_reconstruction(data=data, attack=attack)
-    
+
     def __call__(
         self,
         *,

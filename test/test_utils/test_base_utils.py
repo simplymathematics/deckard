@@ -138,8 +138,10 @@ class TestUtilsAdditional(unittest.TestCase):
                 {
                     "source": str(data_path),
                     "loaded": "${load_data:${source}}",
-                    "saved_path": "${save_data:${loaded}," + str(saved_data_path) + "}",
-                }
+                    "saved_path": "${save_data:${loaded},"
+                    + str(saved_data_path)
+                    + "}",
+                },
             )
             resolved_data = OmegaConf.to_container(data_cfg, resolve=True)
             self.assertTrue(saved_data_path.exists())

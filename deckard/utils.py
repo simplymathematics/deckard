@@ -12,10 +12,9 @@ import importlib.util
 import inspect
 import json
 import logging
-import pickle
 import sys
 import traceback
-from dataclasses import MISSING, asdict, dataclass, field, is_dataclass
+from dataclasses import asdict, dataclass, field, is_dataclass
 from pathlib import Path
 from typing import Any, Iterable, Optional, Union
 
@@ -440,7 +439,7 @@ def instantiate_plugin_spec(
     return plugin_spec
 
 
-def split_separated_tokens(value: Any, sep = ",") -> list[str]:
+def split_separated_tokens(value: Any, sep=",") -> list[str]:
     """Split a comma-separated string into trimmed, non-empty tokens.
 
     Args:
@@ -1080,60 +1079,6 @@ class ConfigBase(ArtifactLoaderConfig):
                 )
         return params
 
-    def to_yaml(self, payload: Any = None, filepath: Optional[str] = None) -> None:
-        """Save the current config instance to a YAML file."""
-        if filepath is None and isinstance(payload, str):
-            filepath = payload
-            payload = None
-        if filepath is None:
-            filepath = getattr(self, "path", None)
-        if filepath is None:
-            return
-        assert filepath is not None, "Filepath must be provided to save config."
-        suffix = Path(filepath).suffix.lower()
-        if suffix and suffix not in {".yaml", ".yml"}:
-            artifact_payload = self if payload is None else payload
-            super().save(payload=artifact_payload, filepath=filepath)
-            logger.info(
-                f"Instance of {self.__class__.__name__} saved via artifact loader to {filepath}",
-            )
-            return
-        resolved_path = self.save(filepath)
-        logger.info(
-            f"Instance of {self.__class__.__name__} saved to {resolved_path}",
-        )
-
-    def from_yaml(self, filepath: Optional[str] = None) -> "ConfigBase":
-        """Load the current config instance from a YAML file."""
-        if filepath is None:
-            filepath = getattr(self, "path", None)
-        assert filepath is not None, "Filepath must be provided to load config."
-        suffix = Path(filepath).suffix.lower()
-        if suffix and suffix not in {".yaml", ".yml"}:
-            loaded = super().load(filepath)
-            if isinstance(loaded, self.__class__):
-                self.__dict__.update(loaded.__dict__)
-                logger.info(
-                    f"Instance of {self.__class__.__name__} loaded via artifact loader from {filepath}",
-                )
-                return self
-            if loaded is self:
-                return self
-            return loaded
-        resolved_path = self._resolve_yaml_read_path(filepath)
-        assert resolved_path.exists(), f"File {filepath} does not exist."
-        obj = self.from_yaml(str(resolved_path))
-        if not isinstance(obj, self.__class__):
-            raise TypeError(
-                f"Loaded object is not of type {self.__class__.__name__}",
-            )
-        logger.info(
-            f"Instance of {self.__class__.__name__} loaded from {resolved_path}",
-        )
-        # Update the current instance's __dict__ with the loaded object's __dict__
-        self.__dict__.update(obj.__dict__)
-        return self
-
     @staticmethod
     def _resolve_yaml_write_path(filepath: str) -> Path:
         """Return canonical YAML output path for config state persistence."""
@@ -1284,8 +1229,7 @@ class ConfigBase(ArtifactLoaderConfig):
             return OmegaConf.to_container(value, resolve=True)
         if isinstance(value, dict):
             return {
-                str(k): ConfigBase._serialize_for_yaml(v)
-                for k, v in value.items()
+                str(k): ConfigBase._serialize_for_yaml(v) for k, v in value.items()
             }
         if isinstance(value, (list, tuple, set, frozenset)):
             return [ConfigBase._serialize_for_yaml(v) for v in value]

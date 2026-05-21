@@ -1028,7 +1028,7 @@ def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):
     )
 
     scores = optimize_module.optimize_main(cfg)
-    assert "accuracy" in scores['test']
+    assert "accuracy" in scores["test"]
     assert "optimizer_loss" in scores
 
 

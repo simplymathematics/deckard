@@ -441,14 +441,19 @@ class _FairnessScorerMixin:
                 raw_needs_labels = scorer_data.pop("needs_labels", None)
                 raw_needs_proba = scorer_data.pop("needs_proba", None)
                 raw_needs_logits = scorer_data.pop("needs_logits", None)
-                raw_binary_expand = scorer_data.pop("binary_expand_to_multiclass", None)
+                raw_binary_expand = scorer_data.pop(
+                    "binary_expand_to_multiclass",
+                    None,
+                )
                 raw_positive_idx = scorer_data.pop("binary_positive_class_index", 1)
                 raw_row_sum_atol = scorer_data.pop("row_sum_atol", 1e-2)
                 raw_prob_clip_eps = scorer_data.pop("probability_clip_eps", 1e-12)
                 resolved_needs_labels = (
                     True
                     if raw_needs_labels is None and raw_needs_proba is not True
-                    else (False if raw_needs_labels is None else bool(raw_needs_labels))
+                    else (
+                        False if raw_needs_labels is None else bool(raw_needs_labels)
+                    )
                 )
                 normalized[key] = ScorerConfig(
                     score_name=scorer_data.pop("score_name", key),
@@ -457,9 +462,7 @@ class _FairnessScorerMixin:
                     greater_is_better=scorer_data.pop("greater_is_better", True),
                     needs_labels=resolved_needs_labels,
                     needs_proba=(
-                        bool(raw_needs_proba)
-                        if raw_needs_proba is not None
-                        else None
+                        bool(raw_needs_proba) if raw_needs_proba is not None else None
                     ),
                     needs_logits=(
                         bool(raw_needs_logits)

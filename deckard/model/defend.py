@@ -850,7 +850,9 @@ class _ARTDefenseBehaviorMixin:
         existing_postprocessors = []
         if _is_art_wrapper_instance(self.model):
             wrapper_state = _get_wrapper_state(self.model)
-            state_base = None if wrapper_state is None else wrapper_state.get("base_estimator")
+            state_base = (
+                None if wrapper_state is None else wrapper_state.get("base_estimator")
+            )
             if state_base is not None:
                 base_estimator = state_base
             else:
@@ -1145,7 +1147,11 @@ class _ARTDefenseBehaviorMixin:
             raw_model = self._model
             if _is_art_torch_wrapper(raw_model):
                 wrapper_state = _get_wrapper_state(raw_model)
-                state_base = None if wrapper_state is None else wrapper_state.get("base_estimator")
+                state_base = (
+                    None
+                    if wrapper_state is None
+                    else wrapper_state.get("base_estimator")
+                )
                 if _is_torch_model_instance(state_base):
                     raw_model = state_base
                 else:

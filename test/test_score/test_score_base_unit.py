@@ -56,13 +56,17 @@ def test_scorer_config_post_init_dict_and_string_paths(monkeypatch):
     with pytest.raises(TypeError, match="must be callable"):
         ScorerConfig(score_name="bad", score_function=123)
 
-    with pytest.raises(ValueError, match="cannot set both needs_labels=True and needs_proba=True"):
+    with pytest.raises(
+        ValueError,
+        match="cannot set both needs_labels=True and needs_proba=True",
+    ):
         ScorerConfig(
             score_name="bad_flags",
             score_function="sklearn.metrics.accuracy_score",
             needs_labels=True,
             needs_proba=True,
         )
+
 
 def test_probability_validation_error_paths():
     scorer = ScorerConfig(
@@ -438,7 +442,10 @@ def test_scorer_dict_attack_placeholder_and_missing_probability_context():
     )
     SimpleNamespace(_attack="resolved")
 
-    with pytest.raises(ValueError, match="requires raw model outputs from predict_proba"):
+    with pytest.raises(
+        ValueError,
+        match="requires raw model outputs from predict_proba",
+    ):
         scorer(
             mode="attack",
             data=SimpleNamespace(y_test=np.array([0, 1])),
@@ -652,7 +659,7 @@ def test_score_data_empirical_cdf_empty_reference_raises():
 def test_scoring_defense_stage_enum_values():
     """Test that ScoringDefenseStage enum has correct values."""
     from deckard.score.base import ScoringDefenseStage
-    
+
     assert ScoringDefenseStage.PRE_DEFENSE.value == "pre-defense"
     assert ScoringDefenseStage.POST_DEFENSE.value == "post-defense"
     assert ScoringDefenseStage.VAL_DEFENSE.value == "val"
@@ -731,7 +738,7 @@ def test_scorer_dict_config_stage_matching_filters_scorers_by_mode():
         },
         stage="",
     )
-    
+
     data = SimpleNamespace(
         y_test=np.array([0, 1]),
         y_train=np.array([0, 1]),
@@ -877,4 +884,3 @@ def test_scorer_dict_config_supports_all_SUPPORTED_SCORING_STAGES():
         result = cfg(**kwargs)
         assert stage in result
         assert "acc" in result[stage]
-

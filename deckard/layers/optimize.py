@@ -392,7 +392,11 @@ def _resolve_multirun_sweep_paths(hydra_cfg) -> dict:
 def _resolve_run_paths(hydra_cfg) -> dict[str, str]:
     run_dir_value = getattr(getattr(hydra_cfg, "run", None), "dir", None)
     if run_dir_value is None:
-        run_dir_value = getattr(getattr(hydra_cfg, "runtime", None), "output_dir", None)
+        run_dir_value = getattr(
+            getattr(hydra_cfg, "runtime", None),
+            "output_dir",
+            None,
+        )
     if run_dir_value is None:
         return {}
     run_dir = Path(run_dir_value)

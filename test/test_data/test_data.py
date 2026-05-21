@@ -277,8 +277,8 @@ class TestDataConfig(unittest.TestCase):
             },
         )
         scores = cfg()
-        self.assertEqual(scores['pre-sample']["n_samples"], len(cfg._y))
-        self.assertNotEqual(scores['pre-sample']["n_samples"], len(cfg.y_train))
+        self.assertEqual(scores["pre-sample"]["n_samples"], len(cfg._y))
+        self.assertNotEqual(scores["pre-sample"]["n_samples"], len(cfg.y_train))
 
     def test_post_defense_score_mode_uses_test_split(self):
         captured = {}

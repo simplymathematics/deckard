@@ -103,7 +103,7 @@ class PlaceholderResolverMixin:
     def num(self, value: int) -> None:
         """Set the job num"""
         self.num = value
-    
+
     @property
     def id(self) -> str:
         """Returns the specific launcher or cluster job ID. Uses uuid as fallback if Hydra is not enabled"""
@@ -111,8 +111,9 @@ class PlaceholderResolverMixin:
             return str(HydraConfig.get().job.num)
         except Exception:
             return uuid4().hex
+
     @id.setter
-    def id(self, value: int ) -> None:
+    def id(self, value: int) -> None:
         """Set the job id."""
         self.id = value
 

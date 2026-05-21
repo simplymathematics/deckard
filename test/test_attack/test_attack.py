@@ -413,6 +413,7 @@ class TestAttackConfig(unittest.TestCase):
     def test_save_and_load_attack(self):
         from deckard.data import DataConfig
         from deckard.model import ModelConfig
+
         data = DataConfig(dataset_name="adult")
         data()
         model = ModelConfig(model_type="sklearn.linear_model.LogisticRegression")
@@ -420,8 +421,11 @@ class TestAttackConfig(unittest.TestCase):
         path = Path(self.attack_file)
         if path.exists():
             path.unlink()
-        loaded_attack = AttackConfig(attack_type = self.attack_type, attack_params = self.attack_params)
-        loaded_attack(data=data, model =model, attack_file = self.attack_file)
+        loaded_attack = AttackConfig(
+            attack_type=self.attack_type,
+            attack_params=self.attack_params,
+        )
+        loaded_attack(data=data, model=model, attack_file=self.attack_file)
         self.attack.save(self.attack_file)
         self.assertTrue(Path(self.attack_file).exists())
         loaded_attack.load(self.attack_file)
@@ -3488,8 +3492,6 @@ class TestStaticHelpers(unittest.TestCase):
         ref = np.array([0, 1])
         result = AttackConfig._normalize_inferred_output(inferred, reference=ref)
         np.testing.assert_array_equal(result, [1, 0])
-
-
 
     def test_infer_task_from_data_classifier_attr(self):
         """Cover the `hasattr(data, 'classifier')` path in _infer_task_is_classification."""

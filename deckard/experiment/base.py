@@ -194,7 +194,9 @@ class DataConfigResolutionMixin:
             resolved_anjana_cls = AnjanaDataConfig
             if resolved_anjana_cls is None:
                 try:
-                    from ..plugins.anjana.data import AnjanaDataConfig as _AnjanaDataConfig
+                    from ..plugins.anjana.data import (
+                        AnjanaDataConfig as _AnjanaDataConfig,
+                    )
 
                     resolved_anjana_cls = _AnjanaDataConfig
                 except Exception as exc:
@@ -334,7 +336,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         elif self.evaluation_mode == "report":
             raw_modes = ["train", "test", "val"]
         else:
-            raise NotImplementedError(f"Evaluation mode: {self.evaluation_mode} not implemented")
+            raise NotImplementedError(
+                f"Evaluation mode: {self.evaluation_mode} not implemented",
+            )
 
         allowed = {"pre-sample", "train", "test", "val"}
         modes = []
@@ -572,9 +576,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         out = {}
         modes = self._resolve_score_modes()
         should_nest_by_mode = (
-            (self.evaluation_mode == "report" and not self._has_explicit_score_mode())
-            or (self._has_explicit_score_mode() and len(modes) > 1)
-        )
+            self.evaluation_mode == "report" and not self._has_explicit_score_mode()
+        ) or (self._has_explicit_score_mode() and len(modes) > 1)
         scorer_is_data_profile = isinstance(self.score, _DataScorerMarker)
         for mode in modes:
             common_kwargs = {
@@ -606,9 +609,13 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     y_pred=y_pred,
                     y_proba=y_proba,
                 )
-            if isinstance(mode_scores, dict) and mode in mode_scores and isinstance(
-                mode_scores[mode],
-                dict,
+            if (
+                isinstance(mode_scores, dict)
+                and mode in mode_scores
+                and isinstance(
+                    mode_scores[mode],
+                    dict,
+                )
             ):
                 mode_scores = mode_scores[mode]
             if not isinstance(mode_scores, dict):
@@ -725,9 +732,14 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             score_fn = spec.get("score_function")
         else:
             score_fn = getattr(spec, "score_function", None)
-        return isinstance(score_fn, str) and "deckard.plugins.anjana.score." in score_fn
+        return (
+            isinstance(score_fn, str) and "deckard.plugins.anjana.score." in score_fn
+        )
 
-    def _split_merged_score_profiles(self, plain: dict) -> tuple[dict | None, dict | None]:
+    def _split_merged_score_profiles(
+        self,
+        plain: dict,
+    ) -> tuple[dict | None, dict | None]:
         scorers = plain.get("scorers")
         if not isinstance(scorers, dict):
             return None, plain
@@ -741,9 +753,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             return None, plain
 
         remaining_scorers = {
-            key: value
-            for key, value in scorers.items()
-            if key not in data_scorers
+            key: value for key, value in scorers.items() if key not in data_scorers
         }
 
         data_cfg = {

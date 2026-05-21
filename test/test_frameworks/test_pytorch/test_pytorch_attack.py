@@ -2679,7 +2679,6 @@ class TestStaticHelpers(unittest.TestCase):
         result = AttackConfig._normalize_inferred_output(inferred, reference=ref)
         np.testing.assert_array_equal(result, [1, 0])
 
-
     def test_infer_task_from_data_classifier_attr(self):
         """Cover the `hasattr(data, 'classifier')` path in _infer_task_is_classification."""
 

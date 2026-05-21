@@ -273,7 +273,12 @@ class _InferenceAttackMixin(_AttackMixin):
         self.attack = inferred
         return self.score_dict
 
-    def _resolve_source_split(self, data, *, attack_kind: str) -> tuple[str, object, object]:
+    def _resolve_source_split(
+        self,
+        data,
+        *,
+        attack_kind: str,
+    ) -> tuple[str, object, object]:
         requested_mode = self.resolve_mode_for_attack_kind(
             attack_kind,
             attack_subtype=self.attack_subtype,

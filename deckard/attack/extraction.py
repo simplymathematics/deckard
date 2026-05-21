@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass, field
 
 import numpy as np
-from ..score.base import DefaultClassifierConfig, ScorerDictConfig
+from ..score.base import DefaultClassifierConfig
 
 from .base import AttackConfig, AttackTypePlugin
 from .poisoning import _PoisoningAttackMixin
@@ -49,6 +49,7 @@ class _ExtractionAttackMixin(_PoisoningAttackMixin):
                 f"_ExtractionAttackMixin received unsupported attack type: {attack_type}",
             )
         return self.extract(data=data, art_model=art_model, attack=attack)
+
     @staticmethod
     def _select_extraction_scorer(benign_pred, extracted_pred):
         """Use full classifier metrics when probabilities are available, else label-only metrics."""
@@ -62,7 +63,7 @@ class _ExtractionAttackMixin(_PoisoningAttackMixin):
         label_only.scorers.pop("roc_auc", None)
         label_only.scorers.pop("log_loss", None)
         return label_only, False
-    
+
     def extract(self, data, art_model, attack) -> dict:
         """Execute a model extraction attack and score victim vs extracted classifiers."""
         task_is_classification = self._infer_task_is_classification(

@@ -14,7 +14,6 @@ from ...utils import (
     is_default_config_value,
     merge_list_of_dicts,
 )
-from ...data.pipeline.core import FairlearnDataPipelineConfig
 from ...plugins.fairlearn.score import (
     DefaultFairlearnClassificationConfig,
     DefaultFairlearnRegressionConfig,

@@ -1,6 +1,6 @@
 import time
 import logging
-from typing import Any, Optional, Literal, Union
+from typing import Any, Literal, Union
 import inspect
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -319,22 +319,14 @@ class ModelConfig(ConfigBase):
         self._model = estimator
         self._sync_model_signature_from_estimator(estimator)
 
-
-
     def _sync_model_signature_from_estimator(self, estimator: Any) -> None:
         # TODO: use inspect for better init parsing
-        
+
         if estimator is None:
             return
 
         estimator_cls = estimator.__class__
         self.model_type = f"{estimator_cls.__module__}.{estimator_cls.__name__}"
-
-        existing_params: Optional[dict] = (
-            self.model_params
-            if isinstance(self.model_params, (dict, DictConfig))
-            else None
-        )
         get_params = getattr(estimator, "get_params", None)
         if callable(get_params):
             try:
@@ -720,9 +712,13 @@ class ModelConfig(ConfigBase):
                 scores = {**mode_scores, **companion_scores}
             else:
                 stage_key = kwargs.get("stage", None)
-                if isinstance(stage_key, str) and stage_key in scores and isinstance(
-                    scores.get(stage_key),
-                    dict,
+                if (
+                    isinstance(stage_key, str)
+                    and stage_key in scores
+                    and isinstance(
+                        scores.get(stage_key),
+                        dict,
+                    )
                 ):
                     stage_scores = dict(scores[stage_key])
                     companion_scores = {
@@ -1458,7 +1454,7 @@ class ModelConfig(ConfigBase):
                         else:
                             self._model = loaded_obj
                         self._sync_model_signature_from_estimator(self._model)
-                    except Exception as e:
+                    except Exception:
                         logger.warning(f"Error loading model file: {model_file}.")
                         self._model = None
                     if self._is_model_fitted(self._model, X_sample=data.X_train):
@@ -1519,48 +1515,48 @@ class ModelConfig(ConfigBase):
                 if getattr(self, "defense_application_time", None) is not None:
                     times["defense_application_time"] = self.defense_application_time
         return times
-    
-    def _is_model_fitted(self, estimator, X_sample=None, depth: int = 0) -> bool:
-            if estimator is None:
-                return False
-            if depth > 2:
-                return False
 
+    def _is_model_fitted(self, estimator, X_sample=None, depth: int = 0) -> bool:
+        if estimator is None:
+            return False
+        if depth > 2:
+            return False
+
+        try:
+            check_is_fitted(estimator)
+            return True
+        except Exception:
+            pass
+
+        # Support wrapped estimators (e.g., ART wrappers exposing underlying model)
+        for attr in ["model", "_model", "estimator"]:
+            wrapped = getattr(estimator, attr, None)
+            if wrapped is None or wrapped is estimator:
+                continue
+            if self._is_model_fitted(
+                wrapped,
+                X_sample=X_sample,
+                depth=depth + 1,
+            ):
+                return True
+
+        for attr in ["is_fitted_", "fitted", "_is_fitted"]:
+            if hasattr(estimator, attr):
+                try:
+                    return bool(getattr(estimator, attr))
+                except Exception:
+                    continue
+
+        # Framework-agnostic fallback: if prediction works on one sample, treat as fitted.
+        if X_sample is not None and hasattr(estimator, "predict"):
             try:
-                check_is_fitted(estimator)
+                if isinstance(X_sample, (pd.DataFrame, pd.Series)):
+                    sample = X_sample.iloc[:1]
+                else:
+                    sample = X_sample[:1]
+                _ = estimator.predict(sample)
                 return True
             except Exception:
                 pass
 
-            # Support wrapped estimators (e.g., ART wrappers exposing underlying model)
-            for attr in ["model", "_model", "estimator"]:
-                wrapped = getattr(estimator, attr, None)
-                if wrapped is None or wrapped is estimator:
-                    continue
-                if self._is_model_fitted(
-                    wrapped,
-                    X_sample=X_sample,
-                    depth=depth + 1,
-                ):
-                    return True
-
-            for attr in ["is_fitted_", "fitted", "_is_fitted"]:
-                if hasattr(estimator, attr):
-                    try:
-                        return bool(getattr(estimator, attr))
-                    except Exception:
-                        continue
-
-            # Framework-agnostic fallback: if prediction works on one sample, treat as fitted.
-            if X_sample is not None and hasattr(estimator, "predict"):
-                try:
-                    if isinstance(X_sample, (pd.DataFrame, pd.Series)):
-                        sample = X_sample.iloc[:1]
-                    else:
-                        sample = X_sample[:1]
-                    _ = estimator.predict(sample)
-                    return True
-                except Exception:
-                    pass
-
-            return False
+        return False

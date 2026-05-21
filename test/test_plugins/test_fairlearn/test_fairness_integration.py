@@ -490,6 +490,7 @@ def test_fairlearn_group_metrics_all_modes(generate_fairness_data):
     """
     from deckard.plugins.fairlearn.score import FairlearnScoreDictConfig
     from deckard.score.base import SUPPORTED_MODEL_SCORE_MODES
+
     data = generate_fairness_data
     model = FairlearnModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
@@ -522,7 +523,9 @@ def test_fairlearn_group_metrics_all_modes(generate_fairness_data):
     )
     for mode in SUPPORTED_MODEL_SCORE_MODES:
         sensitive_attr = mode_to_sensitive_attr.get(mode)
-        assert sensitive_attr is not None, f"No sensitive-feature mapping for mode {mode}"
+        assert (
+            sensitive_attr is not None
+        ), f"No sensitive-feature mapping for mode {mode}"
         sensitive = getattr(data, sensitive_attr, None)
         if sensitive is None:
             with pytest.raises(ValueError):
@@ -546,7 +549,11 @@ def test_fairlearn_group_metrics_all_modes(generate_fairness_data):
         # Check per-group keys
         for group in unique_groups:
             key = f"{group}_accuracy"
-            assert key in scores, f"Missing per-group key {key} in mode {mode}: {list(scores.keys())}"
+            assert (
+                key in scores
+            ), f"Missing per-group key {key} in mode {mode}: {list(scores.keys())}"
         # Check overall and difference keys
         assert "accuracy_overall" in scores, f"Missing overall key in mode {mode}"
-        assert "accuracy_difference" in scores, f"Missing difference key in mode {mode}"
+        assert (
+            "accuracy_difference" in scores
+        ), f"Missing difference key in mode {mode}"

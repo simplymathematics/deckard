@@ -71,7 +71,11 @@ def test_resolve_split_arrays_accepts_stage_aliases():
     assert np.array_equal(x, data.X_test)
     assert np.array_equal(y, data.y_test)
 
-    x_adv, y_adv = resolve_split_arrays(data, "adversarial", stage_to_split_mode=stage_map)
+    x_adv, y_adv = resolve_split_arrays(
+        data,
+        "adversarial",
+        stage_to_split_mode=stage_map,
+    )
     assert np.array_equal(x_adv, data.X_test)
     assert np.array_equal(y_adv, data.y_test)
 
@@ -86,7 +90,9 @@ def test_normalize_scoring_mode_maps_attack_aliases_to_split_modes():
     stage_map = fairness_stage_to_split_mode("val")
     assert normalize_scoring_mode("attack", stage_to_split_mode=stage_map) == "val"
     assert normalize_scoring_mode("attack-val", stage_to_split_mode=stage_map) == "val"
-    assert normalize_scoring_mode("adversarial", stage_to_split_mode=stage_map) == "val"
+    assert (
+        normalize_scoring_mode("adversarial", stage_to_split_mode=stage_map) == "val"
+    )
 
 
 def test_normalize_scoring_mode_requires_mapping_for_stage_aliases():

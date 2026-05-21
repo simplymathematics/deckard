@@ -334,7 +334,7 @@ class AnjanaDataConfig(
     anonymization and fairness-preprocessing hooks. The default plugin setup
     executes ``_apply_anjana_defense`` after data load when an ANJANA defense
     configuration is provided.
-    
+
     Privacy metrics are measured on POST-PIPELINE (anonymized) data by default,
     with results nested under the 'post-pipeline' key.
     """
@@ -352,7 +352,7 @@ class AnjanaDataConfig(
             ),
         ],
     )
-    
+
     score_mode: str = "post-pipeline"
 
     def __post_init__(self):
@@ -460,12 +460,14 @@ class AnjanaDataConfig(
     def _score(
         self,
         *args,
-        mode: Optional[Literal["train", "test", "val", "pre-sample", "post-pipeline"]] = None,
+        mode: Optional[
+            Literal["train", "test", "val", "pre-sample", "post-pipeline"]
+        ] = None,
         **kwargs,
     ) -> dict:
         """
         Score the data using ANJANA privacy metrics measured on post-pipeline (anonymized) data.
-        
+
         By default, measures privacy metrics on the full post-pipeline dataset
         (combined train/test splits after anonymization transformations).
         Results are nested under the 'post-pipeline' key.
@@ -475,20 +477,22 @@ class AnjanaDataConfig(
             ScorerClass = load_class(
                 "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
             )
-            self.scorer = ScorerClass() if isinstance(ScorerClass, type) else ScorerClass
-        
+            self.scorer = (
+                ScorerClass() if isinstance(ScorerClass, type) else ScorerClass
+            )
+
         if self.scorer is None:
             return {}
         if not callable(self.scorer):
             raise TypeError(
                 f"AnjanaDataConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
-        
+
         # Resolve mode: use parameter or configured score_mode
         resolved_mode = mode
         if resolved_mode is None:
             resolved_mode = getattr(self, "score_mode", None) or "post-pipeline"
-        
+
         # Delegate to parent for all modes, including post-pipeline/post-sample.
         try:
             return super()._score(*args, mode=resolved_mode, **kwargs)

@@ -268,7 +268,9 @@ class ArtifactLoaderConfig:
         elif suffix in [".pkl", ".pickle"]:
             self.save_object(model, filepath)
         else:
-            raise NotImplementedError(f"Saving models with extension: {suffix} not supported.")
+            raise NotImplementedError(
+                f"Saving models with extension: {suffix} not supported.",
+            )
 
     def save(self, payload: Any = None, filepath: Optional[str] = None) -> None:
         # Backward compatibility: many callers use save(filepath) positional style.
@@ -288,11 +290,15 @@ class ArtifactLoaderConfig:
                 "metadata": self.metadata,
             }
 
-        if suffix == ".json" and isinstance(payload, dict) and {
-            "id",
-            "payload_kind",
-            "metadata",
-        }.intersection(payload):
+        if (
+            suffix == ".json"
+            and isinstance(payload, dict)
+            and {
+                "id",
+                "payload_kind",
+                "metadata",
+            }.intersection(payload)
+        ):
             with path.open("w", encoding="utf-8") as handle:
                 json.dump(payload, handle, indent=4)
             return
@@ -312,7 +318,7 @@ class ArtifactLoaderConfig:
         if suffix in {".csv", ".parquet", ".html", ".json", ".xlsx"}:
             self.save_data(payload, str(path))
             return
-        
+
         raise ValueError(f"Unsupported file type {path.suffix}.")
 
     def load(self, filepath: Optional[str] = None) -> Any:
@@ -328,7 +334,11 @@ class ArtifactLoaderConfig:
             except Exception:
                 payload = None
 
-            if isinstance(payload, dict) and {"id", "payload_kind", "metadata"}.intersection(payload):
+            if isinstance(payload, dict) and {
+                "id",
+                "payload_kind",
+                "metadata",
+            }.intersection(payload):
                 self.id = str(payload.get("id", self.id))
                 self.payload_kind = str(payload.get("payload_kind", self.payload_kind))
                 metadata = payload.get("metadata", None)

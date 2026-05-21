@@ -8,7 +8,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Literal, Union, cast
+from typing import TYPE_CHECKING, Any, List, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -125,6 +125,7 @@ class ScoringModelStage(str, Enum):
     MODEL_TEST = "test"
     MODEL_VAL = "val"
 
+
 class ScoringDetectorStage(str, Enum):
     """Enum representing the detector stage for scoring context.
 
@@ -217,7 +218,8 @@ SUPPORTED_PIPELINE_SCORE_MODES: frozenset[str] = frozenset(
         ScoringPipelineStage.VAL_PIPELINE.value,
     },
 )
-    
+
+
 class _DataScorerMarker:
     """Mixin that marks a ScorerDictConfig as operating on data rather than model predictions.
 
@@ -603,7 +605,7 @@ class ScorerConfig:
             return bool(
                 np.nanmin(ind_arr) >= 0.0
                 and np.nanmax(ind_arr) <= 1.0
-                and np.allclose(row_sums, 1.0, atol=self.row_sum_atol)
+                and np.allclose(row_sums, 1.0, atol=self.row_sum_atol),
             )
         return False
 
@@ -674,14 +676,14 @@ class ScorerConfig:
 
             score_name = str(self.score_name).lower()
             metric_name_l = str(metric_name).lower()
-            is_roc_auc_metric = (
-                metric_name_l == "roc_auc_score"
-                or score_name in {"roc_auc", "roc_auc_score"}
-            )
-            is_log_loss_metric = (
-                metric_name_l == "log_loss"
-                or score_name in {"log_loss", "logloss"}
-            )
+            is_roc_auc_metric = metric_name_l == "roc_auc_score" or score_name in {
+                "roc_auc",
+                "roc_auc_score",
+            }
+            is_log_loss_metric = metric_name_l == "log_loss" or score_name in {
+                "log_loss",
+                "logloss",
+            }
             if is_roc_auc_metric and ind_arr.ndim == 2:
                 if ind_arr.shape[1] == 1:
                     return ind_arr.reshape(-1)
@@ -689,7 +691,10 @@ class ScorerConfig:
                 if dep_arr.ndim == 1 and ind_arr.shape[1] == 2:
                     unique_labels = np.unique(dep_arr)
                     if unique_labels.size <= 2:
-                        index = min(self.binary_positive_class_index, ind_arr.shape[1] - 1)
+                        index = min(
+                            self.binary_positive_class_index,
+                            ind_arr.shape[1] - 1,
+                        )
                         return ind_arr[:, index]
             if is_log_loss_metric:
                 if ind_arr.ndim == 2 and ind_arr.shape[1] == 1:
@@ -771,7 +776,7 @@ class ScorerConfig:
 @dataclass(eq=False, kw_only=True)
 class ScorerDictConfig(ConfigBase):
     """Container of named ScorerConfig instances.
-    
+
     Attributes
     ----------
     scorers : dict[str, ScorerConfig]
@@ -807,19 +812,22 @@ class ScorerDictConfig(ConfigBase):
                 raw_needs_labels = scorer_data.pop("needs_labels", None)
                 raw_needs_proba = scorer_data.pop("needs_proba", None)
                 raw_needs_logits = scorer_data.pop("needs_logits", None)
-                raw_binary_expand = scorer_data.pop("binary_expand_to_multiclass", None)
+                raw_binary_expand = scorer_data.pop(
+                    "binary_expand_to_multiclass",
+                    None,
+                )
                 raw_positive_idx = scorer_data.pop("binary_positive_class_index", 1)
                 raw_row_sum_atol = scorer_data.pop("row_sum_atol", 1e-2)
                 raw_prob_clip_eps = scorer_data.pop("probability_clip_eps", 1e-12)
                 resolved_needs_labels = (
                     True
                     if raw_needs_labels is None and raw_needs_proba is not True
-                    else (False if raw_needs_labels is None else bool(raw_needs_labels))
+                    else (
+                        False if raw_needs_labels is None else bool(raw_needs_labels)
+                    )
                 )
                 resolved_needs_proba = (
-                    bool(raw_needs_proba)
-                    if raw_needs_proba is not None
-                    else None
+                    bool(raw_needs_proba) if raw_needs_proba is not None else None
                 )
                 if not isinstance(raw_score_params, dict):
                     raise TypeError(
@@ -865,19 +873,22 @@ class ScorerDictConfig(ConfigBase):
                 raw_needs_labels = scorer_data.pop("needs_labels", None)
                 raw_needs_proba = scorer_data.pop("needs_proba", None)
                 raw_needs_logits = scorer_data.pop("needs_logits", None)
-                raw_binary_expand = scorer_data.pop("binary_expand_to_multiclass", None)
+                raw_binary_expand = scorer_data.pop(
+                    "binary_expand_to_multiclass",
+                    None,
+                )
                 raw_positive_idx = scorer_data.pop("binary_positive_class_index", 1)
                 raw_row_sum_atol = scorer_data.pop("row_sum_atol", 1e-2)
                 raw_prob_clip_eps = scorer_data.pop("probability_clip_eps", 1e-12)
                 resolved_needs_labels = (
                     True
                     if raw_needs_labels is None and raw_needs_proba is not True
-                    else (False if raw_needs_labels is None else bool(raw_needs_labels))
+                    else (
+                        False if raw_needs_labels is None else bool(raw_needs_labels)
+                    )
                 )
                 resolved_needs_proba = (
-                    bool(raw_needs_proba)
-                    if raw_needs_proba is not None
-                    else None
+                    bool(raw_needs_proba) if raw_needs_proba is not None else None
                 )
                 if not isinstance(raw_score_params, dict):
                     raise TypeError(
@@ -924,13 +935,22 @@ class ScorerDictConfig(ConfigBase):
         scorer_is_data_profile = self._is_data_profile_scorer()
 
         scoring_type = str(getattr(self, "scoring_type", "")).strip().lower()
-        if scoring_type not in {"", "data", "model", "attack", "detector", "experiment"}:
+        if scoring_type not in {
+            "",
+            "data",
+            "model",
+            "attack",
+            "detector",
+            "experiment",
+        }:
             raise ValueError(
                 f"Unsupported scoring_type '{scoring_type}'.",
             )
 
         container_tokens = self._stage_tokens(self.stage)
-        if (not scorer_is_data_profile) and ScoringDataStage.PRE_SAMPLE.value in container_tokens:
+        if (
+            not scorer_is_data_profile
+        ) and ScoringDataStage.PRE_SAMPLE.value in container_tokens:
             raise ValueError(
                 "pre-sample stage is reserved for data-profile scorers.",
             )
@@ -944,7 +964,9 @@ class ScorerDictConfig(ConfigBase):
                     "data-profile scorers operate on X/y data splits, not model probability outputs.",
                 )
 
-            if (not scorer_is_data_profile) and ScoringDataStage.PRE_SAMPLE.value in scorer_tokens:
+            if (
+                not scorer_is_data_profile
+            ) and ScoringDataStage.PRE_SAMPLE.value in scorer_tokens:
                 raise ValueError(
                     f"Scorer '{key}' declares pre-sample stage but is not a data-profile scorer.",
                 )
@@ -1382,7 +1404,9 @@ class ScorerDictConfig(ConfigBase):
         existing_stage = results.get(stage_key)
         if isinstance(existing_stage, dict):
             stage_results: dict[str, Any] = dict(existing_stage)
-        elif len(results) > 0 and all(not isinstance(v, dict) for v in results.values()):
+        elif len(results) > 0 and all(
+            not isinstance(v, dict) for v in results.values()
+        ):
             # Backward compatibility for legacy flat score-file payloads.
             stage_results = dict(results)
         else:
@@ -1476,7 +1500,10 @@ class ScorerDictConfig(ConfigBase):
             )
 
         for key, scorer in self.scorers.items():
-            if not self._stage_matches(getattr(scorer, "stage", ""), runtime_stage_tokens):
+            if not self._stage_matches(
+                getattr(scorer, "stage", ""),
+                runtime_stage_tokens,
+            ):
                 continue
             scored_key = key
             if stage_results.get(scored_key) is None:

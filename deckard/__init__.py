@@ -165,7 +165,10 @@ def _coerce_artifact_path(path: Any) -> str:
 
 def _load_artifact_resolver(method_name: str, payload_kind: str):
     def _resolver(path: Any):
-        artifact = ArtifactLoaderConfig(path=_coerce_artifact_path(path), payload_kind=payload_kind)
+        artifact = ArtifactLoaderConfig(
+            path=_coerce_artifact_path(path),
+            payload_kind=payload_kind,
+        )
         return getattr(artifact, method_name)(_coerce_artifact_path(path))
 
     return _resolver
@@ -173,7 +176,10 @@ def _load_artifact_resolver(method_name: str, payload_kind: str):
 
 def _save_artifact_resolver(method_name: str, payload_kind: str):
     def _resolver(payload: Any, path: Any):
-        artifact = ArtifactLoaderConfig(path=_coerce_artifact_path(path), payload_kind=payload_kind)
+        artifact = ArtifactLoaderConfig(
+            path=_coerce_artifact_path(path),
+            payload_kind=payload_kind,
+        )
         getattr(artifact, method_name)(payload, _coerce_artifact_path(path))
         return _coerce_artifact_path(path)
 

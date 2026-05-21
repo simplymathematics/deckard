@@ -31,6 +31,7 @@ def _basic_data_config(**overrides):
 
 def test_data_pipeline_mixin_is_standalone():
     from deckard.data._mixins import DataPipelineMixin
+
     assert hasattr(DataPipelineMixin, "normalize_step_hooks")
     assert hasattr(DataPipelineMixin, "pipeline_declares_hook")
     assert hasattr(DataPipelineMixin, "build_pipeline")
@@ -135,7 +136,11 @@ def test_post_init_normalizes_scorer_string_and_dict(monkeypatch):
     dict_cfg = _basic_data_config(scorer=OmegaConf.create({"scorers": {}}))
     assert isinstance(dict_cfg.scorer, ScorerDictConfig)
 
-@pytest.mark.xfail(condition=True, reason="pkg import fails, as expected. Need better Mock.")
+
+@pytest.mark.xfail(
+    condition=True,
+    reason="pkg import fails, as expected. Need better Mock.",
+)
 def test_plugin_instantiation_and_hook_paths(monkeypatch):
     calls = []
 
@@ -200,7 +205,11 @@ def test_get_stratify_col_branches():
     with pytest.raises(ValueError):
         cfg._get_stratify_col()
 
-@pytest.mark.xfail(condition=True, reason="pkg import fails, as expected. Need better Mock.")
+
+@pytest.mark.xfail(
+    condition=True,
+    reason="pkg import fails, as expected. Need better Mock.",
+)
 def test_resolve_sample_branches(monkeypatch):
     import deckard.data._mixins as data_mixins
 
@@ -427,7 +436,10 @@ def test_pipeline_config_invalid_and_fit_y_paths(monkeypatch):
     cfg.pipeline = {
         "bad": {"name": "sklearn.preprocessing.FunctionTransformer", "fit_xy": True},
     }
-    with pytest.raises(ValueError, match="fit_xy pipeline steps are no longer supported"):
+    with pytest.raises(
+        ValueError,
+        match="fit_xy pipeline steps are no longer supported",
+    ):
         cfg._init_pipeline()
 
     cfg.pipeline = "invalid"
@@ -436,7 +448,10 @@ def test_pipeline_config_invalid_and_fit_y_paths(monkeypatch):
 
 
 def test_pipeline_step_rejects_fit_y_and_fit_xy_both_true():
-    with pytest.raises(ValueError, match="fit_xy pipeline steps are no longer supported"):
+    with pytest.raises(
+        ValueError,
+        match="fit_xy pipeline steps are no longer supported",
+    ):
         data_base.DataPipelineStep.from_config(
             "bad",
             {
@@ -447,7 +462,9 @@ def test_pipeline_step_rejects_fit_y_and_fit_xy_both_true():
         )
 
 
-@pytest.mark.xfail(reason="Pipeline stage flag semantics were refactored; assertions need refresh.")
+@pytest.mark.xfail(
+    reason="Pipeline stage flag semantics were refactored; assertions need refresh.",
+)
 def test_pipeline_stage_flags_apply_only_to_declared_stages(monkeypatch):
     import deckard.data._mixins as data_mixins
 

@@ -144,7 +144,6 @@ _SPLIT_ATTRS: dict = {
 }
 
 
-
 def normalize_scoring_mode(
     mode: Optional[str],
     *,

@@ -72,7 +72,7 @@ class TestModelConfig(unittest.TestCase):
         self.assertTrue(
             "training_time" in scores and "prediction_time" in scores,
         )
-        self.assertTrue("accuracy" in scores['test'])
+        self.assertTrue("accuracy" in scores["test"])
         self.assertTrue("training_time" in scores)
         self.assertTrue("prediction_time" in scores)
         self.assertTrue(hasattr(model, "score_dict"))
@@ -1274,7 +1274,6 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
             scorer=None,
         )
         model._train(data.X_train, data.y_train)
-
 
         with tempfile.TemporaryDirectory() as td:
             out = model._load_or_train_model(data, str(Path(td) / "missing.pkl"), {})

@@ -3,7 +3,7 @@
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Union
+from typing import Union
 
 import numpy as np
 from art.config import ART_NUMPY_DTYPE
@@ -174,8 +174,6 @@ class _EvasionAttackMixin(_AttackMixin):
             logger.info(f"{score}: {self.score_dict[score]}")
         self.attack = adv_pred
         return self.score_dict
-
-    
 
 
 @dataclass(eq=False, kw_only=True)

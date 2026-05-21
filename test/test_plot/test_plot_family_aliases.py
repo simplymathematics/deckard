@@ -1,6 +1,3 @@
-
-from deckard.frameworks.pytorch.fairness_data import TinyFairness
-from deckard.plugins.anjana.data import AnjanaDataConfig
 from deckard.plugins.lifelines.plot import SurvivalSeabornPlotterConfig
 from deckard.plugins.seaborn.plot import SeabornPlotConfig
 from deckard.plugins.yellowbrick.plot import YellowbrickPlotConfig

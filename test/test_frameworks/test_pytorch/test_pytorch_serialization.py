@@ -886,7 +886,10 @@ def test_pytorch_model_get_model_save_load_error_paths():
 
         bad = Path(tmpdir) / "bad.pt"
         torch.save({"not_state_dict": 1}, bad)
-        with pytest.raises(TypeError, match="Unsupported serialized torch model payload"):
+        with pytest.raises(
+            TypeError,
+            match="Unsupported serialized torch model payload",
+        ):
             cfg.load_model(str(bad))
 
 
