@@ -3,12 +3,6 @@
 The {mod}`deckard.score` module defines scorer configuration objects used by
 model, attack, and experiment pipelines.
 
-```{eval-rst}
-.. automodule:: deckard.score
-   :members:
-   :show-inheritance:
-```
-
 ## Overview
 
 The score layer provides configurable scorer wrappers so data/model/attack
@@ -69,6 +63,233 @@ Frequently referenced metric callables include:
 - [`fairlearn.metrics.equalized_odds_difference`](https://fairlearn.org/main/api_reference/generated/fairlearn.metrics.equalized_odds_difference.html)
 - [`lifelines.utils.concordance_index`](https://lifelines.readthedocs.io/en/latest/lifelines.utils.html#lifelines.utils.concordance_index)
 
+## Default Scorer Catalog
+
+This section documents every built-in `Default*` scorer configuration and the
+metrics each one registers by default.
+
+### Core Model Defaults
+
+- {class}`~deckard.score.DefaultModelScorerConfig`
+  ```yaml
+  classifier: true
+  metrics:
+    - accuracy: sklearn.metrics.accuracy_score
+    - precision:
+        function: sklearn.metrics.precision_score
+        average: weighted
+        zero_division: 0
+    - recall:
+        function: sklearn.metrics.recall_score
+        average: weighted
+        zero_division: 0
+    - f1:
+        function: sklearn.metrics.f1_score
+        average: weighted
+        zero_division: 0
+    - roc_auc:
+        function: sklearn.metrics.roc_auc_score
+        average: weighted
+        multi_class: ovr
+        needs_proba: true
+    - log_loss:
+        function: sklearn.metrics.log_loss
+        needs_logits: true
+
+  classifier: false
+  metrics:
+    - mse:
+        function: sklearn.metrics.mean_squared_error
+        greater_is_better: false
+    - mae:
+        function: sklearn.metrics.mean_absolute_error
+        greater_is_better: false
+    - r2: sklearn.metrics.r2_score
+  ```
+- {class}`~deckard.score.DefaultClassifierConfig`
+  - Fixed classifier specialization of `DefaultModelScorerConfig`.
+- {class}`~deckard.score.DefaultRegressorConfig`
+  - Fixed regressor specialization of `DefaultModelScorerConfig`.
+
+### PyTorch Model Defaults
+
+- {class}`~deckard.score.DefaultPytorchScorerConfig`
+  ```yaml
+  classifier: true
+  metrics:
+    - accuracy: sklearn.metrics.accuracy_score
+    - precision: sklearn.metrics.precision_score
+    - recall: sklearn.metrics.recall_score
+    - f1: sklearn.metrics.f1_score
+
+
+  classifier: false
+  metrics:
+    - mse: sklearn.metrics.mean_squared_error
+    - mae: sklearn.metrics.mean_absolute_error
+    - r2: sklearn.metrics.r2_score
+
+
+  notes:
+    - roc_auc and log_loss are omitted for broad PyTorch wrapper compatibility
+   - **optimizer_loss** user-specified loss value from `torch` framework is included in the scoring dict automatically.
+  ```
+- {class}`~deckard.score.DefaultPytorchClassifierConfig`
+  - Fixed classifier specialization of `DefaultPytorchScorerConfig`.
+- {class}`~deckard.score.DefaultPytorchRegressorConfig`
+  - Fixed regressor specialization of `DefaultPytorchScorerConfig`.
+
+### Attack Defaults
+
+- {class}`~deckard.score.DefaultEvasionAttackScorerConfig`
+  ```yaml
+  classifier: true
+  metrics:
+    - accuracy: sklearn.metrics.accuracy_score
+    - precision: sklearn.metrics.precision_score
+    - recall: sklearn.metrics.recall_score
+    - f1-score: sklearn.metrics.f1_score
+    - success: deckard.score.attack.evasion_success_score
+
+  classifier: false
+  metrics:
+    - mse: sklearn.metrics.mean_squared_error
+    - mae: sklearn.metrics.mean_absolute_error
+    - r2: sklearn.metrics.r2_score
+  ```
+- {class}`~deckard.score.DefaultEvasionRegressionAttackScorerConfig`
+  - Fixed regression specialization of evasion scorers.
+- {class}`~deckard.score.DefaultMembershipInferenceAttackScorerConfig`
+  ```yaml
+  classifier: true
+  metrics:
+    - accuracy: sklearn.metrics.accuracy_score
+    - precision: sklearn.metrics.precision_score
+    - recall: sklearn.metrics.recall_score
+    - f1: sklearn.metrics.f1_score
+  ```
+- {class}`~deckard.score.DefaultAttributeInferenceAttackScorerConfig`
+  ```yaml
+  classifier: true
+  metrics:
+    - accuracy: sklearn.metrics.accuracy_score
+    - precision: sklearn.metrics.precision_score
+    - recall: sklearn.metrics.recall_score
+    - f1: sklearn.metrics.f1_score
+
+  classifier: false
+  metrics:
+    - mse: sklearn.metrics.mean_squared_error
+    - mae: sklearn.metrics.mean_absolute_error
+    - r2: sklearn.metrics.r2_score
+  ```
+- {class}`~deckard.score.DefaultAttributeInferenceRegressionAttackScorerConfig`
+  - Fixed regression specialization of attribute-inference scorers.
+
+### Data Defaults
+
+- {class}`~deckard.score.DefaultDataScorerConfig`
+  ```yaml
+  classifier: true
+  metrics:
+    - num_classes: deckard.score.data.data_num_classes_score
+    - class_count_min: deckard.score.data.data_class_count_min_score
+    - class_count_max: deckard.score.data.data_class_count_max_score
+    - class_imbalance_ratio:
+        function: deckard.score.data.data_class_imbalance_ratio_score
+        greater_is_better: false
+    - mutual_information_mean:
+        deckard.score.data.data_mutual_information_mean_score
+    - mutual_information_max:
+        deckard.score.data.data_mutual_information_max_score
+
+  classifier: false
+  metrics:
+    - mutual_information_mean:
+        deckard.score.data.data_mutual_information_mean_score
+    - mutual_information_max:
+        deckard.score.data.data_mutual_information_max_score
+    - empirical_cdf: deckard.score.data.data_empirical_cdf_function_score
+  ```
+- {class}`~deckard.score.DefaultDataClassificationConfig`
+  - Fixed classification specialization of `DefaultDataScorerConfig`.
+- {class}`~deckard.score.DefaultDataRegressionConfig`
+  - Fixed regression specialization of `DefaultDataScorerConfig`.
+- {class}`~deckard.score.DefaultPytorchDataScorerConfig`
+  ```yaml
+  classifier: true
+  metrics:
+    - split_count: deckard.score.data.pytorch_split_count_score
+    - num_classes: deckard.score.data.data_num_classes_score
+    - class_count_min: deckard.score.data.data_class_count_min_score
+    - class_count_max: deckard.score.data.data_class_count_max_score
+    - class_imbalance_ratio: deckard.score.data.data_class_imbalance_ratio_score
+
+  classifier: false
+  metrics:
+    - split_count: deckard.score.data.pytorch_split_count_score
+    - empirical_cdf: deckard.score.data.data_empirical_cdf_function_score
+  ```
+
+### Optional Plugin Defaults
+
+These defaults are available when optional dependencies are installed.
+
+- Fairlearn (`fairlearn` extra):
+  - {class}`~deckard.score.DefaultFairlearnScorerConfig`
+    ```yaml
+    inherits:
+      - deckard.score.DefaultClassifierConfig
+      - deckard.score.DefaultRegressorConfig
+    adds:
+      classifier:
+        - demographic_parity_difference
+        - equalized_odds_difference
+        - group_mean_prediction_difference
+      regressor:
+        - group_mae_difference
+        - group_mse_difference
+    ```
+  - {class}`~deckard.score.DefaultFairlearnClassificationConfig`
+    - Fixed classifier specialization.
+  - {class}`~deckard.score.DefaultFairlearnRegressionConfig`
+    - Fixed regressor specialization.
+  - {class}`~deckard.score.DefaultFairlearnDataScorerConfig`
+    ```yaml
+    metrics:
+      - class_count
+      - mutual_info
+    ```
+- Lifelines (`lifelines` extra):
+  - {class}`~deckard.score.DefaultLifelinesConfig`
+    ```yaml
+    metrics:
+      - concordance
+      - aic
+      - bic
+    ```
+- Anjana / PyCanon (`anjana` extra):
+  - {class}`~deckard.score.DefaultAnjanaScorerConfig`
+    ```yaml
+    metrics:
+      - k_anonymity
+      - l_diversity
+      - t_closeness
+    ```
+  - {class}`~deckard.score.DefaultAnjanaDataScorerConfig`
+    - Base data metrics + Anjana privacy metrics
+  - {class}`~deckard.score.DefaultAnjanaModelScorerConfig`
+    - Model-scope specialization of Anjana privacy defaults
+
+### Runtime Naming Notes
+
+- Attack metrics are prefixed by attack family at runtime:
+  - `evasion_*`
+  - `membership_inference_*`
+  - `inferred_<attribute>_*` for attribute inference
+- Some metric names in config differ slightly from emitted keys due to
+  scorer-name normalization and attack-prefix routing.
+
 ## Examples
 
 ```{seealso}
@@ -83,16 +304,148 @@ Frequently referenced metric callables include:
 
 ```
 
-## Minimal YAML Example
+## Custom Scoring and Runtime Arguments
+
+Use a {class}`~deckard.score.ScorerDictConfig` when you want full control over
+which metrics run, which stage they run in, and which runtime payload is passed
+to each metric.
+
+### Minimal YAML Example
 
 ```yaml
 score:
-   _target_: deckard.score.base.ScorerDictConfig
-   scorers:
-      accuracy:
-         score_name: accuracy
-         score_function: sklearn.metrics.accuracy_score
+  _target_: deckard.score.base.ScorerDictConfig
+  scorers:
+    accuracy:
+      score_name: accuracy
+      score_function: sklearn.metrics.accuracy_score
 ```
+
+### Custom scorer patterns
+
+```yaml
+score:
+  _target_: deckard.score.base.ScorerDictConfig
+  classifier : True
+  scorers:
+    # 1) Simple label-based scorer.
+    weighted_f1:
+      score_name: f1
+      score_function: sklearn.metrics.f1_score
+      score_params:
+        average: weighted
+        zero_division: 0
+
+    # 2) Probability/logit scorer.
+    roc_auc:
+      score_name: roc_auc
+      score_function: sklearn.metrics.roc_auc_score
+      needs_proba: true
+      needs_logits: false
+      score_params:
+        average: weighted
+        multi_class: ovr
+
+    # 3) Stage-scoped scorer (data-profile style).
+    post_pipeline_mse:
+      score_name: mse
+      score_function: sklearn.metrics.mean_squared_error
+      greater_is_better: false
+      stage:
+        - post-pipeline # scores on scorer(data.X,data.y)
+
+    # 4) Stage-scoped scorer (model validation).
+    model_val_accuracy:
+      score_name: accuracy
+      score_function: sklearn.metrics.accuracy_score
+      stage:
+        - val # scores on scorer(model.predict(data.X_val),data.y_val)
+
+    # 5) Stage-scoped scorer (post-attack evaluation).
+    post_attack_success:
+      score_name: success
+      score_function: deckard.score.attack.evasion_success_score
+      stage:
+        - post-attack
+
+    # 6) Callable-from-dict specification.
+    custom_metric:
+      score_name: my_custom
+      score_function:
+        _target_: my_package.metrics.build_metric
+        threshold: 0.8
+      score_params:
+        normalize: true
+```
+
+### ScorerConfig kwargs reference
+
+Each entry under `scorers.<name>` is normalized into
+{class}`~deckard.score.ScorerConfig` with these fields:
+
+- `score_name`: metric name used in emitted score keys.
+- `score_function`: callable, import string, or dict spec with `_target_`/`name`.
+- `score_params`: default keyword arguments merged into each metric call.
+- `stage`: optional stage filter token(s), for example `model-test` or
+  `post-attack` (see {class}`~deckard.score.base.ScoringModelStage`,
+  {class}`~deckard.score.base.ScoringAttackStage`,
+  {class}`~deckard.score.base.ScoringDataStage`,
+  {class}`~deckard.score.base.ScoringPipelineStage`,
+  {class}`~deckard.score.base.ScoringDefenseStage`, and
+  {class}`~deckard.score.base.ScoringDetectorStage`).
+- `greater_is_better`: optimization direction hint for downstream consumers.
+- `needs_labels`: treat `ind` as label predictions (default behavior unless
+  `needs_proba: true`).
+- `needs_proba`: scorer expects raw model outputs (probabilities or logits).
+- `needs_logits`: convert logits to probabilities before scoring when needed.
+- `binary_expand_to_multiclass`: expand 1D binary outputs to two columns for
+  multiclass-style probability metrics when applicable.
+- `binary_positive_class_index`: positive-class column used for binary ROC AUC.
+- `row_sum_atol`: tolerance for detecting probability rows that should sum to
+  about `1.0`.
+- `probability_clip_eps`: numerical floor used in probability normalization.
+
+### Runtime arguments for __call__
+
+{meth}`~deckard.score.ScorerConfig.__call__` runtime call:
+
+```python
+ScorerConfig.__call__(dep=None, ind=None, swap=False, **kwargs)
+```
+
+- `dep`: dependent/target values (`y_true` alias is accepted).
+- `ind`: independent/prediction values (`y_pred` alias is accepted).
+- `swap`: swaps `dep` and `ind` before scoring.
+- `**kwargs`: merged with `score_params`; unsupported kwargs are dropped when
+  the metric callable does not accept variadic (`args`, `kwargs`) keyword args.
+
+{meth}`~deckard.score.ScorerDictConfig.__call__` runtime call:
+
+```python
+ScorerDictConfig.__call__(
+    mode=None,
+    data=None,
+    model=None,
+    attack=None,
+    ind=None,
+    dep=None,
+    score_file=None,
+    **kwargs,
+)
+```
+
+- `mode`: runtime scoring mode, for example `train`, `test`, `val`, `attack`,
+  `attack-val`, or `pre-sample` (mapped by
+  {func}`~deckard.score.base.normalize_scoring_mode`).
+- `data`, `model`, `attack`: optional runtime context used to derive inputs
+  when `dep`/`ind` are not passed directly.
+- `dep`/`ind`: explicit targets and predictions.
+- `score_file`: load/update persisted score payloads.
+- `kwargs.stage`: optional runtime stage token(s) used for stage filtering.
+- `kwargs.y_true`/`kwargs.y_pred`: aliases for `dep`/`ind`.
+- `kwargs.y_proba`: optional raw-output override for `needs_proba` scorers.
+- Remaining `kwargs`: forwarded to each scorer call along with runtime context
+  keys (`data`, `model`, `attack`, `mode`).
 
 ## Internals
 
@@ -103,21 +456,24 @@ The main scoring flow is:
 
 1. A config object normalizes metric declarations into
    {class}`~deckard.score.ScorerConfig` instances.
-1. {class}`~deckard.score.ScorerDictConfig` resolves import-string callables,
+2. {class}`~deckard.score.ScorerDictConfig` resolves import-string callables,
    filters unsupported keyword arguments against the target metric signature,
    and executes the metric.
-1. Pipeline components decide which targets and predictions to pass.
-1. Attack scoring adds attack-kind-specific prefixes and timing fields.
+3. Pipeline components decide which targets and predictions to pass.
+4. Attack scoring adds attack-kind-specific prefixes and timing fields.
 
 Important attack-scoring details:
 
 - {class}`~deckard.score.attack.AttackScorerConfig` owns all attack scoring
   behavior.
-- `score_evasion` chooses between classification and regression evasion
+- {meth}`~deckard.score.attack.AttackScorerConfig.score_evasion` chooses
+  between classification and regression evasion
   profiles based on the detected task type.
-- `score_membership` evaluates inferred membership labels against the attack
+- {meth}`~deckard.score.attack.AttackScorerConfig.score_membership` evaluates
+  inferred membership labels against the attack
   labels (`attack.attacked_labels`).
-- `score_attribute` chooses categorical vs regression attribute profiles and
+- {meth}`~deckard.score.attack.AttackScorerConfig.score_attribute` chooses
+  categorical vs regression attribute profiles and
   prefixes metrics with the targeted attribute name.
 - All attack score dicts add `attack_size` and `attack_score_time`; some
   attribute paths also include `attack_generation_time`.
@@ -146,9 +502,17 @@ implementation for every attack family.
 
 ### See also
 
-- {doc}`model` — model configuration and evaluation
 - {doc}`data` — data configuration
+- {doc}`model` — model configuration and evaluation
 - {doc}`attack` — attack scoring
 - {doc}`experiment` — experiment orchestration
 - {doc}`lifelines` — survival-specific metrics
 - {doc}`anjana` — anonymization metrics
+
+## API Reference
+
+```{eval-rst}
+.. automodule:: deckard.score
+  :members:
+  :show-inheritance:
+```

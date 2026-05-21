@@ -6,9 +6,10 @@ in the Deckard project, their purposes, triggers, and current status.
 Related tooling and plugin references:
 
 - [DVC](https://dvc.org) for artifact and notebook cache management
-- [Hydra](https://hydra.cc) for config composition used by test and experiment workflows
+- [Hydra](https://hydra.cc) for config composition used by test and experiment
+  workflows
 - [Optuna](https://optuna.org) for optimization-oriented notebook and experiment
-  runs
+runs
 - [Adversarial Robustness Toolbox
   (ART)](https://adversarial-robustness-toolbox.org/) for attack/defense
   integrations
@@ -437,7 +438,8 @@ For pull requests, recommend this execution order to fail fast:
   (`security-scan.yml`, Dependabot)
 - COMPLETED: Failure notification and benchmark reporting added
   (`notify-failures.yml`, `workflow-benchmarks.yml`)
-- COMPLETED: Release gating and deployment control added (`deploy-release-gated.yml`)
+- COMPLETED: Release gating and deployment control added
+  (`deploy-release-gated.yml`)
 
 ______________________________________________________________________
 

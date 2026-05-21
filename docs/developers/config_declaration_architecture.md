@@ -66,7 +66,7 @@ deckard optimize --cfg job
 ```
 
 - Unit tests: consume canonical composed configs instead of fixture-local
-  declaration copies.
+declaration copies.
 
 - Experiment tests: validate end-to-end execution from composed canonical config
   stacks.

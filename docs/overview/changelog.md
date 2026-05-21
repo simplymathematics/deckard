@@ -3,7 +3,7 @@
 ## .98.1
 
 - Core package updates in `deckard/` (entrypoints, config/declaration handling,
-  data/experiment utilities, and fairlearn scoring).
+data/experiment utilities, and fairlearn scoring).
 - Documentation updates in `docs/` (Sphinx config and multiple notebook
   refreshes, including Hydra/Optuna/Lifelines/Artifacts flows).
 - Build artifact refresh in `build/` and notebook pipeline state updates
@@ -15,7 +15,8 @@
 
 ## Known TODOs
 
-- finalize run-time contracts for consistent API across all composition targets (WIP)
+- finalize run-time contracts for consistent API across all composition targets
+  (WIP)
 - deckard/attack/base.py: set labels to distinguish targeted attacks from
   non-targeted attacks.
 - deckard/layers/optimize.py: ensure data/model/attack \*\_file names are hashes

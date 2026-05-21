@@ -173,7 +173,7 @@ notebook for executed YAML + `save_model`/`load_model` patterns.
 There are two supported patterns:
 
 1. Load a previously saved deckard PyTorch config via `load(filepath)` and
-   load runtime state via `load_model(filepath)`.
+load runtime state via `load_model(filepath)`.
 1. Point `model_type` to a custom constructor/class that returns an already
    initialized {class}`torch.nn.Module` (for example, one that internally loads external
    pre-trained weights), then run normal deckard training/evaluation.

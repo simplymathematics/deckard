@@ -23,7 +23,8 @@ pipelines, allowing adversarial robustness studies on PyTorch models.
 - **ART integration**: PyTorch models wrap as ART estimators for attack/defense
 - **Fairness support**: compatible with {mod}`deckard.plugins.fairlearn.data`
   and attack
-- **Fairness support**: {class}`~deckard.plugins.fairlearn.model.FairlearnPytorchModelConfig`
+- **Fairness support**:
+  {class}`~deckard.plugins.fairlearn.model.FairlearnPytorchModelConfig`
 inherits {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig` directly
 and adds
   fairness-aware scoring; compatible with {mod}`deckard.plugins.fairlearn.data` and
@@ -41,6 +42,16 @@ with PyTorch-specific behavior:
 - Provides configurable {class}`torch.utils.data.DataLoader` for batching
 - Supports device placement for GPU-accelerated data loading
 - Integrates with {mod}`deckard.plugins.fairlearn.data` for stratified sampling
+
+Dataset discovery and naming notes for torch-backed workflows:
+
+- torchvision discovery registers canonical names as `torchvision.<DatasetClass>`
+  (for example `torchvision.MNIST`)
+- torchvision compatibility aliases include `torchvision_<DatasetClass>` and
+  `torchvision.datasets.<DatasetClass>`
+- fairlearn local dataset declarations are exposed as
+  `fairlearn.TinyFairness` and `fairlearn.SyntheticImageSensitiveDataset`
+  (with compatibility aliases for the fully-qualified deckard class names)
 
 Common torch transform and data pipeline components:
 

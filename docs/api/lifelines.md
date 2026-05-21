@@ -12,7 +12,8 @@ The Lifelines integration consists of four main modules:
 
 - {mod}`deckard.plugins.lifelines.data` — survival dataset configuration with
   time/event pairs
-- {mod}`deckard.plugins.lifelines.model` — lifelines estimator training and evaluation
+- {mod}`deckard.plugins.lifelines.model` — lifelines estimator training and
+  evaluation
 - {mod}`deckard.plugins.lifelines.score` — survival-specific metrics
   (concordance, AIC, BIC)
 - {mod}`deckard.plugins.lifelines.experiment` — end-to-end survival experiment orchestration

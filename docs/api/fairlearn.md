@@ -13,7 +13,8 @@ See also: {doc}`pytorch` for torch-backed fairness workflows.
 The Fairlearn integration consists of three main extension modules:
 
 - {mod}`deckard.plugins.fairlearn.data` — fairness-aware dataset configuration
-- {mod}`deckard.plugins.fairlearn.model` — fairness-aware model training and evaluation
+- {mod}`deckard.plugins.fairlearn.model` — fairness-aware model training and
+  evaluation
 - {mod}`deckard.plugins.fairlearn.score` — fairness-aware scoring metrics
 
 These modules support fairness analysis and mitigation by quantifying and
@@ -64,6 +65,18 @@ The {class}`~deckard.plugins.fairlearn.data.FairlearnDataConfig` extends
 - Define mitigation strategies (preprocessing, in-processing, postprocessing)
 - Track group-wise statistics and fairness metrics
 - Optional validation dataset for fairness measurement
+
+Fairlearn-related dataset declarations in the unified discovery registry use
+provider-prefixed names:
+
+- `fairlearn.TinyFairness`
+- `fairlearn.SyntheticImageSensitiveDataset`
+
+Compatibility aliases remain available, including:
+
+- `fairlearn_TinyFairness`
+- `fairlearn_SyntheticImageSensitiveDataset`
+- fully-qualified deckard class paths (for backward-compatible configs)
 
 ### Data pipeline and preprocessing support
 

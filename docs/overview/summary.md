@@ -40,12 +40,12 @@ deckard addresses this by providing:
 - integrated result collection for comparison and reporting
 - [`Hydra`](https://hydra.cc) integration for command line configuration
 - [`Optuna`](https://optuna.org) integration for search space sampling,
-  experiment pruning, and multi-objective optimization
+experiment pruning, and multi-objective optimization
 - **Defense pipelines** that chain [Adversarial Robustness Toolbox
   (ART)](https://adversarial-robustness-toolbox.org/)-based defenses
-  (preprocessors, postprocessors, trainers)
+(preprocessors, postprocessors, trainers)
 - **Detector phase** for auxiliary adversarial/poison detection models executed
-  after attacks
+after attacks
 - **Data sampling strategies** (split, k-fold, shuffle) for robust evaluation
 - **Scorer dictionaries** for unified metric management across data, model, and
   attack components
@@ -163,7 +163,7 @@ Example coverage includes:
 
 - attack presets across evasion, inference, inversion, and reconstruction
 - scorer profiles for classification, regression, fairness, survival, and
-  attack-specific metrics
+attack-specific metrics
 - plotting presets for Yellowbrick diagnostics and Seaborn score visualizations
 
 ## Experiment Management

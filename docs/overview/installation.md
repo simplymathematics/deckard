@@ -48,7 +48,7 @@ pyenv activate env
 ```
 
 - `pyenv install 3.10` downloads and installs the newest Python version
-  compatible with 3.10.
+compatible with 3.10.
 - `pyenv virtualenv 3.10 env` creates a new virtual environment named `env`
   using Python 3.10.
 - `pyenv activate env` activates the `env` environment, so all Python commands

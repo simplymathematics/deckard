@@ -84,30 +84,264 @@ See also: {doc}`lifelines`.
 
 ## Overview
 
-{class}`~deckard.data.DataConfig` can load well-known datasets such as:
+{class}`~deckard.data.DataConfig` is the runtime owner for dataset loading,
+splitting, optional preprocessing, plugin hooks, and data scoring.
 
-- **Adult Income** (via OpenML)
-- **Diabetes** and **Digits** (from scikit-learn)
-- **Synthetic datasets** via `make_classification` or `make_regression`
-- **pd.DataFrame files** that contain a `target` column or
+At a high level, data execution follows this order:
 
-It also supports **reproducible splits** via `train_test_split` with optional stratification,
-timing instrumentation, and hashing for config tracking.
+1. Resolve and load `dataset_name` into `_X` and `_y`.
+1. Run sampling to produce `X_train`, `X_test`, and optional `X_val`.
+1. Optionally run pipeline transforms.
+1. Optionally run data scoring (for split-scoped or pre-sample diagnostics).
+
+The same config model supports:
+
+- built-in sklearn/openml/synthetic datasets,
+- optional dataset providers from plugin dependencies,
+- local file-backed tabular datasets,
+- framework-specific dataset classes such as PyTorch datasets.
+
+## Dataset Catalog
+
+### Core pre-loaded datasets
+
+These names work directly with `deckard.data.base.DataConfig` in `dataset_name`:
+
+- `openml.adult` (canonical) via [sklearn.fetch_openml](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.fetch_openml.html)
+   and aliases `adult`, `openml_adult`, `sklearn.adult`, `sklearn_adult`
+- `diabetes` via [sklearn.load_diabetes](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_diabetes.html)
+- `digits` via [sklearn.load_digits](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_digits.html)
+- `iris` via [sklearn.load_iris](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_iris.html)
+- `make_classification` via [sklearn.make_classification](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_classification.html)
+- `make_regression` via [sklearn.make_regression](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_regression.html)
+
+For sklearn datasets, all of these forms are accepted:
+
+- bare name (for backward compatibility), for example `make_classification`
+- dotted prefix, for example `sklearn.make_classification`
+- underscore prefix, for example `sklearn_make_classification`
+
+You can also use `.openml` filenames (for example `adult.openml`) to force the
+generic OpenML loader path.
+
+### Optional dependency dataset providers
+
+When optional extras are installed, additional provider namespaces are
+auto-discovered at runtime.
+
+- Lifelines datasets (`pip install ".[lifelines]"`):
+   loaded from [lifelines.datasets](https://lifelines.readthedocs.io/en/latest/lifelines.datasets.html)
+   `load_*` functions.
+- Yellowbrick datasets (`pip install ".[yellowbrick]"`):
+   loaded from [yellowbrick.datasets](https://www.scikit-yb.org/en/latest/api/datasets/index.html)
+   `load_*` functions.
+- ART datasets (`pip install ".[art]"`):
+   loaded from `art.utils` `load_*` functions and exposed as `art.<name>`.
+- Hugging Face datasets (`pip install ".[datasets]"` and `huggingface_hub`):
+   discovered from `huggingface_hub.list_datasets(sort="downloads", limit=100)`
+   and exposed as `huggingface.<dataset_id>`.
+
+For each discovered lifelines or yellowbrick dataset `name`, the following
+forms are supported:
+
+- `lifelines.name` and `lifelines_name`
+- `yellowbrick.name` and `yellowbrick_name`
+
+Bare provider names like `rossi` or `occupancy` are intentionally not
+registered in the unified runtime loader registry.
+
+### PyTorch and preloaded framework datasets
+
+{class}`~deckard.frameworks.pytorch.data.PytorchDataConfig` supports fully
+qualified class paths and shorthand aliases.
+
+- Canonical discovery names: `torchvision.<DatasetClass>`
+   (for example `torchvision.MNIST`, `torchvision.CIFAR10`)
+- Compatible aliases: `torchvision_<DatasetClass>` and
+   `torchvision.datasets.<DatasetClass>`
+- Local built-in fairness dataset declarations:
+   `fairlearn.TinyFairness` and
+   `fairlearn.SyntheticImageSensitiveDataset`
+   (with compatibility aliases including the fully-qualified deckard class path)
 
 ### Data scoring mode
 
 {class}`~deckard.data.DataConfig` supports mode-aware dataset scoring via
-`score_mode` with
-values:
+`score_mode` with values:
 
 - `train`
 - `test`
 - `val`
 - `pre-sample`
+- `post-pipeline`
+- `all`
 
 `pre-sample` runs data diagnostics against the full dataset before split
 selection (`_X` / `_y`), while split modes run diagnostics on the selected
 partition.
+
+Mode details for `post-pipeline` and `all`:
+
+- `post-pipeline`: runs data scorers on concatenated train and test splits after
+   sampling (`X_train + X_test`, `y_train + y_test`).
+- `all`: currently follows the same runtime path as `post-pipeline` and
+   `post-sample` in {meth}`~deckard.data.DataConfig._score`, meaning it also
+   scores the concatenated train+test splits (not raw `_X`/`_y`).
+
+If you need true full-dataset diagnostics before splitting, use `pre-sample`.
+
+## YAML Recipes
+
+### 1) Synthetic classification (core)
+
+```yaml
+data:
+   _target_: deckard.data.base.DataConfig
+   dataset_name: make_classification
+   classifier: true
+   data_params:
+      n_samples: 500
+      n_features: 20
+      n_informative: 10
+      n_redundant: 5
+      random_state: 42
+   test_size: 0.2
+   random_state: 42
+```
+
+### 2) sklearn built-in tabular dataset
+
+```yaml
+data:
+   _target_: deckard.data.base.DataConfig
+   dataset_name: diabetes
+   classifier: false
+   test_size: 0.2
+   random_state: 42
+```
+
+### 3) Generic OpenML dataset
+
+```yaml
+data:
+   _target_: deckard.data.base.DataConfig
+   dataset_name: adult.openml
+   classifier: true
+   data_params:
+      version: 2
+   test_size: 0.2
+```
+
+### 4) File-backed dataset
+
+```yaml
+data:
+   _target_: deckard.data.base.DataConfig
+   dataset_name: ./data/train.csv
+   target: label
+   classifier: true
+   drop:
+      - id
+   test_size: 0.2
+   random_state: 7
+```
+
+### 5) Lifelines provider dataset (optional)
+
+```yaml
+data:
+   _target_: deckard.plugins.lifelines.data.LifelinesDataConfig
+   dataset_name: lifelines_rossi
+   mode: native
+   duration_col: week
+   event_col: arrest
+   classifier: false
+   test_size: 0.2
+```
+
+### 6) Yellowbrick provider dataset (optional)
+
+```yaml
+data:
+   _target_: deckard.data.base.DataConfig
+   dataset_name: yellowbrick.concrete
+   classifier: false
+   test_size: 0.2
+```
+
+### 7) PyTorch torchvision dataset
+
+```yaml
+data:
+   _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
+   dataset_name: torchvision.datasets.MNIST
+   classifier: true
+   data_params:
+      train: true
+      download: true
+   train_size: 0.7
+   test_size: 0.2
+   random_state: 42
+```
+
+### 8) Fairness-aware PyTorch built-in dataset
+
+```yaml
+data:
+   _target_: deckard.frameworks.pytorch.fairness_data.FairlearnPytorchDataConfig
+   dataset_name: deckard.frameworks.pytorch.fairness_data.TinyFairness
+   classifier: true
+   sensitive_columns:
+      - _sensitive
+   train_size: 0.7
+   test_size: 0.2
+```
+
+Sensitive feature parsing in fairness-aware torch configs follows two paths:
+
+- Tuple path: if your dataset returns `(x, y, sensitive)` from `__getitem__`,
+  the third tuple element is collected as sensitive metadata.
+- Attribute path: if samples return only `(x, y)`, deckard falls back to a
+  dataset-level `_sensitive` attribute (length must match the dataset size).
+
+### 9) Custom dataset class from an installed package
+
+```yaml
+data:
+   _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
+   dataset_name: my_package.MyDataset
+   classifier: true
+   data_params:
+      split: train
+      root: ./data
+   train_size: None
+   test_size: None
+   random_state: 42
+```
+
+### 10) Custom dataset class from a local Python file
+
+```yaml
+data:
+   _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
+   dataset_name: my_file.py:MyDataset
+   classifier: true
+   data_params:
+      root: ./data
+      download: false
+   train_size: 0.7
+   test_size: 0.2
+   random_state: 42
+```
+
+### Discover optional dataset names at runtime
+
+```python
+from deckard.data.base import _lifelines_dataset_loaders, _yellowbrick_dataset_loaders
+
+print("lifelines:", sorted(_lifelines_dataset_loaders().keys()))
+print("yellowbrick:", sorted(_yellowbrick_dataset_loaders().keys()))
+```
 
 ## Examples
 
@@ -124,27 +358,15 @@ partition.
 
 ```
 
-## Minimal YAML Example
-
-```yaml
-data:
-   _target_: deckard.data.base.DataConfig
-   dataset_name: make_classification
-   data_params:
-      n_samples: 200
-      n_features: 20
-   test_size: 0.2
-   random_state: 42
-```
-
 ## Internals
 
 ### Timing and logging
 
 The data loading and splitting process is timed, and the duration is stored in
-the `_data_load_time` and `_data_sample_time` attributes of the
+the `data_load_time` and `data_sample_time` attributes of the
 {class}`~deckard.data.DataConfig` instance.
-This can be useful for comparing the run-time efficiency of different datasets
+The presence (or absence) of these timing values controls the execution of relevant steps.
+These timings can be useful for comparing the run-time efficiency of different datasets
 of various methods.
 Logging is performed at key steps.
 
@@ -153,8 +375,10 @@ Logging is performed at key steps.
 If you encounter issues with dataset loading, ensure that:
 
 - You have an active internet connection for datasets fetched from OpenML, etc.
-- The specified .csv/.html/.json file path is correct and the file is accessible.
-- Otherwise, use one of the built-in datasets or synthetic data generation options.
+- The selected optional dataset provider is installed (`lifelines`, `yellowbrick`,
+  or `torch` extras when applicable).
+- The selected file path and `target` column are correct for file-backed data.
+- Otherwise, use one of the built-in dataset names from the catalog above.
 
 ### See also
 
