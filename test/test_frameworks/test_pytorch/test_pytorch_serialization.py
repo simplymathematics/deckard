@@ -28,7 +28,7 @@ def test_pytorch_model_config_save_and_load_roundtrip():
     )
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        config_path = Path(tmpdir) / "torch_model.yaml"
+        config_path = Path(tmpdir) / "torch_model.pkl"
         model_path = Path(tmpdir) / "torch_model.pt"
         cfg.save(str(config_path))
         cfg.save_model(cfg.get_model(), str(model_path))
@@ -73,7 +73,7 @@ def test_pytorch_model_training_records_optimizer_loss_and_serializes_it():
     assert len(cfg.score_dict["epochs"]) == 2
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        config_path = Path(tmpdir) / "torch_model_with_loss.yaml"
+        config_path = Path(tmpdir) / "torch_model_with_loss.pkl"
         cfg.save(str(config_path))
 
 
@@ -549,23 +549,17 @@ def test_pytorch_model_serialization_preserves_optimizer_config():
     cfg._train(X, y)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        config_path = Path(tmpdir) / "torch_model_with_adam.yaml"
+        config_path = Path(tmpdir) / "torch_config.pkl"
         model_path = Path(tmpdir) / "torch_model_with_adam.pt"
         cfg.save(str(config_path))
         cfg.save_model(cfg.get_model(), str(model_path))
 
-        loaded = PytorchModelConfig(
-            model_type="torch.nn.Linear",
-            model_params={"in_features": 4, "out_features": 2},
-            classifier=True,
-        )
-        loaded.load(str(config_path))
-        loaded.load_model(str(model_path))
-
-        assert loaded.optimizer is not None
-        assert loaded.optimizer["name"] == "Adam"
-        assert loaded.optimizer["lr"] == 0.001
-        assert "optimizer_loss" in loaded.score_dict
+        cfg.load(str(config_path))
+        cfg.load_model(str(model_path))
+        assert cfg.optimizer is not None
+        assert cfg.optimizer["name"] == "Adam"
+        assert cfg.optimizer["lr"] == 0.001
+        assert "optimizer_loss" in cfg.score_dict
 
 
 def test_pytorch_model_checkpoint_records_track_epochs():
@@ -803,7 +797,7 @@ def test_pytorch_model_serialization_with_different_input_sizes():
     assert "optimizer_loss" in cfg.score_dict
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        config_path = Path(tmpdir) / "large_model.yaml"
+        config_path = Path(tmpdir) / "large_model.pkl"
         model_path = Path(tmpdir) / "large_model.pt"
         cfg.save(str(config_path))
         cfg.save_model(cfg.get_model(), str(model_path))
@@ -855,7 +849,7 @@ def test_pytorch_model_hash_stable_after_load_roundtrip_runtime_mutation():
     )
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        path = Path(tmpdir) / "hash_roundtrip.yaml"
+        path = Path(tmpdir) / "hash_roundtrip.pkl"
         cfg.save(str(path))
 
         loaded = PytorchModelConfig(
