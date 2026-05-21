@@ -22,7 +22,7 @@ Keep detailed design/spec text in the dedicated developer docs linked below.
 ### Phase 2: Framework data runtimes (`deckard/frameworks/**/data.py`)
 
 - [ ] Align framework data configs to the core DataConfig lifecycle method
-  contract (`_load_data`, `_sample`, `_score`, `__call__`).
+  contract (`load_dataset`, `sample`, `score`, `__call__`).
 - [ ] Unify stage semantics with core canonical stage resolver.
 - [ ] Unify hook semantics with core stage-driven hook dispatch.
 - [ ] Deduplicate sampler logic between framework data modules and

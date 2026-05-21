@@ -57,7 +57,7 @@ class DummyPoisonAttack:
 
 
 class TestKFoldExperiment(unittest.TestCase):
-    """ExperimentConfig should loop over all folds when sample='fold'."""
+    """ExperimentConfig should loop over all folds when sampler='fold'."""
 
     N_FOLDS = 3
 
@@ -78,7 +78,7 @@ class TestKFoldExperiment(unittest.TestCase):
                 test_size=0.2,
                 random_state=42,
                 classifier=True,
-                sample=KFoldSampler(n_splits=self.N_FOLDS),
+                sampler=KFoldSampler(n_splits=self.N_FOLDS),
             ),
             model=ModelConfig(
                 model_type="sklearn.ensemble.RandomForestClassifier",
@@ -116,7 +116,7 @@ class TestKFoldExperiment(unittest.TestCase):
 
 
 class TestShuffleExperiment(unittest.TestCase):
-    """ExperimentConfig should loop over all shuffle splits when sample='shuffle'."""
+    """ExperimentConfig should loop over all shuffle splits when sampler='shuffle'."""
 
     N_SPLITS = 3
 
@@ -138,7 +138,7 @@ class TestShuffleExperiment(unittest.TestCase):
                 val_size=0.1,
                 random_state=42,
                 classifier=True,
-                sample=ShuffleSampler(n_splits=self.N_SPLITS),
+                sampler=ShuffleSampler(n_splits=self.N_SPLITS, val_size=0.1),
             ),
             model=ModelConfig(
                 model_type="sklearn.ensemble.RandomForestClassifier",
@@ -202,7 +202,7 @@ class TestExperimentValidationScoring(unittest.TestCase):
                 val_size=val_size,
                 random_state=42,
                 classifier=True,
-                sample="split",
+                sampler="split",
             ),
             model=ModelConfig(
                 model_type="sklearn.ensemble.RandomForestClassifier",
@@ -379,7 +379,7 @@ class TestPoisoningExperimentIntegration(unittest.TestCase):
                 test_size=20,
                 random_state=42,
                 classifier=True,
-                sample="split",
+                sampler="split",
             ),
             model=ModelConfig(
                 model_type="sklearn.ensemble.RandomForestClassifier",
@@ -981,7 +981,7 @@ class TestExperimentScorerModePermutations(unittest.TestCase):
             val_size=val_size,
             random_state=42,
             classifier=True,
-            sample="split",
+            sampler="split",
         )
 
     def _base_model(self):
@@ -1519,7 +1519,7 @@ class TestRunSinglePipelineBranchesExtra(unittest.TestCase):
                     train_size=0.6,
                     test_size=0.2,
                     val_size=0.2,
-                    sample="split",
+                    sampler="split",
                     random_state=42,
                     classifier=True,
                 ),

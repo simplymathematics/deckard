@@ -4,7 +4,7 @@ classifier: true
 data_dir: raw_data/torch_cifar10
 alias: torch_cifar10
 sampler:
-  name: deckard.frameworks.pytorch.sample.TorchSplitSampler
+  name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
   train_size: 128
   test_size: 128
   random_state: 42

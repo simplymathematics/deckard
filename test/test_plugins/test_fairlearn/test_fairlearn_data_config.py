@@ -77,10 +77,8 @@ class TestFairlearnDataConfigInit:
 
 
 class TestLoadData:
-    @patch("deckard.data.base.DataConfig._load_data")
     def test_load_data_validates_sensitive_columns(
         self,
-        mock_super_load,
         capfd,
     ):
         """Test that _load_data validates configured sensitive columns."""
@@ -94,8 +92,9 @@ class TestLoadData:
         config = _fairlearn_config(sensitive_columns="gender")
         config._X = df
         config._y = pd.Series([0, 1, 0, 1])
+        config.data_load_time = 0.0
 
-        config = config._load_data()
+        config = config.load_dataset()
 
         assert config is not None
         assert "gender" in config._X.columns
@@ -115,7 +114,7 @@ class TestLoadData:
         config.data_params = {}
 
         with pytest.raises(AssertionError):
-            config._load_data()
+            config.load_dataset()
 
     @patch.object(FairlearnDataConfig, "__post_init__")
     def test_load_data_missing_y_raises_assertion(self, mock_post_init):
@@ -132,7 +131,7 @@ class TestLoadData:
         config.data_params = {}
 
         with pytest.raises(AssertionError):
-            config._load_data()
+            config.load_dataset()
 
 
 class TestScore:
@@ -224,7 +223,7 @@ class TestClassificationFeatureScoresForGroup:
 
         y_proba = np.column_stack([1 - y.to_numpy(), y.to_numpy()])
 
-        scores = config._score(y_proba=y_proba)
+        scores = config.score(y_proba=y_proba)
 
         assert any(key.endswith("_accuracy") for key in scores)
         assert any(key.endswith("_precision") for key in scores)

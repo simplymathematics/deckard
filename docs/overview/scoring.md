@@ -80,7 +80,7 @@ cfg = DataConfig(
     data_params={"n_samples": 100, "n_features": 10},
 )
 
-scores = cfg._score(mode="all", stage="pre-sample")
+scores = cfg.score(mode="all", stage="pre-sample")
 
 ```
 

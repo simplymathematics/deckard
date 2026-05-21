@@ -392,8 +392,8 @@ class AnjanaDataConfig(
             )
         return DataPipelineConfig.__call__(self, *args, **kwargs)
 
-    def _load_data(self):
-        result = super()._load_data()
+    def load_dataset(self):
+        result = super().load_dataset()
         if not getattr(self, "plugins", None):
             self._apply_anjana_defense()
         return result
@@ -402,9 +402,8 @@ class AnjanaDataConfig(
         self._inject_fairness_defense_step()
         return super()._init_pipeline()
 
-    def _sample(self, run_hooks: bool = True):
-        _ = run_hooks
-        super()._sample()
+    def fit(self, run_hooks: bool = True):
+        super().fit(run_hooks=run_hooks)
 
         if self.fairness_defense not in [None, False]:
             for attr_name in (
@@ -415,7 +414,7 @@ class AnjanaDataConfig(
             ):
                 if hasattr(self, attr_name):
                     delattr(self, attr_name)
-            return
+            return self
 
         train_indices = getattr(self, "train_indices", None)
         test_indices = getattr(self, "test_indices", None)
@@ -424,7 +423,7 @@ class AnjanaDataConfig(
             self._sensitive_test = None
             self._sensitive_all = None
             self._sensitive_val = getattr(self, "_sensitive_val", None)
-            return
+            return self
 
         self._sensitive_train = self._sensitive_labels_from_frame(
             self._X.iloc[train_indices].reset_index(drop=True),
@@ -456,8 +455,9 @@ class AnjanaDataConfig(
             )
         else:
             self._sensitive_val = None
+        return self
 
-    def _score(
+    def score(
         self,
         *args,
         mode: Optional[
@@ -495,7 +495,7 @@ class AnjanaDataConfig(
 
         # Delegate to parent for all modes, including post-pipeline/post-sample.
         try:
-            return super()._score(*args, mode=resolved_mode, **kwargs)
+            return super().score(*args, mode=resolved_mode, **kwargs)
         except TypeError as exc:
             if "data-profile scorer" not in str(exc):
                 raise
@@ -520,6 +520,3 @@ class AnjanaDataConfig(
                 **kwargs,
             )
 
-
-# Configs are now loaded from YAML files in examples/*/config/data/
-# These dictionaries are kept for reference/legacy code but not registered via safe_store

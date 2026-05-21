@@ -1,4 +1,4 @@
-name: deckard.frameworks.pytorch.sample.TorchSplitSampler
+name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
 train_size: null
 test_size: 0.2
 val_size: null

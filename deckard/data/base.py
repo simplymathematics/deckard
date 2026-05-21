@@ -3,24 +3,13 @@ import os
 import pandas as pd
 import time
 import logging
-import importlib
 from pathlib import Path
 
 from dataclasses import dataclass, field
-from typing import Any, Tuple, Union, Optional
+from typing import TYPE_CHECKING, Any, Literal, Tuple, Union, Optional
 from omegaconf import DictConfig, ListConfig
 
 import numpy as np
-
-# Scikit-learn
-from sklearn.datasets import (
-    fetch_openml,
-    make_classification,
-    make_regression,
-    load_digits,
-    load_diabetes,
-    load_iris,
-)
 
 from sklearn.pipeline import Pipeline
 from sklearn.compose import make_column_selector, ColumnTransformer
@@ -39,9 +28,13 @@ from ..utils import (
 )
 from ..frameworks.types import ArrayLike, MatrixLike
 from ._mixins import DataPipelineMixin
+from .stages import normalize_data_score_stage, stage_hook_token
 
 # Setup logger
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from .sample import BaseSampler
 
 
 AUTO_SCORER = "auto"
@@ -64,48 +57,6 @@ def _is_data_scorer_instance(scorer: Any) -> bool:
     if callable(scorer):
         return True
     return str(getattr(scorer, "scoring_type", "")).strip().lower() == "data"
-
-
-def _discover_lifelines_dataset_loaders() -> dict:
-    """Discover lifelines dataset loader functions when lifelines is installed."""
-    try:
-        lifelines_datasets = importlib.import_module("lifelines.datasets")
-    except ImportError:
-        return {}
-    dataset_map = {}
-    for attr in dir(lifelines_datasets):
-        if not attr.startswith("load_"):
-            continue
-        loader = getattr(lifelines_datasets, attr)
-        if callable(loader):
-            dataset_name = attr.replace("load_", "", 1)
-            dataset_map[dataset_name] = loader
-    return dataset_map
-
-
-def _lifelines_dataset_loaders() -> dict:
-    return _discover_lifelines_dataset_loaders()
-
-
-def _discover_yellowbrick_dataset_loaders() -> dict:
-    """Discover yellowbrick dataset loader functions when yellowbrick is installed."""
-    try:
-        yellowbrick_datasets = importlib.import_module("yellowbrick.datasets")
-    except ImportError:
-        return {}
-    dataset_map = {}
-    for attr in dir(yellowbrick_datasets):
-        if not attr.startswith("load_"):
-            continue
-        loader = getattr(yellowbrick_datasets, attr)
-        if callable(loader):
-            dataset_name = attr.replace("load_", "", 1)
-            dataset_map[dataset_name] = loader
-    return dataset_map
-
-
-def _yellowbrick_dataset_loaders() -> dict:
-    return _discover_yellowbrick_dataset_loaders()
 
 
 @dataclass(eq=False, kw_only=True)
@@ -187,18 +138,19 @@ class DataConfig(ConfigBase):
         Proportion or count of samples to include in the training split.
     val_size : Union[float, int, None]
         Proportion or count of samples to include in the validation split when a
-        ``sample`` is provided (e.g. :class:`~deckard.data.sample.SplitSampler` or
+        ``sampler`` is provided (e.g. :class:`~deckard.data.sample.SplitSampler` or
         :class:`~deckard.data.sample.ShuffleSampler`).  Unused in legacy mode.
     split : Union[int, None]
-        Which split index to use as the validation set when ``sample`` performs
+        Which split index to use as the validation set when ``sampler`` performs
         cross-validation or shuffle splitting
         (e.g. :class:`~deckard.data.sample.KFoldSampler` or
         :class:`~deckard.data.sample.ShuffleSampler`).  Defaults to ``0``.
-    sample : Union[callable, dict, None]
-        Optional pluggable sampler.  When ``None`` (default) the legacy 2-way
-        ``train_test_split`` is used.  Can be an instantiated sampler object, a subclass
-        of :class:`~deckard.data.sample.BaseSampler`, or a Hydra-style dict with a
-        ``name``/``_target_`` key pointing to the sampler class.
+    sampler : Union[BaseSampler, Literal["split", "shuffle", "fold"], dict, None]
+        Optional pluggable sampler spec. Resolution/configuration/execution is
+        centralized in :class:`~deckard.data.sample.BaseSampler`. Accepted forms
+        include alias strings (``split``/``shuffle``/``fold``), instantiated
+        sampler objects, sampler classes, and Hydra-style dicts with
+        ``name``/``_target_``.
     random_state : int
         Seed for random number generation to ensure reproducibility.
     stratify : Union[None, str, bool]
@@ -300,28 +252,18 @@ class DataConfig(ConfigBase):
         Computes a hash value for the instance based on non-private attributes.
     _get_stratify_col()
         Returns the stratification array (or None) based on ``self.stratify``.
-    _resolve_sample()
-        Instantiates and returns the sampler object, or None for legacy mode.
-    _load_adult_income_data()
-        Loads and preprocesses the Adult Income dataset from OpenML.
-    _load_generic_sklearn(loader_func, **loader_params)
-        Loads a dataset using a generic scikit-learn loader function.
-    _load_generic_openml(dataset_name, version=1, **loader_params)
-        Loads a dataset from OpenML using the specified dataset name and version.
-    _make_classification_data()
-        Generates a synthetic classification dataset.
-    _make_regression_data()
-        Generates a synthetic regression dataset.
-    _sample()
+    load_dataset()
+        Loads the dataset payload into runtime features/targets from defaults or file-backed datasets.
+    sample()
         Splits the loaded dataset into training, testing, and optionally validation sets.
-    _load_data()
-        Loads the dataset based on the specified name or file type.
+    score(*args, mode=None, **kwargs)
+        Scores the selected data split via the configured data scorer.
     __call__(filepath=None)
         Loads and samples the dataset, splits it into training and testing sets, and returns the corresponding features and labels.
     save(filepath)
         Saves the current state of the DataConfig instance to a file.
-    load(filepath)
-        Loads the state of the DataConfig instance from a file.
+    load(filepath=None)
+        Loads a cached DataConfig object from pickle-based artifact storage.
     Raises
     ------
     ValueError
@@ -346,7 +288,7 @@ class DataConfig(ConfigBase):
             dataset_name="digits",
             test_size=0.2,
             val_size=0.1,
-            sample=SplitSampler(),
+            sampler=SplitSampler(),
         )
         config()
         X_val, y_val = config.X_val, config.y_val
@@ -359,7 +301,7 @@ class DataConfig(ConfigBase):
     train_size: Union[float, int, None] = None
     val_size: Union[float, int, None] = None
     split: Union[int, None] = None
-    sample: Union[str, Any] = "split"
+    sampler: Union["BaseSampler", Literal["split", "shuffle", "fold"], dict, None] = "split"
     random_state: int = 42
     stratify: Union[None, str, bool] = True
     classifier: Union[bool, str] = True
@@ -391,6 +333,7 @@ class DataConfig(ConfigBase):
     val_n: Union[int, None] = None
     _target_: Union[str, None] = None
     _plugin_objects: Union[list, None] = None
+    _sampler_obj: Union[callable, None] = None
 
     def _validate_init(self):
         """
@@ -546,6 +489,14 @@ class DataConfig(ConfigBase):
                     "DataConfig requires a data-profile scorer configuration. "
                     "Model/attack scorers are not valid for data-split scoring.",
                 )
+        self._initialize_runtime_components()
+
+    def _initialize_runtime_components(self) -> None:
+        """Instantiate runtime-bound plugin and sampler objects eagerly."""
+        from .sample import BaseSampler
+
+        self._plugin_objects = self._get_plugins()
+        self._sampler_obj = BaseSampler.resolve(self)
 
     @property
     def X(self) -> MatrixLike | None:
@@ -567,16 +518,72 @@ class DataConfig(ConfigBase):
         """Set the loaded target vector."""
         self._y = value
 
-    def load_raw_data(self) -> tuple[MatrixLike, ArrayLike]:
-        """Public entry-point for loading raw features and target. Delegates to _load_data()."""
-        return self._load_data()
+    def load(self, filepath: Union[str, None] = None):
+        """Load a cached DataConfig object from pickle artifact storage.
 
-    def split_data(
-        self,
-        run_hooks: bool = True,
-    ) -> tuple[MatrixLike, MatrixLike, ArrayLike, ArrayLike]:
-        """Public entry-point for sampling/splitting loaded data. Delegates to _sample()."""
-        return self._sample(run_hooks=run_hooks)
+        This method does not materialize datasets. Use :meth:`load_dataset` for
+        runtime dataset loading from defaults/files.
+        """
+        if filepath is None:
+            raise ValueError("filepath is required for DataConfig.load()")
+        loaded = super().load(filepath)
+        if isinstance(loaded, DataConfig) and loaded is not self:
+            self.__dict__.update(loaded.__dict__)
+            return self
+        return loaded
+
+    def save(self, payload: Any = None, filepath: str | None = None) -> None:
+        """Save this DataConfig object as a pickle cache artifact."""
+        target_path = filepath
+        if target_path is None and isinstance(payload, (str, Path)):
+            target_path = str(payload)
+            payload = self
+        if payload is None:
+            payload = self
+        if target_path is None:
+            raise ValueError("filepath is required for DataConfig.save()")
+        super().save(payload=payload, filepath=target_path)
+
+    def load_raw_data(self) -> tuple[MatrixLike, ArrayLike]:
+        """Compatibility alias for runtime dataset loading."""
+        self.load_dataset()
+        return self._X, self._y
+
+    def load_dataset(self) -> "DataConfig":
+        """Materialize runtime dataset payload into ``_X``/``_y``."""
+        if not hasattr(self, "data_load_time") or self.data_load_time is None:
+            self._load_dataset_runtime()
+        return self
+
+    def load_default_dataset(self, dataset_name: str, **loader_params: Any):
+        """Public default dataset load entry-point delegated to declarations."""
+        from .declarations import load_default_dataset
+
+        return load_default_dataset(self, dataset_name=dataset_name, **loader_params)
+
+    def split_data(self, run_hooks: bool = True) -> "DataConfig":
+        """Compatibility alias for split-only behavior used by legacy call sites."""
+        return self.fit(run_hooks=run_hooks)
+
+    def fit(self, run_hooks: bool = True) -> "DataConfig":
+        """Materialize train/test/(optional val) splits for this dataset."""
+        self.load_dataset()
+        if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
+            self._split_loaded_data(run_hooks=run_hooks)
+        return self
+
+    def sample(self, run_hooks: bool = True) -> "DataConfig":
+        """Public sampling lifecycle method.
+
+        Mirrors ``score/scorer`` naming with ``sample/sampler``.
+        """
+        self.fit(run_hooks=run_hooks)
+        return self
+
+    def score(self, *args, mode: str | None = None, **kwargs) -> dict:
+        """Run data scoring for a canonical stage mode."""
+        resolved_mode = mode if mode is not None else getattr(self, "score_mode", None)
+        return self._score_runtime(*args, mode=resolved_mode, **kwargs)
 
     def _instantiate_plugin(self, plugin_spec: Any):
         return instantiate_plugin_spec(plugin_spec, loader=load_class)
@@ -603,8 +610,36 @@ class DataConfig(ConfigBase):
                 hook_outputs.append(hook(self, **kwargs))
         return hook_outputs
 
-    def _get_stratify_col(self):
-        """Return the stratification array (or ``None``) based on ``self.stratify``.
+    
+    def _run_score_stage_hooks(
+        self,
+        when: str,
+        stage: str,
+        **kwargs,
+    ) -> list[Any]:
+        """Run score hooks for a canonical stage with legacy compatibility.
+
+        Hook dispatch order:
+        1) stage-specific hook (e.g., ``after_score_test``)
+        2) legacy generic hook (e.g., ``after_score``)
+        """
+        event = str(when).strip().lower()
+        if event not in {"before", "after"}:
+            raise ValueError(f"Score hook event must be 'before' or 'after', got {when}")
+        stage_token = stage_hook_token(stage)
+        stage_kwargs = {"stage": stage, **kwargs}
+        outputs: list[Any] = []
+        outputs.extend(
+            self._run_plugin_hook(
+                f"{event}_score_{stage_token}",
+                **stage_kwargs,
+            ),
+        )
+        outputs.extend(self._run_plugin_hook(f"{event}_score", **stage_kwargs))
+        return outputs
+
+    def _get_stratify_col(self, stratify: Union[None, str, bool] = None):
+        """Return the stratification array (or ``None``) based on a stratify value.
 
         Returns
         -------
@@ -617,191 +652,24 @@ class DataConfig(ConfigBase):
             If ``stratify`` is a string that is not a column name in ``self._X``,
             or if ``stratify`` is an unrecognized type.
         """
-        if self.stratify is None or self.stratify is False:
+        if stratify is None:
+            stratify = getattr(self, "stratify", None)
+        if stratify is None or stratify is False:
             return None
-        if self.stratify is True:
+        if stratify is True:
             if self.classifier is False:
                 return None
             return self._y
-        if isinstance(self.stratify, str):
-            if self._X is not None and self.stratify in self._X.columns:
-                return self._X[self.stratify]
+        if isinstance(stratify, str):
+            if self._X is not None and stratify in self._X.columns:
+                return self._X[stratify]
             raise ValueError(
-                f"Stratify column '{self.stratify}' not found in data columns",
+                f"Stratify column '{stratify}' not found in data columns",
             )
         raise ValueError("stratify must be None, True, False, or a column name")
 
-    def _resolve_sample(self):
-        """Instantiate and return the sampler object.
-
-        Accepts:
-        - ``"split"`` / ``"kfold"`` / ``"shuffle"`` -> corresponding sampler class
-        - An already-instantiated sampler object (returned as-is)
-        - A plain :class:`dict` or OmegaConf :class:`~omegaconf.DictConfig` with a
-          ``name`` or ``_target_`` key pointing to the sampler class
-        - A :class:`type` subclass of :class:`BaseSampler` (instantiated with no args)
-
-        Returns
-        -------
-        callable
-        """
-        from .sample import KFoldSampler, ShuffleSampler, SplitSampler
-
-        _SAMPLER_ALIASES = {
-            "split": SplitSampler,
-            "kfold": KFoldSampler,
-            "shuffle": ShuffleSampler,
-        }
-
-        if isinstance(self.sample, str):
-            key = self.sample.lower()
-            if key not in _SAMPLER_ALIASES:
-                raise ValueError(
-                    f"Unknown sampler '{self.sample}'. Must be one of {list(_SAMPLER_ALIASES)}.",
-                )
-            return _SAMPLER_ALIASES[key]()
-
-        spec = self.sample
-
-        # 1. Convert OmegaConf DictConfig to a plain dict first so subsequent
-        #    checks can rely on isinstance(spec, dict).
-        try:
-            from omegaconf import DictConfig, OmegaConf
-
-            if isinstance(spec, DictConfig):
-                spec = OmegaConf.to_container(spec, resolve=True)
-        except ImportError:
-            pass
-
-        # 2. Resolve dict / plain-dict spec (supports 'name' or '_target_' key).
-        if isinstance(spec, dict):
-            # Treat empty dict as None (no sampler)
-            if not spec:
-                return None
-            spec = dict(spec)
-            class_path = spec.pop("name", spec.pop("_target_", None))
-            if class_path is None:
-                raise ValueError(
-                    "sample dict must include 'name' or '_target_'",
-                )
-            return load_class(class_path, **spec)
-
-        # 3. Already an instantiated callable (e.g. a sampler instance).
-        if callable(spec) and not isinstance(spec, type):
-            return spec
-
-        # 4. A bare class – instantiate with no arguments.
-        if isinstance(spec, type):
-            return spec()
-
-        raise ValueError(f"Unsupported sample specification: {type(spec)}")
-
-    def compose_sampling_behavior(self):
-        """Compose and return the sampler runtime callable used by split/sample flows."""
-        sampler_obj = self._resolve_sample()
-        if sampler_obj is None:
-            from .sample import SplitSampler
-
-            sampler_obj = SplitSampler()
-        if not callable(sampler_obj):
-            raise TypeError(
-                f"Composed sampler must be callable, got {type(sampler_obj)}",
-            )
-        return sampler_obj
-
     def __hash__(self):
         return super().__hash__()
-
-    def _load_adult_income_data(self):
-        """
-        Loads and preprocesses the Adult Income dataset from OpenML.
-
-        Steps performed:
-            - Fetches the dataset using the specified name and version.
-            - Separates features (X) and target variable (y).
-            - Converts the target variable 'class' to binary integers (0 for '<=50K', 1 for '>50K').
-            - Encodes the 'sex' column as binary (0 for Male, 1 for Female).
-            - Converts relevant columns to appropriate numeric types.
-            - Converts categorical columns to category dtype.
-            - Applies one-hot encoding to categorical features, dropping the first category.
-            - Records the time taken to load and preprocess the data.
-            - Stores processed features and target in instance variables.
-
-        Returns
-        -------
-        self : DataConfig
-            The instance with loaded and preprocessed data.
-        """
-        start_time = time.process_time()
-        adult = fetch_openml(name=self.dataset_name, version=2, as_frame=True)
-        frame = (
-            adult.frame.copy() if getattr(adult, "frame", None) is not None else None
-        )
-        if frame is None:
-            frame = pd.DataFrame(adult.data).copy()
-            target_source = pd.Series(adult.target, name="class")
-        else:
-            target_source = (
-                frame.pop("class")
-                if "class" in frame.columns
-                else pd.Series(adult.target, name="class")
-            )
-
-        y_raw = pd.Series(target_source, name="target").copy()
-        if pd.api.types.is_numeric_dtype(y_raw):
-            y = y_raw.astype(int)
-        else:
-            y = self._encode_binary_series(
-                y_raw.astype(str),
-                {"<=50K": 0, ">50K": 1},
-            )
-
-        X = frame
-        if "sex" not in X.columns:
-            raise ValueError("Adult dataset must include a 'sex' column")
-
-        sex = self._encode_binary_series(
-            X.pop("sex").astype(str),
-            {"Male": 0, "Female": 1},
-        )
-
-        for column in [
-            "age",
-            "education-num",
-            "hours-per-week",
-            "capital-gain",
-            "capital-loss",
-            "fnlwgt",
-        ]:
-            if column in X.columns:
-                X[column] = pd.to_numeric(X[column], errors="coerce")
-
-        categorical_columns = X.select_dtypes(
-            include=["object", "category"],
-        ).columns.tolist()
-        X = pd.get_dummies(
-            X,
-            columns=categorical_columns,
-            drop_first=True,
-            dummy_na=True,
-            dtype=int,
-        )
-        X["sex"] = sex.astype(int)
-
-        end_time = time.process_time()
-        self.data_load_time = end_time - start_time
-        self._X = X
-        self._y = pd.Series(y)
-        assert isinstance(
-            self._X,
-            pd.DataFrame,
-        ), f"Expected DataFrame got {type(self._X)}"
-        assert isinstance(
-            self._y,
-            pd.Series,
-        ), f"Expected Series got {type(self._y)}"
-        self._X = self._X.apply(pd.to_numeric, errors="coerce")
-        return self
 
     def _encode_binary_series(
         self,
@@ -823,123 +691,16 @@ class DataConfig(ConfigBase):
             encoded = series.map(fallback_mapping)
         return encoded.astype(int)
 
-    def _make_classification_data(
-        self,
-        n_samples=1000,
-        n_features=20,
-        n_informative=10,
-        n_redundant=5,
-        n_clusters_per_class=2,
-        random_state=42,
-        **kwargs,
-    ):
-        """
-        Generates a synthetic classification dataset and stores it as instance attributes.
-
-        Parameters
-        ----------
-        n_samples : int, optional
-            Number of samples to generate. Default is 1000.
-        n_features : int, optional
-            Total number of features. Default is 20.
-        n_informative : int, optional
-            Number of informative features. Default is 10.
-        n_redundant : int, optional
-            Number of redundant features. Default is 5.
-        n_clusters_per_class : int, optional
-            Number of clusters per class. Default is 2.
-        random_state : int, optional
-            Seed for random number generation. Default is 42.
-
-        Returns
-        -------
-        self : DataConfig
-            The instance with loaded data and timing information.
-
-        Side Effects
-        ------------
-        Sets self._X (pd.DataFrame): Feature matrix.
-        Sets self._y (pd.Series): Target vector.
-        Sets self.data_load_time (float): Time taken to generate the data.
-        """
-        start_time = time.process_time()
-        X, y = make_classification(
-            n_samples=n_samples,
-            n_features=n_features,
-            n_informative=n_informative,
-            n_redundant=n_redundant,
-            n_clusters_per_class=n_clusters_per_class,
-            random_state=random_state,
-            **kwargs,
-        )
-        self._X = pd.DataFrame(
-            X,
-            columns=[f"feature_{i}" for i in range(X.shape[1])],
-        )
-        self._y = pd.Series(y)
-        end_time = time.process_time()
-        self.data_load_time = end_time - start_time
-        return self
-
-    def _make_regression_data(
-        self,
-        n_samples=1000,
-        n_features=20,
-        n_informative=10,
-        noise=0.1,
-        random_state=42,
-    ):
-        """
-        Generates synthetic regression data using scikit-learn's make_regression function and stores it as pandas DataFrame and Series.
-
-        Parameters
-        ----------
-        n_samples : int, optional
-            Number of samples to generate. Default is 1000.
-        n_features : int, optional
-            Total number of features. Default is 20.
-        n_informative : int, optional
-            Number of informative features. Default is 10.
-        noise : float, optional
-            Standard deviation of the gaussian noise applied to the output. Default is 0.1.
-        random_state : int, optional
-            Seed for the random number generator. Default is 42.
-
-        Returns
-        -------
-        self : DataConfig
-            The instance with generated data stored in self._X (DataFrame), self._y (Series), and self.data_load_time (float).
-        """
-        start_time = time.process_time()
-        X, y = make_regression(
-            n_samples=n_samples,
-            n_features=n_features,
-            n_informative=n_informative,
-            noise=noise,
-            random_state=random_state,
-        )
-        self._X = pd.DataFrame(
-            X,
-            columns=[f"feature_{i}" for i in range(X.shape[1])],
-        )
-        self._y = pd.Series(y)
-        end_time = time.process_time()
-        self.data_load_time = end_time - start_time
-        return self
-
-    def _sample(
+    def _split_loaded_data(
         self,
         run_hooks: bool = True,
     ):
         """
         Samples training, testing, and optionally validation indices from the loaded dataset.
 
-        When ``self.sample`` is set, delegates to the sampler callable which returns
-        ``(train_idx, test_idx, val_idx)`` and populates ``X_val``/``y_val`` in addition
-        to the standard ``X_train``/``X_test`` splits.
-
-        Without a sample, falls back to the original 2-way ``train_test_split`` behaviour
-        (``X_val``/``y_val`` remain ``None``).
+        Delegates sampler resolution/configuration/execution to
+        :class:`~deckard.data.sample.BaseSampler`, then materializes
+        ``X_train``/``X_test`` and optional ``X_val`` splits.
 
         Raises
         ------
@@ -959,8 +720,9 @@ class DataConfig(ConfigBase):
 
         start_time = time.process_time()
 
-        sampler_obj = self.compose_sampling_behavior()
-        train_idx, test_idx, val_idx = sampler_obj(self)
+        from .sample import BaseSampler
+
+        train_idx, test_idx, val_idx = BaseSampler.execute(self)
         self.train_indices = train_idx
         self.test_indices = test_idx
         self.val_indices = val_idx
@@ -1014,156 +776,7 @@ class DataConfig(ConfigBase):
         if run_hooks:
             self._run_plugin_hook("after_sample")
 
-    def _load_generic_sklearn(self, loader_func, **loader_params):
-        """
-        Loads a dataset using a generic scikit-learn loader function.
-
-        Parameters
-        ----------
-        loader_func : callable
-            A scikit-learn dataset loader function that returns a Bunch object with 'data' and 'target' attributes.
-        loader_params : dict
-            Additional parameters to pass to the loader function.
-
-        Returns
-        -------
-        self : DataConfig
-            The instance with loaded data and timing information.
-
-        Side Effects
-        ------------
-        Sets ``self._X``, ``self._y``, and ``self.data_load_time`` with loaded data and timing information.
-        """
-        start_time = time.process_time()
-        dataset = loader_func(**loader_params)
-        X = dataset.data
-        y = dataset.target
-        end_time = time.process_time()
-        self.data_load_time = end_time - start_time
-        self._X = pd.DataFrame(X)
-        self._y = pd.Series(y)
-        return self
-
-    def _load_generic_openml(self, dataset_name, version=1, **loader_params):
-        """
-        Loads a dataset from OpenML using the specified dataset name and version.
-
-        Parameters
-        ----------
-        dataset_name : str
-            The name of the dataset to load from OpenML.
-        version : int, optional
-            The version of the dataset to load. Default is 1.
-        loader_params : dict
-            Additional parameters to pass to the fetch_openml function.
-
-        Returns
-        -------
-        self : DataConfig
-            The instance with loaded data and timing information.
-
-        Side Effects
-        ------------
-        Sets ``self._X``, ``self._y``, and ``self.data_load_time`` with loaded data and timing information.
-        """
-        start_time = time.process_time()
-        dataset = fetch_openml(
-            name=dataset_name,
-            version=version,
-            as_frame=True,
-            **loader_params,
-        )
-        X = dataset.data
-        y = dataset.target
-        end_time = time.process_time()
-        self.data_load_time = end_time - start_time
-        self._X = pd.DataFrame(X)
-        self._y = pd.Series(y)
-        return self
-
-    def _load_lifelines_dataset(self, dataset_name: str, **loader_params):
-        """Load a lifelines dataset into DataConfig feature/target fields."""
-        lifelines_datasets = _lifelines_dataset_loaders()
-        if not lifelines_datasets:
-            raise ImportError(
-                "Lifelines datasets require optional dependency deckard[lifelines]",
-            )
-        if dataset_name not in lifelines_datasets:
-            raise NotImplementedError(
-                f"Lifelines dataset {dataset_name} not found. Supported: {sorted(lifelines_datasets.keys())}",
-            )
-        start_time = time.process_time()
-        loader = lifelines_datasets[dataset_name]
-        dataset = loader(**loader_params)
-        if not isinstance(dataset, pd.DataFrame):
-            dataset = pd.DataFrame(dataset)
-
-        candidate_target = self.target
-        if candidate_target is None:
-            for candidate in ["E", "event", "status", "status_group"]:
-                if candidate in dataset.columns:
-                    candidate_target = candidate
-                    break
-        if candidate_target is None or candidate_target not in dataset.columns:
-            # Fall back to a zero target when no event column is present.
-            candidate_target = "event"
-            dataset[candidate_target] = 0
-
-        y = dataset.pop(candidate_target)
-        end_time = time.process_time()
-        self.data_load_time = end_time - start_time
-        self._X = dataset
-        self._y = pd.Series(y)
-        return self
-
-    def _load_yellowbrick_dataset(self, dataset_name: str, **loader_params):
-        """Load a yellowbrick dataset into DataConfig feature/target fields."""
-        yellowbrick_datasets = _yellowbrick_dataset_loaders()
-        if not yellowbrick_datasets:
-            raise ImportError(
-                "Yellowbrick datasets require optional dependency deckard[yellowbrick]",
-            )
-        if dataset_name not in yellowbrick_datasets:
-            raise NotImplementedError(
-                f"Yellowbrick dataset {dataset_name} not found. Supported: {sorted(yellowbrick_datasets.keys())}",
-            )
-
-        start_time = time.process_time()
-        loader = yellowbrick_datasets[dataset_name]
-        dataset = loader(**loader_params)
-
-        if hasattr(dataset, "to_data") and callable(getattr(dataset, "to_data")):
-            dataset = dataset.to_data()
-
-        if isinstance(dataset, tuple) and len(dataset) == 2:
-            X, y = dataset
-        elif isinstance(dataset, pd.DataFrame):
-            candidate_target = self.target
-            if candidate_target is None:
-                for candidate in ["target", "y", "label", "class"]:
-                    if candidate in dataset.columns:
-                        candidate_target = candidate
-                        break
-            if candidate_target is None or candidate_target not in dataset.columns:
-                candidate_target = "target"
-                dataset[candidate_target] = 0
-            y = dataset.pop(candidate_target)
-            X = dataset
-        elif hasattr(dataset, "data") and hasattr(dataset, "target"):
-            X = dataset.data
-            y = dataset.target
-        else:
-            raise TypeError(
-                f"Unsupported Yellowbrick dataset output type: {type(dataset)}",
-            )
-
-        end_time = time.process_time()
-        self.data_load_time = end_time - start_time
-        self._X = pd.DataFrame(X)
-        self._y = pd.Series(y)
-        return self
-
-    def _load_data(self):
+    def _load_dataset_runtime(self):
         """
         Loads dataset based on the provided dataset name or file type.
 
@@ -1195,67 +808,9 @@ class DataConfig(ConfigBase):
         if hasattr(self, "data_load_time") and self.data_load_time is not None:
             return
         self._run_plugin_hook("before_load_data")
-        supported_datasets = {
-            "adult": self._load_adult_income_data,
-            "make_classification": self._make_classification_data,
-            "make_regression": self._make_regression_data,
-            "diabetes": lambda **params: self._load_generic_sklearn(
-                load_diabetes,
-                **params,
-            ),
-            "digits": lambda **params: self._load_generic_sklearn(
-                load_digits,
-                **params,
-            ),
-            "iris": lambda **params: self._load_generic_sklearn(
-                load_iris,
-                **params,
-            ),
-        }
-        for dataset_name in _lifelines_dataset_loaders().keys():
-            supported_datasets.setdefault(
-                f"lifelines_{dataset_name}",
-                lambda _name=dataset_name, **params: self._load_lifelines_dataset(
-                    _name,
-                    **params,
-                ),
-            )
-            supported_datasets.setdefault(
-                f"lifelines.{dataset_name}",
-                lambda _name=dataset_name, **params: self._load_lifelines_dataset(
-                    _name,
-                    **params,
-                ),
-            )
-            if dataset_name not in supported_datasets:
-                supported_datasets[dataset_name] = (
-                    lambda _name=dataset_name, **params: self._load_lifelines_dataset(
-                        _name,
-                        **params,
-                    )
-                )
-        for dataset_name in _yellowbrick_dataset_loaders().keys():
-            supported_datasets.setdefault(
-                f"yellowbrick_{dataset_name}",
-                lambda _name=dataset_name, **params: self._load_yellowbrick_dataset(
-                    _name,
-                    **params,
-                ),
-            )
-            supported_datasets.setdefault(
-                f"yellowbrick.{dataset_name}",
-                lambda _name=dataset_name, **params: self._load_yellowbrick_dataset(
-                    _name,
-                    **params,
-                ),
-            )
-            if dataset_name not in supported_datasets:
-                supported_datasets[dataset_name] = (
-                    lambda _name=dataset_name, **params: self._load_yellowbrick_dataset(
-                        _name,
-                        **params,
-                    )
-                )
+        from .declarations import build_loader_registry
+
+        supported_datasets = build_loader_registry(self)
         filetype = Path(self.dataset_name).suffix
         supported_filetypes = data_supported_filetypes
         if (
@@ -1267,11 +822,14 @@ class DataConfig(ConfigBase):
             )
         if self.dataset_name in supported_datasets:
             start_time = time.process_time()
-            supported_datasets[self.dataset_name](**self.data_params)
+            self.load_default_dataset(self.dataset_name, **self.data_params)
         elif filetype == ".openml":
             start_time = time.process_time()
             dataset_base_name = Path(self.dataset_name).stem
-            self._load_generic_openml(
+            from .declarations import load_generic_openml
+
+            load_generic_openml(
+                self,
                 dataset_name=dataset_base_name,
                 **self.data_params,
             )
@@ -1317,7 +875,7 @@ class DataConfig(ConfigBase):
         self._X = data
         self._y = y
 
-    def _score(
+    def _score_runtime(
         self,
         *args,
         mode: str | None = None,
@@ -1327,7 +885,6 @@ class DataConfig(ConfigBase):
         Delegates all dataset scoring to ``self.scorer``. Supports pre-sample mode (raw data, only in DataConfig),
         as well as train/test/val splits. If mode is not provided, uses self.score_mode or defaults to 'test'.
         """
-        self._run_plugin_hook("before_score")
         if self.scorer is None:
             return {}
         if not callable(self.scorer):
@@ -1339,23 +896,10 @@ class DataConfig(ConfigBase):
                 "DataConfig.scorer must be a data-profile scorer; "
                 "model/attack scorers cannot run on raw X/y data splits.",
             )
-        scorer_mode = str(
+        scorer_mode = normalize_data_score_stage(
             mode or getattr(self, "score_mode", None) or "test",
-        ).lower()
-        # Map post-defense to test split (for compatibility with scoring stages)
-        if scorer_mode == "post-defense":
-            scorer_mode = "test"
-        allowed = {
-            "all",
-            "pre-sample",
-            "train",
-            "test",
-            "val",
-            "post-sample",
-            "post-pipeline",
-        }
-        if scorer_mode not in allowed:
-            raise ValueError(f"DataConfig score_mode '{scorer_mode}' not in {allowed}")
+        )
+        self._run_score_stage_hooks("before", scorer_mode)
         if scorer_mode == "pre-sample":
             y_true = getattr(self, "_y", None)
             y_pred = getattr(self, "_X", None)
@@ -1387,7 +931,7 @@ class DataConfig(ConfigBase):
             else:
                 y_true = np.concatenate([np.asarray(y_train), np.asarray(y_test)])
         else:
-            raise ValueError(f"Mode must be in {allowed}")
+            raise ValueError(f"Mode must be one of canonical data score stages, got {scorer_mode}")
         if y_true is None or y_pred is None:
             raise ValueError(
                 f"Data scoring mode '{scorer_mode}' requested but required data split is unavailable.",
@@ -1400,7 +944,11 @@ class DataConfig(ConfigBase):
             data=self,
             **kwargs,
         )
-        plugin_scores = self._run_plugin_hook("after_score", scores=result_dict)
+        plugin_scores = self._run_score_stage_hooks(
+            "after",
+            scorer_mode,
+            scores=result_dict,
+        )
         for plugin_score in plugin_scores:
             if isinstance(plugin_score, dict):
                 result_dict.update(plugin_score)
@@ -1430,7 +978,8 @@ class DataConfig(ConfigBase):
             data_path = Path(data_file)
             if data_path.exists():
                 logger.info(f"Loading existing DataConfig from {data_file}")
-                return self.load(data_file), False
+                self.load(data_file)
+                return False
             logger.debug(f"Creating directory for DataConfig at {data_file}")
             data_path.parent.mkdir(parents=True, exist_ok=True)
             return True
@@ -1444,13 +993,11 @@ class DataConfig(ConfigBase):
 
     def ensure_data_loaded(self) -> None:
         """Ensure raw data is loaded for downstream orchestration."""
-        if not hasattr(self, "data_load_time") or self.data_load_time is None:
-            self.load_raw_data()
+        self.load_dataset()
 
     def ensure_data_sampled(self) -> None:
         """Ensure train/test/(optional val) splits are materialized."""
-        if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
-            self.split_data()
+        self.fit()
 
     def build_data_time_dict(self) -> dict:
         """Build timing/count metadata dictionary for data runtime outputs."""
@@ -1476,9 +1023,9 @@ class DataConfig(ConfigBase):
 
         save_flag = self.prepare_data_file(data_file=data_file)
         scores = dict(getattr(self, "score_dict", {}) or {})
-        self.ensure_data_loaded()
+        self.load_dataset()
         logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
-        self.ensure_data_sampled()
+        self.fit()
         time_dict = self.build_data_time_dict()
         if self.X_val is not None:
             logger.info(
@@ -1489,7 +1036,7 @@ class DataConfig(ConfigBase):
             logger.info(
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
             )
-        data_scores = self._score(*args, **kwargs)
+        data_scores = self.score(*args, **kwargs)
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
@@ -1643,6 +1190,15 @@ class DataPipelineConfig(DataPipelineMixin, DataConfig):
                 ),
             ),
         )
+        self._initialize_runtime_components()
+
+    def fit(self, run_hooks: bool = True) -> "DataPipelineConfig":
+        """Load, sample, and apply configured pipeline transforms."""
+        self.load_dataset()
+        if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
+            self.run_sampling_with_pipeline_hooks()
+        self.apply_pipeline_behavior()
+        return self
 
     def _normalize_step_hooks(self, raw_hooks: Any) -> list[str]:
         if raw_hooks is None:
@@ -1881,10 +1437,10 @@ class DataPipelineConfig(DataPipelineMixin, DataConfig):
                 pre_sample_pipeline,
                 force=run_before_sample_pipeline,
             )
-            self._sample(run_hooks=False)
+            self._split_loaded_data(run_hooks=False)
             self._run_plugin_hook("after_sample")
             return
-        self._sample()
+        self._split_loaded_data()
 
     def _transform_validation_with_pipeline(self, X_pipeline: Pipeline) -> None:
         """Apply the fitted feature pipeline to validation inputs when present."""
@@ -2135,16 +1691,9 @@ class DataPipelineConfig(DataPipelineMixin, DataConfig):
         """
         save_flag = self._prepare_data_file(data_file=data_file)
         scores = self.read_or_initialize_scores(score_file)
-        # Load data if not already loaded
-        if not hasattr(self, "data_load_time") or self.data_load_time is None:
-            self._load_data()
-            logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
-        time_dict = {"data_load_time": self.data_load_time}
-        if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
-            self.run_sampling_with_pipeline_hooks()
-        time_dict["data_sample_time"] = (self.data_sample_time,)
-
-        self.apply_pipeline_behavior()
+        self.load_dataset()
+        logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
+        self.sample()
         time_dict = {
             "data_load_time": self.data_load_time,
             "data_sample_time": self.data_sample_time,
@@ -2167,7 +1716,7 @@ class DataPipelineConfig(DataPipelineMixin, DataConfig):
         self.score_dict.update(**time_dict)
         # Respect explicit mode first, then configured score_mode, then _score fallback.
         resolved_mode = mode if mode is not None else getattr(self, "score_mode", None)
-        data_scores = self._score(*args, mode=resolved_mode, **kwargs)
+        data_scores = self.score(*args, mode=resolved_mode, **kwargs)
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"

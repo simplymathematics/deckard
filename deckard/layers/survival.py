@@ -176,7 +176,7 @@ def _validate_experiment_config_types(
 def _load_plot_dataframe(experiment_config: SurvivalExperimentConfig) -> pd.DataFrame:
     data_cfg = experiment_config.data
     if data_cfg.X is None:
-        data_cfg._load_data()
+        data_cfg.load_dataset()
 
     if data_cfg.X is None:
         raise ValueError("DataConfig did not load features for plot mode")

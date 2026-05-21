@@ -5,7 +5,8 @@ returns ``(train_idx, test_idx, val_idx)`` as numpy arrays of integer indices.
 
 Available samplers:
 
-* :class:`BaseSampler` – abstract interface (raises ``NotImplementedError``)
+* :class:`BaseSampler` – interface plus centralized sampler
+    resolution/composition/execution helpers
 * :class:`SplitSampler` – deterministic 3-way train/test/val split
 * :class:`KFoldSampler` – cross-validation with disjoint validation folds
 * :class:`ShuffleSampler` – repeated random (Monte-Carlo) splits
@@ -26,7 +27,7 @@ python -m deckard data=adult data@sample=kfold
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Any, Tuple
 
 import numpy as np
 from hydra.core.config_store import ConfigStore
@@ -37,6 +38,7 @@ from sklearn.model_selection import (
     StratifiedShuffleSplit,
     train_test_split,
 )
+from ..utils import load_class
 
 if TYPE_CHECKING:
     from .base import DataConfig
@@ -52,6 +54,11 @@ class BaseSampler:
 
     All concrete samplers must implement :meth:`__call__` and return a
     ``(train_idx, test_idx, val_idx)`` triple of integer numpy arrays.
+
+    This class also owns runtime sampling orchestration for ``DataConfig`` via:
+    - :meth:`resolve` to normalize sampler configuration into a callable
+    - :meth:`compose` to resolve/cache/fallback to a default sampler
+    - :meth:`execute` to run the composed sampler
     """
 
     def __call__(
@@ -59,6 +66,103 @@ class BaseSampler:
         config: "DataConfig",
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         raise NotImplementedError
+
+    @classmethod
+    def resolve(cls, config: "DataConfig") -> Any:
+        """Resolve ``config.sampler`` into a callable sampler object or ``None``."""
+        sampler_aliases = {
+            "split": SplitSampler,
+            "fold": KFoldSampler,
+            "kfold": KFoldSampler,
+            "shuffle": ShuffleSampler,
+        }
+
+        def _sampler_kwargs_for_alias(alias: str) -> dict[str, Any]:
+            if alias == "split":
+                return {
+                    "train_size": getattr(config, "train_size", None),
+                    "test_size": getattr(config, "test_size", None),
+                    "val_size": getattr(config, "val_size", None),
+                    "random_state": getattr(config, "random_state", 42),
+                    "stratify": getattr(config, "stratify", True),
+                }
+            if alias in {"fold", "kfold"}:
+                return {
+                    "split": getattr(config, "split", None),
+                    "train_size": getattr(config, "train_size", None),
+                    "test_size": getattr(config, "test_size", None),
+                    "val_size": getattr(config, "val_size", None),
+                    "random_state": getattr(config, "random_state", 42),
+                    "stratify": getattr(config, "stratify", True),
+                }
+            if alias == "shuffle":
+                return {
+                    "split": getattr(config, "split", None),
+                    "test_size": getattr(config, "test_size", None),
+                    "val_size": getattr(config, "val_size", None),
+                    "random_state": getattr(config, "random_state", 42),
+                    "stratify": getattr(config, "stratify", True),
+                }
+            return {}
+
+        spec = getattr(config, "sampler", None)
+        if spec is None:
+            return None
+
+        if isinstance(spec, str):
+            key = spec.lower()
+            if key not in sampler_aliases:
+                raise ValueError(
+                    f"Unknown sampler '{spec}'. Must be one of {list(sampler_aliases)}.",
+                )
+            return sampler_aliases[key](**_sampler_kwargs_for_alias(key))
+
+        try:
+            from omegaconf import DictConfig, OmegaConf
+
+            if isinstance(spec, DictConfig):
+                spec = OmegaConf.to_container(spec, resolve=True)
+        except ImportError:
+            pass
+
+        if isinstance(spec, dict):
+            if not spec:
+                return None
+            spec = dict(spec)
+            class_path = spec.pop("name", spec.pop("_target_", None))
+            if class_path is None:
+                raise ValueError("sampler dict must include 'name' or '_target_'")
+            return load_class(class_path, **spec)
+
+        if callable(spec) and not isinstance(spec, type):
+            return spec
+
+        if isinstance(spec, type):
+            return spec()
+
+        raise ValueError(f"Unsupported sampler specification: {type(spec)}")
+
+    @classmethod
+    def compose(cls, config: "DataConfig") -> Any:
+        """Compose and cache the runtime sampler callable for ``config``."""
+        sampler_obj = getattr(config, "_sampler_obj", None)
+        if sampler_obj is None:
+            sampler_obj = cls.resolve(config)
+            setattr(config, "_sampler_obj", sampler_obj)
+        if sampler_obj is None:
+            sampler_obj = SplitSampler()
+            setattr(config, "_sampler_obj", sampler_obj)
+        if not callable(sampler_obj):
+            raise TypeError(
+                f"Composed sampler must be callable, got {type(sampler_obj)}",
+            )
+        return sampler_obj
+
+    @classmethod
+    def execute(cls, config: "DataConfig") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Resolve/compose and run the configured sampler against ``config``."""
+        sampler_obj = cls.compose(config)
+        return sampler_obj(config)
 
 
 # =========================================================
@@ -74,21 +178,31 @@ class SplitSampler(BaseSampler):
     ``cfg.val_size``) and a remaining *train+test* pool. The pool is then
     split into *train* and *test* portions according to ``cfg.test_size``.
 
-    Note: All parameters are read from the ``DataConfig`` passed to
-    :meth:`__call__`. There are no constructor parameters.
+    Parameters are owned by this sampler dataclass and configured directly on
+    the sampler instance (or its Hydra dict/spec).
     """
+
+    train_size: int | float | None = None
+    test_size: int | float | None = 0.2
+    val_size: int | float | None = None
+    random_state: int | None = 42
+    stratify: bool | str | None = True
 
     def __call__(self, cfg: "DataConfig") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         assert cfg._X is not None, "Data must be loaded before sampling"
         indices = np.arange(len(cfg._X))
-        stratify_col = cfg._get_stratify_col()
+        train_size = self.train_size
+        test_size = self.test_size
+        val_size = self.val_size
+        random_state = self.random_state
+        stratify_col = cfg._get_stratify_col(self.stratify)
 
-        if cfg.val_size is not None:
+        if val_size is not None:
             # 3-way split: isolate validation set first
             train_test_idx, val_idx = train_test_split(
                 indices,
-                test_size=cfg.val_size,
-                random_state=cfg.random_state,
+                test_size=val_size,
+                random_state=random_state,
                 stratify=stratify_col if stratify_col is not None else None,
             )
             stratify_sub = (
@@ -96,17 +210,17 @@ class SplitSampler(BaseSampler):
             )
             train_idx, test_idx = train_test_split(
                 train_test_idx,
-                test_size=cfg.test_size,
-                random_state=cfg.random_state,
+                test_size=test_size,
+                random_state=random_state,
                 stratify=stratify_sub,
             )
         else:
             # 2-way split: no validation set
             train_idx, test_idx = train_test_split(
                 indices,
-                train_size=cfg.train_size,
-                test_size=cfg.test_size,
-                random_state=cfg.random_state,
+                train_size=train_size,
+                test_size=test_size,
+                random_state=random_state,
                 stratify=stratify_col if stratify_col is not None else None,
             )
             val_idx = np.array([], dtype=int)
@@ -140,6 +254,12 @@ class KFoldSampler(BaseSampler):
 
     n_splits: int = 5
     shuffle: bool = True
+    split: int | None = 0
+    train_size: int | float | None = None
+    test_size: int | float | None = 0.2
+    val_size: int | float | None = None
+    random_state: int | None = 42
+    stratify: bool | str | None = True
 
     @staticmethod
     def _to_count(size, total: int):
@@ -157,25 +277,31 @@ class KFoldSampler(BaseSampler):
     def __call__(self, cfg: "DataConfig") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         assert cfg._X is not None, "Data must be loaded before sampling"
         indices = np.arange(len(cfg._X))
-        stratify_col = cfg._get_stratify_col()
+        split = self.split if self.split is not None else 0
+        train_size = self.train_size
+        test_size = self.test_size
+        val_size = self.val_size
+        random_state = self.random_state
+
+        stratify_col = cfg._get_stratify_col(self.stratify)
 
         # Choose stratified or plain splitter
         if stratify_col is not None:
             splitter = StratifiedKFold(
                 n_splits=self.n_splits,
                 shuffle=self.shuffle,
-                random_state=cfg.random_state if self.shuffle else None,
+                random_state=random_state if self.shuffle else None,
             )
             splits = list(splitter.split(indices, stratify_col))
         else:
             splitter = KFold(
                 n_splits=self.n_splits,
                 shuffle=self.shuffle,
-                random_state=cfg.random_state if self.shuffle else None,
+                random_state=random_state if self.shuffle else None,
             )
             splits = list(splitter.split(indices))
 
-        split = cfg.split if cfg.split is not None else 0
+        split = split if split is not None else 0
         if split >= len(splits):
             raise ValueError(
                 f"split={split} out of range for n_splits={self.n_splits}",
@@ -184,7 +310,7 @@ class KFoldSampler(BaseSampler):
         train_val_idx, val_idx = splits[split]
 
         # Treat val_size as a cap on the selected fold validation set.
-        val_cap = self._to_count(getattr(cfg, "val_size", None), len(indices))
+        val_cap = self._to_count(val_size, len(indices))
         if val_cap is not None:
             val_cap = max(0, min(int(val_cap), len(indices)))
             if len(val_idx) > val_cap:
@@ -194,7 +320,7 @@ class KFoldSampler(BaseSampler):
                 val_idx, _ = train_test_split(
                     val_idx,
                     train_size=val_cap,
-                    random_state=cfg.random_state,
+                    random_state=random_state,
                     stratify=stratify_val,
                 )
 
@@ -202,7 +328,7 @@ class KFoldSampler(BaseSampler):
             train_val_idx = np.setdiff1d(indices, val_idx)
 
         # Treat train_size as a cap on the non-validation pool.
-        train_cap = self._to_count(getattr(cfg, "train_size", None), len(indices))
+        train_cap = self._to_count(train_size, len(indices))
         if train_cap is not None:
             train_cap = max(0, min(int(train_cap), len(train_val_idx)))
             if len(train_val_idx) > train_cap:
@@ -214,20 +340,20 @@ class KFoldSampler(BaseSampler):
                 train_val_idx, _ = train_test_split(
                     train_val_idx,
                     train_size=train_cap,
-                    random_state=cfg.random_state,
+                    random_state=random_state,
                     stratify=stratify_train_pool,
                 )
 
         # User-requested guardrail for explicit integer sizing.
         if (
-            isinstance(getattr(cfg, "test_size", None), int)
-            and isinstance(getattr(cfg, "train_size", None), int)
+            isinstance(test_size, int)
+            and isinstance(train_size, int)
             and self.n_splits > 0
         ):
-            if cfg.test_size > cfg.train_size // self.n_splits:
+            if test_size > train_size // self.n_splits:
                 raise ValueError(
                     "test_size must be <= train_size // n_splits for KFoldSampler "
-                    f"(got test_size={cfg.test_size}, train_size={cfg.train_size}, n_splits={self.n_splits})",
+                    f"(got test_size={test_size}, train_size={train_size}, n_splits={self.n_splits})",
                 )
 
         # Stratification for the inner train/test split
@@ -237,8 +363,8 @@ class KFoldSampler(BaseSampler):
 
         train_idx, test_idx = train_test_split(
             train_val_idx,
-            test_size=cfg.test_size,
-            random_state=cfg.random_state,
+            test_size=test_size,
+            random_state=random_state,
             stratify=stratify_sub,
         )
 
@@ -264,32 +390,42 @@ class ShuffleSampler(BaseSampler):
     """
 
     n_splits: int = 5
+    split: int | None = 0
+    test_size: int | float | None = 0.2
+    val_size: int | float | None = None
+    random_state: int | None = 42
+    stratify: bool | str | None = True
 
     def __call__(self, cfg: "DataConfig") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        if cfg.val_size is None:
+        split = self.split if self.split is not None else 0
+        test_size = self.test_size
+        val_size = self.val_size
+        random_state = self.random_state
+
+        if val_size is None:
             raise ValueError("val_size must be set for ShuffleSampler")
 
         assert cfg._X is not None, "Data must be loaded before sampling"
         indices = np.arange(len(cfg._X))
-        stratify_col = cfg._get_stratify_col()
+        stratify_col = cfg._get_stratify_col(self.stratify)
 
         # Choose stratified or plain splitter
         if stratify_col is not None:
             splitter = StratifiedShuffleSplit(
                 n_splits=self.n_splits,
-                test_size=cfg.val_size,
-                random_state=cfg.random_state,
+                test_size=val_size,
+                random_state=random_state,
             )
             splits = list(splitter.split(indices, stratify_col))
         else:
             splitter = ShuffleSplit(
                 n_splits=self.n_splits,
-                test_size=cfg.val_size,
-                random_state=cfg.random_state,
+                test_size=val_size,
+                random_state=random_state,
             )
             splits = list(splitter.split(indices))
 
-        split = cfg.split if cfg.split is not None else 0
+        split = split if split is not None else 0
         if split >= len(splits):
             raise ValueError(
                 f"split={split} out of range for n_splits={self.n_splits}",
@@ -304,8 +440,8 @@ class ShuffleSampler(BaseSampler):
 
         train_idx, test_idx = train_test_split(
             train_test_idx,
-            test_size=cfg.test_size,
-            random_state=cfg.random_state,
+            test_size=test_size,
+            random_state=random_state,
             stratify=stratify_sub,
         )
 
@@ -326,6 +462,11 @@ class SplitSamplerConf:
     """
 
     name: str = "deckard.data.sample.SplitSampler"
+    train_size: int | float | None = None
+    test_size: int | float | None = None
+    val_size: int | float | None = None
+    random_state: int | None = None
+    stratify: bool | str | None = None
 
 
 @dataclass
@@ -339,6 +480,12 @@ class KFoldSamplerConf:
     name: str = "deckard.data.sample.KFoldSampler"
     n_splits: int = 5
     shuffle: bool = True
+    split: int | None = None
+    train_size: int | float | None = None
+    test_size: int | float | None = None
+    val_size: int | float | None = None
+    random_state: int | None = None
+    stratify: bool | str | None = None
 
 
 @dataclass
@@ -351,6 +498,11 @@ class ShuffleSamplerConf:
 
     name: str = "deckard.data.sample.ShuffleSampler"
     n_splits: int = 5
+    split: int | None = None
+    test_size: int | float | None = None
+    val_size: int | float | None = None
+    random_state: int | None = None
+    stratify: bool | str | None = None
 
 
 def register_sampler_configs() -> None:

@@ -8,6 +8,7 @@ Optional exports are only available when their dependencies are installed.
 import logging
 
 from .base import DataConfig, DataPipelineConfig
+from .declarations import DatasetDeclaration, discover_dataset_declarations
 from .pipeline import (
     AnjanaDataPipelineConfig,
     DefaultDataPipelineConfig,
@@ -65,6 +66,8 @@ __all__ = [
     "KFoldSampler",
     "ShuffleSampler",
     "register_sampler_configs",
+    "DatasetDeclaration",
+    "discover_dataset_declarations",
 ]
 
 if "PytorchDataPipelineConfig" in globals():

@@ -1175,7 +1175,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
             train_size=0.6,
             test_size=0.2,
             val_size=0.2,
-            sample="split",
+            sampler="split",
             random_state=42,
             classifier=True,
         )

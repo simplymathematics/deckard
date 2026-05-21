@@ -3,7 +3,7 @@
 ## Overview
 
 Sampling in Deckard is owned by {class}`deckard.data.DataConfig` through its
-`sample` field and concrete sampler callables from {mod}`deckard.data.sample`.
+`sampler` field and concrete sampler callables from {mod}`deckard.data.sample`.
 
 Samplers return `(train_idx, test_idx, val_idx)` and are applied during data
 runtime orchestration.
@@ -11,7 +11,8 @@ runtime orchestration.
 ## Parent Config and Runtime Behavior
 
 - Parent config: {class}`deckard.data.DataConfig`
-- Runtime integration point: `DataConfig._resolve_sample()` and `DataConfig._sample()`
+- Runtime integration point: `DataConfig._resolve_sample()` and public lifecycle methods
+  `DataConfig.sample()` / `DataConfig.sample_data()`
 - Hydra sampler defaults are registered in `register_sampler_configs()` under
   the `sample` config group.
 

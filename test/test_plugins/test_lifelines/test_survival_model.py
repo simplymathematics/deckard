@@ -112,7 +112,7 @@ def test_score_uses_custom_scorer_directly():
     cfg = SurvivalModelConfig()
     cfg.scorer = lambda **kwargs: {"custom": 1.0}
 
-    out = cfg._score(y_true=pd.DataFrame(), y_pred=object())
+    out = cfg.score(y_true=pd.DataFrame(), y_pred=object())
 
     assert out == {"custom": 1.0}
 
@@ -129,7 +129,7 @@ def test_score_collects_concordance_and_handles_calibration_failure(monkeypatch)
 
     monkeypatch.setattr(cfg, "survival_probability_calibration", _raise_calibration)
 
-    out = cfg._score(y_true=y_true, y_pred=model)
+    out = cfg.score(y_true=y_true, y_pred=model)
 
     assert out["concordance"] == 0.9
     assert "ici" not in out
@@ -223,7 +223,7 @@ def test_score_handles_concordance_property_errors_and_nan_calibration(monkeypat
         lambda **_: (None, np.nan, np.nan),
     )
 
-    out = cfg._score(y_true=y_true, y_pred=BrokenConcordance())
+    out = cfg.score(y_true=y_true, y_pred=BrokenConcordance())
 
     assert out == {}
 

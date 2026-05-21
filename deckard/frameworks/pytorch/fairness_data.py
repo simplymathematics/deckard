@@ -124,9 +124,9 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
     # Data loading / splitting
     # ------------------------------------------------------------------
 
-    def _load_data(self):
-        """Use the PyTorch parent's _load_data — skip FairlearnDataConfig's DataFrame logic."""
-        PytorchCustomDataConfig._load_data(self)
+    def load_dataset(self):
+        """Use the PyTorch parent dataset-loading flow for runtime materialization."""
+        return PytorchCustomDataConfig.load_dataset(self)
 
     def _fit_transform_X(self, X_train, X_test, y_train, y_test, pipeline):
         """Bypass pipeline fit/transform for torch types."""
@@ -138,8 +138,9 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         self.pipeline_transform_n = len(X_test) if hasattr(X_test, "__len__") else 0
         return X_train, X_test, y_train, y_test
 
-    def _sample(self):
+    def fit(self, run_hooks: bool = True):
         """Split the dataset and extract per-split sensitive-feature arrays."""
+        _ = run_hooks
         if not (isinstance(self._X, (tuple, list)) and len(self._X) == 2):
             num_samples = len(self._X)
             indices = np.arange(num_samples)
@@ -185,8 +186,9 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             self.train_indices = getattr(self, "train_indices", None)
             self.test_indices = getattr(self, "test_indices", None)
 
-        PytorchCustomDataConfig._sample(self)
+        PytorchCustomDataConfig.fit(self)
         self._extract_sensitive_splits()
+        return self
 
     def _extract_sensitive_splits(self):
         """Populate ``_sensitive_train``, ``_sensitive_test``, ``_sensitive_all``."""
@@ -249,7 +251,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         assert hasattr(self, "X_train"), ".X_train not found"
         return result
 
-    def _score(self, mode: str | None = None) -> dict:
+    def score(self, mode: str | None = None) -> dict:
         """Compute fairness scores using canonical helpers for sensitive-feature lookup."""
         from ...utils import is_default_config_value
 

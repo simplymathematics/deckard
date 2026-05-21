@@ -81,8 +81,8 @@ class _FairnessBehaviorMixin(_SensitiveColumnsMixin):
 
         self.pipeline = {step_name: step_config, **self.pipeline}
 
-    def _sample(self, run_hooks: bool = True):
-        super()._sample(run_hooks=run_hooks)
+    def fit(self, run_hooks: bool = True):
+        super().fit(run_hooks=run_hooks)
 
         train_indices = getattr(self, "train_indices", None)
         test_indices = getattr(self, "test_indices", None)
@@ -123,6 +123,7 @@ class _FairnessBehaviorMixin(_SensitiveColumnsMixin):
             )
         else:
             self._sensitive_val = None
+        return self
 
 
 @dataclass(eq=False, kw_only=True)
@@ -205,8 +206,8 @@ class FairlearnDataConfig(_FairnessBehaviorMixin, DataPipelineConfig):
         elif isinstance(self.sensitive_columns, str):
             self.sensitive_columns = [self.sensitive_columns]
 
-    def _load_data(self) -> Any:
-        super()._load_data()
+    def load_dataset(self) -> Any:
+        super().load_dataset()
         assert hasattr(self, "_X"), RuntimeError(
             "self._X not found while loading FairlearnDataConfig",
         )
@@ -222,7 +223,7 @@ class FairlearnDataConfig(_FairnessBehaviorMixin, DataPipelineConfig):
             assert col in self._X.columns
         return self
 
-    def _score(self, *args, mode=None, **kwargs) -> dict:
+    def score(self, *args, mode=None, **kwargs) -> dict:
         """Delegate fairness dataset scoring and flatten nested dict output."""
         if is_default_config_value(self.scorer, include_best=False):
             self.scorer = (

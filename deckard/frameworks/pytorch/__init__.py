@@ -14,6 +14,16 @@ if TYPE_CHECKING:  # pragma: no cover
     from .experiment import TorchExperimentConfig
     from .fairness_data import FairlearnPytorchDataConfig
     from .model import PytorchModelConfig
+    from .sample import (
+        PytorchBaseSampler,
+        PytorchFoldSampler,
+        PytorchShuffleSampler,
+        PytorchSplitSampler,
+        TorchBaseSampler,
+        TorchKFoldSampler,
+        TorchShuffleSampler,
+        TorchSplitSampler,
+    )
 
 __all__ = [
     "PytorchDataConfig",
@@ -24,6 +34,14 @@ __all__ = [
     "PytorchAttackConfig",
     "DefaultPytorchDefenseConfig",
     "TorchExperimentConfig",
+    "PytorchBaseSampler",
+    "PytorchSplitSampler",
+    "PytorchFoldSampler",
+    "PytorchShuffleSampler",
+    "TorchBaseSampler",
+    "TorchSplitSampler",
+    "TorchKFoldSampler",
+    "TorchShuffleSampler",
 ]
 
 
@@ -61,4 +79,36 @@ def __getattr__(name):
         from .experiment import TorchExperimentConfig
 
         return TorchExperimentConfig
+    if name in {
+        "PytorchBaseSampler",
+        "PytorchSplitSampler",
+        "PytorchFoldSampler",
+        "PytorchShuffleSampler",
+        "TorchBaseSampler",
+        "TorchSplitSampler",
+        "TorchKFoldSampler",
+        "TorchShuffleSampler",
+    }:
+        from .sample import (
+            PytorchBaseSampler,
+            PytorchFoldSampler,
+            PytorchShuffleSampler,
+            PytorchSplitSampler,
+            TorchBaseSampler,
+            TorchKFoldSampler,
+            TorchShuffleSampler,
+            TorchSplitSampler,
+        )
+
+        mapping = {
+            "PytorchBaseSampler": PytorchBaseSampler,
+            "PytorchSplitSampler": PytorchSplitSampler,
+            "PytorchFoldSampler": PytorchFoldSampler,
+            "PytorchShuffleSampler": PytorchShuffleSampler,
+            "TorchBaseSampler": TorchBaseSampler,
+            "TorchSplitSampler": TorchSplitSampler,
+            "TorchKFoldSampler": TorchKFoldSampler,
+            "TorchShuffleSampler": TorchShuffleSampler,
+        }
+        return mapping[name]
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

@@ -25,6 +25,7 @@ from torch.utils.data import (
 from tqdm.auto import tqdm
 
 from ...data.base import DataConfig, DataPipelineConfig
+from .sample import PytorchBaseSampler
 
 # deckard
 from ...utils import load_class, resolve_torch_device
@@ -251,89 +252,14 @@ class TorchDatasetMixin(TorchDatasetSamplingMixin):
         labels: Tensor,
     ) -> tuple[Tensor, Tensor]:
         """Return train/test index tensors based on configured sampler."""
-        sampler_name, params = self._normalize_sampler_spec()
-        num_samples = len(labels)
-
-        # Default path keeps existing PyTorch behavior.
-        if sampler_name in {None, "default", "split", "random_split"}:
-            return self._sample_train_test_indices(num_samples)
-
-        if sampler_name in {"fold", "kfold", "stratifiedkfold", "shuffle"}:
-            val_size = params.get("val_size", getattr(self, "val_size", None))
-            if val_size is None:
-                val_size = 0.0
-            runtime = TorchDatasetSamplingMixin()
-            runtime.dataset = dataset_obj
-            runtime.test_size = (
-                float(self.test_size)
-                if isinstance(self.test_size, (int, float))
-                else 0.2
-            )
-            runtime.train_size = (
-                float(self.train_size)
-                if isinstance(self.train_size, (int, float))
-                else 0.8
-            )
-            runtime.val_size = float(val_size)
-            runtime.random_state = int(self.random_state)
-            runtime.sample = (
-                "fold"
-                if sampler_name in {"fold", "kfold", "stratifiedkfold"}
-                else "shuffle"
-            )
-            runtime.stratify = bool(self.stratify)
-
-            if runtime.sample == "shuffle":
-                # Shuffle mode leaves dataset unchanged; fall back to train/test indices.
-                return self._sample_train_test_indices(num_samples)
-
-            folds = runtime.sample(
-                n_splits=int(params.get("n_splits", getattr(self, "n_splits", 5))),
-            )
-            if not folds:
-                raise ValueError("Configured fold sampler produced no folds")
-            train_subset, test_subset = folds[0]
-            train_idx = torch.as_tensor(train_subset.indices, dtype=torch.long)
-            test_idx = torch.as_tensor(test_subset.indices, dtype=torch.long)
-            return train_idx, test_idx
-
-        if sampler_name == "callable" and callable(getattr(self, "sampler", None)):
-            result = self.sampler(
-                num_samples=num_samples,
-                labels=labels,
-                random_state=self.random_state,
-                train_size=self.train_size,
-                test_size=self.test_size,
-                **params,
-            )
-            if not isinstance(result, (tuple, list)) or len(result) < 2:
-                raise ValueError(
-                    "Callable sampler must return (train_idx, test_idx)",
-                )
-            train_idx = torch.as_tensor(result[0], dtype=torch.long)
-            test_idx = torch.as_tensor(result[1], dtype=torch.long)
-            return train_idx, test_idx
-
-        if "." in sampler_name or ":" in sampler_name:
-            sampler_callable = load_class(sampler_name)
-            result = sampler_callable(
-                num_samples=num_samples,
-                labels=labels,
-                random_state=self.random_state,
-                train_size=self.train_size,
-                test_size=self.test_size,
-                **params,
-            )
-            if not isinstance(result, (tuple, list)) or len(result) < 2:
-                raise ValueError(
-                    "Loaded sampler callable must return (train_idx, test_idx)",
-                )
-            return (
-                torch.as_tensor(result[0], dtype=torch.long),
-                torch.as_tensor(result[1], dtype=torch.long),
-            )
-
-        raise ValueError(f"Unsupported sampler mode: {sampler_name}")
+        # Ensure runtime edits to split params are reflected in the sampler object.
+        self._sampler_obj = None
+        train_idx, test_idx, val_idx = PytorchBaseSampler.execute(self)
+        self.val_indices = torch.as_tensor(val_idx, dtype=torch.long)
+        return (
+            torch.as_tensor(train_idx, dtype=torch.long),
+            torch.as_tensor(test_idx, dtype=torch.long),
+        )
 
     def _sample_train_test_indices(self, num_samples: int) -> tuple[Tensor, Tensor]:
         """Default random train/test split index generation."""
@@ -486,7 +412,16 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
     def __hash__(self):
         return super().__hash__()
 
-    def _score(self, *args, mode: str | None = None, **kwargs) -> dict:
+    def load_dataset(self):
+        """Materialize runtime torch dataset payload into ``_X``/``_y``."""
+        if self.data_load_time is not None and self._X is not None and self._y is not None:
+            return self
+        self._run_plugin_hook("before_load_data")
+        self._load_data()
+        self._run_plugin_hook("after_load_data")
+        return self
+
+    def score(self, *args, mode: str | None = None, **kwargs) -> dict:
         """Run base scoring and mirror legacy pre-sample key for compatibility.
 
         Base data scoring defaults to ``test`` mode when no explicit runtime mode
@@ -494,7 +429,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         ``pre-sample`` bucket, so we expose that key as a compatibility mirror
         without altering the underlying scoring mode selection.
         """
-        scores = super()._score(*args, mode=mode, **kwargs)
+        scores = super().score(*args, mode=mode, **kwargs)
         if (
             mode is None
             and str(getattr(self, "score_mode", "")).strip().lower() == "test"
@@ -650,7 +585,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             logger.error(f"Failed to load dataset {self.dataset_name}: {e}")
             raise
 
-    def _sample(self, run_hooks: bool = True):
+    def fit(self, run_hooks: bool = True):
         """
         Samples training and testing indices from the loaded dataset, optionally using stratification.
 
@@ -669,7 +604,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         Logs the time taken for sampling.
         """
         if self._X is None or self._y is None:
-            raise ValueError("Data not loaded. Call _load_data first.")
+            raise ValueError("Data not loaded. Call load_dataset() first.")
 
         _ = run_hooks
         num_samples = len(self._X)
@@ -746,6 +681,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             self.y_test,
             (Tensor, Dataset),
         ), "y_test must be a Tensor or Dataset"
+        return self
 
     def __call__(  # noqa: F811
         self,
@@ -780,13 +716,13 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
                 pass
 
         if self.data_load_time is None:
-            self._load_data()
+            self.load_dataset()
 
         assert self._X is not None, "_X not loaded"
         assert self._y is not None, "_y not loaded"
 
         if self.data_sample_time is None:
-            self._sample()
+            self.fit()
 
         assert self.X_train is not None, "X_train not sampled"
         assert self.X_test is not None, "X_test not sampled"
@@ -798,7 +734,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             "data_sample_time": self.data_sample_time,
         }
 
-        scores = self._score()
+        scores = self.score()
         all_scores = {**time_dict, **scores}
         self.score_dict = all_scores
 
@@ -840,6 +776,15 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             self.data_params = {}
         if not hasattr(self, "shuffle"):
             self.shuffle = True
+
+    def load_dataset(self):
+        """Materialize custom runtime train/test torch datasets into ``_X``/``_y``."""
+        if self.data_load_time is not None and self._X is not None and self._y is not None:
+            return self
+        self._run_plugin_hook("before_load_data")
+        self._load_data()
+        self._run_plugin_hook("after_load_data")
+        return self
 
     def _as_dataset(self, obj, split: str, transform):
         if isinstance(obj, str):
@@ -953,7 +898,8 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             f"(train={self.train_n}, test={self.test_n}).",
         )
 
-    def _sample(self):
+    def fit(self, run_hooks: bool = True):
+        _ = run_hooks
         # DataLoader params (lazy loading, no full dataset materialization)
         logger.info("Creating torch data loaders.")
         start = time.perf_counter()
@@ -1071,6 +1017,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
 
         end = time.perf_counter()
         self.data_sample_time = end - start
+        return self
 
     def __call__(
         self,
@@ -1106,15 +1053,15 @@ class PytorchCustomDataConfig(PytorchDataConfig):
 
         scores = {}
         if not hasattr(self, "_X") or self._X is None:
-            self._load_data()
+            self.load_dataset()
         if getattr(self, "X_train", None) is None:
-            self._sample()
+            self.fit()
         time_dict = {
             "data_load_time": self.data_load_time,
             "data_sample_time": self.data_sample_time,
             "data_score_time": self.data_score_time,
         }
-        new_scores = self._score(mode=mode, *args, **kwargs)
+        new_scores = self.score(mode=mode, *args, **kwargs)
         scores.update(**time_dict, **new_scores)
         self.score_dict = scores
         if score_file is not None:

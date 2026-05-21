@@ -618,12 +618,12 @@ class DataPipelineMixin:
         runtime.plugins = list(getattr(data, "plugins", []) or [])
 
         if not hasattr(runtime, "data_load_time") or runtime.data_load_time is None:
-            runtime._load_data()
+            runtime.load_dataset()
 
         if hasattr(runtime, "run_sampling_with_pipeline_hooks"):
             runtime.run_sampling_with_pipeline_hooks()
         else:
-            runtime._sample()
+            runtime.fit()
 
         if hasattr(runtime, "apply_pipeline_behavior"):
             runtime.apply_pipeline_behavior()
@@ -638,74 +638,7 @@ class DataLoaderMixin:
 
     def load_raw_data(self) -> Any:
         """Public entry-point for loading raw features and target."""
-        return self._load_data()
-
-
-@dataclass(eq=False, kw_only=True)
-class DataSamplerMixin:
-    """Reusable sampler orchestration behavior for data configs."""
-
-    def split_data(self, run_hooks: bool = True) -> Any:
-        """Public entry-point for sampling/splitting loaded data."""
-        return self._sample(run_hooks=run_hooks)
-
-    def _resolve_sample(self):
-        """Instantiate and return the sampler object."""
-        from .sample import KFoldSampler, ShuffleSampler, SplitSampler
-
-        sampler_aliases = {
-            "split": SplitSampler,
-            "kfold": KFoldSampler,
-            "shuffle": ShuffleSampler,
-        }
-
-        if isinstance(self.sample, str):
-            key = self.sample.lower()
-            if key not in sampler_aliases:
-                raise ValueError(
-                    f"Unknown sampler '{self.sample}'. Must be one of {list(sampler_aliases)}.",
-                )
-            return sampler_aliases[key]()
-
-        spec = self.sample
-
-        try:
-            from omegaconf import DictConfig, OmegaConf
-
-            if isinstance(spec, DictConfig):
-                spec = OmegaConf.to_container(spec, resolve=True)
-        except ImportError:
-            pass
-
-        if isinstance(spec, dict):
-            if not spec:
-                return None
-            spec = dict(spec)
-            class_path = spec.pop("name", spec.pop("_target_", None))
-            if class_path is None:
-                raise ValueError("sample dict must include 'name' or '_target_'")
-            return load_class(class_path, **spec)
-
-        if callable(spec) and not isinstance(spec, type):
-            return spec
-
-        if isinstance(spec, type):
-            return spec()
-
-        raise ValueError(f"Unsupported sample specification: {type(spec)}")
-
-    def compose_sampling_behavior(self):
-        """Compose and return the sampler runtime callable used by split/sample flows."""
-        sampler_obj = self._resolve_sample()
-        if sampler_obj is None:
-            from .sample import SplitSampler
-
-            sampler_obj = SplitSampler()
-        if not callable(sampler_obj):
-            raise TypeError(
-                f"Composed sampler must be callable, got {type(sampler_obj)}",
-            )
-        return sampler_obj
+        return self.load_dataset()
 
 
 @dataclass(eq=False, kw_only=True)
@@ -776,7 +709,7 @@ class DataScoreMixin:
         **kwargs: Any,
     ) -> dict:
         """Canonical public entry-point for dataset scoring."""
-        return self._score(*args, mode=mode, **kwargs)
+        return self._score_runtime(*args, mode=mode, **kwargs)
 
 
 __all__ = [
@@ -784,7 +717,6 @@ __all__ = [
     "_SensitiveColumnsMixin",
     "DataPipelineMixin",
     "DataLoaderMixin",
-    "DataSamplerMixin",
     "DataPluginRuntimeMixin",
     "DataScoreMixin",
 ]

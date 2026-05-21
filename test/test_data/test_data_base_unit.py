@@ -8,6 +8,7 @@ from omegaconf import OmegaConf
 from sklearn.preprocessing import FunctionTransformer
 
 import deckard.data.base as data_base
+import deckard.data.declarations as data_declarations
 from deckard.data.base import DataConfig, DataPipelineConfig
 from deckard.score.base import ScorerDictConfig
 
@@ -26,6 +27,8 @@ def _basic_data_config(**overrides):
     )
     params.update({"test_size": 0.25, "random_state": 0, "classifier": True})
     params.update(overrides)
+    if "sample" in params and "sampler" not in params:
+        params["sampler"] = params.pop("sample")
     return DataConfig(**params)
 
 
@@ -40,12 +43,13 @@ def test_data_pipeline_mixin_is_standalone():
 
 
 def test_discover_lifelines_dataset_loaders_handles_import_error(monkeypatch):
+    monkeypatch.setattr(data_declarations, "_module_available", lambda _name: True)
     monkeypatch.setattr(
-        data_base.importlib,
+        data_declarations.importlib,
         "import_module",
         lambda name: (_ for _ in ()).throw(ImportError()),
     )
-    assert data_base._discover_lifelines_dataset_loaders() == {}
+    assert data_declarations.discover_provider_dataset_loaders("lifelines") == {}
 
 
 def test_discover_lifelines_dataset_loaders_filters_callable_loaders(monkeypatch):
@@ -55,23 +59,29 @@ def test_discover_lifelines_dataset_loaders_filters_callable_loaders(monkeypatch
         other=3,
     )
     monkeypatch.setattr(
-        data_base.importlib,
+        data_declarations,
+        "_module_available",
+        lambda _name: True,
+    )
+    monkeypatch.setattr(
+        data_declarations.importlib,
         "import_module",
         lambda name: datasets_module,
     )
 
-    loaders = data_base._discover_lifelines_dataset_loaders()
+    loaders = data_declarations.discover_provider_dataset_loaders("lifelines")
 
     assert set(loaders) == {"lung", "kidney"}
 
 
 def test_discover_yellowbrick_dataset_loaders_handles_import_error(monkeypatch):
+    monkeypatch.setattr(data_declarations, "_module_available", lambda _name: True)
     monkeypatch.setattr(
-        data_base.importlib,
+        data_declarations.importlib,
         "import_module",
         lambda name: (_ for _ in ()).throw(ImportError()),
     )
-    assert data_base._discover_yellowbrick_dataset_loaders() == {}
+    assert data_declarations.discover_provider_dataset_loaders("yellowbrick") == {}
 
 
 def test_discover_yellowbrick_dataset_loaders_filters_callable_loaders(monkeypatch):
@@ -81,12 +91,17 @@ def test_discover_yellowbrick_dataset_loaders_filters_callable_loaders(monkeypat
         other=3,
     )
     monkeypatch.setattr(
-        data_base.importlib,
+        data_declarations,
+        "_module_available",
+        lambda _name: True,
+    )
+    monkeypatch.setattr(
+        data_declarations.importlib,
         "import_module",
         lambda name: datasets_module,
     )
 
-    loaders = data_base._discover_yellowbrick_dataset_loaders()
+    loaders = data_declarations.discover_provider_dataset_loaders("yellowbrick")
 
     assert set(loaders) == {"energy", "credit"}
 
@@ -211,68 +226,73 @@ def test_get_stratify_col_branches():
     reason="pkg import fails, as expected. Need better Mock.",
 )
 def test_resolve_sample_branches(monkeypatch):
-    import deckard.data._mixins as data_mixins
+    import deckard.data.sample as data_sample
+    from deckard.data.sample import BaseSampler
 
-    cfg = _basic_data_config(sample="split")
-    assert cfg._resolve_sample().__class__.__name__ == "SplitSampler"
+    cfg = _basic_data_config(sampler="split")
+    assert BaseSampler.resolve(cfg).__class__.__name__ == "SplitSampler"
 
-    cfg.sample = {}
-    assert cfg._resolve_sample() is None
+    cfg.sampler = {}
+    assert BaseSampler.resolve(cfg) is None
 
     loaded = object()
     monkeypatch.setattr(
-        data_mixins,
+        data_sample,
         "load_class",
         lambda path, **kwargs: (path, kwargs),
     )
-    cfg.sample = {"name": "pkg.Sample", "folds": 3}
-    assert cfg._resolve_sample() == ("pkg.Sample", {"folds": 3})
+    cfg.sampler = {"name": "pkg.Sample", "folds": 3}
+    assert BaseSampler.resolve(cfg) == ("pkg.Sample", {"folds": 3})
 
-    cfg.sample = lambda *args, **kwargs: loaded
-    assert cfg._resolve_sample() is cfg.sample
+    cfg.sampler = lambda *args, **kwargs: loaded
+    assert BaseSampler.resolve(cfg) is cfg.sampler
 
     class CustomSampler:
         pass
 
-    cfg.sample = CustomSampler
-    assert isinstance(cfg._resolve_sample(), CustomSampler)
+    cfg.sampler = CustomSampler
+    assert isinstance(BaseSampler.resolve(cfg), CustomSampler)
 
-    cfg.sample = {"folds": 3}
+    cfg.sampler = {"folds": 3}
     with pytest.raises(ValueError):
-        cfg._resolve_sample()
+        BaseSampler.resolve(cfg)
 
-    cfg.sample = "unknown"
+    cfg.sampler = "unknown"
     with pytest.raises(ValueError):
-        cfg._resolve_sample()
+        BaseSampler.resolve(cfg)
 
-    cfg.sample = 1
+    cfg.sampler = 1
     with pytest.raises(ValueError):
-        cfg._resolve_sample()
+        BaseSampler.resolve(cfg)
 
 
 def test_load_lifelines_dataset_branches(monkeypatch):
     cfg = _basic_data_config(dataset_name="lung", target=None, classifier=False)
 
-    monkeypatch.setattr(data_base, "_lifelines_dataset_loaders", lambda: {})
+    monkeypatch.setattr(
+        data_declarations,
+        "discover_provider_dataset_loaders",
+        lambda provider: {},
+    )
     with pytest.raises(ImportError):
-        cfg._load_lifelines_dataset("lung")
+        data_declarations.load_lifelines_dataset(cfg, "lung")
 
     monkeypatch.setattr(
-        data_base,
-        "_lifelines_dataset_loaders",
-        lambda: {"other": lambda: pd.DataFrame({"x": [1]})},
+        data_declarations,
+        "discover_provider_dataset_loaders",
+        lambda provider: {"other": lambda **kwargs: pd.DataFrame({"x": [1]})},
     )
     with pytest.raises(NotImplementedError):
-        cfg._load_lifelines_dataset("lung")
+        data_declarations.load_lifelines_dataset(cfg, "lung")
 
     monkeypatch.setattr(
-        data_base,
-        "_lifelines_dataset_loaders",
-        lambda: {
+        data_declarations,
+        "discover_provider_dataset_loaders",
+        lambda provider: {
             "lung": lambda **kwargs: pd.DataFrame({"time": [1, 2], "feature": [3, 4]}),
         },
     )
-    cfg._load_lifelines_dataset("lung")
+    data_declarations.load_lifelines_dataset(cfg, "lung")
     assert "time" in cfg._X.columns
     assert cfg._y.tolist() == [0, 0]
 
@@ -280,68 +300,70 @@ def test_load_lifelines_dataset_branches(monkeypatch):
 def test_load_yellowbrick_dataset_branches(monkeypatch):
     cfg = _basic_data_config(dataset_name="energy", target=None, classifier=False)
 
-    monkeypatch.setattr(data_base, "_yellowbrick_dataset_loaders", lambda: {})
+    monkeypatch.setattr(
+        data_declarations,
+        "discover_provider_dataset_loaders",
+        lambda provider: {},
+    )
     with pytest.raises(ImportError):
-        cfg._load_yellowbrick_dataset("energy")
+        data_declarations.load_yellowbrick_dataset(cfg, "energy")
 
     monkeypatch.setattr(
-        data_base,
-        "_yellowbrick_dataset_loaders",
-        lambda: {"other": lambda: (pd.DataFrame({"x": [1]}), pd.Series([0]))},
+        data_declarations,
+        "discover_provider_dataset_loaders",
+        lambda provider: {
+            "other": lambda **kwargs: (pd.DataFrame({"x": [1]}), pd.Series([0])),
+        },
     )
     with pytest.raises(NotImplementedError):
-        cfg._load_yellowbrick_dataset("energy")
+        data_declarations.load_yellowbrick_dataset(cfg, "energy")
 
     monkeypatch.setattr(
-        data_base,
-        "_yellowbrick_dataset_loaders",
-        lambda: {
+        data_declarations,
+        "discover_provider_dataset_loaders",
+        lambda provider: {
             "energy": lambda **kwargs: (
                 pd.DataFrame({"f": [1, 2]}),
                 pd.Series([0, 1]),
             ),
         },
     )
-    cfg._load_yellowbrick_dataset("energy")
+    data_declarations.load_yellowbrick_dataset(cfg, "energy")
     assert list(cfg._X.columns) == ["f"]
     assert cfg._y.tolist() == [0, 1]
 
     monkeypatch.setattr(
-        data_base,
-        "_yellowbrick_dataset_loaders",
-        lambda: {"energy": lambda **kwargs: pd.DataFrame({"x": [1, 2]})},
+        data_declarations,
+        "discover_provider_dataset_loaders",
+        lambda provider: {"energy": lambda **kwargs: pd.DataFrame({"x": [1, 2]})},
     )
     cfg.target = None
-    cfg._load_yellowbrick_dataset("energy")
+    data_declarations.load_yellowbrick_dataset(cfg, "energy")
     assert cfg._y.tolist() == [0, 0]
 
     monkeypatch.setattr(
-        data_base,
-        "_yellowbrick_dataset_loaders",
-        lambda: {"energy": lambda **kwargs: object()},
+        data_declarations,
+        "discover_provider_dataset_loaders",
+        lambda provider: {"energy": lambda **kwargs: object()},
     )
     with pytest.raises(TypeError):
-        cfg._load_yellowbrick_dataset("energy")
+        data_declarations.load_yellowbrick_dataset(cfg, "energy")
 
 
 def test_load_data_routes_lifelines_aliases_and_csv_options(monkeypatch, tmp_path):
-    cfg = _basic_data_config(dataset_name="lifelines_demo", target="target")
-    called = []
+    cfg = _basic_data_config(dataset_name="lung", target="target")
     monkeypatch.setattr(
-        data_base,
-        "_lifelines_dataset_loaders",
-        lambda: {"demo": object()},
+        data_declarations,
+        "discover_provider_dataset_loaders",
+        lambda provider: {
+            "lung": lambda **kwargs: pd.DataFrame({"x": [1], "target": [0]}),
+        }
+        if provider == "lifelines"
+        else {},
     )
-    monkeypatch.setattr(
-        cfg,
-        "_load_lifelines_dataset",
-        lambda name, **params: called.append(name)
-        or setattr(cfg, "_X", pd.DataFrame({"x": [1]}))
-        or setattr(cfg, "_y", pd.Series([0]))
-        or setattr(cfg, "data_load_time", 0.01),
-    )
-    cfg._load_data()
-    assert called == ["demo"]
+    data_declarations.load_lifelines_dataset(cfg, "lung")
+    assert list(cfg._X.columns) == ["x"]
+    assert cfg._y.tolist() == [0]
 
     csv_path = tmp_path / "data.csv"
     pd.DataFrame({"keep": [1, 2], "drop": [3, 4], "target": [0, 1]}).to_csv(
@@ -377,24 +399,22 @@ def test_load_data_routes_lifelines_aliases_and_csv_options(monkeypatch, tmp_pat
 
 
 def test_load_data_routes_yellowbrick_aliases(monkeypatch):
-    cfg = _basic_data_config(dataset_name="yellowbrick_energy", target="target")
-    called = []
-    monkeypatch.setattr(data_base, "_lifelines_dataset_loaders", lambda: {})
+    cfg = _basic_data_config(dataset_name="energy", target="target")
     monkeypatch.setattr(
-        data_base,
-        "_yellowbrick_dataset_loaders",
-        lambda: {"energy": object()},
+        data_declarations,
+        "discover_provider_dataset_loaders",
+        lambda provider: {
+            "energy": lambda **kwargs: (
+                pd.DataFrame({"x": [1]}),
+                pd.Series([0]),
+            ),
+        }
+        if provider == "yellowbrick"
+        else {},
     )
-    monkeypatch.setattr(
-        cfg,
-        "_load_yellowbrick_dataset",
-        lambda name, **params: called.append(name)
-        or setattr(cfg, "_X", pd.DataFrame({"x": [1]}))
-        or setattr(cfg, "_y", pd.Series([0]))
-        or setattr(cfg, "data_load_time", 0.01),
-    )
-    cfg._load_data()
-    assert called == ["energy"]
+    data_declarations.load_yellowbrick_dataset(cfg, "energy")
+    assert list(cfg._X.columns) == ["x"]
+    assert cfg._y.tolist() == [0]
 
 
 def test_prepare_data_file_existing_and_new(tmp_path):
@@ -404,7 +424,7 @@ def test_prepare_data_file_existing_and_new(tmp_path):
     loaded_cfg = object()
     cfg.load = lambda path: loaded_cfg
 
-    assert cfg._prepare_data_file(existing.as_posix()) == (loaded_cfg, False)
+    assert cfg._prepare_data_file(existing.as_posix()) is False
 
     target = tmp_path / "nested" / "data.pkl"
     assert cfg._prepare_data_file(target.as_posix()) is True
@@ -569,11 +589,11 @@ def test_pipeline_dtype_routing_keeps_untyped_steps(monkeypatch):
 
 def test_score_and_feature_score_branches(monkeypatch):
     cfg = _basic_data_config(scorer=None)
-    assert cfg._score() == {}
+    assert cfg.score() == {}
 
     cfg.scorer = "bad"
     with pytest.raises(TypeError):
-        cfg._score()
+        cfg.score()
 
     plugin = SimpleNamespace(
         before_score=lambda *_args, **_kwargs: None,
@@ -588,7 +608,7 @@ def test_score_and_feature_score_branches(monkeypatch):
     cfg.X_test = pd.DataFrame({"a": [1, 2]})
     cfg._X = pd.DataFrame({"a": [1, 2]})
     cfg._y = pd.Series([0, 1])
-    assert cfg._score() == {"base_score": 1, "plugin_score": 7}
+    assert cfg.score() == {"base_score": 1, "plugin_score": 7}
 
 
 def test_fit_transform_x_empty_pipeline_short_circuits():
@@ -672,14 +692,16 @@ def test_pipeline_call_saves_scores_and_handles_y_pipeline(tmp_path):
     )
     cfg.data_load_time = 0.1
     cfg.data_sample_time = 0.2
+    cfg.pipeline_fit_n = 2
+    cfg.pipeline_transform_n = 1
     cfg.X_train = pd.DataFrame({"a": [1, 2]})
     cfg.X_test = pd.DataFrame({"a": [3]})
     cfg.y_train = pd.Series([0, 1])
     cfg.y_test = pd.Series([1])
-    cfg._sample = lambda run_hooks=True: None
-    cfg._load_data = lambda: None
+    cfg.sample = lambda run_hooks=True: None
+    cfg.load_dataset = lambda: None
     cfg.read_or_initialize_scores = lambda path: {"existing": 1}
-    cfg._score = lambda mode=None, **kwargs: {"metric": 2}
+    cfg.score = lambda *args, mode=None, **kwargs: {"metric": 2}
     cfg._fit_transform_y = lambda X_train, X_test, y_train, y_test, pipeline: (
         setattr(cfg, "pipeline_y_fit_time", 0.01)
         or setattr(cfg, "pipeline_y_transform_time", 0.01)

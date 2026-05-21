@@ -185,7 +185,7 @@ Mode details for `post-pipeline` and `all`:
 - `post-pipeline`: runs data scorers on concatenated train and test splits after
    sampling (`X_train + X_test`, `y_train + y_test`).
 - `all`: currently follows the same runtime path as `post-pipeline` and
-   `post-sample` in {meth}`~deckard.data.DataConfig._score`, meaning it also
+   `post-sample` in {meth}`~deckard.data.DataConfig.score`, meaning it also
    scores the concatenated train+test splits (not raw `_X`/`_y`).
 
 If you need true full-dataset diagnostics before splitting, use `pre-sample`.

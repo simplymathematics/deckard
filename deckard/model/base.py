@@ -731,6 +731,23 @@ class ModelConfig(ConfigBase):
             logger_obj=logger,
         )
 
+    def score(
+        self,
+        y_true: pd.Series,
+        y_pred: pd.Series,
+        *args,
+        mode: str = "test",
+        **kwargs,
+    ) -> dict:
+        """Public scoring entry-point that delegates to the model scorer runtime."""
+        return self._score(
+            y_true,
+            y_pred,
+            *args,
+            mode=mode,
+            **kwargs,
+        )
+
     def _canonical_score_mode(self) -> Literal["train", "test", "val"]:
         mode = str(getattr(self, "score_mode", "test") or "test").lower()
         if mode not in {"train", "test", "val"}:
@@ -787,7 +804,7 @@ class ModelConfig(ConfigBase):
         if mode == "val":
             if data.X_val is None or data.y_val is None:
                 can_resample = (
-                    hasattr(data, "_sample")
+                    callable(getattr(data, "fit", None))
                     and getattr(data, "_X", None) is not None
                     and getattr(data, "_y", None) is not None
                 )
@@ -808,7 +825,7 @@ class ModelConfig(ConfigBase):
                         "val_n",
                     ):
                         setattr(data, attr, None)
-                    data._sample()
+                    data.fit()
             if data.X_val is None or data.y_val is None:
                 raise ValueError(
                     "ModelConfig score_mode='val' requires data.X_val and data.y_val.",
@@ -1392,7 +1409,7 @@ class ModelConfig(ConfigBase):
                         mode_probabilities = None
 
             start = time.process_time()
-            mode_scores = self._score(
+            mode_scores = self.score(
                 y_mode,
                 mode_predictions,
                 y_proba=mode_probabilities,

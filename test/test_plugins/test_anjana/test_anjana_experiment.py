@@ -67,6 +67,10 @@ def _make_anjana_data(
             },
         },
     )
+    if "sample" in base and "sampler" not in base:
+        base["sampler"] = base.pop("sample")
+    else:
+        base.pop("sample", None)
     base.update(overrides)
     cfg = AnjanaDataConfig(**base)
     if monkeypatch is not None and defense is not None:
@@ -168,7 +172,7 @@ def test_anjana_defense_transforms_x_and_y_before_split(monkeypatch):
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
         resolve_class_fn=_fake_defense_drop_half,
     )
-    cfg._load_data()
+    cfg.load_dataset()
 
     # After defense, only 10 rows should remain (half of 20)
     assert len(cfg._X) == 10

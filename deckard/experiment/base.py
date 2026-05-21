@@ -42,7 +42,7 @@ from ..utils import (
     split_separated_tokens,
 )
 from ..score.base import coerce_scorer_config, _DataScorerMarker, _AttackProfileScorer
-from ..data.sample import KFoldSampler, ShuffleSampler
+from ..data.sample import BaseSampler, KFoldSampler, ShuffleSampler
 
 try:
     import tensorflow as tf
@@ -382,8 +382,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         if loaded_data is None or configured_data is None:
             return
         for attr in (
-            "sample",
-            "fold",
+            "sampler",
+            "split",
             "val_size",
             "train_size",
             "test_size",
@@ -392,6 +392,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         ):
             if hasattr(configured_data, attr):
                 setattr(loaded_data, attr, getattr(configured_data, attr))
+        if hasattr(loaded_data, "_sampler_obj"):
+            loaded_data._sampler_obj = None
 
     def _ensure_active_mode_split_available(self) -> None:
         """Ensure required split exists for the active model score mode."""
@@ -407,7 +409,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             return
 
         can_resample = (
-            hasattr(self.data, "_sample")
+            callable(getattr(self.data, "fit", None))
             and getattr(self.data, "_X", None) is not None
             and getattr(self.data, "_y", None) is not None
         )
@@ -428,7 +430,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 "val_n",
             ):
                 setattr(self.data, attr, None)
-            self.data._sample()
+            self.data.fit()
 
         if (
             getattr(self.data, "X_val", None) is None
@@ -1312,7 +1314,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             ``(n_splits, "split")`` for ``ShuffleSampler``,
             and ``(1, "fold")`` for all other samplers.
         """
-        sampler = self.data._resolve_sample()
+        sampler = BaseSampler.resolve(self.data)
         if isinstance(sampler, KFoldSampler):
             return sampler.n_splits, "fold"
         if isinstance(sampler, ShuffleSampler):
@@ -1513,7 +1515,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             # Load raw data only (no sample yet when evaluating repeated splits)
             n_repeats, _ = self._detect_n_repeats()
             if n_repeats > 1:
-                self.data._load_data()
+                self.data.load_dataset()
             else:
                 self.data(**data_file_outputs)
 

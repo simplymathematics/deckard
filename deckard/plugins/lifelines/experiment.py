@@ -731,7 +731,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
         if isinstance(normalized_cfg, DataConfig):
             data_cfg = normalized_cfg
         if data_cfg.X is None:
-            data_cfg._load_data()
+            data_cfg.load_dataset()
         loaded_frame = data_cfg.X
         if loaded_frame is None:
             raise ValueError(

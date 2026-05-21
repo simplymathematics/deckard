@@ -229,7 +229,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     calls = []
     monkeypatch.setattr(
         DataPipelineConfig,
-        "_load_data",
+        "load_dataset",
         lambda self: (calls.append("load"), self)[1],
     )
     monkeypatch.setattr(
@@ -237,7 +237,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
         "_apply_anjana_defense",
         lambda self: calls.append("defense"),
     )
-    assert cfg._load_data() is cfg
+    assert cfg.load_dataset() is cfg
     assert calls == ["load", "defense"]
 
     monkeypatch.setattr(
@@ -248,28 +248,30 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     monkeypatch.setattr(DataPipelineConfig, "_init_pipeline", lambda self: "pipeline")
     assert cfg._init_pipeline() == "pipeline"
 
-    def _sample_with_sensitive(self, **kwargs):
-        _ = kwargs
+    def _fit_with_sensitive(self, run_hooks: bool = True):
+        _ = run_hooks
         self._X = pd.DataFrame({"group": ["a", "b", "b"], "x": [1, 2, 3]})
         self.train_indices = [0, 1]
         self.test_indices = [2]
         self.X_train = self._X.iloc[self.train_indices].reset_index(drop=True)
         self.X_test = self._X.iloc[self.test_indices].reset_index(drop=True)
+        self.y_train = pd.Series([0, 1])
+        self.y_test = pd.Series([1])
 
-    monkeypatch.setattr(DataPipelineConfig, "_sample", _sample_with_sensitive)
+    monkeypatch.setattr(DataPipelineConfig, "fit", _fit_with_sensitive)
     cfg.sensitive_columns = ["group"]
-    cfg._sample()
+    cfg.split_data()
     assert cfg._sensitive_train.tolist() == ["a", "b"]
     assert cfg._sensitive_test.tolist() == ["b"]
     assert cfg._sensitive_all.tolist() == ["a", "b", "b"]
 
     cfg_none = _bare_cfg()
-    monkeypatch.setattr(DataPipelineConfig, "_sample", lambda self, **kw: None)
-    cfg_none._sample()
+    monkeypatch.setattr(DataPipelineConfig, "fit", lambda self, run_hooks=True: None)
+    cfg_none.split_data()
 
     cfg_score = _bare_cfg()
     cfg_score.scorer = None
-    assert cfg_score._score() == {}
+    assert cfg_score.score() == {}
 
     cfg_score.scorer = "default"
     cfg_score._y = pd.Series([0, 1])
@@ -279,7 +281,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
         "load_class",
         lambda path: (lambda **kwargs: {"path": path, "n": len(kwargs["y_true"])}),
     )
-    scored = cfg_score._score(mode="pre-sample")
+    scored = cfg_score.score(mode="pre-sample")
     assert scored == {
         "path": "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
         "n": 2,
@@ -287,7 +289,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
 
     cfg_score.scorer = 5
     with pytest.raises(TypeError, match="must be callable or None"):
-        cfg_score._score(mode="pre-sample")
+        cfg_score.score(mode="pre-sample")
 
     cfg_fallback = _bare_cfg()
     cfg_fallback.scorer = lambda **kwargs: {
@@ -296,4 +298,4 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     }
     cfg_fallback._y = pd.Series([1, 0])
     cfg_fallback._X = pd.DataFrame({"z": [3, 4]})
-    assert cfg_fallback._score(mode="pre-sample") == {"rows": 2, "cols": ["z"]}
+    assert cfg_fallback.score(mode="pre-sample") == {"rows": 2, "cols": ["z"]}

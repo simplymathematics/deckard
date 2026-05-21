@@ -380,7 +380,7 @@ class TestDataConfig(unittest.TestCase):
         h2 = hash(cfg)
         self.assertEqual(h1, h2)
 
-    def test_sample_raises_value_error_if_data_not_loaded(self):
+    def test_split_data_loads_when_data_missing(self):
         cfg = DataConfig(
             dataset_name="make_classification",
             data_params={
@@ -394,13 +394,16 @@ class TestDataConfig(unittest.TestCase):
         )
         cfg._X = None
         cfg._y = None
-        with self.assertRaises(ValueError):
-            cfg._sample()
+        cfg.split_data()
+        self.assertIsNotNone(cfg.X_train)
+        self.assertIsNotNone(cfg.y_train)
+        self.assertIsNotNone(cfg.X_test)
+        self.assertIsNotNone(cfg.y_test)
 
     def test_load_data_raises_not_implemented_for_unknown_dataset(self):
         cfg = DataConfig(dataset_name="unknown_dataset", data_params={})
         with self.assertRaises(NotImplementedError):
-            cfg._load_data()
+            cfg.load_dataset()
 
     def test_load_data_raises_value_error_for_csv_without_target(self):
         import tempfile
@@ -413,7 +416,7 @@ class TestDataConfig(unittest.TestCase):
             )
             cfg = DataConfig(dataset_name=str(csv_path), data_params={})
             with self.assertRaises(ValueError):
-                cfg._load_data()
+                cfg.load_dataset()
 
     def test_call_returns_expected_shapes_for_make_classification(self):
         cfg = DataConfig(
@@ -508,7 +511,7 @@ class TestDataConfig(unittest.TestCase):
             target="status",
             stratify=False,
         )
-        cfg._load_data()
+        cfg.load_dataset()
         self.assertIn("time", cfg.X.columns)
         self.assertEqual(len(cfg.X), len(cfg.y))
 
@@ -520,7 +523,7 @@ class TestDataConfig(unittest.TestCase):
             target="status",
             stratify=False,
         )
-        cfg._load_data()
+        cfg.load_dataset()
         self.assertGreater(len(cfg.X), 0)
         self.assertEqual(len(cfg.X), len(cfg.y))
 
@@ -532,7 +535,7 @@ class TestDataConfig(unittest.TestCase):
             target="gender",
             stratify=False,
         )
-        cfg._load_data()
+        cfg.load_dataset()
         self.assertGreater(len(cfg.X), 0)
         self.assertEqual(len(cfg.X), len(cfg.y))
 
@@ -573,12 +576,14 @@ class HookRecorderPlugin:
     def after_sample(self, data_config):
         self.events.append(f"{self.name}:after_sample")
 
-    def before_score(self, data_config):
+    def before_score(self, data_config, **kwargs):
+        _ = kwargs
         self.events.append(f"{self.name}:before_score")
 
 
 class ScorePlugin:
-    def after_score(self, data_config, scores):
+    def after_score(self, data_config, scores, **kwargs):
+        _ = kwargs
         return {"plugin_metric": float(len(scores))}
 
 
@@ -802,7 +807,7 @@ class TestDataConfigAdditional(unittest.TestCase):
         h2 = hash(cfg)
         self.assertEqual(h1, h2)
 
-    def test_sample_raises_value_error_if_data_not_loaded(self):
+    def test_split_data_loads_when_data_missing(self):
         cfg = DataConfig(
             dataset_name="make_classification",
             data_params={
@@ -816,13 +821,16 @@ class TestDataConfigAdditional(unittest.TestCase):
         )
         cfg._X = None
         cfg._y = None
-        with self.assertRaises(ValueError):
-            cfg._sample()
+        cfg.split_data()
+        self.assertIsNotNone(cfg.X_train)
+        self.assertIsNotNone(cfg.y_train)
+        self.assertIsNotNone(cfg.X_test)
+        self.assertIsNotNone(cfg.y_test)
 
     def test_load_data_raises_not_implemented_for_unknown_dataset(self):
         cfg = DataConfig(dataset_name="unknown_dataset", data_params={})
         with self.assertRaises(NotImplementedError):
-            cfg._load_data()
+            cfg.load_dataset()
 
     def test_load_data_raises_value_error_for_csv_without_target(self):
         import tempfile
@@ -835,7 +843,7 @@ class TestDataConfigAdditional(unittest.TestCase):
             )
             cfg = DataConfig(dataset_name=str(csv_path), data_params={})
             with self.assertRaises(ValueError):
-                cfg._load_data()
+                cfg.load_dataset()
 
     def test_call_returns_expected_shapes_for_make_classification(self):
         cfg = DataConfig(

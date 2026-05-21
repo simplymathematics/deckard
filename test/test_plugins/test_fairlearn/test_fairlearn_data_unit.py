@@ -93,29 +93,35 @@ def test_inject_fairness_defense_step_branch_paths():
 def test_load_data_validates_sensitive_columns(monkeypatch):
     cfg = _cfg()
 
-    monkeypatch.setattr(DataPipelineConfig, "_load_data", lambda self: None)
+    monkeypatch.setattr(DataPipelineConfig, "load_dataset", lambda self: self)
     cfg._X = pd.DataFrame({"group": ["a"], "x": [1]})
     cfg._y = pd.Series([0])
     cfg.sensitive_columns = None
 
     with pytest.raises(ValueError, match="must be configured"):
-        cfg._load_data()
+        cfg.load_dataset()
 
 
 def test_sample_populates_sensitive_val_when_present(monkeypatch):
     cfg = _cfg()
     cfg.sensitive_columns = ["group"]
 
-    def _noop_sample(self, run_hooks: bool = True):
+    def _noop_fit(self, run_hooks: bool = True):
         _ = run_hooks
         self._X = pd.DataFrame({"group": ["a", "b", "b", "a"], "x": [1, 2, 3, 4]})
         self.train_indices = [0, 1]
         self.test_indices = [2]
         self.val_indices = [3]
+        self.X_train = self._X.iloc[self.train_indices].reset_index(drop=True)
+        self.X_test = self._X.iloc[self.test_indices].reset_index(drop=True)
+        self.X_val = self._X.iloc[self.val_indices].reset_index(drop=True)
+        self.y_train = pd.Series([0, 1])
+        self.y_test = pd.Series([1])
+        self.y_val = pd.Series([0])
 
-    monkeypatch.setattr(DataPipelineConfig, "_sample", _noop_sample)
+    monkeypatch.setattr(DataPipelineConfig, "fit", _noop_fit)
 
-    cfg._sample()
+    cfg.split_data()
 
     assert cfg._sensitive_train is not None
     assert cfg._sensitive_test is not None
@@ -131,8 +137,8 @@ def test_score_none_and_non_callable_paths():
     cfg._y = pd.Series([0, 1])
     cfg._X = pd.DataFrame({"x": [1, 2]})
     cfg.scorer = None
-    assert cfg._score() == {}
+    assert cfg.score() == {}
 
     cfg.scorer = "not-callable"
     with pytest.raises(TypeError, match="must be callable"):
-        cfg._score()
+        cfg.score()

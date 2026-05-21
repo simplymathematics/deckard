@@ -74,7 +74,7 @@ def test_anjana_data_score_uses_auto_default(monkeypatch):
     cfg.X_test = pd.DataFrame({"a": [2], "b": [4]})
     cfg.y_test = pd.Series([1])
 
-    out = cfg._score()
+    out = cfg.score()
     assert out["k_anonymity"] == 2.0
 
 
