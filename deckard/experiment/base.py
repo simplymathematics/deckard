@@ -265,8 +265,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         ``evaluation_mode`` and ``score_mode`` are mutually exclusive to prevent
         ambiguous routing. Use exactly one strategy:
 
-        - ``evaluation_mode``: high-level preset routing (``standard`` (train + test), ``tuning`` (test),
-            ``report`` (train + test + val)).
+        - ``evaluation_mode``: high-level preset routing (``standard`` (train + test),
+            ``tuning`` (test), ``report`` (train + test + val)).
         - ``score_mode``: explicit split routing (``train``, ``test``, ``val``,
             ``pre-sample``), optionally a list for multi-pass experiment scoring.
     """

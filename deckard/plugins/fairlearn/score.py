@@ -385,7 +385,7 @@ class _FairnessScorerMixin:
 
     ```python
     @dataclass(eq=False, kw_only=True)
-    class FairnessClassifier(_FairnessScorerMixin, DefaultClassifierConfig):
+    class FairnessClassifierScorerDict(_FairnessScorerMixin, DefaultClassifierConfig):
         group_scorers: dict = field(default_factory=lambda: { ... })
         group_reduction: str = "difference"
         ...
