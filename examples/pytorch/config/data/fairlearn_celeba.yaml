@@ -1,17 +1,19 @@
 _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
 dataset_name: torch_fairness_dataset.py:CelebASmileDataset
-train_size: 128
-test_size: 128
-random_state: 42
 classifier: true
-stratify: true
 alias: fairlearn_celeba
 data_params:
   dataset_name: flwrlabs/celeba
   subset: img_align+identity+attr
   smile_attribute: Smiling
   sensitive_attribute: Male
-  sensitive_attributes: [Male]
-
+  sensitive_attributes:
+  - Male
   batch_size: 32
   num_workers: 4
+sampler:
+  name: deckard.data.sample.SplitSampler
+  train_size: 128
+  test_size: 128
+  random_state: 42
+  stratify: true

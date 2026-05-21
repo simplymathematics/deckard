@@ -1,10 +1,10 @@
-# Use with sample: shuffle
 dataset_name: digits
-test_size: 0.2
-val_size: 0.1
-random_state: 42
 classifier: true
-stratify: true
-fold: 0
-sample: shuffle
+sampler:
+  name: deckard.data.sample.ShuffleSampler
+  test_size: 0.2
+  val_size: 0.1
+  random_state: 42
+  stratify: true
+  split: 0
 alias: digits-shuffle

@@ -1,16 +1,18 @@
 dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
 target: Case_status
-random_state : 0
-train_size : 5000
-test_size : 5000
-stratify: True
 alias: mpox
 drop:
- - ID
+- ID
 pipeline:
-    encoder:
-        name : sklearn.preprocessing.OneHotEncoder
-        handle_unknown: infrequent_if_exist
-    label_encoder:
-      name: "sklearn.preprocessing.LabelEncoder"
-      fit_y : True
+  encoder:
+    name: sklearn.preprocessing.OneHotEncoder
+    handle_unknown: infrequent_if_exist
+  label_encoder:
+    name: sklearn.preprocessing.LabelEncoder
+    fit_y: true
+sampler:
+  name: deckard.data.sample.SplitSampler
+  train_size: 5000
+  test_size: 5000
+  random_state: 0
+  stratify: true

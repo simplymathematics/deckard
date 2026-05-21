@@ -1,13 +1,15 @@
 dataset_name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/c91944733b8f2b9a6ac0b8c8fab01ddcdf0898eb/sms-spam.csv
-target: 'label'
-keep :
-    - 'message'
-random_state : 0
-test_size : .2
-stratify: True
+target: label
+keep:
+- message
 alias: sms_spam
 pipeline:
-    string_embedding:
-        name : sklearn.feature_extraction.text.TfidfVectorizer
-        max_features : 100
-        stop_words : 'english'
+  string_embedding:
+    name: sklearn.feature_extraction.text.TfidfVectorizer
+    max_features: 100
+    stop_words: english
+sampler:
+  name: deckard.data.sample.SplitSampler
+  test_size: 0.2
+  random_state: 0
+  stratify: true

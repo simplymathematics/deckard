@@ -12,6 +12,6 @@ hydra:
       ++data.alias: anjana
       ++data.dataset_name: make_classification
       ++data.classifier: bool(True)
-      ++data.sample: split
+      ++data.sampler: split
       ++data.anjana_defense.name: anjana.anonymity.k_anonymity
       ++data.anjana_defense.k: int(2)

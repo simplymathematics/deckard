@@ -1,4 +1,3 @@
-
 dataset_name: make_regression
 data_params:
   n_samples: 10000
@@ -6,10 +5,10 @@ data_params:
   n_informative: 10
   noise: 0.1
   random_state: 42
-test_size: 0.2
-random_state: 42
-sample: split
-
-stratify: False
-classifier: False
+sampler:
+  name: deckard.data.sample.SplitSampler
+  test_size: 0.2
+  random_state: 42
+  stratify: false
+classifier: false
 alias: make_regression

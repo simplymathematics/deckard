@@ -6,9 +6,9 @@ data_params:
   n_redundant: 5
   n_classes: 2
   random_state: 42
-test_size: 0.2
-random_state: 42
-sample: split
-
-classifier: True
+sampler:
+  name: deckard.data.sample.SplitSampler
+  test_size: 0.2
+  random_state: 42
+classifier: true
 alias: make_classification

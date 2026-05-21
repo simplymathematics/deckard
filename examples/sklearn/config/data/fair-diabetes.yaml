@@ -1,13 +1,15 @@
 dataset_name: diabetes
-test_size: 0.2
-random_state: 42
 _target_: deckard.plugins.fairlearn.FairlearnDataConfig
-classifier: False
-stratify: False
+classifier: false
 alias: fair-diabetes
 sensitive_columns:
-  - sex
+- sex
 pipeline:
   imputer:
     name: sklearn.impute.SimpleImputer
     strategy: mean
+sampler:
+  name: deckard.data.sample.SplitSampler
+  test_size: 0.2
+  random_state: 42
+  stratify: false

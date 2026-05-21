@@ -3,18 +3,19 @@ model_alias: ${oc.select:model.alias,no_model}
 attack_alias: ${oc.select:attack.alias,no_attack}
 defense_alias: ${oc.select:defense.alias,no_defense}
 defaults:
-  - _self_
-  - data: adult
-  - model: rf
-  - defense: class-labels
-  - attack: hsj
-  - score: classification
-  - search/models: ${oc.select:model,rf}
-  - search/defenses: ${oc.select:defense,class-labels}
-  - search/attacks: ${oc.select:attack,hsj}
-  - files: null
-  - override hydra/sweeper : optuna
-  - override hydra/sweeper/sampler : random
+- _self_
+- sampler@data.sampler: default
+- data: adult
+- model: rf
+- defense: class-labels
+- attack: hsj
+- score: classification
+- search/models: ${oc.select:model,rf}
+- search/defenses: ${oc.select:defense,class-labels}
+- search/attacks: ${oc.select:attack,hsj}
+- files: null
+- override hydra/sweeper: optuna
+- override hydra/sweeper/sampler: random
 experiment_name: ${hash:${data},${model},${attack}}
 directions:
 - maximize
@@ -43,33 +44,6 @@ hydra:
     n_jobs: 1
   callbacks:
     deckard_optuna:
-      # OptunaStudyCallback is a Hydra callback used by both single-run and
-      # --multirun executions.
-      #
-      # Single-run mode (no --multirun):
-      #   - Hydra's Optuna sweeper is not active.
-      #   - No Optuna study/trials are created by this callback.
-      #   - The callback still composes run files (e.g. params/score paths using the hydra.run.dir).
-      #
-      # Multirun mode (--multirun):
-      #   - Hydra's Optuna sweeper is active.
-      #   - study_name/storage are read from hydra.sweeper at runtime and used to
-      #     create/load the Optuna study.
-      #
-      # study_name and storage are intentionally omitted from this callback block;
-      # they can still be passed explicitly to the constructor for programmatic use.
-      #
-      # directions and optimizers drive both study creation and metric naming:
-      #   - directions: per-metric optimization direction ("minimize" or "maximize");
-      #     "diff" is treated as a non-directional delta metric and excluded from
-      #     the Optuna metric names list, but still stored.
-      #   - optimizers: metric names corresponding to each direction.
-      #
-      # File paths (directory, log_file, params_file, error_file, score_file) are
-      # also optional; when omitted they are resolved from hydra.sweep.dir/subdir
-      # and hydra.job.name at on_compose_config time.
       _target_: deckard.layers.optimize.OptunaStudyCallback
       directions: ${directions}
       optimizers: ${optimizers}
-
-      

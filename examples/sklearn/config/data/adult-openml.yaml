@@ -1,16 +1,16 @@
 dataset_name: adult.openml
-test_size: 100
-train_size: 100
-data_params: 
-
-random_state: 42
-
-classifier: True
-stratify : False
+data_params: null
+classifier: true
 alias: adult_openml
-pipeline: 
+pipeline:
   label_encoder:
-    _target_: "sklearn.preprocessing.LabelEncoder"
+    _target_: sklearn.preprocessing.LabelEncoder
   feature_selection:
-    _target_: "sklearn.feature_selection.VarianceThreshold"
+    _target_: sklearn.feature_selection.VarianceThreshold
     threshold: 0.0
+sampler:
+  name: deckard.data.sample.SplitSampler
+  train_size: 100
+  test_size: 100
+  random_state: 42
+  stratify: false

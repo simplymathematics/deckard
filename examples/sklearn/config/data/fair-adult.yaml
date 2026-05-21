@@ -1,12 +1,9 @@
 dataset_name: adult
-test_size: 0.2
-random_state: 42
 _target_: deckard.plugins.fairlearn.FairlearnDataConfig
-classifier: True
-stratify: False
+classifier: true
 alias: fair-adult-fairlearn
 sensitive_columns:
-  - sex
+- sex
 fairness_defense:
   step_name: fairness_correlation_remover
   name: fairlearn.preprocessing.CorrelationRemover
@@ -14,3 +11,8 @@ pipeline:
   imputer:
     name: sklearn.impute.SimpleImputer
     strategy: mean
+sampler:
+  name: deckard.data.sample.SplitSampler
+  test_size: 0.2
+  random_state: 42
+  stratify: false
