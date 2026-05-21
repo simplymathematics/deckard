@@ -9,24 +9,11 @@ contributor setup and verification.
 Deckard is a Python package for declarative AI experimentation, evaluation,
 and verification. The project uses:
 
-- `setuptools` build system
+- [`setuptools`](https://setuptools.pypa.io) build system
 - `pyproject.toml` for dependency and tool configuration
 - optional extras for modular installs
 - CLI entrypoint via `deckard`
 
-## Installation
-
-Base install:
-
-```bash
-pip install .
-```
-
-Editable install for local development:
-
-```bash
-pip install -e .
-```
 
 ## Dependency Model
 
@@ -51,8 +38,12 @@ pip install ".[fairlearn]"
 pip install ".[torch]"
 ```
 
-Other available extras include `lifelines`, `anjana`, `yellowbrick`,
-`seaborn`, `datasets`, and `lint`.
+Other available extras include
+[`lifelines`](../api/lifelines),
+[`anjana`](../api/anjana),
+[`yellowbrick`](../api/yellowbrick),
+[`seaborn`](../api/seaborn),
+`datasets`, and `lint`.
 
 ## Contributor Workflow
 
@@ -90,6 +81,16 @@ flake8 deckard/
 black deckard/
 mypy deckard/
 ```
+
+Tools used:
+- [`pre-commit`](https://pre-commit.com) — multi-language pre-commit hook framework
+- [`flake8`](https://flake8.pycqa.org) — Python style and lint checker
+- [`black`](https://black.readthedocs.io) — opinionated Python code formatter
+- [`mypy`](https://mypy.readthedocs.io) — static type checker for Python
+- [`Hydra`](https://hydra.cc) — hierarchical configuration composition and overrides
+- [`Optuna`](https://optuna.org) — hyperparameter optimization and pruning workflows
+- [`Adversarial Robustness Toolbox (ART)`](https://adversarial-robustness-toolbox.org/) — adversarial attacks and defenses
+- [`DVC`](https://dvc.org) — data and artifact versioning for reproducible pipelines
 
 ## Coverage Script
 
@@ -144,8 +145,8 @@ Extension documentation:
 	implicit fallback behavior.
 - Keep metric naming stable, especially for multi-attack and extension metrics,
 	to preserve downstream report compatibility.
-- When modifying notebook-driven workflows, validate with the corresponding DVC
-	stage.
+- When modifying notebook-driven workflows, validate with the corresponding
+	[DVC](https://dvc.org) stage.
 
 ## Documentation Responsibilities
 
@@ -170,6 +171,6 @@ Build docs from the `docs/` directory:
 make html
 ```
 
-For DVC notebook caching behavior in local/CI docs builds, see
+For [DVC](https://dvc.org) notebook caching behavior in local/CI docs builds, see
 [DVC Cache Setup Summary](gh_actions_cache) and
 [DVC Cache and Notebook Workflow Guide](gh_actions_cache).

@@ -8,6 +8,10 @@ in settings where input data can be manipulated, noisy, or adversarial.
 Configuration is declarative and YAML-driven, making experiments reproducible
 and framework-agnostic while minimizing infrastructure overhead.
 
+The main workflow is multi-objective optimization over configurable scorer
+families, followed by post-hoc analysis layers for Pareto filtering,
+visualization, and survival diagnostics.
+
 The toolkit includes support for multiple classes of evasion and inference
 attacks, as well as fairness-oriented metrics and defenses, and is designed to
 be easily extended with additional model, data, metric, and attack components.
@@ -30,17 +34,31 @@ difficult to audit.
 
 deckard addresses this by providing:
 
-- configuration-driven orchestration of full ML pipelines
+- configuration-driven orchestration of full ML pipelines around
+	multi-objective optimization
 - repeatable experiment execution with explicit run metadata
 - integrated result collection for comparison and reporting
-- `hydra` integration for command line configuration
-- `optuna` integration for search space sampling, experiment pruning, and multi-objective optimization
-- **Defense pipelines** that chain ART-based defenses (preprocessors, postprocessors, trainers)
+- [`Hydra`](https://hydra.cc) integration for command line configuration
+- [`Optuna`](https://optuna.org) integration for search space sampling, experiment pruning, and multi-objective optimization
+- **Defense pipelines** that chain [Adversarial Robustness Toolbox (ART)](https://adversarial-robustness-toolbox.org/)-based defenses (preprocessors, postprocessors, trainers)
 - **Detector phase** for auxiliary adversarial/poison detection models executed after attacks
 - **Data sampling strategies** (split, k-fold, shuffle) for robust evaluation
 - **Scorer dictionaries** for unified metric management across data, model, and attack components
 - Numerous extensions for attacking, defending, and measuring various ML metrics (fairness, survival, PyTorch)
 - Designed to be easily extensible, but also provide reasonable defaults to minimize configuration needs
+
+Base runtime configuration objects used in most experiment graphs:
+
+- [DataConfig](../api/data)
+- [ModelConfig](../api/model)
+- [AttackConfig](../api/attack)
+- [DetectorConfig](../api/detector)
+- [ExperimentConfig](../api/experiment)
+- [FileConfig](../api/file)
+
+Dependencies are modular: start with core install, then opt into extension
+stacks (for example PyTorch, Fairlearn, Lifelines, Seaborn, Yellowbrick,
+Anjana) described in [Extensions](extensions) and [Installation](installation).
 
 This reduces engineering friction so researchers can focus on methodology
 instead of ad-hoc pipeline glue code.
@@ -58,6 +76,8 @@ integrate fairlearn for disparate impact, equalized odds, and demographic parity
 measurement. Use :class:`~deckard.score.attack.FairlearnAttackScorerConfig` to
 measure how adversarial robustness varies across groups.
 
+See [Fairlearn plugin API](../api/fairlearn).
+
 ### Privacy And Anonymization
 
 Quantify privacy-utility tradeoffs via :mod:`deckard.Anjana` and
@@ -68,7 +88,7 @@ guarantees, and accuracy impact.
 ### Adversarial Robustness And Attacks
 
 Execute evasion, membership inference, attribute inference, and model inversion
-attacks via :class:`~deckard.attack.AttackConfig` with full ART integration.
+attacks via :class:`~deckard.attack.AttackConfig` with full [Adversarial Robustness Toolbox (ART)](https://adversarial-robustness-toolbox.org/) integration.
 Chain defenses using :class:`~deckard.model.DefensePipelineConfig`. Measure
 attack success rates, defense effectiveness, and certified robustness bounds.
 Combine with fairness analysis for group-aware robustness metrics.
@@ -87,6 +107,9 @@ All metric types (fairness, privacy, attack, standard) integrate through
 :class:`deckard.score.ScorerDictConfig` for unified scoring interface. Define
 custom metrics or wrap scikit-learn, numpy, or domain-specific scoring
 functions.
+
+These scorer definitions become optimization objectives in Optuna studies and
+remain available for downstream layer analysis.
 
 ## Usage
 
@@ -150,6 +173,15 @@ Typical workflow composition includes:
 By standardizing these stages, deckard reduces ambiguity in experiment setup
 and makes comparative benchmarking easier.
 
+## Optimization-First Workflow
+
+1. Define objective scorers in [Score API](../api/score).
+2. Compose experiment config via [Hydra](https://hydra.cc) config groups.
+3. Run single or multi-objective optimization through [Optuna](https://optuna.org).
+4. Persist predictions, scores, and metadata through [File API](../api/file).
+5. Run post-hoc layers for Pareto selection and visual diagnostics via
+	[Layers API](../api/layers).
+
 ## Reproducibility And Auditability
 
 deckard emphasizes reproducibility by making configuration and artifacts first
@@ -159,13 +191,16 @@ class outputs of every run.
 - parameters are serialized and can be hashed for run identity
 - output artifacts can be tracked in version-controlled workflows
 
+Persistence includes scorer outputs, run metadata, model/data artifacts, and
+plot-ready tabular outputs used by post-hoc layers.
+
 This supports internal auditability requirements and reproducible research
 publication practices.
 
 ## Parallel And Distributed Design
 
 deckard is designed to run on laptops, single servers, and cluster-backed
-environments. Through Hydra-based composition and optimizer/scheduler-friendly
+environments. Through [Hydra](https://hydra.cc)-based composition and optimizer/scheduler-friendly
 configuration, the same experiment definition can be reused across:
 
 - local iterative development
@@ -182,5 +217,7 @@ See also:
 - [Package Summary](summary.md).
 - [API Reference](../api/modules)
 - [Extensions](extensions.md)
+- [Scoring Guide](scoring)
+- [Layers](../api/layers)
 - [Notebooks](../notebooks/index)
 - [Developer Docs](../developers/development)

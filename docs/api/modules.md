@@ -5,7 +5,11 @@
 :caption: API Modules
 
 data
+sample
+pipeline
 model
+train
+defend
 attack
 detector
 experiment
@@ -14,4 +18,10 @@ plot
 layers
 file
 utils
+pytorch
+anjana
+fairlearn
+lifelines
+seaborn
+yellowbrick
 ```

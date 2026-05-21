@@ -10,6 +10,13 @@ The plotting package exposes two public entry points:
    experiment configs and prepare experiment outputs at most once before
    rendering plots.
 
+Backend references:
+
+- [Matplotlib](https://matplotlib.org/stable/)
+- [Seaborn](https://seaborn.pydata.org)
+- [Yellowbrick](https://www.scikit-yb.org)
+- [lifelines plotting](https://lifelines.readthedocs.io/en/latest/lifelines.plotting.html)
+
 ```{eval-rst}
 .. automodule:: deckard.plot
    :members:
@@ -46,6 +53,10 @@ Plot configs separate plotting intent from execution details. They support:
 - shared style and rc parameter configuration
 - optional experiment-aware setup for plotting from prior outputs
 
+Hydra users can compose plot backends and parameters through config groups and
+overrides; see [Hydra](https://hydra.cc) and {doc}`experiment` for runtime
+composition context.
+
 ## Examples
 
 ```{seealso}
@@ -80,4 +91,5 @@ experiment context lazily before rendering to avoid repeated setup.
 * {doc}`score` — scoring framework that produces plotting data
 * {doc}`seaborn` — statistical visualization with Seaborn
 * {doc}`yellowbrick` — model interpretability visualizations
-* {doc}`layers` — advanced workflows
+* {doc}`lifelines` — survival model and plotting integration
+* {doc}`layers` — plot, survival, and pareto post-processing workflows

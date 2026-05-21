@@ -21,6 +21,18 @@ The {mod}`deckard.plugins.seaborn.plot` module provides:
 These configs are intended for post-hoc visualization of compiled experiment
 results rather than single-run diagnostics.
 
+External references:
+
+- [Seaborn documentation](https://seaborn.pydata.org)
+- [`seaborn.scatterplot`](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)
+- [`seaborn.lineplot`](https://seaborn.pydata.org/generated/seaborn.lineplot.html)
+- [`seaborn.heatmap`](https://seaborn.pydata.org/generated/seaborn.heatmap.html)
+
+Related Deckard docs:
+
+- {doc}`score` for how plotted fields are produced by scorer configs
+- {doc}`layers` for compiled-results and plotting layer orchestration
+
 ### Supported plot types
 
 The ``plot_type`` field accepts:

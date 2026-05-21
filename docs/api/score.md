@@ -55,6 +55,21 @@ These registrations are added through :func:`~deckard.score.safe_store`, which
 wraps Hydra's ``ConfigStore.instance().store(...)`` and tolerates duplicate
 import-time registration attempts in tests and repeated imports.
 
+## Common scorer components and references
+
+Specific scorer profiles in this module are designed to compose with
+{doc}`model`, {doc}`data`, {doc}`attack`, and plugin APIs such as
+{doc}`fairlearn` and {doc}`lifelines`.
+
+Frequently referenced metric callables include:
+
+- [`sklearn.metrics.accuracy_score`](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html)
+- [`sklearn.metrics.f1_score`](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html)
+- [`sklearn.metrics.mean_squared_error`](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html)
+- [`fairlearn.metrics.demographic_parity_difference`](https://fairlearn.org/main/api_reference/generated/fairlearn.metrics.demographic_parity_difference.html)
+- [`fairlearn.metrics.equalized_odds_difference`](https://fairlearn.org/main/api_reference/generated/fairlearn.metrics.equalized_odds_difference.html)
+- [`lifelines.utils.concordance_index`](https://lifelines.readthedocs.io/en/latest/lifelines.utils.html#lifelines.utils.concordance_index)
+
 ## Examples
 
 ```{seealso}

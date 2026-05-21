@@ -12,6 +12,10 @@ It provides helpers for:
 - model and data artifact management
 - run directory organization
 
+File outputs are commonly coordinated with [Hydra](https://hydra.cc)
+run/multirun directories and [OmegaConf](https://omegaconf.readthedocs.io)
+resolved config values.
+
 ## Examples
 
 ```{seealso}
@@ -37,6 +41,13 @@ It provides helpers for:
 2. Execute experiment/model/attack/score layers.
 3. Persist and reload artifacts via file config helpers.
 
+Hydra-focused workflow notes:
+
+1. Compose output roots via Hydra config groups and overrides.
+2. Resolve run-specific paths after OmegaConf interpolation.
+3. Keep artifact paths consistent across {doc}`experiment`, {doc}`plot`, and
+   {doc}`layers` stages.
+
 ## Troubleshooting
 
 - Ensure output directories are writable.
@@ -49,3 +60,5 @@ It provides helpers for:
 * {doc}`data` — dataset artifacts
 * {doc}`model` — model artifacts
 * {doc}`score` — score persistence and loading
+* {doc}`plot` — plot artifact outputs
+* {doc}`layers` — compile/plot/pareto layer outputs

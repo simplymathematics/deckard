@@ -18,6 +18,24 @@ The Lifelines integration consists of four main modules:
 These modules support adversarial robustness studies on time-to-event models,
 including attacks that perturb event times or event status.
 
+Hydra-oriented configuration for survival experiments is covered in
+{doc}`experiment` and follows [Hydra](https://hydra.cc) composition patterns.
+
+External references:
+
+- [lifelines documentation](https://lifelines.readthedocs.io)
+- [`lifelines.fitters.coxph_fitter.CoxPHFitter`](https://lifelines.readthedocs.io/en/latest/fitters/regression/CoxPHFitter.html)
+- [`lifelines.fitters.weibull_fitter.WeibullFitter`](https://lifelines.readthedocs.io/en/latest/fitters/univariate/WeibullFitter.html)
+- [`lifelines.utils.concordance_index`](https://lifelines.readthedocs.io/en/latest/lifelines.utils.html#lifelines.utils.concordance_index)
+
+Related Deckard docs:
+
+- {doc}`score` for shared scorer profiles and metric composition
+- {doc}`model` for defense-enabled model orchestration
+- {doc}`attack` for attack execution with survival configurations
+- {doc}`plot` for survival curve plotting backends
+- {doc}`pipeline` and {doc}`sample` for survival preprocessing/split workflows
+
 ### Key Features
 
 - **Lifelines integration**: support for Kaplan-Meier, Cox PH, Weibull, and other
@@ -33,6 +51,7 @@ Extension docs:
 
 - {doc}`pytorch`
 - {doc}`plot`
+- {doc}`experiment`
 
 ### Score Types Available
 
@@ -159,5 +178,7 @@ custom user-provided regression fitters can be imported reliably.
 * {doc}`experiment` — experiment orchestration including
   {class}`~deckard.plugins.lifelines.experiment.SurvivalExperimentConfig`
 * {doc}`plot` — visualization including survival curve plotting
+* {doc}`pipeline` — data-pipeline composition for survival datasets
+* {doc}`sample` — split and fold strategies used by survival runs
 * {doc}`pytorch` — optional deep learning survival models
 * {doc}`modules` — overview of all extensions

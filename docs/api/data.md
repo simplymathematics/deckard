@@ -29,6 +29,17 @@ for robust train/test/validation splits.
 The {class}`~deckard.data.DataPipelineConfig` wraps scikit-learn's {class}`~sklearn.pipeline.Pipeline`
 to enable configurable feature preprocessing with timing instrumentation.
 
+Common transform components referenced in deckard pipeline configs:
+
+- [`sklearn.pipeline.Pipeline`](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html)
+- [`sklearn.compose.ColumnTransformer`](https://scikit-learn.org/stable/modules/generated/sklearn.compose.ColumnTransformer.html)
+- [`sklearn.preprocessing.StandardScaler`](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html)
+- [`sklearn.preprocessing.OneHotEncoder`](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html)
+
+For torch-native transforms, see {doc}`pytorch` and:
+
+- [`torchvision.transforms.Compose`](https://pytorch.org/vision/stable/generated/torchvision.transforms.Compose.html)
+
 ## Extensions
 
 ### Pipeline Extension
@@ -132,6 +143,8 @@ If you encounter issues with dataset loading, ensure that:
 
 ### See also
 * {doc}`model` — model configuration and training
+* {doc}`sample` — pluggable train/test/val samplers
+* {doc}`pipeline` — data pipeline config and DataPipelineMixin behavior
 * {doc}`experiment` — experiment orchestration
 * {doc}`attack` — attack configuration
 * {doc}`score` — scoring framework

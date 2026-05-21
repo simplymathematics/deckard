@@ -12,6 +12,15 @@ across:
 deckard uses Hydra/OmegaConf for configuration composition and supports Optuna
 for multirun optimization.
 
+Primary runtime composition objects are:
+
+- [DataConfig](../api/data)
+- [ModelConfig](../api/model)
+- [AttackConfig](../api/attack)
+- [DetectorConfig](../api/detector)
+- [ExperimentConfig](../api/experiment)
+- [FileConfig](../api/file)
+
 ## Prerequisites
 
 - Python 3.10 or higher
@@ -64,6 +73,25 @@ python -m pip install -e .
 
 This command installs the project's dependencies in "editable" mode. Editable mode (`-e .`) allows you to modify the source code and have changes reflected immediately without needing to reinstall the package. The `-m` flag tells Python to run the `pip` module as a script, ensuring you use the correct version of `pip` for your environment.
 
+Optional dependency stacks (install as needed):
+
+```bash
+pip install -e '.[test]'
+pip install -e '.[docs]'
+pip install -e '.[torch]'
+pip install -e '.[fairlearn]'
+pip install -e '.[lifelines]'
+pip install -e '.[seaborn]'
+pip install -e '.[yellowbrick]'
+pip install -e '.[anjana]'
+```
+
+For a full extension stack in one environment:
+
+```bash
+pip install -e '.[all]'
+```
+
 ## Repository layout:
 
 ```
@@ -93,6 +121,14 @@ python -m deckard --help
 python -m deckard optimize --help
 python -m deckard plot --help
 ```
+
+Optimization-first run flow:
+
+1. Define scorers/objectives (see [Scoring](scoring)).
+2. Compose configs with [Hydra](https://hydra.cc).
+3. Run optimization with [Optuna](https://optuna.org).
+4. Persist outputs through [File API](../api/file).
+5. Run post-hoc analysis through [Layers API](../api/layers).
 
 Quick example:
 
@@ -129,6 +165,11 @@ API entry points:
 Notebook entry point:
 
 - Notebook hub: {doc}`/notebooks/index`
+
+Post-hoc layer entry points:
+
+- Layer API: {doc}`/api/layers`
+- Plot API: {doc}`/api/plot`
 
 ### Example Configs
 

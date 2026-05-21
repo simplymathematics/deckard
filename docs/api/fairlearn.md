@@ -15,6 +15,14 @@ The Fairlearn integration consists of three main extension modules:
 
 These modules support fairness analysis and mitigation by quantifying and reducing bias in model predictions.
 
+External references:
+
+- [Fairlearn documentation](https://fairlearn.org/main/)
+- [`fairlearn.metrics.demographic_parity_difference`](https://fairlearn.org/main/api_reference/generated/fairlearn.metrics.demographic_parity_difference.html)
+- [`fairlearn.metrics.equalized_odds_difference`](https://fairlearn.org/main/api_reference/generated/fairlearn.metrics.equalized_odds_difference.html)
+- [`fairlearn.reductions.ExponentiatedGradient`](https://fairlearn.org/main/api_reference/generated/fairlearn.reductions.ExponentiatedGradient.html)
+- [Adversarial Robustness Toolbox (ART)](https://adversarial-robustness-toolbox.org/) for paired attack/defense workflows
+
 ### Key Features
 
 - **Fairness metrics**: evaluate model bias and group fairness
@@ -82,6 +90,55 @@ The {mod}`deckard.plugins.fairlearn.score` module provides:
 
 - {class}`~deckard.plugins.fairlearn.score.DefaultFairnessDataScoreConfig` — data-level fairness metrics (group parity, bias)
 - {class}`~deckard.plugins.fairlearn.score.DefaultFairnessModelScoreConfig` — model-level fairness and utility metrics (accuracy, group fairness)
+
+### How Deckard builds MetricFrame
+
+Group fairness aggregation is implemented through
+[`fairlearn.metrics.MetricFrame`](https://fairlearn.org/main/api_reference/generated/fairlearn.metrics.MetricFrame.html)
+inside Deckard's Fairlearn scorer pipeline.
+
+Deckard constructs MetricFrame with:
+
+```python
+return MetricFrame(
+      metrics=metrics,
+      y_true=y_true,
+      y_pred=y_pred,
+      sensitive_features=sensitive_features,
+      control_features=control_features,
+      sample_params=sample_params,
+      n_boot=n_boot,
+      ci_quantiles=ci_quantiles,
+      random_state=random_state,
+)
+```
+
+Parameter semantics in Deckard runtime:
+
+- `metrics`: normalized metric callables from `group_scorers` on
+   {class}`~deckard.plugins.fairlearn.score.FairlearnScoreDictConfig`.
+- `y_true`: resolved labels from the active scoring mode (`train`, `test`,
+   `val`, `attack`, or `attack-val`).
+- `y_pred`: resolved predictions aligned to `y_true`.
+- `sensitive_features`: protected/group attributes resolved from
+   {class}`~deckard.data.DataConfig` (or explicitly passed at call-time).
+- `control_features`: optional conditioning columns for conditional group
+   evaluation (forwarded directly to MetricFrame).
+- `sample_params`: optional per-metric sample kwargs mapping forwarded as-is.
+- `n_boot`: optional bootstrap iteration count for confidence intervals.
+- `ci_quantiles`: optional quantiles to report when bootstrap is enabled.
+- `random_state`: optional RNG seed/state for reproducible bootstrap behavior.
+
+Related reduction controls on
+{class}`~deckard.plugins.fairlearn.score.FairlearnScoreDictConfig`:
+
+- `group_reduction`: `difference`, `ratio`, or `none`
+- `group_reduction_method`: `between_groups` or `to_overall`
+- `include_group_overall`: include MetricFrame `overall` outputs
+- `include_group_by_group`: include flattened `by_group` outputs
+
+See also {doc}`score` for scorer profile composition and {doc}`attack` for
+attack-time fairness scoring.
 
 ## Examples
 

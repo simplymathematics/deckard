@@ -9,6 +9,18 @@ This guide documents scoring behavior for the base runtime configs:
 
 It covers scoring defaults, `mode` and `stage` semantics, output conventions, and custom scorer examples.
 
+Scoring is the primary objective-definition layer for
+[multi-objective optimization](https://optuna.readthedocs.io/en/stable/tutorial/20_recipes/002_multi_objective.html)
+in Deckard. Scorer outputs are persisted and then reused for post-hoc analysis
+via [Layers](../api/layers).
+
+Related APIs:
+
+- [Score API](../api/score)
+- [Experiment API](../api/experiment)
+- [File API](../api/file)
+- [Layers API](../api/layers)
+
 ## Core Concepts
 
 ### `mode` vs `stage`
@@ -39,9 +51,11 @@ Scorers may produce nested stage/mode outputs internally. Runtime owners can fla
 
 ## `DataConfig`
 
+API reference: [Data API](../api/data)
+
 Defaults:
 
-- `score_mode`: `pre-sample`
+- `score_mode`: `post-pipeline`
 - `scorer`:
   - classification: `deckard.score.data.DefaultDataClassificationConfig`
   - regression: `deckard.score.data.DefaultDataRegressionConfig`
@@ -61,10 +75,13 @@ cfg = DataConfig(
     data_params={"n_samples": 100, "n_features": 10},
 )
 
-scores = cfg._score(mode="pre-sample", stage="pre-sample")
+scores = cfg._score(mode="all", stage="pre-sample")
+
 ```
 
 ## `ModelConfig`
+
+API reference: [Model API](../api/model)
 
 Defaults:
 
@@ -101,6 +118,8 @@ out = model_cfg._score(
 
 ## `DetectorConfig`
 
+API reference: [Detector API](../api/detector)
+
 Defaults:
 
 - `scorer`: `DetectorScorerConfig(classifier=True)` when not provided
@@ -124,6 +143,8 @@ detector_cfg = DetectorConfig(
 ```
 
 ## `AttackConfig`
+
+API reference: [Attack API](../api/attack)
 
 Defaults:
 
@@ -236,6 +257,12 @@ scorers:
 - Raise explicit errors for unsupported stage/mode combinations.
 - Keep scoring configurable via scorer configs, not ad-hoc subtype metric code.
 - Preserve compatibility aliases only at output boundaries.
+- Persist scorer outputs and metadata through [FileConfig](../api/file) so
+    optimization and post-hoc workflows consume the same artifacts.
+- Treat scorer definitions as objective contracts for
+    [Optuna](https://optuna.org) studies.
+- Use [Layers](../api/layers) for post-hoc Pareto selection and plotting once
+    optimization runs complete.
 
 ## Quick Checklist
 

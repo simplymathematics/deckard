@@ -1,6 +1,8 @@
 # Docstring Standard
 
-All public API docstrings in Deckard must use **MyST-native Google-style** sections, rendered via `sphinx.ext.napoleon` and `myst_nb`. No reStructuredText markup is allowed in public docstrings.
+All public API docstrings in Deckard must use **MyST-native Google-style** sections, rendered via
+[`sphinx.ext.napoleon`](https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html)
+and [`myst_nb`](https://myst-nb.readthedocs.io). No reStructuredText markup is allowed in public docstrings.
 
 ## Required Sections
 | Section    | When to include                |
@@ -17,6 +19,7 @@ All public API docstrings in Deckard must use **MyST-native Google-style** secti
 - **Cross-references**: Use MyST role syntax: `` {class}`deckard.data.base.DataConfig` ``
 - **Code examples**: Use fenced Markdown blocks (` ```python `), not RST directives
 - `napoleon_google_docstring = True` (see `docs/conf.py`)
+- `napoleon_google_docstring = True` (see `docs/conf.py`); see the [napoleon docs](https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html) for full section reference
 - Target: `napoleon_numpy_docstring = False` once all docstrings are migrated
 
 ## Example

@@ -19,9 +19,42 @@ Layers are thin orchestration entrypoints for higher-level tasks, such as:
 - plotting
 - survival analysis
 - progress monitoring
+- Pareto-front trial selection
 
 Each layer is registered in :data:`deckard.layers.layer_dict` as a
 ``[parser, main]`` pair consumed by the top-level CLI.
+
+## Pareto Layer
+
+The Pareto layer is implemented in {mod}`deckard.layers.pareto` and selects
+Pareto-optimal Optuna trials for multi-objective workflows.
+
+It uses:
+
+- [Optuna studies](https://optuna.readthedocs.io/en/stable/reference/study.html)
+- [paretoset](https://paretoset.readthedocs.io/en/latest/) for efficient
+  Pareto front computation
+
+Hydra-driven optimization workflows can feed this layer by persisting Optuna
+study outputs and objective columns referenced by `optimizers` and `directions`.
+
+```{eval-rst}
+.. automodule:: deckard.layers.pareto
+   :members:
+   :show-inheritance:
+```
+
+```{eval-rst}
+.. automodule:: deckard.layers.plot
+   :members:
+   :show-inheritance:
+```
+
+```{eval-rst}
+.. automodule:: deckard.layers.survival
+   :members:
+   :show-inheritance:
+```
 
 ## Examples
 
@@ -49,4 +82,6 @@ delegate to domain modules, and normalize outputs for CLI and automation.
 
 * {doc}`experiment`
 * {doc}`plot`
+* {doc}`lifelines`
+* {doc}`file`
 * {doc}`utils`

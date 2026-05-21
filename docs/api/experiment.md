@@ -45,6 +45,13 @@ The experiment layer coordinates the full deckard workflow by composing:
 
 It is the primary integration point for reproducible end-to-end runs.
 
+Experiment configs are typically composed with [Hydra](https://hydra.cc) and
+[OmegaConf](https://omegaconf.readthedocs.io), including config-group overrides
+for data, model, attack, detector, score, and file targets.
+
+For config-group organization details, see
+{doc}`/developers/config_declaration_architecture`.
+
 Available experiment entrypoints:
 
 - {class}`~deckard.experiment.ExperimentConfig` (default)
@@ -68,6 +75,12 @@ Available experiment entrypoints:
 The module resolves nested config objects, applies runtime overrides, and
 normalizes outputs for downstream scoring/serialization.
 
+Hydra override patterns commonly used with experiments include:
+
+- selecting alternate attack/score profiles per run
+- composing plugin configs (for example fairlearn or lifelines)
+- switching runtime backends (sklearn, pytorch, survival)
+
 ## Troubleshooting
 
 - Verify config paths and override keys when Hydra/OmegaConf resolution fails.
@@ -81,6 +94,8 @@ normalizes outputs for downstream scoring/serialization.
 * {doc}`attack` — attack configuration
 * {doc}`file` — result serialization
 * {doc}`score` — scoring framework
+* {doc}`plot` — backend plotting configuration and outputs
+* {doc}`layers` — CLI orchestration layers (including pareto and survival)
 * {doc}`pytorch` — PyTorch experiment orchestration
 * {doc}`lifelines` — survival experiment orchestration
 * {doc}`utils` — utility functions

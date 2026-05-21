@@ -1,6 +1,6 @@
 # Config Declaration Architecture
 
-This document defines the refactor design for Hydra config declaration discovery and registration.
+This document defines the refactor design for [Hydra](https://hydra.cc) config declaration discovery and registration.
 
 ## Canonical Sources
 
@@ -9,6 +9,14 @@ Authoritative config declarations live in:
 - `examples/sklearn/configs/`
 - `examples/pytorch/configs/`
 - External roots provided via `DECKARD_CONFIG_DIRS` (optional)
+
+Plugin declaration families that commonly register through these roots include:
+
+- [Fairlearn plugin API](../api/fairlearn)
+- [Lifelines plugin API](../api/lifelines)
+- [Seaborn plugin API](../api/seaborn)
+- [Yellowbrick plugin API](../api/yellowbrick)
+- [Anjana plugin API](../api/anjana)
 
 The `deckard/` Python package should provide runtime registration logic, not authoritative declaration content.
 
@@ -20,15 +28,15 @@ Expected responsibilities:
 
 - discover config roots (built-in + `DECKARD_CONFIG_DIRS`)
 - iterate YAML declaration files under those roots
-- parse declarations into Hydra-compatible registration metadata
+- parse declarations into [Hydra](https://hydra.cc)-compatible registration metadata
 - register declarations dynamically with `safe_store()`
 - gate framework/plugin registration on installed optional dependencies
 
 ## Hydra Organization
 
-Use canonical Hydra groups with this structure:
+Use canonical [Hydra](https://hydra.cc) config groups with this structure:
 
-- `<group>/<plugin>_<alias-name>`
+- `<group>@<sub-group>/<plugin>_<alias-name>`
 
 Examples:
 
@@ -47,8 +55,12 @@ Use `-` in multi-word aliases.
 
 ## Test Strategy
 
-- Compose-first tests: verify Hydra composition for canonical declarations.
+- Compose-first tests: verify [Hydra](https://hydra.cc) composition for canonical declarations. Use:
+```
+deckard optimize --cfg job 
+```
 - Unit tests: consume canonical composed configs instead of fixture-local declaration copies.
+
 - Experiment tests: validate end-to-end execution from composed canonical config stacks.
 
 ---

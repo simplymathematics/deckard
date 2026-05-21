@@ -9,6 +9,7 @@ Deckard is built on a set of architectural and design principles that ensure rep
 - **Extensible by Design**: New frameworks, and metrics can be added without modifying the core.
 - **Separation of Concerns**: Core, framework, and plugin layers are strictly separated.
 - **Reproducibility**: All workflows are DVC- and Hydra-compatible for reproducible runs.
+- **Reproducibility**: All workflows are [DVC](https://dvc.org)- and [Hydra](https://hydra.cc)-compatible for reproducible runs.
 
 See the [Refactor Plan](refactor_plan) for implementation details and ongoing goals.
 

@@ -2,6 +2,14 @@
 
 This document provides a comprehensive overview of all GitHub Actions workflows in the Deckard project, their purposes, triggers, and current status.
 
+Related tooling and plugin references:
+
+- [DVC](https://dvc.org) for artifact and notebook cache management
+- [Hydra](https://hydra.cc) for config composition used by test and experiment workflows
+- [Optuna](https://optuna.org) for optimization-oriented notebook and experiment runs
+- [Adversarial Robustness Toolbox (ART)](https://adversarial-robustness-toolbox.org/) for attack/defense integrations
+- Plugin APIs: [Fairlearn](../api/fairlearn), [Lifelines](../api/lifelines), [Seaborn](../api/seaborn), [Yellowbrick](../api/yellowbrick), [Anjana](../api/anjana)
+
 ## Workflow Categories
 
 ### Core Testing Workflows

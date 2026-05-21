@@ -2,15 +2,27 @@
 
 ## Purpose
 
-The **Overview** section is the fastest way to understand what **deckard** is,
-what problems it solves, and how to run reproducible evaluations with minimal
-boilerplate.
+The **Overview** section is the fastest way to understand how **deckard** runs
+reproducible, multi-objective ML optimization and how to perform post-hoc
+analysis from persisted experiment artifacts.
 
 It is intended for:
 
 - **Researchers** who need repeatable experiment workflows
 - **Engineers** who need structured security, fairness, and privacy benchmarking
 - **Contributors** extending data, model, attack, or scoring components
+
+Core themes covered in this section:
+
+- dependency setup for core and optional extension stacks
+- concise composition of base runtime configs
+	([DataConfig](../api/data), [ModelConfig](../api/model),
+	[AttackConfig](../api/attack), [DetectorConfig](../api/detector),
+	[ExperimentConfig](../api/experiment), [FileConfig](../api/file))
+- scoring and persistence as first-class optimization outputs
+- multi-objective optimization via [Optuna](https://optuna.org) and
+	[Hydra](https://hydra.cc)
+- post-hoc evaluation pipelines via [Layers](../api/layers)
 
 ## Recommended Reading Order
 
@@ -21,6 +33,7 @@ The following pages are ordered for progressive onboarding:
 2. [Summary](summary.md)
 3. [Extensions](extensions.md)
 4. [Installation](installation.md)
+5. [Scoring](scoring.md)
 5. [Notebooks](../notebooks/index.md)
 6. [API Reference](../api/modules.md)
 7. [Developer Docs](../developers/index.md)

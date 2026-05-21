@@ -40,6 +40,12 @@ with PyTorch-specific behavior:
 - Supports device placement for GPU-accelerated data loading
 - Integrates with {mod}`deckard.plugins.fairlearn.data` for stratified sampling
 
+Common torch transform and data pipeline components:
+
+- [`torch.utils.data.DataLoader`](https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader)
+- [`torchvision.transforms.Compose`](https://pytorch.org/vision/stable/generated/torchvision.transforms.Compose.html)
+- [`torchvision.transforms.Normalize`](https://pytorch.org/vision/stable/generated/torchvision.transforms.Normalize.html)
+
 ### Model Configuration
 
 The {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig` supports:
@@ -51,6 +57,16 @@ The {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig` supports:
 - Optional early stopping and checkpoint management
 - Integration with ART's {class}`~art.estimators.classification.PyTorchClassifier`
   and {class}`~art.estimators.regression.PyTorchRegressor`
+
+Common ART attack and defense components used with torch workflows:
+
+- [`FastGradientMethod`](https://adversarial-robustness-toolbox.readthedocs.io/en/latest/modules/attacks/evasion.html#fast-gradient-method-fgm)
+- [`ProjectedGradientDescent`](https://adversarial-robustness-toolbox.readthedocs.io/en/latest/modules/attacks/evasion.html#projected-gradient-descent-pgd)
+- [`FeatureSqueezing`](https://adversarial-robustness-toolbox.readthedocs.io/en/latest/modules/defences/preprocessor.html#feature-squeezing)
+- [`AdversarialTrainer`](https://adversarial-robustness-toolbox.readthedocs.io/en/latest/modules/defences/trainer.html#adversarial-training)
+
+See also {doc}`attack`, {doc}`model`, and {doc}`score` for cross-component
+composition.
 
 ### Persistence Contract
 

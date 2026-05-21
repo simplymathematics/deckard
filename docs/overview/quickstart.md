@@ -9,8 +9,17 @@ use each page.
 If your goal is to run an experiment quickly:
 
 1. Read [Installation](installation) to create a working environment.
-2. Read [Summary](summary) for architectural context.
-3. Open the notebook guide in [Notebooks](../notebooks/index).
+2. Read [Summary](summary) for optimization-first architecture.
+3. Read [Scoring](scoring) to understand objective metrics and runtime outputs.
+4. Open the notebook guide in [Notebooks](../notebooks/index).
+
+If your goal is multi-objective optimization:
+
+1. Compose objective scorers in [Score API](../api/score).
+2. Run optimization with [Hydra](https://hydra.cc) overrides and
+	[Optuna](https://optuna.org) study storage.
+3. Persist artifacts via [File API](../api/file).
+4. Run post-hoc Pareto and plotting analysis via [Layers API](../api/layers).
 
 If your goal is to extend deckard:
 
@@ -26,6 +35,15 @@ Core extension docs:
 - [Lifelines](../api/lifelines)
 - [Seaborn](../api/seaborn)
 - [Yellowbrick](../api/yellowbrick)
+
+Base runtime config docs:
+
+- [DataConfig](../api/data)
+- [ModelConfig](../api/model)
+- [AttackConfig](../api/attack)
+- [DetectorConfig](../api/detector)
+- [ExperimentConfig](../api/experiment)
+- [FileConfig](../api/file)
 
 ## Documentation Map
 
@@ -54,9 +72,12 @@ A history of changes.
 
 ### Path A: Experiment Users
 
-- Install dependencies.
+- Install dependencies (core plus optional stacks as needed).
 - Run one notebook workflow ([sklearn](../notebooks/sklearn) or [pytorch](../notebooks/pytorch)).
-- Inspect scoring outputs and artifacts.
+- Inspect scoring outputs and persisted artifacts.
+- Promote the most relevant metrics to multi-objective optimization targets.
+- Use [Layers](../api/layers) for post-hoc evaluations (Pareto filtering,
+  plotting, survival workflows).
 - Adapt one config for a new dataset, model, or metric.
 
 ### Path B: Framework Contributors

@@ -85,6 +85,19 @@ Currently supports:
 - **Fairlearn (sklearn)** — via {class}`~deckard.plugins.fairlearn.model.FairlearnModelConfig`
 - **Fairlearn (PyTorch)** — via {class}`~deckard.plugins.fairlearn.model.FairlearnPytorchModelConfig`
 
+### Defense pipeline integration
+
+Model configs can compose deckard defense pipelines used during robustness
+evaluation. See {doc}`attack` for paired attack orchestration and {doc}`score`
+for attack-aware scorer profiles.
+
+Common ART defense components referenced by deckard model defenses:
+
+- [`FeatureSqueezing`](https://adversarial-robustness-toolbox.readthedocs.io/en/latest/modules/defences/preprocessor.html#feature-squeezing)
+- [`SpatialSmoothing`](https://adversarial-robustness-toolbox.readthedocs.io/en/latest/modules/defences/preprocessor.html#spatial-smoothing)
+- [`GaussianAugmentation`](https://adversarial-robustness-toolbox.readthedocs.io/en/latest/modules/defences/preprocessor.html#gaussian-augmentation)
+- [`AdversarialTrainer`](https://adversarial-robustness-toolbox.readthedocs.io/en/latest/modules/defences/trainer.html#adversarial-training)
+
 ## Examples
 
 ```{seealso}
@@ -164,6 +177,8 @@ needed, without requiring private methods.
 
 ### See also
 * {doc}`data` — data configuration and loading
+* {doc}`train` — training runtime mixins and trainer-defense behavior
+* {doc}`defend` — defense pipeline and defense-family mixins
 * {doc}`experiment` — experiment orchestration
 * {doc}`attack` — attack configuration
 * {doc}`score` — scoring framework

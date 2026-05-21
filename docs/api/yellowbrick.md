@@ -21,6 +21,20 @@ The {mod}`deckard.plugins.yellowbrick.plot` module provides:
 
 Yellowbrick plots are selected by ``plot_type`` and are grouped by category:
 
+External references:
+
+- [Yellowbrick documentation](https://www.scikit-yb.org)
+- [`yellowbrick.classifier.ROCAUC`](https://www.scikit-yb.org/en/latest/api/classifier/rocauc.html)
+- [`yellowbrick.classifier.ClassificationReport`](https://www.scikit-yb.org/en/latest/api/classifier/classification_report.html)
+- [`yellowbrick.regressor.ResidualsPlot`](https://www.scikit-yb.org/en/latest/api/regressor/residuals.html)
+- [`yellowbrick.model_selection.LearningCurve`](https://www.scikit-yb.org/en/latest/api/model_selection/learning_curve.html)
+
+Related Deckard docs:
+
+- {doc}`model` for model objects consumed by visualizers
+- {doc}`score` for metric outputs commonly compared alongside yellowbrick plots
+- {doc}`experiment` for composed experiment execution prior to plotting
+
 **Feature analysis** (``visualize_features``):
   ``rank1d``, ``rank2d``, ``radviz``, ``pcoords``, ``jointplot``, ``pca``,
   ``manifold``
