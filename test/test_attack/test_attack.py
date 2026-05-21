@@ -285,14 +285,89 @@ class TestAttackConfig(unittest.TestCase):
         self.assertFalse(has_proba)
         self.assertIsNotNone(scorer_cfg)
 
-    def test_attack_mode_stage_aliases_are_accepted_and_resolved(self):
+    def test_attack_mode_rejects_defense_stage_aliases(self):
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
-        attack.set_mode("post-defense")
-        self.assertEqual(attack.mode, "post-defense")
-        self.assertEqual(attack.resolve_mode_for_attack_kind("evasion"), "test")
+        with self.assertRaisesRegex(ValueError, "Unsupported attack mode"):
+            attack.set_mode("post-defense")
+
+        with self.assertRaisesRegex(ValueError, "Unsupported attack mode"):
+            attack.set_mode("pre-defense")
 
         attack.set_mode("val")
         self.assertEqual(attack.resolve_mode_for_attack_kind("evasion"), "val")
+
+    def test_attack_mode_auto_defaults_by_subtype(self):
+        membership = AttackConfig(
+            attack_type=(
+                "art.attacks.inference.membership_inference."
+                "MembershipInferenceBlackBox"
+            ),
+        )
+        self.assertEqual(
+            membership.resolve_mode_for_attack_kind(
+                "membership",
+                attack_subtype="membership_inference",
+            ),
+            "train",
+        )
+
+        reconstruction = AttackConfig(
+            attack_type=(
+                "art.attacks.inference.reconstruction.DatabaseReconstruction"
+            ),
+        )
+        self.assertEqual(
+            reconstruction.resolve_mode_for_attack_kind(
+                "reconstruction",
+                attack_subtype="reconstruction",
+            ),
+            "train",
+        )
+
+        inversion = AttackConfig(
+            attack_type="art.attacks.inference.model_inversion.MIFace",
+        )
+        self.assertEqual(
+            inversion.resolve_mode_for_attack_kind(
+                "model_inversion",
+                attack_subtype="model_inversion",
+            ),
+            "test",
+        )
+
+        poisoning = AttackConfig(
+            attack_type=(
+                "art.attacks.poisoning.gradient_matching_attack."
+                "GradientMatchingAttack"
+            ),
+            attack_params={"class_source": 0, "class_target": 1},
+        )
+        self.assertEqual(
+            poisoning.resolve_mode_for_attack_kind("poisoning"),
+            "train",
+        )
+
+    def test_attack_mode_split_override_precedence(self):
+        attack = AttackConfig(
+            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_params={"split": "train"},
+        )
+        attack.set_mode("val")
+        self.assertEqual(attack.resolve_mode_for_attack_kind("evasion"), "train")
+
+        self.assertEqual(
+            attack.resolve_mode_for_attack_kind(
+                "evasion",
+                split_override="test",
+            ),
+            "test",
+        )
+
+        with self.assertRaisesRegex(ValueError, "Unsupported attack split override"):
+            attack.resolve_mode_for_attack_kind(
+                "evasion",
+                split_override="invalid",
+            )
 
     def test_attack_score_forwards_mode_and_stage_context(self):
         class _DummyScorer:
@@ -317,7 +392,18 @@ class TestAttackConfig(unittest.TestCase):
 
         self.assertIn("evasion_success", out)
         self.assertEqual(dummy.last_kwargs.get("mode"), "test")
-        self.assertEqual(dummy.last_kwargs.get("stage"), "adversarial")
+        self.assertNotIn("stage", dummy.last_kwargs)
+
+        attack.set_mode("val")
+        out = attack._score(
+            "evasion",
+            y_true=np.array([0, 1]),
+            y_pred=np.array([1, 0]),
+            ben_pred_labels=np.array([0, 1]),
+        )
+        self.assertIn("evasion_success", out)
+        self.assertEqual(dummy.last_kwargs.get("mode"), "val")
+        self.assertNotIn("stage", dummy.last_kwargs)
 
     def test_target_to_class_labels_invalid_shape_raises(self):
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
@@ -325,9 +411,19 @@ class TestAttackConfig(unittest.TestCase):
             attack._target_to_class_labels(np.array(5))
 
     def test_save_and_load_attack(self):
+        from deckard.data import DataConfig
+        from deckard.model import ModelConfig
+        data = DataConfig(dataset_name="adult")
+        data()
+        model = ModelConfig(model_type="sklearn.linear_model.LogisticRegression")
+        model(data=data)
+        path = Path(self.attack_file)
+        if path.exists():
+            path.unlink()
+        loaded_attack = AttackConfig(attack_type = self.attack_type, attack_params = self.attack_params)
+        loaded_attack(data=data, model =model, attack_file = self.attack_file)
         self.attack.save(self.attack_file)
         self.assertTrue(Path(self.attack_file).exists())
-        loaded_attack = AttackConfig()
         loaded_attack.load(self.attack_file)
         self.assertEqual(loaded_attack.attack_type, self.attack.attack_type)
         self.assertEqual(loaded_attack.attack_params, self.attack.attack_params)
@@ -3393,15 +3489,7 @@ class TestStaticHelpers(unittest.TestCase):
         result = AttackConfig._normalize_inferred_output(inferred, reference=ref)
         np.testing.assert_array_equal(result, [1, 0])
 
-    def test_save_method_appends_pkl(self):
-        tmpdir = tempfile.mkdtemp()
-        try:
-            attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
-            path_without_ext = os.path.join(tmpdir, "attack_saved")
-            attack._save(path_without_ext)
-            self.assertTrue(Path(path_without_ext + ".pkl").exists())
-        finally:
-            shutil.rmtree(tmpdir)
+
 
     def test_infer_task_from_data_classifier_attr(self):
         """Cover the `hasattr(data, 'classifier')` path in _infer_task_is_classification."""

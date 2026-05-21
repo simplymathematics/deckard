@@ -20,3 +20,9 @@
 - Add licenses, hyperlinks, and paper references throughout the docs
 - Remove adapter layer, move sklearn-only logic to framworks, ensure *Config objects adhere to contract
 - Update survival, art_attacks, art_defenses notebooks for clarity and scope
+-scores like *demgraphic_parity* and *equalized odss* should not get group scores since they are calculated across groups. They currently have `nan` scores, and should not be calculated across sensitive groups.
+- `__main__.py` read from existing .deckard_rc
+- `layers/` add comprehensive helps strings for the CLI
+- `deckard/frameworks/pytorch/data.py` Compose data behavior at run-time from mixins
+- Remove backwards-compatible logic
+- Add stable re-exports for user convenience

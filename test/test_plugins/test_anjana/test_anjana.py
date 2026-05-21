@@ -69,6 +69,10 @@ def test_anjana_data_score_uses_auto_default(monkeypatch):
         lambda _: _StubScorer(),
     )
     cfg.scorer = "auto"
+    cfg.X_train = pd.DataFrame({"a": [1], "b": [3]})
+    cfg.y_train = pd.Series([0])
+    cfg.X_test = pd.DataFrame({"a": [2], "b": [4]})
+    cfg.y_test = pd.Series([1])
 
     out = cfg._score()
     assert out["k_anonymity"] == 2.0

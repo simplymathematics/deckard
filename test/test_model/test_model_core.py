@@ -72,7 +72,7 @@ class TestModelConfig(unittest.TestCase):
         self.assertTrue(
             "training_time" in scores and "prediction_time" in scores,
         )
-        self.assertTrue("accuracy" in scores)
+        self.assertTrue("accuracy" in scores['test'])
         self.assertTrue("training_time" in scores)
         self.assertTrue("prediction_time" in scores)
         self.assertTrue(hasattr(model, "score_dict"))
@@ -410,7 +410,7 @@ class TestModelPostInitScorerBranches(unittest.TestCase):
                     "score_function": "sklearn.metrics.accuracy_score",
                     "score_params": {},
                     "greater_is_better": True,
-                    "needs_proba": False,
+                    "needs_labels": True,
                 },
             },
         }
@@ -761,6 +761,70 @@ class TestLoadOrTrainModel(unittest.TestCase):
             times = {}
             model2._load_or_train_model(data, model_path, times)
             self.assertIsNotNone(model2._model)
+            self.assertTrue(
+                model2._is_model_fitted(model2._model, X_sample=data.X_train),
+            )
+
+    def test_model_file_present_unwraps_loaded_model_config(self):
+        data, model = _make_fitted_model()
+        model._train(data.X_train, data.y_train)
+
+        with tempfile.TemporaryDirectory() as td:
+            model_path = str(Path(td) / "model.pkl")
+            Path(model_path).write_text("placeholder")
+
+            loaded_obj = ModelConfig(
+                model_type="sklearn.tree.DecisionTreeClassifier",
+                classifier=True,
+                model_params={"max_depth": 2},
+                scorer=None,
+            )
+            loaded_obj._model = model._model
+
+            model2 = ModelConfig(
+                model_type="sklearn.tree.DecisionTreeClassifier",
+                classifier=True,
+                model_params={"max_depth": 2},
+                scorer=None,
+            )
+            model2.load = lambda _fp: loaded_obj
+
+            times = {}
+            model2._load_or_train_model(data, model_path, times)
+
+            self.assertNotIsInstance(model2._model, ModelConfig)
+            self.assertTrue(hasattr(model2._model, "predict"))
+            self.assertIs(model2.get_model(), model2._model)
+            self.assertIs(model2._model, loaded_obj._model)
+
+    def test_model_file_present_loaded_estimator_syncs_model_signature(self):
+        from sklearn.tree import DecisionTreeClassifier
+
+        data, _ = _make_fitted_model()
+        loaded_estimator = DecisionTreeClassifier(max_depth=3, random_state=0)
+        loaded_estimator.fit(data.X_train, data.y_train)
+
+        with tempfile.TemporaryDirectory() as td:
+            model_path = str(Path(td) / "model.pkl")
+            Path(model_path).write_text("placeholder")
+
+            model2 = ModelConfig(
+                model_type="sklearn.tree.DecisionTreeClassifier",
+                classifier=True,
+                model_params={"max_depth": 2},
+                scorer=None,
+            )
+            model2.load = lambda _fp: loaded_estimator
+
+            times = {}
+            model2._load_or_train_model(data, model_path, times)
+
+            self.assertIs(model2._model, loaded_estimator)
+            self.assertEqual(
+                model2.model_type,
+                "sklearn.tree._classes.DecisionTreeClassifier",
+            )
+            self.assertEqual(model2.model_params.get("max_depth"), 3)
 
     def test_no_model_no_file_raises_value_error(self):
         data, _ = _make_fitted_model()
@@ -1183,6 +1247,7 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
             loaded_obj.defense = None
 
             model.load = lambda _fp: loaded_obj
+            model.save_object = lambda *_args, **_kwargs: None
             loaded_obj._train = (
                 lambda X, y: setattr(loaded_obj, "training_time", 0.01)
                 or setattr(loaded_obj, "training_n", len(y))
@@ -1208,17 +1273,9 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
             model_params={"max_depth": 2},
             scorer=None,
         )
-        model._model = None
+        model._train(data.X_train, data.y_train)
 
-        def _train(_X, y):
-            model.training_time = 0.01
-            model.training_n = len(y)
-            model._model = SimpleNamespace(
-                predict=lambda s: np.zeros(len(s), dtype=int),
-            )
 
-        model._train = _train
-        model.save = lambda filepath: None
         with tempfile.TemporaryDirectory() as td:
             out = model._load_or_train_model(data, str(Path(td) / "missing.pkl"), {})
 
@@ -1285,6 +1342,7 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
             )
 
             model.load = lambda _fp: loaded_obj
+            model.save_object = lambda *_args, **_kwargs: None
             out = model._load_or_train_model(data, str(p), {})
 
             self.assertIn("training_time", out)

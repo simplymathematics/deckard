@@ -110,8 +110,8 @@ stages:
     - ./build/art_attacks/sklearn_model.pkl
     - ./build/art_attacks/svm.pkl
     - ./build/art_attacks/torch_evasion_attack.pkl
-    - ./build/art_attacks/torch_model.pt
-    - ./build/art_attacks/torch_extraction_model.pt
+    - ./build/art_attacks/torch_model.pkl
+    - ./build/art_attacks/torch_extraction_model.pkl
     metrics:
     - ./build/art_attacks/membership_scores.csv
     - ./build/art_attacks/torch_scores.csv
@@ -174,7 +174,7 @@ stages:
     - ./build/pytorch/plots/pytorch_roc_auc.png
     - ./build/pytorch/plots/pytorch_scatter.png
     outs:
-    - ./build/pytorch/exp_model.pt
+    - ./build/pytorch/exp_model.pkl
     - ./build/pytorch/checkpoints/
     - ./build/pytorch/raw_data/
   notebook_hydra:
@@ -235,7 +235,7 @@ stages:
     - ./build/notebook_artifacts/sklearn/pretrained_model.pkl
     - ./build/notebook_artifacts/sklearn/attack.pkl
     - ./build/notebook_artifacts/torch/data.pkl
-    - ./build/notebook_artifacts/torch/pretrained_model.pt
+    - ./build/notebook_artifacts/torch/pretrained_model.pkl
     - ./build/notebook_artifacts/torch/attack.pkl
     - ./build/notebook_artifacts/sklearn/accuracy_clean_vs_adv.csv
     - ./build/notebook_artifacts/torch/accuracy_clean_vs_adv.csv

@@ -1,7 +1,7 @@
 import numpy as np
 
 from deckard.model.base import ModelConfig
-
+from deckard.model._mixins import ModelPrunerMixin, PretrainedModelMixin
 
 class _DummyTrial:
     def __init__(self, should_prune=False):
@@ -16,7 +16,9 @@ class _DummyTrial:
 
 
 def test_model_config_exposes_prune_and_cache_mixins():
-    cfg = ModelConfig(
+    class PrunedCachedModelConfig(ModelConfig, ModelPrunerMixin, PretrainedModelMixin):
+        pass
+    cfg = PrunedCachedModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
         model_params={"max_iter": 10},
         classifier=True,
@@ -27,7 +29,9 @@ def test_model_config_exposes_prune_and_cache_mixins():
 
 
 def test_model_pruner_mixin_reports_and_decides():
-    cfg = ModelConfig(
+    class PrunedModelConfig(ModelConfig, ModelPrunerMixin):
+        pass
+    cfg = PrunedModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
         model_params={"max_iter": 10},
         classifier=True,

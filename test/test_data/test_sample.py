@@ -233,7 +233,7 @@ class TestSplitSampler(unittest.TestCase):
         )
         scores = cfg()
         self.assertIn("val_n", scores)
-        self.assertIn("mutual_information_mean", scores)
+        self.assertIn("mutual_information_mean", scores['test'])
 
     def test_sample_dict_spec(self):
         """DataConfig should accept a dict sampler spec and instantiate it."""

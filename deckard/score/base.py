@@ -182,6 +182,41 @@ SUPPORTED_EXPERIMENT_DEFENSE_SCORING_STAGES: frozenset[str] = frozenset(
         ScoringDataStage.POST_SAMPLE.value,
     },
 )
+SUPPORTED_ATTACK_SCORE_MODES: frozenset[str] = frozenset(
+    {
+        ScoringAttackStage.PRE_ATTACK.value,
+        ScoringAttackStage.POST_ATTACK.value,
+        ScoringAttackStage.VAL_ATTACK.value,
+    },
+)
+
+SUPPORTED_EXPERIMENT_SCORE_MODES: frozenset[str] = frozenset(
+    {
+        ScoringDefenseStage.PRE_DEFENSE.value,
+        ScoringDefenseStage.POST_DEFENSE.value,
+        ScoringDefenseStage.VAL_DEFENSE.value,
+        ScoringPipelineStage.POST_PIPELINE.value,
+        ScoringPipelineStage.VAL_PIPELINE.value,
+        ScoringAttackStage.PRE_ATTACK.value,
+        ScoringAttackStage.POST_ATTACK.value,
+        ScoringAttackStage.VAL_ATTACK.value,
+    },
+)
+
+SUPPORTED_DETECTOR_SCORE_MODES: frozenset[str] = frozenset(
+    {
+        ScoringDetectorStage.PRE_FILTER.value,
+        ScoringDetectorStage.POST_FILTER.value,
+        ScoringDetectorStage.VAL_FILTER.value,
+    },
+)
+
+SUPPORTED_PIPELINE_SCORE_MODES: frozenset[str] = frozenset(
+    {
+        ScoringPipelineStage.POST_PIPELINE.value,
+        ScoringPipelineStage.VAL_PIPELINE.value,
+    },
+)
     
 class _DataScorerMarker:
     """Mixin that marks a ScorerDictConfig as operating on data rather than model predictions.
@@ -484,7 +519,13 @@ class ScorerConfig:
     score_params: dict[str, Any] = field(default_factory=dict)
     stage: List[str] = field(default_factory=list)
     greater_is_better: bool = True
-    needs_proba: bool = False
+    needs_labels: Union[bool, None] = True
+    needs_proba: Union[bool, None] = None
+    needs_logits: Union[bool, None] = None
+    binary_expand_to_multiclass: Union[bool, None] = None
+    binary_positive_class_index: int = 1
+    row_sum_atol: float = 1e-2
+    probability_clip_eps: float = 1e-12
 
     def __post_init__(self):
         if OmegaConf.is_config(self.score_function):
@@ -518,27 +559,81 @@ class ScorerConfig:
             )
         if self.score_params is None:
             self.score_params = {}
+        if self.needs_labels is True and self.needs_proba is True:
+            raise ValueError(
+                f"Scorer '{self.score_name}' cannot set both needs_labels=True and needs_proba=True",
+            )
+        if self.binary_positive_class_index < 0:
+            raise ValueError("binary_positive_class_index must be >= 0")
+        if self.row_sum_atol <= 0:
+            raise ValueError("row_sum_atol must be > 0")
+        if self.probability_clip_eps <= 0:
+            raise ValueError("probability_clip_eps must be > 0")
+        if self.needs_labels is not None:
+            self.needs_labels = bool(self.needs_labels)
+        if self.needs_proba is not None:
+            self.needs_proba = bool(self.needs_proba)
+        if self.needs_logits is not None:
+            self.needs_logits = bool(self.needs_logits)
+        if self.binary_expand_to_multiclass is not None:
+            self.binary_expand_to_multiclass = bool(self.binary_expand_to_multiclass)
         self.stage = ScorerDictConfig._normalize_stage_field(self.stage)
 
-    def _validate_probability_input(self, y_true, y_pred):
-        y_true_arr = np.asarray(to_numpy_if_torch(y_true))
-        y_pred_arr = np.asarray(to_numpy_if_torch(y_pred))
-        if y_pred_arr.ndim not in (1, 2):
+    def _validate_raw_output_input(self, dep, ind):
+        dep_arr = np.asarray(to_numpy_if_torch(dep))
+        ind_arr = np.asarray(to_numpy_if_torch(ind))
+        if ind_arr.ndim not in (1, 2):
             raise ValueError(
-                f"Probability scorer '{self.score_name}' requires 1D/2D probability input; got shape {y_pred_arr.shape}",
+                f"Raw-output scorer '{self.score_name}' requires 1D/2D input; got shape {ind_arr.shape}",
             )
-        if y_pred_arr.shape[0] != y_true_arr.shape[0]:
+        if ind_arr.shape[0] != dep_arr.shape[0]:
             raise ValueError(
-                f"Probability scorer '{self.score_name}' requires matching sample counts; got {y_pred_arr.shape[0]} predictions for {y_true_arr.shape[0]} labels",
+                f"Raw-output scorer '{self.score_name}' requires matching sample counts; got {ind_arr.shape[0]} predictions for {dep_arr.shape[0]} labels",
             )
-        if not np.issubdtype(y_pred_arr.dtype, np.number):
+        if not np.issubdtype(ind_arr.dtype, np.number):
             raise ValueError(
-                f"Probability scorer '{self.score_name}' requires numeric probabilities; got dtype {y_pred_arr.dtype}",
+                f"Raw-output scorer '{self.score_name}' requires numeric outputs; got dtype {ind_arr.dtype}",
             )
-        if np.nanmin(y_pred_arr) < -1e-12 or np.nanmax(y_pred_arr) > 1.0 + 1e-12:
-            raise ValueError(
-                f"Probability scorer '{self.score_name}' requires values in [0, 1]; got min={np.nanmin(y_pred_arr)} max={np.nanmax(y_pred_arr)}",
+
+    def _looks_like_probabilities(self, ind_arr: np.ndarray) -> bool:
+        if ind_arr.ndim == 1:
+            return bool(np.nanmin(ind_arr) >= 0.0 and np.nanmax(ind_arr) <= 1.0)
+        if ind_arr.ndim == 2:
+            row_sums = np.sum(ind_arr, axis=1)
+            return bool(
+                np.nanmin(ind_arr) >= 0.0
+                and np.nanmax(ind_arr) <= 1.0
+                and np.allclose(row_sums, 1.0, atol=self.row_sum_atol)
             )
+        return False
+
+    def _convert_logits_if_needed(self, ind_arr: np.ndarray) -> np.ndarray:
+        if self.needs_logits is not True:
+            return ind_arr
+        if self._looks_like_probabilities(ind_arr):
+            return ind_arr
+        if ind_arr.ndim == 1:
+            return 1.0 / (1.0 + np.exp(-ind_arr))
+        if ind_arr.ndim == 2:
+            shifted = ind_arr - np.max(ind_arr, axis=1, keepdims=True)
+            exp_logits = np.exp(shifted)
+            denom = np.sum(exp_logits, axis=1, keepdims=True)
+            return exp_logits / np.clip(denom, self.probability_clip_eps, None)
+        return ind_arr
+
+    def _binary_task_detected(self, dep_arr: np.ndarray) -> bool:
+        if dep_arr.ndim != 1:
+            return False
+        return np.unique(dep_arr).size <= 2
+
+    def _expand_binary_to_multiclass(self, ind_arr: np.ndarray) -> np.ndarray:
+        if ind_arr.ndim == 1:
+            p = ind_arr
+            return np.column_stack([1.0 - p, p])
+        if ind_arr.ndim == 2 and ind_arr.shape[1] == 1:
+            p = ind_arr.reshape(-1)
+            return np.column_stack([1.0 - p, p])
+        return ind_arr
 
     def _normalize_predictions_for_metric(self, dep, ind):
         """Normalize probabilities/logits to metric-compatible labels when needed."""
@@ -562,20 +657,47 @@ class ScorerConfig:
             metric_name in label_metrics or self.score_name in label_metrics
         )
 
-        if self.needs_proba:
+        if self.needs_proba is True:
+            # Expects raw model outputs (logits/probabilities)
             ind_arr = np.asarray(to_numpy_if_torch(ind))
-            if ind_arr.ndim == 2 and (
-                np.nanmin(ind_arr) < 0.0 or np.nanmax(ind_arr) > 1.0
-            ):
-                exp_logits = np.exp(ind_arr - np.max(ind_arr, axis=1, keepdims=True))
-                ind_arr = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
-            self._validate_probability_input(y_true=dep, y_pred=ind_arr)
-            if ind_arr.ndim == 2 and metric_name == "roc_auc_score":
+            self._validate_raw_output_input(dep=dep, ind=ind_arr)
+            dep_arr = np.asarray(to_numpy_if_torch(dep))
+            ind_arr = self._convert_logits_if_needed(ind_arr)
+
+            should_expand_binary = (
+                self.binary_expand_to_multiclass
+                if self.binary_expand_to_multiclass is not None
+                else True
+            )
+            if should_expand_binary and self._binary_task_detected(dep_arr):
+                ind_arr = self._expand_binary_to_multiclass(ind_arr)
+
+            score_name = str(self.score_name).lower()
+            metric_name_l = str(metric_name).lower()
+            is_roc_auc_metric = (
+                metric_name_l == "roc_auc_score"
+                or score_name in {"roc_auc", "roc_auc_score"}
+            )
+            is_log_loss_metric = (
+                metric_name_l == "log_loss"
+                or score_name in {"log_loss", "logloss"}
+            )
+            if is_roc_auc_metric and ind_arr.ndim == 2:
                 if ind_arr.shape[1] == 1:
                     return ind_arr.reshape(-1)
-                if ind_arr.shape[1] == 2:
-                    return ind_arr[:, 1]
+                # sklearn binary roc_auc_score expects 1D positive-class scores.
+                if dep_arr.ndim == 1 and ind_arr.shape[1] == 2:
+                    unique_labels = np.unique(dep_arr)
+                    if unique_labels.size <= 2:
+                        index = min(self.binary_positive_class_index, ind_arr.shape[1] - 1)
+                        return ind_arr[:, index]
+            if is_log_loss_metric:
+                if ind_arr.ndim == 2 and ind_arr.shape[1] == 1:
+                    return ind_arr.reshape(-1)
             return ind_arr
+
+        if self.needs_labels is not True:
+            return ind
 
         if not is_label_metric:
             return ind
@@ -665,6 +787,11 @@ class ScorerDictConfig(ConfigBase):
     )
     stage: List[str] = field(default_factory=list)
 
+    def _is_data_profile_scorer(self) -> bool:
+        if isinstance(self, _DataScorerMarker):
+            return True
+        return str(getattr(self, "scoring_type", "")).strip().lower() == "data"
+
     def __post_init__(self):
         self.stage = self._normalize_stage_field(self.stage)
 
@@ -677,6 +804,23 @@ class ScorerDictConfig(ConfigBase):
                 raw_score_name = scorer_data.pop("score_name", key)
                 raw_score_params = scorer_data.pop("score_params", {})
                 raw_stage = scorer_data.pop("stage", "")
+                raw_needs_labels = scorer_data.pop("needs_labels", None)
+                raw_needs_proba = scorer_data.pop("needs_proba", None)
+                raw_needs_logits = scorer_data.pop("needs_logits", None)
+                raw_binary_expand = scorer_data.pop("binary_expand_to_multiclass", None)
+                raw_positive_idx = scorer_data.pop("binary_positive_class_index", 1)
+                raw_row_sum_atol = scorer_data.pop("row_sum_atol", 1e-2)
+                raw_prob_clip_eps = scorer_data.pop("probability_clip_eps", 1e-12)
+                resolved_needs_labels = (
+                    True
+                    if raw_needs_labels is None and raw_needs_proba is not True
+                    else (False if raw_needs_labels is None else bool(raw_needs_labels))
+                )
+                resolved_needs_proba = (
+                    bool(raw_needs_proba)
+                    if raw_needs_proba is not None
+                    else None
+                )
                 if not isinstance(raw_score_params, dict):
                     raise TypeError(
                         f"score_params for '{key}' must be a dictionary, got {type(raw_score_params)}",
@@ -692,7 +836,21 @@ class ScorerDictConfig(ConfigBase):
                             True,
                         ),
                     ),
-                    needs_proba=bool(scorer_data.pop("needs_proba", False)),
+                    needs_labels=resolved_needs_labels,
+                    needs_proba=resolved_needs_proba,
+                    needs_logits=(
+                        bool(raw_needs_logits)
+                        if raw_needs_logits is not None
+                        else None
+                    ),
+                    binary_expand_to_multiclass=(
+                        bool(raw_binary_expand)
+                        if raw_binary_expand is not None
+                        else None
+                    ),
+                    binary_positive_class_index=int(raw_positive_idx),
+                    row_sum_atol=float(raw_row_sum_atol),
+                    probability_clip_eps=float(raw_prob_clip_eps),
                 )
             elif isinstance(value, DictConfig):
                 raw_value = OmegaConf.to_container(value, resolve=True)
@@ -704,6 +862,23 @@ class ScorerDictConfig(ConfigBase):
                 raw_score_name = scorer_data.pop("score_name", key)
                 raw_score_params = scorer_data.pop("score_params", {})
                 raw_stage = scorer_data.pop("stage", "")
+                raw_needs_labels = scorer_data.pop("needs_labels", None)
+                raw_needs_proba = scorer_data.pop("needs_proba", None)
+                raw_needs_logits = scorer_data.pop("needs_logits", None)
+                raw_binary_expand = scorer_data.pop("binary_expand_to_multiclass", None)
+                raw_positive_idx = scorer_data.pop("binary_positive_class_index", 1)
+                raw_row_sum_atol = scorer_data.pop("row_sum_atol", 1e-2)
+                raw_prob_clip_eps = scorer_data.pop("probability_clip_eps", 1e-12)
+                resolved_needs_labels = (
+                    True
+                    if raw_needs_labels is None and raw_needs_proba is not True
+                    else (False if raw_needs_labels is None else bool(raw_needs_labels))
+                )
+                resolved_needs_proba = (
+                    bool(raw_needs_proba)
+                    if raw_needs_proba is not None
+                    else None
+                )
                 if not isinstance(raw_score_params, dict):
                     raise TypeError(
                         f"score_params for '{key}' must be a dictionary, got {type(raw_score_params)}",
@@ -719,7 +894,21 @@ class ScorerDictConfig(ConfigBase):
                             True,
                         ),
                     ),
-                    needs_proba=bool(scorer_data.pop("needs_proba", False)),
+                    needs_labels=resolved_needs_labels,
+                    needs_proba=resolved_needs_proba,
+                    needs_logits=(
+                        bool(raw_needs_logits)
+                        if raw_needs_logits is not None
+                        else None
+                    ),
+                    binary_expand_to_multiclass=(
+                        bool(raw_binary_expand)
+                        if raw_binary_expand is not None
+                        else None
+                    ),
+                    binary_positive_class_index=int(raw_positive_idx),
+                    row_sum_atol=float(raw_row_sum_atol),
+                    probability_clip_eps=float(raw_prob_clip_eps),
                 )
             else:
                 raise TypeError(
@@ -728,6 +917,37 @@ class ScorerDictConfig(ConfigBase):
             scorer.stage = self._normalize_stage_field(getattr(scorer, "stage", ""))
             normalized[key] = scorer
         self.scorers = normalized
+        self._validate_scope_mode_compatibility()
+
+    def _validate_scope_mode_compatibility(self) -> None:
+        """Fail fast on scorer-scope/mode combinations that are semantically invalid."""
+        scorer_is_data_profile = self._is_data_profile_scorer()
+
+        scoring_type = str(getattr(self, "scoring_type", "")).strip().lower()
+        if scoring_type not in {"", "data", "model", "attack", "detector", "experiment"}:
+            raise ValueError(
+                f"Unsupported scoring_type '{scoring_type}'.",
+            )
+
+        container_tokens = self._stage_tokens(self.stage)
+        if (not scorer_is_data_profile) and ScoringDataStage.PRE_SAMPLE.value in container_tokens:
+            raise ValueError(
+                "pre-sample stage is reserved for data-profile scorers.",
+            )
+
+        for key, scorer in self.scorers.items():
+            scorer_tokens = self._stage_tokens(getattr(scorer, "stage", ""))
+
+            if scorer_is_data_profile and scorer.needs_proba is True:
+                raise ValueError(
+                    f"Data scorer '{key}' cannot set needs_proba=True; "
+                    "data-profile scorers operate on X/y data splits, not model probability outputs.",
+                )
+
+            if (not scorer_is_data_profile) and ScoringDataStage.PRE_SAMPLE.value in scorer_tokens:
+                raise ValueError(
+                    f"Scorer '{key}' declares pre-sample stage but is not a data-profile scorer.",
+                )
 
     @staticmethod
     def _normalize_stage_field(
@@ -742,7 +962,7 @@ class ScorerDictConfig(ConfigBase):
                 field_name="stage",
             )
             return [normalized_text] if normalized_text != "" else []
-        if isinstance(stage_value, tuple):
+        if isinstance(stage_value, (tuple, ListConfig)):
             stage_value = list(stage_value)
         if isinstance(stage_value, list):
             normalized: list[str] = []
@@ -793,28 +1013,12 @@ class ScorerDictConfig(ConfigBase):
     def _runtime_stage_tokens(
         cls,
         *,
-        mode: Literal[
-            "test",
-            "train",
-            "attack",
-            "val",
-            "attack-val",
-            "pre-sample",
-            None,
-        ],
+        mode: str | None,
         stage: Union[str, list[str], None] = None,
     ) -> set[str]:
         mode_token = "" if mode is None else str(mode).strip().lower()
         tokens: set[str] = set()
-        valid_modes = {
-            "test",
-            "train",
-            "attack",
-            "val",
-            "attack-val",
-            "pre-sample",
-            "",
-        }
+        valid_modes = set(SUPPORTED_SCORING_STAGES) | {"attack", "attack-val", ""}
         if mode_token not in valid_modes:
             raise KeyError(
                 f"Unsupported scoring mode '{mode}'. Expected one of: {sorted(valid_modes - {''})}",
@@ -877,15 +1081,7 @@ class ScorerDictConfig(ConfigBase):
 
     @staticmethod
     def _resolve_stage_key(
-        mode: Literal[
-            "test",
-            "train",
-            "attack",
-            "val",
-            "attack-val",
-            "pre-sample",
-            None,
-        ],
+        mode: str | None,
         requested_stage: Union[str, list[str], None] = None,
     ) -> str:
         stage_tokens = ScorerDictConfig._stage_tokens(requested_stage)
@@ -898,14 +1094,7 @@ class ScorerDictConfig(ConfigBase):
 
         if mode is not None:
             stage_key = str(mode).strip().lower()
-            valid_modes = {
-                "test",
-                "train",
-                "attack",
-                "val",
-                "attack-val",
-                "pre-sample",
-            }
+            valid_modes = set(SUPPORTED_SCORING_STAGES) | {"attack", "attack-val"}
             if stage_key in SUPPORTED_SCORING_STAGES:
                 return stage_key
             if stage_key not in valid_modes:
@@ -918,35 +1107,17 @@ class ScorerDictConfig(ConfigBase):
 
     @staticmethod
     def _resolve_runtime_mode(
-        mode: Literal[
-            "test",
-            "train",
-            "attack",
-            "val",
-            "attack-val",
-            "pre-sample",
-            None,
-        ],
+        mode: str | None,
         requested_stage: Union[str, list[str], None] = None,
-    ) -> Literal["test", "train", "attack", "val", "attack-val", "pre-sample"]:
+    ) -> str:
         if mode is not None:
             mode_token = str(mode).strip().lower()
             if mode_token in {"train", "attack", "val", "attack-val", "pre-sample"}:
-                return cast(
-                    Literal[
-                        "test",
-                        "train",
-                        "attack",
-                        "val",
-                        "attack-val",
-                        "pre-sample",
-                    ],
-                    mode_token,
-                )
+                return mode_token
             if mode_token == "test":
                 return "test"
 
-            stage_to_runtime: dict[str, Literal["test", "train", "attack", "val", "attack-val", "pre-sample"]] = {
+            stage_to_runtime: dict[str, str] = {
                 ScoringModelStage.MODEL_TRAIN.value: "train",
                 ScoringModelStage.MODEL_TEST.value: "test",
                 ScoringModelStage.MODEL_VAL.value: "val",
@@ -1065,7 +1236,10 @@ class ScorerDictConfig(ConfigBase):
     def resolve_mode_features(mode, data):
         if data is None:
             return None
-        resolved_mode = normalize_scoring_mode(mode)
+        try:
+            resolved_mode = normalize_scoring_mode(mode)
+        except ValueError:
+            return None
         if resolved_mode == "train":
             return getattr(data, "X_train", None)
         if resolved_mode == "test":
@@ -1163,15 +1337,7 @@ class ScorerDictConfig(ConfigBase):
 
     def __call__(
         self,
-        mode: Literal[
-            "test",
-            "train",
-            "attack",
-            "val",
-            "attack-val",
-            "pre-sample",
-            None,
-        ] = None,
+        mode: str | None = None,
         data: "DataConfig | None" = None,
         model: Any = None,
         attack: Any = None,
@@ -1193,11 +1359,15 @@ class ScorerDictConfig(ConfigBase):
         ):
             raise AssertionError("y_true must be provided if mode is None")
 
-        nested_output = mode is not None or runtime_stage is not None
         effective_mode = self._resolve_runtime_mode(
             mode=mode,
             requested_stage=runtime_stage,
         )
+        scorer_is_data_profile = self._is_data_profile_scorer()
+        if effective_mode == "pre-sample" and not scorer_is_data_profile:
+            raise ValueError(
+                "pre-sample mode is reserved for data-profile scorers.",
+            )
 
         if score_file is not None and Path(score_file).exists():
             results = self.load_scores(score_file)
@@ -1311,10 +1481,14 @@ class ScorerDictConfig(ConfigBase):
             scored_key = key
             if stage_results.get(scored_key) is None:
                 metric_input = ind
-                if scorer.needs_proba:
+                if scorer_is_data_profile and scorer.needs_proba is True:
+                    raise ValueError(
+                        f"Scorer '{key}' is configured as data-profile but requests probability outputs.",
+                    )
+                if scorer.needs_proba is True:
                     if effective_mode == "pre-sample":
                         raise ValueError(
-                            f"Scorer '{key}' requires probabilities but pre-sample mode is reserved for full-dataset diagnostics.",
+                            f"Scorer '{key}' requires raw model outputs but pre-sample mode is reserved for full-dataset diagnostics.",
                         )
                     if y_proba is not None:
                         metric_input = y_proba
@@ -1332,13 +1506,13 @@ class ScorerDictConfig(ConfigBase):
                             )
                         else:
                             raise ValueError(
-                                f"Scorer '{key}' requires probabilities from predict_proba; provide y_proba or pass model+data context",
+                                f"Scorer '{key}' requires raw model outputs from predict_proba; provide y_proba or pass model+data context",
                             )
                     # Final check: ensure metric_input is valid
                     metric_arr = np.asarray(to_numpy_if_torch(metric_input))
                     if metric_arr.ndim not in (1, 2):
                         raise ValueError(
-                            f"Scorer '{key}' expected 1D/2D probability array, got shape {metric_arr.shape}. "
+                            f"Scorer '{key}' expected 1D/2D raw output array, got shape {metric_arr.shape}. "
                             f"Check your model/scorer configuration.",
                         )
                 # Debug print: show raw output from each scorer
@@ -1366,7 +1540,7 @@ class ScorerDictConfig(ConfigBase):
 
         if score_file is not None:
             self.save_scores(results, score_file)
-        if nested_output:
+        if mode is not None or runtime_stage is not None:
             return {stage_key: results[stage_key]}
         return results[stage_key]
 
@@ -1464,12 +1638,16 @@ def _default_classification_scorers() -> dict[str, ScorerConfig]:
             score_name="roc_auc",
             score_function="sklearn.metrics.roc_auc_score",
             score_params={"average": "weighted", "multi_class": "ovr"},
+            needs_labels=False,
             needs_proba=True,
+            needs_logits=True,
         ),
         "log_loss": ScorerConfig(
             score_name="log_loss",
             score_function="sklearn.metrics.log_loss",
+            needs_labels=False,
             needs_proba=True,
+            needs_logits=True,
         ),
     }
 
@@ -1522,6 +1700,7 @@ class DefaultModelScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     """Default model scorer family with optional task inheritance."""
 
     classifier: Union[bool, str, None] = None
+    scoring_type: str = "model"
     scorers: dict[str, ScorerConfig] = field(default_factory=dict)
 
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
@@ -1551,6 +1730,7 @@ class DefaultPytorchScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     """Default PyTorch scorer family with optional task inheritance."""
 
     classifier: Union[bool, str, None] = None
+    scoring_type: str = "model"
     scorers: dict[str, ScorerConfig] = field(default_factory=dict)
 
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
@@ -1624,6 +1804,10 @@ __all__ = [
     "SUPPORTED_DATA_SCORE_MODES",
     "SUPPORTED_MODEL_SCORE_MODES",
     "SUPPORTED_EXPERIMENT_DEFENSE_SCORING_STAGES",
+    "SUPPORTED_ATTACK_SCORE_MODES",
+    "SUPPORTED_EXPERIMENT_SCORE_MODES",
+    "SUPPORTED_DETECTOR_SCORE_MODES",
+    "SUPPORTED_PIPELINE_SCORE_MODES",
     "_DataScorerMarker",
     "_AttackProfileScorer",
     "_TaskAwareScorerMixin",

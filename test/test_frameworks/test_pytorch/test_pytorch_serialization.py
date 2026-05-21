@@ -28,15 +28,18 @@ def test_pytorch_model_config_save_and_load_roundtrip():
     )
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        model_path = Path(tmpdir) / "torch_model.pkl"
-        cfg.save(str(model_path))
+        config_path = Path(tmpdir) / "torch_model.yaml"
+        model_path = Path(tmpdir) / "torch_model.pt"
+        cfg.save(str(config_path))
+        cfg.save_model(cfg.get_model(), str(model_path))
 
         loaded = PytorchModelConfig(
             model_type="torch.nn.Linear",
             model_params={"in_features": 4, "out_features": 2},
             classifier=True,
         )
-        loaded.load(str(model_path))
+        loaded.load(str(config_path))
+        loaded.load_model(str(model_path))
 
         assert loaded.model_type == "torch.nn.Linear"
         assert loaded.model_params["in_features"] == 4
@@ -70,8 +73,8 @@ def test_pytorch_model_training_records_optimizer_loss_and_serializes_it():
     assert len(cfg.score_dict["epochs"]) == 2
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        model_path = Path(tmpdir) / "torch_model_with_loss.pkl"
-        cfg.save(str(model_path))
+        config_path = Path(tmpdir) / "torch_model_with_loss.yaml"
+        cfg.save(str(config_path))
 
 
 def test_initialize_criterion_and_optimizer_support_variants(monkeypatch):
@@ -170,7 +173,7 @@ def test_checkpoint_config_and_data_validation_paths():
         cfg._resolve_checkpoint_config(model_file=None)
 
     cfg.fit_params = {"checkpoint_every_epochs": 1, "checkpoint_include_final": "no"}
-    checkpoint_cfg = cfg._resolve_checkpoint_config(model_file="/tmp/model.pkl")
+    checkpoint_cfg = cfg._resolve_checkpoint_config(model_file="/tmp/model.pt")
     assert checkpoint_cfg["every"] == 1
     assert checkpoint_cfg["prefix"] == "model"
     assert checkpoint_cfg["include_final"] is False
@@ -342,7 +345,7 @@ def test_pytorch_model_checkpointing_scores_and_caches_models():
         cfg.fit_params["checkpoint_dir"] = tmpdir
         times = cfg._load_or_train_model(data, model_file=None, times={})
 
-        checkpoint_models = sorted(Path(tmpdir).glob("*.pkl"))
+        checkpoint_models = sorted(Path(tmpdir).glob("*.pt"))
         checkpoint_scores = sorted(Path(tmpdir).glob("*.json"))
 
         assert times["training_n"] == len(data.y_train)
@@ -546,15 +549,18 @@ def test_pytorch_model_serialization_preserves_optimizer_config():
     cfg._train(X, y)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        model_path = Path(tmpdir) / "torch_model_with_adam.pkl"
-        cfg.save(str(model_path))
+        config_path = Path(tmpdir) / "torch_model_with_adam.yaml"
+        model_path = Path(tmpdir) / "torch_model_with_adam.pt"
+        cfg.save(str(config_path))
+        cfg.save_model(cfg.get_model(), str(model_path))
 
         loaded = PytorchModelConfig(
             model_type="torch.nn.Linear",
             model_params={"in_features": 4, "out_features": 2},
             classifier=True,
         )
-        loaded.load(str(model_path))
+        loaded.load(str(config_path))
+        loaded.load_model(str(model_path))
 
         assert loaded.optimizer is not None
         assert loaded.optimizer["name"] == "Adam"
@@ -595,6 +601,11 @@ def test_pytorch_model_checkpoint_records_track_epochs():
             assert "epoch" in record
             assert "model_file" in record or "model_path" in record
             assert "score_file" in record or "score_path" in record
+            assert "training_elapsed_time" in record
+            assert record["training_elapsed_time"] >= 0
+            assert "timings" in record
+            assert record["timings"]["model_save_time"] >= 0
+            assert record["timings"]["checkpoint_time"] >= 0
 
 
 def test_pytorch_checkpoint_filename_format_appends_epoch_before_extension():
@@ -622,18 +633,28 @@ def test_pytorch_checkpoint_filename_format_appends_epoch_before_extension():
         cfg.fit_params["checkpoint_dir"] = tmpdir
         cfg._load_or_train_model(data, model_file=None, times={})
 
-        model_files = sorted(Path(tmpdir).glob("*.pkl"))
+        model_files = sorted(Path(tmpdir).glob("*.pt"))
         score_files = sorted(Path(tmpdir).glob("*.json"))
         assert model_files
         assert score_files
         for record in cfg.checkpoint_records:
             epoch = record["epoch"]
             model_name = Path(record["model_file"]).name
+            model_state_name = Path(record["model_state_file"]).name
             score_name = Path(record["score_file"]).name
-            assert model_name.endswith(f"_{epoch}.pkl")
+            assert model_name.endswith(f"_{epoch}.pt")
+            assert model_state_name.endswith(f"_{epoch}.pt")
             assert score_name.endswith(f"_{epoch}.json")
             assert "_epoch_" not in model_name
+            assert "_epoch_" not in model_state_name
             assert "_epoch_" not in score_name
+
+            score_payload = cfg.load_scores(record["score_file"])
+            assert score_payload["checkpoint_epoch"] == epoch
+            assert score_payload["checkpoint_training_elapsed_time"] >= 0
+            assert "checkpoint_timings" in score_payload
+            assert score_payload["checkpoint_timings"]["model_save_time"] >= 0
+            assert score_payload["checkpoint_timings"]["score_time"] >= 0
 
 
 def test_pytorch_epoch_attack_scoring_runs_each_epoch_and_keeps_convention():
@@ -782,15 +803,18 @@ def test_pytorch_model_serialization_with_different_input_sizes():
     assert "optimizer_loss" in cfg.score_dict
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        model_path = Path(tmpdir) / "large_model.pkl"
-        cfg.save(str(model_path))
+        config_path = Path(tmpdir) / "large_model.yaml"
+        model_path = Path(tmpdir) / "large_model.pt"
+        cfg.save(str(config_path))
+        cfg.save_model(cfg.get_model(), str(model_path))
 
         loaded = PytorchModelConfig(
             model_type="torch.nn.Linear",
             model_params={"in_features": 100, "out_features": 2},
             classifier=True,
         )
-        loaded.load(str(model_path))
+        loaded.load(str(config_path))
+        loaded.load_model(str(model_path))
 
         # Verify model can make predictions with the new input size
         model_device = next(loaded.get_model().parameters()).device
@@ -831,7 +855,7 @@ def test_pytorch_model_hash_stable_after_load_roundtrip_runtime_mutation():
     )
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        path = Path(tmpdir) / "hash_roundtrip.pkl"
+        path = Path(tmpdir) / "hash_roundtrip.yaml"
         cfg.save(str(path))
 
         loaded = PytorchModelConfig(
@@ -859,17 +883,17 @@ def test_pytorch_model_get_model_save_load_error_paths():
     with pytest.raises(ValueError, match="Model not initialized"):
         cfg.get_model()
     with pytest.raises(ValueError, match="Model not initialized"):
-        cfg.save("/tmp/should_not_exist.pkl")
+        cfg.save_model(cfg._model, "/tmp/should_not_exist.pt")
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        missing = Path(tmpdir) / "missing.pkl"
+        missing = Path(tmpdir) / "missing.pt"
         with pytest.raises(FileNotFoundError):
-            cfg.load(str(missing))
+            cfg.load_model(str(missing))
 
-        bad = Path(tmpdir) / "bad.pkl"
+        bad = Path(tmpdir) / "bad.pt"
         torch.save({"not_state_dict": 1}, bad)
-        with pytest.raises(TypeError, match="Unsupported serialized payload"):
-            cfg.load(str(bad))
+        with pytest.raises(TypeError, match="Unsupported serialized torch model payload"):
+            cfg.load_model(str(bad))
 
 
 def test_pytorch_save_refuses_to_overwrite_existing_file():

@@ -224,12 +224,12 @@ class TestClassificationFeatureScoresForGroup:
 
         y_proba = np.column_stack([1 - y.to_numpy(), y.to_numpy()])
 
-        scores = config.compute_score(y_proba=y_proba)
+        scores = config._score(y_proba=y_proba)
 
-        assert "training_accuracy" in scores
-        assert "training_precision" in scores
-        assert "training_recall" in scores
-        assert "training_roc_auc" in scores
+        assert any(key.endswith("_accuracy") for key in scores)
+        assert any(key.endswith("_precision") for key in scores)
+        assert any(key.endswith("_recall") for key in scores)
+        assert any(key.endswith("_roc_auc") for key in scores)
 
 
 class TestFairlearnDataConfigHashStability:

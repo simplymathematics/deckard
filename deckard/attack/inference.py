@@ -90,7 +90,10 @@ class _InferenceAttackMixin(_AttackMixin):
                     raise ValueError(
                         f"Targeted attribute '{attr}' not found in test data columns.",
                     )
-        active_mode = self.resolve_mode_for_attack_kind("attribute")
+        active_mode = self.resolve_mode_for_attack_kind(
+            "attribute",
+            attack_subtype=self.attack_subtype,
+        )
         if active_mode == "val":
             X_source = getattr(data, "X_val", None)
             if X_source is None:
@@ -116,9 +119,9 @@ class _InferenceAttackMixin(_AttackMixin):
         assert (
             len(X_test_subset) == self.attack_size
         ), f"Test set size {len(X_test_subset)} does not match attack_size {self.attack_size}"
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         attack.fit(x=X_test_subset)
-        attack_time = time.process_time() - start_time
+        attack_time = time.perf_counter() - start_time
         self.attack_time = attack_time
         preds = self._prediction_to_labels(
             art_model.predict(X_test_subset),
@@ -134,7 +137,7 @@ class _InferenceAttackMixin(_AttackMixin):
             and len(possible_values[0]) == 1
         ):
             possible_values = [v[0] for v in possible_values]
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         preds = np.array(preds, dtype=ART_NUMPY_DTYPE)
         X_test_subset_without_feature = np.array(
             X_test_subset_without_feature,
@@ -145,7 +148,7 @@ class _InferenceAttackMixin(_AttackMixin):
             pred=preds,
             values=possible_values,
         )
-        end_time = time.process_time()
+        end_time = time.perf_counter()
         is_classification = not attack._is_continuous
         inferred = self._normalize_inferred_output(inferred)
         if is_classification:
@@ -177,7 +180,7 @@ class _InferenceAttackMixin(_AttackMixin):
         return self.score_dict
 
     def infer_membership(self, data, attack) -> dict:
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         y_train_raw = self._prepare_labels_for_attack(getattr(data, "y_train"))
         y_train_values = self._to_numpy_array(y_train_raw)
         if y_train_values.ndim == 1:
@@ -201,7 +204,7 @@ class _InferenceAttackMixin(_AttackMixin):
                 y=safe_y_data,
                 test_x=self._prepare_features_for_art(getattr(data, "X_test")),
             )
-        self.attack_time = time.process_time() - start_time
+        self.attack_time = time.perf_counter() - start_time
 
         x_train = self._prepare_features_for_art(getattr(data, "X_train"))
         x_test = self._prepare_features_for_art(getattr(data, "X_test"))
@@ -239,24 +242,24 @@ class _InferenceAttackMixin(_AttackMixin):
         sensitive_membership = (
             big_sensitive[indices] if big_sensitive is not None else None
         )
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         inferred = attack.infer(
             x=big_X,
             y=big_y,
         )
-        end_time = time.process_time()
+        end_time = time.perf_counter()
         self.attack_time = end_time - start_time
         inferred = self._normalize_inferred_output(inferred)
         assert (
             len(inferred) == n
         ), f"Length of inferred {len(inferred)} does not match number of samples {self.attack_size}"
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         inferred = self._normalize_inferred_output(inferred, reference=labels)
         inferred = self._prediction_to_labels(inferred, is_regression=False)
         labels = self._normalize_ground_truth(labels, is_regression=False)
         self.attack_predictions = inferred
         self.attacked_labels = labels
-        end_time = time.process_time()
+        end_time = time.perf_counter()
         self.attack_prediction_time = end_time - start_time
         score_dict = self._score(
             attack_kind="membership",
@@ -270,15 +273,41 @@ class _InferenceAttackMixin(_AttackMixin):
         self.attack = inferred
         return self.score_dict
 
-    def infer_model_inversion(self, data, attack) -> dict:
-        split = str(self.attack_params.get("split", "test")).lower()
-        if split not in {"train", "test"}:
-            raise ValueError(
-                f"Unsupported model inversion split '{split}'. Expected 'train' or 'test'.",
+    def _resolve_source_split(self, data, *, attack_kind: str) -> tuple[str, object, object]:
+        requested_mode = self.resolve_mode_for_attack_kind(
+            attack_kind,
+            attack_subtype=self.attack_subtype,
+        )
+        if requested_mode == "val":
+            X_val = getattr(data, "X_val", None)
+            y_val = getattr(data, "y_val", None)
+            if X_val is not None and y_val is not None:
+                return "val", X_val, y_val
+            logger.warning(
+                "Attack mode='val' requested but validation split is unavailable; falling back to test split.",
+            )
+        elif requested_mode == "train":
+            X_train = getattr(data, "X_train", None)
+            y_train = getattr(data, "y_train", None)
+            if X_train is not None and y_train is not None:
+                return "train", X_train, y_train
+            logger.warning(
+                "Attack mode='train' requested but training split is unavailable; falling back to test split.",
             )
 
-        x_source = getattr(data, "X_train" if split == "train" else "X_test")
-        y_source = getattr(data, "y_train" if split == "train" else "y_test")
+        X_test = getattr(data, "X_test", None)
+        y_test = getattr(data, "y_test", None)
+        if X_test is None or y_test is None:
+            raise ValueError(
+                "Inference attacks require test features/labels (or val when mode='val').",
+            )
+        return "test", X_test, y_test
+
+    def infer_model_inversion(self, data, attack) -> dict:
+        split, x_source, y_source = self._resolve_source_split(
+            data,
+            attack_kind="model_inversion",
+        )
         x_source = self._to_numpy_array(
             self._prepare_features_for_attack(x_source),
             dtype=ART_NUMPY_DTYPE,
@@ -343,16 +372,16 @@ class _InferenceAttackMixin(_AttackMixin):
                 f"len(x_init)={len(init_samples)} len(targets)={len(target_labels)}",
             )
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         try:
             inferred = attack.infer(x=init_samples, y=target_labels)
         except TypeError:
             inferred = attack.infer(init_samples, target_labels)
-        self.attack_time = time.process_time() - start_time
+        self.attack_time = time.perf_counter() - start_time
 
         self.attack_prediction_time = 0.0
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         inferred_arr = self._to_numpy_array(inferred, dtype=ART_NUMPY_DTYPE)
         inferred_flat = inferred_arr.reshape(len(target_labels), -1)
 
@@ -385,6 +414,7 @@ class _InferenceAttackMixin(_AttackMixin):
             "model_inversion_mse": score_dict.get("inferred_model_inversion_mse"),
             "model_inversion_mae": score_dict.get("inferred_model_inversion_mae"),
             "model_inversion_num_targets": int(len(target_labels)),
+            "model_inversion_mode": split,
         }
         self.score_dict = {
             **self.score_dict,
@@ -394,15 +424,10 @@ class _InferenceAttackMixin(_AttackMixin):
         return self.score_dict
 
     def infer_database_reconstruction(self, data, attack) -> dict:
-        split = str(self.attack_params.get("split", "train")).lower()
-        if split not in {"train", "test"}:
-            raise ValueError(
-                "Unsupported database reconstruction split "
-                f"'{split}'. Expected 'train' or 'test'.",
-            )
-
-        x_source = getattr(data, "X_train" if split == "train" else "X_test")
-        y_source_raw = getattr(data, "y_train" if split == "train" else "y_test", None)
+        split, x_source, y_source_raw = self._resolve_source_split(
+            data,
+            attack_kind="reconstruction",
+        )
         x_source = self._to_numpy_array(
             self._prepare_features_for_attack(x_source),
             dtype=ART_NUMPY_DTYPE,
@@ -434,16 +459,16 @@ class _InferenceAttackMixin(_AttackMixin):
             y_true_missing = y_source.reshape(-1)[missing_index]
             y_known = np.delete(y_source, missing_index, axis=0)
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         try:
             reconstructed = attack.reconstruct(x_known, y_known)
         except TypeError:
             reconstructed = attack.reconstruct(x_known)
-        self.attack_time = time.process_time() - start_time
+        self.attack_time = time.perf_counter() - start_time
 
         self.attack_prediction_time = 0.0
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         if isinstance(reconstructed, tuple):
             if len(reconstructed) == 0:
                 raise ValueError("DatabaseReconstruction returned an empty tuple.")
@@ -506,7 +531,7 @@ class _InferenceAttackMixin(_AttackMixin):
                     }
                     feature_scores = {**feature_scores, **raw_label_scores}
 
-        self.attack_score_time = time.process_time() - start_time
+        self.attack_score_time = time.perf_counter() - start_time
 
         self.attack_predictions = x_reconstructed
         self.attacked_labels = x_true_missing

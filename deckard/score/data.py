@@ -42,7 +42,25 @@ def _coerce_features_dataframe(X: FeatureMatrix) -> pd.DataFrame:
             return pd.DataFrame({X.name or "feature_0": X})
         codes, _ = pd.factorize(X, sort=True)
         return pd.DataFrame({X.name or "feature_0": codes})
-    arr = np.asarray(X)
+    try:
+        arr = np.asarray(X)
+    except ValueError:
+        arr = None
+
+    if arr is None or (arr.dtype == object and arr.ndim == 1):
+        # Dataset/Subset payloads often yield (features, label) pairs.
+        if hasattr(X, "__len__") and hasattr(X, "__getitem__"):
+            rows: list[np.ndarray] = []
+            for i in range(len(X)):
+                item = X[i]
+                feature = item[0] if isinstance(item, (tuple, list)) else item
+                rows.append(np.asarray(feature).reshape(-1))
+            if rows:
+                arr = np.vstack(rows)
+            else:
+                arr = np.empty((0, 0))
+        else:
+            arr = np.asarray(list(X))
     if arr.ndim > 2:
         arr = arr.reshape(arr.shape[0], -1)
     if arr.ndim == 1:
@@ -399,6 +417,7 @@ class DefaultDataScorerConfig(
     """
 
     classifier: Union[bool, str, None] = None
+    scoring_type: str = "data"
     scorers: dict[str, Union[ScorerConfig, KwargMap]] = field(default_factory=dict)
 
     def _build_default_scorers(
@@ -520,7 +539,11 @@ def pytorch_split_count_score(
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultPytorchDataScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
+class DefaultPytorchDataScorerConfig(
+    _DataScorerMarker,
+    _TaskAwareScorerMixin,
+    ScorerDictConfig,
+):
     """Default tensor-aware data scorer family for PyTorch datasets.
 
     This scorer avoids feature-level mutual-information metrics, which are
@@ -529,6 +552,7 @@ class DefaultPytorchDataScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
     """
 
     classifier: Union[bool, str, None] = None
+    scoring_type: str = "data"
     scorers: dict[str, Union[ScorerConfig, KwargMap]] = field(default_factory=dict)
 
     def _build_default_scorers(

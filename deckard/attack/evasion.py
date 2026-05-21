@@ -72,7 +72,7 @@ class _EvasionAttackMixin(_AttackMixin):
             A dictionary containing the scores and metrics of the attack evaluation.
         """
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         active_mode = self.resolve_mode_for_attack_kind("evasion")
         n, x_subset, y_subset = self.get_attack_subset(
             data,
@@ -118,17 +118,17 @@ class _EvasionAttackMixin(_AttackMixin):
             X_test_adv = attack.apply_patch(x_subset_art, scale=scale)
         else:
             X_test_adv = attack.generate(x=x_subset_art)
-        end_time = time.process_time()
+        end_time = time.perf_counter()
         self.attack_time = end_time - start_time
         logger.info(
             f"Evasion attack took {self.attack_time} seconds for {n} samples",
         )
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         adv_pred = art_model.predict(X_test_adv)
         self.attack_predictions = adv_pred
         self.attacked_labels = y_subset
         # adv_pred_labels = adv_pred.argmax(axis=1)
-        end_time = time.process_time()
+        end_time = time.perf_counter()
         self.attack_prediction_time = end_time - start_time
         logger.info(
             f"Adversarial prediction took {self.attack_prediction_time} seconds for {n} samples",
@@ -151,6 +151,10 @@ class _EvasionAttackMixin(_AttackMixin):
             is_classification=not is_regression,
             y_proba=None if is_regression else ben_preds,
             mode=active_mode,
+            sensitive_features=_sensitive_slice(
+                getattr(data, "_sensitive_test", None),
+                n,
+            ),
         )
 
         score_dict = self._score(

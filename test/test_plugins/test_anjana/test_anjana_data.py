@@ -11,6 +11,7 @@ from deckard.plugins.anjana.data import AnjanaDataConfig
 def _bare_cfg():
     cfg = AnjanaDataConfig.__new__(AnjanaDataConfig)
     cfg.pipeline = {}
+    cfg.plugins = None
     cfg.anjana_defense = None
     cfg.fairness_defense = None
     cfg.identifiers = None
@@ -271,14 +272,14 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     assert cfg_score._score() == {}
 
     cfg_score.scorer = "default"
-    cfg_score.y_train = pd.Series([0, 1])
-    cfg_score.X_train = pd.DataFrame({"x": [1, 2]})
+    cfg_score._y = pd.Series([0, 1])
+    cfg_score._X = pd.DataFrame({"x": [1, 2]})
     monkeypatch.setattr(
         anjana_data_module,
         "load_class",
         lambda path: (lambda **kwargs: {"path": path, "n": len(kwargs["y_true"])}),
     )
-    scored = cfg_score._score()
+    scored = cfg_score._score(mode="pre-sample")
     assert scored == {
         "path": "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
         "n": 2,
@@ -286,7 +287,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
 
     cfg_score.scorer = 5
     with pytest.raises(TypeError, match="must be callable or None"):
-        cfg_score._score()
+        cfg_score._score(mode="pre-sample")
 
     cfg_fallback = _bare_cfg()
     cfg_fallback.scorer = lambda **kwargs: {
@@ -295,4 +296,4 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     }
     cfg_fallback._y = pd.Series([1, 0])
     cfg_fallback._X = pd.DataFrame({"z": [3, 4]})
-    assert cfg_fallback._score() == {"rows": 2, "cols": ["z"]}
+    assert cfg_fallback._score(mode="pre-sample") == {"rows": 2, "cols": ["z"]}

@@ -1,22 +1,43 @@
+# Standard library imports
 import copy
-import logging
 import pickle
+import time
+import logging
 
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Optional, Union, cast
-
-import numpy as np
 import pandas as pd
 
+# Typing imports
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union
+
+# Sklearn and numpy imports
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
+from sklearn.utils.validation import check_is_fitted
+from sklearn.exceptions import NotFittedError
+import numpy as np
+
+# ART imports
 from art.config import ART_NUMPY_DTYPE
+
 from omegaconf import DictConfig, OmegaConf
 
-from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
-from sklearn.exceptions import NotFittedError
-from sklearn.utils.validation import check_is_fitted
-
-from ..frameworks.types import EstimatorLike
+from ..model import ModelConfig
+from ..model.defend import _get_art_symbols
+from ..score.base import (
+    DefaultClassifierConfig,
+    ScorerDictConfig,
+)
+from ..utils import (
+    ConfigBase,
+    is_default_config_value,
+    is_null_config_value,
+    load_class,
+    normalize_plugin_specs,
+    instantiate_plugin_spec,
+    resolve_class,
+    resolve_torch_device,
+)
 from ..frameworks.pytorch.torch_utils import (
     build_torch_art_model,
     collect_subset_from_dataloader,
@@ -25,30 +46,13 @@ from ..frameworks.pytorch.torch_utils import (
     is_torch_model,
     tensor_to_numpy,
 )
-from ..model import ModelConfig
-from ..model.defend import _get_art_symbols
-from ..score.base import (
-    DefaultClassifierConfig,
-    DefaultRegressorConfig,
-    ScorerDictConfig,
-    SUPPORTED_SCORING_STAGES,
-)
-from ..utils import (
-    ConfigBase,
-    instantiate_plugin_spec,
-    is_default_config_value,
-    is_null_config_value,
-    load_class,
-    normalize_plugin_specs,
-    resolve_class,
-    resolve_torch_device,
-)
 
 if TYPE_CHECKING:
-    from ..data.base import DataConfig
     from ..score.attack import AttackScorerConfig
 
 logger = logging.getLogger(__name__)
+
+
 
 
 def _sensitive_slice(sensitive, n):
@@ -102,19 +106,18 @@ class SensitiveFeaturesWrapper(BaseEstimator):
         }
 
     def set_params(self, **params: Any) -> "SensitiveFeaturesWrapper":
-        """Set wrapped estimator or sensitive-feature state."""
         if "estimator" in params:
             self.estimator = params["estimator"]
         if "sensitive_features" in params:
             self._sensitive = np.asarray(params["sensitive_features"])
         return self
-
     def _sensitive_slice(self, sensitive, n):
         """Return the first *n* rows of *sensitive*, or None if unavailable."""
         if sensitive is None:
             return None
         arr = np.asarray(sensitive)
         return arr[:n]
+
 
 
 supported_attacks = [
@@ -246,7 +249,7 @@ class AttackTypePlugin:
         """Return mixin tuple for matching attack family/subtype."""
         _ = (runtime, default_mixins)
         if not self._matches(attack_type=attack_type, attack_subtype=attack_subtype):
-            return ()
+            return tuple()
         mixin = self._resolve_mixin_type()
         return (mixin,)
 
@@ -295,9 +298,56 @@ class AttackConfig(ConfigBase):
     """Runtime attack configuration with plugin-driven dispatch.
 
     Attack behavior is resolved at runtime via mixins and optional plugins.
-    This class owns orchestration, timing, scoring, and plugin hook execution.
+    Concrete attack logic lives in type-specific modules, while this class
+    owns orchestration, timing, scoring, and plugin hook execution.
 
-    ``attack_params`` holds constructor kwargs for the selected attack class.
+    Plugin hooks
+    ------------
+    resolve_attack_mixins(self, *, attack_type, attack_subtype, default_mixins)
+        Return one mixin type, or a list/tuple of mixin types, to extend runtime
+        dispatch for the parsed attack type.
+    resolve_attack_handler(self, *, attack_type, attack_subtype, default_handler, default_mixins)
+        Return a callable handler (or handler type) to override default runtime
+        handler resolution.
+    before_attack_dispatch(self, *, data, model, attack, art_model, attack_type, attack_subtype, runtime, handler)
+        Runs immediately before handler execution. Dict returns are merged into
+        score_dict.
+    after_attack_dispatch(self, *, data, model, attack, art_model, attack_type, attack_subtype, scores)
+        Runs immediately after handler execution. Dict returns are merged into
+        score_dict.
+
+    Parameter layers
+    ----------------
+    attack_params : dict
+        Attack-class constructor kwargs. These are copied and filtered before
+        attack instantiation in ``_initialize_attack``.
+
+    Family-specific parameter semantics
+    ----------------------------------
+    evasion
+        Typical ART attack kwargs (for example ``eps``, ``eps_step``,
+        ``max_iter``), passed through to attack constructor.
+    poisoning
+        Requires ``class_source`` and ``class_target`` for Deckard runtime
+        validation. Some orchestration keys (for example ``trigger_index``,
+        ``poison_fit_params``) are consumed by Deckard and stripped before
+        constructing ART attack objects.
+    extraction
+        Constructor kwargs are attack-specific; query/eval split handling and
+        thieved classifier reset are runtime concerns implemented in mixins.
+    inference
+        Some keys (for example ``split``, ``targets``, ``missing_index``) are
+        runtime controls used by specific inference subtypes and may be removed
+        from constructor kwargs before ART instantiation.
+
+    Plugin hook runtime params
+    --------------------------
+    Hooks are orchestrated by ``_run_plugin_hook(hook_name, **kwargs)``.
+    Core hook names used by AttackConfig runtime are:
+    ``resolve_attack_mixins``, ``resolve_attack_handler``,
+    ``before_attack_dispatch``, and ``after_attack_dispatch``.
+    Hook kwargs are phase-specific runtime objects supplied by attack
+    orchestration.
     """
 
     # Configuration fields
@@ -318,7 +368,7 @@ class AttackConfig(ConfigBase):
     alias: Union[str, None] = None
     plugins: list = field(default_factory=list)
     device: Union[str, None] = None
-    mode: str = "auto"
+    mode: Literal["auto", "train", "test", "val"] = "auto"
 
     # Runtime state fields
     attack_time: Union[float, None] = None
@@ -343,29 +393,14 @@ class AttackConfig(ConfigBase):
     def __hash__(self):
         return super().__hash__()
 
-    @property
-    def attack_instance(self) -> Any:
-        """Compatibility alias for the instantiated attack runtime object."""
-        return self.attack
-
-    @attack_instance.setter
-    def attack_instance(self, value: Any) -> None:
-        """Compatibility alias setter for the attack runtime object."""
-        self.attack = value
-
     def __post_init__(self):
-        """Initialize and normalize attack runtime configuration."""
-        self._initialize_target_reference()
-        self._initialize_attack_scorer()
-        self._validate_poisoning_params()
-        self._initialize_runtime_device()
+        """
+        Initializes post-construction attributes for the class.
 
-    def _initialize_target_reference(self) -> None:
-        """Set canonical runtime target path."""
+        Sets the internal attack attribute to None. If attack_params is not provided,
+        initializes it as an empty dictionary.
+        """
         self._target_ = "deckard.attack.AttackConfig"
-
-    def _initialize_attack_scorer(self) -> None:
-        """Resolve scorer configuration into an attack-scorer runtime object."""
         attack_scorer_cls = resolve_class(
             "deckard.score.attack.AttackScorerConfig",
         )
@@ -396,30 +431,7 @@ class AttackConfig(ConfigBase):
             raise TypeError(
                 "AttackConfig scorer must expose a '_score' method.",
             )
-
-    def _validate_poisoning_params(self) -> None:
-        """Validate poisoning-specific configuration parameters."""
-        attack_type = (self.attack_family or "").lower()
-        if attack_type != "poisoning":
-            return
-        if str(self.attack_type).endswith("PoisoningAttackSVM"):
-            return
-        required_keys = ("class_source", "class_target")
-        missing_keys = [k for k in required_keys if k not in self.attack_params]
-        if missing_keys:
-            raise ValueError(
-                "Poisoning attacks require attack_params to include "
-                f"{required_keys}. Missing: {tuple(missing_keys)}",
-            )
-        class_source = int(self.attack_params["class_source"])
-        class_target = int(self.attack_params["class_target"])
-        if class_source == class_target:
-            raise ValueError(
-                "Poisoning attacks require class_source and class_target to differ.",
-            )
-
-    def _initialize_runtime_device(self) -> None:
-        """Resolve and normalize runtime device selection."""
+        self._validate_poisoning_params()
         self.device = str(resolve_torch_device(self.device))
 
     def load_cached_attack_artifacts(
@@ -450,201 +462,99 @@ class AttackConfig(ConfigBase):
                 )
                 Path(attack_predictions_file).unlink(missing_ok=True)
 
-    def validate_attack_runtime_inputs(self, data, model) -> None:
-        """Validate model/data compatibility for the configured attack."""
-        self._validate_attack_task_compatibility(data, model)
+    def _validate_poisoning_params(self):
+        """Validate poisoning-specific configuration parameters."""
+        attack_type = (self.attack_family or "").lower()
+        if attack_type != "poisoning":
+            return
 
-    def initialize_attack_runtime(self, model, data):
-        """Initialize attack runtime objects and resolved attack family metadata."""
-        return self._initialize_attack(model, data)
+        if str(self.attack_type).endswith("PoisoningAttackSVM"):
+            return
 
-    def resolve_attack_runtime_handler(
-        self,
-        runtime,
-        attack_type: str,
-        attack_subtype: str,
-    ):
-        """Resolve the runtime handler function for this attack family/subtype."""
-        handler = runtime._resolve_attack_handler(
-            attack_type=attack_type,
-            attack_subtype=attack_subtype,
-        )
-        if handler is None:
-            raise NotImplementedError(
-                f"Attack type {attack_type} subtype {attack_subtype} has no registered runtime handler.",
+        required_keys = ("class_source", "class_target")
+        missing_keys = [k for k in required_keys if k not in self.attack_params]
+        if missing_keys:
+            raise ValueError(
+                "Poisoning attacks require attack_params to include "
+                f"{required_keys}. Missing: {tuple(missing_keys)}",
             )
-        return handler
 
-    def dispatch_attack_runtime(
-        self,
-        handler,
-        *,
-        data,
-        model,
-        art_model,
-        attack,
-        attack_type: str,
-        attack_subtype: str,
-    ):
-        """Execute the resolved runtime handler for attack generation/scoring."""
-        return handler(
-            data=data,
-            model=model,
-            art_model=art_model,
-            attack=attack,
-            attack_type=attack_type,
-            attack_subtype=attack_subtype,
-        )
+        class_source = int(self.attack_params["class_source"])
+        class_target = int(self.attack_params["class_target"])
+        if class_source == class_target:
+            raise ValueError(
+                "Poisoning attacks require class_source and class_target to differ.",
+            )
 
-    def set_mode(
-        self,
-        mode: str,
-    ) -> "AttackConfig":
+    def set_mode(self, mode: Literal["auto", "train", "test", "val"]) -> "AttackConfig":
         """Set attack scoring/evaluation split mode explicitly."""
         canonical = str(mode).strip().lower()
-        if canonical not in {"auto", "train", "test", "val", *SUPPORTED_SCORING_STAGES}:
+        valid_modes = {"auto", "train", "test", "val"}
+        if canonical not in valid_modes:
             raise ValueError(
-                f"Unsupported attack mode '{mode}'. Expected one of: {sorted({'auto', 'train', 'test', 'val', *SUPPORTED_SCORING_STAGES})}.",
+                f"Unsupported attack mode '{mode}'. Expected one of: {', '.join(sorted(valid_modes))}.",
             )
         self.mode = canonical
         return self
 
-    @staticmethod
-    def _stage_to_runtime_mode(stage_or_mode: str) -> str:
-        token = str(stage_or_mode or "").strip().lower()
-        stage_to_mode = {
-            "train": "train",
-            "test": "test",
-            "val": "val",
-            "pre-defense": "test",
-            "post-defense": "test",
-            "post-pipeline": "test",
-            "post-sample": "test",
-            "benign": "test",
-            "adversarial": "test",
-            "pre-filter": "test",
-            "post-filter": "test",
-            "pre-sample": "test",
-        }
-        if token not in stage_to_mode:
-            raise ValueError(
-                f"Unsupported attack mode/stage '{stage_or_mode}'. Expected one of: {sorted(stage_to_mode)}.",
-            )
-        return stage_to_mode[token]
-
-    @staticmethod
-    def _default_stage_for_attack_kind(
-        attack_kind: Optional[str],
-        resolved_mode: str,
-    ) -> str:
-        kind = (attack_kind or "").strip().lower()
-        if kind == "evasion":
-            return "adversarial"
-        return resolved_mode
-
-    def resolve_score_stage_for_attack_kind(
-        self,
-        attack_kind: Optional[str],
-        resolved_mode: str,
-    ) -> str:
-        token = str(self.mode or "auto").strip().lower()
-        if token == "auto":
-            return self._default_stage_for_attack_kind(attack_kind, resolved_mode)
-        if token in SUPPORTED_SCORING_STAGES or token in {"train", "test", "val"}:
-            return token
-        raise ValueError(
-            f"Unsupported attack score stage '{self.mode}'. Expected one of auto/train/test/val or {sorted(SUPPORTED_SCORING_STAGES)}.",
-        )
-
     def resolve_mode_for_attack_kind(
         self,
         attack_kind: Optional[str],
+        *,
+        attack_subtype: Optional[str] = None,
+        split_override: Optional[str] = None,
     ) -> Literal["train", "test", "val"]:
-        """Resolve active split mode from explicit mode or attack-kind default."""
-        mode_token = str(self.mode or "auto").strip().lower()
-        if mode_token != "auto":
-            resolved = self._stage_to_runtime_mode(mode_token)
-            if resolved in {"train", "test", "val"}:
-                return cast(Literal["train", "test", "val"], resolved)
+        """Resolve active split mode from overrides, explicit mode, or auto defaults.
+
+        Precedence order:
+        1) Explicit split override (method arg or attack_params['split']).
+        2) Explicit attack mode (train/test/val).
+        3) Auto defaults inferred from attack family/subtype/kind.
+        """
+        valid_modes = {"auto", "train", "test", "val"}
+        mode_value = str(self.mode).strip().lower()
+        if mode_value not in valid_modes:
             raise ValueError(
-                f"Unsupported attack mode '{self.mode}'. Expected one of auto/train/test/val or a supported stage alias.",
+                f"Unsupported attack mode '{self.mode}'. Expected one of: {', '.join(sorted(valid_modes))}.",
             )
-        if attack_kind == "attribute":
+
+        requested_split = split_override
+        if requested_split is None and isinstance(self.attack_params, dict):
+            requested_split = self.attack_params.get("split")
+        if requested_split is not None:
+            canonical_split = str(requested_split).strip().lower()
+            if canonical_split not in {"train", "test", "val"}:
+                raise ValueError(
+                    "Unsupported attack split override "
+                    f"'{requested_split}'. Expected one of: train, test, val.",
+                )
+            return canonical_split
+
+        if mode_value in {"train", "test", "val"}:
+            return mode_value
+        attack_family = (self.attack_family or "").lower()
+        subtype = (attack_subtype or self.attack_subtype or "").lower()
+        kind = (attack_kind or "").lower()
+
+        if attack_family == "poisoning":
+            return "train"
+        if attack_family == "evasion":
+            return "test"
+        if attack_family == "extraction":
+            return "test"
+        if attack_family == "inference":
+            if subtype in {
+                "membership_inference",
+                "attribute_inference",
+                "reconstruction",
+            }:
+                return "train"
+            if subtype == "model_inversion":
+                return "test"
+
+        if kind in {"membership", "attribute", "poisoning", "reconstruction"}:
             return "train"
         return "test"
-
-    def _resolve_comparison_scorer(self, default_scorer):
-        """Resolve optional subtype comparison scorer override from attack_params."""
-        scorer_spec = self.attack_params.get("comparison_scorer", None)
-        if scorer_spec is None:
-            return default_scorer
-        if isinstance(scorer_spec, DictConfig):
-            scorer_spec = OmegaConf.to_container(scorer_spec, resolve=True)
-        if isinstance(scorer_spec, ScorerDictConfig):
-            return scorer_spec
-        if isinstance(scorer_spec, dict):
-            spec = dict(scorer_spec)
-            scorer_target = spec.pop("_target_", spec.pop("name", None))
-            if scorer_target is not None:
-                return load_class(scorer_target, **spec)
-            return ScorerDictConfig(**spec)
-        if isinstance(scorer_spec, str):
-            return load_class(scorer_spec)
-        if isinstance(scorer_spec, type):
-            return scorer_spec()
-        if callable(scorer_spec):
-            return scorer_spec
-        raise TypeError(
-            "attack_params['comparison_scorer'] must be a scorer config, class, import path, or callable.",
-        )
-
-    @staticmethod
-    def _unwrap_mode_or_stage_scores(
-        scores: dict[str, Any],
-        *,
-        mode: str | None,
-        stage: str | None,
-    ) -> dict[str, Any]:
-        if not isinstance(scores, dict):
-            return {}
-        if stage is not None and stage in scores and isinstance(scores.get(stage), dict):
-            return dict(scores[stage])
-        if mode is not None and mode in scores and isinstance(scores.get(mode), dict):
-            return dict(scores[mode])
-        return dict(scores)
-
-    def _score_comparison(
-        self,
-        *,
-        y_true,
-        y_pred,
-        stage: str,
-        prefix: str,
-        is_classification: bool,
-        mode: str = "test",
-        y_proba: Any = None,
-    ) -> dict[str, Any]:
-        base_scorer = (
-            DefaultClassifierConfig() if is_classification else DefaultRegressorConfig()
-        )
-        scorer = self._resolve_comparison_scorer(base_scorer)
-
-        call_kwargs = {
-            "y_true": y_true,
-            "y_pred": y_pred,
-            "mode": mode,
-            "stage": stage,
-        }
-        if y_proba is not None:
-            call_kwargs["y_proba"] = y_proba
-
-        raw_scores = scorer(**call_kwargs)
-        flat_scores = self._unwrap_mode_or_stage_scores(
-            raw_scores,
-            mode=mode,
-            stage=stage,
-        )
-        return {f"{prefix}_{key}": value for key, value in flat_scores.items()}
 
     def _parse_attack_path(self) -> tuple[str, str]:
         parts = (self.attack_type or "").split("attacks.")[-1].split(".")
@@ -697,19 +607,6 @@ class AttackConfig(ConfigBase):
         for output in hook_outputs:
             if isinstance(output, dict):
                 self.score_dict.update(output)
-
-    @staticmethod
-    def _flatten_stage_scores(scores: dict[str, Any]) -> dict[str, Any]:
-        if not isinstance(scores, dict):
-            return {}
-        flat: dict[str, Any] = {}
-        for key, value in scores.items():
-            if isinstance(value, dict):
-                for metric_name, metric_value in value.items():
-                    flat[f"{key}_{metric_name}"] = metric_value
-            else:
-                flat[key] = value
-        return flat
 
     def _resolve_runtime_attack_mixins(
         self,
@@ -936,9 +833,9 @@ class AttackConfig(ConfigBase):
 
                 predict_sig = inspect.signature(model.predict)
                 if "sensitive_features" in predict_sig.parameters:
-                    sensitive = getattr(data, "sensitive_test", None)
+                    sensitive = getattr(data, "_sensitive_test", None)
                     if sensitive is None:
-                        sensitive = getattr(data, "sensitive_train", None)
+                        sensitive = getattr(data, "_sensitive_train", None)
                     if sensitive is not None:
                         model = SensitiveFeaturesWrapper(model, sensitive)
                 if isinstance(model, RegressorMixin) and not isinstance(
@@ -1044,11 +941,7 @@ class AttackConfig(ConfigBase):
         self._attack_subtype = attack_subtype
         return attack, art_model, attack_type, attack_subtype
 
-    def initialize_attack(
-        self,
-        model: ModelConfig | EstimatorLike,
-        data: "DataConfig",
-    ):
+    def initialize_attack(self, model: Any, data: Any):
         """Public entry-point for attack initialisation. Delegates to _initialize_attack()."""
         return self._initialize_attack(model, data)
 
@@ -1129,23 +1022,21 @@ class AttackConfig(ConfigBase):
             attack_file=attack_file,
             attack_predictions_file=attack_predictions_file,
         )
-        self.validate_attack_runtime_inputs(data, model)
+        self._validate_attack_task_compatibility(data, model)
 
-        attack, art_model, attack_type, attack_subtype = (
-            self.initialize_attack_runtime(
-                model,
-                data,
-            )
+        attack, art_model, attack_type, attack_subtype = self._initialize_attack(
+            model,
+            data,
         )
-        runtime = self._with_attack_context(
+        runtime = self._with_attack_context(attack_type=attack_type, attack_subtype=attack_subtype)
+        handler = runtime._resolve_attack_handler(
             attack_type=attack_type,
             attack_subtype=attack_subtype,
         )
-        handler = self.resolve_attack_runtime_handler(
-            runtime,
-            attack_type,
-            attack_subtype,
-        )
+        if handler is None:
+            raise NotImplementedError(
+                f"Attack type {attack_type} subtype {attack_subtype} has no registered runtime handler.",
+            )
 
         before_outputs = runtime._run_plugin_hook(
             "before_attack_dispatch",
@@ -1160,8 +1051,7 @@ class AttackConfig(ConfigBase):
         )
         runtime._merge_plugin_scores(before_outputs)
 
-        scores = self.dispatch_attack_runtime(
-            handler,
+        scores = handler(
             data=data,
             model=model,
             art_model=art_model,
@@ -1372,6 +1262,48 @@ class AttackConfig(ConfigBase):
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
 
+    def _score_comparison(
+        self,
+        *,
+        y_true,
+        y_pred,
+        stage: str,
+        prefix: str,
+        is_classification: bool,
+        y_proba=None,
+        mode: str | None = None,
+        ben_pred_labels=None,
+        sensitive_features=None,
+    ) -> dict:
+        """Score one comparison branch and namespace outputs by prefix.
+
+        Used by attack runtimes to emit pairs like benign/adversarial metrics
+        without relying on caller-side key rewriting.
+        """
+        if not is_classification:
+            return {}
+        attack_kind = (self.attack_kind or "evasion").lower()
+        raw_scores = self._score(
+            attack_kind=attack_kind,
+            y_true=y_true,
+            y_pred=y_pred,
+            y_proba=y_proba,
+            stage=stage,
+            mode=mode,
+            ben_pred_labels=(y_pred if ben_pred_labels is None else ben_pred_labels),
+            sensitive_features=sensitive_features,
+        )
+        normalized_scores: dict[str, Any] = {}
+        attack_prefix = f"{attack_kind}_"
+        for key, value in raw_scores.items():
+            metric_key = str(key)
+            if metric_key.startswith(attack_prefix):
+                metric_key = metric_key[len(attack_prefix) :]
+            if metric_key == "f1-score":
+                metric_key = "f1"
+            normalized_scores[f"{prefix}_{metric_key}"] = value
+        return normalized_scores
+
     def _score(self, attack_kind: str, y_true, y_pred=None, *args, **kwargs) -> dict:
         """Dispatch attack scoring through the configured AttackScorerConfig."""
         if self.scorer is None:
@@ -1384,19 +1316,15 @@ class AttackConfig(ConfigBase):
         if y_proba is None:
             y_proba = self.score_y_proba
 
-        resolved_mode = self.resolve_mode_for_attack_kind(attack_kind)
-        resolved_stage = self.resolve_score_stage_for_attack_kind(
-            attack_kind,
-            resolved_mode,
-        )
-
         score_kwargs = {
             "attack_kind": attack_kind,
             "y_true": y_true,
             "y_pred": y_pred,
             "attack_size": self.attack_size,
-            "mode": resolved_mode,
-            "stage": resolved_stage,
+            "mode": self.resolve_mode_for_attack_kind(
+                attack_kind,
+                attack_subtype=self.attack_subtype,
+            ),
             **kwargs,
         }
         if y_proba is not None:
@@ -1605,7 +1533,22 @@ class AttackConfig(ConfigBase):
         row_sums = pred.sum(axis=1)
         return np.allclose(row_sums, 1.0, atol=1e-4)
 
-    
+    @staticmethod
+    def _select_extraction_scorer(benign_pred, extracted_pred):
+        """Use full classifier metrics when probabilities are available, else label-only metrics."""
+        preds = [np.asarray(benign_pred), np.asarray(extracted_pred)]
+        has_probabilities = all(
+            AttackConfig._looks_like_probabilities(pred) for pred in preds
+        )
+        if has_probabilities:
+            return DefaultClassifierConfig(), True
+        full_classifier = DefaultClassifierConfig()
+        label_only = {
+            name: scorer
+            for name, scorer in full_classifier.scorers.items()
+            if not scorer.needs_proba
+        }
+        return ScorerDictConfig(scorers=label_only), False
 
     def _score_attack_legacy(
         self,
@@ -1620,64 +1563,37 @@ class AttackConfig(ConfigBase):
             y_test_numeric,
         )
 
-    def compose_subset_sampling_behavior(
-        self,
-        data: Any,
-        test: bool,
-    ):
-        """Compose subset-sampling behavior based on runtime data container types."""
-        n = self.attack_size
-        x_ = data.X_test if test is True else data.X_train
-        y_ = data.y_test if test is True else data.y_train
-        from torch.utils.data import Dataset, Subset
-
-        if isinstance(x_, (pd.Series, np.ndarray, pd.DataFrame)) or is_tensor(x_):
-            return lambda: (x_[:n], y_[:n])
-        if isinstance(x_, (Dataset, Subset)):
-            return lambda: self._collect_subset_from_dataset(x_, n)
-        if is_dataloader(x_):
-            return lambda: collect_subset_from_dataloader(x_, n=n)
-        raise ValueError(
-            f"Expected data.X_test to be a pd.Series, np.ndarray, torch Tensor, torch DataLoader, or torch Dataset/Subset. Got: {type(data.X_test)}",
-        )
-
-    @staticmethod
-    def _collect_subset_from_dataset(dataset, n: int):
-        """Collect first batch subset from torch Dataset/Subset containers."""
-        from torch.utils.data import DataLoader
-
-        loader = DataLoader(dataset, batch_size=n, shuffle=False)
-        batch = next(iter(loader))
-        if isinstance(batch, (tuple, list)):
-            return batch[0], batch[1]
-        return batch, None
-
     def get_attack_subset(self, data: Any, test: bool = True) -> tuple:
         n = self.attack_size
-        subset_sampler = self.compose_subset_sampling_behavior(data=data, test=test)
-        x_subset, y_subset = subset_sampler()
+        if test is True:
+            x_ = data.X_test
+            y_ = data.y_test
+        else:
+            x_ = data.X_train
+            y_ = data.y_train
+        from torch.utils.data import Dataset, DataLoader, Subset
+
+        # Accept Subset/Dataset and convert to tensor
+        if isinstance(x_, (pd.Series, np.ndarray, pd.DataFrame)) or is_tensor(x_):
+            x_subset = x_[:n]
+            y_subset = y_[:n]
+        elif isinstance(x_, (Dataset, Subset)):
+            # Convert to tensor
+            loader = DataLoader(x_, batch_size=n, shuffle=False)
+            batch = next(iter(loader))
+            if isinstance(batch, (tuple, list)):
+                x_subset = batch[0]
+                y_subset = batch[1]
+            else:
+                x_subset = batch
+                y_subset = None
+        elif is_dataloader(x_):
+            x_subset, y_subset = collect_subset_from_dataloader(x_, n=n)
+        else:
+            raise ValueError(
+                f"Expected data.X_test to be a pd.Series, np.ndarray, torch Tensor, torch DataLoader, or torch Dataset/Subset. Got: {type(data.X_test)}",
+            )
         # Do not flatten x_subset; preserve original shape for torch/ART models
         if is_tensor(y_subset) and y_subset.ndim > 1:
             y_subset = y_subset.view(-1)
         return n, x_subset, y_subset
-
-    def _save(self, filepath: Union[str, Path]):
-        """
-        Saves the current object to a pickle file.
-
-        Parameters
-        ----------
-        filepath : Union[str, Path]
-            The path where the object should be saved.
-            If the provided path does not end with '.pkl', the extension will be appended automatically.
-
-        Side Effects
-        -----------
-        Serializes the object and writes it to the specified file in binary format.
-        Logs an info message indicating the save location.
-        """
-        if not filepath.endswith(".pkl"):
-            filepath += ".pkl"
-        with open(filepath, "wb") as f:
-            pickle.dump(self, f)
-        logger.info(f"AttackConfig saved to {filepath}")

@@ -286,7 +286,8 @@ class TestPytorchDataConfig(unittest.TestCase):
         loaded = self.config.load_scores(str(score_path))
 
         self.assertTrue(len(loaded) > 0)
-        self.assertIn("num_classes", loaded)
+        self.assertIn("pre-sample", loaded)
+        self.assertIn("num_classes", loaded["pre-sample"])
 
     def test_call_with_score_file_saves_json(self):
         score_path = str(Path(self.temp_dir) / "pytorch_scores.json")

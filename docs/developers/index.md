@@ -11,7 +11,6 @@ Welcome to the Deckard developer documentation. This section contains all design
 - [Refactor Plan](refactor_plan)
 - [Config Declaration Architecture](config_declaration_architecture)
 - [Core/Framework/Plugin Boundaries](core_framework_plugin_boundaries)
-- [Core Plugin Boundaries (Legacy)](core_plugin_boundaries)
 - [Naming Conventions](naming_conventions)
 - [Mixin and Plugin Rules](mixin_plugin_rules)
 - [Docstring Standard](docstring_standard)
@@ -26,8 +25,6 @@ development
 workflows
 refactor_plan
 config_declaration_architecture
-core_plugin_boundaries
-core_plugin_boundaries
 naming_conventions
 mixin_plugin_rules
 docstring_standard

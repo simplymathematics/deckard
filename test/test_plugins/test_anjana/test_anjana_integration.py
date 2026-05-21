@@ -152,11 +152,16 @@ def _assert_anjana_privacy_scores(scores: dict) -> None:
         "t_closeness",
     }
 
-    nested = scores.get("anjana_scores")
-    if isinstance(nested, dict):
-        assert anjana_metrics.issubset(set(nested.keys()))
+    # Check for metrics under "post-pipeline" key (expected default location)
+    post_pipeline = scores.get("post-pipeline")
+    if isinstance(post_pipeline, dict):
+        assert anjana_metrics.issubset(set(post_pipeline.keys())), (
+            f"Expected privacy metrics under 'post-pipeline' key, "
+            f"but found keys: {sorted(post_pipeline.keys())}"
+        )
         return
 
+    # Check for flat top-level keys (legacy fallback)
     flattened_keys = {key for key in scores if key in anjana_metrics}
     assert anjana_metrics.issubset(flattened_keys), (
         "Expected Anjana-specific privacy metrics in scores (k_anonymity, "

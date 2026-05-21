@@ -451,8 +451,6 @@ class AttackScorerConfig(ConfigBase):
         raw_scores = profile(
             y_true=y_true,
             y_pred=y_pred,
-            mode=mode,
-            stage=stage,
             **kwargs,
         )
         if (
@@ -461,14 +459,22 @@ class AttackScorerConfig(ConfigBase):
             and mode in raw_scores
             and isinstance(raw_scores.get(mode), dict)
         ):
-            raw_scores = dict(raw_scores[mode])
+            mode_scores = dict(raw_scores[mode])
+            companion_scores = {
+                key: value for key, value in raw_scores.items() if key != mode
+            }
+            raw_scores = {**mode_scores, **companion_scores}
         elif (
             isinstance(raw_scores, dict)
             and stage is not None
             and stage in raw_scores
             and isinstance(raw_scores.get(stage), dict)
         ):
-            raw_scores = dict(raw_scores[stage])
+            stage_scores = dict(raw_scores[stage])
+            companion_scores = {
+                key: value for key, value in raw_scores.items() if key != stage
+            }
+            raw_scores = {**stage_scores, **companion_scores}
         prefixed_scores = self._prefix_scores(raw_scores, prefix=prefix)
         return round_scores(prefixed_scores, n_samples=n_samples)
 
@@ -541,7 +547,7 @@ class AttackScorerConfig(ConfigBase):
         stage: str | None = None,
         sensitive_features=None,
     ):
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         profile = self.evasion if is_classification else self.evasion_regression
         score_kwargs = {}
         if is_classification:
@@ -558,7 +564,7 @@ class AttackScorerConfig(ConfigBase):
             stage=stage,
             **score_kwargs,
         )
-        attack_score_time = time.process_time() - start_time
+        attack_score_time = time.perf_counter() - start_time
         score_dict["attack_size"] = attack_size
         score_dict["attack_score_time"] = attack_score_time
         return score_dict
@@ -572,7 +578,7 @@ class AttackScorerConfig(ConfigBase):
         stage: str | None = None,
         sensitive_features=None,
     ):
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         score_kwargs = {}
         if sensitive_features is not None:
             score_kwargs["sensitive_features"] = sensitive_features
@@ -586,7 +592,7 @@ class AttackScorerConfig(ConfigBase):
             stage=stage,
             **score_kwargs,
         )
-        attack_score_time = time.process_time() - start_time
+        attack_score_time = time.perf_counter() - start_time
         score_dict["attack_size"] = attack_size
         score_dict["attack_score_time"] = attack_score_time
         return score_dict
@@ -604,7 +610,7 @@ class AttackScorerConfig(ConfigBase):
         sensitive_features=None,
     ):
         prefix = f"inferred_{targeted_attribute}"
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         score_kwargs = {}
         if sensitive_features is not None:
             score_kwargs["sensitive_features"] = sensitive_features
@@ -630,7 +636,7 @@ class AttackScorerConfig(ConfigBase):
                 stage=stage,
                 **score_kwargs,
             )
-        attack_score_time = time.process_time() - start_time
+        attack_score_time = time.perf_counter() - start_time
         score_dict["attack_size"] = attack_size
         score_dict["attack_score_time"] = attack_score_time
         if attack_generation_time is not None:

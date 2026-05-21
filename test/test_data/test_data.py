@@ -277,8 +277,33 @@ class TestDataConfig(unittest.TestCase):
             },
         )
         scores = cfg()
-        self.assertEqual(scores["n_samples"], len(cfg._y))
-        self.assertNotEqual(scores["n_samples"], len(cfg.y_train))
+        self.assertEqual(scores['pre-sample']["n_samples"], len(cfg._y))
+        self.assertNotEqual(scores['pre-sample']["n_samples"], len(cfg.y_train))
+
+    def test_post_defense_score_mode_uses_test_split(self):
+        captured = {}
+
+        class _CaptureScorer:
+            def __call__(self, *args, **kwargs):
+                _ = args
+                captured.update(kwargs)
+                return {"ok": 1}
+
+        cfg = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 30,
+                "n_features": 4,
+                "n_informative": 2,
+                "n_redundant": 0,
+                "random_state": 42,
+            },
+            score_mode="post-defense",
+            scorer=_CaptureScorer(),
+        )
+        cfg()
+        self.assertEqual(captured.get("mode"), "test")
+        self.assertNotIn("stage", captured)
 
     def test_make_regression_data_loading_and_sampling(self):
         cfg = DataConfig(

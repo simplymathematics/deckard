@@ -24,7 +24,7 @@ The following pages are ordered for progressive onboarding:
 5. [Notebooks](../notebooks/index.md)
 6. [API Reference](../api/modules.md)
 7. [Developer Docs](../developers/index.md)
-8. [Development](../developers/development)
+8. [Development](../developers/index.md)
 9. [Build Docs](build_docs.md)
 10. [Docker](docker.md)
 11. [Changelog](changelog.md)

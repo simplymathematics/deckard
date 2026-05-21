@@ -52,6 +52,16 @@ The {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig` supports:
 - Integration with ART's {class}`~art.estimators.classification.PyTorchClassifier`
   and {class}`~art.estimators.regression.PyTorchRegressor`
 
+### Persistence Contract
+
+- ``save``/``load`` on {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig`
+  persist config state as YAML.
+- ``save_model``/``load_model`` persist runtime torch model state artifacts.
+- Runtime torch artifacts use ``.pt`` (and optionally pickle-compatible payloads
+  where supported by the runtime loader).
+- During checkpointing, YAML config records include references to runtime
+  ``model_state_file`` entries.
+
 ### Experiment Orchestration
 
 The {class}`~deckard.frameworks.pytorch.experiment.TorchExperimentConfig` enforces:
@@ -83,6 +93,8 @@ The {class}`~deckard.frameworks.pytorch.experiment.TorchExperimentConfig` enforc
   like ResNet. Install via ``pip install "deckard[pytorch]"`` or similar.
 - **ART compatibility**: Use ART-supported model architectures. Custom modules may
   need additional ART estimator wrapping.
+- **Artifact extension mismatch**: Use YAML for config objects and ``.pt`` for
+  runtime PyTorch model-state artifacts.
 
 ### See also
 

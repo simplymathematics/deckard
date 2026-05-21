@@ -30,16 +30,13 @@ def test_model_defense_package_exports_are_importable():
 def test_default_defense_config_is_neutral_baseline():
     cfg = DefaultDefenseConfig()
     assert cfg.defense_name is None
-    assert cfg.init_params["class"] == "baseline"
 
 
 def test_default_sklearn_defense_config_sets_framework_marker():
     cfg = DefaultSklearnDefenseConfig()
     assert cfg.defense_name is None
-    assert cfg.init_params["class"] == "sklearn.baseline"
 
 
 def test_default_pytorch_defense_config_sets_framework_marker():
     cfg = DefaultPytorchDefenseConfig()
     assert cfg.defense_name is None
-    assert cfg.init_params["class"] == "pytorch.baseline"

@@ -2,7 +2,6 @@
 
 import logging
 import traceback
-from collections.abc import Sized
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Callable, Literal, Union, cast
 
@@ -18,6 +17,10 @@ except Exception:
 
 from ...data import DataConfig
 from ...data._mixins import RuntimePayload
+from ...frameworks.pytorch.score import (
+    resolve_sensitive_features as resolve_sensitive_features_for_mode,
+    validate_sensitive_features,
+)
 from ...score._runtime import resolve_yt_yp, series_like_to_float_dict
 from ...score.base import (
     ScorerConfig,
@@ -72,6 +75,41 @@ SampleParamsLike = Union[dict[str, Any], dict[str, dict[str, Any]], None]
 RandomStateLike = Union[int, np.random.RandomState, None]
 RuntimeScalar = str | int | float | bool | None
 RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
+
+
+def fairness_stage_to_split_mode(runtime_mode: str | None) -> dict[str, str]:
+    """Return fairlearn stage aliases resolved against the runtime scoring mode.
+
+    The runtime scoring mode determines where stage aliases (for example
+    ``post-defense`` or ``adversarial``) route split-backed lookups.
+    """
+    token = str(runtime_mode or "test").strip().lower()
+    if token in {"attack-val", "val"}:
+        runtime_split = "val"
+    elif token == "train":
+        runtime_split = "train"
+    elif token in {"all", "pre-sample"}:
+        runtime_split = token
+    else:
+        runtime_split = "test"
+
+    return {
+        "train": "train",
+        "test": "test",
+        "val": "val",
+        "all": "all",
+        "pre-sample": "pre-sample",
+        "attack": runtime_split,
+        "attack-val": "val",
+        "pre-defense": runtime_split,
+        "post-defense": runtime_split,
+        "post-pipeline": runtime_split,
+        "post-sample": runtime_split,
+        "benign": runtime_split,
+        "adversarial": runtime_split,
+        "pre-filter": runtime_split,
+        "post-filter": runtime_split,
+    }
 
 
 def fairness_data_class_count(
@@ -193,29 +231,36 @@ def _resolve_sensitive_features(
     data: DataConfig | None,
     y_true: Any,
     mode: FairnessMode = "test",
+    stage: str | None = None,
 ) -> Any | None:
     if data is None:
         return None
-    if mode == "train":
-        sensitive = getattr(data, "_sensitive_train", None)
-    elif mode in {"test", "attack"}:
-        sensitive = getattr(data, "_sensitive_test", None)
-    elif mode in {"val", "attack-val"}:
-        sensitive = getattr(data, "_sensitive_val", None)
-    elif mode in {"all", "pre-sample"}:
-        sensitive = getattr(data, "_sensitive_all", None)
+    stage_to_split_mode = fairness_stage_to_split_mode(mode)
+    if stage is not None:
+        try:
+            sensitive = resolve_sensitive_features_for_mode(
+                data,
+                stage,
+                stage_to_split_mode=stage_to_split_mode,
+            )
+        except ValueError:
+            sensitive = resolve_sensitive_features_for_mode(
+                data,
+                mode,
+                stage_to_split_mode=stage_to_split_mode,
+            )
     else:
-        raise ValueError(f"Unsupported fairness scoring mode: {mode}")
+        sensitive = resolve_sensitive_features_for_mode(
+            data,
+            mode,
+            stage_to_split_mode=stage_to_split_mode,
+        )
 
-    if not hasattr(y_true, "__len__"):
-        return None
-    if sensitive is not None and not hasattr(sensitive, "__len__"):
-        return None
-    if sensitive is None:
-        return None
-    if len(cast("Sized", sensitive)) != len(cast("Sized", y_true)):
-        return None
-    return sensitive
+    return validate_sensitive_features(
+        sensitive=sensitive,
+        y_true=y_true,
+        context=f"fairness scoring (stage={stage}, mode={mode})",
+    )
 
 
 def fairness_demographic_parity_difference(
@@ -236,6 +281,7 @@ def fairness_demographic_parity_difference(
             data,
             y_true,
             mode=kwargs.get("mode", "test"),
+            stage=kwargs.get("stage"),
         )
     if sensitive_features is None:
         raise ValueError("sensitive_features are required for fairness scoring")
@@ -267,6 +313,7 @@ def fairness_equalized_odds_difference(
             data,
             y_true,
             mode=kwargs.get("mode", "test"),
+            stage=kwargs.get("stage"),
         )
     if sensitive_features is None:
         raise ValueError("sensitive_features are required for fairness scoring")
@@ -291,6 +338,7 @@ def _resolve_sensitive_from_kwargs_or_data(
             data,
             y_true,
             mode=kwargs.get("mode", "test"),
+            stage=kwargs.get("stage"),
         )
     if sensitive_features is None:
         raise ValueError("sensitive_features are required for fairness scoring")
@@ -390,12 +438,42 @@ class _FairnessScorerMixin:
                     normalized[nested_key] = nested_scorer
             elif isinstance(value, dict):
                 scorer_data = dict(value)
+                raw_needs_labels = scorer_data.pop("needs_labels", None)
+                raw_needs_proba = scorer_data.pop("needs_proba", None)
+                raw_needs_logits = scorer_data.pop("needs_logits", None)
+                raw_binary_expand = scorer_data.pop("binary_expand_to_multiclass", None)
+                raw_positive_idx = scorer_data.pop("binary_positive_class_index", 1)
+                raw_row_sum_atol = scorer_data.pop("row_sum_atol", 1e-2)
+                raw_prob_clip_eps = scorer_data.pop("probability_clip_eps", 1e-12)
+                resolved_needs_labels = (
+                    True
+                    if raw_needs_labels is None and raw_needs_proba is not True
+                    else (False if raw_needs_labels is None else bool(raw_needs_labels))
+                )
                 normalized[key] = ScorerConfig(
                     score_name=scorer_data.pop("score_name", key),
                     score_function=scorer_data.pop("score_function"),
                     score_params=scorer_data.pop("score_params", {}),
                     greater_is_better=scorer_data.pop("greater_is_better", True),
-                    needs_proba=scorer_data.pop("needs_proba", False),
+                    needs_labels=resolved_needs_labels,
+                    needs_proba=(
+                        bool(raw_needs_proba)
+                        if raw_needs_proba is not None
+                        else None
+                    ),
+                    needs_logits=(
+                        bool(raw_needs_logits)
+                        if raw_needs_logits is not None
+                        else None
+                    ),
+                    binary_expand_to_multiclass=(
+                        bool(raw_binary_expand)
+                        if raw_binary_expand is not None
+                        else None
+                    ),
+                    binary_positive_class_index=int(raw_positive_idx),
+                    row_sum_atol=float(raw_row_sum_atol),
+                    probability_clip_eps=float(raw_prob_clip_eps),
                 )
             elif isinstance(value, str) or callable(value):
                 normalized[key] = ScorerConfig(score_name=key, score_function=value)
@@ -465,6 +543,7 @@ class _FairnessScorerMixin:
                     self.data,
                     y_true,
                     mode=self.scorer_kwargs_dict.get("mode", "test"),
+                    stage=self.scorer_kwargs_dict.get("stage"),
                 )
             try:
                 # Avoid passing sensitive_features twice
@@ -554,6 +633,7 @@ class _FairnessScorerMixin:
                 data,
                 resolved_y_true,
                 mode=resolved_mode,
+                stage=cast(str | None, kwargs.get("stage")),
             )
         if sensitive_features is None:
             raise ValueError("sensitive_features are required for fairness scoring")
@@ -740,22 +820,6 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
         Returns:
             Dictionary containing overall and group fairness metrics.
         """
-        sensitive_features_diag = kwargs.get("sensitive_features", None)
-        print(
-            f"[DIAGNOSE] FairlearnScoreDictConfig.__call__: type(sensitive_features)={type(sensitive_features_diag)}, sensitive_features={repr(sensitive_features_diag)[:200]}",
-        )
-        if (
-            sensitive_features_diag is None
-            or not hasattr(sensitive_features_diag, "__len__")
-            or (
-                y_true is not None
-                and hasattr(y_true, "__len__")
-                and len(sensitive_features_diag) != len(y_true)
-            )
-        ):
-            print(
-                f"[DIAGNOSE] sensitive_features is None or length mismatch: type={type(sensitive_features_diag)}, value={repr(sensitive_features_diag)[:200]}, y_true type={type(y_true)}, y_true len={len(y_true) if hasattr(y_true, '__len__') else 'N/A'}, sensitive_features len={len(sensitive_features_diag) if hasattr(sensitive_features_diag, '__len__') else 'N/A'}",
-            )
         # Step 1: resolve y_true/y_pred for both main and group metrics.
         if data is None and (y_true is None or y_pred is None):
             raise ValueError(
@@ -778,6 +842,7 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
                 data,
                 resolved_y_true,
                 mode=resolved_mode,
+                stage=cast(str | None, kwargs.get("stage")),
             )
         if sensitive_features is None:
             raise ValueError("sensitive_features are required for fairness scoring")

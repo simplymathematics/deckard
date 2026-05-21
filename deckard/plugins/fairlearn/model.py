@@ -55,7 +55,7 @@ class _FairnessBehaviorMixin:
         if not callable(fit_method):
             return super()._train(X, y)
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         fit_params = getattr(self, "fit_params", None) or {}
         sensitive = self._resolve_sensitive_features_for_batch(y, split="train")
         if (
@@ -65,7 +65,7 @@ class _FairnessBehaviorMixin:
         ):
             fit_params = {**fit_params, "sensitive_features": sensitive}
         fit_method(X, y, **fit_params)
-        self.training_time = time.process_time() - start_time
+        self.training_time = time.perf_counter() - start_time
         self.training_n = len(y)
         logger.info(f"Model trained in {self.training_time:.2f} seconds")
 
@@ -224,7 +224,7 @@ class FairlearnDefenseConfig(_SensitiveColumnsMixin, DefenseConfig):
         fairlearn_submodule = module_name.split(".")[1]
         base_estimator = self.get_model()
 
-        start = time.process_time()
+        start = time.perf_counter()
         if fairlearn_submodule == "reductions":
             if constraints is None:
                 raise ValueError(
@@ -258,7 +258,7 @@ class FairlearnDefenseConfig(_SensitiveColumnsMixin, DefenseConfig):
                 defended_estimator,
                 data,
             )
-        self.defense_application_time = time.process_time() - start
+        self.defense_application_time = time.perf_counter() - start
         return defended_estimator
 
     def _train(self, X, y):

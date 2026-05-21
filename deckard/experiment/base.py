@@ -4,30 +4,32 @@ This module contains the base experiment configuration object that ties data,
 model, defense, attack, files, and scorers into a single executable unit.
 """
 
-import hashlib
 import logging
-import os
 import warnings
-from dataclasses import dataclass
-from pathlib import Path
-from types import SimpleNamespace
-from typing import Any, List, Literal, Union
-
+import hashlib
+from dataclasses import dataclass, field
+from typing import List, Union, Literal, Any
+from omegaconf import DictConfig, ListConfig, OmegaConf
+import os
+import yaml
 import numpy as np
 import pandas as pd
-import yaml
+from pathlib import Path
+from types import SimpleNamespace
 from hydra.utils import instantiate
-from omegaconf import DictConfig, ListConfig, OmegaConf
 
-from ..attack import AttackConfig
 from ..data import DataConfig, DataPipelineConfig
-from ..data.sample import KFoldSampler, ShuffleSampler
-from ..detector import DetectorConfig
-from ..file import AttackFiles, BaseFiles, FileConfig, ModelFiles
 from ..model import ModelConfig
+
+try:
+    from ..data import FairlearnDataConfig
+except ImportError:  # pragma: no cover
+    FairlearnDataConfig = None
 from ..model.defend import DefensePipelineConfig
+from ..attack import AttackConfig
+from ..detector import DetectorConfig
 from ..score import ScorerDictConfig
-from ..score.base import _AttackProfileScorer, _DataScorerMarker, coerce_scorer_config, SUPPORTED_SCORING_STAGES
+from ..file import FileConfig, data_files, model_files, attack_files
 from ..utils import (
     ConfigBase,
     coerce_config,
@@ -39,6 +41,8 @@ from ..utils import (
     merge_scores_with_collision_suffix,
     split_comma_separated_tokens,
 )
+from ..score.base import coerce_scorer_config, _DataScorerMarker, _AttackProfileScorer
+from ..data.sample import KFoldSampler, ShuffleSampler
 
 try:
     import tensorflow as tf
@@ -49,6 +53,11 @@ try:
     import torch
 except ImportError:  # pragma: no cover
     torch = None
+
+try:
+    from ..data import AnjanaDataConfig
+except ImportError:  # pragma: no cover
+    AnjanaDataConfig = None
 
 
 try:
@@ -70,7 +79,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 DECKARD_CONFIG_DIR = os.environ.get("DECKARD_CONFIG_DIR", "config")
 DECKARD_DEFAULT_CONFIG_FILE = os.environ.get(
     "DECKARD_DEFAULT_CONFIG_FILE",
-    "default.yaml",
+    "default_experiment.yaml",
 )
 
 
@@ -182,26 +191,33 @@ class DataConfigResolutionMixin:
 
     def _select_data_cls(self, data_dict: dict):
         if any(key in data_dict for key in self._anjana_keys):
-            try:
-                from deckard.plugins.anjana.data import AnjanaDataConfig
-            except ImportError:
-                raise ImportError(
-                    "Privacy features need `anjana`. Install with `pip install deckard[anjana]`",
-                )
-            return AnjanaDataConfig
+            resolved_anjana_cls = AnjanaDataConfig
+            if resolved_anjana_cls is None:
+                try:
+                    from ..plugins.anjana.data import AnjanaDataConfig as _AnjanaDataConfig
 
+                    resolved_anjana_cls = _AnjanaDataConfig
+                except Exception as exc:
+                    raise ImportError(
+                        "AnjanaDataConfig requires optional anjana dependencies. Install deckard[anjana] to enable anjana data configs.",
+                    ) from exc
+            return resolved_anjana_cls
         if any(key in data_dict for key in self._fairness_keys):
-            try:
-                from deckard.plugins.fairlearn.data import FairlearnDataConfig
-            except ImportError:
-                raise ImportError(
-                    "Fairness features need `fairlearn`. Install with `pip install deckard[fairlearn]`",
-                )
-            return FairlearnDataConfig
+            resolved_fairlearn_cls = FairlearnDataConfig
+            if resolved_fairlearn_cls is None:
+                try:
+                    from ..plugins.fairlearn.data import (
+                        FairlearnDataConfig as _FairlearnDataConfig,
+                    )
 
+                    resolved_fairlearn_cls = _FairlearnDataConfig
+                except Exception as exc:
+                    raise ImportError(
+                        "FairlearnDataConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn data configs.",
+                    ) from exc
+            return resolved_fairlearn_cls
         if "pipeline" in data_dict:
             return DataPipelineConfig
-
         return DataConfig
 
     def _resolve_data_config(self):
@@ -237,21 +253,22 @@ class DataConfigResolutionMixin:
 
 
 @dataclass(eq=False, kw_only=True)
-class ExperimentConfig(
-    DataConfigResolutionMixin,
-    ConfigBase,
-):
+class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
     """Compose and execute a complete deckard experiment.
 
-    This config coordinates data loading, optional defenses, model runtime,
-    attacks, scoring, and artifact persistence through ``FileConfig``.
-    
-    Attributes
-    ----------
-    scoring_stage : str, optional
-        Defense pipeline stage for which scoring is configured.
-        Supports "pre-defense", "post-defense", or "post-sample".
-        When set, propagated to all scorers to establish context.
+    An experiment coordinates data loading, optional defense application, model
+    training or loading, adversarial attack execution, scoring, and artifact
+        persistence through ``FileConfig``.
+
+        Mode policy
+        -----------
+        ``evaluation_mode`` and ``score_mode`` are mutually exclusive to prevent
+        ambiguous routing. Use exactly one strategy:
+
+        - ``evaluation_mode``: high-level preset routing (``standard`` (train + test), ``tuning`` (test),
+            ``report`` (train + test + val)).
+        - ``score_mode``: explicit split routing (``train``, ``test``, ``val``,
+            ``pre-sample``), optionally a list for multi-pass experiment scoring.
     """
 
     data: Union[DataConfig, DataPipelineConfig]
@@ -267,21 +284,22 @@ class ExperimentConfig(
     device: Any = None
     classifier: Union[str, bool] = True
     evaluation_mode: Literal["standard", "tuning", "report"] = "standard"
-    score_mode: Union[
-        Literal["train", "test", "val", "pre-sample"],
-        list[Literal["train", "test", "val", "pre-sample"]],
-        None,
-    ] = None
-    scoring_defense_stage: Union[
-        Literal["pre-defense", "post-defense", "post-sample"],
-        None,
-    ] = None
+    score_mode: Union[str, list[str], None] = field(default_factory=list)
+
+    def _has_explicit_score_mode(self) -> bool:
+        if not hasattr(self, "score_mode"):
+            return False
+        if self.score_mode is None:
+            return False
+        if isinstance(self.score_mode, list):
+            return len(self.score_mode) > 0
+        return str(self.score_mode).strip() != ""
 
     def _validate_mode_configuration(self) -> None:
         """Ensure exactly one experiment mode-routing strategy is active."""
         # ``standard`` acts as the neutral preset, so it can coexist with
         # explicit ``score_mode`` without ambiguity.
-        if self.score_mode is not None and self.evaluation_mode != "standard":
+        if self._has_explicit_score_mode() and self.evaluation_mode != "standard":
             raise ValueError(
                 "evaluation_mode and score_mode are mutually exclusive. "
                 "Set score_mode with evaluation_mode='standard', or unset score_mode.",
@@ -304,7 +322,7 @@ class ExperimentConfig(
 
     def _resolve_score_modes(self) -> list[str]:
         """Resolve concrete score modes from explicit score_mode or evaluation preset."""
-        if self.score_mode is not None:
+        if self._has_explicit_score_mode():
             if isinstance(self.score_mode, list):
                 raw_modes = list(self.score_mode)
             else:
@@ -316,11 +334,9 @@ class ExperimentConfig(
         elif self.evaluation_mode == "report":
             raw_modes = ["train", "test", "val"]
         else:
-            raise NotImplementedError(
-                f"Evaluation mode: {self.evaluation_mode} not implemented",
-            )
+            raise NotImplementedError(f"Evaluation mode: {self.evaluation_mode} not implemented")
 
-        allowed = SUPPORTED_SCORING_STAGES
+        allowed = {"pre-sample", "train", "test", "val"}
         modes = []
         for raw_mode in raw_modes:
             mode = str(raw_mode).strip().lower()
@@ -333,25 +349,25 @@ class ExperimentConfig(
 
     def _resolve_data_mode_inputs(self, mode: str) -> tuple[Any, Any]:
         if mode == "pre-sample":
-            dep = getattr(self.data, "y", None)
-            ind = getattr(self.data, "X", None)
+            y_true = getattr(self.data, "_y", None)
+            y_pred = getattr(self.data, "_X", None)
         elif mode == "train":
-            dep = getattr(self.data, "y_train", None)
-            ind = getattr(self.data, "X_train", None)
+            y_true = getattr(self.data, "y_train", None)
+            y_pred = getattr(self.data, "X_train", None)
         elif mode == "test":
-            dep = getattr(self.data, "y_test", None)
-            ind = getattr(self.data, "X_test", None)
+            y_true = getattr(self.data, "y_test", None)
+            y_pred = getattr(self.data, "X_test", None)
         elif mode == "val":
-            dep = getattr(self.data, "y_val", None)
-            ind = getattr(self.data, "X_val", None)
+            y_true = getattr(self.data, "y_val", None)
+            y_pred = getattr(self.data, "X_val", None)
         else:
             raise ValueError(f"Unsupported data scoring mode '{mode}'")
 
-        if dep is None or ind is None:
+        if y_true is None or y_pred is None:
             raise ValueError(
                 f"Scoring mode '{mode}' requested but required dataset split is unavailable.",
             )
-        return dep, ind
+        return y_true, y_pred
 
     @staticmethod
     def _apply_runtime_data_split_overrides(
@@ -420,7 +436,7 @@ class ExperimentConfig(
 
     def _resolve_component_score_mode(
         self,
-    ) -> Literal["train", "test", "val", "pre-sample"]:
+    ) -> str:
         modes = self._resolve_score_modes()
         if not modes:
             return "test"
@@ -434,15 +450,15 @@ class ExperimentConfig(
         # For multi-mode evaluations (e.g. standard/report), prefer test-mode
         # component scoring so model metrics retain canonical keys like
         # ``accuracy`` instead of ``training_accuracy``.
-        for preferred in ("val", "test", "train", "pre-sample"):
+        for preferred in ("test", "val", "train", "pre-sample"):
             if preferred in modes:
                 return preferred
         return "test"
 
-    def _propagate_score_mode(self) -> Literal["train", "test", "val", "pre-sample"]:
+    def _propagate_score_mode(self) -> str:
         """
         Propagate score mode to data, model, and attack configs.
-        - DataConfig: supports pre-sample/train/test/val.
+        - DataConfig: supports pre-sample/train/test/val
         - ModelConfig: supports train/test/val (no pre-sample)
         - AttackConfig: supports test/val only
         """
@@ -459,7 +475,7 @@ class ExperimentConfig(
             and active_mode in {"train", "test", "val"}
         ):
             self.model.score_mode = active_mode
-        attack_chain = self.attack_chain
+        attack_chain = getattr(self, "_attack_chain", None)
         if attack_chain is None:
             attack_chain = [self.attack] if self.attack is not None else []
         for attack_cfg in attack_chain:
@@ -470,63 +486,6 @@ class ExperimentConfig(
             ):
                 attack_cfg.set_mode(active_mode)
         return active_mode
-
-    def _propagate_scoring_defense_stage(self) -> Union[str, None]:
-        """Validate and propagate configured scoring defense stage to scorer configs."""
-        stage = self.scoring_defense_stage
-        score_cfg = getattr(self, "score", None)
-        if stage is None and score_cfg is not None:
-            stage = getattr(score_cfg, "scoring_defense_stage", None)
-        if stage is None:
-            for owner in (self.data, self.model):
-                scoped_scorer = getattr(owner, "scorer", None)
-                if scoped_scorer is not None and hasattr(
-                    scoped_scorer,
-                    "scoring_defense_stage",
-                ):
-                    scoped_stage = getattr(
-                        scoped_scorer,
-                        "scoring_defense_stage",
-                        None,
-                    )
-                    if scoped_stage is not None:
-                        stage = scoped_stage
-                        break
-
-        if stage is None:
-            return None
-
-        stage_text = str(stage).strip().lower()
-        allowed = {"pre-defense", "post-defense", "post-sample"}
-        if stage_text not in allowed:
-            raise ValueError(
-                f"Unsupported scoring_defense_stage '{stage}'. Expected one of {sorted(allowed)}.",
-            )
-
-        self.scoring_defense_stage = stage_text
-        if score_cfg is not None and hasattr(score_cfg, "scoring_defense_stage"):
-            score_cfg.scoring_defense_stage = stage_text
-            self.score = score_cfg
-        for owner in (self.data, self.model):
-            scoped_scorer = getattr(owner, "scorer", None)
-            if scoped_scorer is not None and hasattr(
-                scoped_scorer,
-                "scoring_defense_stage",
-            ):
-                scoped_scorer.scoring_defense_stage = stage_text
-        return stage_text
-
-    @staticmethod
-    def _normalize_mode_score_keys(mode: str, mode_scores: dict) -> dict:
-        if isinstance(mode_scores, dict) and mode in mode_scores and isinstance(mode_scores.get(mode), dict):
-            mode_scores = dict(mode_scores[mode])
-        if mode == "train":
-            return {f"training_{k}": v for k, v in mode_scores.items()}
-        if mode == "val":
-            return {f"validation_{k}": v for k, v in mode_scores.items()}
-        if mode == "pre-sample":
-            return {f"presample_{k}": v for k, v in mode_scores.items()}
-        return mode_scores
 
     def _compute_val_predictions(self):
         if self.model is None:
@@ -611,8 +570,13 @@ class ExperimentConfig(
         if self.score is None:
             return {}
         out = {}
+        modes = self._resolve_score_modes()
+        should_nest_by_mode = (
+            (self.evaluation_mode == "report" and not self._has_explicit_score_mode())
+            or (self._has_explicit_score_mode() and len(modes) > 1)
+        )
         scorer_is_data_profile = isinstance(self.score, _DataScorerMarker)
-        for mode in self._resolve_score_modes():
+        for mode in modes:
             common_kwargs = {
                 "data": self.data,
                 "model": self.model,
@@ -624,21 +588,10 @@ class ExperimentConfig(
             }
             if scorer_is_data_profile:
                 y_true, y_pred = self._resolve_data_mode_inputs(mode)
-                y_proba = None
-                if (
-                    mode != "pre-sample"
-                    and self.model is not None
-                    and getattr(self.model, "classifier", False)
-                ):
-                    try:
-                        _, _, y_proba = self._resolve_mode_model_outputs(mode)
-                    except Exception:
-                        y_proba = None
                 mode_scores = self.score(
                     **common_kwargs,
                     y_true=y_true,
                     y_pred=y_pred,
-                    y_proba=y_proba,
                 )
             else:
                 if mode == "pre-sample":
@@ -653,12 +606,26 @@ class ExperimentConfig(
                     y_pred=y_pred,
                     y_proba=y_proba,
                 )
-            out.update(self._normalize_mode_score_keys(mode, mode_scores))
+            if isinstance(mode_scores, dict) and mode in mode_scores and isinstance(
+                mode_scores[mode],
+                dict,
+            ):
+                mode_scores = mode_scores[mode]
+            if not isinstance(mode_scores, dict):
+                raise TypeError(
+                    f"Experiment scorer for mode '{mode}' must return a dictionary, got {type(mode_scores)}",
+                )
+            if mode == "pre-sample":
+                out["pre-sample"] = mode_scores
+            elif should_nest_by_mode:
+                out[mode] = mode_scores
+            else:
+                out.update(mode_scores)
         return out
 
     def _apply_attack_profile_scorer(self, scorer) -> None:
         """Apply an _AttackProfileScorer to the configured attack chain."""
-        attack_chain = self.attack_chain or []
+        attack_chain = getattr(self, "_attack_chain", [])
         profile_attr = getattr(scorer, "_profile_attr", "evasion")
         for attack_cfg in attack_chain:
             if hasattr(attack_cfg, "scorer") and attack_cfg.scorer is not None:
@@ -758,14 +725,9 @@ class ExperimentConfig(
             score_fn = spec.get("score_function")
         else:
             score_fn = getattr(spec, "score_function", None)
-        return (
-            isinstance(score_fn, str) and "deckard.plugins.anjana.score." in score_fn
-        )
+        return isinstance(score_fn, str) and "deckard.plugins.anjana.score." in score_fn
 
-    def _split_merged_score_profiles(
-        self,
-        plain: dict,
-    ) -> tuple[dict | None, dict | None]:
+    def _split_merged_score_profiles(self, plain: dict) -> tuple[dict | None, dict | None]:
         scorers = plain.get("scorers")
         if not isinstance(scorers, dict):
             return None, plain
@@ -779,7 +741,9 @@ class ExperimentConfig(
             return None, plain
 
         remaining_scorers = {
-            key: value for key, value in scorers.items() if key not in data_scorers
+            key: value
+            for key, value in scorers.items()
+            if key not in data_scorers
         }
 
         data_cfg = {
@@ -800,23 +764,21 @@ class ExperimentConfig(
 
         Routing rules (applied after Hydra config resolution):
 
-                Example:
+        **Scoped dict** (Hydra ``@`` package syntax)::
 
-                ```text
-                Scoped dict (Hydra @ package syntax):
-                    +score@score.data=data-classification
-                    +score@score.model=classification
-                    +score@score.attack=evasion-classification
+            +score@score.data=data-classification
+            +score@score.model=classification
+            +score@score.attack=evasion-classification
 
-                Produces score: {data: {...}, model: {...}, attack: {...}}.
-                Each sub-key is routed directly to its component via
-                _route_scorer_to_scope without any type-inference.
+        Produces ``score: {data: {...}, model: {...}, attack: {...}}``.
+        Each sub-key is routed directly to its component via
+        :meth:`_route_scorer_to_scope` without any type-inference.
 
-                Single config (type-based fallback):
-                    score=classification              # -> model.scorer
-                    score=data-classification         # -> data.scorer (_DataScorerMarker)
-                    score=evasion-classification      # -> attack scorer (_AttackProfileScorer)
-                ```
+        **Single config** (type-based fallback)::
+
+            score=classification              # -> model.scorer
+            score=data-classification        # -> data.scorer (_DataScorerMarker)
+            score=evasion-classification     # -> attack scorer (_AttackProfileScorer)
 
         **Null / auto / default** -> components self-configure from their own defaults.
         """
@@ -838,25 +800,11 @@ class ExperimentConfig(
         )
 
         if isinstance(plain, dict):
-            if "scoring_defense_stage" in plain and self.scoring_defense_stage is None:
-                self.scoring_defense_stage = plain.get("scoring_defense_stage")
             # Auto-configure sentinel (from score/auto.yaml).
             if plain.get("_auto_configure"):
                 self.score = None
                 return
 
-            _SCOPE_KEYS = {"data", "model", "attack", "detector", "experiment"}
-            explicit_scope = str(plain.get("scoring_type", "")).strip().lower()
-            if explicit_scope in _SCOPE_KEYS:
-                scoped_cfg = dict(plain)
-                scoped_cfg.pop("scoring_type", None)
-                self._route_scorer_to_scope(
-                    explicit_scope,
-                    coerce_scorer_config(scoped_cfg),
-                )
-                if explicit_scope != "experiment":
-                    self.score = None
-                return
             split_data_cfg, split_model_cfg = self._split_merged_score_profiles(plain)
             if split_data_cfg is not None:
                 data_scorer = coerce_scorer_config(split_data_cfg)
@@ -1148,53 +1096,27 @@ class ExperimentConfig(
         if self.model is None:
             return
 
-        from deckard.plugins.fairlearn.data import FairlearnDataConfig
-
-        if isinstance(
+        if FairlearnDataConfig is not None and isinstance(
             self.data,
             FairlearnDataConfig,
         ):
-            fairlearn_model_cls = FairlearnModelConfig
-            fairlearn_pytorch_model_cls = FairlearnPytorchModelConfig
-            pytorch_model_cls = PytorchModelConfig
-            if (
-                fairlearn_model_cls is None
-                or fairlearn_pytorch_model_cls is None
-                or pytorch_model_cls is None
-            ):
-                try:
-                    from ..model import (
-                        FairlearnModelConfig as _FairlearnModelConfig,
-                    )
-                    from ..model import (
-                        FairlearnPytorchModelConfig as _FairlearnPytorchModelConfig,
-                    )
-                    from ..model import (
-                        PytorchModelConfig as _PytorchModelConfig,
-                    )
-                except ImportError as exc:
-                    raise ImportError(
-                        "FairlearnModelConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn model configs.",
-                    ) from exc
-
-                fairlearn_model_cls = _FairlearnModelConfig
-                fairlearn_pytorch_model_cls = _FairlearnPytorchModelConfig
-                pytorch_model_cls = _PytorchModelConfig
-
-            if fairlearn_model_cls is None:
+            if FairlearnModelConfig is None:
                 raise ImportError(
                     "FairlearnModelConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn model configs.",
                 )
 
-            is_torch_model = pytorch_model_cls is not None and isinstance(
+            is_torch_model = PytorchModelConfig is not None and isinstance(
                 self.model,
-                pytorch_model_cls,
+                PytorchModelConfig,
             )
             target_model_cls = (
-                fairlearn_pytorch_model_cls if is_torch_model else fairlearn_model_cls
+                FairlearnPytorchModelConfig if is_torch_model else FairlearnModelConfig
             )
 
-            if is_torch_model and target_model_cls is None:
+            if (
+                target_model_cls is FairlearnPytorchModelConfig
+                and target_model_cls is None
+            ):
                 raise ImportError(
                     "FairlearnPytorchModelConfig requires optional fairness and torch dependencies. "
                     "Install deckard[fairlearn,torch] to enable fairness-aware pytorch model configs.",
@@ -1202,7 +1124,7 @@ class ExperimentConfig(
 
             fairness_types = tuple(
                 cfg
-                for cfg in (fairlearn_model_cls, fairlearn_pytorch_model_cls)
+                for cfg in (FairlearnModelConfig, FairlearnPytorchModelConfig)
                 if cfg is not None
             )
 
@@ -1224,11 +1146,11 @@ class ExperimentConfig(
 
     def _initialize_attack_chain(self) -> None:
         """Normalize configured attacks and establish primary attack view."""
-        self.attack_chain = self._normalize_attack_chain(self.attack)
-        self._validate_multi_attack_aliases(self.attack_chain)
-        if len(self.attack_chain) > 0:
+        self._attack_chain = self._normalize_attack_chain(self.attack)
+        self._validate_multi_attack_aliases(self._attack_chain)
+        if len(self._attack_chain) > 0:
             # Preserve backward compatibility for single-attack call sites.
-            self.attack = self.attack_chain[0]
+            self.attack = self._attack_chain[0]
         else:
             self.attack = None
 
@@ -1294,8 +1216,8 @@ class ExperimentConfig(
             config_list = [self.data]
             if self.model:
                 config_list.append(self.model)
-            if len(self.attack_chain) > 0:
-                config_list.extend(self.attack_chain)
+            if len(self._attack_chain) > 0:
+                config_list.extend(self._attack_chain)
             if self.detector and isinstance(self.detector, ConfigBase):
                 config_list.append(self.detector)
             if self.score:
@@ -1303,11 +1225,16 @@ class ExperimentConfig(
             self.experiment_name = self._hash_from_list(config_list)
         self._initialize_files()
         self._initialize_component_scorers()
+        self._validate_scorer_scope_configuration()
 
         # Reconcile and enforce a single device across experiment/data/model.
         self._reconcile_component_devices()
         if self.library not in ["sklearn"]:
             self.set_device(self.device if self.device is not None else "cpu")
+
+    def _validate_scorer_scope_configuration(self) -> None:
+        """Validate scorer scope and requested score modes at initialization time."""
+        return
 
     def set_random_seed(self) -> None:
         if self.library in ["sklearn"]:
@@ -1393,7 +1320,7 @@ class ExperimentConfig(
         Returns the accumulated score dict for this pipeline pass.
         """
         scores = {}
-        scores = self._merge_stage_aware_scores(scores, self.data.score_dict)
+        scores.update(**self.data.score_dict)
         self._propagate_score_mode()
 
         if self.model:
@@ -1414,7 +1341,7 @@ class ExperimentConfig(
                 self.model,
                 "score_dict",
             ), "model must have score_dict attribute after training"
-            scores = self._merge_stage_aware_scores(scores, self.model.score_dict)
+            scores.update(**self.model.score_dict)
             if hasattr(self.model, "set_epoch_attack") and callable(
                 getattr(self.model, "set_epoch_attack"),
             ):
@@ -1422,7 +1349,7 @@ class ExperimentConfig(
         else:
             logger.info("No model config provided, skipping model training.")
 
-        attack_chain = self.attack_chain
+        attack_chain = getattr(self, "_attack_chain", None)
         if attack_chain is None:
             attack_chain = [self.attack] if self.attack is not None else []
 
@@ -1480,48 +1407,15 @@ class ExperimentConfig(
                 self.detector,
                 "score_dict",
             ), "detector must have score_dict attribute after execution"
-            scores = self._merge_stage_aware_scores(scores, self.detector.score_dict)
+            scores.update(**self.detector.score_dict)
         else:
             logger.info("No detector config provided, skipping detector phase.")
 
         custom_scores = self._run_experiment_scorer_modes(score_file=None)
         if custom_scores:
-            scores = self._merge_stage_aware_scores(scores, custom_scores)
+            scores = {**scores, **custom_scores}
 
         return scores
-
-    @staticmethod
-    def _merge_stage_aware_scores(base_scores: dict, incoming_scores: dict | None) -> dict:
-        """Merge score payloads while flattening stage-nested scorer results."""
-        from ..score.base import SUPPORTED_SCORING_STAGES
-        merged = dict(base_scores or {})
-        if not isinstance(incoming_scores, dict):
-            return merged
-
-        for key, value in incoming_scores.items():
-            normalized_key = str(key).strip().lower()
-            if normalized_key in SUPPORTED_SCORING_STAGES and isinstance(value, dict):
-                stage_suffix = normalized_key.replace("-", "_")
-                for metric_name, metric_value in value.items():
-                    if normalized_key == "train":
-                        merged[f"training_{metric_name}"] = metric_value
-                    elif normalized_key == "val":
-                        merged[f"validation_{metric_name}"] = metric_value
-                    elif normalized_key == "pre-sample":
-                        merged[f"presample_{metric_name}"] = metric_value
-                    elif normalized_key == "test" and metric_name not in merged:
-                        merged[metric_name] = metric_value
-                    elif normalized_key == "test":
-                        merged[f"{metric_name}_test"] = metric_value
-                    else:
-                        merged[f"{metric_name}_{stage_suffix}"] = metric_value
-                continue
-            if normalized_key == "validation_val" and isinstance(value, dict):
-                for metric_name, metric_value in value.items():
-                    merged[f"validation_{metric_name}"] = metric_value
-                continue
-            merged[key] = value
-        return merged
 
     @staticmethod
     def _aggregate_repeated_scores(
@@ -1567,187 +1461,6 @@ class ExperimentConfig(
                 aggregated[key] = values[-1]
         return aggregated
 
-    @property
-    def runtime_scores(self) -> dict[str, Any]:
-        """Public accessor for the latest experiment score payload."""
-        if self.score_dict is None:
-            self.score_dict = {}
-        return self.score_dict
-
-    @runtime_scores.setter
-    def runtime_scores(self, value: dict[str, Any] | None) -> None:
-        """Set the latest experiment score payload."""
-        self.score_dict = value or {}
-
-    @property
-    def attack_chain(self) -> list[AttackConfig] | None:
-        """Public accessor for normalized attack chain runtime state."""
-        return getattr(self, "_attack_chain", None)
-
-    @attack_chain.setter
-    def attack_chain(self, value: list[AttackConfig] | None) -> None:
-        """Set normalized attack chain runtime state."""
-        self._attack_chain = value
-
-    def compose_file_output_behavior(self) -> tuple[dict, dict, dict, dict]:
-        """Compose runtime file-output mappings for data/model/attack stages."""
-        file_dict = self.files.as_dict()
-        base_keys = set(BaseFiles.__annotations__.keys())
-        model_keys = set(ModelFiles.__annotations__.keys())
-        attack_keys = set(AttackFiles.__annotations__.keys())
-        data_file_outputs = {
-            file: getattr(self.files, file, None)
-            for file in base_keys
-            if file in file_dict
-        }
-        model_file_outputs = {
-            file: getattr(self.files, file, None)
-            for file in model_keys
-            if file in file_dict
-        }
-        attack_file_outputs = {
-            file: getattr(self.files, file, None)
-            for file in attack_keys
-            if file in file_dict
-        }
-        return file_dict, data_file_outputs, model_file_outputs, attack_file_outputs
-
-    def compose_data_loading_behavior(self, data_file_outputs: dict) -> None:
-        """Compose data loading behavior based on cache presence and repeat strategy."""
-        data_file = data_file_outputs.get("data_file")
-        if data_file and Path(data_file).exists():
-            configured_data = self.data
-            self.data = self.load_object(data_file)
-            self._apply_runtime_data_split_overrides(self.data, configured_data)
-            return
-
-        # Load raw data only (no sample yet when evaluating repeated splits)
-        n_repeats, _ = self._detect_n_repeats()
-        if n_repeats > 1:
-            self.data._load_data()
-            return
-        self.data(**data_file_outputs)
-
-    def compose_repeat_strategy(self) -> tuple[int, str]:
-        """Compose repeat strategy from configured sampler behavior."""
-        return self._detect_n_repeats()
-
-    def _reset_data_runtime_for_repeat(self, run_idx: int) -> None:
-        """Reset split-dependent runtime state before a repeated split run."""
-        self.data.split = run_idx
-        self.data.data_sample_time = None
-        for attr in (
-            "train_indices",
-            "test_indices",
-            "val_indices",
-            "X_train",
-            "y_train",
-            "X_test",
-            "y_test",
-            "X_val",
-            "y_val",
-            "train_n",
-            "test_n",
-            "val_n",
-            "pipeline_fit_n",
-            "pipeline_transform_n",
-            "pipeline_fit_time",
-            "pipeline_transform_time",
-            "pipeline_y_fit_n",
-            "pipeline_y_transform_n",
-            "pipeline_y_fit_time",
-            "pipeline_y_transform_time",
-        ):
-            setattr(self.data, attr, None)
-        self.data.score_dict = {}
-
-    def _run_repeated_pipeline_behavior(
-        self,
-        n_repeats: int,
-        run_suffix: str,
-        model_file_outputs: dict,
-        attack_file_outputs: dict,
-    ) -> dict:
-        """Compose repeated split/fold pipeline behavior and aggregate scores."""
-        logger.info(
-            f"Running {n_repeats} repeated {run_suffix} evaluations.",
-        )
-        per_run_scores: list = []
-        for run_idx in range(n_repeats):
-            logger.info(f"  {run_suffix.title()} {run_idx + 1}/{n_repeats}")
-            self._reset_data_runtime_for_repeat(run_idx)
-            # Run full data runtime per split/fold so pipeline hooks and
-            # transformations execute in the same path as normal single runs.
-            self.data(
-                data_file=None,
-                score_file=None,
-            )
-            self.data.score_dict.update(
-                data_load_time=self.data.data_load_time,
-                data_sample_time=self.data.data_sample_time,
-                train_n=self.data.train_n,
-                test_n=self.data.test_n,
-            )
-            split_scores = self._run_single_pipeline(
-                model_file_outputs,
-                attack_file_outputs,
-            )
-            per_run_scores.append(split_scores)
-        return self._aggregate_repeated_scores(per_run_scores, run_suffix)
-
-    def _run_single_pass_pipeline_behavior(
-        self,
-        model_file_outputs: dict,
-        attack_file_outputs: dict,
-    ) -> dict:
-        """Compose single-pass pipeline behavior."""
-        assert hasattr(
-            self.data,
-            "X_train",
-        ), "data must return an object with X_train attribute"
-        assert hasattr(
-            self.data,
-            "y_train",
-        ), "data must return an object with y_train attribute"
-        assert hasattr(
-            self.data,
-            "X_test",
-        ), "data must return an object with X_test attribute"
-        assert hasattr(
-            self.data,
-            "y_test",
-        ), "data must return an object with y_test attribute"
-        assert hasattr(
-            self.data,
-            "score_dict",
-        ), "data must have score_dict attribute after loading"
-        scores = self._run_single_pipeline(
-            model_file_outputs,
-            attack_file_outputs,
-        )
-        if self.model is None:
-            self.model = None
-        return scores
-
-    def compose_pipeline_execution_behavior(
-        self,
-        model_file_outputs: dict,
-        attack_file_outputs: dict,
-    ) -> dict:
-        """Compose experiment pipeline execution across repeated/single strategies."""
-        n_repeats, run_suffix = self.compose_repeat_strategy()
-        if n_repeats > 1:
-            return self._run_repeated_pipeline_behavior(
-                n_repeats=n_repeats,
-                run_suffix=run_suffix,
-                model_file_outputs=model_file_outputs,
-                attack_file_outputs=attack_file_outputs,
-            )
-        return self._run_single_pass_pipeline_behavior(
-            model_file_outputs=model_file_outputs,
-            attack_file_outputs=attack_file_outputs,
-        )
-
     def __call__(
         self,
     ) -> dict:
@@ -1758,12 +1471,41 @@ class ExperimentConfig(
         # Set device
         if self.library not in ["sklearn"]:
             self.set_device()
-        file_dict, data_file_outputs, model_file_outputs, attack_file_outputs = (
-            self.compose_file_output_behavior()
-        )
+        # Get file paths
+        file_dict = self.files.as_dict()
+        data_file_outputs = {
+            file: getattr(self.files, file) for file in data_files if file in file_dict
+        }
+        model_file_outputs = {
+            file: getattr(self.files, file)
+            for file in model_files
+            if file in file_dict
+        }
+        attack_file_outputs = {
+            file: getattr(self.files, file)
+            for file in attack_files
+            if file in file_dict
+        }
 
-        # Data loading (always done once; sampling may repeat per split/fold)
-        self.compose_data_loading_behavior(data_file_outputs)
+        # ------------------------------------------------------------------
+        # Data loading (always done once; sampling may repeat per fold)
+        # ------------------------------------------------------------------
+        data_file_path = data_file_outputs.get("data_file", None)
+        if (
+            isinstance(data_file_path, (str, Path))
+            and str(data_file_path).strip() != ""
+            and Path(data_file_path).exists()
+        ):
+            configured_data = self.data
+            self.data = self.load_object(str(data_file_path))
+            self._apply_runtime_data_split_overrides(self.data, configured_data)
+        else:
+            # Load raw data only (no sample yet when evaluating repeated splits)
+            n_repeats, _ = self._detect_n_repeats()
+            if n_repeats > 1:
+                self.data._load_data()
+            else:
+                self.data(**data_file_outputs)
 
         assert hasattr(self.data, "X_train") or hasattr(
             self.data,
@@ -1772,10 +1514,94 @@ class ExperimentConfig(
 
         self._ensure_active_mode_split_available()
 
-        scores = self.compose_pipeline_execution_behavior(
-            model_file_outputs=model_file_outputs,
-            attack_file_outputs=attack_file_outputs,
-        )
+        n_repeats, run_suffix = self._detect_n_repeats()
+
+        if n_repeats > 1:
+            # ------------------------------------------------------------------
+            # Repeated split evaluation: run one pipeline pass per split/fold
+            # ------------------------------------------------------------------
+            logger.info(
+                f"Running {n_repeats} repeated {run_suffix} evaluations.",
+            )
+            per_run_scores: list = []
+            for run_idx in range(n_repeats):
+                logger.info(f"  {run_suffix.title()} {run_idx + 1}/{n_repeats}")
+                # Reset sampling state so _sample() runs fresh for this run
+                self.data.split = run_idx
+                self.data.data_sample_time = None
+                for attr in (
+                    "train_indices",
+                    "test_indices",
+                    "val_indices",
+                    "X_train",
+                    "y_train",
+                    "X_test",
+                    "y_test",
+                    "X_val",
+                    "y_val",
+                    "train_n",
+                    "test_n",
+                    "val_n",
+                    "pipeline_fit_n",
+                    "pipeline_transform_n",
+                    "pipeline_fit_time",
+                    "pipeline_transform_time",
+                    "pipeline_y_fit_n",
+                    "pipeline_y_transform_n",
+                    "pipeline_y_fit_time",
+                    "pipeline_y_transform_time",
+                ):
+                    setattr(self.data, attr, None)
+                self.data.score_dict = {}
+                # Run full data runtime per fold so DataPipelineConfig hooks and
+                # transformations (e.g., StringDistanceTransformer) execute.
+                self.data(
+                    data_file=None,
+                    score_file=None,
+                )
+                self.data.score_dict.update(
+                    data_load_time=self.data.data_load_time,
+                    data_sample_time=self.data.data_sample_time,
+                    train_n=self.data.train_n,
+                    test_n=self.data.test_n,
+                )
+                fold_scores = self._run_single_pipeline(
+                    model_file_outputs,
+                    attack_file_outputs,
+                )
+                per_run_scores.append(fold_scores)
+
+            scores = self._aggregate_repeated_scores(per_run_scores, run_suffix)
+        else:
+            # ------------------------------------------------------------------
+            # Single-pass (non-fold) pipeline
+            # ------------------------------------------------------------------
+            assert hasattr(
+                self.data,
+                "X_train",
+            ), "data must return an object with X_train attribute"
+            assert hasattr(
+                self.data,
+                "y_train",
+            ), "data must return an object with y_train attribute"
+            assert hasattr(
+                self.data,
+                "X_test",
+            ), "data must return an object with X_test attribute"
+            assert hasattr(
+                self.data,
+                "y_test",
+            ), "data must return an object with y_test attribute"
+            assert hasattr(
+                self.data,
+                "score_dict",
+            ), "data must have score_dict attribute after loading"
+            scores = self._run_single_pipeline(
+                model_file_outputs,
+                attack_file_outputs,
+            )
+            if self.model is None:
+                self.model = None
 
         if "score_file" in file_dict:
             scores = self.merge_and_persist_scores(

@@ -58,13 +58,10 @@ class _ExtractionAttackMixin(_PoisoningAttackMixin):
         )
         if has_probabilities:
             return DefaultClassifierConfig(), True
-        full_classifier = DefaultClassifierConfig()
-        label_only = {
-            name: scorer
-            for name, scorer in full_classifier.scorers.items()
-            if not scorer.needs_proba
-        }
-        return ScorerDictConfig(scorers=label_only), False
+        label_only = DefaultClassifierConfig()
+        label_only.scorers.pop("roc_auc", None)
+        label_only.scorers.pop("log_loss", None)
+        return label_only, False
     
     def extract(self, data, art_model, attack) -> dict:
         """Execute a model extraction attack and score victim vs extracted classifiers."""
@@ -99,20 +96,20 @@ class _ExtractionAttackMixin(_PoisoningAttackMixin):
 
             thieved_model.apply(_reset_module_weights)
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         extracted_classifier = attack.extract(
             x=x_query,
             thieved_classifier=thieved_classifier,
         )
-        self.attack_time = time.process_time() - start_time
+        self.attack_time = time.perf_counter() - start_time
         logger.info(
             f"Extraction attack training took {self.attack_time} seconds for {n} query samples",
         )
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         benign_pred = art_model.predict(x_eval)
         extracted_pred = extracted_classifier.predict(x_eval)
-        self.attack_prediction_time = time.process_time() - start_time
+        self.attack_prediction_time = time.perf_counter() - start_time
         logger.info(
             f"Extraction prediction took {self.attack_prediction_time} seconds on {mode_used} split",
         )
@@ -120,7 +117,7 @@ class _ExtractionAttackMixin(_PoisoningAttackMixin):
         benign_labels = self._labels_from_classifier_predictions(benign_pred)
         extracted_labels = self._labels_from_classifier_predictions(extracted_pred)
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         _, use_proba_metrics = self._select_extraction_scorer(
             benign_pred,
             extracted_pred,
@@ -145,7 +142,7 @@ class _ExtractionAttackMixin(_PoisoningAttackMixin):
             ),
             mode=mode_used,
         )
-        self.attack_score_time = time.process_time() - start_time
+        self.attack_score_time = time.perf_counter() - start_time
 
         self.attack_predictions = extracted_pred
         self.attacked_labels = y_eval

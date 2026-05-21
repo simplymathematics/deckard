@@ -15,7 +15,7 @@ import logging
 import pickle
 import sys
 import traceback
-from dataclasses import MISSING, dataclass, field
+from dataclasses import MISSING, asdict, dataclass, field, is_dataclass
 from pathlib import Path
 from typing import Any, Iterable, Optional, Union
 
@@ -24,6 +24,8 @@ import pandas as pd
 from hydra.core.config_store import ConfigStore
 from hydra.utils import get_class, instantiate
 from omegaconf import DictConfig, ListConfig, OmegaConf
+
+from .artifacts import ArtifactLoaderConfig
 
 logger = logging.getLogger(__name__)
 
@@ -343,9 +345,9 @@ def normalize_optional_mapping_or_steps(
     if is_null_config_value(value):
         return None
     if isinstance(value, DictConfig):
-        return dict(value)
+        return {str(key): item for key, item in dict(value).items()}
     if isinstance(value, dict):
-        return dict(value)
+        return {str(key): item for key, item in value.items()}
     raise TypeError(
         f"{field_name} must be None, bool, dict/DictConfig, or list/ListConfig. Got {type(value)}",
     )
@@ -758,8 +760,8 @@ data_supported_filetypes = [
 ]
 
 
-@dataclass
-class ConfigBase:
+@dataclass(init=False)
+class ConfigBase(ArtifactLoaderConfig):
     """Base class for deckard configuration objects.
 
     ``ConfigBase`` provides a common lifecycle for config dataclasses: argument
@@ -791,41 +793,6 @@ class ConfigBase:
         "_predictions",
         "_probabilities",
     )
-
-    def __init__(self, *args, **kwds):
-        # Initialize dataclass super
-        super().__init__()
-
-        # Initialize args attribute
-        self.args = args if args else ()
-
-        dataclass_fields = self.__dataclass_fields__
-        init_fields = [
-            field_name
-            for field_name, dataclass_field in dataclass_fields.items()
-            if dataclass_field.init
-        ]
-
-        # Seed dataclass defaults/default_factories before applying user values.
-        for field_name, dataclass_field in dataclass_fields.items():
-            if dataclass_field.default is not MISSING:
-                setattr(self, field_name, dataclass_field.default)
-            elif dataclass_field.default_factory is not MISSING:
-                setattr(self, field_name, dataclass_field.default_factory())
-
-        if len(args) > len(init_fields):
-            raise TypeError(
-                f"Expected at most {len(init_fields)} positional arguments, got {len(args)}",
-            )
-
-        for i, arg in enumerate(args):
-            setattr(self, init_fields[i], arg)
-        for k, v in kwds.items():
-            setattr(self, k, v)
-
-        self._before_post_init()
-        self.__post_init__()
-        self._after_post_init()
 
     def __post_init__(self):
         pass
@@ -915,110 +882,16 @@ class ConfigBase:
             return False
         return True
 
-    def save_scores(
-        self,
-        scores: Union[dict, pd.Series],
-        filepath: Optional[str] = None,
-    ) -> None:
-        """
-        Saves the scores dictionary to a CSV file if a filepath is provided.
-
-        Parameters
-        ----------
-        scores : dict
-            Dictionary containing score metrics to be saved.
-        filepath : Union[str, None], optional
-            Path to save the scores as a CSV file. If None, scores are not saved.
-
-        Raises
-        ----------
-        ValueError
-            If the file extension is not supported. Supported types are .csv, .json, and .xlsx.
-        """
-        assert filepath is not None, "Filepath must be provided to save scores."
-        score_path = Path(filepath)
-        score_path.parent.mkdir(parents=True, exist_ok=True)
-        # Assume this is a dictionary of of strings: floats
-        supported_filtypes = [".csv", ".json", ".xlsx"]
-        if not isinstance(scores, dict):
-            scores = dict(scores)
-        if score_path.suffix in supported_filtypes:
-            match score_path.suffix:
-                case ".csv":
-                    pd.DataFrame([scores]).to_csv(score_path, index=False)
-                case ".json":
-                    with open(score_path, "w") as f:
-                        json.dump(scores, f, indent=4)
-                case ".xlsx":
-                    pd.DataFrame([scores]).to_excel(score_path, index=False)
-        else:
-            raise ValueError(
-                f"Unsupported file type {score_path.suffix}. Supported types: {supported_filtypes}",
-            )
-        assert Path(
-            score_path,
-        ).exists(), f"Failed to save scores to {score_path}"
-        logger.info(f"Scores saved to {score_path}")
-
-    def save_data(
-        self,
-        data: pd.DataFrame,
-        filepath: Optional[str] = None,
-        **kwargs: Any,
-    ) -> None:
-        supported_filetypes = [
-            ".csv",
-            ".parquet",
-            ".pkl",
-            ".html",
-            ".json",
-            ".xlsx",
-        ]
-        assert filepath is not None, "Filepath must be provided to save data."
-        data_path = Path(filepath)
-        data_path.parent.mkdir(parents=True, exist_ok=True)
-        filetype = data_path.suffix
-        if not isinstance(data, pd.DataFrame):
-            data = pd.DataFrame(data)
-        match filetype:
-            case ".pkl":
-                data.to_pickle(data_path, **kwargs)
-            case ".csv":
-                data.to_csv(data_path, index=False, **kwargs)
-            case ".parquet":
-                data.to_parquet(data_path, index=False, **kwargs)
-            case ".pkl":
-                data.to_pickle(data_path, **kwargs)
-            case ".html":
-                data.to_html(data_path, index=False, **kwargs)
-            case ".json":
-                data.to_json(data_path, orient="records", lines=True, **kwargs)
-            case ".xlsx":
-                data.to_excel(data_path, index=False, **kwargs)
-            case _:
-                raise ValueError(
-                    f"Unsupported file type {data_path.suffix}. Supported types: {supported_filetypes}",
-                )
-        assert Path(data_path).exists(), f"Failed to save data to {data_path}"
-        logger.info(f"Data saved to {data_path}")
-
     def read_or_initialize_scores(self, score_file: Optional[str]) -> dict:
-        """Return merged scores from disk and memory, or initialize output location.
-
-        This is the canonical entrypoint for score-file reads in ConfigBase.
-        """
+        """Return merged scores from disk and memory, or initialize output location."""
         if score_file is not None and Path(score_file).exists():
-            # Load existing scores
             logger.info(f"Loading existing scores from {score_file}")
             disk_scores = self.load_scores(score_file)
             scores = {**self.score_dict, **disk_scores}
         elif score_file is not None:
-            # Ensure directory exists
-            logger.debug(f"Creating directory for scores at {score_file}")
             Path(score_file).parent.mkdir(parents=True, exist_ok=True)
             scores = self.score_dict
         else:
-            logger.debug("No score_file provided, scores will not be saved")
             if hasattr(self, "score_dict"):
                 scores = self.score_dict
             else:
@@ -1068,173 +941,80 @@ class ConfigBase:
                 )
         return params
 
-    def load_scores(self, filepath: str) -> dict:
-        """
-        Loads scores from a CSV, JSON, or Excel file into a dictionary.
-
-        Parameters
-        ----------
-        filepath : str
-            Path to the scores file.
-
-        Returns
-        -------
-        dict
-            Dictionary containing the loaded scores.
-
-        Raises
-        ------
-        ValueError
-            If the file extension is not supported. Supported types are .csv, .json, and .xlsx.
-        """
-        score_path = Path(filepath)
-        assert score_path.exists(), f"File {filepath} does not exist."
-        supported_filetypes = [".csv", ".json", ".xlsx"]
-        scores: dict
-        if score_path.suffix in supported_filetypes:
-            match score_path.suffix:
-                case ".csv":
-                    df = pd.read_csv(score_path)
-                    if len(df) == 0:
-                        scores = {}
-                    else:
-                        scores = df.iloc[0].to_dict()
-                case ".json":
-                    with open(score_path, "r") as f:
-                        raw = json.load(f)
-                    if not isinstance(raw, dict):
-                        raw = {"data": raw}
-                    files = raw.pop("files", None)
-                    params = raw.pop("params", None)
-                    scores = raw
-                    if files is not None:
-                        scores["files"] = files
-                    if params is not None:
-                        scores["params"] = params
-                case ".xlsx":
-                    df = pd.read_excel(score_path)
-                    if len(df) == 0:
-                        scores = {}
-                    else:
-                        scores = df.iloc[0].to_dict()
-                case _:
-                    raise ValueError(
-                        f"Unsupported file type {score_path.suffix}. Supported types: {supported_filetypes}",
-                    )
-        else:
-            raise ValueError(
-                f"Unsupported file type {score_path.suffix}. Supported types: {supported_filetypes}",
+    def to_yaml(self, payload: Any = None, filepath: Optional[str] = None) -> None:
+        """Save the current config instance to a YAML file."""
+        if filepath is None and isinstance(payload, str):
+            filepath = payload
+            payload = None
+        if filepath is None:
+            filepath = getattr(self, "path", None)
+        if filepath is None:
+            return
+        assert filepath is not None, "Filepath must be provided to save config."
+        suffix = Path(filepath).suffix.lower()
+        if suffix and suffix not in {".yaml", ".yml"}:
+            artifact_payload = self if payload is None else payload
+            super().save(payload=artifact_payload, filepath=filepath)
+            logger.info(
+                f"Instance of {self.__class__.__name__} saved via artifact loader to {filepath}",
             )
-        logger.info(f"Scores loaded from {score_path}")
-        return {str(k): v for k, v in scores.items()}
-
-    def load_data(self, filepath: str, **kwargs) -> pd.DataFrame:
-        return load_data(filepath, **kwargs)
-
-    def save_object(self, obj: Any, filepath: str) -> None:
-        """Save a Python object to a pickle file.
-
-        Args:
-            obj: Object to serialize.
-            filepath: Destination path (must end with ``.pkl`` or ``.pickle``).
-
-        Raises:
-            ValueError: If the file extension is unsupported.
-        """
-        Path(filepath).parent.mkdir(parents=True, exist_ok=True)
-        suffix = Path(filepath).suffix
-        supported_suffixes = [".pkl", ".pickle"]
-        if suffix not in supported_suffixes:
-            raise ValueError(
-                f"Unsupported file type {suffix}. Supported types: {supported_suffixes}",
-            )
-        with open(filepath, "wb") as f:
-            pickle.dump(obj, f)
-        logger.info(f"Object saved to {filepath}")
-
-    def load_object(
-        self,
-        filepath: str,
-        ignore_corrupt: bool = False,
-        delete_corrupt: bool = False,
-    ) -> Any:
-        """
-        Loads a Serializable object from a file using pickle.
-
-        Parameters
-        ----------
-        filepath : str
-            The path to the file from which the object will be loaded.
-
-        Returns
-        -------
-        Any
-            The loaded object.
-
-        Parameters
-        ----------
-        ignore_corrupt : bool, optional
-            If True, return None when a known pickle corruption/loading error occurs.
-        delete_corrupt : bool, optional
-            If True and a known pickle corruption/loading error occurs, delete the file.
-        """
-        try:
-            with open(filepath, "rb") as f:
-                obj = pickle.load(f)
-        except (EOFError, pickle.UnpicklingError, AttributeError, OSError) as exc:
-            if delete_corrupt:
-                Path(filepath).unlink(missing_ok=True)
-            if ignore_corrupt:
-                logger.warning(
-                    "Failed to load cached object %s (%s).",
-                    filepath,
-                    exc,
-                )
-                return None
-            raise
-        logger.info(f"Object loaded from {filepath}")
-        return obj
-
-    def save(self, filepath: str) -> None:
-        """
-        Saves the current instance to a file using pickle.
-
-        Parameters
-        ----------
-        filepath : str
-            The path to the file where the instance will be saved.
-        """
-        self.save_object(self, filepath)
+            return
+        resolved_path = self.save(filepath)
         logger.info(
-            f"Instance of {self.__class__.__name__} saved to {filepath}",
+            f"Instance of {self.__class__.__name__} saved to {resolved_path}",
         )
 
-    def load(self, filepath: str) -> "ConfigBase":
-        """
-        Loads an instance of the class from a file using pickle.
-
-        Parameters
-        ----------
-        filepath : str
-            The path to the file from which the instance will be loaded.
-
-        Returns
-        -------
-        ConfigBase
-            The loaded instance.
-        """
-        assert Path(filepath).exists(), f"File {filepath} does not exist."
-        obj = self.load_object(filepath)
+    def from_yaml(self, filepath: Optional[str] = None) -> "ConfigBase":
+        """Load the current config instance from a YAML file."""
+        if filepath is None:
+            filepath = getattr(self, "path", None)
+        assert filepath is not None, "Filepath must be provided to load config."
+        suffix = Path(filepath).suffix.lower()
+        if suffix and suffix not in {".yaml", ".yml"}:
+            loaded = super().load(filepath)
+            if isinstance(loaded, self.__class__):
+                self.__dict__.update(loaded.__dict__)
+                logger.info(
+                    f"Instance of {self.__class__.__name__} loaded via artifact loader from {filepath}",
+                )
+                return self
+            if loaded is self:
+                return self
+            return loaded
+        resolved_path = self._resolve_yaml_read_path(filepath)
+        assert resolved_path.exists(), f"File {filepath} does not exist."
+        obj = self.from_yaml(str(resolved_path))
         if not isinstance(obj, self.__class__):
             raise TypeError(
                 f"Loaded object is not of type {self.__class__.__name__}",
             )
         logger.info(
-            f"Instance of {self.__class__.__name__} loaded from {filepath}",
+            f"Instance of {self.__class__.__name__} loaded from {resolved_path}",
         )
         # Update the current instance's __dict__ with the loaded object's __dict__
         self.__dict__.update(obj.__dict__)
         return self
+
+    @staticmethod
+    def _resolve_yaml_write_path(filepath: str) -> Path:
+        """Return canonical YAML output path for config state persistence."""
+        path = Path(filepath)
+        if path.suffix.lower() not in {".yaml", ".yml"}:
+            path = path.with_suffix(".yaml")
+        return path
+
+    @staticmethod
+    def _resolve_yaml_read_path(filepath: str) -> Path:
+        """Resolve config state path, preferring canonical YAML suffixes."""
+        path = Path(filepath)
+        candidates = [path]
+        if path.suffix.lower() not in {".yaml", ".yml"}:
+            candidates.insert(0, path.with_suffix(".yaml"))
+            candidates.insert(1, path.with_suffix(".yml"))
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+        return candidates[0]
 
     @staticmethod
     def from_yaml(filepath: str) -> "ConfigBase":
@@ -1251,14 +1031,15 @@ class ConfigBase:
         ConfigBase
             An instance of the class initialized with the configuration from the YAML file.
         """
-        config = OmegaConf.to_container(OmegaConf.load(filepath), resolve=True)
+        resolved_path = ConfigBase._resolve_yaml_read_path(filepath)
+        config = OmegaConf.to_container(OmegaConf.load(resolved_path), resolve=True)
         if not isinstance(config, dict):
             raise TypeError(
-                f"Loaded config is not a dictionary from {filepath}",
+                f"Loaded config is not a dictionary from {resolved_path}",
             )
         instance = instantiate(config)
         logger.info(
-            f"Instance of {instance.__class__.__name__} created from {filepath}",
+            f"Instance of {instance.__class__.__name__} created from {resolved_path}",
         )
         return instance
 
@@ -1280,18 +1061,17 @@ class ConfigBase:
         instance = instantiate(data)
         return instance
 
-    def to_yaml(self) -> str:
-        """
-        Converts the current instance to a YAML string.
-
-        Returns
-        -------
-        str
-            A YAML representation of the instance.
-        """
+    def to_yaml(self, filepath: Optional[str] = None) -> str:
+        """Convert the current instance to YAML and optionally persist to YAML file."""
         config = self.to_dict()
         config = OmegaConf.create(config)
-        return str(OmegaConf.to_yaml(config))
+        yaml_text = str(OmegaConf.to_yaml(config))
+        if filepath is not None:
+            path = self._resolve_yaml_write_path(filepath)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(yaml_text, encoding="utf-8")
+            return str(path)
+        return yaml_text
 
     def to_dict(self, for_hash: bool = False) -> dict:
         """
@@ -1323,7 +1103,7 @@ class ConfigBase:
                             resolve=True,
                         )
                     else:
-                        dict_[name] = value
+                        dict_[name] = self._serialize_for_yaml(value)
 
         # Include any additional runtime attrs not declared as dataclass fields
         for name, value in self.__dict__.items():
@@ -1338,9 +1118,53 @@ class ConfigBase:
             elif OmegaConf.is_config(value):
                 dict_[name] = OmegaConf.to_container(value, resolve=True)
             else:
-                dict_[name] = value
+                dict_[name] = self._serialize_for_yaml(value)
+
+        dict_["_target_"] = f"{self.__class__.__module__}.{self.__class__.__name__}"
 
         return dict_
+
+    @staticmethod
+    def _serialize_for_yaml(value: Any) -> Any:
+        """Convert non-primitive values into YAML-safe representations."""
+        if isinstance(value, (str, int, float, bool)) or value is None:
+            return value
+        if is_dataclass(value) and not isinstance(value, type):
+            return ConfigBase._serialize_for_yaml(asdict(value))
+        if isinstance(value, Path):
+            return value.as_posix()
+        if isinstance(value, type):
+            return f"{value.__module__}.{value.__qualname__}"
+        if callable(value):
+            module = getattr(value, "__module__", None)
+            qualname = getattr(value, "__qualname__", None)
+            if module is not None and qualname is not None:
+                return f"{module}.{qualname}"
+            return str(value)
+        if OmegaConf.is_config(value):
+            return OmegaConf.to_container(value, resolve=True)
+        if isinstance(value, dict):
+            return {
+                str(k): ConfigBase._serialize_for_yaml(v)
+                for k, v in value.items()
+            }
+        if isinstance(value, (list, tuple, set, frozenset)):
+            return [ConfigBase._serialize_for_yaml(v) for v in value]
+        if hasattr(value, "to_dict") and callable(getattr(value, "to_dict")):
+            try:
+                data = value.to_dict()
+                return ConfigBase._serialize_for_yaml(data)
+            except Exception:
+                return str(value)
+        if hasattr(value, "__dict__"):
+            public_attrs = {
+                k: v
+                for k, v in value.__dict__.items()
+                if not k.startswith("_") and not callable(v)
+            }
+            if public_attrs:
+                return ConfigBase._serialize_for_yaml(public_attrs)
+        return str(value)
 
     def execute_without_mercy(self) -> dict:
         # Get log_file from logger

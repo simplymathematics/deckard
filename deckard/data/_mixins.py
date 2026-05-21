@@ -225,6 +225,10 @@ class _SensitiveColumnsMixin:
             data.y_train,
             split="train",
         )
+        if sensitive is None:
+            sensitive = getattr(data, "_sensitive_train", None)
+            if sensitive is not None and hasattr(sensitive, "reset_index"):
+                sensitive = sensitive.reset_index(drop=True)
         fit_method = defended_estimator.fit
 
         X = data.X_train
@@ -310,7 +314,6 @@ class DataPipelineMixin:
         "fit_X",
         "fit_y",
         "fit_Xy",
-        "fit_xy",
         "fit_pre-sample",
         "fit_pre_sample",
         "fit_presample",
@@ -391,7 +394,7 @@ class DataPipelineMixin:
         aliases: dict[str, tuple[str, ...]] = {
             "fit_X": ("fit_X",),
             "fit_y": ("fit_y",),
-            "fit_Xy": ("fit_Xy", "fit_xy"),
+            "fit_Xy": ("fit_Xy",),
             "fit_pre_sample": (
                 "fit_pre-sample",
                 "fit_pre_sample",

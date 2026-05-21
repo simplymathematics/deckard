@@ -109,7 +109,7 @@ class _PoisoningAttackMixin(_AttackMixin):
         else:
             y_train_for_poison = y_train_raw
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         patched_torch_utils_data = None
         patched_dataloader = None
         try:
@@ -134,12 +134,12 @@ class _PoisoningAttackMixin(_AttackMixin):
         finally:
             if patched_torch_utils_data is not None and patched_dataloader is not None:
                 patched_torch_utils_data.DataLoader = patched_dataloader
-        self.attack_time = time.process_time() - start_time
+        self.attack_time = time.perf_counter() - start_time
         logger.info(
             f"Poison generation took {self.attack_time} seconds for {len(x_poison)} training samples",
         )
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         benign_pred = art_model.predict(x_eval)
         # Only pass batch_size if art_model is a torch/ART model (not sklearn)
         batch_size = getattr(data, "batch_size", None)
@@ -159,7 +159,7 @@ class _PoisoningAttackMixin(_AttackMixin):
             # For sklearn models, do not pass batch_size
             art_model.fit(x_poison, y_poison)
         poisoned_pred = art_model.predict(x_eval)
-        self.attack_prediction_time = time.process_time() - start_time
+        self.attack_prediction_time = time.perf_counter() - start_time
         logger.info(
             f"Poisoned model fit + prediction took {self.attack_prediction_time} seconds on {mode_used} split",
         )
@@ -170,7 +170,7 @@ class _PoisoningAttackMixin(_AttackMixin):
             is_regression=False,
         )
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         benign_scores = self._score_comparison(
             y_true=y_eval,
             y_pred=benign_labels,
@@ -192,7 +192,7 @@ class _PoisoningAttackMixin(_AttackMixin):
 
         trigger_pred = art_model.predict(x_trigger)
         trigger_label = int(self._labels_from_classifier_predictions(trigger_pred)[0])
-        self.attack_score_time = time.process_time() - start_time
+        self.attack_score_time = time.perf_counter() - start_time
 
         self.attack_predictions = poisoned_pred
         self.attacked_labels = y_eval
@@ -237,9 +237,9 @@ class _PoisoningAttackMixin(_AttackMixin):
         target_labels = (y_eval_class[:n] + 1) % nb_classes
         y_seed = self._one_hot_encode(target_labels, nb_classes)
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         x_adv, y_adv = attack.poison(x_seed, y_seed)
-        self.attack_time = time.process_time() - start_time
+        self.attack_time = time.perf_counter() - start_time
         logger.info(
             f"SVM poison generation took {self.attack_time} seconds for {len(x_adv)} generated points",
         )
@@ -247,11 +247,11 @@ class _PoisoningAttackMixin(_AttackMixin):
         x_poison = np.vstack([x_train, x_adv])
         y_poison = np.vstack([y_train_for_poison, y_adv])
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         benign_pred = art_model.predict(x_eval)
         art_model.fit(x_poison, y_poison, **poison_fit_params)
         poisoned_pred = art_model.predict(x_eval)
-        self.attack_prediction_time = time.process_time() - start_time
+        self.attack_prediction_time = time.perf_counter() - start_time
         logger.info(
             f"SVM poisoned model fit + prediction took {self.attack_prediction_time} seconds on {mode_used} split",
         )
@@ -262,7 +262,7 @@ class _PoisoningAttackMixin(_AttackMixin):
             is_regression=False,
         )
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         benign_scores = self._score_comparison(
             y_true=y_eval,
             y_pred=benign_labels,
@@ -281,7 +281,7 @@ class _PoisoningAttackMixin(_AttackMixin):
             y_proba=poisoned_pred,
             mode=mode_used,
         )
-        self.attack_score_time = time.process_time() - start_time
+        self.attack_score_time = time.perf_counter() - start_time
 
         self.attack_predictions = poisoned_pred
         self.attacked_labels = y_eval
@@ -333,7 +333,10 @@ class _PoisoningAttackMixin(_AttackMixin):
         )
 
     def _resolve_eval_split(self, data):
-        requested_mode = self.resolve_mode_for_attack_kind("poisoning")
+        requested_mode = self.resolve_mode_for_attack_kind(
+            "poisoning",
+            attack_subtype=self.attack_subtype,
+        )
 
         if requested_mode == "val":
             X_val = getattr(data, "X_val", None)

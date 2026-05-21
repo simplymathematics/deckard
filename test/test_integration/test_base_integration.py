@@ -9,19 +9,19 @@ from hydra.core.config_store import ConfigStore
 from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf
 
+os.environ.setdefault("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "1")
+
 from deckard.attack import AttackConfig
 from deckard.data import DataConfig, DataPipelineConfig
 from deckard.experiment import ExperimentConfig
 from deckard.file import FileConfig
 from deckard.model import DefenseConfig, ModelConfig
 from deckard.model.defend import DefensePipelineConfig
+from deckard.score.attack import AttackScorerConfig
 from deckard.score import (
     DefaultDataClassificationConfig,
     DefaultDataRegressionConfig,
 )
-from deckard.score.attack import AttackScorerConfig
-
-os.environ.setdefault("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "1")
 
 
 def _load_or_skip(cfg):
@@ -988,3 +988,18 @@ def test_cli_plot_composition_smoke():
     assert "plot" in cfg
     assert cfg.plot.plot_type == "roc_auc"
     assert cfg.plot.backend == "yellowbrick"
+
+
+def test_artifact_loader_integration():
+    """Integration test for ArtifactLoaderConfig."""
+    from deckard.artifacts import ArtifactLoaderConfig
+
+    loader = ArtifactLoaderConfig(
+        id="integration-loader",
+        path="artifacts/integration-artifact.json",
+        payload_kind="data",
+    )
+
+    artifact = loader.load()
+    assert artifact.id == "integration-loader"
+    assert artifact.payload_kind == "data"

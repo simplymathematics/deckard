@@ -19,39 +19,22 @@ class DefaultDefenseConfig(DefenseConfig):
 
     defense_name: str | None = None
     defense_params: dict = field(default_factory=dict)
-    init_params: dict = field(
-        default_factory=lambda: {
-            "library": "deckard",
-            "type": "defense",
-            "class": "baseline",
-        },
-    )
 
 
 @dataclass(kw_only=True)
 class DefaultSklearnDefenseConfig(DefaultDefenseConfig):
     """Default sklearn defense configuration."""
 
-    init_params: dict = field(
-        default_factory=lambda: {
-            "library": "art",
-            "type": "defense",
-            "class": "sklearn.baseline",
-        },
-    )
+    defense_name: str | None = None
+    defense_params: dict = field(default_factory=dict)
 
 
 @dataclass(kw_only=True)
 class DefaultPytorchDefenseConfig(DefaultDefenseConfig):
     """Default pytorch defense configuration."""
 
-    init_params: dict = field(
-        default_factory=lambda: {
-            "library": "art",
-            "type": "defense",
-            "class": "pytorch.baseline",
-        },
-    )
+    defense_name: str | None = None
+    defense_params: dict = field(default_factory=dict)
 
 
 __all__ = [

@@ -2679,15 +2679,6 @@ class TestStaticHelpers(unittest.TestCase):
         result = AttackConfig._normalize_inferred_output(inferred, reference=ref)
         np.testing.assert_array_equal(result, [1, 0])
 
-    def test_save_method_appends_pkl(self):
-        tmpdir = tempfile.mkdtemp()
-        try:
-            attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
-            path_without_ext = os.path.join(tmpdir, "attack_saved")
-            attack._save(path_without_ext)
-            self.assertTrue(Path(path_without_ext + ".pkl").exists())
-        finally:
-            shutil.rmtree(tmpdir)
 
     def test_infer_task_from_data_classifier_attr(self):
         """Cover the `hasattr(data, 'classifier')` path in _infer_task_is_classification."""

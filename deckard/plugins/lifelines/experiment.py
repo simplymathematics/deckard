@@ -307,6 +307,19 @@ class SurvivalExperimentConfig(ExperimentConfig):
             )
 
     def _before_post_init(self) -> None:
+        if isinstance(self.data, str):
+            dataset_name = self.data.strip()
+            if dataset_name == "":
+                raise ValueError("data string cannot be blank")
+            if dataset_name.startswith("lifelines-"):
+                dataset_name = dataset_name.replace("-", "_", 1)
+            if dataset_name.startswith("lifelines."):
+                dataset_name = dataset_name.replace(".", "_", 1)
+            self.data = DataConfig(
+                dataset_name=dataset_name,
+                target=self.target,
+                classifier=False,
+            )
         if self.data is not None and not isinstance(self.data, DataConfig):
             try:
                 self.data = self.coerce_component(

@@ -60,7 +60,8 @@ See also: {doc}`lifelines`.
 * Dynamic instantiation of scikit-learn models via import strings (e.g. ``sklearn.svm.SVC``)
 * Training, prediction, and evaluation for both classification and regression
 * Timing instrumentation for training, prediction, and scoring
-* Model persistence (save/load with ``pickle``)
+* Config persistence via YAML state-machine artifacts
+* Runtime model persistence via framework-native artifacts
 * Hydra/YAML configuration for reproducibility and experiment management
 * CLI support for one-line model training and testing
 
@@ -112,44 +113,51 @@ Use the public model persistence interfaces:
 
 - :meth:`deckard.model.ModelConfig.save`
 - :meth:`deckard.model.ModelConfig.load`
+- :meth:`deckard.model.ModelConfig.save_model`
+- :meth:`deckard.model.ModelConfig.load_model`
 - ``model(data, model_file=...)`` for automatic load-or-train behavior
 
-For scikit-learn-backed {class}`~deckard.model.ModelConfig`, persisted models
-use the framework's object serialization path via the config base save/load
-machinery.
+Canonical policy:
 
-For {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig`, persistence is explicit
-and torch-native:
+- ``save``/``load`` persist and restore config objects as ``.yaml``/``.yml``.
+- ``save_model``/``load_model`` persist and restore runtime model objects.
+- Runtime model extensions are framework-specific:
+   - PyTorch runtime artifacts use ``.pt``.
+   - scikit-learn runtime artifacts use ``.pkl`` or ``.joblib``.
 
-- ``save`` writes a checkpoint payload with model metadata plus
-  ``state_dict`` using ``torch.save``.
-- ``load`` restores metadata and calls ``load_state_dict``.
+For {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig`, checkpointing
+produces YAML config records that reference runtime model-state artifacts:
+
+- ``model_file`` entries point to YAML config artifacts.
+- ``model_state_file`` entries point to ``.pt`` runtime state artifacts.
 
 Public API example (automatic load-or-train): see the {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
 notebook for executed save/load examples.
 
-Public API example (PyTorch save/load): see the {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
-notebook for executed PyTorch checkpoint save/load patterns.
+Public API example (PyTorch config + runtime save/load): see the {doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
+notebook for executed YAML + ``save_model``/``load_model`` patterns.
 
 #### Pre-trained torch models
 
 There are two supported patterns:
 
-1. Load a previously saved deckard PyTorch checkpoint via ``load(filepath)``.
+1. Load a previously saved deckard PyTorch config via ``load(filepath)`` and
+   load runtime state via ``load_model(filepath)``.
 2. Point ``model_type`` to a custom constructor/class that returns an already
    initialized {class}`torch.nn.Module` (for example, one that internally loads external
    pre-trained weights), then run normal deckard training/evaluation.
 
 If you want inference-only behavior from a pre-trained checkpoint, load it via
-``load`` and then call the model with ``model_file``/prediction outputs as
+``load`` + ``load_model`` and then call the model with ``model_file``/prediction outputs as
 needed, without requiring private methods.
 
 ## Troubleshooting
 
 * **Model not fitted error** — train the model before calling
-   :meth:`deckard.model.ModelConfig.save` or predictions.
+   :meth:`deckard.model.ModelConfig.save_model` or predictions.
 * **Hydra config not found** — ensure the YAML file path is valid or use inline overrides.
-* **pickle EOFError** — verify the model file is not corrupted.
+* **Artifact deserialization errors** — verify runtime artifact type and extension
+  match the framework policy (PyTorch ``.pt``, sklearn ``.pkl``/``.joblib``).
 * **CLI argument conflicts** — use ``conflict_handler='resolve'`` when composing parsers.
 * **Probability prediction errors** — set ``--probability`` only for models that support ``predict_proba()``.
 

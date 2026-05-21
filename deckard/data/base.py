@@ -1,46 +1,45 @@
 # Imports
-import importlib
-import logging
 import os
+import copy
+import pandas as pd
 import time
-from dataclasses import dataclass, field
+import logging
+import importlib
 from pathlib import Path
-from typing import Any, Literal, Optional, Tuple, Union
+
+from dataclasses import dataclass, field
+from typing import Any, Literal, Tuple, Union, Optional
+from omegaconf import DictConfig, ListConfig
 
 import numpy as np
-import pandas as pd
-from omegaconf import DictConfig, ListConfig
-from scipy.sparse import csr_matrix
-from sklearn.compose import make_column_selector, make_column_transformer
 
 # Scikit-learn
 from sklearn.datasets import (
     fetch_openml,
-    load_diabetes,
-    load_digits,
-    load_iris,
     make_classification,
     make_regression,
+    load_digits,
+    load_diabetes,
+    load_iris,
 )
-from sklearn.pipeline import Pipeline
 
-from ..frameworks.types import ArrayLike, MatrixLike
+from sklearn.pipeline import Pipeline
+from sklearn.compose import make_column_selector, ColumnTransformer
+
+from scipy.sparse import csr_matrix
 
 # deckard
 from ..utils import (
     ConfigBase,
-    coerce_to_list,
     data_supported_filetypes,
     load_class,
+    coerce_to_list,
     merge_list_of_dicts,
+    normalize_plugin_specs,
+    instantiate_plugin_spec,
 )
-from ._mixins import (
-    DataLoaderMixin,
-    DataPipelineMixin,
-    DataPluginRuntimeMixin,
-    DataSamplerMixin,
-    DataScoreMixin,
-)
+from ..frameworks.types import ArrayLike, MatrixLike
+from ._mixins import DataPipelineMixin
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -55,6 +54,17 @@ def _coerce_scorer_config(*args, **kwargs):
     from ..score.base import coerce_scorer_config as _coerce
 
     return _coerce(*args, **kwargs)
+
+
+def _is_data_scorer_instance(scorer: Any) -> bool:
+    """Return True when *scorer* is explicitly a data-profile scorer."""
+    from ..score.base import _DataScorerMarker
+
+    if isinstance(scorer, _DataScorerMarker):
+        return True
+    if callable(scorer):
+        return True
+    return str(getattr(scorer, "scoring_type", "")).strip().lower() == "data"
 
 
 def _discover_lifelines_dataset_loaders() -> dict:
@@ -99,114 +109,250 @@ def _yellowbrick_dataset_loaders() -> dict:
     return _discover_yellowbrick_dataset_loaders()
 
 
-SUPPORTED_DATA_SCORING_MODES = ["train", "test", "val", "pre-sample"]
-
-
-def _supported_data_score_modes() -> set[str]:
-    # Import lazily to avoid deckard.data <-> deckard.score import cycles at module import time.
-    from ..score.base import SUPPORTED_DATA_SCORE_MODES
-
-    return set(SUPPORTED_DATA_SCORE_MODES)
-
-
-def _supported_scoring_stages() -> set[str]:
-    # Import lazily to avoid deckard.data <-> deckard.score import cycles at module import time.
-    from ..score.base import SUPPORTED_SCORING_STAGES
-
-    return set(SUPPORTED_SCORING_STAGES)
-
-
-def _canonical_data_score_mode(
-    stage_or_mode: str,
-) -> str:
-    token = str(stage_or_mode or "").strip().lower()
-    stage_to_mode = {
-        "train": "train",
-        "test": "test",
-        "val": "val",
-        "pre-sample": "pre-sample",
-        "pre-defense": "test",
-        "post-defense": "test",
-        "post-pipeline": "test",
-        "post-sample": "test",
-        "benign": "test",
-        "pre-filter": "test",
-        "post-filter": "test",
-    }
-    if token not in stage_to_mode:
-        raise ValueError(
-            f"Unsupported data score mode/stage '{stage_or_mode}'. "
-            f"Expected one of {sorted(stage_to_mode)}.",
-        )
-    return stage_to_mode[token]
 
 
 @dataclass(eq=False, kw_only=True)
-class DataConfig(
-    DataPluginRuntimeMixin,
-    DataLoaderMixin,
-    DataSamplerMixin,
-    DataScoreMixin,
-    DataPipelineMixin,
-    ConfigBase,
-):
+class DataHookPlugin:
+    """Generic data plugin that delegates one hook to one runtime method.
+
+    Initialization fields
+    ---------------------
+    hook_name : str
+        Hook method name exposed to runtime (e.g., ``before_sample``).
+    method_name : str
+        Runtime method name invoked when the hook runs.
+    method_kwargs : dict[str, Any]
+        Default kwargs merged into hook invocation kwargs.
+    init_params : dict[str, Any]
+        Metadata-only declaration payload for class/type/library docs.
+    """
+
+    hook_name: str
+    method_name: str
+    method_kwargs: dict[str, Any] = field(default_factory=dict)
+    init_params: dict[str, Any] = field(default_factory=dict)
+
+    def declares_hook(self, hook_name: str) -> bool:
+        return hook_name == self.hook_name
+
+    def _invoke(self, runtime: "DataConfig", **kwargs):
+        method = getattr(runtime, self.method_name, None)
+        if not callable(method):
+            raise AttributeError(
+                f"Runtime '{type(runtime).__name__}' has no callable '{self.method_name}'",
+            )
+        call_kwargs = dict(self.method_kwargs)
+        call_kwargs.update(kwargs)
+        return method(**call_kwargs)
+
+    def __call__(self, runtime: "DataConfig", *args, **kwargs):
+        """Common plugin callable contract used across runtime adapters.
+
+        Parameters
+        ----------
+        runtime : DataConfig
+            Runtime data config instance orchestrating plugin hooks.
+        *args : Any
+            Positional runtime args (reserved for contract parity).
+        **kwargs : Any
+            Hook runtime kwargs. Optional ``hook_name`` filters execution.
+        """
+        _ = args
+        hook_name = kwargs.pop("hook_name", None)
+        if hook_name is not None and hook_name != self.hook_name:
+            return None
+        return self._invoke(runtime, **kwargs)
+
+    def __getattr__(self, attr_name: str):
+        if attr_name != self.hook_name:
+            raise AttributeError(attr_name)
+
+        def _hook(runtime: "DataConfig", *args, **kwargs):
+            return self(runtime, *args, hook_name=attr_name, **kwargs)
+
+        return _hook
+
+
+@dataclass(eq=False, kw_only=True)
+class DataConfig(ConfigBase):
     """
     Configuration and utility class for loading, preprocessing, and splitting datasets for machine learning tasks.
 
-    Args:
-        dataset_name: Name of the dataset to load or path to a data file.
-        data_params: Additional parameters for data loading or generation.
-        test_size: Proportion of the dataset to include in the test split (between 0 and 1).
-        train_size: Proportion or count of samples to include in the training split.
-        val_size: Proportion or count of samples to include in the validation split when a sampler is provided.
-        split: Which split index to use as the validation set when sampler performs cross-validation or shuffle splitting. Defaults to 0.
-        sample: Optional pluggable sampler. When None (default) the legacy 2-way train_test_split is used. Can be an instantiated sampler object, a subclass of {class}`deckard.data.sample.BaseSampler`, or a Hydra-style dict with a `name`/`_target_` key pointing to the sampler class.
-        random_state: Seed for random number generation to ensure reproducibility.
-        stratify: Specifies stratification for sampling; can be None, True (use target), or a column name.
-        classifier: Whether the task is classification (True) or regression (False).
-        drop: List of columns to drop from the dataset.
-        target: Name of the target column in the dataset (if applicable).
-        keep: List of columns to keep in the dataset.
-        plugins: Optional data plugin specifications executed during load/sample/score hooks.
-        alias: Optional alias for the dataset configuration.
-        scorer: Scorer specification or AUTO_SCORER.
-        score_mode: Which split to score ("train", "test", "val", "pre-sample").
+    Attributes
+    -------
+    dataset_name : str
+        Name of the dataset to load or path to a data file.
+    data_params : dict
+        Additional parameters for data loading or generation.
+    test_size : float
+        Proportion of the dataset to include in the test split (between 0 and 1).
+    train_size : float
+        Proportion or count of samples to include in the training split.
+    val_size : Union[float, int, None]
+        Proportion or count of samples to include in the validation split when a
+        ``sample`` is provided (e.g. :class:`~deckard.data.sample.SplitSampler` or
+        :class:`~deckard.data.sample.ShuffleSampler`).  Unused in legacy mode.
+    split : Union[int, None]
+        Which split index to use as the validation set when ``sample`` performs
+        cross-validation or shuffle splitting
+        (e.g. :class:`~deckard.data.sample.KFoldSampler` or
+        :class:`~deckard.data.sample.ShuffleSampler`).  Defaults to ``0``.
+    sample : Union[callable, dict, None]
+        Optional pluggable sampler.  When ``None`` (default) the legacy 2-way
+        ``train_test_split`` is used.  Can be an instantiated sampler object, a subclass
+        of :class:`~deckard.data.sample.BaseSampler`, or a Hydra-style dict with a
+        ``name``/``_target_`` key pointing to the sampler class.
+    random_state : int
+        Seed for random number generation to ensure reproducibility.
+    stratify : Union[None, str, bool]
+        Specifies stratification for sampling; can be None, True (use target), or a column name.
+    classifier: bool
+        Whether the task is classification (True) or regression (False).
+    drop: list
+        List of columns to drop from the dataset.
+    target: Union[str, None]
+        Name of the target column in the dataset (if applicable).
+    keep: list
+        List of columns to keep in the dataset.
+    plugins : list
+        Optional data plugin specifications executed during load/sample/score hooks.
+    _X : pd.DataFrame
+        Loaded feature matrix.
+    _y : pd.Series
+        Loaded target vector.
+    data_load_time : float
+        Time taken to load the data.
+    data_sample_time : float
+        Time taken to sample/split the data.
+    train_n : int
+        Number of training samples.
+    test_n : int
+        Number of testing samples.
+    val_n : int
+        Number of validation samples (set only when a sampler is used).
+    alias: str
+        Optional alias for the dataset configuration.
+    train_indices : list
+        Indices for training samples.
+    test_indices : list
+        Indices for testing samples.
+    val_indices : list
+        Indices for validation samples (set only when a sampler is used).
+    X_train : pd.DataFrame
+        Training feature matrix.
+    y_train : pd.Series
+        Training target vector.
+    X_test : pd.DataFrame
+        Testing feature matrix.
+    y_test : pd.Series
+        Testing target vector.
+    X_val : pd.DataFrame
+        Validation feature matrix (set only when a sampler is used).
+    y_val : pd.Series
+        Validation target vector (set only when a sampler is used).
+    score_dict : dict
+        Dictionary to store scores or metrics.
+    _target_ : str
+        Internal identifier for the class.
 
-    Attributes:
-        _X: Loaded feature matrix.
-        _y: Loaded target vector.
-        data_load_time: Time taken to load the data.
-        data_sample_time: Time taken to sample/split the data.
-        train_indices: Indices for training samples.
-        test_indices: Indices for testing samples.
-        val_indices: Indices for validation samples (set only when a sampler is used).
-        X_train: Training feature matrix.
-        y_train: Training target vector.
-        X_test: Testing feature matrix.
-        y_test: Testing target vector.
-        X_val: Validation feature matrix (set only when a sampler is used).
-        y_val: Validation target vector (set only when a sampler is used).
-        train_n: Number of training samples.
-        test_n: Number of testing samples.
-        val_n: Number of validation samples (set only when a sampler is used).
-        score_dict: Dictionary to store scores or metrics.
-        _target_: Internal identifier for the class.
+    Parameter layers
+    ----------------
+    data_params : dict
+        Dataset loader/generator kwargs consumed by the selected data source
+        (for example sklearn loaders, OpenML fetchers, synthetic generators,
+        or file readers).
+    plugins : list
+        Plugin specs resolved at runtime and invoked through hook names.
+        For :class:`DataHookPlugin`, initialization fields are:
+        ``hook_name``, ``method_name``, ``method_kwargs``, and ``init_params``
+        (metadata only).
+    init_params (plugin metadata)
+        Plugin declaration metadata (class/type/library docs). This is not
+        interpreted by DataConfig orchestration logic directly.
 
-    Returns:
-        DataConfig: Instantiated and prepared data configuration object.
+    Family-specific parameter semantics
+    ----------------------------------
+    sklearn loader datasets
+        ``data_params`` are forwarded to sklearn dataset loader callables
+        (for example ``as_frame=True``).
+    OpenML/fetch datasets
+        ``data_params`` typically include source-identifying keys (for example
+        ``name``, ``version``, ``as_frame``) and are passed to fetch helpers.
+    synthetic generators
+        ``data_params`` are generation controls (for example
+        ``n_samples``, ``n_features``, ``n_classes``).
+    file-backed datasets
+        ``data_params`` may include read-time options used by pandas/file
+        loading utilities.
 
-    Raises:
-        ValueError: For invalid parameter values or missing data.
-        NotImplementedError: For unsupported datasets or file types.
+    Plugin hook runtime params
+    --------------------------
+    Hooks are orchestrated by ``_run_plugin_hook(hook_name, **kwargs)``.
+    Core hook names used by DataConfig runtime are:
+    ``before_load_data``, ``after_load_data``, ``before_sample``,
+    ``after_sample``, ``before_score``, and ``after_score``.
+    Hook kwargs are phase-specific runtime objects supplied by the caller;
+    DataHookPlugin forwards them to ``method_name`` after merging
+    ``method_kwargs``.
 
-    Note:
-        Hooks are orchestrated by `_run_plugin_hook(hook_name, **kwargs)`. Core hook names used by DataConfig runtime are: `before_load_data`, `after_load_data`, `before_sample`, `after_sample`, `before_score`, and `after_score`. Hook kwargs are phase-specific runtime objects supplied by the caller; HookPlugin forwards them to `method_name` after merging `method_kwargs`.
+    Methods
+    -------
+    __post_init__()
+        Post-initialization method to validate parameters and initialize internal attributes.
+    __hash__()
+        Computes a hash value for the instance based on non-private attributes.
+    _get_stratify_col()
+        Returns the stratification array (or None) based on ``self.stratify``.
+    _resolve_sample()
+        Instantiates and returns the sampler object, or None for legacy mode.
+    _load_adult_income_data()
+        Loads and preprocesses the Adult Income dataset from OpenML.
+    _load_generic_sklearn(loader_func, **loader_params)
+        Loads a dataset using a generic scikit-learn loader function.
+    _load_generic_openml(dataset_name, version=1, **loader_params)
+        Loads a dataset from OpenML using the specified dataset name and version.
+    _make_classification_data()
+        Generates a synthetic classification dataset.
+    _make_regression_data()
+        Generates a synthetic regression dataset.
+    _sample()
+        Splits the loaded dataset into training, testing, and optionally validation sets.
+    _load_data()
+        Loads the dataset based on the specified name or file type.
+    __call__(filepath=None)
+        Loads and samples the dataset, splits it into training and testing sets, and returns the corresponding features and labels.
+    save(filepath)
+        Saves the current state of the DataConfig instance to a file.
+    load(filepath)
+        Loads the state of the DataConfig instance from a file.
+    Raises
+    ------
+    ValueError
+        For invalid parameter values or missing data.
+    NotImplementedError
+        For unsupported datasets or file types.
 
-    Example:
-        >>> from deckard.data.sample import SplitSampler
-        >>> config = DataConfig(dataset_name="digits", test_size=0.2, val_size=0.1, sample=SplitSampler())
-        >>> config()
-        >>> X_val, y_val = config.X_val, config.y_val
+    Examples
+    --------
+    >>> config = DataConfig(dataset_name="adult", **kwargs)
+    >>> config()
+    >>> X_train = config.X_train
+    >>> y_train = config.y_train
+    >>> X_test = config.X_test
+    >>> y_test = config.y_test
+    >>> score_dict = config.score_dict
+
+    Using a pluggable sampler for 3-way splits::
+
+        from deckard.data.sample import SplitSampler
+        config = DataConfig(
+            dataset_name="digits",
+            test_size=0.2,
+            val_size=0.1,
+            sample=SplitSampler(),
+        )
+        config()
+        X_val, y_val = config.X_val, config.y_val
     """
 
     # Configuration fields
@@ -216,7 +362,7 @@ class DataConfig(
     train_size: Union[float, int, None] = None
     val_size: Union[float, int, None] = None
     split: Union[int, None] = None
-    sample: str = "split"
+    sample: Union[str, Any] = "split"
     random_state: int = 42
     stratify: Union[None, str, bool] = True
     classifier: Union[bool, str] = True
@@ -225,11 +371,11 @@ class DataConfig(
     keep: list = None
     plugins: list = field(default_factory=list)
     alias: Union[str, None] = None
-    scorer: str | dict | None = AUTO_SCORER
-    score_mode: str = "pre-sample"
+    scorer: Any = AUTO_SCORER
+    score_mode: str = "test"
 
     # Runtime state fields
-    score_dict: dict = field(default_factory=dict, repr=True)
+    score_dict: dict = field(init=False, repr=True)
     data_load_time: Union[float, None] = None
     data_sample_time: Union[float, None] = None
     _X: Union[pd.DataFrame, pd.Series, None] = None
@@ -272,10 +418,6 @@ class DataConfig(
                     self.train_size = None
                 else:
                     raise ValueError("test_size must be a float or int")
-
-        if self.score_mode is None:
-            self.score_mode = "pre-sample"
-        self.score_mode = str(self.score_mode).strip().lower()
         self.data_params = self.data_params if self.data_params is not None else {}
         self.drop = [] if not hasattr(self, "drop") or self.drop is None else self.drop
         self.keep = [] if not hasattr(self, "keep") or self.keep is None else self.keep
@@ -343,6 +485,38 @@ class DataConfig(
 
         self._y = self._y.iloc[:sample_cap].copy()
 
+    def _copy_runtime_state_to(self, target) -> None:
+        runtime_fields = [
+            "score_dict",
+            "data_load_time",
+            "data_sample_time",
+            "_X",
+            "_y",
+            "train_indices",
+            "test_indices",
+            "val_indices",
+            "X_train",
+            "y_train",
+            "X_test",
+            "y_test",
+            "X_val",
+            "y_val",
+            "train_n",
+            "test_n",
+            "val_n",
+            "pipeline_fit_n",
+            "pipeline_transform_n",
+            "pipeline_fit_time",
+            "pipeline_transform_time",
+            "pipeline_y_fit_n",
+            "pipeline_y_fit_time",
+            "pipeline_y_transform_n",
+            "pipeline_y_transform_time",
+        ]
+        for attr in runtime_fields:
+            if hasattr(self, attr):
+                setattr(target, attr, getattr(self, attr, None))
+
     def __post_init__(self):
         self._validate_init()
         self.scorer = _coerce_scorer_config(
@@ -355,6 +529,20 @@ class DataConfig(
                 ),
             ),
         )
+        if self.scorer is not None and str(
+            getattr(self.scorer, "scoring_type", ""),
+        ).strip() == "":
+            try:
+                setattr(self.scorer, "scoring_type", "data")
+            except Exception:
+                pass
+        if self.scorer is not None and not _is_data_scorer_instance(self.scorer):
+            scoring_type = str(getattr(self.scorer, "scoring_type", "")).strip().lower()
+            if scoring_type in {"model", "attack"}:
+                raise TypeError(
+                    "DataConfig requires a data-profile scorer configuration. "
+                    "Model/attack scorers are not valid for data-split scoring.",
+                )
 
     @property
     def X(self) -> MatrixLike | None:
@@ -376,91 +564,42 @@ class DataConfig(
         """Set the loaded target vector."""
         self._y = value
 
-    @property
-    def split_indices(self) -> tuple[list | None, list | None, list | None]:
-        """Return the active train/test/val split index triplet."""
-        return (self.train_indices, self.test_indices, self.val_indices)
+    def load_raw_data(self) -> tuple[MatrixLike, ArrayLike]:
+        """Public entry-point for loading raw features and target. Delegates to _load_data()."""
+        return self._load_data()
 
-    @split_indices.setter
-    def split_indices(
+    def split_data(
         self,
-        value: tuple[list | None, list | None, list | None],
-    ) -> None:
-        """Set the active train/test/val split index triplet."""
-        train_idx, test_idx, val_idx = value
-        self.train_indices = train_idx
-        self.test_indices = test_idx
-        self.val_indices = val_idx
+        run_hooks: bool = True,
+    ) -> tuple[MatrixLike, MatrixLike, ArrayLike, ArrayLike]:
+        """Public entry-point for sampling/splitting loaded data. Delegates to _sample()."""
+        return self._sample(run_hooks=run_hooks)
 
-    @property
-    def train_split(self) -> list | None:
-        """Convenience alias for train split indices."""
-        return self.train_indices
 
-    @train_split.setter
-    def train_split(self, value: list | None) -> None:
-        """Set train split indices."""
-        self.train_indices = value
+    def _instantiate_plugin(self, plugin_spec: Any):
+        return instantiate_plugin_spec(plugin_spec, loader=load_class)
 
-    @property
-    def test_split(self) -> list | None:
-        """Convenience alias for test split indices."""
-        return self.test_indices
+    def _get_plugins(self) -> list:
+        if not hasattr(self, "_plugin_objects") or self._plugin_objects is None:
+            plugin_specs = normalize_plugin_specs(self.plugins)
+            self._plugin_objects = [
+                self._instantiate_plugin(spec) for spec in plugin_specs
+            ]
+        return self._plugin_objects
 
-    @test_split.setter
-    def test_split(self, value: list | None) -> None:
-        """Set test split indices."""
-        self.test_indices = value
+    def _run_plugin_hook(self, hook_name: str, **kwargs) -> list[Any]:
+        """Execute one plugin hook across all instantiated plugins.
 
-    @property
-    def val_split(self) -> list | None:
-        """Convenience alias for validation split indices."""
-        return self.val_indices
-
-    @val_split.setter
-    def val_split(self, value: list | None) -> None:
-        """Set validation split indices."""
-        self.val_indices = value
-
-    @property
-    def sensitive_train(self) -> Any:
-        """Public accessor for training split sensitive features."""
-        return getattr(self, "_sensitive_train", None)
-
-    @sensitive_train.setter
-    def sensitive_train(self, value: Any) -> None:
-        """Set training split sensitive features."""
-        self._sensitive_train = value
-
-    @property
-    def sensitive_test(self) -> Any:
-        """Public accessor for test split sensitive features."""
-        return getattr(self, "_sensitive_test", None)
-
-    @sensitive_test.setter
-    def sensitive_test(self, value: Any) -> None:
-        """Set test split sensitive features."""
-        self._sensitive_test = value
-
-    @property
-    def sensitive_val(self) -> Any:
-        """Public accessor for validation split sensitive features."""
-        return getattr(self, "_sensitive_val", None)
-
-    @sensitive_val.setter
-    def sensitive_val(self, value: Any) -> None:
-        """Set validation split sensitive features."""
-        self._sensitive_val = value
-
-    @property
-    def sensitive_all(self) -> Any:
-        """Public accessor for full-dataset sensitive features."""
-        return getattr(self, "_sensitive_all", None)
-
-    @sensitive_all.setter
-    def sensitive_all(self, value: Any) -> None:
-        """Set full-dataset sensitive features."""
-        self._sensitive_all = value
+        Supported DataConfig hook names used by the runtime include:
+        ``before_load_data``, ``after_load_data``, ``before_sample``,
+        ``after_sample``, ``before_score``, and ``after_score``.
+        """
+        hook_outputs = []
+        for plugin in self._get_plugins():
+            hook = getattr(plugin, hook_name, None)
+            if callable(hook):
+                hook_outputs.append(hook(self, **kwargs))
+        return hook_outputs
 
     def _get_stratify_col(self):
         """Return the stratification array (or ``None``) based on ``self.stratify``.
@@ -489,6 +628,82 @@ class DataConfig(
                 f"Stratify column '{self.stratify}' not found in data columns",
             )
         raise ValueError("stratify must be None, True, False, or a column name")
+
+    def _resolve_sample(self):
+        """Instantiate and return the sampler object.
+
+        Accepts:
+        - ``"split"`` / ``"kfold"`` / ``"shuffle"`` -> corresponding sampler class
+        - An already-instantiated sampler object (returned as-is)
+        - A plain :class:`dict` or OmegaConf :class:`~omegaconf.DictConfig` with a
+          ``name`` or ``_target_`` key pointing to the sampler class
+        - A :class:`type` subclass of :class:`BaseSampler` (instantiated with no args)
+
+        Returns
+        -------
+        callable
+        """
+        from .sample import KFoldSampler, ShuffleSampler, SplitSampler
+
+        _SAMPLER_ALIASES = {
+            "split": SplitSampler,
+            "kfold": KFoldSampler,
+            "shuffle": ShuffleSampler,
+        }
+
+        if isinstance(self.sample, str):
+            key = self.sample.lower()
+            if key not in _SAMPLER_ALIASES:
+                raise ValueError(
+                    f"Unknown sampler '{self.sample}'. Must be one of {list(_SAMPLER_ALIASES)}.",
+                )
+            return _SAMPLER_ALIASES[key]()
+
+        spec = self.sample
+
+        # 1. Convert OmegaConf DictConfig to a plain dict first so subsequent
+        #    checks can rely on isinstance(spec, dict).
+        try:
+            from omegaconf import DictConfig, OmegaConf
+
+            if isinstance(spec, DictConfig):
+                spec = OmegaConf.to_container(spec, resolve=True)
+        except ImportError:
+            pass
+
+        # 2. Resolve dict / plain-dict spec (supports 'name' or '_target_' key).
+        if isinstance(spec, dict):
+            # Treat empty dict as None (no sampler)
+            if not spec:
+                return None
+            spec = dict(spec)
+            class_path = spec.pop("name", spec.pop("_target_", None))
+            if class_path is None:
+                raise ValueError(
+                    "sample dict must include 'name' or '_target_'",
+                )
+            return load_class(class_path, **spec)
+
+        # 3. Already an instantiated callable (e.g. a sampler instance).
+        if callable(spec) and not isinstance(spec, type):
+            return spec
+
+        # 4. A bare class – instantiate with no arguments.
+        if isinstance(spec, type):
+            return spec()
+
+        raise ValueError(f"Unsupported sample specification: {type(spec)}")
+
+    def compose_sampling_behavior(self):
+        """Compose and return the sampler runtime callable used by split/sample flows."""
+        sampler_obj = self._resolve_sample()
+        if sampler_obj is None:
+            from .sample import SplitSampler
+
+            sampler_obj = SplitSampler()
+        if not callable(sampler_obj):
+            raise TypeError(f"Composed sampler must be callable, got {type(sampler_obj)}")
+        return sampler_obj
 
     def __hash__(self):
         return super().__hash__()
@@ -1048,8 +1263,7 @@ class DataConfig(
             )
         if self.dataset_name in supported_datasets:
             start_time = time.process_time()
-            params = self.data_params or {}
-            supported_datasets[self.dataset_name](**params)
+            supported_datasets[self.dataset_name](**self.data_params)
         elif filetype == ".openml":
             start_time = time.process_time()
             dataset_base_name = Path(self.dataset_name).stem
@@ -1102,13 +1316,12 @@ class DataConfig(
     def _score(
         self,
         *args,
-        mode: Optional[str] = None,
-        stage: Optional[str] = None,
+        mode: str | None = None,
         **kwargs,
     ) -> dict:
         """
         Delegates all dataset scoring to ``self.scorer``. Supports pre-sample mode (raw data, only in DataConfig),
-        as well as train/test/val splits. If mode is not provided, uses self.score_mode or defaults to 'pre-sample'.
+        as well as train/test/val splits. If mode is not provided, uses self.score_mode or defaults to 'test'.
         """
         self._run_plugin_hook("before_score")
         if self.scorer is None:
@@ -1117,31 +1330,25 @@ class DataConfig(
             raise TypeError(
                 f"DataConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
-        requested_mode = str(
-            mode or getattr(self, "score_mode", None) or "pre-sample",
+        if not _is_data_scorer_instance(self.scorer):
+            raise TypeError(
+                "DataConfig.scorer must be a data-profile scorer; "
+                "model/attack scorers cannot run on raw X/y data splits.",
+            )
+        scorer_mode = str(
+            mode or getattr(self, "score_mode", None) or "test",
         ).lower()
-        stage_or_mode = str(stage or requested_mode).lower()
-        if requested_mode not in _supported_scoring_stages() and requested_mode not in {
+        # Map post-defense to test split (for compatibility with scoring stages)
+        if scorer_mode == "post-defense":
+            scorer_mode = "test"
+        allowed = {
+            "pre-sample",
             "train",
             "test",
             "val",
-            "pre-sample",
-        }:
-            raise ValueError(
-                f"DataConfig score_mode '{requested_mode}' is unsupported.",
-            )
-        if stage_or_mode not in _supported_scoring_stages() and stage_or_mode not in {
-            "train",
-            "test",
-            "val",
-            "pre-sample",
-        }:
-            raise ValueError(
-                f"DataConfig stage '{stage_or_mode}' is unsupported.",
-            )
-        scorer_mode = _canonical_data_score_mode(requested_mode)
-
-        allowed = _supported_data_score_modes()
+            "post-sample",
+            "post-pipeline",
+        }
         if scorer_mode not in allowed:
             raise ValueError(f"DataConfig score_mode '{scorer_mode}' not in {allowed}")
         if scorer_mode == "pre-sample":
@@ -1156,6 +1363,28 @@ class DataConfig(
         elif scorer_mode == "val":
             y_true = getattr(self, "y_val", None)
             y_pred = getattr(self, "X_val", None)
+        elif scorer_mode in {"post-sample", "post-pipeline"}:
+            y_train = getattr(self, "y_train", None)
+            y_test = getattr(self, "y_test", None)
+            X_train = getattr(self, "X_train", None)
+            X_test = getattr(self, "X_test", None)
+            if (
+                y_train is None
+                or y_test is None
+                or X_train is None
+                or X_test is None
+            ):
+                raise ValueError(
+                    "Data scoring mode 'post-sample' requires both train and test splits.",
+                )
+            if isinstance(X_train, (pd.DataFrame, pd.Series)):
+                y_pred = pd.concat([X_train, X_test], ignore_index=True)
+            else:
+                y_pred = np.concatenate([np.asarray(X_train), np.asarray(X_test)])
+            if isinstance(y_train, (pd.DataFrame, pd.Series)):
+                y_true = pd.concat([y_train, y_test], ignore_index=True)
+            else:
+                y_true = np.concatenate([np.asarray(y_train), np.asarray(y_test)])
         else:
             raise ValueError(f"Mode must be in {allowed}")
         if y_true is None or y_pred is None:
@@ -1167,23 +1396,9 @@ class DataConfig(
             y_true=y_true,
             y_pred=y_pred,
             mode=scorer_mode,
-            stage=stage_or_mode,
             data=self,
             **kwargs,
         )
-        # Keep backward compatibility for DataConfig callers expecting a flat dict.
-        if (
-            isinstance(result_dict, dict)
-            and scorer_mode in result_dict
-            and isinstance(result_dict.get(scorer_mode), dict)
-        ):
-            result_dict = dict(result_dict[scorer_mode])
-        elif (
-            isinstance(result_dict, dict)
-            and stage_or_mode in result_dict
-            and isinstance(result_dict.get(stage_or_mode), dict)
-        ):
-            result_dict = dict(result_dict[stage_or_mode])
         plugin_scores = self._run_plugin_hook("after_score", scores=result_dict)
         for plugin_score in plugin_scores:
             if isinstance(plugin_score, dict):
@@ -1194,12 +1409,13 @@ class DataConfig(
         """Attach a pipeline-like plugin object to this data config."""
         if pipeline is None:
             return self
-        pipeline_plugins = (
-            [pipeline] if not isinstance(pipeline, list) else list(pipeline)
-        )
+        pipeline_plugins = [pipeline] if not isinstance(pipeline, list) else list(pipeline)
         existing_plugins = list(self.plugins or [])
         self.plugins = [*pipeline_plugins, *existing_plugins]
         return self
+
+
+
 
     def _prepare_data_file(self, data_file: Union[str, None]) -> bool:
         """
@@ -1262,10 +1478,6 @@ class DataConfig(
         scores = dict(getattr(self, "score_dict", {}) or {})
         self.ensure_data_loaded()
         logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
-        score_kwargs = dict(kwargs)
-        requested_mode = score_kwargs.pop("mode", None)
-        pre_sample_scores = {}
-
         self.ensure_data_sampled()
         time_dict = self.build_data_time_dict()
         if self.X_val is not None:
@@ -1277,16 +1489,8 @@ class DataConfig(
             logger.info(
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
             )
-        resolved_mode = str(
-            requested_mode or getattr(self, "score_mode", "test"),
-        ).lower()
-        post_sample_scores = self._score(
-            *args,
-            mode=resolved_mode,
-            stage="post-sample",
-            **score_kwargs,
-        )
-        all_scores = {**scores, **pre_sample_scores, **post_sample_scores, **time_dict}
+        data_scores = self._score(*args, **kwargs)
+        all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
         all_scores = self.merge_and_persist_scores(all_scores, score_file)
@@ -1294,15 +1498,14 @@ class DataConfig(
             self.save(data_file)
         return self.score_dict
 
-
 @dataclass
 class DataPipelineStep:
     """
     Represents a step in a data pipeline with optional metadata.
-
+    
     This dataclass normalizes and documents the optional parameters that
     configure how a step integrates with the pipeline runtime.
-
+    
     Attributes
     ----------
     name : str
@@ -1319,35 +1522,29 @@ class DataPipelineStep:
         Hook name(s) that trigger when this step runs. Supported hooks:
         - "before_sample": Run this step's pre_sample_fit before KFold sampling.
     """
-
+    
     name: str
-    fit_X: bool = True
     fit_y: bool = False
-    fit_Xy: bool = False
-    fit_pre_sample: bool = False
-    fit_post_sample: bool = True
     dtype: Optional[str] = None
     plugin_hook: Union[str, list, None] = None
-    args: list[Any] = field(default_factory=list)
-    kwargs: dict[str, Any] = field(default_factory=dict)
-
+    
     @classmethod
     def from_config(cls, step_name: str, step_config: dict) -> "DataPipelineStep":
         """
         Extract DataPipelineStep from a pipeline step config dict.
-
+        
         Parameters
         ----------
         step_name : str
             Name of the step (key in pipeline.steps dict).
         step_config : dict
             Configuration dict for the step.
-
+            
         Returns
         -------
         DataPipelineStep
             Parsed step metadata.
-
+            
         Raises
         ------
         ValueError
@@ -1356,81 +1553,42 @@ class DataPipelineStep:
         step_class = step_config.get("name")
         if step_class is None:
             raise ValueError(f"Step {step_name} missing required 'name' key")
-
-        fit_y = bool(step_config.get("fit_y", False))
-        fit_xy = bool(step_config.get("fit_Xy", step_config.get("fit_xy", False)))
-        if fit_y and fit_xy:
-            raise ValueError(
-                f"Step {step_name} cannot enable both fit_y and fit_Xy/fit_xy",
-            )
-        fit_pre_sample = bool(
-            step_config.get(
-                "fit_pre-sample",
-                step_config.get("fit_pre_sample", step_config.get("fit_presample", False)),
-            ),
-        )
-        fit_post_sample = bool(
-            step_config.get(
-                "fit_post-sample",
-                step_config.get(
-                    "fit_post_sample",
-                    step_config.get("fit_postsample", True),
-                ),
-            ),
-        )
-        fit_x = bool(step_config.get("fit_X", True))
-
+        
+        fit_y = step_config.get("fit_y", False)
+        fit_xy = step_config.get("fit_xy", False)
+        
+        if fit_xy is True:
+            raise ValueError("fit_xy pipeline steps are no longer supported.")
+        
         return cls(
             name=step_class,
-            fit_X=fit_x,
             fit_y=fit_y,
-            fit_Xy=fit_xy,
-            fit_pre_sample=fit_pre_sample,
-            fit_post_sample=fit_post_sample,
             dtype=step_config.get("dtype", None),
             plugin_hook=step_config.get("plugin_hook", None),
-            args=list(step_config.get("args", []) or []),
-            kwargs=dict(step_config.get("kwargs", {}) or {}),
         )
-
+    
     def stripped_config(self, step_config: dict) -> dict:
         """
         Remove DataPipelineStep metadata from a step config dict.
-
+        
         Parameters
         ----------
         step_config : dict
             Original step configuration.
-
+            
         Returns
         -------
         dict
             New dict with metadata keys removed, ready for transformer instantiation.
         """
         config = dict(step_config)
-        for key in {
-            "name",
-            "fit_X",
-            "fit_y",
-            "fit_Xy",
-            "fit_xy",
-            "fit_pre-sample",
-            "fit_pre_sample",
-            "fit_presample",
-            "fit_post-sample",
-            "fit_post_sample",
-            "fit_postsample",
-            "dtype",
-            "plugin_hook",
-            "args",
-            "kwargs",
-        }:
+        for key in {"name", "fit_y", "fit_xy", "dtype", "plugin_hook"}:
             config.pop(key, None)
         return config
 
 
 @dataclass(eq=False, kw_only=True)
-class DataPipelineConfig(DataConfig):
+class DataPipelineConfig(DataPipelineMixin, DataConfig):
     """Initializes a data pipeline configuration and fits it to the data in the call() method."""
 
     pipeline: dict = field(default_factory=dict)
@@ -1439,6 +1597,7 @@ class DataPipelineConfig(DataConfig):
     def __post_init__(self):
         self._validate_init()
         # Allow a list of step-dicts: merge them in order (later wins on key conflict)
+        
 
         if isinstance(self.pipeline, (list, ListConfig)):
             self.pipeline = merge_list_of_dicts(coerce_to_list(self.pipeline))
@@ -1514,30 +1673,28 @@ class DataPipelineConfig(DataConfig):
 
     def _resolve_step_config(self, step_class: str, step_config: dict) -> dict:
         """Resolve fold-specific paths in step config for precomputed matrices.
-
+        
         For StringDistanceTransformer, resolves ${data.split} placeholders in
         distance_matrix_train and distance_matrix_test paths using self.split.
         """
         resolved_config = {**step_config}
-
+        
         # Only process StringDistanceTransformer configs
         if "StringDistanceTransformer" not in step_class:
             return resolved_config
-
+        
         # Resolve distance_matrix_full path if present
         if "distance_matrix_full" in resolved_config:
             path = resolved_config["distance_matrix_full"]
             if isinstance(path, str) and "${data.split}" in path:
                 if self.split is not None:
                     resolved_config["distance_matrix_full"] = path.replace(
-                        "${data.split}",
-                        str(self.split),
+                        "${data.split}", str(self.split)
                     )
             elif isinstance(path, str) and "${item.fold}" in path:
                 if self.split is not None:
                     resolved_config["distance_matrix_full"] = path.replace(
-                        "${item.fold}",
-                        str(self.split),
+                        "${item.fold}", str(self.split)
                     )
 
         # Resolve distance_matrix_train path if present
@@ -1546,34 +1703,32 @@ class DataPipelineConfig(DataConfig):
             if isinstance(path, str) and "${data.split}" in path:
                 if self.split is not None:
                     resolved_config["distance_matrix_train"] = path.replace(
-                        "${data.split}",
-                        str(self.split),
+                        "${data.split}", str(self.split)
                     )
             elif isinstance(path, str) and "${item.fold}" in path:
                 if self.split is not None:
                     resolved_config["distance_matrix_train"] = path.replace(
-                        "${item.fold}",
-                        str(self.split),
+                        "${item.fold}", str(self.split)
                     )
-
+        
         # Resolve distance_matrix_test path if present
         if "distance_matrix_test" in resolved_config:
             path = resolved_config["distance_matrix_test"]
             if isinstance(path, str) and "${data.split}" in path:
                 if self.split is not None:
                     resolved_config["distance_matrix_test"] = path.replace(
-                        "${data.split}",
-                        str(self.split),
+                        "${data.split}", str(self.split)
                     )
             elif isinstance(path, str) and "${item.fold}" in path:
                 if self.split is not None:
                     resolved_config["distance_matrix_test"] = path.replace(
-                        "${item.fold}",
-                        str(self.split),
+                        "${item.fold}", str(self.split)
                     )
-
+        
         return resolved_config
 
+    
+    
     def _run_pre_sample_transformations(self, pipeline: Pipeline, force: bool = False):
         if not (self.pre_sample_transform or force):
             return
@@ -1583,9 +1738,9 @@ class DataPipelineConfig(DataConfig):
         val_size = getattr(self, "val_size", None) or 0
         # Only cap when sizes are integers (fractional sizes are not capped)
         if (
-            isinstance(train_size, int)
-            and isinstance(test_size, int)
-            and isinstance(val_size, int)
+            isinstance(train_size, int) and
+            isinstance(test_size, int) and
+            isinstance(val_size, int)
         ):
             budget = train_size + test_size + val_size
         else:
@@ -1603,7 +1758,7 @@ class DataPipelineConfig(DataConfig):
             else:
                 y_hook = self._y[keep_idx]
             logger.info(
-                f"Subsetting data from {n_samples} to {budget} samples before pre_sample_fit.",
+                f"Subsetting data from {n_samples} to {budget} samples before pre_sample_fit."
             )
         else:
             X_hook = self._X
@@ -1615,11 +1770,6 @@ class DataPipelineConfig(DataConfig):
             pre_sample_fit = getattr(step, "pre_sample_fit", None)
             if callable(pre_sample_fit):
                 pre_sample_fit(X_hook, y=y_hook, data=self)
-
-        # Apply declarative pre-sample fit/transform stages from pipeline step flags.
-        X_hook_t, y_hook_t = self.fit_presample(X_hook, y_hook)
-        self._X = X_hook_t
-        self._y = y_hook_t
 
     def _inject_sample_indices(self, pipeline: Pipeline):
         if not hasattr(self, "train_indices") or self.train_indices is None:
@@ -1643,30 +1793,25 @@ class DataPipelineConfig(DataConfig):
         for step_name, step_config in self.pipeline.items():
             # Parse step metadata (name, fit_y, dtype, plugin_hook)
             step = DataPipelineStep.from_config(step_name, step_config)
-
+            
             # Register hooks if present
             step_hooks = self._normalize_step_hooks(step.plugin_hook)
             if step_hooks:
                 self._pipeline_step_hooks[step_name] = step_hooks
-
+            
             # Get clean config (metadata removed, ready for instantiation)
             step_config_clean = step.stripped_config(step_config)
-
-            # Merge explicit kwargs object after stripped config (kwargs wins).
-            step_config_clean.update(step.kwargs)
-
+            
             # Resolve fold-specific paths before instantiation
             step_config_clean = self._resolve_step_config(step.name, step_config_clean)
-
+            
             # Instantiate the transformer
-            step_instance = load_class(step.name, *step.args, **step_config_clean)
-
-            if not step.fit_post_sample:
-                continue
-            if step.fit_X or step.fit_Xy:
+            step_instance = load_class(step.name, **step_config_clean)
+            dtypes.append(step.dtype)
+            
+            if step.fit_y is not True:
                 X_pipeline_steps.append((step_name, step_instance))
-                dtypes.append(step.dtype)
-            if step.fit_y:
+            else:
                 y_pipeline_steps.append((step_name, step_instance))
 
         if dtypes is not None and any(x is not None for x in dtypes):
@@ -1675,44 +1820,34 @@ class DataPipelineConfig(DataConfig):
             num_dtypes = {"num", "numeric", "float", "int"}
 
             transformers = []
-            passthrough_steps = []
 
             for (name, transformer), dtype in zip(X_pipeline_steps, dtypes):
-                if dtype is None:
-                    passthrough_steps.append((name, transformer))
-                    continue
 
-                dtype_text = str(dtype).strip().lower()
-
-                if dtype_text in num_dtypes:
+                if dtype in num_dtypes:
                     selector = make_column_selector(dtype_include=np.number)
 
-                elif dtype_text in string_dtypes:
+                elif dtype in string_dtypes:
                     selector = make_column_selector(
                         dtype_include=object,
                     )  # or "string" depending on your data
 
                 else:
-                    passthrough_steps.append((name, transformer))
-                    continue
+                    continue  # skip unknown dtype
 
-                transformers.append((transformer, selector))
+                transformers.append((name, transformer, selector))
 
-            if transformers:
-                pipeline_steps = [
+            X_pipeline = Pipeline(
+                steps=[
                     (
                         "preprocess",
-                        make_column_transformer(
-                            *transformers,
+                        ColumnTransformer(
+                            transformers=transformers,
                             remainder="passthrough",
                             verbose_feature_names_out=False,
                         ),
                     ),
-                ]
-                pipeline_steps.extend(passthrough_steps)
-                X_pipeline = Pipeline(steps=pipeline_steps)
-            else:
-                X_pipeline = Pipeline(steps=X_pipeline_steps)
+                ],
+            )
 
         else:
             X_pipeline = Pipeline(steps=X_pipeline_steps)
@@ -1728,9 +1863,7 @@ class DataPipelineConfig(DataConfig):
 
     def should_run_pre_sample_pipeline(self) -> bool:
         """Determine whether pre-sample pipeline behavior is composed for this run."""
-        return self.pre_sample_transform or self._pipeline_declares_hook(
-            "before_sample",
-        )
+        return self.pre_sample_transform or self._pipeline_declares_hook("before_sample")
 
     def run_sampling_with_pipeline_hooks(self) -> None:
         """Compose sampling behavior with optional pre-sample pipeline hooks."""
@@ -1777,36 +1910,29 @@ class DataPipelineConfig(DataConfig):
         """Compose and apply feature/target pipeline behavior to sampled splits."""
         X_pipeline, y_pipeline = self.compose_pipeline_behavior()
         self._inject_sample_indices(X_pipeline)
-
-        start_fit = time.process_time()
-        self.X_train, self.y_train = self.fit_X(self.X_train, self.y_train)
-        self.X_train, self.y_train = self.fit_Xy(self.X_train, self.y_train)
-        self.X_train, self.y_train = self.fit_y(self.X_train, self.y_train)
-        end_fit = time.process_time()
-        self.pipeline_fit_time = end_fit - start_fit
-        self.pipeline_fit_n = len(self.X_train) if hasattr(self.X_train, "__len__") else None
-
-        start_transform = time.process_time()
-        self.X_test, self.y_test = self.run_pipeline((self.X_test, self.y_test))
-        if getattr(self, "X_val", None) is not None:
-            self.X_val, self.y_val = self.run_pipeline((self.X_val, self.y_val))
-        end_transform = time.process_time()
-        self.pipeline_transform_time = end_transform - start_transform
-        self.pipeline_transform_n = len(self.X_test) if hasattr(self.X_test, "__len__") else None
-
-        # Keep legacy path active for explicit y-only sklearn pipelines from create_pipeline().
-        if y_pipeline is not None and not getattr(self, "_fitted_pipeline_y", None):
-            self.X_train, self.X_test, self.y_train, self.y_test = self._fit_transform_y(
-                self.X_train,
-                self.X_test,
-                self.y_train,
-                self.y_test,
-                y_pipeline,
+        self.X_train, self.X_test, self.y_train, self.y_test = self._fit_transform_X(
+            self.X_train,
+            self.X_test,
+            self.y_train,
+            self.y_test,
+            X_pipeline,
+        )
+        self._transform_validation_with_pipeline(X_pipeline)
+        if y_pipeline is not None:
+            self.X_train, self.X_test, self.y_train, self.y_test = (
+                self._fit_transform_y(
+                    self.X_train,
+                    self.X_test,
+                    self.y_train,
+                    self.y_test,
+                    y_pipeline,
+                )
             )
 
     def create_pipeline(self):
         """Public entry-point for pipeline initialisation. Delegates to `_init_pipeline()`."""
         return self._init_pipeline()
+
 
     def _fit_transform_X(
         self,
@@ -2009,10 +2135,6 @@ class DataPipelineConfig(DataConfig):
             self._load_data()
             logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
         time_dict = {"data_load_time": self.data_load_time}
-        score_kwargs = dict(kwargs)
-        requested_mode = score_kwargs.pop("mode", mode)
-        pre_sample_scores = {}
-
         if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
             self.run_sampling_with_pipeline_hooks()
         time_dict["data_sample_time"] = (self.data_sample_time,)
@@ -2039,18 +2161,9 @@ class DataPipelineConfig(DataConfig):
             )
         self.score_dict.update(**time_dict)
         # Respect explicit mode first, then configured score_mode, then _score fallback.
-        resolved_mode = (
-            requested_mode
-            if requested_mode is not None
-            else getattr(self, "score_mode", None)
-        )
-        post_sample_scores = self._score(
-            *args,
-            mode=resolved_mode,
-            stage="post-sample",
-            **score_kwargs,
-        )
-        all_scores = {**scores, **pre_sample_scores, **post_sample_scores, **time_dict}
+        resolved_mode = mode if mode is not None else getattr(self, "score_mode", None)
+        data_scores = self._score(*args, mode=resolved_mode, **kwargs)
+        all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
 

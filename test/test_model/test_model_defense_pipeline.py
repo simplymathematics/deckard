@@ -258,6 +258,107 @@ def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
     assert init_params["preprocessing"] is None
 
 
+def test_extract_art_wrapper_context_ignores_untyped_cached_wrappers():
+    defense = DefenseConfig(
+        defense_name="art.defences.postprocessor.HighConfidence",
+        model_type="sklearn.linear_model.LogisticRegression",
+        classifier=True,
+    )
+
+    class CachedLike:
+        def __init__(self):
+            self.model = "unexpected-inner"
+            self.preprocessing_defences = ["fake-pre"]
+            self.postprocessing_defences = ["fake-post"]
+
+    cached_like = CachedLike()
+    defense._model = cached_like
+
+    (
+        base_estimator,
+        _art_class,
+        _art_params,
+        existing_preprocessors,
+        existing_postprocessors,
+    ) = defense._extract_art_wrapper_context(
+        art_class=object,
+        init_params={"preprocessing": None},
+    )
+
+    # Non-ART cached objects should not be treated as wrappers.
+    assert base_estimator is cached_like
+    assert existing_preprocessors == []
+    assert existing_postprocessors == []
+
+
+def test_extract_art_wrapper_context_prefers_explicit_wrapper_state(monkeypatch):
+    defense = DefenseConfig(
+        defense_name="art.defences.postprocessor.HighConfidence",
+        model_type="sklearn.linear_model.LogisticRegression",
+        classifier=True,
+    )
+    state_base = SimpleNamespace(name="base-estimator")
+    wrapper = SimpleNamespace(
+        model="legacy-inner",
+        preprocessing_defences=["A"],
+        postprocessing_defences=["B"],
+        preprocessing=(0.0, 1.0),
+        clip_values=(0.0, 1.0),
+    )
+    defense._model = wrapper
+
+    monkeypatch.setattr(
+        "deckard.model.defend._is_art_wrapper_instance",
+        lambda obj: obj is wrapper,
+    )
+    monkeypatch.setattr(
+        "deckard.model.defend._get_wrapper_state",
+        lambda obj: {"wrapped_by_deckard": True, "base_estimator": state_base},
+    )
+
+    (
+        base_estimator,
+        art_class,
+        art_params,
+        existing_preprocessors,
+        existing_postprocessors,
+    ) = defense._extract_art_wrapper_context(
+        art_class=dict,
+        init_params={"preprocessing": None},
+    )
+
+    assert base_estimator is state_base
+    assert art_class is wrapper.__class__
+    assert art_params["clip_values"] == (0.0, 1.0)
+    assert art_params["preprocessing"] == (0.0, 1.0)
+    assert existing_preprocessors == ["A"]
+    assert existing_postprocessors == ["B"]
+
+
+def test_get_art_class_torch_requires_typed_base_estimator(monkeypatch):
+    defense = DefenseConfig(
+        defense_name="art.defences.postprocessor.HighConfidence",
+        model_type=None,
+        classifier=True,
+    )
+    defense.model_type = "torch.nn.Linear"
+    defense._model = SimpleNamespace(model="not-a-torch-module")
+
+    monkeypatch.setattr(
+        "deckard.model.defend._is_art_torch_wrapper",
+        lambda _obj: True,
+    )
+    monkeypatch.setattr(
+        "deckard.model.defend._is_torch_model_instance",
+        lambda _obj: False,
+    )
+
+    with pytest.raises(TypeError, match="Torch defenses require a torch.nn.Module"):
+        defense.get_art_class(
+            SimpleNamespace(X_train=np.zeros((4, 3)), y_train=np.array([0, 1, 0, 1])),
+        )
+
+
 def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
     pipeline = DefensePipelineConfig.__new__(DefensePipelineConfig)
     pipeline.defenses = []
@@ -483,7 +584,7 @@ def test_pipeline_apply_validation_and_elapsed_fallback(monkeypatch):
         lambda hook_name, **kwargs: hook_calls.append(hook_name) or [],
     )
     monkeypatch.setattr(
-        "deckard.model.defend.time.process_time",
+        "deckard.model.defend.time.perf_counter",
         iter([10.0, 12.5]).__next__,
     )
 

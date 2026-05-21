@@ -86,6 +86,27 @@ def _is_art_torch_wrapper(model_obj: Any) -> bool:
     return isinstance(model_obj, torch_wrapper_types)
 
 
+def _is_art_wrapper_instance(model_obj: Any) -> bool:
+    if model_obj is None:
+        return False
+    try:
+        art_symbols = _get_art_symbols()
+    except Exception:
+        return False
+    sklearn_wrapper_types = tuple(art_symbols["sklearn_dict"].values())
+    torch_wrapper_types = art_symbols["torch_wrapper_types"]
+    return isinstance(model_obj, sklearn_wrapper_types + torch_wrapper_types)
+
+
+def _get_wrapper_state(model_obj: Any) -> dict[str, Any] | None:
+    state = getattr(model_obj, "_deckard_art_wrapper_state", None)
+    if not isinstance(state, dict):
+        return None
+    if state.get("wrapped_by_deckard") is not True:
+        return None
+    return state
+
+
 supported_defense_types = [
     "detector",
     "preprocessor",
@@ -489,14 +510,14 @@ class _DefensePipelineConfigBehaviorMixin:
                 defense=defense_obj,
                 applied_defenses=applied_defenses,
             )
-            started = time.process_time()
+            started = time.perf_counter()
             defended_estimator = apply_to(
                 estimator=defended_estimator,
                 data=data,
             )
             elapsed = getattr(defense_obj, "defense_application_time", None)
             if elapsed is None:
-                elapsed = time.process_time() - started
+                elapsed = time.perf_counter() - started
             total_defense_time += float(elapsed)
             applied_defenses.append(defense_obj)
             step_outputs = self._run_plugin_hook(
@@ -566,7 +587,6 @@ class _DefenseMixin:
         defense_subtype: Union[str, None],
         defense_class: Any,
         art_class: Any,
-        init_params: dict,
         base_estimator: Any,
         existing_preprocessors: list,
         existing_postprocessors: list,
@@ -769,7 +789,7 @@ class _ARTDefenseBehaviorMixin:
             model_cfg = self._get_model_config()
             self.classifier = model_cfg.classifier
             self.model_params = model_cfg.model_params
-            self.model = model_cfg.model
+            self.model = model_cfg._model
         elif not hasattr(self, "_model"):
             self.model = None
 
@@ -828,18 +848,22 @@ class _ARTDefenseBehaviorMixin:
         art_params = dict(init_params or {})
         existing_preprocessors = []
         existing_postprocessors = []
-        if hasattr(self.model, "model") and hasattr(
-            self.model,
-            "preprocessing_defences",
-        ):
-            base_estimator = getattr(self.model, "model")
+        if _is_art_wrapper_instance(self.model):
+            wrapper_state = _get_wrapper_state(self.model)
+            state_base = None if wrapper_state is None else wrapper_state.get("base_estimator")
+            if state_base is not None:
+                base_estimator = state_base
+            else:
+                wrapped_model = getattr(self.model, "model", None)
+                if wrapped_model is not None:
+                    base_estimator = wrapped_model
             art_class = self.model.__class__
-            existing_preprocessors = list(
-                getattr(self.model, "preprocessing_defences", []) or [],
-            )
-            existing_postprocessors = list(
-                getattr(self.model, "postprocessing_defences", []) or [],
-            )
+            raw_preprocessors = getattr(self.model, "preprocessing_defences", None)
+            raw_postprocessors = getattr(self.model, "postprocessing_defences", None)
+            if isinstance(raw_preprocessors, (list, tuple)):
+                existing_preprocessors = list(raw_preprocessors)
+            if isinstance(raw_postprocessors, (list, tuple)):
+                existing_postprocessors = list(raw_postprocessors)
             art_params["preprocessing"] = getattr(
                 self.model,
                 "preprocessing",
@@ -867,7 +891,17 @@ class _ARTDefenseBehaviorMixin:
         art_params = dict(init_params or {})
         art_params["preprocessing_defences"] = preprocessing_defences or None
         art_params["postprocessing_defences"] = postprocessing_defences or None
-        return art_class(base_estimator, **art_params)
+        wrapped_estimator = art_class(base_estimator, **art_params)
+        setattr(
+            wrapped_estimator,
+            "_deckard_art_wrapper_state",
+            {
+                "wrapped_by_deckard": True,
+                "base_estimator": base_estimator,
+                "wrapper_type": type(wrapped_estimator).__name__,
+            },
+        )
+        return wrapped_estimator
 
     @property
     def model(self) -> BaseEstimator | None:
@@ -977,7 +1011,7 @@ class _ARTDefenseBehaviorMixin:
                 raise ValueError(
                     "ModelConfig must have a fitted estimator before applying defense",
                 ) from e
-        start = time.process_time()
+        start = time.perf_counter()
         handler = self._resolve_defense_handler(
             defense_type=defense_type,
             defense_subtype=defense_subtype,
@@ -1016,7 +1050,7 @@ class _ARTDefenseBehaviorMixin:
                 "Defense application did not produce an estimator",
             )
         # Some defences can optionally be applied during training or prediction
-        end = time.process_time()
+        end = time.perf_counter()
         self._apply_fit = getattr(defense, "_apply_fit", True)
         self._mark_applied_defense_signature(
             defended_estimator,
@@ -1107,10 +1141,23 @@ class _ARTDefenseBehaviorMixin:
             else:
                 nb_classes = len(set(y_train))
 
-            # Resolve the underlying nn.Module (unwrap if already an ART wrapper).
+            # Resolve the underlying nn.Module from a typed ART wrapper context.
             raw_model = self._model
             if _is_art_torch_wrapper(raw_model):
-                raw_model = getattr(raw_model, "model", raw_model)
+                wrapper_state = _get_wrapper_state(raw_model)
+                state_base = None if wrapper_state is None else wrapper_state.get("base_estimator")
+                if _is_torch_model_instance(state_base):
+                    raw_model = state_base
+                else:
+                    wrapped_model = getattr(raw_model, "model", None)
+                    if _is_torch_model_instance(wrapped_model):
+                        raw_model = wrapped_model
+
+            if not _is_torch_model_instance(raw_model):
+                raise TypeError(
+                    "Torch defenses require a torch.nn.Module base estimator. "
+                    f"Got {type(raw_model)} while constructing ART wrapper context.",
+                )
 
             art_symbols = _get_art_symbols()
 

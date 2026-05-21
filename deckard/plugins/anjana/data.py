@@ -334,6 +334,9 @@ class AnjanaDataConfig(
     anonymization and fairness-preprocessing hooks. The default plugin setup
     executes ``_apply_anjana_defense`` after data load when an ANJANA defense
     configuration is provided.
+    
+    Privacy metrics are measured on POST-PIPELINE (anonymized) data by default,
+    with results nested under the 'post-pipeline' key.
     """
 
     plugins: list = field(
@@ -349,15 +352,21 @@ class AnjanaDataConfig(
             ),
         ],
     )
+    
+    score_mode: str = "post-pipeline"
 
     def __post_init__(self):
         # Support test patterns that call __post_init__ directly on bare instances.
         self._before_post_init()
         if is_default_config_value(self.scorer, include_best=False):
-            self.scorer = load_class(
+            ScorerClass = load_class(
                 "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
             )
+            self.scorer = ScorerClass
         super().__post_init__()
+        # Ensure scorer is instantiated (not just a class) after parent coercion
+        if isinstance(self.scorer, type):
+            self.scorer = self.scorer()
         self._validate_init()
 
     def __call__(
@@ -451,31 +460,61 @@ class AnjanaDataConfig(
     def _score(
         self,
         *args,
-        mode: Optional[Literal["train", "test", "val", "pre-sample"]] = None,
+        mode: Optional[Literal["train", "test", "val", "pre-sample", "post-pipeline"]] = None,
         **kwargs,
     ) -> dict:
-        if self.scorer is None:
-            return {}
+        """
+        Score the data using ANJANA privacy metrics measured on post-pipeline (anonymized) data.
+        
+        By default, measures privacy metrics on the full post-pipeline dataset
+        (combined train/test splits after anonymization transformations).
+        Results are nested under the 'post-pipeline' key.
+        """
+        # Handle "auto" scorer before checking if callable
         if is_default_config_value(self.scorer, include_best=False):
-            self.scorer = load_class(
+            ScorerClass = load_class(
                 "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
             )
-        if not hasattr(self, "plugins"):
-            if not callable(self.scorer):
-                raise TypeError(
-                    f"AnjanaDataConfig.scorer must be callable or None, got {type(self.scorer)}",
-                )
-            y_true = getattr(self, "_y", None)
-            if y_true is None:
+            self.scorer = ScorerClass() if isinstance(ScorerClass, type) else ScorerClass
+        
+        if self.scorer is None:
+            return {}
+        if not callable(self.scorer):
+            raise TypeError(
+                f"AnjanaDataConfig.scorer must be callable or None, got {type(self.scorer)}",
+            )
+        
+        # Resolve mode: use parameter or configured score_mode
+        resolved_mode = mode
+        if resolved_mode is None:
+            resolved_mode = getattr(self, "score_mode", None) or "post-pipeline"
+        
+        # Delegate to parent for all modes, including post-pipeline/post-sample.
+        try:
+            return super()._score(*args, mode=resolved_mode, **kwargs)
+        except TypeError as exc:
+            if "data-profile scorer" not in str(exc):
+                raise
+            if resolved_mode == "pre-sample":
+                y_true = getattr(self, "_y", None)
+                y_pred = getattr(self, "_X", None)
+            elif resolved_mode == "train":
                 y_true = getattr(self, "y_train", None)
-            y_pred = getattr(self, "_X", None)
-            if y_pred is None:
-                y_pred = getattr(self, "y_train", None)
-            if y_pred is None:
-                y_pred = y_true
-            return self.scorer(y_true=y_true, y_pred=y_pred, mode=mode, **kwargs)
-            return super()._score(*args, mode=mode, **kwargs)
-        return super()._score(*args, mode=mode, **kwargs)
+                y_pred = getattr(self, "X_train", None)
+            elif resolved_mode == "val":
+                y_true = getattr(self, "y_val", None)
+                y_pred = getattr(self, "X_val", None)
+            else:
+                y_true = getattr(self, "y_test", None)
+                y_pred = getattr(self, "X_test", None)
+            return self.scorer(
+                *args,
+                y_true=y_true,
+                y_pred=y_pred,
+                mode=resolved_mode,
+                data=self,
+                **kwargs,
+            )
 
 
 # Configs are now loaded from YAML files in examples/*/config/data/

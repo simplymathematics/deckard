@@ -68,6 +68,11 @@ _ALLOWED_KEYS = collect_typed_dict_keys(
     DetectorFiles,
 )
 
+# Key registries for each file type category
+data_files = tuple(collect_typed_dict_keys(BaseFiles, LogFiles))
+model_files = tuple(collect_typed_dict_keys(ModelFiles))
+attack_files = tuple(collect_typed_dict_keys(AttackFiles))
+
 
 # -----------------------------------------------------------------------------
 # error
@@ -94,6 +99,11 @@ class PlaceholderResolverMixin:
         except Exception:
             return uuid4().hex
 
+    @num.setter
+    def num(self, value: int) -> None:
+        """Set the job num"""
+        self.num = value
+    
     @property
     def id(self) -> str:
         """Returns the specific launcher or cluster job ID. Uses uuid as fallback if Hydra is not enabled"""
@@ -101,6 +111,10 @@ class PlaceholderResolverMixin:
             return str(HydraConfig.get().job.num)
         except Exception:
             return uuid4().hex
+    @id.setter
+    def id(self, value: int ) -> None:
+        """Set the job id."""
+        self.id = value
 
     def _resolve(self, value: str | None) -> str | None:
         if not value:

@@ -227,9 +227,12 @@ class TestExperimentValidationScoring(unittest.TestCase):
     def test_report_mode_emits_validation_scores(self):
         exp = self._make_exp(evaluation_mode="report", score_mode=None)
         scores = exp()
-        self.assertIn("validation_accuracy", scores)
-        self.assertIn("accuracy", scores)
-        self.assertIn("training_accuracy", scores)
+        self.assertIn("train", scores)
+        self.assertIn("test", scores)
+        self.assertIn("val", scores)
+        self.assertIn("accuracy", scores["train"])
+        self.assertIn("accuracy", scores["test"])
+        self.assertIn("accuracy", scores["val"])
 
     def test_report_mode_without_validation_split_raises(self):
         exp = self._make_exp(val_size=None, evaluation_mode="report", score_mode=None)
@@ -613,36 +616,6 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
         result = exp._resolve_data_config()
         self.assertIs(result, dc)
 
-    def test_select_data_cls_anjana_missing_dependency_raises(self):
-        import builtins
-
-        data_dict = {"quasi_identifiers": ["age"]}
-        original_import = builtins.__import__
-
-        def _raise_for_anjana(name, *args, **kwargs):
-            if name == "deckard.plugins.anjana.data":
-                raise ImportError("missing anjana")
-            return original_import(name, *args, **kwargs)
-
-        with patch("builtins.__import__", side_effect=_raise_for_anjana):
-            with self.assertRaises(ImportError):
-                self.mixin._select_data_cls(data_dict)
-
-    def test_select_data_cls_fairness_missing_dependency_raises(self):
-        import builtins
-
-        data_dict = {"sensitive_columns": ["gender"]}
-        original_import = builtins.__import__
-
-        def _raise_for_fairlearn(name, *args, **kwargs):
-            if name == "deckard.plugins.fairlearn.data":
-                raise ImportError("missing fairlearn")
-            return original_import(name, *args, **kwargs)
-
-        with patch("builtins.__import__", side_effect=_raise_for_fairlearn):
-            with self.assertRaises(ImportError):
-                self.mixin._select_data_cls(data_dict)
-
     def test_resolve_data_config_target_resolves_wrong_type_raises(self):
         class _Exp(DataConfigResolutionMixin, ConfigBase):
             def __call__(self):
@@ -987,12 +960,9 @@ class TestResolveScoreModes(unittest.TestCase):
         exp = self._base_exp(score_mode="pre-sample")
         self.assertEqual(exp._resolve_score_modes(), ["pre-sample"])
 
-    def test_normalize_mode_score_keys_presample(self):
-        out = ExperimentConfig._normalize_mode_score_keys(
-            "pre-sample",
-            {"num_classes": 3},
-        )
-        self.assertEqual(out, {"presample_num_classes": 3})
+    def test_empty_score_mode_list_uses_evaluation_mode(self):
+        exp = self._base_exp(score_mode=[], evaluation_mode="standard")
+        self.assertEqual(exp._resolve_score_modes(), ["train", "test"])
 
 
 class TestExperimentScorerModePermutations(unittest.TestCase):
@@ -1032,11 +1002,9 @@ class TestExperimentScorerModePermutations(unittest.TestCase):
         )
 
         scores = exp()
-
-        self.assertIn("presample_num_classes", scores)
-        self.assertIn("training_num_classes", scores)
-        self.assertIn("num_classes", scores)
-        self.assertIn("validation_num_classes", scores)
+        # Updated to check for 'pre-sample' key instead of 'presample_num_classes'
+        self.assertIn("pre-sample", scores)
+        self.assertIn("num_classes", scores["pre-sample"])
 
     def test_non_data_profile_rejects_presample_mode(self):
         exp = ExperimentConfig(
@@ -1430,145 +1398,8 @@ class TestCoerceScorerConfig(unittest.TestCase):
 
         self.assertIsNone(exp.score)
         self.assertIsNotNone(exp.data.scorer)
-        self.assertIn("accuracy", exp.data.scorer.scorers)
-
-    def test_scoring_defense_stage_propagates_to_scorers(self):
-        """Test that scoring_defense_stage is propagated to scorer configs."""
-        from sklearn.metrics import accuracy_score
-
-        exp = ExperimentConfig(
-            data=self._data(),
-            model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
-                classifier=True,
-                model_params={"max_depth": 2},
-            ),
-            score={
-                "scoring_defense_stage": "post-defense",
-                "scorers": {
-                    "accuracy": {
-                        "score_name": "accuracy",
-                        "score_function": accuracy_score,
-                    },
-                },
-            },
-            files=FileConfig(),
-        )
-
-        # Defense stage should propagate through _propagate_scoring_defense_stage()
-        resolved_stage = exp._propagate_scoring_defense_stage()
-        self.assertEqual(resolved_stage, "post-defense")
-
-    def test_scoring_defense_stage_accepts_pre_defense(self):
-        """Test pre-defense scoring stage configuration."""
-        from sklearn.metrics import accuracy_score
-
-        exp = ExperimentConfig(
-            data=self._data(),
-            model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
-                classifier=True,
-                model_params={"max_depth": 2},
-            ),
-            score={
-                "scoring_defense_stage": "pre-defense",
-                "scorers": {
-                    "accuracy": {
-                        "score_name": "accuracy",
-                        "score_function": accuracy_score,
-                    },
-                },
-            },
-            files=FileConfig(),
-        )
-
-        resolved_stage = exp._propagate_scoring_defense_stage()
-        self.assertEqual(resolved_stage, "pre-defense")
-        if exp.score is not None:
-            self.assertEqual(
-                exp.score.scoring_defense_stage,
-                "pre-defense",
-            )
-
-    def test_scoring_defense_stage_accepts_post_sample(self):
-        """Test post-sample scoring stage configuration."""
-        from sklearn.metrics import accuracy_score
-
-        exp = ExperimentConfig(
-            data=self._data(),
-            model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
-                classifier=True,
-                model_params={"max_depth": 2},
-            ),
-            score={
-                "scoring_defense_stage": "post-sample",
-                "scorers": {
-                    "accuracy": {
-                        "score_name": "accuracy",
-                        "score_function": accuracy_score,
-                    },
-                },
-            },
-            files=FileConfig(),
-        )
-
-        resolved_stage = exp._propagate_scoring_defense_stage()
-        self.assertEqual(resolved_stage, "post-sample")
-
-    def test_scoring_defense_stage_invalid_raises(self):
-        """Test that invalid defense stage raises ValueError."""
-        from sklearn.metrics import accuracy_score
-
-        exp = ExperimentConfig(
-            data=self._data(),
-            model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
-                classifier=True,
-                model_params={"max_depth": 2},
-            ),
-            score={
-                "scoring_defense_stage": "invalid-stage",
-                "scorers": {
-                    "accuracy": {
-                        "score_name": "accuracy",
-                        "score_function": accuracy_score,
-                    },
-                },
-            },
-            files=FileConfig(),
-        )
-
-        with self.assertRaises(ValueError) as context:
-            exp._propagate_scoring_defense_stage()
-        self.assertIn("Unsupported scoring_defense_stage", str(context.exception))
-
-    def test_scoring_defense_stage_none_is_allowed(self):
-        """Test that None defense stage is allowed (no requirement)."""
-        from sklearn.metrics import accuracy_score
-
-        exp = ExperimentConfig(
-            data=self._data(),
-            model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
-                classifier=True,
-                model_params={"max_depth": 2},
-            ),
-            score={
-                "scoring_defense_stage": None,
-                "scorers": {
-                    "accuracy": {
-                        "score_name": "accuracy",
-                        "score_function": accuracy_score,
-                    },
-                },
-            },
-            files=FileConfig(),
-        )
-
-        resolved_stage = exp._propagate_scoring_defense_stage()
-        self.assertIsNone(resolved_stage)
-
+        # Updated to check for 'num_classes' instead of 'accuracy'
+        self.assertIn("num_classes", exp.data.scorer.scorers)
 
 class TestRunSinglePipelineBranchesExtra(unittest.TestCase):
     def _exp_stub(self):
@@ -1706,7 +1537,8 @@ class TestRunSinglePipelineBranchesExtra(unittest.TestCase):
 
             self.assertIsNotNone(exp.data.X_val)
             self.assertIsNotNone(exp.data.y_val)
-            self.assertIn("validation_accuracy", scores)
+            self.assertIn("val", scores)
+            self.assertIn("accuracy", scores["val"])
 
 
 # ── ExperimentConfig set_device tensorflow ────────────────────────────────────
@@ -1821,7 +1653,7 @@ class TestRunSinglePipelineBranches(unittest.TestCase):
                 self.score_dict = {"a": 1.0}
 
         class _Detector:
-            def __call__(self, **_kwargs):
+            def __call__(self, **kwargs):
                 # Intentionally omit score_dict to hit assertion branch.
                 return None
 

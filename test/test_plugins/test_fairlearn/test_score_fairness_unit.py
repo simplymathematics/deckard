@@ -11,6 +11,7 @@ from deckard.plugins.fairlearn.score import (
     _resolve_sensitive_features,
     _series_like_to_float_dict,
     as_group_scorer,
+    fairness_stage_to_split_mode,
     fairness_demographic_parity_difference,
     fairness_equalized_odds_difference,
     fairness_group_mae_difference,
@@ -81,13 +82,41 @@ def test_resolve_sensitive_features_shape_mismatch():
     arr = np.array([0, 1, 0])
     data = DummyData(sensitive_train=arr)
     y = np.ones(4)
-    assert _resolve_sensitive_features(data, y, mode="train") is None
+    with pytest.raises(ValueError):
+        _resolve_sensitive_features(data, y, mode="train")
 
 
 def test_resolve_sensitive_features_none():
     data = DummyData()
     y = np.ones(4)
-    assert _resolve_sensitive_features(data, y, mode="train") is None
+    with pytest.raises(ValueError):
+        _resolve_sensitive_features(data, y, mode="train")
+
+
+def test_resolve_sensitive_features_prefers_stage_over_mode():
+    train_sensitive = np.array([1, 1, 1, 1])
+    test_sensitive = np.array([0, 0, 0, 0])
+    data = DummyData(
+        sensitive_train=train_sensitive,
+        sensitive_test=test_sensitive,
+    )
+    y = np.ones(4)
+    resolved = _resolve_sensitive_features(
+        data,
+        y,
+        mode="test",
+        stage="train",
+    )
+    assert np.all(resolved == train_sensitive)
+
+
+def test_fairness_stage_to_split_mode_uses_runtime_mode_for_aliases():
+    train_map = fairness_stage_to_split_mode("train")
+    val_map = fairness_stage_to_split_mode("val")
+    assert train_map["adversarial"] == "train"
+    assert train_map["post-defense"] == "train"
+    assert val_map["adversarial"] == "val"
+    assert val_map["post-defense"] == "val"
 
 
 # --- fairness_demographic_parity_difference & fairness_equalized_odds_difference ---

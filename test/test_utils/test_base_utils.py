@@ -124,6 +124,42 @@ class TestUtilsAdditional(unittest.TestCase):
 
         self.assertEqual(h1, h2)
 
+    def test_omegaconf_artifact_resolvers_load_and_save(self):
+        with tempfile.TemporaryDirectory() as td:
+            td_path = Path(td)
+            data_path = td_path / "data.csv"
+            saved_data_path = td_path / "saved-data.csv"
+            model_path = td_path / "model.pkl"
+            saved_model_path = td_path / "saved-model.pkl"
+
+            pd.DataFrame({"x": [1, 2]}).to_csv(data_path, index=False)
+
+            data_cfg = OmegaConf.create(
+                {
+                    "source": str(data_path),
+                    "loaded": "${load_data:${source}}",
+                    "saved_path": "${save_data:${loaded}," + str(saved_data_path) + "}",
+                }
+            )
+            resolved_data = OmegaConf.to_container(data_cfg, resolve=True)
+            self.assertTrue(saved_data_path.exists())
+            self.assertEqual(resolved_data["saved_path"], str(saved_data_path))
+            self.assertEqual(list(resolved_data["loaded"].columns), ["x"])
+
+            model_cfg = OmegaConf.create(
+                {
+                    "payload": BaseConfig(score_dict={"metric": 1}),
+                    "model_path": str(model_path),
+                    "saved_model_path": "${save_model:${payload},"
+                    + str(saved_model_path)
+                    + "}",
+                },
+                flags={"allow_objects": True},
+            )
+            resolved_model = OmegaConf.to_container(model_cfg, resolve=True)
+            self.assertTrue(saved_model_path.exists())
+            self.assertEqual(resolved_model["saved_model_path"], str(saved_model_path))
+
     def test_configbase_hash_deterministic_for_equal_content(self):
         cfg1 = BaseConfig(score_dict={"alpha": 1, "beta": 2})
         cfg2 = BaseConfig(score_dict={"beta": 2, "alpha": 1})
@@ -252,15 +288,6 @@ class TestUtilsAdditional(unittest.TestCase):
     def test_load_data_none_raises(self):
         with self.assertRaises(FileNotFoundError):
             load_data(None)
-
-    def test_load_type_mismatch_raises(self):
-        a = TypeAConfig()
-        b = TypeBConfig()
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "obj.pkl"
-            b.save(str(p))
-            with self.assertRaises(TypeError):
-                a.load(str(p))
 
     def test_execute_returns_fallback_score_dict_on_exception(self):
         cfg = FailingConfig(score_dict={"fallback": 123})

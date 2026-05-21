@@ -147,6 +147,46 @@ class PytorchModelConfig(ModelConfig):
     _checkpoint_context: Any = field(default=None, repr=False, compare=False)
     _epoch_attack: Any = field(default=None, repr=False, compare=False)
 
+    @staticmethod
+    def _pickle_safe_model_type(model_type: Any) -> Any:
+        if model_type is None or isinstance(model_type, str):
+            return model_type
+        if isinstance(model_type, type):
+            return f"{model_type.__module__}.{model_type.__qualname__}"
+        return f"{model_type.__class__.__module__}.{model_type.__class__.__qualname__}"
+
+    def __getstate__(self):
+        state = dict(self.__dict__)
+        model_obj = state.get("_model", None)
+        if model_obj is not None and hasattr(model_obj, "state_dict"):
+            try:
+                state["_pickled_model_state_dict"] = copy.deepcopy(
+                    model_obj.state_dict(),
+                )
+            except Exception:
+                state["_pickled_model_state_dict"] = None
+            state["_model"] = None
+
+        state["model_type"] = self._pickle_safe_model_type(state.get("model_type"))
+        state["_checkpoint_context"] = None
+        state["_epoch_attack"] = None
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        pickled_state = self.__dict__.pop("_pickled_model_state_dict", None)
+        if getattr(self, "_model", None) is None:
+            try:
+                self._initialize_model()
+            except Exception:
+                return
+        if pickled_state is not None and getattr(self, "_model", None) is not None:
+            try:
+                self._model.load_state_dict(pickled_state)
+                self._model = self._model.to(self.device)
+            except Exception:
+                pass
+
     def _initialize_default_scorer(self) -> None:
         if not is_default_config_value(self.scorer, include_best=False):
             return
@@ -359,89 +399,73 @@ class PytorchModelConfig(ModelConfig):
         return self._model
 
     def save(self, filepath: str) -> None:
-        """Serialize PyTorch model state and config metadata.
+        """Persist config state as canonical YAML artifact.
 
         Args:
-            filepath: Output path for the serialized model payload.
+            filepath: Output path for the YAML config state.
 
         Returns:
             None.
         """
-        if self._model is None:
-            raise ValueError("Model not initialized")
-        path = Path(filepath)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        if path.exists():
-            raise ValueError(f"File {filepath} already exists")
-
-        payload = {
-            "model_type": self.model_type,
-            "model_params": self.model_params,
-            "classifier": self.classifier,
-            "fit_params": self.fit_params,
-            "criterion": self.criterion,
-            "optimizer": self.optimizer,
-            "clip_values": self.clip_values,
-            "random_seed": self.random_seed,
-            "channels_first": self.channels_first,
-            "library": self.library,
-            "alias": self.alias,
-            "device": str(self.device),
-            "score_dict": self.score_dict,
-            "checkpoint_records": self.checkpoint_records,
-            "training_time": self.training_time,
-            "prediction_time": self.prediction_time,
-            "training_n": self.training_n,
-            "prediction_n": self.prediction_n,
-            "state_dict": self._model.state_dict(),
-        }
-        torch.save(payload, path)
+        super().save(self, filepath)
 
     def load(self, filepath: str) -> "PytorchModelConfig":
-        """Load PyTorch model state and config metadata.
+        """Load config state from canonical YAML artifact.
 
         Args:
-            filepath: Input path for the serialized model payload.
+            filepath: Input path for the YAML config state.
 
         Returns:
             The current model config instance with restored model state.
         """
-        path = Path(filepath)
-        if not path.exists():
-            raise FileNotFoundError(filepath)
-
-        payload = torch.load(path, map_location=self.device)
-        if not isinstance(payload, dict) or "state_dict" not in payload:
-            raise TypeError(f"Unsupported serialized payload in {filepath}")
-
-        self.model_type = payload.get("model_type", self.model_type)
-        self.model_params = payload.get("model_params", self.model_params)
-        self.classifier = payload.get("classifier", self.classifier)
-        self.fit_params = payload.get("fit_params", self.fit_params)
-        self.criterion = payload.get("criterion", self.criterion)
-        self.optimizer = payload.get("optimizer", self.optimizer)
-        self.clip_values = payload.get("clip_values", self.clip_values)
-        self.random_seed = payload.get("random_seed", self.random_seed)
-        self.channels_first = payload.get("channels_first", self.channels_first)
-        self.library = payload.get("library", self.library)
-        self.alias = payload.get("alias", self.alias)
-        self.score_dict = payload.get("score_dict", self.score_dict)
-        self.checkpoint_records = payload.get(
-            "checkpoint_records",
-            self.checkpoint_records,
-        )
-        self.training_time = payload.get("training_time", self.training_time)
-        self.prediction_time = payload.get(
-            "prediction_time",
-            self.prediction_time,
-        )
-        self.training_n = payload.get("training_n", self.training_n)
-        self.prediction_n = payload.get("prediction_n", self.prediction_n)
-
+        loaded = super().load(filepath)
         self._initialize_model()
-        self._model.load_state_dict(payload["state_dict"])
-        self._model = self._model.to(self.device)
-        return self
+        return loaded
+
+    def save_model(self, model: Any, filepath: str) -> None:
+        """Persist runtime torch model state to .pt or pickle payload."""
+        path = Path(filepath)
+        suffix = path.suffix.lower()
+        if suffix not in {".pt", ".pkl", ".pickle"}:
+            raise ValueError(
+                f"PytorchModelConfig runtime model artifacts must use .pt/.pkl/.pickle. Got: {suffix}",
+            )
+
+        model_obj = model if model is not None else self._model
+        if model_obj is None:
+            raise ValueError("Model not initialized")
+
+        payload = {
+            "model_type": self.model_type,
+            "model_params": self.model_params,
+            "state_dict": model_obj.state_dict(),
+            "device": str(self.device),
+        }
+        super().save_model(payload, str(path))
+
+    def load_model(
+        self,
+        filepath: str,
+        ignore_corrupt: bool = False,
+        delete_corrupt: bool = False,
+    ) -> ModelType:
+        """Load runtime torch model state from .pt/.pkl payload."""
+        payload = super().load_model(
+            filepath,
+            ignore_corrupt=ignore_corrupt,
+            delete_corrupt=delete_corrupt,
+        )
+        if isinstance(payload, dict) and "state_dict" in payload:
+            self.model_type = payload.get("model_type", self.model_type)
+            self.model_params = payload.get("model_params", self.model_params)
+            self._initialize_model()
+            self._model.load_state_dict(payload["state_dict"])
+            self._model = self._model.to(self.device)
+            return self._model
+        if isinstance(payload, torch.nn.Module):
+            self._model = payload.to(self.device)
+            return self._model
+        raise TypeError(f"Unsupported serialized torch model payload in {filepath}")
 
     def _coerce_bool(self, value: Any, default: bool) -> bool:
         if value is None:
@@ -608,9 +632,9 @@ class PytorchModelConfig(ModelConfig):
         epoch_entry = self.score_dict["epochs"].setdefault(epoch_index, {})
         snapshot = self._build_checkpoint_snapshot()
 
-        benign_start = time.process_time()
+        benign_start = time.perf_counter()
         benign_scores = self._score_checkpoint_snapshot(snapshot, data)
-        benign_time = time.process_time() - benign_start
+        benign_time = time.perf_counter() - benign_start
 
         epoch_entry["benign_scores"] = benign_scores
         epoch_entry.setdefault("timings", {})["benign_score_time"] = benign_time
@@ -618,7 +642,7 @@ class PytorchModelConfig(ModelConfig):
         if attack_config is None:
             return
 
-        attack_start = time.process_time()
+        attack_start = time.perf_counter()
         attack_runner = copy.deepcopy(attack_config)
         attack_scores = attack_runner(
             data=data,
@@ -627,7 +651,7 @@ class PytorchModelConfig(ModelConfig):
             attack_predictions_file=None,
             score_file=None,
         )
-        attack_time = time.process_time() - attack_start
+        attack_time = time.perf_counter() - attack_start
 
         epoch_entry["adversarial_scores"] = dict(attack_scores or {})
         epoch_entry["timings"]["adversarial_score_time"] = attack_time
@@ -649,6 +673,7 @@ class PytorchModelConfig(ModelConfig):
         checkpoint_cfg,
         elapsed_time: float,
     ):
+        checkpoint_started = time.perf_counter()
         snapshot = self._build_checkpoint_snapshot()
         snapshot.training_time = elapsed_time
         snapshot.training_n = (
@@ -659,15 +684,34 @@ class PytorchModelConfig(ModelConfig):
             checkpoint_cfg["dir"],
             checkpoint_cfg["prefix"],
             epoch_index,
-            ".pkl",
+            ".pt",
         )
         if model_path.exists():
             model_path.unlink()
-        snapshot.save(str(model_path))
+        model_save_started = time.perf_counter()
+        snapshot.save_model(snapshot._model, str(model_path))
+        model_save_time = time.perf_counter() - model_save_started
+
+        epoch_timings = {}
+        epochs_payload = self.score_dict.get("epochs", {}) if self.score_dict else {}
+        epoch_payload = epochs_payload.get(epoch_index)
+        if not isinstance(epoch_payload, dict):
+            epoch_payload = epochs_payload.get(str(epoch_index), {})
+        if isinstance(epoch_payload, dict):
+            raw_timings = epoch_payload.get("timings", {})
+            if isinstance(raw_timings, dict):
+                epoch_timings = dict(raw_timings)
 
         record = {
             "epoch": epoch_index,
+            # Checkpoints persist model state only; config YAML artifacts are not emitted.
             "model_file": str(model_path),
+            "model_state_file": str(model_path),
+            "training_elapsed_time": float(elapsed_time),
+            "timings": {
+                "model_save_time": float(model_save_time),
+                **epoch_timings,
+            },
         }
 
         if checkpoint_cfg["score"] and data is not None:
@@ -679,9 +723,26 @@ class PytorchModelConfig(ModelConfig):
             )
             if score_path.exists():
                 score_path.unlink()
+            score_started = time.perf_counter()
             checkpoint_scores = self._score_checkpoint_snapshot(snapshot, data)
+            score_time = time.perf_counter() - score_started
+            checkpoint_scores = {
+                **dict(checkpoint_scores or {}),
+                "checkpoint_epoch": epoch_index,
+                "checkpoint_training_elapsed_time": float(elapsed_time),
+                "checkpoint_timings": {
+                    "model_save_time": float(model_save_time),
+                    "score_time": float(score_time),
+                    **epoch_timings,
+                },
+            }
             snapshot.save_scores(checkpoint_scores, str(score_path))
             record["score_file"] = str(score_path)
+            record["timings"]["score_time"] = float(score_time)
+
+        record["timings"]["checkpoint_time"] = float(
+            time.perf_counter() - checkpoint_started,
+        )
 
         self.checkpoint_records.append(record)
 
@@ -722,7 +783,7 @@ class PytorchModelConfig(ModelConfig):
 
         for epoch_num in range(epochs):
             epoch_idx = epoch_offset + epoch_num + 1
-            epoch_start = time.process_time()
+            epoch_start = time.perf_counter()
             epoch_losses = []
 
             if is_tensor_input:
@@ -760,7 +821,7 @@ class PytorchModelConfig(ModelConfig):
                     loss.backward()
                     optimizer.step()
 
-            epoch_time = time.process_time() - epoch_start
+            epoch_time = time.perf_counter() - epoch_start
             epoch_loss_mean = float(np.mean(epoch_losses)) if epoch_losses else None
 
             epoch_metrics[epoch_idx] = {
@@ -870,7 +931,7 @@ class PytorchModelConfig(ModelConfig):
         if self._model is None:
             raise ValueError("Model not initialized")
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
         logger.info(f"Starting training with {len(y)} samples")
 
         criterion = initialize_criterion(self.criterion)
@@ -934,7 +995,7 @@ class PytorchModelConfig(ModelConfig):
                 if is_final and checkpoint_cfg["include_final"]:
                     should_checkpoint = True
                 if should_checkpoint:
-                    elapsed = time.process_time() - start_time
+                    elapsed = time.perf_counter() - start_time
                     logger.info("Checkpointing at epoch %s", epoch_index)
                     self._persist_checkpoint(
                         epoch_index,
@@ -943,7 +1004,7 @@ class PytorchModelConfig(ModelConfig):
                         elapsed,
                     )
 
-        end_time = time.process_time()
+        end_time = time.perf_counter()
         self.training_time = end_time - start_time
         self.training_n = len(y)
 

@@ -56,31 +56,38 @@ def test_scorer_config_post_init_dict_and_string_paths(monkeypatch):
     with pytest.raises(TypeError, match="must be callable"):
         ScorerConfig(score_name="bad", score_function=123)
 
+    with pytest.raises(ValueError, match="cannot set both needs_labels=True and needs_proba=True"):
+        ScorerConfig(
+            score_name="bad_flags",
+            score_function="sklearn.metrics.accuracy_score",
+            needs_labels=True,
+            needs_proba=True,
+        )
 
 def test_probability_validation_error_paths():
     scorer = ScorerConfig(
         score_name="roc_auc",
         score_function="sklearn.metrics.roc_auc_score",
+        needs_labels=False,
         needs_proba=True,
     )
 
-    with pytest.raises(ValueError, match="1D/2D probability input"):
-        scorer._validate_probability_input([0, 1], np.zeros((2, 2, 2)))
+    with pytest.raises(ValueError, match="1D/2D input"):
+        scorer._validate_raw_output_input([0, 1], np.zeros((2, 2, 2)))
     with pytest.raises(ValueError, match="matching sample counts"):
-        scorer._validate_probability_input([0, 1], np.array([[0.1], [0.2], [0.3]]))
-    with pytest.raises(ValueError, match="numeric probabilities"):
-        scorer._validate_probability_input(
+        scorer._validate_raw_output_input([0, 1], np.array([[0.1], [0.2], [0.3]]))
+    with pytest.raises(ValueError, match="numeric outputs"):
+        scorer._validate_raw_output_input(
             [0, 1],
             np.array([["a"], ["b"]], dtype=object),
         )
-    with pytest.raises(ValueError, match=r"values in \[0, 1\]"):
-        scorer._validate_probability_input([0, 1], np.array([[1.2], [0.2]]))
 
 
 def test_normalize_predictions_branches_for_probability_and_labels():
     roc = ScorerConfig(
         score_name="roc_auc",
         score_function="sklearn.metrics.roc_auc_score",
+        needs_labels=False,
         needs_proba=True,
     )
     assert np.array_equal(
@@ -93,6 +100,13 @@ def test_normalize_predictions_branches_for_probability_and_labels():
             np.array([[0.8, 0.2], [0.1, 0.9]]),
         ),
         np.array([0.2, 0.9]),
+    )
+    multiclass_scores = np.array(
+        [[0.7, 0.2, 0.1], [0.1, 0.7, 0.2], [0.1, 0.2, 0.7]],
+    )
+    assert np.array_equal(
+        roc._normalize_predictions_for_metric([0, 1, 2], multiclass_scores),
+        multiclass_scores,
     )
 
     acc = ScorerConfig(
@@ -116,6 +130,67 @@ def test_normalize_predictions_branches_for_probability_and_labels():
     )
     non_numeric = np.array([["a"], ["b"]], dtype=object)
     assert acc._normalize_predictions_for_metric([0, 1], non_numeric) is non_numeric
+
+
+def test_needs_logits_transforms_logits_when_needed():
+    cfg = ScorerConfig(
+        score_name="log_loss",
+        score_function="sklearn.metrics.log_loss",
+        needs_labels=False,
+        needs_proba=True,
+        needs_logits=True,
+    )
+    out = cfg._normalize_predictions_for_metric([0, 1], np.array([-1.0, 2.0]))
+    assert out.ndim == 2
+    assert out.shape == (2, 2)
+    assert np.all(out >= 0.0)
+    assert np.all(out <= 1.0)
+    assert np.allclose(out.sum(axis=1), 1.0, atol=1e-6)
+
+
+def test_binary_expansion_happens_only_for_needs_proba_scorers():
+    raw = np.array([0.2, 0.9])
+    passthrough = ScorerConfig(
+        score_name="raw",
+        score_function=lambda dep, ind: 0.0,
+        needs_labels=False,
+        needs_proba=None,
+    )
+    assert np.array_equal(
+        passthrough._normalize_predictions_for_metric([0, 1], raw),
+        raw,
+    )
+
+    proba = ScorerConfig(
+        score_name="log_loss",
+        score_function="sklearn.metrics.log_loss",
+        needs_labels=False,
+        needs_proba=True,
+    )
+    expanded = proba._normalize_predictions_for_metric([0, 1], raw)
+    assert expanded.shape == (2, 2)
+
+
+def test_scorer_dict_parses_logits_and_binary_options():
+    sd = ScorerDictConfig(
+        scorers={
+            "roc": {
+                "score_function": "sklearn.metrics.roc_auc_score",
+                "needs_proba": True,
+                "needs_logits": True,
+                "binary_expand_to_multiclass": False,
+                "binary_positive_class_index": 0,
+                "row_sum_atol": 1e-3,
+                "probability_clip_eps": 1e-8,
+            },
+        },
+    )
+    scorer = sd["roc"]
+    assert scorer.needs_logits is True
+    assert scorer.binary_expand_to_multiclass is False
+    assert scorer.binary_positive_class_index == 0
+    assert scorer.row_sum_atol == pytest.approx(1e-3)
+    assert scorer.probability_clip_eps == pytest.approx(1e-8)
 
 
 def test_scorer_call_filters_kwargs_without_var_kwargs():
@@ -243,6 +318,7 @@ def test_scorer_dict_call_mode_and_probability_routing(tmp_path, monkeypatch):
     roc = ScorerConfig(
         score_name="roc_auc",
         score_function="sklearn.metrics.roc_auc_score",
+        needs_labels=False,
         needs_proba=True,
     )
     scorer_dict = ScorerDictConfig(scorers={"accuracy": acc, "roc_auc": roc})
@@ -355,13 +431,14 @@ def test_scorer_dict_attack_placeholder_and_missing_probability_context():
             "roc_auc": ScorerConfig(
                 score_name="roc_auc",
                 score_function="sklearn.metrics.roc_auc_score",
+                needs_labels=False,
                 needs_proba=True,
             ),
         },
     )
     SimpleNamespace(_attack="resolved")
 
-    with pytest.raises(ValueError, match="requires probabilities from predict_proba"):
+    with pytest.raises(ValueError, match="requires raw model outputs from predict_proba"):
         scorer(
             mode="attack",
             data=SimpleNamespace(y_test=np.array([0, 1])),
@@ -415,9 +492,8 @@ def test_scorer_dict_pre_sample_mode_uses_full_dataset_vectors():
         _X=np.array([[0.0], [1.0], [2.0], [3.0]]),
     )
 
-    result = scorer_dict(mode="pre-sample", data=data)
-
-    assert result["pre-sample"]["n"] == 4
+    with pytest.raises(ValueError, match="reserved for data-profile scorers"):
+        scorer_dict(mode="pre-sample", data=data)
 
 
 def test_scorer_dict_pre_sample_rejects_probability_metrics():
@@ -426,6 +502,7 @@ def test_scorer_dict_pre_sample_rejects_probability_metrics():
             "roc_auc": ScorerConfig(
                 score_name="roc_auc",
                 score_function="sklearn.metrics.roc_auc_score",
+                needs_labels=False,
                 needs_proba=True,
             ),
         },
@@ -436,7 +513,7 @@ def test_scorer_dict_pre_sample_rejects_probability_metrics():
         _X=np.array([[0.0], [1.0], [2.0], [3.0]]),
     )
 
-    with pytest.raises(ValueError, match="reserved for full-dataset diagnostics"):
+    with pytest.raises(ValueError, match="reserved for data-profile scorers"):
         scorer_dict(mode="pre-sample", data=data)
 
 
@@ -445,9 +522,8 @@ def test_runtime_stage_tokens_rejects_unknown_mode():
         ScorerDictConfig._runtime_stage_tokens(mode="unsupported", stage=None)
 
 
-def test_stage_alias_uses_default_scorer_for_runtime_mode():
+def test_stage_alias_uses_explicit_mode_for_runtime_split():
     scorer_dict = ScorerDictConfig(
-        default_scorer="val",
         scorers={
             "sum_true": ScorerConfig(
                 score_name="sum_true",
@@ -462,7 +538,7 @@ def test_stage_alias_uses_default_scorer_for_runtime_mode():
     )
     model = SimpleNamespace(val_predictions=np.array([1.0]))
 
-    out = scorer_dict(mode="post-defense", stage="post-defense", data=data, model=model)
+    out = scorer_dict(mode="val", stage="post-defense", data=data, model=model)
     assert out["post-defense"]["sum_true"] == 9.0
 
 
@@ -492,7 +568,6 @@ def test_stage_matrix_routes_split_and_uses_stage_key():
     )
 
     matrix = [
-        ("pre-sample", "pre-sample", 3.0),
         ("train", "pre-defense", 3.0),
         ("test", "post-filter", 4.0),
     ]
@@ -500,6 +575,9 @@ def test_stage_matrix_routes_split_and_uses_stage_key():
         out = scorer_dict(mode=mode, stage=stage, data=data, model=model)
         assert stage in out
         assert out[stage]["sum_true"] == expected
+
+    with pytest.raises(ValueError, match="reserved for data-profile scorers"):
+        scorer_dict(mode="pre-sample", stage="pre-sample", data=data, model=model)
 
 
 def test_score_data_coerce_features_dataframe_series_and_vector():
@@ -790,6 +868,11 @@ def test_scorer_dict_config_supports_all_SUPPORTED_SCORING_STAGES():
         }
         if stage == "adversarial":
             kwargs["attack"] = attack
+
+        if stage == "pre-sample":
+            with pytest.raises(ValueError, match="reserved for data-profile scorers"):
+                cfg(**kwargs)
+            continue
 
         result = cfg(**kwargs)
         assert stage in result

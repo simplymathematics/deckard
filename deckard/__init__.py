@@ -19,6 +19,7 @@ import logging
 import os
 import warnings
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import yaml
@@ -40,6 +41,7 @@ from .data import DataConfig  # noqa E402
 from .model import ModelConfig  # noqa E402
 from .model.defend import DefenseConfig  # noqa E402
 from .attack import AttackConfig  # noqa E402
+from .artifacts import ArtifactLoaderConfig  # noqa E402
 from .detector import DetectorConfig  # noqa E402
 from .experiment import ExperimentConfig  # noqa E402
 
@@ -155,6 +157,84 @@ OmegaConf.register_new_resolver(
     replace=True,
     use_cache=False,
 )
+
+
+def _coerce_artifact_path(path: Any) -> str:
+    return str(path)
+
+
+def _load_artifact_resolver(method_name: str, payload_kind: str):
+    def _resolver(path: Any):
+        artifact = ArtifactLoaderConfig(path=_coerce_artifact_path(path), payload_kind=payload_kind)
+        return getattr(artifact, method_name)(_coerce_artifact_path(path))
+
+    return _resolver
+
+
+def _save_artifact_resolver(method_name: str, payload_kind: str):
+    def _resolver(payload: Any, path: Any):
+        artifact = ArtifactLoaderConfig(path=_coerce_artifact_path(path), payload_kind=payload_kind)
+        getattr(artifact, method_name)(payload, _coerce_artifact_path(path))
+        return _coerce_artifact_path(path)
+
+    return _resolver
+
+
+_ARTIFACT_LOADERS: dict[str, tuple[str, str]] = {
+    "load_artifact": ("load", "data"),
+    "load_data": ("load_data", "data"),
+    "load_matrix": ("load_matrix", "data"),
+    "load_vector": ("load_vector", "data"),
+    "load_predictions": ("load_data", "data"),
+    "load_benign_predictions": ("load_data", "data"),
+    "load_adversarial_predictions": ("load_data", "data"),
+    "load_attack_samples": ("load_data", "data"),
+    "load_attack_predictions": ("load_data", "data"),
+    "load_defended_predictions": ("load_data", "data"),
+    "load_detected_predictions": ("load_data", "data"),
+    "load_filtered_outputs": ("load_data", "data"),
+    "load_probabilities": ("load_data", "data"),
+    "load_scores": ("load_scores", "scores"),
+    "load_model": ("load_model", "model"),
+    "load_detector": ("load_model", "model"),
+    "load_object": ("load_object", "object"),
+}
+
+_ARTIFACT_SAVERS: dict[str, tuple[str, str]] = {
+    "save_artifact": ("save", "data"),
+    "save_data": ("save_data", "data"),
+    "save_matrix": ("save_data", "data"),
+    "save_vector": ("save_data", "data"),
+    "save_predictions": ("save_data", "data"),
+    "save_benign_predictions": ("save_data", "data"),
+    "save_adversarial_predictions": ("save_data", "data"),
+    "save_attack_samples": ("save_data", "data"),
+    "save_attack_predictions": ("save_data", "data"),
+    "save_defended_predictions": ("save_data", "data"),
+    "save_detected_predictions": ("save_data", "data"),
+    "save_filtered_outputs": ("save_data", "data"),
+    "save_probabilities": ("save_data", "data"),
+    "save_scores": ("save_scores", "scores"),
+    "save_model": ("save_object", "model"),
+    "save_detector": ("save_object", "model"),
+    "save_object": ("save_object", "object"),
+}
+
+for resolver_name, (method_name, payload_kind) in _ARTIFACT_LOADERS.items():
+    OmegaConf.register_new_resolver(
+        resolver_name,
+        _load_artifact_resolver(method_name, payload_kind),
+        replace=True,
+        use_cache=False,
+    )
+
+for resolver_name, (method_name, payload_kind) in _ARTIFACT_SAVERS.items():
+    OmegaConf.register_new_resolver(
+        resolver_name,
+        _save_artifact_resolver(method_name, payload_kind),
+        replace=True,
+        use_cache=False,
+    )
 
 
 logger = logging.getLogger(__name__)

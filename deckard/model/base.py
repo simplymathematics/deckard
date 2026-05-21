@@ -1,41 +1,35 @@
-import logging
 import time
+import logging
+from typing import Any, Optional, Literal, Union
+import inspect
+from pathlib import Path
 from dataclasses import dataclass, field
 from functools import lru_cache
-from pathlib import Path
-from typing import Any, Literal, Union
+from omegaconf import DictConfig
 
 import numpy as np
 import pandas as pd
-from omegaconf import DictConfig
-from sklearn.base import BaseEstimator
+
+
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
+from sklearn.base import BaseEstimator
 
 from ..data import DataConfig
-from ..frameworks.types import ArrayLike, EstimatorLike, MatrixLike
 from ..score.base import (  # noqa: F401
-    ScorerDictConfig,
-)
-from ..score.base import (
-    SUPPORTED_MODEL_SCORE_MODES,
-    SUPPORTED_SCORING_STAGES,
+    _DataScorerMarker,
     coerce_scorer_config as _coerce_scorer_config,
 )
 from ..utils import (
     ConfigBase,
-    is_null_config_value,
     load_class,
-    normalize_plugin_specs,
     probabilities_from_model_outputs,
     round_scores,
+    normalize_plugin_specs,
+    instantiate_plugin_spec,
+    is_null_config_value,
 )
-from ._mixins import (
-    ModelHookRuntimeMixin,
-    ModelPrunerMixin,
-    ModelTrainingMixin,
-    PretrainedModelMixin,
-)
+from ..frameworks.types import ArrayLike, EstimatorLike, MatrixLike
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +40,6 @@ __all__ = ["ModelConfig"]
 
 @lru_cache(maxsize=1)
 def _get_art_symbols() -> dict[str, Any]:
-    from art.estimators.classification import PyTorchClassifier
     from art.estimators.classification.scikitlearn import (
         ScikitlearnAdaBoostClassifier,
         ScikitlearnBaggingClassifier,
@@ -58,11 +51,12 @@ def _get_art_symbols() -> dict[str, Any]:
         ScikitlearnRandomForestClassifier,
         ScikitlearnSVC,
     )
-    from art.estimators.regression import PyTorchRegressor
     from art.estimators.regression.scikitlearn import (
         ScikitlearnDecisionTreeRegressor,
         ScikitlearnRegressor,
     )
+    from art.estimators.classification import PyTorchClassifier
+    from art.estimators.regression import PyTorchRegressor
 
     classifier_dict = {
         "SVC": ScikitlearnSVC,
@@ -113,59 +107,66 @@ def _is_art_model_instance(model_obj: Any) -> bool:
 
 
 @dataclass(eq=False, kw_only=True)
-class ModelConfig(
-    ModelTrainingMixin,
-    PretrainedModelMixin,
-    ModelPrunerMixin,
-    ModelHookRuntimeMixin,  # Allows for user-configured plugins
-    ConfigBase,  # Persistence, Hashing,
-):
-    """
-    Runtime model configuration with plugin-aware training/evaluation orchestration.
+class ModelConfig(ConfigBase):
+    """Runtime model configuration with plugin-aware training/evaluation orchestration.
 
-    Args:
-        model_type: Model type string or None.
-        classifier: Whether the model is a classifier (True/False or str).
-        model_params: Model-constructor kwargs passed to the resolved estimator/class.
-        probability: Whether to enable probability prediction.
-        alias: Optional alias for the model configuration.
-        defense: Optional defense pipeline/config applied after model training or load.
-        plugins: Plugin specs resolved at runtime and invoked through hook names.
-        scorer: Scorer specification or AUTO_SCORER.
-        score_mode: Which split to score ("train", "test", "val").
+    Model behavior is resolved from ``model_type`` and runtime context. This
+    class owns model instantiation, training/load flow, prediction, scoring,
+    persistence, and optional defense-pipeline integration.
 
-    Attributes:
-        _model: Instantiated model object.
-        score_dict: Dictionary to store scores or metrics.
-        training_time: Time taken for model training.
-        prediction_time: Time taken for prediction.
-        val_prediction_time: Time taken for validation prediction.
-        training_prediction_time: Time taken for training prediction.
-        training_score_time: Time taken for training score computation.
-        prediction_score_time: Time taken for prediction score computation.
-        val_score_time: Time taken for validation score computation.
-        defense_application_time: Time taken to apply defense pipeline.
-        training_n: Number of training samples.
-        prediction_n: Number of prediction samples.
-        val_n: Number of validation samples.
-        training_predictions: Training predictions.
-        predictions: Test predictions.
-        val_predictions: Validation predictions.
-        training_probabilities: Training probabilities.
-        probabilities: Test probabilities.
-        val_probabilities: Validation probabilities.
-        _target_: Internal identifier for the class.
+    Plugin hooks
+    ------------
+    before_load_score(self, *, data, score_file)
+        Runs before reading persisted score/timing artifacts.
+    after_load_score(self, *, data, score_file, times)
+        Runs after reading persisted score/timing artifacts.
+    before_load_predictions(self, *, data, train_predictions_file, test_predictions_file)
+        Runs before loading persisted predictions/probabilities.
+    after_load_predictions(self, *, data, train_predictions_file, test_predictions_file, times)
+        Runs after loading persisted predictions/probabilities.
+    before_train_or_load_model(self, *, data, model_file, times)
+        Runs before model load-or-train resolution.
+    after_train_or_load_model(self, *, data, model_file, times)
+        Runs after model load-or-train resolution.
+    before_evaluate(self, *, data, times)
+        Runs before evaluation/scoring.
+    after_evaluate(self, *, data, times)
+        Runs after evaluation/scoring. Dict returns are merged into
+        ``score_dict``.
+    before_persist(self, *, data, times, model_file, test_predictions_file, train_predictions_file, training_probabilities_file, test_probabilities_file, score_file)
+        Runs before persistence of model artifacts and score outputs.
+    after_persist(self, *, data, times, model_file, test_predictions_file, train_predictions_file, training_probabilities_file, test_probabilities_file, score_file)
+        Runs after persistence. Dict returns are merged into ``score_dict``.
 
-    Note:
-        Model behavior is resolved from `model_type` and runtime context. This class owns model instantiation, training/load flow, prediction, scoring, persistence, and optional defense-pipeline integration.
+    Parameter layers
+    ----------------
+    model_params : dict
+        Model-constructor kwargs passed to the resolved estimator/class.
+    defense : Any
+        Optional defense pipeline/config applied after model training or load.
+    plugins : list
+        Plugin specs resolved at runtime and invoked through hook names.
 
-        Hooks are orchestrated by `_run_plugin_hook(hook_name, **kwargs)`. Core hook names used by ModelConfig runtime are: `before_load_score`, `after_load_score`, `before_load_predictions`, `after_load_predictions`, `before_train_or_load_model`, `after_train_or_load_model`, `before_evaluate`, `after_evaluate`, `before_persist`, and `after_persist`. Hook kwargs are phase-specific runtime objects supplied by model orchestration.
+    Family-specific parameter semantics
+    ----------------------------------
+    sklearn estimators
+        ``model_params`` are forwarded directly to estimator constructors.
+    wrapped or custom model classes
+        ``model_params`` may be split between wrapper setup and underlying
+        model kwargs.
+    defense-enabled runs
+        ``defense`` controls post-training estimator wrapping/application.
 
-    Example:
-        >>> config = ModelConfig(model_type="logistic_regression", model_params={"C": 1.0})
-        >>> config.initialize_model()
-        >>> config.train(X_train, y_train)
-        >>> y_pred = config.model.predict(X_test)
+    Plugin hook runtime params
+    --------------------------
+    Hooks are orchestrated by ``_run_plugin_hook(hook_name, **kwargs)``.
+    Core hook names used by ModelConfig runtime are:
+    ``before_load_score``, ``after_load_score``, ``before_load_predictions``,
+    ``after_load_predictions``, ``before_train_or_load_model``,
+    ``after_train_or_load_model``, ``before_evaluate``, ``after_evaluate``,
+    ``before_persist``, and ``after_persist``.
+    Hook kwargs are phase-specific runtime objects supplied by model
+    orchestration.
     """
 
     # Configuration fields
@@ -177,7 +178,7 @@ class ModelConfig(
     defense: Any = None
     plugins: Union[list, None] = None
     scorer: Any = AUTO_SCORER
-    score_mode: str = "test"
+    score_mode: Literal["train", "test", "val"] = "test"
 
     # Runtime/model state fields
     _model: Any = None
@@ -212,15 +213,6 @@ class ModelConfig(
         self._initialize_runtime_defaults()
         self._initialize_target_reference()
         self._normalize_classifier_flag()
-        self.score_mode = str(self.score_mode or "test").strip().lower()
-        if (
-            self.score_mode not in SUPPORTED_MODEL_SCORE_MODES
-            and self.score_mode not in SUPPORTED_SCORING_STAGES
-        ):
-            raise ValueError(
-                f"Unsupported ModelConfig score_mode '{self.score_mode}'. "
-                f"Expected one of: {sorted(SUPPORTED_MODEL_SCORE_MODES | SUPPORTED_SCORING_STAGES)}",
-            )
         self._initialize_default_scorer()
         self._normalize_plugins()
         self._coerce_defense_config()
@@ -284,6 +276,11 @@ class ModelConfig(
                 ),
             ),
         )
+        if isinstance(self.scorer, _DataScorerMarker):
+            raise TypeError(
+                "ModelConfig requires a model/attack scorer configuration; "
+                "data-profile scorers are not valid for model-output scoring.",
+            )
 
     def _normalize_plugins(self) -> None:
         """Normalize configured plugin specs."""
@@ -320,41 +317,108 @@ class ModelConfig(
     def set_estimator(self, estimator: EstimatorLike) -> None:
         """Set the internal fitted estimator directly."""
         self._model = estimator
+        self._sync_model_signature_from_estimator(estimator)
 
-    @property
-    def model(self) -> EstimatorLike | None:
-        """Public accessor for the runtime estimator payload."""
-        return self._model
 
-    @model.setter
-    def model(self, value: EstimatorLike | None) -> None:
-        """Set the runtime estimator payload."""
-        self._model = value
+
+    def _sync_model_signature_from_estimator(self, estimator: Any) -> None:
+        # TODO: use inspect for better init parsing
+        
+        if estimator is None:
+            return
+
+        estimator_cls = estimator.__class__
+        self.model_type = f"{estimator_cls.__module__}.{estimator_cls.__name__}"
+
+        existing_params: Optional[dict] = (
+            self.model_params
+            if isinstance(self.model_params, (dict, DictConfig))
+            else None
+        )
+        get_params = getattr(estimator, "get_params", None)
+        if callable(get_params):
+            try:
+                self.model_params = get_params()
+                if hasattr(estimator, "predict_proba"):
+                    self.probability = True
+                return
+            except Exception:
+                pass
+        model_params = self.model_params or {}
+        sig = inspect.signature(estimator.__class__.__init__)
+        init_params = {}
+        for param in sig.parameters.values():
+            name = param.name
+            if hasattr(estimator, name):
+                value = getattr(estimator, name)
+                init_params[name] = value
+        self.model_params = {**init_params, **model_params}
 
     def __hash__(self) -> int:
         return super().__hash__()
 
+    def _instantiate_plugin(self, plugin_spec: Any):
+        return instantiate_plugin_spec(plugin_spec, loader=load_class)
+
+    def _get_plugins(self) -> list:
+        if self._plugin_objects is None:
+            plugin_specs = normalize_plugin_specs(self.plugins)
+            self._plugin_objects = [
+                self._instantiate_plugin(spec) for spec in plugin_specs
+            ]
+        return self._plugin_objects
+
+    def _run_plugin_hook(self, hook_name: str, **kwargs):
+        hook_outputs = []
+        for plugin in self._get_plugins():
+            hook = getattr(plugin, hook_name, None)
+            if callable(hook):
+                hook_outputs.append(hook(self, **kwargs))
+        return hook_outputs
+
+    def _merge_plugin_scores(self, hook_outputs):
+        if self.score_dict is None:
+            self.score_dict = {}
+        for output in hook_outputs:
+            if isinstance(output, dict):
+                self.score_dict.update(output)
+
+    def _copy_runtime_state_to(self, target) -> None:
+        runtime_fields = [
+            "_model",
+            "score_dict",
+            "training_predictions",
+            "predictions",
+            "val_predictions",
+            "training_probabilities",
+            "probabilities",
+            "val_probabilities",
+            "training_time",
+            "prediction_time",
+            "val_prediction_time",
+            "training_prediction_time",
+            "training_score_time",
+            "prediction_score_time",
+            "val_score_time",
+            "defense_application_time",
+            "training_n",
+            "prediction_n",
+            "val_n",
+        ]
+        for attr in runtime_fields:
+            setattr(target, attr, getattr(self, attr, None))
+
     def _require_defense_pipeline(self):
         """Return configured defense pipeline or raise on invalid type."""
         if self.defense is None:
-            self.defense_pipeline = None
+            self._defense_pipeline = None
             return None
 
         from .defend import DefensePipelineConfig
 
         self.defense = DefensePipelineConfig.coerce(self.defense)
-        self.defense_pipeline = self.defense
-        return self.defense_pipeline
-
-    @property
-    def defense_pipeline(self) -> Any:
-        """Public accessor for the resolved defense pipeline runtime object."""
+        self._defense_pipeline = self.defense
         return self._defense_pipeline
-
-    @defense_pipeline.setter
-    def defense_pipeline(self, value: Any) -> None:
-        """Set the resolved defense pipeline runtime object."""
-        self._defense_pipeline = value
 
     def compose_defense_pipeline(self):
         """Compose defense pipeline behavior only when defense config is present."""
@@ -448,36 +512,6 @@ class ModelConfig(
         else:
             return self._model
 
-    @property
-    def fitted_estimator(self) -> EstimatorLike | None:
-        """Public accessor for the trained runtime estimator payload."""
-        return self.model
-
-    @fitted_estimator.setter
-    def fitted_estimator(self, value: EstimatorLike | None) -> None:
-        """Set the trained runtime estimator payload."""
-        self.model = value
-
-    @property
-    def test_predictions(self) -> Any:
-        """Compatibility alias for test split predictions."""
-        return self.predictions
-
-    @test_predictions.setter
-    def test_predictions(self, value: Any) -> None:
-        """Compatibility alias setter for test split predictions."""
-        self.predictions = value
-
-    @property
-    def test_probabilities(self) -> Any:
-        """Compatibility alias for test split probabilities."""
-        return self.probabilities
-
-    @test_probabilities.setter
-    def test_probabilities(self, value: Any) -> None:
-        """Compatibility alias setter for test split probabilities."""
-        self.probabilities = value
-
     def _apply_defense(self, data: "DataConfig") -> EstimatorLike:
         """Delegate defense application to DefensePipelineConfig."""
 
@@ -525,7 +559,9 @@ class ModelConfig(
         if self._model is None:
             raise ValueError("Model not initialized")
         start_time = time.process_time()
-        self.train_model(X, y)
+        assert hasattr(self._model, "fit"), "Model does not have a fit method"
+        fit_params = {} if not hasattr(self, "fit_params") else self.fit_params
+        self._model.fit(X, y, **fit_params)
         end_time = time.process_time()
         self.training_time = end_time - start_time
         self.training_n = len(y)
@@ -656,58 +692,56 @@ class ModelConfig(
             raise TypeError(
                 f"ModelConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
+        if isinstance(self.scorer, _DataScorerMarker):
+            raise TypeError(
+                "ModelConfig.scorer cannot be a data-profile scorer; "
+                "data diagnostics must run in DataConfig/experiment data scope.",
+            )
+        if str(mode).strip().lower() == "pre-sample":
+            raise ValueError(
+                "pre-sample mode is reserved for data-profile scorers and cannot be used for model scoring.",
+            )
         y_proba = kwargs.pop("y_proba", None)
-        stage = kwargs.pop("stage", None)
         scores = self.scorer(
             *args,
             y_true=y_true,
             y_pred=y_pred,
             y_proba=y_proba,
             mode=mode,
-            stage=stage,
             **kwargs,
         )
-        if (
-            isinstance(scores, dict)
-            and mode in scores
-            and isinstance(scores.get(mode), dict)
-        ):
-            scores = dict(scores[mode])
-        elif (
-            isinstance(scores, dict)
-            and isinstance(stage, str)
-            and stage in scores
-            and isinstance(scores.get(stage), dict)
-        ):
-            scores = dict(scores[stage])
+        if isinstance(scores, dict):
+            mode_key = str(mode).strip().lower()
+            if mode_key in scores and isinstance(scores.get(mode_key), dict):
+                mode_scores = dict(scores[mode_key])
+                companion_scores = {
+                    key: value for key, value in scores.items() if key != mode_key
+                }
+                scores = {**mode_scores, **companion_scores}
+            else:
+                stage_key = kwargs.get("stage", None)
+                if isinstance(stage_key, str) and stage_key in scores and isinstance(
+                    scores.get(stage_key),
+                    dict,
+                ):
+                    stage_scores = dict(scores[stage_key])
+                    companion_scores = {
+                        key: value for key, value in scores.items() if key != stage_key
+                    }
+                    scores = {**stage_scores, **companion_scores}
         return round_scores(
             scores=scores,
             n_samples=len(y_true),
             logger_obj=logger,
         )
 
-
-
     def _canonical_score_mode(self) -> Literal["train", "test", "val"]:
-        runtime_mode, _ = self._resolve_score_mode_and_stage()
-        if runtime_mode not in SUPPORTED_MODEL_SCORE_MODES:
+        mode = str(getattr(self, "score_mode", "test") or "test").lower()
+        if mode not in {"train", "test", "val"}:
             raise ValueError(
                 f"Unsupported ModelConfig score_mode '{self.score_mode}'. Expected one of: train, test, val.",
             )
-        return runtime_mode
-
-    def _resolve_score_mode_and_stage(self) -> tuple[Literal["train", "test", "val"], str]:
-        stage = str(getattr(self, "score_mode", "test") or "test").strip().lower()
-        resolved_mode = ScorerDictConfig._resolve_runtime_mode(
-            mode=stage,
-            requested_stage=None,
-        )
-        if resolved_mode not in SUPPORTED_MODEL_SCORE_MODES:
-            raise ValueError(
-                f"Unsupported ModelConfig score_mode '{self.score_mode}'. Expected one of train/test/val or a model-compatible stage token.",
-            )
-        stage_key = stage if stage in SUPPORTED_SCORING_STAGES else str(resolved_mode)
-        return resolved_mode, stage_key
+        return mode
 
     @staticmethod
     def _mode_score_prefix(mode: str) -> str:
@@ -1155,6 +1189,8 @@ class ModelConfig(
             test_probabilities_file=test_probabilities_file,
             score_file=score_file,
         )
+        if model_file is not None:
+            self.save_object(self, model_file)
         hook_outputs = self._run_plugin_hook(
             "after_persist",
             data=data,
@@ -1273,7 +1309,7 @@ class ModelConfig(
                 )
                 self.training_probabilities = None
 
-        score_mode, score_stage = self._resolve_score_mode_and_stage()
+        score_mode = self._canonical_score_mode()
 
         X_mode, y_mode = self._mode_split_data(data, score_mode)
         names = self._mode_runtime_names(score_mode)
@@ -1365,24 +1401,20 @@ class ModelConfig(
                 mode_predictions,
                 y_proba=mode_probabilities,
                 mode=score_mode,
-                stage=score_stage,
                 data=data,
                 model=self,
             )
             score_time = time.process_time() - start
             setattr(self, score_time_attr, score_time)
             times[names["score_time_key"]] = score_time
-            prefix = self._mode_score_prefix(score_mode)
-            if prefix:
-                mode_scores = {
-                    f"{prefix}{key}": value for key, value in mode_scores.items()
-                }
-                loss_curve_key = f"{prefix}loss_curve"
-                if loss_curve_key in mode_scores:
-                    del mode_scores[loss_curve_key]
             if self.score_dict is None:
                 self.score_dict = {}
-            self.score_dict.update(mode_scores)
+            if score_mode in {"train", "val"}:
+                self.score_dict[score_mode] = mode_scores
+            else:
+                # Preserve per-mode structure while keeping legacy top-level keys.
+                self.score_dict[score_mode] = mode_scores
+                self.score_dict.update(mode_scores)
             logger.info(
                 "%s scores computed in %.2f seconds",
                 score_mode.title(),
@@ -1409,7 +1441,86 @@ class ModelConfig(
             dict: Updated `times` dictionary with training metadata.
         """
 
-        def _is_model_fitted(estimator, X_sample=None, depth: int = 0) -> bool:
+        match self._model, model_file:
+            case None, None:  # Neither model nor filepath provided
+                raise ValueError(
+                    "Model not trained or loaded. Please train or load a model before prediction.",
+                )
+            case _, _:  # Model and/or filepath provided
+                if model_file is not None and Path(model_file).exists():
+                    logger.info(
+                        f"Model file {model_file} exists. Loading model.",
+                    )
+                    try:
+                        loaded_obj = self.load(str(model_file))
+                        if isinstance(loaded_obj, ModelConfig):
+                            self.__dict__.update(loaded_obj.__dict__)
+                        else:
+                            self._model = loaded_obj
+                        self._sync_model_signature_from_estimator(self._model)
+                    except Exception as e:
+                        logger.warning(f"Error loading model file: {model_file}.")
+                        self._model = None
+                    if self._is_model_fitted(self._model, X_sample=data.X_train):
+                        logger.info("Model loaded and is fitted.")
+                    else:
+                        logger.warning(
+                            "Loaded model is not fitted. Training a new model.",
+                        )
+                        logger.info(
+                            f"Training model on {len(data.y_train)} samples...",
+                        )
+                        if self._model is None and hasattr(self, "_initialize_model"):
+                            self._initialize_model()
+                        self._train(data.X_train, data.y_train)
+                        assert hasattr(
+                            self,
+                            "_model",
+                        ), "Model not initialized after training"
+                        if self.defense is not None:
+                            self._model = self._apply_defense(data)
+                        times["training_time"] = self.training_time
+                        times["training_n"] = self.training_n
+                        # Save the newly trained mode
+                        if model_file is not None:
+                            self.save_object(self, model_file)
+                else:
+                    # train the model if no model exists at the filepath
+                    logger.info(
+                        f"Training model on {len(data.y_train)} samples...",
+                    )
+                    model_is_fitted = self._is_model_fitted(
+                        self._model,
+                        X_sample=data.X_train,
+                    )
+
+                    # Do not trust timing metadata from loaded score files as proof of fitted state.
+                    if not model_is_fitted:
+                        if self._model is None and hasattr(self, "_initialize_model"):
+                            self._initialize_model()
+                        self._train(data.X_train, data.y_train)
+                    times["training_time"] = self.training_time
+                    times["training_n"] = self.training_n
+
+                    if model_file is not None:
+                        self.save_object(self, model_file)
+        # Validate model is trained
+        if self._model is None:
+            raise NotFittedError("Model is not initialized")
+        if self.defense is not None:
+            defense_pipeline = self._require_defense_pipeline()
+            stage = defense_pipeline.resolve_stage(
+                default_stage="post_fit_pre_predict",
+                model=self,
+                data=data,
+            )
+            if stage == "post_fit_pre_predict":
+                self._model = self._apply_defense(data)
+                if getattr(self, "defense_application_time", None) is not None:
+                    times["defense_application_time"] = self.defense_application_time
+        return times
+    
+    def _is_model_fitted(self, estimator, X_sample=None, depth: int = 0) -> bool:
             if estimator is None:
                 return False
             if depth > 2:
@@ -1426,7 +1537,7 @@ class ModelConfig(
                 wrapped = getattr(estimator, attr, None)
                 if wrapped is None or wrapped is estimator:
                     continue
-                if _is_model_fitted(
+                if self._is_model_fitted(
                     wrapped,
                     X_sample=X_sample,
                     depth=depth + 1,
@@ -1453,67 +1564,3 @@ class ModelConfig(
                     pass
 
             return False
-
-        match self._model, model_file:
-            case None, None:  # Neither model nor filepath provided
-                raise ValueError(
-                    "Model not trained or loaded. Please train or load a model before prediction.",
-                )
-            case _, _:  # Model and/or filepath provided
-                if model_file is not None and Path(model_file).exists():
-                    logger.info(
-                        f"Model file {model_file} exists. Loading model.",
-                    )
-                    self = self.load(model_file)
-                    if _is_model_fitted(self._model, X_sample=data.X_train):
-                        logger.info("Model loaded and is fitted.")
-                    else:
-                        logger.warning(
-                            "Loaded model is not fitted. Training a new model.",
-                        )
-                        logger.info(
-                            f"Training model on {len(data.y_train)} samples...",
-                        )
-                        self._train(data.X_train, data.y_train)
-                        assert hasattr(
-                            self,
-                            "_model",
-                        ), "Model not initialized after training"
-                        if self.defense is not None:
-                            self._model = self._apply_defense(data)
-                        times["training_time"] = self.training_time
-                        times["training_n"] = self.training_n
-                        # Save the newly trained mode
-                else:
-                    # train the model if no model exists at the filepath
-                    logger.info(
-                        f"Training model on {len(data.y_train)} samples...",
-                    )
-                    model_is_fitted = _is_model_fitted(
-                        self._model,
-                        X_sample=data.X_train,
-                    )
-
-                    # Do not trust timing metadata from loaded score files as proof of fitted state.
-                    if not model_is_fitted:
-                        self._train(data.X_train, data.y_train)
-                    times["training_time"] = self.training_time
-                    times["training_n"] = self.training_n
-
-                    if model_file is not None:
-                        self.save(filepath=model_file)
-        # Validate model is trained
-        if self._model is None:
-            raise NotFittedError("Model is not initialized")
-        if self.defense is not None:
-            defense_pipeline = self._require_defense_pipeline()
-            stage = defense_pipeline.resolve_stage(
-                default_stage="post_fit_pre_predict",
-                model=self,
-                data=data,
-            )
-            if stage == "post_fit_pre_predict":
-                self._model = self._apply_defense(data)
-                if getattr(self, "defense_application_time", None) is not None:
-                    times["defense_application_time"] = self.defense_application_time
-        return times
