@@ -6,6 +6,10 @@ This integration enables fairness evaluation and mitigation workflows within the
 deckard framework.
 See also: {doc}`pytorch` for torch-backed fairness workflows.
 
+Fairlearn model and data extensions are thin wrappers over the canonical model
+and data runtimes, with fairness-specific behavior isolated to the plugin
+layers.
+
 (fairlearn-overview)=
 
 ## Overview
@@ -81,7 +85,7 @@ Compatibility aliases remain available, including:
 ### Data pipeline and preprocessing support
 
 {class}`~deckard.plugins.fairlearn.data.FairlearnDataConfig` extends
-{class}`~deckard.data.DataPipelineConfig`, so it keeps standard deckard
+{class}`~deckard.data.DataConfig`, so it keeps standard deckard
 pipeline capabilities while adding fairness hooks:
 
 - configurable preprocessing pipeline steps from core data config
@@ -89,6 +93,18 @@ pipeline capabilities while adding fairness hooks:
 - optional ANJANA anonymization insertion via `anjana_defense`
 - group-aware sampling and stratification
 - standard split/k-fold/shuffle sampling through the base data stack
+- the public data mixin is {class}`~deckard.plugins.fairlearn.data.FairnessBehaviorMixin`
+
+### Canon Runtime and Scoring Contract
+
+Fairlearn data runtime behavior follows the canonical data contract:
+
+- stage hooks remain stage-scoped (`before_sample`, `after_pipeline`)
+- fairness score tails run as scoring hooks (`after_score`) and merge last
+- score scope is split-scoped (`train|test|val|all`), not stage names
+- DataScorer payloads use `X`/`y` semantics in data runtime execution
+- the same stage-aware model contract documented in {doc}`model` applies to
+  fairness-aware model wrappers
 
 ### Model Configuration
 
@@ -105,6 +121,9 @@ The {class}`~deckard.plugins.fairlearn.model.FairlearnModelConfig` supports:
 general model defenses via `model.defense` (ART preprocessors,
 postprocessors, trainers, and detector pipelines) where compatible with the
 selected backend/model.
+
+The shared fairness model mixin is
+{class}`~deckard.plugins.fairlearn.model.FairnessBehaviorMixin`.
 
 ### Scoring and Metrics
 
@@ -192,3 +211,5 @@ attack-time fairness scoring.
 - {doc}`score` — scoring framework including {mod}`deckard.plugins.fairlearn.score`
 - {doc}`pytorch` — optional PyTorch integration with Fairlearn
 - {doc}`modules` — overview of all extensions
+- {doc}`../developers/data_runtime_canon` — cross-family runtime contract
+- {doc}`../developers/plugin_runtime_migration` — migration guardrails

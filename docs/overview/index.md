@@ -34,14 +34,15 @@ The following pages are ordered for progressive onboarding:
 4. [Extensions](extensions.md)
 5. [Installation](installation.md)
 6. [Data](data.md)
-7. [Scoring](scoring.md)
-8. [Notebooks](../notebooks/index.md)
-9. [API Reference](../api/modules.md)
-10. [Developer Docs](../developers/index.md)
-11. [Development](../developers/index.md)
-12. [Build Docs](build_docs.md)
-13. [Docker](docker.md)
-14. [Changelog](changelog.md)
+7. [Model](model.md)
+8. [Scoring](scoring.md)
+9. [Notebooks](../notebooks/index.md)
+10. [API Reference](../api/modules.md)
+11. [Developer Docs](../developers/index.md)
+12. [Development](../developers/index.md)
+13. [Build Docs](build_docs.md)
+14. [Docker](docker.md)
+15. [Changelog](changelog.md)
 
 ## Navigation Notes
 
@@ -64,6 +65,7 @@ quickstart
 summary
 optimize
 data
+model
 scoring
 extensions
 installation

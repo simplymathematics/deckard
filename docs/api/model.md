@@ -1,12 +1,15 @@
 # Model
 
 The {mod}`~deckard.model` module defines the {class}`~deckard.model.ModelConfig`
-dataclass,
-which provides a complete pipeline for **model configuration, training,
-evaluation, and persistence**.
+dataclass, which provides a complete pipeline for **model configuration,
+training, evaluation, defense application, and persistence**.
 It supports dynamic scikit-learn model instantiation, configurable parameters,
 CLI execution,
 and integration with the {mod}`deckard.data` module.
+
+The canonical model runtime contract, trainer flow, and defense-stage behavior
+are documented in {doc}`../developers/model_runtime_canon` and summarized for
+users in {doc}`../overview/model`.
 
 ```{eval-rst}
 .. automodule:: deckard.model
@@ -19,7 +22,8 @@ and integration with the {mod}`deckard.data` module.
 ### Fairlearn Extension
 
 The fairlearn extension provides fairness-aware model behavior, including
-group-sensitive fitting, scoring, and fairlearn defense wrappers.
+group-sensitive fitting, scoring, and fairlearn defense wrappers. The public
+model mixin is {class}`~deckard.plugins.fairlearn.model.FairnessBehaviorMixin`.
 See also: {doc}`fairlearn`.
 
 ```{eval-rst}
@@ -28,9 +32,9 @@ See also: {doc}`fairlearn`.
    :show-inheritance:
 ```
 
-### Pytorch extesion
+### Pytorch extension
 
-The Pytorch extesion provides PyTorch-native model training, prediction, and
+The Pytorch extension provides PyTorch-native model training, prediction, and
 scoring through a {class}`~deckard.model.ModelConfig`-compatible API.
 See also: {doc}`pytorch`.
 
@@ -90,6 +94,16 @@ Currently supports:
 Model configs can compose deckard defense pipelines used during robustness
 evaluation. See {doc}`attack` for paired attack orchestration and {doc}`score`
 for attack-aware scorer profiles.
+
+Defense application is stage-aware and follows the canonical model stages:
+
+- `pre_art_defense`
+- `pre_fit`
+- `post_fit_pre_predict`
+
+Pretrained models that receive a fit-time defense are retrained after a
+pre-defense snapshot is cached, so the old timing and prediction state remain
+available for analysis.
 
 Common ART defense components referenced by deckard model defenses:
 

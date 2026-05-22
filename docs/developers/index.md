@@ -15,6 +15,9 @@ integrating with Deckard.
 - [Config Declaration Architecture](config_declaration_architecture)
 - [Naming Conventions](naming_conventions)
 - [Mixin and Plugin Rules](mixin_plugin_rules)
+- [Data Runtime Canon](data_runtime_canon)
+- [Model Runtime Canon](model_runtime_canon)
+- [Plugin Runtime Migration Guardrails](plugin_runtime_migration)
 - [Docstring Standard](docstring_standard)
 - [GH Actions Cache Setup](gh_actions_cache)
 
@@ -29,6 +32,9 @@ refactor_plan
 config_declaration_architecture
 naming_conventions
 mixin_plugin_rules
+data_runtime_canon
+model_runtime_canon
+plugin_runtime_migration
 docstring_standard
 gh_actions_cache
 ```
@@ -42,3 +48,6 @@ ______________________________________________________________________
 - [API Reference](../api/modules)
 - [Notebook Index](../notebooks/index)
 - [Build Docs](../overview/build_docs)
+- [Data Runtime Canon](data_runtime_canon)
+- [Model Runtime Canon](model_runtime_canon)
+- [Plugin Runtime Migration Guardrails](plugin_runtime_migration)

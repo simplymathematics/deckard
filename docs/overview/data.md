@@ -27,7 +27,7 @@ DataConfig is the canonical runtime owner for:
 - stage-aware score hook dispatch
 - data scoring and persistence orchestration
 
-DataPipelineConfig remains available as a legacy alias of DataConfig for
+DataConfig remains available as a legacy alias of DataConfig for
 compatibility with existing configs.
 
 ### Pipeline runtime object
@@ -148,7 +148,7 @@ data:
 - Keep score_mode focused on split scope, not lifecycle semantics.
 - Express lifecycle timing through scorer stage definitions.
 - Prefer DataConfig as the primary runtime entrypoint.
-- Treat DataPipelineConfig as compatibility-only in new configs.
+- Treat DataConfig as compatibility-only in new configs.
 - Persist artifacts via files so optimization and post-hoc layers use the same
   outputs.
 - Keep plugin behavior policy-oriented and avoid duplicating core runtime

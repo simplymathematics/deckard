@@ -4,6 +4,10 @@ deckard provides native support for PyTorch models, data, and experiments throug
 the optional Pypytorch extesion modules. This integration enables seamless use of
 PyTorch-based workflows within the deckard framework.
 
+The PyTorch runtime still follows the canonical Deckard model contract,
+including stage-aware defense application, files-only persistence, and
+canonical timing and score fields.
+
 (pytorch-overview)=
 
 ## Overview
@@ -29,6 +33,7 @@ inherits {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig` directly
 and adds
   fairness-aware scoring; compatible with {mod}`deckard.plugins.fairlearn.data` and
   attack stratification by sensitive features
+- The shared fairness model mixin is {class}`~deckard.plugins.fairlearn.model.FairnessBehaviorMixin`.
 - **Survival analysis**: optional integration with lifelines-based survival experiments
 - **Standard scorers**: classification, regression, and attack metrics via
   {class}`deckard.score.DefaultClassifierConfig`, etc.
@@ -91,6 +96,19 @@ composition.
 - During checkpointing, YAML config records include references to runtime
   `model_state_file` entries.
 
+### Canon Runtime Contract
+
+PyTorch data configs participate in the same canonical data runtime contract as
+core and plugin families:
+
+- files-only persistence through `files={...}` aliases
+- canonical timing keys in `times`
+- split-scoped score mode (`train|test|val|all`)
+- stage lifecycle hook orchestration owned by the core data runtime
+- model defenses follow the same stage-aware contract documented in {doc}`model`
+
+See {doc}`data` and {doc}`pipeline` for canonical stage/scope semantics.
+
 ### Experiment Orchestration
 
 The {class}`~deckard.frameworks.pytorch.experiment.TorchExperimentConfig` enforces:
@@ -135,3 +153,5 @@ The {class}`~deckard.frameworks.pytorch.experiment.TorchExperimentConfig` enforc
 - {doc}`plot` — visualization support including training history plots
 - {doc}`lifelines` — optional survival analysis integration with PyTorch
 - {doc}`modules` — overview of all extensions
+- {doc}`../developers/data_runtime_canon` — cross-family runtime contract
+- {doc}`../developers/plugin_runtime_migration` — migration guardrails

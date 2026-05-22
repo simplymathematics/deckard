@@ -40,3 +40,25 @@ External references:
 1. Configure an Anjana-aware data pipeline.
 1. Train a compatible model configuration.
 1. Score utility and privacy-sensitive outcomes.
+
+## Canon Runtime Contract
+
+Anjana data behavior is implemented as policy hooks on top of canonical data
+runtime orchestration:
+
+- pipeline policy hook at `before_sample` for pre-sample anonymization
+- score tail policy hook at `after_score_post_pipeline`
+- score scope remains split-scoped (`train|test|val|all`)
+- persistence remains files-only via `files={...}`
+- the public privacy mixin is {class}`~deckard.plugins.anjana.data.PrivacyBehaviorMixin`
+
+Anjana tail metrics are emitted as flat, collision-safe score entries so they
+compose with other plugin score tails, including Fairlearn-last merges.
+
+## See also
+
+- {doc}`data`
+- {doc}`pipeline`
+- {doc}`fairlearn`
+- {doc}`../developers/data_runtime_canon`
+- {doc}`../developers/plugin_runtime_migration`

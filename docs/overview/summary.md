@@ -176,7 +176,7 @@ Typical workflow composition includes:
 
 1. **Dataset Loading And Sampling**: Load data via
    :class:`~deckard.data.DataConfig`, apply data preprocessing pipelines via
-   :class:`~deckard.data.DataPipelineConfig`, and sample via pluggable
+   :class:`~deckard.data.DataConfig`, and sample via pluggable
    :class:`~deckard.data.sample.BaseSampler` strategies.
 1. **Preprocessing And Feature Handling**: Transform features via sklearn
    pipelines; automatically instrumented with timing metrics.

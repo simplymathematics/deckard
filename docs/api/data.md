@@ -27,9 +27,9 @@ for robust train/test/validation splits.
 
 {class}`~deckard.data.DataConfig` is the runtime owner for optional preprocessing
 via a `pipeline` attribute that accepts a
-{class}`~deckard.data.pipeline.core.DataPipeline` object.
+{class}`~deckard.data.pipeline.base.DataPipeline` object.
 
-{class}`~deckard.data.DataPipelineConfig` remains available as a legacy alias
+{class}`~deckard.data.DataConfig` remains available as a legacy alias
 to {class}`~deckard.data.DataConfig` for compatibility.
 
 Common transform components referenced in deckard pipeline configs:

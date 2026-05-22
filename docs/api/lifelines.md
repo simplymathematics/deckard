@@ -94,7 +94,7 @@ Because {class}`~deckard.plugins.lifelines.data.LifelinesDataConfig` extends
 stack), survival workflows can still use the standard data pipeline and sampler
 interfaces:
 
-- preprocessing pipelines from {class}`~deckard.data.DataPipelineConfig`
+- preprocessing pipelines from {class}`~deckard.data.DataConfig`
 - split/k-fold/shuffle samplers via `examples/sklearn/config/sample <../examples/sklearn/config/sample>`\_
 - train/test/validation flow from core data config fields
 
