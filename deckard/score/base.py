@@ -651,9 +651,6 @@ class ScorerConfig:
             "cohen_kappa_score",
             "demographic_parity_difference",
             "equalized_odds_difference",
-            "group_mean_prediction_difference",
-            "group_mae_difference",
-            "group_mse_difference",
         }
         is_label_metric = (
             metric_name in label_metrics or self.score_name in label_metrics
@@ -729,8 +726,12 @@ class ScorerConfig:
         **kwargs: Any,
     ) -> MetricResult:
         """Execute one scorer using generic dependent/independent payload names."""
+        if dep is None and "y" in kwargs:
+            dep = kwargs.pop("y")
         if dep is None and "y_true" in kwargs:
             dep = kwargs.pop("y_true")
+        if ind is None and "X" in kwargs:
+            ind = kwargs.pop("X")
         if ind is None and "y_pred" in kwargs:
             ind = kwargs.pop("y_pred")
         if dep is None or ind is None:
@@ -1040,7 +1041,7 @@ class ScorerDictConfig(ConfigBase):
     ) -> set[str]:
         mode_token = "" if mode is None else str(mode).strip().lower()
         tokens: set[str] = set()
-        valid_modes = set(SUPPORTED_SCORING_STAGES) | {"attack", "attack-val", ""}
+        valid_modes = set(SUPPORTED_SCORING_STAGES) | {"all", "attack", "attack-val", ""}
         if mode_token not in valid_modes:
             raise KeyError(
                 f"Unsupported scoring mode '{mode}'. Expected one of: {sorted(valid_modes - {''})}",
@@ -1061,6 +1062,17 @@ class ScorerDictConfig(ConfigBase):
             },
             "val": {
                 ScoringModelStage.MODEL_VAL.value,
+                ScoringDefenseStage.VAL_DEFENSE.value,
+                ScoringPipelineStage.VAL_PIPELINE.value,
+                ScoringAttackStage.VAL_ATTACK.value,
+                ScoringDataStage.VAL_ATTACK.value,
+                ScoringDetectorStage.VAL_FILTER.value,
+            },
+            "all": {
+                ScoringModelStage.MODEL_TRAIN.value,
+                ScoringModelStage.MODEL_TEST.value,
+                ScoringModelStage.MODEL_VAL.value,
+                ScoringAttackStage.PRE_ATTACK.value,
                 ScoringDefenseStage.VAL_DEFENSE.value,
                 ScoringPipelineStage.VAL_PIPELINE.value,
                 ScoringAttackStage.VAL_ATTACK.value,
@@ -1106,25 +1118,11 @@ class ScorerDictConfig(ConfigBase):
         mode: str | None,
         requested_stage: Union[str, list[str], None] = None,
     ) -> str:
-        stage_tokens = ScorerDictConfig._stage_tokens(requested_stage)
-        ScorerDictConfig._validate_stage_tokens(
-            stage_tokens,
-            field_name="runtime stage",
-        )
-        if len(stage_tokens) == 1:
-            return next(iter(stage_tokens))
-
         if mode is not None:
-            stage_key = str(mode).strip().lower()
-            valid_modes = set(SUPPORTED_SCORING_STAGES) | {"attack", "attack-val"}
-            if stage_key in SUPPORTED_SCORING_STAGES:
-                return stage_key
-            if stage_key not in valid_modes:
-                raise KeyError(
-                    f"Unsupported scoring mode '{mode}'. Expected one of: {sorted(valid_modes)}",
-                )
-            return stage_key
-
+            return ScorerDictConfig._resolve_runtime_mode(
+                mode,
+                requested_stage=requested_stage,
+            )
         return "test"
 
     @staticmethod
@@ -1132,47 +1130,15 @@ class ScorerDictConfig(ConfigBase):
         mode: str | None,
         requested_stage: Union[str, list[str], None] = None,
     ) -> str:
-        if mode is not None:
-            mode_token = str(mode).strip().lower()
-            if mode_token in {"train", "attack", "val", "attack-val", "pre-sample"}:
-                return mode_token
-            if mode_token == "test":
-                return "test"
-
-            stage_to_runtime: dict[str, str] = {
-                ScoringModelStage.MODEL_TRAIN.value: "train",
-                ScoringModelStage.MODEL_TEST.value: "test",
-                ScoringModelStage.MODEL_VAL.value: "val",
-                ScoringDataStage.PRE_SAMPLE.value: "pre-sample",
-                ScoringAttackStage.PRE_ATTACK.value: "test",
-                ScoringAttackStage.POST_ATTACK.value: "attack",
-                ScoringDefenseStage.PRE_DEFENSE.value: "test",
-                ScoringDefenseStage.POST_DEFENSE.value: "test",
-                ScoringPipelineStage.POST_PIPELINE.value: "test",
-                ScoringDataStage.POST_SAMPLE.value: "test",
-                ScoringDetectorStage.PRE_FILTER.value: "test",
-                ScoringDetectorStage.POST_FILTER.value: "test",
-            }
-            if mode_token in stage_to_runtime:
-                return stage_to_runtime[mode_token]
-            raise KeyError(
-                f"Unsupported scoring mode '{mode}'.",
-            )
-
-        stage_tokens = ScorerDictConfig._stage_tokens(requested_stage)
-        ScorerDictConfig._validate_stage_tokens(
-            stage_tokens,
-            field_name="runtime stage",
+        _ = requested_stage
+        if mode is None:
+            return "test"
+        mode_token = str(mode).strip().lower()
+        if mode_token in {"train", "test", "val", "all", "attack", "attack-val", "pre-sample"}:
+            return mode_token
+        raise KeyError(
+            f"Unsupported scoring mode '{mode}'.",
         )
-        if ScoringModelStage.MODEL_TRAIN.value in stage_tokens:
-            return "train"
-        if ScoringDataStage.PRE_SAMPLE.value in stage_tokens:
-            return "pre-sample"
-        if ScoringAttackStage.POST_ATTACK.value in stage_tokens:
-            return "attack"
-        if ScoringModelStage.MODEL_VAL.value in stage_tokens:
-            return "val"
-        return "test"
 
     def __iter__(self):
         return iter(self.scorers.items())
@@ -1422,8 +1388,12 @@ class ScorerDictConfig(ConfigBase):
                 f"configured={self.stage}, runtime={sorted(runtime_stage_tokens)}",
             )
 
+        if ind is None and "X" in kwargs:
+            ind = kwargs.pop("X")
         if ind is None and "y_pred" in kwargs:
             ind = kwargs.pop("y_pred")
+        if dep is None and "y" in kwargs:
+            dep = kwargs.pop("y")
         if dep is None and "y_true" in kwargs:
             dep = kwargs.pop("y_true")
 
@@ -1458,6 +1428,28 @@ class ScorerDictConfig(ConfigBase):
                 assert data is not None and model is not None
                 dep = data.y_val
                 ind = model.val_predictions
+            elif effective_mode == "all":
+                assert data is not None and model is not None
+                dep = getattr(data, "_y", None)
+                if dep is None:
+                    y_parts = [
+                        getattr(data, "y_train", None),
+                        getattr(data, "y_test", None),
+                        getattr(data, "y_val", None),
+                    ]
+                    y_parts = [part for part in y_parts if part is not None]
+                    if len(y_parts) > 0:
+                        dep = np.concatenate([np.asarray(part) for part in y_parts])
+                ind = getattr(model, "predictions", None)
+                if ind is None:
+                    pred_parts = [
+                        getattr(model, "training_predictions", None),
+                        getattr(model, "test_predictions", None),
+                        getattr(model, "val_predictions", None),
+                    ]
+                    pred_parts = [part for part in pred_parts if part is not None]
+                    if len(pred_parts) > 0:
+                        ind = np.concatenate([np.asarray(part) for part in pred_parts])
             elif effective_mode == "attack-val":
                 assert data is not None and attack is not None
                 dep = getattr(attack, "attacked_labels", None)

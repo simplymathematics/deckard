@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 from deckard.data.base import DataConfig
 from deckard.data.stages import normalize_data_score_stage
@@ -18,61 +19,65 @@ def _cfg_with_loaded_splits() -> DataConfig:
 
 
 def test_normalize_data_score_stage_aliases():
-    assert normalize_data_score_stage("post-defense") == "test"
-    assert normalize_data_score_stage("attack") == "test"
-    assert normalize_data_score_stage("attack-val") == "val"
     assert normalize_data_score_stage("train") == "train"
+    assert normalize_data_score_stage("test") == "test"
+    assert normalize_data_score_stage("val") == "val"
+    assert normalize_data_score_stage("all") == "all"
+    with pytest.raises(ValueError):
+        normalize_data_score_stage("post-defense")
 
 
-def test_score_stage_hooks_support_stage_specific_and_legacy_hooks():
-    seen = {"before": 0, "after": 0, "legacy_after": 0}
+def test_score_is_pass_through_to_scorer_dict_config():
+    captured = {}
 
-    class Plugin:
-        def before_score_test(self, runtime, **kwargs):
-            _ = runtime
-            seen["before"] += 1
-            assert kwargs["stage"] == "test"
-            return None
+    class _CaptureScorer:
+        scoring_type = "data"
 
-        def after_score_test(self, runtime, **kwargs):
-            _ = runtime
-            seen["after"] += 1
-            assert kwargs["stage"] == "test"
-            return {"stage_specific": 1}
-
-        def after_score(self, runtime, **kwargs):
-            _ = runtime
-            seen["legacy_after"] += 1
-            assert kwargs["stage"] == "test"
-            return {"legacy": 2}
-
-    cfg = _cfg_with_loaded_splits()
-    cfg.plugins = [Plugin()]
-    cfg._plugin_objects = cfg.plugins
-
-    result = cfg.score(mode="test")
-
-    assert result["base"] == 1
-    assert result["stage_specific"] == 1
-    assert result["legacy"] == 2
-    assert seen == {"before": 1, "after": 1, "legacy_after": 1}
-
-
-def test_score_mode_alias_routes_to_canonical_stage_hooks():
-    called = {"after_test": 0}
-
-    class Plugin:
-        def after_score_test(self, runtime, **kwargs):
-            _ = runtime
-            assert kwargs["stage"] == "test"
-            called["after_test"] += 1
+        def __call__(self, *args, **kwargs):
+            _ = args
+            captured.update(kwargs)
             return {"ok": True}
 
     cfg = _cfg_with_loaded_splits()
-    cfg.plugins = [Plugin()]
-    cfg._plugin_objects = cfg.plugins
+    cfg.scorer = _CaptureScorer()
 
-    result = cfg.score(mode="post-defense")
+    result = cfg.score(mode="test", stage="post-sample")
 
     assert result["ok"] is True
-    assert called["after_test"] == 1
+    assert captured["mode"] == "test"
+    assert captured["stage"] == "post-sample"
+    assert captured["data"] is cfg
+
+
+def test_call_orchestrates_scores_using_scorer_stages():
+    cfg = DataConfig(
+        dataset_name="make_classification",
+        data_params={
+            "n_samples": 40,
+            "n_features": 4,
+            "n_informative": 2,
+            "n_redundant": 0,
+            "random_state": 42,
+            "n_clusters_per_class": 1,
+        },
+        score_split="test",
+        scorer={
+            "_target_": "deckard.score.data.DefaultDataScorerConfig",
+            "scorers": {
+                "pre_metric": {
+                    "score_function": lambda y_true, y_pred: float(len(y_true)),
+                    "stage": "post-sample",
+                },
+                "post_metric": {
+                    "score_function": lambda y_true, y_pred: float(len(y_true)),
+                    "stage": "post-pipeline",
+                },
+            },
+        },
+    )
+
+    out = cfg()
+
+    assert "test" in out
+    assert "pre_metric" in out["test"]
+    assert "post_metric" in out["test"]

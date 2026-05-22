@@ -173,15 +173,14 @@ class TestDataPipelineConfig(unittest.TestCase):
 
 
 class TestDataConfig(unittest.TestCase):
-    def test_invalid_score_mode_raises(self):
-        cfg = DataConfig(
-            dataset_name="make_classification",
-            data_params={"n_samples": 10, "n_features": 2},
-            score_mode="invalid",
-            scorer=lambda y_true, y_pred: {"dummy": 1},
-        )
+    def test_invalid_score_split_raises(self):
         with self.assertRaises(ValueError):
-            cfg()
+            DataConfig(
+                dataset_name="make_classification",
+                data_params={"n_samples": 10, "n_features": 2},
+                score_split="invalid",
+                scorer=lambda y_true, y_pred: {"dummy": 1},
+            )
 
     def basic_config(self):
         # Minimal config for DataConfig
@@ -258,7 +257,7 @@ class TestDataConfig(unittest.TestCase):
         self.assertIn("data_sample_time", scores)
         self.assertNotIn("class_counts", scores)
 
-    def test_presample_score_mode_uses_full_dataset(self):
+    def test_presample_stage_does_not_override_score_split(self):
         cfg = DataConfig(
             dataset_name="make_classification",
             data_params={
@@ -268,26 +267,27 @@ class TestDataConfig(unittest.TestCase):
                 "n_redundant": 0,
                 "random_state": 42,
             },
-            score_mode="pre-sample",
+            score_split="test",
             scorer={
                 "n_samples": {
                     "score_name": "n_samples",
                     "score_function": lambda y_true, y_pred: len(y_true),
+                    "stage": "post-sample",
                 },
             },
         )
         scores = cfg()
-        self.assertEqual(scores["pre-sample"]["n_samples"], len(cfg._y))
-        self.assertNotEqual(scores["pre-sample"]["n_samples"], len(cfg.y_train))
+        self.assertEqual(scores["test"]["n_samples"], len(cfg.y_test))
+        self.assertNotEqual(scores["test"]["n_samples"], len(cfg._y))
 
-    def test_post_defense_score_mode_uses_test_split(self):
+    def test_score_split_test_uses_test_split(self):
         captured = {}
 
         class _CaptureScorer:
             def __call__(self, *args, **kwargs):
                 _ = args
                 captured.update(kwargs)
-                return {"ok": 1}
+                return 1.0
 
         cfg = DataConfig(
             dataset_name="make_classification",
@@ -298,8 +298,13 @@ class TestDataConfig(unittest.TestCase):
                 "n_redundant": 0,
                 "random_state": 42,
             },
-            score_mode="post-defense",
-            scorer=_CaptureScorer(),
+            score_split="test",
+            scorer={
+                "capture": {
+                    "score_function": _CaptureScorer(),
+                    "stage": "post-pipeline",
+                },
+            },
         )
         cfg()
         self.assertEqual(captured.get("mode"), "test")
@@ -455,8 +460,10 @@ class TestDataConfig(unittest.TestCase):
             data_path = Path(tmpdirname) / "data.pkl"
             score_path = Path(tmpdirname) / "scores.json"
             results = cfg(
-                data_file=str(data_path),
-                score_file=str(score_path),
+                files={
+                    "data_file": str(data_path),
+                    "score_file": str(score_path),
+                },
             )
             self.assertTrue(data_path.exists())
             self.assertTrue(score_path.exists())
@@ -470,7 +477,7 @@ class TestDataConfig(unittest.TestCase):
         cfg()
         with tempfile.TemporaryDirectory() as tmpdirname:
             data_path = Path(tmpdirname) / "data.pkl"
-            cfg(data_file=str(data_path))
+            cfg(files={"data_file": str(data_path)})
             self.assertTrue(cfg._X is not None)
 
     def test_save_score_dict(self):
@@ -482,7 +489,7 @@ class TestDataConfig(unittest.TestCase):
             # save scores
             cfg.save_scores(cfg.score_dict, score_path)
             loaded_scores = cfg.load_scores(score_path)
-            cfg(score_file=str(score_path))
+            cfg(files={"score_file": str(score_path)})
             self.assertTrue(score_path.exists())
             self.assertIn("mutual_info", loaded_scores)
             self.assertIn("chisquare", loaded_scores)
@@ -496,7 +503,7 @@ class TestDataConfig(unittest.TestCase):
         cfg()
         with tempfile.TemporaryDirectory() as tmpdirname:
             data_path = Path(tmpdirname) / "data.pkl"
-            cfg(data_file=str(data_path))
+            cfg(files={"data_file": str(data_path)})
             self.assertTrue(data_path.exists())
             # Load the data back and verify
             cfg = cfg.load(filepath=str(data_path))
@@ -661,7 +668,7 @@ class TestFairlearnDataPipelineConfig(unittest.TestCase):
     def test_pipeline_fit_and_transform(self):
         config = DataPipelineConfig(
             pipeline=self.pipeline_config_dict,
-            score_mode="train",
+            score_split="train",
         )
         config._X = self.X_train
         config._y = self.y_train
@@ -882,8 +889,10 @@ class TestDataConfigAdditional(unittest.TestCase):
             data_path = Path(tmpdirname) / "data.pkl"
             score_path = Path(tmpdirname) / "scores.json"
             results = cfg(
-                data_file=str(data_path),
-                score_file=str(score_path),
+                files={
+                    "data_file": str(data_path),
+                    "score_file": str(score_path),
+                },
             )
             self.assertTrue(data_path.exists())
             self.assertTrue(score_path.exists())
@@ -897,7 +906,7 @@ class TestDataConfigAdditional(unittest.TestCase):
         cfg()
         with tempfile.TemporaryDirectory() as tmpdirname:
             data_path = Path(tmpdirname) / "data.pkl"
-            cfg(data_file=str(data_path))
+            cfg(files={"data_file": str(data_path)})
             self.assertTrue(cfg._X is not None)
 
     def test_save_score_dict(self):
@@ -909,7 +918,7 @@ class TestDataConfigAdditional(unittest.TestCase):
             # save scores
             cfg.save_scores(cfg.score_dict, score_path)
             loaded_scores = cfg.load_scores(score_path)
-            cfg(score_file=str(score_path))
+            cfg(files={"score_file": str(score_path)})
             self.assertTrue(score_path.exists())
             self.assertIn("mutual_info", loaded_scores)
             self.assertIn("chisquare", loaded_scores)
@@ -923,7 +932,7 @@ class TestDataConfigAdditional(unittest.TestCase):
         cfg()
         with tempfile.TemporaryDirectory() as tmpdirname:
             data_path = Path(tmpdirname) / "data.pkl"
-            cfg(data_file=str(data_path))
+            cfg(files={"data_file": str(data_path)})
             self.assertTrue(data_path.exists())
             # Load the data back and verify
             cfg = cfg.load(filepath=str(data_path))

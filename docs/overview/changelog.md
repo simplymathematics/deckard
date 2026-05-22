@@ -1,5 +1,19 @@
 # Changelog
 
+## .98.2
+
+- Data runtime architecture updated: `DataConfig` is the canonical runtime owner
+  for loading, sampling, optional pipeline execution, and score orchestration.
+- `DataPipelineConfig` is now documented as a legacy compatibility alias of
+  `DataConfig`.
+- Data pipeline execution now documented around the runtime
+  `deckard.data.pipeline.core.DataPipeline` stage order
+  (`fit_pre_sample`, `fit_X`, `fit_y`, `fit_Xy`).
+- API documentation refresh for data and pipeline pages to remove stale
+  `DataPipelineMixin` inheritance references.
+- Added a new overview guide page: `docs/overview/data.md`, styled to match the
+  scoring overview documentation.
+
 ## .98.1
 
 - Core package updates in `deckard/` (entrypoints, config/declaration handling,

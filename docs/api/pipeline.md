@@ -2,18 +2,21 @@
 
 ## Overview
 
-Deckard pipeline configuration for data preprocessing is owned by
-{class}`deckard.data.base.DataPipelineConfig`.
+Deckard data preprocessing is executed by the runtime
+{class}`deckard.data.pipeline.core.DataPipeline` object.
 
-`DataPipelineConfig` composes parent data runtime behavior from
-{class}`deckard.data.base.DataConfig` with mixin behavior from
-{class}`deckard.data._mixins.DataPipelineMixin`.
+{class}`deckard.data.base.DataConfig` owns pipeline orchestration and accepts an
+optional `pipeline` runtime object.
+
+{class}`deckard.data.base.DataPipelineConfig` remains as a legacy alias to
+{class}`deckard.data.base.DataConfig`.
 
 ## Parent Config and Mixin Map
 
-- {class}`deckard.data.base.DataPipelineConfig` inherits
-  {class}`deckard.data._mixins.DataPipelineMixin` and
-  {class}`deckard.data.base.DataConfig`.
+- {class}`deckard.data.base.DataConfig` is the canonical runtime owner.
+- {class}`deckard.data.pipeline.core.DataPipeline` executes stage order:
+  `fit_pre_sample`, `fit_X`, `fit_y`, `fit_Xy`.
+- {class}`deckard.data.base.DataPipelineConfig` is a compatibility alias.
 - {class}`deckard.data.pipeline.core.DefaultDataPipelineConfig` is the default
   no-op pipeline variant.
 - {class}`deckard.data.pipeline.core.FairlearnDataPipelineConfig` is a fairness
@@ -39,12 +42,6 @@ Deckard pipeline configuration for data preprocessing is owned by
 
 ```{eval-rst}
 .. automodule:: deckard.data.pipeline.core
-   :members:
-   :show-inheritance:
-```
-
-```{eval-rst}
-.. automodule:: deckard.data._mixins
    :members:
    :show-inheritance:
 ```

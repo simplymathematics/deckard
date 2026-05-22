@@ -11,6 +11,7 @@ from .base import DataConfig, DataPipelineConfig
 from .declarations import DatasetDeclaration, discover_dataset_declarations
 from .pipeline import (
     AnjanaDataPipelineConfig,
+    DataPipeline,
     DefaultDataPipelineConfig,
     FairlearnDataPipelineConfig,
 )
@@ -56,8 +57,8 @@ except Exception:
 
 __all__ = [
     "DataConfig",
+    "DataPipeline",
     "DataPipelineConfig",
-    "DataPipelineMixin",
     "DefaultDataPipelineConfig",
     "AnjanaDataPipelineConfig",
     "FairlearnDataPipelineConfig",

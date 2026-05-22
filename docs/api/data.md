@@ -25,8 +25,12 @@ for robust train/test/validation splits.
 
 ## Data Preprocessing Pipelines
 
-The {class}`~deckard.data.DataPipelineConfig` wraps scikit-learn's {class}`~sklearn.pipeline.Pipeline`
-to enable configurable feature preprocessing with timing instrumentation.
+{class}`~deckard.data.DataConfig` is the runtime owner for optional preprocessing
+via a `pipeline` attribute that accepts a
+{class}`~deckard.data.pipeline.core.DataPipeline` object.
+
+{class}`~deckard.data.DataPipelineConfig` remains available as a legacy alias
+to {class}`~deckard.data.DataConfig` for compatibility.
 
 Common transform components referenced in deckard pipeline configs:
 
@@ -44,7 +48,7 @@ For torch-native transforms, see {doc}`pytorch` and:
 ### Pipeline Extension
 
 deckard exposes a configurable pipeline layer for data preprocessing via
-{class}`~deckard.data.DataPipelineConfig`.
+{class}`~deckard.data.DataConfig.pipeline`.
 
 ### Fairlearn Plugin
 
@@ -172,23 +176,19 @@ qualified class paths and shorthand aliases.
 - `train`
 - `test`
 - `val`
-- `pre-sample`
-- `post-pipeline`
 - `all`
 
-`pre-sample` runs data diagnostics against the full dataset before split
-selection (`_X` / `_y`), while split modes run diagnostics on the selected
-partition.
+`score_mode` controls split scope only. Hook stage lifecycle is configured
+separately using scorer stage metadata (for example `pre-sample`,
+`post-sample`, `post-pipeline`).
 
-Mode details for `post-pipeline` and `all`:
+Mode details for `all`:
 
-- `post-pipeline`: runs data scorers on concatenated train and test splits after
-   sampling (`X_train + X_test`, `y_train + y_test`).
-- `all`: currently follows the same runtime path as `post-pipeline` and
-   `post-sample` in {meth}`~deckard.data.DataConfig.score`, meaning it also
-   scores the concatenated train+test splits (not raw `_X`/`_y`).
+- `all`: runs data scorers on concatenated train and test splits
+  (`X_train + X_test`, `y_train + y_test`).
 
-If you need true full-dataset diagnostics before splitting, use `pre-sample`.
+If you need full-dataset diagnostics before splitting, configure the scorer
+stage to `pre-sample` while using an explicit split scope mode.
 
 ## YAML Recipes
 
@@ -362,9 +362,12 @@ print("yellowbrick:", sorted(_yellowbrick_dataset_loaders().keys()))
 
 ### Timing and logging
 
-The data loading and splitting process is timed, and the duration is stored in
-the `data_load_time` and `data_sample_time` attributes of the
-{class}`~deckard.data.DataConfig` instance.
+The data runtime records canonical timing keys in `times`, including
+`data_load_time`, `data_sample_time`, `data_pipeline_time`, and
+`data_score_time`.
+
+The same values are mirrored onto matching top-level attributes on
+{class}`~deckard.data.DataConfig` for compatibility.
 The presence (or absence) of these timing values controls the execution of relevant steps.
 These timings can be useful for comparing the run-time efficiency of different datasets
 of various methods.
@@ -384,7 +387,7 @@ If you encounter issues with dataset loading, ensure that:
 
 - {doc}`model` — model configuration and training
 - {doc}`sample` — pluggable train/test/val samplers
-- {doc}`pipeline` — data pipeline config and DataPipelineMixin behavior
+- {doc}`pipeline` — runtime data pipeline object and compatibility config aliases
 - {doc}`experiment` — experiment orchestration
 - {doc}`attack` — attack configuration
 - {doc}`score` — scoring framework

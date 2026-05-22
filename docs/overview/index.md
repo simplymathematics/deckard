@@ -29,18 +29,19 @@ Core themes covered in this section:
 The following pages are ordered for progressive onboarding:
 
 1. [Quickstart](quickstart.md)
-1. [Summary](summary.md)
-1. [Optimization](optimize.md)
-1. [Extensions](extensions.md)
-1. [Installation](installation.md)
-1. [Scoring](scoring.md)
-1. [Notebooks](../notebooks/index.md)
-1. [API Reference](../api/modules.md)
-1. [Developer Docs](../developers/index.md)
-1. [Development](../developers/index.md)
-1. [Build Docs](build_docs.md)
-1. [Docker](docker.md)
-1. [Changelog](changelog.md)
+2. [Summary](summary.md)
+3. [Optimization](optimize.md)
+4. [Extensions](extensions.md)
+5. [Installation](installation.md)
+6. [Data](data.md)
+7. [Scoring](scoring.md)
+8. [Notebooks](../notebooks/index.md)
+9. [API Reference](../api/modules.md)
+10. [Developer Docs](../developers/index.md)
+11. [Development](../developers/index.md)
+12. [Build Docs](build_docs.md)
+13. [Docker](docker.md)
+14. [Changelog](changelog.md)
 
 ## Navigation Notes
 
@@ -62,6 +63,7 @@ for a structured introduction.
 quickstart
 summary
 optimize
+data
 scoring
 extensions
 installation

@@ -9,6 +9,7 @@ import logging
 from ..base import DataPipelineConfig
 from .core import (
     AnjanaDataPipelineConfig,
+    DataPipeline,
     DefaultDataPipelineConfig,
     FairlearnDataPipelineConfig,
 )
@@ -24,6 +25,7 @@ except Exception:  # pragma: no cover
 
 
 __all__ = [
+    "DataPipeline",
     "DataPipelineConfig",
     "DefaultDataPipelineConfig",
     "AnjanaDataPipelineConfig",

@@ -25,6 +25,7 @@ from torch.utils.data import (
 from tqdm.auto import tqdm
 
 from ...data.base import DataConfig, DataPipelineConfig
+from ...data.stages import DataFiles
 from .sample import PytorchBaseSampler
 
 # deckard
@@ -439,6 +440,14 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             and isinstance(scores.get("test"), dict)
         ):
             scores = {"pre-sample": dict(scores["test"]), **scores}
+        if (
+            mode is None
+            and isinstance(scores, dict)
+            and "post-pipeline" in scores
+            and "pre-sample" not in scores
+            and isinstance(scores.get("post-pipeline"), dict)
+        ):
+            scores = {"pre-sample": dict(scores["post-pipeline"]), **scores}
         return scores
 
     def _load_data(self) -> None:
@@ -506,6 +515,9 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             dataset_len = len(full_dataset)
             sample_cap = self._resolve_max_samples(dataset_len)
             n_to_load = dataset_len if sample_cap is None else sample_cap
+            if n_to_load < dataset_len:
+                # Keep sampler length aligned with materialized tensors.
+                self.dataset_obj = Subset(full_dataset, list(range(n_to_load)))
             samples = [full_dataset[i] for i in range(n_to_load)]
             sensitive_values = []
 
@@ -685,8 +697,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
 
     def __call__(  # noqa: F811
         self,
-        data_file: Union[str, None] = None,
-        score_file: Union[str, None] = None,
+        files: DataFiles | None = None,
     ) -> dict:
         """Load, sample, and optionally persist torch data artifacts and scores.
 
@@ -697,6 +708,10 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         Returns:
             A score dictionary augmented with runtime timing metrics.
         """
+        files = dict(files or {})
+        data_file = files.get("data_file")
+        score_file = files.get("score_file")
+
         if data_file is not None:
             assert isinstance(
                 data_file,
@@ -737,9 +752,6 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         scores = self.score()
         all_scores = {**time_dict, **scores}
         self.score_dict = all_scores
-
-        if data_file is not None:
-            pass
 
         if score_file is not None:
             self.save_scores(scores, score_file)
@@ -1021,8 +1033,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
 
     def __call__(
         self,
-        data_file: str | None = None,
-        score_file: str | None = None,
+        files: DataFiles | None = None,
         mode: Union[str, None] = "test",
         *args,
         **kwargs,
@@ -1036,6 +1047,9 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         Returns:
             Dictionary of computed and/or loaded scoring values.
         """
+        files = dict(files or {})
+        data_file = files.get("data_file")
+        score_file = files.get("score_file")
         cached_scores = None
         if data_file is not None and Path(data_file).exists():
             self = self.load_object(data_file)

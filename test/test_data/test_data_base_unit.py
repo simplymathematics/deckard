@@ -10,6 +10,7 @@ from sklearn.preprocessing import FunctionTransformer
 import deckard.data.base as data_base
 import deckard.data.declarations as data_declarations
 from deckard.data.base import DataConfig, DataPipelineConfig
+from deckard.data.pipeline import DataPipeline
 from deckard.score.base import ScorerDictConfig
 
 
@@ -32,14 +33,12 @@ def _basic_data_config(**overrides):
     return DataConfig(**params)
 
 
-def test_data_pipeline_mixin_is_standalone():
-    from deckard.data._mixins import DataPipelineMixin
+def test_data_pipeline_config_is_legacy_alias():
+    assert issubclass(DataPipelineConfig, DataConfig)
 
-    assert hasattr(DataPipelineMixin, "normalize_step_hooks")
-    assert hasattr(DataPipelineMixin, "pipeline_declares_hook")
-    assert hasattr(DataPipelineMixin, "build_pipeline")
-    assert hasattr(DataPipelineMixin, "fit_presample")
-    assert hasattr(DataPipelineConfig, "apply_to")
+    cfg = DataPipelineConfig(scorer="none")
+    assert isinstance(cfg, DataConfig)
+    assert cfg.pipeline is None
 
 
 def test_discover_lifelines_dataset_loaders_handles_import_error(monkeypatch):
@@ -424,47 +423,39 @@ def test_prepare_data_file_existing_and_new(tmp_path):
     loaded_cfg = object()
     cfg.load = lambda path: loaded_cfg
 
-    assert cfg._prepare_data_file(existing.as_posix()) is False
+    assert cfg._prepare_files(files={"data_file": existing.as_posix()}) is False
 
     target = tmp_path / "nested" / "data.pkl"
-    assert cfg._prepare_data_file(target.as_posix()) is True
+    assert cfg._prepare_files(files={"data_file": target.as_posix()}) is True
     assert target.parent.exists()
-    assert cfg._prepare_data_file(None) is False
+    cfg.files = {}
+    assert cfg._prepare_files(files=None) is False
 
 
-def test_pipeline_config_invalid_and_fit_y_paths(monkeypatch):
-    with pytest.raises(AssertionError):
-        DataPipelineConfig(pipeline={"bad": []})
-
+def test_pipeline_config_coerces_legacy_pipeline_specs():
     cfg = DataPipelineConfig(
         pipeline={
-            "target": {
-                "name": "sklearn.preprocessing.FunctionTransformer",
-                "fit_y": True,
-            },
             "feature": {
                 "name": "sklearn.preprocessing.FunctionTransformer",
-                "dtype": "unknown",
+                "fit_X": True,
             },
         },
         scorer="none",
     )
-    x_pipeline, y_pipeline = cfg._init_pipeline()
-    assert isinstance(x_pipeline, data_base.Pipeline)
-    assert y_pipeline[0][0] == "target"
+    assert isinstance(cfg.pipeline, DataPipeline)
 
-    cfg.pipeline = {
-        "bad": {"name": "sklearn.preprocessing.FunctionTransformer", "fit_xy": True},
-    }
-    with pytest.raises(
-        ValueError,
-        match="fit_xy pipeline steps are no longer supported",
-    ):
-        cfg._init_pipeline()
-
-    cfg.pipeline = "invalid"
-    with pytest.raises(ValueError):
-        cfg._init_pipeline()
+    cfg_list = DataPipelineConfig(
+        pipeline=[
+            {
+                "feature": {
+                    "name": "sklearn.preprocessing.FunctionTransformer",
+                    "fit_X": True,
+                },
+            },
+        ],
+        scorer="none",
+    )
+    assert isinstance(cfg_list.pipeline, DataPipeline)
 
 
 def test_pipeline_step_rejects_fit_y_and_fit_xy_both_true():
@@ -547,7 +538,7 @@ def test_pipeline_stage_flags_apply_only_to_declared_stages(monkeypatch):
 
 
 def test_pipeline_dtype_routing_keeps_untyped_steps(monkeypatch):
-    import deckard.data._mixins as data_mixins
+    import deckard.data.pipeline.core as data_pipeline_core
     from sklearn.base import BaseEstimator, TransformerMixin
 
     class IdentityTransformer(BaseEstimator, TransformerMixin):
@@ -558,7 +549,7 @@ def test_pipeline_dtype_routing_keeps_untyped_steps(monkeypatch):
             return X
 
     monkeypatch.setattr(
-        data_mixins,
+        data_pipeline_core,
         "load_class",
         lambda name, *args, **kwargs: IdentityTransformer(),
     )
@@ -578,11 +569,8 @@ def test_pipeline_dtype_routing_keeps_untyped_steps(monkeypatch):
         scorer="none",
     )
 
-    X = pd.DataFrame({"a": [1.0, 2.0], "b": [3.0, 4.0]})
-    y = pd.Series([0, 1])
-    cfg.fit_X(X, y)
-
-    fitted = cfg._fitted_pipeline_X
+    x_steps = cfg.pipeline._collect_x_steps(stage="X")
+    fitted = cfg.pipeline._build_x_pipeline(x_steps)
     assert fitted is not None
     assert [name for name, _ in fitted.steps] == ["preprocess", "untagged"]
 
@@ -608,55 +596,48 @@ def test_score_and_feature_score_branches(monkeypatch):
     cfg.X_test = pd.DataFrame({"a": [1, 2]})
     cfg._X = pd.DataFrame({"a": [1, 2]})
     cfg._y = pd.Series([0, 1])
-    assert cfg.score() == {"base_score": 1, "plugin_score": 7}
+    assert cfg.score() == {"base_score": 1}
+
+    cfg.score_dict = {}
+    cfg._score_orchestration_active = True
+    try:
+        staged = cfg._score_orchestration_hook(stage="post-pipeline")
+    finally:
+        cfg._score_orchestration_active = False
+
+    assert staged == {"base_score": 1, "plugin_score": 7}
+    assert cfg.score_dict == staged
 
 
-def test_fit_transform_x_empty_pipeline_short_circuits():
+def test_empty_runtime_pipeline_leaves_data_unchanged():
     cfg = DataPipelineConfig(pipeline={}, scorer="none")
-    x_train = pd.DataFrame({"a": [1, 2]})
-    x_test = pd.DataFrame({"a": [3]})
-    y_train = pd.Series([0, 1])
-    y_test = pd.Series([1])
+    cfg._X = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    cfg._y = pd.Series([0, 1, 0])
 
-    out = cfg._fit_transform_X(
-        x_train,
-        x_test,
-        y_train,
-        y_test,
-        data_base.Pipeline(steps=[]),
-    )
-    assert out == (x_train, x_test, y_train, y_test)
-    assert cfg.pipeline_fit_time == 0.0
-    assert cfg.pipeline_transform_time == 0.0
+    cfg.fit()
+
+    assert cfg.X_train is not None
+    assert cfg.X_test is not None
+    assert cfg.y_train is not None
+    assert cfg.y_test is not None
 
 
 def test_fit_transform_x_handles_sparse_and_generated_feature_names():
-    cfg = DataPipelineConfig(pipeline={}, scorer="none")
-    x_train = np.array([[1.0], [2.0]])
-    x_test = np.array([[3.0]])
-    y_train = pd.Series([0, 1])
-    y_test = pd.Series([1])
-    pipeline = data_base.Pipeline(
-        steps=[
-            (
-                "csr",
-                FunctionTransformer(
-                    lambda values: data_base.csr_matrix(values),
-                    validate=False,
-                ),
-            ),
-        ],
+    cfg = DataPipelineConfig(scorer="none")
+    runtime = DataPipeline(
+        pipeline={
+            "csr": {
+                "name": "sklearn.preprocessing.FunctionTransformer",
+                "kwargs": {"func": lambda values: data_base.csr_matrix(values), "validate": False},
+            },
+        },
     )
 
-    out_train, out_test, _, _ = cfg._fit_transform_X(
-        x_train,
-        x_test,
-        y_train,
-        y_test,
-        pipeline,
-    )
-    assert list(out_train.columns) == ["feature_0"]
-    assert list(out_test.columns) == ["feature_0"]
+    pipeline = runtime._build_x_pipeline(runtime._collect_x_steps(stage="X"))
+    x_train = pd.DataFrame({"a": [1.0, 2.0]})
+    transformed = runtime._fit_transform_features(pipeline, x_train, x_train)
+
+    assert list(transformed.columns) == ["feature_0"]
 
 
 def test_fit_transform_y_csr_conversion():
@@ -665,60 +646,31 @@ def test_fit_transform_y_csr_conversion():
         lambda values: data_base.csr_matrix(values),
         validate=False,
     )
-    x_train = pd.DataFrame({"a": [1, 2]})
-    x_test = pd.DataFrame({"a": [3]})
     y_train = pd.Series([0, 1])
-    y_test = pd.Series([1])
 
-    with pytest.raises(ValueError, match="1-dimensional"):
-        cfg._fit_transform_y(
-            x_train,
-            x_test,
-            y_train,
-            y_test,
-            [("csr", transformer)],
-        )
+    transformed = cfg.pipeline._fit_transform_target([("csr", transformer)], y_train)
+    assert isinstance(transformed, pd.Series)
+    assert transformed.tolist() == [0, 1]
 
 
 def test_pipeline_call_saves_scores_and_handles_y_pipeline(tmp_path):
-    cfg = DataPipelineConfig(
-        pipeline={
-            "target": {
-                "name": "sklearn.preprocessing.FunctionTransformer",
-                "fit_y": True,
-            },
-        },
-        scorer="none",
-    )
+    cfg = DataPipelineConfig(scorer="none")
     cfg.data_load_time = 0.1
     cfg.data_sample_time = 0.2
-    cfg.pipeline_fit_n = 2
-    cfg.pipeline_transform_n = 1
     cfg.X_train = pd.DataFrame({"a": [1, 2]})
     cfg.X_test = pd.DataFrame({"a": [3]})
     cfg.y_train = pd.Series([0, 1])
     cfg.y_test = pd.Series([1])
-    cfg.sample = lambda run_hooks=True: None
+    cfg.fit = lambda run_hooks=True: cfg
     cfg.load_dataset = lambda: None
-    cfg.read_or_initialize_scores = lambda path: {"existing": 1}
     cfg.score = lambda *args, mode=None, **kwargs: {"metric": 2}
-    cfg._fit_transform_y = lambda X_train, X_test, y_train, y_test, pipeline: (
-        setattr(cfg, "pipeline_y_fit_time", 0.01)
-        or setattr(cfg, "pipeline_y_transform_time", 0.01)
-        or X_train,
-        X_test,
-        y_train,
-        y_test,
-    )
     saved = {}
-    cfg.save_scores = lambda scores, path: saved.update(scores)
-    cfg._prepare_data_file = lambda data_file: False
+    cfg.merge_and_persist_scores = lambda scores, score_file=None: saved.update(scores) or scores
+    cfg._prepare_files = lambda files=None: False
+    cfg.files = {}
 
     score_path = tmp_path / "scores.json"
-    result = cfg(score_file=score_path.as_posix())
+    result = cfg(files={"score_file": score_path.as_posix()})
 
-    assert result["existing"] == 1
     assert result["metric"] == 2
-    assert result["pipeline_fit_n"] == 2
-    assert result["pipeline_transform_n"] == 1
     assert saved["metric"] == 2

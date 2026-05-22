@@ -201,7 +201,9 @@ class TestPytorchDataConfig(unittest.TestCase):
         self.assertEqual(len(self.config.X_test), 100)
 
     def test_call(self):
-        scores = self.config(data_file=str(Path(self.temp_dir) / "data.pkl"))
+        scores = self.config(
+            files={"data_file": str(Path(self.temp_dir) / "data.pkl")},
+        )
         self.assertIn("data_load_time", scores)
         self.assertIn("data_sample_time", scores)
         self.assertGreater(scores["data_load_time"], 0)
@@ -286,12 +288,12 @@ class TestPytorchDataConfig(unittest.TestCase):
         loaded = self.config.load_scores(str(score_path))
 
         self.assertTrue(len(loaded) > 0)
-        self.assertIn("pre-sample", loaded)
-        self.assertIn("num_classes", loaded["pre-sample"])
+        self.assertIn("test", loaded)
+        self.assertIn("num_classes", loaded["test"])
 
     def test_call_with_score_file_saves_json(self):
         score_path = str(Path(self.temp_dir) / "pytorch_scores.json")
-        scores = self.config(score_file=score_path)
+        scores = self.config(files={"score_file": score_path})
         self.assertTrue(Path(score_path).exists())
         self.assertIn("data_load_time", scores)
 
@@ -492,8 +494,10 @@ class TestPytorchDataConfig(unittest.TestCase):
         ) as load_scores:
             with patch.object(self.config, "save_scores") as save_scores:
                 scores = self.config(
-                    data_file=str(data_path),
-                    score_file=str(score_path),
+                    files={
+                        "data_file": str(data_path),
+                        "score_file": str(score_path),
+                    },
                 )
 
         load_scores.assert_not_called()
@@ -738,8 +742,10 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
             with patch.object(loaded, "save_scores") as save_scores:
                 with patch.object(loaded, "save_object") as save_object:
                     scores = cfg(
-                        data_file=str(data_path),
-                        score_file=str(score_path),
+                        files={
+                            "data_file": str(data_path),
+                            "score_file": str(score_path),
+                        },
                         mode="pre-sample",
                     )
 

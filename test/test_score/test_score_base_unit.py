@@ -546,7 +546,7 @@ def test_stage_alias_uses_explicit_mode_for_runtime_split():
     model = SimpleNamespace(val_predictions=np.array([1.0]))
 
     out = scorer_dict(mode="val", stage="post-defense", data=data, model=model)
-    assert out["post-defense"]["sum_true"] == 9.0
+    assert out["val"]["sum_true"] == 9.0
 
 
 def test_stage_matrix_routes_split_and_uses_stage_key():
@@ -580,8 +580,8 @@ def test_stage_matrix_routes_split_and_uses_stage_key():
     ]
     for mode, stage, expected in matrix:
         out = scorer_dict(mode=mode, stage=stage, data=data, model=model)
-        assert stage in out
-        assert out[stage]["sum_true"] == expected
+        assert mode in out
+        assert out[mode]["sum_true"] == expected
 
     with pytest.raises(ValueError, match="reserved for data-profile scorers"):
         scorer_dict(mode="pre-sample", stage="pre-sample", data=data, model=model)
@@ -717,10 +717,10 @@ def test_scorer_config_accepts_multiple_stages_and_matches_either():
     out_defense = cfg(mode="test", stage="post-defense", data=data, model=model)
     out_pipeline = cfg(mode="test", stage="post-pipeline", data=data, model=model)
 
-    assert "post-defense" in out_defense
-    assert "acc" in out_defense["post-defense"]
-    assert "post-pipeline" in out_pipeline
-    assert "acc" in out_pipeline["post-pipeline"]
+    assert "test" in out_defense
+    assert "acc" in out_defense["test"]
+    assert "test" in out_pipeline
+    assert "acc" in out_pipeline["test"]
 
 
 def test_scorer_dict_config_stage_matching_filters_scorers_by_mode():
@@ -803,8 +803,8 @@ def test_scorer_dict_config_stage_override_kwarg_enables_matching():
         data=data,
         model=model,
     )
-    assert "post-defense" in result
-    assert "acc" in result["post-defense"]
+    assert "test" in result
+    assert "acc" in result["test"]
 
 
 def test_scorer_dict_config_persists_mode_stage_token_as_output_key():
@@ -822,10 +822,10 @@ def test_scorer_dict_config_persists_mode_stage_token_as_output_key():
     )
     model = SimpleNamespace(predictions=np.array([0, 1]))
 
-    result = cfg(mode="post-defense", data=data, model=model)
+    result = cfg(mode="test", stage="post-defense", data=data, model=model)
 
-    assert "post-defense" in result
-    assert "acc" in result["post-defense"]
+    assert "test" in result
+    assert "acc" in result["test"]
 
 
 def test_scorer_dict_config_rejects_unsupported_stage_tokens():
@@ -867,20 +867,19 @@ def test_scorer_dict_config_supports_all_SUPPORTED_SCORING_STAGES():
         attack_predictions=np.array([0, 1]),
     )
 
-    for stage in sorted(SUPPORTED_SCORING_STAGES):
+    runtime_modes = ["train", "test", "val", "all", "attack", "attack-val"]
+    for mode in runtime_modes:
         kwargs = {
-            "mode": stage,
+            "mode": mode,
             "data": data,
             "model": model,
         }
-        if stage == "adversarial":
+        if mode in {"attack", "attack-val"}:
             kwargs["attack"] = attack
 
-        if stage == "pre-sample":
-            with pytest.raises(ValueError, match="reserved for data-profile scorers"):
-                cfg(**kwargs)
-            continue
-
         result = cfg(**kwargs)
-        assert stage in result
-        assert "acc" in result[stage]
+        assert mode in result
+        assert "acc" in result[mode]
+
+    with pytest.raises(ValueError, match="reserved for data-profile scorers"):
+        cfg(mode="pre-sample", data=data, model=model)
