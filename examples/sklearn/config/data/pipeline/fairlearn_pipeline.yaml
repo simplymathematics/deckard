@@ -1,3 +1,9 @@
-_target_: deckard.data.pipeline.core.FairlearnDataPipelineConfig
+_target_: deckard.data.DataConfig
 alias: fairlearn
-pipeline: {}
+pipeline:
+  fairness_correlation_remover:
+    name: fairlearn.preprocessing.CorrelationRemover
+    sensitive_feature_ids: [sex]
+  fairness_prototype_representation:
+    name: fairlearn.preprocessing.PrototypeRepresentationLearner
+    max_iter: 1
