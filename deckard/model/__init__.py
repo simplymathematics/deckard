@@ -20,6 +20,15 @@ from .postprocessor import PostprocessorDefenseConfig
 from .preprocessor import PreprocessorDefenseConfig
 from .regularizer import RegularizerDefenseConfig
 from .trainer import TrainerDefenseConfig
+from .trainers import (
+    BaseTrainer,
+    PartialFitPruningTrainer,
+    PartialFitTrainer,
+    PretrainedTrainer,
+    PruningTrainer,
+    PytorchTrainer,
+    SklearnTrainer,
+)
 from .transformer import TransformerDefenseConfig
 
 ScorerDictConfig = Any
@@ -117,6 +126,13 @@ __all__ = [
     "TrainerDefenseConfig",
     "RegularizerDefenseConfig",
     "TransformerDefenseConfig",
+    "BaseTrainer",
+    "SklearnTrainer",
+    "PretrainedTrainer",
+    "PartialFitTrainer",
+    "PartialFitPruningTrainer",
+    "PruningTrainer",
+    "PytorchTrainer",
 ]
 
 if "FairlearnDefenseConfig" in globals():

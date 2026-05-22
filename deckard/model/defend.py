@@ -23,6 +23,7 @@ from ..utils import (
     normalize_plugin_specs,
     resolve_class,
 )
+from .canon import defense_stage_priority, resolve_model_defense_stage
 from .base import ModelConfig
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -116,6 +117,59 @@ supported_defense_types = [
     "transformer",
     None,
 ]
+
+
+@dataclass(eq=False)
+class DefenseStep:
+    """One defense-chain step with explicit fit/predict application flags."""
+
+    defense: Any
+    apply_fit: bool
+    apply_predict: bool
+
+    @staticmethod
+    def _derive_default_flags(defense_obj: Any) -> tuple[bool, bool]:
+        defense_name = str(getattr(defense_obj, "defense_name", "") or "").lower()
+        if defense_name.startswith("fairlearn.") or defense_name.startswith("anjana."):
+            return True, True
+        return True, True
+
+    @classmethod
+    def from_defense(
+        cls,
+        defense_obj: Any,
+        *,
+        apply_fit: bool | None = None,
+        apply_predict: bool | None = None,
+    ) -> "DefenseStep":
+        default_fit, default_predict = cls._derive_default_flags(defense_obj)
+        resolved_apply_fit = default_fit if apply_fit is None else bool(apply_fit)
+        resolved_apply_predict = (
+            default_predict if apply_predict is None else bool(apply_predict)
+        )
+
+        defense_name = str(getattr(defense_obj, "defense_name", "") or "").lower()
+        if defense_name.startswith("art.") and apply_fit is None and apply_predict is None:
+            logger.warning(
+                "ART defense step '%s' is missing explicit apply_fit/apply_predict flags; "
+                "defaulting to apply_fit=True, apply_predict=True.",
+                getattr(defense_obj, "defense_name", type(defense_obj).__name__),
+            )
+
+        return cls(
+            defense=defense_obj,
+            apply_fit=resolved_apply_fit,
+            apply_predict=resolved_apply_predict,
+        )
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.defense, name)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name in {"defense", "apply_fit", "apply_predict"}:
+            object.__setattr__(self, name, value)
+            return
+        setattr(self.defense, name, value)
 
 
 class _DefensePipelineConfigBehaviorMixin:
@@ -246,16 +300,43 @@ class _DefensePipelineConfigBehaviorMixin:
                 self.score_dict.update(output)
 
     def _coerce_single_defense(self, defense_obj):
+        if isinstance(defense_obj, DefenseStep):
+            defense_obj = defense_obj.defense
         if hasattr(defense_obj, "apply_to"):
+            if not hasattr(defense_obj, "apply_fit"):
+                setattr(defense_obj, "apply_fit", True)
+            if not hasattr(defense_obj, "apply_predict"):
+                setattr(defense_obj, "apply_predict", True)
             return defense_obj
 
         defense_obj = coerce_config(defense_obj)
 
         if isinstance(defense_obj, dict):
             defense_dict = cast(dict[str, Any], dict(defense_obj))
+            apply_fit = defense_dict.pop("apply_fit", None)
+            apply_predict = defense_dict.pop("apply_predict", None)
+            raw_params = defense_dict.get("defense_params", None)
+            if isinstance(raw_params, dict):
+                if apply_fit is None and "apply_fit" in raw_params:
+                    apply_fit = raw_params.get("apply_fit")
+                if apply_predict is None and "apply_predict" in raw_params:
+                    apply_predict = raw_params.get("apply_predict")
+            nested_defense = defense_dict.pop("defense", None)
+            if nested_defense is not None:
+                step_defense = self._coerce_single_defense(nested_defense)
+                if apply_fit is not None:
+                    setattr(step_defense, "apply_fit", bool(apply_fit))
+                if apply_predict is not None:
+                    setattr(step_defense, "apply_predict", bool(apply_predict))
+                return step_defense
             target = defense_dict.pop("_target_", None)
             if target is not None:
-                return resolve_class(target)(**defense_dict)
+                defense_instance = resolve_class(target)(**defense_dict)
+                if apply_fit is not None:
+                    setattr(defense_instance, "apply_fit", bool(apply_fit))
+                if apply_predict is not None:
+                    setattr(defense_instance, "apply_predict", bool(apply_predict))
+                return defense_instance
 
             defense_name = defense_dict.get("defense_name")
             if isinstance(defense_name, str) and defense_name.startswith(
@@ -265,10 +346,20 @@ class _DefensePipelineConfigBehaviorMixin:
                     fair_cls = resolve_class(
                         "deckard.plugins.fairlearn.model.FairlearnDefenseConfig",
                     )
-                    return fair_cls(**defense_dict)
+                    defense_instance = fair_cls(**defense_dict)
+                    if apply_fit is not None:
+                        setattr(defense_instance, "apply_fit", bool(apply_fit))
+                    if apply_predict is not None:
+                        setattr(defense_instance, "apply_predict", bool(apply_predict))
+                    return defense_instance
                 except Exception:
                     pass
-            return DefenseConfig(**defense_dict)
+            defense_instance = DefenseConfig(**defense_dict)
+            if apply_fit is not None:
+                setattr(defense_instance, "apply_fit", bool(apply_fit))
+            if apply_predict is not None:
+                setattr(defense_instance, "apply_predict", bool(apply_predict))
+            return defense_instance
 
         raise TypeError(
             f"Unsupported defense specification in pipeline: {type(defense_obj)}",
@@ -334,6 +425,15 @@ class _DefensePipelineConfigBehaviorMixin:
             defense_list = [defenses]
         return [self._coerce_single_defense(item) for item in defense_list]
 
+    def requires_fit_application(self) -> bool:
+        return any(bool(getattr(step, "apply_fit", True)) for step in self.normalize_defenses(getattr(self, "defenses", [])))
+
+    @staticmethod
+    def _unwrap_defense(defense_obj: Any) -> Any:
+        if isinstance(defense_obj, DefenseStep):
+            return defense_obj.defense
+        return defense_obj
+
     def resolve_stage(
         self,
         default_stage: str = "post_fit_pre_predict",
@@ -361,6 +461,7 @@ class _DefensePipelineConfigBehaviorMixin:
 
     def _is_art_defense(self, defense_obj) -> bool:
         """Return True if defense_obj is an ART defense (wraps model, must be last)."""
+        defense_obj = self._unwrap_defense(defense_obj)
         defense_name = getattr(defense_obj, "defense_name", None)
         if isinstance(defense_name, str) and defense_name.startswith("art."):
             return True
@@ -378,6 +479,7 @@ class _DefensePipelineConfigBehaviorMixin:
 
     def _is_model_wrapper_defense(self, defense_obj) -> bool:
         """Return True for defenses that wrap/transform estimators rather than raw data."""
+        defense_obj = self._unwrap_defense(defense_obj)
         if self._is_art_defense(defense_obj):
             return True
         try:
@@ -390,6 +492,7 @@ class _DefensePipelineConfigBehaviorMixin:
         return False
 
     def _is_retraining_defense(self, defense_obj) -> bool:
+        defense_obj = self._unwrap_defense(defense_obj)
         defense_name = getattr(defense_obj, "defense_name", None)
         if not isinstance(defense_name, str):
             return False
@@ -413,6 +516,31 @@ class _DefensePipelineConfigBehaviorMixin:
         defense_chain = self.normalize_defenses(self.defenses)
         if len(defense_chain) == 0:
             return estimator
+
+        staged_chain = []
+        for step in defense_chain:
+            defense_name = getattr(step, "defense_name", None)
+            resolved_stage = resolve_model_defense_stage(
+                defense_name,
+                default_stage=stage,
+            )
+            staged_chain.append((resolved_stage, step))
+
+        sorted_chain = sorted(
+            staged_chain,
+            key=lambda item: defense_stage_priority(item[0]),
+        )
+        if [obj for _, obj in sorted_chain] != defense_chain:
+            logger.warning(
+                "Defense chain stage order adjusted to canonical model defense staging. "
+                "Original=%s Reordered=%s",
+                [getattr(d, "defense_name", type(d).__name__) for d in defense_chain],
+                [
+                    f"{getattr(d, 'defense_name', type(d).__name__)}@{s}"
+                    for s, d in sorted_chain
+                ],
+            )
+            defense_chain = [obj for _, obj in sorted_chain]
 
         # Enforce model-wrapper defenses last: ART/fairlearn estimator wrappers should run
         # after data-transform defenses, while preserving user order within each group.
@@ -490,7 +618,15 @@ class _DefensePipelineConfigBehaviorMixin:
         defended_estimator = estimator
         total_defense_time = 0.0
         applied_defenses = []
-        for defense_obj in defense_chain:
+        for defense_step in defense_chain:
+            defense_obj = self._unwrap_defense(defense_step)
+            stage_token = str(stage).strip().lower()
+            if stage_token in {"pre_fit", "pre_art_defense"}:
+                should_apply = bool(getattr(defense_step, "apply_fit", True))
+            else:
+                should_apply = bool(getattr(defense_step, "apply_predict", True))
+            if not should_apply:
+                continue
             self._inherit_model_context(defense_obj, defended_estimator)
             if (
                 hasattr(defense_obj, "data")
@@ -507,7 +643,7 @@ class _DefensePipelineConfigBehaviorMixin:
                 estimator=defended_estimator,
                 data=data,
                 stage=stage,
-                defense=defense_obj,
+                defense=defense_step,
                 applied_defenses=applied_defenses,
             )
             started = time.perf_counter()
@@ -519,13 +655,13 @@ class _DefensePipelineConfigBehaviorMixin:
             if elapsed is None:
                 elapsed = time.perf_counter() - started
             total_defense_time += float(elapsed)
-            applied_defenses.append(defense_obj)
+            applied_defenses.append(defense_step)
             step_outputs = self._run_plugin_hook(
                 "after_apply_defense_step",
                 estimator=defended_estimator,
                 data=data,
                 stage=stage,
-                defense=defense_obj,
+                defense=defense_step,
                 applied_defenses=applied_defenses,
                 step_defense_time=float(elapsed),
             )
@@ -539,7 +675,9 @@ class _DefensePipelineConfigBehaviorMixin:
             stage=stage,
             defense_chain=defense_chain,
             applied_defenses=applied_defenses,
-            applied_defense_types=[type(d).__name__ for d in applied_defenses],
+            applied_defense_types=[
+                type(self._unwrap_defense(d)).__name__ for d in applied_defenses
+            ],
             defense_application_time=total_defense_time,
         )
         self._merge_plugin_scores(hook_outputs)

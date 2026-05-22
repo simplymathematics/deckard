@@ -836,7 +836,7 @@ class PytorchModelConfig(ModelConfig):
 
         return epoch_metrics
 
-    def _apply_defense(self, data):
+    def _apply_defense(self, data, stage: str = "post_fit_pre_predict"):
         """Override to pre-wrap with a properly configured PyTorchClassifier/Regressor.
 
         The base-class defense pipeline receives the raw ``torch.nn.Module`` as
@@ -861,7 +861,7 @@ class PytorchModelConfig(ModelConfig):
             return art_estimator
 
         stage = defense_pipeline.resolve_stage(
-            default_stage="post_fit_pre_predict",
+            default_stage=stage,
             model=self,
             data=data,
         )

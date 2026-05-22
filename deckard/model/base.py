@@ -1,5 +1,6 @@
 import time
 import logging
+import copy
 from typing import Any, Literal, Union
 import inspect
 from pathlib import Path
@@ -30,6 +31,8 @@ from ..utils import (
     is_null_config_value,
 )
 from ..frameworks.types import ArrayLike, EstimatorLike, MatrixLike
+from .canon import ensure_model_runtime_contract, normalize_model_score_mode
+from .trainers import BaseTrainer
 
 logger = logging.getLogger(__name__)
 
@@ -179,6 +182,8 @@ class ModelConfig(ConfigBase):
     plugins: Union[list, None] = None
     scorer: Any = AUTO_SCORER
     score_mode: Literal["train", "test", "val"] = "test"
+    trainer: Any = "sklearn"
+    trainer_params: dict = None
 
     # Runtime/model state fields
     _model: Any = None
@@ -207,6 +212,7 @@ class ModelConfig(ConfigBase):
         compare=False,
     )
     _defense_pipeline: Any = field(default=None, repr=False, compare=False)
+    _trainer_obj: Any = field(default=None, repr=False, compare=False)
 
     def __post_init__(self):
         """Initialize runtime defaults and normalize model-config state."""
@@ -219,31 +225,13 @@ class ModelConfig(ConfigBase):
 
     def _initialize_runtime_defaults(self) -> None:
         """Initialize runtime attributes that must exist after construction."""
+        if self.model_params is None:
+            self.model_params = {}
+        if self.trainer_params is None:
+            self.trainer_params = {}
         if not hasattr(self, "_model") or self._model is None:
             self._initialize_model()
-        if not hasattr(self, "score_dict") or self.score_dict is None:
-            self.score_dict = {}
-        for attr in [
-            "training_time",
-            "prediction_time",
-            "val_prediction_time",
-            "training_prediction_time",
-            "training_score_time",
-            "prediction_score_time",
-            "val_score_time",
-            "defense_application_time",
-            "training_n",
-            "prediction_n",
-            "val_n",
-            "training_predictions",
-            "predictions",
-            "val_predictions",
-            "training_probabilities",
-            "probabilities",
-            "val_probabilities",
-        ]:
-            if not hasattr(self, attr):
-                setattr(self, attr, None)
+        ensure_model_runtime_contract(self)
 
     def _initialize_target_reference(self) -> None:
         """Ensure the canonical runtime target path is set."""
@@ -486,7 +474,15 @@ class ModelConfig(ConfigBase):
             art_class, init_params = self.get_art_class(data)
             art_model = art_class(self._model, **init_params)
         else:
-            art_model = self._apply_defense(data)
+            defense_pipeline = self._require_defense_pipeline()
+            stage = (
+                "pre_fit"
+                if defense_pipeline is not None
+                and hasattr(defense_pipeline, "requires_fit_application")
+                and defense_pipeline.requires_fit_application()
+                else "post_fit_pre_predict"
+            )
+            art_model = self._apply_defense_for_stage(data, stage=stage)
         return art_model
 
     def get_model(self) -> BaseEstimator:
@@ -504,7 +500,21 @@ class ModelConfig(ConfigBase):
         else:
             return self._model
 
-    def _apply_defense(self, data: "DataConfig") -> EstimatorLike:
+    def _apply_defense_for_stage(self, data: "DataConfig", stage: str):
+        apply_defense = self._apply_defense
+        signature = inspect.signature(apply_defense)
+        accepts_stage = (
+            "stage" in signature.parameters
+            or any(
+                parameter.kind == inspect.Parameter.VAR_KEYWORD
+                for parameter in signature.parameters.values()
+            )
+        )
+        if accepts_stage:
+            return apply_defense(data, stage=stage)
+        return apply_defense(data)
+
+    def _apply_defense(self, data: "DataConfig", stage: str = "post_fit_pre_predict") -> EstimatorLike:
         """Delegate defense application to DefensePipelineConfig."""
 
         if self.defense is None:
@@ -514,7 +524,10 @@ class ModelConfig(ConfigBase):
                 "ModelConfig must have a fitted estimator before applying defense",
             )
 
-        apply_defense, defense_pipeline, _ = self.compose_defense_behavior(data)
+        apply_defense, defense_pipeline, _ = self.compose_defense_behavior(
+            data,
+            default_stage=stage,
+        )
         if apply_defense is None or defense_pipeline is None:
             return self._model
         defended_estimator = apply_defense(self._model)
@@ -749,12 +762,101 @@ class ModelConfig(ConfigBase):
         )
 
     def _canonical_score_mode(self) -> Literal["train", "test", "val"]:
-        mode = str(getattr(self, "score_mode", "test") or "test").lower()
-        if mode not in {"train", "test", "val"}:
-            raise ValueError(
-                f"Unsupported ModelConfig score_mode '{self.score_mode}'. Expected one of: train, test, val.",
-            )
-        return mode
+        return normalize_model_score_mode(getattr(self, "score_mode", "test"))
+
+    def _compose_trainer(self):
+        """Compose and cache runtime trainer callable for this model config."""
+        trainer_obj = getattr(self, "_trainer_obj", None)
+        if trainer_obj is None:
+            trainer_obj = BaseTrainer.compose(self)
+            self._trainer_obj = trainer_obj
+        return trainer_obj
+
+    def _train_with_runtime_trainer(
+        self,
+        data,
+        model_file,
+        times,
+        *,
+        force_retrain: bool = False,
+    ):
+        """Train model via configured runtime trainer object."""
+        trainer_obj = self._compose_trainer()
+        updated_times = trainer_obj(
+            self,
+            data,
+            model_file=model_file,
+            times=times,
+            force_retrain=force_retrain,
+        )
+        if isinstance(updated_times, dict):
+            times.update(updated_times)
+        else:
+            times["training_time"] = getattr(self, "training_time", None)
+            times["training_n"] = getattr(self, "training_n", None)
+        return times
+
+    def _pre_defense_snapshot_key(self) -> str:
+        alias = str(getattr(self, "alias", "") or "").strip().lower()
+        if alias:
+            alias = "".join(ch if ch.isalnum() else "-" for ch in alias).strip("-")
+            if alias:
+                return f"pre-{alias}-defense"
+        return "pre-defense"
+
+    def _cache_pre_defense_runtime(self, times: dict | None = None) -> None:
+        self._pre_defense_runtime_state = {
+            "times": dict(times or {}),
+            "score_dict": copy.deepcopy(self.score_dict or {}),
+            "training_predictions": self.training_predictions,
+            "predictions": self.predictions,
+            "val_predictions": self.val_predictions,
+            "training_probabilities": self.training_probabilities,
+            "probabilities": self.probabilities,
+            "val_probabilities": self.val_probabilities,
+            "training_time": self.training_time,
+            "prediction_time": self.prediction_time,
+            "val_prediction_time": self.val_prediction_time,
+            "training_prediction_time": self.training_prediction_time,
+            "training_score_time": self.training_score_time,
+            "prediction_score_time": self.prediction_score_time,
+            "val_score_time": self.val_score_time,
+            "defense_application_time": self.defense_application_time,
+            "training_n": self.training_n,
+            "prediction_n": self.prediction_n,
+            "val_n": self.val_n,
+        }
+        snapshot_key = self._pre_defense_snapshot_key()
+        if self.score_dict is None:
+            self.score_dict = {}
+        self.score_dict[snapshot_key] = {
+            "cached": True,
+            "retrain_required": True,
+            "training_n": self.training_n,
+            "prediction_n": self.prediction_n,
+            "val_n": self.val_n,
+        }
+
+    def _reset_runtime_predictions(self) -> None:
+        for attr in (
+            "training_predictions",
+            "predictions",
+            "val_predictions",
+            "training_probabilities",
+            "probabilities",
+            "val_probabilities",
+            "training_prediction_time",
+            "prediction_time",
+            "val_prediction_time",
+            "training_score_time",
+            "prediction_score_time",
+            "val_score_time",
+            "training_n",
+            "prediction_n",
+            "val_n",
+            "defense_application_time",
+        ):
+            setattr(self, attr, None)
 
     @staticmethod
     def _mode_score_prefix(mode: str) -> str:
@@ -1184,6 +1286,17 @@ class ModelConfig(ConfigBase):
         )
         self._merge_plugin_scores(hook_outputs)
 
+        self.merge_runtime_files(
+            {
+                "model_file": model_file,
+                "test_predictions_file": test_predictions_file,
+                "train_predictions_file": train_predictions_file,
+                "training_probabilities_file": training_probabilities_file,
+                "test_probabilities_file": test_probabilities_file,
+                "score_file": score_file,
+            },
+        )
+
         self._run_plugin_hook(
             "before_persist",
             data=data,
@@ -1460,6 +1573,7 @@ class ModelConfig(ConfigBase):
                     "Model not trained or loaded. Please train or load a model before prediction.",
                 )
             case _, _:  # Model and/or filepath provided
+                trained_this_call = False
                 if model_file is not None and Path(model_file).exists():
                     logger.info(
                         f"Model file {model_file} exists. Loading model.",
@@ -1485,18 +1599,18 @@ class ModelConfig(ConfigBase):
                         )
                         if self._model is None and hasattr(self, "_initialize_model"):
                             self._initialize_model()
-                        self._train(data.X_train, data.y_train)
+                        times = self._train_with_runtime_trainer(
+                            data,
+                            model_file,
+                            times,
+                        )
+                        trained_this_call = True
                         assert hasattr(
                             self,
                             "_model",
                         ), "Model not initialized after training"
                         if self.defense is not None:
                             self._model = self._apply_defense(data)
-                        times["training_time"] = self.training_time
-                        times["training_n"] = self.training_n
-                        # Save the newly trained mode
-                        if model_file is not None:
-                            self.save_object(self, model_file)
                 else:
                     # train the model if no model exists at the filepath
                     logger.info(
@@ -1511,24 +1625,43 @@ class ModelConfig(ConfigBase):
                     if not model_is_fitted:
                         if self._model is None and hasattr(self, "_initialize_model"):
                             self._initialize_model()
-                        self._train(data.X_train, data.y_train)
-                    times["training_time"] = self.training_time
-                    times["training_n"] = self.training_n
-
-                    if model_file is not None:
-                        self.save_object(self, model_file)
+                        times = self._train_with_runtime_trainer(
+                            data,
+                            model_file,
+                            times,
+                        )
+                        trained_this_call = True
+                    else:
+                        times["training_time"] = self.training_time
+                        times["training_n"] = self.training_n
         # Validate model is trained
         if self._model is None:
             raise NotFittedError("Model is not initialized")
         if self.defense is not None:
             defense_pipeline = self._require_defense_pipeline()
+            if (
+                defense_pipeline is not None
+                and not trained_this_call
+                and hasattr(defense_pipeline, "requires_fit_application")
+                and defense_pipeline.requires_fit_application()
+            ):
+                self._cache_pre_defense_runtime(times)
+                self._reset_runtime_predictions()
+                self._initialize_model()
+                times = self._train_with_runtime_trainer(
+                    data,
+                    model_file,
+                    times,
+                    force_retrain=True,
+                )
+                self._model = self._apply_defense_for_stage(data, stage="pre_fit")
             stage = defense_pipeline.resolve_stage(
                 default_stage="post_fit_pre_predict",
                 model=self,
                 data=data,
             )
             if stage == "post_fit_pre_predict":
-                self._model = self._apply_defense(data)
+                self._model = self._apply_defense_for_stage(data, stage=stage)
                 if getattr(self, "defense_application_time", None) is not None:
                     times["defense_application_time"] = self.defense_application_time
         return times

@@ -10,6 +10,7 @@ from deckard.model.base import ModelConfig
 from deckard.model.defend import (
     DefenseConfig,
     DefensePipelineConfig,
+    DefenseStep,
 )
 
 

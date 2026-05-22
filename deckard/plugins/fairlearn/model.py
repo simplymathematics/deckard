@@ -26,8 +26,12 @@ except ImportError:
     nn_module = None
 
 
-class _FairnessBehaviorMixin:
+class FairnessBehaviorMixin:
     """Shared fairness-aware model behavior used by sklearn and PyTorch configs."""
+
+    def apply_fairness_behavior(self) -> None:
+        """Public entrypoint for fairlearn-specific model behavior setup."""
+        self.__post_init__()
 
     def __post_init__(self):
         if (
@@ -111,13 +115,13 @@ class _FairnessBehaviorMixin:
 @dataclass(eq=False, kw_only=True)
 class FairlearnModelConfig(
     _SensitiveColumnsMixin,
-    _FairnessBehaviorMixin,
+    FairnessBehaviorMixin,
     ModelConfig,
 ):
     """Fairness-aware model config for sklearn models.
 
     Inherits sklearn training/prediction from ModelConfig and adds
-    fairness-aware scoring and defense support via _FairnessBehaviorMixin.
+    fairness-aware scoring and defense support via FairnessBehaviorMixin.
     """
 
     data: Union[FairlearnDataConfig, None] = None
@@ -127,13 +131,13 @@ class FairlearnModelConfig(
 @dataclass(eq=False, kw_only=True)
 class FairlearnPytorchModelConfig(
     _SensitiveColumnsMixin,
-    _FairnessBehaviorMixin,
+    FairnessBehaviorMixin,
     PytorchModelConfig,
 ):
     """Fairness-aware model config for PyTorch models.
 
     Inherits all torch training/prediction/defense from PytorchModelConfig
-    and adds fairness-aware scoring via _FairnessBehaviorMixin.
+    and adds fairness-aware scoring via FairnessBehaviorMixin.
     """
 
     data: Union[FairlearnDataConfig, None] = None
@@ -355,7 +359,7 @@ class FairlearnDefenseConfig(_SensitiveColumnsMixin, DefenseConfig):
 
 __all__ = [
     "_SensitiveColumnsMixin",
-    "_FairnessBehaviorMixin",
+    "FairnessBehaviorMixin",
     "FairlearnModelConfig",
     "FairlearnPytorchModelConfig",
     "FairlearnDefenseConfig",
