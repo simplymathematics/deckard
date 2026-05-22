@@ -21,10 +21,12 @@ from deckard.utils import (
     coerce_to_list,
     create_parser_from_function,
     import_class_from_file,
+    instantiate_plugin_spec,
     load_class,
     load_data,
     merge_list_of_dicts,
     merge_scores_with_collision_suffix,
+    normalize_plugin_specs,
     resolve_class,
     resolve_torch_device,
     safe_store,
@@ -290,6 +292,44 @@ class TestUtilsAdditional(unittest.TestCase):
     def test_load_data_none_raises(self):
         with self.assertRaises(FileNotFoundError):
             load_data(None)
+
+    def test_load_data_supports_npz_via_artifact_loader(self):
+        with tempfile.TemporaryDirectory() as td:
+            npz_path = Path(td) / "arr.npz"
+            import numpy as np
+
+            np.savez(npz_path, data=np.array([[1, 2], [3, 4]]))
+            loaded = load_data(str(npz_path))
+            self.assertIsInstance(loaded, pd.DataFrame)
+            self.assertEqual(loaded.shape, (2, 2))
+
+    def test_normalize_plugin_specs_requires_list_like(self):
+        self.assertEqual(normalize_plugin_specs(None), [])
+        with self.assertRaises(TypeError):
+            normalize_plugin_specs("deckard.plugins.foo.Plugin")
+
+    def test_instantiate_plugin_spec_uses_loader_for_dict_and_string(self):
+        calls = []
+
+        def _loader(path, **kwargs):
+            calls.append((path, kwargs))
+            return {"path": path, **kwargs}
+
+        out_dict = instantiate_plugin_spec(
+            {"name": "pkg.Plugin", "alpha": 1},
+            loader=_loader,
+        )
+        out_str = instantiate_plugin_spec("pkg.Plugin2", loader=_loader)
+
+        self.assertEqual(out_dict["path"], "pkg.Plugin")
+        self.assertEqual(out_dict["alpha"], 1)
+        self.assertEqual(out_str["path"], "pkg.Plugin2")
+        self.assertEqual(len(calls), 2)
+
+    def test_instantiate_plugin_spec_passthrough_object(self):
+        marker = object()
+        out = instantiate_plugin_spec(marker, loader=lambda *_a, **_k: None)
+        self.assertIs(out, marker)
 
     def test_execute_returns_fallback_score_dict_on_exception(self):
         cfg = FailingConfig(score_dict={"fallback": 123})

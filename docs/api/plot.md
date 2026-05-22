@@ -85,6 +85,51 @@ The plotting module routes to backend-specific config objects and ensures
 output files are written consistently. Yellowbrick plotting can hydrate
 experiment context lazily before rendering to avoid repeated setup.
 
+## Canonical backend ownership
+
+- Seaborn plot configs behave like DataConfig extensions and can source data
+  from in-memory frames, `data_file`, `data_config`, or Optuna storage.
+- Yellowbrick plot configs behave like ExperimentConfig extensions and keep
+  experiment preparation logic in Yellowbrick runtime modules.
+
+## Optuna-backed Seaborn recipes
+
+### Seaborn from Optuna storage
+
+```yaml
+plot:
+   _target_: deckard.plugins.seaborn.plot.SeabornPlotConfig
+   plot_type: scatter
+   x: number
+   y: value
+   optuna_storage: sqlite:///build/optuna.db
+   optuna_study_name: tuned_search
+   optuna_query:
+      trial_states:
+         - COMPLETE
+      sort_by: value
+      ascending: false
+      limit: 200
+```
+
+### Seaborn from DataConfig runtime payload
+
+```yaml
+plot:
+   _target_: deckard.plugins.seaborn.plot.SeabornPlotConfig
+   plot_type: line
+   x: number
+   y: value
+   data_config:
+      _target_: deckard.data.base.DataConfig
+      dataset_name: optuna
+      target: value
+      data_params:
+         optuna_storage: sqlite:///build/optuna.db
+         study_name: baseline_search
+         columns: [number, value]
+```
+
 ## Troubleshooting
 
 - Confirm plotting dependencies are installed for the selected backend.

@@ -7,8 +7,9 @@ model, defense, attack, files, and scorers into a single executable unit.
 import logging
 import warnings
 import hashlib
+import time
 from dataclasses import dataclass, field
-from typing import List, Union, Literal, Any
+from typing import List, Union, Literal, Any, Mapping
 from omegaconf import DictConfig, ListConfig, OmegaConf
 import os
 import yaml
@@ -43,6 +44,16 @@ from ..utils import (
 )
 from ..score.base import coerce_scorer_config, _DataScorerMarker, _AttackProfileScorer
 from ..data.sample import BaseSampler, KFoldSampler, ShuffleSampler
+from ..plugins.base import HookBundle, compose_hook_plugins
+from .canon import (
+    CANONICAL_EXPERIMENT_TIMES,
+    CANONICAL_EXPERIMENT_CACHE_STAGES,
+    build_experiment_hook_bundle,
+    build_experiment_hook_graph,
+    build_experiment_stage_cache_key,
+    build_experiment_params_manifest,
+    ensure_experiment_runtime_contract,
+)
 
 try:
     import tensorflow as tf
@@ -287,6 +298,12 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
     classifier: Union[str, bool] = True
     evaluation_mode: Literal["standard", "tuning", "report"] = "standard"
     score_mode: Union[str, list[str], None] = field(default_factory=list)
+    times: dict[str, Any] = field(default_factory=dict)
+    outputs: dict[str, Any] = field(default_factory=dict)
+    params: dict[str, Any] = field(default_factory=dict)
+    hook_plugins: list[Any] = field(default_factory=list)
+    hook_bundles: list[Any] = field(default_factory=list)
+    cache_enabled: bool = True
 
     def _has_explicit_score_mode(self) -> bool:
         if not hasattr(self, "score_mode"):
@@ -1210,8 +1227,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         ), "file must be an instance of FileConfig"
 
     def __post_init__(self) -> None:
-        if not hasattr(self, "score_dict") or self.score_dict is None:
-            self.score_dict = {}
+        ensure_experiment_runtime_contract(self)
         if not hasattr(self, "_target_") or self._target_ is None:
             self._target_ = "deckard.experiment.ExperimentConfig"
         # Set random seed
@@ -1244,9 +1260,217 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         if self.library not in ["sklearn"]:
             self.set_device(self.device if self.device is not None else "cpu")
 
+        self._initialize_hook_orchestration()
+
+        # Store a serializable initialization-time manifest for persistence and caching.
+        self.params = build_experiment_params_manifest(self)
+        self._runtime_cache = self._load_runtime_cache()
+
     def _validate_scorer_scope_configuration(self) -> None:
         """Validate scorer scope and requested score modes at initialization time."""
         return
+
+    def _initialize_hook_orchestration(self) -> None:
+        """Compose canonical and user-provided hook plugins/bundles."""
+        canonical_bundle = build_experiment_hook_bundle()
+        user_bundles: list[HookBundle] = []
+        for bundle in coerce_to_list(self.hook_bundles):
+            if isinstance(bundle, HookBundle):
+                user_bundles.append(bundle)
+            elif isinstance(bundle, dict) and "name" in bundle and "hooks" in bundle:
+                hooks = tuple(bundle.get("hooks") or ())
+                if all(hasattr(hook, "hook_name") for hook in hooks):
+                    user_bundles.append(HookBundle(name=str(bundle["name"]), hooks=hooks))
+
+        self.outputs.setdefault("hooks", {})
+        self.outputs["hooks"]["graph"] = build_experiment_hook_graph()
+        self._composed_hook_plugins = compose_hook_plugins(
+            canonical_bundle,
+            user_bundles,
+            self.hook_plugins,
+        )
+
+    def _run_experiment_stage_hooks(
+        self,
+        when: str,
+        stage: str,
+        *,
+        component: str,
+        **kwargs: Any,
+    ) -> list[Any]:
+        event = str(when).strip().lower()
+        if event not in {"before", "after"}:
+            raise ValueError(f"Hook event must be 'before' or 'after', got {when}")
+        hook_name = f"{event}_{str(stage).strip().lower().replace('-', '_')}"
+        outputs: list[Any] = []
+        for plugin in getattr(self, "_composed_hook_plugins", []):
+            hook = getattr(plugin, hook_name, None)
+            if callable(hook):
+                outputs.append(
+                    hook(
+                        self,
+                        component=component,
+                        stage=stage,
+                        event=event,
+                        **kwargs,
+                    )
+                )
+        return outputs
+
+    def _experiment_stage_hook(
+        self,
+        *,
+        component: str,
+        stage: str,
+        event: str,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Default experiment hook callback used by canonical HookPlugins."""
+        hook_bucket = self.outputs.setdefault("hooks", {})
+        trace = hook_bucket.setdefault("trace", [])
+        trace.append(
+            {
+                "component": component,
+                "stage": stage,
+                "event": event,
+                "run": kwargs.get("run_idx"),
+            }
+        )
+        return {
+            "component": component,
+            "stage": stage,
+            "event": event,
+        }
+
+    def _cache_file_path(self) -> str | None:
+        if not self.cache_enabled:
+            return None
+        params_file = getattr(self.files, "params_file", None)
+        if params_file in [None, ""]:
+            return None
+        params_path = Path(str(params_file))
+        if params_path.suffix.lower() in {".yaml", ".yml"}:
+            return params_path.with_name(f"{params_path.stem}.runtime_cache.pkl").as_posix()
+        return params_path.with_suffix(".runtime_cache.pkl").as_posix()
+
+    def _load_runtime_cache(self) -> dict[str, Any]:
+        if not self.cache_enabled:
+            return {}
+        cache_path = self._cache_file_path()
+        if cache_path is None or not Path(cache_path).exists():
+            return {}
+        payload = self.load_object(cache_path, ignore_corrupt=True, delete_corrupt=True)
+        if isinstance(payload, dict):
+            return payload
+        return {}
+
+    def _persist_runtime_cache(self) -> None:
+        if not self.cache_enabled:
+            return
+        cache_path = self._cache_file_path()
+        if cache_path is None:
+            return
+        self.save_object(getattr(self, "_runtime_cache", {}), cache_path)
+
+    def _build_stage_cache_key(
+        self,
+        *,
+        stage: str,
+        component: str,
+        identity: Mapping[str, Any] | None = None,
+    ) -> str:
+        return build_experiment_stage_cache_key(
+            params_manifest=self.params,
+            stage=stage,
+            component=component,
+            identity=identity,
+        )
+
+    def _cache_stage_get(
+        self,
+        *,
+        stage: str,
+        component: str,
+        identity: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        if not self.cache_enabled or stage not in CANONICAL_EXPERIMENT_CACHE_STAGES:
+            return None
+        cache_key = self._build_stage_cache_key(
+            stage=stage,
+            component=component,
+            identity=identity,
+        )
+        cache_store = getattr(self, "_runtime_cache", {})
+        stage_bucket = cache_store.get(stage, {})
+        cached = stage_bucket.get(cache_key)
+        if isinstance(cached, dict):
+            self.outputs.setdefault("cache", {}).setdefault("hits", []).append(
+                {"stage": stage, "component": component, "key": cache_key}
+            )
+            return cached
+        return None
+
+    def _cache_stage_set(
+        self,
+        *,
+        stage: str,
+        component: str,
+        value: Mapping[str, Any],
+        identity: Mapping[str, Any] | None = None,
+    ) -> None:
+        if not self.cache_enabled or stage not in CANONICAL_EXPERIMENT_CACHE_STAGES:
+            return
+        cache_key = self._build_stage_cache_key(
+            stage=stage,
+            component=component,
+            identity=identity,
+        )
+        cache_store = getattr(self, "_runtime_cache", {})
+        stage_bucket = cache_store.setdefault(stage, {})
+        stage_bucket[cache_key] = dict(value)
+        self._runtime_cache = cache_store
+        self.outputs.setdefault("cache", {}).setdefault("writes", []).append(
+            {"stage": stage, "component": component, "key": cache_key}
+        )
+
+    @staticmethod
+    def _sample_cache_fields() -> tuple[str, ...]:
+        return (
+            "train_indices",
+            "test_indices",
+            "val_indices",
+            "X_train",
+            "y_train",
+            "X_test",
+            "y_test",
+            "X_val",
+            "y_val",
+            "train_n",
+            "test_n",
+            "val_n",
+            "pipeline_fit_n",
+            "pipeline_transform_n",
+            "pipeline_fit_time",
+            "pipeline_transform_time",
+            "pipeline_y_fit_n",
+            "pipeline_y_transform_n",
+            "pipeline_y_fit_time",
+            "pipeline_y_transform_time",
+            "data_load_time",
+            "data_sample_time",
+        )
+
+    def _capture_sample_cache_value(self) -> dict[str, Any]:
+        value: dict[str, Any] = {"score_dict": dict(getattr(self.data, "score_dict", {}) or {})}
+        for attr in self._sample_cache_fields():
+            value[attr] = getattr(self.data, attr, None)
+        return value
+
+    def _apply_sample_cache_value(self, value: Mapping[str, Any]) -> None:
+        for attr in self._sample_cache_fields():
+            if attr in value:
+                setattr(self.data, attr, value.get(attr))
+        self.data.score_dict = dict(value.get("score_dict", {}) or {})
 
     def set_random_seed(self) -> None:
         if self.library in ["sklearn"]:
@@ -1325,6 +1549,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         self,
         model_file_outputs: dict,
         attack_file_outputs: dict,
+        *,
+        run_idx: int | None = None,
     ) -> dict:
         """Run model training, optional attack, and optional custom scoring for the
         current state of ``self.data`` (already loaded and sampled).
@@ -1336,28 +1562,73 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         self._propagate_score_mode()
 
         if self.model:
-            if hasattr(self.model, "set_epoch_attack") and callable(
-                getattr(self.model, "set_epoch_attack"),
-            ):
-                self.model.set_epoch_attack(self.attack)
-            self.model(data=self.data, **model_file_outputs)
-            assert hasattr(
-                self.model,
-                "training_predictions",
-            ), "model must have training_predictions attribute after training"
-            assert hasattr(
-                self.model,
-                "predictions",
-            ), "model must have predictions attribute after training"
-            assert hasattr(
-                self.model,
-                "score_dict",
-            ), "model must have score_dict attribute after training"
-            scores.update(**self.model.score_dict)
-            if hasattr(self.model, "set_epoch_attack") and callable(
-                getattr(self.model, "set_epoch_attack"),
-            ):
-                self.model.set_epoch_attack(None)
+            self._run_experiment_stage_hooks(
+                "before",
+                "train",
+                component="model",
+                run_idx=run_idx,
+            )
+            cached_model = self._cache_stage_get(
+                stage="train",
+                component="model",
+                identity={"run_idx": run_idx},
+            )
+            if isinstance(cached_model, dict):
+                self.model.score_dict = dict(cached_model.get("score_dict", {}))
+                self.model.training_predictions = cached_model.get("training_predictions")
+                self.model.predictions = cached_model.get("predictions")
+                self.model.training_probabilities = cached_model.get("training_probabilities")
+                self.model.probabilities = cached_model.get("probabilities")
+                scores.update(**self.model.score_dict)
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "train",
+                    component="model",
+                    run_idx=run_idx,
+                    cache_hit=True,
+                )
+            else:
+                if hasattr(self.model, "set_epoch_attack") and callable(
+                    getattr(self.model, "set_epoch_attack"),
+                ):
+                    self.model.set_epoch_attack(self.attack)
+                self.model(data=self.data, **model_file_outputs)
+                assert hasattr(
+                    self.model,
+                    "training_predictions",
+                ), "model must have training_predictions attribute after training"
+                assert hasattr(
+                    self.model,
+                    "predictions",
+                ), "model must have predictions attribute after training"
+                assert hasattr(
+                    self.model,
+                    "score_dict",
+                ), "model must have score_dict attribute after training"
+                scores.update(**self.model.score_dict)
+                if hasattr(self.model, "set_epoch_attack") and callable(
+                    getattr(self.model, "set_epoch_attack"),
+                ):
+                    self.model.set_epoch_attack(None)
+                self._cache_stage_set(
+                    stage="train",
+                    component="model",
+                    identity={"run_idx": run_idx},
+                    value={
+                        "score_dict": dict(getattr(self.model, "score_dict", {}) or {}),
+                        "training_predictions": getattr(self.model, "training_predictions", None),
+                        "predictions": getattr(self.model, "predictions", None),
+                        "training_probabilities": getattr(self.model, "training_probabilities", None),
+                        "probabilities": getattr(self.model, "probabilities", None),
+                    },
+                )
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "train",
+                    component="model",
+                    run_idx=run_idx,
+                    cache_hit=False,
+                )
         else:
             logger.info("No model config provided, skipping model training.")
 
@@ -1369,6 +1640,36 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             multi_attack = len(attack_chain) > 1
             try:
                 for attack_cfg in attack_chain:
+                    attack_component = (
+                        f"attack:{attack_cfg.alias}" if multi_attack else "attack"
+                    )
+                    self._run_experiment_stage_hooks(
+                        "before",
+                        "attack",
+                        component=attack_component,
+                        run_idx=run_idx,
+                    )
+                    cached_attack = self._cache_stage_get(
+                        stage="attack",
+                        component=attack_component,
+                        identity={"run_idx": run_idx},
+                    )
+                    if isinstance(cached_attack, dict):
+                        attack_cfg.score_dict = dict(cached_attack.get("score_dict", {}))
+                        attack_cfg.attack_predictions = cached_attack.get("attack_predictions")
+                        scores = merge_scores_with_collision_suffix(
+                            scores,
+                            attack_cfg.score_dict,
+                            alias=attack_cfg.alias if multi_attack else None,
+                        )
+                        self._run_experiment_stage_hooks(
+                            "after",
+                            "attack",
+                            component=attack_component,
+                            run_idx=run_idx,
+                            cache_hit=True,
+                        )
+                        continue
                     run_outputs = self._build_attack_file_outputs_for_run(
                         attack_file_outputs,
                         attack_cfg,
@@ -1396,6 +1697,22 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                         attack_cfg.score_dict,
                         alias=attack_cfg.alias if multi_attack else None,
                     )
+                    self._cache_stage_set(
+                        stage="attack",
+                        component=attack_component,
+                        identity={"run_idx": run_idx},
+                        value={
+                            "score_dict": dict(getattr(attack_cfg, "score_dict", {}) or {}),
+                            "attack_predictions": getattr(attack_cfg, "attack_predictions", None),
+                        },
+                    )
+                    self._run_experiment_stage_hooks(
+                        "after",
+                        "attack",
+                        component=attack_component,
+                        run_idx=run_idx,
+                        cache_hit=False,
+                    )
 
                 self.attack = attack_chain[0]
             except ValueError as e:
@@ -1409,21 +1726,90 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 raise ValueError(
                     "Detector phase requires an attack configuration/output.",
                 )
-            detector_attack = self._build_detector_attack_view(attack_chain)
-            self.detector(
-                data=self.data,
-                model=self.model,
-                attack=detector_attack,
+            self._run_experiment_stage_hooks(
+                "before",
+                "defense",
+                component="detector",
+                run_idx=run_idx,
             )
-            assert hasattr(
-                self.detector,
-                "score_dict",
-            ), "detector must have score_dict attribute after execution"
-            scores.update(**self.detector.score_dict)
+            cached_detector = self._cache_stage_get(
+                stage="defense",
+                component="detector",
+                identity={"run_idx": run_idx},
+            )
+            if isinstance(cached_detector, dict):
+                self.detector.score_dict = dict(cached_detector.get("score_dict", {}))
+                scores.update(**self.detector.score_dict)
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "defense",
+                    component="detector",
+                    run_idx=run_idx,
+                    cache_hit=True,
+                )
+            else:
+                detector_attack = self._build_detector_attack_view(attack_chain)
+                self.detector(
+                    data=self.data,
+                    model=self.model,
+                    attack=detector_attack,
+                )
+                assert hasattr(
+                    self.detector,
+                    "score_dict",
+                ), "detector must have score_dict attribute after execution"
+                scores.update(**self.detector.score_dict)
+                self._cache_stage_set(
+                    stage="defense",
+                    component="detector",
+                    identity={"run_idx": run_idx},
+                    value={"score_dict": dict(getattr(self.detector, "score_dict", {}) or {})},
+                )
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "defense",
+                    component="detector",
+                    run_idx=run_idx,
+                    cache_hit=False,
+                )
         else:
             logger.info("No detector config provided, skipping detector phase.")
 
-        custom_scores = self._run_experiment_scorer_modes(score_file=None)
+        self._run_experiment_stage_hooks(
+            "before",
+            "score",
+            component="experiment",
+            run_idx=run_idx,
+        )
+        cached_scores = self._cache_stage_get(
+            stage="score",
+            component="experiment",
+            identity={"run_idx": run_idx},
+        )
+        if isinstance(cached_scores, dict):
+            custom_scores = dict(cached_scores.get("score_dict", {}))
+            self._run_experiment_stage_hooks(
+                "after",
+                "score",
+                component="experiment",
+                run_idx=run_idx,
+                cache_hit=True,
+            )
+        else:
+            custom_scores = self._run_experiment_scorer_modes(score_file=None)
+            self._cache_stage_set(
+                stage="score",
+                component="experiment",
+                identity={"run_idx": run_idx},
+                value={"score_dict": dict(custom_scores or {})},
+            )
+            self._run_experiment_stage_hooks(
+                "after",
+                "score",
+                component="experiment",
+                run_idx=run_idx,
+                cache_hit=False,
+            )
         if custom_scores:
             scores = {**scores, **custom_scores}
 
@@ -1476,6 +1862,10 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
     def __call__(
         self,
     ) -> dict:
+        run_start = time.process_time()
+        self.params = build_experiment_params_manifest(self)
+        self._runtime_cache = self._load_runtime_cache()
+        self.outputs.setdefault("cache", {})
         # Initialize Scores
         scores = {}
         # Set random seed
@@ -1502,6 +1892,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         # ------------------------------------------------------------------
         # Data loading (always done once; sampling may repeat per fold)
         # ------------------------------------------------------------------
+        self._run_experiment_stage_hooks("before", "load", component="data")
         data_file_path = data_file_outputs.get("data_file", None)
         if (
             isinstance(data_file_path, (str, Path))
@@ -1518,6 +1909,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 self.data.load_dataset()
             else:
                 self.data(files=data_file_outputs)
+        self._run_experiment_stage_hooks("after", "load", component="data")
 
         assert hasattr(self.data, "X_train") or hasattr(
             self.data,
@@ -1541,47 +1933,61 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 # Reset sampling state so _sample() runs fresh for this run
                 self.data.split = run_idx
                 self.data.data_sample_time = None
-                for attr in (
-                    "train_indices",
-                    "test_indices",
-                    "val_indices",
-                    "X_train",
-                    "y_train",
-                    "X_test",
-                    "y_test",
-                    "X_val",
-                    "y_val",
-                    "train_n",
-                    "test_n",
-                    "val_n",
-                    "pipeline_fit_n",
-                    "pipeline_transform_n",
-                    "pipeline_fit_time",
-                    "pipeline_transform_time",
-                    "pipeline_y_fit_n",
-                    "pipeline_y_transform_n",
-                    "pipeline_y_fit_time",
-                    "pipeline_y_transform_time",
-                ):
+                for attr in self._sample_cache_fields():
                     setattr(self.data, attr, None)
                 self.data.score_dict = {}
-                # Run full data runtime per fold so DataConfig hooks and
-                # transformations (e.g., StringDistanceTransformer) execute.
-                self.data(
-                    files={
-                        "data_file": None,
-                        "score_file": None,
-                    },
+                self._run_experiment_stage_hooks(
+                    "before",
+                    "sample",
+                    component="data",
+                    run_idx=run_idx,
                 )
-                self.data.score_dict.update(
-                    data_load_time=self.data.data_load_time,
-                    data_sample_time=self.data.data_sample_time,
-                    train_n=self.data.train_n,
-                    test_n=self.data.test_n,
+                cached_sample = self._cache_stage_get(
+                    stage="sample",
+                    component="data",
+                    identity={"run_idx": run_idx, "suffix": run_suffix},
                 )
+                if isinstance(cached_sample, dict):
+                    self._apply_sample_cache_value(cached_sample)
+                    self._run_experiment_stage_hooks(
+                        "after",
+                        "sample",
+                        component="data",
+                        run_idx=run_idx,
+                        cache_hit=True,
+                    )
+                else:
+                    # Run full data runtime per fold so DataConfig hooks and
+                    # transformations (e.g., StringDistanceTransformer) execute.
+                    self.data(
+                        files={
+                            "data_file": None,
+                            "score_file": None,
+                        },
+                    )
+                    self.data.score_dict.update(
+                        data_load_time=self.data.data_load_time,
+                        data_sample_time=self.data.data_sample_time,
+                        train_n=self.data.train_n,
+                        test_n=self.data.test_n,
+                    )
+                    self._cache_stage_set(
+                        stage="sample",
+                        component="data",
+                        identity={"run_idx": run_idx, "suffix": run_suffix},
+                        value=self._capture_sample_cache_value(),
+                    )
+                    self._run_experiment_stage_hooks(
+                        "after",
+                        "sample",
+                        component="data",
+                        run_idx=run_idx,
+                        cache_hit=False,
+                    )
                 fold_scores = self._run_single_pipeline(
                     model_file_outputs,
                     attack_file_outputs,
+                    run_idx=run_idx,
                 )
                 per_run_scores.append(fold_scores)
 
@@ -1613,6 +2019,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             scores = self._run_single_pipeline(
                 model_file_outputs,
                 attack_file_outputs,
+                run_idx=None,
             )
             if self.model is None:
                 self.model = None
@@ -1621,6 +2028,32 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         self.merge_runtime_files(file_dict)
         scores = dict(self.score_dict)
 
+        self.times.update(
+            {
+                "data_load_time": getattr(self.data, "data_load_time", None),
+                "data_sample_time": getattr(self.data, "data_sample_time", None),
+                "model_training_time": getattr(self.model, "training_time", None)
+                if self.model is not None
+                else None,
+                "attack_time": sum(
+                    float(getattr(attack_cfg, "attack_time", 0.0) or 0.0)
+                    for attack_cfg in getattr(self, "_attack_chain", [])
+                )
+                if len(getattr(self, "_attack_chain", [])) > 0
+                else None,
+                "detector_time": getattr(self.detector, "detector_time", None)
+                if self.detector is not None
+                else None,
+            },
+        )
+        self.times["experiment_total_time"] = time.process_time() - run_start
+
+        self.outputs["scores"] = dict(scores)
+        self.outputs["files"] = dict(file_dict)
+        self.outputs["cache"]["path"] = self._cache_file_path()
+        self.params = build_experiment_params_manifest(self)
+
+        self._run_experiment_stage_hooks("before", "persist", component="experiment")
         if "score_file" in file_dict:
             scores = self.merge_and_persist_scores(
                 scores,
@@ -1628,4 +2061,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             )
         else:
             logger.info("No score_file specified, skipping score saving.")
+        self._persist_runtime_cache()
+        self._run_experiment_stage_hooks("after", "persist", component="experiment")
+
+        for key in CANONICAL_EXPERIMENT_TIMES:
+            self.score_dict[key] = self.times.get(key)
         return scores

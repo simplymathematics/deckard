@@ -4,7 +4,7 @@ import time
 import unittest
 from pathlib import Path
 
-from deckard.file import FileConfig
+from deckard.file import CanonFileHandler, FileConfig, FileConfigError
 
 
 class TestFileConfig(unittest.TestCase):
@@ -80,3 +80,29 @@ class TestFileConfig(unittest.TestCase):
         self.assertIn("model_file", keys)
         self.assertIn("score_file", keys)
         self.assertGreaterEqual(len(config), 2)
+
+    def test_canon_handler_parses_and_replaces_placeholders(self):
+        handler = CanonFileHandler()
+        template = "run-{num}-{hash}-{timestamp}.json"
+        parsed = handler.parse_placeholders(template)
+        self.assertIn("{num}", parsed)
+        self.assertIn("{hash}", parsed)
+        rendered = handler.replace_placeholders(
+            template,
+            {"{num}": "7", "{hash}": "abc", "{timestamp}": "now"},
+        )
+        self.assertEqual(rendered, "run-7-abc-now.json")
+
+    def test_handler_validate_keys_rejects_unknown(self):
+        handler = CanonFileHandler()
+        with self.assertRaises(FileConfigError):
+            handler.validate_keys({"unknown_file": "x.txt"})
+
+    def test_file_config_disk_status_reports_existing_paths(self):
+        temp_file = Path(self.temp_dirs["data_directory"]) / "d.csv"
+        temp_file.write_text("x,y\n1,2\n", encoding="utf-8")
+
+        config = FileConfig(data_file=str(temp_file), model_file="/tmp/missing.pkl")
+        status = config.disk_status()
+        self.assertTrue(status["data_file"])
+        self.assertFalse(status["model_file"])

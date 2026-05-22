@@ -581,12 +581,9 @@ class AttackConfig(ConfigBase):
         return attack_type, attack_subtype
 
     def _instantiate_plugin(self, plugin_spec: Any):
-        def _resolve_and_instantiate(path: str, **kwargs):
-            return resolve_class(path)(**kwargs)
-
         return instantiate_plugin_spec(
             plugin_spec,
-            loader=_resolve_and_instantiate,
+            loader=load_class,
         )
 
     def _get_plugins(self) -> list:

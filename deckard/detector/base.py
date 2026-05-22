@@ -18,6 +18,7 @@ from ..utils import (
     ConfigBase,
     coerce_config,
     instantiate_plugin_spec,
+    load_class,
     normalize_plugin_specs,
     resolve_class,
 )
@@ -114,10 +115,7 @@ class DetectorConfig(ConfigBase):
         self.scorer = self._coerce_scorer(self.scorer)
 
     def _instantiate_plugin(self, plugin_spec: Any):
-        def _resolve_and_instantiate(path: str, **kwargs):
-            return resolve_class(path)(**kwargs)
-
-        return instantiate_plugin_spec(plugin_spec, loader=_resolve_and_instantiate)
+        return instantiate_plugin_spec(plugin_spec, loader=load_class)
 
     def _get_plugins(self) -> list:
         if self._plugin_objects is None:

@@ -1320,44 +1320,15 @@ def save_data(
     filepath: Union[str, None] = None,
     **kwargs,
 ) -> None:
-    """Persist tabular data to one of deckard's supported file formats."""
-    supported_filetypes = [
-        ".csv",
-        ".parquet",
-        ".pkl",
-        ".html",
-        ".json",
-        ".xlsx",
-    ]
-    assert filepath is not None, "Filepath must be provided to save data."
-    data_path = Path(filepath)
-    data_path.parent.mkdir(parents=True, exist_ok=True)
-    filetype = data_path.suffix
-    if not isinstance(data, pd.DataFrame):
-        data = pd.DataFrame(data)
-    match filetype:
-        case ".pkl":
-            data.to_pickle(data_path, **kwargs)
-        case ".csv":
-            data.to_csv(data_path, index=False, **kwargs)
-        case ".parquet":
-            data.to_parquet(data_path, index=False, **kwargs)
-        case ".html":
-            data.to_html(data_path, index=False, **kwargs)
-        case ".json":
-            data.to_json(data_path, orient="records", lines=True, **kwargs)
-        case ".xlsx":
-            data.to_excel(data_path, index=False, **kwargs)
-        case _:
-            raise ValueError(
-                f"Unsupported file type {data_path.suffix}. Supported types: {supported_filetypes}",
-            )
-    assert Path(data_path).exists(), f"Failed to save data to {data_path}"
-    logger.info(f"Data saved to {data_path}")
+    """Persist tabular data via ArtifactLoaderConfig IO contract."""
+    loader = ArtifactLoaderConfig(payload_kind="data")
+    loader.save_data(data, filepath, **kwargs)
+    if filepath is not None:
+        logger.info(f"Data saved to {Path(filepath)}")
 
 
 def load_data(filepath: str, **kwargs) -> pd.DataFrame:
-    """Load tabular data into a DataFrame from a supported file type.
+    """Load tabular data via ArtifactLoaderConfig IO contract.
 
     Args:
         filepath: Source data file path.
@@ -1371,44 +1342,10 @@ def load_data(filepath: str, **kwargs) -> pd.DataFrame:
         ValueError: If the file extension is unsupported.
     """
 
-    if filepath is None:
-        raise FileNotFoundError("Filepath is None.")
-    supported_filetypes = [
-        ".csv",
-        ".json",
-        ".xlsx",
-        ".parquet",
-        ".pkl",
-        ".npz",
-        ".html",
-    ]
-
-    match Path(filepath).suffix:
-        case ".pkl":
-            data = pd.read_pickle(filepath, **kwargs)
-        case ".csv":
-            data = pd.read_csv(filepath, **kwargs)
-        case ".json":
-            json_kwargs = {"orient": "records", **kwargs}
-            if "lines" not in json_kwargs:
-                try:
-                    data = pd.read_json(filepath, lines=True, **json_kwargs)
-                except ValueError:
-                    data = pd.read_json(filepath, **json_kwargs)
-            else:
-                data = pd.read_json(filepath, **json_kwargs)
-        case ".xlsx":
-            data = pd.read_excel(filepath, **kwargs)
-        case ".parquet":
-            data = pd.read_parquet(filepath, **kwargs)
-        case ".html":
-            data = pd.read_html(filepath, **kwargs)[0]
-        case _:
-            raise ValueError(
-                f"Unsupported file type {Path(filepath).suffix}. Supported types: {supported_filetypes}",
-            )
+    loader = ArtifactLoaderConfig(payload_kind="data")
+    data = loader.load_data(filepath, **kwargs)
     logger.info(f"Data loaded from {Path(filepath)}")
-    return data
+    return pd.DataFrame(data)
 
 
 def import_class_from_file(

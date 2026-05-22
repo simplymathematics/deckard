@@ -17,6 +17,7 @@ integrating with Deckard.
 - [Mixin and Plugin Rules](mixin_plugin_rules)
 - [Data Runtime Canon](data_runtime_canon)
 - [Model Runtime Canon](model_runtime_canon)
+- [Persistence and Runtime State Contract](persistence)
 - [Plugin Runtime Migration Guardrails](plugin_runtime_migration)
 - [Docstring Standard](docstring_standard)
 - [GH Actions Cache Setup](gh_actions_cache)
@@ -34,6 +35,7 @@ naming_conventions
 mixin_plugin_rules
 data_runtime_canon
 model_runtime_canon
+persistence
 plugin_runtime_migration
 docstring_standard
 gh_actions_cache
@@ -50,4 +52,5 @@ ______________________________________________________________________
 - [Build Docs](../overview/build_docs)
 - [Data Runtime Canon](data_runtime_canon)
 - [Model Runtime Canon](model_runtime_canon)
+- [Persistence and Runtime State Contract](persistence)
 - [Plugin Runtime Migration Guardrails](plugin_runtime_migration)

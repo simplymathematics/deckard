@@ -157,52 +157,116 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x] Emit `poison_filter_success` and `evasion_filter_success` scores and ensure successful filtering yields unperturbed inputs/labels for downstream scoring consistency.
 
 ## Scorer Checklist:
-- [ ] Define a canonical scorer runtime contract for `score_mode`, stage hooks, and score aggregation.
-- [ ] Normalize scorer output shapes so score dictionaries remain flat, serializable, and merge-safe.
-- [ ] Keep scorer policy logic split-scoped and separate from hook-stage lifecycle names.
-- [ ] Add scorer contract tests for stage dispatch, score merging, and persistence of score artifacts.
-- [ ] Update scorer docs and examples to describe the canonical scoring path.
+- [x] Define a canonical scorer runtime contract for `score_mode`, stage hooks, and score aggregation.
+- [x] Normalize scorer output shapes so score dictionaries remain flat, serializable, and merge-safe.
+- [x] Keep scorer policy logic split-scoped and separate from hook-stage lifecycle names.
+- [x] Add scorer contract tests for stage dispatch, score merging, and persistence of score artifacts.
+- [x] Update scorer docs and examples to describe the canonical scoring path.
+
+### Scorer Serialization Contract (Pending)
+- [ ] Add vector-valued scoring support in runtime and persistence layers.
+- [ ] Ensure score persistence uses human-readable and easy-to-parse formats (JSON/YAML first).
+- [ ] Implement explicit score de-serialization and serialization contract for scalar, vector, and nested score payloads.
+- [ ] Guarantee final persisted score output includes:
+  - [ ] a flat dictionary keyed by runtime scope (mode/stage dependent)
+  - [ ] a dot.list OmegaConf-style dictionary for easy downstream parsing.
 
 ## Optuna DB Checklist
-- [ ] Define canonical Optuna study dataframe loading helpers and use them as shared runtime APIs.
-- [ ] Route DataConfig dataset loading to support optuna-backed sources (`optuna`, `.db`, `.sqlite3`, or explicit `optuna_storage`).
-- [ ] Treat Seaborn plot configs as DataConfig extensions by accepting/resolving DataConfig runtime payloads directly.
-- [ ] Treat Yellowbrick plot configs as ExperimentConfig extensions and keep experiment-only preparation logic in Yellowbrick modules.
-- [ ] Add focused tests for Optuna-backed DataConfig loading and Seaborn plotting from Optuna/DataConfig sources.
-- [ ] Update plotting and data docs/examples to describe canonical `optuna.db` query paths.
+- [x] Define canonical Optuna study dataframe loading helpers and use them as shared runtime APIs.
+- [x] Route DataConfig dataset loading to support optuna-backed sources (`optuna`, `.db`, `.sqlite3`, or explicit `optuna_storage`).
+- [x] Treat Seaborn plot configs as DataConfig extensions by accepting/resolving DataConfig runtime payloads directly.
+- [x] Treat Yellowbrick plot configs as ExperimentConfig extensions and keep experiment-only preparation logic in Yellowbrick modules.
+- [x] Add focused tests for Optuna-backed DataConfig loading and Seaborn plotting from Optuna/DataConfig sources.
+- [x] Update plotting and data docs/examples to describe canonical `optuna.db` query paths.
 
 
 
 ## Plot Checklist
-- [ ] Define a canonical plot runtime contract for `files`, `times`, plot output state, and backend selection.
-- [ ] Normalize plot backend dispatch so Seaborn, Yellowbrick, and survival plotting remain thin wrappers over the shared plot API.
-- [ ] Keep experiment-preparation and output hydration policy-only in backend-specific modules.
-- [ ] Add plot contract tests for lazy setup, files-only persistence, and one-time experiment preparation.
-- [ ] Update plot docs and example configs to reflect canonical plot behavior.
+- [x] Define a canonical plot runtime contract for `files`, `times`, plot output state, and backend selection.
+- [x] Normalize plot backend dispatch so Seaborn, Yellowbrick, and survival plotting remain thin wrappers over the shared plot API.
+- [x] Keep experiment-preparation and output hydration policy-only in backend-specific modules.
+- [x] Add plot contract tests for lazy setup, files-only persistence, and one-time experiment preparation.
+- [x] Update plot docs and example configs to reflect canonical plot behavior.
 
 ## File Checklist
-- [ ] Decentralize the file-schema `TypedDict`s into module-local canon definitions instead of centralizing them in one registry file (These currently exist in *canon.py files).
-- [ ] Introduce a shared abstract file handler that can operate on the canon `TypedDict`s for disk-status checks, parsing, string replacement, and validation.
-- [ ] Keep `FileConfig` as the public typed file registry while removing legacy group-specific path assumptions from runtime call sites.
-- [ ] Align file placeholders (`{num}`, `{timestamp}`, `{hash}`, replacements) with the final runtime identity and multirun behavior.
-- [ ]Ensure that {num}/{#} and {hash}/{*} work with run, multirun, and without hydra (UUID fallback).
-- [ ] Update file-related tests to validate allowed keys, placeholder resolution, handler behavior, and cross-module persistence aliases.
-- [ ] Refresh file docs/examples so top-level config APIs use the final decentralized file-schema contract.
+- [x] Decentralize the file-schema `TypedDict`s into module-local canon definitions instead of centralizing them in one registry file (These currently exist in *canon.py files).
+- [x] Introduce a shared abstract file handler that can operate on the canon `TypedDict`s for disk-status checks, parsing, string replacement, and validation.
+- [x] Keep `FileConfig` as the public typed file registry while removing legacy group-specific path assumptions from runtime call sites.
+- [x] Align file placeholders (`{num}`, `{timestamp}`, `{hash}`, replacements) with the final runtime identity and multirun behavior.
+- [x]Ensure that {num}/{#} and {hash}/{*} work with run, multirun, and without hydra (UUID fallback).
+- [x] Update file-related tests to validate allowed keys, placeholder resolution, handler behavior, and cross-module persistence aliases.
+- [x] Refresh file docs/examples so top-level config APIs use the final decentralized file-schema contract.
+- [ ] Implement, test, and document persistence workflows with/without attacks/defenses and with and without pre-trained models for sklearn and pytorch frameworks.
 
 
 ## Utils Checklist
-- [ ] Ensure `deckard/artifacts.py` owns persistence load/save behavior for all runtime artifact payloads.
-- [ ] Move/retain config coercion and normalization in `ConfigBase` and shared utility helpers only.
-- [ ] Centralize class resolution, plugin instantiation, score merging, and device resolution in `deckard/utils.py`.
-- [ ] Remove duplicate coercion/persistence helpers from core, framework, and plugin modules.
-- [ ] Add utility contract tests for artifact IO, config coercion, plugin spec normalization, and resolver behavior.
+- [x] Ensure `deckard/artifacts.py` owns persistence load/save behavior for all runtime artifact payloads.
+- [x] Move/retain config coercion and normalization in `ConfigBase` and shared utility helpers only.
+- [x] Centralize class resolution, plugin instantiation, score merging, and device resolution in `deckard/utils.py`.
+- [x] Remove duplicate coercion/persistence helpers from core, framework, and plugin modules.
+- [x] Add utility contract tests for artifact IO, config coercion, plugin spec normalization, and resolver behavior.
 
 ## Experiment Checklist
 - [ ] Define a canonical experiment runtime contract for `files`, `times`, `scores`, and component orchestration.
+- [ ] Ensure that all training, defense, pipeline, fold, and attack scores are properly cached.
 - [ ] Normalize experiment loading so data/model/attack/detector/scorer configs are composed through the canonical runtime.
 - [ ] Ensure experiment persistence and score collection remain files-only and stage-aware.
 - [ ] Add experiment contract tests for end-to-end orchestration, cross-family composition, and rerun stability.
 - [ ] Update experiment docs and example workflows to match the final canonical flow.
+
+### Experiment Runtime Composition Plan (Detailed)
+
+#### Phase 1: Canon Runtime Contract
+- [x] Add `deckard/experiment/canon.py` with canonical experiment runtime fields and helper APIs.
+- [x] Canonize experiment state buckets:
+  - [x] `files` (artifact paths, cache keys, persistence aliases)
+  - [x] `times` (canonical timing keys plus extensible stage timings)
+  - [x] `scores` (mode/stage-aware score payloads)
+  - [x] `outputs` (cached intermediate runtime payloads)
+  - [x] `params` (resolved config + runtime kwargs manifest)
+- [x] Add mode/stage normalization helpers for experiment-level orchestration (single run + multi-trial semantics).
+
+#### Phase 2: Native Config + HookPlugin + Bundle Composition
+- [ ] Define native `*Config` composition entry points for data/model/attack/detector/scorer/pipeline/defense.
+- [ ] Support runtime composition from supplied kwargs without replacing canonical config behavior.
+- [ ] Add a HookPlugin execution graph generated programmatically from canonical stage definitions in Data/Model/Attack/Score/Detector `*Config` runtimes (no hard-coded stage list).
+- [ ] Introduce Bundle definitions that group stage hooks + component configs into reusable runtime policies.
+- [ ] Ensure Bundle composition is additive/overridable and deterministic by explicit order.
+
+#### Phase 3: Caching and Reuse Across Stages/Trials
+- [ ] Define cache keys for sample/pipeline/train/defense/attack outputs using resolved params + stage identity.
+- [ ] Persist and reload intermediate outputs for stage skipping and rerun acceleration.
+- [ ] Ensure cached outputs can be selectively invalidated by component/stage-level parameter changes.
+- [ ] Ensure all training, defense, pipeline, fold, and attack score artifacts are cache-aware and rehydratable.
+
+#### Phase 4: YAML Serialization Contract
+- [ ] Add YAML serialization for experiment persistence including:
+  - [ ] resolved params
+  - [ ] runtime attributes
+  - [ ] cached output metadata and pointers
+- [ ] Keep JSON/YAML score artifacts human-readable and parse-friendly.
+- [ ] Define explicit de/serialization schema versioning for forward-compatible restores.
+- [ ] Add load-time migration guards for older score/cache payload structures.
+
+#### Phase 5: DVC Pipeline Autogeneration
+- [ ] Add utility to generate `dvc.yaml` from experiment persistence values and runtime stage graph.
+- [ ] Map canonical experiment stages to DVC stages with deps/outs/params wiring.
+- [ ] Emit reproducible stage commands for single experiment execution and multi-trial sweeps.
+- [ ] Support optional cached-output reuse by pointing DVC outs to canonical runtime file aliases.
+
+#### Phase 6: Hydra Single-Default Multi-Stage Execution
+(currently lives in deckard/layers/optimize.py, but we should have a dedicated OptimizerConfig that handles metadata, optimizers, directions, etc)
+- [ ] Define one Hydra default profile that can execute:
+  - [ ] a single experiment through selected hook stages
+  - [ ] multiple trials with cached intermediate reuse
+- [ ] Ensure stage selection and trial fan-out are controlled by runtime kwargs/overrides, not alternate orchestration paths.
+- [ ] Preserve files-only persistence and stage-aware score collection for both single and multi-trial flows.
+
+#### Phase 7: Validation and Documentation
+- [ ] Add contract tests for HookPlugin stage ordering, Bundle merge behavior, and native `*Config` composition.
+- [ ] Add integration tests for cache reuse, YAML round-trip restores, and DVC autogeneration correctness.
+- [ ] Add Hydra compose tests validating single-default stage selection and multi-trial execution behavior.
+- [ ] Document experiment canon, Bundle authoring, hook contracts, serialization schema, and DVC workflow in developer docs.
 
 ## Final framework/plugin migration:
 - [ ] Keep all *fair* behavior in lightweight Fairlearn mixins, plugins, and wrappers outside the core modules.

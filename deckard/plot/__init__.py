@@ -7,9 +7,11 @@ dependencies.
 """
 
 import logging
+import time
 from dataclasses import dataclass, field
 from typing import Union
 
+from .canon import normalize_plot_backend
 from ..utils import ConfigBase
 
 logger = logging.getLogger(__name__)
@@ -98,6 +100,9 @@ class PlotConfig(ConfigBase):
     """
 
     kwargs: dict = field(default_factory=dict)
+    files: dict = field(default_factory=dict)
+    times: dict = field(default_factory=dict)
+    plot_state: dict = field(default_factory=dict)
     config: Union[
         SeabornPlotConfig,
         SeabornPlotConfigList,
@@ -117,6 +122,7 @@ class PlotConfig(ConfigBase):
             self.kwargs.get(key) is not None
             for key in ("data_file", "data_config", "data", "optuna_storage")
         )
+        requested_backend = self.kwargs.get("backend", None)
 
         if has_experiment and has_seaborn_source:
             raise ValueError(
@@ -127,7 +133,16 @@ class PlotConfig(ConfigBase):
                 "Missing required source key: provide 'experiment' or 'data_file'.",
             )
 
+        if requested_backend is None:
+            backend = "yellowbrick" if has_experiment else "seaborn"
+        else:
+            backend = normalize_plot_backend(requested_backend)
+
         if has_experiment:
+            if backend != "yellowbrick":
+                raise ValueError(
+                    "Experiment source requires yellowbrick backend.",
+                )
             _refresh_yellowbrick_configs()
             if YellowbrickPlotConfig is None or YellowbrickConfigList is None:
                 raise ImportError(
@@ -139,6 +154,10 @@ class PlotConfig(ConfigBase):
                 else YellowbrickPlotConfig
             )
         else:
+            if backend != "seaborn":
+                raise ValueError(
+                    "Seaborn data source requires seaborn backend.",
+                )
             _refresh_seaborn_configs()
             if SeabornPlotConfig is None or SeabornPlotConfigList is None:
                 raise ImportError(
@@ -148,10 +167,20 @@ class PlotConfig(ConfigBase):
                 SeabornPlotConfigList if "plots" in self.kwargs else SeabornPlotConfig
             )
 
+        self.plot_state["backend"] = backend
+        self.plot_state["configured"] = True
+        plot_file = self.kwargs.get("plot_file")
+        if plot_file is not None:
+            self.files["plot_file"] = str(plot_file)
+
         self.config = config_cls(**self.kwargs)
 
     def __call__(self, *args, **kwargs):
-        return self.config(*args, **kwargs)
+        start = time.perf_counter()
+        out = self.config(*args, **kwargs)
+        self.times["plot_call_time"] = time.perf_counter() - start
+        self.plot_state["rendered"] = True
+        return out
 
     def __getattr__(self, name):
         return getattr(self.config, name)

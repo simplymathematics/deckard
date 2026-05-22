@@ -6,7 +6,10 @@ deckard configs and framework integrations.
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 class RuntimeValue(Protocol):
@@ -40,9 +43,18 @@ class EstimatorLike(Protocol):
         """Return size metadata when available."""
 
 
+if TYPE_CHECKING:
+    TabularLike: TypeAlias = pd.DataFrame | pd.Series
+else:
+    TabularLike: TypeAlias = Any
+IndexLike: TypeAlias = "list[int]"
+
+
 __all__ = [
     "RuntimeValue",
     "MatrixLike",
     "ArrayLike",
     "EstimatorLike",
+    "TabularLike",
+    "IndexLike",
 ]

@@ -16,6 +16,19 @@ File outputs are commonly coordinated with [Hydra](https://hydra.cc)
 run/multirun directories and [OmegaConf](https://omegaconf.readthedocs.io)
 resolved config values.
 
+## Canonical file contract
+
+`FileConfig` is the public typed file registry for canonical artifact paths.
+It now uses a shared file handler surface for:
+
+- key validation
+- disk-status checks
+- placeholder parsing and replacement
+
+Supported placeholders include `{num}`, `{#}`, `{timestamp}`, `{hash}`, and
+`{*}`. Hydra job values are used when available, with UUID fallback outside of
+Hydra-managed runs.
+
 ## Examples
 
 ```{seealso}
@@ -43,6 +56,19 @@ file:
    output_dir: build/sklearn
    score_dict_file: score_dict.json
    score_table_file: score_table.csv
+
+## Handler Example
+
+`FileConfig` accepts a custom handler when callers need to centralize file-key
+validation or disk-status checks.
+
+```python
+from deckard.file import CanonFileHandler, FileConfig
+
+handler = CanonFileHandler()
+cfg = FileConfig(handler=handler, model_file="build/model.pkl")
+status = cfg.disk_status()
+```
 ```
 
 ## Typical Workflow

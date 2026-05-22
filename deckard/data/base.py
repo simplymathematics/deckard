@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Literal,Union, Optional
+from typing import TYPE_CHECKING, Any, Callable, Literal, Optional, Union, cast
 from omegaconf import DictConfig, ListConfig
 
 import numpy as np
@@ -19,7 +19,7 @@ from ..utils import (
     coerce_to_list,
     merge_list_of_dicts,
 )
-from ..frameworks.types import ArrayLike, MatrixLike
+from ..frameworks.types import ArrayLike, IndexLike, MatrixLike, TabularLike
 from ..plugins.base import OrchestratorBase
 from .canon import (
     DEFAULT_DATA_SCORE_STAGE,
@@ -64,7 +64,7 @@ def _is_data_scorer_instance(scorer: Any) -> bool:
 
 def _load_optuna_studies_dataframe(
     *,
-    storage: str | None,
+    storage: Any,
     study_name: str | None,
     schema: Any,
     **kwargs: Any,
@@ -255,7 +255,7 @@ class DataConfig(OrchestratorBase, ConfigBase):
 
     # Configuration fields
     dataset_name: str = "adult"
-    data_params: dict = None
+    data_params: dict[str, Any] = field(default_factory=dict)
     test_size: Union[float, int, None] = 0.2
     train_size: Union[float, int, None] = None
     val_size: Union[float, int, None] = None
@@ -265,9 +265,9 @@ class DataConfig(OrchestratorBase, ConfigBase):
     stratify: Union[None, str, bool] = None
     classifier: Union[bool, str] = True
     target: Union[str, None] = None
-    drop: list = None
-    keep: list = None
-    plugins: list = field(default_factory=list)
+    drop: list[str] = field(default_factory=list)
+    keep: list[str] = field(default_factory=list)
+    plugins: list[Any] = field(default_factory=list)
     alias: Union[str, None] = None
     scorer: Any = AUTO_SCORER
     score_split: str = "test"
@@ -276,27 +276,27 @@ class DataConfig(OrchestratorBase, ConfigBase):
     files: DataFiles = field(default_factory=lambda: {})
 
     # Runtime state fields
-    score_dict: dict = field(default_factory=dict, init=False, repr=True)
+    score_dict: dict[str, Any] = field(default_factory=dict, init=False, repr=True)
     times: dict[str, Any] = field(default_factory=dict)
     data_load_time: Union[float, None] = None
     data_sample_time: Union[float, None] = None
-    _X: Union[pd.DataFrame, pd.Series, None] = None
+    _X: Union[TabularLike, None] = None
     _y: Union[pd.Series, None] = None
-    train_indices: Union[list, None] = None
-    test_indices: Union[list, None] = None
-    val_indices: Union[list, None] = None
-    X_train: Union[pd.DataFrame, pd.Series, None] = None
+    train_indices: Union[IndexLike, None] = None
+    test_indices: Union[IndexLike, None] = None
+    val_indices: Union[IndexLike, None] = None
+    X_train: Union[TabularLike, None] = None
     y_train: Union[pd.Series, None] = None
-    X_test: Union[pd.DataFrame, pd.Series, None] = None
+    X_test: Union[TabularLike, None] = None
     y_test: Union[pd.Series, None] = None
-    X_val: Union[pd.DataFrame, pd.Series, None] = None
+    X_val: Union[TabularLike, None] = None
     y_val: Union[pd.Series, None] = None
     train_n: Union[int, None] = None
     test_n: Union[int, None] = None
     val_n: Union[int, None] = None
     _target_: Union[str, None] = None
-    _plugin_objects: Union[list, None] = None
-    _sampler_obj: Union[callable, None] = None
+    _plugin_objects: Union[list[Any], None] = None
+    _sampler_obj: Union[Callable[..., Any], None] = None
     _score_orchestration_active: bool = field(default=False, init=False, repr=False)
 
     def _normalize_score_mode(self, mode: str) -> str:
@@ -361,14 +361,15 @@ class DataConfig(OrchestratorBase, ConfigBase):
 
     def _resolve_max_samples(self, dataset_len: int) -> Union[int, None]:
         """Resolve an optional dataset cap from the test-only environment variable."""
-        max_samples = os.environ.get(DECKARD_TEST_MAX_SAMPLES_ENV)
-        if max_samples in [None, ""]:
+        max_samples_text = os.environ.get(DECKARD_TEST_MAX_SAMPLES_ENV)
+        if max_samples_text in [None, ""]:
             return None
+        assert max_samples_text is not None
         try:
-            max_samples = int(max_samples)
+            max_samples = int(max_samples_text)
         except (TypeError, ValueError):
             raise ValueError(
-                f"{DECKARD_TEST_MAX_SAMPLES_ENV} must be an integer, got {max_samples}",
+                f"{DECKARD_TEST_MAX_SAMPLES_ENV} must be an integer, got {max_samples_text}",
             )
         if max_samples <= 0:
             return None
@@ -474,7 +475,8 @@ class DataConfig(OrchestratorBase, ConfigBase):
         if isinstance(raw_pipeline, DataPipeline):
             return
         if isinstance(raw_pipeline, (dict, DictConfig)):
-            self.pipeline = DataPipeline(pipeline=dict(raw_pipeline))
+            pipeline_dict = {str(k): v for k, v in dict(raw_pipeline).items()}
+            self.pipeline = DataPipeline(pipeline=pipeline_dict)
             return
         if isinstance(raw_pipeline, (list, ListConfig)):
             merged = merge_list_of_dicts(coerce_to_list(raw_pipeline))
@@ -519,6 +521,7 @@ class DataConfig(OrchestratorBase, ConfigBase):
             pipeline = pipeline._build_x_pipeline(
                 pipeline._collect_x_steps(stage="X"),
             )
+        assert pipeline is not None
         fit_start = time.process_time()
         if y_train is not None:
             pipeline.fit(X_train, y_train)
@@ -540,7 +543,7 @@ class DataConfig(OrchestratorBase, ConfigBase):
         self._sampler_obj = BaseSampler.resolve(self)
 
     @property
-    def X(self) -> MatrixLike | None:
+    def X(self) -> TabularLike | None:
         """Convenience alias for the loaded feature matrix."""
         return self._X
 
@@ -554,17 +557,17 @@ class DataConfig(OrchestratorBase, ConfigBase):
         self.score_dict = value
 
     @property
-    def y(self) -> ArrayLike | None:
+    def y(self) -> pd.Series | None:
         """Convenience alias for the loaded target vector."""
         return self._y
 
     @X.setter
-    def X(self, value: MatrixLike | None) -> None:
+    def X(self, value: TabularLike | None) -> None:
         """Set the loaded feature matrix."""
         self._X = value
 
     @y.setter
-    def y(self, value: ArrayLike | None) -> None:
+    def y(self, value: pd.Series | None) -> None:
         """Set the loaded target vector."""
         self._y = value
 
@@ -594,7 +597,7 @@ class DataConfig(OrchestratorBase, ConfigBase):
             raise ValueError("filepath is required for DataConfig.save()")
         super().save(payload=payload, filepath=target_path)
 
-    def load_raw_data(self) -> tuple[MatrixLike, ArrayLike]:
+    def load_raw_data(self) -> tuple[TabularLike | None, pd.Series | None]:
         """Compatibility alias for runtime dataset loading."""
         self.load_dataset()
         return self._X, self._y
@@ -640,7 +643,7 @@ class DataConfig(OrchestratorBase, ConfigBase):
         mode: str | None = None,
         stage: str | None = None,
         **kwargs,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Thin pass-through scoring call delegated to the configured scorer."""
         if self.scorer is None:
             return {}
@@ -687,7 +690,10 @@ class DataConfig(OrchestratorBase, ConfigBase):
             scorer_kwargs["X"] = X
         if stage is not None:
             scorer_kwargs["stage"] = stage
-        return self.scorer(*args, **scorer_kwargs)
+        scorer_output = self.scorer(*args, **scorer_kwargs)
+        if isinstance(scorer_output, dict):
+            return scorer_output
+        return {"value": scorer_output}
 
     
     
@@ -717,7 +723,7 @@ class DataConfig(OrchestratorBase, ConfigBase):
                 return None
             return self._y
         if isinstance(stratify, str):
-            if self._X is not None and stratify in self._X.columns:
+            if isinstance(self._X, pd.DataFrame) and stratify in self._X.columns:
                 return self._X[stratify]
             raise ValueError(
                 f"Stratify column '{stratify}' not found in data columns",
@@ -779,22 +785,28 @@ class DataConfig(OrchestratorBase, ConfigBase):
         from .sample import BaseSampler
 
         train_idx, test_idx, val_idx = BaseSampler.execute(self)
-        self.train_indices = train_idx
-        self.test_indices = test_idx
-        self.val_indices = val_idx
-        if len(val_idx) > 0:
-            self.X_val = self._X.iloc[self.val_indices].reset_index(drop=True)
-            self.y_val = self._y.iloc[self.val_indices].reset_index(drop=True)
+        self.train_indices = np.asarray(train_idx, dtype=int).tolist()
+        self.test_indices = np.asarray(test_idx, dtype=int).tolist()
+        self.val_indices = np.asarray(val_idx, dtype=int).tolist()
+        if self.val_indices is not None and len(self.val_indices) > 0:
+            val_index = np.asarray(self.val_indices, dtype=int)
+            self.X_val = self._X.iloc[val_index].reset_index(drop=True)
+            self.y_val = self._y.iloc[val_index].reset_index(drop=True)
+            assert self.X_val is not None
             self.val_n = len(self.X_val)
 
         end_time = time.process_time()
         self._set_time("data_sample_time", end_time - start_time)
         logger.info(f"Data sampled in {self.data_sample_time:.2f} seconds")
 
-        self.X_train = self._X.iloc[self.train_indices].reset_index(drop=True)
-        self.y_train = self._y.iloc[self.train_indices].reset_index(drop=True)
-        self.X_test = self._X.iloc[self.test_indices].reset_index(drop=True)
-        self.y_test = self._y.iloc[self.test_indices].reset_index(drop=True)
+        assert self.train_indices is not None and self.test_indices is not None
+        train_index = np.asarray(self.train_indices, dtype=int)
+        test_index = np.asarray(self.test_indices, dtype=int)
+        self.X_train = self._X.iloc[train_index].reset_index(drop=True)
+        self.y_train = self._y.iloc[train_index].reset_index(drop=True)
+        self.X_test = self._X.iloc[test_index].reset_index(drop=True)
+        self.y_test = self._y.iloc[test_index].reset_index(drop=True)
+        assert self.X_train is not None and self.X_test is not None
         self.train_n = len(self.X_train)
         self.test_n = len(self.X_test)
         assert isinstance(
@@ -968,7 +980,7 @@ class DataConfig(OrchestratorBase, ConfigBase):
         )
 
     def _load_from_csv(self):
-        data = self.load_data(self.dataset_name)
+        data = pd.DataFrame(cast(Any, self.load_data(self.dataset_name)))
         if self.target is None:
             raise ValueError(
                 "CSV file must contain a 'target' column or specify the target column name in the 'target' attribute",
@@ -997,7 +1009,8 @@ class DataConfig(OrchestratorBase, ConfigBase):
 
         study_name = data_params.pop("study_name", None)
         schema = data_params.pop("schema", None)
-        data = _load_optuna_studies_dataframe(
+        data = pd.DataFrame(
+            _load_optuna_studies_dataframe(
             storage=storage,
             study_name=study_name,
             schema=schema,
@@ -1013,6 +1026,7 @@ class DataConfig(OrchestratorBase, ConfigBase):
             ascending=bool(data_params.pop("ascending", True)),
             offset=int(data_params.pop("offset", 0)),
             limit=data_params.pop("limit", None),
+            ),
         )
         if not isinstance(data, pd.DataFrame) or data.empty:
             raise ValueError("Optuna study query returned no rows.")
@@ -1112,6 +1126,7 @@ class DataConfig(OrchestratorBase, ConfigBase):
         finally:
             self._score_orchestration_active = False
         time_dict = self.build_data_time_dict()
+        assert self.X_train is not None and self.X_test is not None
         if self.X_val is not None:
             logger.info(
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}, "

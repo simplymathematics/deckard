@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import re
 import time
+from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import Mapping
 from typing import Any, TypedDict
 from uuid import uuid4
 
@@ -74,13 +78,60 @@ model_files = tuple(collect_typed_dict_keys(ModelFiles))
 attack_files = tuple(collect_typed_dict_keys(AttackFiles))
 
 
-# -----------------------------------------------------------------------------
-# error
-# -----------------------------------------------------------------------------
-
 
 class FileConfigError(TypeError):
     pass
+
+
+class AbstractFileHandler(ABC):
+    """Abstract file handler for canonical file-schema operations."""
+
+    @abstractmethod
+    def validate_keys(self, keys: Mapping[str, Any] | list[str] | tuple[str, ...]) -> None:
+        """Validate provided file keys against the allowed file schema."""
+
+    @abstractmethod
+    def disk_status(self, files: Mapping[str, Any]) -> dict[str, bool]:
+        """Return exists/not-exists status for provided file path mapping."""
+
+    @abstractmethod
+    def parse_placeholders(self, value: str) -> list[str]:
+        """Parse placeholder tokens from a template string."""
+
+    @abstractmethod
+    def replace_placeholders(self, value: str, replacements: Mapping[str, Any]) -> str:
+        """Apply placeholder replacements to a template string."""
+
+
+class CanonFileHandler(AbstractFileHandler):
+    """Concrete handler operating on canonical file-schema key/value payloads."""
+
+    _placeholder_re = re.compile(r"\{[^{}]+\}")
+
+    def validate_keys(self, keys: Mapping[str, Any] | list[str] | tuple[str, ...]) -> None:
+        iterable = keys.keys() if isinstance(keys, Mapping) else keys
+        invalid = [key for key in iterable if key not in _ALLOWED_KEYS]
+        if invalid:
+            raise FileConfigError(f"Invalid file key(s): {', '.join(sorted(invalid))}")
+
+    def disk_status(self, files: Mapping[str, Any]) -> dict[str, bool]:
+        self.validate_keys(files)
+        status: dict[str, bool] = {}
+        for key, value in files.items():
+            if isinstance(value, str) and value.strip() != "":
+                status[key] = Path(value).exists()
+            else:
+                status[key] = False
+        return status
+
+    def parse_placeholders(self, value: str) -> list[str]:
+        return self._placeholder_re.findall(value)
+
+    def replace_placeholders(self, value: str, replacements: Mapping[str, Any]) -> str:
+        resolved = value
+        for token, replacement in replacements.items():
+            resolved = resolved.replace(str(token), str(replacement))
+        return resolved
 
 
 # -----------------------------------------------------------------------------
@@ -94,6 +145,8 @@ class PlaceholderResolverMixin:
     @property
     def num(self) -> str:
         """Returns the serial job number in a multirun sweep. Uses uuid as fallback if Hydra is not enabled."""
+        if hasattr(self, "_num_override"):
+            return str(self._num_override)
         try:
             return str(HydraConfig.get().job.num)
         except Exception:
@@ -101,41 +154,50 @@ class PlaceholderResolverMixin:
 
     @num.setter
     def num(self, value: int) -> None:
-        """Set the job num"""
-        self.num = value
+        """Set the resolved job num override."""
+        self._num_override = str(value)
 
     @property
     def id(self) -> str:
         """Returns the specific launcher or cluster job ID. Uses uuid as fallback if Hydra is not enabled"""
+        if hasattr(self, "_id_override"):
+            return str(self._id_override)
         try:
-            return str(HydraConfig.get().job.num)
+            return str(HydraConfig.get().job.id)
         except Exception:
-            return uuid4().hex
+            try:
+                return str(HydraConfig.get().job.num)
+            except Exception:
+                return uuid4().hex
 
     @id.setter
     def id(self, value: int) -> None:
-        """Set the job id."""
-        self.id = value
+        """Set the resolved job id override."""
+        self._id_override = str(value)
+
+    def _replacement_dict(self) -> dict[str, str]:
+        replacements = {
+            "{num}": self.num,
+            "{#}": self.num,
+            "{timestamp}": time.strftime("%Y%m%d-%H%M%S"),
+            "{hash}": self.id,
+            "{*}": self.id,
+        }
+        replacements.update({k: str(v) for k, v in getattr(self, "replace", {}).items()})
+        return replacements
 
     def _resolve(self, value: str | None) -> str | None:
         if not value:
             return None
+        handler = getattr(self, "handler", None)
+        replacements = self._replacement_dict()
+        if isinstance(handler, AbstractFileHandler):
+            return handler.replace_placeholders(value, replacements)
+        resolved = value
+        for token, replacement in replacements.items():
+            resolved = resolved.replace(token, replacement)
+        return resolved
 
-        value = value.replace("{num}", self.num)
-        value = value.replace("{#}", self.num)
-        value = value.replace("{timestamp}", time.strftime("%Y%m%d-%H%M%S"))
-        value = value.replace("{hash}", self.id)
-        value = value.replace("{*}", self.id)
-
-        for k, v in getattr(self, "replace", {}).items():
-            value = value.replace(k, str(v))
-
-        return value
-
-
-# -----------------------------------------------------------------------------
-# FIXED FILE CONFIG
-# -----------------------------------------------------------------------------
 class FileConfig(PlaceholderResolverMixin):
     """Dynamic file-path configuration container.
 
@@ -150,18 +212,26 @@ class FileConfig(PlaceholderResolverMixin):
 
     Args:
         replace: Optional mapping used for additional placeholder replacements.
+        handler: Optional shared file handler implementation.
         **files: File-path keyword arguments matching the configured schema.
 
     Raises:
         FileConfigError: If an unknown file key is provided.
     """
 
-    def __init__(self, *, replace: dict[str, str] | None = None, **files: Any):
+    def __init__(
+        self,
+        *,
+        replace: dict[str, str] | None = None,
+        handler: AbstractFileHandler | None = None,
+        **files: Any,
+    ):
         self.replace = replace or {}
+        self.handler = handler or CanonFileHandler()
         self._files: dict[str, Any] = {}
 
+        self.handler.validate_keys(files)
         for k, v in files.items():
-            self._validate_key(k)
             self._set(k, v)
 
     # -------------------------------------------------------------------------
@@ -169,8 +239,7 @@ class FileConfig(PlaceholderResolverMixin):
     # -------------------------------------------------------------------------
 
     def _validate_key(self, key: str) -> None:
-        if key not in _ALLOWED_KEYS:
-            raise FileConfigError(f"Invalid file key: {key}")
+        self.handler.validate_keys([key])
 
     # -------------------------------------------------------------------------
     # assignment
@@ -194,6 +263,9 @@ class FileConfig(PlaceholderResolverMixin):
 
     def as_dict(self) -> dict[str, Any]:
         return dict(self._files)
+
+    def disk_status(self) -> dict[str, bool]:
+        return self.handler.disk_status(self._files)
 
     def __getitem__(self, key: str) -> Any:
         return self._files[key]

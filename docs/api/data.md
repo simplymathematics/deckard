@@ -190,6 +190,63 @@ Mode details for `all`:
 If you need full-dataset diagnostics before splitting, configure the scorer
 stage to `pre-sample` while using an explicit split scope mode.
 
+## Optuna-backed dataset loading
+
+{class}`~deckard.data.DataConfig` can load tabular trial data directly from
+Optuna storage without writing SQL.
+
+Use one of these source forms:
+
+- `dataset_name: optuna`
+- `dataset_name: /path/to/optuna.db`
+- `dataset_name: /path/to/optuna.sqlite3`
+- `data_params.optuna_storage: ...` (explicit storage URI/path/object)
+
+Supported query controls are forwarded to the shared runtime helper:
+
+- `study_name`, `study_names`
+- `trial_numbers`, `trial_number_range`, `trial_states`
+- `columns`, `include_columns`, `exclude_columns`
+- `row_slice`, `sort_by`, `ascending`, `offset`, `limit`
+
+### 10) Optuna DB source (single study)
+
+```yaml
+data:
+   _target_: deckard.data.base.DataConfig
+   dataset_name: optuna
+   target: value
+   data_params:
+      optuna_storage: sqlite:///build/optuna.db
+      study_name: baseline_search
+      trial_states:
+         - COMPLETE
+      columns:
+         - number
+         - value
+         - params_lr
+         - params_batch_size
+```
+
+### 11) Optuna DB source (multi-study slice)
+
+```yaml
+data:
+   _target_: deckard.data.base.DataConfig
+   dataset_name: optuna
+   target: value
+   data_params:
+      optuna_storage: sqlite:///build/optuna.db
+      study_names:
+         - baseline_search
+         - tuned_search
+      trial_number_range: [0, 200]
+      sort_by: value
+      ascending: false
+      offset: 0
+      limit: 100
+```
+
 ## YAML Recipes
 
 ### 1) Synthetic classification (core)

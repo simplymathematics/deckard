@@ -12,6 +12,7 @@ from dataclasses import MISSING, dataclass, field
 from pathlib import Path
 from typing import Any, Optional, cast
 
+import numpy as np
 import pandas as pd
 
 from .frameworks.types import ArrayLike, EstimatorLike, MatrixLike
@@ -176,9 +177,52 @@ class ArtifactLoaderConfig:
         assert Path(data_path).exists(), f"Failed to save data to {data_path}"
 
     def load_data(self, filepath: str, **kwargs: Any) -> MatrixLike | ArrayLike:
-        from .utils import load_data as load_tabular_data
+        if filepath is None:
+            raise FileNotFoundError("Filepath is None.")
 
-        return load_tabular_data(filepath, **kwargs)
+        path = Path(filepath)
+        supported_filetypes = [
+            ".csv",
+            ".json",
+            ".xlsx",
+            ".parquet",
+            ".pkl",
+            ".npz",
+            ".html",
+        ]
+
+        match path.suffix:
+            case ".pkl":
+                data = pd.read_pickle(path, **kwargs)
+            case ".csv":
+                data = pd.read_csv(path, **kwargs)
+            case ".json":
+                json_kwargs = {"orient": "records", **kwargs}
+                if "lines" not in json_kwargs:
+                    try:
+                        data = pd.read_json(path, lines=True, **json_kwargs)
+                    except ValueError:
+                        data = pd.read_json(path, **json_kwargs)
+                else:
+                    data = pd.read_json(path, **json_kwargs)
+            case ".xlsx":
+                data = pd.read_excel(path, **kwargs)
+            case ".parquet":
+                data = pd.read_parquet(path, **kwargs)
+            case ".html":
+                data = pd.read_html(path, **kwargs)[0]
+            case ".npz":
+                npz_payload = np.load(path, allow_pickle=True)
+                if len(npz_payload.files) == 0:
+                    data = pd.DataFrame()
+                else:
+                    first_key = npz_payload.files[0]
+                    data = pd.DataFrame(npz_payload[first_key])
+            case _:
+                raise ValueError(
+                    f"Unsupported file type {path.suffix}. Supported types: {supported_filetypes}",
+                )
+        return data
 
     def load_matrix(
         self,
