@@ -20,7 +20,7 @@ from ..utils import (
     merge_list_of_dicts,
 )
 from ..frameworks.types import ArrayLike, MatrixLike
-from ..plugins.base import PluginOrchestratorMixin
+from ..plugins.base import OrchestratorBase
 from .canon import (
     DEFAULT_DATA_SCORE_STAGE,
     CANONICAL_DATA_TIMES,
@@ -66,7 +66,7 @@ def _is_data_scorer_instance(scorer: Any) -> bool:
 
 
 @dataclass(eq=False, kw_only=True)
-class DataConfig(PluginOrchestratorMixin, ConfigBase):
+class DataConfig(OrchestratorBase, ConfigBase):
     """
     Configuration and utility class for loading, preprocessing, and splitting datasets for machine learning tasks.
 
@@ -467,6 +467,52 @@ class DataConfig(PluginOrchestratorMixin, ConfigBase):
             "DataConfig.pipeline must be DataPipeline | dict | list | None, "
             f"got {type(raw_pipeline)}",
         )
+
+    def _init_pipeline(self):
+        """Legacy compatibility hook returning the resolved pipeline runtime."""
+        self._coerce_pipeline_runtime()
+        pipeline_runtime = getattr(self, "pipeline", None)
+        if pipeline_runtime is None:
+            return None, None
+
+        from .pipeline.base import DataPipeline
+
+        if isinstance(pipeline_runtime, DataPipeline):
+            pipeline = pipeline_runtime._build_x_pipeline(
+                pipeline_runtime._collect_x_steps(stage="X"),
+            )
+        else:
+            pipeline = pipeline_runtime
+        return pipeline, pipeline_runtime
+
+    def _fit_transform_X(
+        self,
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        pipeline,
+    ):
+        """Legacy compatibility hook for direct pipeline fit/transform tests."""
+        from .pipeline.base import DataPipeline
+
+        if pipeline is None:
+            return X_train, X_test, y_train, y_test
+        if isinstance(pipeline, DataPipeline):
+            pipeline = pipeline._build_x_pipeline(
+                pipeline._collect_x_steps(stage="X"),
+            )
+        fit_start = time.process_time()
+        if y_train is not None:
+            pipeline.fit(X_train, y_train)
+        else:
+            pipeline.fit(X_train)
+        self.pipeline_fit_time = time.process_time() - fit_start
+        transform_start = time.process_time()
+        X_train_t = pipeline.transform(X_train)
+        X_test_t = pipeline.transform(X_test)
+        self.pipeline_transform_time = time.process_time() - transform_start
+        return X_train_t, X_test_t, y_train, y_test
 
     def _initialize_runtime_components(self) -> None:
         """Instantiate runtime-bound plugin and sampler objects eagerly."""

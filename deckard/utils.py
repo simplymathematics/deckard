@@ -1057,6 +1057,46 @@ class ConfigBase(ArtifactLoaderConfig):
             self.save_scores(merged_scores, score_file)
         return merged_scores
 
+    @staticmethod
+    def _coerce_files_mapping(files_value: Any) -> dict[str, Any]:
+        """Coerce supported file containers into a plain mapping."""
+        if files_value is None:
+            return {}
+        if isinstance(files_value, dict):
+            return dict(files_value)
+        if hasattr(files_value, "as_dict") and callable(files_value.as_dict):
+            candidate = files_value.as_dict()
+            if isinstance(candidate, dict):
+                return dict(candidate)
+        return {}
+
+    def merge_runtime_files(
+        self,
+        *file_mappings: Any,
+        include_existing: bool = True,
+        update_score_dict: bool = True,
+    ) -> dict[str, Any]:
+        """Merge runtime file mappings and persist merged map on the config.
+
+        This is used at the end of runtime ``__call__`` paths, just before
+        persistence, so newly created artifact paths are retained in-memory and
+        optionally attached to ``score_dict`` for on-disk score metadata.
+        """
+        merged: dict[str, Any] = {}
+        if include_existing:
+            merged.update(self._coerce_files_mapping(getattr(self, "files", None)))
+        for mapping in file_mappings:
+            merged.update(self._coerce_files_mapping(mapping))
+
+        if hasattr(self, "files"):
+            files_attr = getattr(self, "files", None)
+            if isinstance(files_attr, dict):
+                setattr(self, "files", dict(merged))
+
+        if update_score_dict and isinstance(getattr(self, "score_dict", None), dict):
+            self.score_dict["files"] = dict(merged)
+        return merged
+
     def get_call_params(self) -> dict:
         """
         Retrieves the parameters required to call the __call__ method of the instance.

@@ -1517,7 +1517,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             if n_repeats > 1:
                 self.data.load_dataset()
             else:
-                self.data(**data_file_outputs)
+                self.data(files=data_file_outputs)
 
         assert hasattr(self.data, "X_train") or hasattr(
             self.data,
@@ -1568,8 +1568,10 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 # Run full data runtime per fold so DataPipelineConfig hooks and
                 # transformations (e.g., StringDistanceTransformer) execute.
                 self.data(
-                    data_file=None,
-                    score_file=None,
+                    files={
+                        "data_file": None,
+                        "score_file": None,
+                    },
                 )
                 self.data.score_dict.update(
                     data_load_time=self.data.data_load_time,
@@ -1614,6 +1616,10 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             )
             if self.model is None:
                 self.model = None
+
+        self.score_dict = dict(scores)
+        self.merge_runtime_files(file_dict)
+        scores = dict(self.score_dict)
 
         if "score_file" in file_dict:
             scores = self.merge_and_persist_scores(

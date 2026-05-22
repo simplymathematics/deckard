@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Any, TYPE_CHECKING
 
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(eq=False, kw_only=True)
-class DataPipeline:
+class DataPipeline(dict):
     """Runtime pipeline executor for host data configs.
 
     Execution order in ``__call__``:
@@ -29,6 +30,11 @@ class DataPipeline:
     """
 
     pipeline: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        mapping = dict(self.pipeline or {})
+        dict.__init__(self, mapping)
+        self.pipeline = mapping
 
     _PIPELINE_META_KEYS = {
         "name",
@@ -71,6 +77,7 @@ class DataPipeline:
                 X_fit=host._X,
                 X_apply=host._X,
                 y_fit=getattr(host, "_y", None),
+                host=host,
             )
         self._run_stage_hooks(host, "after", "fit_pre_sample", "pre-sample")
 
@@ -84,6 +91,7 @@ class DataPipeline:
                 X_fit=host.X_train,
                 X_apply=host.X_train,
                 y_fit=getattr(host, "y_train", None),
+                host=host,
             )
             host.X_test = self._transform_features(pipeline, host.X_test)
             if getattr(host, "X_val", None) is not None:
@@ -94,8 +102,12 @@ class DataPipeline:
         self._run_stage_hooks(host, "before", "fit_y", "post-pipeline")
         y_steps = self._collect_y_steps(stage="y")
         if len(y_steps) > 0 and getattr(host, "y_train", None) is not None:
+            fit_start = time.process_time()
             host.y_train = self._fit_transform_target(y_steps, host.y_train)
+            host.pipeline_y_fit_time = time.process_time() - fit_start
+            transform_start = time.process_time()
             host.y_test = self._transform_target(y_steps, host.y_test)
+            host.pipeline_y_transform_time = time.process_time() - transform_start
             if getattr(host, "y_val", None) is not None:
                 host.y_val = self._transform_target(y_steps, host.y_val)
         self._run_stage_hooks(host, "after", "fit_y", "post-pipeline")
@@ -121,6 +133,7 @@ class DataPipeline:
                 X_fit=X_all,
                 X_apply=X_all,
                 y_fit=y_all,
+                host=host,
             )
             host._X = X_all_t
             host._y = y_all
@@ -249,12 +262,27 @@ class DataPipeline:
 
         return Pipeline(steps=[(name, transformer) for name, transformer, _ in x_steps])
 
-    def _fit_transform_features(self, pipeline: Pipeline, X_fit: Any, X_apply: Any, y_fit: Any = None) -> Any:
+    def _fit_transform_features(
+        self,
+        pipeline: Pipeline,
+        X_fit: Any,
+        X_apply: Any,
+        y_fit: Any = None,
+        host: "DataConfig | None" = None,
+    ) -> Any:
+        fit_start = time.process_time()
         if y_fit is not None:
             pipeline.fit(X_fit, y_fit)
         else:
             pipeline.fit(X_fit)
-        return self._transform_features(pipeline, X_apply)
+        fit_elapsed = time.process_time() - fit_start
+        transform_start = time.process_time()
+        transformed = self._transform_features(pipeline, X_apply)
+        transform_elapsed = time.process_time() - transform_start
+        if host is not None:
+            host.pipeline_fit_time = fit_elapsed
+            host.pipeline_transform_time = transform_elapsed
+        return transformed
 
     def _transform_features(self, pipeline: Pipeline, X: Any) -> Any:
         transformed = pipeline.transform(X)
@@ -280,6 +308,8 @@ class DataPipeline:
         if y_frame.shape[1] == 1:
             return y_frame.iloc[:, 0]
         return y_frame
+
+
 
     def _transform_target(self, y_steps: list[tuple[str, Any]], y: Any) -> Any:
         y_frame = y.to_frame() if isinstance(y, pd.Series) else pd.DataFrame(y)

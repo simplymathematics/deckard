@@ -1096,6 +1096,14 @@ class AttackConfig(ConfigBase):
         score_dict = {**scores, **times}
         self.score_dict = score_dict
 
+        self.merge_runtime_files(
+            {
+                "attack_file": attack_file,
+                "attack_predictions_file": attack_predictions_file,
+                "score_file": score_file,
+            },
+        )
+
         # Save attack, predictions, and scores if file paths are provided
         if attack_file is not None and not Path(attack_file).exists():
             try:

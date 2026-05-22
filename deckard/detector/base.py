@@ -335,4 +335,5 @@ class DetectorConfig(ConfigBase):
             "detector_training_time": float(self.detector_training_time or 0.0),
             "detector_detection_time": float(self.detector_detection_time),
         }
+        self.merge_runtime_files(getattr(self, "files", None))
         return self.score_dict

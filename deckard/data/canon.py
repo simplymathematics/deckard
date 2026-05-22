@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, ClassVar, Final, Mapping, TypedDict
 
-from ..plugins.base import PluginOrchestratorMixin, PluginRuntimeMixin
+from ..plugins.base import OrchestratorBase, RuntimeBase
 
 
 CANONICAL_DATA_METHODS: Final[tuple[str, ...]] = (
@@ -35,6 +35,10 @@ CANONICAL_DATA_TIMES: Final[tuple[str, ...]] = (
     "data_sample_time",
     "data_pipeline_time",
     "data_score_time",
+    "pipeline_fit_time",
+    "pipeline_transform_time",
+    "pipeline_y_fit_time",
+    "pipeline_y_transform_time",
 )
 
 CANONICAL_DATA_RUNTIME_FIELDS: Final[tuple[str, ...]] = (
@@ -86,6 +90,10 @@ class DataTimes(TypedDict, total=False):
     data_sample_time: float | None
     data_pipeline_time: float | None
     data_score_time: float | None
+    pipeline_fit_time: float | None
+    pipeline_transform_time: float | None
+    pipeline_y_fit_time: float | None
+    pipeline_y_transform_time: float | None
 
 
 _STAGE_ALIASES: Final[dict[str, str]] = {
@@ -299,14 +307,21 @@ def resolve_sensitive_split_payload(
     if data is None:
         return None
     resolved_mode = normalize_runtime_split_mode(mode, aliases=aliases)
-    sensitive = getattr(data, _SPLIT_SENSITIVE_ATTRS[resolved_mode], None)
+    sensitive_attr = _SPLIT_SENSITIVE_ATTRS[resolved_mode]
+    sensitive = getattr(data, sensitive_attr, None)
+    if sensitive is None:
+        legacy_attr = sensitive_attr.removeprefix("_")
+        sensitive = getattr(data, legacy_attr, None)
     if sensitive is None and fallback_to_all and resolved_mode != "all":
-        sensitive = getattr(data, _SPLIT_SENSITIVE_ATTRS["all"], None)
+        all_attr = _SPLIT_SENSITIVE_ATTRS["all"]
+        sensitive = getattr(data, all_attr, None)
+        if sensitive is None:
+            sensitive = getattr(data, all_attr.removeprefix("_"), None)
     return sensitive
 
 
 @dataclass(eq=False, kw_only=True)
-class DataPluginRuntimeMixin(PluginRuntimeMixin):
+class DataPluginRuntimeMixin(RuntimeBase):
     """Reusable plugin orchestration and runtime-state copy behavior."""
 
     def _copy_runtime_state_to(self, target: Any) -> None:
@@ -342,7 +357,7 @@ class DataPluginRuntimeMixin(PluginRuntimeMixin):
                 setattr(target, attr, getattr(self, attr, None))
 
 @dataclass(eq=False, kw_only=True)
-class ScoringOrchestratorMixin(PluginOrchestratorMixin, DataPluginRuntimeMixin):
+class ScoringOrchestratorMixin(OrchestratorBase, DataPluginRuntimeMixin):
     """Backward-compatible alias wrapper for centralized plugin orchestration."""
 
     default_stage: Final[str] = DEFAULT_DATA_SCORE_STAGE
