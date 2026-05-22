@@ -69,9 +69,6 @@ class PytorchBaseSampler(BaseSampler):
         def _sampler_kwargs_for_alias(alias: str) -> dict[str, Any]:
             if alias == "split":
                 return {
-                    "train_size": getattr(config, "train_size", None),
-                    "test_size": getattr(config, "test_size", None),
-                    "val_size": getattr(config, "val_size", None),
                     "random_state": getattr(config, "random_state", 42),
                     "stratify": getattr(config, "stratify", True),
                 }
@@ -84,8 +81,6 @@ class PytorchBaseSampler(BaseSampler):
                 }
             if alias == "shuffle":
                 return {
-                    "train_size": getattr(config, "train_size", None),
-                    "test_size": getattr(config, "test_size", None),
                     "random_state": getattr(config, "random_state", 42),
                     "stratify": getattr(config, "stratify", True),
                 }
@@ -143,9 +138,6 @@ class PytorchBaseSampler(BaseSampler):
             sampler_obj = PytorchSplitSampler()
             setattr(config, "_sampler_obj", sampler_obj)
         for field_name in (
-            "train_size",
-            "test_size",
-            "val_size",
             "random_state",
             "stratify",
             "n_splits",

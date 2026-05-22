@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 from omegaconf import ListConfig
 
-from deckard.data.base import DataPipelineConfig
+from deckard.data.base import DataConfig
 from deckard.plugins.fairlearn.data import FairlearnDataConfig
 
 
@@ -20,7 +20,7 @@ def test_post_init_converts_sensitive_listconfig(monkeypatch):
     cfg = _cfg()
     cfg.sensitive_columns = ListConfig(["group"])
 
-    monkeypatch.setattr(DataPipelineConfig, "__post_init__", lambda self: None)
+    monkeypatch.setattr(DataConfig, "__post_init__", lambda self: None)
     monkeypatch.setattr(FairlearnDataConfig, "_validate_init", lambda self: None)
 
     cfg.__post_init__()
@@ -107,7 +107,7 @@ def test_inject_fairness_defense_step_branch_paths():
 def test_load_data_validates_sensitive_columns(monkeypatch):
     cfg = _cfg()
 
-    monkeypatch.setattr(DataPipelineConfig, "load_dataset", lambda self: self)
+    monkeypatch.setattr(DataConfig, "load_dataset", lambda self: self)
     cfg._X = pd.DataFrame({"group": ["a"], "x": [1]})
     cfg._y = pd.Series([0])
     cfg.sensitive_columns = None
@@ -133,7 +133,7 @@ def test_sample_populates_sensitive_val_when_present(monkeypatch):
         self.y_test = pd.Series([1])
         self.y_val = pd.Series([0])
 
-    monkeypatch.setattr(DataPipelineConfig, "fit", _noop_fit)
+    monkeypatch.setattr(DataConfig, "fit", _noop_fit)
 
     cfg.fit()
 

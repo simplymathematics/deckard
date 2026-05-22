@@ -9,7 +9,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from .data import (
         PytorchCustomDataConfig,
         PytorchDataConfig,
-        PytorchDataPipelineConfig,
     )
     from .experiment import TorchExperimentConfig
     from .fairness_data import FairlearnPytorchDataConfig
@@ -28,7 +27,6 @@ if TYPE_CHECKING:  # pragma: no cover
 __all__ = [
     "PytorchDataConfig",
     "PytorchCustomDataConfig",
-    "PytorchDataPipelineConfig",
     "FairlearnPytorchDataConfig",
     "PytorchModelConfig",
     "PytorchAttackConfig",
@@ -49,18 +47,15 @@ def __getattr__(name):
     if name in {
         "PytorchDataConfig",
         "PytorchCustomDataConfig",
-        "PytorchDataPipelineConfig",
     }:
         from .data import (
             PytorchCustomDataConfig,
             PytorchDataConfig,
-            PytorchDataPipelineConfig,
         )
 
         mapping = {
             "PytorchDataConfig": PytorchDataConfig,
             "PytorchCustomDataConfig": PytorchCustomDataConfig,
-            "PytorchDataPipelineConfig": PytorchDataPipelineConfig,
         }
         return mapping[name]
     if name == "FairlearnPytorchDataConfig":

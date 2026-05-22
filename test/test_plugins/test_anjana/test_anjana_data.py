@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from omegaconf import OmegaConf
 
-from deckard.data.base import DataPipelineConfig
+from deckard.data.base import DataConfig
 from deckard.plugins.anjana import data as anjana_data_module
 from deckard.plugins.anjana.data import AnjanaDataConfig
 
@@ -45,7 +45,7 @@ def test_post_init_normalizes_list_like_fields(monkeypatch):
     cfg.sensitive_columns = "group"
     cfg.hierarchy_interval_sizes = OmegaConf.create({"zip": [5]})
 
-    monkeypatch.setattr(DataPipelineConfig, "__post_init__", lambda self: None)
+    monkeypatch.setattr(DataConfig, "__post_init__", lambda self: None)
     monkeypatch.setattr(AnjanaDataConfig, "_validate_init", lambda self: None)
 
     cfg.__post_init__()
@@ -228,7 +228,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
 
     calls = []
     monkeypatch.setattr(
-        DataPipelineConfig,
+        DataConfig,
         "load_dataset",
         lambda self: (calls.append("load"), self)[1],
     )
@@ -250,7 +250,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
         self.y_train = pd.Series([0, 1])
         self.y_test = pd.Series([1])
 
-    monkeypatch.setattr(DataPipelineConfig, "fit", _fit_with_sensitive)
+    monkeypatch.setattr(DataConfig, "fit", _fit_with_sensitive)
     cfg.sensitive_columns = ["group"]
     cfg.fit()
     assert cfg._sensitive_train.tolist() == ["a", "b"]
@@ -258,7 +258,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     assert cfg._sensitive_all.tolist() == ["a", "b", "b"]
 
     cfg_none = _bare_cfg()
-    monkeypatch.setattr(DataPipelineConfig, "fit", lambda self, run_hooks=True: None)
+    monkeypatch.setattr(DataConfig, "fit", lambda self, run_hooks=True: None)
     cfg_none.fit()
 
     cfg_score = _bare_cfg()

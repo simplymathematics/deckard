@@ -24,7 +24,7 @@ from torch.utils.data import (
 )
 from tqdm.auto import tqdm
 
-from ...data.base import DataConfig, DataPipelineConfig
+from ...data.base import DataConfig
 from ...data.canon import DataFiles, merge_data_files
 from .sample import PytorchBaseSampler
 
@@ -198,11 +198,6 @@ class TorchDatasetSamplingMixin:
         return ds
 
 
-@dataclass(eq=False, kw_only=True)
-class PytorchDataPipelineConfig(DataPipelineConfig):
-    pass
-
-
 class TorchDatasetMixin(TorchDatasetSamplingMixin):
     """PyTorch data mixin with dataset-aware sampling behavior."""
 
@@ -273,7 +268,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         train_size (Union[float, int, None]): Proportion or absolute number of train samples.
         random_state (int): Random seed for reproducibility.
         stratify (Union[None, str, bool]): Whether to stratify the split.
-        pipeline (Dict[str, DataPipelineConfig]): Data processing pipelines.
+        pipeline (Dict[str, DataConfig]): Data processing pipelines.
 
     """
 

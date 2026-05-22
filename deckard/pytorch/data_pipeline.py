@@ -1,5 +1,5 @@
 """PyTorch data pipeline config re-exports."""
 
-from ..frameworks.pytorch.data import PytorchDataPipelineConfig
+from ..frameworks.pytorch.data import PytorchDataConfig
 
-__all__ = ["PytorchDataPipelineConfig"]
+__all__ = ["PytorchDataConfig"]

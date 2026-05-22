@@ -7,14 +7,10 @@ Optional exports are only available when their dependencies are installed.
 
 import logging
 
-from .base import DataConfig, DataPipelineConfig
+from .base import DataConfig
 from .declarations import DatasetDeclaration, discover_dataset_declarations
-from .pipeline import (
-    AnjanaDataPipelineConfig,
-    DataPipeline,
-    DefaultDataPipelineConfig,
-    FairlearnDataPipelineConfig,
-)
+from .pipeline import DataConfig as PipelineDataConfig
+from .pipeline import DataPipeline
 from .sample import (
     BaseSampler,
     KFoldSampler,
@@ -26,11 +22,11 @@ from .sample import (
 logger = logging.getLogger(__name__)
 
 try:
-    from .pipeline import PytorchDataPipelineConfig
+    from .pipeline import PytorchDataConfig
 
-    _ = PytorchDataPipelineConfig
+    _ = PytorchDataConfig
 except Exception:  # pragma: no cover
-    logger.debug("Torch not found. PytorchDataPipelineConfig is unavailable.")
+    logger.debug("Torch not found. PytorchDataConfig is unavailable.")
 
 
 try:
@@ -58,10 +54,7 @@ except Exception:
 __all__ = [
     "DataConfig",
     "DataPipeline",
-    "DataPipelineConfig",
-    "DefaultDataPipelineConfig",
-    "AnjanaDataPipelineConfig",
-    "FairlearnDataPipelineConfig",
+    "PipelineDataConfig",
     "BaseSampler",
     "SplitSampler",
     "KFoldSampler",
@@ -71,8 +64,8 @@ __all__ = [
     "discover_dataset_declarations",
 ]
 
-if "PytorchDataPipelineConfig" in globals():
-    __all__.append("PytorchDataPipelineConfig")
+if "PytorchDataConfig" in globals():
+    __all__.append("PytorchDataConfig")
 
 
 if "PytorchDataConfig" in globals():

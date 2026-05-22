@@ -18,7 +18,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from hydra.utils import instantiate
 
-from ..data import DataConfig, DataPipelineConfig
+from ..data import DataConfig
 from ..model import ModelConfig
 
 try:
@@ -219,7 +219,7 @@ class DataConfigResolutionMixin:
                     ) from exc
             return resolved_fairlearn_cls
         if "pipeline" in data_dict:
-            return DataPipelineConfig
+            return DataConfig
         return DataConfig
 
     def _resolve_data_config(self):
@@ -273,7 +273,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             ``pre-sample``), optionally a list for multi-pass experiment scoring.
     """
 
-    data: Union[DataConfig, DataPipelineConfig]
+    data: DataConfig
     experiment_name: str = "{hash}"
     model: ModelConfig = None
     defense: DefensePipelineConfig = None
@@ -1565,7 +1565,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 ):
                     setattr(self.data, attr, None)
                 self.data.score_dict = {}
-                # Run full data runtime per fold so DataPipelineConfig hooks and
+                # Run full data runtime per fold so DataConfig hooks and
                 # transformations (e.g., StringDistanceTransformer) execute.
                 self.data(
                     files={

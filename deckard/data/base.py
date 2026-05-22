@@ -1147,14 +1147,5 @@ class DataPipelineStep:
         return config
 
 
-@dataclass(eq=False, kw_only=True)
-class DataPipelineConfig(DataConfig):
-    """Legacy alias for DataConfig.
-
-    Historical pipeline-specific behavior now lives in DataConfig via the
-    optional ``pipeline`` runtime attribute.
-    """
-
-    pass
 
 

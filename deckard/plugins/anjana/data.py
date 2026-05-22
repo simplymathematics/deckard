@@ -9,7 +9,7 @@ from deckard.plugins import HookPlugin
 from deckard.plugins.base import compose_hook_plugins
 
 from ...data._mixins import RuntimePayload, _SensitiveColumnsMixin
-from ...data.base import DataPipelineConfig
+from ...data.base import DataConfig
 from ...data.canon import resolve_runtime_files
 from ...utils import (
     is_default_config_value,
@@ -254,11 +254,11 @@ class AnjanaDataConfig(
     PrivacyBehaviorMixin,
     AnjanaPipelineHooksMixin,
     AnjanaDataScoreHooksMixin,
-    DataPipelineConfig,
+    DataConfig,
 ):
     """Data pipeline config with ANJANA anonymization support.
 
-    This config extends ``DataPipelineConfig`` with optional privacy
+    This config extends ``DataConfig`` with optional privacy
     anonymization and fairness-preprocessing hooks. The default plugin setup
     executes ``apply_anjana_defense`` after data load when an ANJANA defense
     configuration is provided.
@@ -360,7 +360,7 @@ class AnjanaDataConfig(
             files_arg if isinstance(files_arg, (dict, DictConfig)) else None,
         )
         self._coerce_pipeline_runtime()
-        return DataPipelineConfig.__call__(self, *args, files=files, **kwargs)
+        return DataConfig.__call__(self, *args, files=files, **kwargs)
 
 
 __all__ = [

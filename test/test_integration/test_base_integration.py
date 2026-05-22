@@ -12,7 +12,7 @@ from omegaconf import OmegaConf
 os.environ.setdefault("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "1")
 
 from deckard.attack import AttackConfig
-from deckard.data import DataConfig, DataPipelineConfig
+from deckard.data import DataConfig
 from deckard.experiment import ExperimentConfig
 from deckard.file import FileConfig
 from deckard.model import DefenseConfig, ModelConfig
@@ -685,9 +685,9 @@ def test_cli_data_model_composition_adult_logistic():
 
     # Load config into data
     data_dict = OmegaConf.to_container(cfg.data, resolve=True)
-    # Use DataPipelineConfig if pipeline is present
+    # Use DataConfig if pipeline is present
     if "pipeline" in data_dict:
-        data = DataPipelineConfig(**data_dict)
+        data = DataConfig(**data_dict)
     else:
         data = DataConfig(**data_dict)
     _load_or_skip(data)
@@ -721,7 +721,7 @@ def test_cli_data_model_composition_diabetes_rf():
     # Load config into data
     data_dict = OmegaConf.to_container(cfg.data, resolve=True)
     if "pipeline" in data_dict:
-        data = DataPipelineConfig(**data_dict)
+        data = DataConfig(**data_dict)
     else:
         data = DataConfig(**data_dict)
     _load_or_skip(data)
@@ -792,7 +792,7 @@ def test_cli_attack_composition_fgm():
     # Load configs
     data_dict = OmegaConf.to_container(cfg.data, resolve=True)
     if "pipeline" in data_dict:
-        data = DataPipelineConfig(**data_dict)
+        data = DataConfig(**data_dict)
     else:
         data = DataConfig(**data_dict)
     _load_or_skip(data)
@@ -830,7 +830,7 @@ def test_cli_attack_composition_database_reconstruction_smoke():
 
     data_dict = OmegaConf.to_container(cfg.data, resolve=True)
     if "pipeline" in data_dict:
-        data = DataPipelineConfig(**data_dict)
+        data = DataConfig(**data_dict)
     else:
         data = DataConfig(**data_dict)
     _load_or_skip(data)
@@ -868,7 +868,7 @@ def test_cli_full_experiment_composition():
     # Load configs
     data_dict = OmegaConf.to_container(cfg.data, resolve=True)
     if "pipeline" in data_dict:
-        data = DataPipelineConfig(**data_dict)
+        data = DataConfig(**data_dict)
     else:
         data = DataConfig(**data_dict)
 
@@ -906,7 +906,7 @@ def test_cli_full_experiment_composition_database_reconstruction_end_to_end():
 
     data_dict = OmegaConf.to_container(cfg.data, resolve=True)
     if "pipeline" in data_dict:
-        data = DataPipelineConfig(**data_dict)
+        data = DataConfig(**data_dict)
     else:
         data = DataConfig(**data_dict)
 
@@ -942,7 +942,7 @@ def test_cli_experiment_tuning_mode_emits_test_scores():
 
     data_dict = OmegaConf.to_container(cfg.data, resolve=True)
     if "pipeline" in data_dict:
-        data = DataPipelineConfig(**data_dict)
+        data = DataConfig(**data_dict)
     else:
         data = DataConfig(**data_dict)
 

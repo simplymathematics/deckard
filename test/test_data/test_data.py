@@ -9,7 +9,7 @@ import pytest
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 
-from deckard.data import DataConfig, DataPipelineConfig
+from deckard.data import DataConfig
 
 try:
     import lifelines  # noqa: F401
@@ -19,8 +19,8 @@ except ImportError:
     HAS_LIFELINES = False
 
 
-class TestDataPipelineConfigListMerge(unittest.TestCase):
-    """DataPipelineConfig should accept a list of step-dicts and merge them."""
+class TestDataConfigListMerge(unittest.TestCase):
+    """DataConfig should accept a list of step-dicts and merge them."""
 
     steps_a = {
         "imputer": {"name": "sklearn.impute.SimpleImputer", "strategy": "mean"},
@@ -34,7 +34,7 @@ class TestDataPipelineConfigListMerge(unittest.TestCase):
     }
 
     def test_list_of_two_dicts_merges_steps(self):
-        cfg = DataPipelineConfig(
+        cfg = DataConfig(
             dataset_name="make_classification",
             pipeline=[self.steps_a, self.steps_b],
         )
@@ -43,21 +43,21 @@ class TestDataPipelineConfigListMerge(unittest.TestCase):
         self.assertIn("scaler", cfg.pipeline)
 
     def test_list_later_entry_wins_on_key_conflict(self):
-        cfg = DataPipelineConfig(
+        cfg = DataConfig(
             dataset_name="make_classification",
             pipeline=[self.steps_a, self.steps_override],
         )
         self.assertEqual(cfg.pipeline["imputer"]["strategy"], "median")
 
     def test_single_dict_still_works(self):
-        cfg = DataPipelineConfig(
+        cfg = DataConfig(
             dataset_name="make_classification",
             pipeline={"imputer": {"name": "sklearn.impute.SimpleImputer"}},
         )
         self.assertIn("imputer", cfg.pipeline)
 
 
-class TestDataPipelineConfig(unittest.TestCase):
+class TestDataConfig(unittest.TestCase):
     def setUp(self):
         self.pipeline_config_dict = {
             "imputer": {
@@ -115,13 +115,13 @@ class TestDataPipelineConfig(unittest.TestCase):
         }
 
     def test_pipelineconfig_initialization(self):
-        config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
+        config = DataConfig(pipeline=self.pipeline_config_dict)
         self.assertIsInstance(config.pipeline, dict)
         self.assertIn("imputer", config.pipeline)
         self.assertIn("scaler", config.pipeline)
 
     def test_pipeline_initialization(self):
-        config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
+        config = DataConfig(pipeline=self.pipeline_config_dict)
         (
             pipeline,
             _,
@@ -132,7 +132,7 @@ class TestDataPipelineConfig(unittest.TestCase):
         self.assertEqual(pipeline.steps[1][0], "scaler")
 
     def test_pipeline_fit_and_transform(self):
-        config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
+        config = DataConfig(pipeline=self.pipeline_config_dict)
         config._y = self.y_train
         config.data_load_time = 3
         pipeline, _ = config._init_pipeline()
@@ -149,19 +149,19 @@ class TestDataPipelineConfig(unittest.TestCase):
         self.assertFalse(self.X_test.equals(config.X_test))
 
     def test_pipeline_fit_time(self):
-        config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
+        config = DataConfig(pipeline=self.pipeline_config_dict)
         config()
         self.assertIsNotNone(config.pipeline_fit_time)
         self.assertGreater(config.pipeline_fit_time, 0)
 
     def test_pipeline_transform_time(self):
-        config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
+        config = DataConfig(pipeline=self.pipeline_config_dict)
         config()
         self.assertIsNotNone(config.pipeline_transform_time)
         self.assertGreater(config.pipeline_transform_time, 0)
 
     def test_pipeline_selector_initialization(self):
-        config = DataPipelineConfig(pipeline=self.pipeline_selector_dict)
+        config = DataConfig(pipeline=self.pipeline_selector_dict)
         (
             pipeline,
             _,
@@ -594,7 +594,7 @@ class ScorePlugin:
         return {"plugin_metric": float(len(scores))}
 
 
-class TestFairlearnDataPipelineConfig(unittest.TestCase):
+class TestFairlearnDataConfig(unittest.TestCase):
     def setUp(self):
         self.pipeline_config_dict = {
             "imputer": {
@@ -652,13 +652,13 @@ class TestFairlearnDataPipelineConfig(unittest.TestCase):
         }
 
     def test_pipelineconfig_initialization(self):
-        config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
+        config = DataConfig(pipeline=self.pipeline_config_dict)
         self.assertIsInstance(config.pipeline, dict)
         self.assertIn("imputer", config.pipeline)
         self.assertIn("scaler", config.pipeline)
 
     def test_pipeline_initialization(self):
-        config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
+        config = DataConfig(pipeline=self.pipeline_config_dict)
         pipeline, _ = config._init_pipeline()
         self.assertIsInstance(pipeline, Pipeline)
         self.assertEqual(len(pipeline.steps), 2)
@@ -666,7 +666,7 @@ class TestFairlearnDataPipelineConfig(unittest.TestCase):
         self.assertEqual(pipeline.steps[1][0], "scaler")
 
     def test_pipeline_fit_and_transform(self):
-        config = DataPipelineConfig(
+        config = DataConfig(
             pipeline=self.pipeline_config_dict,
             score_split="train",
         )
@@ -680,19 +680,19 @@ class TestFairlearnDataPipelineConfig(unittest.TestCase):
         self.assertFalse(self.X_test.equals(config.X_test))
 
     def test_pipeline_fit_time(self):
-        config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
+        config = DataConfig(pipeline=self.pipeline_config_dict)
         config()
         self.assertIsNotNone(config.pipeline_fit_time)
         self.assertGreater(config.pipeline_fit_time, 0)
 
     def test_pipeline_transform_time(self):
-        config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
+        config = DataConfig(pipeline=self.pipeline_config_dict)
         config()
         self.assertIsNotNone(config.pipeline_transform_time)
         self.assertGreater(config.pipeline_transform_time, 0)
 
     def test_pipeline_selector_initialization(self):
-        config = DataPipelineConfig(pipeline=self.pipeline_selector_dict)
+        config = DataConfig(pipeline=self.pipeline_selector_dict)
         (
             pipeline,
             _,

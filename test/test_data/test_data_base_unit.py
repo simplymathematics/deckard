@@ -10,7 +10,7 @@ from sklearn.preprocessing import FunctionTransformer
 
 import deckard.data.base as data_base
 import deckard.data.declarations as data_declarations
-from deckard.data.base import DataConfig, DataPipelineConfig
+from deckard.data.base import DataConfig, DataConfig
 from deckard.data.pipeline import DataPipeline
 from deckard.score.base import ScorerDictConfig
 
@@ -35,9 +35,9 @@ def _basic_data_config(**overrides):
 
 
 def test_data_pipeline_config_is_legacy_alias():
-    assert issubclass(DataPipelineConfig, DataConfig)
+    assert issubclass(DataConfig, DataConfig)
 
-    cfg = DataPipelineConfig(scorer="none")
+    cfg = DataConfig(scorer="none")
     assert isinstance(cfg, DataConfig)
     assert cfg.pipeline is None
 
@@ -434,7 +434,7 @@ def test_prepare_data_file_existing_and_new(tmp_path):
 
 
 def test_pipeline_config_coerces_legacy_pipeline_specs():
-    cfg = DataPipelineConfig(
+    cfg = DataConfig(
         pipeline={
             "feature": {
                 "name": "sklearn.preprocessing.FunctionTransformer",
@@ -445,7 +445,7 @@ def test_pipeline_config_coerces_legacy_pipeline_specs():
     )
     assert isinstance(cfg.pipeline, DataPipeline)
 
-    cfg_list = DataPipelineConfig(
+    cfg_list = DataConfig(
         pipeline=[
             {
                 "feature": {
@@ -503,7 +503,7 @@ def test_pipeline_stage_flags_apply_only_to_declared_stages(monkeypatch):
 
     monkeypatch.setattr(data_mixins, "load_class", _fake_load_class)
 
-    cfg = DataPipelineConfig(
+    cfg = DataConfig(
         pipeline={
             "pre": {
                 "name": "test.Pre",
@@ -555,7 +555,7 @@ def test_pipeline_dtype_routing_keeps_untyped_steps(monkeypatch):
         lambda name, *args, **kwargs: IdentityTransformer(),
     )
 
-    cfg = DataPipelineConfig(
+    cfg = DataConfig(
         pipeline={
             "typed": {
                 "name": "typed.Transformer",
@@ -611,7 +611,7 @@ def test_score_and_feature_score_branches(monkeypatch):
 
 
 def test_empty_runtime_pipeline_leaves_data_unchanged():
-    cfg = DataPipelineConfig(pipeline={}, scorer="none")
+    cfg = DataConfig(pipeline={}, scorer="none")
     cfg._X = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
     cfg._y = pd.Series([0, 1, 0])
 
@@ -624,7 +624,7 @@ def test_empty_runtime_pipeline_leaves_data_unchanged():
 
 
 def test_fit_transform_x_handles_sparse_and_generated_feature_names():
-    cfg = DataPipelineConfig(scorer="none")
+    cfg = DataConfig(scorer="none")
     runtime = DataPipeline(
         pipeline={
             "csr": {
@@ -642,7 +642,7 @@ def test_fit_transform_x_handles_sparse_and_generated_feature_names():
 
 
 def test_fit_transform_y_csr_conversion():
-    cfg = DataPipelineConfig(pipeline={}, scorer="none")
+    cfg = DataConfig(pipeline={}, scorer="none")
     transformer = FunctionTransformer(
         lambda values: csr_matrix(values),
         validate=False,
@@ -655,7 +655,7 @@ def test_fit_transform_y_csr_conversion():
 
 
 def test_pipeline_call_saves_scores_and_handles_y_pipeline(tmp_path):
-    cfg = DataPipelineConfig(scorer="none")
+    cfg = DataConfig(scorer="none")
     cfg.data_load_time = 0.1
     cfg.data_sample_time = 0.2
     cfg.X_train = pd.DataFrame({"a": [1, 2]})

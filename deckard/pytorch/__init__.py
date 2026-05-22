@@ -15,7 +15,6 @@ from ..frameworks.pytorch import (
     PytorchAttackConfig,
     PytorchCustomDataConfig,
     PytorchDataConfig,
-    PytorchDataPipelineConfig,
     PytorchModelConfig,
     TorchExperimentConfig,
 )
@@ -23,7 +22,6 @@ from ..frameworks.pytorch import (
 __all__ = [
     "PytorchDataConfig",
     "PytorchCustomDataConfig",
-    "PytorchDataPipelineConfig",
     "PytorchModelConfig",
     "PytorchAttackConfig",
     "TorchExperimentConfig",

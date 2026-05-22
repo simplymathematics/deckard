@@ -9,7 +9,7 @@ from deckard.plugins import HookPlugin
 from deckard.plugins.base import compose_hook_plugins
 
 from ...data._mixins import RuntimePayload, _SensitiveColumnsMixin
-from ...data.base import DataPipelineConfig
+from ...data.base import DataConfig
 from ...data.canon import resolve_runtime_files
 from ...utils import (
     coerce_to_list,
@@ -98,11 +98,11 @@ class FairlearnDataConfig(
     FairnessBehaviorMixin,
     FairlearnPipelineHooksMixin,
     FairlearnDataScoreHooksMixin,
-    DataPipelineConfig,
+    DataConfig,
 ):
     """Fairlearn-aware data pipeline configuration.
 
-    This extends ``DataPipelineConfig`` with sensitive feature handling,
+    This extends ``DataConfig`` with sensitive feature handling,
     fairness-defense pipeline injection, and fairness-oriented scorer defaults.
 
     Key fields:

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class TorchDataPipelineMixin:
-    """PyTorch adapter methods for FrameworkDataPipelineConfig."""
+    """PyTorch adapter methods for framework DataConfig runtimes."""
 
     def build_pipeline(self) -> RuntimeValue:
         """

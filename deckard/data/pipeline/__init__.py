@@ -1,42 +1,27 @@
 """Data pipeline package exports.
 
-This package centralizes pipeline-oriented config classes while maintaining
-backward compatibility with DataPipelineConfig in data.base.
+This package centralizes pipeline-oriented runtime helpers with DataConfig as
+the canonical data config surface.
 """
 
 import logging
 
-from .base import (
-    AnjanaDataPipelineConfig,
-    DataPipeline,
-    DefaultDataPipelineConfig,
-    FairlearnDataPipelineConfig,
-)
+from .base import DataConfig, DataPipeline
 
 logger = logging.getLogger(__name__)
 
 try:
-    from ...frameworks.pytorch.data import PytorchDataPipelineConfig
+    from ...frameworks.pytorch.data import PytorchDataConfig
 
-    _ = PytorchDataPipelineConfig
+    _ = PytorchDataConfig
 except Exception:  # pragma: no cover
-    logger.debug("Torch not found. PytorchDataPipelineConfig is unavailable.")
-
-try:
-    from ..base import DataPipelineConfig
-except Exception:  # pragma: no cover
-    DataPipelineConfig = None
+    logger.debug("Torch not found. PytorchDataConfig is unavailable.")
 
 
 __all__ = [
     "DataPipeline",
-    "DefaultDataPipelineConfig",
-    "AnjanaDataPipelineConfig",
-    "FairlearnDataPipelineConfig",
+    "DataConfig",
 ]
 
-if DataPipelineConfig is not None:
-    __all__.append("DataPipelineConfig")
-
-if "PytorchDataPipelineConfig" in globals():
-    __all__.append("PytorchDataPipelineConfig")
+if "PytorchDataConfig" in globals():
+    __all__.append("PytorchDataConfig")

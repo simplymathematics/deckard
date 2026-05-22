@@ -594,11 +594,11 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
     #     self.assertIs(cls, FairlearnDataConfig)
 
     def test_select_data_cls_pipeline_key(self):
-        from deckard.data import DataPipelineConfig
+        from deckard.data import DataConfig
 
         data_dict = {"pipeline": {}}
         cls = self.mixin._select_data_cls(data_dict)
-        self.assertIs(cls, DataPipelineConfig)
+        self.assertIs(cls, DataConfig)
 
     def test_select_data_cls_plain(self):
         data_dict = {"dataset_name": "make_classification", "classifier": True}
@@ -627,7 +627,7 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
             exp._resolve_data_config()
 
     def test_sklearn_pipeline_yaml_compose_instantiates_pipeline_configs(self):
-        from deckard.data import DataPipelineConfig
+        from deckard.data import DataConfig
 
         config_dir = (
             Path(__file__).resolve().parents[2]
@@ -644,12 +644,12 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
         ):
             with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
                 cfg = compose(config_name=config_name)
-            self.assertIsInstance(instantiate(cfg), DataPipelineConfig)
+            self.assertIsInstance(instantiate(cfg), DataConfig)
 
     def test_pytorch_pipeline_yaml_compose_instantiates_pipeline_config(self):
         pytest.importorskip("torch")
 
-        from deckard.data import DataPipelineConfig
+        from deckard.data import DataConfig
 
         config_dir = (
             Path(__file__).resolve().parents[2]
@@ -661,7 +661,7 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
         )
         with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
             cfg = compose(config_name="pytorch_pipeline")
-        self.assertIsInstance(instantiate(cfg), DataPipelineConfig)
+        self.assertIsInstance(instantiate(cfg), DataConfig)
 
 
 # ── ExperimentConfig.set_random_seed ─────────────────────────────────────────

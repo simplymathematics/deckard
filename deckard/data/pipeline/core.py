@@ -4,17 +4,11 @@ Prefer importing from ``deckard.data.pipeline.base``.
 """
 
 from .base import (  # noqa: F401
-    AnjanaDataPipelineConfig,
+    DataConfig,
     DataPipeline,
-    DataPipelineConfig,
-    DefaultDataPipelineConfig,
-    FairlearnDataPipelineConfig,
 )
 
 __all__ = [
     "DataPipeline",
-    "DataPipelineConfig",
-    "DefaultDataPipelineConfig",
-    "AnjanaDataPipelineConfig",
-    "FairlearnDataPipelineConfig",
+    "DataConfig",
 ]

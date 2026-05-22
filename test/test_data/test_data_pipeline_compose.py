@@ -4,9 +4,9 @@ from hydra import compose, initialize_config_dir
 from hydra.utils import instantiate
 
 from deckard.data.pipeline.base import (
-    AnjanaDataPipelineConfig,
-    DefaultDataPipelineConfig,
-    FairlearnDataPipelineConfig,
+    DataConfig,
+    DataConfig,
+    DataConfig,
 )
 
 
@@ -29,16 +29,16 @@ def test_sklearn_pipeline_yaml_configs_compose_and_instantiate():
     anjana_cfg = _compose_from_dir(config_dir, "anjana_pipeline")
     fairlearn_cfg = _compose_from_dir(config_dir, "fairlearn_pipeline")
 
-    assert isinstance(instantiate(default_cfg), DefaultDataPipelineConfig)
-    assert isinstance(instantiate(anjana_cfg), AnjanaDataPipelineConfig)
-    assert isinstance(instantiate(fairlearn_cfg), FairlearnDataPipelineConfig)
+    assert isinstance(instantiate(default_cfg), DataConfig)
+    assert isinstance(instantiate(anjana_cfg), DataConfig)
+    assert isinstance(instantiate(fairlearn_cfg), DataConfig)
 
 
 def test_pytorch_pipeline_yaml_config_compose_and_instantiate():
     import pytest
 
     pytest.importorskip("torch")
-    from deckard.frameworks.pytorch.data import PytorchDataPipelineConfig
+    from deckard.frameworks.pytorch.data import PytorchDataConfig
 
     config_dir = (
         Path(__file__).resolve().parents[2]
@@ -50,4 +50,4 @@ def test_pytorch_pipeline_yaml_config_compose_and_instantiate():
     )
 
     pytorch_cfg = _compose_from_dir(config_dir, "pytorch_pipeline")
-    assert isinstance(instantiate(pytorch_cfg), PytorchDataPipelineConfig)
+    assert isinstance(instantiate(pytorch_cfg), PytorchDataConfig)

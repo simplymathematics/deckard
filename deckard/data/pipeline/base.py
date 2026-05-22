@@ -15,7 +15,7 @@ from sklearn.pipeline import Pipeline
 from ...utils import load_class
 
 if TYPE_CHECKING:
-    from ..base import DataConfig, DataPipelineConfig
+    from ..base import DataConfig
 
 
 @dataclass(eq=False, kw_only=True)
@@ -324,35 +324,10 @@ class DataPipeline(dict):
         return y_frame
 
 
-# Compatibility marker configs still exposed through data.pipeline package.
-from ..base import DataPipelineConfig 
-
-
-@dataclass(eq=False, kw_only=True)
-class DefaultDataPipelineConfig(DataPipelineConfig):
-    """Default no-op data pipeline config."""
-
-    pipeline: dict = field(default_factory=dict)
-
-
-@dataclass(eq=False, kw_only=True)
-class AnjanaDataPipelineConfig(DataPipelineConfig):
-    """Pipeline config marker for anjana-family data flows."""
-
-    pipeline: dict = field(default_factory=dict)
-
-
-@dataclass(eq=False, kw_only=True)
-class FairlearnDataPipelineConfig(DataPipelineConfig):
-    """Pipeline config marker for fairlearn-family data flows."""
-
-    pipeline: dict = field(default_factory=dict)
+from ..base import DataConfig
 
 
 __all__ = [
     "DataPipeline",
-    "DataPipelineConfig",
-    "DefaultDataPipelineConfig",
-    "AnjanaDataPipelineConfig",
-    "FairlearnDataPipelineConfig",
+    "DataConfig",
 ]
