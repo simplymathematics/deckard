@@ -66,7 +66,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x] Ensure that top-level *Config objects keep their current behavior
 - [x] Implement ANJANA pipeline policy hook at `pre_sample` (before_sample) and keep anonymization logic policy-only.
 - [x] Implement Fairlearn pipeline policy hook at `after_pipeline` (post-pipeline) for stage-aligned runtime behavior.
-- 
+-
 - [x] Add ANJANA score tail hook (post_pipeline) that runs after base/core scores.
 - [x] Add Fairlearn score tail hook (`after_score`) and enforce fairlearn metrics merge last.
 -
@@ -74,7 +74,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [ ] Keep top-level config behavior stable (`AnjanaDataConfig`, `FairlearnDataConfig`, `LifelinesDataConfig`) via focused plugin suite validation.
 - [x] test fairlearn.preprocessing.CorrelationRemover (check first for existing test and extend rather than make a new one)
 - [x] register fairlearn.preprocessing.PrototypeRepresentationLearner (max_iter =1 for tests) in examples/*/config/data/pipeline. Test.
-- [x] validate anjana scoring/defense 
+- [x] validate anjana scoring/defense
 
 ### Contracts, docs, and migration guards
 
@@ -85,7 +85,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x] Update API docs (`data`, `pytorch`, `fairlearn`, `anjana` `pipeline`) to reflect canon.
 - [x] Update developer docs to explain the canon file.
 - [x] Add new doc files to indices. Add cross-links elsewhere.
-- [x] Add hook-based persistence using existing 
+- [x] Add hook-based persistence using existing
   stage and hook behavior, files-only persistence, and score-mode semantics.
   - [x] `docs/api/data.md` updated for DataConfig pipeline ownership and score-mode semantics.
   - [x] `docs/api/pytorch.md` and `docs/api/fairlearn.md` and `docs/api/anjana.md` pending targeted refresh.
@@ -131,7 +131,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x] Add stage and hook conformance tests for core/framework/plugin families.
 - [x] Update API docs (`model`, `pytorch`, `fairlearn`, `anjana` `pipeline`) to reflect canon.
 - [x] Add new doc files to indices. Add cross-links elsewhere.
-- [x] Add hook-based persistence using existing 
+- [x] Add hook-based persistence using existing
   stage and hook behavior, files-only persistence, and score-mode semantics.
   - [x] `docs/api/data.md` updated for DataConfig pipeline ownership and score-mode semantics.
   - [x] `docs/api/pytorch.md` and `docs/api/fairlearn.md` and `docs/api/anjana.md` targeted refresh completed.
@@ -179,8 +179,6 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x] Add focused tests for Optuna-backed DataConfig loading and Seaborn plotting from Optuna/DataConfig sources.
 - [x] Update plotting and data docs/examples to describe canonical `optuna.db` query paths.
 
-
-
 ## Plot Checklist
 - [x] Define a canonical plot runtime contract for `files`, `times`, plot output state, and backend selection.
 - [x] Normalize plot backend dispatch so Seaborn, Yellowbrick, and survival plotting remain thin wrappers over the shared plot API.
@@ -197,7 +195,6 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x] Update file-related tests to validate allowed keys, placeholder resolution, handler behavior, and cross-module persistence aliases.
 - [x] Refresh file docs/examples so top-level config APIs use the final decentralized file-schema contract.
 - [ ] Implement, test, and document persistence workflows with/without attacks/defenses and with and without pre-trained models for sklearn and pytorch frameworks.
-
 
 ## Utils Checklist
 - [x] Ensure `deckard/artifacts.py` owns persistence load/save behavior for all runtime artifact payloads.
@@ -268,6 +265,58 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [ ] Add Hydra compose tests validating single-default stage selection and multi-trial execution behavior.
 - [ ] Document experiment canon, Bundle authoring, hook contracts, serialization schema, and DVC workflow in developer docs.
 
+#### Execution Plan: Docs -> Notebooks -> Testing -> Coverage
+
+##### Step 1: Overview and API Documentation
+- [x] Add overview docs for each core module modeled after `docs/overview/scoring.md`:
+  - [x] `docs/overview/data.md`
+  - [x] `docs/overview/model.md`
+  - [x] `docs/overview/attack.md`
+  - [x] `docs/overview/detector.md`
+  - [x] `docs/overview/experiment.md`
+  - [x] `docs/overview/file.md`
+  - [x] `docs/overview/plot.md`
+  - [x] `docs/overview/utils.md`
+  - [x] `docs/overview/scoring.md`
+- [ ] Ensure each overview page includes: defaults, runtime contract, stage/mode semantics (when applicable), persistence behavior, examples, and quick checklist.
+- [ ] Cross-link every overview page with matching API and developer canon docs.
+- [ ] Update overview index/toctree reading order to include all core-module pages.
+
+##### Step 2: Notebook Demonstration Suite
+- [ ] Add a DVC-focused notebook under `docs/notebooks/` for persistence and cache behavior verification (single-run and multi-trial).
+- [ ] Add one notebook per core module to demonstrate canon runtime behavior end-to-end:
+  - [ ] data
+  - [ ] model
+  - [ ] attack
+  - [ ] detector
+  - [ ] experiment
+  - [ ] file
+  - [ ] plot
+  - [ ] utils/artifacts
+  - [ ] scoring
+- [ ] Add notebook sections that explicitly demonstrate:
+  - [ ] files-only persistence aliases
+  - [ ] canonical timing keys plus extensibility
+  - [ ] stage/mode normalization and hook ordering
+  - [ ] cache-key determinism and selective invalidation
+  - [ ] YAML/JSON human-readable score and params artifacts
+- [ ] Add notebook index page entries and per-notebook run expectations.
+
+##### Step 3: Test Plan Aligned to Notebook Scenarios
+- [ ] Convert notebook scenarios into focused unit and integration tests.
+- [ ] Add/extend experiment tests for stage graph generation, bundle merge order, cache reuse, and cache invalidation.
+- [ ] Add end-to-end tests that compare fresh runs vs cache-hit reruns and assert equivalent outputs.
+- [ ] Add persistence contract tests for scalar/vector/nested score serialization and de-serialization.
+- [ ] Add regression tests that validate dot-list/OmegaConf-style score flattening output.
+- [ ] Add docs-build tests to ensure new overview and notebook references resolve.
+
+##### Step 4: Coverage Closure and Exit Criteria
+- [ ] Run focused test suites for all touched core modules and notebook-derived scenarios.
+- [ ] Run coverage and identify remaining gaps for new runtime branches (hooks, cache paths, persistence codecs).
+- [ ] Add targeted tests to close the remaining branch/line gaps.
+- [ ] Capture final coverage deltas and mark checklist items complete.
+- [ ] Publish final migration summary in developer docs with links to overview docs, notebooks, and tests.
+
 ## Final framework/plugin migration:
 - [ ] Keep all *fair* behavior in lightweight Fairlearn mixins, plugins, and wrappers outside the core modules.
 - [ ] Keep all *torch* behavior in lightweight PyTorch wrappers outside the core modules.
@@ -278,7 +327,6 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [ ] Document the compatibility alias and re-export matrix in developer/API docs.
 - [ ] Verify framework/plugin modules only own backend-specific device, estimator, and policy logic.
 - [ ] Add final migration tests that assert core modules import cleanly without framework/plugin fallback behavior.
-
 
 ## Overall Checklist
 

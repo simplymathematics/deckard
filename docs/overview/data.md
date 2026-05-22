@@ -11,9 +11,9 @@ It complements the API details in:
 
 - [Data API](../api/data)
 - [Pipeline API](../api/pipeline)
-- [Sample API](../api/sample)
 - [Score API](../api/score)
 - [File API](../api/file)
+- [Sample API](../api/sample)
 
 ## Core Concepts
 
@@ -101,6 +101,50 @@ At a high level, a data run is:
 1. apply DataPipeline when configured
 1. run score orchestration hooks and scorers
 1. persist score/data artifacts through files
+
+## Execution Flows
+
+### Flow 1: Fresh Load -> Sample -> Optional Pipeline -> Score -> Persist
+
+This is the default DataConfig path when no cached dataset artifact is used. The
+runtime executes lifecycle hooks around load/sample/pipeline boundaries, then
+runs stage-aware scoring with split-scoped mode selection.
+
+```mermaid
+flowchart TD
+  A[Start DataConfig.__call__] --> B[before_load_data hook]
+  B --> C[load_dataset]
+  C --> D[after_load_data hook]
+  D --> E[before_sample hook]
+  E --> F[sample split train/test/val]
+  F --> G[after_sample hook]
+  G --> H{pipeline configured?}
+  H -- yes --> I[before_pipeline hook]
+  I --> J[fit_pre_sample -> fit_X -> fit_y -> fit_Xy]
+  J --> K[after_pipeline hook]
+  H -- no --> L[skip pipeline]
+  K --> M[score mode select train/test/val/all]
+  L --> M
+  M --> N[score stage pre-load/pre-sample/post-sample/post-pipeline]
+  N --> O[persist files + score_file]
+```
+
+### Flow 2: Existing Data Artifact Load Path
+
+When a persisted data artifact exists, DataConfig restores state directly and
+still executes scoring/persistence in canonical order. This preserves hook and
+score semantics while avoiding unnecessary dataset reconstruction.
+
+```mermaid
+flowchart TD
+  A[Start DataConfig.__call__] --> B{data_file exists?}
+  B -- yes --> C[load persisted data object]
+  C --> D[apply runtime split overrides]
+  D --> E[optional re-sample if split changed]
+  E --> F[score mode + stage dispatch]
+  F --> G[persist merged scores/files]
+  B -- no --> H[follow fresh load flow]
+```
 
 ## Programmatic Example
 

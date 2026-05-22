@@ -125,6 +125,7 @@ lint = [
     "mypy",
     "pre-commit",
     "flake8-pyproject",
+    "pymarkdownlnt",
 ]
 datasets = [
     "datasets"

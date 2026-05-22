@@ -52,6 +52,84 @@ Most runtime scorers are `ScorerDictConfig` (or subclasses) receiving:
 Scorers may produce nested stage/mode outputs internally.
 Runtime owners can flatten for backward compatibility.
 
+## Execution Flows
+
+### Flow 1: DataConfig Scoring Stages
+
+Data scoring dispatches by split-scoped mode and lifecycle stage. Hooks fire at
+stage boundaries and scorer outputs are merged into a canonical score payload.
+
+```mermaid
+flowchart TD
+  A[DataConfig runtime ready] --> B[select mode train/test/val/all]
+  B --> C[before_score_stage hook]
+  C --> D{stage token}
+  D -- pre-load --> E[score before load boundary]
+  D -- pre-sample --> F[score before sample boundary]
+  D -- post-sample --> G[score after sample boundary]
+  D -- post-pipeline --> H[score after pipeline boundary]
+  E --> I[merge score_dict]
+  F --> I
+  G --> I
+  H --> I
+  I --> J[after_score_stage hook]
+```
+
+### Flow 2: ModelConfig Scoring with Defense Branches
+
+Model scoring branches by defense stage and score mode. This keeps metrics
+consistent across standard training, fit-time defense retraining, and
+predict-time defense application.
+
+```mermaid
+flowchart TD
+  A[Model outputs available] --> B[select mode train/test/val]
+  B --> C{defense stage}
+  C -- pre_fit --> D[score pre-fit defended outputs]
+  C -- post_fit_pre_predict --> E[apply predict-time defense then score]
+  C -- pre_art_defense --> F[score ART-preprocessed path]
+  D --> G[merge model score_dict]
+  E --> G
+  F --> G
+  G --> H[persist score_file]
+```
+
+### Flow 3: AttackConfig Scoring by Attack Type
+
+Attack scoring adapts to evasion/poisoning/extraction families while preserving
+stage-aware benign/adversarial or victim/extracted comparison metrics.
+
+```mermaid
+flowchart TD
+  A[Attack outputs produced] --> B{attack family}
+  B -- evasion --> C[score benign + adversarial stages]
+  B -- poisoning --> D[score poisoned train impact]
+  B -- extraction/inference --> E[score victim vs extracted comparison]
+  C --> F[merge attack score_dict]
+  D --> F
+  E --> F
+  F --> G[persist attack score artifacts]
+```
+
+### Flow 4: DetectorConfig Scoring with Filter Branches
+
+Detector scoring emits baseline and post-filter metrics, with explicit
+poison/evasion filter success values to keep downstream experiment scoring
+consistent.
+
+```mermaid
+flowchart TD
+  A[Detector fit/detect complete] --> B[emit pre-filter scores]
+  B --> C{filter branch}
+  C -- poisoning filter --> D[emit poison_filter_success + post-filter scores]
+  C -- evasion filter --> E[emit evasion_filter_success + post-filter scores]
+  C -- no filter --> F[emit detector baseline scores]
+  D --> G[merge detector score_dict]
+  E --> G
+  F --> G
+  G --> H[persist detector score artifacts]
+```
+
 ## Defaults by Base Config
 
 ## `DataConfig`

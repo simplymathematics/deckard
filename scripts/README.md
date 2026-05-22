@@ -32,9 +32,9 @@ Use [scripts/test_workflow.sh](scripts/test_workflow.sh) to run any workflow wit
 
 - `--gpu-mode auto|cpu|mps|cuda`
 - `auto` resolves to:
-	- `mps` on macOS
-	- `cuda` when NVIDIA GPUs are detected via `nvidia-smi`
-	- `cpu` otherwise
+  - `mps` on macOS
+  - `cuda` when NVIDIA GPUs are detected via `nvidia-smi`
+  - `cpu` otherwise
 
 Examples:
 

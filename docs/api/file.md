@@ -69,6 +69,7 @@ handler = CanonFileHandler()
 cfg = FileConfig(handler=handler, model_file="build/model.pkl")
 status = cfg.disk_status()
 ```
+
 ```
 
 ## Typical Workflow

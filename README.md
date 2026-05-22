@@ -72,10 +72,8 @@ Canonical documentation lives in `docs/` and is built with Sphinx.
 - [Module and extension map](docs/source/modules.md)
 - [Notebook hub](docs/notebooks/index.md)
 
-
 ## Citation:
 If you find this software useful please cite us:
-
 
 ```bibtex
 @software{deckard,

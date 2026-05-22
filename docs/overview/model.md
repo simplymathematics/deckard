@@ -34,6 +34,66 @@ Deckard treats model defenses as stage-aware pipeline behavior:
 
 This is what lets a pretrained model pick up a new defense without losing the old score/timing trail.
 
+## Execution Flows
+
+### Flow 1: Standard Train -> Predict -> Score -> Persist
+
+This is the base path for non-pretrained model runs. Hooks surround train and
+score boundaries, and scoring is emitted in split-scoped modes.
+
+```mermaid
+flowchart TD
+    A[Start ModelConfig.__call__] --> B[before_train hook]
+    B --> C[initialize estimator]
+    C --> D[train]
+    D --> E[after_train hook]
+    E --> F[predict train/test/val]
+    F --> G[before_score hook]
+    G --> H[score mode train/test/val]
+    H --> I[score stage post-defense or default]
+    I --> J[after_score hook]
+    J --> K[persist model/predictions/scores]
+```
+
+### Flow 2: Pretrained + apply_fit=True Defense
+
+When a pretrained model receives a fit-time defense, runtime captures a
+pre-defense snapshot, retrains with defense enabled, and preserves both score
+paths for auditability.
+
+```mermaid
+flowchart TD
+    A[Start pretrained load path] --> B[load cached model]
+    B --> C{defense apply_fit=True?}
+    C -- yes --> D[capture pre-defense score/timing snapshot]
+    D --> E[apply pre_fit defense]
+    E --> F[retrain model]
+    F --> G[score defended model]
+    G --> H[persist pre-defense + post-defense outputs]
+    C -- no --> I[skip retrain branch]
+```
+
+### Flow 3: apply_predict=True and ART/Fairness Defense Stage Branches
+
+Predict-time defenses run after fitting and before prediction. The runtime maps
+defense families to canonical stages (`pre_art_defense`, `pre_fit`,
+`post_fit_pre_predict`) so scoring remains stage-consistent across plugins and
+frameworks.
+
+```mermaid
+flowchart TD
+    A[Model fit complete] --> B{defense family}
+    B -- ANJANA/preprocessor --> C[pre_art_defense stage]
+    B -- fairlearn.reductions --> D[pre_fit stage]
+    B -- fairlearn.adversarial or postprocessing --> E[post_fit_pre_predict stage]
+    C --> F[apply_predict defense]
+    D --> F
+    E --> F
+    F --> G[predict]
+    G --> H[score with stage-tagged outputs]
+    H --> I[persist]
+```
+
 ## Framework-specific extensions
 
 ### PyTorch
@@ -65,10 +125,10 @@ When you build on Deckard's model layer:
 
 ## Related Docs
 
+- {doc}`data`
 - {doc}`../api/model`
+- {doc}`scoring`
 - {doc}`../api/pytorch`
 - {doc}`../api/fairlearn`
 - {doc}`../api/anjana`
 - {doc}`../developers/model_runtime_canon`
-- {doc}`scoring`
-- {doc}`data`

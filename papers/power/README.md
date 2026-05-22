@@ -5,8 +5,7 @@ python -m deckard --config_file torch_cifar10.yaml
 python -m deckard --config_file torch_cifar100.yaml
 ```
 
-
-To see the dashboard, find a *.db file. They should be in something like `mnist/reports/attack/torch_mnist.db`. 
+To see the dashboard, find a *.db file. They should be in something like `mnist/reports/attack/torch_mnist.db`.
 
 ```
 sudo apt install python3.10-venv

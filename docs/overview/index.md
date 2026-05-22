@@ -24,6 +24,24 @@ Core themes covered in this section:
   [Hydra](https://hydra.cc)
 - post-hoc evaluation pipelines via [Layers](../api/layers)
 
+Canonical base-config navigation order used across overview docs:
+
+1. data
+2. pipeline
+3. model
+4. trainer
+5. defense
+6. attack
+7. detector
+8. scorer
+9. files
+10. artifacts
+11. experiment
+12. plot
+13. utils
+14. framework
+15. plugins
+
 ## Recommended Reading Order
 
 The following pages are ordered for progressive onboarding:
@@ -31,18 +49,36 @@ The following pages are ordered for progressive onboarding:
 1. [Quickstart](quickstart.md)
 2. [Summary](summary.md)
 3. [Optimization](optimize.md)
-4. [Extensions](extensions.md)
-5. [Installation](installation.md)
-6. [Data](data.md)
-7. [Model](model.md)
-8. [Scoring](scoring.md)
-9. [Notebooks](../notebooks/index.md)
-10. [API Reference](../api/modules.md)
-11. [Developer Docs](../developers/index.md)
-12. [Development](../developers/index.md)
-13. [Build Docs](build_docs.md)
-14. [Docker](docker.md)
-15. [Changelog](changelog.md)
+4. [Data](data.md)
+5. [Pipeline](pipeline.md)
+6. [Model](model.md)
+7. [Trainer](trainer.md)
+8. [Defense](defense.md)
+9. [Attack](attack.md)
+10. [Detector](detector.md)
+11. [Scorer (Scoring)](scoring.md)
+12. [Files](file.md)
+13. [Artifacts](artifacts.md)
+14. [Experiment](experiment.md)
+15. [Plot](plot.md)
+16. [Utils](utils.md)
+17. [Framework: sklearn](sklearn.md)
+18. [Framework: PyTorch](pytorch.md)
+19. [Framework: Transformers](transformers.md)
+20. [Plugin: ANJANA](anjana.md)
+21. [Plugin: Fairlearn](fairlearn.md)
+22. [Plugin: Lifelines](lifelines.md)
+23. [Plugin: Seaborn](seaborn.md)
+24. [Plugin: Yellowbrick](yellowbrick.md)
+25. [Extensions](extensions.md)
+26. [Installation](installation.md)
+27. [Notebooks](../notebooks/index.md)
+28. [API Reference](../api/modules.md)
+29. [Developer Docs](../developers/index.md)
+30. [Development](../developers/index.md)
+31. [Build Docs](build_docs.md)
+32. [Docker](docker.md)
+33. [Changelog](changelog.md)
 
 ## Navigation Notes
 
@@ -65,8 +101,29 @@ quickstart
 summary
 optimize
 data
+pipeline
 model
+trainer
+defense
+attack
+detector
 scoring
+file
+artifacts
+experiment
+plot
+utils
+# Framework overviews
+sklearn
+pytorch
+transformers
+
+# Plugin overviews
+anjana
+fairlearn
+lifelines
+seaborn
+yellowbrick
 extensions
 installation
 build_docs

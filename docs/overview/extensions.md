@@ -3,6 +3,14 @@
 This page maps Deckard extension points to both internal API docs and external
 library references.
 
+For full hook ownership and execution-policy details, see
+[Plugin and Hook Execution Reference](../developers/plugin_hook_execution).
+
+Standardized execution-order overview pages:
+
+- frameworks: [sklearn](sklearn.md), [pytorch](pytorch.md), [transformers](transformers.md)
+- plugins: [anjana](anjana.md), [fairlearn](fairlearn.md), [lifelines](lifelines.md), [seaborn](seaborn.md), [yellowbrick](yellowbrick.md)
+
 ## Core Pipelines
 
 ### sklearn transform pipelines
