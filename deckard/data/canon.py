@@ -5,13 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, ClassVar, Final, Mapping, TypedDict
 
-from ..plugins import HookPlugin
-from ..utils import (
-    coerce_to_list,
-    instantiate_plugin_spec,
-    load_class,
-    normalize_plugin_specs,
-)
+from ..plugins.base import PluginOrchestratorMixin, PluginRuntimeMixin
 
 
 CANONICAL_DATA_METHODS: Final[tuple[str, ...]] = (
@@ -129,6 +123,36 @@ _EVENT_ALIASES: Final[dict[str, str]] = {
     "after": "after",
 }
 
+_RUNTIME_SPLIT_ALIASES: Final[dict[str, str]] = {
+    "train": "train",
+    "test": "test",
+    "val": "val",
+    "all": "all",
+    "attack": "test",
+    "attack-val": "val",
+    "pre-sample": "all",
+    "post-pipeline": "test",
+    "post-sample": "test",
+    "pre-load": "test",
+    "auto": "test",
+    "benign": "test",
+    "adversarial": "test",
+}
+
+_SPLIT_DATA_ATTRS: Final[dict[str, tuple[str, str]]] = {
+    "train": ("y_train", "X_train"),
+    "test": ("y_test", "X_test"),
+    "val": ("y_val", "X_val"),
+    "all": ("_y", "_X"),
+}
+
+_SPLIT_SENSITIVE_ATTRS: Final[dict[str, str]] = {
+    "train": "_sensitive_train",
+    "test": "_sensitive_test",
+    "val": "_sensitive_val",
+    "all": "_sensitive_all",
+}
+
 
 def ensure_canonical_times(times: Mapping[str, Any] | None = None) -> dict[str, Any]:
     """Return an extensible timing dict with canonical keys present."""
@@ -157,6 +181,25 @@ def merge_files(
 ) -> DataFiles:
     """Backward-compatible alias for merge_data_files."""
     return merge_data_files(base, override)
+
+
+def resolve_runtime_files(
+    kwargs: dict[str, Any],
+    files: Mapping[str, Any] | None = None,
+    *,
+    legacy_keys: tuple[str, ...] = ("data_file", "score_file", "metadata_file"),
+) -> DataFiles:
+    """Resolve canonical runtime files payload from explicit and legacy kwargs.
+
+    This helper pops legacy flat file kwargs from ``kwargs`` and merges them with
+    an optional ``files`` mapping into canonical ``DataFiles``.
+    """
+    files_payload = files if isinstance(files, Mapping) else None
+    legacy_files = {key: kwargs.pop(key) for key in legacy_keys if key in kwargs}
+    return merge_data_files(
+        files_payload,
+        legacy_files if len(legacy_files) > 0 else None,
+    )
 
 
 def ensure_data_runtime_contract(target: Any) -> Any:
@@ -199,8 +242,71 @@ def normalize_data_score_stage(value: str) -> str:
     return normalize_data_score_mode(value)
 
 
+def normalize_runtime_split_mode(
+    mode: str | None,
+    *,
+    aliases: Mapping[str, str] | None = None,
+    default: str = "test",
+) -> str:
+    """Normalize stage/split aliases to canonical runtime split tokens."""
+    token = str(mode or default).strip().lower()
+    alias_map = dict(_RUNTIME_SPLIT_ALIASES)
+    if aliases:
+        alias_map.update(
+            {
+                str(key).strip().lower(): str(value).strip().lower()
+                for key, value in aliases.items()
+            },
+        )
+    resolved = alias_map.get(token, token)
+    if resolved not in _SPLIT_DATA_ATTRS:
+        raise ValueError(
+            f"Unknown runtime split mode '{mode}'. Expected one of {sorted(_SPLIT_DATA_ATTRS)}",
+        )
+    return resolved
+
+
+def resolve_data_split_payload(
+    data: Any,
+    mode: str | None,
+    *,
+    aliases: Mapping[str, str] | None = None,
+    fallback_to_all: bool = False,
+) -> tuple[Any, Any]:
+    """Resolve ``(y, X)`` payload for a runtime split mode from a data object."""
+    if data is None:
+        return None, None
+    resolved_mode = normalize_runtime_split_mode(mode, aliases=aliases)
+    y_attr, x_attr = _SPLIT_DATA_ATTRS[resolved_mode]
+    y = getattr(data, y_attr, None)
+    X = getattr(data, x_attr, None)
+    if fallback_to_all and resolved_mode != "all":
+        if y is None:
+            y = getattr(data, "_y", None)
+        if X is None:
+            X = getattr(data, "_X", None)
+    return y, X
+
+
+def resolve_sensitive_split_payload(
+    data: Any,
+    mode: str | None,
+    *,
+    aliases: Mapping[str, str] | None = None,
+    fallback_to_all: bool = False,
+) -> Any:
+    """Resolve sensitive-feature payload for a runtime split mode."""
+    if data is None:
+        return None
+    resolved_mode = normalize_runtime_split_mode(mode, aliases=aliases)
+    sensitive = getattr(data, _SPLIT_SENSITIVE_ATTRS[resolved_mode], None)
+    if sensitive is None and fallback_to_all and resolved_mode != "all":
+        sensitive = getattr(data, _SPLIT_SENSITIVE_ATTRS["all"], None)
+    return sensitive
+
+
 @dataclass(eq=False, kw_only=True)
-class DataPluginRuntimeMixin:
+class DataPluginRuntimeMixin(PluginRuntimeMixin):
     """Reusable plugin orchestration and runtime-state copy behavior."""
 
     def _copy_runtime_state_to(self, target: Any) -> None:
@@ -235,160 +341,31 @@ class DataPluginRuntimeMixin:
             if hasattr(self, attr):
                 setattr(target, attr, getattr(self, attr, None))
 
-    def _instantiate_plugin(self, plugin_spec: Any):
-        return instantiate_plugin_spec(plugin_spec, loader=load_class)
-
-    def _get_plugins(self) -> list:
-        if not hasattr(self, "_plugin_objects") or self._plugin_objects is None:
-            plugin_specs = normalize_plugin_specs(getattr(self, "plugins", []))
-            self._plugin_objects = [
-                self._instantiate_plugin(spec) for spec in plugin_specs
-            ]
-        return self._plugin_objects
-
-    def _run_plugin_hook(self, hook_name: str, **kwargs: Any) -> list[Any]:
-        hook_outputs: list[Any] = []
-        for plugin in self._get_plugins():
-            hook = getattr(plugin, hook_name, None)
-            if callable(hook):
-                hook_outputs.append(hook(self, **kwargs))
-        return hook_outputs
-
-
 @dataclass(eq=False, kw_only=True)
-class ScoringOrchestratorMixin(DataPluginRuntimeMixin):
-    """Stage-driven score orchestration mixin for data runtimes."""
+class ScoringOrchestratorMixin(PluginOrchestratorMixin, DataPluginRuntimeMixin):
+    """Backward-compatible alias wrapper for centralized plugin orchestration."""
 
     default_stage: Final[str] = DEFAULT_DATA_SCORE_STAGE
     stage_aliases: ClassVar[dict[str, str]] = _STAGE_ALIASES
     mode_aliases: ClassVar[dict[str, str]] = _MODE_ALIASES
+    score_stage_aliases: ClassVar[dict[str, str]] = _STAGE_ALIASES
+    score_stage_order: ClassVar[tuple[str, ...]] = tuple(
+        stage for stage in CANONICAL_DATA_STAGES if stage not in {"all", "auto"}
+    )
+    score_event_aliases: ClassVar[dict[str, str]] = _EVENT_ALIASES
+    score_stage_to_hook: ClassVar[dict[str, str]] = {
+        "pre-load": "before_load_data",
+        "pre-sample": "before_sample",
+        "post-sample": "after_sample",
+        "post-pipeline": "after_pipeline",
+    }
     _score_orchestration_active: bool = True
 
-    def _iter_configured_score_stages(self) -> list[str]:
-        scorer = getattr(self, "scorer", None)
-        configured = getattr(scorer, "configured_scorers", None)
-        if not isinstance(configured, dict) or len(configured) == 0:
-            return [self.default_stage]
+    def _normalize_score_mode(self, mode: str) -> str:
+        return normalize_data_score_mode(mode)
 
-        raw_stages: list[str] = []
-        for scorer_cfg in configured.values():
-            stage_value = getattr(scorer_cfg, "stage", None)
-            if stage_value in [None, "", []]:
-                raw_stages.append(self.default_stage)
-                continue
-            if isinstance(stage_value, str):
-                raw_stages.append(stage_value)
-                continue
-            for token in coerce_to_list(stage_value):
-                raw_stages.append(str(token))
-
-        if len(raw_stages) == 0:
-            return [self.default_stage]
-        return raw_stages
-
-    def _expand_canonical_score_stages(self, raw_stages: list[str]) -> list[str]:
-        canonical = list(CANONICAL_DATA_STAGES)
-        ordered = [stage for stage in canonical if stage not in {"all", "auto"}]
-        expanded: list[str] = []
-
-        for token in raw_stages:
-            normalized = str(token).strip().lower().replace("_", "-")
-            if normalized in {"", "auto"}:
-                expanded.append(self.default_stage)
-                continue
-            if normalized == "all":
-                expanded.extend(ordered)
-                continue
-            if normalized in ordered:
-                expanded.append(normalized)
-                continue
-            raise ValueError(
-                f"Unsupported data score stage '{token}'. "
-                f"Expected one of {ordered + ['all', 'auto']}",
-            )
-
-        deduped: list[str] = []
-        for stage in ordered:
-            if stage in expanded and stage not in deduped:
-                deduped.append(stage)
-        return deduped or [self.default_stage]
-
-    def _configure_score_orchestration_plugins(self) -> None:
-        stage_to_hook = {
-            "pre-load": "before_load_data",
-            "pre-sample": "before_sample",
-            "post-sample": "after_sample",
-            "post-pipeline": "after_pipeline",
-        }
-        stage_tokens = self._expand_canonical_score_stages(
-            self._iter_configured_score_stages(),
-        )
-        score_plugins = [
-            HookPlugin(
-                hook_name=stage_to_hook[stage],
-                method_name="_score_orchestration_hook",
-                method_kwargs={"stage": stage},
-            )
-            for stage in stage_tokens
-            if stage in stage_to_hook
-        ]
-        if len(score_plugins) == 0:
-            return
-        if not hasattr(self, "_plugin_objects") or self._plugin_objects is None:
-            self._plugin_objects = []
-        self._plugin_objects.extend(score_plugins)
-
-    def _score_orchestration_hook(self, stage: str, **kwargs: Any):
-        if not self._score_orchestration_active:
-            return None
-        mode = kwargs.pop("mode", None)
-        mode = normalize_data_score_mode(mode or getattr(self, "score_split", "test"))
-        score_kwargs = kwargs.pop("score_kwargs", None) or {}
-        self._run_score_stage_hooks("before", stage, score_kwargs=score_kwargs)
-        score_fn = getattr(self, "score", None)
-        if not callable(score_fn):
-            raise AttributeError(f"{type(self).__name__} has no callable 'score' method")
-        result = score_fn(mode=mode, stage=stage, **score_kwargs)
-        plugin_scores = self._run_score_stage_hooks("after", stage, scores=result)
-        if isinstance(result, dict):
-            for plugin_score in plugin_scores:
-                if isinstance(plugin_score, dict):
-                    result.update(plugin_score)
-            if self.score_dict is None:
-                self.score_dict = {}
-            for key, value in result.items():
-                if (
-                    key in self.score_dict
-                    and isinstance(self.score_dict.get(key), dict)
-                    and isinstance(value, dict)
-                ):
-                    self.score_dict[key].update(value)
-                else:
-                    self.score_dict[key] = value
-        return result
-
-    def _run_score_stage_hooks(
-        self,
-        when: str,
-        stage: str,
-        **kwargs: Any,
-    ) -> list[Any]:
-        event = str(when).strip().lower()
-        if event not in {"before", "after", "pre", "post"}:
-            raise ValueError(f"Score hook event must be 'before' or 'after', got {when}")
-        event = _EVENT_ALIASES[event]
-        stage_token = stage_hook_token(stage)
-        stage = stage_token.replace("_", "-")
-        stage_kwargs = {"stage": stage, **kwargs}
-        outputs: list[Any] = []
-        outputs.extend(
-            self._run_plugin_hook(
-                f"{event}_score_{stage_token}",
-                **stage_kwargs,
-            ),
-        )
-        outputs.extend(self._run_plugin_hook(f"{event}_score", **stage_kwargs))
-        return outputs
+    def _stage_hook_token(self, stage: str) -> str:
+        return stage_hook_token(stage)
 
 
 __all__ = [
@@ -406,8 +383,12 @@ __all__ = [
     "stage_hook_token",
     "normalize_data_score_mode",
     "normalize_data_score_stage",
+    "normalize_runtime_split_mode",
+    "resolve_data_split_payload",
+    "resolve_sensitive_split_payload",
     "merge_data_files",
     "merge_files",
+    "resolve_runtime_files",
     "DataPluginRuntimeMixin",
     "ScoringOrchestratorMixin",
 ]
