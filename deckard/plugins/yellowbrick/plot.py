@@ -585,7 +585,12 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
             and hasattr(self.experiment, "data")
             and callable(getattr(self.experiment.data, "__call__", None))
         ):
-            self.experiment.data(data_file=None, score_file=None)
+            self.experiment.data(
+                files={
+                    "data_file": None,
+                    "score_file": None,
+                },
+            )
         # If full arrays are present but splits are missing, force an in-memory sample split.
         if (
             not self._experiment_outputs_ready()
@@ -1220,7 +1225,12 @@ class YellowbrickConfigList(ConfigBase):
             and hasattr(self.experiment, "data")
             and callable(getattr(self.experiment.data, "__call__", None))
         ):
-            self.experiment.data(data_file=None, score_file=None)
+            self.experiment.data(
+                files={
+                    "data_file": None,
+                    "score_file": None,
+                },
+            )
         if not self._experiment_outputs_ready():
             raise RuntimeError(
                 "Experiment data is not prepared: X_train/y_train/X_test/y_test are required for plotting.",

@@ -174,15 +174,10 @@ class FairlearnDataConfig(
         return self
 
 
-
-_FairnessBehaviorMixin = FairnessBehaviorMixin
-
-
 __all__ = [
     "FAIRLEARN_PIPELINE_HOOKS",
     "FAIRLEARN_SCORING_HOOKS",
     "FairnessBehaviorMixin",
-    "_FairnessBehaviorMixin",
     "default_fairlearn_data_plugins",
     "FairlearnDataConfig",
 ]

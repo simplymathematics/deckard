@@ -745,6 +745,8 @@ class ScorerConfig:
         ind = self._normalize_predictions_for_metric(dep=dep, ind=ind)
 
         params = {**self.score_params, **kwargs}
+        for reserved in ("y_true", "y_pred", "dep", "ind"):
+            params.pop(reserved, None)
         score_function = self.score_function
         if not callable(score_function):
             raise TypeError(

@@ -260,7 +260,7 @@ class AnjanaDataConfig(
 
     This config extends ``DataPipelineConfig`` with optional privacy
     anonymization and fairness-preprocessing hooks. The default plugin setup
-    executes ``_apply_anjana_defense`` after data load when an ANJANA defense
+    executes ``apply_anjana_defense`` after data load when an ANJANA defense
     configuration is provided.
 
     Privacy metrics are measured on POST-PIPELINE (anonymized) data by default,
@@ -363,14 +363,10 @@ class AnjanaDataConfig(
         return DataPipelineConfig.__call__(self, *args, files=files, **kwargs)
 
 
-_PrivacyBehaviorMixin = PrivacyBehaviorMixin
-
-
 __all__ = [
     "ANJANA_PIPELINE_HOOKS",
     "ANJANA_SCORING_HOOKS",
     "PrivacyBehaviorMixin",
-    "_PrivacyBehaviorMixin",
     "default_anjana_data_plugins",
     "AnjanaDataConfig",
 ]

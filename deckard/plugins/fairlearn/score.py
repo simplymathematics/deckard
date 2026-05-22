@@ -16,9 +16,15 @@ except Exception:
     torch = None
 
 from ...data import DataConfig
+from ...data.canon import (
+    normalize_data_score_mode,
+    resolve_data_split_payload,
+    resolve_sensitive_split_payload,
+)
 from ...data._mixins import RuntimePayload
+from ...plugins import HookPlugin
+from ...plugins.base import HookBundle
 from ...frameworks.pytorch.score import (
-    resolve_sensitive_features as resolve_sensitive_features_for_mode,
     validate_sensitive_features,
 )
 from ...score._runtime import resolve_yt_yp, series_like_to_float_dict
@@ -28,7 +34,7 @@ from ...score.base import (
     _TaskAwareScorerMixin,
     safe_store,
 )
-from ...utils import coerce_to_list, merge_list_of_dicts
+from ...utils import coerce_to_list, is_default_config_value, merge_list_of_dicts
 
 # TODO: Remove this
 # Backward-compatible aliases used in existing tests and downstream imports.
@@ -56,6 +62,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "FAIRLEARN_SCORING_HOOKS",
+    "FairlearnDataScoreHooksMixin",
     "_FairnessScorerMixin",
     "fairness_demographic_parity_difference",
     "fairness_equalized_odds_difference",
@@ -75,6 +83,98 @@ SampleParamsLike = Union[dict[str, Any], dict[str, dict[str, Any]], None]
 RandomStateLike = Union[int, np.random.RandomState, None]
 RuntimeScalar = str | int | float | bool | None
 RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
+
+
+FAIRLEARN_SCORING_HOOKS = HookBundle(
+    name="fairlearn.data.scoring_hooks",
+    hooks=(
+        HookPlugin(
+            hook_name="after_score",
+            method_name="_append_fairlearn_tail_scores",
+            init_params={
+                "library": "fairlearn",
+                "type": "data",
+                "class": "tail_score",
+                "phase": "scoring",
+            },
+        ),
+    ),
+)
+
+
+class FairlearnDataScoreHooksMixin:
+    """Data-runtime fairlearn scoring hooks and split-scoped score adapter."""
+
+    def _run_fairlearn_score(self, *args, mode: str, **kwargs) -> dict:
+        kwargs = dict(kwargs)
+        kwargs.pop("y_true", None)
+        kwargs.pop("y_pred", None)
+        kwargs.pop("dep", None)
+        kwargs.pop("ind", None)
+        y, X = resolve_data_split_payload(self, mode, fallback_to_all=True)
+        fairness_scores = self.scorer(
+            *args,
+            y=y,
+            X=X,
+            mode=mode,
+            data=self,
+            **kwargs,
+        )
+        if isinstance(fairness_scores, dict):
+            flat = {}
+            for key, value in fairness_scores.items():
+                if isinstance(value, dict):
+                    for subk, subv in value.items():
+                        flat[f"{key}_{subk}"] = subv
+                else:
+                    flat[key] = value
+            return flat
+        return {"fairness_score": fairness_scores}
+
+    def _append_fairlearn_tail_scores(
+        self,
+        stage: str,
+        scores: dict | None = None,
+        **kwargs,
+    ) -> dict:
+        """Run fairlearn score hook after base/core scores and append last."""
+        _ = kwargs
+        if self.scorer is None:
+            return {}
+        if not callable(self.scorer):
+            raise TypeError(
+                f"FairlearnDataConfig.scorer must be callable or None, got {type(self.scorer)}",
+            )
+        resolved_mode = normalize_data_score_mode(getattr(self, "score_split", "test"))
+        tail_scores = self._run_fairlearn_score(mode=resolved_mode)
+        existing = dict(scores or {})
+        if len(existing) == 0:
+            return tail_scores
+        merged_tail = {}
+        for key, value in tail_scores.items():
+            if key in existing:
+                merged_tail[f"fairlearn_{key}"] = value
+            else:
+                merged_tail[key] = value
+        return merged_tail
+
+    def score(self, *args, mode=None, **kwargs) -> dict:
+        if is_default_config_value(getattr(self, "scorer", None), include_best=False):
+            self.scorer = (
+                DefaultFairlearnClassificationConfig()
+                if getattr(self, "classifier", True)
+                else DefaultFairlearnRegressionConfig()
+            )
+        if getattr(self, "scorer", None) is None:
+            return {}
+        if not callable(self.scorer):
+            raise TypeError(
+                f"FairlearnDataConfig.scorer must be callable or None, got {type(self.scorer)}",
+            )
+        scorer_mode = normalize_data_score_mode(
+            mode if mode is not None else getattr(self, "score_split", "test"),
+        )
+        return self._run_fairlearn_score(*args, mode=scorer_mode, **kwargs)
 
 
 def fairness_stage_to_split_mode(runtime_mode: str | None) -> dict[str, str]:
@@ -236,24 +336,20 @@ def _resolve_sensitive_features(
     if data is None:
         return None
     stage_to_split_mode = fairness_stage_to_split_mode(mode)
-    if stage is not None:
-        try:
-            sensitive = resolve_sensitive_features_for_mode(
-                data,
-                stage,
-                stage_to_split_mode=stage_to_split_mode,
-            )
-        except ValueError:
-            sensitive = resolve_sensitive_features_for_mode(
-                data,
-                mode,
-                stage_to_split_mode=stage_to_split_mode,
-            )
-    else:
-        sensitive = resolve_sensitive_features_for_mode(
+    lookup_mode = stage if stage is not None else mode
+    try:
+        sensitive = resolve_sensitive_split_payload(
+            data,
+            lookup_mode,
+            aliases=stage_to_split_mode,
+            fallback_to_all=False,
+        )
+    except ValueError:
+        sensitive = resolve_sensitive_split_payload(
             data,
             mode,
-            stage_to_split_mode=stage_to_split_mode,
+            aliases=stage_to_split_mode,
+            fallback_to_all=False,
         )
 
     return validate_sensitive_features(
@@ -614,19 +710,35 @@ class _FairnessScorerMixin:
         Returns:
             Dictionary containing computed fairness metrics.
         """
+        if y_true is None and "y" in kwargs:
+            y_true = kwargs.pop("y")
+        if y_pred is None and "X" in kwargs:
+            y_pred = kwargs.pop("X")
+        data_y = kwargs.pop("y", None)
+        data_X = kwargs.pop("X", None)
+        if y_true is None:
+            y_true = data_y
+        if y_pred is None:
+            y_pred = data_X
+
         # Step 1: resolve y_true/y_pred for both main and group metrics.
-        if data is None and (y_true is None or y_pred is None):
-            raise ValueError(
-                "data must be provided when y_true/y_pred are not passed directly",
+        # Data-only scorer paths should use explicit y/X payloads directly and
+        # not route through model/attack-centric y_true/y_pred resolution.
+        if model is None and attack is None and y_true is not None and y_pred is not None:
+            resolved_y_true, resolved_y_pred = y_true, y_pred
+        else:
+            if data is None and (y_true is None or y_pred is None):
+                raise ValueError(
+                    "data must be provided when y_true/y_pred are not passed directly",
+                )
+            resolved_y_true, resolved_y_pred = resolve_yt_yp(
+                mode,
+                cast(DataConfig, data),
+                model,
+                attack,
+                y_pred,
+                y_true,
             )
-        resolved_y_true, resolved_y_pred = resolve_yt_yp(
-            mode,
-            cast(DataConfig, data),
-            model,
-            attack,
-            y_pred,
-            y_true,
-        )
 
         # Step 2: resolve sensitive features once.
         resolved_mode = "test" if mode is None else mode
@@ -823,19 +935,31 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
         Returns:
             Dictionary containing overall and group fairness metrics.
         """
+        data_y = kwargs.pop("y", None)
+        data_X = kwargs.pop("X", None)
+        if y_true is None:
+            y_true = data_y
+        if y_pred is None:
+            y_pred = data_X
+
         # Step 1: resolve y_true/y_pred for both main and group metrics.
-        if data is None and (y_true is None or y_pred is None):
-            raise ValueError(
-                "data must be provided when y_true/y_pred are not passed directly",
+        # Data-only scorer paths should use explicit y/X payloads directly and
+        # not route through model/attack-centric y_true/y_pred resolution.
+        if model is None and attack is None and y_true is not None and y_pred is not None:
+            resolved_y_true, resolved_y_pred = y_true, y_pred
+        else:
+            if data is None and (y_true is None or y_pred is None):
+                raise ValueError(
+                    "data must be provided when y_true/y_pred are not passed directly",
+                )
+            resolved_y_true, resolved_y_pred = resolve_yt_yp(
+                mode,
+                cast(DataConfig, data),
+                model,
+                attack,
+                y_pred,
+                y_true,
             )
-        resolved_y_true, resolved_y_pred = resolve_yt_yp(
-            mode,
-            cast(DataConfig, data),
-            model,
-            attack,
-            y_pred,
-            y_true,
-        )
 
         # Step 2: resolve sensitive features once.
         resolved_mode = "test" if mode is None else mode

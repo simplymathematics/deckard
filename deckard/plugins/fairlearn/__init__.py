@@ -1,6 +1,6 @@
 """Fairlearn plugin package exports."""
 
-from .data import FairlearnDataConfig
+from .data import FairlearnDataConfig, FairnessBehaviorMixin
 from .model import (
     FairlearnDefenseConfig,
     FairlearnModelConfig,
@@ -10,6 +10,7 @@ from .score import DefaultFairlearnScorerConfig
 
 __all__ = [
     "FairlearnDataConfig",
+    "FairnessBehaviorMixin",
     "DefaultFairlearnScorerConfig",
     "FairlearnDefenseConfig",
     "FairlearnModelConfig",

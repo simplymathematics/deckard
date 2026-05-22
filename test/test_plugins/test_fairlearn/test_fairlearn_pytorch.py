@@ -29,7 +29,7 @@ def test_sensitive_extraction():
     config.train_size = 0.5
     config.test_size = 0.5
     config.random_state = 42
-    config.split_data()
+    config.fit()
     assert hasattr(config, "_sensitive_train")
     assert hasattr(config, "_sensitive_test")
     assert len(config._sensitive_train) + len(config._sensitive_test) == 20

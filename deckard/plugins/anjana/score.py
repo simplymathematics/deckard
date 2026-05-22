@@ -6,6 +6,9 @@ from typing import Any, cast
 import pandas as pd
 
 from ...data import DataConfig
+from ...data.canon import normalize_data_score_mode, resolve_data_split_payload
+from ...plugins import HookPlugin
+from ...plugins.base import HookBundle
 from ...score.base import (
     ScorerConfig,
     ScorerDictConfig,
@@ -13,8 +16,11 @@ from ...score.base import (
     _TaskAwareScorerMixin,
     safe_store,
 )
+from ...utils import is_default_config_value, load_class
 
 __all__ = [
+    "ANJANA_SCORING_HOOKS",
+    "AnjanaDataScoreHooksMixin",
     "anjana_k_anonymity_score",
     "anjana_l_diversity_score",
     "anjana_t_closeness_score",
@@ -23,6 +29,106 @@ __all__ = [
     "DefaultAnjanaDataScorerConfig",
     "DefaultAnjanaModelScorerConfig",
 ]
+
+
+ANJANA_SCORING_HOOKS = HookBundle(
+    name="anjana.data.scoring_hooks",
+    hooks=(
+        HookPlugin(
+            hook_name="after_score_post_pipeline",
+            method_name="_append_anjana_tail_scores",
+            init_params={
+                "library": "anjana",
+                "type": "data",
+                "class": "tail_score",
+                "phase": "scoring",
+            },
+        ),
+    ),
+)
+
+
+class AnjanaDataScoreHooksMixin:
+    """Data-runtime ANJANA scoring hooks and split-scoped score adapter."""
+
+    def score(self, *args, mode=None, **kwargs) -> dict:
+        if is_default_config_value(self.scorer, include_best=False):
+            from . import data as anjana_data_module
+
+            loader = getattr(anjana_data_module, "load_class", load_class)
+            scorer_obj = loader("deckard.plugins.anjana.score.DefaultAnjanaScorerConfig")
+            self.scorer = scorer_obj() if isinstance(scorer_obj, type) else scorer_obj
+
+        if self.scorer is None:
+            return {}
+        if not callable(self.scorer):
+            raise TypeError(
+                f"AnjanaDataConfig.scorer must be callable or None, got {type(self.scorer)}",
+            )
+
+        resolved_mode = normalize_data_score_mode(
+            mode if mode is not None else getattr(self, "score_split", "test"),
+        )
+
+        try:
+            return super().score(*args, mode=resolved_mode, **kwargs)
+        except TypeError as exc:
+            if "data-profile scorer" not in str(exc):
+                raise
+            y, X = resolve_data_split_payload(self, resolved_mode, fallback_to_all=False)
+            return self.scorer(
+                *args,
+                y=y,
+                X=X,
+                mode=resolved_mode,
+                data=self,
+                **kwargs,
+            )
+
+    def _append_anjana_tail_scores(
+        self,
+        stage: str,
+        scores: dict | None = None,
+        **kwargs,
+    ) -> dict:
+        """Run ANJANA score hook after base/core scores and append last."""
+        _ = kwargs
+        if self.scorer is None:
+            return {}
+        if not callable(self.scorer):
+            raise TypeError(
+                f"AnjanaDataConfig.scorer must be callable or None, got {type(self.scorer)}",
+            )
+
+        hook_stage = str(stage).strip().lower()
+        if hook_stage != "post-pipeline":
+            return {}
+
+        resolved_mode = normalize_data_score_mode(getattr(self, "score_split", "test"))
+        y, X = resolve_data_split_payload(self, resolved_mode, fallback_to_all=False)
+        tail_scores = self.scorer(
+            y=y,
+            X=X,
+            mode=resolved_mode,
+            data=self,
+        )
+        if isinstance(tail_scores, dict) and len(tail_scores) == 1:
+            only_key = next(iter(tail_scores))
+            only_val = tail_scores[only_key]
+            if isinstance(only_val, dict):
+                tail_scores = only_val
+        if not isinstance(tail_scores, dict):
+            tail_scores = {"anjana_score": tail_scores}
+        existing = dict(scores or {})
+        if len(existing) == 0:
+            return tail_scores
+        merged_tail = {}
+        for key, value in tail_scores.items():
+            if key in existing:
+                merged_tail[f"anjana_{key}"] = value
+            else:
+                merged_tail[key] = value
+        return merged_tail
 
 
 def _resolve_frame_and_context(

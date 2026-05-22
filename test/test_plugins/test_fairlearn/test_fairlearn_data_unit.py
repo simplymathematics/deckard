@@ -89,6 +89,20 @@ def test_inject_fairness_defense_step_branch_paths():
     cfg._inject_fairness_defense_step()
     assert cfg.pipeline == before
 
+    cfg.fairness_defense = {
+        "name": "fairlearn.preprocessing.PrototypeRepresentationLearner",
+        "step_name": "prototype_step",
+        "max_iter": 1,
+    }
+    cfg.pipeline = {}
+    cfg._inject_fairness_defense_step()
+    assert "prototype_step" in cfg.pipeline
+    assert (
+        cfg.pipeline["prototype_step"]["name"]
+        == "fairlearn.preprocessing.PrototypeRepresentationLearner"
+    )
+    assert cfg.pipeline["prototype_step"]["max_iter"] == 1
+
 
 def test_load_data_validates_sensitive_columns(monkeypatch):
     cfg = _cfg()
@@ -121,7 +135,7 @@ def test_sample_populates_sensitive_val_when_present(monkeypatch):
 
     monkeypatch.setattr(DataPipelineConfig, "fit", _noop_fit)
 
-    cfg.split_data()
+    cfg.fit()
 
     assert cfg._sensitive_train is not None
     assert cfg._sensitive_test is not None

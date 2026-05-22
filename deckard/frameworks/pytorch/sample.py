@@ -142,6 +142,20 @@ class PytorchBaseSampler(BaseSampler):
         if sampler_obj is None:
             sampler_obj = PytorchSplitSampler()
             setattr(config, "_sampler_obj", sampler_obj)
+        for field_name in (
+            "train_size",
+            "test_size",
+            "val_size",
+            "random_state",
+            "stratify",
+            "n_splits",
+            "split",
+            "shuffle",
+        ):
+            if hasattr(sampler_obj, field_name):
+                value = getattr(config, field_name, None)
+                if value is not None:
+                    setattr(sampler_obj, field_name, value)
         if not callable(sampler_obj):
             raise TypeError(
                 f"Composed sampler must be callable, got {type(sampler_obj)}",
