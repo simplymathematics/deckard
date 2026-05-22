@@ -8,6 +8,49 @@ import pandas as pd
 
 def series_like_to_float_dict(values: Any) -> dict[str, float]:
     """Flatten scalar/Series/DataFrame-like values into score key/value pairs."""
+    if isinstance(values, dict):
+        flattened: dict[str, float] = {}
+
+        def _flatten(prefix: str, payload: Any) -> None:
+            if isinstance(payload, dict):
+                for key, value in payload.items():
+                    child_key = str(key).strip()
+                    next_prefix = (
+                        child_key
+                        if prefix == ""
+                        else f"{prefix}_{child_key}"
+                    )
+                    _flatten(next_prefix, value)
+                return
+            if isinstance(payload, pd.Series):
+                for key, value in payload.items():
+                    child_key = str(key).strip()
+                    next_prefix = (
+                        child_key
+                        if prefix == ""
+                        else f"{prefix}_{child_key}"
+                    )
+                    _flatten(next_prefix, value)
+                return
+            if isinstance(payload, pd.DataFrame):
+                df_payload = series_like_to_float_dict(payload)
+                for key, value in df_payload.items():
+                    next_prefix = key if prefix == "" else f"{prefix}_{key}"
+                    flattened[next_prefix] = float(value)
+                return
+            key = prefix if prefix != "" else "value"
+            scalar = np.asarray(payload)
+            if scalar.ndim == 0:
+                flattened[key] = float(scalar)
+                return
+            raise TypeError(
+                "Score dictionary values must be scalar-like after flattening; "
+                f"got shape {scalar.shape} at key '{key}'.",
+            )
+
+        _flatten("", values)
+        return flattened
+
     if isinstance(values, pd.DataFrame):
         flattened: dict[str, float] = {}
         for row_key, row_values in values.to_dict(orient="index").items():
@@ -20,7 +63,13 @@ def series_like_to_float_dict(values: Any) -> dict[str, float]:
         return flattened
     if isinstance(values, pd.Series):
         return {str(key): float(value) for key, value in values.items()}
-    return {"value": float(values)}
+    scalar = np.asarray(values)
+    if scalar.ndim == 0:
+        return {"value": float(scalar)}
+    raise TypeError(
+        "Score values must be scalar, dict, pandas Series, or pandas DataFrame; "
+        f"got shape {scalar.shape}.",
+    )
 
 
 def resolve_yt_yp(

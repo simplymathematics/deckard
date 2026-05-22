@@ -27,6 +27,7 @@ from ..utils import (
     resolve_class,
     safe_store,
 )
+from .canon import normalize_scorer_mode
 from ._runtime import series_like_to_float_dict as _series_like_to_float_dict
 
 if TYPE_CHECKING:
@@ -1133,14 +1134,7 @@ class ScorerDictConfig(ConfigBase):
         requested_stage: Union[str, list[str], None] = None,
     ) -> str:
         _ = requested_stage
-        if mode is None:
-            return "test"
-        mode_token = str(mode).strip().lower()
-        if mode_token in {"train", "test", "val", "all", "attack", "attack-val", "pre-sample"}:
-            return mode_token
-        raise KeyError(
-            f"Unsupported scoring mode '{mode}'.",
-        )
+        return normalize_scorer_mode(mode)
 
     def __iter__(self):
         return iter(self.scorers.items())
@@ -1550,7 +1544,9 @@ class ScorerDictConfig(ConfigBase):
                     for k, v in flat_scores.items():
                         stage_results[f"{scored_key}_{k}"] = v
                 else:
-                    stage_results[scored_key] = value
+                    stage_results[scored_key] = _series_like_to_float_dict(value)[
+                        "value"
+                    ]
 
         if not stage_results:
             raise KeyError(

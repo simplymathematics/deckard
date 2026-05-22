@@ -25,6 +25,7 @@ from .base import (
     build_scorer,
     build_scorer_dict,
 )
+from .canon import CANON_SCORER_MODES, ScorerRuntimeContract, normalize_scorer_mode
 from .data import (
     DefaultDataClassificationConfig,
     DefaultDataRegressionConfig,
@@ -263,6 +264,9 @@ __all__ = [
     "survival_bic_score",
     "build_scorer",
     "build_scorer_dict",
+    "ScorerRuntimeContract",
+    "CANON_SCORER_MODES",
+    "normalize_scorer_mode",
 ]
 
 

@@ -18,6 +18,7 @@ from sklearn.svm import SVC
 
 from deckard.attack import AttackConfig, ExtractionAttackConfig
 from deckard.attack.base import SensitiveFeaturesWrapper, _sensitive_slice
+from deckard.attack.canon import normalize_attack_stage
 from deckard.score.attack import FairlearnAttackScorerConfig
 
 
@@ -334,6 +335,14 @@ class TestAttackConfig(unittest.TestCase):
             ),
             "test",
         )
+
+    def test_attack_runtime_contract_defaults_and_stage_metadata(self):
+        attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
+        self.assertIsInstance(attack.score_dict, dict)
+        self.assertIsNone(attack.attack_predictions)
+        self.assertEqual(attack.mode, "auto")
+        self.assertEqual(normalize_attack_stage("before_attack"), "pre-attack")
+        self.assertEqual(normalize_attack_stage("after_attack"), "post-attack")
 
         poisoning = AttackConfig(
             attack_type=(

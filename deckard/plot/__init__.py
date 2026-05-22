@@ -92,7 +92,8 @@ def _refresh_yellowbrick_configs() -> None:
 class PlotConfig(ConfigBase):
     """Wrapper that routes to appropriate plot config (Seaborn or Yellowbrick).
 
-    Takes either an `experiment` (ExperimentConfig) or `data_file` parameter
+    Takes either an `experiment` (ExperimentConfig) or seaborn data source
+    (`data_file`, `data_config`, `data`, or `optuna_storage`) parameter
     to determine the data source, then creates the appropriate plot config.
     """
 
@@ -112,13 +113,16 @@ class PlotConfig(ConfigBase):
                 self.kwargs.setdefault(attr, getattr(self, attr))
 
         has_experiment = self.kwargs.get("experiment") is not None
-        has_data_file = self.kwargs.get("data_file") is not None
+        has_seaborn_source = any(
+            self.kwargs.get(key) is not None
+            for key in ("data_file", "data_config", "data", "optuna_storage")
+        )
 
-        if has_experiment and has_data_file:
+        if has_experiment and has_seaborn_source:
             raise ValueError(
                 "Provide either 'experiment' or 'data_file', not both.",
             )
-        if not has_experiment and not has_data_file:
+        if not has_experiment and not has_seaborn_source:
             raise ValueError(
                 "Missing required source key: provide 'experiment' or 'data_file'.",
             )

@@ -410,6 +410,59 @@ class TestDataConfig(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             cfg.load_dataset()
 
+    @patch("deckard.data.base._load_optuna_studies_dataframe")
+    def test_load_dataset_from_optuna_storage(self, mock_optuna_loader):
+        mock_optuna_loader.return_value = pd.DataFrame(
+            {
+                "value": [0.1, 0.2, 0.3],
+                "params_alpha": [1, 2, 3],
+                "params_beta": [4, 5, 6],
+            },
+        )
+        cfg = DataConfig(
+            dataset_name="optuna",
+            target="value",
+            data_params={
+                "optuna_storage": "sqlite:///optuna.db",
+                "study_name": "demo",
+            },
+        )
+        cfg.load_dataset()
+        self.assertIsInstance(cfg._X, pd.DataFrame)
+        self.assertIsInstance(cfg._y, pd.Series)
+        self.assertEqual(list(cfg._X.columns), ["params_alpha", "params_beta"])
+        self.assertEqual(len(cfg._y), 3)
+
+    @patch("deckard.data.base._load_optuna_studies_dataframe")
+    def test_load_dataset_from_optuna_storage_forwards_query_options(
+        self,
+        mock_optuna_loader,
+    ):
+        mock_optuna_loader.return_value = pd.DataFrame(
+            {
+                "value": [0.1, 0.2],
+                "params_alpha": [1, 2],
+            },
+        )
+        cfg = DataConfig(
+            dataset_name="optuna",
+            target="value",
+            data_params={
+                "optuna_storage": "sqlite:///optuna.db",
+                "study_names": ["a", "b"],
+                "trial_number_range": [0, 10],
+                "columns": ["value", "params_alpha"],
+                "limit": 5,
+            },
+        )
+        cfg.load_dataset()
+
+        kwargs = mock_optuna_loader.call_args.kwargs
+        self.assertEqual(kwargs["study_names"], ["a", "b"])
+        self.assertEqual(kwargs["trial_number_range"], [0, 10])
+        self.assertEqual(kwargs["columns"], ["value", "params_alpha"])
+        self.assertEqual(kwargs["limit"], 5)
+
     def test_load_data_raises_value_error_for_csv_without_target(self):
         import tempfile
 

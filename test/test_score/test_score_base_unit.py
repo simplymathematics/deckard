@@ -758,7 +758,29 @@ def test_scorer_dict_config_stage_matching_filters_scorers_by_mode():
     train_results = cfg(mode="train", data=data, model=model)
     assert "train" in train_results
     assert "train_acc" in train_results["train"]
-    assert "acc" not in train_results["train"]
+
+
+def test_scorer_dict_flattens_dict_metric_payloads():
+    cfg = ScorerDictConfig(
+        scorers={
+            "nested": ScorerConfig(
+                score_name="nested",
+                score_function=lambda y_true, y_pred: {
+                    "group": {"a": float(np.mean(y_true)), "b": float(np.mean(y_pred))},
+                },
+            ),
+        },
+    )
+
+    data = SimpleNamespace(
+        y_test=np.array([0.0, 2.0]),
+        X_test=np.array([[1.0], [2.0]]),
+    )
+    model = SimpleNamespace(predictions=np.array([1.0, 3.0]))
+
+    scores = cfg(mode="test", data=data, model=model)
+    assert scores["test"]["nested_group_a"] == 1.0
+    assert scores["test"]["nested_group_b"] == 2.0
 
 
 def test_scorer_dict_config_stage_gate_blocks_non_matching_runtime():

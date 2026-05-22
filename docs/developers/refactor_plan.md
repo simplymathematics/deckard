@@ -119,6 +119,8 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x] If a pretrained model receives a defense step with `apply_fit=True`, snapshot the pre-defense state and retrain before applying that defense.
 - [x] Persist the pre-defense score/timing/prediction snapshot under an explicit key such as `pre-defense` or `pre-<alias>-defense` before rerunning.
 - [x] Add focused model/defense stage tests validating trainer and defense-stage canon behavior.
+- [x] Ensure a single defense chain with `apply_fit=True` does not trigger repeated training passes under normal runtime flow.
+- [x] Restrict forced retraining-on-fit-defense to loaded pretrained-model flows (no extra retrain for standard already-fitted model paths).
 
 ### Model Documentation and Finalization
 
@@ -138,18 +140,21 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x] Run  and fix coverage, then mark checklist completion
 
 ## Attack Checklist:
-- [ ] Define a canonical attack runtime contract (`files`, `times`, `scores`, `stage`, `mode`).
-- [ ] Normalize attack-stage hooks and defense/attack ordering semantics across core and framework adapters.
-- [ ] Keep attack configuration resolution thin so backend-specific attack logic stays in wrappers.
-- [ ] Add focused attack contract tests for persistence, timing, and split-scoped scoring behavior.
-- [ ] Update attack docs and examples to reflect canonical attack/runtime behavior.
+- [x] Define a canonical attack runtime contract (`files`, `times`, `scores`, `stage`, `mode`).
+- [x] Normalize attack-stage hooks and defense/attack ordering semantics across core and framework adapters.
+- [x] Keep attack configuration resolution thin so backend-specific attack logic stays in wrappers.
+- [x] Add focused attack contract tests for persistence, timing, and split-scoped scoring behavior.
+- [x] Update attack docs and examples to reflect canonical attack/runtime behavior.
 
 ## Detector Checklist:
-- [ ] Define a canonical detector runtime contract and align detector state fields to shared model/runtime helpers.
-- [ ] Normalize detector-stage hook dispatch and defense application ordering.
-- [ ] Ensure detector configs preserve files-only persistence and canonical timing metadata.
-- [ ] Add detector contract tests covering train/load behavior, wrapper reuse, and score-state preservation.
-- [ ] Update detector docs and example configs to match the final canon.
+- [x] Define a canonical detector runtime contract and align detector state fields to shared model/runtime helpers.
+- [x] Normalize detector-stage hook dispatch and defense application ordering.
+- [x] Ensure detector configs preserve files-only persistence and canonical timing metadata.
+- [x] Add detector contract tests covering train/load behavior, wrapper reuse, and score-state preservation.
+- [x] Update detector docs and example configs to match the final canon.
+- [x] Support config-driven detector runtime execution (coerce/execute `*Config` objects) before detector fit/detect orchestration.
+- [x] Add detector filtering paths for poisoning and evasion with canonical side effects: poison filtering retrains model, evasion filtering post-processes attack predictions.
+- [x] Emit `poison_filter_success` and `evasion_filter_success` scores and ensure successful filtering yields unperturbed inputs/labels for downstream scoring consistency.
 
 ## Scorer Checklist:
 - [ ] Define a canonical scorer runtime contract for `score_mode`, stage hooks, and score aggregation.
@@ -158,12 +163,15 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [ ] Add scorer contract tests for stage dispatch, score merging, and persistence of score artifacts.
 - [ ] Update scorer docs and examples to describe the canonical scoring path.
 
-## Experiment Checklist
-- [ ] Define a canonical experiment runtime contract for `files`, `times`, `scores`, and component orchestration.
-- [ ] Normalize experiment loading so data/model/attack/detector/scorer configs are composed through the canonical runtime.
-- [ ] Ensure experiment persistence and score collection remain files-only and stage-aware.
-- [ ] Add experiment contract tests for end-to-end orchestration, cross-family composition, and rerun stability.
-- [ ] Update experiment docs and example workflows to match the final canonical flow.
+## Optuna DB Checklist
+- [ ] Define canonical Optuna study dataframe loading helpers and use them as shared runtime APIs.
+- [ ] Route DataConfig dataset loading to support optuna-backed sources (`optuna`, `.db`, `.sqlite3`, or explicit `optuna_storage`).
+- [ ] Treat Seaborn plot configs as DataConfig extensions by accepting/resolving DataConfig runtime payloads directly.
+- [ ] Treat Yellowbrick plot configs as ExperimentConfig extensions and keep experiment-only preparation logic in Yellowbrick modules.
+- [ ] Add focused tests for Optuna-backed DataConfig loading and Seaborn plotting from Optuna/DataConfig sources.
+- [ ] Update plotting and data docs/examples to describe canonical `optuna.db` query paths.
+
+
 
 ## Plot Checklist
 - [ ] Define a canonical plot runtime contract for `files`, `times`, plot output state, and backend selection.
@@ -189,6 +197,12 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [ ] Remove duplicate coercion/persistence helpers from core, framework, and plugin modules.
 - [ ] Add utility contract tests for artifact IO, config coercion, plugin spec normalization, and resolver behavior.
 
+## Experiment Checklist
+- [ ] Define a canonical experiment runtime contract for `files`, `times`, `scores`, and component orchestration.
+- [ ] Normalize experiment loading so data/model/attack/detector/scorer configs are composed through the canonical runtime.
+- [ ] Ensure experiment persistence and score collection remain files-only and stage-aware.
+- [ ] Add experiment contract tests for end-to-end orchestration, cross-family composition, and rerun stability.
+- [ ] Update experiment docs and example workflows to match the final canonical flow.
 
 ## Final framework/plugin migration:
 - [ ] Keep all *fair* behavior in lightweight Fairlearn mixins, plugins, and wrappers outside the core modules.

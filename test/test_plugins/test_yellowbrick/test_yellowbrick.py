@@ -71,6 +71,13 @@ class TestYellowbrickPlots(unittest.TestCase):
         self.assertIsInstance(cv, StratifiedKFold)
         self.assertEqual(cv.n_splits, 5)
 
+    def test_yellowbrick_requires_experiment_config(self):
+        with self.assertRaises(TypeError):
+            YellowbrickPlotConfig(
+                experiment=object(),
+                plot_type="roc_auc",
+            )
+
     def test_parse_cv_defaults_to_kfold_for_regressor(self):
         plot_cfg = YellowbrickPlotConfig(
             experiment=self._make_regression_experiment(),

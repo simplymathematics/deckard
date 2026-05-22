@@ -7,6 +7,11 @@ import optuna
 import pandas as pd
 import yaml
 
+from ..optuna_callback import (
+    clean_column_names as _clean_optuna_columns,
+    load_optuna_studies_dataframe,
+    parse_study_name,
+)
 from ..utils import create_parser_from_function, save_data
 
 # suppress future warning
@@ -71,22 +76,7 @@ def parse_study_name(
 
 def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
     """Normalize Optuna trial dataframe column prefixes for reporting."""
-    cols = df.columns
-    clean_cols = []
-    for col in cols:
-        if col.startswith("values_") or col.startswith("params_"):
-            col = col[7:]
-            clean_cols.append(col)
-        elif col.startswith("user_attrs_"):
-            col = col[11:]
-            clean_cols.append(col)
-        elif col.startswith("++") or col.startswith("~"):
-            col = col[2:]
-            clean_cols.append(col)
-        else:
-            clean_cols.append(col)
-    df.columns = clean_cols
-    return df
+    return _clean_optuna_columns(df)
 
 
 def parse_studies(
@@ -94,19 +84,11 @@ def parse_studies(
     schema: Union[str, dict[str, Any]],
 ) -> pd.DataFrame:
     """Load and merge all studies from an Optuna storage into one dataframe."""
-    studies = optuna.study.get_all_study_summaries(storage=optuna_db)
-    assert len(studies) > 0, f"No studies found in {optuna_db}"
-    df = pd.DataFrame()
-    for summary in studies:
-        name = getattr(summary, "study_name", getattr(summary, "name", None))
-        assert name is not None, "Study summary did not expose a study name"
-        study = optuna.study.load_study(storage=optuna_db, study_name=name)
-        tmp_df = study.trials_dataframe()
-        meta_df = parse_study_name(study_name=name, schema=schema)
-        tmp_df = tmp_df.merge(meta_df, how="cross")
-        df = pd.concat([df, tmp_df], ignore_index=True)
-    df = clean_column_names(df)
-    return df
+    return load_optuna_studies_dataframe(
+        storage=optuna_db,
+        study_name=None,
+        schema=schema,
+    )
 
 
 def compile_results_main(

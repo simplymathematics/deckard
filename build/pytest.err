@@ -1,2 +1,0 @@
-/Users/c.meyers/Documents/deckard/.venv/lib/python3.10/site-packages/coverage/report_core.py:107: CoverageWarning: Couldn't parse Python file '/Users/c.meyers/Documents/deckard/deckard/frameworks/pytorch/sample.py' (couldnt-parse); see https://coverage.readthedocs.io/en/7.13.5/messages.html#warning-couldnt-parse
-  coverage._warn(msg, slug="couldnt-parse")

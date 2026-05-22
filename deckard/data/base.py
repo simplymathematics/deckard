@@ -62,6 +62,23 @@ def _is_data_scorer_instance(scorer: Any) -> bool:
     return str(getattr(scorer, "scoring_type", "")).strip().lower() == "data"
 
 
+def _load_optuna_studies_dataframe(
+    *,
+    storage: str | None,
+    study_name: str | None,
+    schema: Any,
+    **kwargs: Any,
+):
+    from ..optuna_callback import load_optuna_studies_dataframe
+
+    return load_optuna_studies_dataframe(
+        storage=storage,
+        study_name=study_name,
+        schema=schema,
+        **kwargs,
+    )
+
+
 
 
 
@@ -890,16 +907,30 @@ class DataConfig(OrchestratorBase, ConfigBase):
         from .declarations import build_loader_registry
 
         supported_datasets = build_loader_registry(self)
-        filetype = Path(self.dataset_name).suffix
+        dataset_name = str(self.dataset_name)
+        filetype = Path(dataset_name).suffix
         supported_filetypes = data_supported_filetypes
+        is_optuna_source = (
+            dataset_name.strip().lower() == "optuna"
+            or filetype in {".db", ".sqlite3"}
+            or "optuna_storage" in (self.data_params or {})
+            or "study_name" in (self.data_params or {})
+        )
         if (
+            not is_optuna_source
+            and
             filetype not in supported_filetypes
             and self.dataset_name not in supported_datasets
         ):
             raise NotImplementedError(
                 f"Currently only {supported_filetypes} filetypes are supported for loading data. Cannot load {self.dataset_name}",
             )
-        if self.dataset_name in supported_datasets:
+        if is_optuna_source:
+            start_time = time.process_time()
+            self._load_from_optuna_storage()
+            end_time = time.process_time()
+            self._set_time("data_load_time", end_time - start_time)
+        elif self.dataset_name in supported_datasets:
             start_time = time.process_time()
             self.load_default_dataset(self.dataset_name, **self.data_params)
         elif filetype == ".openml":
@@ -943,6 +974,64 @@ class DataConfig(OrchestratorBase, ConfigBase):
                 "CSV file must contain a 'target' column or specify the target column name in the 'target' attribute",
             )
         y = data.pop(self.target)
+        if len(self.keep) > 1:
+            data = data[self.keep]
+        elif len(self.keep) == 1:
+            data = data[self.keep[0]]
+        for del_col in self.drop:
+            assert len(self.keep) == 0, "Cannot specify both keep and drop columns"
+            if del_col in data.columns:
+                data = data.drop(columns=del_col)
+        self._X = data
+        self._y = y
+
+    def _load_from_optuna_storage(self):
+        data_params = dict(self.data_params or {})
+        storage = data_params.pop("optuna_storage", None)
+        if storage is None:
+            storage = data_params.pop("storage", None)
+        if storage is None and str(self.dataset_name).strip().lower() != "optuna":
+            storage = self.dataset_name
+        if storage is None:
+            storage = "sqlite:///optuna.db"
+
+        study_name = data_params.pop("study_name", None)
+        schema = data_params.pop("schema", None)
+        data = _load_optuna_studies_dataframe(
+            storage=storage,
+            study_name=study_name,
+            schema=schema,
+            study_names=data_params.pop("study_names", None),
+            columns=data_params.pop("columns", None),
+            include_columns=data_params.pop("include_columns", None),
+            exclude_columns=data_params.pop("exclude_columns", None),
+            trial_numbers=data_params.pop("trial_numbers", None),
+            trial_number_range=data_params.pop("trial_number_range", None),
+            trial_states=data_params.pop("trial_states", None),
+            row_slice=data_params.pop("row_slice", None),
+            sort_by=data_params.pop("sort_by", None),
+            ascending=bool(data_params.pop("ascending", True)),
+            offset=int(data_params.pop("offset", 0)),
+            limit=data_params.pop("limit", None),
+        )
+        if not isinstance(data, pd.DataFrame) or data.empty:
+            raise ValueError("Optuna study query returned no rows.")
+
+        target_col = self.target or data_params.pop("target", None)
+        if target_col is None:
+            if "value" in data.columns:
+                target_col = "value"
+            else:
+                value_cols = [c for c in data.columns if str(c).startswith("value")]
+                if len(value_cols) > 0:
+                    target_col = value_cols[0]
+
+        if target_col is None or str(target_col) not in data.columns:
+            raise ValueError(
+                "Optuna-backed DataConfig requires a valid target column (set target=... or data_params.target).",
+            )
+
+        y = data.pop(str(target_col))
         if len(self.keep) > 1:
             data = data[self.keep]
         elif len(self.keep) == 1:

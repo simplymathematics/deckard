@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, List, Literal, Optional
+from typing import TYPE_CHECKING, Any, List, Literal, Optional, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -14,7 +14,11 @@ from ...plot.base import (
     _PlotterMixin,
     _SeabornPlotterMarker,
 )
+from ...optuna_callback import load_optuna_studies_dataframe
 from ...utils import ConfigBase, load_data
+
+if TYPE_CHECKING:
+    from ...data import DataConfig
 
 logger = logging.getLogger(__name__)
 
@@ -234,6 +238,11 @@ class SeabornPlotConfig(_SeabornPlotterMarker, ConfigBase):
     rc_config: dict = field(default_factory=dict)
     plot_type: Literal["scatter", "line", "hist", "cat", "bar", "heatmap"] = "scatter"
     data_file: Optional[str] = None
+    data_config: Optional["DataConfig"] = None
+    optuna_storage: Optional[str] = None
+    optuna_study_name: Optional[str] = None
+    optuna_schema: Optional[Union[dict[str, Any], str]] = None
+    optuna_query: dict[str, Any] = field(default_factory=dict)
     title: Optional[str] = None
     xlabel: Optional[str] = None
     ylabel: Optional[str] = None
@@ -246,17 +255,42 @@ class SeabornPlotConfig(_SeabornPlotterMarker, ConfigBase):
     data: Optional[pd.DataFrame] = None
 
     def __post_init__(self):
-        # Accept either an in-memory DataFrame or a data file path.
-        assert (
-            self.data is not None or self.data_file is not None
-        ), "Either data or data_file must be provided."
-        if self.data is not None:
+        # Seaborn plotters are an extension of DataConfig runtime payloads.
+        # Accept in-memory data, data_file, DataConfig, or optuna-backed source.
+        if self.data_config is not None:
+            data_obj = self.data_config
+            if callable(getattr(data_obj, "__call__", None)) and (
+                getattr(data_obj, "_X", None) is None or getattr(data_obj, "_y", None) is None
+            ):
+                data_obj(files={"data_file": None, "score_file": None})
+            data = getattr(data_obj, "_X", None)
+            if data is None:
+                raise ValueError("Provided data_config did not materialize feature dataframe (_X).")
+        elif self.data is not None:
             data = self.data.copy()
-        else:
+        elif self.data_file is not None:
             assert Path(
                 self.data_file,
             ).exists(), f"File: {self.data_file} not found."
             data = load_data(self.data_file)
+        else:
+            storage = self.optuna_storage
+            if storage is None and Path("optuna.db").exists():
+                storage = "sqlite:///optuna.db"
+            assert (
+                storage is not None
+            ), "Provide one of data, data_file, data_config, or optuna_storage (or optuna.db in cwd)."
+            data = load_optuna_studies_dataframe(
+                storage=storage,
+                study_name=self.optuna_study_name,
+                schema=self.optuna_schema,
+                **dict(self.optuna_query or {}),
+            )
+
+        if self.data is not None:
+            data = pd.DataFrame(data).copy()
+        else:
+            data = pd.DataFrame(data)
         # Validate columns are in data
         assert (
             self.x in data.columns
@@ -388,13 +422,18 @@ class SeabornPlotConfigList(ConfigBase):
     """
 
     plots: List[SeabornPlotConfig] = field(default_factory=list)
-    data_file: str = field(default_factory=str)
+    data_file: Optional[str] = None
+    data_config: Optional["DataConfig"] = None
+    optuna_storage: Optional[str] = None
+    optuna_study_name: Optional[str] = None
+    optuna_schema: Optional[Union[dict[str, Any], str]] = None
 
     def __post_init__(self):
-        # Validate self.data_file
-        assert Path(
-            self.data_file,
-        ).exists(), f"File: {self.data_file} not found."
+        # Keep list containers aligned with SeabornPlotConfig data-source options.
+        if self.data_file is not None:
+            assert Path(
+                self.data_file,
+            ).exists(), f"File: {self.data_file} not found."
 
     def __iter__(self):
         return iter(self.plots)

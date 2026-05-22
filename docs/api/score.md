@@ -9,6 +9,29 @@ The score layer provides configurable scorer wrappers so data/model/attack
 components can use a consistent scoring interface without hard-coding metric
 implementations.
 
+## Canonical Runtime Contract
+
+Scoring now uses a canonical runtime contract shared across data/model/attack/
+detector execution paths.
+
+- Runtime score scope is normalized through
+  {func}`~deckard.score.normalize_scorer_mode` with canonical modes:
+  `train`, `test`, `val`, `all`, `attack`, `attack-val`, `pre-sample`.
+- Runtime payload shape is represented by
+  {class}`~deckard.score.ScorerRuntimeContract`.
+- Stage filtering remains stage-token driven and independent from score scope.
+
+## Output Shape Guarantees
+
+Score outputs are normalized to remain flat, serializable, and merge-safe.
+
+- Scalar metric outputs are always persisted as primitive float-compatible
+  values.
+- Dict/Series/DataFrame metric outputs are flattened into scalar key/value
+  pairs before merge.
+- Nested metric payloads are flattened with underscore-joined keys, then
+  prefixed by scorer key when merged into stage outputs.
+
 deckard now treats scoring as a runtime-configured layer rather than a fixed
 set of metrics embedded inside each pipeline component.
 

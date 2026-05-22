@@ -14,7 +14,14 @@ from ..score.base import (
     _TaskAwareScorerMixin,
     coerce_scorer_config,
 )
-from ..utils import ConfigBase, coerce_config, resolve_class
+from ..utils import (
+    ConfigBase,
+    coerce_config,
+    instantiate_plugin_spec,
+    normalize_plugin_specs,
+    resolve_class,
+)
+from .canon import ensure_detector_runtime_contract, normalize_detector_stage
 
 if TYPE_CHECKING:
     from ..attack import AttackConfig
@@ -54,6 +61,8 @@ class DetectorConfig(ConfigBase):
     detector_type: str = "art.defences.detector.evasion.BinaryInputDetector"
     detector_params: dict[str, Any] = field(default_factory=dict)
     fit_params: dict[str, Any] = field(default_factory=dict)
+    mode: str = "train"
+    filter_mode: str = "auto"
     detector_model: Union[ModelConfig, dict, str, None] = None
     scorer: Union[
         DetectorScorerConfig,
@@ -62,18 +71,22 @@ class DetectorConfig(ConfigBase):
         None,
     ] = None
     alias: str = field(default_factory=str)
+    plugins: list = field(default_factory=list)
 
     detector: Any = None
+    detector_predictions: Any = None
     score_dict: dict[str, float | int] = field(default_factory=dict)
     detector_training_time: Union[float, None] = None
     detector_detection_time: Union[float, None] = None
     _target_: Union[str, None] = None
+    _plugin_objects: Union[list, None] = field(default=None, repr=False, compare=False)
 
     def __post_init__(self):
         self._initialize_target_reference()
         self._initialize_runtime_defaults()
         self._initialize_detector_model_config()
         self._initialize_detector_scorer()
+        ensure_detector_runtime_contract(self)
 
     def _initialize_target_reference(self) -> None:
         """Set canonical runtime target path."""
@@ -84,6 +97,12 @@ class DetectorConfig(ConfigBase):
         """Normalize mutable runtime defaults."""
         self.detector_params = self.detector_params or {}
         self.fit_params = self.fit_params or {}
+        self.mode = str(self.mode or "train").strip().lower()
+        if self.mode not in {"train", "filter"}:
+            raise ValueError(f"Unsupported detector mode: {self.mode}")
+        self.filter_mode = str(self.filter_mode or "auto").strip().lower()
+        if self.filter_mode not in {"auto", "poison", "evasion"}:
+            raise ValueError(f"Unsupported detector filter_mode: {self.filter_mode}")
         self.score_dict = self.score_dict or {}
 
     def _initialize_detector_model_config(self) -> None:
@@ -93,6 +112,47 @@ class DetectorConfig(ConfigBase):
     def _initialize_detector_scorer(self) -> None:
         """Coerce detector scorer into a supported scorer config."""
         self.scorer = self._coerce_scorer(self.scorer)
+
+    def _instantiate_plugin(self, plugin_spec: Any):
+        def _resolve_and_instantiate(path: str, **kwargs):
+            return resolve_class(path)(**kwargs)
+
+        return instantiate_plugin_spec(plugin_spec, loader=_resolve_and_instantiate)
+
+    def _get_plugins(self) -> list:
+        if self._plugin_objects is None:
+            plugin_specs = normalize_plugin_specs(self.plugins)
+            self._plugin_objects = [
+                self._instantiate_plugin(spec) for spec in plugin_specs
+            ]
+        return self._plugin_objects
+
+    def _run_plugin_hook(self, hook_name: str, **kwargs) -> list[Any]:
+        outputs = []
+        for plugin in self._get_plugins():
+            hook = getattr(plugin, hook_name, None)
+            if callable(hook):
+                outputs.append(hook(self, **kwargs))
+        return outputs
+
+    def _merge_plugin_scores(self, hook_outputs: list[Any]) -> None:
+        if self.score_dict is None:
+            self.score_dict = {}
+        for output in hook_outputs:
+            if isinstance(output, dict):
+                self.score_dict.update(output)
+
+    def _run_detector_stage_hooks(self, when: str, stage: str, **kwargs: Any) -> None:
+        event = str(when).strip().lower()
+        if event not in {"before", "after"}:
+            raise ValueError(f"Invalid detector hook event: {when}")
+        canonical_stage = normalize_detector_stage(stage)
+        outputs = self._run_plugin_hook(
+            f"{event}_detector_stage",
+            stage=canonical_stage,
+            **kwargs,
+        )
+        self._merge_plugin_scores(outputs)
 
     def _coerce_detector_model(
         self,
@@ -175,6 +235,163 @@ class DetectorConfig(ConfigBase):
         y = np.concatenate([y_clean, y_adv], axis=0)
         return x, y, n
 
+    def _resolve_runtime_data(self, data: "DataConfig") -> "DataConfig":
+        if data is None:
+            raise ValueError("DetectorConfig requires data to execute.")
+        has_runtime = hasattr(data, "X_train") and hasattr(data, "X_test")
+        if has_runtime:
+            return data
+        if callable(data):
+            data()
+            if hasattr(data, "X_train") and hasattr(data, "X_test"):
+                return data
+        raise ValueError("DetectorConfig could not resolve runtime data arrays.")
+
+    def _resolve_runtime_model(
+        self,
+        model: ModelConfig | None,
+        data: "DataConfig",
+    ) -> ModelConfig | None:
+        if model is None:
+            return None
+        has_estimator = getattr(model, "_model", None) is not None
+        if has_estimator:
+            return model
+        if callable(model):
+            model(data)
+        return model
+
+    def _resolve_runtime_attack(
+        self,
+        attack: "AttackConfig | None",
+        data: "DataConfig",
+        model: ModelConfig | None,
+    ) -> "AttackConfig | None":
+        if attack is None:
+            return None
+        if getattr(attack, "attack_predictions", None) is not None:
+            return attack
+        if callable(attack):
+            attack(data=data, model=model)
+        return attack
+
+    @staticmethod
+    def _to_label_vector(values: Any) -> np.ndarray:
+        arr = np.asarray(values)
+        if arr.ndim == 1:
+            return arr.reshape(-1)
+        if arr.ndim >= 2 and arr.shape[1] > 1:
+            return np.argmax(arr, axis=1)
+        return arr.reshape(-1)
+
+    def _resolve_filter_family(self, attack: "AttackConfig | None") -> str:
+        if self.filter_mode in {"poison", "evasion"}:
+            return self.filter_mode
+        attack_type = str(getattr(attack, "attack_type", "") or "").lower()
+        if "poison" in attack_type:
+            return "poison"
+        return "evasion"
+
+    def _apply_poison_filter(
+        self,
+        *,
+        data: "DataConfig",
+        model: ModelConfig | None,
+        attack: "AttackConfig | None",
+        x_clean: np.ndarray,
+        x_adv: np.ndarray,
+        y_pred: np.ndarray,
+        n: int,
+    ) -> float:
+        poison_mask = y_pred[n:].reshape(-1).astype(int) == 1
+        filtered_adv = np.array(x_adv, copy=True)
+        if len(filtered_adv) and len(x_clean):
+            filtered_adv[poison_mask] = x_clean[poison_mask]
+
+        if attack is not None:
+            attack.attack_predictions = filtered_adv
+
+        split = str(self.fit_params.get("split", "test")).lower()
+        x_attr = "X_train" if split == "train" else "X_test"
+        y_attr = "y_train" if split == "train" else "y_test"
+        setattr(data, x_attr, filtered_adv)
+
+        if model is not None and hasattr(data, y_attr):
+            y_values = self._to_numpy(getattr(data, y_attr))[: len(filtered_adv)]
+            if hasattr(model, "_train") and callable(getattr(model, "_train")):
+                model._train(filtered_adv, y_values)
+            elif hasattr(model, "fit") and callable(getattr(model, "fit")):
+                model.fit(filtered_adv, y_values)
+
+        return float(np.mean(poison_mask)) if len(poison_mask) else 0.0
+
+    def _apply_evasion_filter(
+        self,
+        *,
+        data: "DataConfig",
+        model: ModelConfig | None,
+        attack: "AttackConfig | None",
+        x_clean: np.ndarray,
+        x_adv: np.ndarray,
+        y_pred: np.ndarray,
+        n: int,
+    ) -> float:
+        evasion_mask = y_pred[n:].reshape(-1).astype(int) == 1
+        split = str(self.fit_params.get("split", "test")).lower()
+        y_attr = "y_train" if split == "train" else "y_test"
+        y_clean = self._to_label_vector(self._to_numpy(getattr(data, y_attr)))[:n]
+
+        if attack is not None:
+            filtered_inputs = np.array(x_adv, copy=True)
+            if len(filtered_inputs) and len(x_clean):
+                filtered_inputs[evasion_mask] = x_clean[evasion_mask]
+            setattr(attack, "filtered_attack_inputs", filtered_inputs)
+
+            attack_preds = getattr(attack, "attack_predictions", None)
+            if attack_preds is not None:
+                adv_labels = self._to_label_vector(self._to_numpy(attack_preds))[:n]
+                filtered_labels = np.array(adv_labels, copy=True)
+                filtered_labels[evasion_mask] = y_clean[evasion_mask]
+                attack.attacked_labels = filtered_labels
+                setattr(attack, "filtered_attack_labels", filtered_labels)
+
+        return float(np.mean(evasion_mask)) if len(evasion_mask) else 0.0
+
+    def _apply_filtering_behavior(
+        self,
+        *,
+        data: "DataConfig",
+        model: ModelConfig | None,
+        attack: "AttackConfig | None",
+        x: np.ndarray,
+        y_pred: np.ndarray,
+        n: int,
+    ) -> tuple[float, float]:
+        x_clean = x[:n]
+        x_adv = x[n : 2 * n]
+        family = self._resolve_filter_family(attack)
+        if family == "poison":
+            poison_success = self._apply_poison_filter(
+                data=data,
+                model=model,
+                attack=attack,
+                x_clean=x_clean,
+                x_adv=x_adv,
+                y_pred=y_pred,
+                n=n,
+            )
+            return poison_success, 0.0
+        evasion_success = self._apply_evasion_filter(
+            data=data,
+            model=model,
+            attack=attack,
+            x_clean=x_clean,
+            x_adv=x_adv,
+            y_pred=y_pred,
+            n=n,
+        )
+        return 0.0, evasion_success
+
     def _build_detector_backend(
         self,
         x_train: np.ndarray,
@@ -245,11 +462,35 @@ class DetectorConfig(ConfigBase):
         fit_kwargs: dict[str, Any],
     ) -> np.ndarray:
         """Execute detector fit/predict behavior and return detector labels."""
+        self._run_detector_stage_hooks(
+            "before",
+            "pre-fit",
+            detector=detector,
+            x=x,
+            y=y,
+            fit_kwargs=fit_kwargs,
+        )
         if hasattr(detector, "fit") and callable(getattr(detector, "fit")):
             start = time.process_time()
             detector.fit(x, y, **fit_kwargs)
             self.detector_training_time = time.process_time() - start
+        self._run_detector_stage_hooks(
+            "after",
+            "post-fit",
+            detector=detector,
+            x=x,
+            y=y,
+            fit_kwargs=fit_kwargs,
+        )
 
+        self._run_detector_stage_hooks(
+            "before",
+            "pre-detect",
+            detector=detector,
+            x=x,
+            y=y,
+            fit_kwargs=fit_kwargs,
+        )
         start = time.process_time()
         y_pred = None
         if hasattr(detector, "detect") and callable(getattr(detector, "detect")):
@@ -282,6 +523,15 @@ class DetectorConfig(ConfigBase):
                 f"Detector {self.detector_type} exposes neither detect() nor detect_poison().",
             )
         self.detector_detection_time = time.process_time() - start
+        self._run_detector_stage_hooks(
+            "after",
+            "post-detect",
+            detector=detector,
+            x=x,
+            y=y,
+            fit_kwargs=fit_kwargs,
+            y_pred=y_pred,
+        )
 
         if y_pred is None:
             raise RuntimeError("Detector prediction output was not produced.")
@@ -292,8 +542,15 @@ class DetectorConfig(ConfigBase):
         data: "DataConfig",
         model: ModelConfig | None = None,
         attack: "AttackConfig | None" = None,
+        detector_file: str | None = None,
+        detected_predictions_file: str | None = None,
+        score_file: str | None = None,
     ) -> dict[str, float | int]:
-        _ = model
+        ensure_detector_runtime_contract(self)
+        data = self._resolve_runtime_data(data)
+        model = self._resolve_runtime_model(model=model, data=data)
+        attack = self._resolve_runtime_attack(attack=attack, data=data, model=model)
+
         x, y, n = self.compose_detector_dataset_behavior(data=data, attack=attack)
 
         backend = self.compose_detector_backend_behavior(x_train=x, y_train=y)
@@ -311,6 +568,7 @@ class DetectorConfig(ConfigBase):
             fit_kwargs=fit_kwargs,
         )
         y_true = y.reshape(-1).astype(int)
+        self.detector_predictions = y_pred
 
         self.detector = detector
         metric_scores = self.scorer(
@@ -326,6 +584,18 @@ class DetectorConfig(ConfigBase):
             score_key = key if str(key).startswith("detector_") else f"detector_{key}"
             prefixed_scores[score_key] = float(value)
 
+        poison_filter_success = 0.0
+        evasion_filter_success = 0.0
+        if self.mode == "filter":
+            poison_filter_success, evasion_filter_success = self._apply_filtering_behavior(
+                data=data,
+                model=model,
+                attack=attack,
+                x=x,
+                y_pred=y_pred,
+                n=n,
+            )
+
         self.score_dict = {
             **self.score_dict,
             **prefixed_scores,
@@ -334,6 +604,22 @@ class DetectorConfig(ConfigBase):
             "detector_adversarial_n": int(n),
             "detector_training_time": float(self.detector_training_time or 0.0),
             "detector_detection_time": float(self.detector_detection_time),
+            "detector_stage": normalize_detector_stage("post-detect"),
+            "detector_execution_order": "post-attack",
+            "poison_filter_success": float(poison_filter_success),
+            "evasion_filter_success": float(evasion_filter_success),
         }
-        self.merge_runtime_files(getattr(self, "files", None))
+        self.merge_runtime_files(
+            {
+                "detector_model_file": detector_file,
+                "detected_predictions_file": detected_predictions_file,
+                "score_file": score_file,
+            },
+        )
+
+        if detector_file is not None:
+            self.save_object(self.detector, detector_file)
+        if detected_predictions_file is not None:
+            self.save_data(self.detector_predictions, detected_predictions_file)
+        self.score_dict = self.merge_and_persist_scores(self.score_dict, score_file)
         return self.score_dict

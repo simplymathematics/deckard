@@ -8,6 +8,14 @@ evaluate detector behavior against experiment outputs.
 It is typically used after model and attack execution to derive detector-level
 metrics from benign and attacked samples.
 
+Canonical runtime contract:
+
+- files: detector artifacts persist through files-only paths (`detector_model_file`, `detected_predictions_file`, `score_file`)
+- times: `detector_training_time`, `detector_detection_time`
+- scores: detector-prefixed metrics merged with runtime timing metadata
+- stage: canonical detector stage tokens (`pre-fit`, `post-fit`, `pre-detect`, `post-detect`)
+- ordering: detector execution is marked as `post-attack` for consistent orchestration metadata
+
 ## Examples
 
 ```{seealso}

@@ -12,11 +12,23 @@ It provides:
 - artifact persistence for attacked samples and labels
 - attack-aware scoring hooks used by experiment orchestration
 
+Canonical runtime contract:
+
+- files: attack artifacts persist through files-only paths (`attack_file`, `attack_predictions_file`, `score_file`)
+- times: `attack_generation_time`, `attack_prediction_time`, `attack_score_time`
+- scores: attack metrics merged with runtime timing metadata
+- stage: canonical stage tokens (`pre-attack`, `post-attack`) with compatibility aliases normalized at runtime
+- mode: split scope (`auto`, `train`, `test`, `val`) distinct from stage/hook lifecycle
+
 ## Attack Families
 
 Deckard runtime attack dispatch is centered on
 {class}`deckard.attack.base.AttackConfig`, which resolves a family/subtype and
 dispatches to mixin handlers via plugins.
+
+Attack execution ordering is explicit in runtime metadata and defaults to
+`post-defense`, so downstream scoring and detector layers can reason about
+defense/attack sequencing consistently.
 
 Supported attack families:
 

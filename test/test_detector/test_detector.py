@@ -7,6 +7,7 @@ from omegaconf import OmegaConf
 from sklearn.datasets import make_classification
 
 from deckard.detector import DetectorConfig
+from deckard.detector.canon import normalize_detector_stage
 from deckard.detector.default import DetectorScorerConfig
 
 
@@ -337,6 +338,48 @@ def test_detector_constructor_fallback_and_detect_poison_indices(monkeypatch):
     assert "detector_accuracy" in scores
 
 
+def test_detector_stage_normalization_tokens():
+    assert normalize_detector_stage("before_fit") == "pre-fit"
+    assert normalize_detector_stage("after_fit") == "post-fit"
+    assert normalize_detector_stage("before_detect") == "pre-detect"
+    assert normalize_detector_stage("after_detect") == "post-detect"
+
+
+def test_detector_persists_files_and_score_state(tmp_path):
+    data, attack = _make_data_and_attack(n=6, d=3)
+    cfg = DetectorConfig(
+        detector_model={
+            "model_type": "sklearn.linear_model.LogisticRegression",
+            "classifier": True,
+            "model_params": {"max_iter": 20},
+        },
+    )
+
+    detector_file = tmp_path / "detector.pkl"
+    detected_predictions_file = tmp_path / "detector_preds.pkl"
+    score_file = tmp_path / "detector_scores.json"
+
+    with patch(
+        "deckard.detector.base.resolve_class",
+        return_value=_FakeBinaryInputDetector,
+    ):
+        scores = cfg(
+            data=data,
+            model=None,
+            attack=attack,
+            detector_file=str(detector_file),
+            detected_predictions_file=str(detected_predictions_file),
+            score_file=str(score_file),
+        )
+
+    assert "detector_stage" in scores
+    assert scores["detector_stage"] == "post-detect"
+    assert scores["detector_execution_order"] == "post-attack"
+    assert detector_file.exists()
+    assert detected_predictions_file.exists()
+    assert score_file.exists()
+
+
 def test_detector_detect_poison_invalid_shape_raises(monkeypatch):
     class _BadPoisonDetector:
         def __init__(self, classifier, x_train, y_train, **kwargs):
@@ -398,3 +441,130 @@ def test_detector_raises_when_backend_has_no_detection_api(monkeypatch):
         match=r"exposes neither detect\(\) nor detect_poison\(\)",
     ):
         cfg(data=data, model=None, attack=attack)
+
+
+class _ConfigLikeData:
+    def __init__(self, n=6, d=3):
+        self._rng = np.random.default_rng(41)
+        self.n = n
+        self.d = d
+
+    def __call__(self):
+        self.X_train = self._rng.random((self.n, self.d), dtype=np.float32)
+        self.y_train = self._rng.integers(0, 2, size=(self.n,))
+        self.X_test = self._rng.random((self.n, self.d), dtype=np.float32)
+        self.y_test = self._rng.integers(0, 2, size=(self.n,))
+        return {"data_ready": True}
+
+
+class _ConfigLikeModel:
+    def __init__(self):
+        self._model = None
+        self.train_calls = 0
+
+    def __call__(self, data):
+        self._model = object()
+        _ = data
+        return {"model_ready": True}
+
+    def _train(self, X, y):
+        _ = X, y
+        self.train_calls += 1
+
+
+class _ConfigLikeAttack:
+    attack_type = "art.attacks.poisoning.BackdoorAttack"
+
+    def __init__(self):
+        self.attack_predictions = None
+
+    def __call__(self, data, model):
+        _ = model
+        self.attack_predictions = np.array(data.X_test, copy=True)
+        self.attack_predictions[0] = self.attack_predictions[0] + 5.0
+        return {"attack_ready": True}
+
+
+class _FixedDetectDetector:
+    def __init__(self, detector, **kwargs):
+        self.detector = detector
+        self.kwargs = kwargs
+
+    def fit(self, x, y, **kwargs):
+        _ = x, y, kwargs
+
+    def detect(self, x, batch_size=128, **kwargs):
+        _ = batch_size, kwargs
+        n = len(x) // 2
+        pred = np.zeros(len(x), dtype=int)
+        pred[n] = 1
+        return {"mock": True}, pred
+
+
+def test_detector_filter_mode_poison_updates_attack_and_retrains(monkeypatch):
+    data = _ConfigLikeData(n=5, d=2)
+    model = _ConfigLikeModel()
+    attack = _ConfigLikeAttack()
+
+    cfg = DetectorConfig(
+        detector_model={
+            "model_type": "sklearn.linear_model.LogisticRegression",
+            "classifier": True,
+            "model_params": {"max_iter": 10},
+        },
+        mode="filter",
+        filter_mode="poison",
+        fit_params={"split": "test"},
+    )
+
+    monkeypatch.setattr(
+        DetectorConfig,
+        "_build_detector_backend",
+        lambda self, x_train, y_train: object(),
+    )
+    monkeypatch.setattr(
+        "deckard.detector.base.resolve_class",
+        lambda _name: _FixedDetectDetector,
+    )
+
+    scores = cfg(data=data, model=model, attack=attack)
+
+    assert model.train_calls == 1
+    assert scores["poison_filter_success"] > 0.0
+    assert "evasion_filter_success" in scores
+    assert np.allclose(attack.attack_predictions[0], data.X_test[0])
+
+
+def test_detector_filter_mode_evasion_sets_filtered_labels(monkeypatch):
+    data, attack = _make_data_and_attack(n=6, d=3)
+    attack.attack_type = "art.attacks.evasion.FastGradientMethod"
+    attack.attacked_labels = np.zeros(6, dtype=int)
+    model = SimpleNamespace(_model=object())
+
+    cfg = DetectorConfig(
+        detector_model={
+            "model_type": "sklearn.linear_model.LogisticRegression",
+            "classifier": True,
+            "model_params": {"max_iter": 10},
+        },
+        mode="filter",
+        filter_mode="evasion",
+        fit_params={"split": "test"},
+    )
+
+    monkeypatch.setattr(
+        DetectorConfig,
+        "_build_detector_backend",
+        lambda self, x_train, y_train: object(),
+    )
+    monkeypatch.setattr(
+        "deckard.detector.base.resolve_class",
+        lambda _name: _FixedDetectDetector,
+    )
+
+    scores = cfg(data=data, model=model, attack=attack)
+
+    assert scores["evasion_filter_success"] > 0.0
+    assert "poison_filter_success" in scores
+    assert hasattr(attack, "filtered_attack_inputs")
+    assert np.array_equal(attack.attacked_labels[:1], data.y_test[:1])

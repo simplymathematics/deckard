@@ -31,7 +31,11 @@ from ..utils import (
     is_null_config_value,
 )
 from ..frameworks.types import ArrayLike, EstimatorLike, MatrixLike
-from .canon import ensure_model_runtime_contract, normalize_model_score_mode
+from .canon import (
+    ensure_model_runtime_contract,
+    normalize_model_score_mode,
+    normalize_model_trainer_alias,
+)
 from .trainers import BaseTrainer
 
 logger = logging.getLogger(__name__)
@@ -795,6 +799,21 @@ class ModelConfig(ConfigBase):
             times["training_time"] = getattr(self, "training_time", None)
             times["training_n"] = getattr(self, "training_n", None)
         return times
+
+    def _uses_pretrained_trainer(self) -> bool:
+        trainer_obj = self._compose_trainer()
+        try:
+            from .trainers import PretrainedTrainer
+
+            if isinstance(trainer_obj, PretrainedTrainer):
+                return True
+        except Exception:
+            pass
+
+        trainer_spec = getattr(self, "trainer", None)
+        if isinstance(trainer_spec, str):
+            return normalize_model_trainer_alias(trainer_spec) == "pretrained"
+        return False
 
     def _pre_defense_snapshot_key(self) -> str:
         alias = str(getattr(self, "alias", "") or "").strip().lower()
@@ -1574,6 +1593,7 @@ class ModelConfig(ConfigBase):
                 )
             case _, _:  # Model and/or filepath provided
                 trained_this_call = False
+                loaded_model_this_call = False
                 if model_file is not None and Path(model_file).exists():
                     logger.info(
                         f"Model file {model_file} exists. Loading model.",
@@ -1590,6 +1610,7 @@ class ModelConfig(ConfigBase):
                         self._model = None
                     if self._is_model_fitted(self._model, X_sample=data.X_train):
                         logger.info("Model loaded and is fitted.")
+                        loaded_model_this_call = True
                     else:
                         logger.warning(
                             "Loaded model is not fitted. Training a new model.",
@@ -1642,6 +1663,8 @@ class ModelConfig(ConfigBase):
             if (
                 defense_pipeline is not None
                 and not trained_this_call
+                and loaded_model_this_call
+                and self._uses_pretrained_trainer()
                 and hasattr(defense_pipeline, "requires_fit_application")
                 and defense_pipeline.requires_fit_application()
             ):

@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
 from matplotlib.axes import Axes
+from unittest.mock import patch
+
+from deckard.data import DataConfig
 
 try:
     import seaborn  # noqa: F401
@@ -135,6 +138,54 @@ class TestSeabornPlots(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             self._make_cfg(data_file=bad_file.as_posix(), y="y")
+
+    def test_seaborn_config_accepts_data_config_source(self):
+        cfg_data = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 20,
+                "n_features": 4,
+                "n_informative": 3,
+                "n_redundant": 0,
+                "n_repeated": 0,
+                "random_state": 1,
+            },
+            target=None,
+        )
+        cfg_data()
+        cfg_data._X = pd.DataFrame(cfg_data._X)
+        cfg_data._X.columns = ["x", "y", "z", "w"]
+
+        cfg = SeabornPlotConfig(
+            plot_type="scatter",
+            x="x",
+            y="y",
+            data_config=cfg_data,
+        )
+        ax = cfg()
+        self.assertIsInstance(ax, Axes)
+
+    @patch("deckard.plugins.seaborn.plot.load_optuna_studies_dataframe")
+    def test_seaborn_config_accepts_optuna_storage_source(self, mock_optuna_loader):
+        mock_optuna_loader.return_value = pd.DataFrame(
+            {
+                "trial": [1, 2, 3],
+                "objective": [0.1, 0.2, 0.3],
+            },
+        )
+        cfg = SeabornPlotConfig(
+            plot_type="line",
+            x="trial",
+            y="objective",
+            optuna_storage="sqlite:///optuna.db",
+            optuna_study_name="demo",
+            optuna_query={"study_names": ["demo", "other"], "row_slice": (0, 2)},
+        )
+        ax = cfg()
+        self.assertIsInstance(ax, Axes)
+        kwargs = mock_optuna_loader.call_args.kwargs
+        self.assertEqual(kwargs["study_names"], ["demo", "other"])
+        self.assertEqual(kwargs["row_slice"], (0, 2))
 
     def test_plot_config_list_len(self):
         cfg_list = SeabornPlotConfigList(

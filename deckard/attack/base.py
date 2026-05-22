@@ -45,6 +45,11 @@ from ..frameworks.pytorch.torch_utils import (
     is_torch_model,
     tensor_to_numpy,
 )
+from .canon import (
+    ensure_attack_runtime_contract,
+    normalize_attack_mode,
+    normalize_attack_stage,
+)
 
 if TYPE_CHECKING:
     from ..score.attack import AttackScorerConfig
@@ -428,6 +433,8 @@ class AttackConfig(ConfigBase):
             raise TypeError(
                 "AttackConfig scorer must expose a '_score' method.",
             )
+        ensure_attack_runtime_contract(self)
+        self.mode = str(self.mode or "auto").strip().lower()
         self._validate_poisoning_params()
         self.device = str(resolve_torch_device(self.device))
 
@@ -488,14 +495,25 @@ class AttackConfig(ConfigBase):
         mode: Literal["auto", "train", "test", "val"],
     ) -> "AttackConfig":
         """Set attack scoring/evaluation split mode explicitly."""
-        canonical = str(mode).strip().lower()
-        valid_modes = {"auto", "train", "test", "val"}
-        if canonical not in valid_modes:
-            raise ValueError(
-                f"Unsupported attack mode '{mode}'. Expected one of: {', '.join(sorted(valid_modes))}.",
-            )
-        self.mode = canonical
+        self.mode = normalize_attack_mode(mode)
         return self
+
+    def _run_attack_stage_hooks(
+        self,
+        when: str,
+        stage: str,
+        **kwargs: Any,
+    ) -> None:
+        event = str(when).strip().lower()
+        if event not in {"before", "after"}:
+            raise ValueError(f"Invalid attack hook event: {when}")
+        canonical_stage = normalize_attack_stage(stage)
+        hook_outputs = self._run_plugin_hook(
+            f"{event}_attack_stage",
+            stage=canonical_stage,
+            **kwargs,
+        )
+        self._merge_plugin_scores(hook_outputs)
 
     def resolve_mode_for_attack_kind(
         self,
@@ -1022,6 +1040,7 @@ class AttackConfig(ConfigBase):
             attack_file=attack_file,
             attack_predictions_file=attack_predictions_file,
         )
+        ensure_attack_runtime_contract(self)
         self._validate_attack_task_compatibility(data, model)
 
         attack, art_model, attack_type, attack_subtype = self._initialize_attack(
@@ -1054,6 +1073,19 @@ class AttackConfig(ConfigBase):
         )
         runtime._merge_plugin_scores(before_outputs)
 
+        attack_execution_order = "post-defense"
+        runtime._run_attack_stage_hooks(
+            "before",
+            "pre-attack",
+            data=data,
+            model=model,
+            attack=attack,
+            art_model=art_model,
+            attack_type=attack_type,
+            attack_subtype=attack_subtype,
+            execution_order=attack_execution_order,
+        )
+
         scores = handler(
             data=data,
             model=model,
@@ -1064,6 +1096,17 @@ class AttackConfig(ConfigBase):
         )
 
         self.__dict__.update(runtime.__dict__)
+        self._run_attack_stage_hooks(
+            "after",
+            "post-attack",
+            data=data,
+            model=model,
+            attack=attack,
+            art_model=art_model,
+            attack_type=attack_type,
+            attack_subtype=attack_subtype,
+            execution_order=attack_execution_order,
+        )
         after_outputs = self._run_plugin_hook(
             "after_attack_dispatch",
             data=data,
@@ -1093,7 +1136,12 @@ class AttackConfig(ConfigBase):
             "attack_prediction_time": self.attack_prediction_time,
             "attack_score_time": self.attack_score_time,
         }
-        score_dict = {**scores, **times}
+        score_dict = {
+            **scores,
+            **times,
+            "attack_stage": normalize_attack_stage("post-attack"),
+            "attack_execution_order": attack_execution_order,
+        }
         self.score_dict = score_dict
 
         self.merge_runtime_files(

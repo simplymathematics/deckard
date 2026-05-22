@@ -96,12 +96,13 @@ def test_defense_step_factory_proxies_flags():
     assert step.defense is defense
 
 
-def test_pretrained_model_with_fit_defense_snapshots_and_retrains(monkeypatch):
+def test_pretrained_model_with_fit_defense_snapshots_and_retrains(monkeypatch, tmp_path):
     model = ModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 10},
         alias="demo",
+        trainer="pretrained",
     )
     model._model = SimpleNamespace(existing=True)
     model.score_dict = {"baseline_accuracy": 0.9}
@@ -129,6 +130,10 @@ def test_pretrained_model_with_fit_defense_snapshots_and_retrains(monkeypatch):
         model.training_n = len(data.X_train)
         return {**times, "training_time": 3.0, "training_n": len(data.X_train)}
 
+    model_file = tmp_path / "pretrained.pkl"
+    model_file.write_text("artifact")
+
+    monkeypatch.setattr(model, "load", lambda _path: SimpleNamespace(loaded=True))
     monkeypatch.setattr(model, "_is_model_fitted", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(model, "_require_defense_pipeline", lambda: defense_pipeline)
     monkeypatch.setattr(model, "_train_with_runtime_trainer", fake_train_with_runtime_trainer)
@@ -136,9 +141,54 @@ def test_pretrained_model_with_fit_defense_snapshots_and_retrains(monkeypatch):
     monkeypatch.setattr(model, "_apply_defense", lambda _data: model._model)
 
     data = SimpleNamespace(X_train=[0, 1], y_train=[0, 1])
-    times = model._load_or_train_model(data, model_file=None, times={})
+    times = model._load_or_train_model(data, model_file=str(model_file), times={})
 
     assert retrain_calls["force_retrain"] is True
     assert model._pre_defense_runtime_state["predictions"] == [0, 1]
     assert model.score_dict["pre-demo-defense"]["retrain_required"] is True
     assert times["training_time"] == 3.0
+
+
+def test_loaded_non_pretrained_model_with_fit_defense_does_not_force_retrain(
+    monkeypatch,
+    tmp_path,
+):
+    model = ModelConfig(
+        model_type="sklearn.linear_model.LogisticRegression",
+        classifier=True,
+        model_params={"max_iter": 10},
+        alias="demo",
+        trainer="sklearn",
+    )
+    model._model = SimpleNamespace(existing=True)
+    model.score_dict = {}
+    model.defense = object()
+
+    defense_pipeline = SimpleNamespace(
+        requires_fit_application=lambda: True,
+        resolve_stage=lambda **_kwargs: "post_fit_pre_predict",
+        apply=lambda estimator, data, stage: estimator,
+        defense_application_time=None,
+        score_dict={},
+    )
+
+    model_file = tmp_path / "trained.pkl"
+    model_file.write_text("artifact")
+
+    retrain_calls = {"count": 0}
+
+    def fake_train_with_runtime_trainer(data, model_file, times, force_retrain=False):
+        _ = data, model_file, times, force_retrain
+        retrain_calls["count"] += 1
+        return times
+
+    monkeypatch.setattr(model, "load", lambda _path: SimpleNamespace(loaded=True))
+    monkeypatch.setattr(model, "_is_model_fitted", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(model, "_require_defense_pipeline", lambda: defense_pipeline)
+    monkeypatch.setattr(model, "_train_with_runtime_trainer", fake_train_with_runtime_trainer)
+
+    data = SimpleNamespace(X_train=[0, 1], y_train=[0, 1])
+    model._load_or_train_model(data, model_file=str(model_file), times={})
+
+    assert retrain_calls["count"] == 0
+    assert "pre-demo-defense" not in model.score_dict
