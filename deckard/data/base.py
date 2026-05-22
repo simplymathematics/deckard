@@ -6,15 +6,10 @@ import logging
 from pathlib import Path
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Literal, Tuple, Union, Optional, Final
+from typing import TYPE_CHECKING, Any, Literal,Union, Optional
 from omegaconf import DictConfig, ListConfig
 
 import numpy as np
-
-from sklearn.pipeline import Pipeline
-from sklearn.compose import make_column_selector, ColumnTransformer
-
-from scipy.sparse import csr_matrix
 
 # deckard
 from ..utils import (
@@ -23,11 +18,10 @@ from ..utils import (
     load_class,
     coerce_to_list,
     merge_list_of_dicts,
-    normalize_plugin_specs,
-    instantiate_plugin_spec,
 )
 from ..frameworks.types import ArrayLike, MatrixLike
-from .stages import (
+from ..plugins.base import PluginOrchestratorMixin
+from .canon import (
     DEFAULT_DATA_SCORE_STAGE,
     CANONICAL_DATA_TIMES,
     DataFiles,
@@ -35,14 +29,14 @@ from .stages import (
     ensure_canonical_times,
     merge_data_files,
     normalize_data_score_mode,
-    ScoringOrchestratorMixin,
+    stage_hook_token,
 )
 
 # Setup logger
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from .pipeline.core import DataPipeline
+    from .pipeline.base import DataPipeline
     from .sample import BaseSampler
 
 
@@ -72,7 +66,7 @@ def _is_data_scorer_instance(scorer: Any) -> bool:
 
 
 @dataclass(eq=False, kw_only=True)
-class DataConfig(ScoringOrchestratorMixin, ConfigBase):
+class DataConfig(PluginOrchestratorMixin, ConfigBase):
     """
     Configuration and utility class for loading, preprocessing, and splitting datasets for machine learning tasks.
 
@@ -288,6 +282,12 @@ class DataConfig(ScoringOrchestratorMixin, ConfigBase):
     _sampler_obj: Union[callable, None] = None
     _score_orchestration_active: bool = field(default=False, init=False, repr=False)
 
+    def _normalize_score_mode(self, mode: str) -> str:
+        return normalize_data_score_mode(mode)
+
+    def _stage_hook_token(self, stage: str) -> str:
+        return stage_hook_token(stage)
+
     def _validate_init(self):
         """
         Post-initialization method for setting up data-related attributes.
@@ -452,7 +452,7 @@ class DataConfig(ScoringOrchestratorMixin, ConfigBase):
         if raw_pipeline is None:
             return
 
-        from .pipeline.core import DataPipeline
+        from .pipeline.base import DataPipeline
 
         if isinstance(raw_pipeline, DataPipeline):
             return
@@ -551,7 +551,7 @@ class DataConfig(ScoringOrchestratorMixin, ConfigBase):
             self._split_loaded_data(run_hooks=run_hooks)
         pipeline_runtime = getattr(self, "pipeline", None)
         if pipeline_runtime is not None:
-            from .pipeline.core import DataPipeline
+            from .pipeline.base import DataPipeline
 
             if not isinstance(pipeline_runtime, DataPipeline):
                 raise TypeError(
@@ -993,7 +993,16 @@ class DataConfig(ScoringOrchestratorMixin, ConfigBase):
         self.score_dict = all_scores
         self.times.update({k: all_scores.get(k) for k in CANONICAL_DATA_TIMES})
         assert hasattr(self, "score_dict"), "score_dict must be set"
+        self.merge_runtime_files(
+            self.files,
+            {
+                "data_file": data_file,
+                "score_file": score_file,
+            },
+        )
+        all_scores = dict(self.score_dict)
         all_scores = self.merge_and_persist_scores(all_scores, score_file)
+        self.score_dict = all_scores
         if save_flag:
             self.save(data_file)
         return self.score_dict

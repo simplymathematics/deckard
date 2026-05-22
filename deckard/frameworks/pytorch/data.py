@@ -25,7 +25,7 @@ from torch.utils.data import (
 from tqdm.auto import tqdm
 
 from ...data.base import DataConfig, DataPipelineConfig
-from ...data.stages import DataFiles
+from ...data.canon import DataFiles, merge_data_files
 from .sample import PytorchBaseSampler
 
 # deckard
@@ -247,12 +247,8 @@ class TorchDatasetMixin(TorchDatasetSamplingMixin):
             f"Unsupported sampler specification type: {type(sampler_spec)}",
         )
 
-    def _sample_with_configurable_sampler(
-        self,
-        dataset_obj: Dataset,
-        labels: Tensor,
-    ) -> tuple[Tensor, Tensor]:
-        """Return train/test index tensors based on configured sampler."""
+    def _sample_with_configurable_sampler(self) -> tuple[Tensor, Tensor]:
+        """Return train/test index tensors based on the configured sampler."""
         # Ensure runtime edits to split params are reflected in the sampler object.
         self._sampler_obj = None
         train_idx, test_idx, val_idx = PytorchBaseSampler.execute(self)
@@ -261,51 +257,6 @@ class TorchDatasetMixin(TorchDatasetSamplingMixin):
             torch.as_tensor(train_idx, dtype=torch.long),
             torch.as_tensor(test_idx, dtype=torch.long),
         )
-
-    def _sample_train_test_indices(self, num_samples: int) -> tuple[Tensor, Tensor]:
-        """Default random train/test split index generation."""
-        indices = torch.arange(num_samples)
-        perm = torch.randperm(
-            num_samples,
-            generator=torch.Generator().manual_seed(self.random_state),
-        )
-        indices = indices[perm]
-
-        if self.train_size is None and self.test_size is None:
-            raise ValueError("Either train_size or test_size must be specified.")
-
-        if self.train_size is None:
-            test_size = (
-                int(self.test_size * num_samples)
-                if isinstance(self.test_size, float)
-                else int(self.test_size)
-            )
-            train_size = num_samples - test_size
-        elif self.test_size is None:
-            train_size = (
-                int(self.train_size * num_samples)
-                if isinstance(self.train_size, float)
-                else int(self.train_size)
-            )
-            test_size = num_samples - train_size
-        else:
-            train_size = (
-                int(self.train_size * num_samples)
-                if isinstance(self.train_size, float)
-                else int(self.train_size)
-            )
-            test_size = (
-                int(self.test_size * num_samples)
-                if isinstance(self.test_size, float)
-                else int(self.test_size)
-            )
-
-        if train_size + test_size > num_samples:
-            raise ValueError("Train size and test size exceed total samples.")
-
-        train_idx = indices[:train_size]
-        test_idx = indices[train_size : train_size + test_size]  # noqa E203
-        return train_idx, test_idx
 
     pass
 
@@ -423,32 +374,8 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         return self
 
     def score(self, *args, mode: str | None = None, **kwargs) -> dict:
-        """Run base scoring and mirror legacy pre-sample key for compatibility.
-
-        Base data scoring defaults to ``test`` mode when no explicit runtime mode
-        is provided. PyTorch framework persistence tests still assert the historical
-        ``pre-sample`` bucket, so we expose that key as a compatibility mirror
-        without altering the underlying scoring mode selection.
-        """
-        scores = super().score(*args, mode=mode, **kwargs)
-        if (
-            mode is None
-            and str(getattr(self, "score_mode", "")).strip().lower() == "test"
-            and isinstance(scores, dict)
-            and "test" in scores
-            and "pre-sample" not in scores
-            and isinstance(scores.get("test"), dict)
-        ):
-            scores = {"pre-sample": dict(scores["test"]), **scores}
-        if (
-            mode is None
-            and isinstance(scores, dict)
-            and "post-pipeline" in scores
-            and "pre-sample" not in scores
-            and isinstance(scores.get("post-pipeline"), dict)
-        ):
-            scores = {"pre-sample": dict(scores["post-pipeline"]), **scores}
-        return scores
+        """Delegate scoring to the canonical DataConfig score flow."""
+        return super().score(*args, mode=mode, **kwargs)
 
     def _load_data(self) -> None:
         """Load a PyTorch dataset using load_class for generic instantiation.
@@ -578,7 +505,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
                 self._sensitive = sensitive_values
 
             end = time.perf_counter()
-            self.data_load_time = end - start
+            self._set_time("data_load_time", end - start)
             logger.info(
                 f"Loaded dataset {self.dataset_name} in {self.data_load_time:.2f} seconds. "
                 f"Shape: {self._X.shape}, Labels: {self._y.shape}",
@@ -618,7 +545,9 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         if self._X is None or self._y is None:
             raise ValueError("Data not loaded. Call load_dataset() first.")
 
-        _ = run_hooks
+        if run_hooks:
+            self._run_plugin_hook("before_sample")
+
         num_samples = len(self._X)
         # Determine stratification
         if self.stratify not in (None, True, False):
@@ -627,22 +556,16 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             )
 
         start_time = time.perf_counter()
-        # TODO: deprecate this for new sampling config. make consistent with ModelConfig
-        dataset_obj = getattr(self, "dataset_obj", None)
-        if isinstance(dataset_obj, Dataset):
-            train_idx, test_idx = self._sample_with_configurable_sampler(
-                dataset_obj=dataset_obj,
-                labels=self._y,
-            )
-        else:
-            train_idx, test_idx = self._sample_train_test_indices(num_samples)
+        if getattr(self, "dataset_obj", None) is None:
+            self.dataset_obj = TensorDataset(self._X, self._y)
+        train_idx, test_idx = self._sample_with_configurable_sampler()
 
         # Store indices as attributes for downstream compatibility
         self.train_indices = train_idx
         self.test_indices = test_idx
 
         end_time = time.perf_counter()
-        self.data_sample_time = end_time - start_time
+        self._set_time("data_sample_time", end_time - start_time)
 
         # For compatibility with sklearn-like and torch workflows, set as Subset objects and tensors
         from torch.utils.data import Subset
@@ -693,70 +616,48 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             self.y_test,
             (Tensor, Dataset),
         ), "y_test must be a Tensor or Dataset"
+        if run_hooks:
+            self._run_plugin_hook("after_sample")
         return self
 
     def __call__(  # noqa: F811
         self,
+        *args,
         files: DataFiles | None = None,
+        **kwargs,
     ) -> dict:
-        """Load, sample, and optionally persist torch data artifacts and scores.
+        """Run framework lifecycle with canonical hook/stage semantics."""
+        self.files = merge_data_files(self.files, files)
+        data_file = self.files.get("data_file")
+        score_file = self.files.get("score_file")
+        should_save_data = data_file is not None and not Path(data_file).exists()
 
-        Args:
-            data_file: Optional path used to load/save serialized data runtime state.
-            score_file: Optional path used to load/save serialized scoring outputs.
-
-        Returns:
-            A score dictionary augmented with runtime timing metrics.
-        """
-        files = dict(files or {})
-        data_file = files.get("data_file")
-        score_file = files.get("score_file")
-
-        if data_file is not None:
-            assert isinstance(
-                data_file,
-                str,
-            ), "data_file must be a string path."
-            if not Path(data_file).exists():
-                Path(data_file).parent.mkdir(parents=True, exist_ok=True)
-            else:
-                pass
-
-        if score_file is not None:
-            assert isinstance(
-                score_file,
-                str,
-            ), "score_file must be a string path."
-            if Path(score_file).exists():
-                pass
+        if data_file is not None and not Path(data_file).exists():
+            Path(data_file).parent.mkdir(parents=True, exist_ok=True)
 
         if self.data_load_time is None:
             self.load_dataset()
-
-        assert self._X is not None, "_X not loaded"
-        assert self._y is not None, "_y not loaded"
-
         if self.data_sample_time is None:
             self.fit()
 
-        assert self.X_train is not None, "X_train not sampled"
-        assert self.X_test is not None, "X_test not sampled"
-        assert self.y_train is not None, "y_train not sampled"
-        assert self.y_test is not None, "y_test not sampled"
+        self._score_orchestration_active = True
+        try:
+            self._run_plugin_hook("after_pipeline", score_kwargs=kwargs)
+        finally:
+            self._score_orchestration_active = False
 
-        time_dict = {
-            "data_load_time": self.data_load_time,
-            "data_sample_time": self.data_sample_time,
-        }
+        runtime_scores = dict(getattr(self, "score_dict", {}) or {})
+        if len(runtime_scores) == 0:
+            runtime_scores = self.score(*args, **kwargs)
 
-        scores = self.score()
-        all_scores = {**time_dict, **scores}
+        all_scores = {**runtime_scores, **self.build_data_time_dict()}
         self.score_dict = all_scores
 
         if score_file is not None:
-            self.save_scores(scores, score_file)
-
-        return all_scores
+            self.save_scores(all_scores, score_file)
+        if should_save_data and data_file is not None:
+            self.save_object(self, data_file)
+        return self.score_dict
 
 
 @dataclass(eq=False, kw_only=True)
@@ -902,7 +803,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         self._y = torch.cat([train_labels, test_labels], dim=0)
 
         end = time.perf_counter()
-        self.data_load_time = end - start
+        self._set_time("data_load_time", end - start)
         # Sampling is already defined by provided train/test splits
 
         logger.info(
@@ -911,7 +812,8 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         )
 
     def fit(self, run_hooks: bool = True):
-        _ = run_hooks
+        if run_hooks:
+            self._run_plugin_hook("before_sample")
         # DataLoader params (lazy loading, no full dataset materialization)
         logger.info("Creating torch data loaders.")
         start = time.perf_counter()
@@ -1028,7 +930,9 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             self._sensitive_all = train_sensitive_batches + test_sensitive_batches
 
         end = time.perf_counter()
-        self.data_sample_time = end - start
+        self._set_time("data_sample_time", end - start)
+        if run_hooks:
+            self._run_plugin_hook("after_sample")
         return self
 
     def __call__(
@@ -1038,48 +942,25 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         *args,
         **kwargs,
     ) -> dict:
-        """Load torch custom data, run sampling/scoring, and persist optional outputs.
-
-        Args:
-            data_file: Optional path to serialized runtime data state.
-            score_file: Optional path to serialized score output.
-
-        Returns:
-            Dictionary of computed and/or loaded scoring values.
-        """
+        """Run custom torch lifecycle with cache compatibility and canonical hooks."""
         files = dict(files or {})
         data_file = files.get("data_file")
         score_file = files.get("score_file")
-        cached_scores = None
+
         if data_file is not None and Path(data_file).exists():
-            self = self.load_object(data_file)
+            loaded = self.load_object(data_file)
+            if isinstance(loaded, PytorchCustomDataConfig) and loaded is not self:
+                self.__dict__.update(loaded.__dict__)
+
         if score_file is not None and Path(score_file).exists():
             cached_scores = self.load_scores(score_file)
+            if isinstance(cached_scores, dict):
+                self.score_dict = dict(cached_scores)
+                self.save_scores(self.score_dict, filepath=score_file)
+                if data_file is not None:
+                    self.save_object(self, data_file)
+                return self.score_dict
 
-        if cached_scores is not None:
-            scores = dict(cached_scores)
-            self.score_dict = scores
-            if score_file is not None:
-                self.save_scores(scores, filepath=score_file)
-            if data_file is not None:
-                self.save_object(self, data_file)
-            return scores
-
-        scores = {}
-        if not hasattr(self, "_X") or self._X is None:
-            self.load_dataset()
-        if getattr(self, "X_train", None) is None:
-            self.fit()
-        time_dict = {
-            "data_load_time": self.data_load_time,
-            "data_sample_time": self.data_sample_time,
-            "data_score_time": self.data_score_time,
-        }
-        new_scores = self.score(mode=mode, *args, **kwargs)
-        scores.update(**time_dict, **new_scores)
-        self.score_dict = scores
-        if score_file is not None:
-            self.save_scores(scores, filepath=score_file)
-        if data_file is not None:
-            self.save_object(self, data_file)
-        return scores
+        if mode is not None and "mode" not in kwargs:
+            kwargs["mode"] = mode
+        return super().__call__(*args, files=files, **kwargs)

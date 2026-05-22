@@ -18,7 +18,7 @@ from typing import Any, Dict, Optional, Protocol, Union
 import numpy as np
 import pandas as pd
 
-from ..utils import load_class
+from .canon import normalize_runtime_split_mode, resolve_sensitive_split_payload
 
 
 class RuntimePayload(Protocol):
@@ -113,28 +113,18 @@ class _SensitiveColumnsMixin:
         return sensitive_series
 
     def _resolve_runtime_sensitive_source(self, split: str):
-        if getattr(self, "data", None) is None:
-            return None
-        if split == "train":
-            return getattr(self.data, "sensitive_train", None)
-        if split == "test":
-            return getattr(self.data, "sensitive_test", None)
-        if split == "all":
-            return getattr(self.data, "sensitive_all", None)
-        if split in {"val", "attack-val"}:
-            return getattr(self.data, "_sensitive_val", None)
-        raise ValueError(f"Unsupported fairness split: {split}")
+        return resolve_sensitive_split_payload(
+            getattr(self, "data", None),
+            split,
+            aliases={"attack-val": "val"},
+            fallback_to_all=False,
+        )
 
     def _resolve_scoring_split(self, mode: str) -> str:
-        if mode == "train":
-            return "train"
-        if mode in {"test", "attack"}:
-            return "test"
-        if mode in {"val", "attack-val"}:
-            return "val"
-        if mode == "all":
-            return "all"
-        raise ValueError(f"Unsupported fairness scoring mode: {mode}")
+        return normalize_runtime_split_mode(
+            mode,
+            aliases={"attack": "test", "attack-val": "val"},
+        )
 
     def _validate_sensitive_series(self, sensitive, context: str):
         if sensitive is None:

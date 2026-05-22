@@ -3,7 +3,7 @@ from pathlib import Path
 from hydra import compose, initialize_config_dir
 from hydra.utils import instantiate
 
-from deckard.data.pipeline.core import (
+from deckard.data.pipeline.base import (
     AnjanaDataPipelineConfig,
     DefaultDataPipelineConfig,
     FairlearnDataPipelineConfig,

@@ -6,8 +6,7 @@ backward compatibility with DataPipelineConfig in data.base.
 
 import logging
 
-from ..base import DataPipelineConfig
-from .core import (
+from .base import (
     AnjanaDataPipelineConfig,
     DataPipeline,
     DefaultDataPipelineConfig,
@@ -23,14 +22,21 @@ try:
 except Exception:  # pragma: no cover
     logger.debug("Torch not found. PytorchDataPipelineConfig is unavailable.")
 
+try:
+    from ..base import DataPipelineConfig
+except Exception:  # pragma: no cover
+    DataPipelineConfig = None
+
 
 __all__ = [
     "DataPipeline",
-    "DataPipelineConfig",
     "DefaultDataPipelineConfig",
     "AnjanaDataPipelineConfig",
     "FairlearnDataPipelineConfig",
 ]
+
+if DataPipelineConfig is not None:
+    __all__.append("DataPipelineConfig")
 
 if "PytorchDataPipelineConfig" in globals():
     __all__.append("PytorchDataPipelineConfig")

@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 from helpers import load_canonical_data_profile
 from omegaconf import OmegaConf
+from scipy.sparse import csr_matrix
 from sklearn.preprocessing import FunctionTransformer
 
 import deckard.data.base as data_base
@@ -538,7 +539,7 @@ def test_pipeline_stage_flags_apply_only_to_declared_stages(monkeypatch):
 
 
 def test_pipeline_dtype_routing_keeps_untyped_steps(monkeypatch):
-    import deckard.data.pipeline.core as data_pipeline_core
+    import deckard.data.pipeline.base as data_pipeline_core
     from sklearn.base import BaseEstimator, TransformerMixin
 
     class IdentityTransformer(BaseEstimator, TransformerMixin):
@@ -628,7 +629,7 @@ def test_fit_transform_x_handles_sparse_and_generated_feature_names():
         pipeline={
             "csr": {
                 "name": "sklearn.preprocessing.FunctionTransformer",
-                "kwargs": {"func": lambda values: data_base.csr_matrix(values), "validate": False},
+                "kwargs": {"func": lambda values: csr_matrix(values), "validate": False},
             },
         },
     )
@@ -643,7 +644,7 @@ def test_fit_transform_x_handles_sparse_and_generated_feature_names():
 def test_fit_transform_y_csr_conversion():
     cfg = DataPipelineConfig(pipeline={}, scorer="none")
     transformer = FunctionTransformer(
-        lambda values: data_base.csr_matrix(values),
+        lambda values: csr_matrix(values),
         validate=False,
     )
     y_train = pd.Series([0, 1])

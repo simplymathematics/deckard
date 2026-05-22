@@ -399,7 +399,7 @@ class TestDataConfig(unittest.TestCase):
         )
         cfg._X = None
         cfg._y = None
-        cfg.split_data()
+        cfg.fit()
         self.assertIsNotNone(cfg.X_train)
         self.assertIsNotNone(cfg.y_train)
         self.assertIsNotNone(cfg.X_test)
@@ -828,7 +828,7 @@ class TestDataConfigAdditional(unittest.TestCase):
         )
         cfg._X = None
         cfg._y = None
-        cfg.split_data()
+        cfg.fit()
         self.assertIsNotNone(cfg.X_train)
         self.assertIsNotNone(cfg.y_train)
         self.assertIsNotNone(cfg.X_test)

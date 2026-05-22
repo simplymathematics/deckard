@@ -185,7 +185,7 @@ class TestPytorchDataConfig(unittest.TestCase):
 
     def test_sample(self):
         self.config.load_dataset()
-        self.config.split_data()
+        self.config.fit()
         from torch.utils.data import Subset
 
         self.assertIsInstance(self.config.X_train, (Tensor, Dataset, Subset))
@@ -196,7 +196,7 @@ class TestPytorchDataConfig(unittest.TestCase):
     def test_sample_allows_stratify_false(self):
         self.config.stratify = False
         self.config.load_dataset()
-        self.config.split_data()
+        self.config.fit()
         self.assertEqual(len(self.config.X_train), 100)
         self.assertEqual(len(self.config.X_test), 100)
 
@@ -237,7 +237,7 @@ class TestPytorchDataConfig(unittest.TestCase):
         self.assertTrue(hasattr(cfg, "_sensitive"))
         self.assertEqual(len(cfg._sensitive), len(y))
 
-        cfg.split_data()
+        cfg.fit()
         self.assertTrue(hasattr(cfg, "_sensitive_train"))
         self.assertTrue(hasattr(cfg, "_sensitive_test"))
         self.assertEqual(len(cfg._sensitive_train), 60)
@@ -261,7 +261,7 @@ class TestPytorchDataConfig(unittest.TestCase):
         self.assertTrue(hasattr(cfg, "_sensitive"))
         self.assertEqual(len(cfg._sensitive), len(y))
 
-        cfg.split_data()
+        cfg.fit()
         self.assertTrue(hasattr(cfg, "_sensitive_train"))
         self.assertTrue(hasattr(cfg, "_sensitive_test"))
         self.assertEqual(len(cfg._sensitive_train), 70)
@@ -276,7 +276,7 @@ class TestPytorchDataConfig(unittest.TestCase):
 
     def test_pytorch_data_score_persistence_roundtrip(self):
         self.config.load_dataset()
-        self.config.split_data()
+        self.config.fit()
         from torch.utils.data import Subset
 
         self.assertIsInstance(self.config.X_train, (Tensor, Dataset, Subset))
@@ -308,7 +308,7 @@ class TestPytorchDataConfig(unittest.TestCase):
             data_params={"_args_": [X, y]},
         )
         cfg.load_dataset()
-        cfg.split_data()
+        cfg.fit()
         self.assertEqual(len(cfg.X_train), 70)
         self.assertEqual(len(cfg.X_test), 20)
 
@@ -324,7 +324,7 @@ class TestPytorchDataConfig(unittest.TestCase):
         )
         cfg.load_dataset()
         with self.assertRaises(ValueError):
-            cfg.split_data()
+            cfg.fit()
 
     def test_invalid_stratify_raises(self):
         X = torch.randn(80, 4)
@@ -339,7 +339,7 @@ class TestPytorchDataConfig(unittest.TestCase):
         )
         cfg.load_dataset()
         with self.assertRaises(ValueError):
-            cfg.split_data()
+            cfg.fit()
 
     def test_normalize_sensitive_item_variants(self):
         cfg = self.config
@@ -459,19 +459,19 @@ class TestPytorchDataConfig(unittest.TestCase):
         )
 
         with self.assertRaises(ValueError):
-            cfg.split_data()
+            cfg.fit()
 
         cfg.load_dataset()
         cfg.train_size = None
         cfg.test_size = 0.2
-        cfg.split_data()
+        cfg.fit()
         self.assertEqual(len(cfg.X_train), 8)
         self.assertEqual(len(cfg.X_test), 2)
 
         cfg.test_size = None
         cfg.train_size = 0.5
         cfg.data_sample_time = None
-        cfg.split_data()
+        cfg.fit()
         self.assertEqual(len(cfg.X_train), 5)
         self.assertEqual(len(cfg.X_test), 5)
 
@@ -479,7 +479,7 @@ class TestPytorchDataConfig(unittest.TestCase):
         cfg.test_size = None
         cfg.data_sample_time = None
         with self.assertRaises(ValueError):
-            cfg.split_data()
+            cfg.fit()
 
     def test_call_accepts_existing_data_and_score_paths(self):
         data_path = Path(self.temp_dir) / "existing_data.pkl"
@@ -569,7 +569,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
         cfg.data_load_time = 0.0
         cfg.data_sample_time = None
 
-        cfg.split_data()
+        cfg.fit()
 
         from torch.utils.data import DataLoader
 
@@ -685,7 +685,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
         )
         cfg._X = (SensitiveBatchDataset(6), SensitiveBatchDataset(4))
         cfg._y = cfg._X
-        cfg.split_data()
+        cfg.fit()
 
         self.assertEqual(len(cfg._sensitive_train), 6)
         self.assertEqual(len(cfg._sensitive_test), 4)
@@ -703,7 +703,7 @@ class TestPytorchCustomDataConfig(unittest.TestCase):
         bad_cfg._y = bad_cfg._X
 
         with self.assertRaises(ValueError):
-            bad_cfg.split_data()
+            bad_cfg.fit()
 
     def test_custom_call_uses_cached_paths_and_persists_outputs(self):
         import json

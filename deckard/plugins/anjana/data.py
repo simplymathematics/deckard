@@ -1,15 +1,16 @@
-import inspect
 from dataclasses import dataclass, field
-from typing import Any, Dict, Literal, Optional, Union, cast
+from typing import Any, Dict, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
 from omegaconf import DictConfig
 
 from deckard.plugins import HookPlugin
+from deckard.plugins.base import compose_hook_plugins
 
 from ...data._mixins import RuntimePayload, _SensitiveColumnsMixin
 from ...data.base import DataPipelineConfig
+from ...data.canon import resolve_runtime_files
 from ...utils import (
     is_default_config_value,
     load_class,
@@ -21,13 +22,23 @@ from ...utils import (
 from ...utils import (
     normalize_optional_mapping_or_steps as _normalize_optional_mapping_or_steps,
 )
+from .pipeline import ANJANA_PIPELINE_HOOKS, AnjanaPipelineHooksMixin
+from .score import ANJANA_SCORING_HOOKS, AnjanaDataScoreHooksMixin
 
 RuntimeScalar = str | int | float | bool | None
 RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
 
 
+def default_anjana_data_plugins() -> list[HookPlugin]:
+    """Compose ANJANA runtime hooks from separate pipeline/scoring bundles."""
+    return compose_hook_plugins(
+        ANJANA_PIPELINE_HOOKS,
+        ANJANA_SCORING_HOOKS,
+    )
+
+
 @dataclass(eq=False, kw_only=True)
-class _PrivacyBehaviorMixin:
+class PrivacyBehaviorMixin(_SensitiveColumnsMixin):
     """Reusable privacy behavior mixed into data pipeline configs."""
 
     anjana_defense: Union[None, bool, Dict[str, Any], list] = None
@@ -174,91 +185,10 @@ class _PrivacyBehaviorMixin:
         return hierarchies
 
     def _resolve_anjana_target_column(self) -> str:
-        if isinstance(self.target, str) and self.target.strip() != "":
-            return self.target
+        target = getattr(self, "target", None)
+        if isinstance(target, str) and target.strip() != "":
+            return target
         return "__deckard_target__"
-
-    def _apply_anjana_defense(self) -> None:
-        if self.anjana_defense in [None, False]:
-            return
-        if self.anjana_defense is True:
-            raise ValueError(
-                "anjana_defense=True is ambiguous. Provide a config dict with at least a 'name' key.",
-            )
-        if not isinstance(self.anjana_defense, (dict, DictConfig)):
-            raise TypeError(
-                "anjana_defense must be a dict/DictConfig, False, or None. "
-                f"Got {type(self.anjana_defense)}",
-            )
-
-        defense_cfg = dict(self.anjana_defense)
-        defense_name = defense_cfg.pop(
-            "name",
-            defense_cfg.pop("_target_", None),
-        )
-        if not isinstance(defense_name, str):
-            raise ValueError(
-                "anjana_defense config must include a 'name' or '_target_' key",
-            )
-
-        defense_fn = resolve_class(defense_name)
-        if not callable(defense_fn):
-            raise TypeError(
-                f"Configured ANJANA defense '{defense_name}' is not callable",
-            )
-
-        frame = self._build_privacy_frame()
-        call_kwargs = dict(defense_cfg)
-        call_kwargs.setdefault("data", frame)
-        call_kwargs.setdefault("ident", self.identifiers or [])
-        if self.quasi_identifiers is not None:
-            call_kwargs.setdefault("quasi_ident", self.quasi_identifiers)
-        if self.sensitive_attribute is not None:
-            call_kwargs.setdefault("sens_att", self.sensitive_attribute)
-        call_kwargs.setdefault("supp_level", 100)
-        if self.hierarchies is not None:
-            call_kwargs.setdefault("hierarchies", self.hierarchies)
-        elif self.quasi_identifiers is not None:
-            call_kwargs.setdefault(
-                "hierarchies",
-                self.generate_anjana_hierarchy_dict(frame=frame),
-            )
-
-        signature = inspect.signature(defense_fn)
-        supports_var_kwargs = any(
-            p.kind == inspect.Parameter.VAR_KEYWORD
-            for p in signature.parameters.values()
-        )
-        if not supports_var_kwargs:
-            accepted = {
-                name
-                for name, p in signature.parameters.items()
-                if p.kind
-                in {
-                    inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                    inspect.Parameter.KEYWORD_ONLY,
-                }
-            }
-            call_kwargs = {
-                key: value for key, value in call_kwargs.items() if key in accepted
-            }
-
-        transformed = defense_fn(**call_kwargs)
-        if not isinstance(transformed, pd.DataFrame):
-            raise TypeError(
-                f"ANJANA defense '{defense_name}' must return pandas.DataFrame, got {type(transformed)}",
-            )
-
-        target_col = self._resolve_anjana_target_column()
-        if target_col not in transformed.columns:
-            retained_index = transformed.index.intersection(frame.index)
-            transformed = transformed.loc[retained_index].copy()
-            self._y = pd.Series(self._y, index=frame.index).loc[retained_index]
-        else:
-            self._y = transformed[target_col]
-            transformed = transformed.drop(columns=[target_col])
-
-        self._X = transformed
 
     def _inject_privacy_defense_step(self) -> None:
         if self.fairness_defense in [None, False]:
@@ -274,15 +204,12 @@ class _PrivacyBehaviorMixin:
             )
         if self.sensitive_columns is None:
             raise ValueError("sensitive_columns must be configured")
-        if (
-            not hasattr(self, "_X")
-            or self._X is None
-            or not isinstance(self._X, pd.DataFrame)
-        ):
+        frame = getattr(self, "_X", None)
+        if frame is None or not isinstance(frame, pd.DataFrame):
             return
 
         sensitive_columns = [
-            col for col in self.sensitive_columns if col in self._X.columns
+            col for col in self.sensitive_columns if col in frame.columns
         ]
         if not sensitive_columns:
             raise RuntimeError(
@@ -318,14 +245,15 @@ class _PrivacyBehaviorMixin:
             )
         frame = frame.copy()
         target_col = self._resolve_anjana_target_column()
-        frame[target_col] = pd.Series(self._y).values
+        frame[target_col] = pd.Series(getattr(self, "_y", None)).values
         return frame
 
 
 @dataclass(eq=False, kw_only=True)
 class AnjanaDataConfig(
-    _PrivacyBehaviorMixin,
-    _SensitiveColumnsMixin,
+    PrivacyBehaviorMixin,
+    AnjanaPipelineHooksMixin,
+    AnjanaDataScoreHooksMixin,
     DataPipelineConfig,
 ):
     """Data pipeline config with ANJANA anonymization support.
@@ -339,68 +267,9 @@ class AnjanaDataConfig(
     with results nested under the 'post-pipeline' key.
     """
 
-    plugins: list = field(
-        default_factory=lambda: [
-            HookPlugin(
-                hook_name="after_load_data",
-                method_name="_apply_anjana_defense",
-                init_params={
-                    "library": "anjana",
-                    "type": "data",
-                    "class": "anonymization",
-                },
-            ),
-        ],
-    )
+    plugins: list = field(default_factory=default_anjana_data_plugins)
 
     score_mode: str = "post-pipeline"
-
-    def __post_init__(self):
-        # Support test patterns that call __post_init__ directly on bare instances.
-        self._before_post_init()
-        if is_default_config_value(self.scorer, include_best=False):
-            ScorerClass = load_class(
-                "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
-            )
-            self.scorer = ScorerClass
-        super().__post_init__()
-        # Ensure scorer is instantiated (not just a class) after parent coercion
-        if isinstance(self.scorer, type):
-            self.scorer = self.scorer()
-        self._validate_init()
-
-    def __call__(
-        self,
-        *args: RuntimePayload,
-        **kwargs: RuntimePayload,
-    ) -> dict[str, RuntimeValue]:
-        """Execute ANJANA data runtime with scorer auto-resolution.
-
-        Args:
-            *args: Positional runtime arguments forwarded to the pipeline runtime.
-            **kwargs: Keyword runtime arguments forwarded to the pipeline runtime.
-
-        Returns:
-            Runtime score dictionary from the underlying pipeline config.
-        """
-        if (
-            is_default_config_value(self.scorer, include_best=False)
-            or self.scorer is None
-        ):
-            self.scorer = load_class(
-                "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
-            )
-        return DataPipelineConfig.__call__(self, *args, **kwargs)
-
-    def load_dataset(self):
-        result = super().load_dataset()
-        if not getattr(self, "plugins", None):
-            self._apply_anjana_defense()
-        return result
-
-    def _init_pipeline(self):
-        self._inject_fairness_defense_step()
-        return super()._init_pipeline()
 
     def fit(self, run_hooks: bool = True):
         super().fit(run_hooks=run_hooks)
@@ -425,13 +294,21 @@ class AnjanaDataConfig(
             self._sensitive_val = getattr(self, "_sensitive_val", None)
             return self
 
+        frame = getattr(self, "_X", None)
+        if not isinstance(frame, pd.DataFrame):
+            self._sensitive_train = None
+            self._sensitive_test = None
+            self._sensitive_all = None
+            self._sensitive_val = None
+            return self
+
         self._sensitive_train = self._sensitive_labels_from_frame(
-            self._X.iloc[train_indices].reset_index(drop=True),
+            frame.iloc[train_indices].reset_index(drop=True),
         )
         self._sensitive_test = self._sensitive_labels_from_frame(
-            self._X.iloc[test_indices].reset_index(drop=True),
+            frame.iloc[test_indices].reset_index(drop=True),
         )
-        self._sensitive_all = self._sensitive_labels_from_frame(self._X)
+        self._sensitive_all = self._sensitive_labels_from_frame(frame)
         self._sensitive_train = self._validate_sensitive_runtime(
             self._sensitive_train,
             "train sampling",
@@ -447,7 +324,7 @@ class AnjanaDataConfig(
         val_indices = getattr(self, "val_indices", None)
         if val_indices is not None and len(val_indices) > 0:
             self._sensitive_val = self._sensitive_labels_from_frame(
-                self._X.iloc[val_indices].reset_index(drop=True),
+                frame.iloc[val_indices].reset_index(drop=True),
             )
             self._sensitive_val = self._validate_sensitive_runtime(
                 self._sensitive_val,
@@ -457,66 +334,44 @@ class AnjanaDataConfig(
             self._sensitive_val = None
         return self
 
-    def score(
-        self,
-        *args,
-        mode: Optional[
-            Literal["train", "test", "val", "pre-sample", "post-pipeline"]
-        ] = None,
-        **kwargs,
-    ) -> dict:
-        """
-        Score the data using ANJANA privacy metrics measured on post-pipeline (anonymized) data.
-
-        By default, measures privacy metrics on the full post-pipeline dataset
-        (combined train/test splits after anonymization transformations).
-        Results are nested under the 'post-pipeline' key.
-        """
-        # Handle "auto" scorer before checking if callable
+    def __post_init__(self):
+        # Support test patterns that call __post_init__ directly on bare instances.
+        self._before_post_init()
         if is_default_config_value(self.scorer, include_best=False):
             ScorerClass = load_class(
                 "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
             )
-            self.scorer = (
-                ScorerClass() if isinstance(ScorerClass, type) else ScorerClass
-            )
+            self.scorer = ScorerClass
+        super().__post_init__()
+        # Ensure scorer is instantiated (not just a class) after parent coercion
+        if isinstance(self.scorer, type):
+            self.scorer = self.scorer()
+        self._validate_init()
 
-        if self.scorer is None:
-            return {}
-        if not callable(self.scorer):
-            raise TypeError(
-                f"AnjanaDataConfig.scorer must be callable or None, got {type(self.scorer)}",
-            )
+    def __call__(
+        self,
+        *args: RuntimePayload,
+        **kwargs: RuntimePayload,
+    ) -> dict[str, RuntimeValue]:
+        """Execute ANJANA data runtime with canonical file handling."""
+        files_arg = kwargs.pop("files", None)
+        files = resolve_runtime_files(
+            kwargs,
+            files_arg if isinstance(files_arg, (dict, DictConfig)) else None,
+        )
+        self._coerce_pipeline_runtime()
+        return DataPipelineConfig.__call__(self, *args, files=files, **kwargs)
 
-        # Resolve mode: use parameter or configured score_mode
-        resolved_mode = mode
-        if resolved_mode is None:
-            resolved_mode = getattr(self, "score_mode", None) or "post-pipeline"
 
-        # Delegate to parent for all modes, including post-pipeline/post-sample.
-        try:
-            return super().score(*args, mode=resolved_mode, **kwargs)
-        except TypeError as exc:
-            if "data-profile scorer" not in str(exc):
-                raise
-            if resolved_mode == "pre-sample":
-                y_true = getattr(self, "_y", None)
-                y_pred = getattr(self, "_X", None)
-            elif resolved_mode == "train":
-                y_true = getattr(self, "y_train", None)
-                y_pred = getattr(self, "X_train", None)
-            elif resolved_mode == "val":
-                y_true = getattr(self, "y_val", None)
-                y_pred = getattr(self, "X_val", None)
-            else:
-                y_true = getattr(self, "y_test", None)
-                y_pred = getattr(self, "X_test", None)
-            return self.scorer(
-                *args,
-                y_true=y_true,
-                y_pred=y_pred,
-                mode=resolved_mode,
-                data=self,
-                **kwargs,
-            )
+_PrivacyBehaviorMixin = PrivacyBehaviorMixin
+
+
+__all__ = [
+    "ANJANA_PIPELINE_HOOKS",
+    "ANJANA_SCORING_HOOKS",
+    "PrivacyBehaviorMixin",
+    "_PrivacyBehaviorMixin",
+    "default_anjana_data_plugins",
+    "AnjanaDataConfig",
+]
 

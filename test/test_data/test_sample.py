@@ -409,7 +409,7 @@ class TestKFoldSampler(unittest.TestCase):
                     },
                 )
                 cfg.load_dataset()
-                cfg.split_data()
+                cfg.fit()
                 self.assertEqual(len(cfg.X_train), 800)
                 self.assertEqual(len(cfg.X_test), 200)
                 self.assertEqual(len(cfg.X_val), 200)
@@ -446,7 +446,7 @@ class TestKFoldSampler(unittest.TestCase):
         )
         cfg.load_dataset()
         with self.assertRaises(ValueError):
-            cfg.split_data()
+            cfg.fit()
 
 
 # ---------------------------------------------------------------------------
@@ -633,7 +633,7 @@ class TestOmegaConfSampleSpec(unittest.TestCase):
             },
         )
         cfg.load_dataset()
-        cfg.split_data()
+        cfg.fit()
         self.assertIsNotNone(cfg.X_val)
         self.assertGreater(len(cfg.X_val), 0)
 

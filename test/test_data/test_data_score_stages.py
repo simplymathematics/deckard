@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from deckard.data.base import DataConfig
-from deckard.data.stages import normalize_data_score_stage
+from deckard.data.canon import normalize_data_score_stage
 
 
 def _cfg_with_loaded_splits() -> DataConfig:

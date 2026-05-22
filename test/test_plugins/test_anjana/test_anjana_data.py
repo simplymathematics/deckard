@@ -238,15 +238,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
         lambda self: calls.append("defense"),
     )
     assert cfg.load_dataset() is cfg
-    assert calls == ["load", "defense"]
-
-    monkeypatch.setattr(
-        AnjanaDataConfig,
-        "_inject_fairness_defense_step",
-        lambda self: calls.append("inject"),
-    )
-    monkeypatch.setattr(DataPipelineConfig, "_init_pipeline", lambda self: "pipeline")
-    assert cfg._init_pipeline() == "pipeline"
+    assert calls == ["load"]
 
     def _fit_with_sensitive(self, run_hooks: bool = True):
         _ = run_hooks
@@ -260,14 +252,14 @@ def test_load_init_sample_and_score_paths(monkeypatch):
 
     monkeypatch.setattr(DataPipelineConfig, "fit", _fit_with_sensitive)
     cfg.sensitive_columns = ["group"]
-    cfg.split_data()
+    cfg.fit()
     assert cfg._sensitive_train.tolist() == ["a", "b"]
     assert cfg._sensitive_test.tolist() == ["b"]
     assert cfg._sensitive_all.tolist() == ["a", "b", "b"]
 
     cfg_none = _bare_cfg()
     monkeypatch.setattr(DataPipelineConfig, "fit", lambda self, run_hooks=True: None)
-    cfg_none.split_data()
+    cfg_none.fit()
 
     cfg_score = _bare_cfg()
     cfg_score.scorer = None
@@ -276,12 +268,16 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     cfg_score.scorer = "default"
     cfg_score._y = pd.Series([0, 1])
     cfg_score._X = pd.DataFrame({"x": [1, 2]})
+    cfg_score.y_train = pd.Series([0])
+    cfg_score.y_test = pd.Series([1])
+    cfg_score.X_train = pd.DataFrame({"x": [1]})
+    cfg_score.X_test = pd.DataFrame({"x": [2]})
     monkeypatch.setattr(
         anjana_data_module,
         "load_class",
-        lambda path: (lambda **kwargs: {"path": path, "n": len(kwargs["y_true"])}),
+        lambda path: (lambda **kwargs: {"path": path, "n": len(kwargs["y"])}),
     )
-    scored = cfg_score.score(mode="pre-sample")
+    scored = cfg_score.score(mode="all")
     assert scored == {
         "path": "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
         "n": 2,
@@ -289,13 +285,17 @@ def test_load_init_sample_and_score_paths(monkeypatch):
 
     cfg_score.scorer = 5
     with pytest.raises(TypeError, match="must be callable or None"):
-        cfg_score.score(mode="pre-sample")
+        cfg_score.score(mode="all")
 
     cfg_fallback = _bare_cfg()
     cfg_fallback.scorer = lambda **kwargs: {
-        "rows": len(kwargs["y_true"]),
-        "cols": list(kwargs["y_pred"].columns),
+        "rows": len(kwargs["y"]),
+        "cols": list(kwargs["X"].columns),
     }
     cfg_fallback._y = pd.Series([1, 0])
     cfg_fallback._X = pd.DataFrame({"z": [3, 4]})
-    assert cfg_fallback.score(mode="pre-sample") == {"rows": 2, "cols": ["z"]}
+    cfg_fallback.y_train = pd.Series([1])
+    cfg_fallback.y_test = pd.Series([0])
+    cfg_fallback.X_train = pd.DataFrame({"z": [3]})
+    cfg_fallback.X_test = pd.DataFrame({"z": [4]})
+    assert cfg_fallback.score(mode="all") == {"rows": 2, "cols": ["z"]}

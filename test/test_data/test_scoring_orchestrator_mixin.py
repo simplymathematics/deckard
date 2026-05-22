@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from types import SimpleNamespace
 
-from deckard.data.stages import ScoringOrchestratorMixin
+from deckard.data.canon import ScoringOrchestratorMixin
 
 
 @dataclass(eq=False, kw_only=True)
