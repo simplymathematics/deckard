@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Union
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
 
+from ..artifacts import ScoreDict
 from ..model import ModelConfig
 from ..score.base import (
     DefaultModelScorerConfig,
@@ -76,7 +77,7 @@ class DetectorConfig(ConfigBase):
 
     detector: Any = None
     detector_predictions: Any = None
-    score_dict: dict[str, float | int] = field(default_factory=dict)
+    score_dict: ScoreDict = field(default_factory=ScoreDict)
     detector_training_time: Union[float, None] = None
     detector_detection_time: Union[float, None] = None
     _target_: Union[str, None] = None
@@ -104,7 +105,7 @@ class DetectorConfig(ConfigBase):
         self.filter_mode = str(self.filter_mode or "auto").strip().lower()
         if self.filter_mode not in {"auto", "poison", "evasion"}:
             raise ValueError(f"Unsupported detector filter_mode: {self.filter_mode}")
-        self.score_dict = self.score_dict or {}
+        self.score_dict = ScoreDict.from_payload(self.score_dict or {})
 
     def _initialize_detector_model_config(self) -> None:
         """Coerce detector-model config into a runtime ModelConfig object."""

@@ -21,6 +21,7 @@ from art.config import ART_NUMPY_DTYPE
 
 from omegaconf import DictConfig, OmegaConf
 
+from ..artifacts import ScoreDict
 from ..model import ModelConfig
 from ..model.defend import _get_art_symbols
 from ..score.base import (
@@ -384,7 +385,7 @@ class AttackConfig(ConfigBase):
     target_index: Union[int, None] = None
     _attack_type: Union[str, None] = None
     _attack_subtype: Union[str, None] = None
-    score_dict: dict = field(default_factory=dict)
+    score_dict: ScoreDict = field(default_factory=ScoreDict)
     _target_: Union[str, None] = None
     _plugin_objects: Union[list, None] = field(
         default=None,

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any, ClassVar, Final, Mapping, TypedDict
 
 from ..plugins.base import OrchestratorBase, RuntimeBase
+from ..artifacts import ScoreDict
 
 
 CANONICAL_DATA_METHODS: Final[tuple[str, ...]] = (
@@ -215,7 +216,9 @@ def ensure_data_runtime_contract(target: Any) -> Any:
     target.files = merge_data_files(getattr(target, "files", None), None)
     target.times = ensure_canonical_times(getattr(target, "times", None))
     if not hasattr(target, "score_dict") or getattr(target, "score_dict") is None:
-        target.score_dict = {}
+        target.score_dict = ScoreDict()
+    else:
+        target.score_dict = ScoreDict.from_payload(getattr(target, "score_dict"))
 
     for field in CANONICAL_DATA_RUNTIME_FIELDS:
         if field in {"score_dict", "files", "times"}:

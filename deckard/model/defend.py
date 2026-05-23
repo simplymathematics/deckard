@@ -13,6 +13,7 @@ from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
 
+from ..artifacts import ScoreDict
 from ..data import DataConfig
 from ..utils import (
     ConfigBase,
@@ -1387,7 +1388,7 @@ class DefensePipelineConfig(_DefensePipelineConfigBehaviorMixin, ConfigBase):
     defenses: list = field(default_factory=list)
     plugins: list = field(default_factory=list)
     alias: str = field(default_factory=str)
-    score_dict: dict = field(default_factory=dict)
+    score_dict: ScoreDict = field(default_factory=ScoreDict)
     defense_application_time: Union[float, None] = None
     _target_: Union[str, None] = None
     _plugin_objects: Union[list, None] = field(
@@ -1398,7 +1399,9 @@ class DefensePipelineConfig(_DefensePipelineConfigBehaviorMixin, ConfigBase):
 
     def __post_init__(self):
         if not hasattr(self, "score_dict") or self.score_dict is None:
-            self.score_dict = {}
+            self.score_dict = ScoreDict()
+        else:
+            self.score_dict = ScoreDict.from_payload(self.score_dict)
         if not hasattr(self, "_target_") or self._target_ is None:
             self._target_ = "deckard.model.DefensePipelineConfig"
         self.defenses = self.normalize_defenses(self.defenses)
@@ -1443,7 +1446,7 @@ class DefenseConfig(_ARTDefenseBehaviorMixin, ConfigBase):
     alias: str = field(default_factory=str)
     plugins: list = field(default_factory=list)
     _model: Union[BaseEstimator, None] = field(default=None, repr=False)
-    score_dict: dict = field(default_factory=dict)
+    score_dict: ScoreDict = field(default_factory=ScoreDict)
     _target_: Union[str, None] = field(default=None, repr=False)
     _plugin_objects: Union[list, None] = field(
         default=None,

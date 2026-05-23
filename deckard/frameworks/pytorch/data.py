@@ -26,6 +26,7 @@ from tqdm.auto import tqdm
 
 from ...data.base import DataConfig
 from ...data.canon import DataFiles, merge_data_files
+from ...artifacts import ScoreDict
 from .sample import PytorchBaseSampler
 
 # deckard
@@ -672,7 +673,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
     data_load_time: Union[float, None] = None
     data_sample_time: Union[float, None] = None
     transform_params: dict = field(default_factory=dict)
-    score_dict: dict = field(init=False, repr=False)
+    score_dict: ScoreDict = field(init=False, repr=False)
 
     def __hash__(self):
         return super().__hash__()

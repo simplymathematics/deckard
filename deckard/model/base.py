@@ -21,6 +21,7 @@ from ..score.base import (  # noqa: F401
     _DataScorerMarker,
     coerce_scorer_config as _coerce_scorer_config,
 )
+from ..artifacts import ScoreDict
 from ..utils import (
     ConfigBase,
     load_class,
@@ -191,7 +192,7 @@ class ModelConfig(ConfigBase):
 
     # Runtime/model state fields
     _model: Any = None
-    score_dict: dict = None
+    score_dict: ScoreDict = field(default_factory=ScoreDict)
     training_time: Union[float, None] = None
     prediction_time: Union[float, None] = None
     val_prediction_time: Union[float, None] = None

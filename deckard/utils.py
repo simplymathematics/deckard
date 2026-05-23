@@ -24,7 +24,7 @@ from hydra.core.config_store import ConfigStore
 from hydra.utils import get_class, instantiate
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
-from .artifacts import ArtifactLoaderConfig
+from .artifacts import ArtifactLoaderConfig, ScoreDict
 
 logger = logging.getLogger(__name__)
 
@@ -908,7 +908,7 @@ class ConfigBase(ArtifactLoaderConfig):
     """
 
     # _target_: str = "deckard.utils.ConfigBase"
-    score_dict: dict = field(default_factory=dict)
+    score_dict: ScoreDict = field(default_factory=ScoreDict)
     HASH_EXCLUDE_FIELDS = {
         "args",
         "score_dict",
@@ -940,6 +940,7 @@ class ConfigBase(ArtifactLoaderConfig):
 
     def _after_post_init(self) -> None:
         """Finalize common lifecycle state after __post_init__."""
+        self.score_dict = ScoreDict.from_payload(getattr(self, "score_dict", {}))
         # Freeze hash at configuration time so runtime attributes added during
         # execution cannot alter experiment identity.
         self._hash_payload = self.to_dict(for_hash=True)
@@ -1022,40 +1023,28 @@ class ConfigBase(ArtifactLoaderConfig):
 
     def read_or_initialize_scores(self, score_file: Optional[str]) -> dict:
         """Return merged scores from disk and memory, or initialize output location."""
-        if score_file is not None and Path(score_file).exists():
-            logger.info(f"Loading existing scores from {score_file}")
-            disk_scores = self.load_scores(score_file)
-            scores = {**self.score_dict, **disk_scores}
-        elif score_file is not None:
-            Path(score_file).parent.mkdir(parents=True, exist_ok=True)
-            scores = self.score_dict
-        else:
-            if hasattr(self, "score_dict"):
-                scores = self.score_dict
-            else:
-                scores = {}
-        return scores
+        runtime_scores = ScoreDict.from_payload(getattr(self, "score_dict", {}))
+        resolved = runtime_scores(
+            score_file=score_file,
+            artifact_loader=self,
+            persist=True,
+        )
+        self.score_dict = ScoreDict.from_payload(resolved)
+        return dict(self.score_dict)
 
     def merge_and_persist_scores(
         self,
         new_scores: dict,
         score_file: Optional[str],
     ) -> dict:
-        """Merge score payload with on-disk scores and persist only when needed."""
-        if score_file is None:
-            return new_scores
-
-        score_path = Path(score_file)
-        score_path.parent.mkdir(parents=True, exist_ok=True)
-
-        existing_scores: dict = {}
-        if score_path.exists():
-            existing_scores = self.load_scores(score_file)
-
-        merged_scores = {**existing_scores, **new_scores}
-        if (not score_path.exists()) or merged_scores != existing_scores:
-            self.save_scores(merged_scores, score_file)
-        return merged_scores
+        """Merge score payload with on-disk scores and persist via ScoreDict lifecycle."""
+        merged_input = ScoreDict.from_payload(new_scores)
+        resolved = merged_input(
+            score_file=score_file,
+            artifact_loader=self,
+            persist=True,
+        )
+        return dict(ScoreDict.from_payload(resolved))
 
     @staticmethod
     def _coerce_files_mapping(files_value: Any) -> dict[str, Any]:
@@ -1093,7 +1082,8 @@ class ConfigBase(ArtifactLoaderConfig):
             if isinstance(files_attr, dict):
                 setattr(self, "files", dict(merged))
 
-        if update_score_dict and isinstance(getattr(self, "score_dict", None), dict):
+        if update_score_dict and getattr(self, "score_dict", None) is not None:
+            self.score_dict = ScoreDict.from_payload(getattr(self, "score_dict", {}))
             self.score_dict["files"] = dict(merged)
         return merged
 

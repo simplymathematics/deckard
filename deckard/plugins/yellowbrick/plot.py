@@ -19,6 +19,7 @@ from sklearn.model_selection import (
     StratifiedKFold,
     TimeSeriesSplit,
 )
+from ...artifacts import ScoreDict
 
 # Classifier Visualizers
 from yellowbrick.classifier import (
@@ -526,7 +527,9 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
         self._experiment_prepared = False
         self._experiment_scores = {}
         if not hasattr(self, "score_dict"):
-            self.score_dict = {}
+            self.score_dict = ScoreDict()
+        else:
+            self.score_dict = ScoreDict.from_payload(getattr(self, "score_dict", {}))
         if not hasattr(self, "rc_config"):
             self.rc_config = {}
         if not hasattr(self, "plot_params"):
@@ -1156,7 +1159,9 @@ class YellowbrickConfigList(ConfigBase):
         self._experiment_prepared = False
         self._experiment_scores = {}
         if not hasattr(self, "score_dict"):
-            self.score_dict = {}
+            self.score_dict = ScoreDict()
+        else:
+            self.score_dict = ScoreDict.from_payload(getattr(self, "score_dict", {}))
         if not hasattr(self, "rc_config"):
             self.rc_config = {}
         if not isinstance(self.experiment, ExperimentConfig):

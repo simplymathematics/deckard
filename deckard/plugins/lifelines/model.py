@@ -29,6 +29,7 @@ from lifelines.fitters import RegressionFitter
 from lifelines.utils import CensoringType
 from matplotlib.axes import Axes
 
+from ...artifacts import ScoreDict
 from ...model.base import ModelConfig
 from ...utils import save_data
 
@@ -51,11 +52,13 @@ class _SurvivalModelInitMixin:
     """Reusable initialization behavior for survival model configs."""
 
     # Declared for static analyzers; concrete dataclass provides these fields.
-    score_dict: dict[str, Any]
+    score_dict: ScoreDict
 
     def _initialize_runtime_fields(self) -> None:
         if not hasattr(self, "score_dict") or self.score_dict is None:
-            self.score_dict = {}
+            self.score_dict = ScoreDict()
+        else:
+            self.score_dict = ScoreDict.from_payload(self.score_dict)
         for attr in [
             "training_time",
             "prediction_time",

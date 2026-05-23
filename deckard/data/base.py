@@ -21,6 +21,7 @@ from ..utils import (
 )
 from ..frameworks.types import ArrayLike, IndexLike, MatrixLike, TabularLike
 from ..plugins.base import OrchestratorBase
+from ..artifacts import ScoreDict
 from .canon import (
     DEFAULT_DATA_SCORE_STAGE,
     CANONICAL_DATA_TIMES,
@@ -276,7 +277,7 @@ class DataConfig(OrchestratorBase, ConfigBase):
     files: DataFiles = field(default_factory=lambda: {})
 
     # Runtime state fields
-    score_dict: dict[str, Any] = field(default_factory=dict, init=False, repr=True)
+    score_dict: ScoreDict = field(default_factory=ScoreDict, init=False, repr=True)
     times: dict[str, Any] = field(default_factory=dict)
     data_load_time: Union[float, None] = None
     data_sample_time: Union[float, None] = None
@@ -548,13 +549,13 @@ class DataConfig(OrchestratorBase, ConfigBase):
         return self._X
 
     @property
-    def scores(self) -> dict[str, Any]:
+    def scores(self) -> ScoreDict:
         """Canonical score container alias (backed by ``score_dict``)."""
         return self.score_dict
 
     @scores.setter
     def scores(self, value: dict[str, Any]) -> None:
-        self.score_dict = value
+        self.score_dict = ScoreDict.from_payload(value)
 
     @property
     def y(self) -> pd.Series | None:
@@ -1116,7 +1117,7 @@ class DataConfig(OrchestratorBase, ConfigBase):
         save_flag = self._prepare_files(files=self.files)
         score_file = self.files.get("score_file")
         data_file = self.files.get("data_file")
-        scores = dict(getattr(self, "score_dict", {}) or {})
+        scores = dict(ScoreDict.from_payload(getattr(self, "score_dict", {}) or {}))
         self._score_orchestration_active = True
         try:
             self.load_dataset()
@@ -1136,11 +1137,11 @@ class DataConfig(OrchestratorBase, ConfigBase):
             logger.info(
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
             )
-        data_scores = dict(getattr(self, "score_dict", {}) or {})
+        data_scores = dict(ScoreDict.from_payload(getattr(self, "score_dict", {}) or {}))
         if len(data_scores) == 0:
             data_scores = self.score(*args, **kwargs)
         all_scores = {**scores, **data_scores, **time_dict}
-        self.score_dict = all_scores
+        self.score_dict = ScoreDict.from_payload(all_scores)
         self.times.update({k: all_scores.get(k) for k in CANONICAL_DATA_TIMES})
         assert hasattr(self, "score_dict"), "score_dict must be set"
         self.merge_runtime_files(
@@ -1150,9 +1151,9 @@ class DataConfig(OrchestratorBase, ConfigBase):
                 "score_file": score_file,
             },
         )
-        all_scores = dict(self.score_dict)
+        all_scores = dict(ScoreDict.from_payload(self.score_dict))
         all_scores = self.merge_and_persist_scores(all_scores, score_file)
-        self.score_dict = all_scores
+        self.score_dict = ScoreDict.from_payload(all_scores)
         if save_flag:
             self.save(data_file)
         return self.score_dict

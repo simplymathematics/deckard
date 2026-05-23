@@ -39,6 +39,7 @@ from .data import (
     data_mutual_information_mean_score,
     data_num_classes_score,
 )
+from .score_dict import ScoreDict
 
 
 def _is_available(module_name: str) -> bool:
@@ -225,6 +226,7 @@ def survival_bic_score(*args, **kwargs):
 
 
 __all__ = [
+    "ScoreDict",
     "ScorerConfig",
     "ScorerDictConfig",
     "DefaultModelScorerConfig",

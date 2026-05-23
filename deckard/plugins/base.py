@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any, ClassVar
 
 from . import HookPlugin
+from ..artifacts import ScoreDict
 from ..utils import (
 	coerce_to_list,
 	instantiate_plugin_spec,
@@ -257,7 +258,9 @@ class OrchestratorBase(RuntimeBase):
 				if isinstance(plugin_score, dict):
 					result.update(plugin_score)
 			if getattr(self, "score_dict", None) is None:
-				self.score_dict = {}
+				self.score_dict = ScoreDict()
+			else:
+				self.score_dict = ScoreDict.from_payload(self.score_dict)
 			for key, value in result.items():
 				if (
 					key in self.score_dict
