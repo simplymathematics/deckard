@@ -191,6 +191,43 @@ stages:
     - ../../deckard/utils.py
     # No outs/metrics: hydra.ipynb does not persist outputs
 
+  notebook_deckard:
+    cmd: jupyter nbconvert --to notebook --execute --inplace deckard.ipynb
+    deps:
+    - deckard.ipynb
+    - ../../deckard/__main__.py
+    - ../../deckard/experiment/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
+    # No outs/metrics: deckard.ipynb is a walkthrough notebook
+
+  notebook_scoring:
+    cmd: jupyter nbconvert --to notebook --execute --inplace scoring.ipynb
+    deps:
+    - scoring.ipynb
+    - ../../deckard/score/
+    - ../../deckard/artifacts.py
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
+    # No outs/metrics: scoring.ipynb demonstrates in-memory score contract behavior
+
+  notebook_dvc:
+    cmd: jupyter nbconvert --to notebook --execute --inplace dvc.ipynb
+    deps:
+    - dvc.ipynb
+    - ../../deckard/experiment/
+    - ../../deckard/layers/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
+    - ../../examples/sklearn/config/default.yaml
+    - ../../examples/sklearn/config/files/default.yaml
+    - ../../examples/sklearn/config/attack/hsj.yaml
+    - ../../examples/sklearn/config/defense/class-labels.yaml
+    - ../../examples/sklearn/config/dvc/plot_specs/
+    outs:
+    - ./build/dvc.generated.yaml
+    - ./build/dvc_specs/
+
   notebook_optuna:
     cmd: jupyter nbconvert --to notebook --execute --inplace optuna.ipynb
     deps:

@@ -30,8 +30,10 @@ notebooks to avoid stale cached outputs.
 - [sklearn](sklearn) - End-to-end sklearn experiments.
 - [pytorch](pytorch) - End-to-end PyTorch experiments.
 - [hydra](hydra) - [Hydra](https://hydra.cc) config composition and overrides.
+- [dvc](dvc) - DVC pipeline autogeneration and Vega-Lite plot spec workflows.
 - [optuna](optuna) - [Optuna](https://optuna.org) hyperparameter optimization workflows.
 - [artifacts](artifacts) - Artifact and output management.
+- [scoring](scoring) - ScoreDict contract, score lifecycle, and persistence views.
 
 ## Fair Models and Group Scoring
 
@@ -119,10 +121,12 @@ deckard
 detector
 fairlearn
 hydra
+dvc
 lifelines
 optuna
 pytorch
 seaborn
 sklearn
 yellowbrick
+scoring
 ```
