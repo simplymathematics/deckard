@@ -133,13 +133,18 @@ class AnjanaDataScoreHooksMixin:
 
 def _resolve_frame_and_context(
     data: DataConfig | None = None,
-    y_pred: Any | None = None,
-    y_true: Any | None = None,
+    X: Any | None = None,
+    y: Any | None = None,
     **kwargs: Any,
 ) -> tuple[pd.DataFrame, list[str], str | None]:
+    if X is None:
+        X = kwargs.pop("y_pred", None)
+    if y is None:
+        y = kwargs.pop("y_true", None)
+
     frame = None
-    if isinstance(y_pred, pd.DataFrame):
-        frame = y_pred
+    if isinstance(X, pd.DataFrame):
+        frame = X
     elif data is not None and isinstance(
         getattr(data, "_X", None),
         pd.DataFrame,
@@ -147,7 +152,7 @@ def _resolve_frame_and_context(
         frame = data._X
     if frame is None:
         raise ValueError(
-            "ANJANA scorers require a pandas.DataFrame via y_pred or data._X",
+            "ANJANA scorers require a pandas.DataFrame via X or data._X",
         )
 
     quasi_ident = kwargs.get(
@@ -162,10 +167,10 @@ def _resolve_frame_and_context(
     if (
         isinstance(sens_att, str)
         and sens_att not in frame.columns
-        and y_true is not None
+        and y is not None
     ):
         frame = frame.copy()
-        labels = pd.Series(cast(Any, y_true)).reset_index(drop=True)
+        labels = pd.Series(cast(Any, y)).reset_index(drop=True)
         if len(labels) == len(frame):
             frame[sens_att] = labels
 
@@ -185,8 +190,8 @@ def _resolve_frame_and_context(
 
 
 def anjana_k_anonymity_score(
-    y_true: Any = None,
-    y_pred: Any = None,
+    y: Any = None,
+    X: Any = None,
     data: DataConfig | None = None,
     **kwargs: Any,
 ) -> float:
@@ -194,9 +199,9 @@ def anjana_k_anonymity_score(
 
     Parameters
     ----------
-    y_true : array-like, optional
+    y : array-like, optional
         Ground-truth labels (unused; present for scorer interface compatibility).
-    y_pred : pd.DataFrame, optional
+    X : pd.DataFrame, optional
         The (possibly anonymized) feature matrix.  When provided as a DataFrame
         it is used directly; otherwise the function falls back to ``data._X``.
     data : AnjanaDataConfig, optional
@@ -227,16 +232,16 @@ def anjana_k_anonymity_score(
 
     frame, quasi_ident, _ = _resolve_frame_and_context(
         data=data,
-        y_pred=y_pred,
-        y_true=y_true,
+        X=X,
+        y=y,
         **kwargs,
     )
     return float(pycanon_anonymity.k_anonymity(frame, quasi_ident))
 
 
 def anjana_l_diversity_score(
-    y_true: Any = None,
-    y_pred: Any = None,
+    y: Any = None,
+    X: Any = None,
     data: DataConfig | None = None,
     **kwargs: Any,
 ) -> float:
@@ -244,9 +249,9 @@ def anjana_l_diversity_score(
 
     Parameters
     ----------
-    y_true : array-like, optional
+    y : array-like, optional
         Ground-truth labels (unused; present for scorer interface compatibility).
-    y_pred : pd.DataFrame, optional
+    X : pd.DataFrame, optional
         The (possibly anonymized) feature matrix.
     data : AnjanaDataConfig, optional
         Data configuration carrying ``quasi_identifiers`` and
@@ -276,8 +281,8 @@ def anjana_l_diversity_score(
 
     frame, quasi_ident, sens_att = _resolve_frame_and_context(
         data=data,
-        y_pred=y_pred,
-        y_true=y_true,
+        X=X,
+        y=y,
         **kwargs,
     )
     if sens_att is None:
@@ -288,8 +293,8 @@ def anjana_l_diversity_score(
 
 
 def anjana_t_closeness_score(
-    y_true: Any = None,
-    y_pred: Any = None,
+    y: Any = None,
+    X: Any = None,
     data: DataConfig | None = None,
     **kwargs: Any,
 ) -> float:
@@ -297,9 +302,9 @@ def anjana_t_closeness_score(
 
     Parameters
     ----------
-    y_true : array-like, optional
+    y : array-like, optional
         Ground-truth labels (unused; present for scorer interface compatibility).
-    y_pred : pd.DataFrame, optional
+    X : pd.DataFrame, optional
         The (possibly anonymized) feature matrix.
     data : AnjanaDataConfig, optional
         Data configuration carrying ``quasi_identifiers`` and
@@ -329,8 +334,8 @@ def anjana_t_closeness_score(
 
     frame, quasi_ident, sens_att = _resolve_frame_and_context(
         data=data,
-        y_pred=y_pred,
-        y_true=y_true,
+        X=X,
+        y=y,
         **kwargs,
     )
     if sens_att is None:
@@ -366,7 +371,7 @@ class DefaultAnjanaScorerConfig(_AnjanaScorerMixin, ScorerDictConfig):
     data : DataConfig
         Data configuration carrying ``quasi_identifiers`` and optional
         ``sensitive_attribute`` column name.
-    y_pred : pd.DataFrame
+    X : pd.DataFrame
         The (possibly anonymized) feature matrix.  When a DataFrame, used directly;
         otherwise fallback to ``data._X``.
 

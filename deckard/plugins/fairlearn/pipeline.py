@@ -84,10 +84,28 @@ class FairlearnPipelineHooksMixin:
                 "fairness_defense config must include a 'name' key",
             )
 
-        if step_name in self.pipeline:
+        from ...data.pipeline.base import DataPipeline
+
+        pipeline_runtime = getattr(self, "pipeline", None)
+        if isinstance(pipeline_runtime, DataPipeline):
+            pipeline_dict = dict(pipeline_runtime.pipeline or {})
+            if step_name in pipeline_dict:
+                return
+            updated = {step_name: step_config, **pipeline_dict}
+            pipeline_runtime.pipeline = updated
+            pipeline_runtime.clear()
+            pipeline_runtime.update(updated)
+            self.pipeline = pipeline_runtime
             return
 
-        self.pipeline = {step_name: step_config, **self.pipeline}
+        if pipeline_runtime in [None, False]:
+            self.pipeline = DataPipeline(pipeline={step_name: step_config})
+            return
+
+        pipeline_dict = dict(pipeline_runtime)
+        if step_name in pipeline_dict:
+            return
+        self.pipeline = DataPipeline(pipeline={step_name: step_config, **pipeline_dict})
 
     def _run_fairlearn_post_pipeline_hook(self, **kwargs):
         """Post-pipeline policy hook for fairlearn runtime stage alignment."""

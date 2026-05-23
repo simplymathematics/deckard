@@ -10,6 +10,7 @@ from typing import Any, Literal
 import numpy as np
 import torch
 from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
+from sklearn.model_selection import ShuffleSplit, StratifiedShuffleSplit
 from torch import Tensor
 from torch.utils.data import (
     DataLoader,
@@ -69,6 +70,9 @@ class PytorchBaseSampler(BaseSampler):
         def _sampler_kwargs_for_alias(alias: str) -> dict[str, Any]:
             if alias == "split":
                 return {
+                    "train_size": getattr(config, "train_size", None),
+                    "test_size": getattr(config, "test_size", None),
+                    "val_size": getattr(config, "val_size", None),
                     "random_state": getattr(config, "random_state", 42),
                     "stratify": getattr(config, "stratify", True),
                 }
@@ -76,11 +80,18 @@ class PytorchBaseSampler(BaseSampler):
                 return {
                     "n_splits": getattr(config, "n_splits", 5),
                     "split": getattr(config, "split", 0),
+                    "train_size": getattr(config, "train_size", None),
+                    "test_size": getattr(config, "test_size", None),
+                    "val_size": getattr(config, "val_size", None),
                     "random_state": getattr(config, "random_state", 42),
                     "stratify": getattr(config, "stratify", True),
                 }
             if alias == "shuffle":
                 return {
+                    "n_splits": getattr(config, "n_splits", 5),
+                    "split": getattr(config, "split", 0),
+                    "test_size": getattr(config, "test_size", None),
+                    "val_size": getattr(config, "val_size", None),
                     "random_state": getattr(config, "random_state", 42),
                     "stratify": getattr(config, "stratify", True),
                 }
@@ -138,6 +149,9 @@ class PytorchBaseSampler(BaseSampler):
             sampler_obj = PytorchSplitSampler()
             setattr(config, "_sampler_obj", sampler_obj)
         for field_name in (
+            "train_size",
+            "test_size",
+            "val_size",
             "random_state",
             "stratify",
             "n_splits",
@@ -213,8 +227,23 @@ class PytorchFoldSampler(PytorchBaseSampler):
     n_splits: int = 5
     split: int = 0
     shuffle: bool = True
+    train_size: int | float | None = None
+    test_size: int | float | None = 0.2
+    val_size: int | float | None = None
     random_state: int | None = 42
     stratify: bool | str | None = True
+
+    @staticmethod
+    def _to_count(size, total: int):
+        if size is None:
+            return None
+        if isinstance(size, float):
+            if size <= 0:
+                return 0
+            if size < 1:
+                return int(np.floor(total * size))
+            return int(size)
+        return int(size)
 
     def __call__(self, config: Any) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         dataset = getattr(config, "dataset_obj", None)
@@ -243,18 +272,67 @@ class PytorchFoldSampler(PytorchBaseSampler):
         fold_index = self.split or 0
         if fold_index >= len(folds):
             raise ValueError(f"split={fold_index} out of range for n_splits={self.n_splits}")
-        train_idx, test_idx = folds[fold_index]
-        return train_idx, test_idx, np.array([], dtype=np.int64)
+
+        train_val_idx, val_idx = folds[fold_index]
+
+        val_cap = self._to_count(self.val_size, len(indices))
+        if val_cap is not None:
+            val_cap = max(0, min(int(val_cap), len(indices)))
+            if len(val_idx) > val_cap:
+                stratify_val = y[val_idx] if y is not None else None
+                val_idx, _ = train_test_split(
+                    val_idx,
+                    train_size=val_cap,
+                    random_state=self.random_state,
+                    stratify=stratify_val,
+                )
+            train_val_idx = np.setdiff1d(indices, val_idx)
+
+        train_cap = self._to_count(self.train_size, len(indices))
+        if train_cap is not None:
+            train_cap = max(0, min(int(train_cap), len(train_val_idx)))
+            if len(train_val_idx) > train_cap:
+                stratify_train_pool = y[train_val_idx] if y is not None else None
+                train_val_idx, _ = train_test_split(
+                    train_val_idx,
+                    train_size=train_cap,
+                    random_state=self.random_state,
+                    stratify=stratify_train_pool,
+                )
+
+        if (
+            isinstance(self.test_size, int)
+            and isinstance(self.train_size, int)
+            and self.n_splits > 0
+            and self.test_size > self.train_size // self.n_splits
+        ):
+            raise ValueError(
+                "test_size must be <= train_size // n_splits for PytorchFoldSampler "
+                f"(got test_size={self.test_size}, train_size={self.train_size}, n_splits={self.n_splits})",
+            )
+
+        stratify_sub = y[train_val_idx] if y is not None else None
+        train_idx, test_idx = train_test_split(
+            train_val_idx,
+            test_size=self.test_size,
+            random_state=self.random_state,
+            stratify=stratify_sub,
+        )
+        return train_idx, test_idx, val_idx
 
 
 @dataclass
 class PytorchShuffleSampler(PytorchBaseSampler):
-    train_size: int | float | None = None
+    n_splits: int = 5
+    split: int | None = 0
     test_size: int | float | None = 0.2
+    val_size: int | float | None = None
     random_state: int | None = 42
     stratify: bool | str | None = True
 
     def __call__(self, config: Any) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        if self.val_size is None:
+            raise ValueError("val_size must be set for PytorchShuffleSampler")
         dataset = getattr(config, "dataset_obj", None)
         if dataset is None:
             if getattr(config, "_X", None) is None or getattr(config, "_y", None) is None:
@@ -263,15 +341,37 @@ class PytorchShuffleSampler(PytorchBaseSampler):
         indices = np.arange(len(dataset))
         labels = getattr(config, "_y", None)
         y = labels.detach().cpu().numpy() if (self.stratify and labels is not None) else None
+
+        if y is not None:
+            splitter = StratifiedShuffleSplit(
+                n_splits=self.n_splits,
+                test_size=self.val_size,
+                random_state=self.random_state,
+            )
+            splits = list(splitter.split(indices, y))
+        else:
+            splitter = ShuffleSplit(
+                n_splits=self.n_splits,
+                test_size=self.val_size,
+                random_state=self.random_state,
+            )
+            splits = list(splitter.split(indices))
+
+        split_index = self.split if self.split is not None else 0
+        if split_index >= len(splits):
+            raise ValueError(f"split={split_index} out of range for n_splits={self.n_splits}")
+
+        train_test_idx, val_idx = splits[split_index]
+        stratify_sub = y[train_test_idx] if y is not None else None
+
         train_idx, test_idx = train_test_split(
-            indices,
-            train_size=self.train_size,
+            train_test_idx,
             test_size=self.test_size,
             random_state=self.random_state,
-            stratify=y if y is not None else None,
+            stratify=stratify_sub,
             shuffle=True,
         )
-        return train_idx, test_idx, np.array([], dtype=np.int64)
+        return train_idx, test_idx, val_idx
 
 
 PytorchKFoldSampler = PytorchFoldSampler

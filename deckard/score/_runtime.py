@@ -6,10 +6,10 @@ import numpy as np
 import pandas as pd
 
 
-def series_like_to_float_dict(values: Any) -> dict[str, float]:
+def series_like_to_float_dict(values: Any) -> dict[str, Any]:
     """Flatten scalar/Series/DataFrame-like values into score key/value pairs."""
     if isinstance(values, dict):
-        flattened: dict[str, float] = {}
+        flattened: dict[str, Any] = {}
 
         def _flatten(prefix: str, payload: Any) -> None:
             if isinstance(payload, dict):
@@ -39,6 +39,9 @@ def series_like_to_float_dict(values: Any) -> dict[str, float]:
                     flattened[next_prefix] = float(value)
                 return
             key = prefix if prefix != "" else "value"
+            if callable(payload):
+                flattened[key] = payload
+                return
             scalar = np.asarray(payload)
             if scalar.ndim == 0:
                 flattened[key] = float(scalar)
@@ -52,7 +55,7 @@ def series_like_to_float_dict(values: Any) -> dict[str, float]:
         return flattened
 
     if isinstance(values, pd.DataFrame):
-        flattened: dict[str, float] = {}
+        flattened: dict[str, Any] = {}
         for row_key, row_values in values.to_dict(orient="index").items():
             if isinstance(row_key, tuple):
                 row_label = "_".join(str(group) for group in row_key)
@@ -63,6 +66,8 @@ def series_like_to_float_dict(values: Any) -> dict[str, float]:
         return flattened
     if isinstance(values, pd.Series):
         return {str(key): float(value) for key, value in values.items()}
+    if callable(values):
+        return {"value": values}
     scalar = np.asarray(values)
     if scalar.ndim == 0:
         return {"value": float(scalar)}

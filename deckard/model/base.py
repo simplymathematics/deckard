@@ -1204,6 +1204,7 @@ class ModelConfig(ConfigBase):
     def __call__(
         self,
         data: DataConfig,
+        files: dict[str, Any] | None = None,
         model_file: Union[str, None] = None,
         test_predictions_file: Union[str, None] = None,
         train_predictions_file: Union[str, None] = None,
@@ -1235,6 +1236,20 @@ class ModelConfig(ConfigBase):
             If prediction is requested without a trained or loaded model.
 
         """
+        files = dict(files or {})
+        if model_file is None:
+            model_file = files.get("model_file")
+        if test_predictions_file is None:
+            test_predictions_file = files.get("test_predictions_file")
+        if train_predictions_file is None:
+            train_predictions_file = files.get("train_predictions_file")
+        if training_probabilities_file is None:
+            training_probabilities_file = files.get("training_probabilities_file")
+        if test_probabilities_file is None:
+            test_probabilities_file = files.get("test_probabilities_file")
+        if score_file is None:
+            score_file = files.get("score_file")
+
         # Ensure data is loaded
         if data.X_train is None or data.y_train is None:
             raise ValueError(

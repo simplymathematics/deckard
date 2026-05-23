@@ -540,10 +540,19 @@ class DetectorConfig(ConfigBase):
         data: "DataConfig",
         model: ModelConfig | None = None,
         attack: "AttackConfig | None" = None,
+        files: dict[str, Any] | None = None,
         detector_file: str | None = None,
         detected_predictions_file: str | None = None,
         score_file: str | None = None,
     ) -> dict[str, float | int]:
+        files = dict(files or {})
+        if detector_file is None:
+            detector_file = files.get("detector_file", files.get("detector_model_file"))
+        if detected_predictions_file is None:
+            detected_predictions_file = files.get("detected_predictions_file")
+        if score_file is None:
+            score_file = files.get("score_file")
+
         ensure_detector_runtime_contract(self)
         data = self._resolve_runtime_data(data)
         model = self._resolve_runtime_model(model=model, data=data)

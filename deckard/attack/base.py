@@ -997,6 +997,7 @@ class AttackConfig(ConfigBase):
         self,
         data,
         model,
+        files: dict[str, Any] | None = None,
         attack_file: Union[str, None] = None,
         attack_predictions_file: Union[str, None] = None,
         score_file: Union[str, None] = None,
@@ -1033,6 +1034,14 @@ class AttackConfig(ConfigBase):
         AssertionError
             If the output scores or timing variables are not of the expected types.
         """
+        files = dict(files or {})
+        if attack_file is None:
+            attack_file = files.get("attack_file")
+        if attack_predictions_file is None:
+            attack_predictions_file = files.get("attack_predictions_file")
+        if score_file is None:
+            score_file = files.get("score_file")
+
         self.load_cached_attack_artifacts(
             attack_file=attack_file,
             attack_predictions_file=attack_predictions_file,

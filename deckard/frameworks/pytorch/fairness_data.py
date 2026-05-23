@@ -106,6 +106,16 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
     )
     scorer: Any = None
 
+    def _ensure_data_scorer_default(self) -> None:
+        scorer_name = type(self.scorer).__name__ if self.scorer is not None else ""
+        if self.scorer is None or scorer_name in {
+            "DefaultFairlearnClassificationConfig",
+            "DefaultFairlearnRegressionConfig",
+        }:
+            self.scorer = DefaultFairlearnDataScorerConfig(
+                classifier=getattr(self, "classifier", True),
+            )
+
     # ------------------------------------------------------------------
     # Initialisation
     # ------------------------------------------------------------------
@@ -115,10 +125,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         PytorchCustomDataConfig.__post_init__(self)
         if not hasattr(self, "dataset") or not self.dataset:
             self.dataset = self.dataset_name
-        if self.scorer is None:
-            self.scorer = DefaultFairlearnDataScorerConfig(
-                classifier=getattr(self, "classifier", True),
-            )
+        self._ensure_data_scorer_default()
 
     # ------------------------------------------------------------------
     # Data loading / splitting
@@ -247,6 +254,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             self.scorer = DefaultFairlearnDataScorerConfig(
                 classifier=getattr(self, "classifier", True),
             )
+        self._ensure_data_scorer_default()
         result = super().__call__(*args, **kwargs)
         assert hasattr(self, "X_train"), ".X_train not found"
         return result
@@ -262,6 +270,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             self.scorer = DefaultFairlearnDataScorerConfig(
                 classifier=getattr(self, "classifier", True),
             )
+        self._ensure_data_scorer_default()
         if not callable(self.scorer):
             raise TypeError(
                 f"FairlearnPytorchDataConfig.scorer must be callable, got {type(self.scorer)}",
@@ -307,8 +316,8 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             y_proba = None
 
         fairness_scores = self.scorer(
-            y_true=y_true,
-            y_pred=X,
+            y=y_true,
+            X=X,
             y_proba=y_proba,
             mode=scorer_mode,
             data=self,

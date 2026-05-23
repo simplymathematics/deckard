@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from dataclasses import dataclass
 from typing import Any, ClassVar
 
@@ -223,11 +224,33 @@ class OrchestratorBase(RuntimeBase):
 		mode = kwargs.pop("mode", None)
 		mode = self._normalize_score_mode(mode or getattr(self, "score_split", "test"))
 		score_kwargs = kwargs.pop("score_kwargs", None) or {}
+		if not isinstance(score_kwargs, dict):
+			score_kwargs = dict(score_kwargs)
+		score_kwargs.pop("mode", None)
+		score_kwargs.pop("stage", None)
 		self._run_score_stage_hooks("before", stage, score_kwargs=score_kwargs)
 		score_fn = getattr(self, "score", None)
 		if not callable(score_fn):
 			raise AttributeError(f"{type(self).__name__} has no callable 'score' method")
-		result = score_fn(mode=mode, stage=stage, **score_kwargs)
+		score_call_kwargs = dict(score_kwargs)
+		try:
+			signature = inspect.signature(score_fn)
+		except (TypeError, ValueError):
+			signature = None
+		if signature is None:
+			score_call_kwargs.setdefault("mode", mode)
+			score_call_kwargs.setdefault("stage", stage)
+		else:
+			params = signature.parameters
+			has_var_kw = any(
+				param.kind == inspect.Parameter.VAR_KEYWORD
+				for param in params.values()
+			)
+			if "mode" in params or has_var_kw:
+				score_call_kwargs.setdefault("mode", mode)
+			if "stage" in params or has_var_kw:
+				score_call_kwargs.setdefault("stage", stage)
+		result = score_fn(**score_call_kwargs)
 		plugin_scores = self._run_score_stage_hooks("after", stage, scores=result)
 		if isinstance(result, dict):
 			for plugin_score in plugin_scores:

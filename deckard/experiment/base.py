@@ -1379,8 +1379,11 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         component: str,
         identity: Mapping[str, Any] | None = None,
     ) -> str:
+        params_manifest = getattr(self, "params", None)
+        if not isinstance(params_manifest, Mapping):
+            params_manifest = {}
         return build_experiment_stage_cache_key(
-            params_manifest=self.params,
+            params_manifest=params_manifest,
             stage=stage,
             component=component,
             identity=identity,
@@ -1404,7 +1407,11 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         stage_bucket = cache_store.get(stage, {})
         cached = stage_bucket.get(cache_key)
         if isinstance(cached, dict):
-            self.outputs.setdefault("cache", {}).setdefault("hits", []).append(
+            outputs = getattr(self, "outputs", None)
+            if not isinstance(outputs, dict):
+                outputs = {}
+                self.outputs = outputs
+            outputs.setdefault("cache", {}).setdefault("hits", []).append(
                 {"stage": stage, "component": component, "key": cache_key}
             )
             return cached
@@ -1429,7 +1436,11 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         stage_bucket = cache_store.setdefault(stage, {})
         stage_bucket[cache_key] = dict(value)
         self._runtime_cache = cache_store
-        self.outputs.setdefault("cache", {}).setdefault("writes", []).append(
+        outputs = getattr(self, "outputs", None)
+        if not isinstance(outputs, dict):
+            outputs = {}
+            self.outputs = outputs
+        outputs.setdefault("cache", {}).setdefault("writes", []).append(
             {"stage": stage, "component": component, "key": cache_key}
         )
 

@@ -112,7 +112,7 @@ class PlotConfig(ConfigBase):
 
     def __post_init__(self):
         # Merge any extra attributes set by ConfigBase into kwargs
-        known_fields = {"kwargs", "config"}
+        known_fields = {"kwargs", "files", "times", "plot_state", "config"}
         for attr in list(vars(self).keys()):
             if attr not in known_fields:
                 self.kwargs.setdefault(attr, getattr(self, attr))
