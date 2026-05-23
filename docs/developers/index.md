@@ -19,6 +19,11 @@ integrating with Deckard.
 - [Model Runtime Canon](model_runtime_canon)
 - [Plugin and Hook Execution Reference](plugin_hook_execution)
 - [Persistence and Runtime State Contract](persistence)
+- [Score Serialization Contract](score)
+- [Optimization Runtime Contract](optimization)
+- [Hydra and Optuna Orchestration Contract](hydra)
+- [Pruning Runtime Contract](pruning)
+- [DVC Pipeline Autogeneration Spec](dvc)
 - [Plugin Runtime Migration Guardrails](plugin_runtime_migration)
 - [Docstring Standard](docstring_standard)
 - [GH Actions Cache Setup](gh_actions_cache)
@@ -38,6 +43,11 @@ data_runtime_canon
 model_runtime_canon
 plugin_hook_execution
 persistence
+score
+optimization
+hydra
+pruning
+dvc
 plugin_runtime_migration
 docstring_standard
 gh_actions_cache
@@ -56,4 +66,9 @@ ______________________________________________________________________
 - [Model Runtime Canon](model_runtime_canon)
 - [Plugin and Hook Execution Reference](plugin_hook_execution)
 - [Persistence and Runtime State Contract](persistence)
+- [Score Serialization Contract](score)
+- [Optimization Runtime Contract](optimization)
+- [Hydra and Optuna Orchestration Contract](hydra)
+- [Pruning Runtime Contract](pruning)
+- [DVC Pipeline Autogeneration Spec](dvc)
 - [Plugin Runtime Migration Guardrails](plugin_runtime_migration)

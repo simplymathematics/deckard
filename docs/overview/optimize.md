@@ -7,7 +7,7 @@ Optimization orchestration integrates:
 
 - [Hydra](https://hydra.cc) runtime composition and sweeping
 - [Optuna](https://optuna.org) studies, trials, and samplers
-- {class}`deckard.layers.optimize.OptunaStudyCallback` lifecycle hooks
+- {class}`deckard.layers.optimize.DefaultOptimizerCallback` lifecycle hooks
 
 For layer API reference, see [Layers](../api/layers).
 
@@ -22,7 +22,7 @@ The canonical baseline configuration is:
 ```yaml
 callbacks:
   deckard_optuna:
-    _target_: deckard.layers.optimize.OptunaStudyCallback
+    _target_: deckard.layers.optimize.DefaultOptimizerCallback
     directions: ${directions}
     optimizers: ${optimizers}
 ```

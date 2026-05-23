@@ -64,7 +64,7 @@ behavior, sweep parameters, sweeper configuration, and dashboard usage, is in
 ```{seealso}
 
     Callback wiring used by optimization is implemented in
-    {class}`deckard.layers.optimize.OptunaStudyCallback`.
+   {class}`deckard.layers.optimize.DefaultOptimizerCallback`.
 
     The canonical configuration lives in
     [examples/sklearn/config/default.yaml](../../examples/sklearn/config/default.yaml).
@@ -78,7 +78,7 @@ behavior, sweep parameters, sweeper configuration, and dashboard usage, is in
 ```yaml
 callbacks:
    deckard_optuna:
-      _target_: deckard.layers.optimize.OptunaStudyCallback
+      _target_: deckard.layers.optimize.DefaultOptimizerCallback
       directions: ${directions}
       optimizers: ${optimizers}
 ```

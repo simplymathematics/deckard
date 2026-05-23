@@ -52,6 +52,36 @@ Most runtime scorers are `ScorerDictConfig` (or subclasses) receiving:
 Scorers may produce nested stage/mode outputs internally.
 Runtime owners can flatten for backward compatibility.
 
+### ScoreDict Serialization Contract
+
+Deckard now uses a native ScoreDict container implemented in artifacts.
+
+- ScoreDict supports scalar, vector, and nested payload normalization.
+- ScoreDict centralizes flattening and dotlist projection helpers.
+- ScoreDict is callable and owns score load/merge/save lifecycle when a score
+  file is supplied.
+
+Persisted score artifacts follow schema deckard.score.v1 and include:
+
+- payload
+- flat
+- flat_by_scope
+- dotlist
+- dotlist_items
+
+JSON and YAML are first-class human-readable persistence formats.
+
+### What Users Need to Know
+
+- You can keep using config-level scoring without constructing ScoreDict
+  directly; runtime configs handle this internally.
+- Score artifacts now include both nested payloads and convenient flattened
+  projections for analysis tools.
+- If you pass score files in runtime configs, score persistence and merge
+  behavior is automatic across reruns.
+- For downstream parsing, prefer `dotlist` or `flat` from persisted score
+  artifacts.
+
 ## Execution Flows
 
 ### Flow 1: DataConfig Scoring Stages

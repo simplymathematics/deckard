@@ -49,36 +49,38 @@ The following pages are ordered for progressive onboarding:
 1. [Quickstart](quickstart.md)
 2. [Summary](summary.md)
 3. [Optimization](optimize.md)
-4. [Data](data.md)
-5. [Pipeline](pipeline.md)
-6. [Model](model.md)
-7. [Trainer](trainer.md)
-8. [Defense](defense.md)
-9. [Attack](attack.md)
-10. [Detector](detector.md)
-11. [Scorer (Scoring)](scoring.md)
-12. [Files](file.md)
-13. [Artifacts](artifacts.md)
-14. [Experiment](experiment.md)
-15. [Plot](plot.md)
-16. [Utils](utils.md)
-17. [Framework: sklearn](sklearn.md)
-18. [Framework: PyTorch](pytorch.md)
-19. [Framework: Transformers](transformers.md)
-20. [Plugin: ANJANA](anjana.md)
-21. [Plugin: Fairlearn](fairlearn.md)
-22. [Plugin: Lifelines](lifelines.md)
-23. [Plugin: Seaborn](seaborn.md)
-24. [Plugin: Yellowbrick](yellowbrick.md)
-25. [Extensions](extensions.md)
-26. [Installation](installation.md)
-27. [Notebooks](../notebooks/index.md)
-28. [API Reference](../api/modules.md)
-29. [Developer Docs](../developers/index.md)
-30. [Development](../developers/index.md)
-31. [Build Docs](build_docs.md)
-32. [Docker](docker.md)
-33. [Changelog](changelog.md)
+4. [Hydra](hydra.md)
+5. [Data](data.md)
+6. [Pipeline](pipeline.md)
+7. [Model](model.md)
+8. [Trainer](trainer.md)
+9. [Defense](defense.md)
+10. [Attack](attack.md)
+11. [Detector](detector.md)
+12. [Scorer (Scoring)](scoring.md)
+13. [Files](file.md)
+14. [Artifacts](artifacts.md)
+15. [Experiment](experiment.md)
+16. [Plot](plot.md)
+17. [DVC](dvc.md)
+18. [Utils](utils.md)
+19. [Framework: sklearn](sklearn.md)
+20. [Framework: PyTorch](pytorch.md)
+21. [Framework: Transformers](transformers.md)
+22. [Plugin: ANJANA](anjana.md)
+23. [Plugin: Fairlearn](fairlearn.md)
+24. [Plugin: Lifelines](lifelines.md)
+25. [Plugin: Seaborn](seaborn.md)
+26. [Plugin: Yellowbrick](yellowbrick.md)
+27. [Extensions](extensions.md)
+28. [Installation](installation.md)
+29. [Notebooks](../notebooks/index.md)
+30. [API Reference](../api/modules.md)
+31. [Developer Docs](../developers/index.md)
+32. [Development](../developers/index.md)
+33. [Build Docs](build_docs.md)
+34. [Docker](docker.md)
+35. [Changelog](changelog.md)
 
 ## Navigation Notes
 
@@ -100,6 +102,7 @@ for a structured introduction.
 quickstart
 summary
 optimize
+hydra
 data
 pipeline
 model
@@ -112,19 +115,23 @@ file
 artifacts
 experiment
 plot
+dvc
 utils
+
 # Framework overviews
 sklearn
 pytorch
 transformers
 
 # Plugin overviews
+extensions
 anjana
 fairlearn
 lifelines
 seaborn
 yellowbrick
-extensions
+
+# Software Guide
 installation
 build_docs
 docker

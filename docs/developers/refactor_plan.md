@@ -164,12 +164,18 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x] Update scorer docs and examples to describe the canonical scoring path.
 
 ### Scorer Serialization Contract (Pending)
-- [ ] Add vector-valued scoring support in runtime and persistence layers.
-- [ ] Ensure score persistence uses human-readable and easy-to-parse formats (JSON/YAML first).
-- [ ] Implement explicit score de-serialization and serialization contract for scalar, vector, and nested score payloads.
-- [ ] Guarantee final persisted score output includes:
-  - [ ] a flat dictionary keyed by runtime scope (mode/stage dependent)
-  - [ ] a dot.list OmegaConf-style dictionary for easy downstream parsing.
+- [x] create a native ScoreDict class to make this behavior consistent everywhere and unify all score-transformation functions in that object as helper methods. Use this object to type score_dict in ConfigBase (score_dict: ScoreDict).
+- [x] Add a callable lifecycle method that replaces the current read_or_initialize_scores and general persistence flows so each ScoreDict call loads/saves from disk when a score file is specified; otherwise it returns the nested runtime score dictionary.
+- [x] ensure no other data scoring paths still rely on legacy-only y_true/y_pred paths
+- [x] Add vector-valued scoring support in runtime and persistence layers.
+- [x] Ensure score persistence uses human-readable and easy-to-parse formats (formatted JSON/YAML first).
+- [x] Implement explicit score de-serialization and serialization contract for scalar, vector, and nested score payloads.
+- [x] Guarantee final persisted score output includes:
+  - [x] a flat dictionary keyed by runtime scope (mode/stage dependent)
+  - [x] a dot.list OmegaConf-style dictionary for easy downstream parsing of all scores across stages, modes, and splits.
+  - [ ] Create a docs/notebooks/scoring.ipynb that explains major paths.
+  - [x] Update docs/developers/score with a design spec
+  - [x] Update overview/scoring with the new contract
 
 ## Optuna DB Checklist
 - [x] Define canonical Optuna study dataframe loading helpers and use them as shared runtime APIs.
@@ -203,14 +209,6 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x] Remove duplicate coercion/persistence helpers from core, framework, and plugin modules.
 - [x] Add utility contract tests for artifact IO, config coercion, plugin spec normalization, and resolver behavior.
 
-## Experiment Checklist
-- [ ] Define a canonical experiment runtime contract for `files`, `times`, `scores`, and component orchestration.
-- [ ] Ensure that all training, defense, pipeline, fold, and attack scores are properly cached.
-- [ ] Normalize experiment loading so data/model/attack/detector/scorer configs are composed through the canonical runtime.
-- [ ] Ensure experiment persistence and score collection remain files-only and stage-aware.
-- [ ] Add experiment contract tests for end-to-end orchestration, cross-family composition, and rerun stability.
-- [ ] Update experiment docs and example workflows to match the final canonical flow.
-
 ### Experiment Runtime Composition Plan (Detailed)
 
 #### Phase 1: Canon Runtime Contract
@@ -224,46 +222,110 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x] Add mode/stage normalization helpers for experiment-level orchestration (single run + multi-trial semantics).
 
 #### Phase 2: Native Config + HookPlugin + Bundle Composition
-- [ ] Define native `*Config` composition entry points for data/model/attack/detector/scorer/pipeline/defense.
-- [ ] Support runtime composition from supplied kwargs without replacing canonical config behavior.
-- [ ] Add a HookPlugin execution graph generated programmatically from canonical stage definitions in Data/Model/Attack/Score/Detector `*Config` runtimes (no hard-coded stage list).
-- [ ] Introduce Bundle definitions that group stage hooks + component configs into reusable runtime policies.
-- [ ] Ensure Bundle composition is additive/overridable and deterministic by explicit order.
+- [x] Define native `*Config` composition entry points for data/model/attack/detector/scorer/pipeline/defense.
+- [x] Support runtime composition from supplied kwargs without replacing canonical config behavior.
+- [x] Add a HookPlugin execution graph generated programmatically from canonical stage definitions in Data/Model/Attack/Score/Detector `*Config` runtimes (no hard-coded stage list).
+- [x] Introduce Bundle definitions that group stage hooks + component configs into reusable runtime policies.
+- [x] Ensure Bundle composition is additive/overridable and deterministic by explicit order.
 
 #### Phase 3: Caching and Reuse Across Stages/Trials
-- [ ] Define cache keys for sample/pipeline/train/defense/attack outputs using resolved params + stage identity.
-- [ ] Persist and reload intermediate outputs for stage skipping and rerun acceleration.
-- [ ] Ensure cached outputs can be selectively invalidated by component/stage-level parameter changes.
-- [ ] Ensure all training, defense, pipeline, fold, and attack score artifacts are cache-aware and rehydratable.
+- [x] Define cache keys for sample/pipeline/train/defense/attack outputs using resolved params + stage identity.
+- [x] Persist and reload intermediate outputs for stage skipping and rerun acceleration.
+- [x] Ensure cached outputs can be selectively invalidated by component/stage-level parameter changes.
+- [x] Ensure all training, defense, pipeline, fold, and attack score artifacts are cache-aware and rehydratable.
 
 #### Phase 4: YAML Serialization Contract
-- [ ] Add YAML serialization for experiment persistence including:
-  - [ ] resolved params
-  - [ ] runtime attributes
-  - [ ] cached output metadata and pointers
-- [ ] Keep JSON/YAML score artifacts human-readable and parse-friendly.
-- [ ] Define explicit de/serialization schema versioning for forward-compatible restores.
-- [ ] Add load-time migration guards for older score/cache payload structures.
+- [x] Add YAML serialization for experiment persistence including:
+  - [x] resolved params
+  - [x] runtime attributes
+  - [x] cached output metadata and pointers
+- [x] Keep JSON/YAML score artifacts human-readable and parse-friendly.
+- [x] Define explicit de/serialization schema versioning for forward-compatible restores.
+- [x] Add load-time migration guards for older score/cache payload structures.
 
 #### Phase 5: DVC Pipeline Autogeneration
-- [ ] Add utility to generate `dvc.yaml` from experiment persistence values and runtime stage graph.
-- [ ] Map canonical experiment stages to DVC stages with deps/outs/params wiring.
-- [ ] Emit reproducible stage commands for single experiment execution and multi-trial sweeps.
-- [ ] Support optional cached-output reuse by pointing DVC outs to canonical runtime file aliases.
+Design spec: [DVC Pipeline Autogeneration Spec](dvc)
+- [x] Add utility to generate `dvc.yaml` from experiment persistence values and runtime stage graph.
+- [x] Map canonical experiment stages to DVC stages with deps/outs/params wiring.
+- [x] Emit reproducible stage commands for single experiment execution and multi-trial sweeps.
+- [x] Support optional cached-output reuse by pointing DVC outs to canonical runtime file aliases.
+- [x] Enable Vega-Lite plot spec outputs (`*.vl.json`) for browser-renderable DVC plot artifacts (yellowbrick and seaborn plots should be supported, but not required)
+- [x] create specs according to [DVC Pipeline Autogeneration Spec](dvc) and deckard-native functionality. Create runnable hydra yaml files for each plot with names like "<attack_alias>_<attack_param>_vs_<metric>" or "roc_auc" with the normal file extension.
+- [x] Ensure generated DVCLive/DVC output directories use runtime identity:
+  - [x] run mode: `ExperimentConfig.name`
+  - [x] multirun mode: stage-dependent experiment hash
+- [x] Keep DVC metrics policy canonical:
+  - [x] file-only metrics by default
+  - [x] keyed metrics selectors only when `optimizers` is explicitly configured
+- [x] targeted tests
+- [x] create high-level docs/overview/dvc file
+- [x] create demonstration notebook using examples/sklearn context in docs/notebooks/dvc.ipynb
+- [x] update docs/developers/dvc
+- [ ] Make pruning status contingent on optuna pruner configuration
+- [ ] Auto-enable dvclive if dvc_plugin is in the default.yaml
+- [ ] Add native support for fetching/loading artifacts using Live().log_image, Live().log_metric, Live().log_params, Live().log_artifact
+- [ ] Ensure that run and multi-run both generate reproducible `dvc.yaml` and `params.yaml` files.
+Goal:
+- [ ] generated dvc `cmd` should use `deckard optimize` syntax.
+- [ ] Fix bug with meta-data files only output optimizer metric rather than full score dictionary (filtered scores are only passed to the optuna optimizer) 
+- [ ] Fix bug `- ../outputs/logs/notebook/scores.json` -> `./outputs/logs/notebook/<resolved_ID>/scores.json`
+- [ ] dvc should track everything and cache scores/params by default and rely on user configuration for 
+- [ ] Update developers/dvc.md to reflect canon and change the narrative from a plan to a finalized design spec.
+
+GOAL:
+```
+### Plan: DVC + DVCLive integration
+
+- Primary integration path: hook-driven DVCLive integration in experiment runtime.
+- Secondary integration path: layer-driven study and batch aggregate plotting.
+- Use DVCLive APIs directly rather than reimplementing wrapper behavior.
+
+DVCLive API coverage target:
+
+- `log_*`
+- `next_step`
+- `end`
+- `monitor_system`
+- `make_dvcyaml`
+- `make_report`
+- `make_summary`
+```
 
 #### Phase 6: Hydra Single-Default Multi-Stage Execution
-(currently lives in deckard/layers/optimize.py, but we should have a dedicated OptimizerConfig that handles metadata, optimizers, directions, etc)
-- [ ] Define one Hydra default profile that can execute:
-  - [ ] a single experiment through selected hook stages
-  - [ ] multiple trials with cached intermediate reuse
-- [ ] Ensure stage selection and trial fan-out are controlled by runtime kwargs/overrides, not alternate orchestration paths.
-- [ ] Preserve files-only persistence and stage-aware score collection for both single and multi-trial flows.
+Design specs: [Optimization Runtime Contract](optimization) | [Hydra and Optuna Orchestration Contract](hydra) | [Pruning Runtime Contract](pruning)
+- [x] Rename/default callback contract to `DefaultOptimizerCallback` as the configurable Hydra callback adapter.
+- [x] Define `OptimizerConfig` as the dedicated runtime optimization policy object
+  (metadata, optimizers, directions, trial reporting/pruning policy, optional DVCLive integration).
+- [x] Keep callback behavior adapter-thin:
+  - [x] callback owns lifecycle hooks
+  - [x] callback delegates policy behavior to `OptimizerConfig`
+- [x] Define one Hydra default profile that can execute:
+  - [x] a single experiment through selected hook stages
+  - [x] multiple trials with cached intermediate reuse
+- [x] Ensure stage selection and trial fan-out are controlled by runtime kwargs/overrides, not alternate orchestration paths.
+- [x] Preserve files-only persistence and stage-aware score collection for both single and multi-trial flows.
+- [x] targeted tests
+- [x] create/update high-level docs/overview/hydra file
+- [ ] create/update demonstration notebook using examples/sklearn context in docs/notebooks/hydra.ipynb
+- [x] update docs/developers/hydra
+- [ ] rename any existing *optuna docs to *optimize
+- [x] create/update high-level docs/overview/optimize file
+- [ ] create/update demonstration notebook using examples/sklearn context in docs/notebooks/optimize.ipynb
+- [ ] update docs/developers/optimize
 
 #### Phase 7: Validation and Documentation
 - [ ] Add contract tests for HookPlugin stage ordering, Bundle merge behavior, and native `*Config` composition.
 - [ ] Add integration tests for cache reuse, YAML round-trip restores, and DVC autogeneration correctness.
 - [ ] Add Hydra compose tests validating single-default stage selection and multi-trial execution behavior.
-- [ ] Document experiment canon, Bundle authoring, hook contracts, serialization schema, and DVC workflow in developer docs.
+- [ ] Add optimization callback/config tests for adapter + policy split:
+  - [ ] `DefaultOptimizerCallback` lifecycle delegation
+  - [ ] `OptimizerConfig` trial resolution/report/prune behavior
+- [ ] Add pruning integration tests that assert prune termination raises `TrialPruned`.
+- [ ] Add DVC contract tests that assert:
+  - [ ] Vega-Lite plot path generation (`*.vl.json`)
+  - [ ] identity-derived output directories in run and multirun
+  - [ ] metrics file policy and optimizer-keyed selector behavior
+- [ ] Document experiment canon, bundle authoring, hook contracts, serialization schema, and DVC workflow in developer docs.
 
 #### Execution Plan: Docs -> Notebooks -> Testing -> Coverage
 
@@ -303,7 +365,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [ ] Add notebook index page entries and per-notebook run expectations.
 
 ##### Step 3: Test Plan Aligned to Notebook Scenarios
-- [ ] Convert notebook scenarios into focused unit and integration tests.
+- [ ] Convert notebook scenarios into focused instruction aboout various workflow paths.
 - [ ] Add/extend experiment tests for stage graph generation, bundle merge order, cache reuse, and cache invalidation.
 - [ ] Add end-to-end tests that compare fresh runs vs cache-hit reruns and assert equivalent outputs.
 - [ ] Add persistence contract tests for scalar/vector/nested score serialization and de-serialization.
