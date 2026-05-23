@@ -223,10 +223,8 @@ stages:
     - ../../examples/sklearn/config/files/default.yaml
     - ../../examples/sklearn/config/attack/hsj.yaml
     - ../../examples/sklearn/config/defense/class-labels.yaml
-    - ../../examples/sklearn/config/dvc/plot_specs/
-    outs:
-    - ./build/dvc.generated.yaml
-    - ./build/dvc_specs/
+    - ../../examples/sklearn/config/plot/
+    # No outs/metrics: dvc.ipynb is a stage-plan inspection notebook
 
   notebook_optuna:
     cmd: jupyter nbconvert --to notebook --execute --inplace optuna.ipynb

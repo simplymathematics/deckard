@@ -25,6 +25,28 @@ Related contracts:
 - Prefer hook-driven DVCLive logging for per-trial runtime reporting.
 - Keep layer-level execution paths for study-level and batch aggregate plotting.
 
+## Frozen Contract (Current)
+
+The current implementation is frozen around these invariants:
+
+- `DVCExperimentConfig` is an optional wrapper and not a replacement for core runtime execution.
+- Base `ExperimentConfig` hashing excludes DVC policy fields (`dvc_plugin`) so DVC toggles do not change experiment identity.
+- DVC hook wrappers are only composed when the DVC plugin is explicitly enabled.
+- Structured DVC params payloads use top-level `__target__` with a single top-level `dvc_plugin` block.
+- Wrapped `experiment` payloads do not duplicate `dvc_plugin`.
+- Persisted DVC/DVCLive path fields are normalized to repository-relative paths.
+
+### Current command/mode behavior
+
+- Generated stage commands do not emit explicit `--multirun` flags.
+- Mode (`single`/multirun-equivalent semantics) is represented through stage planning and params payload metadata.
+
+### Runtime manifest interpretation notes
+
+- `params.attack` represents the primary attack fingerprint for the experiment.
+- `params.attack_chain` represents the full ordered attack chain.
+- For single-attack runs, these entries can contain the same attack fingerprint by design.
+
 ## Existing Runtime Behavior: Composition and Hooks
 
 ### Native component composition
@@ -228,6 +250,13 @@ Write a DVC params file (YAML) containing:
 - key experiment manifest fields (`experiment_name`, `library`, `random_state`, score/eval mode)
 - component fingerprints from `build_experiment_params_manifest`
 
+Current payload shape includes:
+
+- top-level `__target__` for wrapper identity
+- top-level `experiment` payload for constructor-safe runtime state
+- top-level `dvc_plugin` policy payload
+- top-level `_dvc` metadata (`stage_selection`, `run_mode`, `params_manifest`)
+
 This ensures DVC stage invalidation aligns with experiment cache invalidation.
 
 Params MUST be parsed and cached according to stage (e.g. pre-defense does not include defense params)
@@ -369,7 +398,6 @@ stages:
       +files.score_file=outputs/logs/<run_identity>/scores.json
       +files.log_file=outputs/logs/<run_identity>/run.log
       +files.error_file=outputs/logs/<run_identity>/error.log
-      --multirun
     deps:
       - .deckard_rc
       - ../../deckard
@@ -417,7 +445,7 @@ dvc_file=<existing_or_desired> #defaults to dvc.yaml
 
 ```bash
 python -m deckard optimize <optional hydra overrides> 
-stage=<canonical_stage_or_all> --multirun 
+stage=<canonical_stage_or_all> 
 params_file=<existing_or_desired> # defaults to params.yaml
 dvc_file=<existing_or_desired> #defaults to dvc.yaml
 ```

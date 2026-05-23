@@ -125,3 +125,6 @@ References:
 
 - [Optuna Dashboard](https://optuna-dashboard.readthedocs.io/en/latest/)
 - [optuna-dashboard docs](https://optuna-dashboard.readthedocs.io/en/latest/)
+
+## Easy Parallelization with Optuna and RDB
+[Docs](https://optuna.readthedocs.io/en/stable/tutorial/10_key_features/004_distributed.html#multi-process-optimization)

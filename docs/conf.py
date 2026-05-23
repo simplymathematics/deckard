@@ -25,6 +25,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "myst_nb",
+    "sphinxcontrib.mermaid",
 ]
 
 # Allow optional/heavy dependencies to be absent during docs builds
@@ -70,6 +71,11 @@ nb_append_css = False
 myst_enable_extensions = [
     "colon_fence",
     "deflist",
+]
+
+# Render fenced ```mermaid blocks through sphinxcontrib-mermaid.
+myst_fence_as_directive = [
+    "mermaid",
 ]
 
 # ---------------------------------------------------------------------------
@@ -133,7 +139,10 @@ def _sanitize_text_file(file_path: Path, pattern: str, replacement: str) -> bool
     if replacements == 0:
         return False
 
-    file_path.write_text(new_text, encoding="utf-8")
+    try:
+        file_path.write_text(new_text, encoding="utf-8")
+    except OSError:
+        return False
     return True
 
 

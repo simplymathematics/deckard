@@ -23,6 +23,14 @@ Core capabilities:
 - Vega-Lite (`*.vl.json`) plot artifact targets
 - canonical plot naming patterns (for example `<attack_alias>_<attack_param>_vs_<metric>.vl.json`)
 
+## Current Implementation Notes
+
+- DVC integration is optional and wrapper-driven via `DVCExperimentConfig`.
+- Base `ExperimentConfig` hashing excludes `dvc_plugin`, so DVC policy toggles do not change experiment identity.
+- Generated structured params payloads use top-level `__target__` and a single top-level `dvc_plugin` block.
+- Wrapped `experiment` payloads do not duplicate `dvc_plugin`.
+- Persisted DVC/DVCLive path fields are normalized to relative paths to avoid absolute host-path leakage.
+
 ## Canonical Stages
 
 Generated stage names follow experiment canon:
@@ -61,6 +69,11 @@ generate_dvc_pipeline(
     overwrite=False,
 )
 ```
+
+Command-generation note:
+
+- Stage commands no longer emit explicit `--multirun` flags.
+- Run mode is carried through canonical stage/mode metadata and params payloads.
 
 ## Quick Checklist
 

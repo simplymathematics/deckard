@@ -249,26 +249,32 @@ Design spec: [DVC Pipeline Autogeneration Spec](dvc)
 - [x] Map canonical experiment stages to DVC stages with deps/outs/params wiring.
 - [x] Emit reproducible stage commands for single experiment execution and multi-trial sweeps.
 - [x] Support optional cached-output reuse by pointing DVC outs to canonical runtime file aliases.
-- [x] Enable Vega-Lite plot spec outputs (`*.vl.json`) for browser-renderable DVC plot artifacts (yellowbrick and seaborn plots should be supported, but not required)
-- [x] create specs according to [DVC Pipeline Autogeneration Spec](dvc) and deckard-native functionality. Create runnable hydra yaml files for each plot with names like "<attack_alias>_<attack_param>_vs_<metric>" or "roc_auc" with the normal file extension.
-- [x] Ensure generated DVCLive/DVC output directories use runtime identity:
-  - [x] run mode: `ExperimentConfig.name`
-  - [x] multirun mode: stage-dependent experiment hash
-- [x] Keep DVC metrics policy canonical:
-  - [x] file-only metrics by default
-  - [x] keyed metrics selectors only when `optimizers` is explicitly configured
+- [x] Enable Vega-Lite plot spec outputs (`*.vl.json`) for browser-renderable DVC plot artifacts (yellowbrick and seaborn plots should be supported, but not required).
+- [x] Create specs according to [DVC Pipeline Autogeneration Spec](dvc) and deckard-native functionality. Create runnable Hydra YAML files for each plot with names like "<attack_alias>_<attack_param>_vs_<metric>" or "roc_auc".
+- [x] Ensure generated DVCLive/DVC output directories use runtime identity.
+- [x] Keep DVC metrics policy canonical.
 - [x] targeted tests
 - [x] create high-level docs/overview/dvc file
 - [x] create demonstration notebook using examples/sklearn context in docs/notebooks/dvc.ipynb
 - [x] update docs/developers/dvc
+
+Concrete rewrite steps to align runtime implementation with the design spec:
+- [x] Introduce `DVCPluginBundle` as first/last hook bundles for `ExperimentConfig` orchestration.
+- [x] Instantiate `dvclive.Live` at runtime hook entry (`before_load` in first-position wrapper) and keep a single runtime session per experiment call.
+- [x] Pull DVC dependencies in the first wrapper using DVC-native commands (`dvc pull`) before stage execution proceeds.
+- [x] Log DVCLive params/metrics/artifacts with native methods (`log_params`, `log_metric`, `log_artifact`, `next_step`, `end`) from runtime hook callbacks.
+- [x] Push newly created outputs in the final wrapper (`after_persist`, last-position) via DVC-native commands (`dvc add`, `dvc push`).
+- [x] Keep report generation optional and mode-aware (`make_summary`, `make_report`, `make_dvcyaml`, report extension mapping).
+- [x] Align canonical DVC stage naming for score/persist stages with `experiment__*` naming.
+- [x] Align command emission with Command Templates (`python -m deckard optimize ... stage=... [--multirun] params_file=... dvc_file=...`).
+- [x] Enforce Vega-Lite output contract to hydra-resolvable JSON artifacts (`*.vl.json`) even when callers pass YAML-like paths.
+- [x] Update and extend targeted tests for bundle construction, lifecycle hook execution, stage naming, and Vega-Lite output normalization.
 - [ ] Make pruning status contingent on optuna pruner configuration
 - [ ] Auto-enable dvclive if dvc_plugin is in the default.yaml
 - [ ] Add native support for fetching/loading artifacts using Live().log_image, Live().log_metric, Live().log_params, Live().log_artifact
 - [ ] Ensure that run and multi-run both generate reproducible `dvc.yaml` and `params.yaml` files.
 Goal:
 - [ ] generated dvc `cmd` should use `deckard optimize` syntax.
-- [ ] Fix bug with meta-data files only output optimizer metric rather than full score dictionary (filtered scores are only passed to the optuna optimizer) 
-- [ ] Fix bug `- ../outputs/logs/notebook/scores.json` -> `./outputs/logs/notebook/<resolved_ID>/scores.json`
 - [ ] dvc should track everything and cache scores/params by default and rely on user configuration for 
 - [ ] Update developers/dvc.md to reflect canon and change the narrative from a plan to a finalized design spec.
 

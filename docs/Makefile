@@ -4,7 +4,7 @@
 # You can set these variables from the command line, and also
 # from the environment for the first two.
 SPHINXOPTS    ?=
-SPHINXBUILD   ?= sphinx-build
+SPHINXBUILD   ?= $(shell if [ -x ../.venv/bin/sphinx-build ]; then echo ../.venv/bin/sphinx-build; else echo sphinx-build; fi)
 SPHINXAUTOBUILD ?= sphinx-autobuild
 SOURCEDIR     = .
 BUILDDIR      = build
