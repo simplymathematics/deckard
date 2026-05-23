@@ -35,7 +35,7 @@ hydra:
     subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
   callbacks:
     deckard_optuna:
-      _target_: deckard.layers.optimize.OptunaStudyCallback
+      _target_: deckard.layers.optimize.DefaultOptimizerCallback
       directions: ${directions}
       optimizers: ${optimizers}
   sweeper:

@@ -6,6 +6,16 @@ defaults:
 - attack: fgm
 - files: default
 experiment_name: default
+dvc_plugin:
+  enabled: false
+  dvclive_dir: null
+  make_summary: true
+  make_report: true
+  report_mode: html
+  resume: true
+  save_dvc_exp: false
+  cache_images: false
+  monitor_system: false
 hydra:
   run:
     dir: output/logs/${experiment_name}

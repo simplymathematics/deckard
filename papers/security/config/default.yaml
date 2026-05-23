@@ -46,7 +46,7 @@ hydra:
     n_trials: ???
   callbacks:
     deckard_optuna:
-      # OptunaStudyCallback is a Hydra callback used by both single-run and
+      # DefaultOptimizerCallback is a Hydra callback used by both single-run and
       # --multirun executions.
       #
       # Single-run mode (no --multirun):
@@ -73,6 +73,6 @@ hydra:
       # File paths (directory, log_file, params_file, error_file, score_file) are
       # also optional; when omitted they are resolved from hydra.sweep.dir/subdir
       # and hydra.job.name at on_compose_config time.
-      _target_: deckard.layers.optimize.OptunaStudyCallback
+      _target_: deckard.layers.optimize.DefaultOptimizerCallback
       directions: ${directions}
       optimizers: ${optimizers}
