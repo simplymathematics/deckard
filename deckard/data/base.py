@@ -21,6 +21,7 @@ from ..utils import (
 )
 from ..frameworks.types import ArrayLike, IndexLike, MatrixLike, TabularLike
 from ..plugins.base import OrchestratorBase
+from ..orchestration import stage_hook_token
 from ..artifacts import ScoreDict
 from .canon import (
     DEFAULT_DATA_SCORE_STAGE,
@@ -30,7 +31,6 @@ from .canon import (
     ensure_canonical_times,
     merge_data_files,
     normalize_data_score_mode,
-    stage_hook_token,
 )
 
 # Setup logger

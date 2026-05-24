@@ -8,7 +8,7 @@ from omegaconf import DictConfig, ListConfig
 from deckard.plugins import HookPlugin
 from deckard.plugins.base import compose_hook_plugins
 
-from ...data._mixins import RuntimePayload, _SensitiveColumnsMixin
+from ...data._mixins import RuntimePayload, SensitiveColumnsMixin
 from ...data.base import DataConfig
 from ...data.canon import resolve_runtime_files
 from ...utils import (
@@ -19,8 +19,8 @@ from ...utils import (
 from .pipeline import FAIRLEARN_PIPELINE_HOOKS, FairlearnPipelineHooksMixin
 from .score import (
     FAIRLEARN_SCORING_HOOKS,
-    DefaultFairlearnClassificationConfig,
-    DefaultFairlearnRegressionConfig,
+    DefaultFairlearnClassificationScorerDictConfig,
+    DefaultFairlearnRegressionScorerDictConfig,
     FairlearnDataScoreHooksMixin,
 )
 
@@ -39,7 +39,7 @@ def default_fairlearn_data_plugins() -> list[HookPlugin]:
 
 
 @dataclass(eq=False, kw_only=True)
-class FairnessBehaviorMixin(_SensitiveColumnsMixin):
+class FairnessBehaviorMixin(SensitiveColumnsMixin):
     """Fairlearn-specific sensitive-feature behavior for data configs.
 
     Extends the framework-independent :class:`_SensitiveColumnsMixin` with
@@ -49,6 +49,11 @@ class FairnessBehaviorMixin(_SensitiveColumnsMixin):
     """
 
     def fit(self, run_hooks: bool = True):
+        """Populate split-aligned sensitive feature payloads after data sampling.
+
+        Args:
+            run_hooks: Whether the parent data runtime should execute hook callbacks.
+        """
         super().fit(run_hooks=run_hooks)
 
         train_indices = getattr(self, "train_indices", None)
@@ -137,9 +142,9 @@ class FairlearnDataConfig(
             or self.scorer is None
         ):
             self.scorer = (
-                DefaultFairlearnClassificationConfig()
+                DefaultFairlearnClassificationScorerDictConfig()
                 if self.classifier
-                else DefaultFairlearnRegressionConfig()
+                else DefaultFairlearnRegressionScorerDictConfig()
             )
 
         if isinstance(self.fairness_defense, (list, ListConfig)):

@@ -8,16 +8,17 @@ from typing import Union
 import numpy as np
 from art.config import ART_NUMPY_DTYPE
 
+from ..artifacts import ScoreDict
 from ..frameworks.pytorch.torch_utils import (
     is_tensor,
     tensor_to_numpy,
 )
-from .base import AttackConfig, AttackTypePlugin, _AttackMixin, _sensitive_slice
+from .base import AttackConfig, AttackTypePlugin, AttackMixin, _sensitive_slice
 
 logger = logging.getLogger(__name__)
 
 
-class _EvasionAttackMixin(_AttackMixin):
+class EvasionAttackMixin(AttackMixin):
     """Reusable evasion attack behavior."""
 
     # Declared for static analyzers
@@ -26,7 +27,7 @@ class _EvasionAttackMixin(_AttackMixin):
     attack_prediction_time: Union[float, None]
     attack_predictions: Union[object, None]
     attacked_labels: Union[object, None]
-    score_dict: dict
+    score_dict: ScoreDict
 
     def __call__(
         self,
@@ -177,7 +178,7 @@ class _EvasionAttackMixin(_AttackMixin):
 
 
 @dataclass(eq=False, kw_only=True)
-class EvasionAttackConfig(_EvasionAttackMixin, AttackConfig):
+class EvasionAttackConfig(EvasionAttackMixin, AttackConfig):
     """Configuration for evasion attacks that generate adversarial examples.
 
     Initialization params
@@ -204,7 +205,7 @@ class EvasionAttackConfig(_EvasionAttackMixin, AttackConfig):
     plugins: list = field(
         default_factory=lambda: [
             AttackTypePlugin(
-                mixin_type=_EvasionAttackMixin,
+                mixin_type=EvasionAttackMixin,
                 attack_type="evasion",
             ),
         ],

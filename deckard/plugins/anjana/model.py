@@ -8,7 +8,7 @@ from ...utils import is_default_config_value, load_class, safe_store
 from .data import AnjanaDataConfig
 
 
-class _AnjanaModelInitMixin:
+class AnjanaModelInitMixin:
     """Reusable initialization behavior for ANJANA model configs."""
 
     # Declared for static analyzers; concrete dataclass provides these fields.
@@ -24,7 +24,7 @@ class _AnjanaModelInitMixin:
 
 
 @dataclass(eq=False, kw_only=True)
-class AnjanaModelConfig(_AnjanaModelInitMixin, ModelConfig):
+class AnjanaModelConfig(AnjanaModelInitMixin, ModelConfig):
     """ANJANA-aware model config for data anonymization scoring."""
 
     data: Union[AnjanaDataConfig, None] = None

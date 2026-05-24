@@ -8,6 +8,7 @@ import logging
 import warnings
 import hashlib
 import time
+import inspect
 from dataclasses import dataclass, field
 from typing import List, Union, Literal, Any, Mapping
 from omegaconf import DictConfig, ListConfig, OmegaConf
@@ -26,7 +27,7 @@ try:
     from ..data import FairlearnDataConfig
 except ImportError:  # pragma: no cover
     FairlearnDataConfig = None
-from ..model.defend import DefensePipelineConfig
+from ..model.defense.base import DefensePipelineConfig
 from ..attack import AttackConfig
 from ..detector import DetectorConfig
 from ..score import ScorerDictConfig
@@ -46,8 +47,11 @@ from ..score.base import coerce_scorer_config, _DataScorerMarker, _AttackProfile
 from ..data.sample import BaseSampler, KFoldSampler, ShuffleSampler
 from ..plugins.base import HookBundle, compose_hook_plugins
 from .canon import (
+    CANONICAL_EXPERIMENT_PIPELINE_STAGES,
     CANONICAL_EXPERIMENT_TIMES,
     CANONICAL_EXPERIMENT_CACHE_STAGES,
+    CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_PREFIX,
+    CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_VERSION,
     build_experiment_hook_bundle,
     build_experiment_hook_graph,
     build_experiment_stage_cache_key,
@@ -303,7 +307,12 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
     params: dict[str, Any] = field(default_factory=dict)
     hook_plugins: list[Any] = field(default_factory=list)
     hook_bundles: list[Any] = field(default_factory=list)
+    dvc_plugin: Any = None
     cache_enabled: bool = True
+
+    RUNTIME_STATE_VERSION = CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_VERSION
+    PIPELINE_STAGE_ORDER = CANONICAL_EXPERIMENT_PIPELINE_STAGES
+    HASH_EXCLUDE_FIELDS = ConfigBase.HASH_EXCLUDE_FIELDS | {"dvc_plugin"}
 
     def _has_explicit_score_mode(self) -> bool:
         if not hasattr(self, "score_mode"):
@@ -722,9 +731,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         if fairness_base is None:
             return merged
 
-        from ..plugins.fairlearn.score import FairlearnScoreDictConfig
+        from ..plugins.fairlearn.score import FairlearnScorerDictConfig
 
-        return FairlearnScoreDictConfig(
+        return FairlearnScorerDictConfig(
             scorers=merged.scorers,
             group_scorers=dict(getattr(fairness_base, "group_scorers", {}) or {}),
             group_reduction=getattr(
@@ -852,7 +861,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
             # Scoped dict: keys are component names produced by Hydra @ package syntax
             # or by passing {"data": scorer, "model": scorer, ...} directly.
-            _SCOPE_KEYS = {"data", "model", "attack", "detector", "experiment"}
+            _SCOPE_KEYS = ("data", "model", "attack", "detector", "experiment")
             if any(k in _SCOPE_KEYS for k in plain):
                 for scope in _SCOPE_KEYS:
                     if scope in plain:
@@ -1226,6 +1235,51 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             FileConfig,
         ), "file must be an instance of FileConfig"
 
+    def compose_components(self, **kwargs: Any) -> "ExperimentConfig":
+        """Apply native component overrides and re-compose experiment runtime state.
+
+        Supported keys include data/model/attack/detector/score/files/defense and
+        hook-oriented keys (hook_plugins/hook_bundles).
+        """
+        supported = {
+            "data",
+            "model",
+            "attack",
+            "detector",
+            "score",
+            "files",
+            "defense",
+            "hook_plugins",
+            "hook_bundles",
+            "evaluation_mode",
+            "score_mode",
+            "cache_enabled",
+        }
+        unknown = sorted(set(kwargs) - supported)
+        if unknown:
+            raise ValueError(
+                f"Unsupported compose_components keys: {unknown}. Supported keys: {sorted(supported)}",
+            )
+
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+        ensure_experiment_runtime_contract(self)
+        self._initialize_data_and_classifier()
+        self._validate_mode_configuration()
+        self._initialize_defense()
+        self._coerce_model()
+        self._specialize_model_for_data()
+        self._initialize_attack_chain()
+        self._initialize_detector()
+        self._initialize_files()
+        self._initialize_component_scorers()
+        self._validate_scorer_scope_configuration()
+        self._initialize_hook_orchestration()
+        self.params = build_experiment_params_manifest(self)
+        self._runtime_cache = self._load_runtime_cache()
+        return self
+
     def __post_init__(self) -> None:
         ensure_experiment_runtime_contract(self)
         if not hasattr(self, "_target_") or self._target_ is None:
@@ -1272,7 +1326,10 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
     def _initialize_hook_orchestration(self) -> None:
         """Compose canonical and user-provided hook plugins/bundles."""
+        from .dvc import build_dvc_experiment_plugin_hooks
+
         canonical_bundle = build_experiment_hook_bundle()
+        dvc_first_hooks, dvc_last_hooks = build_dvc_experiment_plugin_hooks(self.dvc_plugin)
         user_bundles: list[HookBundle] = []
         for bundle in coerce_to_list(self.hook_bundles):
             if isinstance(bundle, HookBundle):
@@ -1285,9 +1342,11 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         self.outputs.setdefault("hooks", {})
         self.outputs["hooks"]["graph"] = build_experiment_hook_graph()
         self._composed_hook_plugins = compose_hook_plugins(
+            dvc_first_hooks,
             canonical_bundle,
             user_bundles,
             self.hook_plugins,
+            dvc_last_hooks,
         )
 
     def _run_experiment_stage_hooks(
@@ -1342,6 +1401,29 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             "event": event,
         }
 
+    def _dvc_experiment_plugin_hook(
+        self,
+        *,
+        dvc_plugin: Any,
+        plugin_position: str,
+        component: str,
+        stage: str,
+        event: str,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Delegate optional DVCExperimentPlugin hook handling to dvc helpers."""
+        from .dvc import run_dvc_experiment_plugin_hook
+
+        return run_dvc_experiment_plugin_hook(
+            self,
+            dvc_plugin=dvc_plugin,
+            plugin_position=plugin_position,
+            component=component,
+            stage=stage,
+            event=event,
+            **kwargs,
+        )
+
     def _cache_file_path(self) -> str | None:
         if not self.cache_enabled:
             return None
@@ -1352,6 +1434,119 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         if params_path.suffix.lower() in {".yaml", ".yml"}:
             return params_path.with_name(f"{params_path.stem}.runtime_cache.pkl").as_posix()
         return params_path.with_suffix(".runtime_cache.pkl").as_posix()
+
+    @staticmethod
+    def _extract_schema_major(version: str) -> int:
+        token = str(version).strip()
+        if not token.startswith(CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_PREFIX):
+            raise ValueError(
+                "Unsupported experiment runtime schema version "
+                f"'{version}'. Expected prefix '{CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_PREFIX}'.",
+            )
+        suffix = token[len(CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_PREFIX) :]
+        if suffix == "" or not suffix.isdigit():
+            raise ValueError(
+                f"Malformed experiment runtime schema version '{version}'.",
+            )
+        return int(suffix)
+
+    def _runtime_state_file_path(self, file_dict: Mapping[str, Any]) -> str | None:
+        params_file = file_dict.get("params_file")
+        if params_file in [None, ""]:
+            return None
+        return str(self._resolve_yaml_write_path(str(params_file)))
+
+    def _build_runtime_state_payload(self, file_dict: Mapping[str, Any]) -> dict[str, Any]:
+        hook_outputs = dict(self.outputs.get("hooks", {}) or {})
+        cache_outputs = dict(self.outputs.get("cache", {}) or {})
+        cache_outputs.setdefault("path", self._cache_file_path())
+        cache_outputs["enabled"] = bool(self.cache_enabled)
+        cache_outputs["hits_count"] = len(cache_outputs.get("hits", []) or [])
+        cache_outputs["writes_count"] = len(cache_outputs.get("writes", []) or [])
+
+        experiment_payload = self._sanitize_runtime_instantiation_payload(
+            self.to_dict(for_hash=True),
+        )
+        files_payload = experiment_payload.get("files")
+        if isinstance(files_payload, dict):
+            files_payload.pop("handler", None)
+
+        return {
+            "schema_version": self.RUNTIME_STATE_VERSION,
+            "experiment": experiment_payload,
+            "params": build_experiment_params_manifest(self),
+            "runtime": {
+                "times": dict(self.times or {}),
+                "outputs": {
+                    "files": dict(file_dict),
+                    "hooks": hook_outputs,
+                    "cache": cache_outputs,
+                    "scores": dict(self.score_dict or {}),
+                },
+            },
+        }
+
+    def _persist_runtime_state(self, file_dict: Mapping[str, Any]) -> None:
+        runtime_state_path = self._runtime_state_file_path(file_dict)
+        if runtime_state_path is None:
+            return
+        payload = self._build_runtime_state_payload(file_dict)
+        path = Path(runtime_state_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            yaml.safe_dump(payload, sort_keys=False),
+            encoding="utf-8",
+        )
+        self.outputs.setdefault("files", {})["params_file"] = path.as_posix()
+
+    @staticmethod
+    def _sanitize_runtime_instantiation_payload(payload: Any) -> Any:
+        if isinstance(payload, list):
+            return [
+                ExperimentConfig._sanitize_runtime_instantiation_payload(item)
+                for item in payload
+            ]
+
+        if not isinstance(payload, dict):
+            return payload
+
+        sanitized = {
+            key: ExperimentConfig._sanitize_runtime_instantiation_payload(value)
+            for key, value in payload.items()
+        }
+        target = sanitized.get("_target_")
+        if not isinstance(target, str):
+            return sanitized
+
+        try:
+            target_cls = load_class(target)
+            init_sig = inspect.signature(target_cls.__init__)
+        except Exception:
+            return sanitized
+
+        params = init_sig.parameters
+        accepts_var_kwargs = any(
+            parameter.kind == inspect.Parameter.VAR_KEYWORD
+            for parameter in params.values()
+        )
+        if accepts_var_kwargs:
+            return sanitized
+
+        allowed = {
+            name
+            for name, parameter in params.items()
+            if name != "self"
+            and parameter.kind
+            in {
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                inspect.Parameter.KEYWORD_ONLY,
+            }
+        }
+        filtered = {"_target_": target}
+        for key, value in sanitized.items():
+            if key == "_target_" or key in allowed:
+                filtered[key] = value
+        return filtered
 
     def _load_runtime_cache(self) -> dict[str, Any]:
         if not self.cache_enabled:
@@ -1573,6 +1768,13 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         self._propagate_score_mode()
 
         if self.model:
+            if self.defense is not None:
+                self._run_experiment_stage_hooks(
+                    "before",
+                    "apply_fit_defense",
+                    component="defense",
+                    run_idx=run_idx,
+                )
             self._run_experiment_stage_hooks(
                 "before",
                 "train",
@@ -1640,6 +1842,49 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     run_idx=run_idx,
                     cache_hit=False,
                 )
+            if self.defense is not None:
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "apply_fit_defense",
+                    component="defense",
+                    run_idx=run_idx,
+                )
+                self._run_experiment_stage_hooks(
+                    "before",
+                    "apply_predict_defense",
+                    component="defense",
+                    run_idx=run_idx,
+                )
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "apply_predict_defense",
+                    component="defense",
+                    run_idx=run_idx,
+                )
+            self._run_experiment_stage_hooks(
+                "before",
+                "model_score",
+                component="model",
+                run_idx=run_idx,
+            )
+            self._run_experiment_stage_hooks(
+                "after",
+                "model_score",
+                component="model",
+                run_idx=run_idx,
+            )
+            self._run_experiment_stage_hooks(
+                "before",
+                "model_persist",
+                component="model",
+                run_idx=run_idx,
+            )
+            self._run_experiment_stage_hooks(
+                "after",
+                "model_persist",
+                component="model",
+                run_idx=run_idx,
+            )
         else:
             logger.info("No model config provided, skipping model training.")
 
@@ -1653,6 +1898,12 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 for attack_cfg in attack_chain:
                     attack_component = (
                         f"attack:{attack_cfg.alias}" if multi_attack else "attack"
+                    )
+                    self._run_experiment_stage_hooks(
+                        "before",
+                        "generation",
+                        component=attack_component,
+                        run_idx=run_idx,
                     )
                     self._run_experiment_stage_hooks(
                         "before",
@@ -1679,6 +1930,37 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                             component=attack_component,
                             run_idx=run_idx,
                             cache_hit=True,
+                        )
+                        self._run_experiment_stage_hooks(
+                            "after",
+                            "generation",
+                            component=attack_component,
+                            run_idx=run_idx,
+                            cache_hit=True,
+                        )
+                        self._run_experiment_stage_hooks(
+                            "before",
+                            "attack_score",
+                            component=attack_component,
+                            run_idx=run_idx,
+                        )
+                        self._run_experiment_stage_hooks(
+                            "after",
+                            "attack_score",
+                            component=attack_component,
+                            run_idx=run_idx,
+                        )
+                        self._run_experiment_stage_hooks(
+                            "before",
+                            "attack_persist",
+                            component=attack_component,
+                            run_idx=run_idx,
+                        )
+                        self._run_experiment_stage_hooks(
+                            "after",
+                            "attack_persist",
+                            component=attack_component,
+                            run_idx=run_idx,
                         )
                         continue
                     run_outputs = self._build_attack_file_outputs_for_run(
@@ -1724,6 +2006,37 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                         run_idx=run_idx,
                         cache_hit=False,
                     )
+                    self._run_experiment_stage_hooks(
+                        "after",
+                        "generation",
+                        component=attack_component,
+                        run_idx=run_idx,
+                        cache_hit=False,
+                    )
+                    self._run_experiment_stage_hooks(
+                        "before",
+                        "attack_score",
+                        component=attack_component,
+                        run_idx=run_idx,
+                    )
+                    self._run_experiment_stage_hooks(
+                        "after",
+                        "attack_score",
+                        component=attack_component,
+                        run_idx=run_idx,
+                    )
+                    self._run_experiment_stage_hooks(
+                        "before",
+                        "attack_persist",
+                        component=attack_component,
+                        run_idx=run_idx,
+                    )
+                    self._run_experiment_stage_hooks(
+                        "after",
+                        "attack_persist",
+                        component=attack_component,
+                        run_idx=run_idx,
+                    )
 
                 self.attack = attack_chain[0]
             except ValueError as e:
@@ -1737,6 +2050,18 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 raise ValueError(
                     "Detector phase requires an attack configuration/output.",
                 )
+            self._run_experiment_stage_hooks(
+                "before",
+                "detector-train",
+                component="detector",
+                run_idx=run_idx,
+            )
+            self._run_experiment_stage_hooks(
+                "before",
+                "detector-defense",
+                component="detector",
+                run_idx=run_idx,
+            )
             self._run_experiment_stage_hooks(
                 "before",
                 "defense",
@@ -1754,6 +2079,20 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 self._run_experiment_stage_hooks(
                     "after",
                     "defense",
+                    component="detector",
+                    run_idx=run_idx,
+                    cache_hit=True,
+                )
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "detector-defense",
+                    component="detector",
+                    run_idx=run_idx,
+                    cache_hit=True,
+                )
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "detector-train",
                     component="detector",
                     run_idx=run_idx,
                     cache_hit=True,
@@ -1783,6 +2122,44 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     run_idx=run_idx,
                     cache_hit=False,
                 )
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "detector-defense",
+                    component="detector",
+                    run_idx=run_idx,
+                    cache_hit=False,
+                )
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "detector-train",
+                    component="detector",
+                    run_idx=run_idx,
+                    cache_hit=False,
+                )
+            self._run_experiment_stage_hooks(
+                "before",
+                "detector_score",
+                component="detector",
+                run_idx=run_idx,
+            )
+            self._run_experiment_stage_hooks(
+                "after",
+                "detector_score",
+                component="detector",
+                run_idx=run_idx,
+            )
+            self._run_experiment_stage_hooks(
+                "before",
+                "detector_persist",
+                component="detector",
+                run_idx=run_idx,
+            )
+            self._run_experiment_stage_hooks(
+                "after",
+                "detector_persist",
+                component="detector",
+                run_idx=run_idx,
+            )
         else:
             logger.info("No detector config provided, skipping detector phase.")
 
@@ -1869,6 +2246,48 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             except (TypeError, ValueError):
                 aggregated[key] = values[-1]
         return aggregated
+
+    @staticmethod
+    def from_yaml(filepath: str) -> "ExperimentConfig":
+        resolved_path = ConfigBase._resolve_yaml_read_path(filepath)
+        payload = OmegaConf.to_container(OmegaConf.load(resolved_path), resolve=True)
+        if not isinstance(payload, dict):
+            raise TypeError(
+                f"Loaded config is not a dictionary from {resolved_path}",
+            )
+
+        schema_version = payload.get("schema_version")
+        if schema_version is None:
+            instance = instantiate(payload)
+            if not isinstance(instance, ExperimentConfig):
+                raise TypeError(
+                    f"Object loaded from {resolved_path} is not an ExperimentConfig: {type(instance)}",
+                )
+            return instance
+
+        major = ExperimentConfig._extract_schema_major(str(schema_version))
+        current_major = ExperimentConfig._extract_schema_major(
+            CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_VERSION,
+        )
+        if major > current_major:
+            raise ValueError(
+                "Cannot load future experiment runtime schema "
+                f"'{schema_version}' with runtime expecting up to v{current_major}.",
+            )
+
+        experiment_payload = payload.get("experiment")
+        if not isinstance(experiment_payload, dict):
+            raise ValueError(
+                "Experiment runtime YAML is missing required 'experiment' payload.",
+            )
+
+        instance = instantiate(experiment_payload)
+        if not isinstance(instance, ExperimentConfig):
+            raise TypeError(
+                "Runtime state payload did not instantiate ExperimentConfig; "
+                f"got {type(instance)}",
+            )
+        return instance
 
     def __call__(
         self,
@@ -2073,6 +2492,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         else:
             logger.info("No score_file specified, skipping score saving.")
         self._persist_runtime_cache()
+        self._persist_runtime_state(file_dict)
         self._run_experiment_stage_hooks("after", "persist", component="experiment")
 
         for key in CANONICAL_EXPERIMENT_TIMES:

@@ -39,7 +39,7 @@ from .data import (
     data_mutual_information_mean_score,
     data_num_classes_score,
 )
-from .score_dict import ScoreDict
+from ..artifacts import ScoreDict
 
 
 def _is_available(module_name: str) -> bool:
@@ -50,22 +50,22 @@ def _is_available(module_name: str) -> bool:
 def _load_fairlearn_score_symbols() -> bool:
     try:
         from ..plugins.fairlearn.score import (
-            DefaultFairlearnClassificationConfig,
+            DefaultFairlearnClassificationScorerDictConfig,
             DefaultFairlearnDataScorerConfig,
-            DefaultFairlearnRegressionConfig,
-            DefaultFairlearnScorerConfig,
-            FairlearnScoreDictConfig,
+            DefaultFairlearnRegressionScorerDictConfig,
+            DefaultFairlearnScorerDictConfig,
+            FairlearnScorerDictConfig,
         )
     except Exception:  # pragma: no cover
         return False
 
     globals().update(
         {
-            "DefaultFairlearnClassificationConfig": DefaultFairlearnClassificationConfig,
+            "DefaultFairlearnClassificationScorerDictConfig": DefaultFairlearnClassificationScorerDictConfig,
             "DefaultFairlearnDataScorerConfig": DefaultFairlearnDataScorerConfig,
-            "DefaultFairlearnRegressionConfig": DefaultFairlearnRegressionConfig,
-            "DefaultFairlearnScorerConfig": DefaultFairlearnScorerConfig,
-            "FairlearnScoreDictConfig": FairlearnScoreDictConfig,
+            "DefaultFairlearnRegressionScorerDictConfig": DefaultFairlearnRegressionScorerDictConfig,
+            "DefaultFairlearnScorerDictConfig": DefaultFairlearnScorerDictConfig,
+            "FairlearnScorerDictConfig": FairlearnScorerDictConfig,
         },
     )
     return True
@@ -275,11 +275,11 @@ __all__ = [
 if _is_available("fairlearn"):
     __all__.extend(
         [
-            "DefaultFairlearnScorerConfig",
-            "DefaultFairlearnClassificationConfig",
-            "DefaultFairlearnRegressionConfig",
+            "DefaultFairlearnScorerDictConfig",
+            "DefaultFairlearnClassificationScorerDictConfig",
+            "DefaultFairlearnRegressionScorerDictConfig",
             "DefaultFairlearnDataScorerConfig",
-            "FairlearnScoreDictConfig",
+            "FairlearnScorerDictConfig",
         ],
     )
 
@@ -298,11 +298,11 @@ if _is_available("lifelines"):
 
 def __getattr__(name: str):
     fairlearn_symbols = {
-        "DefaultFairlearnScorerConfig",
-        "DefaultFairlearnClassificationConfig",
-        "DefaultFairlearnRegressionConfig",
+        "DefaultFairlearnScorerDictConfig",
+        "DefaultFairlearnClassificationScorerDictConfig",
+        "DefaultFairlearnRegressionScorerDictConfig",
         "DefaultFairlearnDataScorerConfig",
-        "FairlearnScoreDictConfig",
+        "FairlearnScorerDictConfig",
     }
     anjana_symbols = {
         "DefaultAnjanaScorerConfig",

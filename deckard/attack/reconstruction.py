@@ -3,10 +3,10 @@
 from dataclasses import dataclass, field
 
 from .base import AttackConfig, AttackTypePlugin
-from .inference import _InferenceAttackMixin
+from .inference import InferenceAttackMixin
 
 
-class _ReconstructionAttackMixin(_InferenceAttackMixin):
+class ReconstructionAttackMixin(InferenceAttackMixin):
     """Reusable database reconstruction attack behavior."""
 
     def infer_database_reconstruction(self, data, attack) -> dict:
@@ -32,7 +32,7 @@ class _ReconstructionAttackMixin(_InferenceAttackMixin):
 
 
 @dataclass(eq=False, kw_only=True)
-class ReconstructionAttackConfig(_ReconstructionAttackMixin, AttackConfig):
+class ReconstructionAttackConfig(ReconstructionAttackMixin, AttackConfig):
     """Configuration for database reconstruction attacks.
 
     Initialization params
@@ -58,7 +58,7 @@ class ReconstructionAttackConfig(_ReconstructionAttackMixin, AttackConfig):
     plugins: list = field(
         default_factory=lambda: [
             AttackTypePlugin(
-                mixin_type=_ReconstructionAttackMixin,
+                mixin_type=ReconstructionAttackMixin,
                 attack_type="inference",
                 attack_subtype="reconstruction",
             ),

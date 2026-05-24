@@ -1,13 +1,8 @@
-"""Model defense defaults and public defense package exports.
-
-This package provides canonical default defense config classes while preserving
-backward compatibility with the existing defense runtime implementation in
-model.defend.
-"""
+"""Model defense defaults and public defense package exports."""
 
 from dataclasses import dataclass, field
 
-from ..defend import DefenseConfig, DefensePipelineConfig
+from .base import DefenseConfig, DefensePipelineConfig
 
 
 @dataclass(kw_only=True)

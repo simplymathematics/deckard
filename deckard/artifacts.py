@@ -42,6 +42,8 @@ class ScoreDict(dict):
     @staticmethod
     def normalize_value(value: Any) -> Any:
         """Convert runtime score values into JSON/YAML serializable values."""
+        if isinstance(value, Path):
+            return value.as_posix()
         if isinstance(value, ScoreDict):
             return {str(k): ScoreDict.normalize_value(v) for k, v in value.items()}
         if isinstance(value, dict):
@@ -168,7 +170,10 @@ class ScoreDict(dict):
 
     def dotlist_items(self, sep: str = ".") -> list[str]:
         """Return OmegaConf-style `key=value` entries."""
-        return [f"{k}={json.dumps(v)}" for k, v in self.flatten(sep=sep).items()]
+        return [
+            f"{k}={json.dumps(ScoreDict.normalize_value(v), default=str)}"
+            for k, v in self.flatten(sep=sep).items()
+        ]
 
     def to_contract_envelope(self, schema: str = "deckard.score.v1") -> dict[str, Any]:
         """Return standardized serialization envelope for persisted scores."""

@@ -6,12 +6,12 @@ from .model import (
     FairlearnModelConfig,
     FairlearnPytorchModelConfig,
 )
-from .score import DefaultFairlearnScorerConfig
+from .score import DefaultFairlearnScorerDictConfig
 
 __all__ = [
     "FairlearnDataConfig",
     "FairnessBehaviorMixin",
-    "DefaultFairlearnScorerConfig",
+    "DefaultFairlearnScorerDictConfig",
     "FairlearnDefenseConfig",
     "FairlearnModelConfig",
     "FairlearnPytorchModelConfig",

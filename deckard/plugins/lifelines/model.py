@@ -48,7 +48,7 @@ AFT_MODEL_TYPES = {
 }
 
 
-class _SurvivalModelInitMixin:
+class SurvivalModelInitMixin:
     """Reusable initialization behavior for survival model configs."""
 
     # Declared for static analyzers; concrete dataclass provides these fields.
@@ -82,7 +82,7 @@ class _SurvivalModelInitMixin:
 
 
 @dataclass(eq=False, kw_only=True)
-class SurvivalModelConfig(_SurvivalModelInitMixin, ModelConfig):
+class SurvivalModelConfig(SurvivalModelInitMixin, ModelConfig):
     """Configuration for survival analysis models using lifelines.
 
     Extends ModelConfig to support AFT (Accelerated Failure Time) survival

@@ -11,7 +11,7 @@ from matplotlib.axes import Axes
 from seaborn import barplot, catplot, heatmap, histplot, lineplot, scatterplot
 
 from ...plot.base import (
-    _PlotterMixin,
+    PlotterMixin,
     _SeabornPlotterMarker,
 )
 from ...optuna_callback import load_optuna_studies_dataframe
@@ -35,7 +35,7 @@ supported_seaborn_plotters = list(seaborn_plotter_dict.keys())
 
 
 @dataclass(eq=True)
-class _SeabornPlotterMixin(_PlotterMixin):
+class SeabornPlotterMixin(PlotterMixin):
     """Seaborn-specific plotter handler for matplotlib-based rendering.
 
     Initialization parameters

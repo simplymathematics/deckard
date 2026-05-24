@@ -7,9 +7,9 @@ import pandas as pd
 from art.config import ART_NUMPY_DTYPE
 from sklearn.base import BaseEstimator
 
-from ...data._mixins import RuntimePayload, _SensitiveColumnsMixin
+from ...data._mixins import RuntimePayload, SensitiveColumnsMixin
 from ...model.base import ModelConfig, logger
-from ...model.defend import DefenseConfig
+from ...model.defense.base import DefenseConfig
 from ...pytorch.model import PytorchModelConfig
 from ...utils import (
     is_default_config_value,
@@ -39,14 +39,14 @@ class FairnessBehaviorMixin:
             or getattr(self, "scorer", None) is None
         ):
             from .score import (
-                DefaultFairlearnClassificationConfig,
-                DefaultFairlearnRegressionConfig,
+                DefaultFairlearnClassificationScorerDictConfig,
+                DefaultFairlearnRegressionScorerDictConfig,
             )
 
             if hasattr(self, "classifier") and self.classifier is False:
-                self.scorer = DefaultFairlearnRegressionConfig()
+                self.scorer = DefaultFairlearnRegressionScorerDictConfig()
             else:
-                self.scorer = DefaultFairlearnClassificationConfig()
+                self.scorer = DefaultFairlearnClassificationScorerDictConfig()
 
         super_post_init = getattr(super(), "__post_init__", None)
         if callable(super_post_init):
@@ -114,7 +114,7 @@ class FairnessBehaviorMixin:
 
 @dataclass(eq=False, kw_only=True)
 class FairlearnModelConfig(
-    _SensitiveColumnsMixin,
+    SensitiveColumnsMixin,
     FairnessBehaviorMixin,
     ModelConfig,
 ):
@@ -130,7 +130,7 @@ class FairlearnModelConfig(
 
 @dataclass(eq=False, kw_only=True)
 class FairlearnPytorchModelConfig(
-    _SensitiveColumnsMixin,
+    SensitiveColumnsMixin,
     FairnessBehaviorMixin,
     PytorchModelConfig,
 ):
@@ -171,7 +171,7 @@ class BinaryLogitAdapter:
 
 
 @dataclass(eq=False, kw_only=True)
-class FairlearnDefenseConfig(_SensitiveColumnsMixin, DefenseConfig):
+class FairlearnDefenseConfig(SensitiveColumnsMixin, DefenseConfig):
     """Fairness-aware defense config that inherits DefenseConfig."""
 
     data: Union[FairlearnDataConfig, None] = None
@@ -358,7 +358,7 @@ class FairlearnDefenseConfig(_SensitiveColumnsMixin, DefenseConfig):
 
 
 __all__ = [
-    "_SensitiveColumnsMixin",
+    "SensitiveColumnsMixin",
     "FairnessBehaviorMixin",
     "FairlearnModelConfig",
     "FairlearnPytorchModelConfig",

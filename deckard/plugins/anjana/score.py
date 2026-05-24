@@ -6,14 +6,15 @@ from typing import Any, cast
 import pandas as pd
 
 from ...data import DataConfig
-from ...data.canon import normalize_data_score_mode, resolve_data_split_payload
+from ...data.canon import normalize_data_score_mode
+from ...orchestration import resolve_data_split_payload
 from ...plugins import HookPlugin
 from ...plugins.base import HookBundle
 from ...score.base import (
     ScorerConfig,
     ScorerDictConfig,
     _DataScorerMarker,
-    _TaskAwareScorerMixin,
+    TaskAwareScorerMixin,
     safe_store,
 )
 from ...utils import is_default_config_value, load_class
@@ -24,7 +25,7 @@ __all__ = [
     "anjana_k_anonymity_score",
     "anjana_l_diversity_score",
     "anjana_t_closeness_score",
-    "_AnjanaScorerMixin",
+    "AnjanaScorerMixin",
     "DefaultAnjanaScorerConfig",
     "DefaultAnjanaDataScorerConfig",
     "DefaultAnjanaModelScorerConfig",
@@ -345,7 +346,7 @@ def anjana_t_closeness_score(
     return float(pycanon_anonymity.t_closeness(frame, quasi_ident, [sens_att]))
 
 
-class _AnjanaScorerMixin(_DataScorerMarker):
+class AnjanaScorerMixin(_DataScorerMarker):
     """Marker mixin for ANJANA privacy scorers.
 
     Inherits :class:`_DataScorerMarker` so that
@@ -357,7 +358,7 @@ class _AnjanaScorerMixin(_DataScorerMarker):
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultAnjanaScorerConfig(_AnjanaScorerMixin, ScorerDictConfig):
+class DefaultAnjanaScorerConfig(AnjanaScorerMixin, ScorerDictConfig):
     """Default privacy scorer set for ANJANA anonymization analysis.
 
     Initialization parameters
@@ -419,7 +420,7 @@ class DefaultAnjanaScorerConfig(_AnjanaScorerMixin, ScorerDictConfig):
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultAnjanaDataScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
+class DefaultAnjanaDataScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
     """Default data-analysis scorers plus ANJANA privacy scorers.
 
     Initialization parameters

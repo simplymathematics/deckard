@@ -5,16 +5,16 @@ from typing import Any
 
 from deckard.plugins.defense import DefenseTypePlugin
 
-from ..utils import safe_store
-from .defend import (
+from ...utils import safe_store
+from .base import (
     DefensePipelineConfig,
-    _DefenseMixin,
+    DefenseMixin,
     _is_art_torch_wrapper,
     _is_torch_model_instance,
 )
 
 
-class _TrainerDefenseMixin(_DefenseMixin):
+class TrainerDefenseMixin(DefenseMixin):
     """Reusable trainer defense behavior (adversarial training)."""
 
     def __call__(
@@ -64,7 +64,7 @@ class _TrainerDefenseMixin(_DefenseMixin):
 
 
 @dataclass(eq=False, kw_only=True)
-class TrainerDefenseConfig(_TrainerDefenseMixin, DefensePipelineConfig):
+class TrainerDefenseConfig(TrainerDefenseMixin, DefensePipelineConfig):
     """Configuration for trainer-based defenses.
 
     Registers trainer defense behavior and plugin metadata used during defense
@@ -74,14 +74,13 @@ class TrainerDefenseConfig(_TrainerDefenseMixin, DefensePipelineConfig):
     plugins: list = field(
         default_factory=lambda: [
             DefenseTypePlugin(
-                mixin_type=_TrainerDefenseMixin,
+                mixin_type=TrainerDefenseMixin,
                 defense_type="trainer",
             ),
         ],
     )
 
 
-# Register trainer defense config
 safe_store(
     group="model",
     name="trainer_defense",

@@ -18,7 +18,7 @@ from typing import Any, Dict, Optional, Protocol, Union
 import numpy as np
 import pandas as pd
 
-from .canon import normalize_runtime_split_mode, resolve_sensitive_split_payload
+from ..orchestration import normalize_runtime_split_mode, resolve_sensitive_split_payload
 
 
 class RuntimePayload(Protocol):
@@ -30,7 +30,7 @@ class RuntimePayload(Protocol):
 
 
 @dataclass(eq=False, kw_only=True)
-class _SensitiveColumnsMixin:
+class SensitiveColumnsMixin:
     """Framework-independent sensitive-column behavior.
 
     Provides field declarations and helper methods for resolving and
@@ -198,6 +198,7 @@ class _SensitiveColumnsMixin:
         return model_obj
 
     def get_model(self):
+        """Return the fitted model object, unwrapping wrapper attributes when needed."""
         if getattr(self, "_model", None) is None:
             raise ValueError("Model is not fitted yet.")
         if hasattr(self._model, "model"):
@@ -298,6 +299,6 @@ class _SensitiveColumnsMixin:
 
 __all__ = [
     "RuntimePayload",
-    "_SensitiveColumnsMixin",
+    "SensitiveColumnsMixin",
     "DataLoaderMixin",
 ]

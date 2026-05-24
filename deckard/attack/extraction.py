@@ -9,12 +9,12 @@ import numpy as np
 from ..score.base import DefaultClassifierConfig
 
 from .base import AttackConfig, AttackTypePlugin
-from .poisoning import _PoisoningAttackMixin
+from .poisoning import PoisoningAttackMixin
 
 logger = logging.getLogger(__name__)
 
 
-class _ExtractionAttackMixin(_PoisoningAttackMixin):
+class ExtractionAttackMixin(PoisoningAttackMixin):
     """Reusable extraction attack behavior (model stealing)."""
 
     def __call__(
@@ -159,7 +159,7 @@ class _ExtractionAttackMixin(_PoisoningAttackMixin):
 
 
 @dataclass(eq=False, kw_only=True)
-class ExtractionAttackConfig(_ExtractionAttackMixin, AttackConfig):
+class ExtractionAttackConfig(ExtractionAttackMixin, AttackConfig):
     """Configuration for model extraction attacks (model stealing).
 
     Initialization params
@@ -186,7 +186,7 @@ class ExtractionAttackConfig(_ExtractionAttackMixin, AttackConfig):
     plugins: list = field(
         default_factory=lambda: [
             AttackTypePlugin(
-                mixin_type=_ExtractionAttackMixin,
+                mixin_type=ExtractionAttackMixin,
                 attack_type="extraction",
             ),
         ],

@@ -12,7 +12,7 @@ from ..score.base import (
     DefaultModelScorerConfig,
     ScorerConfig,
     ScorerDictConfig,
-    _TaskAwareScorerMixin,
+    TaskAwareScorerMixin,
     coerce_scorer_config,
 )
 from ..utils import (
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(eq=False, kw_only=True)
-class DetectorScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
+class DetectorScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
     """Task-aware scorer config for detector outputs."""
 
     classifier: Union[bool, str] = True

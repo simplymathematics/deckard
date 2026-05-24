@@ -2,18 +2,27 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, ClassVar, Final, Mapping, TypedDict
+from typing import Any, Final, Mapping, TypedDict
 
-from ..plugins.base import OrchestratorBase, RuntimeBase
 from ..artifacts import ScoreDict
-
-
-CANONICAL_DATA_METHODS: Final[tuple[str, ...]] = (
-    "load",
-    "sample",
-    "pipeline",
+from ..orchestration import (
+    CANONICAL_RUNTIME_METHODS,
+    DEFAULT_SCORE_MODE,
+    DEFAULT_SCORE_STAGE,
+    EVENT_ALIASES as _EVENT_ALIASES,
+    MODE_ALIASES as _MODE_ALIASES,
+    RUNTIME_SPLIT_ALIASES as _RUNTIME_SPLIT_ALIASES,
+    STAGE_ALIASES as _STAGE_ALIASES,
+    DataRuntimeStateMixin as DataPluginRuntimeMixin,
+    ScoreOrchestratorMixin as ScoringOrchestratorMixin,
+    normalize_runtime_split_mode as _normalize_runtime_split_mode,
+    resolve_data_split_payload as _resolve_data_split_payload,
+    resolve_sensitive_split_payload as _resolve_sensitive_split_payload,
+    stage_hook_token as _stage_hook_token,
 )
+
+
+CANONICAL_DATA_METHODS: Final[tuple[str, ...]] = CANONICAL_RUNTIME_METHODS
 
 CANONICAL_DATA_STAGES: Final[tuple[str, ...]] = (
     "pre-load",
@@ -62,8 +71,8 @@ CANONICAL_DATA_RUNTIME_FIELDS: Final[tuple[str, ...]] = (
     "val_n",
 )
 
-DEFAULT_DATA_SCORE_STAGE: Final[str] = "post-pipeline"
-DEFAULT_DATA_SCORE_MODE: Final[str] = "test"
+DEFAULT_DATA_SCORE_STAGE: Final[str] = DEFAULT_SCORE_STAGE
+DEFAULT_DATA_SCORE_MODE: Final[str] = DEFAULT_SCORE_MODE
 
 
 class BaseFiles(TypedDict, total=False):
@@ -95,72 +104,6 @@ class DataTimes(TypedDict, total=False):
     pipeline_transform_time: float | None
     pipeline_y_fit_time: float | None
     pipeline_y_transform_time: float | None
-
-
-_STAGE_ALIASES: Final[dict[str, str]] = {
-    "pre-load": "pre-load",
-    "preload": "pre-load",
-    "before-load": "pre-load",
-    "before_load": "pre-load",
-    "pre-sample": "pre-sample",
-    "pre_sample": "pre-sample",
-    "presample": "pre-sample",
-    "post-sample": "post-sample",
-    "post_sample": "post-sample",
-    "postsample": "post-sample",
-    "post-pipeline": "post-pipeline",
-    "post_pipeline": "post-pipeline",
-    "postpipeline": "post-pipeline",
-}
-
-_MODE_ALIASES: Final[dict[str, str]] = {
-    "train": "train",
-    "training": "train",
-    "test": "test",
-    "eval": "test",
-    "evaluation": "test",
-    "val": "val",
-    "valid": "val",
-    "validation": "val",
-    "all": "all",
-}
-
-_EVENT_ALIASES: Final[dict[str, str]] = {
-    "pre": "before",
-    "before": "before",
-    "post": "after",
-    "after": "after",
-}
-
-_RUNTIME_SPLIT_ALIASES: Final[dict[str, str]] = {
-    "train": "train",
-    "test": "test",
-    "val": "val",
-    "all": "all",
-    "attack": "test",
-    "attack-val": "val",
-    "pre-sample": "all",
-    "post-pipeline": "test",
-    "post-sample": "test",
-    "pre-load": "test",
-    "auto": "test",
-    "benign": "test",
-    "adversarial": "test",
-}
-
-_SPLIT_DATA_ATTRS: Final[dict[str, tuple[str, str]]] = {
-    "train": ("y_train", "X_train"),
-    "test": ("y_test", "X_test"),
-    "val": ("y_val", "X_val"),
-    "all": ("_y", "_X"),
-}
-
-_SPLIT_SENSITIVE_ATTRS: Final[dict[str, str]] = {
-    "train": "_sensitive_train",
-    "test": "_sensitive_test",
-    "val": "_sensitive_val",
-    "all": "_sensitive_all",
-}
 
 
 def ensure_canonical_times(times: Mapping[str, Any] | None = None) -> dict[str, Any]:
@@ -230,12 +173,7 @@ def ensure_data_runtime_contract(target: Any) -> Any:
 
 def stage_hook_token(stage: str) -> str:
     """Convert canonical stage names into hook-safe tokens."""
-    key = str(stage).strip().lower().replace(" ", "-")
-    if key in _STAGE_ALIASES:
-        return _STAGE_ALIASES[key].replace("-", "_")
-    raise ValueError(
-        f"Unknown data hook stage '{stage}'. Must be one of {list(CANONICAL_DATA_STAGES)}",
-    )
+    return _stage_hook_token(stage)
 
 
 def normalize_data_score_mode(mode: str) -> str:
@@ -260,21 +198,7 @@ def normalize_runtime_split_mode(
     default: str = "test",
 ) -> str:
     """Normalize stage/split aliases to canonical runtime split tokens."""
-    token = str(mode or default).strip().lower()
-    alias_map = dict(_RUNTIME_SPLIT_ALIASES)
-    if aliases:
-        alias_map.update(
-            {
-                str(key).strip().lower(): str(value).strip().lower()
-                for key, value in aliases.items()
-            },
-        )
-    resolved = alias_map.get(token, token)
-    if resolved not in _SPLIT_DATA_ATTRS:
-        raise ValueError(
-            f"Unknown runtime split mode '{mode}'. Expected one of {sorted(_SPLIT_DATA_ATTRS)}",
-        )
-    return resolved
+    return _normalize_runtime_split_mode(mode, aliases=aliases, default=default)
 
 
 def resolve_data_split_payload(
@@ -285,18 +209,12 @@ def resolve_data_split_payload(
     fallback_to_all: bool = False,
 ) -> tuple[Any, Any]:
     """Resolve ``(y, X)`` payload for a runtime split mode from a data object."""
-    if data is None:
-        return None, None
-    resolved_mode = normalize_runtime_split_mode(mode, aliases=aliases)
-    y_attr, x_attr = _SPLIT_DATA_ATTRS[resolved_mode]
-    y = getattr(data, y_attr, None)
-    X = getattr(data, x_attr, None)
-    if fallback_to_all and resolved_mode != "all":
-        if y is None:
-            y = getattr(data, "_y", None)
-        if X is None:
-            X = getattr(data, "_X", None)
-    return y, X
+    return _resolve_data_split_payload(
+        data,
+        mode,
+        aliases=aliases,
+        fallback_to_all=fallback_to_all,
+    )
 
 
 def resolve_sensitive_split_payload(
@@ -307,83 +225,12 @@ def resolve_sensitive_split_payload(
     fallback_to_all: bool = False,
 ) -> Any:
     """Resolve sensitive-feature payload for a runtime split mode."""
-    if data is None:
-        return None
-    resolved_mode = normalize_runtime_split_mode(mode, aliases=aliases)
-    sensitive_attr = _SPLIT_SENSITIVE_ATTRS[resolved_mode]
-    sensitive = getattr(data, sensitive_attr, None)
-    if sensitive is None:
-        legacy_attr = sensitive_attr.removeprefix("_")
-        sensitive = getattr(data, legacy_attr, None)
-    if sensitive is None and fallback_to_all and resolved_mode != "all":
-        all_attr = _SPLIT_SENSITIVE_ATTRS["all"]
-        sensitive = getattr(data, all_attr, None)
-        if sensitive is None:
-            sensitive = getattr(data, all_attr.removeprefix("_"), None)
-    return sensitive
-
-
-@dataclass(eq=False, kw_only=True)
-class DataPluginRuntimeMixin(RuntimeBase):
-    """Reusable plugin orchestration and runtime-state copy behavior."""
-
-    def _copy_runtime_state_to(self, target: Any) -> None:
-        runtime_fields = [
-            "score_dict",
-            "data_load_time",
-            "data_sample_time",
-            "_X",
-            "_y",
-            "train_indices",
-            "test_indices",
-            "val_indices",
-            "X_train",
-            "y_train",
-            "X_test",
-            "y_test",
-            "X_val",
-            "y_val",
-            "train_n",
-            "test_n",
-            "val_n",
-            "pipeline_fit_n",
-            "pipeline_transform_n",
-            "pipeline_fit_time",
-            "pipeline_transform_time",
-            "pipeline_y_fit_n",
-            "pipeline_y_fit_time",
-            "pipeline_y_transform_n",
-            "pipeline_y_transform_time",
-        ]
-        for attr in runtime_fields:
-            if hasattr(self, attr):
-                setattr(target, attr, getattr(self, attr, None))
-
-@dataclass(eq=False, kw_only=True)
-class ScoringOrchestratorMixin(OrchestratorBase, DataPluginRuntimeMixin):
-    """Backward-compatible alias wrapper for centralized plugin orchestration."""
-
-    default_stage: Final[str] = DEFAULT_DATA_SCORE_STAGE
-    stage_aliases: ClassVar[dict[str, str]] = _STAGE_ALIASES
-    mode_aliases: ClassVar[dict[str, str]] = _MODE_ALIASES
-    score_stage_aliases: ClassVar[dict[str, str]] = _STAGE_ALIASES
-    score_stage_order: ClassVar[tuple[str, ...]] = tuple(
-        stage for stage in CANONICAL_DATA_STAGES if stage not in {"all", "auto"}
+    return _resolve_sensitive_split_payload(
+        data,
+        mode,
+        aliases=aliases,
+        fallback_to_all=fallback_to_all,
     )
-    score_event_aliases: ClassVar[dict[str, str]] = _EVENT_ALIASES
-    score_stage_to_hook: ClassVar[dict[str, str]] = {
-        "pre-load": "before_load_data",
-        "pre-sample": "before_sample",
-        "post-sample": "after_sample",
-        "post-pipeline": "after_pipeline",
-    }
-    _score_orchestration_active: bool = True
-
-    def _normalize_score_mode(self, mode: str) -> str:
-        return normalize_data_score_mode(mode)
-
-    def _stage_hook_token(self, stage: str) -> str:
-        return stage_hook_token(stage)
 
 
 __all__ = [

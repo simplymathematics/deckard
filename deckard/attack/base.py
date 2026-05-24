@@ -23,7 +23,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from ..artifacts import ScoreDict
 from ..model import ModelConfig
-from ..model.defend import _get_art_symbols
+from ..model.defense.base import _get_art_symbols
 from ..score.base import (
     DefaultClassifierConfig,
     ScorerDictConfig,
@@ -133,7 +133,7 @@ supported_attacks = [
 
 
 @dataclass(eq=True)
-class _AttackMixin:
+class AttackMixin:
     """Base callable attack handler used by runtime attack context resolution.
 
     Parameters
@@ -634,26 +634,26 @@ class AttackConfig(ConfigBase):
         attack_subtype_lower = (attack_subtype or "").lower()
 
         if attack_type_lower == "evasion":
-            from .evasion import _EvasionAttackMixin
+            from .evasion import EvasionAttackMixin
 
-            mixins.append(_EvasionAttackMixin)
+            mixins.append(EvasionAttackMixin)
         elif attack_type_lower == "poisoning":
-            from .poisoning import _PoisoningAttackMixin
+            from .poisoning import PoisoningAttackMixin
 
-            mixins.append(_PoisoningAttackMixin)
+            mixins.append(PoisoningAttackMixin)
         elif attack_type_lower == "extraction":
-            from .extraction import _ExtractionAttackMixin
+            from .extraction import ExtractionAttackMixin
 
-            mixins.append(_ExtractionAttackMixin)
+            mixins.append(ExtractionAttackMixin)
         elif attack_type_lower == "inference":
             if attack_subtype_lower == "reconstruction":
-                from .reconstruction import _ReconstructionAttackMixin
+                from .reconstruction import ReconstructionAttackMixin
 
-                mixins.append(_ReconstructionAttackMixin)
+                mixins.append(ReconstructionAttackMixin)
             else:
-                from .inference import _InferenceAttackMixin
+                from .inference import InferenceAttackMixin
 
-                mixins.append(_InferenceAttackMixin)
+                mixins.append(InferenceAttackMixin)
 
         plugin_outputs = self._run_plugin_hook(
             "resolve_attack_mixins",
@@ -679,7 +679,7 @@ class AttackConfig(ConfigBase):
         mixins = self._resolve_runtime_attack_mixins(attack_type, attack_subtype)
         default_handler = None
         for mixin in mixins:
-            if isinstance(mixin, type) and issubclass(mixin, _AttackMixin):
+            if isinstance(mixin, type) and issubclass(mixin, AttackMixin):
                 default_handler = mixin(self)
                 break
 
@@ -693,7 +693,7 @@ class AttackConfig(ConfigBase):
         for output in hook_outputs:
             if callable(output):
                 return output
-            if isinstance(output, type) and issubclass(output, _AttackMixin):
+            if isinstance(output, type) and issubclass(output, AttackMixin):
                 return output(self)
 
         return default_handler

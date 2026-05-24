@@ -31,7 +31,7 @@ from ...score._runtime import resolve_yt_yp, series_like_to_float_dict
 from ...score.base import (
     ScorerConfig,
     ScorerDictConfig,
-    _TaskAwareScorerMixin,
+    TaskAwareScorerMixin,
     safe_store,
 )
 from ...utils import coerce_to_list, is_default_config_value, merge_list_of_dicts
@@ -64,16 +64,16 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "FAIRLEARN_SCORING_HOOKS",
     "FairlearnDataScoreHooksMixin",
-    "_FairnessScorerMixin",
+    "FairnessScorerMixin",
     "fairness_demographic_parity_difference",
     "fairness_equalized_odds_difference",
     "fairness_group_mean_prediction_difference",
     "fairness_group_mae_difference",
     "fairness_group_mse_difference",
-    "FairlearnScoreDictConfig",
-    "DefaultFairlearnScorerConfig",
-    "DefaultFairlearnClassificationConfig",
-    "DefaultFairlearnRegressionConfig",
+    "FairlearnScorerDictConfig",
+    "DefaultFairlearnScorerDictConfig",
+    "DefaultFairlearnClassificationScorerDictConfig",
+    "DefaultFairlearnRegressionScorerDictConfig",
     "DefaultFairlearnDataScorerConfig",
 ]
 
@@ -161,9 +161,9 @@ class FairlearnDataScoreHooksMixin:
     def score(self, *args, mode=None, **kwargs) -> dict:
         if is_default_config_value(getattr(self, "scorer", None), include_best=False):
             self.scorer = (
-                DefaultFairlearnClassificationConfig()
+                DefaultFairlearnClassificationScorerDictConfig()
                 if getattr(self, "classifier", True)
-                else DefaultFairlearnRegressionConfig()
+                else DefaultFairlearnRegressionScorerDictConfig()
             )
         if getattr(self, "scorer", None) is None:
             return {}
@@ -233,7 +233,7 @@ def fairness_data_mutual_info_self(
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultFairlearnDataScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
+class DefaultFairlearnDataScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
     """Default fairness data scoring: class count, mutual information, etc.
 
     Initialization parameters
@@ -298,7 +298,7 @@ def as_group_scorer(
 ):
     """
     Wrap any ScorerDictConfig (or dict of metrics) to enable MetricFrame group scoring at runtime.
-    Returns a FairlearnScoreDictConfig with group_scorers auto-populated from the main scorers.
+    Returns a FairlearnScorerDictConfig with group_scorers auto-populated from the main scorers.
     """
     if isinstance(scorer_dict, ScorerDictConfig):
         scorers = scorer_dict.scorers
@@ -316,7 +316,7 @@ def as_group_scorer(
         if group_reduction_method in ("between_groups", "to_overall")
         else "between_groups"
     )
-    return FairlearnScoreDictConfig(
+    return FairlearnScorerDictConfig(
         scorers=scorers,
         group_scorers={},
         group_reduction=group_reduction_lit,  # type: ignore
@@ -460,7 +460,7 @@ def _flatten_metric_frame_by_group(by_group: pd.DataFrame) -> dict[str, float]:
     return flattened
 
 
-class _FairnessScorerMixin:
+class FairnessScorerMixin:
     """Mixin that adds MetricFrame group scoring to any :class:`ScorerDictConfig` subclass.
 
     Override ``__call__`` to first run the base scorer (via ``super().__call__()``),
@@ -771,7 +771,7 @@ class _FairnessScorerMixin:
             return results
 
         # Step 4: build MetricFrame and populate results using resolved arrays.
-        self_cfg = cast("FairlearnScoreDictConfig", self)
+        self_cfg = cast("FairlearnScorerDictConfig", self)
         control_features = cast(
             ControlFeaturesLike,
             kwargs.pop("control_features", self_cfg.control_features),
@@ -872,7 +872,7 @@ class _FairnessScorerMixin:
 
 
 @dataclass(eq=False, kw_only=True)
-class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
+class FairlearnScorerDictConfig(FairnessScorerMixin, ScorerDictConfig):
     """ScorerDictConfig variant that computes fairness metrics through MetricFrame.
 
     Composes ``_FairnessScorerMixin`` (group scoring) with ``ScorerDictConfig``
@@ -997,7 +997,7 @@ class FairlearnScoreDictConfig(_FairnessScorerMixin, ScorerDictConfig):
             return results
 
         # Step 4: build MetricFrame and populate results using resolved arrays.
-        self_cfg = cast("FairlearnScoreDictConfig", self)
+        self_cfg = cast("FairlearnScorerDictConfig", self)
         control_features = cast(
             ControlFeaturesLike,
             kwargs.pop("control_features", self_cfg.control_features),
@@ -1293,9 +1293,11 @@ def fairness_group_mse_difference(
         metric_fn=mean_squared_error,
     )
 
-
 @dataclass(eq=False, kw_only=True)
-class DefaultFairlearnScorerConfig(_TaskAwareScorerMixin, FairlearnScoreDictConfig):
+class DefaultFairlearnScorerDictConfig(
+    TaskAwareScorerMixin,
+    FairlearnScorerDictConfig,
+):
     """Default fairness scorer family with optional task inheritance.
 
     Initialization parameters
@@ -1343,9 +1345,9 @@ class DefaultFairlearnScorerConfig(_TaskAwareScorerMixin, FairlearnScoreDictConf
 
     Plugin pattern
     --------------
-    This scorer inherits from ``_ScorerMixin`` semantics through ``FairlearnScoreDictConfig``.
+    This scorer inherits from ``_ScorerMixin`` semantics through ``FairlearnScorerDictConfig``.
     Plugins registered via ``ScorerTypePlugin`` contribute mixin-based runtime context.
-    Enables FairlearnScoreDictConfig group-level routing when ``group_scorers`` present.
+    Enables FairlearnScorerDictConfig group-level routing when ``group_scorers`` present.
     """
 
     classifier: Union[bool, str, None] = None
@@ -1398,9 +1400,8 @@ class DefaultFairlearnScorerConfig(_TaskAwareScorerMixin, FairlearnScoreDictConf
             self.group_scorers = self.scorers.copy()
         super().__post_init__()
 
-
 @dataclass(eq=False, kw_only=True)
-class DefaultFairlearnClassificationConfig(DefaultFairlearnScorerConfig):
+class DefaultFairlearnClassificationScorerDictConfig(DefaultFairlearnScorerDictConfig):
     """Default scorer set for classification fairness workflows.
 
     Initialization parameters
@@ -1420,7 +1421,7 @@ class DefaultFairlearnClassificationConfig(DefaultFairlearnScorerConfig):
 
     Plugin pattern
     --------------
-    This scorer inherits from ``_ScorerMixin`` semantics through ``FairlearnScoreDictConfig``.
+    This scorer inherits from ``_ScorerMixin`` semantics through ``FairlearnScorerDictConfig``.
     Plugins registered via ``ScorerTypePlugin`` route to classification-fairness dispatch.
     """
 
@@ -1428,7 +1429,7 @@ class DefaultFairlearnClassificationConfig(DefaultFairlearnScorerConfig):
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultFairlearnRegressionConfig(DefaultFairlearnScorerConfig):
+class DefaultFairlearnRegressionScorerDictConfig(DefaultFairlearnScorerDictConfig):
     """Default scorer set for regression fairness workflows.
 
     Initialization parameters
@@ -1448,26 +1449,23 @@ class DefaultFairlearnRegressionConfig(DefaultFairlearnScorerConfig):
 
     Plugin pattern
     --------------
-    This scorer inherits from ``_ScorerMixin`` semantics through ``FairlearnScoreDictConfig``.
+    This scorer inherits from ``_ScorerMixin`` semantics through ``FairlearnScorerDictConfig``.
     Plugins registered via ``ScorerTypePlugin`` route to regression-fairness dispatch.
     """
 
     classifier: Union[bool, str, None] = False
 
-
 safe_store(
     group="score",
     name="fairlearn-classification",
     node={
-        "_target_": "deckard.plugins.fairlearn.score.DefaultFairlearnScorerConfig",
-        "classifier": True,
+        "_target_": "deckard.plugins.fairlearn.score.DefaultFairlearnClassificationScorerDictConfig",
     },
 )
 safe_store(
     group="score",
     name="fairlearn-regression",
     node={
-        "_target_": "deckard.plugins.fairlearn.score.DefaultFairlearnScorerConfig",
-        "classifier": False,
+        "_target_": "deckard.plugins.fairlearn.score.DefaultFairlearnRegressionScorerDictConfig",
     },
 )

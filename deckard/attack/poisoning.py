@@ -9,12 +9,12 @@ from art.config import ART_NUMPY_DTYPE
 from art.estimators.classification.classifier import ClassifierNeuralNetwork
 
 from ..frameworks.pytorch.torch_utils import is_torch_model
-from .base import AttackConfig, AttackTypePlugin, _AttackMixin
+from .base import AttackConfig, AttackTypePlugin, AttackMixin
 
 logger = logging.getLogger(__name__)
 
 
-class _PoisoningAttackMixin(_AttackMixin):
+class PoisoningAttackMixin(AttackMixin):
     """Reusable poisoning attack behavior (backdoor, trojan)."""
 
     def __call__(
@@ -364,7 +364,7 @@ class _PoisoningAttackMixin(_AttackMixin):
 
 
 @dataclass(eq=False, kw_only=True)
-class PoisoningAttackConfig(_PoisoningAttackMixin, AttackConfig):
+class PoisoningAttackConfig(PoisoningAttackMixin, AttackConfig):
     """Configuration for poisoning attacks that corrupt training data.
 
     Initialization params
@@ -391,7 +391,7 @@ class PoisoningAttackConfig(_PoisoningAttackMixin, AttackConfig):
     plugins: list = field(
         default_factory=lambda: [
             AttackTypePlugin(
-                mixin_type=_PoisoningAttackMixin,
+                mixin_type=PoisoningAttackMixin,
                 attack_type="poisoning",
             ),
         ],

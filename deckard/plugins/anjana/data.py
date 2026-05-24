@@ -8,7 +8,7 @@ from omegaconf import DictConfig
 from deckard.plugins import HookPlugin
 from deckard.plugins.base import compose_hook_plugins
 
-from ...data._mixins import RuntimePayload, _SensitiveColumnsMixin
+from ...data._mixins import RuntimePayload, SensitiveColumnsMixin
 from ...data.base import DataConfig
 from ...data.canon import resolve_runtime_files
 from ...utils import (
@@ -38,7 +38,7 @@ def default_anjana_data_plugins() -> list[HookPlugin]:
 
 
 @dataclass(eq=False, kw_only=True)
-class PrivacyBehaviorMixin(_SensitiveColumnsMixin):
+class PrivacyBehaviorMixin(SensitiveColumnsMixin):
     """Reusable privacy behavior mixed into data pipeline configs."""
 
     anjana_defense: Union[None, bool, Dict[str, Any], list] = None

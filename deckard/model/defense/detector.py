@@ -5,16 +5,16 @@ from typing import Any
 
 from deckard.plugins.defense import DefenseTypePlugin
 
-from ..utils import safe_store
-from .defend import (
+from ...utils import safe_store
+from .base import (
     DefensePipelineConfig,
-    _DefenseMixin,
+    DefenseMixin,
     _is_art_torch_wrapper,
     _is_torch_model_instance,
 )
 
 
-class _DetectorDefenseMixin(_DefenseMixin):
+class DetectorDefenseMixin(DefenseMixin):
     """Reusable detector defense behavior."""
 
     def __call__(
@@ -80,7 +80,7 @@ class _DetectorDefenseMixin(_DefenseMixin):
 
 
 @dataclass(eq=False)
-class DetectorDefenseConfig(_DetectorDefenseMixin, DefensePipelineConfig):
+class DetectorDefenseConfig(DetectorDefenseMixin, DefensePipelineConfig):
     """Configuration for detector-based defenses.
 
     This wraps detector-family defense behavior and registers detector-specific
@@ -90,14 +90,13 @@ class DetectorDefenseConfig(_DetectorDefenseMixin, DefensePipelineConfig):
     plugins: list = field(
         default_factory=lambda: [
             DefenseTypePlugin(
-                mixin_type=_DetectorDefenseMixin,
+                mixin_type=DetectorDefenseMixin,
                 defense_type="detector",
             ),
         ],
     )
 
 
-# Register detector defense config
 safe_store(
     group="model",
     name="detector_defense",

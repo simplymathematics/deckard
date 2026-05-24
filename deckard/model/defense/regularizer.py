@@ -5,11 +5,11 @@ from typing import Any
 
 from deckard.plugins.defense import DefenseTypePlugin
 
-from ..utils import safe_store
-from .defend import DefensePipelineConfig, _DefenseMixin
+from ...utils import safe_store
+from .base import DefensePipelineConfig, DefenseMixin
 
 
-class _RegularizerDefenseMixin(_DefenseMixin):
+class RegularizerDefenseMixin(DefenseMixin):
     """Reusable regularizer defense behavior."""
 
     def __call__(
@@ -31,7 +31,7 @@ class _RegularizerDefenseMixin(_DefenseMixin):
 
 
 @dataclass(eq=False, kw_only=True)
-class RegularizerDefenseConfig(_RegularizerDefenseMixin, DefensePipelineConfig):
+class RegularizerDefenseConfig(RegularizerDefenseMixin, DefensePipelineConfig):
     """Configuration for regularizer-based defenses.
 
     Registers regularizer defense behavior and plugin metadata used during
@@ -41,14 +41,13 @@ class RegularizerDefenseConfig(_RegularizerDefenseMixin, DefensePipelineConfig):
     plugins: list = field(
         default_factory=lambda: [
             DefenseTypePlugin(
-                mixin_type=_RegularizerDefenseMixin,
+                mixin_type=RegularizerDefenseMixin,
                 defense_type="regularizer",
             ),
         ],
     )
 
 
-# Register regularizer defense config
 safe_store(
     group="model",
     name="regularizer_defense",

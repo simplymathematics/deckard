@@ -1,9 +1,10 @@
 import argparse
+from dataclasses import dataclass, field
 import inspect
 import json
 import logging
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Mapping, cast
 
 import optuna
 import yaml
@@ -18,13 +19,142 @@ from optuna.storages._rdb.storage import (
 )
 
 from ..experiment import ExperimentConfig
+from ..experiment.canon import (
+    CANONICAL_EXPERIMENT_STAGE_COMPONENTS,
+    normalize_experiment_stage,
+)
 from ..utils import ConfigBase, hash_conf_values
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
 
-class OptunaStudyCallback(HydraCallback):
+@dataclass
+class OptimizerConfig:
+    """Runtime optimization policy object used by Hydra callback adapters.
+
+    This object owns optimization policy state (objectives, study metadata,
+    trial-attribute reporting knobs, and optional DVCLive flags) while callback
+    classes own Hydra lifecycle hooks.
+    """
+
+    directions: list[str] = field(default_factory=list)
+    optimizers: list[str] = field(default_factory=list)
+    study_name: str | None = None
+    storage: str | None = None
+    report_trial_attrs: bool = True
+    pruning_enabled: bool = True
+    dvclive_enabled: bool = False
+    dvclive_dir: str | None = None
+
+    @classmethod
+    def from_any(
+        cls,
+        value: Any,
+        *,
+        directions: list[Any] | None = None,
+        optimizers: list[Any] | None = None,
+        study_name: str | None = None,
+        storage: str | None = None,
+    ) -> "OptimizerConfig":
+        if isinstance(value, cls):
+            cfg = value
+        else:
+            raw: dict[str, Any] = {}
+            if isinstance(value, DictConfig):
+                container = OmegaConf.to_container(value, resolve=True)
+                if isinstance(container, dict):
+                    raw = dict(container)
+            elif isinstance(value, Mapping):
+                raw = dict(value)
+            cfg = cls(
+                directions=[str(item) for item in list(raw.get("directions") or [])],
+                optimizers=[str(item) for item in list(raw.get("optimizers") or [])],
+                study_name=cast(str | None, raw.get("study_name")),
+                storage=cast(str | None, raw.get("storage")),
+                report_trial_attrs=bool(raw.get("report_trial_attrs", True)),
+                pruning_enabled=bool(raw.get("pruning_enabled", True)),
+                dvclive_enabled=bool(raw.get("dvclive_enabled", False)),
+                dvclive_dir=cast(str | None, raw.get("dvclive_dir")),
+            )
+
+        # Explicit callback constructor args take precedence over embedded policy values.
+        if directions is not None:
+            cfg.directions = [str(item) for item in directions]
+        if optimizers is not None:
+            cfg.optimizers = [str(item) for item in optimizers]
+        if study_name is not None:
+            cfg.study_name = str(study_name)
+        if storage is not None:
+            cfg.storage = str(storage)
+        return cfg
+
+    def resolve_study_binding(self, hydra_cfg: Any) -> tuple[str | None, str | None]:
+        sweeper = _get_sweeper_cfg(hydra_cfg)
+        sweeper_study_name = sweeper.get("study_name") if isinstance(sweeper, dict) else None
+        sweeper_storage = sweeper.get("storage") if isinstance(sweeper, dict) else None
+        return self.study_name or sweeper_study_name, self.storage or sweeper_storage
+
+    def create_study(self, *, study_name: str, storage: str) -> optuna.study.Study:
+        return create_study(
+            study_name=study_name,
+            storage=storage,
+            directions=self.directions,
+            optimizers=self.optimizers,
+        )
+
+    def set_metric_names(self, study: Any) -> None:
+        set_study_metric_names(
+            study=study,
+            optimizers=self.optimizers,
+            directions=self.directions,
+        )
+
+    def resolve_score_policy(
+        self,
+        config: Any,
+    ) -> tuple[list[str], list[str]]:
+        if self.optimizers:
+            optimizers = list(self.optimizers)
+        else:
+            optimizers = list(getattr(config, "optimizers", []) or [])
+
+        if self.directions:
+            directions = list(self.directions)
+        else:
+            directions = list(getattr(config, "directions", []) or [])
+
+        return optimizers, directions
+
+    def merge_from_runtime_config(self, config: Any) -> None:
+        if isinstance(config, DictConfig):
+            cfg = OmegaConf.to_container(config, resolve=True)
+        elif isinstance(config, Mapping):
+            cfg = dict(config)
+        else:
+            cfg = {}
+        if not isinstance(cfg, dict):
+            return
+
+        if "directions" in cfg and cfg.get("directions") is not None:
+            self.directions = [str(item) for item in list(cfg.get("directions") or [])]
+        if "optimizers" in cfg and cfg.get("optimizers") is not None:
+            self.optimizers = [str(item) for item in list(cfg.get("optimizers") or [])]
+        if "report_trial_attrs" in cfg:
+            self.report_trial_attrs = bool(cfg.get("report_trial_attrs"))
+        if "pruning_enabled" in cfg:
+            self.pruning_enabled = bool(cfg.get("pruning_enabled"))
+        if "dvclive_enabled" in cfg:
+            self.dvclive_enabled = bool(cfg.get("dvclive_enabled"))
+        if "dvclive_dir" in cfg and cfg.get("dvclive_dir") is not None:
+            self.dvclive_dir = str(cfg.get("dvclive_dir"))
+        if "study_name" in cfg and cfg.get("study_name") is not None:
+            self.study_name = str(cfg.get("study_name"))
+        if "storage" in cfg and cfg.get("storage") is not None:
+            self.storage = str(cfg.get("storage"))
+
+
+class DefaultOptimizerCallback(HydraCallback):
     """
     Hydra-native callback that syncs study setup and metric names for multirun.
 
@@ -45,8 +175,8 @@ class OptunaStudyCallback(HydraCallback):
 
     def __init__(
         self,
-        directions: list,
-        optimizers: list,
+        directions: list | None = None,
+        optimizers: list | None = None,
         study_name: str | None = None,
         storage: str | None = None,
         directory: str | None = None,
@@ -54,11 +184,19 @@ class OptunaStudyCallback(HydraCallback):
         params_file: str | None = None,
         error_file: str | None = None,
         score_file: str | None = None,
+        optimizer: Any | None = None,
     ):
-        self.study_name = study_name
-        self.storage = storage
-        self.directions = directions
-        self.optimizers = optimizers
+        self.optimizer = OptimizerConfig.from_any(
+            optimizer,
+            directions=list(directions or []),
+            optimizers=list(optimizers or []),
+            study_name=study_name,
+            storage=storage,
+        )
+        self.study_name = self.optimizer.study_name
+        self.storage = self.optimizer.storage
+        self.directions = self.optimizer.directions
+        self.optimizers = self.optimizer.optimizers
         self.study = None
         self._directory = directory
         self._log_file = log_file
@@ -71,6 +209,14 @@ class OptunaStudyCallback(HydraCallback):
         self._resolved_log_file: str | None = None
         self._resolved_error_file: str | None = None
 
+    def _configure_policy(self, config: Any) -> None:
+        self.optimizer.merge_from_runtime_config(config)
+        # Keep legacy attribute access stable.
+        self.study_name = self.optimizer.study_name
+        self.storage = self.optimizer.storage
+        self.directions = self.optimizer.directions
+        self.optimizers = self.optimizer.optimizers
+
     def on_multirun_start(self, config: DictConfig, **kwargs: Any) -> None:
         """
         Create the Optuna study and initialize objective metric names.
@@ -82,29 +228,18 @@ class OptunaStudyCallback(HydraCallback):
         Raises:
             ValueError: If `study_name` or `storage` is not provided.
         """
+        self._configure_policy(config)
         hydra_cfg = HydraConfig.get()
-        sweeper = _get_sweeper_cfg(hydra_cfg)
-        study_name = self.study_name or (
-            sweeper.get("study_name") if isinstance(sweeper, dict) else None
-        )
-        storage = self.storage or (
-            sweeper.get("storage") if isinstance(sweeper, dict) else None
-        )
+        study_name, storage = self.optimizer.resolve_study_binding(hydra_cfg)
         if study_name is None or storage is None:
             raise ValueError(
                 "study_name and storage must be provided for multirun study setup",
             )
-        self.study = create_study(
+        self.study = self.optimizer.create_study(
             study_name=study_name,
             storage=storage,
-            directions=self.directions,
-            optimizers=self.optimizers,
         )
-        set_study_metric_names(
-            study=self.study,
-            optimizers=self.optimizers,
-            directions=self.directions,
-        )
+        self.optimizer.set_metric_names(self.study)
 
     def on_compose_config(self, config: DictConfig, **kwargs: Any) -> None:
         """
@@ -117,6 +252,7 @@ class OptunaStudyCallback(HydraCallback):
         Note:
             Writes params.yaml after resolving file paths.
         """
+        self._configure_policy(config)
         hydra_cfg = HydraConfig.get()
         _normalize_mode_cfg(config, hydra_cfg, include_file_paths=True)
         _seed_experiment_uuid_for_current_trial(
@@ -181,13 +317,11 @@ class OptunaStudyCallback(HydraCallback):
             config: Hydra config for the run.
             **kwargs: Additional keyword arguments.
         """
+        self._configure_policy(config)
         hydra_cfg = HydraConfig.get()
         _normalize_mode_cfg(config, hydra_cfg, include_file_paths=False)
-        set_study_metric_names(
-            study=self.study,
-            optimizers=self.optimizers,
-            directions=self.directions,
-        )
+        if self.study is not None:
+            self.optimizer.set_metric_names(self.study)
 
     def on_run_end(self, config: DictConfig, **kwargs: Any) -> None:
         """
@@ -208,13 +342,10 @@ class OptunaStudyCallback(HydraCallback):
             config: Hydra config for the multirun.
             **kwargs: Additional keyword arguments.
         """
+        self._configure_policy(config)
         if self.study is None:
             return
-        set_study_metric_names(
-            study=self.study,
-            optimizers=self.optimizers,
-            directions=self.directions,
-        )
+        self.optimizer.set_metric_names(self.study)
 
     def on_job_start(self, config: DictConfig, **kwargs: Any) -> None:
         """
@@ -224,6 +355,7 @@ class OptunaStudyCallback(HydraCallback):
             config: Hydra config for the job.
             **kwargs: Additional keyword arguments.
         """
+        self._configure_policy(config)
         hydra_cfg = HydraConfig.get()
         _seed_experiment_uuid_for_current_trial(
             hydra_cfg=hydra_cfg,
@@ -245,6 +377,7 @@ class OptunaStudyCallback(HydraCallback):
             job_return: Return value from the job execution.
             **kwargs: Additional keyword arguments.
         """
+        self._configure_policy(config)
         hydra_cfg = HydraConfig.get()
         score_file = self._resolved_score_file
         if not score_file:
@@ -284,8 +417,7 @@ class OptunaStudyCallback(HydraCallback):
         if not isinstance(score_payload, dict):
             return
         score_payload_dict = {str(k): v for k, v in score_payload.items()}
-        optimizers = list(getattr(config, "optimizers", self.optimizers) or [])
-        directions = list(getattr(config, "directions", self.directions) or [])
+        optimizers, directions = self.optimizer.resolve_score_policy(config)
         if optimizers:
             _, attrs = filter_scores(
                 score_payload_dict,
@@ -295,14 +427,15 @@ class OptunaStudyCallback(HydraCallback):
             )
         else:
             attrs = dict(score_payload_dict)
-        _sync_multirun_trial_attributes(
-            hydra_cfg=hydra_cfg,
-            score_payload=score_payload_dict,
-            optimizers=optimizers,
-            directions=directions,
-            experiment_name=getattr(config, "experiment_name", ""),
-            attrs=attrs,
-        )
+        if self.optimizer.report_trial_attrs:
+            _sync_multirun_trial_attributes(
+                hydra_cfg=hydra_cfg,
+                score_payload=score_payload_dict,
+                optimizers=optimizers,
+                directions=directions,
+                experiment_name=getattr(config, "experiment_name", ""),
+                attrs=attrs,
+            )
         score_path = Path(str(score_file))
         score_path.parent.mkdir(parents=True, exist_ok=True)
         with open(score_path, "w") as f:
@@ -539,9 +672,10 @@ def _overwrite_frozen_trial_user_attr(
 
 
 def _prepare_multirun_cfg(cfg, hydra_cfg, include_file_paths: bool = False):
+    stage_payload = _build_stage_dependent_hash_payload(cfg)
     explicit_name = cfg.get("experiment_name", None)
     if explicit_name is None or str(explicit_name).strip() == "":
-        cfg["experiment_name"] = _ensure_experiment_hash(hash_conf_values(_root_=cfg))
+        cfg["experiment_name"] = _ensure_experiment_hash(hash_conf_values(stage_payload))
     else:
         cfg["experiment_name"] = _ensure_experiment_hash(explicit_name)
 
@@ -575,8 +709,60 @@ def _normalize_mode_cfg(cfg, hydra_cfg, include_file_paths: bool = False):
             include_file_paths=include_file_paths,
         )
     if _is_run_mode(hydra_cfg):
+        explicit_name = cfg.get("experiment_name", None)
+        if explicit_name is None or str(explicit_name).strip() == "":
+            cfg["experiment_name"] = _ensure_experiment_hash(
+                hash_conf_values(_build_stage_dependent_hash_payload(cfg)),
+            )
         return cfg
     return cfg
+
+
+def _build_stage_dependent_hash_payload(cfg: Any) -> dict[str, Any]:
+    if isinstance(cfg, DictConfig):
+        cfg = OmegaConf.to_container(cfg, resolve=False)
+    if not isinstance(cfg, dict):
+        return {"stage": "all", "cfg": str(cfg)}
+
+    stage_token = cfg.get("stage", "all")
+    try:
+        stage = normalize_experiment_stage(stage_token)
+    except Exception:
+        stage = str(stage_token or "all")
+
+    selected_components = CANONICAL_EXPERIMENT_STAGE_COMPONENTS.get(stage)
+    if selected_components is None:
+        # Union of known stage participants when stage selection is unknown/"all".
+        component_union: set[str] = set()
+        for components in CANONICAL_EXPERIMENT_STAGE_COMPONENTS.values():
+            component_union.update(components)
+        selected_components = tuple(sorted(component_union))
+    payload: dict[str, Any] = {
+        "stage": stage,
+        "components": {
+            key: cfg.get(key)
+            for key in selected_components
+            if key in cfg
+        },
+        "runtime": {
+            key: cfg.get(key)
+            for key in (
+                "library",
+                "classifier",
+                "evaluation_mode",
+                "score_mode",
+                "random_state",
+                "optimizers",
+                "directions",
+                "report_trial_attrs",
+                "pruning_enabled",
+                "dvclive_enabled",
+                "dvclive_dir",
+            )
+            if key in cfg
+        },
+    }
+    return payload
 
 
 def _extract_scores_from_job_end_kwargs(
@@ -699,7 +885,7 @@ def optimize_main(
         conf_obj,
         ConfigBase,
     ), f"conf_obj must be an instance of ConfigBase. Got {type(conf_obj)}"
-    scores = OptunaStudyCallback.execute_runtime_object(conf_obj)
+    scores = DefaultOptimizerCallback.execute_runtime_object(conf_obj)
 
     # Preserve raw runtime payload for callback hooks even when sweepers wrap
     # return values for objective extraction.
@@ -1104,3 +1290,6 @@ hydra_parser = argparse.ArgumentParser(
     add_help=False,
     usage="deckard optimize --config-dir=conf --config-name=default.yaml",
 )
+
+# Backward compatibility alias. Keep until downstream configs migrate.
+OptunaStudyCallback = DefaultOptimizerCallback

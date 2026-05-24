@@ -596,9 +596,9 @@ def coerce_config(config_obj: Any) -> Any:
 
     Supported coercions:
 
-    - ``DictConfig`` → ``dict``/``list`` via ``OmegaConf.to_container``
-    - {class}`deckard.utils.ConfigBase` → ``dict`` via ``to_dict``
-    - existing YAML file path string → loaded config container via OmegaConf
+    - ``DictConfig`` -> ``dict``/``list`` via ``OmegaConf.to_container``
+    - {class}`deckard.utils.ConfigBase` -> ``dict`` via ``to_dict``
+    - existing YAML file path string -> loaded config container via OmegaConf
 
     Args:
         config_obj (Any): Object to coerce. Returned unchanged when none of

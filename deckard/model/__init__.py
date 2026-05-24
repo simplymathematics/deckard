@@ -9,17 +9,17 @@ import logging
 from typing import Any
 
 from .base import ModelConfig
-from .defend import DefenseConfig, DefensePipelineConfig
+from .defense.base import DefenseConfig, DefensePipelineConfig
 from .defense import (
     DefaultDefenseConfig,
     DefaultPytorchDefenseConfig,
     DefaultSklearnDefenseConfig,
 )
-from .detector import DetectorDefenseConfig
-from .postprocessor import PostprocessorDefenseConfig
-from .preprocessor import PreprocessorDefenseConfig
-from .regularizer import RegularizerDefenseConfig
-from .trainer import TrainerDefenseConfig
+from .defense.detector import DetectorDefenseConfig
+from .defense.postprocessor import PostprocessorDefenseConfig
+from .defense.preprocessor import PreprocessorDefenseConfig
+from .defense.regularizer import RegularizerDefenseConfig
+from .defense.trainer import TrainerDefenseConfig
 from .trainers import (
     BaseTrainer,
     PartialFitPruningTrainer,

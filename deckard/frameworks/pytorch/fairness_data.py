@@ -109,8 +109,8 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
     def _ensure_data_scorer_default(self) -> None:
         scorer_name = type(self.scorer).__name__ if self.scorer is not None else ""
         if self.scorer is None or scorer_name in {
-            "DefaultFairlearnClassificationConfig",
-            "DefaultFairlearnRegressionConfig",
+            "DefaultFairlearnClassificationScorerDictConfig",
+            "DefaultFairlearnRegressionScorerDictConfig",
         }:
             self.scorer = DefaultFairlearnDataScorerConfig(
                 classifier=getattr(self, "classifier", True),

@@ -29,6 +29,7 @@ class ModelTrainingMixin:
         self.train_model(X, y)
 
     def _train(self, X, y) -> None:
+        """Protected training hook used by model runtime orchestration."""
         self.train_model(X, y)
 
 
@@ -88,9 +89,11 @@ class ModelHookRuntimeMixin:
     """Reusable plugin orchestration and runtime-state copy behavior."""
 
     def _instantiate_plugin(self, plugin_spec: Any):
+        """Create one plugin instance from a normalized plugin specification."""
         return instantiate_plugin_spec(plugin_spec, loader=load_class)
 
     def _get_plugins(self) -> list:
+        """Lazily instantiate and cache configured plugin objects."""
         if self._plugin_objects is None:
             plugin_specs = normalize_plugin_specs(self.plugins)
             self._plugin_objects = [
@@ -99,6 +102,7 @@ class ModelHookRuntimeMixin:
         return self._plugin_objects
 
     def _run_plugin_hook(self, hook_name: str, **kwargs: Any):
+        """Execute one named hook across all configured plugins."""
         hook_outputs = []
         for plugin in self._get_plugins():
             hook = getattr(plugin, hook_name, None)
@@ -107,6 +111,7 @@ class ModelHookRuntimeMixin:
         return hook_outputs
 
     def _merge_plugin_scores(self, hook_outputs: Iterable[Any]) -> None:
+        """Merge dictionary hook outputs into ``score_dict`` in-order."""
         if self.score_dict is None:
             self.score_dict = {}
         for output in hook_outputs:
@@ -114,6 +119,7 @@ class ModelHookRuntimeMixin:
                 self.score_dict.update(output)
 
     def _copy_runtime_state_to(self, target: Any) -> None:
+        """Copy standard runtime attributes from this object to ``target``."""
         runtime_fields = [
             "_model",
             "score_dict",

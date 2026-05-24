@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypedDict
+
+
+class DetectorFiles(TypedDict, total=False):
+    """Canonical detector persistence aliases used by detector runtimes."""
+
+    detector_model_file: str | None
+    detected_predictions_file: str | None
+    detected_probabilities_file: str | None
+    score_file: str | None
 
 DETECTOR_RUNTIME_STAGE_ALIASES: dict[str, str] = {
     "before_fit": "pre-fit",

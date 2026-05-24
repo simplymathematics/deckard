@@ -173,7 +173,7 @@ class DefenseStep:
         setattr(self.defense, name, value)
 
 
-class _DefensePipelineConfigBehaviorMixin:
+class DefensePipelineConfigBehaviorMixin:
     """Reusable defense pipeline configuration behavior mixed into pipeline configs.
 
     Plugin hooks
@@ -206,7 +206,7 @@ class _DefensePipelineConfigBehaviorMixin:
     # Declared for static analyzers; concrete dataclass provides these fields.
     defenses: list
     plugins: list
-    score_dict: dict
+    score_dict: ScoreDict
     _plugin_objects: Union[list, None]
 
     @classmethod
@@ -238,6 +238,7 @@ class _DefensePipelineConfigBehaviorMixin:
 
     @classmethod
     def coerce(cls, defense_config: Any):
+        """Normalize user defense config input into ``DefensePipelineConfig``."""
         if defense_config is None or isinstance(defense_config, cls):
             return defense_config
 
@@ -268,6 +269,7 @@ class _DefensePipelineConfigBehaviorMixin:
         )
 
     def _instantiate_plugin(self, plugin_spec: Any):
+        """Instantiate one defense plugin from a normalized plugin spec."""
         def _resolve_and_instantiate(path: str, **kwargs):
             return resolve_class(path)(**kwargs)
 
@@ -277,6 +279,7 @@ class _DefensePipelineConfigBehaviorMixin:
         )
 
     def _get_plugins(self) -> list:
+        """Lazily instantiate and cache defense plugins for this runtime."""
         if self._plugin_objects is None:
             plugin_specs = normalize_plugin_specs(self.plugins)
             self._plugin_objects = [
@@ -294,6 +297,7 @@ class _DefensePipelineConfigBehaviorMixin:
         return hook_outputs
 
     def _merge_plugin_scores(self, hook_outputs):
+        """Merge dictionary hook outputs into the runtime ``score_dict``."""
         if self.score_dict is None:
             self.score_dict = {}
         for output in hook_outputs:
@@ -418,6 +422,7 @@ class _DefensePipelineConfigBehaviorMixin:
             defense_obj.probability = True
 
     def normalize_defenses(self, defenses: Any) -> list:
+        """Return a normalized list of defense objects from raw defense specs."""
         if defenses is None:
             return []
         if isinstance(defenses, (tuple, list)):
@@ -427,6 +432,7 @@ class _DefensePipelineConfigBehaviorMixin:
         return [self._coerce_single_defense(item) for item in defense_list]
 
     def requires_fit_application(self) -> bool:
+        """Return ``True`` when any defense step requests fit-time application."""
         return any(bool(getattr(step, "apply_fit", True)) for step in self.normalize_defenses(getattr(self, "defenses", [])))
 
     @staticmethod
@@ -440,6 +446,7 @@ class _DefensePipelineConfigBehaviorMixin:
         default_stage: str = "post_fit_pre_predict",
         **context: Any,
     ) -> str:
+        """Resolve defense stage using plugin hooks and fallback defaults."""
         stage = default_stage
         # TODO: make this context aware since art defenses have _apply_fit and _apply_predict
         hook_outputs = self._run_plugin_hook(
@@ -510,6 +517,7 @@ class _DefensePipelineConfigBehaviorMixin:
         data,
         stage: str = "post_fit_pre_predict",
     ) -> BaseEstimator:
+        """Apply configured defense chain to ``estimator`` for the given stage."""
         if estimator is None:
             raise ValueError(
                 "estimator must be provided before applying defenses",
@@ -694,7 +702,7 @@ def _is_torch_model_instance(model_obj) -> bool:
 
 
 @dataclass(eq=True)
-class _DefenseMixin:
+class DefenseMixin:
     """Base callable defense handler used by runtime defense context resolution.
 
     Parameters
@@ -759,7 +767,7 @@ class _DefenseMixin:
         raise NotImplementedError("Defense handlers must implement __call__")
 
 
-class _PassthroughDefenseMixin(_DefenseMixin):
+class PassthroughDefenseMixin(DefenseMixin):
     """Default handler for no-op/passthrough ART wrapping."""
 
     def __call__(
@@ -785,7 +793,7 @@ class _PassthroughDefenseMixin(_DefenseMixin):
         return None, defended_estimator
 
 
-class _ARTDefenseBehaviorMixin:
+class ARTDefenseBehaviorMixin:
     """Reusable defense workflow behavior mixed into concrete config dataclasses."""
 
     # Declared for static analyzers; concrete dataclass provides these fields.
@@ -797,13 +805,14 @@ class _ARTDefenseBehaviorMixin:
     defense_name: Union[str, None]
     defense_params: dict
     _model: Union[BaseEstimator, None]
-    score_dict: dict
+    score_dict: ScoreDict
     _target_: Union[str, None]
     _model_config: Union[ModelConfig, None]
     plugins: list
     _plugin_objects: Union[list, None]
 
     def _instantiate_plugin(self, plugin_spec: Any):
+        """Instantiate one runtime plugin from a normalized plugin spec."""
         def _resolve_and_instantiate(path: str, **kwargs):
             return resolve_class(path)(**kwargs)
 
@@ -813,6 +822,7 @@ class _ARTDefenseBehaviorMixin:
         )
 
     def _get_plugins(self) -> list:
+        """Lazily instantiate and cache runtime plugins for defense dispatch."""
         if getattr(self, "_plugin_objects", None) is None:
             plugin_specs = normalize_plugin_specs(getattr(self, "plugins", []))
             self._plugin_objects = [
@@ -837,31 +847,31 @@ class _ARTDefenseBehaviorMixin:
         mixins: list[type] = []
         dtype = (defense_type or "").lower() if defense_type is not None else None
         if dtype is None:
-            mixins.append(_PassthroughDefenseMixin)
+            mixins.append(PassthroughDefenseMixin)
         elif dtype == "detector":
-            from .detector import _DetectorDefenseMixin
+            from .detector import DetectorDefenseMixin
 
-            mixins.append(_DetectorDefenseMixin)
+            mixins.append(DetectorDefenseMixin)
         elif dtype == "preprocessor":
-            from .preprocessor import _PreprocessorDefenseMixin
+            from .preprocessor import PreprocessorDefenseMixin
 
-            mixins.append(_PreprocessorDefenseMixin)
+            mixins.append(PreprocessorDefenseMixin)
         elif dtype == "postprocessor":
-            from .postprocessor import _PostprocessorDefenseMixin
+            from .postprocessor import PostprocessorDefenseMixin
 
-            mixins.append(_PostprocessorDefenseMixin)
+            mixins.append(PostprocessorDefenseMixin)
         elif dtype == "trainer":
-            from .trainer import _TrainerDefenseMixin
+            from .trainer import TrainerDefenseMixin
 
-            mixins.append(_TrainerDefenseMixin)
+            mixins.append(TrainerDefenseMixin)
         elif dtype == "transformer":
-            from .transformer import _TransformerDefenseMixin
+            from .transformer import TransformerDefenseMixin
 
-            mixins.append(_TransformerDefenseMixin)
+            mixins.append(TransformerDefenseMixin)
         elif dtype == "regularizer":
-            from .regularizer import _RegularizerDefenseMixin
+            from .regularizer import RegularizerDefenseMixin
 
-            mixins.append(_RegularizerDefenseMixin)
+            mixins.append(RegularizerDefenseMixin)
 
         plugin_outputs = self._run_plugin_hook(
             "resolve_defense_mixins",
@@ -891,7 +901,7 @@ class _ARTDefenseBehaviorMixin:
         mixins = self._resolve_runtime_defense_mixins(defense_type, defense_subtype)
         default_handler = None
         for mixin in mixins:
-            if isinstance(mixin, type) and issubclass(mixin, _DefenseMixin):
+            if isinstance(mixin, type) and issubclass(mixin, DefenseMixin):
                 default_handler = mixin(self)
                 break
 
@@ -905,7 +915,7 @@ class _ARTDefenseBehaviorMixin:
         for output in hook_outputs:
             if callable(output):
                 return output
-            if isinstance(output, type) and issubclass(output, _DefenseMixin):
+            if isinstance(output, type) and issubclass(output, DefenseMixin):
                 return output(self)
 
         return default_handler
@@ -1382,7 +1392,7 @@ class _ARTDefenseBehaviorMixin:
 
 
 @dataclass(eq=False, kw_only=True)
-class DefensePipelineConfig(_DefensePipelineConfigBehaviorMixin, ConfigBase):
+class DefensePipelineConfig(DefensePipelineConfigBehaviorMixin, ConfigBase):
     """Runtime owner for applying an ordered chain of defense specs."""
 
     defenses: list = field(default_factory=list)
@@ -1411,7 +1421,7 @@ class DefensePipelineConfig(_DefensePipelineConfigBehaviorMixin, ConfigBase):
 
 
 @dataclass(kw_only=True)
-class DefenseConfig(_ARTDefenseBehaviorMixin, ConfigBase):
+class DefenseConfig(ARTDefenseBehaviorMixin, ConfigBase):
     """Concrete defense configuration used by defense runtime mixins.
 
     Main parameter groups:

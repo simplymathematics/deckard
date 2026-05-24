@@ -7,10 +7,30 @@ orchestration config and an optional survival-specific extension.
 import logging
 
 from .base import ExperimentConfig
+from .canon import (
+    CANONICAL_EXPERIMENT_PIPELINE_STAGES,
+    normalize_experiment_pipeline_stage,
+)
+from .dvc import (
+    build_dvc_cmd,
+    build_dvc_stage_name,
+    build_dvc_stage_plan,
+    extract_dvc_file_aliases,
+    generate_dvc_pipeline,
+)
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["ExperimentConfig"]
+__all__ = [
+    "ExperimentConfig",
+    "CANONICAL_EXPERIMENT_PIPELINE_STAGES",
+    "build_dvc_cmd",
+    "build_dvc_stage_name",
+    "build_dvc_stage_plan",
+    "extract_dvc_file_aliases",
+    "generate_dvc_pipeline",
+    "normalize_experiment_pipeline_stage",
+]
 
 
 def _load_torch_experiment_symbols() -> bool:

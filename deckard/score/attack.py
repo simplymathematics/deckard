@@ -11,7 +11,7 @@ from .base import (
     ScorerConfig,
     ScorerDictConfig,
     _AttackProfileScorer,
-    _TaskAwareScorerMixin,
+    TaskAwareScorerMixin,
     coerce_scorer_config,
     safe_store,
 )
@@ -44,7 +44,7 @@ def evasion_success_score(
 
 @dataclass(eq=False, kw_only=True)
 class DefaultEvasionAttackScorerConfig(
-    _TaskAwareScorerMixin,
+    TaskAwareScorerMixin,
     _AttackProfileScorer,
     ScorerDictConfig,
 ):
@@ -174,7 +174,7 @@ class DefaultEvasionRegressionAttackScorerConfig(DefaultEvasionAttackScorerConfi
 
 @dataclass(eq=False, kw_only=True)
 class DefaultMembershipInferenceAttackScorerConfig(
-    _TaskAwareScorerMixin,
+    TaskAwareScorerMixin,
     _AttackProfileScorer,
     ScorerDictConfig,
 ):
@@ -254,7 +254,7 @@ class DefaultMembershipInferenceAttackScorerConfig(
 
 @dataclass(eq=False, kw_only=True)
 class DefaultAttributeInferenceAttackScorerConfig(
-    _TaskAwareScorerMixin,
+    TaskAwareScorerMixin,
     _AttackProfileScorer,
     ScorerDictConfig,
 ):
@@ -759,7 +759,7 @@ class FairlearnAttributeInferenceRegressionAttackScorerConfig:
 class FairlearnAttackScorerConfig(AttackScorerConfig):
     """AttackScorerConfig that computes attack metrics stratified by sensitive group.
 
-    Uses :class:`~deckard.plugins.fairlearn.score.FairlearnScoreDictConfig` profiles for
+    Uses :class:`~deckard.plugins.fairlearn.score.FairlearnScorerDictConfig` profiles for
     each attack type so that metrics (accuracy, f1, mse, …) are computed
     per sensitive group via ``fairlearn.metrics.MetricFrame``.
 
@@ -777,12 +777,12 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
     attribute_inference_regression: Union[ScorerDictConfig, dict, None] = None
 
     def __post_init__(self):
-        from ..plugins.fairlearn.score import FairlearnScoreDictConfig
+        from ..plugins.fairlearn.score import FairlearnScorerDictConfig
 
         def _fairlearn_profile(field_val, default_group_scorers, base_scorers=None):
-            """Return a FairlearnScoreDictConfig, merging any user-supplied overrides."""
-            # If user provided a FairlearnScoreDictConfig, use as-is
-            if isinstance(field_val, FairlearnScoreDictConfig):
+            """Return a FairlearnScorerDictConfig, merging any user-supplied overrides."""
+            # If user provided a FairlearnScorerDictConfig, use as-is
+            if isinstance(field_val, FairlearnScorerDictConfig):
                 # Defensive: if scorers or group_scorers are empty, fill with defaults
                 if not getattr(field_val, "scorers", None):
                     field_val.scorers = base_scorers or {
@@ -803,7 +803,7 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
                 group_scorers = dict(
                     field_val.get("group_scorers", default_group_scorers),
                 )
-                return FairlearnScoreDictConfig(
+                return FairlearnScorerDictConfig(
                     scorers=scorers,
                     group_scorers=group_scorers,
                     include_group_by_group=field_val.get(
@@ -815,7 +815,7 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
                 )
             # If None, use all defaults
             if field_val is None:
-                return FairlearnScoreDictConfig(
+                return FairlearnScorerDictConfig(
                     scorers=base_scorers
                     or {k: v for k, v in default_group_scorers.items()},
                     group_scorers=default_group_scorers,
@@ -832,7 +832,7 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
                 }
             if not getattr(coerced, "group_scorers", None):
                 coerced.group_scorers = default_group_scorers
-            return FairlearnScoreDictConfig(
+            return FairlearnScorerDictConfig(
                 scorers=coerced.scorers,
                 group_scorers=coerced.group_scorers,
                 include_group_by_group=True,

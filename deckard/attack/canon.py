@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypedDict
+
+
+class AttackFiles(TypedDict, total=False):
+    """Canonical attack persistence aliases used by attack runtimes."""
+
+    attack_file: str | None
+    attack_predictions_file: str | None
+    score_file: str | None
 
 ATTACK_RUNTIME_STAGE_ALIASES: dict[str, str] = {
     "before_attack": "pre-attack",

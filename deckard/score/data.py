@@ -20,7 +20,7 @@ from .base import (
     ScorerConfig,
     ScorerDictConfig,
     _DataScorerMarker,
-    _TaskAwareScorerMixin,
+    TaskAwareScorerMixin,
     safe_store,
 )
 
@@ -367,7 +367,7 @@ def data_empirical_cdf_function_score(
 @dataclass(eq=False, kw_only=True)
 class DefaultDataScorerConfig(
     _DataScorerMarker,
-    _TaskAwareScorerMixin,
+    TaskAwareScorerMixin,
     ScorerDictConfig,
 ):
     """Default data-analysis scorer family with optional task inheritance.
@@ -541,7 +541,7 @@ def pytorch_split_count_score(
 @dataclass(eq=False, kw_only=True)
 class DefaultPytorchDataScorerConfig(
     _DataScorerMarker,
-    _TaskAwareScorerMixin,
+    TaskAwareScorerMixin,
     ScorerDictConfig,
 ):
     """Default tensor-aware data scorer family for PyTorch datasets.

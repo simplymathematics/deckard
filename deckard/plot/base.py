@@ -30,7 +30,7 @@ class _YellowbrickPlotterMarker:
 
 
 @dataclass(eq=True)
-class _PlotterMixin:
+class PlotterMixin:
     """Base callable plotter handler used by runtime plotter context resolution.
 
     Initialization parameters

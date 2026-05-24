@@ -10,12 +10,12 @@ from art.config import ART_NUMPY_DTYPE
 from numpy.exceptions import AxisError
 from omegaconf import ListConfig, OmegaConf
 
-from .base import AttackConfig, AttackTypePlugin, _AttackMixin, _sensitive_slice
+from .base import AttackConfig, AttackTypePlugin, AttackMixin, _sensitive_slice
 
 logger = logging.getLogger(__name__)
 
 
-class _InferenceAttackMixin(_AttackMixin):
+class InferenceAttackMixin(AttackMixin):
     """Reusable inference attack behavior (membership, attribute, inversion)."""
 
     targeted_attribute: str
@@ -60,6 +60,17 @@ class _InferenceAttackMixin(_AttackMixin):
         attack,
         targeted_attribute,
     ) -> dict:
+        """Infer held-out attribute values from model outputs.
+
+        Args:
+            data: Runtime data config providing attack source features.
+            art_model: ART-wrapped estimator used for attribute inference.
+            attack: Instantiated attribute-inference attack implementation.
+            targeted_attribute: Column name or column-name list to reconstruct.
+
+        Returns:
+            Score payload for the reconstructed attribute predictions.
+        """
         assert hasattr(data, "X_train") and hasattr(
             data,
             "y_train",
@@ -180,6 +191,15 @@ class _InferenceAttackMixin(_AttackMixin):
         return self.score_dict
 
     def infer_membership(self, data, attack) -> dict:
+        """Infer whether sampled records belonged to the model training set.
+
+        Args:
+            data: Runtime data config providing train/test splits.
+            attack: Instantiated membership-inference attack implementation.
+
+        Returns:
+            Score payload for inferred membership labels.
+        """
         start_time = time.perf_counter()
         y_train_raw = self._prepare_labels_for_attack(getattr(data, "y_train"))
         y_train_values = self._to_numpy_array(y_train_raw)
@@ -309,6 +329,15 @@ class _InferenceAttackMixin(_AttackMixin):
         return "test", X_test, y_test
 
     def infer_model_inversion(self, data, attack) -> dict:
+        """Reconstruct representative inputs for target class labels.
+
+        Args:
+            data: Runtime data config providing source samples and labels.
+            attack: Instantiated model-inversion attack implementation.
+
+        Returns:
+            Score payload comparing reconstructed inputs against class prototypes.
+        """
         split, x_source, y_source = self._resolve_source_split(
             data,
             attack_kind="model_inversion",
@@ -429,6 +458,15 @@ class _InferenceAttackMixin(_AttackMixin):
         return self.score_dict
 
     def infer_database_reconstruction(self, data, attack) -> dict:
+        """Reconstruct a held-out database row from the remaining dataset.
+
+        Args:
+            data: Runtime data config providing the source split to reconstruct from.
+            attack: Instantiated reconstruction attack implementation.
+
+        Returns:
+            Score payload for the reconstructed record and auxiliary metadata.
+        """
         split, x_source, y_source_raw = self._resolve_source_split(
             data,
             attack_kind="reconstruction",
@@ -565,7 +603,7 @@ class _InferenceAttackMixin(_AttackMixin):
 
 
 @dataclass(eq=False, kw_only=True)
-class InferenceAttackConfig(_InferenceAttackMixin, AttackConfig):
+class InferenceAttackConfig(InferenceAttackMixin, AttackConfig):
     """Configuration for privacy inference attacks.
 
     Initialization params
@@ -598,7 +636,7 @@ class InferenceAttackConfig(_InferenceAttackMixin, AttackConfig):
     plugins: list = field(
         default_factory=lambda: [
             AttackTypePlugin(
-                mixin_type=_InferenceAttackMixin,
+                mixin_type=InferenceAttackMixin,
                 attack_type="inference",
                 excluded_subtypes=("reconstruction",),
             ),

@@ -282,7 +282,7 @@ class ModelConfig(ConfigBase):
     def _coerce_defense_config(self) -> None:
         """Coerce defense configuration into the runtime pipeline wrapper."""
         if self.defense is not None:
-            from .defend import DefensePipelineConfig
+            from .defense.base import DefensePipelineConfig
 
             self.defense = DefensePipelineConfig.coerce(self.defense)
 
@@ -399,7 +399,7 @@ class ModelConfig(ConfigBase):
             self._defense_pipeline = None
             return None
 
-        from .defend import DefensePipelineConfig
+        from .defense.base import DefensePipelineConfig
 
         self.defense = DefensePipelineConfig.coerce(self.defense)
         self._defense_pipeline = self.defense

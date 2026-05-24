@@ -86,17 +86,32 @@ def iter_config_files(root: Path) -> Iterator[Path]:
 
     Notes:
         - Only yields files with .yaml extension
-        - Recursively scans all subdirectories
-        - Skips hidden directories and files
+        - Recursively scans subdirectories under the config root
+        - Skips hidden directories/files
+        - Skips YAML files directly under the config root
+        - Skips any file named `default.yaml`
     """
     if not root.is_dir():
         logger.warning(f"Config root is not a directory: {root}")
         return
 
     for path in sorted(root.rglob("*.yaml")):
+        relative_parts = path.relative_to(root).parts
+
         # Skip hidden files/dirs
-        if any(part.startswith(".") for part in path.relative_to(root).parts):
+        if any(part.startswith(".") for part in relative_parts):
             continue
+
+        # Register only YAML under subfolders of examples/*/config, not config itself.
+        if len(relative_parts) < 2:
+            logger.debug(f"Skipping root-level config file: {path}")
+            continue
+
+        # Never register default.yaml in ConfigStore to avoid schema collisions.
+        if path.name == "default.yaml":
+            logger.debug(f"Skipping default config registration: {path}")
+            continue
+
         logger.debug(f"Found config file: {path}")
         yield path
 

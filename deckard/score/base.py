@@ -242,7 +242,7 @@ class _AttackProfileScorer:
 
 
 @dataclass(eq=True)
-class _ScorerMixin:
+class ScorerMixin:
     """Base callable scorer handler used by runtime scorer context resolution.
 
     Initialization parameters
@@ -423,7 +423,7 @@ def _normalize_classifier_flag(
     return None
 
 
-class _TaskAwareScorerMixin:
+class TaskAwareScorerMixin:
     """Mixin for scorer configs whose defaults depend on task type.
 
     API
@@ -1612,9 +1612,9 @@ def coerce_scorer_config(scorer_obj, *, default_factory=None):
                 fallback.pop("classifier", None)
                 if "group_scorers" in fallback:
                     try:
-                        from ..plugins.fairlearn.score import FairlearnScoreDictConfig
+                        from ..plugins.fairlearn.score import FairlearnScorerDictConfig
 
-                        return FairlearnScoreDictConfig(**fallback)
+                        return FairlearnScorerDictConfig(**fallback)
                     except Exception:
                         pass
                 return ScorerDictConfig(scorers=fallback.get("scorers", {}))
@@ -1713,7 +1713,7 @@ def _default_pytorch_classification_scorers() -> dict[str, ScorerConfig]:
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultModelScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
+class DefaultModelScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
     """Default model scorer family with optional task inheritance."""
 
     classifier: Union[bool, str, None] = None
@@ -1743,7 +1743,7 @@ class DefaultRegressorConfig(DefaultModelScorerConfig):
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultPytorchScorerConfig(_TaskAwareScorerMixin, ScorerDictConfig):
+class DefaultPytorchScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
     """Default PyTorch scorer family with optional task inheritance."""
 
     classifier: Union[bool, str, None] = None
@@ -1827,7 +1827,7 @@ __all__ = [
     "SUPPORTED_PIPELINE_SCORE_MODES",
     "_DataScorerMarker",
     "_AttackProfileScorer",
-    "_TaskAwareScorerMixin",
+    "TaskAwareScorerMixin",
     "ScorerConfig",
     "ScorerDictConfig",
     "DefaultModelScorerConfig",

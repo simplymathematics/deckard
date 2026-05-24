@@ -16,7 +16,7 @@ class LifelinesDataMode(str, Enum):
     OPTUNA_DB = "optuna_db"
 
 
-class _LifelinesValidationMixin:
+class LifelinesValidationMixin:
     """Reusable validation behavior for lifelines-compatible configs."""
 
     mode: "LifelinesDataMode"
@@ -60,7 +60,7 @@ class _LifelinesValidationMixin:
 
 
 @dataclass(eq=False, kw_only=True)
-class LifelinesDataConfig(_LifelinesValidationMixin, DataConfig):
+class LifelinesDataConfig(LifelinesValidationMixin, DataConfig):
     """DataConfig specialization for survival-analysis mode management."""
 
     mode: LifelinesDataMode = field(default=LifelinesDataMode.NATIVE)

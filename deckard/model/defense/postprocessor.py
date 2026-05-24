@@ -1,16 +1,16 @@
-"""Configuration for preprocessor defenses (input transformation)."""
+"""Configuration for postprocessor defenses (output transformation)."""
 
 from dataclasses import dataclass, field
 from typing import Any
 
 from deckard.plugins.defense import DefenseTypePlugin
 
-from ..utils import safe_store
-from .defend import DefensePipelineConfig, _DefenseMixin
+from ...utils import safe_store
+from .base import DefensePipelineConfig, DefenseMixin
 
 
-class _PreprocessorDefenseMixin(_DefenseMixin):
-    """Reusable preprocessor defense behavior."""
+class PostprocessorDefenseMixin(DefenseMixin):
+    """Reusable postprocessor defense behavior."""
 
     def __call__(
         self,
@@ -31,39 +31,38 @@ class _PreprocessorDefenseMixin(_DefenseMixin):
             art_class=art_class,
             base_estimator=base_estimator,
             init_params=init_params,
-            preprocessing_defences=existing_preprocessors + [defense],
-            postprocessing_defences=existing_postprocessors,
+            preprocessing_defences=existing_preprocessors,
+            postprocessing_defences=existing_postprocessors + [defense],
         )
         return defense, defended_estimator
 
 
 @dataclass(eq=False, kw_only=True)
-class PreprocessorDefenseConfig(_PreprocessorDefenseMixin, DefensePipelineConfig):
-    """Configuration for preprocessor-based defenses.
+class PostprocessorDefenseConfig(PostprocessorDefenseMixin, DefensePipelineConfig):
+    """Configuration for postprocessor-based defenses.
 
-    Registers preprocessor defense behavior and plugin metadata used during
+    Registers postprocessor defense behavior and plugin metadata used during
     defense runtime dispatch.
     """
 
     plugins: list = field(
         default_factory=lambda: [
             DefenseTypePlugin(
-                mixin_type=_PreprocessorDefenseMixin,
-                defense_type="preprocessor",
+                mixin_type=PostprocessorDefenseMixin,
+                defense_type="postprocessor",
             ),
         ],
     )
 
 
-# Register preprocessor defense config
 safe_store(
     group="model",
-    name="preprocessor_defense",
-    node=PreprocessorDefenseConfig(),
+    name="postprocessor_defense",
+    node=PostprocessorDefenseConfig(),
 )
 
 safe_store(
     group="search/models",
-    name="preprocessor_defense",
-    node=PreprocessorDefenseConfig(),
+    name="postprocessor_defense",
+    node=PostprocessorDefenseConfig(),
 )

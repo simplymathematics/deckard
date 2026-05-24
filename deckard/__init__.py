@@ -39,7 +39,7 @@ warnings.filterwarnings(
 
 from .data import DataConfig  # noqa E402
 from .model import ModelConfig  # noqa E402
-from .model.defend import DefenseConfig  # noqa E402
+from .model.defense.base import DefenseConfig  # noqa E402
 from .attack import AttackConfig  # noqa E402
 from .artifacts import ArtifactLoaderConfig  # noqa E402
 from .detector import DetectorConfig  # noqa E402
@@ -151,9 +151,90 @@ def _hash_conf(*values, _root_=None):
     return hash_conf_values(*values, _root_=_root_)
 
 
+def _stage_params(stage: Any = "???", _root_=None):
+    """Build stage-scoped params payload from canonical experiment components."""
+    from .experiment.canon import (
+        CANONICAL_EXPERIMENT_STAGE_COMPONENTS,
+        normalize_experiment_stage,
+    )
+
+    root = _root_ if _root_ is not None else OmegaConf.create({})
+    if stage in {None, "", "???"}:
+        stage_token = OmegaConf.select(root, "stage", default="all")
+    else:
+        stage_token = stage
+    try:
+        stage = normalize_experiment_stage(stage_token)
+    except Exception:
+        stage = str(stage_token or "all")
+
+    selected_components = CANONICAL_EXPERIMENT_STAGE_COMPONENTS.get(stage)
+    if selected_components is None:
+        component_union: set[str] = set()
+        for components in CANONICAL_EXPERIMENT_STAGE_COMPONENTS.values():
+            component_union.update(components)
+        selected_components = tuple(sorted(component_union))
+
+    component_path_overrides = {
+        "sampler": "data.sampler",
+        "pipeline": "data.pipeline",
+        "trainer": "model.trainer",
+        "framework": "library",
+        "plugins": "plugins",
+        "plot": "plot",
+        "files": "files",
+    }
+
+    components: dict[str, Any] = {}
+    for component in selected_components:
+        path = component_path_overrides.get(component, component)
+        value = OmegaConf.select(root, path, default=None)
+        if value is not None:
+            components[component] = value
+
+    runtime_keys = (
+        "library",
+        "classifier",
+        "evaluation_mode",
+        "score_mode",
+        "random_state",
+        "optimizers",
+        "directions",
+        "report_trial_attrs",
+        "pruning_enabled",
+        "dvclive_enabled",
+        "dvclive_dir",
+    )
+    runtime = {
+        key: OmegaConf.select(root, key, default=None)
+        for key in runtime_keys
+        if OmegaConf.select(root, key, default=None) is not None
+    }
+
+    return {
+        "stage": stage,
+        "components": components,
+        "runtime": runtime,
+    }
+
+
 OmegaConf.register_new_resolver(
     "hash",
     _hash_conf,
+    replace=True,
+    use_cache=False,
+)
+
+OmegaConf.register_new_resolver(
+    "stage_params",
+    _stage_params,
+    replace=True,
+    use_cache=False,
+)
+
+OmegaConf.register_new_resolver(
+    "stage_hash_payload",
+    _stage_params,
     replace=True,
     use_cache=False,
 )

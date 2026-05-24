@@ -79,9 +79,19 @@ class ModelFiles(TypedDict, total=False):
 
     model_file: str | None
     test_predictions_file: str | None
+    training_predictions_file: str | None
     train_predictions_file: str | None
     training_probabilities_file: str | None
     test_probabilities_file: str | None
+    score_file: str | None
+
+
+class DefenseFiles(TypedDict, total=False):
+    """Canonical defense persistence aliases used by defense runtimes."""
+
+    defended_model_file: str | None
+    defended_predictions_file: str | None
+    defended_probabilities_file: str | None
     score_file: str | None
 
 

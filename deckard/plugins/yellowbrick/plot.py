@@ -84,7 +84,7 @@ from ...frameworks.pytorch.score import (  # noqa: F401
     to_numpy as _to_numpy,
 )
 from ...plot.base import (
-    _PlotterMixin,
+    PlotterMixin,
     _YellowbrickPlotterMarker,
 )
 from ...utils import ConfigBase
@@ -393,7 +393,7 @@ def _named_classifier_adapter(model_config: Any) -> _YellowbrickModelAdapter:
 
 
 @dataclass(eq=True)
-class _YellowbrickPlotterMixin(_PlotterMixin):
+class YellowbrickPlotterMixin(PlotterMixin):
     """Yellowbrick-specific plotter handler for ML model visualization.
 
     Initialization parameters

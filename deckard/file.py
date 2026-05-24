@@ -140,6 +140,8 @@ class CanonFileHandler(AbstractFileHandler):
 
 
 class PlaceholderResolverMixin:
+    """Reusable placeholder-expansion helpers for file-oriented config objects."""
+
     replace: dict[str, str]
 
     @property

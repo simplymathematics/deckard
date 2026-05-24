@@ -6,15 +6,15 @@ from typing import Any
 from deckard.plugins.defense import DefenseTypePlugin
 
 from ..utils import safe_store
-from .defend import (
+from .defense.base import (
     DefensePipelineConfig,
-    _DefenseMixin,
+    DefenseMixin,
     _is_art_torch_wrapper,
     _is_torch_model_instance,
 )
 
 
-class _TransformerDefenseMixin(_DefenseMixin):
+class TransformerDefenseMixin(DefenseMixin):
     """Reusable transformer defense behavior."""
 
     def __call__(
@@ -84,7 +84,7 @@ class _TransformerDefenseMixin(_DefenseMixin):
 
 
 @dataclass(eq=False, kw_only=True)
-class TransformerDefenseConfig(_TransformerDefenseMixin, DefensePipelineConfig):
+class TransformerDefenseConfig(TransformerDefenseMixin, DefensePipelineConfig):
     """Configuration for transformer-based defenses.
 
     Registers transformer defense behavior and plugin metadata used during
@@ -94,7 +94,7 @@ class TransformerDefenseConfig(_TransformerDefenseMixin, DefensePipelineConfig):
     plugins: list = field(
         default_factory=lambda: [
             DefenseTypePlugin(
-                mixin_type=_TransformerDefenseMixin,
+                mixin_type=TransformerDefenseMixin,
                 defense_type="transformer",
             ),
         ],
