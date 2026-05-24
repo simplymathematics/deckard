@@ -23,7 +23,7 @@ from deckard.file import FileConfig
 from deckard.frameworks.pytorch.data import PytorchDataConfig
 from deckard.frameworks.pytorch.model import PytorchModelConfig
 from deckard.model import DefensePipelineConfig
-from deckard.model.defend import DefenseConfig
+from deckard.model.defense.base import DefenseConfig
 
 torch = pytest.importorskip("torch")
 ROOT = Path(__file__).resolve().parents[3]
@@ -309,7 +309,7 @@ def test_art_last_ordering_no_warning_for_wrapper_only_chain(caplog):
         defenses=[art_defense_dict, fairlearn_defense],
     )
 
-    with caplog.at_level(logging.WARNING, logger="deckard.model.defend"):
+    with caplog.at_level(logging.WARNING, logger="deckard.model.defense.base"):
         data_cfg = _make_torch_data(unit_interval=True)
         estimator = _make_torch_model()._model
         try:
@@ -336,7 +336,7 @@ def test_art_last_ordering_no_warning_when_already_last(caplog):
         ],
     )
 
-    with caplog.at_level(logging.WARNING, logger="deckard.model.defend"):
+    with caplog.at_level(logging.WARNING, logger="deckard.model.defense.base"):
         data_cfg = _make_torch_data(unit_interval=True)
         estimator = _make_torch_model()._model
         try:

@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 
 from deckard.frameworks.pytorch import model as pytorch_module
-from deckard.model.defend import DefensePipelineConfig
+from deckard.model.defense.base import DefensePipelineConfig
 
 PytorchModelConfig = pytest.importorskip(
     "deckard.frameworks.pytorch.model",

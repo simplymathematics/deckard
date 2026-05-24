@@ -5,9 +5,9 @@ import pytest
 from sklearn.metrics import accuracy_score, mean_squared_error
 
 from deckard.plugins.fairlearn.score import (
-    DefaultFairlearnClassificationConfig,
-    DefaultFairlearnRegressionConfig,
-    FairlearnScoreDictConfig,
+    DefaultFairlearnClassificationScorerDictConfig,
+    DefaultFairlearnRegressionScorerDictConfig,
+    FairlearnScorerDictConfig,
 )
 from deckard.score.attack import FairlearnAttackScorerConfig
 from deckard.score import ScorerConfig, ScorerDictConfig
@@ -15,8 +15,8 @@ from deckard.score import ScorerConfig, ScorerDictConfig
 
 class TestFairnessScorers(unittest.TestCase):
     def test_fairness_classification_and_regression_profiles_are_distinct(self):
-        classification = DefaultFairlearnClassificationConfig()
-        regression = DefaultFairlearnRegressionConfig()
+        classification = DefaultFairlearnClassificationScorerDictConfig()
+        regression = DefaultFairlearnRegressionScorerDictConfig()
         self.assertIn("accuracy", classification.scorers.keys())
         self.assertIn("mse", regression.scorers.keys())
         self.assertIn("demographic_parity_difference", classification.scorers.keys())
@@ -32,7 +32,7 @@ class TestFairnessScorers(unittest.TestCase):
         self.assertIn("group_mae_difference", regression.scorers.keys())
 
     def test_fairness_regression_scores(self):
-        scorer = DefaultFairlearnRegressionConfig()
+        scorer = DefaultFairlearnRegressionScorerDictConfig()
         y_true = np.array([1.0, 1.8, 3.2, 4.0])
         y_pred = np.array([1.1, 1.6, 2.8, 4.3])
         sensitive = np.array([0, 0, 1, 1])
@@ -54,16 +54,16 @@ class TestFairnessScorers(unittest.TestCase):
 
     def test_score_profile_classes_available(self):
         self.assertIsInstance(
-            DefaultFairlearnClassificationConfig(),
-            FairlearnScoreDictConfig,
+            DefaultFairlearnClassificationScorerDictConfig(),
+            FairlearnScorerDictConfig,
         )
         self.assertIsInstance(
-            DefaultFairlearnRegressionConfig(),
-            FairlearnScoreDictConfig,
+            DefaultFairlearnRegressionScorerDictConfig(),
+            FairlearnScorerDictConfig,
         )
 
     def test_metric_frame_fairness_score_dict_classification(self):
-        scorer = FairlearnScoreDictConfig(
+        scorer = FairlearnScorerDictConfig(
             group_scorers={
                 "accuracy": ScorerConfig(
                     score_name="accuracy",
@@ -90,7 +90,7 @@ class TestFairnessScorers(unittest.TestCase):
         self.assertIn("accuracy_difference", scores)
 
     def test_metric_frame_fairness_score_dict_regression(self):
-        scorer = FairlearnScoreDictConfig(
+        scorer = FairlearnScorerDictConfig(
             group_scorers={
                 "mse": ScorerConfig(
                     score_name="mse",
@@ -118,7 +118,7 @@ class TestFairnessScorers(unittest.TestCase):
     def test_metric_frame_fairness_score_dict_supports_full_metricframe_kwargs(
         self,
     ):
-        scorer = FairlearnScoreDictConfig(
+        scorer = FairlearnScorerDictConfig(
             group_scorers={
                 "accuracy": ScorerConfig(
                     score_name="accuracy",

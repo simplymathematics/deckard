@@ -98,10 +98,14 @@ class TestIterConfigFiles:
             (root / "data").mkdir()
             (root / "data" / "config3.yaml").touch()
             (root / "default.yaml").touch()
+            (root / "top.yaml").touch()
+            (root / "model" / "default.yaml").touch()
 
             files = list(iter_config_files(root))
-            assert len(files) == 4, "Should find 4 YAML files"
+            assert len(files) == 3, "Should find 3 YAML files under subfolders excluding default.yaml"
             assert all(f.suffix == ".yaml" for f in files), "All files should be .yaml"
+            assert all(f.name != "default.yaml" for f in files)
+            assert all(len(f.relative_to(root).parts) >= 2 for f in files)
 
     def test_skip_hidden_files(self):
         """Test that hidden files are skipped."""
@@ -109,12 +113,27 @@ class TestIterConfigFiles:
             root = Path(tmpdir)
 
             # Create visible and hidden files
+            (root / "group").mkdir()
+            (root / "group" / "config.yaml").touch()
             (root / "config.yaml").touch()
             (root / ".hidden.yaml").touch()
 
             files = list(iter_config_files(root))
             assert len(files) == 1, "Should find only visible file"
             assert "config.yaml" in str(files[0])
+
+    def test_skip_root_level_and_default_yaml(self):
+        """Root-level YAML and default.yaml should never be registered."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "default.yaml").touch()
+            (root / "other.yaml").touch()
+            (root / "group").mkdir()
+            (root / "group" / "default.yaml").touch()
+            (root / "group" / "valid.yaml").touch()
+
+            files = list(iter_config_files(root))
+            assert files == [root / "group" / "valid.yaml"]
 
     def test_nonexistent_directory(self):
         """Test that nonexistent directory returns empty iterator."""

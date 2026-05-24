@@ -448,7 +448,7 @@ def test_art_defense_reordered_last_with_warning(caplog):
     """If ART is placed before non-ART defenses, pipeline reorders and logs a warning."""
     import logging
 
-    from deckard.model.defend import DefensePipelineConfig
+    from deckard.model.defense.base import DefensePipelineConfig
 
     call_order = []
 
@@ -474,7 +474,7 @@ def test_art_defense_reordered_last_with_warning(caplog):
         defenses=[_StubArtDefense(), _StubFairnessDefense()],
     )
 
-    with caplog.at_level(logging.WARNING, logger="deckard.model.defend"):
+    with caplog.at_level(logging.WARNING, logger="deckard.model.defense.base"):
         pipeline.apply(estimator=object(), data=object())
 
     assert call_order == ["fairness", "art"]

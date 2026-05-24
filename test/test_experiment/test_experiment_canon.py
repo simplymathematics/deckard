@@ -11,6 +11,8 @@ from deckard.experiment.canon import (
     build_experiment_hook_graph,
     build_experiment_hook_plugins,
     build_experiment_params_manifest,
+    build_experiment_stage_param_key_paths,
+    build_experiment_stage_params_subset,
     build_experiment_stage_cache_key,
     ensure_canonical_experiment_times,
     ensure_experiment_runtime_contract,
@@ -167,3 +169,36 @@ def test_experiment_stage_cache_key_is_deterministic_and_identity_sensitive():
     )
     assert key_a == key_b
     assert key_a != key_c
+
+
+def test_experiment_stage_param_key_paths_are_stage_scoped():
+    load_paths = set(build_experiment_stage_param_key_paths(stage="load", component="data"))
+    model_paths = set(build_experiment_stage_param_key_paths(stage="model_score", component="model"))
+
+    assert "data" in load_paths
+    assert "model" not in load_paths
+    assert "model" in model_paths
+
+
+def test_experiment_stage_param_subset_filters_manifest_by_stage_component():
+    manifest = {
+        "schema_version": "deckard.experiment.runtime.v1",
+        "experiment_name": "exp",
+        "library": "sklearn",
+        "classifier": True,
+        "evaluation_mode": "standard",
+        "score_mode": "test",
+        "random_state": 42,
+        "data": {"alias": "data-a"},
+        "model": {"alias": "model-a"},
+        "attack": {"alias": "attack-a"},
+    }
+
+    subset = build_experiment_stage_params_subset(
+        params_manifest=manifest,
+        stage="load",
+        component="data",
+    )
+    assert "data" in subset
+    assert "model" not in subset
+    assert subset["random_state"] == 42

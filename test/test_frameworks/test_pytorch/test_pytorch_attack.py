@@ -2714,13 +2714,13 @@ class TestFairlearnAttackScorer(unittest.TestCase):
         return data
 
     def test_fairlearn_attack_scorer_instantiates(self):
-        from deckard.plugins.fairlearn.score import FairlearnScoreDictConfig
+        from deckard.plugins.fairlearn.score import FairlearnScorerDictConfig
         from deckard.score.base import DefaultClassifierConfig
 
         scorer = FairlearnAttackScorerConfig(evasion=DefaultClassifierConfig())
-        self.assertIsInstance(scorer.evasion, FairlearnScoreDictConfig)
-        self.assertIsInstance(scorer.membership_inference, FairlearnScoreDictConfig)
-        self.assertIsInstance(scorer.attribute_inference, FairlearnScoreDictConfig)
+        self.assertIsInstance(scorer.evasion, FairlearnScorerDictConfig)
+        self.assertIsInstance(scorer.membership_inference, FairlearnScorerDictConfig)
+        self.assertIsInstance(scorer.attribute_inference, FairlearnScorerDictConfig)
 
     def test_score_evasion_with_sensitive_features_produces_group_metrics(self):
         scorer = FairlearnAttackScorerConfig()

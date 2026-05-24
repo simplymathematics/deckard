@@ -43,6 +43,14 @@ def test_repository_enforcement_frameworks_scope_passes() -> None:
     _run_enforcement("deckard/frameworks")
 
 
+def test_repository_enforcement_score_scope_passes() -> None:
+    _run_enforcement("deckard/score")
+
+
+def test_repository_enforcement_deckard_scope_passes() -> None:
+    _run_enforcement("deckard")
+
+
 def test_plugin_orchestration_is_deterministic() -> None:
     class _Runtime:
         def __init__(self) -> None:

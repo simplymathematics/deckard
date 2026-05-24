@@ -7,7 +7,7 @@ import pytest
 from omegaconf import OmegaConf
 
 from deckard.model.base import ModelConfig
-from deckard.model.defend import (
+from deckard.model.defense.base import (
     DefenseConfig,
     DefensePipelineConfig,
     DefenseStep,
@@ -224,7 +224,7 @@ def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
 
     defense.defense_name = "art.defences.postprocessor.Missing"
     monkeypatch.setattr(
-        "deckard.model.defend.resolve_class",
+        "deckard.model.defense.base.resolve_class",
         lambda name: (_ for _ in ()).throw(AttributeError(name)),
     )
     with pytest.raises(ImportError, match="Could not import defense class"):
@@ -240,7 +240,7 @@ def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
             SimpleNamespace(X_train=np.zeros((2, 3)), y_train=[0, 1]),
         )
 
-    import deckard.model.defend as defend_module
+    import deckard.model.defense.base as defend_module
 
     custom_art = type("CustomArt", (), {})
     monkeypatch.setitem(
@@ -308,11 +308,11 @@ def test_extract_art_wrapper_context_prefers_explicit_wrapper_state(monkeypatch)
     defense._model = wrapper
 
     monkeypatch.setattr(
-        "deckard.model.defend._is_art_wrapper_instance",
+        "deckard.model.defense.base._is_art_wrapper_instance",
         lambda obj: obj is wrapper,
     )
     monkeypatch.setattr(
-        "deckard.model.defend._get_wrapper_state",
+        "deckard.model.defense.base._get_wrapper_state",
         lambda obj: {"wrapped_by_deckard": True, "base_estimator": state_base},
     )
 
@@ -345,11 +345,11 @@ def test_get_art_class_torch_requires_typed_base_estimator(monkeypatch):
     defense._model = SimpleNamespace(model="not-a-torch-module")
 
     monkeypatch.setattr(
-        "deckard.model.defend._is_art_torch_wrapper",
+        "deckard.model.defense.base._is_art_torch_wrapper",
         lambda _obj: True,
     )
     monkeypatch.setattr(
-        "deckard.model.defend._is_torch_model_instance",
+        "deckard.model.defense.base._is_torch_model_instance",
         lambda _obj: False,
     )
 
@@ -403,7 +403,7 @@ def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
         DefensePipelineConfig.coerce(3)
 
     monkeypatch.setattr(
-        "deckard.model.defend.coerce_config",
+        "deckard.model.defense.base.coerce_config",
         lambda obj: (
             [{"defense_name": "art.defences.postprocessor.HighConfidence"}]
             if obj == "legacy-list"
@@ -421,7 +421,7 @@ def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
 
         return _factory
 
-    monkeypatch.setattr("deckard.model.defend.resolve_class", _resolve_plugin)
+    monkeypatch.setattr("deckard.model.defense.base.resolve_class", _resolve_plugin)
     plugin_pipeline = DefensePipelineConfig(defenses=[])
     assert plugin_pipeline._instantiate_plugin(
         {"name": "pkg.Plugin", "flag": True},
@@ -479,7 +479,7 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
             return FairDefense
         raise RuntimeError(name)
 
-    monkeypatch.setattr("deckard.model.defend.resolve_class", _resolve)
+    monkeypatch.setattr("deckard.model.defense.base.resolve_class", _resolve)
 
     coerced_target = pipeline._coerce_single_defense(
         {"_target_": "pkg.CustomDefense", "x": 1},
@@ -494,7 +494,7 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
     assert coerced_fair.kwargs["eps"] == 0.1
 
     monkeypatch.setattr(
-        "deckard.model.defend.resolve_class",
+        "deckard.model.defense.base.resolve_class",
         lambda name: (_ for _ in ()).throw(RuntimeError(name)),
     )
     coerced_plain = pipeline._coerce_single_defense(
@@ -584,7 +584,7 @@ def test_pipeline_apply_validation_and_elapsed_fallback(monkeypatch):
         lambda hook_name, **kwargs: hook_calls.append(hook_name) or [],
     )
     monkeypatch.setattr(
-        "deckard.model.defend.time.perf_counter",
+        "deckard.model.defense.base.time.perf_counter",
         iter([10.0, 12.5]).__next__,
     )
 

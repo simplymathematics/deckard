@@ -4,9 +4,9 @@ import pytest
 
 from deckard.plugins.fairlearn import score as fairness
 from deckard.plugins.fairlearn.score import (
-    DefaultFairlearnClassificationConfig,
-    DefaultFairlearnRegressionConfig,
-    FairlearnScoreDictConfig,
+    DefaultFairlearnClassificationScorerDictConfig,
+    DefaultFairlearnRegressionScorerDictConfig,
+    FairlearnScorerDictConfig,
     _flatten_metric_frame_by_group,
     _resolve_sensitive_features,
     _series_like_to_float_dict,
@@ -39,7 +39,7 @@ class DummyData:
 def test_as_group_scorer_with_dict():
     scorer_dict = {"accuracy": ScorerConfig("accuracy", lambda y_true, y_pred: 1.0)}
     group = as_group_scorer(scorer_dict)
-    assert isinstance(group, FairlearnScoreDictConfig)
+    assert isinstance(group, FairlearnScorerDictConfig)
     assert group.scorers["accuracy"].score_name == "accuracy"
 
 
@@ -48,7 +48,7 @@ def test_as_group_scorer_with_scorerdictconfig():
         scorers={"accuracy": ScorerConfig("accuracy", lambda y_true, y_pred: 1.0)},
     )
     group = as_group_scorer(scorer_dict)
-    assert isinstance(group, FairlearnScoreDictConfig)
+    assert isinstance(group, FairlearnScorerDictConfig)
     assert group.scorers["accuracy"].score_name == "accuracy"
 
 
@@ -214,16 +214,16 @@ def test_fairness_group_mse_difference():
     assert abs(result) < 1e-6
 
 
-# --- DefaultFairlearnClassificationConfig & DefaultFairlearnRegressionConfig ---
+# --- DefaultFairlearnClassificationScorerDictConfig & DefaultFairlearnRegressionScorerDictConfig ---
 def test_default_fairlearn_classification_config():
-    cfg = DefaultFairlearnClassificationConfig()
+    cfg = DefaultFairlearnClassificationScorerDictConfig()
     assert cfg.classifier is True
     assert "accuracy" in cfg.scorers
-    assert isinstance(cfg, FairlearnScoreDictConfig)
+    assert isinstance(cfg, FairlearnScorerDictConfig)
 
 
 def test_default_fairlearn_regression_config():
-    cfg = DefaultFairlearnRegressionConfig()
+    cfg = DefaultFairlearnRegressionScorerDictConfig()
     assert cfg.classifier is False
     assert "mse" in cfg.scorers
-    assert isinstance(cfg, FairlearnScoreDictConfig)
+    assert isinstance(cfg, FairlearnScorerDictConfig)

@@ -13,6 +13,7 @@ from helpers import make_runtime_env
 from omegaconf import OmegaConf
 
 from deckard.layers import optimize as optimize_module
+from deckard.experiment.canon import CANONICAL_EXPERIMENT_STAGE_COMPONENTS
 
 ROOT = Path(__file__).resolve().parents[2]
 EXAMPLES_SKLEARN_DIR = ROOT / "examples" / "sklearn"
@@ -1390,6 +1391,86 @@ def test_mode_and_multirun_cfg_branches(tmp_path):
         optimize_module._normalize_mode_cfg(unknown_mode_cfg, unknown_mode)
         is unknown_mode_cfg
     )
+
+
+def test_optimizer_policy_auto_configures_from_root_cfg(monkeypatch):
+    captured = {}
+
+    callback = optimize_module.DefaultOptimizerCallback()
+    cfg = OmegaConf.create(
+        {
+            "directions": ["maximize", "diff"],
+            "optimizers": ["accuracy", "delta"],
+            "report_trial_attrs": False,
+            "pruning_enabled": True,
+            "dvclive_enabled": True,
+        },
+    )
+
+    monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: SimpleNamespace(mode="RunMode.MULTIRUN"))
+    monkeypatch.setattr(optimize_module, "_normalize_mode_cfg", lambda config, hydra_cfg, **kwargs: config)
+    monkeypatch.setattr(optimize_module, "_seed_experiment_uuid_for_current_trial", lambda **kwargs: None)
+    monkeypatch.setattr(optimize_module, "_resolve_multirun_paths", lambda hydra_cfg: {})
+    monkeypatch.setattr(optimize_module, "_sync_multirun_trial_attributes", lambda **kwargs: captured.update(kwargs))
+
+    callback.on_compose_config(cfg)
+    callback._resolved_score_file = None
+    callback.on_job_end(
+        cfg,
+        job_return=SimpleNamespace(return_value={"accuracy": 0.91, "delta": 0.04}),
+    )
+
+    assert callback.optimizers == ["accuracy", "delta"]
+    assert callback.directions == ["maximize", "diff"]
+    assert callback.optimizer.report_trial_attrs is False
+    assert captured == {}
+
+
+def test_stage_dependent_hash_payload_includes_selected_components():
+    cfg = {
+        "stage": "train",
+        "data": {"name": "adult"},
+        "model": {"name": "rf"},
+        "attack": {"name": "hsj"},
+        "score": {"name": "classification"},
+        "directions": ["maximize"],
+        "optimizers": ["accuracy"],
+    }
+
+    payload = optimize_module._build_stage_dependent_hash_payload(cfg)
+
+    assert payload["stage"] == "train"
+    assert "data" in payload["components"]
+    assert "model" in payload["components"]
+    assert "attack" not in payload["components"]
+
+
+def test_stage_dependent_hash_payload_includes_attack_for_attack_stage():
+    cfg = {
+        "stage": "attack",
+        "data": {"name": "adult"},
+        "model": {"name": "rf"},
+        "attack": {"name": "hsj"},
+        "detector": {"name": "spectral"},
+        "defense": {"name": "gaussian"},
+    }
+
+    payload = optimize_module._build_stage_dependent_hash_payload(cfg)
+
+    assert payload["stage"] == "attack"
+    assert "attack" in payload["components"]
+
+
+def test_canonical_stage_components_include_attack_participation():
+    assert "attack" in CANONICAL_EXPERIMENT_STAGE_COMPONENTS
+    assert "attack" in CANONICAL_EXPERIMENT_STAGE_COMPONENTS["attack"]
+    assert "attack" in CANONICAL_EXPERIMENT_STAGE_COMPONENTS["score"]
+
+
+def test_canonical_stage_components_include_plugin_framework_plot_participants():
+    assert "plugins" in CANONICAL_EXPERIMENT_STAGE_COMPONENTS["score"]
+    assert "framework" in CANONICAL_EXPERIMENT_STAGE_COMPONENTS["score"]
+    assert "plot" in CANONICAL_EXPERIMENT_STAGE_COMPONENTS["score"]
 
 
 def test_extract_scores_kwargs_path_and_none():

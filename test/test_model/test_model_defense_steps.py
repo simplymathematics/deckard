@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
 from deckard.model.base import ModelConfig
-from deckard.model.defend import DefensePipelineConfig, DefenseStep
+from deckard.model.defense.base import DefensePipelineConfig, DefenseStep
 
 
 class _DummyDefense:

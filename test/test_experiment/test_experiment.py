@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
+import yaml
 
 import numpy as np
 import pytest
@@ -18,6 +19,11 @@ from deckard.attack import AttackConfig
 from deckard.attack.base import resolve_class as base_resolve_class
 from deckard.data import DataConfig
 from deckard.experiment import ExperimentConfig, SurvivalExperimentConfig
+from deckard.experiment.canon import (
+    CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_VERSION,
+    build_experiment_params_manifest,
+    build_experiment_stage_cache_key,
+)
 from deckard.experiment.base import (
     DataConfigResolutionMixin,
     _file_resolver,
@@ -1776,6 +1782,101 @@ class TestExperimentBranchEdges(unittest.TestCase):
                 model=123,
                 files=FileConfig(),
             )
+
+
+class TestExperimentRuntimeCompositionAndPersistence(unittest.TestCase):
+    def _make_base_experiment(self, *, params_file=None):
+        files = FileConfig(params_file=params_file) if params_file else FileConfig()
+        return ExperimentConfig(
+            data=DataConfig(
+                dataset_name="make_classification",
+                data_params={
+                    "n_samples": 80,
+                    "n_features": 6,
+                    "n_informative": 4,
+                    "n_redundant": 2,
+                    "random_state": 0,
+                },
+                test_size=0.25,
+                random_state=42,
+                classifier=True,
+                sampler="split",
+            ),
+            model=ModelConfig(
+                model_type="sklearn.tree.DecisionTreeClassifier",
+                classifier=True,
+                model_params={"max_depth": 2},
+            ),
+            files=files,
+            experiment_name="runtime-contract-test",
+        )
+
+    def test_compose_components_updates_model_entrypoint(self):
+        exp = self._make_base_experiment()
+        exp.compose_components(
+            model={
+                "model_type": "sklearn.linear_model.LogisticRegression",
+                "classifier": True,
+                "model_params": {"max_iter": 20},
+            },
+        )
+        self.assertIsInstance(exp.model, ModelConfig)
+        self.assertEqual(exp.model.model_type, "sklearn.linear_model.LogisticRegression")
+
+    def test_stage_cache_key_changes_when_component_params_change(self):
+        exp_a = self._make_base_experiment()
+        exp_b = self._make_base_experiment()
+        exp_b.compose_components(model=ModelConfig(
+            model_type="sklearn.tree.DecisionTreeClassifier",
+            classifier=True,
+            model_params={"max_depth": 5},
+        ))
+
+        key_a = build_experiment_stage_cache_key(
+            params_manifest=build_experiment_params_manifest(exp_a),
+            stage="train",
+            component="model",
+            identity={"run_idx": 0},
+        )
+        key_b = build_experiment_stage_cache_key(
+            params_manifest=build_experiment_params_manifest(exp_b),
+            stage="train",
+            component="model",
+            identity={"run_idx": 0},
+        )
+        self.assertNotEqual(key_a, key_b)
+
+    def test_runtime_state_yaml_is_persisted_with_schema_and_reloads(self):
+        with tempfile.TemporaryDirectory() as td:
+            params_path = Path(td) / "experiment_runtime_state"
+            exp = self._make_base_experiment(params_file=str(params_path))
+            _ = exp()
+
+            saved_path = Path(str(params_path) + ".yaml")
+            self.assertTrue(saved_path.exists())
+            payload = yaml.safe_load(saved_path.read_text(encoding="utf-8"))
+            self.assertEqual(
+                payload.get("schema_version"),
+                CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_VERSION,
+            )
+            self.assertIn("params", payload)
+            self.assertIn("runtime", payload)
+
+            restored = ExperimentConfig.from_yaml(str(saved_path))
+            self.assertIsInstance(restored, ExperimentConfig)
+
+    def test_runtime_state_yaml_rejects_future_schema_version(self):
+        with tempfile.TemporaryDirectory() as td:
+            exp = self._make_base_experiment()
+            payload = {
+                "schema_version": "deckard.experiment.runtime.v999",
+                "experiment": exp.to_dict(for_hash=True),
+            }
+            path = Path(td) / "future_runtime.yaml"
+            path.write_text(yaml.safe_dump(payload), encoding="utf-8")
+
+            with self.assertRaises(ValueError):
+                ExperimentConfig.from_yaml(str(path))
 
 
 if __name__ == "__main__":

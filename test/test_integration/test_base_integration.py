@@ -16,7 +16,7 @@ from deckard.data import DataConfig
 from deckard.experiment import ExperimentConfig
 from deckard.file import FileConfig
 from deckard.model import DefenseConfig, ModelConfig
-from deckard.model.defend import DefensePipelineConfig
+from deckard.model.defense.base import DefensePipelineConfig
 from deckard.score.attack import AttackScorerConfig
 from deckard.score import (
     DefaultDataClassificationConfig,

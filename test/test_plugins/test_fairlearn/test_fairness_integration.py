@@ -9,7 +9,7 @@ from deckard.attack import AttackConfig
 from deckard.plugins.fairlearn.data import FairlearnDataConfig
 from deckard.plugins.fairlearn.score import (
     DefaultFairlearnDataScorerConfig,
-    FairlearnScoreDictConfig,
+    FairlearnScorerDictConfig,
 )
 from deckard.score.attack import FairlearnAttackScorerConfig
 from deckard.score import ScorerConfig
@@ -107,7 +107,7 @@ def test_fairness_regression_data_and_metric_frame_scores():
     )
     data()
 
-    scorer = FairlearnScoreDictConfig(
+    scorer = FairlearnScorerDictConfig(
         scorers={
             "mse": ScorerConfig(
                 score_name="mse",
@@ -232,14 +232,14 @@ def test_mixed_fairlearn_and_art_defenses_apply_with_type_checks(
 @pytest.fixture(scope="module")
 def generate_fairness_model(generate_fairness_data):
     from deckard.plugins.fairlearn.score import (
-        DefaultFairlearnClassificationConfig,
+        DefaultFairlearnClassificationScorerDictConfig,
     )
 
     model = FairlearnModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
-        scorer=DefaultFairlearnClassificationConfig(),
+        scorer=DefaultFairlearnClassificationScorerDictConfig(),
         data=generate_fairness_data,
     )
     model(generate_fairness_data)
@@ -488,7 +488,7 @@ def test_fairlearn_group_metrics_all_modes(generate_fairness_data):
     """
     Ensure per-group metrics are present in score_dict for all supported modes.
     """
-    from deckard.plugins.fairlearn.score import FairlearnScoreDictConfig
+    from deckard.plugins.fairlearn.score import FairlearnScorerDictConfig
     from deckard.score.base import SUPPORTED_MODEL_SCORE_MODES
 
     data = generate_fairness_data
@@ -504,7 +504,7 @@ def test_fairlearn_group_metrics_all_modes(generate_fairness_data):
         "test": "_sensitive_test",
         "val": "_sensitive_val",
     }
-    scorer = FairlearnScoreDictConfig(
+    scorer = FairlearnScorerDictConfig(
         scorers={
             "accuracy": ScorerConfig(
                 score_name="accuracy",

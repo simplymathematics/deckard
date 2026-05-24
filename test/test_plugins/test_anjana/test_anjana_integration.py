@@ -481,7 +481,7 @@ def test_wrapper_defenses_reordered_last_with_warning(caplog):
         defenses=[_StubArtDefense(), _StubDataDefense()],
     )
 
-    with caplog.at_level(logging.WARNING, logger="deckard.model.defend"):
+    with caplog.at_level(logging.WARNING, logger="deckard.model.defense.base"):
         pipeline.apply(estimator=object(), data=object())
 
     assert call_order == ["data", "art"]

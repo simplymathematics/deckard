@@ -79,6 +79,57 @@ def test_hash_conf_matches_hash_conf_values():
     assert observed == expected
 
 
+def test_stage_params_excludes_future_stage_components():
+    root = OmegaConf.create(
+        {
+            "stage": "sample",
+            "data": {"alias": "adult"},
+            "model": {"alias": "rf"},
+            "attack": {"alias": "hsj"},
+            "score": {"alias": "classification"},
+            "directions": ["maximize"],
+        },
+    )
+
+    payload = deckard._stage_params("???", _root_=root)
+
+    assert payload["stage"] == "sample"
+    assert "data" in payload["components"]
+    assert "attack" not in payload["components"]
+    assert "model" not in payload["components"]
+
+
+def test_stage_params_includes_attack_for_attack_stage():
+    root = OmegaConf.create(
+        {
+            "stage": "attack",
+            "data": {"alias": "adult"},
+            "model": {"alias": "rf"},
+            "attack": {"alias": "hsj"},
+            "detector": {"alias": "spectral"},
+            "score": {"alias": "classification"},
+        },
+    )
+
+    payload = deckard._stage_params("attack", _root_=root)
+
+    assert payload["stage"] == "attack"
+    assert "attack" in payload["components"]
+
+
+def test_stage_params_resolver_accepts_missing_stage_argument():
+    root = OmegaConf.create(
+        {
+            "data": {"alias": "adult"},
+            "model": {"alias": "rf"},
+        },
+    )
+
+    payload = deckard._stage_params("???", _root_=root)
+
+    assert payload["stage"] == "all"
+
+
 def test_public_api_all_contains_expected_symbols():
     required = {
         "DataConfig",
