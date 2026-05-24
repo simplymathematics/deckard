@@ -110,7 +110,13 @@ class DVCExperimentPlugin:
     dvc_file: str = "dvc.yaml"
     params_file: str = "params.yaml"
 
+    def __call__(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        """Return normalized plugin settings for runtime hook composition."""
+        _ = args, kwargs
+        return self.to_dict()
+
     def to_dict(self) -> dict[str, Any]:
+        """Serialize DVC plugin policy fields into a plain runtime dictionary."""
         return {
             "enabled": bool(self.enabled),
             "dvclive_dir": self.dvclive_dir,
@@ -171,10 +177,12 @@ class DVCExperimentConfig:
             )
         return payload
 
-    def to_experiment_config(self):
+    def to_experiment_config(self) -> "ExperimentConfig":
+        """Return the normalized wrapped ExperimentConfig runtime object."""
         return self._experiment_obj
 
     def to_dict(self, *, for_hash: bool = False) -> dict[str, Any]:
+        """Serialize DVC experiment wrapper into a plain declaration dictionary."""
         experiment_payload: dict[str, Any]
         if hasattr(self._experiment_obj, "to_dict") and callable(
             getattr(self._experiment_obj, "to_dict"),
@@ -198,6 +206,7 @@ class DVCExperimentConfig:
         return getattr(self._experiment_obj, name)
 
     def __call__(self) -> dict[str, Any]:
+        """Execute wrapped experiment runtime with DVC plugin policy applied."""
         return self._experiment_obj()
 
 

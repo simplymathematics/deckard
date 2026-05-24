@@ -25,6 +25,7 @@ class PostprocessorDefenseMixin(DefenseMixin):
         existing_preprocessors,
         existing_postprocessors,
     ) -> tuple[Any, Any]:
+        """Attach postprocessor defense and return defense with defended estimator."""
         assert defense_class is not None
         defense = defense_class(**(self.defense_params or {}))
         defended_estimator = self._build_art_wrapper(

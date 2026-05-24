@@ -15,7 +15,8 @@ from matplotlib.figure import Figure
 
 from ...data import DataConfig
 from ...experiment import SurvivalExperimentConfig
-from ...utils import ConfigBase
+from ...frameworks.types import StringifiedClass
+from ...utils import BaseConfig
 from ..seaborn.plot import SeabornPlotConfig
 
 
@@ -26,7 +27,7 @@ def _close_axis_figure(ax: Any) -> None:
 
 
 @dataclass(kw_only=True)
-class SurvivalSeabornPlotterConfig(ConfigBase):
+class SurvivalSeabornPlotterConfig(BaseConfig):
     """Factory for seaborn plot configs commonly used in survival model reporting."""
 
     coefficients_file: Optional[str] = None
@@ -493,7 +494,7 @@ class SurvivalSeabornPlotterConfig(ConfigBase):
 
 
 @dataclass(eq=False, kw_only=True)
-class SurvivalSeabornPlotConfigList(ConfigBase):
+class SurvivalSeabornPlotConfigList(BaseConfig):
     """Container for multiple survival model plots from SurvivalSeabornPlotterConfig."""
 
     plots_by_model: dict[str, list[Any]] = field(default_factory=dict)
@@ -503,7 +504,7 @@ class SurvivalSeabornPlotConfigList(ConfigBase):
 
     def add_model_plots(
         self,
-        model_type: str,
+        model_type: StringifiedClass,
         model: Any,
         plots: list[Any],
         t0: float = 0.35,

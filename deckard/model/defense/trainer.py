@@ -30,6 +30,7 @@ class TrainerDefenseMixin(DefenseMixin):
         existing_preprocessors,
         existing_postprocessors,
     ) -> tuple[Any, Any]:
+        """Build trainer defense wrapper and return defense with defended estimator."""
         assert defense_class is not None
         trainer_params = dict(self.defense_params or {})
 

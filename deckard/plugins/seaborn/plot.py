@@ -15,7 +15,7 @@ from ...plot.base import (
     _SeabornPlotterMarker,
 )
 from ...optuna_callback import load_optuna_studies_dataframe
-from ...utils import ConfigBase, load_data
+from ...utils import BaseConfig, load_data
 
 if TYPE_CHECKING:
     from ...data import DataConfig
@@ -165,7 +165,7 @@ class SeabornPlotterMixin(PlotterMixin):
 
 
 @dataclass(kw_only=True, eq=False)
-class SeabornPlotConfig(_SeabornPlotterMarker, ConfigBase):
+class SeabornPlotConfig(_SeabornPlotterMarker, BaseConfig):
     """Configuration for seaborn matplotlib-based plots.
 
     Initialization parameters
@@ -312,7 +312,8 @@ class SeabornPlotConfig(_SeabornPlotterMarker, ConfigBase):
     def __len__(self):
         return 1
 
-    def __call__(self, ax: Optional[Axes] = None):
+    def __call__(self, ax: Optional[Axes] = None) -> Axes:
+        """Render the configured seaborn plot and return the resolved axes."""
         plotter_map = globals().get(
             "seaborn_plotter_dict",
             globals().get("searborn_plotter_dict"),
@@ -389,7 +390,7 @@ class SeabornPlotConfig(_SeabornPlotterMarker, ConfigBase):
 
 
 @dataclass(eq=False, kw_only=True)
-class SeabornPlotConfigList(ConfigBase):
+class SeabornPlotConfigList(BaseConfig):
     """Container for multiple seaborn plot configurations.
 
     Initialization parameters

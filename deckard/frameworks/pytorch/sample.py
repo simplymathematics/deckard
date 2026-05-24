@@ -520,7 +520,7 @@ class TorchDataLoaderSamplingMixin:
         pin_memory: bool = False,
         drop_last: bool = False,
         n_splits: int = 5,
-    ):
+    ) -> Any:
         """Sample the dataset according to `self.sample`.
 
         Modes:

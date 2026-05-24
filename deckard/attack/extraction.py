@@ -6,6 +6,11 @@ import time
 from dataclasses import dataclass, field
 
 import numpy as np
+from sklearn.base import BaseEstimator
+from ..artifacts import ScoreDict
+from ..data import DataConfig
+from ..frameworks.types import AttackLike, EstimatorLike, MatrixLike, StringifiedClass
+from ..model import ModelConfig
 from ..score.base import DefaultClassifierConfig
 
 from .base import AttackConfig, AttackTypePlugin
@@ -20,29 +25,22 @@ class ExtractionAttackMixin(PoisoningAttackMixin):
     def __call__(
         self,
         *,
-        data,
-        model,
-        art_model,
-        attack,
-        attack_type: str,
-        attack_subtype: str,
-    ) -> dict:
+        data: DataConfig,
+        model: ModelConfig | BaseEstimator | EstimatorLike,
+        art_model: EstimatorLike,
+        attack: AttackLike,
+        attack_type: StringifiedClass,
+        attack_subtype: StringifiedClass,
+    ) -> ScoreDict:
         """Run extraction attack runtime handler.
 
-        Parameters
-        ----------
-        data : Any
-            Data runtime with sampled train/test/val splits.
-        model : Any
-            User model object/config passed into attack orchestration.
-        art_model : Any
-            ART-wrapped victim model used for extraction.
-        attack : Any
-            Instantiated extraction attack object.
-        attack_type : str
-            Parsed runtime family; must be ``extraction`` for this mixin.
-        attack_subtype : str
-            Parsed subtype token from attack path.
+        Args:
+            data: Data runtime with sampled train/test/val splits.
+            model: User model object/config passed into attack orchestration.
+            art_model: ART-wrapped victim model used for extraction.
+            attack: Instantiated extraction attack object.
+            attack_type: Parsed runtime family; must be ``extraction``.
+            attack_subtype: Parsed subtype token from attack path.
         """
         if (attack_type or "").lower() != "extraction":
             raise ValueError(
@@ -51,7 +49,10 @@ class ExtractionAttackMixin(PoisoningAttackMixin):
         return self.extract(data=data, art_model=art_model, attack=attack)
 
     @staticmethod
-    def _select_extraction_scorer(benign_pred, extracted_pred):
+    def _select_extraction_scorer(
+        benign_pred: MatrixLike,
+        extracted_pred: MatrixLike,
+    ) -> tuple[DefaultClassifierConfig, bool]:
         """Use full classifier metrics when probabilities are available, else label-only metrics."""
         preds = [np.asarray(benign_pred), np.asarray(extracted_pred)]
         has_probabilities = all(
@@ -64,8 +65,19 @@ class ExtractionAttackMixin(PoisoningAttackMixin):
         label_only.scorers.pop("log_loss", None)
         return label_only, False
 
-    def extract(self, data, art_model, attack) -> dict:
-        """Execute a model extraction attack and score victim vs extracted classifiers."""
+    def extract(
+        self,
+        data: DataConfig,
+        art_model: EstimatorLike,
+        attack: AttackLike,
+    ) -> ScoreDict:
+        """Execute a model extraction attack and score victim vs extracted classifiers.
+
+        Args:
+            data: Runtime dataset and split container.
+            art_model: ART-wrapped victim model used for extraction.
+            attack: Instantiated extraction attack object.
+        """
         task_is_classification = self._infer_task_is_classification(
             data,
             model=art_model,
@@ -148,14 +160,16 @@ class ExtractionAttackMixin(PoisoningAttackMixin):
         self.attack_predictions = extracted_pred
         self.attacked_labels = y_eval
         self.attack = extracted_classifier
-        self.score_dict = {
-            **self.score_dict,
-            **benign_scores,
-            **extracted_scores,
-            "attack_size": n,
-            "extraction_mode": mode_used,
-        }
-        return self.score_dict
+        self.score_dict = ScoreDict.from_payload(
+            {
+                **self.score_dict,
+                **benign_scores,
+                **extracted_scores,
+                "attack_size": n,
+                "extraction_mode": mode_used,
+            },
+        )
+        return ScoreDict.from_payload(self.score_dict)
 
 
 @dataclass(eq=False, kw_only=True)
@@ -177,9 +191,9 @@ class ExtractionAttackConfig(ExtractionAttackMixin, AttackConfig):
 
     Runtime params
     --------------
-    _ExtractionAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> dict
+    _ExtractionAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> ScoreDict
         Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
-    _ExtractionAttackMixin.extract(self, data: Any, art_model: Any, attack: Any) -> dict
+    _ExtractionAttackMixin.extract(self, data: Any, art_model: Any, attack: Any) -> ScoreDict
         Executes extraction flow and returns score payload.
     """
 

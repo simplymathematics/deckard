@@ -30,6 +30,7 @@ class TransformerDefenseMixin(DefenseMixin):
         existing_preprocessors,
         existing_postprocessors,
     ) -> tuple[Any, Any]:
+        """Build transformer defense wrapper and return defense with defended estimator."""
         assert defense_class is not None
         transformer_params = dict(self.defense_params or {})
         subtype = (defense_subtype or "").lower()

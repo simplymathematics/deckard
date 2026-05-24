@@ -7,7 +7,7 @@ import logging
 from torch import Tensor
 
 # Local / project
-from ..types import RuntimeValue
+from ..types import EstimatorLike
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class TorchDataPipelineMixin:
     """PyTorch adapter methods for framework DataConfig runtimes."""
 
-    def build_pipeline(self) -> RuntimeValue:
+    def build_pipeline(self) -> EstimatorLike | Tensor:
         """
         Build a preprocessing pipeline.
         """
@@ -88,8 +88,8 @@ class TorchDataPipelineMixin:
 
     def run_pipeline(
         self,
-        pipeline: RuntimeValue | None = None,
-    ) -> RuntimeValue:
+        pipeline: EstimatorLike | Tensor | None = None,
+    ) -> EstimatorLike | Tensor:
         """
         Execute prepared pipeline.
         """

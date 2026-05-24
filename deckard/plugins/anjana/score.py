@@ -5,6 +5,7 @@ from typing import Any, cast
 
 import pandas as pd
 
+from ...artifacts import ScoreDict
 from ...data import DataConfig
 from ...data.canon import normalize_data_score_mode
 from ...orchestration import resolve_data_split_payload
@@ -52,7 +53,8 @@ ANJANA_SCORING_HOOKS = HookBundle(
 class AnjanaDataScoreHooksMixin:
     """Data-runtime ANJANA scoring hooks and split-scoped score adapter."""
 
-    def score(self, *args, mode=None, **kwargs) -> dict:
+    def score(self, *args, mode=None, **kwargs) -> ScoreDict:
+        """Run base data scoring with ANJANA defaults and split-aware fallback."""
         if is_default_config_value(self.scorer, include_best=False):
             from . import data as anjana_data_module
 
@@ -61,7 +63,7 @@ class AnjanaDataScoreHooksMixin:
             self.scorer = scorer_obj() if isinstance(scorer_obj, type) else scorer_obj
 
         if self.scorer is None:
-            return {}
+            return ScoreDict()
         if not callable(self.scorer):
             raise TypeError(
                 f"AnjanaDataConfig.scorer must be callable or None, got {type(self.scorer)}",
@@ -72,18 +74,22 @@ class AnjanaDataScoreHooksMixin:
         )
 
         try:
-            return super().score(*args, mode=resolved_mode, **kwargs)
+            return ScoreDict.from_payload(
+                super().score(*args, mode=resolved_mode, **kwargs),
+            )
         except TypeError as exc:
             if "data-profile scorer" not in str(exc):
                 raise
             y, X = resolve_data_split_payload(self, resolved_mode, fallback_to_all=False)
-            return self.scorer(
-                *args,
-                y=y,
-                X=X,
-                mode=resolved_mode,
-                data=self,
-                **kwargs,
+            return ScoreDict.from_payload(
+                self.scorer(
+                    *args,
+                    y=y,
+                    X=X,
+                    mode=resolved_mode,
+                    data=self,
+                    **kwargs,
+                ),
             )
 
     def _append_anjana_tail_scores(
@@ -91,11 +97,11 @@ class AnjanaDataScoreHooksMixin:
         stage: str,
         scores: dict | None = None,
         **kwargs,
-    ) -> dict:
+    ) -> ScoreDict:
         """Run ANJANA score hook after base/core scores and append last."""
         _ = kwargs
         if self.scorer is None:
-            return {}
+            return ScoreDict()
         if not callable(self.scorer):
             raise TypeError(
                 f"AnjanaDataConfig.scorer must be callable or None, got {type(self.scorer)}",
@@ -103,7 +109,7 @@ class AnjanaDataScoreHooksMixin:
 
         hook_stage = str(stage).strip().lower()
         if hook_stage != "post-pipeline":
-            return {}
+            return ScoreDict()
 
         resolved_mode = normalize_data_score_mode(getattr(self, "score_split", "test"))
         y, X = resolve_data_split_payload(self, resolved_mode, fallback_to_all=False)
@@ -122,14 +128,14 @@ class AnjanaDataScoreHooksMixin:
             tail_scores = {"anjana_score": tail_scores}
         existing = dict(scores or {})
         if len(existing) == 0:
-            return tail_scores
+            return ScoreDict.from_payload(tail_scores)
         merged_tail = {}
         for key, value in tail_scores.items():
             if key in existing:
                 merged_tail[f"anjana_{key}"] = value
             else:
                 merged_tail[key] = value
-        return merged_tail
+        return ScoreDict.from_payload(merged_tail)
 
 
 def _resolve_frame_and_context(

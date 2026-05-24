@@ -13,13 +13,13 @@ import numpy as np
 
 # deckard
 from ..utils import (
-    ConfigBase,
+    BaseConfig,
     data_supported_filetypes,
     load_class,
     coerce_to_list,
     merge_list_of_dicts,
 )
-from ..frameworks.types import ArrayLike, IndexLike, MatrixLike, TabularLike
+from ..frameworks.types import ArrayLike, EstimatorLike, IndexLike, MatrixLike, StringifiedClass, TabularLike
 from ..plugins.base import OrchestratorBase
 from ..orchestration import stage_hook_token
 from ..artifacts import ScoreDict
@@ -84,7 +84,7 @@ def _load_optuna_studies_dataframe(
 
 
 @dataclass(eq=False, kw_only=True)
-class DataConfig(OrchestratorBase, ConfigBase):
+class DataConfig(OrchestratorBase, BaseConfig):
     """
     Configuration and utility class for loading, preprocessing, and splitting datasets for machine learning tasks.
 
@@ -255,7 +255,7 @@ class DataConfig(OrchestratorBase, ConfigBase):
     """
 
     # Configuration fields
-    dataset_name: str = "adult"
+    dataset_name: StringifiedClass = "adult"
     data_params: dict[str, Any] = field(default_factory=dict)
     test_size: Union[float, int, None] = 0.2
     train_size: Union[float, int, None] = None
@@ -554,7 +554,12 @@ class DataConfig(OrchestratorBase, ConfigBase):
         return self.score_dict
 
     @scores.setter
-    def scores(self, value: dict[str, Any]) -> None:
+    def scores(self, value: ScoreDict) -> None:
+        """Set canonical score payload from mapping input.
+
+        Args:
+            value: Score payload mapping.
+        """
         self.score_dict = ScoreDict.from_payload(value)
 
     @property
@@ -564,19 +569,36 @@ class DataConfig(OrchestratorBase, ConfigBase):
 
     @X.setter
     def X(self, value: TabularLike | None) -> None:
-        """Set the loaded feature matrix."""
+        """Set the loaded feature matrix.
+
+        Args:
+            value: Loaded feature payload.
+        """
         self._X = value
 
     @y.setter
     def y(self, value: pd.Series | None) -> None:
-        """Set the loaded target vector."""
+        """Set the loaded target vector.
+
+        Args:
+            value: Loaded target payload.
+        """
         self._y = value
 
-    def load(self, filepath: Union[str, None] = None):
+    def load(
+        self,
+        filepath: Union[str, None] = None,
+    ) -> "DataConfig | ScoreDict | MatrixLike | ArrayLike | EstimatorLike | None":
         """Load a cached DataConfig object from pickle artifact storage.
 
         This method does not materialize datasets. Use :meth:`load_dataset` for
         runtime dataset loading from defaults/files.
+
+        Args:
+            filepath: Persisted DataConfig artifact path.
+
+        Returns:
+            Loaded payload or updated DataConfig instance.
         """
         if filepath is None:
             raise ValueError("filepath is required for DataConfig.load()")
@@ -586,8 +608,17 @@ class DataConfig(OrchestratorBase, ConfigBase):
             return self
         return loaded
 
-    def save(self, payload: Any = None, filepath: str | None = None) -> None:
-        """Save this DataConfig object as a pickle cache artifact."""
+    def save(
+        self,
+        payload: "DataConfig | ScoreDict | MatrixLike | ArrayLike | EstimatorLike | str | Path | None" = None,
+        filepath: str | None = None,
+    ) -> None:
+        """Save this DataConfig object as a pickle cache artifact.
+
+        Args:
+            payload: Payload to persist.
+            filepath: Target file path.
+        """
         target_path = filepath
         if target_path is None and isinstance(payload, (str, Path)):
             target_path = str(payload)
@@ -603,8 +634,20 @@ class DataConfig(OrchestratorBase, ConfigBase):
         self.load_dataset()
         return self._X, self._y
 
-    def load_default_dataset(self, dataset_name: str, **loader_params: Any):
-        """Public default dataset load entry-point delegated to declarations."""
+    def load_default_dataset(
+        self,
+        dataset_name: StringifiedClass,
+        **loader_params: Any,
+    ) -> MatrixLike | ArrayLike | None:
+        """Public default dataset load entry-point delegated to declarations.
+
+        Args:
+            dataset_name: Dataset identifier.
+            **loader_params: Dataset-loader specific kwargs.
+
+        Returns:
+            Optional loaded payload from declaration loader.
+        """
         from .declarations import load_default_dataset
 
         return load_default_dataset(self, dataset_name=dataset_name, **loader_params)
@@ -612,7 +655,14 @@ class DataConfig(OrchestratorBase, ConfigBase):
 
 
     def fit(self, run_hooks: bool = True) -> "DataConfig":
-        """Materialize train/test/(optional val) splits for this dataset."""
+        """Materialize train/test/(optional val) splits for this dataset.
+
+        Args:
+            run_hooks: Whether to execute plugin hooks.
+
+        Returns:
+            This DataConfig instance.
+        """
         self.load_dataset()
         if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
             self._split_loaded_data(run_hooks=run_hooks)
@@ -634,6 +684,12 @@ class DataConfig(OrchestratorBase, ConfigBase):
         """Public sampling lifecycle method.
 
         Mirrors ``score/scorer`` naming with ``sample/sampler``.
+
+        Args:
+            run_hooks: Whether to execute plugin hooks.
+
+        Returns:
+            This DataConfig instance.
         """
         self.fit(run_hooks=run_hooks)
         return self
@@ -644,10 +700,20 @@ class DataConfig(OrchestratorBase, ConfigBase):
         mode: str | None = None,
         stage: str | None = None,
         **kwargs,
-    ) -> dict[str, Any]:
-        """Thin pass-through scoring call delegated to the configured scorer."""
+    ) -> ScoreDict:
+        """Thin pass-through scoring call delegated to the configured scorer.
+
+        Args:
+            *args: Positional scorer args.
+            mode: Scoring mode token.
+            stage: Optional scoring stage token.
+            **kwargs: Additional scorer kwargs.
+
+        Returns:
+            Canonical score payload.
+        """
         if self.scorer is None:
-            return {}
+            return ScoreDict()
         if not callable(self.scorer):
             raise TypeError(
                 f"DataConfig.scorer must be callable or None, got {type(self.scorer)}",
@@ -693,8 +759,8 @@ class DataConfig(OrchestratorBase, ConfigBase):
             scorer_kwargs["stage"] = stage
         scorer_output = self.scorer(*args, **scorer_kwargs)
         if isinstance(scorer_output, dict):
-            return scorer_output
-        return {"value": scorer_output}
+            return ScoreDict.from_payload(scorer_output)
+        return ScoreDict.from_payload({"value": scorer_output})
 
     
     
@@ -845,7 +911,7 @@ class DataConfig(OrchestratorBase, ConfigBase):
         if run_hooks:
             self._run_plugin_hook("after_sample")
 
-    def load_dataset(self):
+    def load_dataset(self) -> None:
         """
         Loads dataset based on the provided dataset name or file type.
 
@@ -1060,8 +1126,15 @@ class DataConfig(OrchestratorBase, ConfigBase):
 
 
 
-    def apply_pipeline(self, pipeline) -> "DataConfig":
-        """Attach a pipeline-like plugin object to this data config."""
+    def apply_pipeline(self, pipeline: "DataPipeline | list | None") -> "DataConfig":
+        """Attach a pipeline-like plugin object to this data config.
+
+        Args:
+            pipeline: Pipeline object or list of pipeline plugins.
+
+        Returns:
+            This DataConfig instance.
+        """
         if pipeline is None:
             return self
         pipeline_plugins = (
@@ -1106,6 +1179,14 @@ class DataConfig(OrchestratorBase, ConfigBase):
         """
         Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.
         Strictly validates that all output values are flat and serializable.
+
+        Args:
+            *args: Positional scoring args.
+            files: Optional runtime file aliases.
+            **kwargs: Runtime scoring kwargs.
+
+        Returns:
+            Runtime score/timing payload dictionary.
         """
 
         if "data_file" in kwargs or "score_file" in kwargs:

@@ -131,7 +131,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
     # Data loading / splitting
     # ------------------------------------------------------------------
 
-    def load_dataset(self):
+    def load_dataset(self) -> "FairlearnPytorchDataConfig":
         """Use the PyTorch parent dataset-loading flow for runtime materialization."""
         return PytorchCustomDataConfig.load_dataset(self)
 
@@ -145,7 +145,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         self.pipeline_transform_n = len(X_test) if hasattr(X_test, "__len__") else 0
         return X_train, X_test, y_train, y_test
 
-    def fit(self, run_hooks: bool = True):
+    def fit(self, run_hooks: bool = True) -> "FairlearnPytorchDataConfig":
         """Split the dataset and extract per-split sensitive-feature arrays."""
         _ = run_hooks
         if not (isinstance(self._X, (tuple, list)) and len(self._X) == 2):

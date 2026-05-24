@@ -48,7 +48,7 @@ class FairnessBehaviorMixin(SensitiveColumnsMixin):
     fields/helpers without pulling in fairlearn-specific logic.
     """
 
-    def fit(self, run_hooks: bool = True):
+    def fit(self, run_hooks: bool = True) -> "FairnessBehaviorMixin":
         """Populate split-aligned sensitive feature payloads after data sampling.
 
         Args:
@@ -162,6 +162,7 @@ class FairlearnDataConfig(
             self.sensitive_columns = [self.sensitive_columns]
 
     def load_dataset(self) -> Any:
+        """Load dataset and validate configured sensitive columns are present."""
         super().load_dataset()
         assert hasattr(self, "_X"), RuntimeError(
             "self._X not found while loading FairlearnDataConfig",

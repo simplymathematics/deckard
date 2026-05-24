@@ -22,6 +22,7 @@ from typing import Any, Callable, TYPE_CHECKING
 
 import pandas as pd
 from sklearn.datasets import fetch_openml, make_classification, make_regression
+from ..frameworks.types import StringifiedClass
 
 logger = logging.getLogger(__name__)
 
@@ -453,7 +454,7 @@ def make_regression_data(
 
 def load_generic_openml(
     cfg: Any,
-    dataset_name: str,
+    dataset_name: StringifiedClass,
     version: int = 1,
     **loader_params: Any,
 ) -> Any:
@@ -487,7 +488,11 @@ def load_generic_sklearn_dataset(
     return cfg
 
 
-def load_lifelines_dataset(cfg: Any, dataset_name: str, **loader_params: Any) -> Any:
+def load_lifelines_dataset(
+    cfg: Any,
+    dataset_name: StringifiedClass,
+    **loader_params: Any,
+) -> Any:
     """Load a lifelines dataset into ``cfg._X``/``cfg._y``."""
     lifelines_datasets = discover_provider_dataset_loaders("lifelines")
     if not lifelines_datasets:
@@ -522,7 +527,11 @@ def load_lifelines_dataset(cfg: Any, dataset_name: str, **loader_params: Any) ->
     return cfg
 
 
-def load_yellowbrick_dataset(cfg: Any, dataset_name: str, **loader_params: Any) -> Any:
+def load_yellowbrick_dataset(
+    cfg: Any,
+    dataset_name: StringifiedClass,
+    **loader_params: Any,
+) -> Any:
     """Load a yellowbrick dataset into ``cfg._X``/``cfg._y``."""
     yellowbrick_datasets = discover_provider_dataset_loaders("yellowbrick")
     if not yellowbrick_datasets:
@@ -571,7 +580,7 @@ def load_yellowbrick_dataset(cfg: Any, dataset_name: str, **loader_params: Any) 
 
 def load_default_dataset(
     cfg: "DataConfig",
-    dataset_name: str,
+    dataset_name: StringifiedClass,
     **loader_params: Any,
 ) -> Any:
     """Public default dataset loader entry-point for ``DataConfig``."""

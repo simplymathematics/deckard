@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, TypedDict
 
+from ..artifacts import ScoreDict
+
 
 class AttackFiles(TypedDict, total=False):
     """Canonical attack persistence aliases used by attack runtimes."""
@@ -49,7 +51,7 @@ def normalize_attack_mode(mode: Any) -> str:
 def ensure_attack_runtime_contract(runtime: Any) -> None:
     """Ensure core attack runtime fields exist and are initialized."""
     if not hasattr(runtime, "score_dict") or runtime.score_dict is None:
-        runtime.score_dict = {}
+        runtime.score_dict = ScoreDict()
 
     for attr in (
         "attack_time",

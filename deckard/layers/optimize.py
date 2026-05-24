@@ -23,7 +23,7 @@ from ..experiment.canon import (
     CANONICAL_EXPERIMENT_STAGE_COMPONENTS,
     normalize_experiment_stage,
 )
-from ..utils import ConfigBase, hash_conf_values
+from ..utils import BaseConfig, hash_conf_values
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -57,6 +57,7 @@ class OptimizerConfig:
         study_name: str | None = None,
         storage: str | None = None,
     ) -> "OptimizerConfig":
+        """Normalize optimizer policy declarations into an OptimizerConfig instance."""
         if isinstance(value, cls):
             cfg = value
         else:
@@ -90,12 +91,14 @@ class OptimizerConfig:
         return cfg
 
     def resolve_study_binding(self, hydra_cfg: Any) -> tuple[str | None, str | None]:
+        """Resolve effective Optuna study name and storage from runtime Hydra config."""
         sweeper = _get_sweeper_cfg(hydra_cfg)
         sweeper_study_name = sweeper.get("study_name") if isinstance(sweeper, dict) else None
         sweeper_storage = sweeper.get("storage") if isinstance(sweeper, dict) else None
         return self.study_name or sweeper_study_name, self.storage or sweeper_storage
 
     def create_study(self, *, study_name: str, storage: str) -> optuna.study.Study:
+        """Create an Optuna study using current optimizer policy settings."""
         return create_study(
             study_name=study_name,
             storage=storage,
@@ -104,6 +107,7 @@ class OptimizerConfig:
         )
 
     def set_metric_names(self, study: Any) -> None:
+        """Apply configured metric names/directions onto the provided study object."""
         set_study_metric_names(
             study=study,
             optimizers=self.optimizers,
@@ -114,6 +118,7 @@ class OptimizerConfig:
         self,
         config: Any,
     ) -> tuple[list[str], list[str]]:
+        """Resolve optimizer names and directions from explicit policy or runtime config."""
         if self.optimizers:
             optimizers = list(self.optimizers)
         else:
@@ -127,6 +132,7 @@ class OptimizerConfig:
         return optimizers, directions
 
     def merge_from_runtime_config(self, config: Any) -> None:
+        """Merge runtime optimizer fields into this policy object in-place."""
         if isinstance(config, DictConfig):
             cfg = OmegaConf.to_container(config, resolve=True)
         elif isinstance(config, Mapping):
@@ -883,7 +889,7 @@ def optimize_main(
     conf_obj = instantiate(cfg_dict)
     assert isinstance(
         conf_obj,
-        ConfigBase,
+        BaseConfig,
     ), f"conf_obj must be an instance of ConfigBase. Got {type(conf_obj)}"
     scores = DefaultOptimizerCallback.execute_runtime_object(conf_obj)
 

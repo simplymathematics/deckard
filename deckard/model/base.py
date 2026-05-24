@@ -1,7 +1,7 @@
 import time
 import logging
 import copy
-from typing import Any, Literal, Union
+from typing import Any, Callable, Literal, Union
 import inspect
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -23,7 +23,7 @@ from ..score.base import (  # noqa: F401
 )
 from ..artifacts import ScoreDict
 from ..utils import (
-    ConfigBase,
+    BaseConfig,
     load_class,
     probabilities_from_model_outputs,
     round_scores,
@@ -31,7 +31,7 @@ from ..utils import (
     instantiate_plugin_spec,
     is_null_config_value,
 )
-from ..frameworks.types import ArrayLike, EstimatorLike, MatrixLike
+from ..frameworks.types import ArtEsimtator, ArrayLike, EstimatorLike, MatrixLike, StringifiedClass
 from .canon import (
     ensure_model_runtime_contract,
     normalize_model_score_mode,
@@ -115,7 +115,7 @@ def _is_art_model_instance(model_obj: Any) -> bool:
 
 
 @dataclass(eq=False, kw_only=True)
-class ModelConfig(ConfigBase):
+class ModelConfig(BaseConfig):
     """Runtime model configuration with plugin-aware training/evaluation orchestration.
 
     Model behavior is resolved from ``model_type`` and runtime context. This
@@ -178,7 +178,7 @@ class ModelConfig(ConfigBase):
     """
 
     # Configuration fields
-    model_type: Union[str, None] = None
+    model_type: StringifiedClass | None = None
     classifier: Union[bool, str] = True
     model_params: dict = None
     probability: bool = False
@@ -308,7 +308,11 @@ class ModelConfig(ConfigBase):
             self._initialize_model()
 
     def set_estimator(self, estimator: EstimatorLike) -> None:
-        """Set the internal fitted estimator directly."""
+        """Set the internal fitted estimator directly.
+
+        Args:
+            estimator: Fitted estimator payload.
+        """
         self._model = estimator
         self._sync_model_signature_from_estimator(estimator)
 
@@ -405,7 +409,7 @@ class ModelConfig(ConfigBase):
         self._defense_pipeline = self.defense
         return self._defense_pipeline
 
-    def compose_defense_pipeline(self):
+    def compose_defense_pipeline(self) -> "BaseConfig | None":
         """Compose defense pipeline behavior only when defense config is present."""
         return self._require_defense_pipeline()
 
@@ -413,8 +417,16 @@ class ModelConfig(ConfigBase):
         self,
         data: "DataConfig",
         default_stage: str = "post_fit_pre_predict",
-    ):
-        """Compose a defense application callable and resolved stage for runtime use."""
+    ) -> tuple[Callable[[EstimatorLike], EstimatorLike] | None, BaseConfig | None, str | None]:
+        """Compose a defense application callable and resolved stage for runtime use.
+
+        Args:
+            data: Data runtime context.
+            default_stage: Fallback defense stage.
+
+        Returns:
+            Callable defense applicator, resolved pipeline, and stage token.
+        """
         defense_pipeline = self.compose_defense_pipeline()
         if defense_pipeline is None:
             return None, None, None
@@ -433,7 +445,15 @@ class ModelConfig(ConfigBase):
 
         return _apply, defense_pipeline, stage
 
-    def get_art_class(self, data: "DataConfig"):
+    def get_art_class(self, data: "DataConfig") -> tuple[ArtEsimtator, dict[str, float | int | tuple[int, ...] | None]]:
+        """Resolve ART estimator wrapper class and initialization params for model runtime.
+
+        Args:
+            data: Data runtime context used for shape/class metadata.
+
+        Returns:
+            ART wrapper class and initialization parameter mapping.
+        """
         try:
             art_symbols = _get_art_symbols()
         except Exception as exc:
@@ -465,15 +485,11 @@ class ModelConfig(ConfigBase):
     def get_art_model(self, data: "DataConfig") -> EstimatorLike:
         """Get the ART model estimator.
 
-        Parameters
-        ----------
-        data : DataConfig
-            The data configuration containing training data.
+        Args:
+            data: Data configuration containing training data.
 
-        Returns
-        -------
-        BaseEstimator
-            The ART model estimator.
+        Returns:
+            ART model estimator.
         """
         if self.defense is None:
             art_class, init_params = self.get_art_class(data)
@@ -578,7 +594,12 @@ class ModelConfig(ConfigBase):
         logger.info(f"Model trained in {self.training_time:.2f} seconds")
 
     def train(self, X: MatrixLike, y: ArrayLike) -> None:
-        """Public entry-point for model training. Delegates to _train()."""
+        """Public entry-point for model training. Delegates to _train().
+
+        Args:
+            X: Training features.
+            y: Training labels.
+        """
         return self._train(X, y)
 
     def _predict(self, X: pd.DataFrame) -> pd.Series:
@@ -757,7 +778,18 @@ class ModelConfig(ConfigBase):
         mode: str = "test",
         **kwargs,
     ) -> dict:
-        """Public scoring entry-point that delegates to the model scorer runtime."""
+        """Public scoring entry-point that delegates to the model scorer runtime.
+
+        Args:
+            y_true: Ground-truth labels.
+            y_pred: Predicted labels.
+            *args: Additional scorer args.
+            mode: Scoring mode.
+            **kwargs: Additional scorer kwargs.
+
+        Returns:
+            Score payload mapping.
+        """
         return self._score(
             y_true,
             y_pred,
@@ -1131,7 +1163,14 @@ class ModelConfig(ConfigBase):
         return times
 
     def load_score_times(self, score_file: str | None) -> dict:
-        """Public wrapper for loading persisted score/timing metadata."""
+        """Public wrapper for loading persisted score/timing metadata.
+
+        Args:
+            score_file: Persisted score file path.
+
+        Returns:
+            Timing metadata mapping.
+        """
         return self._load_score_file(score_file)
 
     def load_cached_predictions(
@@ -1140,7 +1179,16 @@ class ModelConfig(ConfigBase):
         test_predictions_file: str | None,
         times: dict,
     ) -> dict:
-        """Public wrapper for loading cached prediction artifacts."""
+        """Public wrapper for loading cached prediction artifacts.
+
+        Args:
+            train_predictions_file: Optional training predictions path.
+            test_predictions_file: Optional test predictions path.
+            times: Runtime timing dictionary.
+
+        Returns:
+            Updated timing dictionary.
+        """
         return self._load_all_predictions(
             train_predictions_file,
             test_predictions_file,
@@ -1153,7 +1201,16 @@ class ModelConfig(ConfigBase):
         model_file: str | None,
         times: dict,
     ) -> dict:
-        """Public wrapper for model load-or-train orchestration."""
+        """Public wrapper for model load-or-train orchestration.
+
+        Args:
+            data: Data runtime context.
+            model_file: Optional model artifact path.
+            times: Runtime timing dictionary.
+
+        Returns:
+            Updated timing dictionary.
+        """
         return self._load_or_train_model(data, model_file, times)
 
     def evaluate_model(
@@ -1161,7 +1218,15 @@ class ModelConfig(ConfigBase):
         data: DataConfig,
         times: dict,
     ) -> dict:
-        """Public wrapper for evaluation and scoring orchestration."""
+        """Public wrapper for evaluation and scoring orchestration.
+
+        Args:
+            data: Data runtime context.
+            times: Runtime timing dictionary.
+
+        Returns:
+            Updated timing dictionary.
+        """
         return self._evaluate_and_score(
             data,
             times,
@@ -1179,7 +1244,15 @@ class ModelConfig(ConfigBase):
         test_probabilities_file: str | None,
         score_file: str | None,
     ) -> None:
-        """Persist runtime predictions/probabilities/scores to configured outputs."""
+        """Persist runtime predictions/probabilities/scores to configured outputs.
+
+        Args:
+            test_predictions_file: Optional test predictions path.
+            train_predictions_file: Optional train predictions path.
+            training_probabilities_file: Optional train probabilities path.
+            test_probabilities_file: Optional test probabilities path.
+            score_file: Optional score payload path.
+        """
         if (
             train_predictions_file is not None
             and self.training_predictions is not None
@@ -1205,7 +1278,7 @@ class ModelConfig(ConfigBase):
     def __call__(
         self,
         data: DataConfig,
-        files: dict[str, Any] | None = None,
+        files: dict[str, str | None] | None = None,
         model_file: Union[str, None] = None,
         test_predictions_file: Union[str, None] = None,
         train_predictions_file: Union[str, None] = None,
@@ -1216,21 +1289,18 @@ class ModelConfig(ConfigBase):
         """
         Executes the model workflow: training, prediction, scoring, and model persistence.
 
-        Parameters
-        ----------
-        data : DataConfig
-            An instance of DataConfig containing training and test data.
-        model_file : str or None, optional
-            Path to save or load the model. If provided, the model will be loaded from or saved to this path.
-        test_predictions_file : str or None, optional
-            Path to save the predictions. If provided, the predictions will be saved to this path.
-        score_file : str or None, optional
-            Path to load existing scores. If provided, scores will be loaded from this path.
+        Args:
+            data: DataConfig containing training and test data.
+            files: Optional runtime file alias mapping.
+            model_file: Optional model artifact path.
+            test_predictions_file: Optional test predictions path.
+            train_predictions_file: Optional train predictions path.
+            training_probabilities_file: Optional train probabilities path.
+            test_probabilities_file: Optional test probabilities path.
+            score_file: Optional score artifact path.
 
-        Returns
-        -------
-        dict
-            Dictionary containing scores and timing information for training, prediction, and scoring.
+        Returns:
+            Model prediction payload.
         Raises
         ------
         ValueError

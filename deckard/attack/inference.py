@@ -6,10 +6,15 @@ from dataclasses import dataclass, field
 
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator
 from art.config import ART_NUMPY_DTYPE
 from numpy.exceptions import AxisError
 from omegaconf import ListConfig, OmegaConf
 
+from ..artifacts import ScoreDict
+from ..data import DataConfig
+from ..model import ModelConfig
+from ..frameworks.types import AttackLike, EstimatorLike, StringifiedClass
 from .base import AttackConfig, AttackTypePlugin, AttackMixin, _sensitive_slice
 
 logger = logging.getLogger(__name__)
@@ -23,13 +28,23 @@ class InferenceAttackMixin(AttackMixin):
     def __call__(
         self,
         *,
-        data,
-        model,
-        art_model,
-        attack,
-        attack_type: str,
-        attack_subtype: str,
-    ) -> dict:
+        data: DataConfig,
+        model: ModelConfig | BaseEstimator | EstimatorLike,
+        art_model: EstimatorLike,
+        attack: AttackLike,
+        attack_type: StringifiedClass,
+        attack_subtype: StringifiedClass,
+    ) -> ScoreDict:
+        """Dispatch inference attack execution for supported inference subtypes.
+
+        Args:
+            data: Runtime dataset and split container.
+            model: User model configuration or estimator.
+            art_model: ART-wrapped model used for inference attacks.
+            attack: Instantiated inference attack implementation.
+            attack_type: Parsed attack family.
+            attack_subtype: Parsed attack subtype.
+        """
         if (attack_type or "").lower() != "inference":
             raise ValueError(
                 f"_InferenceAttackMixin received unsupported attack type: {attack_type}",
@@ -55,11 +70,11 @@ class InferenceAttackMixin(AttackMixin):
 
     def infer_attribute(
         self,
-        data,
-        art_model,
-        attack,
-        targeted_attribute,
-    ) -> dict:
+        data: DataConfig,
+        art_model: EstimatorLike,
+        attack: AttackLike,
+        targeted_attribute: str | list[str] | ListConfig,
+    ) -> ScoreDict:
         """Infer held-out attribute values from model outputs.
 
         Args:
@@ -184,13 +199,13 @@ class InferenceAttackMixin(AttackMixin):
         )
         self.score_y_pred = inferred
         self.score_y_proba = None
-        self.score_dict = {**self.score_dict, **score_dict}
+        self.score_dict = ScoreDict.from_payload({**self.score_dict, **score_dict})
         self.attack = inferred
         self.attack_predictions = inferred
         self.attacked_labels = target
-        return self.score_dict
+        return ScoreDict.from_payload(self.score_dict)
 
-    def infer_membership(self, data, attack) -> dict:
+    def infer_membership(self, data: DataConfig, attack: AttackLike) -> ScoreDict:
         """Infer whether sampled records belonged to the model training set.
 
         Args:
@@ -289,9 +304,9 @@ class InferenceAttackMixin(AttackMixin):
         )
         self.score_y_pred = inferred
         self.score_y_proba = None
-        self.score_dict = {**self.score_dict, **score_dict}
+        self.score_dict = ScoreDict.from_payload({**self.score_dict, **score_dict})
         self.attack = inferred
-        return self.score_dict
+        return ScoreDict.from_payload(self.score_dict)
 
     def _resolve_source_split(
         self,
@@ -328,7 +343,7 @@ class InferenceAttackMixin(AttackMixin):
             )
         return "test", X_test, y_test
 
-    def infer_model_inversion(self, data, attack) -> dict:
+    def infer_model_inversion(self, data: DataConfig, attack: AttackLike) -> ScoreDict:
         """Reconstruct representative inputs for target class labels.
 
         Args:
@@ -450,14 +465,16 @@ class InferenceAttackMixin(AttackMixin):
             "model_inversion_num_targets": int(len(target_labels)),
             "model_inversion_mode": split,
         }
-        self.score_dict = {
-            **self.score_dict,
-            **score_dict,
-            **model_inversion_scores,
-        }
-        return self.score_dict
+        self.score_dict = ScoreDict.from_payload(
+            {
+                **self.score_dict,
+                **score_dict,
+                **model_inversion_scores,
+            },
+        )
+        return ScoreDict.from_payload(self.score_dict)
 
-    def infer_database_reconstruction(self, data, attack) -> dict:
+    def infer_database_reconstruction(self, data: DataConfig, attack: AttackLike) -> ScoreDict:
         """Reconstruct a held-out database row from the remaining dataset.
 
         Args:
@@ -572,7 +589,9 @@ class InferenceAttackMixin(AttackMixin):
                             "inferred_database_reconstruction_label_mae",
                         ),
                     }
-                    feature_scores = {**feature_scores, **raw_label_scores}
+                    feature_scores = ScoreDict.from_payload(
+                        {**feature_scores, **raw_label_scores},
+                    )
 
         self.attack_score_time = time.perf_counter() - start_time
 
@@ -588,18 +607,20 @@ class InferenceAttackMixin(AttackMixin):
                 "inferred_database_reconstruction_feature_mae",
             ),
         }
-        self.score_dict = {
-            **self.score_dict,
-            **feature_scores,
-            **compatibility_scores,
-            "database_reconstruction_num_features": int(x_true.shape[1]),
-            "database_reconstruction_num_known_rows": int(len(x_known)),
-            "database_reconstruction_missing_index": int(missing_index),
-            **label_score,
-            "attack_size": int(x_pred.shape[0]),
-            "attack_score_time": float(self.attack_score_time),
-        }
-        return self.score_dict
+        self.score_dict = ScoreDict.from_payload(
+            {
+                **self.score_dict,
+                **feature_scores,
+                **compatibility_scores,
+                "database_reconstruction_num_features": int(x_true.shape[1]),
+                "database_reconstruction_num_known_rows": int(len(x_known)),
+                "database_reconstruction_missing_index": int(missing_index),
+                **label_score,
+                "attack_size": int(x_pred.shape[0]),
+                "attack_score_time": float(self.attack_score_time),
+            },
+        )
+        return ScoreDict.from_payload(self.score_dict)
 
 
 @dataclass(eq=False, kw_only=True)
@@ -623,13 +644,13 @@ class InferenceAttackConfig(InferenceAttackMixin, AttackConfig):
 
     Runtime params
     --------------
-    _InferenceAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> dict
+    _InferenceAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> ScoreDict
         Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
-    _InferenceAttackMixin.infer_membership(self, data: Any, attack: Any) -> dict
+    _InferenceAttackMixin.infer_membership(self, data: Any, attack: Any) -> ScoreDict
         Membership-inference runtime handler.
-    _InferenceAttackMixin.infer_attribute(self, data: Any, art_model: Any, attack: Any, targeted_attribute: str | int) -> dict
+    _InferenceAttackMixin.infer_attribute(self, data: Any, art_model: Any, attack: Any, targeted_attribute: str | int) -> ScoreDict
         Attribute-inference runtime handler.
-    _InferenceAttackMixin.infer_model_inversion(self, data: Any, attack: Any) -> dict
+    _InferenceAttackMixin.infer_model_inversion(self, data: Any, attack: Any) -> ScoreDict
         Model-inversion runtime handler.
     """
 

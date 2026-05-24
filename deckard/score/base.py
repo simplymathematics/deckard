@@ -15,10 +15,12 @@ import pandas as pd
 from hydra.utils import instantiate
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
-from ..frameworks.types import ArrayLike, MatrixLike
+from ..artifacts import ScoreDict
+from ..data import DataConfig
+from ..frameworks.types import ArrayLike, AttackLike, EstimatorLike, MatrixLike
 from ..frameworks.pytorch.score import normalize_scoring_mode, to_numpy_if_torch
 from ..utils import (
-    ConfigBase,
+    BaseConfig,
     coerce_config,
     is_default_config_value,
     is_null_config_value,
@@ -38,6 +40,18 @@ logger = logging.getLogger(__name__)
 MetricScalar = Union[float, int, np.floating, np.integer]
 MetricResult = Union[MetricScalar, np.ndarray]
 ScoreFunction = Callable[..., MetricResult]
+ScoreKwargValue = (
+    str
+    | int
+    | float
+    | bool
+    | None
+    | ArrayLike
+    | MatrixLike
+    | list[str]
+    | tuple[str, ...]
+    | dict[str, str | int | float | bool | None]
+)
 
 
 class ScoringDefenseStage(str, Enum):
@@ -275,28 +289,21 @@ class ScorerMixin:
     def __call__(
         self,
         *,
-        data: Any = None,
-        model: Any = None,
-        attack: Any = None,
+        data: DataConfig | None = None,
+        model: EstimatorLike | None = None,
+        attack: AttackLike | None = None,
         mode: str = "test",
-    ) -> dict:
+    ) -> ScoreDict:
         """Execute one scorer handler.
 
-        Parameters
-        ----------
-        data : Any
-            Data runtime containing train/test/val splits.
-        model : Any
-            User model object or model config supplied to scorer chain.
-        attack : Any
-            Instantiated attack object (optional).
-        mode : str
-            Scoring mode (test, train, attack, val, attack-val, pre-sample).
+        Args:
+            data: Data runtime containing train/test/val splits.
+            model: User model object or model config supplied to scorer chain.
+            attack: Instantiated attack object (optional).
+            mode: Scoring mode token.
 
-        Returns
-        -------
-        dict
-            Score dictionary from scorer execution.
+        Returns:
+            Score payload dictionary from scorer execution.
         """
         raise NotImplementedError(
             "Scorer mixins must implement __call__",
@@ -367,7 +374,17 @@ class ScorerTypePlugin:
         scoring_subtype: Union[str, None],
         default_mixins: tuple[type, ...],
     ) -> tuple[type, ...]:
-        """Return mixin tuple for matching scoring family/subtype."""
+        """Return mixin tuple for matching scoring family/subtype.
+
+        Args:
+            runtime: Active runtime scorer config.
+            scoring_type: Requested scorer family.
+            scoring_subtype: Requested scorer subtype.
+            default_mixins: Default mixins for this scoring family.
+
+        Returns:
+            Mixin tuple to attach to runtime context.
+        """
         _ = (runtime, default_mixins)
         if not self._matches(
             scoring_type=scoring_type,
@@ -383,10 +400,21 @@ class ScorerTypePlugin:
         *,
         scoring_type: str,
         scoring_subtype: Union[str, None],
-        default_handler: Any,
+        default_handler: Callable[..., ScoreDict] | None,
         default_mixins: tuple[type, ...],
-    ) -> Any:
-        """Return callable runtime handler for matching scoring family/subtype."""
+    ) -> Callable[..., ScoreDict] | None:
+        """Return callable runtime handler for matching scoring family/subtype.
+
+        Args:
+            runtime: Active runtime scorer config.
+            scoring_type: Requested scorer family.
+            scoring_subtype: Requested scorer subtype.
+            default_handler: Existing resolved handler.
+            default_mixins: Existing resolved mixins.
+
+        Returns:
+            Callable scorer handler when plugin matches; otherwise ``None``.
+        """
         _ = (default_handler, default_mixins)
         if not self._matches(
             scoring_type=scoring_type,
@@ -395,21 +423,17 @@ class ScorerTypePlugin:
             return None
         return lambda *args, **kwargs: self(runtime, *args, **kwargs)
 
-    def __call__(self, runtime: "ScorerDictConfig", *args, **kwargs) -> dict:
+    def __call__(self, runtime: "ScorerDictConfig", *args, **kwargs) -> ScoreDict:
         """Delegate runtime scorer execution to configured mixin handler.
 
-        Parameters
-        ----------
-        runtime : ScorerDictConfig
-            Runtime config instance currently orchestrating scoring.
-        *args : Any
-            Positional runtime args forwarded to mixin ``__call__``.
-        **kwargs : Any
-            Keyword runtime args forwarded to mixin ``__call__``.
+        Args:
+            runtime: Runtime config instance currently orchestrating scoring.
+            *args: Positional runtime args forwarded to mixin ``__call__``.
+            **kwargs: Keyword runtime args forwarded to mixin ``__call__``.
         """
         mixin = self._resolve_mixin_type()
         handler = mixin(runtime)
-        return handler(*args, **kwargs)
+        return ScoreDict.from_payload(handler(*args, **kwargs))
 
 
 def _normalize_classifier_flag(
@@ -423,6 +447,7 @@ def _normalize_classifier_flag(
     return None
 
 
+@dataclass
 class TaskAwareScorerMixin:
     """Mixin for scorer configs whose defaults depend on task type.
 
@@ -453,8 +478,8 @@ class TaskAwareScorerMixin:
         self,
         *,
         data: "DataConfig | None" = None,
-        model: Any = None,
-        attack: Any = None,
+        model: EstimatorLike | None = None,
+        attack: AttackLike | None = None,
         default: Union[bool, None] = None,
     ) -> bool:
         """Resolve the effective task type for this scorer config.
@@ -465,6 +490,12 @@ class TaskAwareScorerMixin:
         3. ``model.classifier``
         4. ``data.classifier``
         5. explicit ``default``
+
+        Args:
+            data: Optional data runtime context.
+            model: Optional model runtime context.
+            attack: Optional attack runtime context.
+            default: Fallback classifier flag when context is ambiguous.
         """
         explicit = _normalize_classifier_flag(getattr(self, "classifier", None))
         if explicit is not None:
@@ -721,12 +752,22 @@ class ScorerConfig:
 
     def __call__(
         self,
-        dep: Any = None,
-        ind: Any = None,
+        dep: ArrayLike | MatrixLike | None = None,
+        ind: ArrayLike | MatrixLike | None = None,
         swap: bool = False,
-        **kwargs: Any,
+        **kwargs: ScoreKwargValue,
     ) -> MetricResult:
-        """Execute one scorer using generic dependent/independent payload names."""
+        """Execute one scorer using generic dependent/independent payload names.
+
+        Args:
+            dep: Dependent payload (typically labels or targets).
+            ind: Independent payload (typically predictions or features).
+            swap: Swap ``dep``/``ind`` before scoring.
+            **kwargs: Additional metric kwargs.
+
+        Returns:
+            Metric output returned by the configured score function.
+        """
         if dep is None and "y" in kwargs:
             dep = kwargs.pop("y")
         if dep is None and "y_true" in kwargs:
@@ -778,7 +819,7 @@ class ScorerConfig:
 
 
 @dataclass(eq=False, kw_only=True)
-class ScorerDictConfig(ConfigBase):
+class ScorerDictConfig(BaseConfig):
     """Container of named ScorerConfig instances.
 
     Attributes
@@ -1152,10 +1193,15 @@ class ScorerDictConfig(ConfigBase):
 
     @configured_scorers.setter
     def configured_scorers(self, value: dict[str, ScorerConfig] | None) -> None:
-        """Set configured scorer definitions."""
+        """Set configured scorer definitions.
+
+        Args:
+            value: Replacement scorer mapping.
+        """
         self.scorers = value or {}
 
-    def get_callables(self):
+    def get_callables(self) -> dict[str, ScorerConfig]:
+        """Return configured scorer callables keyed by scorer name."""
         return {key: scorer for key, scorer in self.scorers.items()}
 
     def score(
@@ -1164,10 +1210,10 @@ class ScorerDictConfig(ConfigBase):
         dep: ArrayLike,
         *args: Any,
         data: "DataConfig | None" = None,
-        model: Any = None,
-        attack: Any = None,
+        model: EstimatorLike | None = None,
+        attack: AttackLike | None = None,
         **kwargs: Any,
-    ) -> dict[str, Any]:
+    ) -> ScoreDict:
         """Compute metrics from matrix-like independent and array-like dependent data.
 
         Args:
@@ -1195,12 +1241,18 @@ class ScorerDictConfig(ConfigBase):
         )
 
     @classmethod
-    def merge(cls, items):
+    def merge(
+        cls,
+        items: list["ScorerDictConfig | dict[str, ScoreKwargValue]"],
+    ) -> "ScorerDictConfig":
         """Merge a list of scorer specs into a single ScorerDictConfig.
 
         Each element of *items* may be a :class:`ScorerDictConfig`, a dict
         with a ``scorers`` key, or a bare scorers dict (name -> scorer spec).
         Later entries win on duplicate scorer names.
+
+        Args:
+            items: Scorer containers to merge.
         """
         merged_scorers: dict = {}
         for item in items:
@@ -1217,7 +1269,19 @@ class ScorerDictConfig(ConfigBase):
         return cls(scorers=merged_scorers)
 
     @staticmethod
-    def resolve_mode_features(mode, data):
+    def resolve_mode_features(
+        mode: str | None,
+        data: "DataConfig | None",
+    ) -> MatrixLike | None:
+        """Resolve split-specific feature payload for the requested scoring mode.
+
+        Args:
+            mode: Requested scoring mode token.
+            data: Optional data runtime context.
+
+        Returns:
+            Resolved feature payload for the mode, if available.
+        """
         if data is None:
             return None
         try:
@@ -1235,7 +1299,15 @@ class ScorerDictConfig(ConfigBase):
         return None
 
     @staticmethod
-    def is_classification_labels(y):
+    def is_classification_labels(y: ArrayLike | MatrixLike) -> bool:
+        """Return ``True`` when label payload appears categorical/integer-coded.
+
+        Args:
+            y: Label payload to inspect.
+
+        Returns:
+            ``True`` when labels appear categorical/integer-coded.
+        """
         # Returns True if y is integer/binary labels, False if continuous
         y_arr = np.asarray(to_numpy_if_torch(y))
         if y_arr.dtype.kind in {"i", "u", "b"}:
@@ -1248,9 +1320,22 @@ class ScorerDictConfig(ConfigBase):
         return False
 
     @staticmethod
-    def predict_proba_from_model(model, X, y_true=None, y_pred=None):
-        """
-        For torch models, use the model's raw output (logits) as the probability input for normalization if predict_proba is not available.
+    def predict_proba_from_model(
+        model: EstimatorLike | None,
+        X: MatrixLike | None,
+        y_true: ArrayLike | None = None,
+        y_pred: ArrayLike | MatrixLike | None = None,
+    ) -> MatrixLike | ArrayLike:
+        """Resolve probability-like prediction outputs from model runtime.
+
+        Args:
+            model: Model runtime/config context.
+            X: Input features for inference.
+            y_true: Optional labels used for fallback one-hot conversion.
+            y_pred: Optional precomputed predictions/probabilities.
+
+        Returns:
+            Probability-like prediction payload.
         """
         if model is None or X is None:
             raise ValueError("Cannot compute probabilities: model or input X is None.")
@@ -1323,13 +1408,28 @@ class ScorerDictConfig(ConfigBase):
         self,
         mode: str | None = None,
         data: "DataConfig | None" = None,
-        model: Any = None,
-        attack: Any = None,
-        ind=None,
-        dep=None,
-        score_file=None,
-        **kwargs: Any,
-    ) -> dict[str, Any]:
+        model: EstimatorLike | None = None,
+        attack: AttackLike | None = None,
+        ind: MatrixLike | ArrayLike | None = None,
+        dep: MatrixLike | ArrayLike | None = None,
+        score_file: str | None = None,
+        **kwargs: ScoreKwargValue,
+    ) -> ScoreDict:
+        """Execute staged scorer evaluation and return a normalized score payload.
+
+        Args:
+            mode: Requested scoring mode.
+            data: Optional data runtime context.
+            model: Optional model runtime context.
+            attack: Optional attack runtime context.
+            ind: Independent payload (features/predictions).
+            dep: Dependent payload (labels/targets).
+            score_file: Optional persisted score file path.
+            **kwargs: Additional scoring/runtime kwargs.
+
+        Returns:
+            Canonical score payload for resolved stage.
+        """
         results: dict[str, Any] = {}
         runtime_stage = kwargs.pop("stage", None)
 
@@ -1558,8 +1658,8 @@ class ScorerDictConfig(ConfigBase):
         if score_file is not None:
             self.save_scores(results, score_file)
         if mode is not None or runtime_stage is not None:
-            return {stage_key: results[stage_key]}
-        return results[stage_key]
+            return ScoreDict.from_payload({stage_key: results[stage_key]})
+        return ScoreDict.from_payload(results[stage_key])
 
 
 def coerce_scorer_config(scorer_obj, *, default_factory=None):

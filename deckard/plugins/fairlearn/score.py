@@ -15,6 +15,7 @@ try:
 except Exception:
     torch = None
 
+from ...artifacts import ScoreDict
 from ...data import DataConfig
 from ...data.canon import (
     normalize_data_score_mode,
@@ -105,7 +106,7 @@ FAIRLEARN_SCORING_HOOKS = HookBundle(
 class FairlearnDataScoreHooksMixin:
     """Data-runtime fairlearn scoring hooks and split-scoped score adapter."""
 
-    def _run_fairlearn_score(self, *args, mode: str, **kwargs) -> dict:
+    def _run_fairlearn_score(self, *args, mode: str, **kwargs) -> ScoreDict:
         kwargs = dict(kwargs)
         kwargs.pop("y_true", None)
         kwargs.pop("y_pred", None)
@@ -128,19 +129,19 @@ class FairlearnDataScoreHooksMixin:
                         flat[f"{key}_{subk}"] = subv
                 else:
                     flat[key] = value
-            return flat
-        return {"fairness_score": fairness_scores}
+            return ScoreDict.from_payload(flat)
+        return ScoreDict.from_payload({"fairness_score": fairness_scores})
 
     def _append_fairlearn_tail_scores(
         self,
         stage: str,
         scores: dict | None = None,
         **kwargs,
-    ) -> dict:
+    ) -> ScoreDict:
         """Run fairlearn score hook after base/core scores and append last."""
         _ = kwargs
         if self.scorer is None:
-            return {}
+            return ScoreDict()
         if not callable(self.scorer):
             raise TypeError(
                 f"FairlearnDataConfig.scorer must be callable or None, got {type(self.scorer)}",
@@ -149,16 +150,17 @@ class FairlearnDataScoreHooksMixin:
         tail_scores = self._run_fairlearn_score(mode=resolved_mode)
         existing = dict(scores or {})
         if len(existing) == 0:
-            return tail_scores
+            return ScoreDict.from_payload(tail_scores)
         merged_tail = {}
         for key, value in tail_scores.items():
             if key in existing:
                 merged_tail[f"fairlearn_{key}"] = value
             else:
                 merged_tail[key] = value
-        return merged_tail
+        return ScoreDict.from_payload(merged_tail)
 
-    def score(self, *args, mode=None, **kwargs) -> dict:
+    def score(self, *args, mode=None, **kwargs) -> ScoreDict:
+        """Run fairlearn-aware scoring for the requested data split mode."""
         if is_default_config_value(getattr(self, "scorer", None), include_best=False):
             self.scorer = (
                 DefaultFairlearnClassificationScorerDictConfig()
@@ -166,7 +168,7 @@ class FairlearnDataScoreHooksMixin:
                 else DefaultFairlearnRegressionScorerDictConfig()
             )
         if getattr(self, "scorer", None) is None:
-            return {}
+            return ScoreDict()
         if not callable(self.scorer):
             raise TypeError(
                 f"FairlearnDataConfig.scorer must be callable or None, got {type(self.scorer)}",
@@ -174,7 +176,9 @@ class FairlearnDataScoreHooksMixin:
         scorer_mode = normalize_data_score_mode(
             mode if mode is not None else getattr(self, "score_split", "test"),
         )
-        return self._run_fairlearn_score(*args, mode=scorer_mode, **kwargs)
+        return ScoreDict.from_payload(
+            self._run_fairlearn_score(*args, mode=scorer_mode, **kwargs),
+        )
 
 
 def fairness_stage_to_split_mode(runtime_mode: str | None) -> dict[str, str]:

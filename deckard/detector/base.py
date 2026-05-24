@@ -16,7 +16,7 @@ from ..score.base import (
     coerce_scorer_config,
 )
 from ..utils import (
-    ConfigBase,
+    BaseConfig,
     coerce_config,
     instantiate_plugin_spec,
     load_class,
@@ -57,7 +57,7 @@ class DetectorScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
 
 
 @dataclass(eq=False, kw_only=True)
-class DetectorConfig(ConfigBase):
+class DetectorConfig(BaseConfig):
     """Auxiliary detector runtime for adversarial-vs-clean detection tasks."""
 
     detector_type: str = "art.defences.detector.evasion.BinaryInputDetector"
@@ -546,6 +546,7 @@ class DetectorConfig(ConfigBase):
         detected_predictions_file: str | None = None,
         score_file: str | None = None,
     ) -> dict[str, float | int]:
+        """Execute detector runtime lifecycle and return detection score payload."""
         files = dict(files or {})
         if detector_file is None:
             detector_file = files.get("detector_file", files.get("detector_model_file"))

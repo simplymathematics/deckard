@@ -14,9 +14,10 @@ from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
 
 from ..artifacts import ScoreDict
+from ..frameworks.types import ArtEsimtator, EstimatorLike, RuntimeValue, StringifiedClass
 from ..data import DataConfig
 from ..utils import (
-    ConfigBase,
+    BaseConfig,
     coerce_config,
     coerce_to_list,
     instantiate_plugin_spec,
@@ -29,6 +30,8 @@ from .base import ModelConfig
 
 warnings.filterwarnings("ignore", category=UserWarning)
 logger = logging.getLogger(__name__)
+
+DefenseScoreValue = str | int | float | bool | None
 
 
 @lru_cache(maxsize=1)
@@ -237,8 +240,18 @@ class DefensePipelineConfigBehaviorMixin:
         return any(key in defense_spec for key in legacy_keys)
 
     @classmethod
-    def coerce(cls, defense_config: Any):
-        """Normalize user defense config input into ``DefensePipelineConfig``."""
+    def coerce(
+        cls,
+        defense_config: "DefensePipelineConfig | dict | list | tuple | None",
+    ) -> "DefensePipelineConfig | None":
+        """Normalize user defense config input into ``DefensePipelineConfig``.
+
+        Args:
+            defense_config: Raw defense config payload.
+
+        Returns:
+            Normalized pipeline config payload.
+        """
         if defense_config is None or isinstance(defense_config, cls):
             return defense_config
 
@@ -421,8 +434,15 @@ class DefensePipelineConfigBehaviorMixin:
         ):
             defense_obj.probability = True
 
-    def normalize_defenses(self, defenses: Any) -> list:
-        """Return a normalized list of defense objects from raw defense specs."""
+    def normalize_defenses(self, defenses: list | tuple | dict | BaseConfig | None) -> list:
+        """Return a normalized list of defense objects from raw defense specs.
+
+        Args:
+            defenses: Raw defense payload(s).
+
+        Returns:
+            Normalized defense object list.
+        """
         if defenses is None:
             return []
         if isinstance(defenses, (tuple, list)):
@@ -446,7 +466,15 @@ class DefensePipelineConfigBehaviorMixin:
         default_stage: str = "post_fit_pre_predict",
         **context: Any,
     ) -> str:
-        """Resolve defense stage using plugin hooks and fallback defaults."""
+        """Resolve defense stage using plugin hooks and fallback defaults.
+
+        Args:
+            default_stage: Fallback stage when plugins do not override.
+            **context: Optional runtime context for plugin stage resolution.
+
+        Returns:
+            Resolved defense stage token.
+        """
         stage = default_stage
         # TODO: make this context aware since art defenses have _apply_fit and _apply_predict
         hook_outputs = self._run_plugin_hook(
@@ -514,10 +542,19 @@ class DefensePipelineConfigBehaviorMixin:
     def apply(
         self,
         estimator: BaseEstimator,
-        data,
+        data: DataConfig | None,
         stage: str = "post_fit_pre_predict",
     ) -> BaseEstimator:
-        """Apply configured defense chain to ``estimator`` for the given stage."""
+        """Apply configured defense chain to ``estimator`` for the given stage.
+
+        Args:
+            estimator: Base estimator to transform.
+            data: Runtime data context.
+            stage: Defense stage token.
+
+        Returns:
+            Defended estimator.
+        """
         if estimator is None:
             raise ValueError(
                 "estimator must be provided before applying defenses",
@@ -729,40 +766,29 @@ class DefenseMixin:
     def __call__(
         self,
         *,
-        data: Any,
-        defense_type: Union[str, None],
+        data: DataConfig | None,
+        defense_type: StringifiedClass | None,
         defense_subtype: Union[str, None],
-        defense_class: Any,
-        art_class: Any,
-        base_estimator: Any,
+        defense_class: type | None,
+        art_class: ArtEsimtator,
+        base_estimator: EstimatorLike,
         existing_preprocessors: list,
         existing_postprocessors: list,
-    ) -> tuple[Any, Any]:
+    ) -> tuple[BaseConfig | None, EstimatorLike]:
         """Execute one defense handler.
 
-        Parameters
-        ----------
-        data : Any
-            Data runtime containing train/test/val splits.
-        defense_type : str | None
-            Parsed defense family.
-        defense_subtype : str | None
-            Parsed defense subtype.
-        defense_class : Any
-            Concrete defense class resolved from ``defense_name``.
-        art_class : Any
-            ART estimator wrapper class selected for model type.
-        init_params : dict
-            Runtime ART estimator initialization kwargs resolved by
-            ``DefenseConfig.get_art_class``. Handlers should treat this as
-            library/class-specific defaults and merge with ``defense_params``
-            when constructing wrapped estimators.
-        base_estimator : Any
-            Unwrapped model estimator used as defense target.
-        existing_preprocessors : list
-            Existing preprocessor defenses already attached to wrapper.
-        existing_postprocessors : list
-            Existing postprocessor defenses already attached to wrapper.
+        Args:
+            data: Data runtime containing train/test/val splits.
+            defense_type: Parsed defense family.
+            defense_subtype: Parsed defense subtype.
+            defense_class: Concrete defense class resolved from ``defense_name``.
+            art_class: ART estimator wrapper class selected for model type.
+            base_estimator: Unwrapped model estimator used as defense target.
+            existing_preprocessors: Existing preprocessor defenses already attached.
+            existing_postprocessors: Existing postprocessor defenses already attached.
+
+        Returns:
+            Defense artifact and defended estimator.
         """
         raise NotImplementedError("Defense handlers must implement __call__")
 
@@ -773,16 +799,32 @@ class PassthroughDefenseMixin(DefenseMixin):
     def __call__(
         self,
         *,
-        data: Any,
-        defense_type: Union[str, None],
+        data: DataConfig | None,
+        defense_type: StringifiedClass | None,
         defense_subtype: Union[str, None],
-        defense_class: Any,
-        art_class: Any,
+        defense_class: type | None,
+        art_class: ArtEsimtator,
         init_params: dict,
-        base_estimator: Any,
+        base_estimator: EstimatorLike,
         existing_preprocessors: list,
         existing_postprocessors: list,
-    ) -> tuple[Any, Any]:
+    ) -> tuple[BaseConfig | None, EstimatorLike]:
+        """Build and return an ART wrapper without adding defense transforms.
+
+        Args:
+            data: Data runtime containing train/test/val splits.
+            defense_type: Parsed defense family.
+            defense_subtype: Parsed defense subtype.
+            defense_class: Concrete defense class resolved from ``defense_name``.
+            art_class: ART estimator wrapper class selected for model type.
+            init_params: Runtime ART estimator initialization kwargs.
+            base_estimator: Unwrapped model estimator used as defense target.
+            existing_preprocessors: Existing preprocessor defenses already attached.
+            existing_postprocessors: Existing postprocessor defenses already attached.
+
+        Returns:
+            ``None`` and the wrapped estimator.
+        """
         defended_estimator = self._build_art_wrapper(
             art_class=art_class,
             base_estimator=base_estimator,
@@ -797,7 +839,7 @@ class ARTDefenseBehaviorMixin:
     """Reusable defense workflow behavior mixed into concrete config dataclasses."""
 
     # Declared for static analyzers; concrete dataclass provides these fields.
-    model_type: Union[str, None]
+    model_type: StringifiedClass | None
     classifier: Union[bool, str, None]
     model_params: dict
     probability: bool
@@ -841,7 +883,7 @@ class ARTDefenseBehaviorMixin:
 
     def _resolve_runtime_defense_mixins(
         self,
-        defense_type: Union[str, None],
+        defense_type: StringifiedClass | None,
         defense_subtype: Union[str, None],
     ) -> tuple[type, ...]:
         mixins: list[type] = []
@@ -895,7 +937,7 @@ class ARTDefenseBehaviorMixin:
 
     def _resolve_defense_handler(
         self,
-        defense_type: Union[str, None],
+        defense_type: StringifiedClass | None,
         defense_subtype: Union[str, None],
     ):
         mixins = self._resolve_runtime_defense_mixins(defense_type, defense_subtype)
@@ -1061,7 +1103,11 @@ class ARTDefenseBehaviorMixin:
 
     @model.setter
     def model(self, value: BaseEstimator | None) -> None:
-        """Set the runtime estimator payload."""
+        """Set the runtime estimator payload.
+
+        Args:
+            value: Estimator payload.
+        """
         self._model = value
 
     @property
@@ -1071,7 +1117,11 @@ class ARTDefenseBehaviorMixin:
 
     @model_config.setter
     def model_config(self, value: ModelConfig | None) -> None:
-        """Set the lazily built model config shell."""
+        """Set the lazily built model config shell.
+
+        Args:
+            value: Model config shell.
+        """
         self._model_config = value
 
     def get_model(self) -> BaseEstimator:
@@ -1089,9 +1139,17 @@ class ARTDefenseBehaviorMixin:
     def apply_to(
         self,
         estimator: Union["BaseEstimator", None],
-        data: Any,
+        data: DataConfig | None,
     ) -> "BaseEstimator":
-        """Apply this defense to a pre-fitted estimator."""
+        """Apply this defense to a pre-fitted estimator.
+
+        Args:
+            estimator: Fitted estimator payload.
+            data: Runtime data payload.
+
+        Returns:
+            Defended estimator.
+        """
         if estimator is None:
             raise ValueError(
                 "estimator must be provided before applying defense",
@@ -1104,7 +1162,7 @@ class ARTDefenseBehaviorMixin:
                 model_cfg._model = estimator
         return self.apply_defense(data)
 
-    def apply_defense(self, data: Any) -> "BaseEstimator":
+    def apply_defense(self, data: DataConfig | None) -> "BaseEstimator":
         """Apply the configured defense to the current estimator.
 
         Args:
@@ -1224,6 +1282,7 @@ class ARTDefenseBehaviorMixin:
         return defended_estimator
 
     def parse_defense_name(self) -> tuple:
+        """Parse the configured defense path into type, subtype, and class."""
         if self.defense_name is not None and len(self.defense_name) > 0:
             module_name, class_name = self.defense_name.rsplit(".", 1)
         else:
@@ -1258,7 +1317,18 @@ class ARTDefenseBehaviorMixin:
 
         return defense_type, defense_subtype, defense_class
 
-    def get_art_class(self, data: Any):
+    def get_art_class(
+        self,
+        data: DataConfig,
+    ) -> tuple[ArtEsimtator, dict[str, RuntimeValue]]:
+        """Resolve the ART estimator wrapper class for the current model/data.
+
+        Args:
+            data: Runtime data payload used for wrapper shape metadata.
+
+        Returns:
+            ART wrapper class and initialization parameter mapping.
+        """
         if (
             _is_torch_model_instance(getattr(self, "_model", None))
             or (
@@ -1384,7 +1454,21 @@ class ARTDefenseBehaviorMixin:
         training_probabilities_file: Union[str, None] = None,
         test_probabilities_file: Union[str, None] = None,
         score_file: Union[str, None] = None,
-    ) -> dict[str, Any]:
+     ) -> dict[str, DefenseScoreValue]:
+        """Deprecated runtime entrypoint kept for compatibility with older configs.
+
+        Args:
+            data: Runtime data payload.
+            model_file: Optional persisted model path.
+            test_predictions_file: Optional test prediction file path.
+            train_predictions_file: Optional train prediction file path.
+            training_probabilities_file: Optional train probability file path.
+            test_probabilities_file: Optional test probability file path.
+            score_file: Optional score file path.
+
+        Returns:
+            Score payload mapping.
+        """
         raise NotImplementedError(
             "DefenseConfig no longer owns model runtime orchestration. "
             "Use ModelConfig(defense=DefensePipelineConfig(...))(data=...) instead.",
@@ -1392,7 +1476,7 @@ class ARTDefenseBehaviorMixin:
 
 
 @dataclass(eq=False, kw_only=True)
-class DefensePipelineConfig(DefensePipelineConfigBehaviorMixin, ConfigBase):
+class DefensePipelineConfig(DefensePipelineConfigBehaviorMixin, BaseConfig):
     """Runtime owner for applying an ordered chain of defense specs."""
 
     defenses: list = field(default_factory=list)
@@ -1421,7 +1505,7 @@ class DefensePipelineConfig(DefensePipelineConfigBehaviorMixin, ConfigBase):
 
 
 @dataclass(kw_only=True)
-class DefenseConfig(ARTDefenseBehaviorMixin, ConfigBase):
+class DefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
     """Concrete defense configuration used by defense runtime mixins.
 
     Main parameter groups:
@@ -1432,7 +1516,7 @@ class DefenseConfig(ARTDefenseBehaviorMixin, ConfigBase):
     supports handler/mixin resolution plus before/after dispatch hooks.
     """
 
-    model_type: Union[str, None] = None
+    model_type: StringifiedClass | None = None
     classifier: Union[bool, str, None] = True
     model_params: dict = field(
         default_factory=dict,

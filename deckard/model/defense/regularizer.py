@@ -25,6 +25,7 @@ class RegularizerDefenseMixin(DefenseMixin):
         existing_preprocessors,
         existing_postprocessors,
     ) -> tuple[Any, Any]:
+        """Raise for unimplemented regularizer defense runtime path."""
         raise NotImplementedError(
             "Regularizer defenses are not implemented yet.",
         )

@@ -15,7 +15,7 @@ from typing import Any, Optional, cast
 import numpy as np
 import pandas as pd
 
-from .frameworks.types import ArrayLike, EstimatorLike, MatrixLike
+from .frameworks.types import ArrayLike, EstimatorLike, MatrixLike, RuntimeValue
 
 try:
     import torch
@@ -325,9 +325,15 @@ class ArtifactLoaderConfig:
 
     def save_scores(
         self,
-        scores: dict[str, Any] | pd.Series,
+        scores: ScoreDict | dict[str, RuntimeValue] | pd.Series,
         filepath: Optional[str] = None,
     ) -> None:
+        """Persist score payloads to disk in a supported tabular/structured format.
+
+        Args:
+            scores: Score payload mapping or series to persist.
+            filepath: Target file path.
+        """
         assert filepath is not None, "Filepath must be provided to save scores."
         score_path = Path(filepath)
         score_path.parent.mkdir(parents=True, exist_ok=True)
@@ -371,7 +377,15 @@ class ArtifactLoaderConfig:
             )
         assert Path(score_path).exists(), f"Failed to save scores to {score_path}"
 
-    def load_scores(self, filepath: str) -> dict[str, Any]:
+    def load_scores(self, filepath: str) -> ScoreDict:
+        """Load score payloads from disk and normalize key/value types.
+
+        Args:
+            filepath: Source score file path.
+
+        Returns:
+            Canonical score payload mapping.
+        """
         score_path = Path(filepath)
         assert score_path.exists(), f"File {filepath} does not exist."
         supported_filetypes = [".csv", ".json", ".xlsx", ".yaml", ".yml"]
@@ -426,14 +440,21 @@ class ArtifactLoaderConfig:
             raise ValueError(
                 f"Unsupported file type {score_path.suffix}. Supported types: {supported_filetypes}",
             )
-        return {str(k): v for k, v in scores.items()}
+        return ScoreDict.from_payload({str(k): v for k, v in scores.items()})
 
     def save_data(
         self,
         data: MatrixLike | ArrayLike | pd.DataFrame,
         filepath: Optional[str] = None,
-        **kwargs: Any,
+        **kwargs: RuntimeValue,
     ) -> None:
+        """Persist matrix/array-like data payloads using file-suffix routing.
+
+        Args:
+            data: Matrix-like payload to persist.
+            filepath: Target file path.
+            **kwargs: Backend-specific pandas writer options.
+        """
         assert filepath is not None, "Filepath must be provided to save data."
         data_path = Path(filepath)
         data_path.parent.mkdir(parents=True, exist_ok=True)
@@ -467,7 +488,16 @@ class ArtifactLoaderConfig:
                 )
         assert Path(data_path).exists(), f"Failed to save data to {data_path}"
 
-    def load_data(self, filepath: str, **kwargs: Any) -> MatrixLike | ArrayLike:
+    def load_data(self, filepath: str, **kwargs: RuntimeValue) -> MatrixLike | ArrayLike:
+        """Load matrix/array-like payloads from disk based on file extension.
+
+        Args:
+            filepath: Source payload path.
+            **kwargs: Backend-specific pandas reader options.
+
+        Returns:
+            Loaded matrix-like or array-like payload.
+        """
         if filepath is None:
             raise FileNotFoundError("Filepath is None.")
 
@@ -518,18 +548,36 @@ class ArtifactLoaderConfig:
     def load_matrix(
         self,
         filepath: str,
-        **kwargs: Any,
+        **kwargs: RuntimeValue,
     ) -> MatrixLike:
+        """Load and return a matrix-like payload from disk.
+
+        Args:
+            filepath: Source payload path.
+            **kwargs: Backend-specific pandas reader options.
+        """
         return self.load_data(filepath, **kwargs)
 
     def load_vector(
         self,
         filepath: str,
-        **kwargs: Any,
+        **kwargs: RuntimeValue,
     ) -> ArrayLike:
+        """Load and return a vector-like payload from disk.
+
+        Args:
+            filepath: Source payload path.
+            **kwargs: Backend-specific pandas reader options.
+        """
         return self.load_data(filepath, **kwargs)
 
-    def save_object(self, obj: EstimatorLike | Any, filepath: str) -> None:
+    def save_object(self, obj: EstimatorLike | RuntimeValue, filepath: str) -> None:
+        """Serialize a Python object payload with pickle-compatible formats.
+
+        Args:
+            obj: Object payload to serialize.
+            filepath: Target pickle path.
+        """
         Path(filepath).parent.mkdir(parents=True, exist_ok=True)
         suffix = Path(filepath).suffix
         supported_suffixes = [".pkl", ".pickle"]
@@ -545,7 +593,17 @@ class ArtifactLoaderConfig:
         filepath: str,
         ignore_corrupt: bool = False,
         delete_corrupt: bool = False,
-    ) -> Any:
+    ) -> EstimatorLike | RuntimeValue | None:
+        """Load a pickled object payload with optional corrupt-file handling.
+
+        Args:
+            filepath: Source pickle path.
+            ignore_corrupt: Return ``None`` when file is corrupt.
+            delete_corrupt: Delete corrupt file before returning/raising.
+
+        Returns:
+            Loaded payload or ``None`` when ``ignore_corrupt`` is enabled.
+        """
         try:
             with open(filepath, "rb") as f:
                 obj = pickle.load(f)
@@ -562,7 +620,17 @@ class ArtifactLoaderConfig:
         filepath: str,
         ignore_corrupt: bool = False,
         delete_corrupt: bool = False,
-    ) -> EstimatorLike | Any:
+    ) -> EstimatorLike | RuntimeValue | None:
+        """Load model artifacts from .pt/.joblib/pickle-backed formats.
+
+        Args:
+            filepath: Source model artifact path.
+            ignore_corrupt: Return ``None`` when file is corrupt.
+            delete_corrupt: Delete corrupt file before returning/raising.
+
+        Returns:
+            Loaded model payload.
+        """
         suffix = Path(filepath).suffix.lower()
         if suffix == ".pt":
             if torch is None:
@@ -582,7 +650,13 @@ class ArtifactLoaderConfig:
             delete_corrupt=delete_corrupt,
         )
 
-    def save_model(self, model: EstimatorLike | Any, filepath: str) -> None:
+    def save_model(self, model: EstimatorLike | RuntimeValue, filepath: str) -> None:
+        """Persist model artifacts using suffix-driven serialization backends.
+
+        Args:
+            model: Model payload to persist.
+            filepath: Target model artifact path.
+        """
         suffix = Path(filepath).suffix.lower()
         if suffix == ".pt":
             if torch is None:
@@ -607,7 +681,17 @@ class ArtifactLoaderConfig:
                 f"Saving models with extension: {suffix} not supported.",
             )
 
-    def save(self, payload: Any = None, filepath: Optional[str] = None) -> None:
+    def save(
+        self,
+        payload: EstimatorLike | MatrixLike | ArrayLike | ScoreDict | RuntimeValue | None = None,
+        filepath: Optional[str] = None,
+    ) -> None:
+        """Persist payloads by delegating to score/data/object/model save handlers.
+
+        Args:
+            payload: Payload to persist; defaults to config metadata when omitted.
+            filepath: Target artifact path.
+        """
         # Backward compatibility: many callers use save(filepath) positional style.
         if filepath is None and isinstance(payload, (str, Path)):
             filepath = str(payload)
@@ -656,7 +740,18 @@ class ArtifactLoaderConfig:
 
         raise ValueError(f"Unsupported file type {path.suffix}.")
 
-    def load(self, filepath: Optional[str] = None) -> Any:
+    def load(
+        self,
+        filepath: Optional[str] = None,
+    ) -> "ArtifactLoaderConfig | ScoreDict | MatrixLike | ArrayLike | EstimatorLike | RuntimeValue | None":
+        """Load artifacts from disk and dispatch to the appropriate loader.
+
+        Args:
+            filepath: Optional source path; defaults to ``self.path``.
+
+        Returns:
+            Loaded payload or the config instance when loading metadata envelope.
+        """
         path = Path(filepath or self.path)
         if not path.exists():
             return self

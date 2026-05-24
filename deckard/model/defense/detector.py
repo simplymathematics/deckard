@@ -30,6 +30,7 @@ class DetectorDefenseMixin(DefenseMixin):
         existing_preprocessors,
         existing_postprocessors,
     ) -> tuple[Any, Any]:
+        """Build detector defense wrapper and return defense with defended estimator."""
         assert defense_class is not None
         subtype = (defense_subtype or "").lower()
         if subtype == "evasion":

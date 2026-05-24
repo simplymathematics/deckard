@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, Final, List, Literal, Optional, Union, get_args
 
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.model_selection import (
@@ -87,7 +88,7 @@ from ...plot.base import (
     PlotterMixin,
     _YellowbrickPlotterMarker,
 )
-from ...utils import ConfigBase
+from ...utils import BaseConfig
 
 try:
     from torch.utils.data import Subset
@@ -229,6 +230,35 @@ all_viz_objects = [
 ]
 
 SUPPORTED_YELLOWBRICK_PLOT_TYPES = all_viz_types
+YELLOWBRICK_PLOT_TYPE_DOCS: Final[dict[str, str]] = {
+    "rank1d": "Rank single features by score against the target.",
+    "rank2d": "Visualize pairwise feature relationships by target class.",
+    "radviz": "Project features radially to inspect class separability.",
+    "pcoords": "Render parallel coordinates for multi-feature class comparison.",
+    "jointplot": "Show 2D feature relationship with marginal distributions.",
+    "pca": "Project features to principal components.",
+    "manifold": "Project features with nonlinear manifold embedding.",
+    "class_balance": "Display per-class sample counts.",
+    "balanced_binning_reference": "Visualize target-value binning quality.",
+    "feature_correlation": "Measure correlation between each feature and target.",
+    "prediction_error": "Compare predicted vs true values for regressors.",
+    "residuals_plot": "Inspect regression residual behavior.",
+    "alpha_selection": "Inspect regularization alpha sensitivity.",
+    "roc_auc": "Plot ROC curves and AUC for classifiers.",
+    "precision_recall_curve": "Plot precision-recall tradeoff curves.",
+    "classification_report": "Visualize precision/recall/F1 per class.",
+    "class_prediction_error": "Show class-wise prediction error matrix.",
+    "discrimination_threshold": "Sweep binary decision thresholds.",
+    "k_elbow": "Estimate optimal cluster count with elbow metric.",
+    "silhouette": "Inspect cluster cohesion and separation.",
+    "intercluster_distance": "Visualize inter-cluster distances.",
+    "validation_curve": "Plot score vs hyperparameter values.",
+    "learning_curve": "Plot score vs training set size.",
+    "cv_scores": "Summarize cross-validation scores across folds.",
+    "feature_importances": "Display estimator feature importances.",
+    "rfecv": "Run recursive feature elimination with CV.",
+    "dropping_curve": "Measure score impact while dropping features.",
+}
 
 logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -426,22 +456,17 @@ class YellowbrickPlotterMixin(PlotterMixin):
     def __call__(
         self,
         *,
-        ax: Any = None,
-        **kwargs: Any,
-    ) -> Any:
+        ax: Axes | None = None,
+        **kwargs: dict,
+    ) -> ScoreDict:
         """Execute yellowbrick visualization.
 
-        Parameters
-        ----------
-        ax : Axes | None
-            Matplotlib axis to plot on. If None, visualizer creates figure.
-        **kwargs : Any
-            Additional visualizer parameters.
+        Args:
+            ax: Matplotlib axis to plot on.
+            **kwargs: Additional visualizer parameters.
 
-        Returns
-        -------
-        Any
-            Yellowbrick visualizer object containing rendered plot.
+        Returns:
+            Score payload for rendered plot context.
         """
         # This is a placeholder implementation.
         # The actual implementation delegates to runtime config methods
@@ -452,7 +477,7 @@ class YellowbrickPlotterMixin(PlotterMixin):
 
 
 @dataclass(kw_only=True, eq=False)
-class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
+class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
     """Render a single Yellowbrick plot from composed experiment configuration.
 
     Initialization parameters
@@ -509,6 +534,17 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
     At runtime, ``PlotTypePlugin`` resolves ``_YellowbrickPlotterMixin`` for rendering
     when plot_backend="yellowbrick", enabling flexible seaborn/yellowbrick switching.
     Lazy experiment preparation reuses state across multiple plot renders.
+
+    Supported plot types
+    --------------------
+    ``rank1d``, ``rank2d``, ``radviz``, ``pcoords``, ``jointplot``, ``pca``,
+    ``manifold``, ``class_balance``, ``balanced_binning_reference``,
+    ``feature_correlation``, ``prediction_error``, ``residuals_plot``,
+    ``alpha_selection``, ``roc_auc``, ``precision_recall_curve``,
+    ``classification_report``, ``class_prediction_error``,
+    ``discrimination_threshold``, ``k_elbow``, ``silhouette``,
+    ``intercluster_distance``, ``validation_curve``, ``learning_curve``,
+    ``cv_scores``, ``feature_importances``, ``rfecv``, ``dropping_curve``.
     """
 
     experiment: ExperimentConfig
@@ -774,8 +810,16 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
 
         return estimator
 
-    def visualize_features(self, ax=None):
-        """Generates and saves the Yellowbrick data plot."""
+    def visualize_features(self, ax: Axes | None = None) -> None:
+        """Render feature-focused Yellowbrick plots.
+
+        Supported ``plot_type`` values:
+            ``rank1d``, ``rank2d``, ``radviz``, ``pcoords``, ``jointplot``,
+            ``pca``, ``manifold``.
+
+        Args:
+            ax: Optional matplotlib axis for the rendered plot.
+        """
         X, y, classes, features = self._get_plot_data()
         if self.plot_type == "rank1d":
             visualizer = Rank1D(
@@ -838,7 +882,16 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
         self.show(visualizer)
         logger.info(f"Yellowbrick plot saved to {self.save_path}")
 
-    def visualize_targets(self, ax=None):
+    def visualize_targets(self, ax: Axes | None = None) -> None:
+        """Render target-focused Yellowbrick plots.
+
+        Supported ``plot_type`` values:
+            ``class_balance``, ``balanced_binning_reference``,
+            ``feature_correlation``.
+
+        Args:
+            ax: Optional matplotlib axis for the rendered plot.
+        """
         X, y, classes, feature_indices = self._get_plot_data()
         if self.plot_type == "class_balance":
             visualizer = ClassBalance(labels=classes, **self.plot_params, ax=ax)
@@ -858,7 +911,15 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
         self.show(visualizer)
         logger.info(f"Yellowbrick target plot saved to {self.save_path}")
 
-    def visualize_regressors(self, ax=None):
+    def visualize_regressors(self, ax: Axes | None = None) -> None:
+        """Render regressor-focused Yellowbrick plots.
+
+        Supported ``plot_type`` values:
+            ``prediction_error``, ``residuals_plot``, ``alpha_selection``.
+
+        Args:
+            ax: Optional matplotlib axis for the rendered plot.
+        """
         X, y, _, _ = self._get_plot_data()
         X_test, y_test, _, _ = self._get_plot_data(test=True)
         model = self._get_plot_model()
@@ -878,7 +939,16 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
         self.show(visualizer)
         logger.info(f"Yellowbrick regressor plot saved to {self.save_path}")
 
-    def visualize_classifiers(self, ax=None):
+    def visualize_classifiers(self, ax: Axes | None = None) -> None:
+        """Render classifier-focused Yellowbrick plots.
+
+        Supported ``plot_type`` values:
+            ``roc_auc``, ``precision_recall_curve``, ``classification_report``,
+            ``class_prediction_error``, ``discrimination_threshold``.
+
+        Args:
+            ax: Optional matplotlib axis for the rendered plot.
+        """
         X, y, _classes, _ = self._get_plot_data()
         X_test, y_test, _, _ = self._get_plot_data(test=True)
         model = self._get_plot_model()
@@ -936,7 +1006,15 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
         self.show(visualizer)
         logger.info(f"Yellowbrick classifier plot saved to {self.save_path}")
 
-    def visualize_clusters(self, ax):
+    def visualize_clusters(self, ax: Axes | None = None) -> None:
+        """Render clustering-focused Yellowbrick plots.
+
+        Supported ``plot_type`` values:
+            ``k_elbow``, ``silhouette``, ``intercluster_distance``.
+
+        Args:
+            ax: Optional matplotlib axis for the rendered plot.
+        """
         X, _, _, _ = self._get_plot_data()
         model = self._get_plot_model()
         if self.plot_type == "k_elbow":
@@ -953,7 +1031,16 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
         self.show(visualizer)
         logger.info(f"Yellowbrick cluster plot saved to {self.save_path}")
 
-    def visualize_model_selection(self, ax=None):
+    def visualize_model_selection(self, ax: Axes | None = None) -> None:
+        """Render model-selection Yellowbrick plots.
+
+        Supported ``plot_type`` values:
+            ``validation_curve``, ``learning_curve``, ``cv_scores``,
+            ``feature_importances``, ``rfecv``, ``dropping_curve``.
+
+        Args:
+            ax: Optional matplotlib axis for the rendered plot.
+        """
         X, y, _, features = self._get_plot_data()
         model = self._get_plot_model()
         cv = self.parse_cv()
@@ -992,7 +1079,14 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
             f"Yellowbrick model selection plot saved to {self.save_path}",
         )
 
-    def parse_cv(self):
+    def parse_cv(self) -> KFold | StratifiedKFold | TimeSeriesSplit | ShuffleSplit:
+        """Parse and instantiate the configured cross-validation strategy.
+
+        Accepted runtime formats:
+            int -> StratifiedKFold(n_splits=int)
+            dict[name=kfold|timeseries|stratifiedkfold|shufflesplit] -> matching splitter
+            omitted -> default KFold/StratifiedKFold based on classifier flag
+        """
         if "cv" not in self.plot_params:
             classifier_flag = getattr(self.experiment.model, "classifier", True)
             if classifier_flag:
@@ -1025,7 +1119,13 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
                 raise ValueError(f"Unsupported CV type: {name}")
         return cv
 
-    def parse_range(self):
+    def parse_range(self) -> list[float | int]:
+        """Parse ``param_range`` configuration into a concrete value sequence.
+
+        Accepted formats:
+            [start, stop]
+            [start, stop, "linear"|"log"|step]
+        """
         assert (
             "param_range" in self.plot_params
         ), "Param_range must be specified for validation_curve"
@@ -1071,8 +1171,15 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
             else list(param_range)
         )
 
-    def visualize(self, ax=None):
-        """Main method to generate and save the Yellowbrick plot."""
+    def visualize(self, ax: Axes | None = None) -> None:
+        """Dispatch rendering based on ``plot_type`` and save output image.
+
+        See ``YELLOWBRICK_PLOT_TYPE_DOCS`` for human-readable descriptions of
+        every supported ``plot_type``.
+
+        Args:
+            ax: Optional matplotlib axis for the rendered plot.
+        """
         # Validate that either ax is provided or otherwise create a new figure
         if ax is None:
             _, ax = plt.subplots(figsize=(10, 8))
@@ -1099,7 +1206,12 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
         else:
             raise ValueError(f"Unsupported plot type: {self.plot_type}")
 
-    def show(self, visualizer):
+    def show(self, visualizer: BaseEstimator) -> None:
+        """Finalize and save a fitted Yellowbrick visualizer to disk.
+
+        Args:
+            visualizer: Fitted yellowbrick visualizer instance.
+        """
         assert hasattr(
             visualizer,
             "show",
@@ -1130,16 +1242,21 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, ConfigBase):
     def __len__(self):
         return 1
 
-    def __call__(self) -> dict:
+    def __call__(self) -> ScoreDict:
+        """Prepare experiment state, render ``plot_type``, and return score payload.
+
+        The score payload originates from the prepared ``ExperimentConfig`` and
+        is returned unchanged except for normalization to ``ScoreDict``.
+        """
         if self.rc_config:
             plt.rcParams.update(self.rc_config)
         scores = self._ensure_experiment_prepared()
         self.visualize()
-        return scores
+        return ScoreDict.from_payload(scores)
 
 
 @dataclass(kw_only=True)
-class YellowbrickConfigList(ConfigBase):
+class YellowbrickConfigList(BaseConfig):
     """Render a collection of Yellowbrick plots from one prepared experiment.
 
     This config composes an ExperimentConfig and prepares it once, then fans that

@@ -33,7 +33,7 @@ from ..detector import DetectorConfig
 from ..score import ScorerDictConfig
 from ..file import FileConfig, data_files, model_files, attack_files
 from ..utils import (
-    ConfigBase,
+    BaseConfig,
     coerce_config,
     coerce_to_list,
     instantiate_config,
@@ -194,7 +194,7 @@ class DataConfigResolutionMixin:
             data_dict = OmegaConf.to_container(data_obj, resolve=True)
         elif isinstance(data_obj, str):
             data_dict = DataConfig.from_yaml(data_obj).to_dict()
-        elif isinstance(data_obj, ConfigBase):
+        elif isinstance(data_obj, BaseConfig):
             data_dict = data_obj.to_dict()
         elif isinstance(data_obj, dict):
             data_dict = data_obj
@@ -246,7 +246,7 @@ class DataConfigResolutionMixin:
 
         if hasattr(self.data, "_target_") and not isinstance(
             self.data,
-            (dict, DictConfig, str, ConfigBase),
+            (dict, DictConfig, str, BaseConfig),
         ):
             data_obj = instantiate(self.data)
             if not isinstance(data_obj, DataConfig):
@@ -270,7 +270,7 @@ class DataConfigResolutionMixin:
 
 
 @dataclass(eq=False, kw_only=True)
-class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
+class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
     """Compose and execute a complete deckard experiment.
 
     An experiment coordinates data loading, optional defense application, model
@@ -312,7 +312,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
     RUNTIME_STATE_VERSION = CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_VERSION
     PIPELINE_STAGE_ORDER = CANONICAL_EXPERIMENT_PIPELINE_STAGES
-    HASH_EXCLUDE_FIELDS = ConfigBase.HASH_EXCLUDE_FIELDS | {"dvc_plugin"}
+    HASH_EXCLUDE_FIELDS = BaseConfig.HASH_EXCLUDE_FIELDS | {"dvc_plugin"}
 
     def _has_explicit_score_mode(self) -> bool:
         if not hasattr(self, "score_mode"):
@@ -1027,7 +1027,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             attacks=attack_chain,
         )
 
-    def set_device(self, device: Union[str, int] = "cpu"):
+    def set_device(self, device: Union[str, int] = "cpu") -> None:
         """
         Set the computation device for the experiment based on the selected library.
         For TensorFlow, configures GPU/CPU usage.
@@ -1300,7 +1300,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 config_list.append(self.model)
             if len(self._attack_chain) > 0:
                 config_list.extend(self._attack_chain)
-            if self.detector and isinstance(self.detector, ConfigBase):
+            if self.detector and isinstance(self.detector, BaseConfig):
                 config_list.append(self.detector)
             if self.score:
                 config_list.append(self.score)
@@ -1679,6 +1679,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         self.data.score_dict = dict(value.get("score_dict", {}) or {})
 
     def set_random_seed(self) -> None:
+        """Set deterministic random seed for the configured runtime library."""
         if self.library in ["sklearn"]:
             np.random.seed(self.random_state)
         elif self.library in ["tensorflow"]:
@@ -1720,7 +1721,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
             assert isinstance(
                 conf,
-                ConfigBase,
+                BaseConfig,
             ), "All items in config_list must be ConfigBase or config-like values"
             hash_parts.append(
                 "".join(
@@ -2249,7 +2250,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
     @staticmethod
     def from_yaml(filepath: str) -> "ExperimentConfig":
-        resolved_path = ConfigBase._resolve_yaml_read_path(filepath)
+        """Load an ExperimentConfig runtime snapshot from canonical YAML."""
+        resolved_path = BaseConfig._resolve_yaml_read_path(filepath)
         payload = OmegaConf.to_container(OmegaConf.load(resolved_path), resolve=True)
         if not isinstance(payload, dict):
             raise TypeError(
@@ -2292,6 +2294,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
     def __call__(
         self,
     ) -> dict:
+        """Execute full experiment pipeline and return aggregated score payload."""
         run_start = time.process_time()
         self.params = build_experiment_params_manifest(self)
         self._runtime_cache = self._load_runtime_cache()

@@ -271,7 +271,8 @@ class AnjanaDataConfig(
 
     score_mode: str = "post-pipeline"
 
-    def fit(self, run_hooks: bool = True):
+    def fit(self, run_hooks: bool = True) -> "AnjanaDataConfig":
+        """Fit data splits and refresh split-aligned sensitive feature payloads."""
         super().fit(run_hooks=run_hooks)
 
         if self.fairness_defense not in [None, False]:

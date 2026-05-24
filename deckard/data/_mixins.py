@@ -197,7 +197,7 @@ class SensitiveColumnsMixin:
         _ = device
         return model_obj
 
-    def get_model(self):
+    def get_model(self) -> Any:
         """Return the fitted model object, unwrapping wrapper attributes when needed."""
         if getattr(self, "_model", None) is None:
             raise ValueError("Model is not fitted yet.")

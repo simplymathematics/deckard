@@ -16,7 +16,7 @@ import sys
 import traceback
 from dataclasses import asdict, dataclass, field, is_dataclass
 from pathlib import Path
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Callable, Iterable, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -25,11 +25,12 @@ from hydra.utils import get_class, instantiate
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
 from .artifacts import ArtifactLoaderConfig, ScoreDict
+from .frameworks.types import RuntimeValue
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "ConfigBase",
+    "BaseConfig",
     "normalize_config_token",
     "is_null_config_value",
     "is_default_config_value",
@@ -614,7 +615,7 @@ def coerce_config(config_obj: Any) -> Any:
     if isinstance(config_obj, DictConfig):
         return OmegaConf.to_container(config_obj, resolve=True)
 
-    if isinstance(config_obj, ConfigBase):
+    if isinstance(config_obj, BaseConfig):
         return config_obj.to_dict()
 
     if isinstance(config_obj, str):
@@ -899,7 +900,7 @@ data_supported_filetypes = [
 
 
 @dataclass(init=False)
-class ConfigBase(ArtifactLoaderConfig):
+class BaseConfig(ArtifactLoaderConfig):
     """Base class for deckard configuration objects.
 
     ``ConfigBase`` provides a common lifecycle for config dataclasses: argument
@@ -948,27 +949,21 @@ class ConfigBase(ArtifactLoaderConfig):
 
     def coerce_component(
         self,
-        component: Any,
+        component: RuntimeValue,
         expected_type: type,
         *,
         default_target: Optional[str] = None,
-        overrides: Optional[dict[str, Any]] = None,
-        allow_passthrough: Optional[Any] = None,
-    ) -> Any:
+        overrides: Optional[dict[str, RuntimeValue]] = None,
+        allow_passthrough: Callable[[RuntimeValue], bool] | None = None,
+    ) -> BaseConfig | RuntimeValue | None:
         """Instantiate/normalize a config component to ``expected_type``.
 
-        Parameters
-        ----------
-        component : Any
-            Config-like object, runtime object, or expected config instance.
-        expected_type : type
-            The required config class.
-        default_target : str, optional
-            Hydra target path used when input lacks ``_target_``.
-        overrides : dict, optional
-            Key/value pairs injected into the normalized instantiation spec.
-        allow_passthrough : callable, optional
-            If provided and returns ``True`` for *component*, bypasses coercion.
+        Args:
+            component: Config-like object, runtime object, or expected config instance.
+            expected_type: Required config class.
+            default_target: Hydra target path used when input lacks ``_target_``.
+            overrides: Key/value pairs injected into the normalized spec.
+            allow_passthrough: Optional predicate that bypasses coercion.
         """
         if component is None:
             return None
@@ -994,7 +989,8 @@ class ConfigBase(ArtifactLoaderConfig):
             )
         return instance
 
-    def __call__(self):
+    def __call__(self) -> ScoreDict:
+        """Execute runtime behavior and return normalized score payload."""
         raise NotImplementedError("This is an abstract base class.")
 
     def __hash__(self):
@@ -1006,7 +1002,7 @@ class ConfigBase(ArtifactLoaderConfig):
 
     def __eq__(self, other: object) -> bool:
         """Two ConfigBase instances are equal when their configuration hashes match."""
-        if not isinstance(other, ConfigBase):
+        if not isinstance(other, BaseConfig):
             return NotImplemented
         return hash(self) == hash(other)
 
@@ -1022,7 +1018,11 @@ class ConfigBase(ArtifactLoaderConfig):
         return True
 
     def read_or_initialize_scores(self, score_file: Optional[str]) -> dict:
-        """Return merged scores from disk and memory, or initialize output location."""
+        """Return merged scores from disk and memory, or initialize output location.
+
+        Args:
+            score_file: Optional score file path.
+        """
         runtime_scores = ScoreDict.from_payload(getattr(self, "score_dict", {}))
         resolved = runtime_scores(
             score_file=score_file,
@@ -1037,7 +1037,12 @@ class ConfigBase(ArtifactLoaderConfig):
         new_scores: dict,
         score_file: Optional[str],
     ) -> dict:
-        """Merge score payload with on-disk scores and persist via ScoreDict lifecycle."""
+        """Merge score payload with on-disk scores and persist via ScoreDict lifecycle.
+
+        Args:
+            new_scores: Newly computed score payload.
+            score_file: Optional score file path.
+        """
         merged_input = ScoreDict.from_payload(new_scores)
         resolved = merged_input(
             score_file=score_file,
@@ -1061,17 +1066,22 @@ class ConfigBase(ArtifactLoaderConfig):
 
     def merge_runtime_files(
         self,
-        *file_mappings: Any,
+        *file_mappings: RuntimeValue,
         include_existing: bool = True,
         update_score_dict: bool = True,
-    ) -> dict[str, Any]:
+    ) -> dict[str, RuntimeValue]:
         """Merge runtime file mappings and persist merged map on the config.
 
         This is used at the end of runtime ``__call__`` paths, just before
         persistence, so newly created artifact paths are retained in-memory and
         optionally attached to ``score_dict`` for on-disk score metadata.
+
+        Args:
+            *file_mappings: File mapping containers to merge.
+            include_existing: Whether to include current ``self.files`` entries.
+            update_score_dict: Whether to mirror merged file map into ``score_dict``.
         """
-        merged: dict[str, Any] = {}
+        merged: dict[str, RuntimeValue] = {}
         if include_existing:
             merged.update(self._coerce_files_mapping(getattr(self, "files", None)))
         for mapping in file_mappings:
@@ -1131,21 +1141,17 @@ class ConfigBase(ArtifactLoaderConfig):
         return candidates[0]
 
     @staticmethod
-    def from_yaml(filepath: str) -> "ConfigBase":
+    def from_yaml(filepath: str) -> "BaseConfig":
         """
         Creates an instance of the class from a YAML configuration file.
 
-        Parameters
-        ----------
-        filepath : str
-            The path to the YAML configuration file.
+        Args:
+            filepath: Path to YAML configuration file.
 
-        Returns
-        -------
-        ConfigBase
-            An instance of the class initialized with the configuration from the YAML file.
+        Returns:
+            Instance initialized from the YAML configuration.
         """
-        resolved_path = ConfigBase._resolve_yaml_read_path(filepath)
+        resolved_path = BaseConfig._resolve_yaml_read_path(filepath)
         config = OmegaConf.to_container(OmegaConf.load(resolved_path), resolve=True)
         if not isinstance(config, dict):
             raise TypeError(
@@ -1158,25 +1164,25 @@ class ConfigBase(ArtifactLoaderConfig):
         return instance
 
     @staticmethod
-    def from_dict(data: dict) -> "ConfigBase":
+    def from_dict(data: dict) -> "BaseConfig":
         """
         Creates an instance of the class from a dictionary.
 
-        Parameters
-        ----------
-        data : dict
-            The dictionary containing the configuration.
+        Args:
+            data: Dictionary containing the configuration.
 
-        Returns
-        -------
-        ConfigBase
-            An instance of the class initialized with the configuration from the dictionary.
+        Returns:
+            Instance initialized from dictionary configuration.
         """
         instance = instantiate(data)
         return instance
 
     def to_yaml(self, filepath: Optional[str] = None) -> str:
-        """Convert the current instance to YAML and optionally persist to YAML file."""
+        """Convert the current instance to YAML and optionally persist to YAML file.
+
+        Args:
+            filepath: Optional destination path.
+        """
         config = self.to_dict()
         config = OmegaConf.create(config)
         yaml_text = str(OmegaConf.to_yaml(config))
@@ -1191,10 +1197,11 @@ class ConfigBase(ArtifactLoaderConfig):
         """
         Converts the current instance to a dictionary.
 
-        Returns
-        -------
-        dict
-            A dictionary representation of the instance.
+        Args:
+            for_hash: Whether to omit runtime-only fields for stable hashing.
+
+        Returns:
+            Dictionary representation of the instance.
         """
         # Build a dict from inherited dataclass fields + runtime attributes
         dict_ = {}
@@ -1209,7 +1216,7 @@ class ConfigBase(ArtifactLoaderConfig):
                     continue
                 if hasattr(self, name):
                     value = getattr(self, name)
-                    if isinstance(value, ConfigBase):
+                    if isinstance(value, BaseConfig):
                         dict_[name] = value.to_dict(for_hash=for_hash)
                     elif OmegaConf.is_config(value):
                         dict_[name] = OmegaConf.to_container(
@@ -1227,7 +1234,7 @@ class ConfigBase(ArtifactLoaderConfig):
                 continue
             if for_hash and not self._is_hash_field(name):
                 continue
-            if isinstance(value, ConfigBase):
+            if isinstance(value, BaseConfig):
                 dict_[name] = value.to_dict(for_hash=for_hash)
             elif OmegaConf.is_config(value):
                 dict_[name] = OmegaConf.to_container(value, resolve=True)
@@ -1244,7 +1251,7 @@ class ConfigBase(ArtifactLoaderConfig):
         if isinstance(value, (str, int, float, bool)) or value is None:
             return value
         if is_dataclass(value) and not isinstance(value, type):
-            return ConfigBase._serialize_for_yaml(asdict(value))
+            return BaseConfig._serialize_for_yaml(asdict(value))
         if isinstance(value, Path):
             return value.as_posix()
         if isinstance(value, type):
@@ -1259,14 +1266,14 @@ class ConfigBase(ArtifactLoaderConfig):
             return OmegaConf.to_container(value, resolve=True)
         if isinstance(value, dict):
             return {
-                str(k): ConfigBase._serialize_for_yaml(v) for k, v in value.items()
+                str(k): BaseConfig._serialize_for_yaml(v) for k, v in value.items()
             }
         if isinstance(value, (list, tuple, set, frozenset)):
-            return [ConfigBase._serialize_for_yaml(v) for v in value]
+            return [BaseConfig._serialize_for_yaml(v) for v in value]
         if hasattr(value, "to_dict") and callable(getattr(value, "to_dict")):
             try:
                 data = value.to_dict()
-                return ConfigBase._serialize_for_yaml(data)
+                return BaseConfig._serialize_for_yaml(data)
             except Exception:
                 return str(value)
         if hasattr(value, "__dict__"):
@@ -1276,10 +1283,11 @@ class ConfigBase(ArtifactLoaderConfig):
                 if not k.startswith("_") and not callable(v)
             }
             if public_attrs:
-                return ConfigBase._serialize_for_yaml(public_attrs)
+                return BaseConfig._serialize_for_yaml(public_attrs)
         return str(value)
 
     def execute_without_mercy(self) -> dict:
+        """Execute config runtime and persist traceback details on failure."""
         # Get log_file from logger
         log_file = next(
             (

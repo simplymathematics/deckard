@@ -6,7 +6,9 @@ from typing import Any, Literal, Union
 
 from sklearn.metrics import accuracy_score
 
-from ..utils import ConfigBase, round_scores
+from ..artifacts import ScoreDict
+from ..frameworks.types import ArrayLike
+from ..utils import BaseConfig, round_scores
 from .base import (
     ScorerConfig,
     ScorerDictConfig,
@@ -379,7 +381,7 @@ class DefaultAttributeInferenceRegressionAttackScorerConfig(
 
 
 @dataclass(eq=False, kw_only=True)
-class AttackScorerConfig(ConfigBase):
+class AttackScorerConfig(BaseConfig):
     """Owns all attack scoring logic and profile-specific scorer configs."""
 
     evasion: Union[ScorerDictConfig, dict, None] = None
@@ -428,14 +430,14 @@ class AttackScorerConfig(ConfigBase):
         raise TypeError(f"Unsupported scorer profile type: {type(profile)}")
 
     @staticmethod
-    def _prefix_scores(scores: dict, prefix: str) -> dict:
+    def _prefix_scores(scores: dict, prefix: str) -> ScoreDict:
         prefixed = {}
         for key, value in scores.items():
             prefixed_key = (
                 key if str(key).startswith(f"{prefix}_") else f"{prefix}_{key}"
             )
             prefixed[prefixed_key] = value
-        return prefixed
+        return ScoreDict.from_payload(prefixed)
 
     def _score_with_profile(
         self,
@@ -447,7 +449,7 @@ class AttackScorerConfig(ConfigBase):
         mode: str | None = None,
         stage: str | None = None,
         **kwargs,
-    ) -> dict:
+    ) -> ScoreDict:
         raw_scores = profile(
             y_true=y_true,
             y_pred=y_pred,
@@ -476,7 +478,9 @@ class AttackScorerConfig(ConfigBase):
             }
             raw_scores = {**stage_scores, **companion_scores}
         prefixed_scores = self._prefix_scores(raw_scores, prefix=prefix)
-        return round_scores(prefixed_scores, n_samples=n_samples)
+        return ScoreDict.from_payload(
+            round_scores(prefixed_scores, n_samples=n_samples),
+        )
 
     def _score(
         self,
@@ -538,15 +542,27 @@ class AttackScorerConfig(ConfigBase):
 
     def score_evasion(
         self,
-        ben_pred_labels,
-        adv_pred_labels,
-        y_true,
+        ben_pred_labels: ArrayLike,
+        adv_pred_labels: ArrayLike,
+        y_true: ArrayLike,
         attack_size: int,
         is_classification: bool = True,
         mode: str | None = None,
         stage: str | None = None,
-        sensitive_features=None,
-    ):
+        sensitive_features: ArrayLike | None = None,
+    ) -> ScoreDict:
+        """Score evasion attack outputs and append attack timing/size metadata.
+
+        Args:
+            ben_pred_labels: Benign prediction labels for success-rate scoring.
+            adv_pred_labels: Adversarial prediction labels.
+            y_true: Ground-truth labels for attacked samples.
+            attack_size: Number of samples used by the attack.
+            is_classification: Whether scoring uses classifier profile.
+            mode: Optional split/mode tag.
+            stage: Optional scoring stage tag.
+            sensitive_features: Optional sensitive-feature vector for fairness metrics.
+        """
         start_time = time.perf_counter()
         profile = self.evasion if is_classification else self.evasion_regression
         score_kwargs = {}
@@ -571,13 +587,23 @@ class AttackScorerConfig(ConfigBase):
 
     def score_membership(
         self,
-        labels,
-        inferred,
+        labels: ArrayLike,
+        inferred: ArrayLike,
         attack_size: int,
         mode: str | None = None,
         stage: str | None = None,
-        sensitive_features=None,
-    ):
+        sensitive_features: ArrayLike | None = None,
+    ) -> ScoreDict:
+        """Score membership inference outputs and append attack metadata.
+
+        Args:
+            labels: Ground-truth member/non-member labels.
+            inferred: Attack-inferred membership predictions.
+            attack_size: Number of evaluated membership samples.
+            mode: Optional split/mode tag.
+            stage: Optional scoring stage tag.
+            sensitive_features: Optional sensitive-feature vector for fairness metrics.
+        """
         start_time = time.perf_counter()
         score_kwargs = {}
         if sensitive_features is not None:
@@ -599,16 +625,29 @@ class AttackScorerConfig(ConfigBase):
 
     def score_attribute(
         self,
-        target,
-        inferred,
+        target: ArrayLike,
+        inferred: ArrayLike,
         attack_size: int,
         targeted_attribute: str,
         is_classification: bool,
         mode: str | None = None,
         stage: str | None = None,
-        attack_generation_time=None,
-        sensitive_features=None,
-    ):
+        attack_generation_time: float | None = None,
+        sensitive_features: ArrayLike | None = None,
+    ) -> ScoreDict:
+        """Score attribute inference outputs and append attack metadata.
+
+        Args:
+            target: Ground-truth target attribute values.
+            inferred: Attack-inferred attribute predictions.
+            attack_size: Number of attacked samples.
+            targeted_attribute: Name of the targeted private attribute.
+            is_classification: Whether the targeted attribute is categorical.
+            mode: Optional split/mode tag.
+            stage: Optional scoring stage tag.
+            attack_generation_time: Optional attack-generation runtime.
+            sensitive_features: Optional sensitive-feature vector for fairness metrics.
+        """
         prefix = f"inferred_{targeted_attribute}"
         start_time = time.perf_counter()
         score_kwargs = {}

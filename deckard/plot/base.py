@@ -8,7 +8,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Union
 
-from ..utils import ConfigBase, resolve_class
+from ..utils import BaseConfig, resolve_class
 
 logger = logging.getLogger(__name__)
 
@@ -201,7 +201,7 @@ class PlotTypePlugin:
 
 
 @dataclass(eq=False, kw_only=True)
-class PlotDictConfig(ConfigBase):
+class PlotDictConfig(BaseConfig):
     """Container for multiple plot configs enabling flexible plot composition.
 
     Initialization parameters

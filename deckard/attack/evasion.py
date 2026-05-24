@@ -7,8 +7,12 @@ from typing import Union
 
 import numpy as np
 from art.config import ART_NUMPY_DTYPE
+from sklearn.base import BaseEstimator
 
 from ..artifacts import ScoreDict
+from ..data import DataConfig
+from ..frameworks.types import ArrayLike, AttackLike, EstimatorLike, StringifiedClass
+from ..model import ModelConfig
 from ..frameworks.pytorch.torch_utils import (
     is_tensor,
     tensor_to_numpy,
@@ -25,27 +29,42 @@ class EvasionAttackMixin(AttackMixin):
     attack_size: int
     attack_time: Union[float, None]
     attack_prediction_time: Union[float, None]
-    attack_predictions: Union[object, None]
-    attacked_labels: Union[object, None]
+    attack_predictions: ArrayLike | None
+    attacked_labels: ArrayLike | None
     score_dict: ScoreDict
 
     def __call__(
         self,
         *,
-        data,
-        model,
-        art_model,
-        attack,
-        attack_type: str,
-        attack_subtype: str,
-    ) -> dict:
+        data: DataConfig,
+        model: ModelConfig | BaseEstimator | EstimatorLike,
+        art_model: EstimatorLike,
+        attack: AttackLike,
+        attack_type: StringifiedClass,
+        attack_subtype: StringifiedClass,
+    ) -> ScoreDict:
+        """Dispatch evasion attack execution for runtime attack family validation.
+
+        Args:
+            data: Runtime dataset and split container.
+            model: User model configuration or estimator.
+            art_model: ART-wrapped model used for prediction and attack evaluation.
+            attack: Instantiated evasion attack implementation.
+            attack_type: Parsed attack family.
+            attack_subtype: Parsed evasion subtype.
+        """
         if (attack_type or "").lower() != "evasion":
             raise ValueError(
                 f"_EvasionAttackMixin received unsupported attack type: {attack_type}",
             )
         return self.evade(data, art_model, attack)
 
-    def evade(self, data, art_model, attack) -> dict:
+    def evade(
+        self,
+        data: DataConfig,
+        art_model: EstimatorLike,
+        attack: AttackLike,
+    ) -> ScoreDict:
         """
         Executes an evasion attack on a given dataset using the specified ART model and attack method.
 
@@ -54,21 +73,13 @@ class EvasionAttackMixin(AttackMixin):
         The method then evaluates the attack by comparing benign and adversarial predictions against the true labels,
         and stores the attack results and scores.
 
-        Parameters
-        ----------
-        data : object
-            The dataset containing features and labels.
-        art_model : object
-            The adversarial robustness toolbox (ART) model used for predictions.
-        attack : object
-            The ART attack object used to generate adversarial examples.
-        train : bool, optional
-            If True, uses the training set for evaluation; otherwie, uses the test set. Defaults to False.
+        Args:
+            data: The dataset containing features and labels.
+            art_model: ART model used for predictions.
+            attack: ART attack object used to generate adversarial examples.
 
-        Returns
-        -------
-        dict
-            A dictionary containing the scores and metrics of the attack evaluation.
+        Returns:
+            Score payload containing attack evaluation metrics.
         """
 
         start_time = time.perf_counter()
@@ -170,11 +181,13 @@ class EvasionAttackMixin(AttackMixin):
         logger.info(
             f"Attack scoring took {self.attack_score_time} seconds for {len(adv_pred_labels)} samples and {len(self.score_dict)} scores.",
         )
-        self.score_dict = {**self.score_dict, **benign_scores, **score_dict}
+        self.score_dict = ScoreDict.from_payload(
+            {**self.score_dict, **benign_scores, **score_dict},
+        )
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
         self.attack = adv_pred
-        return self.score_dict
+        return ScoreDict.from_payload(self.score_dict)
 
 
 @dataclass(eq=False, kw_only=True)
@@ -196,9 +209,9 @@ class EvasionAttackConfig(EvasionAttackMixin, AttackConfig):
 
     Runtime params
     --------------
-    _EvasionAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> dict
+    _EvasionAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> ScoreDict
         Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
-    _EvasionAttackMixin.evade(self, data: Any, art_model: Any, attack: Any) -> dict
+    _EvasionAttackMixin.evade(self, data: Any, art_model: Any, attack: Any) -> ScoreDict
         Generates adversarial examples and returns score payload.
     """
 

@@ -3,15 +3,62 @@
 import logging
 import time
 from dataclasses import dataclass, field
+from typing import Protocol, cast
 
 import numpy as np
 from art.config import ART_NUMPY_DTYPE
 from art.estimators.classification.classifier import ClassifierNeuralNetwork
+from sklearn.base import BaseEstimator
 
+from ..artifacts import ScoreDict
+from ..data import DataConfig
+from ..frameworks.types import AttackLike, EstimatorLike, MatrixLike, RuntimeValue, StringifiedClass
+from ..model import ModelConfig
 from ..frameworks.pytorch.torch_utils import is_torch_model
 from .base import AttackConfig, AttackTypePlugin, AttackMixin
 
 logger = logging.getLogger(__name__)
+
+
+class _PoisoningArtModel(Protocol):
+    """Minimal ART model contract used by poisoning mixin methods."""
+
+    nb_classes: int | None
+    _model: "_TorchLikeModel"
+    _device: RuntimeValue
+
+    def predict(self, x: MatrixLike) -> MatrixLike:
+        """Predict model outputs for the provided matrix-like payload."""
+        ...
+
+    def fit(
+        self,
+        x: MatrixLike,
+        y: MatrixLike,
+        **kwargs: RuntimeValue,
+    ) -> None:
+        """Fit the model on poisoned samples."""
+        ...
+
+
+class _TorchLikeModel(Protocol):
+    """Torch-like model contract supporting device transfer."""
+
+    def to(self, device: RuntimeValue) -> "_TorchLikeModel":
+        """Move model parameters to the requested device."""
+        ...
+
+
+class _PoisoningAttack(Protocol):
+    """Minimal poisoning attack contract for ART attack objects."""
+
+    def poison(
+        self,
+        *args: RuntimeValue,
+        **kwargs: RuntimeValue,
+    ) -> tuple[MatrixLike, MatrixLike]:
+        """Generate poisoned features/labels."""
+        ...
 
 
 class PoisoningAttackMixin(AttackMixin):
@@ -20,22 +67,47 @@ class PoisoningAttackMixin(AttackMixin):
     def __call__(
         self,
         *,
-        data,
-        model,
-        art_model,
-        attack,
-        attack_type: str,
-        attack_subtype: str,
-    ) -> dict:
+        data: DataConfig,
+        model: ModelConfig | BaseEstimator | EstimatorLike,
+        art_model: EstimatorLike,
+        attack: AttackLike,
+        attack_type: StringifiedClass,
+        attack_subtype: StringifiedClass,
+    ) -> ScoreDict:
+        """Dispatch poisoning attack execution for runtime attack family validation.
+
+        Args:
+            data: Runtime dataset and split container.
+            model: User model configuration or estimator.
+            art_model: ART-wrapped model used to run poisoning workflow.
+            attack: Instantiated poisoning attack implementation.
+            attack_type: Parsed attack family.
+            attack_subtype: Parsed poisoning subtype.
+        """
         if (attack_type or "").lower() != "poisoning":
             raise ValueError(
                 f"_PoisoningAttackMixin received unsupported attack type: {attack_type}",
             )
-        return self.poison(data=data, art_model=art_model, attack=attack)
+        return self.poison(
+            data=data,
+            art_model=cast(_PoisoningArtModel, art_model),
+            attack=cast(_PoisoningAttack, attack),
+        )
 
-    def poison(self, data, art_model, attack) -> dict:
-        """Execute a poisoning attack and score benign vs poisoned model accuracy."""
-        attack_name = type(attack).__name__.lower()
+    def poison(
+        self,
+        data: DataConfig,
+        art_model: _PoisoningArtModel,
+        attack: _PoisoningAttack,
+    ) -> ScoreDict:
+        """Execute a poisoning attack and score benign vs poisoned model accuracy.
+
+        Args:
+            data: Runtime dataset and split container.
+            art_model: ART-wrapped model used for poisoned fitting and prediction.
+            attack: Instantiated poisoning attack implementation.
+        """
+        attack_name: StringifiedClass = type(attack).__name__.lower()
         if "poisoningattacksvm" in attack_name:
             return self._poison_svm(data=data, art_model=art_model, attack=attack)
 
@@ -197,21 +269,28 @@ class PoisoningAttackMixin(AttackMixin):
         self.attack_predictions = poisoned_pred
         self.attacked_labels = y_eval
         self.attack = art_model
-        self.score_dict = {
-            **self.score_dict,
-            **benign_scores,
-            **poisoned_scores,
-            "poison_attack_target_class": class_target,
-            "poison_attack_source_class": class_source,
-            "poison_trigger_index": trigger_idx,
-            "poison_trigger_predicted_class": trigger_label,
-            "poison_trigger_success": int(trigger_label == class_target),
-            "attack_size": len(x_poison),
-            "poison_mode": mode_used,
-        }
-        return self.score_dict
+        self.score_dict = ScoreDict.from_payload(
+            {
+                **self.score_dict,
+                **benign_scores,
+                **poisoned_scores,
+                "poison_attack_target_class": class_target,
+                "poison_attack_source_class": class_source,
+                "poison_trigger_index": trigger_idx,
+                "poison_trigger_predicted_class": trigger_label,
+                "poison_trigger_success": int(trigger_label == class_target),
+                "attack_size": len(x_poison),
+                "poison_mode": mode_used,
+            },
+        )
+        return ScoreDict.from_payload(self.score_dict)
 
-    def _poison_svm(self, data, art_model, attack) -> dict:
+    def _poison_svm(
+        self,
+        data: DataConfig,
+        art_model: _PoisoningArtModel,
+        attack: _PoisoningAttack,
+    ) -> ScoreDict:
         """Execute an ART PoisoningAttackSVM attack and score benign vs poisoned model accuracy."""
         poison_fit_params = self.attack_params.get("poison_fit_params", {})
 
@@ -239,13 +318,15 @@ class PoisoningAttackMixin(AttackMixin):
 
         start_time = time.perf_counter()
         x_adv, y_adv = attack.poison(x_seed, y_seed)
+        x_adv_arr = np.asarray(x_adv)
+        y_adv_arr = np.asarray(y_adv)
         self.attack_time = time.perf_counter() - start_time
         logger.info(
-            f"SVM poison generation took {self.attack_time} seconds for {len(x_adv)} generated points",
+            f"SVM poison generation took {self.attack_time} seconds for {len(x_adv_arr)} generated points",
         )
 
-        x_poison = np.vstack([x_train, x_adv])
-        y_poison = np.vstack([y_train_for_poison, y_adv])
+        x_poison = np.vstack([x_train, x_adv_arr])
+        y_poison = np.vstack([y_train_for_poison, y_adv_arr])
 
         start_time = time.perf_counter()
         benign_pred = art_model.predict(x_eval)
@@ -286,15 +367,17 @@ class PoisoningAttackMixin(AttackMixin):
         self.attack_predictions = poisoned_pred
         self.attacked_labels = y_eval
         self.attack = art_model
-        self.score_dict = {
-            **self.score_dict,
-            **benign_scores,
-            **poisoned_scores,
-            "poisoning_attack_points": int(len(x_adv)),
-            "poison_mode": mode_used,
-            "attack_size": int(len(x_adv)),
-        }
-        return self.score_dict
+        self.score_dict = ScoreDict.from_payload(
+            {
+                **self.score_dict,
+                **benign_scores,
+                **poisoned_scores,
+                "poisoning_attack_points": int(len(x_adv_arr)),
+                "poison_mode": mode_used,
+                "attack_size": int(len(x_adv_arr)),
+            },
+        )
+        return ScoreDict.from_payload(self.score_dict)
 
     @staticmethod
     def _is_nn_art_classifier(art_model) -> bool:
@@ -316,8 +399,9 @@ class PoisoningAttackMixin(AttackMixin):
             model_obj = getattr(art_model, "model", None)
         return bool(model_obj is not None and is_torch_model(model_obj))
 
-    @staticmethod
-    def _labels_from_classifier_predictions(predictions):
+    @classmethod
+    def _labels_from_classifier_predictions(cls, predictions):
+        _ = cls
         preds = np.asarray(predictions)
         if preds.ndim == 1:
             # Binary classifiers can expose scores/probabilities as a single vector.
@@ -332,7 +416,7 @@ class PoisoningAttackMixin(AttackMixin):
             f"Unsupported prediction shape for classifier output: {preds.shape}",
         )
 
-    def _resolve_eval_split(self, data):
+    def _resolve_eval_split(self, data: DataConfig):
         requested_mode = self.resolve_mode_for_attack_kind(
             "poisoning",
             attack_subtype=self.attack_subtype,
@@ -382,9 +466,9 @@ class PoisoningAttackConfig(PoisoningAttackMixin, AttackConfig):
 
     Runtime params
     --------------
-    _PoisoningAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> dict
+    _PoisoningAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> ScoreDict
         Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
-    _PoisoningAttackMixin.poison(self, data: Any, art_model: Any, attack: Any) -> dict
+    _PoisoningAttackMixin.poison(self, data: Any, art_model: Any, attack: Any) -> ScoreDict
         Executes poisoning flow and returns score payload.
     """
 

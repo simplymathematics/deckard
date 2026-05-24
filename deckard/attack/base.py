@@ -8,7 +8,7 @@ import pandas as pd
 
 # Typing imports
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Literal, Optional, Union
 
 # Sklearn and numpy imports
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
@@ -22,14 +22,16 @@ from art.config import ART_NUMPY_DTYPE
 from omegaconf import DictConfig, OmegaConf
 
 from ..artifacts import ScoreDict
+from ..data import DataConfig
 from ..model import ModelConfig
+from ..frameworks.types import ArrayLike, AttackLike, EstimatorLike, MatrixLike, RuntimeValue
 from ..model.defense.base import _get_art_symbols
 from ..score.base import (
     DefaultClassifierConfig,
     ScorerDictConfig,
 )
 from ..utils import (
-    ConfigBase,
+    BaseConfig,
     is_default_config_value,
     is_null_config_value,
     load_class,
@@ -162,33 +164,24 @@ class AttackMixin:
     def __call__(
         self,
         *,
-        data,
-        model,
-        art_model,
-        attack,
+        data: DataConfig,
+        model: ModelConfig | EstimatorLike | BaseEstimator,
+        art_model: EstimatorLike,
+        attack: AttackLike,
         attack_type: str,
         attack_subtype: str,
-    ) -> dict:
+    ) -> ScoreDict:
         """Execute one attack handler.
 
-        Parameters
-        ----------
-        data : Any
-            Data runtime containing train/test/val splits.
-        model : Any
-            User model object or model config supplied to ``AttackConfig``.
-        art_model : Any
-            ART estimator wrapper used by the selected attack implementation.
-        attack : Any
-            Instantiated attack object (e.g., ART attack instance).
-        attack_type : str
-            Parsed attack family (e.g., ``evasion``, ``poisoning``, ``inference``).
-        attack_subtype : str
-            Parsed attack subtype from attack path.
+        Args:
+            data: Data runtime containing train/test/val splits.
+            model: User model object or model config supplied to ``AttackConfig``.
+            art_model: ART estimator wrapper used by the selected attack implementation.
+            attack: Instantiated attack object (for example ART attack instance).
+            attack_type: Parsed attack family.
+            attack_subtype: Parsed attack subtype from attack path.
 
-        Returns
-        -------
-        dict
+        Returns:
             Score dictionary merged into runtime ``score_dict``.
         """
         raise NotImplementedError(
@@ -249,7 +242,17 @@ class AttackTypePlugin:
         attack_subtype: str,
         default_mixins: tuple[type, ...],
     ) -> tuple[type, ...]:
-        """Return mixin tuple for matching attack family/subtype."""
+        """Return mixin tuple for matching attack family/subtype.
+
+        Args:
+            runtime: Active runtime attack config.
+            attack_type: Requested attack family.
+            attack_subtype: Requested attack subtype.
+            default_mixins: Default mixins for this attack family.
+
+        Returns:
+            Mixin tuple to attach to runtime context.
+        """
         _ = (runtime, default_mixins)
         if not self._matches(attack_type=attack_type, attack_subtype=attack_subtype):
             return ()
@@ -262,30 +265,37 @@ class AttackTypePlugin:
         *,
         attack_type: str,
         attack_subtype: str,
-        default_handler: Any,
+        default_handler: Callable[..., ScoreDict] | None,
         default_mixins: tuple[type, ...],
-    ) -> Any:
-        """Return callable runtime handler for matching attack family/subtype."""
+    ) -> Callable[..., ScoreDict] | None:
+        """Return callable runtime handler for matching attack family/subtype.
+
+        Args:
+            runtime: Active runtime attack config.
+            attack_type: Requested attack family.
+            attack_subtype: Requested attack subtype.
+            default_handler: Existing resolved runtime handler.
+            default_mixins: Existing resolved mixins.
+
+        Returns:
+            Callable runtime handler when plugin matches; otherwise ``None``.
+        """
         _ = (default_handler, default_mixins)
         if not self._matches(attack_type=attack_type, attack_subtype=attack_subtype):
             return None
         return lambda *args, **kwargs: self(runtime, *args, **kwargs)
 
-    def __call__(self, runtime: "AttackConfig", *args, **kwargs) -> dict:
+    def __call__(self, runtime: "AttackConfig", *args, **kwargs) -> ScoreDict:
         """Delegate runtime attack execution to configured mixin handler.
 
-        Parameters
-        ----------
-        runtime : AttackConfig
-            Runtime config instance currently orchestrating the attack.
-        *args : Any
-            Positional runtime args forwarded to mixin ``__call__``.
-        **kwargs : Any
-            Keyword runtime args forwarded to mixin ``__call__``.
+        Args:
+            runtime: Runtime config instance currently orchestrating the attack.
+            *args: Positional runtime args forwarded to mixin ``__call__``.
+            **kwargs: Keyword runtime args forwarded to mixin ``__call__``.
         """
         mixin = self._resolve_mixin_type()
         handler = mixin(runtime)
-        return handler(*args, **kwargs)
+        return ScoreDict.from_payload(handler(*args, **kwargs))
 
 
 def _get_sklearn_dict() -> dict[str, Any]:
@@ -297,7 +307,7 @@ def _get_supported_models() -> tuple[type, ...]:
 
 
 @dataclass(eq=False, kw_only=True)
-class AttackConfig(ConfigBase):
+class AttackConfig(BaseConfig):
     """Runtime attack configuration with plugin-driven dispatch.
 
     Attack behavior is resolved at runtime via mixins and optional plugins.
@@ -444,7 +454,12 @@ class AttackConfig(ConfigBase):
         attack_file: str | None,
         attack_predictions_file: str | None,
     ) -> None:
-        """Load previously persisted attack runtime artifacts when available."""
+        """Load previously persisted attack runtime artifacts when available.
+
+        Args:
+            attack_file: Optional persisted attack object path.
+            attack_predictions_file: Optional persisted predictions path.
+        """
         if attack_file is not None and Path(attack_file).exists():
             loaded_self = self.load_object(
                 attack_file,
@@ -495,7 +510,14 @@ class AttackConfig(ConfigBase):
         self,
         mode: Literal["auto", "train", "test", "val"],
     ) -> "AttackConfig":
-        """Set attack scoring/evaluation split mode explicitly."""
+        """Set attack scoring/evaluation split mode explicitly.
+
+        Args:
+            mode: Attack mode token.
+
+        Returns:
+            This AttackConfig instance.
+        """
         self.mode = normalize_attack_mode(mode)
         return self
 
@@ -529,6 +551,14 @@ class AttackConfig(ConfigBase):
         1) Explicit split override (method arg or attack_params['split']).
         2) Explicit attack mode (train/test/val).
         3) Auto defaults inferred from attack family/subtype/kind.
+
+        Args:
+            attack_kind: Canonical attack kind token.
+            attack_subtype: Optional attack subtype token.
+            split_override: Optional split override token.
+
+        Returns:
+            Canonical split mode.
         """
         valid_modes = {"auto", "train", "test", "val"}
         mode_value = str(self.mode).strip().lower()
@@ -619,10 +649,10 @@ class AttackConfig(ConfigBase):
 
     def _merge_plugin_scores(self, hook_outputs):
         if self.score_dict is None:
-            self.score_dict = {}
+            self.score_dict = ScoreDict()
         for output in hook_outputs:
             if isinstance(output, dict):
-                self.score_dict.update(output)
+                self.score_dict.update(ScoreDict.from_payload(output))
 
     def _resolve_runtime_attack_mixins(
         self,
@@ -717,6 +747,7 @@ class AttackConfig(ConfigBase):
 
     @property
     def attack_family(self) -> Optional[str]:
+        """Return canonical attack family resolved from runtime attack declaration."""
         if self._attack_type:
             return self._attack_type
         attack_type, _ = self._parse_attack_path()
@@ -724,6 +755,7 @@ class AttackConfig(ConfigBase):
 
     @property
     def attack_subtype(self) -> Optional[str]:
+        """Return canonical attack subtype resolved from runtime attack declaration."""
         if self._attack_subtype:
             return self._attack_subtype
         _, attack_subtype = self._parse_attack_path()
@@ -731,6 +763,7 @@ class AttackConfig(ConfigBase):
 
     @property
     def attack_kind(self) -> Optional[str]:
+        """Return normalized scoring attack kind token for the configured attack."""
         attack_type = (self.attack_family or "").lower()
         subtype = (self.attack_subtype or "").lower()
 
@@ -743,7 +776,10 @@ class AttackConfig(ConfigBase):
         return None
 
     @staticmethod
-    def _infer_task_is_classification(data, model) -> Optional[bool]:
+    def _infer_task_is_classification(
+        data: DataConfig,
+        model: ModelConfig | EstimatorLike | BaseEstimator,
+    ) -> Optional[bool]:
         """Infer task type from model first, then data config as fallback."""
         if isinstance(model, ModelConfig) and model.classifier is not None:
             return bool(model.classifier)
@@ -758,7 +794,11 @@ class AttackConfig(ConfigBase):
             return bool(getattr(data, "classifier"))
         return None
 
-    def _validate_attack_task_compatibility(self, data, model):
+    def _validate_attack_task_compatibility(
+        self,
+        data: DataConfig,
+        model: ModelConfig | EstimatorLike | BaseEstimator,
+    ):
         """Fail fast for known unsupported task/attack combinations."""
         attack_type = (self.attack_family or "").lower()
         task_is_classification = self._infer_task_is_classification(data, model)
@@ -767,7 +807,11 @@ class AttackConfig(ConfigBase):
                 "Evasion attacks are not supported for regression models in the current sklearn+ART integration.",
             )
 
-    def _initialize_attack(self, model, data):
+    def _initialize_attack(
+        self,
+        model: ModelConfig | EstimatorLike | BaseEstimator,
+        data: DataConfig,
+    ):
         """
         Initialize an attack instance for a given model.
 
@@ -957,15 +1001,27 @@ class AttackConfig(ConfigBase):
         self._attack_subtype = attack_subtype
         return attack, art_model, attack_type, attack_subtype
 
-    def initialize_attack(self, model: Any, data: Any):
-        """Public entry-point for attack initialisation. Delegates to _initialize_attack()."""
+    def initialize_attack(
+        self,
+        model: ModelConfig | BaseEstimator | EstimatorLike,
+        data: DataConfig,
+    ) -> tuple[AttackLike, EstimatorLike, str, str]:
+        """Public entry-point for attack initialisation. Delegates to _initialize_attack().
+
+        Args:
+            model: Runtime model payload.
+            data: Runtime data payload.
+
+        Returns:
+            Initialized attack, ART model, attack family, and attack subtype.
+        """
         return self._initialize_attack(model, data)
 
     @staticmethod
     def _is_poisoning_svm_attack(attack_class) -> bool:
         return "PoisoningAttackSVM" in getattr(attack_class, "__name__", "")
 
-    def _build_poisoning_svm_init_params(self, data) -> dict:
+    def _build_poisoning_svm_init_params(self, data: DataConfig) -> dict:
         y_train = self._target_to_class_labels(getattr(data, "y_train"))
         x_val = getattr(data, "X_val", None)
         y_val = getattr(data, "y_val", None)
@@ -983,7 +1039,11 @@ class AttackConfig(ConfigBase):
             ),
         }
 
-    def _ensure_poisoning_svm_clip_values(self, art_model, data) -> None:
+    def _ensure_poisoning_svm_clip_values(
+        self,
+        art_model: EstimatorLike,
+        data: DataConfig,
+    ) -> None:
         if getattr(art_model, "clip_values", None) is not None:
             return
         x_train = self._prepare_features_for_art(getattr(data, "X_train"))
@@ -996,35 +1056,26 @@ class AttackConfig(ConfigBase):
 
     def __call__(
         self,
-        data,
-        model,
-        files: dict[str, Any] | None = None,
+        data: DataConfig,
+        model: ModelConfig | BaseEstimator | EstimatorLike,
+        files: dict[str, str | None] | None = None,
         attack_file: Union[str, None] = None,
         attack_predictions_file: Union[str, None] = None,
         score_file: Union[str, None] = None,
-    ):
+    ) -> ScoreDict:
         """
         Executes the specified attack on the provided model using the given data.
 
-        Parameters
-        ----------
-        data : Any
-            The input data to be used for the attack.
-        model : object
-            The machine learning model to be attacked.
-        attack_file : str or None, optional
-            File path to save the attack object. If None, the attack object is not saved. Default is None.
-        attack_predictions_file : str or None, optional
-            File path to save the attack predictions. If None, predictions are not saved. Default is None.
-        score_file : str or None, optional
-            File path to save the attack scores. If None, scores are not saved. Default is None.
-        **kwargs
-            Additional keyword arguments for the attack.
+        Args:
+            data: Input data used for attack execution.
+            model: Model payload to be attacked.
+            files: Optional runtime file alias mapping.
+            attack_file: Optional path for persisted attack object.
+            attack_predictions_file: Optional path for persisted attack predictions.
+            score_file: Optional path for persisted scores.
 
-        Returns
-        -------
-        dict
-            A dictionary containing attack scores and timing information.
+        Returns:
+            A score payload containing attack scores and timing information.
 
         Raises
         ------
@@ -1149,7 +1200,7 @@ class AttackConfig(ConfigBase):
             "attack_stage": normalize_attack_stage("post-attack"),
             "attack_execution_order": attack_execution_order,
         }
-        self.score_dict = score_dict
+        self.score_dict = ScoreDict.from_payload(score_dict)
 
         self.merge_runtime_files(
             {
@@ -1172,10 +1223,17 @@ class AttackConfig(ConfigBase):
                 Path(attack_file).unlink(missing_ok=True)
         if attack_predictions_file is not None:
             self.save_data(self.attack_predictions, attack_predictions_file)
-        self.score_dict = self.merge_and_persist_scores(self.score_dict, score_file)
-        return score_dict
+        self.score_dict = ScoreDict.from_payload(
+            self.merge_and_persist_scores(self.score_dict, score_file),
+        )
+        return ScoreDict.from_payload(score_dict)
 
-    def _get_benign_preds(self, data, art_model, train=False):
+    def _get_benign_preds(
+        self,
+        data: DataConfig,
+        art_model: EstimatorLike,
+        train: bool = False,
+    ):
         """
         Generate benign predictions and corresponding labels for a subset of data.
 
@@ -1230,7 +1288,12 @@ class AttackConfig(ConfigBase):
         ), f"y_subset should be np.ndarray, got {type(y_subset)}"
         return n, ben_pred_labels, X_subset, y_subset
 
-    def _get_feature_vector_preds(self, data, targeted_attribute, train=False):
+    def _get_feature_vector_preds(
+        self,
+        data: DataConfig,
+        targeted_attribute: str | list[str],
+        train: bool = False,
+    ):
         """
         Extracts a subset of feature vectors, labels, and attributes from the provided data for either training or testing.
 
@@ -1340,14 +1403,14 @@ class AttackConfig(ConfigBase):
         mode: str | None = None,
         ben_pred_labels=None,
         sensitive_features=None,
-    ) -> dict:
+    ) -> ScoreDict:
         """Score one comparison branch and namespace outputs by prefix.
 
         Used by attack runtimes to emit pairs like benign/adversarial metrics
         without relying on caller-side key rewriting.
         """
         if not is_classification:
-            return {}
+            return ScoreDict()
         attack_kind = (self.attack_kind or "evasion").lower()
         raw_scores = self._score(
             attack_kind=attack_kind,
@@ -1368,9 +1431,9 @@ class AttackConfig(ConfigBase):
             if metric_key == "f1-score":
                 metric_key = "f1"
             normalized_scores[f"{prefix}_{metric_key}"] = value
-        return normalized_scores
+        return ScoreDict.from_payload(normalized_scores)
 
-    def _score(self, attack_kind: str, y_true, y_pred=None, *args, **kwargs) -> dict:
+    def _score(self, attack_kind: str, y_true, y_pred=None, *args, **kwargs) -> ScoreDict:
         """Dispatch attack scoring through the configured AttackScorerConfig."""
         if self.scorer is None:
             raise ValueError(
@@ -1409,7 +1472,7 @@ class AttackConfig(ConfigBase):
             **score_kwargs,
         )
         self.attack_score_time = score_dict.get("attack_score_time")
-        return score_dict
+        return ScoreDict.from_payload(score_dict)
 
     @staticmethod
     def _is_regression_prediction_output(y_true, predictions) -> bool:
@@ -1629,7 +1692,20 @@ class AttackConfig(ConfigBase):
             y_test_numeric,
         )
 
-    def get_attack_subset(self, data: Any, test: bool = True) -> tuple:
+    def get_attack_subset(
+        self,
+        data: DataConfig,
+        test: bool = True,
+    ) -> tuple[int, MatrixLike | ArrayLike, ArrayLike | None]:
+        """Return attack-size limited feature/label subset from train or test split.
+
+        Args:
+            data: Data runtime containing train/test splits.
+            test: Use test split when True, otherwise train split.
+
+        Returns:
+            Subset size, feature payload, and label payload.
+        """
         n = self.attack_size
         if test is True:
             x_ = data.X_test

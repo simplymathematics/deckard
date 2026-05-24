@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any, Union
+from ..frameworks.types import StringifiedClass
 
 
 @dataclass(eq=False, kw_only=True)
@@ -21,7 +22,7 @@ class DefenseTypePlugin:
     """
 
     mixin_type: Any
-    defense_type: Union[str, None]
+    defense_type: StringifiedClass | None
     defense_subtype: Union[str, None] = None
     excluded_subtypes: tuple[str, ...] = field(default_factory=tuple)
     init_params: dict[str, Any] = field(default_factory=dict)
@@ -39,7 +40,7 @@ class DefenseTypePlugin:
     def _matches(
         self,
         *,
-        defense_type: Union[str, None],
+        defense_type: StringifiedClass | None,
         defense_subtype: Union[str, None],
     ) -> bool:
         if (defense_type or "").lower() != (self.defense_type or "").lower():
@@ -58,10 +59,11 @@ class DefenseTypePlugin:
         self,
         runtime: Any,
         *,
-        defense_type: Union[str, None],
+        defense_type: StringifiedClass | None,
         defense_subtype: Union[str, None],
         default_mixins: tuple[type, ...],
     ) -> tuple[type, ...]:
+        """Return matching defense mixins for the runtime defense family/subtype."""
         _ = (runtime, default_mixins)
         if not self._matches(
             defense_type=defense_type,
@@ -75,11 +77,12 @@ class DefenseTypePlugin:
         self,
         runtime: Any,
         *,
-        defense_type: Union[str, None],
+        defense_type: StringifiedClass | None,
         defense_subtype: Union[str, None],
         default_handler: Any,
         default_mixins: tuple[type, ...],
     ) -> Any:
+        """Return callable defense handler when plugin matches runtime defense context."""
         _ = (default_handler, default_mixins)
         if not self._matches(
             defense_type=defense_type,
@@ -89,6 +92,7 @@ class DefenseTypePlugin:
         return lambda *args, **kwargs: self(runtime, *args, **kwargs)
 
     def __call__(self, runtime: Any, *args, **kwargs) -> tuple[Any, Any]:
+        """Delegate defense execution to the configured mixin bound to runtime."""
         mixin = self._resolve_mixin_type()
         handler = mixin(runtime)
         return handler(*args, **kwargs)

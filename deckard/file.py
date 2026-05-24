@@ -259,14 +259,17 @@ class FileConfig(PlaceholderResolverMixin):
     # -------------------------------------------------------------------------
 
     def update(self, **kwargs: Any) -> None:
+        """Validate and assign file-path fields on the runtime file mapping."""
         for k, v in kwargs.items():
             self._validate_key(k)
             self._set(k, v)
 
     def as_dict(self) -> dict[str, Any]:
+        """Return file mapping as a plain dictionary."""
         return dict(self._files)
 
     def disk_status(self) -> dict[str, bool]:
+        """Return per-file existence status for configured file paths."""
         return self.handler.disk_status(self._files)
 
     def __getitem__(self, key: str) -> Any:

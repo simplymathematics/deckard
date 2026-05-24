@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Any, Optional, Union
 
 from ...data.base import DataConfig
+from ...frameworks.types import StringifiedClass
 
 
 class LifelinesDataMode(str, Enum):
@@ -153,7 +154,7 @@ class LifelinesDataConfig(LifelinesValidationMixin, DataConfig):
     def from_optuna_db(
         cls,
         optuna_db: str,
-        dataset_name: str = "optuna",
+        dataset_name: StringifiedClass = "optuna",
         optuna_schema: Optional[Union[str, dict[str, Any]]] = None,
         optuna_query: Optional[str] = None,
     ) -> "LifelinesDataConfig":

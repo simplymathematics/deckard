@@ -9,6 +9,9 @@ from dataclasses import dataclass, field
 from importlib import import_module
 from typing import Any
 
+PluginScalar = str | int | float | bool | None
+PluginValue = PluginScalar | list["PluginValue"] | dict[str, "PluginValue"]
+
 
 @dataclass(eq=False, kw_only=True)
 class HookPlugin:
@@ -27,6 +30,7 @@ class HookPlugin:
     init_params: dict[str, Any] = field(default_factory=dict)
 
     def declares_hook(self, hook_name: str) -> bool:
+        """Return whether this plugin handles the provided hook name."""
         return hook_name == self.hook_name
 
     def _invoke(self, runtime: Any, **kwargs: Any):
@@ -39,7 +43,8 @@ class HookPlugin:
         call_kwargs.update(kwargs)
         return method(**call_kwargs)
 
-    def __call__(self, runtime: Any, *args: Any, **kwargs: Any):
+    def __call__(self, runtime: Any, *args: Any, **kwargs: Any) -> PluginValue | None:
+        """Dispatch runtime hook calls that match this plugin's declared hook."""
         _ = args
         hook_name = kwargs.pop("hook_name", None)
         if hook_name is not None and hook_name != self.hook_name:

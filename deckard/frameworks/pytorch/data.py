@@ -27,6 +27,7 @@ from tqdm.auto import tqdm
 from ...data.base import DataConfig
 from ...data.canon import DataFiles, merge_data_files
 from ...artifacts import ScoreDict
+from ...frameworks.types import StringifiedClass
 from .sample import PytorchBaseSampler
 
 # deckard
@@ -79,7 +80,7 @@ class TorchDatasetSamplingMixin:
                 "train_size + val_size + test_size must equal 1.0",
             )
 
-    def sample(self, *, n_splits: int = 5):
+    def sample(self, *, n_splits: int = 5) -> Any:
         """
         Modes:
             split   -> (train_ds, val_ds, test_ds)
@@ -273,7 +274,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
 
     """
 
-    dataset_name: str = "torchvision.datasets.MNIST"
+    dataset_name: StringifiedClass = "torchvision.datasets.MNIST"
     device: Union[str, None] = None
     data_dir: str = "./raw_data"
     test_size: Union[float, int, None] = 0.2
@@ -360,7 +361,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
     def __hash__(self):
         return super().__hash__()
 
-    def load_dataset(self):
+    def load_dataset(self) -> "PytorchDataConfig":
         """Materialize runtime torch dataset payload into ``_X``/``_y``."""
         if self.data_load_time is not None and self._X is not None and self._y is not None:
             return self
@@ -520,7 +521,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             logger.error(f"Failed to load dataset {self.dataset_name}: {e}")
             raise
 
-    def fit(self, run_hooks: bool = True):
+    def fit(self, run_hooks: bool = True) -> "PytorchDataConfig":
         """
         Samples training and testing indices from the loaded dataset, optionally using stratification.
 
@@ -686,7 +687,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         if not hasattr(self, "shuffle"):
             self.shuffle = True
 
-    def load_dataset(self):
+    def load_dataset(self) -> "PytorchCustomDataConfig":
         """Materialize custom runtime train/test torch datasets into ``_X``/``_y``."""
         if self.data_load_time is not None and self._X is not None and self._y is not None:
             return self
@@ -807,7 +808,8 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             f"(train={self.train_n}, test={self.test_n}).",
         )
 
-    def fit(self, run_hooks: bool = True):
+    def fit(self, run_hooks: bool = True) -> "PytorchCustomDataConfig":
+        """Build lazy DataLoaders from pre-defined custom train/test datasets."""
         if run_hooks:
             self._run_plugin_hook("before_sample")
         # DataLoader params (lazy loading, no full dataset materialization)

@@ -9,12 +9,41 @@ dependencies.
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Union
+from pathlib import Path
+from typing import TYPE_CHECKING, Union
+
+import matplotlib as mpl
 
 from .canon import normalize_plot_backend
-from ..utils import ConfigBase
+from ..utils import BaseConfig
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
 
 logger = logging.getLogger(__name__)
+
+
+def _load_default_matplotlibrc() -> None:
+    """Load canonical matplotlib rc settings for deckard plotting defaults."""
+    rc_path = Path(__file__).resolve().parents[1] / "plots" / ".matplotlibrc"
+    if not rc_path.exists():
+        logger.debug(
+            "No canonical matplotlibrc found at %s; using matplotlib defaults.",
+            rc_path,
+        )
+        return
+    try:
+        mpl.rc_file(str(rc_path))
+        logger.debug("Loaded canonical matplotlibrc from %s", rc_path)
+    except Exception as exc:  # pragma: no cover
+        logger.warning(
+            "Failed to load canonical matplotlibrc %s: %s",
+            rc_path,
+            exc,
+        )
+
+
+_load_default_matplotlibrc()
 
 try:
     from ..plugins.seaborn.plot import (
@@ -91,7 +120,7 @@ def _refresh_yellowbrick_configs() -> None:
 
 
 @dataclass(eq=False, kw_only=True)
-class PlotConfig(ConfigBase):
+class PlotConfig(BaseConfig):
     """Wrapper that routes to appropriate plot config (Seaborn or Yellowbrick).
 
     Takes either an `experiment` (ExperimentConfig) or seaborn data source
@@ -175,7 +204,8 @@ class PlotConfig(ConfigBase):
 
         self.config = config_cls(**self.kwargs)
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs) -> Union[dict, "Axes"]:
+        """Render the resolved plotting backend and return its runtime output."""
         start = time.perf_counter()
         out = self.config(*args, **kwargs)
         self.times["plot_call_time"] = time.perf_counter() - start
