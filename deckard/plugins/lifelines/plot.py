@@ -6,7 +6,7 @@ This module contains the survival plotting classes that used to live in
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Mapping, Optional
+from typing import Any, Callable, Mapping, Optional, Protocol
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -24,6 +24,45 @@ def _close_axis_figure(ax: Any) -> None:
     fig = getattr(ax, "figure", None)
     if isinstance(fig, Figure):
         plt.close(fig)
+
+
+PlotScalar = str | int | float | bool | None
+PlotValue = PlotScalar | list["PlotValue"] | dict[str, "PlotValue"]
+
+
+class SurvivalFitterLike(Protocol):
+    """Structural protocol for fitted survival estimators used by plot helpers."""
+
+    summary: pd.DataFrame
+
+    def plot(self, *args: Any, **kwargs: Any) -> Axes:
+        """Render fitter plot output.
+
+        Args:
+            *args: Positional plotting arguments.
+            **kwargs: Keyword plotting arguments.
+
+        Returns:
+            Matplotlib axis for the rendered fitter plot.
+        """
+        ...
+
+    def plot_partial_effects_on_outcome(
+        self,
+        covariates: list[PlotScalar],
+        *,
+        values: list[PlotScalar],
+    ) -> Axes:
+        """Render partial-effects curves on fitted survival outcomes.
+
+        Args:
+            covariates: Covariates to vary.
+            values: Values to evaluate for covariates.
+
+        Returns:
+            Matplotlib axis for the rendered partial-effects plot.
+        """
+        ...
 
 
 @dataclass(kw_only=True)
@@ -112,7 +151,7 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
     def plot_aft(
         self,
         *,
-        aft: Any,
+        aft: SurvivalFitterLike,
         title: str,
         file: str,
         xlabel: str,
@@ -137,6 +176,9 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
 
         Returns:
             The rendered matplotlib axis.
+
+        Raises:
+            ValueError: If the fitted summary cannot be rendered.
         """
         file_path = self._resolve_output_path(folder, file, filetype)
 
@@ -176,7 +218,7 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
     def plot_summary(
         self,
         *,
-        aft: Any,
+        aft: SurvivalFitterLike,
         title: str,
         file: str,
         xlabel: str,
@@ -201,6 +243,9 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
 
         Returns:
             The rendered matplotlib axis.
+
+        Raises:
+            ValueError: If summary plot rendering fails.
         """
         file_path = self._resolve_output_path(folder, file, filetype)
 
@@ -237,7 +282,7 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
     def plot_qq(
         self,
         *,
-        aft: Any,
+        aft: SurvivalFitterLike,
         X_train: pd.DataFrame,
         X_test: Optional[pd.DataFrame],
         t0: float,
@@ -246,7 +291,7 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
         xlabel: str,
         ylabel: str,
         calibration_fn: Callable[
-            [Any, pd.DataFrame, Optional[pd.DataFrame], float],
+            [SurvivalFitterLike, pd.DataFrame, Optional[pd.DataFrame], float],
             pd.DataFrame,
         ],
         folder: str,
@@ -271,6 +316,9 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
 
         Returns:
             The rendered matplotlib axis.
+
+        Raises:
+            ValueError: If calibration plot rendering fails.
         """
         calibration_data = calibration_fn(aft, X_train, X_test, t0)
         file_path = self._resolve_output_path(folder, file, filetype)
@@ -293,9 +341,9 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
     def plot_partial_effects(
         self,
         *,
-        aft: Any,
-        covariate_array: list[Any],
-        values: list[Any],
+        aft: SurvivalFitterLike,
+        covariate_array: list[PlotScalar],
+        values: list[PlotScalar],
         title: str,
         file: str,
         xlabel: str,
@@ -318,6 +366,9 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
 
         Returns:
             The rendered matplotlib axis.
+
+        Raises:
+            ValueError: If partial-effects plot rendering fails.
         """
         file_path = self._resolve_output_path(folder, file, filetype)
         ax = aft.plot_partial_effects_on_outcome(covariate_array, values=values)
@@ -329,8 +380,16 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
         _close_axis_figure(ax)
         return ax
 
-    def __call__(self, *args: Any, **kwargs: Any) -> tuple[Any, list[Any]]:
-        """Render a single model experiment when the plotter config is called."""
+    def __call__(self, *args: Any, **kwargs: Any) -> tuple[SurvivalFitterLike, list[Axes]]:
+        """Render a single model experiment when the plotter config is called.
+
+        Args:
+            *args: Positional shorthand runtime parameters.
+            **kwargs: Keyword runtime parameters for single-model rendering.
+
+        Returns:
+            Fitted survival model and rendered plot axes.
+        """
         if args:
             kwargs = {
                 "mtype": args[0],
@@ -348,7 +407,7 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
     def _render_single_model(
         self,
         mtype: str,
-        config: dict[str, Any],
+        config: dict[str, PlotValue],
         X_train: pd.DataFrame,
         target: str,
         duration_col: str,
@@ -356,7 +415,7 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
         X_test: Optional[pd.DataFrame] = None,
         dummy_dict: Optional[dict[str, str]] = None,
         folder: str = ".",
-    ) -> tuple[Any, list[Any]]:
+    ) -> tuple[SurvivalFitterLike, list[Axes]]:
         dummy_dict = dummy_dict or {}
         config = dict(config or {})
         plots = []
@@ -470,7 +529,7 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
     def run_survival_model_experiment(
         self,
         mtype: str,
-        config: dict[str, Any],
+        config: dict[str, PlotValue],
         X_train: pd.DataFrame,
         target: str,
         duration_col: str,
@@ -478,8 +537,23 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
         X_test: Optional[pd.DataFrame] = None,
         dummy_dict: Optional[dict[str, str]] = None,
         folder: str = ".",
-    ) -> tuple[Any, list[Any]]:
-        """Backward-compatible alias for single-model survival rendering."""
+    ) -> tuple[SurvivalFitterLike, list[Axes]]:
+        """Backward-compatible alias for single-model survival rendering.
+
+        Args:
+            mtype: Survival model type token.
+            config: Per-model plotting/model configuration mapping.
+            X_train: Training dataframe.
+            target: Event indicator column.
+            duration_col: Duration/time column.
+            t0: Calibration horizon.
+            X_test: Optional test dataframe.
+            dummy_dict: Optional dummy replacement mapping.
+            folder: Output folder for generated artifacts.
+
+        Returns:
+            Fitted survival model and rendered plot axes.
+        """
         return self._render_single_model(
             mtype=mtype,
             config=config,
@@ -534,7 +608,15 @@ class SurvivalSeabornPlotConfigList(BaseConfig):
         return results
 
     def __call__(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        """Render all configured model variants when the config list is called."""
+        """Render all configured model variants when the config list is called.
+
+        Args:
+            *args: Positional shorthand runtime parameters.
+            **kwargs: Keyword runtime parameters for multi-model rendering.
+
+        Returns:
+            Rendered plot artifacts grouped by model.
+        """
         if args:
             kwargs = {
                 "model_config": args[0],

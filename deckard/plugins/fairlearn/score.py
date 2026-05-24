@@ -83,7 +83,11 @@ ControlFeaturesLike = Union[pd.Series, pd.DataFrame, np.ndarray, None]
 SampleParamsLike = Union[dict[str, Any], dict[str, dict[str, Any]], None]
 RandomStateLike = Union[int, np.random.RandomState, None]
 RuntimeScalar = str | int | float | bool | None
-RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
+SerializableValue = (
+    RuntimeScalar
+    | list["SerializableValue"]
+    | dict[str, "SerializableValue"]
+)
 
 
 FAIRLEARN_SCORING_HOOKS = HookBundle(
@@ -159,8 +163,20 @@ class FairlearnDataScoreHooksMixin:
                 merged_tail[key] = value
         return ScoreDict.from_payload(merged_tail)
 
-    def score(self, *args, mode=None, **kwargs) -> ScoreDict:
-        """Run fairlearn-aware scoring for the requested data split mode."""
+    def score(self, *args: RuntimePayload, mode: str | None = None, **kwargs: RuntimePayload) -> ScoreDict:
+        """Run fairlearn-aware scoring for the requested data split mode.
+
+        Args:
+            *args: Positional runtime payloads forwarded to fairness scorer.
+            mode: Optional scoring-mode override.
+            **kwargs: Runtime payloads used for fairness score resolution.
+
+        Returns:
+            Fairness-aware score payload.
+
+        Raises:
+            TypeError: If configured scorer is not callable.
+        """
         if is_default_config_value(getattr(self, "scorer", None), include_best=False):
             self.scorer = (
                 DefaultFairlearnClassificationScorerDictConfig()
@@ -698,7 +714,7 @@ class FairnessScorerMixin:
         y_true: RuntimePayload | None = None,
         score_file: str | None = None,
         **kwargs: RuntimePayload,
-    ) -> dict[str, RuntimeValue]:
+    ) -> dict[str, SerializableValue]:
         """Compute fairness metrics for resolved predictions and sensitive features.
 
         Args:
@@ -713,6 +729,9 @@ class FairnessScorerMixin:
 
         Returns:
             Dictionary containing computed fairness metrics.
+
+        Raises:
+            ValueError: If required data/sensitive features are missing.
         """
         if y_true is None and "y" in kwargs:
             y_true = kwargs.pop("y")
@@ -925,7 +944,7 @@ class FairlearnScorerDictConfig(FairnessScorerMixin, ScorerDictConfig):
         y_true: RuntimePayload | None = None,
         score_file: str | None = None,
         **kwargs: RuntimePayload,
-    ) -> dict[str, RuntimeValue]:
+    ) -> dict[str, SerializableValue]:
         """Compute fairlearn group metrics from resolved predictions and labels.
 
         Args:
@@ -940,6 +959,9 @@ class FairlearnScorerDictConfig(FairnessScorerMixin, ScorerDictConfig):
 
         Returns:
             Dictionary containing overall and group fairness metrics.
+
+        Raises:
+            ValueError: If required data/sensitive features are missing.
         """
         data_y = kwargs.pop("y", None)
         data_X = kwargs.pop("X", None)

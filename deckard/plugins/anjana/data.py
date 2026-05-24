@@ -26,7 +26,11 @@ from .pipeline import ANJANA_PIPELINE_HOOKS, AnjanaPipelineHooksMixin
 from .score import ANJANA_SCORING_HOOKS, AnjanaDataScoreHooksMixin
 
 RuntimeScalar = str | int | float | bool | None
-RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
+SerializableValue = (
+    RuntimeScalar
+    | list["SerializableValue"]
+    | dict[str, "SerializableValue"]
+)
 
 
 def default_anjana_data_plugins() -> list[HookPlugin]:
@@ -120,7 +124,7 @@ class PrivacyBehaviorMixin(SensitiveColumnsMixin):
         quasi_identifiers: Optional[Union[str, list]] = None,
         interval_sizes: Optional[Dict[str, Union[int, list]]] = None,
         fill_value: Optional[str] = None,
-    ) -> Dict[str, Dict[int, RuntimeValue]]:
+    ) -> Dict[str, Dict[int, SerializableValue]]:
         """Generate interval or categorical hierarchies for ANJANA quasi-identifiers.
 
         Args:
@@ -131,6 +135,11 @@ class PrivacyBehaviorMixin(SensitiveColumnsMixin):
 
         Returns:
             Per-column hierarchy dictionaries keyed by hierarchy level.
+
+        Raises:
+            TypeError: If the source data is not a pandas DataFrame.
+            ValueError: If quasi-identifiers are not provided.
+            KeyError: If any quasi-identifier column is missing from the source frame.
         """
         source = frame if frame is not None else getattr(self, "_X", None)
         if not isinstance(source, pd.DataFrame):
@@ -272,7 +281,14 @@ class AnjanaDataConfig(
     score_mode: str = "post-pipeline"
 
     def fit(self, run_hooks: bool = True) -> "AnjanaDataConfig":
-        """Fit data splits and refresh split-aligned sensitive feature payloads."""
+        """Fit data splits and refresh split-aligned sensitive feature payloads.
+
+        Args:
+            run_hooks: Whether to execute configured runtime hooks during fit.
+
+        Returns:
+            The current configuration instance.
+        """
         super().fit(run_hooks=run_hooks)
 
         if self.fairness_defense not in [None, False]:
@@ -353,8 +369,16 @@ class AnjanaDataConfig(
         self,
         *args: RuntimePayload,
         **kwargs: RuntimePayload,
-    ) -> dict[str, RuntimeValue]:
-        """Execute ANJANA data runtime with canonical file handling."""
+    ) -> dict[str, SerializableValue]:
+        """Execute ANJANA data runtime with canonical file handling.
+
+        Args:
+            *args: Positional runtime payloads forwarded to base data execution.
+            **kwargs: Keyword runtime payloads and optional file mappings.
+
+        Returns:
+            Runtime score and artifact payload mapping.
+        """
         files_arg = kwargs.pop("files", None)
         files = resolve_runtime_files(
             kwargs,

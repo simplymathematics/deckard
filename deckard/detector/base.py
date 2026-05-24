@@ -1,7 +1,7 @@
 import time
 from dataclasses import dataclass, field
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any, Protocol, Union
 
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
@@ -28,6 +28,59 @@ from .canon import ensure_detector_runtime_contract, normalize_detector_stage
 if TYPE_CHECKING:
     from ..attack import AttackConfig
     from ..data import DataConfig
+
+
+DetectorFitParamValue = str | int | float | bool | None
+DetectorFileValue = str | None
+
+
+class DetectorRuntimeLike(Protocol):
+    """Structural protocol for detector runtime objects used in DetectorConfig."""
+
+    def fit(
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        **kwargs: DetectorFitParamValue,
+    ) -> Any:
+        """Fit detector state from runtime arrays.
+
+        Args:
+            x: Runtime feature matrix.
+            y: Runtime labels.
+            **kwargs: Detector fit kwargs.
+
+        Returns:
+            Detector fit output.
+        """
+        ...
+
+    def detect(
+        self,
+        x: np.ndarray,
+        batch_size: int,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Predict adversarial flags for runtime arrays.
+
+        Args:
+            x: Runtime feature matrix.
+            batch_size: Inference batch size.
+
+        Returns:
+            Tuple containing detector scores and adversarial mask.
+        """
+        ...
+
+    def detect_poison(self, **kwargs: DetectorFitParamValue) -> tuple[np.ndarray, np.ndarray]:
+        """Predict poison flags for runtime arrays.
+
+        Args:
+            **kwargs: Poison detection kwargs.
+
+        Returns:
+            Tuple containing detector scores and clean/poison mask.
+        """
+        ...
 
 
 @dataclass(eq=False, kw_only=True)
@@ -419,25 +472,51 @@ class DetectorConfig(BaseConfig):
         data: "DataConfig",
         attack: "AttackConfig",
     ) -> tuple[np.ndarray, np.ndarray, int]:
-        """Compose detector dataset behavior from clean/adversarial samples."""
+        """Compose detector dataset behavior from clean/adversarial samples.
+
+        Args:
+            data: Runtime data configuration.
+            attack: Runtime attack configuration.
+
+        Returns:
+            Tuple containing features, labels, and clean-sample count.
+        """
         return self._build_detector_dataset(data=data, attack=attack)
 
     def compose_detector_backend_behavior(
         self,
         x_train: np.ndarray,
         y_train: np.ndarray,
-    ) -> Any:
-        """Compose backend detector-estimator behavior from configured model."""
+    ) -> DetectorRuntimeLike:
+        """Compose backend detector-estimator behavior from configured model.
+
+        Args:
+            x_train: Detector training features.
+            y_train: Detector training labels.
+
+        Returns:
+            Trained backend estimator for detector wrapping.
+        """
         return self._build_detector_backend(x_train=x_train, y_train=y_train)
 
     def compose_detector_runtime_behavior(
         self,
-        backend: Any,
+        backend: DetectorRuntimeLike,
         x: np.ndarray,
         y: np.ndarray,
-        fit_kwargs: dict[str, Any],
-    ) -> Any:
-        """Compose concrete detector runtime object for evasion/poison APIs."""
+        fit_kwargs: dict[str, DetectorFitParamValue],
+    ) -> DetectorRuntimeLike:
+        """Compose concrete detector runtime object for evasion/poison APIs.
+
+        Args:
+            backend: Trained backend estimator.
+            x: Detector training features.
+            y: Detector training labels.
+            fit_kwargs: Runtime detector-fit kwargs.
+
+        Returns:
+            Instantiated detector runtime object.
+        """
         detector_cls = resolve_class(self.detector_type)
         # Detector constructors differ between evasion and poisoning detectors.
         try:
@@ -455,12 +534,27 @@ class DetectorConfig(BaseConfig):
 
     def execute_detector_behavior(
         self,
-        detector: Any,
+        detector: DetectorRuntimeLike,
         x: np.ndarray,
         y: np.ndarray,
-        fit_kwargs: dict[str, Any],
+        fit_kwargs: dict[str, DetectorFitParamValue],
     ) -> np.ndarray:
-        """Execute detector fit/predict behavior and return detector labels."""
+        """Execute detector fit/predict behavior and return detector labels.
+
+        Args:
+            detector: Detector runtime object.
+            x: Detector input features.
+            y: Detector binary labels.
+            fit_kwargs: Runtime detector-fit kwargs.
+
+        Returns:
+            Detector prediction labels.
+
+        Raises:
+            ValueError: If poison-detection output shape is unsupported.
+            AttributeError: If detector runtime does not expose detection methods.
+            RuntimeError: If detector prediction output is not produced.
+        """
         self._run_detector_stage_hooks(
             "before",
             "pre-fit",
@@ -541,12 +635,25 @@ class DetectorConfig(BaseConfig):
         data: "DataConfig",
         model: ModelConfig | None = None,
         attack: "AttackConfig | None" = None,
-        files: dict[str, Any] | None = None,
+        files: dict[str, DetectorFileValue] | None = None,
         detector_file: str | None = None,
         detected_predictions_file: str | None = None,
         score_file: str | None = None,
     ) -> dict[str, float | int]:
-        """Execute detector runtime lifecycle and return detection score payload."""
+        """Execute detector runtime lifecycle and return detection score payload.
+
+        Args:
+            data: Runtime data configuration.
+            model: Optional runtime model configuration.
+            attack: Optional runtime attack configuration.
+            files: Optional runtime artifact file mapping.
+            detector_file: Optional detector artifact path.
+            detected_predictions_file: Optional detected-predictions artifact path.
+            score_file: Optional detector score artifact path.
+
+        Returns:
+            Detector score payload.
+        """
         files = dict(files or {})
         if detector_file is None:
             detector_file = files.get("detector_file", files.get("detector_model_file"))

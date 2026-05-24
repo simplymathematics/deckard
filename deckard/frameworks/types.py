@@ -63,7 +63,15 @@ class ArtEsimtator(Protocol):
         estimator: EstimatorLike,
         **kwargs: RuntimeValue,
     ) -> EstimatorLike:
-        """Construct an ART estimator wrapper from a base estimator."""
+        """Construct an ART estimator wrapper from a base estimator.
+
+        Args:
+            estimator: Base estimator runtime object.
+            **kwargs: ART wrapper constructor parameters.
+
+        Returns:
+            Wrapped ART estimator runtime object.
+        """
         ...
 
 

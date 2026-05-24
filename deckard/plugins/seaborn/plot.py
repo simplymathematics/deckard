@@ -22,6 +22,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+SeabornScalar = str | int | float | bool | None
+SeabornValue = SeabornScalar | list["SeabornValue"] | dict[str, "SeabornValue"]
+
 seaborn_plotter_dict = {
     "scatter": scatterplot,
     "line": lineplot,
@@ -67,21 +70,16 @@ class SeabornPlotterMixin(PlotterMixin):
     def __call__(
         self,
         *,
-        ax: Any = None,
-        **kwargs: Any,
-    ) -> Any:
+        ax: Axes | None = None,
+        **kwargs: SeabornValue,
+    ) -> Axes:
         """Execute seaborn plot rendering.
 
-        Parameters
-        ----------
-        ax : Axes | None
-            Matplotlib axis to plot on. If None, creates new figure/axis.
-        **kwargs : Any
-            Additional plot parameters forwarded to seaborn function.
+        Args:
+            ax: Matplotlib axis to plot on. If None, creates a new axis.
+            **kwargs: Additional plot parameters forwarded to seaborn function.
 
-        Returns
-        -------
-        Axes
+        Returns:
             Matplotlib axis containing rendered plot.
         """
         plotter_map = globals().get(
@@ -313,7 +311,14 @@ class SeabornPlotConfig(_SeabornPlotterMarker, BaseConfig):
         return 1
 
     def __call__(self, ax: Optional[Axes] = None) -> Axes:
-        """Render the configured seaborn plot and return the resolved axes."""
+        """Render the configured seaborn plot and return the resolved axes.
+
+        Args:
+            ax: Optional pre-created axis to render into.
+
+        Returns:
+            Axis containing the rendered seaborn chart.
+        """
         plotter_map = globals().get(
             "seaborn_plotter_dict",
             globals().get("searborn_plotter_dict"),
@@ -443,6 +448,14 @@ class SeabornPlotConfigList(BaseConfig):
         return len(self.plots)
 
     def __call__(self, axes=None):
+        """Render all configured plots and return the resulting axes collection.
+
+        Args:
+            axes: Optional axes array for plot placement.
+
+        Returns:
+            Axes collection used for rendered plots.
+        """
         plot_length = len(self)
         fig = None
         if axes is None:

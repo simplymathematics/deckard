@@ -80,12 +80,27 @@ class TorchDatasetSamplingMixin:
                 "train_size + val_size + test_size must equal 1.0",
             )
 
-    def sample(self, *, n_splits: int = 5) -> Any:
-        """
+    def sample(
+        self,
+        *,
+        n_splits: int = 5,
+    ) -> tuple[Subset, Subset, Subset] | list[tuple[Subset, Subset]] | Dataset:
+        """Sample dataset according to configured runtime strategy.
+
         Modes:
-            split   -> (train_ds, val_ds, test_ds)
-            fold    -> list[(train_ds, val_ds)]
-            shuffle -> dataset
+            split: returns train/val/test subsets.
+            fold: returns list of train/val subset pairs.
+            shuffle: returns full dataset (shuffle deferred to DataLoader).
+
+        Args:
+            n_splits: Number of folds when sample mode is fold.
+
+        Returns:
+            Sampled dataset payload for the configured sampling mode.
+
+        Raises:
+            TypeError: If dataset is not a torch Dataset.
+            ValueError: If sample mode is unsupported or split sizes are invalid.
         """
         ds = self.dataset
 
@@ -208,8 +223,15 @@ class TorchDatasetMixin(TorchDatasetSamplingMixin):
     dataset_type: Union[str, None]
     n_splits: int
 
-    def resolve_dataset_type(self, dataset_obj: Any) -> str:
-        """Classify runtime dataset shape for downstream sampling behavior."""
+    def resolve_dataset_type(self, dataset_obj: Dataset) -> str:
+        """Classify runtime dataset shape for downstream sampling behavior.
+
+        Args:
+            dataset_obj: Runtime dataset instance to classify.
+
+        Returns:
+            One of tensor, iterable, map, or unknown.
+        """
         if isinstance(dataset_obj, TensorDataset):
             return "tensor"
         if isinstance(dataset_obj, IterableDataset):
@@ -362,7 +384,11 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         return super().__hash__()
 
     def load_dataset(self) -> "PytorchDataConfig":
-        """Materialize runtime torch dataset payload into ``_X``/``_y``."""
+        """Materialize runtime torch dataset payload into ``_X``/``_y``.
+
+        Returns:
+            The current data configuration instance.
+        """
         if self.data_load_time is not None and self._X is not None and self._y is not None:
             return self
         self._run_plugin_hook("before_load_data")
@@ -371,7 +397,16 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         return self
 
     def score(self, *args, mode: str | None = None, **kwargs) -> dict:
-        """Delegate scoring to the canonical DataConfig score flow."""
+        """Delegate scoring to the canonical DataConfig score flow.
+
+        Args:
+            *args: Positional scoring payloads forwarded to parent implementation.
+            mode: Optional scoring mode token.
+            **kwargs: Keyword scoring payloads forwarded to parent implementation.
+
+        Returns:
+            Score payload dictionary from parent scoring flow.
+        """
         return super().score(*args, mode=mode, **kwargs)
 
     def _load_data(self) -> None:
@@ -522,22 +557,16 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             raise
 
     def fit(self, run_hooks: bool = True) -> "PytorchDataConfig":
-        """
-        Samples training and testing indices from the loaded dataset, optionally using stratification.
+        """Sample train/test indices and populate runtime split payloads.
 
-        Calculates the number of samples for training and testing based on ``train_size`` and ``test_size``.
-        Supports stratified sampling using the target variable.
-        Splits the data into training and testing sets, records the sampling time, and stores the resulting indices.
+        Args:
+            run_hooks: Whether to execute before/after sample plugin hooks.
 
-        Raises
-        ------
-        ValueError
-            If data is not loaded, or if ``stratify`` is invalid.
+        Returns:
+            The current data configuration instance.
 
-        Side Effects
-        ------------
-        Sets ``self.train_indices``, ``self.test_indices``, and ``self.data_sample_time``.
-        Logs the time taken for sampling.
+        Raises:
+            ValueError: If data is not loaded or stratify setting is invalid.
         """
         if self._X is None or self._y is None:
             raise ValueError("Data not loaded. Call load_dataset() first.")
@@ -623,7 +652,16 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         files: DataFiles | None = None,
         **kwargs,
     ) -> dict:
-        """Run framework lifecycle with canonical hook/stage semantics."""
+        """Run framework lifecycle with canonical hook/stage semantics.
+
+        Args:
+            *args: Positional runtime payloads forwarded to scoring.
+            files: Optional file mapping for score/data persistence.
+            **kwargs: Keyword runtime payloads forwarded to scoring.
+
+        Returns:
+            Runtime score dictionary.
+        """
         self.files = merge_data_files(self.files, files)
         data_file = self.files.get("data_file")
         score_file = self.files.get("score_file")
@@ -688,7 +726,11 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             self.shuffle = True
 
     def load_dataset(self) -> "PytorchCustomDataConfig":
-        """Materialize custom runtime train/test torch datasets into ``_X``/``_y``."""
+        """Materialize custom runtime train/test torch datasets into ``_X``/``_y``.
+
+        Returns:
+            The current custom data configuration instance.
+        """
         if self.data_load_time is not None and self._X is not None and self._y is not None:
             return self
         self._run_plugin_hook("before_load_data")
@@ -809,7 +851,17 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         )
 
     def fit(self, run_hooks: bool = True) -> "PytorchCustomDataConfig":
-        """Build lazy DataLoaders from pre-defined custom train/test datasets."""
+        """Build lazy DataLoaders from pre-defined custom train/test datasets.
+
+        Args:
+            run_hooks: Whether to execute before/after sample plugin hooks.
+
+        Returns:
+            The current custom data configuration instance.
+
+        Raises:
+            ValueError: If custom runtime dataset payload does not include train/test datasets.
+        """
         if run_hooks:
             self._run_plugin_hook("before_sample")
         # DataLoader params (lazy loading, no full dataset materialization)
@@ -940,7 +992,17 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         *args,
         **kwargs,
     ) -> dict:
-        """Run custom torch lifecycle with cache compatibility and canonical hooks."""
+        """Run custom torch lifecycle with cache compatibility and canonical hooks.
+
+        Args:
+            files: Optional file mapping for score/data persistence.
+            mode: Optional scoring mode token.
+            *args: Positional runtime payloads forwarded to parent call.
+            **kwargs: Keyword runtime payloads forwarded to parent call.
+
+        Returns:
+            Runtime score dictionary.
+        """
         files = dict(files or {})
         data_file = files.get("data_file")
         score_file = files.get("score_file")

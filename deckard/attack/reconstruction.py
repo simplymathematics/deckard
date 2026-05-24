@@ -24,6 +24,9 @@ class ReconstructionAttackMixin(InferenceAttackMixin):
         Args:
             data: Runtime dataset and split container.
             attack: Instantiated reconstruction attack implementation.
+
+        Returns:
+            Score payload for reconstructed database-row inference.
         """
         return super().infer_database_reconstruction(data=data, attack=attack)
 
@@ -46,6 +49,12 @@ class ReconstructionAttackMixin(InferenceAttackMixin):
             attack: Instantiated reconstruction attack implementation.
             attack_type: Parsed attack family.
             attack_subtype: Parsed attack subtype.
+
+        Returns:
+            Score payload for reconstruction attack execution.
+
+        Raises:
+            ValueError: If attack family/subtype is not inference.reconstruction.
         """
         if (attack_type or "").lower() != "inference" or (
             attack_subtype or ""

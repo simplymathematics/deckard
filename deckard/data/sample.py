@@ -65,11 +65,32 @@ class BaseSampler:
         self,
         config: "DataConfig",
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Run sampling strategy against runtime data config.
+
+        Args:
+            config: Runtime data config.
+
+        Returns:
+            Train, test, and validation index arrays.
+
+        Raises:
+            NotImplementedError: Always raised by base sampler interface.
+        """
         raise NotImplementedError
 
     @classmethod
     def resolve(cls, config: "DataConfig") -> Any:
-        """Resolve ``config.sampler`` into a callable sampler object or ``None``."""
+        """Resolve ``config.sampler`` into a callable sampler object or ``None``.
+
+        Args:
+            config: Runtime data config with sampler declaration.
+
+        Returns:
+            Resolved sampler object or ``None``.
+
+        Raises:
+            ValueError: If sampler declaration is invalid or unsupported.
+        """
         sampler_aliases = {
             "split": SplitSampler,
             "fold": KFoldSampler,
@@ -144,7 +165,17 @@ class BaseSampler:
 
     @classmethod
     def compose(cls, config: "DataConfig") -> Any:
-        """Compose and cache the runtime sampler callable for ``config``."""
+        """Compose and cache the runtime sampler callable for ``config``.
+
+        Args:
+            config: Runtime data config.
+
+        Returns:
+            Callable sampler object.
+
+        Raises:
+            TypeError: If composed sampler is not callable.
+        """
         sampler_obj = getattr(config, "_sampler_obj", None)
         if sampler_obj is None:
             sampler_obj = cls.resolve(config)
@@ -160,7 +191,14 @@ class BaseSampler:
 
     @classmethod
     def execute(cls, config: "DataConfig") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Resolve/compose and run the configured sampler against ``config``."""
+        """Resolve/compose and run the configured sampler against ``config``.
+
+        Args:
+            config: Runtime data config.
+
+        Returns:
+            Train, test, and validation index arrays.
+        """
         sampler_obj = cls.compose(config)
         return sampler_obj(config)
 
@@ -189,6 +227,14 @@ class SplitSampler(BaseSampler):
     stratify: bool | str | None = True
 
     def __call__(self, cfg: "DataConfig") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Generate train/test/validation splits.
+
+        Args:
+            cfg: Runtime data config.
+
+        Returns:
+            Train, test, and validation index arrays.
+        """
         assert cfg._X is not None, "Data must be loaded before sampling"
         indices = np.arange(len(cfg._X))
         train_size = self.train_size
@@ -275,6 +321,17 @@ class KFoldSampler(BaseSampler):
         return int(size)
 
     def __call__(self, cfg: "DataConfig") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Generate fold-based train/test/validation splits.
+
+        Args:
+            cfg: Runtime data config.
+
+        Returns:
+            Train, test, and validation index arrays.
+
+        Raises:
+            ValueError: If selected split is out of range or sizing is invalid.
+        """
         assert cfg._X is not None, "Data must be loaded before sampling"
         indices = np.arange(len(cfg._X))
         split = self.split if self.split is not None else 0
@@ -397,6 +454,17 @@ class ShuffleSampler(BaseSampler):
     stratify: bool | str | None = True
 
     def __call__(self, cfg: "DataConfig") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Generate repeated random train/test/validation splits.
+
+        Args:
+            cfg: Runtime data config.
+
+        Returns:
+            Train, test, and validation index arrays.
+
+        Raises:
+            ValueError: If ``val_size`` is missing or selected split is out of range.
+        """
         split = self.split if self.split is not None else 0
         test_size = self.test_size
         val_size = self.val_size

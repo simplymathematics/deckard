@@ -24,7 +24,7 @@ from omegaconf import DictConfig, OmegaConf
 from ..artifacts import ScoreDict
 from ..data import DataConfig
 from ..model import ModelConfig
-from ..frameworks.types import ArrayLike, AttackLike, EstimatorLike, MatrixLike, RuntimeValue
+from ..frameworks.types import ArrayLike, AttackLike, EstimatorLike, MatrixLike
 from ..model.defense.base import _get_art_symbols
 from ..score.base import (
     DefaultClassifierConfig,
@@ -81,14 +81,40 @@ class SensitiveFeaturesWrapper(BaseEstimator):
         self._sensitive = np.asarray(sensitive_features)
 
     def fit(self, X: Any, y: Any, **kwargs: Any) -> Any:
+        """Fit wrapped estimator.
+
+        Args:
+            X: Training features.
+            y: Training labels.
+            **kwargs: Extra fit kwargs forwarded to wrapped estimator.
+
+        Returns:
+            Fitted wrapped estimator.
+        """
         return self.estimator.fit(X, y, **kwargs)
 
     def predict(self, X: Any) -> Any:
+        """Predict labels with stored sensitive features.
+
+        Args:
+            X: Feature matrix.
+
+        Returns:
+            Predicted labels.
+        """
         n = len(X)
         sf = self._sensitive[:n]
         return self.estimator.predict(X, sensitive_features=sf)
 
     def predict_proba(self, X: Any) -> Any:
+        """Predict class probabilities with stored sensitive features.
+
+        Args:
+            X: Feature matrix.
+
+        Returns:
+            Probability matrix (or synthetic one-hot fallback).
+        """
         n = len(X)
         sf = self._sensitive[:n]
         if hasattr(self.estimator, "predict_proba"):
@@ -105,12 +131,28 @@ class SensitiveFeaturesWrapper(BaseEstimator):
         return proba
 
     def get_params(self, deep: bool = True) -> dict:
+        """Return sklearn-compatible params for the wrapper.
+
+        Args:
+            deep: Included for sklearn API compatibility.
+
+        Returns:
+            Parameter mapping for estimator and sensitive features.
+        """
         return {
             "estimator": self.estimator,
             "sensitive_features": self._sensitive,
         }
 
     def set_params(self, **params: Any) -> "SensitiveFeaturesWrapper":
+        """Set sklearn-compatible wrapper parameters.
+
+        Args:
+            **params: Parameters to set on wrapper state.
+
+        Returns:
+            This wrapper instance.
+        """
         if "estimator" in params:
             self.estimator = params["estimator"]
         if "sensitive_features" in params:
@@ -183,6 +225,9 @@ class AttackMixin:
 
         Returns:
             Score dictionary merged into runtime ``score_dict``.
+
+        Raises:
+            NotImplementedError: Always raised by the base attack mixin.
         """
         raise NotImplementedError(
             "Attack handlers must implement __call__",
@@ -292,6 +337,9 @@ class AttackTypePlugin:
             runtime: Runtime config instance currently orchestrating the attack.
             *args: Positional runtime args forwarded to mixin ``__call__``.
             **kwargs: Keyword runtime args forwarded to mixin ``__call__``.
+
+        Returns:
+            Runtime attack score payload.
         """
         mixin = self._resolve_mixin_type()
         handler = mixin(runtime)
@@ -559,6 +607,9 @@ class AttackConfig(BaseConfig):
 
         Returns:
             Canonical split mode.
+
+        Raises:
+            ValueError: If configured mode or split override token is unsupported.
         """
         valid_modes = {"auto", "train", "test", "val"}
         mode_value = str(self.mode).strip().lower()
@@ -747,7 +798,11 @@ class AttackConfig(BaseConfig):
 
     @property
     def attack_family(self) -> Optional[str]:
-        """Return canonical attack family resolved from runtime attack declaration."""
+        """Return canonical attack family resolved from runtime attack declaration.
+
+        Returns:
+            Canonical attack family token when available.
+        """
         if self._attack_type:
             return self._attack_type
         attack_type, _ = self._parse_attack_path()
@@ -755,7 +810,11 @@ class AttackConfig(BaseConfig):
 
     @property
     def attack_subtype(self) -> Optional[str]:
-        """Return canonical attack subtype resolved from runtime attack declaration."""
+        """Return canonical attack subtype resolved from runtime attack declaration.
+
+        Returns:
+            Canonical attack subtype token when available.
+        """
         if self._attack_subtype:
             return self._attack_subtype
         _, attack_subtype = self._parse_attack_path()
@@ -763,7 +822,11 @@ class AttackConfig(BaseConfig):
 
     @property
     def attack_kind(self) -> Optional[str]:
-        """Return normalized scoring attack kind token for the configured attack."""
+        """Return normalized scoring attack kind token for the configured attack.
+
+        Returns:
+            Normalized attack scoring kind token.
+        """
         attack_type = (self.attack_family or "").lower()
         subtype = (self.attack_subtype or "").lower()
 
@@ -1077,14 +1140,10 @@ class AttackConfig(BaseConfig):
         Returns:
             A score payload containing attack scores and timing information.
 
-        Raises
-        ------
-        ValueError
-            If the attack type, subtype, or model type is unsupported, or if the model is not fitted.
-        NotImplementedError
-            If the attack type or subtype is not implemented.
-        AssertionError
-            If the output scores or timing variables are not of the expected types.
+        Raises:
+            ValueError: If attack type/subtype/model wiring is unsupported.
+            NotImplementedError: If selected attack runtime is not implemented.
+            AssertionError: If runtime outputs fail payload assertions.
         """
         files = dict(files or {})
         if attack_file is None:
@@ -1705,6 +1764,9 @@ class AttackConfig(BaseConfig):
 
         Returns:
             Subset size, feature payload, and label payload.
+
+        Raises:
+            ValueError: If selected split payload cannot be converted to a supported subset type.
         """
         n = self.attack_size
         if test is True:

@@ -4,7 +4,7 @@ import inspect
 import json
 import logging
 from pathlib import Path
-from typing import Any, Mapping, cast
+from typing import Any, Mapping, Protocol, cast
 
 import optuna
 import yaml
@@ -29,6 +29,17 @@ from ..utils import BaseConfig, hash_conf_values
 logger = logging.getLogger(__name__)
 
 
+OptimizerScalar = str | int | float | bool | None
+OptimizerValue = OptimizerScalar | list["OptimizerValue"] | dict[str, "OptimizerValue"]
+
+
+class OptimizerRuntimeConfigLike(Protocol):
+    """Structural protocol for runtime configs exposing optimizer fields."""
+
+    optimizers: list[str] | None
+    directions: list[str] | None
+
+
 @dataclass
 class OptimizerConfig:
     """Runtime optimization policy object used by Hydra callback adapters.
@@ -50,14 +61,25 @@ class OptimizerConfig:
     @classmethod
     def from_any(
         cls,
-        value: Any,
+        value: "OptimizerConfig | DictConfig | Mapping[str, OptimizerValue] | None",
         *,
-        directions: list[Any] | None = None,
-        optimizers: list[Any] | None = None,
+        directions: list[str] | None = None,
+        optimizers: list[str] | None = None,
         study_name: str | None = None,
         storage: str | None = None,
     ) -> "OptimizerConfig":
-        """Normalize optimizer policy declarations into an OptimizerConfig instance."""
+        """Normalize optimizer policy declarations into an OptimizerConfig instance.
+
+        Args:
+            value: Policy declaration payload.
+            directions: Explicit optimization directions override.
+            optimizers: Explicit optimizer names override.
+            study_name: Optional explicit study name override.
+            storage: Optional explicit storage URI override.
+
+        Returns:
+            Normalized optimizer policy object.
+        """
         if isinstance(value, cls):
             cfg = value
         else:
@@ -90,15 +112,33 @@ class OptimizerConfig:
             cfg.storage = str(storage)
         return cfg
 
-    def resolve_study_binding(self, hydra_cfg: Any) -> tuple[str | None, str | None]:
-        """Resolve effective Optuna study name and storage from runtime Hydra config."""
+    def resolve_study_binding(
+        self,
+        hydra_cfg: DictConfig | Mapping[str, OptimizerValue],
+    ) -> tuple[str | None, str | None]:
+        """Resolve effective Optuna study name and storage from runtime Hydra config.
+
+        Args:
+            hydra_cfg: Runtime Hydra configuration payload.
+
+        Returns:
+            Effective study name and storage URI tuple.
+        """
         sweeper = _get_sweeper_cfg(hydra_cfg)
         sweeper_study_name = sweeper.get("study_name") if isinstance(sweeper, dict) else None
         sweeper_storage = sweeper.get("storage") if isinstance(sweeper, dict) else None
         return self.study_name or sweeper_study_name, self.storage or sweeper_storage
 
     def create_study(self, *, study_name: str, storage: str) -> optuna.study.Study:
-        """Create an Optuna study using current optimizer policy settings."""
+        """Create an Optuna study using current optimizer policy settings.
+
+        Args:
+            study_name: Optuna study name.
+            storage: Optuna storage URI.
+
+        Returns:
+            Created Optuna study.
+        """
         return create_study(
             study_name=study_name,
             storage=storage,
@@ -106,8 +146,12 @@ class OptimizerConfig:
             optimizers=self.optimizers,
         )
 
-    def set_metric_names(self, study: Any) -> None:
-        """Apply configured metric names/directions onto the provided study object."""
+    def set_metric_names(self, study: optuna.study.Study) -> None:
+        """Apply configured metric names/directions onto the provided study object.
+
+        Args:
+            study: Optuna study to update with metric-name metadata.
+        """
         set_study_metric_names(
             study=study,
             optimizers=self.optimizers,
@@ -116,9 +160,16 @@ class OptimizerConfig:
 
     def resolve_score_policy(
         self,
-        config: Any,
+        config: "OptimizerRuntimeConfigLike | Mapping[str, OptimizerValue] | DictConfig",
     ) -> tuple[list[str], list[str]]:
-        """Resolve optimizer names and directions from explicit policy or runtime config."""
+        """Resolve optimizer names and directions from explicit policy or runtime config.
+
+        Args:
+            config: Runtime config payload exposing optimizer fields.
+
+        Returns:
+            Optimizer names and directions.
+        """
         if self.optimizers:
             optimizers = list(self.optimizers)
         else:
@@ -131,8 +182,15 @@ class OptimizerConfig:
 
         return optimizers, directions
 
-    def merge_from_runtime_config(self, config: Any) -> None:
-        """Merge runtime optimizer fields into this policy object in-place."""
+    def merge_from_runtime_config(
+        self,
+        config: "DictConfig | Mapping[str, OptimizerValue]",
+    ) -> None:
+        """Merge runtime optimizer fields into this policy object in-place.
+
+        Args:
+            config: Runtime optimizer policy payload.
+        """
         if isinstance(config, DictConfig):
             cfg = OmegaConf.to_container(config, resolve=True)
         elif isinstance(config, Mapping):

@@ -25,7 +25,6 @@ from hydra.utils import get_class, instantiate
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
 from .artifacts import ArtifactLoaderConfig, ScoreDict
-from .frameworks.types import RuntimeValue
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +63,15 @@ __all__ = [
 
 NULL_CONFIG_TOKENS = frozenset({"none", "null", "n/a"})
 DEFAULT_CONFIG_TOKENS = frozenset({"auto", "default", "best"})
+
+RuntimeScalar = str | int | float | bool | None
+RuntimeSerializable = (
+    RuntimeScalar
+    | list["RuntimeSerializable"]
+    | tuple["RuntimeSerializable", ...]
+    | dict[str, "RuntimeSerializable"]
+)
+ComponentInput = "BaseConfig | DictConfig | ListConfig | RuntimeSerializable"
 
 
 def normalize_config_token(value: Any) -> str | None:
@@ -949,13 +957,13 @@ class BaseConfig(ArtifactLoaderConfig):
 
     def coerce_component(
         self,
-        component: RuntimeValue,
+        component: ComponentInput,
         expected_type: type,
         *,
         default_target: Optional[str] = None,
-        overrides: Optional[dict[str, RuntimeValue]] = None,
-        allow_passthrough: Callable[[RuntimeValue], bool] | None = None,
-    ) -> BaseConfig | RuntimeValue | None:
+        overrides: Optional[dict[str, RuntimeSerializable]] = None,
+        allow_passthrough: Callable[[ComponentInput], bool] | None = None,
+    ) -> "BaseConfig | DictConfig | ListConfig | RuntimeSerializable | None":
         """Instantiate/normalize a config component to ``expected_type``.
 
         Args:
@@ -964,6 +972,12 @@ class BaseConfig(ArtifactLoaderConfig):
             default_target: Hydra target path used when input lacks ``_target_``.
             overrides: Key/value pairs injected into the normalized spec.
             allow_passthrough: Optional predicate that bypasses coercion.
+
+        Returns:
+            Instantiated config, passthrough runtime payload, or None.
+
+        Raises:
+            TypeError: If instantiated payload is not an instance of expected_type.
         """
         if component is None:
             return None
@@ -990,7 +1004,14 @@ class BaseConfig(ArtifactLoaderConfig):
         return instance
 
     def __call__(self) -> ScoreDict:
-        """Execute runtime behavior and return normalized score payload."""
+        """Execute runtime behavior and return normalized score payload.
+
+        Returns:
+            Normalized score payload for the runtime execution.
+
+        Raises:
+            NotImplementedError: Always raised by the abstract base implementation.
+        """
         raise NotImplementedError("This is an abstract base class.")
 
     def __hash__(self):
@@ -1022,6 +1043,9 @@ class BaseConfig(ArtifactLoaderConfig):
 
         Args:
             score_file: Optional score file path.
+
+        Returns:
+            Merged score payload dictionary persisted via score lifecycle hooks.
         """
         runtime_scores = ScoreDict.from_payload(getattr(self, "score_dict", {}))
         resolved = runtime_scores(
@@ -1042,6 +1066,9 @@ class BaseConfig(ArtifactLoaderConfig):
         Args:
             new_scores: Newly computed score payload.
             score_file: Optional score file path.
+
+        Returns:
+            Canonical merged score payload.
         """
         merged_input = ScoreDict.from_payload(new_scores)
         resolved = merged_input(
@@ -1066,10 +1093,10 @@ class BaseConfig(ArtifactLoaderConfig):
 
     def merge_runtime_files(
         self,
-        *file_mappings: RuntimeValue,
+        *file_mappings: RuntimeSerializable,
         include_existing: bool = True,
         update_score_dict: bool = True,
-    ) -> dict[str, RuntimeValue]:
+    ) -> dict[str, RuntimeSerializable]:
         """Merge runtime file mappings and persist merged map on the config.
 
         This is used at the end of runtime ``__call__`` paths, just before
@@ -1080,8 +1107,11 @@ class BaseConfig(ArtifactLoaderConfig):
             *file_mappings: File mapping containers to merge.
             include_existing: Whether to include current ``self.files`` entries.
             update_score_dict: Whether to mirror merged file map into ``score_dict``.
+
+        Returns:
+            Merged runtime file mapping.
         """
-        merged: dict[str, RuntimeValue] = {}
+        merged: dict[str, RuntimeSerializable] = {}
         if include_existing:
             merged.update(self._coerce_files_mapping(getattr(self, "files", None)))
         for mapping in file_mappings:
@@ -1098,13 +1128,13 @@ class BaseConfig(ArtifactLoaderConfig):
         return merged
 
     def get_call_params(self) -> dict:
-        """
-        Retrieves the parameters required to call the __call__ method of the instance.
+        """Retrieve parameters required to call the instance ``__call__`` method.
 
-        Returns
-        -------
-        dict
-            A dictionary containing parameter names and their corresponding values.
+        Returns:
+            Mapping of ``__call__`` parameter names to current instance values.
+
+        Raises:
+            AttributeError: If a required ``__call__`` parameter is missing on the instance.
         """
         sig = inspect.signature(self.__call__)
         params = {}
@@ -1150,6 +1180,9 @@ class BaseConfig(ArtifactLoaderConfig):
 
         Returns:
             Instance initialized from the YAML configuration.
+
+        Raises:
+            TypeError: If loaded YAML content does not deserialize to a dictionary.
         """
         resolved_path = BaseConfig._resolve_yaml_read_path(filepath)
         config = OmegaConf.to_container(OmegaConf.load(resolved_path), resolve=True)
@@ -1182,6 +1215,9 @@ class BaseConfig(ArtifactLoaderConfig):
 
         Args:
             filepath: Optional destination path.
+
+        Returns:
+            YAML text when filepath is None, otherwise the persisted YAML path.
         """
         config = self.to_dict()
         config = OmegaConf.create(config)
@@ -1287,7 +1323,11 @@ class BaseConfig(ArtifactLoaderConfig):
         return str(value)
 
     def execute_without_mercy(self) -> dict:
-        """Execute config runtime and persist traceback details on failure."""
+        """Execute config runtime and persist traceback details on failure.
+
+        Returns:
+            Score payload produced by runtime execution or fallback ``score_dict``.
+        """
         # Get log_file from logger
         log_file = next(
             (

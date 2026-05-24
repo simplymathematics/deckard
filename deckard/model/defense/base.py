@@ -14,7 +14,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
 
 from ...artifacts import ScoreDict
-from ...frameworks.types import ArtEsimtator, EstimatorLike, RuntimeValue, StringifiedClass
+from ...frameworks.types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...data import DataConfig
 from ...utils import (
 	BaseConfig,
@@ -32,6 +32,14 @@ warnings.filterwarnings("ignore", category=UserWarning)
 logger = logging.getLogger(__name__)
 
 DefenseScoreValue = str | int | float | bool | None
+DefenseInitParamValue = (
+	EstimatorLike
+	| tuple[int, ...]
+	| tuple[float, float]
+	| str
+	| int
+	| None
+)
 
 
 @lru_cache(maxsize=1)
@@ -146,6 +154,16 @@ class DefenseStep:
 		apply_fit: bool | None = None,
 		apply_predict: bool | None = None,
 	) -> "DefenseStep":
+		"""Build a defense step from a raw defense object.
+
+		Args:
+			defense_obj: Concrete defense object.
+			apply_fit: Optional fit-time application override.
+			apply_predict: Optional predict-time application override.
+
+		Returns:
+			Defense step with resolved application flags.
+		"""
 		default_fit, default_predict = cls._derive_default_flags(defense_obj)
 		resolved_apply_fit = default_fit if apply_fit is None else bool(apply_fit)
 		resolved_apply_predict = (
@@ -250,6 +268,9 @@ class DefensePipelineConfigBehaviorMixin:
 
 		Returns:
 			Normalized pipeline config payload.
+
+		Raises:
+			TypeError: If input payload cannot be interpreted as defense config.
 		"""
 		if defense_config is None or isinstance(defense_config, cls):
 			return defense_config
@@ -442,7 +463,11 @@ class DefensePipelineConfigBehaviorMixin:
 		return [self._coerce_single_defense(item) for item in defense_list]
 
 	def requires_fit_application(self) -> bool:
-		"""Return ``True`` when any defense step requests fit-time application."""
+		"""Return ``True`` when any defense step requests fit-time application.
+
+		Returns:
+			Whether at least one configured defense applies during fit.
+		"""
 		return any(bool(getattr(step, "apply_fit", True)) for step in self.normalize_defenses(getattr(self, "defenses", [])))
 
 	@staticmethod
@@ -542,6 +567,10 @@ class DefensePipelineConfigBehaviorMixin:
 
 		Returns:
 			Defended estimator.
+
+		Raises:
+			ValueError: If estimator is missing.
+			TypeError: If a configured defense does not expose ``apply_to``.
 		"""
 		if estimator is None:
 			raise ValueError(
@@ -777,6 +806,9 @@ class DefenseMixin:
 
 		Returns:
 			Defense artifact and defended estimator.
+
+		Raises:
+			NotImplementedError: Always raised by the base defense mixin.
 		"""
 		raise NotImplementedError("Defense handlers must implement __call__")
 
@@ -1087,7 +1119,11 @@ class ARTDefenseBehaviorMixin:
 
 	@property
 	def model(self) -> BaseEstimator | None:
-		"""Public accessor for the runtime estimator payload."""
+		"""Public accessor for the runtime estimator payload.
+
+		Returns:
+			Runtime estimator payload.
+		"""
 		return getattr(self, "_model", None)
 
 	@model.setter
@@ -1101,7 +1137,11 @@ class ARTDefenseBehaviorMixin:
 
 	@property
 	def model_config(self) -> ModelConfig | None:
-		"""Public accessor for the lazily built model config shell."""
+		"""Public accessor for the lazily built model config shell.
+
+		Returns:
+			Lazily built model config shell.
+		"""
 		return getattr(self, "_model_config", None)
 
 	@model_config.setter
@@ -1116,10 +1156,11 @@ class ARTDefenseBehaviorMixin:
 	def get_model(self) -> BaseEstimator:
 		"""Get the model's estimator.
 
-		Returns
-		-------
-		BaseEstimator
+		Returns:
 			The model's estimator.
+
+		Raises:
+			ValueError: If model estimator is not available.
 		"""
 		if self.model is None:
 			raise ValueError("Model is not fitted yet.")
@@ -1138,6 +1179,9 @@ class ARTDefenseBehaviorMixin:
 
 		Returns:
 			Defended estimator.
+
+		Raises:
+			ValueError: If estimator is missing.
 		"""
 		if estimator is None:
 			raise ValueError(
@@ -1267,7 +1311,15 @@ class ARTDefenseBehaviorMixin:
 		return defended_estimator
 
 	def parse_defense_name(self) -> tuple:
-		"""Parse the configured defense path into type, subtype, and class."""
+		"""Parse the configured defense path into type, subtype, and class.
+
+		Returns:
+			Defense type token, subtype token, and resolved class.
+
+		Raises:
+			ImportError: If defense type parsing/import fails.
+			AssertionError: If parsed defense type is unsupported.
+		"""
 		if self.defense_name is not None and len(self.defense_name) > 0:
 			module_name, class_name = self.defense_name.rsplit(".", 1)
 		else:
@@ -1305,7 +1357,7 @@ class ARTDefenseBehaviorMixin:
 	def get_art_class(
 		self,
 		data: DataConfig,
-	) -> tuple[ArtEsimtator, dict[str, RuntimeValue]]:
+	) -> tuple[ArtEsimtator, dict[str, DefenseInitParamValue]]:
 		"""Resolve the ART estimator wrapper class for the current model/data.
 
 		Args:
@@ -1313,6 +1365,11 @@ class ARTDefenseBehaviorMixin:
 
 		Returns:
 			ART wrapper class and initialization parameter mapping.
+
+		Raises:
+			ImportError: If optional torch/ART dependencies are unavailable.
+			ValueError: If model type is required but missing.
+			TypeError: If torch defenses receive non-torch base estimator.
 		"""
 		if (
 			_is_torch_model_instance(getattr(self, "_model", None))
@@ -1428,35 +1485,6 @@ class ARTDefenseBehaviorMixin:
 		if "preprocessing" not in init_params:
 			init_params["preprocessing"] = None
 		return art_class, init_params
-
-	def __call__(
-		self,
-		data: DataConfig,
-		model_file: Union[str, None] = None,
-		test_predictions_file: Union[str, None] = None,
-		train_predictions_file: Union[str, None] = None,
-		training_probabilities_file: Union[str, None] = None,
-		test_probabilities_file: Union[str, None] = None,
-		score_file: Union[str, None] = None,
-	) -> dict[str, DefenseScoreValue]:
-		"""Deprecated runtime entrypoint kept for compatibility with older configs.
-
-		Args:
-			data: Runtime data payload.
-			model_file: Optional persisted model path.
-			test_predictions_file: Optional test prediction file path.
-			train_predictions_file: Optional train prediction file path.
-			training_probabilities_file: Optional train probability file path.
-			test_probabilities_file: Optional test probability file path.
-			score_file: Optional score file path.
-
-		Returns:
-			Score payload mapping.
-		"""
-		raise NotImplementedError(
-			"DefenseConfig no longer owns model runtime orchestration. "
-			"Use ModelConfig(defense=DefensePipelineConfig(...))(data=...) instead.",
-		)
 
 
 @dataclass(eq=False, kw_only=True)

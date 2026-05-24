@@ -1033,6 +1033,9 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         For TensorFlow, configures GPU/CPU usage.
         Args:
             device (Union[str, int]): Device to use ("cpu", "gpu", or GPU index).
+
+        Raises:
+            ImportError: If tensorflow support is requested but unavailable.
         """
 
         if self.library == "tensorflow":
@@ -1240,6 +1243,15 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
 
         Supported keys include data/model/attack/detector/score/files/defense and
         hook-oriented keys (hook_plugins/hook_bundles).
+
+        Args:
+            **kwargs: Component overrides and runtime orchestration options.
+
+        Returns:
+            This ExperimentConfig instance.
+
+        Raises:
+            ValueError: If unsupported override keys are provided.
         """
         supported = {
             "data",
@@ -1679,7 +1691,12 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         self.data.score_dict = dict(value.get("score_dict", {}) or {})
 
     def set_random_seed(self) -> None:
-        """Set deterministic random seed for the configured runtime library."""
+        """Set deterministic random seed for the configured runtime library.
+
+        Raises:
+            ImportError: If selected library dependency is unavailable.
+            ValueError: If runtime library is unsupported.
+        """
         if self.library in ["sklearn"]:
             np.random.seed(self.random_state)
         elif self.library in ["tensorflow"]:
@@ -2250,7 +2267,18 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
 
     @staticmethod
     def from_yaml(filepath: str) -> "ExperimentConfig":
-        """Load an ExperimentConfig runtime snapshot from canonical YAML."""
+        """Load an ExperimentConfig runtime snapshot from canonical YAML.
+
+        Args:
+            filepath: Path to runtime YAML payload.
+
+        Returns:
+            Instantiated ExperimentConfig runtime object.
+
+        Raises:
+            TypeError: If loaded payload cannot be instantiated as ExperimentConfig.
+            ValueError: If schema payload is malformed or from unsupported future version.
+        """
         resolved_path = BaseConfig._resolve_yaml_read_path(filepath)
         payload = OmegaConf.to_container(OmegaConf.load(resolved_path), resolve=True)
         if not isinstance(payload, dict):
@@ -2294,7 +2322,11 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
     def __call__(
         self,
     ) -> dict:
-        """Execute full experiment pipeline and return aggregated score payload."""
+        """Execute full experiment pipeline and return aggregated score payload.
+
+        Returns:
+            Aggregated experiment score payload.
+        """
         run_start = time.process_time()
         self.params = build_experiment_params_manifest(self)
         self._runtime_cache = self._load_runtime_cache()

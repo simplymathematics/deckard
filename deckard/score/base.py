@@ -304,6 +304,9 @@ class ScorerMixin:
 
         Returns:
             Score payload dictionary from scorer execution.
+
+        Raises:
+            NotImplementedError: Always raised by base mixin; subclasses must implement.
         """
         raise NotImplementedError(
             "Scorer mixins must implement __call__",
@@ -430,6 +433,9 @@ class ScorerTypePlugin:
             runtime: Runtime config instance currently orchestrating scoring.
             *args: Positional runtime args forwarded to mixin ``__call__``.
             **kwargs: Keyword runtime args forwarded to mixin ``__call__``.
+
+        Returns:
+            Normalized score payload returned by the mixin handler.
         """
         mixin = self._resolve_mixin_type()
         handler = mixin(runtime)
@@ -496,6 +502,12 @@ class TaskAwareScorerMixin:
             model: Optional model runtime context.
             attack: Optional attack runtime context.
             default: Fallback classifier flag when context is ambiguous.
+
+        Returns:
+            Resolved classifier flag where True means classification and False regression.
+
+        Raises:
+            ValueError: If classifier cannot be inferred from explicit/default/context values.
         """
         explicit = _normalize_classifier_flag(getattr(self, "classifier", None))
         if explicit is not None:
@@ -767,6 +779,10 @@ class ScorerConfig:
 
         Returns:
             Metric output returned by the configured score function.
+
+        Raises:
+            ValueError: If required dep/ind inputs are missing.
+            TypeError: If score_function is not callable.
         """
         if dep is None and "y" in kwargs:
             dep = kwargs.pop("y")
@@ -1188,7 +1204,11 @@ class ScorerDictConfig(BaseConfig):
 
     @property
     def configured_scorers(self) -> dict[str, ScorerConfig]:
-        """Public accessor for configured scorer definitions."""
+        """Public accessor for configured scorer definitions.
+
+        Returns:
+            Mapping from scorer name to configured scorer object.
+        """
         return self.scorers
 
     @configured_scorers.setter
@@ -1201,7 +1221,11 @@ class ScorerDictConfig(BaseConfig):
         self.scorers = value or {}
 
     def get_callables(self) -> dict[str, ScorerConfig]:
-        """Return configured scorer callables keyed by scorer name."""
+        """Return configured scorer callables keyed by scorer name.
+
+        Returns:
+            Mapping of scorer names to scorer configs.
+        """
         return {key: scorer for key, scorer in self.scorers.items()}
 
     def score(
@@ -1253,6 +1277,9 @@ class ScorerDictConfig(BaseConfig):
 
         Args:
             items: Scorer containers to merge.
+
+        Returns:
+            Consolidated scorer dictionary config.
         """
         merged_scorers: dict = {}
         for item in items:
@@ -1336,6 +1363,9 @@ class ScorerDictConfig(BaseConfig):
 
         Returns:
             Probability-like prediction payload.
+
+        Raises:
+            ValueError: If probability outputs cannot be derived from model or inputs.
         """
         if model is None or X is None:
             raise ValueError("Cannot compute probabilities: model or input X is None.")
@@ -1429,6 +1459,12 @@ class ScorerDictConfig(BaseConfig):
 
         Returns:
             Canonical score payload for resolved stage.
+
+        Raises:
+            AssertionError: If no runtime payload can be resolved for scoring.
+            ValueError: If mode/stage resolution or payload requirements are invalid.
+            TypeError: If configured scorer entries are not callable.
+            KeyError: If scoring mode token is unsupported.
         """
         results: dict[str, Any] = {}
         runtime_stage = kwargs.pop("stage", None)

@@ -1,6 +1,12 @@
 from dataclasses import dataclass, field
-from typing import Any, Union
+from typing import Any, Callable, Union
 from ..frameworks.types import StringifiedClass
+from ..frameworks.types import EstimatorLike
+from ..utils import BaseConfig
+
+DefenseScalar = str | int | float | bool | None
+DefenseValue = DefenseScalar | list["DefenseValue"] | dict[str, "DefenseValue"]
+DefenseHandler = Callable[..., tuple[BaseConfig | None, EstimatorLike]]
 
 
 @dataclass(eq=False, kw_only=True)
@@ -57,13 +63,23 @@ class DefenseTypePlugin:
 
     def resolve_defense_mixins(
         self,
-        runtime: Any,
+        runtime: BaseConfig,
         *,
         defense_type: StringifiedClass | None,
         defense_subtype: Union[str, None],
         default_mixins: tuple[type, ...],
     ) -> tuple[type, ...]:
-        """Return matching defense mixins for the runtime defense family/subtype."""
+        """Return matching defense mixins for the runtime defense family/subtype.
+
+        Args:
+            runtime: Runtime config instance (unused in current matching logic).
+            defense_type: Requested defense family.
+            defense_subtype: Optional requested defense subtype.
+            default_mixins: Framework default mixin set.
+
+        Returns:
+            Single-item tuple containing the configured mixin when matched, else empty tuple.
+        """
         _ = (runtime, default_mixins)
         if not self._matches(
             defense_type=defense_type,
@@ -75,14 +91,25 @@ class DefenseTypePlugin:
 
     def resolve_defense_handler(
         self,
-        runtime: Any,
+        runtime: BaseConfig,
         *,
         defense_type: StringifiedClass | None,
         defense_subtype: Union[str, None],
-        default_handler: Any,
+        default_handler: DefenseHandler | None,
         default_mixins: tuple[type, ...],
-    ) -> Any:
-        """Return callable defense handler when plugin matches runtime defense context."""
+    ) -> DefenseHandler | None:
+        """Return callable defense handler when plugin matches runtime defense context.
+
+        Args:
+            runtime: Runtime config instance bound to the resolved mixin.
+            defense_type: Requested defense family.
+            defense_subtype: Optional requested defense subtype.
+            default_handler: Framework default defense handler.
+            default_mixins: Framework default defense mixins.
+
+        Returns:
+            Callable plugin handler when matched, otherwise None.
+        """
         _ = (default_handler, default_mixins)
         if not self._matches(
             defense_type=defense_type,
@@ -91,8 +118,22 @@ class DefenseTypePlugin:
             return None
         return lambda *args, **kwargs: self(runtime, *args, **kwargs)
 
-    def __call__(self, runtime: Any, *args, **kwargs) -> tuple[Any, Any]:
-        """Delegate defense execution to the configured mixin bound to runtime."""
+    def __call__(
+        self,
+        runtime: BaseConfig,
+        *args: DefenseValue,
+        **kwargs: DefenseValue,
+    ) -> tuple[BaseConfig | None, EstimatorLike]:
+        """Delegate defense execution to the configured mixin bound to runtime.
+
+        Args:
+            runtime: Runtime config instance passed into the defense mixin.
+            *args: Positional arguments forwarded to the defense handler.
+            **kwargs: Keyword arguments forwarded to the defense handler.
+
+        Returns:
+            Two-item tuple returned by the defense handler.
+        """
         mixin = self._resolve_mixin_type()
         handler = mixin(runtime)
         return handler(*args, **kwargs)

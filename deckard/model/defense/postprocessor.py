@@ -1,12 +1,13 @@
 """Configuration for postprocessor defenses (output transformation)."""
 
 from dataclasses import dataclass, field
-from typing import Any
 
 from deckard.plugins.defense import DefenseTypePlugin
 
-from ...utils import safe_store
-from .base import DefensePipelineConfig, DefenseMixin
+from ...data import DataConfig
+from ...frameworks.types import ArtEsimtator, EstimatorLike, StringifiedClass
+from ...utils import BaseConfig, safe_store
+from .base import DefenseInitParamValue, DefensePipelineConfig, DefenseMixin
 
 
 class PostprocessorDefenseMixin(DefenseMixin):
@@ -15,17 +16,33 @@ class PostprocessorDefenseMixin(DefenseMixin):
     def __call__(
         self,
         *,
-        data,
-        defense_type,
-        defense_subtype,
-        defense_class,
-        art_class,
-        init_params,
-        base_estimator,
-        existing_preprocessors,
-        existing_postprocessors,
-    ) -> tuple[Any, Any]:
-        """Attach postprocessor defense and return defense with defended estimator."""
+        data: DataConfig | None,
+        defense_type: StringifiedClass | None,
+        defense_subtype: str | None,
+        defense_class: type | None,
+        art_class: ArtEsimtator,
+        init_params: dict[str, DefenseInitParamValue],
+        base_estimator: EstimatorLike,
+        existing_preprocessors: list,
+        existing_postprocessors: list,
+    ) -> tuple[BaseConfig | None, EstimatorLike]:
+        """Attach postprocessor defense and return defense with defended estimator.
+
+        Args:
+            data: Data runtime payload.
+            defense_type: Parsed defense family token.
+            defense_subtype: Parsed defense subtype token.
+            defense_class: Concrete defense class resolved from defense name.
+            art_class: ART estimator wrapper class selected for model type.
+            init_params: Runtime ART estimator initialization kwargs.
+            base_estimator: Unwrapped model estimator used as defense target.
+            existing_preprocessors: Existing preprocessor defenses already attached.
+            existing_postprocessors: Existing postprocessor defenses already attached.
+
+        Returns:
+            Postprocessor defense object and defended estimator.
+        """
+        _ = (data, defense_type, defense_subtype)
         assert defense_class is not None
         defense = defense_class(**(self.defense_params or {}))
         defended_estimator = self._build_art_wrapper(

@@ -15,7 +15,7 @@ from typing import Any, Optional, cast
 import numpy as np
 import pandas as pd
 
-from .frameworks.types import ArrayLike, EstimatorLike, MatrixLike, RuntimeValue
+from .frameworks.types import ArrayLike, EstimatorLike, MatrixLike
 
 try:
     import torch
@@ -35,13 +35,27 @@ except Exception:  # pragma: no cover - optional dependency
 
 SCORE_PAYLOAD_SCHEMA = "deckard.score.v1"
 
+SerializableScalar = str | int | float | bool | None
+SerializableValue = (
+    SerializableScalar
+    | list["SerializableValue"]
+    | dict[str, "SerializableValue"]
+)
+
 
 class ScoreDict(dict):
     """Dictionary-like score payload with canonical transformation helpers."""
 
     @staticmethod
     def normalize_value(value: Any) -> Any:
-        """Convert runtime score values into JSON/YAML serializable values."""
+        """Convert runtime score values into JSON/YAML serializable values.
+
+        Args:
+            value: Runtime score payload value.
+
+        Returns:
+            JSON/YAML-safe representation of the provided value.
+        """
         if isinstance(value, Path):
             return value.as_posix()
         if isinstance(value, ScoreDict):
@@ -68,7 +82,14 @@ class ScoreDict(dict):
 
     @classmethod
     def from_payload(cls, payload: Any) -> "ScoreDict":
-        """Build a ScoreDict from arbitrary score payload input."""
+        """Build a ScoreDict from arbitrary score payload input.
+
+        Args:
+            payload: Arbitrary score payload to normalize.
+
+        Returns:
+            Normalized ScoreDict instance.
+        """
         if isinstance(payload, ScoreDict):
             return cls(payload)
         if isinstance(payload, pd.Series):
@@ -78,7 +99,14 @@ class ScoreDict(dict):
         return cls({"value": cls.normalize_value(payload)})
 
     def merge(self, other: dict[str, Any] | "ScoreDict") -> "ScoreDict":
-        """Return merged score payload with `other` taking precedence."""
+        """Return merged score payload with `other` taking precedence.
+
+        Args:
+            other: Score payload to merge into the current mapping.
+
+        Returns:
+            Merged ScoreDict where other takes precedence.
+        """
         merged = ScoreDict.from_payload(self)
         merged.update(ScoreDict.from_payload(other))
         return merged
@@ -92,7 +120,18 @@ class ScoreDict(dict):
         mode: str | None = None,
         split: str | None = None,
     ) -> "ScoreDict":
-        """Update score payload optionally nested by stage/mode/split."""
+        """Update score payload optionally nested by stage/mode/split.
+
+        Args:
+            value: Score value or nested score mapping.
+            key: Optional key for the value at the resolved cursor.
+            stage: Optional stage key.
+            mode: Optional mode key.
+            split: Optional split key.
+
+        Returns:
+            The updated ScoreDict instance.
+        """
         cursor: dict[str, Any] = self
         for token in (stage, mode, split):
             if token is None:
@@ -121,7 +160,17 @@ class ScoreDict(dict):
         split: str | None = None,
         default: Any = None,
     ) -> Any:
-        """Return score payload view optionally narrowed by stage/mode/split."""
+        """Return score payload view optionally narrowed by stage/mode/split.
+
+        Args:
+            stage: Optional stage key.
+            mode: Optional mode key.
+            split: Optional split key.
+            default: Fallback value when path resolution fails.
+
+        Returns:
+            Resolved score payload or default.
+        """
         cursor: Any = self
         for token in (stage, mode, split):
             if token is None:
@@ -151,11 +200,25 @@ class ScoreDict(dict):
         return flattened
 
     def flatten(self, sep: str = ".") -> dict[str, Any]:
-        """Return a dot-delimited flat score mapping."""
+        """Return a dot-delimited flat score mapping.
+
+        Args:
+            sep: Token separator used for flattened keys.
+
+        Returns:
+            Flattened score mapping.
+        """
         return ScoreDict._flatten(dict(self), sep=sep)
 
     def flat_by_scope(self, sep: str = ".") -> dict[str, dict[str, Any]]:
-        """Group flattened score keys by first token scope."""
+        """Group flattened score keys by first token scope.
+
+        Args:
+            sep: Token separator used for flattened keys.
+
+        Returns:
+            Mapping from scope token to scoped flat score mapping.
+        """
         grouped: dict[str, dict[str, Any]] = {}
         for key, value in self.flatten(sep=sep).items():
             parts = str(key).split(sep, 1)
@@ -165,18 +228,39 @@ class ScoreDict(dict):
         return grouped
 
     def dotlist_dict(self, sep: str = ".") -> dict[str, Any]:
-        """Return OmegaConf-style dot-key dictionary."""
+        """Return OmegaConf-style dot-key dictionary.
+
+        Args:
+            sep: Token separator used for flattened keys.
+
+        Returns:
+            Dot-key dictionary for OmegaConf-style overrides.
+        """
         return dict(self.flatten(sep=sep))
 
     def dotlist_items(self, sep: str = ".") -> list[str]:
-        """Return OmegaConf-style `key=value` entries."""
+        """Return OmegaConf-style `key=value` entries.
+
+        Args:
+            sep: Token separator used for flattened keys.
+
+        Returns:
+            List of key=value override strings.
+        """
         return [
             f"{k}={json.dumps(ScoreDict.normalize_value(v), default=str)}"
             for k, v in self.flatten(sep=sep).items()
         ]
 
     def to_contract_envelope(self, schema: str = "deckard.score.v1") -> dict[str, Any]:
-        """Return standardized serialization envelope for persisted scores."""
+        """Return standardized serialization envelope for persisted scores.
+
+        Args:
+            schema: Envelope schema identifier.
+
+        Returns:
+            Standardized score envelope containing nested and flattened payloads.
+        """
         flat = self.flatten(sep=".")
         return {
             "_schema": schema,
@@ -200,6 +284,14 @@ class ScoreDict(dict):
         ``load_scores``/``save_scores``, this call always performs a disk read
         (if the file exists) and a disk write (when ``persist=True``).
         Without ``score_file``, returns the in-memory nested payload.
+
+        Args:
+            score_file: Optional persisted score path.
+            artifact_loader: Optional loader implementing load_scores/save_scores.
+            persist: Whether to persist merged scores when score_file is provided.
+
+        Returns:
+            Resolved nested score payload as a dictionary.
         """
         current = ScoreDict.from_payload(self)
         if score_file is None:
@@ -325,7 +417,7 @@ class ArtifactLoaderConfig:
 
     def save_scores(
         self,
-        scores: ScoreDict | dict[str, RuntimeValue] | pd.Series,
+        scores: ScoreDict | dict[str, SerializableValue] | pd.Series,
         filepath: Optional[str] = None,
     ) -> None:
         """Persist score payloads to disk in a supported tabular/structured format.
@@ -333,6 +425,11 @@ class ArtifactLoaderConfig:
         Args:
             scores: Score payload mapping or series to persist.
             filepath: Target file path.
+
+        Raises:
+            ImportError: If YAML persistence is requested without PyYAML.
+            ValueError: If filepath extension is unsupported.
+            AssertionError: If filepath is missing or file was not persisted.
         """
         assert filepath is not None, "Filepath must be provided to save scores."
         score_path = Path(filepath)
@@ -385,6 +482,11 @@ class ArtifactLoaderConfig:
 
         Returns:
             Canonical score payload mapping.
+
+        Raises:
+            ImportError: If YAML loading is requested without PyYAML.
+            ValueError: If filepath extension is unsupported.
+            AssertionError: If score file does not exist.
         """
         score_path = Path(filepath)
         assert score_path.exists(), f"File {filepath} does not exist."
@@ -446,7 +548,7 @@ class ArtifactLoaderConfig:
         self,
         data: MatrixLike | ArrayLike | pd.DataFrame,
         filepath: Optional[str] = None,
-        **kwargs: RuntimeValue,
+        **kwargs: SerializableValue,
     ) -> None:
         """Persist matrix/array-like data payloads using file-suffix routing.
 
@@ -454,6 +556,10 @@ class ArtifactLoaderConfig:
             data: Matrix-like payload to persist.
             filepath: Target file path.
             **kwargs: Backend-specific pandas writer options.
+
+        Raises:
+            ValueError: If filepath extension is unsupported.
+            AssertionError: If filepath is missing or file was not persisted.
         """
         assert filepath is not None, "Filepath must be provided to save data."
         data_path = Path(filepath)
@@ -488,7 +594,11 @@ class ArtifactLoaderConfig:
                 )
         assert Path(data_path).exists(), f"Failed to save data to {data_path}"
 
-    def load_data(self, filepath: str, **kwargs: RuntimeValue) -> MatrixLike | ArrayLike:
+    def load_data(
+        self,
+        filepath: str,
+        **kwargs: SerializableValue,
+    ) -> MatrixLike | ArrayLike:
         """Load matrix/array-like payloads from disk based on file extension.
 
         Args:
@@ -497,6 +607,10 @@ class ArtifactLoaderConfig:
 
         Returns:
             Loaded matrix-like or array-like payload.
+
+        Raises:
+            FileNotFoundError: If filepath is None.
+            ValueError: If filepath extension is unsupported.
         """
         if filepath is None:
             raise FileNotFoundError("Filepath is None.")
@@ -548,35 +662,44 @@ class ArtifactLoaderConfig:
     def load_matrix(
         self,
         filepath: str,
-        **kwargs: RuntimeValue,
+        **kwargs: SerializableValue,
     ) -> MatrixLike:
         """Load and return a matrix-like payload from disk.
 
         Args:
             filepath: Source payload path.
             **kwargs: Backend-specific pandas reader options.
+
+        Returns:
+            Loaded matrix-like payload.
         """
         return self.load_data(filepath, **kwargs)
 
     def load_vector(
         self,
         filepath: str,
-        **kwargs: RuntimeValue,
+        **kwargs: SerializableValue,
     ) -> ArrayLike:
         """Load and return a vector-like payload from disk.
 
         Args:
             filepath: Source payload path.
             **kwargs: Backend-specific pandas reader options.
+
+        Returns:
+            Loaded vector-like payload.
         """
         return self.load_data(filepath, **kwargs)
 
-    def save_object(self, obj: EstimatorLike | RuntimeValue, filepath: str) -> None:
+    def save_object(self, obj: EstimatorLike | SerializableValue, filepath: str) -> None:
         """Serialize a Python object payload with pickle-compatible formats.
 
         Args:
             obj: Object payload to serialize.
             filepath: Target pickle path.
+
+        Raises:
+            ValueError: If filepath extension is not pickle-compatible.
         """
         Path(filepath).parent.mkdir(parents=True, exist_ok=True)
         suffix = Path(filepath).suffix
@@ -593,7 +716,7 @@ class ArtifactLoaderConfig:
         filepath: str,
         ignore_corrupt: bool = False,
         delete_corrupt: bool = False,
-    ) -> EstimatorLike | RuntimeValue | None:
+    ) -> EstimatorLike | SerializableValue | None:
         """Load a pickled object payload with optional corrupt-file handling.
 
         Args:
@@ -603,6 +726,12 @@ class ArtifactLoaderConfig:
 
         Returns:
             Loaded payload or ``None`` when ``ignore_corrupt`` is enabled.
+
+        Raises:
+            EOFError: If the pickle stream is truncated and ignore_corrupt is False.
+            pickle.UnpicklingError: If pickle data is invalid and ignore_corrupt is False.
+            AttributeError: If object attributes cannot be restored and ignore_corrupt is False.
+            OSError: If file IO fails and ignore_corrupt is False.
         """
         try:
             with open(filepath, "rb") as f:
@@ -620,7 +749,7 @@ class ArtifactLoaderConfig:
         filepath: str,
         ignore_corrupt: bool = False,
         delete_corrupt: bool = False,
-    ) -> EstimatorLike | RuntimeValue | None:
+    ) -> EstimatorLike | SerializableValue | None:
         """Load model artifacts from .pt/.joblib/pickle-backed formats.
 
         Args:
@@ -630,6 +759,9 @@ class ArtifactLoaderConfig:
 
         Returns:
             Loaded model payload.
+
+        Raises:
+            ImportError: If required optional loaders (torch/joblib) are unavailable.
         """
         suffix = Path(filepath).suffix.lower()
         if suffix == ".pt":
@@ -650,12 +782,16 @@ class ArtifactLoaderConfig:
             delete_corrupt=delete_corrupt,
         )
 
-    def save_model(self, model: EstimatorLike | RuntimeValue, filepath: str) -> None:
+    def save_model(self, model: EstimatorLike | SerializableValue, filepath: str) -> None:
         """Persist model artifacts using suffix-driven serialization backends.
 
         Args:
             model: Model payload to persist.
             filepath: Target model artifact path.
+
+        Raises:
+            ImportError: If required optional savers (torch/joblib) are unavailable.
+            NotImplementedError: If model file extension is unsupported.
         """
         suffix = Path(filepath).suffix.lower()
         if suffix == ".pt":
@@ -683,7 +819,7 @@ class ArtifactLoaderConfig:
 
     def save(
         self,
-        payload: EstimatorLike | MatrixLike | ArrayLike | ScoreDict | RuntimeValue | None = None,
+        payload: EstimatorLike | MatrixLike | ArrayLike | ScoreDict | SerializableValue | None = None,
         filepath: Optional[str] = None,
     ) -> None:
         """Persist payloads by delegating to score/data/object/model save handlers.
@@ -691,6 +827,9 @@ class ArtifactLoaderConfig:
         Args:
             payload: Payload to persist; defaults to config metadata when omitted.
             filepath: Target artifact path.
+
+        Raises:
+            ValueError: If filepath is missing or extension is unsupported.
         """
         # Backward compatibility: many callers use save(filepath) positional style.
         if filepath is None and isinstance(payload, (str, Path)):
@@ -743,7 +882,7 @@ class ArtifactLoaderConfig:
     def load(
         self,
         filepath: Optional[str] = None,
-    ) -> "ArtifactLoaderConfig | ScoreDict | MatrixLike | ArrayLike | EstimatorLike | RuntimeValue | None":
+    ) -> "ArtifactLoaderConfig | ScoreDict | MatrixLike | ArrayLike | EstimatorLike | SerializableValue | None":
         """Load artifacts from disk and dispatch to the appropriate loader.
 
         Args:
@@ -751,6 +890,9 @@ class ArtifactLoaderConfig:
 
         Returns:
             Loaded payload or the config instance when loading metadata envelope.
+
+        Raises:
+            ValueError: If path extension is unsupported for configured payload kind.
         """
         path = Path(filepath or self.path)
         if not path.exists():

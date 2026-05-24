@@ -29,7 +29,11 @@ from .score import (
 logger = logging.getLogger(__name__)
 
 RuntimeScalar = str | int | float | bool | None
-RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
+SerializableValue = (
+    RuntimeScalar
+    | list["SerializableValue"]
+    | dict[str, "SerializableValue"]
+)
 
 
 class TinyFairness(Dataset):
@@ -132,7 +136,11 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
     # ------------------------------------------------------------------
 
     def load_dataset(self) -> "FairlearnPytorchDataConfig":
-        """Use the PyTorch parent dataset-loading flow for runtime materialization."""
+        """Use the PyTorch parent dataset-loading flow for runtime materialization.
+
+        Returns:
+            This FairlearnPytorchDataConfig instance.
+        """
         return PytorchCustomDataConfig.load_dataset(self)
 
     def _fit_transform_X(self, X_train, X_test, y_train, y_test, pipeline):
@@ -146,7 +154,17 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         return X_train, X_test, y_train, y_test
 
     def fit(self, run_hooks: bool = True) -> "FairlearnPytorchDataConfig":
-        """Split the dataset and extract per-split sensitive-feature arrays."""
+        """Split the dataset and extract per-split sensitive-feature arrays.
+
+        Args:
+            run_hooks: Reserved hook toggle for interface compatibility.
+
+        Returns:
+            This FairlearnPytorchDataConfig instance.
+
+        Raises:
+            ValueError: If split-size configuration is invalid.
+        """
         _ = run_hooks
         if not (isinstance(self._X, (tuple, list)) and len(self._X) == 2):
             num_samples = len(self._X)
@@ -235,7 +253,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
     # Scoring
     # ------------------------------------------------------------------
 
-    def __call__(self, *args: object, **kwargs: object) -> dict[str, RuntimeValue]:
+    def __call__(self, *args: object, **kwargs: object) -> dict[str, SerializableValue]:
         """Run fairness-aware torch data execution with a default scorer fallback.
 
         Args:
@@ -260,7 +278,17 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         return result
 
     def score(self, mode: str | None = None) -> dict:
-        """Compute fairness scores using canonical helpers for sensitive-feature lookup."""
+        """Compute fairness scores using canonical helpers for sensitive-feature lookup.
+
+        Args:
+            mode: Scoring mode token for stage/split resolution.
+
+        Returns:
+            Fairness score mapping for the requested mode.
+
+        Raises:
+            TypeError: If configured scorer is not callable.
+        """
         from ...utils import is_default_config_value
 
         if (

@@ -88,19 +88,45 @@ class AbstractFileHandler(ABC):
 
     @abstractmethod
     def validate_keys(self, keys: Mapping[str, Any] | list[str] | tuple[str, ...]) -> None:
-        """Validate provided file keys against the allowed file schema."""
+        """Validate provided file keys against the allowed file schema.
+
+        Args:
+            keys: File key container to validate against allowed schema keys.
+        """
 
     @abstractmethod
     def disk_status(self, files: Mapping[str, Any]) -> dict[str, bool]:
-        """Return exists/not-exists status for provided file path mapping."""
+        """Return exists/not-exists status for provided file path mapping.
+
+        Args:
+            files: Mapping of file-key to filepath values.
+
+        Returns:
+            Mapping of file-key to disk existence status.
+        """
 
     @abstractmethod
     def parse_placeholders(self, value: str) -> list[str]:
-        """Parse placeholder tokens from a template string."""
+        """Parse placeholder tokens from a template string.
+
+        Args:
+            value: Template string containing placeholder markers.
+
+        Returns:
+            Placeholder token list extracted from value.
+        """
 
     @abstractmethod
     def replace_placeholders(self, value: str, replacements: Mapping[str, Any]) -> str:
-        """Apply placeholder replacements to a template string."""
+        """Apply placeholder replacements to a template string.
+
+        Args:
+            value: Template string containing placeholder markers.
+            replacements: Mapping of placeholder tokens to replacement values.
+
+        Returns:
+            Resolved string with placeholders replaced.
+        """
 
 
 class CanonFileHandler(AbstractFileHandler):
@@ -109,12 +135,28 @@ class CanonFileHandler(AbstractFileHandler):
     _placeholder_re = re.compile(r"\{[^{}]+\}")
 
     def validate_keys(self, keys: Mapping[str, Any] | list[str] | tuple[str, ...]) -> None:
+        """Validate incoming key set against the canonical key registry.
+
+        Args:
+            keys: File key container to validate.
+
+        Raises:
+            FileConfigError: If one or more keys are not in the canonical schema.
+        """
         iterable = keys.keys() if isinstance(keys, Mapping) else keys
         invalid = [key for key in iterable if key not in _ALLOWED_KEYS]
         if invalid:
             raise FileConfigError(f"Invalid file key(s): {', '.join(sorted(invalid))}")
 
     def disk_status(self, files: Mapping[str, Any]) -> dict[str, bool]:
+        """Return per-key disk existence status for provided file mapping.
+
+        Args:
+            files: Mapping of file-key to filepath values.
+
+        Returns:
+            Mapping of file-key to disk existence status.
+        """
         self.validate_keys(files)
         status: dict[str, bool] = {}
         for key, value in files.items():
@@ -125,9 +167,26 @@ class CanonFileHandler(AbstractFileHandler):
         return status
 
     def parse_placeholders(self, value: str) -> list[str]:
+        """Parse placeholder tokens from a template string.
+
+        Args:
+            value: Template string containing placeholder markers.
+
+        Returns:
+            Placeholder token list extracted from value.
+        """
         return self._placeholder_re.findall(value)
 
     def replace_placeholders(self, value: str, replacements: Mapping[str, Any]) -> str:
+        """Apply placeholder replacements to a template string.
+
+        Args:
+            value: Template string containing placeholder markers.
+            replacements: Mapping of placeholder tokens to replacement values.
+
+        Returns:
+            Resolved template string.
+        """
         resolved = value
         for token, replacement in replacements.items():
             resolved = resolved.replace(str(token), str(replacement))
@@ -146,7 +205,11 @@ class PlaceholderResolverMixin:
 
     @property
     def num(self) -> str:
-        """Returns the serial job number in a multirun sweep. Uses uuid as fallback if Hydra is not enabled."""
+        """Return the serial job number in a multirun sweep.
+
+        Returns:
+            Hydra job number when available, otherwise a UUID fallback.
+        """
         if hasattr(self, "_num_override"):
             return str(self._num_override)
         try:
@@ -156,12 +219,20 @@ class PlaceholderResolverMixin:
 
     @num.setter
     def num(self, value: int) -> None:
-        """Set the resolved job num override."""
+        """Set the resolved job num override.
+
+        Args:
+            value: Job number override.
+        """
         self._num_override = str(value)
 
     @property
     def id(self) -> str:
-        """Returns the specific launcher or cluster job ID. Uses uuid as fallback if Hydra is not enabled"""
+        """Return the specific launcher or cluster job identifier.
+
+        Returns:
+            Hydra job ID/num when available, otherwise a UUID fallback.
+        """
         if hasattr(self, "_id_override"):
             return str(self._id_override)
         try:
@@ -174,7 +245,11 @@ class PlaceholderResolverMixin:
 
     @id.setter
     def id(self, value: int) -> None:
-        """Set the resolved job id override."""
+        """Set the resolved job id override.
+
+        Args:
+            value: Job ID override.
+        """
         self._id_override = str(value)
 
     def _replacement_dict(self) -> dict[str, str]:
@@ -259,17 +334,29 @@ class FileConfig(PlaceholderResolverMixin):
     # -------------------------------------------------------------------------
 
     def update(self, **kwargs: Any) -> None:
-        """Validate and assign file-path fields on the runtime file mapping."""
+        """Validate and assign file-path fields on the runtime file mapping.
+
+        Args:
+            **kwargs: File mapping entries to set/update.
+        """
         for k, v in kwargs.items():
             self._validate_key(k)
             self._set(k, v)
 
-    def as_dict(self) -> dict[str, Any]:
-        """Return file mapping as a plain dictionary."""
+    def as_dict(self) -> dict[str, str | int | float | bool | None]:
+        """Return file mapping as a plain dictionary.
+
+        Returns:
+            Serialized file mapping dictionary.
+        """
         return dict(self._files)
 
     def disk_status(self) -> dict[str, bool]:
-        """Return per-file existence status for configured file paths."""
+        """Return per-file existence status for configured file paths.
+
+        Returns:
+            Mapping from configured file key to disk existence status.
+        """
         return self.handler.disk_status(self._files)
 
     def __getitem__(self, key: str) -> Any:

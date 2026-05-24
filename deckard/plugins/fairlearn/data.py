@@ -25,7 +25,11 @@ from .score import (
 )
 
 RuntimeScalar = str | int | float | bool | None
-RuntimeValue = RuntimeScalar | list["RuntimeValue"] | dict[str, "RuntimeValue"]
+SerializableValue = (
+    RuntimeScalar
+    | list["SerializableValue"]
+    | dict[str, "SerializableValue"]
+)
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +57,9 @@ class FairnessBehaviorMixin(SensitiveColumnsMixin):
 
         Args:
             run_hooks: Whether the parent data runtime should execute hook callbacks.
+
+        Returns:
+            The current fairness behavior instance.
         """
         super().fit(run_hooks=run_hooks)
 
@@ -120,8 +127,16 @@ class FairlearnDataConfig(
         self,
         *args: RuntimePayload,
         **kwargs: RuntimePayload,
-    ) -> dict[str, RuntimeValue]:
-        """Execute fairness-aware data runtime."""
+    ) -> dict[str, SerializableValue]:
+        """Execute fairness-aware data runtime.
+
+        Args:
+            *args: Positional runtime payloads forwarded to parent execution.
+            **kwargs: Keyword runtime payloads and optional file mappings.
+
+        Returns:
+            Runtime score and artifact payload mapping.
+        """
         files = resolve_runtime_files(
             kwargs,
             kwargs.pop("files", None),
@@ -161,8 +176,16 @@ class FairlearnDataConfig(
         elif isinstance(self.sensitive_columns, str):
             self.sensitive_columns = [self.sensitive_columns]
 
-    def load_dataset(self) -> Any:
-        """Load dataset and validate configured sensitive columns are present."""
+    def load_dataset(self) -> "FairlearnDataConfig":
+        """Load dataset and validate configured sensitive columns are present.
+
+        Returns:
+            The current configuration instance after dataset validation.
+
+        Raises:
+            ValueError: If sensitive columns are not configured.
+            AssertionError: If runtime datasets are missing expected attributes/columns.
+        """
         super().load_dataset()
         assert hasattr(self, "_X"), RuntimeError(
             "self._X not found while loading FairlearnDataConfig",

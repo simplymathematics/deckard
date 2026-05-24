@@ -41,6 +41,12 @@ class ExtractionAttackMixin(PoisoningAttackMixin):
             attack: Instantiated extraction attack object.
             attack_type: Parsed runtime family; must be ``extraction``.
             attack_subtype: Parsed subtype token from attack path.
+
+        Returns:
+            Score payload for extraction runtime execution.
+
+        Raises:
+            ValueError: If attack type is not extraction.
         """
         if (attack_type or "").lower() != "extraction":
             raise ValueError(
@@ -77,6 +83,12 @@ class ExtractionAttackMixin(PoisoningAttackMixin):
             data: Runtime dataset and split container.
             art_model: ART-wrapped victim model used for extraction.
             attack: Instantiated extraction attack object.
+
+        Returns:
+            Score payload comparing victim and extracted model behavior.
+
+        Raises:
+            ValueError: If task/model requirements for extraction are not met.
         """
         task_is_classification = self._infer_task_is_classification(
             data,

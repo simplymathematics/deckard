@@ -36,11 +36,36 @@ class BaseTrainer:
         times: dict[str, Any] | None = None,
         force_retrain: bool = False,
     ) -> dict[str, Any]:
+        """Train model runtime and return training metadata.
+
+        Args:
+            config: Runtime model config.
+            data: Runtime data config containing train payloads.
+            model_file: Optional model artifact path.
+            times: Optional runtime timing mapping.
+            force_retrain: Whether to force retraining even when artifacts exist.
+
+        Returns:
+            Training metadata payload.
+
+        Raises:
+            NotImplementedError: Always raised by the base trainer interface.
+        """
         raise NotImplementedError
 
     @classmethod
     def resolve(cls, config: "ModelConfig") -> Any:
-        """Resolve config.trainer into a callable trainer object or None."""
+        """Resolve config.trainer into a callable trainer object or None.
+
+        Args:
+            config: Runtime model config with trainer declaration.
+
+        Returns:
+            Resolved trainer object or None.
+
+        Raises:
+            ValueError: If trainer specification type is unsupported.
+        """
         trainer_aliases = {
             "sklearn": SklearnTrainer,
             "pretrained": PretrainedTrainer,
@@ -87,7 +112,17 @@ class BaseTrainer:
 
     @classmethod
     def compose(cls, config: "ModelConfig") -> Any:
-        """Compose and cache runtime trainer callable for config."""
+        """Compose and cache runtime trainer callable for config.
+
+        Args:
+            config: Runtime model config.
+
+        Returns:
+            Callable trainer object.
+
+        Raises:
+            TypeError: If composed trainer is not callable.
+        """
         trainer_obj = getattr(config, "_trainer_obj", None)
         if trainer_obj is None:
             trainer_obj = cls.resolve(config)
@@ -109,7 +144,18 @@ class BaseTrainer:
         times: dict[str, Any] | None = None,
         force_retrain: bool = False,
     ) -> dict[str, Any]:
-        """Resolve/compose and run the configured trainer against config."""
+        """Resolve/compose and run the configured trainer against config.
+
+        Args:
+            config: Runtime model config.
+            data: Runtime data config.
+            model_file: Optional model artifact path.
+            times: Optional runtime timing mapping.
+            force_retrain: Whether to force retraining.
+
+        Returns:
+            Training metadata payload from trainer execution.
+        """
         trainer_obj = cls.compose(config)
         return trainer_obj(
             config,
@@ -133,6 +179,18 @@ class SklearnTrainer(BaseTrainer):
         times: dict[str, Any] | None = None,
         force_retrain: bool = False,
     ) -> dict[str, Any]:
+        """Train sklearn-style model and optionally persist artifact.
+
+        Args:
+            config: Runtime model config.
+            data: Runtime data config.
+            model_file: Optional model artifact path.
+            times: Optional runtime timing mapping.
+            force_retrain: Unused for sklearn trainer; retained for interface parity.
+
+        Returns:
+            Training metadata payload.
+        """
         output = dict(times or {})
         config._train(data.X_train, data.y_train)
         output["training_time"] = getattr(config, "training_time", None)
@@ -155,6 +213,18 @@ class PytorchTrainer(BaseTrainer):
         times: dict[str, Any] | None = None,
         force_retrain: bool = False,
     ) -> dict[str, Any]:
+        """Train torch-style model and optionally persist artifact.
+
+        Args:
+            config: Runtime model config.
+            data: Runtime data config.
+            model_file: Optional model artifact path.
+            times: Optional runtime timing mapping.
+            force_retrain: Unused for pytorch trainer; retained for interface parity.
+
+        Returns:
+            Training metadata payload.
+        """
         output = dict(times or {})
         config._train(data.X_train, data.y_train)
         output["training_time"] = getattr(config, "training_time", None)
@@ -179,6 +249,21 @@ class PretrainedTrainer(BaseTrainer):
         times: dict[str, Any] | None = None,
         force_retrain: bool = False,
     ) -> dict[str, Any]:
+        """Load pretrained artifacts when available and optionally retrain.
+
+        Args:
+            config: Runtime model config.
+            data: Runtime data config.
+            model_file: Optional model artifact path.
+            times: Optional runtime timing mapping.
+            force_retrain: Whether to bypass artifact loading and retrain.
+
+        Returns:
+            Training metadata payload.
+
+        Raises:
+            NotFittedError: If no fitted artifact is available and fallback training is disabled.
+        """
         output = dict(times or {})
         if force_retrain:
             config._initialize_model()
@@ -229,6 +314,18 @@ class PartialFitTrainer(BaseTrainer):
         times: dict[str, Any] | None = None,
         force_retrain: bool = False,
     ) -> dict[str, Any]:
+        """Incrementally train model with partial_fit when supported.
+
+        Args:
+            config: Runtime model config.
+            data: Runtime data config.
+            model_file: Optional model artifact path.
+            times: Optional runtime timing mapping.
+            force_retrain: Unused for partial-fit trainer; retained for interface parity.
+
+        Returns:
+            Training metadata payload.
+        """
         output = dict(times or {})
         model = getattr(config, "_model", None)
         if model is None and hasattr(config, "_initialize_model"):
@@ -278,6 +375,18 @@ class PruningTrainer(BaseTrainer):
         times: dict[str, Any] | None = None,
         force_retrain: bool = False,
     ) -> dict[str, Any]:
+        """Train model and optionally mark trial as pruned using configured metric.
+
+        Args:
+            config: Runtime model config.
+            data: Runtime data config.
+            model_file: Optional model artifact path.
+            times: Optional runtime timing mapping.
+            force_retrain: Unused for pruning trainer; retained for interface parity.
+
+        Returns:
+            Training metadata payload.
+        """
         output = dict(times or {})
         config._train(data.X_train, data.y_train)
         output["training_time"] = getattr(config, "training_time", None)
@@ -315,6 +424,18 @@ class PartialFitPruningTrainer(PartialFitTrainer):
         times: dict[str, Any] | None = None,
         force_retrain: bool = False,
     ) -> dict[str, Any]:
+        """Run partial-fit training with optional pruning checks.
+
+        Args:
+            config: Runtime model config.
+            data: Runtime data config.
+            model_file: Optional model artifact path.
+            times: Optional runtime timing mapping.
+            force_retrain: Unused for this trainer; retained for interface parity.
+
+        Returns:
+            Training metadata payload.
+        """
         output = super().__call__(
             config,
             data,

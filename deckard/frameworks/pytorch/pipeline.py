@@ -17,8 +17,13 @@ class TorchDataPipelineMixin:
     """PyTorch adapter methods for framework DataConfig runtimes."""
 
     def build_pipeline(self) -> EstimatorLike | Tensor:
-        """
-        Build a preprocessing pipeline.
+        """Build a preprocessing pipeline.
+
+        Returns:
+            Runtime pipeline object.
+
+        Raises:
+            AttributeError: If runtime does not expose ``create_pipeline``.
         """
         create_pipeline = getattr(self, "create_pipeline", None)
 
@@ -36,8 +41,14 @@ class TorchDataPipelineMixin:
         X: Tensor,
         y: Tensor,
     ) -> tuple[Tensor, Tensor]:
-        """
-        Pre-sample hook.
+        """Run pre-sample hook.
+
+        Args:
+            X: Feature tensor.
+            y: Target tensor.
+
+        Returns:
+            Feature and target tensors.
         """
         return X, y
 
@@ -46,8 +57,14 @@ class TorchDataPipelineMixin:
         X: Tensor,
         y: Tensor,
     ) -> tuple[Tensor, Tensor]:
-        """
-        Apply feature-only transforms.
+        """Apply feature-only transforms.
+
+        Args:
+            X: Feature tensor.
+            y: Target tensor.
+
+        Returns:
+            Transformed feature tensor and original target tensor.
         """
         transform = getattr(self, "X_transform", None)
 
@@ -61,8 +78,14 @@ class TorchDataPipelineMixin:
         X: Tensor,
         y: Tensor,
     ) -> tuple[Tensor, Tensor]:
-        """
-        Apply target-only transforms.
+        """Apply target-only transforms.
+
+        Args:
+            X: Feature tensor.
+            y: Target tensor.
+
+        Returns:
+            Original feature tensor and transformed target tensor.
         """
         transform = getattr(self, "y_transform", None)
 
@@ -76,8 +99,14 @@ class TorchDataPipelineMixin:
         X: Tensor,
         y: Tensor,
     ) -> tuple[Tensor, Tensor]:
-        """
-        Apply joint pipeline transform.
+        """Apply joint pipeline transform.
+
+        Args:
+            X: Feature tensor.
+            y: Target tensor.
+
+        Returns:
+            Transformed feature tensor and target tensor.
         """
         pipeline = getattr(self, "pipeline", None)
 
@@ -90,8 +119,13 @@ class TorchDataPipelineMixin:
         self,
         pipeline: EstimatorLike | Tensor | None = None,
     ) -> EstimatorLike | Tensor:
-        """
-        Execute prepared pipeline.
+        """Execute prepared pipeline.
+
+        Args:
+            pipeline: Optional pipeline override.
+
+        Returns:
+            Pipeline output payload.
         """
         if pipeline is None:
             pipeline = getattr(self, "pipeline", None)

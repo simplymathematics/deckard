@@ -205,7 +205,15 @@ class PlotConfig(BaseConfig):
         self.config = config_cls(**self.kwargs)
 
     def __call__(self, *args, **kwargs) -> Union[dict, "Axes"]:
-        """Render the resolved plotting backend and return its runtime output."""
+        """Render the resolved plotting backend and return its runtime output.
+
+        Args:
+            *args: Positional args forwarded to resolved plot config.
+            **kwargs: Keyword args forwarded to resolved plot config.
+
+        Returns:
+            Plot backend runtime output payload.
+        """
         start = time.perf_counter()
         out = self.config(*args, **kwargs)
         self.times["plot_call_time"] = time.perf_counter() - start

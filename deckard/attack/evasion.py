@@ -52,6 +52,12 @@ class EvasionAttackMixin(AttackMixin):
             attack: Instantiated evasion attack implementation.
             attack_type: Parsed attack family.
             attack_subtype: Parsed evasion subtype.
+
+        Returns:
+            Score payload for evasion attack execution.
+
+        Raises:
+            ValueError: If attack family is not evasion.
         """
         if (attack_type or "").lower() != "evasion":
             raise ValueError(
@@ -80,6 +86,10 @@ class EvasionAttackMixin(AttackMixin):
 
         Returns:
             Score payload containing attack evaluation metrics.
+
+        Raises:
+            TypeError: If runtime labels have unsupported type.
+            ValueError: If attack runtime payloads are invalid.
         """
 
         start_time = time.perf_counter()

@@ -53,8 +53,21 @@ ANJANA_SCORING_HOOKS = HookBundle(
 class AnjanaDataScoreHooksMixin:
     """Data-runtime ANJANA scoring hooks and split-scoped score adapter."""
 
-    def score(self, *args, mode=None, **kwargs) -> ScoreDict:
-        """Run base data scoring with ANJANA defaults and split-aware fallback."""
+    def score(self, *args: Any, mode: str | None = None, **kwargs: Any) -> ScoreDict:
+        """Run base data scoring with ANJANA defaults and split-aware fallback.
+
+        Args:
+            *args: Positional score payloads forwarded to base scorer execution.
+            mode: Optional data split mode to score.
+            **kwargs: Keyword payloads forwarded to scorer execution.
+
+        Returns:
+            Normalized score payload from the configured scorer.
+
+        Raises:
+            TypeError: If the configured scorer is not callable.
+            Exception: Re-raises non-data-profile TypeError from parent scoring.
+        """
         if is_default_config_value(self.scorer, include_best=False):
             from . import data as anjana_data_module
 

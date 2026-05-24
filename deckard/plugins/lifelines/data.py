@@ -17,6 +17,10 @@ class LifelinesDataMode(str, Enum):
     OPTUNA_DB = "optuna_db"
 
 
+LifelinesScalar = str | int | float | bool | None
+LifelinesValue = LifelinesScalar | list["LifelinesValue"] | dict[str, "LifelinesValue"]
+
+
 class LifelinesValidationMixin:
     """Reusable validation behavior for lifelines-compatible configs."""
 
@@ -131,7 +135,7 @@ class LifelinesDataConfig(LifelinesValidationMixin, DataConfig):
     def from_auxiliary_attack(
         cls,
         data_config: DataConfig,
-        attack_config: dict[str, Any],
+        attack_config: dict[str, LifelinesValue],
     ) -> "LifelinesDataConfig":
         """Build auxiliary-attack mode config from an existing data config.
 
@@ -155,7 +159,7 @@ class LifelinesDataConfig(LifelinesValidationMixin, DataConfig):
         cls,
         optuna_db: str,
         dataset_name: StringifiedClass = "optuna",
-        optuna_schema: Optional[Union[str, dict[str, Any]]] = None,
+        optuna_schema: Optional[Union[str, dict[str, LifelinesValue]]] = None,
         optuna_query: Optional[str] = None,
     ) -> "LifelinesDataConfig":
         """Build optuna-db mode config from an Optuna database source.
@@ -180,19 +184,35 @@ class LifelinesDataConfig(LifelinesValidationMixin, DataConfig):
         )
 
     def is_native_survival_data(self) -> bool:
-        """Return whether this config is in native survival-data mode."""
+        """Return whether this config is in native survival-data mode.
+
+        Returns:
+            ``True`` when mode is native survival data.
+        """
         return self.mode == LifelinesDataMode.NATIVE
 
     def has_auxiliary_model(self) -> bool:
-        """Return whether this config is in auxiliary-model mode."""
+        """Return whether this config is in auxiliary-model mode.
+
+        Returns:
+            ``True`` when mode is auxiliary model.
+        """
         return self.mode == LifelinesDataMode.AUXILIARY_MODEL
 
     def has_auxiliary_attack(self) -> bool:
-        """Return whether this config is in auxiliary-attack mode."""
+        """Return whether this config is in auxiliary-attack mode.
+
+        Returns:
+            ``True`` when mode is auxiliary attack.
+        """
         return self.mode == LifelinesDataMode.AUXILIARY_ATTACK
 
     def is_optuna_db(self) -> bool:
-        """Return whether this config is in Optuna database mode."""
+        """Return whether this config is in Optuna database mode.
+
+        Returns:
+            ``True`` when mode is Optuna DB.
+        """
         return self.mode == LifelinesDataMode.OPTUNA_DB
 
 

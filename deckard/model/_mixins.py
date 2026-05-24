@@ -2,21 +2,46 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterable
+from typing import Any, Iterable, Protocol
 
+from ..frameworks.types import ArrayLike, EstimatorLike, MatrixLike
 from ..plugins import HookPlugin
 from ..utils import instantiate_plugin_spec, load_class, normalize_plugin_specs
+
+
+class PruneTrialProtocol(Protocol):
+    """Minimal trial protocol for pruning integrations."""
+
+    def report(self, value: float, step: int) -> None:
+        """Report intermediate metric values to the pruning backend.
+
+        Args:
+            value: Intermediate scalar metric.
+            step: Iteration or epoch step index.
+        """
+        ...
+
+    def should_prune(self) -> bool:
+        """Return whether current trial should be pruned.
+
+        Returns:
+            ``True`` when backend requests pruning.
+        """
+        ...
 
 
 class ModelTrainingMixin:
     """Reusable model training behavior for non-pretrained model flows."""
 
-    def train_model(self, X, y) -> None:
+    def train_model(self, X: MatrixLike, y: ArrayLike) -> None:
         """Fit the underlying estimator.
 
         Args:
             X: Training features.
             y: Training targets.
+
+        Raises:
+            ValueError: If runtime model is missing or non-trainable.
         """
         model = getattr(self, "_model", None)
         if model is None or not hasattr(model, "fit"):
@@ -24,11 +49,16 @@ class ModelTrainingMixin:
         fit_params = getattr(self, "fit_params", {}) or {}
         model.fit(X, y, **fit_params)
 
-    def train(self, X, y) -> None:
-        """Public training entrypoint that delegates to the model implementation."""
+    def train(self, X: MatrixLike, y: ArrayLike) -> None:
+        """Public training entrypoint that delegates to the model implementation.
+
+        Args:
+            X: Training features.
+            y: Training targets.
+        """
         self.train_model(X, y)
 
-    def _train(self, X, y) -> None:
+    def _train(self, X: MatrixLike, y: ArrayLike) -> None:
         """Protected training hook used by model runtime orchestration."""
         self.train_model(X, y)
 
@@ -36,7 +66,7 @@ class ModelTrainingMixin:
 class PretrainedModelMixin:
     """Reusable pretrained-model loading behavior."""
 
-    def load_cached(self, path: str) -> Any:
+    def load_cached(self, path: str) -> EstimatorLike:
         """Load a persisted model from ``path`` using the config's loader.
 
         Args:
@@ -44,6 +74,9 @@ class PretrainedModelMixin:
 
         Returns:
             The loaded config or estimator instance.
+
+        Raises:
+            NotImplementedError: If neither config nor model exposes ``load(path)``.
         """
         loader = getattr(self, "load", None)
         if callable(loader):
@@ -61,8 +94,8 @@ class ModelPrunerMixin:
 
     def check_prune(
         self,
-        trial,
-        value: Any | None = None,
+        trial: PruneTrialProtocol | None,
+        value: float | int | None = None,
         step: int | None = None,
     ) -> bool:
         """Report an intermediate value and ask a trial whether it should prune.

@@ -68,6 +68,14 @@ class TinyNet(nn.Module if nn else object):
         )
 
     def forward(self, x):
+        """Run forward pass through TinyNet.
+
+        Args:
+            x: Input tensor batch.
+
+        Returns:
+            Logit tensor output.
+        """
         return self.net(x)
 
 
@@ -393,6 +401,9 @@ class PytorchModelConfig(ModelConfig):
 
         Returns:
             The initialized torch model instance.
+
+        Raises:
+            ValueError: If model is not initialized.
         """
         if self._model is None:
             raise ValueError("Model not initialized")
@@ -422,8 +433,16 @@ class PytorchModelConfig(ModelConfig):
         self._initialize_model()
         return loaded
 
-    def save_model(self, model: Any, filepath: str) -> None:
-        """Persist runtime torch model state to .pt or pickle payload."""
+    def save_model(self, model: torch.nn.Module | None, filepath: str) -> None:
+        """Persist runtime torch model state to .pt or pickle payload.
+
+        Args:
+            model: Runtime model to serialize; defaults to internal model when None.
+            filepath: Output artifact path.
+
+        Raises:
+            ValueError: If filepath suffix is unsupported or model is missing.
+        """
         path = Path(filepath)
         suffix = path.suffix.lower()
         if suffix not in {".pt", ".pkl", ".pickle"}:
@@ -449,7 +468,19 @@ class PytorchModelConfig(ModelConfig):
         ignore_corrupt: bool = False,
         delete_corrupt: bool = False,
     ) -> ModelType:
-        """Load runtime torch model state from .pt/.pkl payload."""
+        """Load runtime torch model state from .pt/.pkl payload.
+
+        Args:
+            filepath: Serialized model payload path.
+            ignore_corrupt: Skip corrupt payload errors when supported.
+            delete_corrupt: Delete corrupt payloads when supported.
+
+        Returns:
+            Restored torch model instance.
+
+        Raises:
+            TypeError: If serialized payload type is unsupported.
+        """
         payload = super().load_model(
             filepath,
             ignore_corrupt=ignore_corrupt,

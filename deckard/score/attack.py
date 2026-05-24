@@ -562,6 +562,9 @@ class AttackScorerConfig(BaseConfig):
             mode: Optional split/mode tag.
             stage: Optional scoring stage tag.
             sensitive_features: Optional sensitive-feature vector for fairness metrics.
+
+        Returns:
+            Evasion attack score payload.
         """
         start_time = time.perf_counter()
         profile = self.evasion if is_classification else self.evasion_regression
@@ -603,6 +606,9 @@ class AttackScorerConfig(BaseConfig):
             mode: Optional split/mode tag.
             stage: Optional scoring stage tag.
             sensitive_features: Optional sensitive-feature vector for fairness metrics.
+
+        Returns:
+            Membership attack score payload.
         """
         start_time = time.perf_counter()
         score_kwargs = {}
@@ -647,6 +653,9 @@ class AttackScorerConfig(BaseConfig):
             stage: Optional scoring stage tag.
             attack_generation_time: Optional attack-generation runtime.
             sensitive_features: Optional sensitive-feature vector for fairness metrics.
+
+        Returns:
+            Attribute attack score payload.
         """
         prefix = f"inferred_{targeted_attribute}"
         start_time = time.perf_counter()

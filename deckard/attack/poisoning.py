@@ -12,12 +12,15 @@ from sklearn.base import BaseEstimator
 
 from ..artifacts import ScoreDict
 from ..data import DataConfig
-from ..frameworks.types import AttackLike, EstimatorLike, MatrixLike, RuntimeValue, StringifiedClass
+from ..frameworks.types import AttackLike, EstimatorLike, MatrixLike, StringifiedClass
 from ..model import ModelConfig
 from ..frameworks.pytorch.torch_utils import is_torch_model
 from .base import AttackConfig, AttackTypePlugin, AttackMixin
 
 logger = logging.getLogger(__name__)
+
+TorchDeviceLike = str | int | None
+PoisonArgValue = str | int | float | bool | None | MatrixLike
 
 
 class _PoisoningArtModel(Protocol):
@@ -25,27 +28,47 @@ class _PoisoningArtModel(Protocol):
 
     nb_classes: int | None
     _model: "_TorchLikeModel"
-    _device: RuntimeValue
+    _device: TorchDeviceLike
 
     def predict(self, x: MatrixLike) -> MatrixLike:
-        """Predict model outputs for the provided matrix-like payload."""
+        """Predict model outputs for the provided matrix-like payload.
+
+        Args:
+            x: Feature payload for inference.
+
+        Returns:
+            Predicted model outputs.
+        """
         ...
 
     def fit(
         self,
         x: MatrixLike,
         y: MatrixLike,
-        **kwargs: RuntimeValue,
+        **kwargs: PoisonArgValue,
     ) -> None:
-        """Fit the model on poisoned samples."""
+        """Fit the model on poisoned samples.
+
+        Args:
+            x: Feature payload.
+            y: Label payload.
+            **kwargs: Optional backend-specific fit parameters.
+        """
         ...
 
 
 class _TorchLikeModel(Protocol):
     """Torch-like model contract supporting device transfer."""
 
-    def to(self, device: RuntimeValue) -> "_TorchLikeModel":
-        """Move model parameters to the requested device."""
+    def to(self, device: TorchDeviceLike) -> "_TorchLikeModel":
+        """Move model parameters to the requested device.
+
+        Args:
+            device: Target device token.
+
+        Returns:
+            Model moved to requested device.
+        """
         ...
 
 
@@ -54,10 +77,18 @@ class _PoisoningAttack(Protocol):
 
     def poison(
         self,
-        *args: RuntimeValue,
-        **kwargs: RuntimeValue,
+        *args: PoisonArgValue,
+        **kwargs: PoisonArgValue,
     ) -> tuple[MatrixLike, MatrixLike]:
-        """Generate poisoned features/labels."""
+        """Generate poisoned features/labels.
+
+        Args:
+            *args: Positional poisoning attack arguments.
+            **kwargs: Keyword poisoning attack arguments.
+
+        Returns:
+            Poisoned features and labels.
+        """
         ...
 
 
@@ -83,6 +114,12 @@ class PoisoningAttackMixin(AttackMixin):
             attack: Instantiated poisoning attack implementation.
             attack_type: Parsed attack family.
             attack_subtype: Parsed poisoning subtype.
+
+        Returns:
+            Score payload for poisoning runtime execution.
+
+        Raises:
+            ValueError: If attack type is not poisoning.
         """
         if (attack_type or "").lower() != "poisoning":
             raise ValueError(
@@ -106,6 +143,9 @@ class PoisoningAttackMixin(AttackMixin):
             data: Runtime dataset and split container.
             art_model: ART-wrapped model used for poisoned fitting and prediction.
             attack: Instantiated poisoning attack implementation.
+
+        Returns:
+            Score payload comparing benign and adversarial predictions.
         """
         attack_name: StringifiedClass = type(attack).__name__.lower()
         if "poisoningattacksvm" in attack_name:

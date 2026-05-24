@@ -87,6 +87,12 @@ class GenericFlexibleTransformer(nn.Module if nn else object):
         """
         Accepts arbitrary keyword arguments (**kwargs) to adapt natively to
         tokenizers, image processors, or audio feature extractors.
+
+        Args:
+            **kwargs: Backbone-ready model inputs (token/image/audio features).
+
+        Returns:
+            Dictionary containing pooled features and classifier logits.
         """
         # Safely extract attention mask if passing tokenized text inputs
         attention_mask = kwargs.get("attention_mask", None)

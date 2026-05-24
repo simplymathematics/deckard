@@ -337,6 +337,16 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
         return _to_numpy(value)
 
     def fit(self, X, y=None, **kwargs):
+        """No-op fit adapter used by Yellowbrick estimator contracts.
+
+        Args:
+            X: Training features (unused for fitting in this adapter).
+            y: Optional labels used to infer classifier classes.
+            **kwargs: Additional estimator kwargs (ignored).
+
+        Returns:
+            The current adapter instance.
+        """
         # Experiment preparation performs model fitting already.
         if y is not None and self._estimator_type == "classifier":
             y_arr = self._to_numpy(y).reshape(-1)
@@ -367,6 +377,17 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
         return self._to_numpy(raw)
 
     def predict_proba(self, X) -> np.ndarray:
+        """Return probability-like predictions for Yellowbrick classifiers.
+
+        Args:
+            X: Feature payload for inference.
+
+        Returns:
+            Probability matrix.
+
+        Raises:
+            ValueError: If raw prediction shape cannot be converted to probabilities.
+        """
         raw = self._predict_raw(X)
         if raw.ndim == 1:
             logits = raw.astype(float)
@@ -384,6 +405,17 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
         )
 
     def predict(self, X) -> np.ndarray:
+        """Return class predictions for Yellowbrick estimator interfaces.
+
+        Args:
+            X: Feature payload for inference.
+
+        Returns:
+            Predicted class labels.
+
+        Raises:
+            ValueError: If raw prediction shape cannot be converted to labels.
+        """
         raw = self._predict_raw(X)
         if raw.ndim == 1:
             return (raw > 0.0).astype(int)
@@ -394,6 +426,15 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
         )
 
     def score(self, X, y) -> float:
+        """Return simple classification accuracy for Yellowbrick consumers.
+
+        Args:
+            X: Feature payload for inference.
+            y: Ground-truth labels.
+
+        Returns:
+            Classification accuracy score.
+        """
         y_true = self._to_numpy(y).reshape(-1)
         y_pred = self.predict(X).reshape(-1)
         if _get_shape(y_true)[0] == 0:
@@ -467,6 +508,9 @@ class YellowbrickPlotterMixin(PlotterMixin):
 
         Returns:
             Score payload for rendered plot context.
+
+        Raises:
+            NotImplementedError: Always raised by the base mixin implementation.
         """
         # This is a placeholder implementation.
         # The actual implementation delegates to runtime config methods
@@ -819,6 +863,9 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
 
         Args:
             ax: Optional matplotlib axis for the rendered plot.
+
+        Raises:
+            ValueError: If the configured plot_type is not a supported feature visualizer.
         """
         X, y, classes, features = self._get_plot_data()
         if self.plot_type == "rank1d":
@@ -891,6 +938,9 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
 
         Args:
             ax: Optional matplotlib axis for the rendered plot.
+
+        Raises:
+            ValueError: If the configured plot_type is not a supported target visualizer.
         """
         X, y, classes, feature_indices = self._get_plot_data()
         if self.plot_type == "class_balance":
@@ -919,6 +969,9 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
 
         Args:
             ax: Optional matplotlib axis for the rendered plot.
+
+        Raises:
+            ValueError: If the configured plot_type is not a supported regressor visualizer.
         """
         X, y, _, _ = self._get_plot_data()
         X_test, y_test, _, _ = self._get_plot_data(test=True)
@@ -948,6 +1001,9 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
 
         Args:
             ax: Optional matplotlib axis for the rendered plot.
+
+        Raises:
+            ValueError: If the configured plot_type is not a supported classifier visualizer.
         """
         X, y, _classes, _ = self._get_plot_data()
         X_test, y_test, _, _ = self._get_plot_data(test=True)
@@ -1014,6 +1070,9 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
 
         Args:
             ax: Optional matplotlib axis for the rendered plot.
+
+        Raises:
+            ValueError: If the configured plot_type is not a supported clustering visualizer.
         """
         X, _, _, _ = self._get_plot_data()
         model = self._get_plot_model()
@@ -1040,6 +1099,9 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
 
         Args:
             ax: Optional matplotlib axis for the rendered plot.
+
+        Raises:
+            ValueError: If the configured plot_type is not a supported model-selection visualizer.
         """
         X, y, _, features = self._get_plot_data()
         model = self._get_plot_model()
@@ -1086,6 +1148,13 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
             int -> StratifiedKFold(n_splits=int)
             dict[name=kfold|timeseries|stratifiedkfold|shufflesplit] -> matching splitter
             omitted -> default KFold/StratifiedKFold based on classifier flag
+
+        Returns:
+            Instantiated cross-validation splitter.
+
+        Raises:
+            AssertionError: If dict cv configuration is missing required name key.
+            ValueError: If cv strategy name is unsupported.
         """
         if "cv" not in self.plot_params:
             classifier_flag = getattr(self.experiment.model, "classifier", True)
@@ -1125,6 +1194,13 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
         Accepted formats:
             [start, stop]
             [start, stop, "linear"|"log"|step]
+
+        Returns:
+            Concrete range values as a list.
+
+        Raises:
+            AssertionError: If param_range is missing or malformed.
+            ValueError: If distribution marker is unsupported.
         """
         assert (
             "param_range" in self.plot_params
@@ -1179,6 +1255,9 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
 
         Args:
             ax: Optional matplotlib axis for the rendered plot.
+
+        Raises:
+            ValueError: If plot_type is unsupported.
         """
         # Validate that either ax is provided or otherwise create a new figure
         if ax is None:
@@ -1247,6 +1326,9 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
 
         The score payload originates from the prepared ``ExperimentConfig`` and
         is returned unchanged except for normalization to ``ScoreDict``.
+
+        Returns:
+            Normalized experiment score payload.
         """
         if self.rc_config:
             plt.rcParams.update(self.rc_config)
@@ -1400,6 +1482,11 @@ class YellowbrickConfigList(BaseConfig):
         return len(self.plots) if isinstance(self.plots, dict) else 0
 
     def __call__(self) -> dict:
+        """Render configured yellowbrick plot collection and return experiment scores.
+
+        Returns:
+            Experiment score payload captured during preparation.
+        """
         if self.rc_config:
             plt.rcParams.update(self.rc_config)
         scores = self._ensure_experiment_prepared()

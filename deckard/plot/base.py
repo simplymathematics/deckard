@@ -6,11 +6,15 @@ enabling flexible composition of plot configurations with experiment state.
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Union
+from typing import Any, Callable, Union
 
 from ..utils import BaseConfig, resolve_class
 
 logger = logging.getLogger(__name__)
+
+PlotScalar = str | int | float | bool | None
+PlotValue = PlotScalar | list["PlotValue"] | dict[str, "PlotValue"]
+PlotResult = dict[str, PlotValue] | BaseConfig | None
 
 
 class _SeabornPlotterMarker:
@@ -69,25 +73,22 @@ class PlotterMixin:
     def __call__(
         self,
         *,
-        experiment: Any = None,
+        experiment: BaseConfig | None = None,
         plot_type: str = "scatter",
-        **kwargs: Any,
-    ) -> Any:
+        **kwargs: PlotValue,
+    ) -> PlotResult:
         """Execute plotter handler.
 
-        Parameters
-        ----------
-        experiment : Any
-            ExperimentConfig instance providing model/data/attack context.
-        plot_type : str
-            Type of plot to render (e.g., "scatter", "roc_auc").
-        **kwargs : Any
-            Additional plotter-specific parameters.
+        Args:
+            experiment: Runtime experiment context.
+            plot_type: Type of plot to render.
+            **kwargs: Additional plotter-specific parameters.
 
-        Returns
-        -------
-        Any
-            Rendered plot object (axes, figure, or visualizer).
+        Returns:
+            Rendered plot payload from concrete plotter implementation.
+
+        Raises:
+            NotImplementedError: Always raised by the base mixin implementation.
         """
         raise NotImplementedError(
             "Plotter mixins must implement __call__",
@@ -155,7 +156,17 @@ class PlotTypePlugin:
         plot_family: Union[str, None],
         default_mixins: tuple[type, ...],
     ) -> tuple[type, ...]:
-        """Return mixin tuple for matching plotting backend/family."""
+        """Return mixin tuple for matching plotting backend/family.
+
+        Args:
+            runtime: Active runtime plot config.
+            plot_backend: Requested plotting backend.
+            plot_family: Requested plotting family.
+            default_mixins: Default mixins for this plotting context.
+
+        Returns:
+            Mixin tuple to attach to runtime context.
+        """
         _ = (runtime, default_mixins)
         if not self._matches(
             plot_backend=plot_backend,
@@ -171,10 +182,21 @@ class PlotTypePlugin:
         *,
         plot_backend: str,
         plot_family: Union[str, None],
-        default_handler: Any,
+        default_handler: Callable[..., PlotResult] | None,
         default_mixins: tuple[type, ...],
-    ) -> Any:
-        """Return callable runtime handler for matching backend/family."""
+    ) -> Callable[..., PlotResult] | None:
+        """Return callable runtime handler for matching backend/family.
+
+        Args:
+            runtime: Active runtime plot config.
+            plot_backend: Requested plotting backend.
+            plot_family: Requested plotting family.
+            default_handler: Existing resolved runtime handler.
+            default_mixins: Existing resolved mixins.
+
+        Returns:
+            Callable runtime plot handler when plugin matches, else None.
+        """
         _ = (default_handler, default_mixins)
         if not self._matches(
             plot_backend=plot_backend,
@@ -183,17 +205,21 @@ class PlotTypePlugin:
             return None
         return lambda *args, **kwargs: self(runtime, *args, **kwargs)
 
-    def __call__(self, runtime: "PlotDictConfig", *args, **kwargs) -> Any:
+    def __call__(
+        self,
+        runtime: "PlotDictConfig",
+        *args: PlotValue,
+        **kwargs: PlotValue,
+    ) -> PlotResult:
         """Delegate runtime plotter execution to configured mixin handler.
 
-        Parameters
-        ----------
-        runtime : PlotDictConfig
-            Runtime config instance currently orchestrating plotting.
-        *args : Any
-            Positional runtime args forwarded to mixin ``__call__``.
-        **kwargs : Any
-            Keyword runtime args forwarded to mixin ``__call__``.
+        Args:
+            runtime: Runtime config instance currently orchestrating plotting.
+            *args: Positional runtime args forwarded to mixin ``__call__``.
+            **kwargs: Keyword runtime args forwarded to mixin ``__call__``.
+
+        Returns:
+            Rendered plot payload from the configured mixin handler.
         """
         mixin = self._resolve_mixin_type()
         handler = mixin(runtime)
@@ -240,14 +266,10 @@ class PlotDictConfig(BaseConfig):
 
         Later configs override earlier ones with same key.
 
-        Parameters
-        ----------
-        other : PlotDictConfig
-            Plot config to merge.
+        Args:
+            other: Plot config to merge.
 
-        Returns
-        -------
-        PlotDictConfig
+        Returns:
             Self (mutated).
         """
         if isinstance(other, PlotDictConfig):

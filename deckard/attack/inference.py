@@ -44,6 +44,12 @@ class InferenceAttackMixin(AttackMixin):
             attack: Instantiated inference attack implementation.
             attack_type: Parsed attack family.
             attack_subtype: Parsed attack subtype.
+
+        Returns:
+            Score payload for the selected inference subtype.
+
+        Raises:
+            ValueError: If attack family/subtype is unsupported.
         """
         if (attack_type or "").lower() != "inference":
             raise ValueError(
@@ -85,6 +91,9 @@ class InferenceAttackMixin(AttackMixin):
 
         Returns:
             Score payload for the reconstructed attribute predictions.
+
+        Raises:
+            ValueError: If targeted attributes are invalid or missing.
         """
         assert hasattr(data, "X_train") and hasattr(
             data,
@@ -352,6 +361,9 @@ class InferenceAttackMixin(AttackMixin):
 
         Returns:
             Score payload comparing reconstructed inputs against class prototypes.
+
+        Raises:
+            ValueError: If source split, targets, or initialization values are invalid.
         """
         split, x_source, y_source = self._resolve_source_split(
             data,
@@ -483,6 +495,9 @@ class InferenceAttackMixin(AttackMixin):
 
         Returns:
             Score payload for the reconstructed record and auxiliary metadata.
+
+        Raises:
+            ValueError: If source split is too small or reconstruction indices are invalid.
         """
         split, x_source, y_source_raw = self._resolve_source_split(
             data,

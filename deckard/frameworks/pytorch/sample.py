@@ -56,10 +56,32 @@ class PytorchBaseSampler(BaseSampler):
     """PyTorch sampler base that mirrors :class:`deckard.data.sample.BaseSampler`."""
 
     def __call__(self, config: Any) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Run sampling strategy against runtime config.
+
+        Args:
+            config: Runtime data-like config.
+
+        Returns:
+            Train, test, and validation index arrays.
+
+        Raises:
+            NotImplementedError: Always raised by base sampler interface.
+        """
         raise NotImplementedError
 
     @classmethod
     def resolve(cls, config: Any) -> Any:
+        """Resolve sampler declaration into callable sampler object.
+
+        Args:
+            config: Runtime data-like config.
+
+        Returns:
+            Resolved sampler object or ``None``.
+
+        Raises:
+            ValueError: If sampler declaration is invalid or unsupported.
+        """
         sampler_aliases = {
             "split": PytorchSplitSampler,
             "fold": PytorchFoldSampler,
@@ -141,6 +163,17 @@ class PytorchBaseSampler(BaseSampler):
 
     @classmethod
     def compose(cls, config: Any) -> Any:
+        """Compose and cache runtime sampler callable.
+
+        Args:
+            config: Runtime data-like config.
+
+        Returns:
+            Callable sampler object.
+
+        Raises:
+            TypeError: If resolved sampler is not callable.
+        """
         sampler_obj = getattr(config, "_sampler_obj", None)
         if sampler_obj is None:
             sampler_obj = cls.resolve(config)
@@ -170,6 +203,14 @@ class PytorchBaseSampler(BaseSampler):
 
     @classmethod
     def execute(cls, config: Any) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Resolve/compose and execute sampler for runtime config.
+
+        Args:
+            config: Runtime data-like config.
+
+        Returns:
+            Train, test, and validation index arrays.
+        """
         sampler_obj = cls.compose(config)
         return sampler_obj(config)
 
@@ -183,6 +224,17 @@ class PytorchSplitSampler(PytorchBaseSampler):
     stratify: bool | str | None = True
 
     def __call__(self, config: Any) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Generate deterministic train/test/validation splits.
+
+        Args:
+            config: Runtime data-like config.
+
+        Returns:
+            Train, test, and validation index arrays.
+
+        Raises:
+            ValueError: If split sizes are invalid or source data is unavailable.
+        """
         if self.train_size is None and self.test_size is None:
             raise ValueError("Either train_size or test_size must be specified.")
         dataset = getattr(config, "dataset_obj", None)
@@ -246,6 +298,17 @@ class PytorchFoldSampler(PytorchBaseSampler):
         return int(size)
 
     def __call__(self, config: Any) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Generate fold-based train/test/validation splits.
+
+        Args:
+            config: Runtime data-like config.
+
+        Returns:
+            Train, test, and validation index arrays.
+
+        Raises:
+            ValueError: If split index or sizing constraints are invalid.
+        """
         dataset = getattr(config, "dataset_obj", None)
         if dataset is None:
             if getattr(config, "_X", None) is None or getattr(config, "_y", None) is None:
@@ -331,6 +394,17 @@ class PytorchShuffleSampler(PytorchBaseSampler):
     stratify: bool | str | None = True
 
     def __call__(self, config: Any) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Generate shuffled train/test/validation splits.
+
+        Args:
+            config: Runtime data-like config.
+
+        Returns:
+            Train, test, and validation index arrays.
+
+        Raises:
+            ValueError: If validation size or split index is invalid.
+        """
         if self.val_size is None:
             raise ValueError("val_size must be set for PytorchShuffleSampler")
         dataset = getattr(config, "dataset_obj", None)
@@ -520,13 +594,21 @@ class TorchDataLoaderSamplingMixin:
         pin_memory: bool = False,
         drop_last: bool = False,
         n_splits: int = 5,
-    ) -> Any:
+    ) -> tuple[DataLoader, DataLoader, DataLoader]:
         """Sample the dataset according to `self.sample`.
 
-        Modes:
-            split   -> (train_loader, val_loader, test_loader)
-            fold    -> list[(train_loader, val_loader)]
-            shuffle -> single shuffled DataLoader
+        Args:
+            batch_size: Batch size for created dataloaders.
+            num_workers: Number of dataloader workers.
+            pin_memory: Whether to pin memory in dataloaders.
+            drop_last: Whether to drop incomplete trailing batch in train loader.
+            n_splits: Number of fold candidates for fold/shuffle modes.
+
+        Returns:
+            Train, validation, and test dataloaders.
+
+        Raises:
+            TypeError: If configured dataset is not a torch Dataset.
         """
         ds = self.dataset
 

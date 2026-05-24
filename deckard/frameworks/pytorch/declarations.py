@@ -21,6 +21,14 @@ class TinyNet(nn.Module if nn else object):
         )
 
     def forward(self, x):
+        """Run forward pass through TinyNet.
+
+        Args:
+            x: Input tensor batch.
+
+        Returns:
+            Logit tensor output.
+        """
         return self.net(x)
 
 
@@ -125,4 +133,12 @@ class FlexNet(nn.Module if nn else object):
         return in_features
 
     def forward(self, x):
+        """Run forward pass through configured backbone/classification head.
+
+        Args:
+            x: Input tensor batch.
+
+        Returns:
+            Model logits for configured classes.
+        """
         return self.backbone(x)

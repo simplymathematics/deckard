@@ -54,6 +54,14 @@ class DataPipeline(dict):
     }
 
     def __call__(self, host: "DataConfig") -> "DataConfig":
+        """Execute configured pipeline stages for the host data runtime.
+
+        Args:
+            host: Data runtime configuration.
+
+        Returns:
+            Updated host data configuration.
+        """
         if getattr(host, "_X", None) is None or getattr(host, "_y", None) is None:
             host.load_dataset()
 
@@ -68,6 +76,11 @@ class DataPipeline(dict):
         return host
 
     def fit_pre_sample(self, host: "DataConfig") -> None:
+        """Run pre-sample feature pipeline stage on raw loaded data.
+
+        Args:
+            host: Data runtime configuration.
+        """
         self._run_stage_hooks(host, "before", "fit_pre_sample", "pre-sample")
         x_steps = self._collect_x_steps(stage="pre_sample")
         pipeline = self._build_x_pipeline(x_steps)
@@ -82,6 +95,11 @@ class DataPipeline(dict):
         self._run_stage_hooks(host, "after", "fit_pre_sample", "pre-sample")
 
     def fit_X(self, host: "DataConfig") -> None:
+        """Fit and apply feature-only transforms on split data.
+
+        Args:
+            host: Data runtime configuration.
+        """
         self._run_stage_hooks(host, "before", "fit_X", "post-pipeline")
         x_steps = self._collect_x_steps(stage="X")
         pipeline = self._build_x_pipeline(x_steps)
@@ -99,6 +117,11 @@ class DataPipeline(dict):
         self._run_stage_hooks(host, "after", "fit_X", "post-pipeline")
 
     def fit_y(self, host: "DataConfig") -> None:
+        """Fit and apply target-only transforms on split labels.
+
+        Args:
+            host: Data runtime configuration.
+        """
         self._run_stage_hooks(host, "before", "fit_y", "post-pipeline")
         y_steps = self._collect_y_steps(stage="y")
         if len(y_steps) > 0 and getattr(host, "y_train", None) is not None:
@@ -113,6 +136,11 @@ class DataPipeline(dict):
         self._run_stage_hooks(host, "after", "fit_y", "post-pipeline")
 
     def fit_Xy(self, host: "DataConfig") -> None:
+        """Fit and apply joint feature-target transforms across all splits.
+
+        Args:
+            host: Data runtime configuration.
+        """
         self._run_stage_hooks(host, "before", "fit_Xy", "post-pipeline")
         xy_steps = self._collect_x_steps(stage="Xy")
         pipeline = self._build_x_pipeline(xy_steps)

@@ -34,6 +34,11 @@ class HookBundle:
 	hooks: tuple[HookPlugin, ...]
 
 	def clone_plugins(self) -> list[HookPlugin]:
+		"""Return detached plugin copies for safe per-runtime composition.
+
+		Returns:
+			Cloned hook plugins.
+		"""
 		return [_clone_hook_plugin(plugin) for plugin in self.hooks]
 
 

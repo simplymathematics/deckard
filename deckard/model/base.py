@@ -410,7 +410,11 @@ class ModelConfig(BaseConfig):
         return self._defense_pipeline
 
     def compose_defense_pipeline(self) -> "BaseConfig | None":
-        """Compose defense pipeline behavior only when defense config is present."""
+        """Compose defense pipeline behavior only when defense config is present.
+
+        Returns:
+            Resolved defense pipeline config when present, else None.
+        """
         return self._require_defense_pipeline()
 
     def compose_defense_behavior(
@@ -453,6 +457,10 @@ class ModelConfig(BaseConfig):
 
         Returns:
             ART wrapper class and initialization parameter mapping.
+
+        Raises:
+            ImportError: If ART dependency is unavailable.
+            ValueError: If model_type is unset.
         """
         try:
             art_symbols = _get_art_symbols()
@@ -509,10 +517,11 @@ class ModelConfig(BaseConfig):
     def get_model(self) -> BaseEstimator:
         """Get the model's estimator.
 
-        Returns
-        -------
-        BaseEstimator
+        Returns:
             The model's estimator.
+
+        Raises:
+            ValueError: If model is not fitted yet.
         """
         if self._model is None:
             raise ValueError("Model is not fitted yet.")
@@ -1301,10 +1310,9 @@ class ModelConfig(BaseConfig):
 
         Returns:
             Model prediction payload.
-        Raises
-        ------
-        ValueError
-            If prediction is requested without a trained or loaded model.
+
+        Raises:
+            ValueError: If training data is missing or model state is invalid.
 
         """
         files = dict(files or {})

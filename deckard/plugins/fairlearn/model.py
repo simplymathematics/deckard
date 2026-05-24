@@ -157,6 +157,17 @@ class BinaryLogitAdapter:
             nn_module.Module.__init__(self)
 
     def forward(self, x):
+        """Normalize binary model outputs to a single-logit column.
+
+        Args:
+            x: Input tensor batch.
+
+        Returns:
+            Two-dimensional single-logit tensor.
+
+        Raises:
+            ValueError: If predictor output shape is unsupported.
+        """
         out = self.base_model(x)
         if hasattr(out, "ndim"):
             if out.ndim == 1:

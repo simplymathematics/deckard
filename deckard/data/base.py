@@ -545,12 +545,20 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
     @property
     def X(self) -> TabularLike | None:
-        """Convenience alias for the loaded feature matrix."""
+        """Convenience alias for the loaded feature matrix.
+
+        Returns:
+            Loaded feature payload.
+        """
         return self._X
 
     @property
     def scores(self) -> ScoreDict:
-        """Canonical score container alias (backed by ``score_dict``)."""
+        """Canonical score container alias (backed by ``score_dict``).
+
+        Returns:
+            Canonical score payload container.
+        """
         return self.score_dict
 
     @scores.setter
@@ -564,7 +572,11 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
     @property
     def y(self) -> pd.Series | None:
-        """Convenience alias for the loaded target vector."""
+        """Convenience alias for the loaded target vector.
+
+        Returns:
+            Loaded target payload.
+        """
         return self._y
 
     @X.setter
@@ -599,6 +611,9 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
         Returns:
             Loaded payload or updated DataConfig instance.
+
+        Raises:
+            ValueError: If filepath is not provided.
         """
         if filepath is None:
             raise ValueError("filepath is required for DataConfig.load()")
@@ -618,6 +633,9 @@ class DataConfig(OrchestratorBase, BaseConfig):
         Args:
             payload: Payload to persist.
             filepath: Target file path.
+
+        Raises:
+            ValueError: If filepath is not provided.
         """
         target_path = filepath
         if target_path is None and isinstance(payload, (str, Path)):
@@ -630,7 +648,11 @@ class DataConfig(OrchestratorBase, BaseConfig):
         super().save(payload=payload, filepath=target_path)
 
     def load_raw_data(self) -> tuple[TabularLike | None, pd.Series | None]:
-        """Compatibility alias for runtime dataset loading."""
+        """Compatibility alias for runtime dataset loading.
+
+        Returns:
+            Loaded feature and target payload tuple.
+        """
         self.load_dataset()
         return self._X, self._y
 
@@ -662,6 +684,9 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
         Returns:
             This DataConfig instance.
+
+        Raises:
+            TypeError: If configured pipeline runtime is not a DataPipeline object.
         """
         self.load_dataset()
         if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
@@ -711,6 +736,9 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
         Returns:
             Canonical score payload.
+
+        Raises:
+            TypeError: If configured scorer is not callable.
         """
         if self.scorer is None:
             return ScoreDict()
@@ -979,6 +1007,10 @@ class DataConfig(OrchestratorBase, BaseConfig):
             If the dataset or file type is not supported.
         ValueError
             If a CSV file does not contain a 'target' column.
+        
+        Raises:
+            NotImplementedError: If dataset name or file type is unsupported.
+            ValueError: If required runtime target/source fields are invalid.
         """
         if hasattr(self, "data_load_time") and self.data_load_time is not None:
             return
@@ -1146,7 +1178,11 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
 
     def build_data_time_dict(self) -> dict:
-        """Build timing/count metadata dictionary for data runtime outputs."""
+        """Build timing/count metadata dictionary for data runtime outputs.
+
+        Returns:
+            Runtime timing/count metadata mapping.
+        """
         time_dict = dict(self.times)
         time_dict["train_n"] = self.train_n
         time_dict["test_n"] = self.test_n
@@ -1187,6 +1223,9 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
         Returns:
             Runtime score/timing payload dictionary.
+
+        Raises:
+            TypeError: If legacy file kwargs are passed outside files mapping.
         """
 
         if "data_file" in kwargs or "score_file" in kwargs:
@@ -1278,22 +1317,15 @@ class DataPipelineStep:
         """
         Extract DataPipelineStep from a pipeline step config dict.
 
-        Parameters
-        ----------
-        step_name : str
-            Name of the step (key in pipeline.steps dict).
-        step_config : dict
-            Configuration dict for the step.
+        Args:
+            step_name: Name of the step (key in pipeline.steps dict).
+            step_config: Configuration dict for the step.
 
-        Returns
-        -------
-        DataPipelineStep
+        Returns:
             Parsed step metadata.
 
-        Raises
-        ------
-        ValueError
-            If "name" key is missing or if both fit_y and fit_xy are True.
+        Raises:
+            ValueError: If required metadata is missing or unsupported.
         """
         step_class = step_config.get("name")
         if step_class is None:
@@ -1316,15 +1348,11 @@ class DataPipelineStep:
         """
         Remove DataPipelineStep metadata from a step config dict.
 
-        Parameters
-        ----------
-        step_config : dict
-            Original step configuration.
+        Args:
+            step_config: Original step configuration.
 
-        Returns
-        -------
-        dict
-            New dict with metadata keys removed, ready for transformer instantiation.
+        Returns:
+            New config with metadata keys removed.
         """
         config = dict(step_config)
         step_kwargs = {"name", "fit_y", "fit_Xy", "fit_X", "fit_pre_sample", "dtype", "plugin_hook"}

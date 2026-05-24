@@ -19,6 +19,9 @@ from ...data import DataConfig
 from ...experiment.base import ExperimentConfig
 from ...model import ModelConfig, SurvivalModelConfig
 
+LifelinesScalar = str | int | float | bool | None
+LifelinesValue = LifelinesScalar | list["LifelinesValue"] | dict[str, "LifelinesValue"]
+
 
 def _lifelines_dataset_loaders() -> dict[str, Any]:
     try:
@@ -795,7 +798,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
         cls,
         *,
         attack_optuna_db: str,
-        attack_schema: Optional[Union[str, dict[str, Any]]] = None,
+        attack_schema: Optional[Union[str, dict[str, LifelinesValue]]] = None,
         attack_query: Optional[str] = None,
     ) -> tuple[pd.DataFrame, Optional[AttackConfig], Optional[ModelConfig]]:
         """Load survival-ready data from Optuna attack studies.
@@ -878,6 +881,9 @@ class SurvivalExperimentConfig(ExperimentConfig):
 
         Returns:
             Mapping with ``aft_table``, ``model_scores``, and fitted ``models``.
+
+        Raises:
+            ValueError: If runtime mode/data inputs are invalid.
         """
         from .plot import SurvivalSeabornPlotConfigList
 

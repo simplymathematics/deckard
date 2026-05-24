@@ -168,6 +168,9 @@ class SurvivalModelConfig(SurvivalModelInitMixin, ModelConfig):
 
         Returns:
                 A fitted lifelines regression fitter.
+
+        Raises:
+            ValueError: If required duration/event columns are missing.
         """
         if self.duration_col not in df.columns:
             raise ValueError(f"Column {self.duration_col} not found in data")
