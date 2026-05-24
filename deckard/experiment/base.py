@@ -532,9 +532,9 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
                 "Validation scoring requested but validation split is unavailable. "
                 "Set data.val_size (or use a sampler that produces validation indices).",
             )
-        if not hasattr(self.model, "_predict"):
-            raise ValueError("Validation scoring requires model._predict")
-        val_predictions = self.model._predict(self.data.X_val)
+        if not hasattr(self.model, "predict"):
+            raise ValueError("Validation scoring requires model.predict")
+        val_predictions = self.model.predict(self.data.X_val)
         self.model.val_predictions = val_predictions
         return val_predictions
 
@@ -545,17 +545,17 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
             raise ValueError(
                 f"{mode} scoring requires a model, but model is None",
             )
-        if not hasattr(self.model, "_predict"):
-            raise ValueError(f"{mode} scoring requires model._predict")
+        if not hasattr(self.model, "predict"):
+            raise ValueError(f"{mode} scoring requires model.predict")
         if mode == "train":
             if getattr(self.model, "training_predictions", None) is None:
-                self.model.training_predictions = self.model._predict(
+                self.model.training_predictions = self.model.predict(
                     self.data.X_train,
                 )
             return
         if mode == "test":
             if getattr(self.model, "predictions", None) is None:
-                self.model.predictions = self.model._predict(self.data.X_test)
+                self.model.predictions = self.model.predict(self.data.X_test)
             return
         if mode == "val":
             self._compute_val_predictions()
@@ -582,13 +582,13 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
             raise ValueError(f"Unsupported model scoring mode '{mode}'")
 
         y_pred = getattr(self.model, pred_attr, None)
-        if y_pred is None and hasattr(self.model, "_predict"):
-            y_pred = self.model._predict(X_split)
+        if y_pred is None and hasattr(self.model, "predict"):
+            y_pred = self.model.predict(X_split)
             setattr(self.model, pred_attr, y_pred)
 
         y_proba = getattr(self.model, proba_attr, None)
         if y_proba is None and getattr(self.model, "classifier", False):
-            predict_proba = getattr(self.model, "_predict_proba", None)
+            predict_proba = getattr(self.model, "predict_proba", None)
             if callable(predict_proba):
                 try:
                     y_proba = predict_proba(X_split)
@@ -2319,10 +2319,12 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
             )
         return instance
 
-    def __call__(
+    def run(
         self,
     ) -> dict:
         """Execute full experiment pipeline and return aggregated score payload.
+
+        This is the canonical public entrypoint for experiment execution.
 
         Returns:
             Aggregated experiment score payload.
@@ -2533,3 +2535,9 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         for key in CANONICAL_EXPERIMENT_TIMES:
             self.score_dict[key] = self.times.get(key)
         return scores
+
+    def __call__(
+        self,
+    ) -> dict:
+        """Backward-compatible callable alias for experiment execution."""
+        return self.run()

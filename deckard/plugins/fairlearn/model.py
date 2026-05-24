@@ -52,12 +52,12 @@ class FairnessBehaviorMixin:
         if callable(super_post_init):
             super_post_init()
 
-    def _train(self, X: pd.DataFrame, y: pd.Series):
+    def train(self, X: pd.DataFrame, y: pd.Series):
         if self._model is None:
             raise ValueError("Model not initialized")
         fit_method = getattr(self._model, "fit", None)
         if not callable(fit_method):
-            return super()._train(X, y)
+            return super().train(X, y)
 
         start_time = time.perf_counter()
         fit_params = getattr(self, "fit_params", None) or {}
@@ -73,12 +73,12 @@ class FairnessBehaviorMixin:
         self.training_n = len(y)
         logger.info(f"Model trained in {self.training_time:.2f} seconds")
 
-    def _predict(self, X: pd.DataFrame) -> Any:
+    def predict(self, X: pd.DataFrame) -> Any:
         if self._model is None:
             raise ValueError("Model not initialized")
         predict_method = getattr(self._model, "predict", None)
         if not callable(predict_method):
-            return super()._predict(X)
+            return super().predict(X)
         sensitive = self._resolve_sensitive_features_for_batch(X, split="test")
         try:
             return self._call_with_optional_sensitive(
@@ -98,12 +98,12 @@ class FairnessBehaviorMixin:
                 )
             raise
 
-    def _predict_proba(self, X: pd.DataFrame) -> Any:
+    def predict_proba(self, X: pd.DataFrame) -> Any:
         if self._model is None:
             raise ValueError("Model not initialized")
         predict_proba = getattr(self._model, "predict_proba", None)
         if not callable(predict_proba):
-            return super()._predict_proba(X)
+            return super().predict_proba(X)
         sensitive = self._resolve_sensitive_features_for_batch(X, split="test")
         return self._call_with_optional_sensitive(
             predict_proba,
@@ -276,7 +276,7 @@ class FairlearnDefenseConfig(SensitiveColumnsMixin, DefenseConfig):
         self.defense_application_time = time.perf_counter() - start
         return defended_estimator
 
-    def _train(self, X, y):
+    def train(self, X, y):
         if self._model is None:
             self._model = load_class(
                 self.model_type,

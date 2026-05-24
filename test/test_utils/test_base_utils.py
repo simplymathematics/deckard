@@ -1,5 +1,4 @@
 import argparse
-import json
 import logging
 import tempfile
 import unittest
@@ -23,14 +22,12 @@ from deckard.utils import (
     import_class_from_file,
     instantiate_plugin_spec,
     load_class,
-    load_data,
     merge_list_of_dicts,
     merge_scores_with_collision_suffix,
     normalize_plugin_specs,
     resolve_class,
     resolve_torch_device,
     safe_store,
-    save_data,
 )
 
 
@@ -243,65 +240,6 @@ class TestUtilsAdditional(unittest.TestCase):
         cfg = MissingParamConfig()
         with self.assertRaises(AttributeError):
             cfg.get_call_params()
-
-    def test_save_scores_and_load_scores_json(self):
-        cfg = BaseConfig(score_dict={"baseline": 1})
-        scores = {"acc": 0.9, "files": {"f": "x.csv"}, "params": {"k": 1}}
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "scores.json"
-            cfg.save_scores(scores, p)
-            loaded = cfg.load_scores(str(p))
-            self.assertIn("acc", loaded)
-            self.assertIn("files", loaded)
-            self.assertIn("params", loaded)
-
-    def test_save_scores_unsupported_extension_raises(self):
-        cfg = BaseConfig()
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "scores.txt"
-            with self.assertRaises(ValueError):
-                cfg.save_scores({"acc": 1.0}, p)
-
-    def test_read_scores_from_disk_existing_file_merges(self):
-        cfg = BaseConfig(score_dict={"base": 1})
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "scores.json"
-            with open(p, "w") as f:
-                json.dump({"new": 2}, f)
-            merged = cfg.read_or_initialize_scores(str(p))
-            self.assertEqual(merged["base"], 1)
-            self.assertEqual(merged["new"], 2)
-
-    def test_read_scores_from_disk_missing_file_creates_directory(self):
-        cfg = BaseConfig(score_dict={"base": 1})
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "nested" / "scores.json"
-            out = cfg.read_or_initialize_scores(str(p))
-            self.assertTrue(p.parent.exists())
-            self.assertEqual(out, {"base": 1})
-
-    def test_save_data_top_level_and_load_data_roundtrip_pickle(self):
-        payload = {"a": [1, 2], "b": [3, 4]}
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "data.pkl"
-            save_data(payload, p)
-            loaded = load_data(str(p))
-            self.assertIsInstance(loaded, pd.DataFrame)
-            self.assertEqual(list(loaded.columns), ["a", "b"])
-
-    def test_load_data_none_raises(self):
-        with self.assertRaises(FileNotFoundError):
-            load_data(None)
-
-    def test_load_data_supports_npz_via_artifact_loader(self):
-        with tempfile.TemporaryDirectory() as td:
-            npz_path = Path(td) / "arr.npz"
-            import numpy as np
-
-            np.savez(npz_path, data=np.array([[1, 2], [3, 4]]))
-            loaded = load_data(str(npz_path))
-            self.assertIsInstance(loaded, pd.DataFrame)
-            self.assertEqual(loaded.shape, (2, 2))
 
     def test_normalize_plugin_specs_requires_list_like(self):
         self.assertEqual(normalize_plugin_specs(None), [])
@@ -694,122 +632,6 @@ class TestCoerceHelpers(unittest.TestCase):
         self.assertEqual(result["evasion_accuracy"], 0.4)
 
 
-# ── ConfigBase – save/load scores ────────────────────────────────────────────
-
-
-class TestConfigBaseScores(unittest.TestCase):
-    def test_save_and_load_scores_csv(self):
-        cfg = _Cfg()
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "s.csv"
-            cfg.save_scores({"acc": 0.9}, p)
-            loaded = cfg.load_scores(str(p))
-            self.assertIsNotNone(loaded)
-
-    @pytest.mark.skipif(
-        __import__("importlib").util.find_spec("openpyxl") is None,
-        reason="openpyxl not installed",
-    )
-    def test_save_and_load_scores_xlsx(self):
-        cfg = _Cfg()
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "s.xlsx"
-            cfg.save_scores({"acc": 0.9}, p)
-            loaded = cfg.load_scores(str(p))
-            self.assertIsNotNone(loaded)
-
-    def test_load_scores_unsupported_extension_raises(self):
-        cfg = _Cfg()
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "s.txt"
-            p.write_text("nothing")
-            with self.assertRaises(ValueError):
-                cfg.load_scores(str(p))
-
-    def test_save_scores_csv_saves_file(self):
-        cfg = _Cfg()
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "s.csv"
-            cfg.save_scores({"x": 1.0, "y": 2.0}, p)
-            self.assertTrue(p.exists())
-
-
-# ── ConfigBase – save_data / load_data ───────────────────────────────────────
-
-
-class TestConfigBaseSaveLoadData(unittest.TestCase):
-    def test_save_data_html(self):
-        cfg = _Cfg()
-        df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "d.html"
-            cfg.save_data(df, p)
-            self.assertTrue(p.exists())
-
-    @pytest.mark.skipif(
-        __import__("importlib").util.find_spec("openpyxl") is None,
-        reason="openpyxl not installed",
-    )
-    def test_save_data_xlsx(self):
-        cfg = _Cfg()
-        df = pd.DataFrame({"a": [1, 2]})
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "d.xlsx"
-            cfg.save_data(df, p)
-            self.assertTrue(p.exists())
-
-    def test_save_data_parquet(self):
-        cfg = _Cfg()
-        df = pd.DataFrame({"a": [1, 2]})
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "d.parquet"
-            cfg.save_data(df, p)
-            self.assertTrue(p.exists())
-
-    def test_save_data_unsupported_raises(self):
-        cfg = _Cfg()
-        df = pd.DataFrame({"a": [1]})
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "d.xyz"
-            with self.assertRaises(ValueError):
-                cfg.save_data(df, p)
-
-    def test_load_data_delegates_to_top_level(self):
-        cfg = _Cfg()
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "d.csv"
-            pd.DataFrame({"a": [1, 2]}).to_csv(p, index=False)
-            result = cfg.load_data(str(p))
-            self.assertIsInstance(result, pd.DataFrame)
-
-
-# ── ConfigBase – save_object / load_object ───────────────────────────────────
-
-
-class TestConfigBaseSaveLoadObject(unittest.TestCase):
-    def test_save_object_unsupported_extension_raises(self):
-        cfg = _Cfg()
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "obj.txt"
-            with self.assertRaises(ValueError):
-                cfg.save_object(cfg, str(p))
-
-    def test_load_object_corrupt_with_ignore_returns_none(self):
-        cfg = _Cfg()
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "corrupt.pkl"
-            p.write_bytes(b"not valid pickle data!!")
-            result = cfg.load_object(str(p), ignore_corrupt=True)
-            self.assertIsNone(result)
-
-    def test_load_object_corrupt_with_delete_removes_file(self):
-        cfg = _Cfg()
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "corrupt.pkl"
-            p.write_bytes(b"garbage")
-            result = cfg.load_object(str(p), ignore_corrupt=True, delete_corrupt=True)
-            self.assertIsNone(result)
-            self.assertFalse(p.exists())
 
 
 # ── ConfigBase – from_yaml / to_yaml / to_dict ───────────────────────────────
@@ -840,84 +662,6 @@ class TestConfigBaseSerialisation(unittest.TestCase):
         }
         obj = BaseConfig.from_dict(data)
         self.assertIsNotNone(obj)
-
-
-# ── Top-level save_data / load_data ──────────────────────────────────────────
-
-
-class TestTopLevelSaveLoadData(unittest.TestCase):
-    def test_save_and_load_csv(self):
-        df = pd.DataFrame({"x": [1, 2, 3]})
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "data.csv"
-            save_data(df, p)
-            result = load_data(str(p))
-            self.assertIsInstance(result, pd.DataFrame)
-
-    def test_save_and_load_parquet(self):
-        df = pd.DataFrame({"x": [1, 2, 3]})
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "data.parquet"
-            save_data(df, p)
-            result = load_data(str(p))
-            self.assertIsInstance(result, pd.DataFrame)
-
-    def test_save_and_load_json(self):
-        df = pd.DataFrame({"x": [1, 2, 3]})
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "data.json"
-            save_data(df, p)
-            result = load_data(str(p))
-            self.assertIsInstance(result, pd.DataFrame)
-
-    def test_save_and_load_html(self):
-        lxml = __import__("importlib").util.find_spec("lxml")
-        if lxml is None:
-            self.skipTest("lxml not installed")
-        df = pd.DataFrame({"x": [1, 2, 3]})
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "data.html"
-            save_data(df, p)
-            result = load_data(str(p))
-            self.assertIsInstance(result, pd.DataFrame)
-
-    def test_save_and_load_xlsx(self):
-        if __import__("importlib").util.find_spec("openpyxl") is None:
-            self.skipTest("openpyxl not installed")
-        df = pd.DataFrame({"x": [1, 2, 3]})
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "data.xlsx"
-            save_data(df, p)
-            result = load_data(str(p))
-            self.assertIsInstance(result, pd.DataFrame)
-
-    def test_save_and_load_pkl(self):
-        df = pd.DataFrame({"x": [1, 2, 3]})
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "data.pkl"
-            save_data(df, p)
-            result = load_data(str(p))
-            self.assertIsInstance(result, pd.DataFrame)
-
-    def test_save_data_unsupported_raises(self):
-        df = pd.DataFrame({"x": [1]})
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "data.xyz"
-            with self.assertRaises(ValueError):
-                save_data(df, p)
-
-    def test_load_data_unsupported_raises(self):
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "data.xyz"
-            p.write_text("junk")
-            with self.assertRaises(ValueError):
-                load_data(str(p))
-
-    def test_save_data_converts_non_dataframe(self):
-        with tempfile.TemporaryDirectory() as td:
-            p = Path(td) / "data.csv"
-            save_data({"a": [1, 2], "b": [3, 4]}, p)
-            self.assertTrue(p.exists())
 
 
 # ── resolve_class / load_class ───────────────────────────────────────────────

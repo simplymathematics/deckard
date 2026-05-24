@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 import logging
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from omegaconf import DictConfig, ListConfig
@@ -10,7 +10,6 @@ from deckard.plugins.base import compose_hook_plugins
 
 from ...data._mixins import RuntimePayload, SensitiveColumnsMixin
 from ...data.base import DataConfig
-from ...data.canon import resolve_runtime_files
 from ...utils import (
     coerce_to_list,
     is_default_config_value,
@@ -137,12 +136,8 @@ class FairlearnDataConfig(
         Returns:
             Runtime score and artifact payload mapping.
         """
-        files = resolve_runtime_files(
-            kwargs,
-            kwargs.pop("files", None),
-        )
-        self._coerce_pipeline_runtime()
-        result = super().__call__(*args, files=files, **kwargs)
+        files = cast(Any, kwargs.pop("files", None))
+        result = self.execute_data_runtime(*args, files=files, **kwargs)
         assert hasattr(self, "X_train"), ".X_train not found"
         return result
 

@@ -233,6 +233,30 @@ class AttackMixin:
             "Attack handlers must implement __call__",
         )
 
+    def attack(
+        self,
+        *,
+        data: DataConfig,
+        model: ModelConfig | EstimatorLike | BaseEstimator,
+        art_model: EstimatorLike,
+        attack: AttackLike,
+        attack_type: str,
+        attack_subtype: str,
+    ) -> ScoreDict:
+        """Public alias for base attack dispatch.
+
+        This mirrors the canonical attack type name and keeps a consistent
+        public entrypoint across attack mixins.
+        """
+        return self(
+            data=data,
+            model=model,
+            art_model=art_model,
+            attack=attack,
+            attack_type=attack_type,
+            attack_subtype=attack_subtype,
+        )
+
 
 @dataclass(eq=False, kw_only=True)
 class AttackTypePlugin:

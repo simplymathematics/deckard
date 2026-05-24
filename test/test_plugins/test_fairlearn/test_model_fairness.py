@@ -116,7 +116,7 @@ class TestFairlearnModelConfig(unittest.TestCase):
             defenses=[art_defense, fair_defense],
         )
         runtime_data = Mock()
-        result = model._apply_defense(data=runtime_data)
+        result = model.apply_defense(data=runtime_data)
 
         self.assertIs(result, second_estimator)
         art_defense.apply_to.assert_called_once_with(
@@ -151,7 +151,7 @@ class TestFairlearnModelConfig(unittest.TestCase):
         ]
 
         with self.assertRaises(TypeError):
-            model._apply_defense(data=Mock())
+            model.apply_defense(data=Mock())
 
     def test_sensitive_fairness_scores_naming_convention(self):
         """Test that sensitive fairness scores follow naming convention."""
@@ -199,7 +199,7 @@ class TestFairlearnModelConfig(unittest.TestCase):
         )
         model._model = SensitiveFitEstimator()
 
-        model._train(self.X_test, self.y_test)
+        model.train(self.X_test, self.y_test)
 
         self.assertIsNotNone(model._model.received_sensitive)
         self.assertEqual(len(model._model.received_sensitive), len(self.y_test))
@@ -227,7 +227,7 @@ class TestFairlearnModelConfig(unittest.TestCase):
         )
         model._model = SensitivePredictEstimator()
 
-        y_pred = model._predict(self.X_test)
+        y_pred = model.predict(self.X_test)
 
         self.assertEqual(len(y_pred), len(self.X_test))
 
@@ -288,7 +288,7 @@ class TestFairlearnDefenseConfigApplyDefense(unittest.TestCase):
             defense_params=defense_params or {},
             data=self.fairness_data,
         )
-        cfg._train(self.X_train, self.y_train)
+        cfg.train(self.X_train, self.y_train)
         return cfg
 
     def test_apply_defense_reductions_exponentiated_gradient_string_constraint(

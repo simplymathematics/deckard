@@ -618,7 +618,7 @@ class PytorchModelConfig(ModelConfig):
                 data=data,
             )
             if checkpoint_stage == "post_fit_pre_predict":
-                snapshot._model = snapshot._apply_defense(data)
+                snapshot._model = snapshot.apply_defense(data)
         try:
             snapshot._evaluate_and_score(data, times={})
         except ValueError as exc:
@@ -629,9 +629,9 @@ class PytorchModelConfig(ModelConfig):
             ):
                 raise
             if checkpoint_stage == "before_predict" and snapshot.defense is not None:
-                snapshot._model = snapshot._apply_defense(data)
-            train_pred = snapshot._predict(data.X_train)
-            test_pred = snapshot._predict(data.X_test)
+                snapshot._model = snapshot.apply_defense(data)
+            train_pred = snapshot.predict(data.X_train)
+            test_pred = snapshot.predict(data.X_test)
             if snapshot.classifier:
                 train_scores = snapshot._classification_scores(
                     data.y_train,
@@ -867,7 +867,7 @@ class PytorchModelConfig(ModelConfig):
 
         return epoch_metrics
 
-    def _apply_defense(self, data, stage: str = "post_fit_pre_predict"):
+    def apply_defense(self, data, stage: str = "post_fit_pre_predict"):
         """Override to pre-wrap with a properly configured PyTorchClassifier/Regressor.
 
         The base-class defense pipeline receives the raw ``torch.nn.Module`` as
@@ -957,7 +957,7 @@ class PytorchModelConfig(ModelConfig):
                 "to produce torch tensors before passing data to a torch model.",
             )
 
-    def _train(self, X: torch.Tensor, y: torch.Tensor):
+    def train(self, X: torch.Tensor, y: torch.Tensor):
         """Train the PyTorch model with per-epoch logging and metrics tracking."""
         if self._model is None:
             raise ValueError("Model not initialized")
@@ -1056,7 +1056,7 @@ class PytorchModelConfig(ModelConfig):
             nb_epochs,
         )
 
-    def _predict(self, X: Union[torch.Tensor, torch.utils.data.DataLoader]):
+    def predict(self, X: Union[torch.Tensor, torch.utils.data.DataLoader]):
         """Make predictions, handling Tensor, DataLoader, Subset, or Dataset inputs."""
         if self._model is None:
             raise ValueError("Model not initialized")

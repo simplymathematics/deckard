@@ -31,6 +31,7 @@ from .canon import (
     ensure_canonical_times,
     merge_data_files,
     normalize_data_score_mode,
+    resolve_runtime_files,
 )
 
 # Setup logger
@@ -939,6 +940,18 @@ class DataConfig(OrchestratorBase, BaseConfig):
         if run_hooks:
             self._run_plugin_hook("after_sample")
 
+    def _load_dataset_with_hooks(
+        self,
+        load_fn: Callable[[], None],
+    ) -> "DataConfig":
+        """Run canonical dataset-load hook orchestration around a loader callable."""
+        if hasattr(self, "data_load_time") and self.data_load_time is not None:
+            return self
+        self._run_plugin_hook("before_load_data")
+        load_fn()
+        self._run_plugin_hook("after_load_data")
+        return self
+
     def load_dataset(self) -> None:
         """
         Loads dataset based on the provided dataset name or file type.
@@ -1205,6 +1218,43 @@ class DataConfig(OrchestratorBase, BaseConfig):
             return False
         data_path.parent.mkdir(parents=True, exist_ok=True)
         return True
+
+    def resolve_call_files(
+        self,
+        kwargs: dict[str, Any],
+        files: DataFiles | DictConfig | dict[str, Any] | None = None,
+    ) -> DataFiles:
+        """Resolve canonical runtime files payload from explicit and legacy kwargs.
+
+        Args:
+            kwargs: Mutable runtime kwargs payload.
+            files: Optional explicit files mapping.
+
+        Returns:
+            Canonical runtime files payload.
+        """
+        files_payload = files if isinstance(files, (dict, DictConfig)) else None
+        return resolve_runtime_files(kwargs, files_payload)
+
+    def execute_data_runtime(
+        self,
+        *args: Any,
+        files: DataFiles | DictConfig | dict[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> dict:
+        """Execute canonical DataConfig call flow with normalized files/pipeline runtime.
+
+        Args:
+            *args: Positional runtime payloads forwarded to ``__call__``.
+            files: Optional files payload to resolve into canonical aliases.
+            **kwargs: Keyword runtime payloads forwarded to ``__call__``.
+
+        Returns:
+            Runtime score payload.
+        """
+        runtime_files = self.resolve_call_files(kwargs, files=files)
+        self._coerce_pipeline_runtime()
+        return DataConfig.__call__(self, *args, files=runtime_files, **kwargs)
     
     def __call__(
         self,

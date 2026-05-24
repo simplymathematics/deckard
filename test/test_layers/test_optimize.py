@@ -939,7 +939,7 @@ def test_optimize_main_executes_conf_object_in_single_run(monkeypatch):
         captured["cfg"] = cfg
         return DummyBase()
 
-    monkeypatch.setattr(optimize_module, "ConfigBase", DummyBase)
+    monkeypatch.setattr(optimize_module, "BaseConfig", DummyBase)
     monkeypatch.setattr(optimize_module, "instantiate", fake_instantiate)
     monkeypatch.setattr(
         optimize_module.HydraConfig,
@@ -974,7 +974,7 @@ def test_optimize_main_executes_once_in_multirun(monkeypatch):
         sweeper={"storage": "sqlite:///db.sqlite3", "study_name": "demo-study"},
     )
 
-    monkeypatch.setattr(optimize_module, "ConfigBase", DummyBase)
+    monkeypatch.setattr(optimize_module, "BaseConfig", DummyBase)
     monkeypatch.setattr(optimize_module, "ExperimentConfig", DummyExperiment)
     monkeypatch.setattr(optimize_module, "instantiate", fake_instantiate)
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
@@ -1528,7 +1528,7 @@ def test_optimize_main_accepts_plain_dict_cfg(monkeypatch):
         def __call__(self):
             return {"ok": True}
 
-    monkeypatch.setattr(optimize_module, "ConfigBase", DummyBase)
+    monkeypatch.setattr(optimize_module, "BaseConfig", DummyBase)
     monkeypatch.setattr(optimize_module, "instantiate", lambda cfg: DummyBase())
     monkeypatch.setattr(
         optimize_module.HydraConfig,

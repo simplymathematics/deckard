@@ -182,6 +182,11 @@ class TestShuffleExperiment(unittest.TestCase):
 
 
 class TestExperimentValidationScoring(unittest.TestCase):
+    def test_run_delegates_to_call(self):
+        exp = ExperimentConfig.__new__(ExperimentConfig)
+        exp.__call__ = lambda: {"ok": 1.0}
+        self.assertEqual(exp.run(), {"ok": 1.0})
+
     def test_propagation_of_modes_to_children(self):
         exp = self._make_exp(score_mode="test")
         exp._propagate_score_mode()
@@ -1740,7 +1745,7 @@ class TestExperimentBranchEdges(unittest.TestCase):
         with self.assertRaises(ValueError):
             exp._compute_val_predictions()
 
-        exp.model = SimpleNamespace(_predict=lambda x: x)
+        exp.model = SimpleNamespace(predict=lambda x: x)
         exp.data = SimpleNamespace(X_val=None, y_val=None)
         with self.assertRaises(ValueError):
             exp._compute_val_predictions()

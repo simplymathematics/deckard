@@ -373,7 +373,7 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
                     X = X.unsqueeze(0)
                 else:
                     X = X.unsqueeze(1)
-        raw = self.model_config._predict(X)
+        raw = self.model_config.predict(X)
         return self._to_numpy(raw)
 
     def predict_proba(self, X) -> np.ndarray:

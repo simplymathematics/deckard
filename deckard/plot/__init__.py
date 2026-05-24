@@ -139,6 +139,25 @@ class PlotConfig(BaseConfig):
         YellowbrickConfigList,
     ] = field(init=False, repr=False)
 
+    @staticmethod
+    def _resolve_requested_backend(kwargs: dict) -> str | None:
+        """Resolve canonical backend from backend/plot_backend aliases."""
+        raw_backend = kwargs.get("backend")
+        raw_plot_backend = kwargs.get("plot_backend")
+        if raw_backend is not None and raw_plot_backend is not None:
+            norm_backend = normalize_plot_backend(raw_backend)
+            norm_plot_backend = normalize_plot_backend(raw_plot_backend)
+            if norm_backend != norm_plot_backend:
+                raise ValueError(
+                    "backend and plot_backend refer to different backends.",
+                )
+            return norm_backend
+        if raw_backend is not None:
+            return normalize_plot_backend(raw_backend)
+        if raw_plot_backend is not None:
+            return normalize_plot_backend(raw_plot_backend)
+        return None
+
     def __post_init__(self):
         # Merge any extra attributes set by ConfigBase into kwargs
         known_fields = {"kwargs", "files", "times", "plot_state", "config"}
@@ -151,7 +170,7 @@ class PlotConfig(BaseConfig):
             self.kwargs.get(key) is not None
             for key in ("data_file", "data_config", "data", "optuna_storage")
         )
-        requested_backend = self.kwargs.get("backend", None)
+        requested_backend = self._resolve_requested_backend(self.kwargs)
 
         if has_experiment and has_seaborn_source:
             raise ValueError(
@@ -165,7 +184,7 @@ class PlotConfig(BaseConfig):
         if requested_backend is None:
             backend = "yellowbrick" if has_experiment else "seaborn"
         else:
-            backend = normalize_plot_backend(requested_backend)
+            backend = requested_backend
 
         if has_experiment:
             if backend != "yellowbrick":
@@ -198,6 +217,9 @@ class PlotConfig(BaseConfig):
 
         self.plot_state["backend"] = backend
         self.plot_state["configured"] = True
+        # Keep both keys in sync for legacy and canonical callers.
+        self.kwargs["backend"] = backend
+        self.kwargs["plot_backend"] = backend
         plot_file = self.kwargs.get("plot_file")
         if plot_file is not None:
             self.files["plot_file"] = str(plot_file)

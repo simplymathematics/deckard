@@ -10,7 +10,6 @@ from deckard.plugins.base import compose_hook_plugins
 
 from ...data._mixins import RuntimePayload, SensitiveColumnsMixin
 from ...data.base import DataConfig
-from ...data.canon import resolve_runtime_files
 from ...utils import (
     is_default_config_value,
     load_class,
@@ -379,13 +378,8 @@ class AnjanaDataConfig(
         Returns:
             Runtime score and artifact payload mapping.
         """
-        files_arg = kwargs.pop("files", None)
-        files = resolve_runtime_files(
-            kwargs,
-            files_arg if isinstance(files_arg, (dict, DictConfig)) else None,
-        )
-        self._coerce_pipeline_runtime()
-        return DataConfig.__call__(self, *args, files=files, **kwargs)
+        files = cast(Any, kwargs.pop("files", None))
+        return self.execute_data_runtime(*args, files=files, **kwargs)
 
 
 __all__ = [

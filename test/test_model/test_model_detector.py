@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from deckard.model.detector import DetectorDefenseConfig
+from deckard.model.defense.detector import DetectorDefenseConfig
 
 
 class _DefenseCtorKwarg:
@@ -55,7 +55,7 @@ def test_detector_defense_evasion_builds_detector_with_kwarg_ctor(monkeypatch):
 
     cfg._build_art_wrapper = lambda **kwargs: wrapped
     monkeypatch.setattr(
-        "deckard.model.detector._is_torch_model_instance",
+        "deckard.model.defense.detector._is_torch_model_instance",
         lambda _m: True,
     )
 
@@ -82,7 +82,7 @@ def test_detector_defense_evasion_supports_positional_ctor_fallback(monkeypatch)
 
     cfg._build_art_wrapper = lambda **kwargs: wrapped
     monkeypatch.setattr(
-        "deckard.model.detector._is_torch_model_instance",
+        "deckard.model.defense.detector._is_torch_model_instance",
         lambda _m: True,
     )
 

@@ -4,10 +4,10 @@ from dataclasses import dataclass, field
 
 from deckard.plugins.defense import DefenseTypePlugin
 
-from ..data import DataConfig
-from ..frameworks.types import ArtEsimtator, EstimatorLike, StringifiedClass
-from ..utils import BaseConfig, safe_store
-from .defense.base import (
+from ...data import DataConfig
+from ...frameworks.types import ArtEsimtator, EstimatorLike, StringifiedClass
+from ...utils import BaseConfig, safe_store
+from .base import (
     DefenseInitParamValue,
     DefensePipelineConfig,
     DefenseMixin,
@@ -123,7 +123,6 @@ class TransformerDefenseConfig(TransformerDefenseMixin, DefensePipelineConfig):
     )
 
 
-# Register transformer defense config
 safe_store(
     group="model",
     name="transformer_defense",

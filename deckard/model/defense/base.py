@@ -194,8 +194,59 @@ class DefenseStep:
 		setattr(self.defense, name, value)
 
 
-class DefensePipelineConfigBehaviorMixin:
-	"""Reusable defense pipeline configuration behavior mixed into pipeline configs.
+class DefenseHookRuntimeMixin:
+	"""Shared plugin-hook runtime behavior for defense pipeline and defense configs.
+
+	This mixin centralizes plugin instantiation, hook dispatch, and score-dict merge
+	behavior so all defense runtime owners expose consistent hook semantics.
+	"""
+
+	plugins: list
+	_plugin_objects: Union[list, None]
+	score_dict: ScoreDict
+
+	def _instantiate_plugin(self, plugin_spec: Any):
+		"""Instantiate one runtime plugin from a normalized plugin spec."""
+		def _resolve_and_instantiate(path: str, **kwargs):
+			return resolve_class(path)(**kwargs)
+
+		return instantiate_plugin_spec(
+			plugin_spec,
+			loader=_resolve_and_instantiate,
+		)
+
+	def _get_plugins(self) -> list:
+		"""Lazily instantiate and cache runtime plugins for defense dispatch."""
+		if getattr(self, "_plugin_objects", None) is None:
+			plugin_specs = normalize_plugin_specs(getattr(self, "plugins", []))
+			self._plugin_objects = [
+				self._instantiate_plugin(spec) for spec in plugin_specs
+			]
+		return list(self._plugin_objects or [])
+
+	def _run_plugin_hook(self, hook_name: str, **kwargs) -> list[Any]:
+		"""Execute one plugin hook across all instantiated plugins."""
+		hook_outputs = []
+		for plugin in self._get_plugins():
+			hook = getattr(plugin, hook_name, None)
+			if callable(hook):
+				hook_outputs.append(hook(self, **kwargs))
+		return hook_outputs
+
+	def _merge_plugin_scores(self, hook_outputs):
+		"""Merge dictionary hook outputs into the runtime ``score_dict``."""
+		if self.score_dict is None:
+			self.score_dict = ScoreDict()
+		for output in hook_outputs:
+			if isinstance(output, dict):
+				self.score_dict.update(output)
+
+
+class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
+	"""Pipeline-owner behavior for composing, normalizing, and applying defense chains.
+
+	This mixin owns pipeline-level orchestration semantics: chain coercion,
+	stage resolution, and ordered application of multi-step defenses.
 
 	Plugin hooks
 	------------
@@ -291,42 +342,6 @@ class DefensePipelineConfigBehaviorMixin:
 		raise TypeError(
 			"Defense config must be a DefensePipelineConfig, a single defense spec, or None",
 		)
-
-	def _instantiate_plugin(self, plugin_spec: Any):
-		"""Instantiate one defense plugin from a normalized plugin spec."""
-		def _resolve_and_instantiate(path: str, **kwargs):
-			return resolve_class(path)(**kwargs)
-
-		return instantiate_plugin_spec(
-			plugin_spec,
-			loader=_resolve_and_instantiate,
-		)
-
-	def _get_plugins(self) -> list:
-		"""Lazily instantiate and cache defense plugins for this runtime."""
-		if self._plugin_objects is None:
-			plugin_specs = normalize_plugin_specs(self.plugins)
-			self._plugin_objects = [
-				self._instantiate_plugin(spec) for spec in plugin_specs
-			]
-		return self._plugin_objects
-
-	def _run_plugin_hook(self, hook_name: str, **kwargs) -> list[Any]:
-		"""Execute one plugin hook across all instantiated plugins."""
-		hook_outputs = []
-		for plugin in self._get_plugins():
-			hook = getattr(plugin, hook_name, None)
-			if callable(hook):
-				hook_outputs.append(hook(self, **kwargs))
-		return hook_outputs
-
-	def _merge_plugin_scores(self, hook_outputs):
-		"""Merge dictionary hook outputs into the runtime ``score_dict``."""
-		if self.score_dict is None:
-			self.score_dict = ScoreDict()
-		for output in hook_outputs:
-			if isinstance(output, dict):
-				self.score_dict.update(output)
 
 	def _coerce_single_defense(self, defense_obj):
 		if isinstance(defense_obj, DefenseStep):
@@ -812,6 +827,32 @@ class DefenseMixin:
 		"""
 		raise NotImplementedError("Defense handlers must implement __call__")
 
+	def defend(
+		self,
+		*,
+		data: DataConfig | None,
+		defense_type: StringifiedClass | None,
+		defense_subtype: Union[str, None],
+		defense_class: type | None,
+		art_class: ArtEsimtator,
+		init_params: dict,
+		base_estimator: EstimatorLike,
+		existing_preprocessors: list,
+		existing_postprocessors: list,
+	) -> tuple[BaseConfig | None, EstimatorLike]:
+		"""Public verb-form alias for applying a defense handler."""
+		return self(
+			data=data,
+			defense_type=defense_type,
+			defense_subtype=defense_subtype,
+			defense_class=defense_class,
+			art_class=art_class,
+			init_params=init_params,
+			base_estimator=base_estimator,
+			existing_preprocessors=existing_preprocessors,
+			existing_postprocessors=existing_postprocessors,
+		)
+
 
 class PassthroughDefenseMixin(DefenseMixin):
 	"""Default handler for no-op/passthrough ART wrapping."""
@@ -855,8 +896,12 @@ class PassthroughDefenseMixin(DefenseMixin):
 		return None, defended_estimator
 
 
-class ARTDefenseBehaviorMixin:
-	"""Reusable defense workflow behavior mixed into concrete config dataclasses."""
+class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
+	"""Single-defense dispatch behavior mixed into concrete defense config dataclasses.
+
+	This mixin owns per-defense runtime dispatch semantics: resolving handler/mixins,
+	building ART-compatible wrappers, and applying a single defense spec.
+	"""
 
 	model_type: StringifiedClass | None
 	classifier: Union[bool, str, None]
@@ -871,34 +916,6 @@ class ARTDefenseBehaviorMixin:
 	_model_config: Union[ModelConfig, None]
 	plugins: list
 	_plugin_objects: Union[list, None]
-
-	def _instantiate_plugin(self, plugin_spec: Any):
-		"""Instantiate one runtime plugin from a normalized plugin spec."""
-		def _resolve_and_instantiate(path: str, **kwargs):
-			return resolve_class(path)(**kwargs)
-
-		return instantiate_plugin_spec(
-			plugin_spec,
-			loader=_resolve_and_instantiate,
-		)
-
-	def _get_plugins(self) -> list:
-		"""Lazily instantiate and cache runtime plugins for defense dispatch."""
-		if getattr(self, "_plugin_objects", None) is None:
-			plugin_specs = normalize_plugin_specs(getattr(self, "plugins", []))
-			self._plugin_objects = [
-				self._instantiate_plugin(spec) for spec in plugin_specs
-			]
-		return list(self._plugin_objects or [])
-
-	def _run_plugin_hook(self, hook_name: str, **kwargs) -> list[Any]:
-		"""Execute one plugin hook across all instantiated plugins."""
-		hook_outputs = []
-		for plugin in self._get_plugins():
-			hook = getattr(plugin, hook_name, None)
-			if callable(hook):
-				hook_outputs.append(hook(self, **kwargs))
-		return hook_outputs
 
 	def _resolve_runtime_defense_mixins(
 		self,
@@ -1189,9 +1206,31 @@ class ARTDefenseBehaviorMixin:
 			)
 		self.model = estimator
 		model_cfg = self.model_config
-		if model_cfg is not None:
+		if model_cfg is not None and hasattr(model_cfg, "set_estimator"):
 			model_cfg.set_estimator(estimator)
+		elif model_cfg is not None and hasattr(model_cfg, "_model"):
+			setattr(model_cfg, "_model", estimator)
 		return self.apply_defense(data)
+
+	def apply(
+		self,
+		estimator: Union["BaseEstimator", None],
+		data: DataConfig | None,
+	) -> "BaseEstimator":
+		"""Unified public entrypoint for applying a single defense config.
+
+		Args:
+			estimator: Fitted estimator payload to defend.
+			data: Runtime data payload.
+
+		Returns:
+			Defended estimator.
+
+		Notes:
+			This method is equivalent to ``apply_to`` and exists to align the
+			public API with pipeline-level ``DefensePipelineConfig.apply``.
+		"""
+		return self.apply_to(estimator=estimator, data=data)
 
 	def apply_defense(self, data: DataConfig | None) -> "BaseEstimator":
 		"""Apply the configured defense to the current estimator.
@@ -1569,3 +1608,19 @@ class DefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
 
 	def __hash__(self) -> int:
 		return super().__hash__()
+
+	def __call__(self, *args: Any, **kwargs: Any) -> None:
+		"""Disallow direct runtime execution for defense config objects.
+
+		Args:
+			*args: Positional runtime arguments.
+			**kwargs: Keyword runtime arguments.
+
+		Raises:
+			NotImplementedError: Always, because defense configs are applied via pipeline/model runtime owners.
+		"""
+		_ = args
+		_ = kwargs
+		raise NotImplementedError(
+			"DefenseConfig is not a runtime owner; call apply_defense/apply_to from model pipeline instead.",
+		)

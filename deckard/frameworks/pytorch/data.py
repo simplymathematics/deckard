@@ -7,7 +7,7 @@ import tempfile
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, List, Literal, Optional, Union
+from typing import Any, Callable, List, Literal, Optional, Union, cast
 
 import numpy as np
 from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
@@ -277,8 +277,6 @@ class TorchDatasetMixin(TorchDatasetSamplingMixin):
             torch.as_tensor(test_idx, dtype=torch.long),
         )
 
-    pass
-
 
 @dataclass(eq=False, kw_only=True)
 class PytorchDataConfig(TorchDatasetMixin, DataConfig):
@@ -389,25 +387,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         Returns:
             The current data configuration instance.
         """
-        if self.data_load_time is not None and self._X is not None and self._y is not None:
-            return self
-        self._run_plugin_hook("before_load_data")
-        self._load_data()
-        self._run_plugin_hook("after_load_data")
-        return self
-
-    def score(self, *args, mode: str | None = None, **kwargs) -> dict:
-        """Delegate scoring to the canonical DataConfig score flow.
-
-        Args:
-            *args: Positional scoring payloads forwarded to parent implementation.
-            mode: Optional scoring mode token.
-            **kwargs: Keyword scoring payloads forwarded to parent implementation.
-
-        Returns:
-            Score payload dictionary from parent scoring flow.
-        """
-        return super().score(*args, mode=mode, **kwargs)
+        return cast("PytorchDataConfig", self._load_dataset_with_hooks(self._load_data))
 
     def _load_data(self) -> None:
         """Load a PyTorch dataset using load_class for generic instantiation.
@@ -731,12 +711,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         Returns:
             The current custom data configuration instance.
         """
-        if self.data_load_time is not None and self._X is not None and self._y is not None:
-            return self
-        self._run_plugin_hook("before_load_data")
-        self._load_data()
-        self._run_plugin_hook("after_load_data")
-        return self
+        return cast("PytorchCustomDataConfig", self._load_dataset_with_hooks(self._load_data))
 
     def _as_dataset(self, obj, split: str, transform):
         if isinstance(obj, str):

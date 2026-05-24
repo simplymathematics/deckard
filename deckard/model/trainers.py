@@ -192,7 +192,7 @@ class SklearnTrainer(BaseTrainer):
             Training metadata payload.
         """
         output = dict(times or {})
-        config._train(data.X_train, data.y_train)
+        config.train(data.X_train, data.y_train)
         output["training_time"] = getattr(config, "training_time", None)
         output["training_n"] = getattr(config, "training_n", None)
         if model_file is not None:
@@ -202,7 +202,7 @@ class SklearnTrainer(BaseTrainer):
 
 @dataclass
 class PytorchTrainer(BaseTrainer):
-    """Trainer for torch model flows; delegates to model _train implementation."""
+    """Trainer for torch model flows; delegates to model train implementation."""
 
     def __call__(
         self,
@@ -226,7 +226,7 @@ class PytorchTrainer(BaseTrainer):
             Training metadata payload.
         """
         output = dict(times or {})
-        config._train(data.X_train, data.y_train)
+        config.train(data.X_train, data.y_train)
         output["training_time"] = getattr(config, "training_time", None)
         output["training_n"] = getattr(config, "training_n", None)
         if model_file is not None:
@@ -267,7 +267,7 @@ class PretrainedTrainer(BaseTrainer):
         output = dict(times or {})
         if force_retrain:
             config._initialize_model()
-            config._train(data.X_train, data.y_train)
+            config.train(data.X_train, data.y_train)
             output["training_time"] = getattr(config, "training_time", None)
             output["training_n"] = getattr(config, "training_n", None)
             if model_file is not None:
@@ -280,14 +280,14 @@ class PretrainedTrainer(BaseTrainer):
                 config.__dict__.update(getattr(loaded_obj, "__dict__", {}))
             else:
                 config._model = loaded_obj
-            if config._is_model_fitted(config._model, X_sample=data.X_train):
+            if config.is_fitted(config._model, X_sample=data.X_train):
                 logger.info("Pretrained trainer loaded fitted model from %s", model_file)
                 output.setdefault("training_time", getattr(config, "training_time", None))
                 output.setdefault("training_n", getattr(config, "training_n", None))
                 return output
 
         if self.allow_fallback_training:
-            config._train(data.X_train, data.y_train)
+            config.train(data.X_train, data.y_train)
             output["training_time"] = getattr(config, "training_time", None)
             output["training_n"] = getattr(config, "training_n", None)
             if model_file is not None:
@@ -334,7 +334,7 @@ class PartialFitTrainer(BaseTrainer):
 
         partial_fit = getattr(model, "partial_fit", None)
         if not callable(partial_fit):
-            config._train(data.X_train, data.y_train)
+            config.train(data.X_train, data.y_train)
         else:
             fit_params = getattr(config, "fit_params", {}) or {}
             if getattr(config, "classifier", True):
@@ -388,7 +388,7 @@ class PruningTrainer(BaseTrainer):
             Training metadata payload.
         """
         output = dict(times or {})
-        config._train(data.X_train, data.y_train)
+        config.train(data.X_train, data.y_train)
         output["training_time"] = getattr(config, "training_time", None)
         output["training_n"] = getattr(config, "training_n", None)
 

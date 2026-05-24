@@ -41,20 +41,20 @@ class TestModelConfig(unittest.TestCase):
         self.assertTrue(hasattr(self.model._model, "predict"))
 
     def test_train_and_predict(self):
-        self.model._train(self.X_train, self.y_train)
-        preds = self.model._predict(self.X_train)
+        self.model.train(self.X_train, self.y_train)
+        preds = self.model.predict(self.X_train)
         self.assertEqual(len(preds), len(self.y_train))
 
     def test_predict_proba(self):
-        self.model._train(self.X_train, self.y_train)
+        self.model.train(self.X_train, self.y_train)
         self.model.probability = True
-        proba = self.model._predict_proba(self.X_train)
+        proba = self.model.predict_proba(self.X_train)
         self.assertEqual(len(proba), len(self.y_train))
 
     def test_score(self):
-        self.model._train(self.X_train, self.y_train)
-        proba = self.model._predict_proba(self.X_train)
-        scores = self.model._score(self.y_train, proba, y_proba=proba)
+        self.model.train(self.X_train, self.y_train)
+        proba = self.model.predict_proba(self.X_train)
+        scores = self.model.score(self.y_train, proba, y_proba=proba)
         self.assertIsInstance(scores, dict)
         self.assertIn("accuracy", scores)
 
@@ -283,7 +283,7 @@ class TestModelConfig(unittest.TestCase):
         )
         model._model = WrappedPredictor()
 
-        preds = model._predict(self.X_test)
+        preds = model.predict(self.X_test)
         self.assertTrue(np.array_equal(preds, np.array([0, 1])))
 
     def test_decode_predictions_for_persistence_converts_2d_classifier_output(
@@ -601,7 +601,7 @@ class TestPredictTypeErrorHandling(unittest.TestCase):
             arr,
         )
         X = pd.DataFrame({"a": [1, 2, 3, 4]})
-        result = model._predict(X)
+        result = model.predict(X)
         np.testing.assert_array_equal(result, arr)
 
     def test_cant_convert_type_error_falls_back_to_array(self):
@@ -611,7 +611,7 @@ class TestPredictTypeErrorHandling(unittest.TestCase):
             arr,
         )
         X = pd.DataFrame({"a": [1, 2, 3, 4]})
-        result = model._predict(X)
+        result = model.predict(X)
         np.testing.assert_array_equal(result, arr)
 
     def test_other_type_error_reraises(self):
@@ -626,7 +626,7 @@ class TestPredictTypeErrorHandling(unittest.TestCase):
         )
         X = pd.DataFrame({"a": [1, 2, 3]})
         with self.assertRaises(TypeError):
-            model._predict(X)
+            model.predict(X)
 
     def test_predict_without_model_raises_value_error(self):
         model = ModelConfig(
@@ -637,7 +637,7 @@ class TestPredictTypeErrorHandling(unittest.TestCase):
         )
         model._model = None
         with self.assertRaises(ValueError):
-            model._predict(pd.DataFrame({"a": [1]}))
+            model.predict(pd.DataFrame({"a": [1]}))
 
 
 # ── _predict_proba branches ────────────────────────────────────────────────
@@ -659,7 +659,7 @@ class TestPredictProbaBranches(unittest.TestCase):
         model.probability = False
         data = _make_data()
         with self.assertRaises(ValueError):
-            model._predict_proba(data.X_test)
+            model.predict_proba(data.X_test)
 
     def test_predict_proba_no_model_raises(self):
         model = ModelConfig(
@@ -767,7 +767,7 @@ class TestLoadOrTrainModel(unittest.TestCase):
 
     def test_model_file_present_unwraps_loaded_model_config(self):
         data, model = _make_fitted_model()
-        model._train(data.X_train, data.y_train)
+        model.train(data.X_train, data.y_train)
 
         with tempfile.TemporaryDirectory() as td:
             model_path = str(Path(td) / "model.pkl")
@@ -986,7 +986,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
                 return np.column_stack([np.ones(n) * 0.4, np.ones(n) * 0.6])
 
         model._model = _PredictModel()
-        model._predict = lambda X: np.ones(len(X), dtype=int)
+        model.predict = lambda X: np.ones(len(X), dtype=int)
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {
             "loss_curve": [1.0, 0.5],
             "accuracy": 0.5,
@@ -1009,7 +1009,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         data = _make_data()
         data.X_test = None
         model._model = SimpleNamespace(predict_proba=lambda X: np.zeros((len(X), 2)))
-        model._predict = lambda X: np.zeros(len(X), dtype=int)
+        model.predict = lambda X: np.zeros(len(X), dtype=int)
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {"accuracy": 1.0}
 
         with self.assertRaises(ValueError):
@@ -1020,7 +1020,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         data = _make_data()
         data.y_test = None
         model._model = SimpleNamespace(predict_proba=lambda X: np.zeros((len(X), 2)))
-        model._predict = lambda X: np.zeros(len(X), dtype=int)
+        model.predict = lambda X: np.zeros(len(X), dtype=int)
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {"accuracy": 1.0}
 
         with self.assertRaises(ValueError):
@@ -1037,7 +1037,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
             return np.column_stack([np.ones(n) * 0.3, np.ones(n) * 0.7])
 
         model._model = SimpleNamespace(predict_proba=_predict_proba)
-        model._predict = lambda X: np.ones(len(X), dtype=int)
+        model.predict = lambda X: np.ones(len(X), dtype=int)
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {"accuracy": 1.0}
         model.score_dict = {}
 
@@ -1095,7 +1095,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         model._model = SimpleNamespace(
             predict_proba=lambda _X: (_ for _ in ()).throw(ValueError("bad probs")),
         )
-        model._predict = lambda X: np.zeros(len(X), dtype=int)
+        model.predict = lambda X: np.zeros(len(X), dtype=int)
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {"accuracy": 1.0}
         model.score_dict = {}
 
@@ -1115,7 +1115,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         model._model = SimpleNamespace(
             predict_proba=lambda _X: (_ for _ in ()).throw(TypeError("unexpected")),
         )
-        model._predict = lambda X: np.zeros(len(X), dtype=int)
+        model.predict = lambda X: np.zeros(len(X), dtype=int)
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {"accuracy": 1.0}
 
         with self.assertRaises(TypeError):
@@ -1133,7 +1133,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         model._model = SimpleNamespace(
             predict_proba=lambda _X: (_ for _ in ()).throw(TypeError("unexpected")),
         )
-        model._predict = lambda X: np.zeros(len(X), dtype=int)
+        model.predict = lambda X: np.zeros(len(X), dtype=int)
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {"accuracy": 1.0}
 
         with self.assertRaises(TypeError):
@@ -1148,7 +1148,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         model = self._model()
         data = _make_data()
         model._model = SimpleNamespace()
-        model._predict = lambda X: np.zeros(len(X), dtype=int)
+        model.predict = lambda X: np.zeros(len(X), dtype=int)
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {"accuracy": 1.0}
         model.score_dict = {}
 
@@ -1186,7 +1186,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
 
         model = self._model()
         model.score_mode = "val"
-        model._train(data.X_train, data.y_train)
+        model.train(data.X_train, data.y_train)
         model.scorer = lambda y_true, y_pred, mode="val", **kwargs: {
             "validation_accuracy": 1.0,
         }
@@ -1202,7 +1202,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         model = self._model()
         data = _make_data()
         model._model = SimpleNamespace(predict_proba=lambda X: np.zeros((len(X), 2)))
-        model._predict = lambda X: np.zeros(len(X), dtype=int)
+        model.predict = lambda X: np.zeros(len(X), dtype=int)
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {"accuracy": 1.0}
         model.score_dict = None
 
@@ -1213,7 +1213,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         model = self._model()
         data = _make_data()
         model._model = SimpleNamespace()
-        model._predict = lambda _X: None
+        model.predict = lambda _X: None
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {"accuracy": 1.0}
 
         with self.assertRaises(TypeError):
@@ -1248,7 +1248,7 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
 
             model.load = lambda _fp: loaded_obj
             model.save_object = lambda *_args, **_kwargs: None
-            loaded_obj._train = (
+            loaded_obj.train = (
                 lambda X, y: setattr(loaded_obj, "training_time", 0.01)
                 or setattr(loaded_obj, "training_n", len(y))
                 or setattr(
@@ -1273,7 +1273,7 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
             model_params={"max_depth": 2},
             scorer=None,
         )
-        model._train(data.X_train, data.y_train)
+        model.train(data.X_train, data.y_train)
 
         with tempfile.TemporaryDirectory() as td:
             out = model._load_or_train_model(data, str(Path(td) / "missing.pkl"), {})
@@ -1324,7 +1324,7 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
             )
             loaded_obj._model = _Unfitted()
             loaded_obj.defense = object()
-            loaded_obj._train = (
+            loaded_obj.train = (
                 lambda X, y: setattr(loaded_obj, "training_time", 0.01)
                 or setattr(loaded_obj, "training_n", len(y))
                 or setattr(

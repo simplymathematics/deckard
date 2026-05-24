@@ -48,7 +48,7 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
             classifier=True,
             model_params={"max_iter": 20},
         )
-        model._train(data.X_train, data.y_train)
+        model.train(data.X_train, data.y_train)
         defense = DefenseConfig(
             defense_name="art.defences.trainer.AdversarialTrainerMadryPGD",
             defense_params={"nb_epochs": 1, "batch_size": 4, "max_iter": 1},
@@ -163,7 +163,7 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
             classifier=True,
             model_params={"max_iter": 20},
         )
-        model._train(data.X_train, data.y_train)
+        model.train(data.X_train, data.y_train)
         defense = DefenseConfig(
             defense_name="art.defences.detector.evasion.BinaryInputDetector",
             defense_params={},
@@ -273,7 +273,7 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
             classifier=True,
             model_params={"max_iter": 20},
         )
-        model._train(data.X_train, data.y_train)
+        model.train(data.X_train, data.y_train)
         defense = DefenseConfig(
             defense_name="art.defences.transformer.evasion.DefensiveDistillation",
             defense_params={"batch_size": 8, "nb_epochs": 1},
@@ -294,7 +294,7 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
             classifier=True,
             model_params={"max_iter": 20},
         )
-        model._train(data.X_train, data.y_train)
+        model.train(data.X_train, data.y_train)
         defense = DefenseConfig(
             defense_name="art.defences.transformer.poisoning.NeuralCleanse",
             defense_params={},

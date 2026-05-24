@@ -14,6 +14,14 @@ from .inference import InferenceAttackMixin
 class ReconstructionAttackMixin(InferenceAttackMixin):
     """Reusable database reconstruction attack behavior."""
 
+    def reconstruct(
+        self,
+        data: DataConfig,
+        attack: AttackLike,
+    ) -> ScoreDict:
+        """Public subtype-mirroring alias for reconstruction execution."""
+        return self.infer_database_reconstruction(data=data, attack=attack)
+
     def infer_database_reconstruction(
         self,
         data: DataConfig,
@@ -62,7 +70,7 @@ class ReconstructionAttackMixin(InferenceAttackMixin):
             raise ValueError(
                 "_ReconstructionAttackMixin requires inference.reconstruction attack subtype",
             )
-        return self.infer_database_reconstruction(data=data, attack=attack)
+        return self.reconstruct(data=data, attack=attack)
 
 
 @dataclass(eq=False, kw_only=True)

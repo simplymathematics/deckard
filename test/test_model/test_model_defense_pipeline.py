@@ -75,7 +75,7 @@ class TestDefenseConfig(unittest.TestCase):
             classifier=True,
             model_params={"n_estimators": 5, "random_state": 42},
         )
-        model._train(self.data.X_train, self.data.y_train)
+        model.train(self.data.X_train, self.data.y_train)
 
         defended = self.defense_config.apply_to(
             estimator=model.get_model(),

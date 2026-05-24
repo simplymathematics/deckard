@@ -190,7 +190,7 @@ def test_mixed_fairlearn_and_art_defenses_apply_with_type_checks(
         model_params={"max_iter": 50},
         data=data,
     )
-    model._train(data.X_train, data.y_train)
+    model.train(data.X_train, data.y_train)
 
     fair_defense = FairlearnDefenseConfig(
         model_type="sklearn.linear_model.LogisticRegression",
@@ -215,7 +215,7 @@ def test_mixed_fairlearn_and_art_defenses_apply_with_type_checks(
         defenses=[fair_defense, art_defense],
         plugins=[probe],
     )
-    defended = model._apply_defense(data)
+    defended = model.apply_defense(data)
 
     assert probe.before_called
     assert probe.after_called

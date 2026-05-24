@@ -50,8 +50,8 @@ def _base_model(defense=None):
 def _apply_defense(defense):
     data = _base_classification_data()
     model = _base_model(defense=defense)
-    model._train(data.X_train, data.y_train)
-    wrapped = model._apply_defense(data)
+    model.train(data.X_train, data.y_train)
+    wrapped = model.apply_defense(data)
     return data, model, wrapped
 
 
@@ -238,7 +238,7 @@ def test_get_art_model_does_not_duplicate_apply_fit_preprocessor_defense():
             ],
         },
     )
-    model._train(data.X_train, data.y_train)
+    model.train(data.X_train, data.y_train)
 
     first_wrapper = model.get_art_model(data)
     second_wrapper = model.get_art_model(data)

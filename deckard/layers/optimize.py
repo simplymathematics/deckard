@@ -930,6 +930,23 @@ def optimize_main(
     """
     hydra_cfg = HydraConfig.get()
     cfg_dict = _coerce_cfg_to_dict(cfg)
+    # Ensure callback-style interpolation keys always exist at root during
+    # resolution, even when they are not constructor args for ExperimentConfig.
+    cfg_dict.setdefault("dvclive_enabled", False)
+    cfg_dict.setdefault("pruning_enabled", True)
+    cfg_dict.setdefault("report_trial_attrs", True)
+    cfg_dict.setdefault("dvclive_dir", None)
+
+    # Resolve interpolations before dropping non-constructor root keys.
+    cfg_resolved = OmegaConf.create(cfg_dict)
+    OmegaConf.resolve(cfg_resolved)
+    cfg_container = OmegaConf.to_container(cfg_resolved, resolve=True)
+    assert isinstance(
+        cfg_container,
+        dict,
+    ), f"cfg must resolve to a dictionary. Got {type(cfg_container)}"
+    cfg_dict = {str(k): v for k, v in cfg_container.items()}
+
     assert isinstance(
         cfg_dict,
         dict,
@@ -948,7 +965,7 @@ def optimize_main(
     assert isinstance(
         conf_obj,
         BaseConfig,
-    ), f"conf_obj must be an instance of ConfigBase. Got {type(conf_obj)}"
+    ), f"conf_obj must be an instance of BaseConfig. Got {type(conf_obj)}"
     scores = DefaultOptimizerCallback.execute_runtime_object(conf_obj)
 
     # Preserve raw runtime payload for callback hooks even when sweepers wrap

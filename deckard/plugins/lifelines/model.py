@@ -215,7 +215,7 @@ class SurvivalModelConfig(SurvivalModelInitMixin, ModelConfig):
         self._model = aft
         return aft
 
-    def _score(
+    def score(
         self,
         y_true: pd.DataFrame,
         y_pred: RegressionFitter,

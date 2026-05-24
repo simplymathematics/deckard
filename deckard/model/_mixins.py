@@ -58,10 +58,6 @@ class ModelTrainingMixin:
         """
         self.train_model(X, y)
 
-    def _train(self, X: MatrixLike, y: ArrayLike) -> None:
-        """Protected training hook used by model runtime orchestration."""
-        self.train_model(X, y)
-
 
 class PretrainedModelMixin:
     """Reusable pretrained-model loading behavior."""

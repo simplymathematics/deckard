@@ -64,7 +64,7 @@ def test_pytorch_model_training_records_optimizer_loss_and_serializes_it():
 
     X = torch.randn(8, 4)
     y = torch.randint(0, 2, (8,))
-    cfg._train(X, y)
+    cfg.train(X, y)
 
     assert "optimizer_loss" in cfg.score_dict
     assert cfg.score_dict["optimizer_loss"] is not None
@@ -203,11 +203,11 @@ def test_predict_path_for_art_wrapper_and_empty_loader():
     cfg._model = _ArtLikeModel()
 
     empty_loader = DataLoader(TensorDataset(torch.empty((0, 4))), batch_size=2)
-    out_empty = cfg._predict(empty_loader)
+    out_empty = cfg.predict(empty_loader)
     assert out_empty.numel() == 0
 
     x = torch.tensor([[0.2, 0.1, 0.0, 0.0], [0.8, 0.1, 0.0, 0.0]], dtype=torch.float32)
-    out = cfg._predict(x)
+    out = cfg.predict(x)
     assert isinstance(out, torch.Tensor)
     assert out.shape[0] == 2
 
@@ -411,7 +411,7 @@ def test_score_checkpoint_snapshot_predict_proba_fallback_classification():
         _evaluate_and_score=lambda data, times={}: (_ for _ in ()).throw(
             ValueError("predict_proba unavailable"),
         ),
-        _predict=lambda X: torch.zeros(len(X), dtype=torch.long),
+        predict=lambda X: torch.zeros(len(X), dtype=torch.long),
         _classification_scores=lambda y_true, y_pred: {"accuracy": 0.5},
         _regression_scores=lambda y_true, y_pred: {"mse": 1.0},
     )
@@ -445,7 +445,7 @@ def test_score_checkpoint_snapshot_predict_proba_fallback_regression():
         _evaluate_and_score=lambda data, times={}: (_ for _ in ()).throw(
             ValueError("predict_proba missing"),
         ),
-        _predict=lambda X: torch.zeros(len(X), dtype=torch.float32),
+        predict=lambda X: torch.zeros(len(X), dtype=torch.float32),
         _classification_scores=lambda y_true, y_pred: {"accuracy": 0.5},
         _regression_scores=lambda y_true, y_pred: {"mse": 0.25},
     )
@@ -505,7 +505,7 @@ def test_pytorch_model_with_adam_optimizer():
 
     X = torch.randn(8, 4)
     y = torch.randint(0, 2, (8,))
-    cfg._train(X, y)
+    cfg.train(X, y)
 
     assert "optimizer_loss" in cfg.score_dict
     assert cfg.score_dict["optimizer_loss"] is not None
@@ -526,7 +526,7 @@ def test_pytorch_model_with_mse_loss():
 
     X = torch.randn(8, 4)
     y = torch.randn(8, 1)
-    cfg._train(X, y)
+    cfg.train(X, y)
 
     assert "optimizer_loss" in cfg.score_dict
     assert cfg.score_dict["optimizer_loss"] is not None
@@ -546,7 +546,7 @@ def test_pytorch_model_serialization_preserves_optimizer_config():
 
     X = torch.randn(8, 4)
     y = torch.randint(0, 2, (8,))
-    cfg._train(X, y)
+    cfg.train(X, y)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         config_path = Path(tmpdir) / "torch_config.pkl"
@@ -730,12 +730,12 @@ def test_pytorch_model_loss_decreases_during_training():
     y = torch.randint(0, 2, (20,))
 
     # Train and capture loss
-    cfg._train(X, y)
+    cfg.train(X, y)
     final_loss_1 = cfg.score_dict["optimizer_loss"]
 
     # Retrain with more epochs to verify loss changes
     cfg.fit_params["nb_epochs"] = 10
-    cfg._train(X, y)
+    cfg.train(X, y)
     final_loss_2 = cfg.score_dict["optimizer_loss"]
 
     # Loss should be different (not necessarily lower due to randomness)
@@ -770,7 +770,7 @@ def test_pytorch_model_different_batch_sizes():
             criterion="CrossEntropyLoss",
             optimizer={"name": "SGD", "lr": 0.01},
         )
-        cfg._train(data.X_train, data.y_train)
+        cfg.train(data.X_train, data.y_train)
         losses.append(cfg.score_dict["optimizer_loss"])
 
     # All batch sizes should produce valid losses
@@ -792,7 +792,7 @@ def test_pytorch_model_serialization_with_different_input_sizes():
 
     X = torch.randn(8, 100)
     y = torch.randint(0, 2, (8,))
-    cfg._train(X, y)
+    cfg.train(X, y)
 
     assert "optimizer_loss" in cfg.score_dict
 
@@ -831,7 +831,7 @@ def test_pytorch_model_hash_stable_after_training_and_runtime_updates():
 
     X = torch.randn(8, 4)
     y = torch.randint(0, 2, (8,))
-    cfg._train(X, y)
+    cfg.train(X, y)
     cfg.score_dict["runtime_metric"] = 1.23
     cfg.training_time = 99.0
 

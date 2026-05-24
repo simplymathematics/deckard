@@ -467,7 +467,7 @@ class _ConfigLikeModel:
         _ = data
         return {"model_ready": True}
 
-    def _train(self, X, y):
+    def train(self, X, y):
         _ = X, y
         self.train_calls += 1
 

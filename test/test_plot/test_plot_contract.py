@@ -45,3 +45,32 @@ def test_plot_config_rejects_mismatched_backend_and_source():
                 "backend": "seaborn",
             },
         )
+
+
+def test_plot_config_accepts_plot_backend_alias():
+    with patch("deckard.plot.SeabornPlotConfig") as mock_seaborn:
+        mock_instance = Mock(return_value="ok")
+        mock_seaborn.return_value = mock_instance
+
+        cfg = PlotConfig(
+            kwargs={
+                "data_file": "/tmp/data.pkl",
+                "plot_type": "scatter",
+                "plot_backend": "sns",
+            },
+        )
+        assert cfg.plot_state["backend"] == "seaborn"
+        assert cfg.kwargs["backend"] == "seaborn"
+        assert cfg.kwargs["plot_backend"] == "seaborn"
+
+
+def test_plot_config_rejects_conflicting_backend_aliases():
+    with pytest.raises(ValueError, match="different backends"):
+        PlotConfig(
+            kwargs={
+                "data_file": "/tmp/data.pkl",
+                "plot_type": "scatter",
+                "backend": "seaborn",
+                "plot_backend": "yellowbrick",
+            },
+        )

@@ -1,7 +1,7 @@
 import collections
 import logging
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import torch
@@ -10,6 +10,8 @@ from torch.utils.data import (
     Subset,  # Ensure Subset is always in scope
 )
 
+from ...artifacts import ScoreDict
+from ...data.base import DataConfig
 from ...plugins.fairlearn.data import FairlearnDataConfig
 from ...plugins.fairlearn.score import (
     DefaultFairlearnDataScorerConfig,
@@ -120,6 +122,19 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
                 classifier=getattr(self, "classifier", True),
             )
 
+    def _ensure_runtime_scorer(self) -> None:
+        """Ensure runtime scorer is a fairlearn data scorer with canonical defaults."""
+        from ...utils import is_default_config_value
+
+        if (
+            is_default_config_value(self.scorer, include_best=False)
+            or self.scorer is None
+        ):
+            self.scorer = DefaultFairlearnDataScorerConfig(
+                classifier=getattr(self, "classifier", True),
+            )
+        self._ensure_data_scorer_default()
+
     # ------------------------------------------------------------------
     # Initialisation
     # ------------------------------------------------------------------
@@ -141,17 +156,18 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         Returns:
             This FairlearnPytorchDataConfig instance.
         """
-        return PytorchCustomDataConfig.load_dataset(self)
+        return cast("FairlearnPytorchDataConfig", PytorchCustomDataConfig.load_dataset(self))
 
     def _fit_transform_X(self, X_train, X_test, y_train, y_test, pipeline):
-        """Bypass pipeline fit/transform for torch types."""
-        if pipeline:
-            raise NotImplementedError("Pytorch data pipelines not yet implemented.")
-        self.pipeline_fit_time = 0.0
-        self.pipeline_fit_n = len(X_train) if hasattr(X_train, "__len__") else 0
-        self.pipeline_transform_time = 0.0
-        self.pipeline_transform_n = len(X_test) if hasattr(X_test, "__len__") else 0
-        return X_train, X_test, y_train, y_test
+        """Run canonical DataConfig pipeline fit/transform for torch fairness data."""
+        return DataConfig._fit_transform_X(
+            self,
+            X_train,
+            X_test,
+            y_train,
+            y_test,
+            pipeline,
+        )
 
     def fit(self, run_hooks: bool = True) -> "FairlearnPytorchDataConfig":
         """Split the dataset and extract per-split sensitive-feature arrays.
@@ -263,21 +279,17 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         Returns:
             Lifecycle outputs returned by the parent data configuration.
         """
-        from ...utils import is_default_config_value
-
-        if (
-            is_default_config_value(self.scorer, include_best=False)
-            or self.scorer is None
-        ):
-            self.scorer = DefaultFairlearnDataScorerConfig(
-                classifier=getattr(self, "classifier", True),
-            )
-        self._ensure_data_scorer_default()
+        self._ensure_runtime_scorer()
         result = super().__call__(*args, **kwargs)
         assert hasattr(self, "X_train"), ".X_train not found"
         return result
 
-    def score(self, mode: str | None = None) -> dict:
+    def score(
+        self,
+        *args: Any,
+        mode: str | None = None,
+        **kwargs: Any,
+    ) -> ScoreDict:
         """Compute fairness scores using canonical helpers for sensitive-feature lookup.
 
         Args:
@@ -289,16 +301,8 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         Raises:
             TypeError: If configured scorer is not callable.
         """
-        from ...utils import is_default_config_value
-
-        if (
-            is_default_config_value(self.scorer, include_best=False)
-            or self.scorer is None
-        ):
-            self.scorer = DefaultFairlearnDataScorerConfig(
-                classifier=getattr(self, "classifier", True),
-            )
-        self._ensure_data_scorer_default()
+        _ = (args, kwargs)
+        self._ensure_runtime_scorer()
         if not callable(self.scorer):
             raise TypeError(
                 f"FairlearnPytorchDataConfig.scorer must be callable, got {type(self.scorer)}",
@@ -310,11 +314,11 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         # Map "pre-sample" -> dataset-level summary (no model predictions needed).
         if scorer_mode == "pre-sample":
             y_all, sensitive = self._get_full_dataset_labels()
-            return {
+            return ScoreDict({
                 "n_samples": len(y_all),
                 "label_distribution": dict(collections.Counter(y_all)),
                 "sensitive_distribution": dict(collections.Counter(sensitive)),
-            }
+            })
 
         # Canonical sensitive-feature lookup.
         sensitive = resolve_sensitive_features(
@@ -327,7 +331,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
                 "No sensitive features for mode '%s'; skipping fairness scoring.",
                 scorer_mode,
             )
-            return {}
+            return ScoreDict()
 
         # Extract (X, y) arrays for the requested split.
         X, y_true = self._get_split_arrays(
@@ -335,7 +339,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             stage_to_split_mode=stage_to_split_mode,
         )
         if y_true is None:
-            return {}
+            return ScoreDict()
 
         y_proba = None
         try:
@@ -360,8 +364,8 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
                         flat[f"{k}_{subk}"] = subv
                 else:
                     flat[k] = v
-            return flat
-        return {"fairness_score": fairness_scores}
+            return ScoreDict(flat)
+        return ScoreDict({"fairness_score": fairness_scores})
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -404,5 +408,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         if y_all is None:
             raise RuntimeError("Could not extract y labels for pre-sample mode.")
 
-        y_all = coerce_to_numpy(y_all)
-        return y_all.tolist(), sensitive
+        y_all_array = coerce_to_numpy(y_all)
+        if y_all_array is None:
+            raise RuntimeError("Could not coerce dataset labels to numpy array.")
+        return y_all_array.tolist(), sensitive

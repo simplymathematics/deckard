@@ -8,6 +8,8 @@ from hydra._internal.utils import get_args_parser
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 
+from ..plot.canon import normalize_plot_backend
+
 logger = logging.getLogger(__name__)
 
 
@@ -15,6 +17,7 @@ PLOT_MAIN_DEFAULTS = {
     "experiment_config": "",
     "data_file": "",
     "backend": "auto",
+    "plot_backend": "",
     "plot_type": "",
     "plots": "",
     "plot_params_file": "",
@@ -171,7 +174,23 @@ def _extract_backend(
     plot_block = (
         cfg_dict.get("plot", {}) if isinstance(cfg_dict.get("plot"), dict) else {}
     )
-    backend = plot_block.get("backend", cfg_dict.get("backend", "auto"))
+    backend = plot_block.get("backend", cfg_dict.get("backend", None))
+    plot_backend = plot_block.get("plot_backend", cfg_dict.get("plot_backend", None))
+    if backend is not None and plot_backend is not None:
+        norm_backend = normalize_plot_backend(backend)
+        norm_plot_backend = normalize_plot_backend(plot_backend)
+        if norm_backend != norm_plot_backend:
+            raise ValueError(
+                "backend and plot_backend refer to different backends",
+            )
+        backend = norm_backend
+    elif backend is not None:
+        backend = normalize_plot_backend(backend) if str(backend).strip().lower() != "auto" else "auto"
+    elif plot_backend is not None:
+        backend = normalize_plot_backend(plot_backend)
+    else:
+        backend = "auto"
+
     if backend not in {"auto", "yellowbrick", "seaborn"}:
         raise ValueError("backend must be one of: auto, yellowbrick, seaborn")
     if backend == "auto":

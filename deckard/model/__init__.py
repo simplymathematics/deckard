@@ -20,6 +20,7 @@ from .defense.postprocessor import PostprocessorDefenseConfig
 from .defense.preprocessor import PreprocessorDefenseConfig
 from .defense.regularizer import RegularizerDefenseConfig
 from .defense.trainer import TrainerDefenseConfig
+from .defense.transformer import TransformerDefenseConfig
 from .trainers import (
     BaseTrainer,
     PartialFitPruningTrainer,
@@ -29,7 +30,6 @@ from .trainers import (
     PytorchTrainer,
     SklearnTrainer,
 )
-from .transformer import TransformerDefenseConfig
 
 ScorerDictConfig = Any
 

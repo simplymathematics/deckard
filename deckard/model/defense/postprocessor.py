@@ -13,6 +13,32 @@ from .base import DefenseInitParamValue, DefensePipelineConfig, DefenseMixin
 class PostprocessorDefenseMixin(DefenseMixin):
     """Reusable postprocessor defense behavior."""
 
+    def postprocess(
+        self,
+        *,
+        data: DataConfig | None,
+        defense_type: StringifiedClass | None,
+        defense_subtype: str | None,
+        defense_class: type | None,
+        art_class: ArtEsimtator,
+        init_params: dict[str, DefenseInitParamValue],
+        base_estimator: EstimatorLike,
+        existing_preprocessors: list,
+        existing_postprocessors: list,
+    ) -> tuple[BaseConfig | None, EstimatorLike]:
+        """Public verb-form entrypoint for postprocessor defense execution."""
+        return self(
+            data=data,
+            defense_type=defense_type,
+            defense_subtype=defense_subtype,
+            defense_class=defense_class,
+            art_class=art_class,
+            init_params=init_params,
+            base_estimator=base_estimator,
+            existing_preprocessors=existing_preprocessors,
+            existing_postprocessors=existing_postprocessors,
+        )
+
     def __call__(
         self,
         *,

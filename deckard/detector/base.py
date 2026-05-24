@@ -370,10 +370,8 @@ class DetectorConfig(BaseConfig):
 
         if model is not None and hasattr(data, y_attr):
             y_values = self._to_numpy(getattr(data, y_attr))[: len(filtered_adv)]
-            if hasattr(model, "_train") and callable(getattr(model, "_train")):
-                model._train(filtered_adv, y_values)
-            elif hasattr(model, "fit") and callable(getattr(model, "fit")):
-                model.fit(filtered_adv, y_values)
+            if hasattr(model, "train") and callable(getattr(model, "train")):
+                model.train(filtered_adv, y_values)
 
         return float(np.mean(poison_mask)) if len(poison_mask) else 0.0
 
@@ -457,7 +455,7 @@ class DetectorConfig(BaseConfig):
         detector_model_cfg = self.detector_model
         assert isinstance(detector_model_cfg, ModelConfig)
         detector_model_cfg.__post_init__()
-        detector_model_cfg._train(x_train, y_train)
+        detector_model_cfg.train(x_train, y_train)
 
         data_stub = SimpleNamespace(
             X_train=x_train,
@@ -629,6 +627,48 @@ class DetectorConfig(BaseConfig):
         if y_pred is None:
             raise RuntimeError("Detector prediction output was not produced.")
         return y_pred
+
+    def filter(
+        self,
+        data: "DataConfig",
+        model: ModelConfig | None = None,
+        attack: "AttackConfig | None" = None,
+        files: dict[str, DetectorFileValue] | None = None,
+        detector_file: str | None = None,
+        detected_predictions_file: str | None = None,
+        score_file: str | None = None,
+    ) -> dict[str, float | int]:
+        """Execute detector runtime specifically in filter mode.
+
+        This public method applies detector filtering behavior to attack/runtime
+        payloads and returns the resulting detector score dictionary.
+
+        Args:
+            data: Runtime data configuration.
+            model: Optional runtime model configuration.
+            attack: Optional runtime attack configuration.
+            files: Optional runtime artifact file mapping.
+            detector_file: Optional detector artifact path.
+            detected_predictions_file: Optional detected-predictions artifact path.
+            score_file: Optional detector score artifact path.
+
+        Returns:
+            Detector score payload from a filter-mode execution.
+        """
+        previous_mode = self.mode
+        self.mode = "filter"
+        try:
+            return self(
+                data=data,
+                model=model,
+                attack=attack,
+                files=files,
+                detector_file=detector_file,
+                detected_predictions_file=detected_predictions_file,
+                score_file=score_file,
+            )
+        finally:
+            self.mode = previous_mode
 
     def __call__(
         self,

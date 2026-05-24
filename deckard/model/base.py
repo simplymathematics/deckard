@@ -316,6 +316,72 @@ class ModelConfig(BaseConfig):
         self._model = estimator
         self._sync_model_signature_from_estimator(estimator)
 
+    def apply_defense(
+        self,
+        data: "DataConfig",
+        stage: str = "post_fit_pre_predict",
+    ) -> EstimatorLike:
+        """Apply configured defense behavior to the current estimator.
+
+        Args:
+            data: Data runtime context.
+            stage: Defense stage token.
+
+        Returns:
+            Defended estimator payload.
+        """
+        if self.defense is None:
+            return self._model
+        if self._model is None:
+            raise ValueError(
+                "ModelConfig must have a fitted estimator before applying defense",
+            )
+
+        apply_defense, defense_pipeline, _ = self.compose_defense_behavior(
+            data,
+            default_stage=stage,
+        )
+        if apply_defense is None or defense_pipeline is None:
+            return self._model
+        defended_estimator = apply_defense(self._model)
+        self.defense_application_time = getattr(
+            defense_pipeline,
+            "defense_application_time",
+            None,
+        )
+        if getattr(defense_pipeline, "score_dict", None):
+            if self.score_dict is None:
+                self.score_dict = {}
+            self.score_dict.update(defense_pipeline.score_dict)
+        return defended_estimator
+
+    def is_fitted(
+        self,
+        estimator: Any = None,
+        X_sample: Any = None,
+    ) -> bool:
+        """Return whether an estimator should be treated as fitted.
+
+        Args:
+            estimator: Optional estimator to test. Defaults to current runtime estimator.
+            X_sample: Optional sample payload used for prediction-based fallback checks.
+
+        Returns:
+            ``True`` when estimator is considered fitted.
+        """
+        candidate = self._model if estimator is None else estimator
+        return self._is_model_fitted(candidate, X_sample=X_sample)
+
+    def save_model(self, model_file: str | None) -> None:
+        """Persist this model config and runtime estimator state to disk.
+
+        Args:
+            model_file: Target path for persisted model payload.
+        """
+        if model_file is None:
+            return
+        self.save_object(self, model_file)
+
     def _sync_model_signature_from_estimator(self, estimator: Any) -> None:
         # TODO: use inspect for better init parsing
 
@@ -511,7 +577,7 @@ class ModelConfig(BaseConfig):
                 and defense_pipeline.requires_fit_application()
                 else "post_fit_pre_predict"
             )
-            art_model = self._apply_defense_for_stage(data, stage=stage)
+            art_model = self.apply_defense(data, stage=stage)
         return art_model
 
     def get_model(self) -> BaseEstimator:
@@ -530,49 +596,7 @@ class ModelConfig(BaseConfig):
         else:
             return self._model
 
-    def _apply_defense_for_stage(self, data: "DataConfig", stage: str):
-        apply_defense = self._apply_defense
-        signature = inspect.signature(apply_defense)
-        accepts_stage = (
-            "stage" in signature.parameters
-            or any(
-                parameter.kind == inspect.Parameter.VAR_KEYWORD
-                for parameter in signature.parameters.values()
-            )
-        )
-        if accepts_stage:
-            return apply_defense(data, stage=stage)
-        return apply_defense(data)
-
-    def _apply_defense(self, data: "DataConfig", stage: str = "post_fit_pre_predict") -> EstimatorLike:
-        """Delegate defense application to DefensePipelineConfig."""
-
-        if self.defense is None:
-            return self._model
-        if self._model is None:
-            raise ValueError(
-                "ModelConfig must have a fitted estimator before applying defense",
-            )
-
-        apply_defense, defense_pipeline, _ = self.compose_defense_behavior(
-            data,
-            default_stage=stage,
-        )
-        if apply_defense is None or defense_pipeline is None:
-            return self._model
-        defended_estimator = apply_defense(self._model)
-        self.defense_application_time = getattr(
-            defense_pipeline,
-            "defense_application_time",
-            None,
-        )
-        if getattr(defense_pipeline, "score_dict", None):
-            if self.score_dict is None:
-                self.score_dict = {}
-            self.score_dict.update(defense_pipeline.score_dict)
-        return defended_estimator
-
-    def _train(self, X: pd.DataFrame, y: pd.Series):
+    def train(self, X: MatrixLike, y: ArrayLike) -> None:
         """
         Trains the internal model using the provided feature matrix and target vector.
 
@@ -602,16 +626,7 @@ class ModelConfig(BaseConfig):
         self.training_n = len(y)
         logger.info(f"Model trained in {self.training_time:.2f} seconds")
 
-    def train(self, X: MatrixLike, y: ArrayLike) -> None:
-        """Public entry-point for model training. Delegates to _train().
-
-        Args:
-            X: Training features.
-            y: Training labels.
-        """
-        return self._train(X, y)
-
-    def _predict(self, X: pd.DataFrame) -> pd.Series:
+    def predict(self, X: MatrixLike) -> ArrayLike:
         """
         Generates predictions for the input data using the initialized model.
 
@@ -661,7 +676,7 @@ class ModelConfig(BaseConfig):
                         y_pred = base_model.predict(X)
         return y_pred
 
-    def _predict_proba(self, X: pd.DataFrame) -> pd.DataFrame:
+    def predict_proba(self, X: MatrixLike) -> ArrayLike:
         """
         Predicts class probabilities for the input data using the trained model.
 
@@ -699,7 +714,7 @@ class ModelConfig(BaseConfig):
             f"Wrapped model of type {type(self._model)} does not have a predict_proba or _predict_proba method, nor does its underlying estimator.",
         )
 
-    def _score(
+    def score(
         self,
         y_true: pd.Series,
         y_pred: pd.Series,
@@ -777,34 +792,6 @@ class ModelConfig(BaseConfig):
             scores=scores,
             n_samples=len(y_true),
             logger_obj=logger,
-        )
-
-    def score(
-        self,
-        y_true: pd.Series,
-        y_pred: pd.Series,
-        *args,
-        mode: str = "test",
-        **kwargs,
-    ) -> dict:
-        """Public scoring entry-point that delegates to the model scorer runtime.
-
-        Args:
-            y_true: Ground-truth labels.
-            y_pred: Predicted labels.
-            *args: Additional scorer args.
-            mode: Scoring mode.
-            **kwargs: Additional scorer kwargs.
-
-        Returns:
-            Score payload mapping.
-        """
-        return self._score(
-            y_true,
-            y_pred,
-            *args,
-            mode=mode,
-            **kwargs,
         )
 
     def _canonical_score_mode(self) -> Literal["train", "test", "val"]:
@@ -1428,8 +1415,7 @@ class ModelConfig(BaseConfig):
             test_probabilities_file=test_probabilities_file,
             score_file=score_file,
         )
-        if model_file is not None:
-            self.save_object(self, model_file)
+        self.save_model(model_file)
         hook_outputs = self._run_plugin_hook(
             "after_persist",
             data=data,
@@ -1507,7 +1493,7 @@ class ModelConfig(BaseConfig):
                     self.score_dict.update(defense_pipeline.score_dict)
 
         if persist_training_predictions and self.training_predictions is None:
-            train_predictions = self._predict(data.X_train)
+            train_predictions = self.predict(data.X_train)
             self.training_predictions = self._decode_predictions_for_persistence(
                 train_predictions,
                 y_true=data.y_train,
@@ -1540,7 +1526,7 @@ class ModelConfig(BaseConfig):
                         else:
                             raise e
                 else:
-                    self.training_probabilities = self._predict(data.X_train)
+                    self.training_probabilities = self.predict(data.X_train)
             except ValueError as e:
                 logger.warning(
                     "Skipping training probability persistence: %s",
@@ -1564,7 +1550,7 @@ class ModelConfig(BaseConfig):
             times[names["n_key"]] = len(mode_predictions)
         else:
             start_time = time.process_time()
-            mode_predictions = self._predict(X_mode)
+            mode_predictions = self.predict(X_mode)
             end_time = time.process_time()
             prediction_time = end_time - start_time
             setattr(self, prediction_time_attr, prediction_time)
@@ -1606,7 +1592,7 @@ class ModelConfig(BaseConfig):
                             else:
                                 raise e
                     else:
-                        probabilities = self._predict(X_mode)
+                        probabilities = self.predict(X_mode)
                     setattr(self, probabilities_attr, probabilities)
                 except ValueError as e:
                     logger.warning(
@@ -1625,7 +1611,7 @@ class ModelConfig(BaseConfig):
             mode_probabilities = getattr(self, probabilities_attr, None)
             if mode_probabilities is None and self.classifier:
                 try:
-                    mode_probabilities = self._predict_proba(X_mode)
+                    mode_probabilities = self.predict_proba(X_mode)
                 except Exception:
                     try:
                         mode_probabilities = probabilities_from_model_outputs(
@@ -1702,7 +1688,7 @@ class ModelConfig(BaseConfig):
                     except Exception:
                         logger.warning(f"Error loading model file: {model_file}.")
                         self._model = None
-                    if self._is_model_fitted(self._model, X_sample=data.X_train):
+                    if self.is_fitted(self._model, X_sample=data.X_train):
                         logger.info("Model loaded and is fitted.")
                         loaded_model_this_call = True
                     else:
@@ -1725,13 +1711,13 @@ class ModelConfig(BaseConfig):
                             "_model",
                         ), "Model not initialized after training"
                         if self.defense is not None:
-                            self._model = self._apply_defense(data)
+                            self._model = self.apply_defense(data)
                 else:
                     # train the model if no model exists at the filepath
                     logger.info(
                         f"Training model on {len(data.y_train)} samples...",
                     )
-                    model_is_fitted = self._is_model_fitted(
+                    model_is_fitted = self.is_fitted(
                         self._model,
                         X_sample=data.X_train,
                     )
@@ -1771,14 +1757,14 @@ class ModelConfig(BaseConfig):
                     times,
                     force_retrain=True,
                 )
-                self._model = self._apply_defense_for_stage(data, stage="pre_fit")
+                self._model = self.apply_defense(data, stage="pre_fit")
             stage = defense_pipeline.resolve_stage(
                 default_stage="post_fit_pre_predict",
                 model=self,
                 data=data,
             )
             if stage == "post_fit_pre_predict":
-                self._model = self._apply_defense_for_stage(data, stage=stage)
+                self._model = self.apply_defense(data, stage=stage)
                 if getattr(self, "defense_application_time", None) is not None:
                     times["defense_application_time"] = self.defense_application_time
         return times

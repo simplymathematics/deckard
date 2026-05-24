@@ -55,24 +55,71 @@ class InferenceAttackMixin(AttackMixin):
             raise ValueError(
                 f"_InferenceAttackMixin received unsupported attack type: {attack_type}",
             )
+        return self.inference(
+            data=data,
+            art_model=art_model,
+            attack=attack,
+            attack_subtype=attack_subtype,
+        )
+
+    def inference(
+        self,
+        *,
+        data: DataConfig,
+        art_model: EstimatorLike,
+        attack: AttackLike,
+        attack_subtype: StringifiedClass,
+    ) -> ScoreDict:
+        """Public type-mirroring dispatcher for inference attack subtypes."""
         subtype = (attack_subtype or "").lower()
         if subtype == "membership_inference":
-            return self.infer_membership(data=data, attack=attack)
+            return self.membership_inference(data=data, attack=attack)
         if subtype == "attribute_inference":
             assert (
                 self.targeted_attribute is not None
             ), "targeted_attribute must be specified for inference attacks"
-            return self.infer_attribute(
+            return self.attribute_inference(
                 data=data,
                 art_model=art_model,
                 attack=attack,
                 targeted_attribute=self.targeted_attribute,
             )
         if subtype == "model_inversion":
-            return self.infer_model_inversion(data=data, attack=attack)
+            return self.model_inversion(data=data, attack=attack)
         if subtype == "reconstruction":
-            return self.infer_database_reconstruction(data=data, attack=attack)
+            return self.reconstruct(data=data, attack=attack)
         raise ValueError(f"Unsupported inference attack subtype: {attack_subtype}")
+
+    def membership_inference(
+        self,
+        data: DataConfig,
+        attack: AttackLike,
+    ) -> ScoreDict:
+        """Public subtype-mirroring alias for membership inference execution."""
+        return self.infer_membership(data=data, attack=attack)
+
+    def attribute_inference(
+        self,
+        data: DataConfig,
+        art_model: EstimatorLike,
+        attack: AttackLike,
+        targeted_attribute: str | list[str] | ListConfig,
+    ) -> ScoreDict:
+        """Public subtype-mirroring alias for attribute inference execution."""
+        return self.infer_attribute(
+            data=data,
+            art_model=art_model,
+            attack=attack,
+            targeted_attribute=targeted_attribute,
+        )
+
+    def model_inversion(self, data: DataConfig, attack: AttackLike) -> ScoreDict:
+        """Public subtype-mirroring alias for model inversion execution."""
+        return self.infer_model_inversion(data=data, attack=attack)
+
+    def reconstruct(self, data: DataConfig, attack: AttackLike) -> ScoreDict:
+        """Public subtype-mirroring alias for reconstruction execution."""
+        return self.infer_database_reconstruction(data=data, attack=attack)
 
     def infer_attribute(
         self,
