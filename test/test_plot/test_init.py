@@ -8,7 +8,7 @@ try:
     import yellowbrick  # noqa: F401
 
     from deckard.plot import PlotConfig
-    from deckard.utils import ConfigBase
+    from deckard.utils import BaseConfig
 except Exception:
     pytest.skip(
         "seaborn and yellowbrick are required for plot init tests",
@@ -159,7 +159,7 @@ class TestPlotConfig(unittest.TestCase):
         plot_cfg_new.config = None  # Prevent config instantiation
 
         # Verify PlotConfig inherits from ConfigBase
-        self.assertTrue(isinstance(plot_cfg_new, ConfigBase))
+        self.assertTrue(isinstance(plot_cfg_new, BaseConfig))
 
         # Verify it has the hash method
         self.assertTrue(hasattr(plot_cfg_new, "__hash__"))

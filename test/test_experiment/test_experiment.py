@@ -33,7 +33,7 @@ from deckard.file import FileConfig
 from deckard.frameworks.pytorch.experiment import TorchExperimentConfig
 from deckard.model import ModelConfig
 from deckard.score import DefaultClassifierConfig, DefaultDataClassificationConfig
-from deckard.utils import ConfigBase
+from deckard.utils import BaseConfig
 
 
 def test_experiment_family_aliases_are_importable():
@@ -572,7 +572,7 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
 
     def test_data_to_dict_not_dict_result_raises(self):
         # ConfigBase.to_dict() normally returns dict; if it returns non-dict we get TypeError
-        class BadBase(ConfigBase):
+        class BadBase(BaseConfig):
             def __call__(self):
                 pass
 
@@ -612,7 +612,7 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
         self.assertIs(cls, DataConfig)
 
     def test_resolve_data_config_with_data_config_passthrough(self):
-        class _Exp(DataConfigResolutionMixin, ConfigBase):
+        class _Exp(DataConfigResolutionMixin, BaseConfig):
             def __call__(self):
                 pass
 
@@ -623,7 +623,7 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
         self.assertIs(result, dc)
 
     def test_resolve_data_config_target_resolves_wrong_type_raises(self):
-        class _Exp(DataConfigResolutionMixin, ConfigBase):
+        class _Exp(DataConfigResolutionMixin, BaseConfig):
             def __call__(self):
                 pass
 

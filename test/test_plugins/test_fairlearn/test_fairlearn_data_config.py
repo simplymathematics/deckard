@@ -237,12 +237,12 @@ class TestFairlearnDataConfigHashStability:
     def test_fairness_data_config_is_configbase_with_hash(self):
         """Test that FairlearnDataConfig is ConfigBase and has __hash__ method."""
         pytest.importorskip("fairlearn")
-        from deckard.utils import ConfigBase
+        from deckard.utils import BaseConfig
 
         config = _fairlearn_config(sensitive_columns="gender")
         assert isinstance(
             config,
-            ConfigBase,
+            BaseConfig,
         ), "FairlearnDataConfig should inherit from ConfigBase"
         assert hasattr(
             config,

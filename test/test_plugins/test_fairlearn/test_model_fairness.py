@@ -233,7 +233,7 @@ class TestFairlearnModelConfig(unittest.TestCase):
 
     def test_fairness_model_config_is_configbase_with_hash(self):
         """Test that FairlearnModelConfig is ConfigBase and has __hash__ method."""
-        from deckard.utils import ConfigBase
+        from deckard.utils import BaseConfig
 
         fairness_data = Mock(spec=FairlearnDataConfig)
         fairness_data.sensitive_test = self.sensitive_test
@@ -248,7 +248,7 @@ class TestFairlearnModelConfig(unittest.TestCase):
         )
         self.assertIsInstance(
             model,
-            ConfigBase,
+            BaseConfig,
             msg="FairlearnModelConfig should inherit from ConfigBase",
         )
         self.assertTrue(
@@ -377,7 +377,7 @@ class TestFairlearnDefenseConfigApplyDefense(unittest.TestCase):
 
     def test_fairness_defense_config_is_configbase_with_hash(self):
         """Test that FairlearnDefenseConfig is ConfigBase and has __hash__ method."""
-        from deckard.utils import ConfigBase
+        from deckard.utils import BaseConfig
 
         cfg = self._make_fitted_defense(
             "fairlearn.reductions.ExponentiatedGradient",
@@ -388,7 +388,7 @@ class TestFairlearnDefenseConfigApplyDefense(unittest.TestCase):
         )
         self.assertIsInstance(
             cfg,
-            ConfigBase,
+            BaseConfig,
             msg="FairlearnDefenseConfig should inherit from ConfigBase",
         )
         self.assertTrue(

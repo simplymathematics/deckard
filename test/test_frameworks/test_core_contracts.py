@@ -8,7 +8,7 @@ from deckard.detector import DetectorConfig
 from deckard.experiment import ExperimentConfig
 from deckard.model import ModelConfig
 from deckard.score import ScorerDictConfig
-from deckard.utils import ConfigBase
+from deckard.utils import BaseConfig
 
 
 @pytest.mark.parametrize(
@@ -25,5 +25,5 @@ from deckard.utils import ConfigBase
 def test_runtime_configs_inherit_config_base(runtime_cls):
     assert issubclass(
         runtime_cls,
-        ConfigBase,
+        BaseConfig,
     ), f"{runtime_cls.__name__} must inherit ConfigBase"

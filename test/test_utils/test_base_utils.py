@@ -14,7 +14,7 @@ from omegaconf import OmegaConf
 
 from deckard import utils
 from deckard.utils import (
-    ConfigBase,
+    BaseConfig,
     _auto_torch_device_from_backends,
     _torch_compiler_backends,
     coerce_config,
@@ -34,12 +34,12 @@ from deckard.utils import (
 )
 
 
-class BaseConfig(ConfigBase):
+class BaseConfig(BaseConfig):
     def __call__(self):
         return 1
 
 
-class ParamsConfig(ConfigBase):
+class ParamsConfig(BaseConfig):
     x: int = 10
     y: str = "abc"
 
@@ -47,22 +47,22 @@ class ParamsConfig(ConfigBase):
         return x, y
 
 
-class MissingParamConfig(ConfigBase):
+class MissingParamConfig(BaseConfig):
     def __call__(self, required_param):
         return required_param
 
 
-class FailingConfig(ConfigBase):
+class FailingConfig(BaseConfig):
     def __call__(self):
         raise RuntimeError("boom")
 
 
-class TypeAConfig(ConfigBase):
+class TypeAConfig(BaseConfig):
     def __call__(self):
         return "A"
 
 
-class TypeBConfig(ConfigBase):
+class TypeBConfig(BaseConfig):
     def __call__(self):
         return "B"
 
@@ -433,12 +433,12 @@ class TestUtilsAdditional(unittest.TestCase):
 # ── Minimal ConfigBase subclass ──────────────────────────────────────────────
 
 
-class _Cfg(ConfigBase):
+class _Cfg(BaseConfig):
     def __call__(self):
         return self.score_dict
 
 
-class _Fail(ConfigBase):
+class _Fail(BaseConfig):
     def __call__(self):
         raise RuntimeError("deliberate failure")
 
@@ -838,7 +838,7 @@ class TestConfigBaseSerialisation(unittest.TestCase):
             "_target_": "deckard.utils.ConfigBase",
             "score_dict": {"x": 5},
         }
-        obj = ConfigBase.from_dict(data)
+        obj = BaseConfig.from_dict(data)
         self.assertIsNotNone(obj)
 
 
