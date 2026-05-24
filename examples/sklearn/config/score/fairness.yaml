@@ -1,1 +1,1 @@
-_target_: deckard.plugins.fairlearn.score.DefaultFairlearnScorerConfig
+_target_: deckard.plugins.fairlearn.score.DefaultFairlearnScorerDictConfig
