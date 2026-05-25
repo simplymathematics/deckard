@@ -1,4 +1,4 @@
-_target_: deckard.score.data.DefaultDataClassificationConfig
+_target_: deckard.score.data.DefaultDataClassificationScorerDictConfig
 scorers:
   num_classes:
     score_function: deckard.score.data.data_num_classes_score

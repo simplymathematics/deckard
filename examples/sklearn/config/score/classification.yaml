@@ -1,4 +1,4 @@
-_target_: deckard.score.base.DefaultClassifierConfig
+_target_: deckard.score.base.DefaultClassifierScorerDictConfig
 scorers:
   accuracy:
     score_function: sklearn.metrics.accuracy_score

@@ -1,1 +1,1 @@
-_target_: deckard.score.base.DefaultRegressorConfig
+_target_: deckard.score.base.DefaultRegressorScorerDictConfig

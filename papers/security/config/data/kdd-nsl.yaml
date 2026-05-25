@@ -1,8 +1,10 @@
 dataset_name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/d6a22cdb42a1db624c89f0298cb4f654d3812703/kdd_nsl.csv
 target: label
-random_state: 0
-stratify: true
-train_size: 0.1
-test_size: 0.1
+
+sampler:
+  train_size: 0.1
+  test_size: 0.1
+  random_state: 0
+  stratify: true
 alias: kdd_nsl
 _target_: deckard.data.DataConfig

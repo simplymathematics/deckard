@@ -3,9 +3,9 @@ defaults:
   - pipeline: precompute
 
 _target_: deckard.data.DataConfig
-train_size: 1000
-test_size: 200
-val_size: 200
-sample: 
+sampler:
+  train_size: 1000
+  test_size: 200
+  val_size: 200
   name: deckard.data.sample.KFoldSampler
   n_splits: 5

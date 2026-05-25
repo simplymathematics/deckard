@@ -70,7 +70,7 @@ stages:
       deckard optimize
       algorithm="${item.algorithm[3]}"
       data=${item.dataset}
-      ++data.train_size=${item.train_size}
+      ++data.sampler.train_size=${item.train_size}
       ++data.random_state=42
       ++data.split=0
       ++data.pre_sample_transform=true
@@ -121,7 +121,7 @@ stages:
       data=${item.dataset}
       model=ncd_${item.model_name}
       data.sample.name=deckard.data.sample.KFoldSampler
-      ++data.train_size=${item.train_size}
+      ++data.sampler.train_size=${item.train_size}
       ++data.random_state=42
       optimization=search
       metric_name=${item.metric}

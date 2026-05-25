@@ -8,10 +8,11 @@ data_params:
   n_redundant: 1
   n_repeated: 0
   n_clusters_per_class: 1
-random_state: 0
-stratify: true
-train_size: 10
-test_size: 1000
+sampler:
+  random_state: 0
+  stratify: true
+  train_size: 10
+  test_size: 1000
 classifier: true
 alias: classification
 _target_: deckard.data.DataConfig
