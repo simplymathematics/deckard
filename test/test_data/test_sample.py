@@ -16,10 +16,6 @@ from deckard.data import (
 )
 import pytest
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 
 def _make_clf_config(**kwargs):
     """Return a small classification DataConfig, loading data but not yet sampling."""
@@ -34,22 +30,26 @@ def _make_clf_config(**kwargs):
             "n_clusters_per_class": 1,
         },
     )
-    defaults.update(
-        {"test_size": 0.2, "random_state": 42, "stratify": True, "classifier": True},
-    )
+    defaults.update({"classifier": True})
     defaults.update(kwargs)
     if "sample" in defaults and "sampler" not in defaults:
         defaults["sampler"] = defaults.pop("sample")
-    defaults.setdefault(
-        "sampler",
-        SplitSampler(
-            train_size=defaults.get("train_size", None),
-            test_size=defaults.get("test_size", 0.2),
-            val_size=defaults.get("val_size", None),
-            random_state=defaults.get("random_state", 42),
-            stratify=defaults.get("stratify", True),
-        ),
-    )
+    sampler_train_size = defaults.pop("train_size", None)
+    sampler_test_size = defaults.pop("test_size", 0.2)
+    sampler_val_size = defaults.pop("val_size", None)
+    sampler_random_state = defaults.pop("random_state", 42)
+    sampler_stratify = defaults.pop("stratify", True)
+    defaults.pop("n_splits", None)
+    defaults.pop("shuffle", None)
+    defaults.pop("split", None)
+    if "sampler" not in kwargs and "sample" not in kwargs:
+        defaults["sampler"] = SplitSampler(
+            train_size=sampler_train_size,
+            test_size=sampler_test_size,
+            val_size=sampler_val_size,
+            random_state=sampler_random_state,
+            stratify=sampler_stratify,
+        )
     cfg = DataConfig(**defaults)
     cfg.load_dataset()
     return cfg
@@ -66,22 +66,26 @@ def _make_reg_config(**kwargs):
             "random_state": 1,
         },
     )
-    defaults.update(
-        {"test_size": 0.2, "random_state": 1, "stratify": False, "classifier": False},
-    )
+    defaults.update({"classifier": False})
     defaults.update(kwargs)
     if "sample" in defaults and "sampler" not in defaults:
         defaults["sampler"] = defaults.pop("sample")
-    defaults.setdefault(
-        "sampler",
-        SplitSampler(
-            train_size=defaults.get("train_size", None),
-            test_size=defaults.get("test_size", 0.2),
-            val_size=defaults.get("val_size", None),
-            random_state=defaults.get("random_state", 1),
-            stratify=defaults.get("stratify", False),
-        ),
-    )
+    sampler_train_size = defaults.pop("train_size", None)
+    sampler_test_size = defaults.pop("test_size", 0.2)
+    sampler_val_size = defaults.pop("val_size", None)
+    sampler_random_state = defaults.pop("random_state", 1)
+    sampler_stratify = defaults.pop("stratify", False)
+    defaults.pop("n_splits", None)
+    defaults.pop("shuffle", None)
+    defaults.pop("split", None)
+    if "sampler" not in kwargs and "sample" not in kwargs:
+        defaults["sampler"] = SplitSampler(
+            train_size=sampler_train_size,
+            test_size=sampler_test_size,
+            val_size=sampler_val_size,
+            random_state=sampler_random_state,
+            stratify=sampler_stratify,
+        )
     cfg = DataConfig(**defaults)
     cfg.load_dataset()
     return cfg
@@ -107,38 +111,38 @@ class TestBaseSampler:
 class TestGetStratifyCol:
     def test_stratify_true_returns_y(self):
         cfg = _make_clf_config()
-        col = cfg._get_stratify_col()
+        col = BaseSampler._get_stratify_col(cfg)
         assert isinstance(col, pd.Series)
         assert len(col) == len(cfg._y)
 
     def test_stratify_false_returns_none(self):
         cfg = _make_clf_config(stratify=False)
-        assert cfg._get_stratify_col() is None
+        assert BaseSampler._get_stratify_col(cfg) is None
 
     def test_stratify_none_returns_none(self):
         cfg = _make_clf_config(stratify=None)
-        assert cfg._get_stratify_col() is None
+        assert BaseSampler._get_stratify_col(cfg) is None
 
     def test_stratify_column_name(self):
         cfg = _make_clf_config(stratify=False)
         # Add a column to _X so we can use it
         cfg._X["strat_col"] = np.tile([0, 1], len(cfg._X) // 2 + 1)[: len(cfg._X)]
-        cfg.stratify = "strat_col"
-        col = cfg._get_stratify_col()
+        cfg.sampler.stratify = "strat_col"
+        col = BaseSampler._get_stratify_col(cfg)
         assert isinstance(col, pd.Series)
         assert len(col) == len(cfg._X)
 
     def test_stratify_invalid_column_raises(self):
         cfg = _make_clf_config(stratify=False)
-        cfg.stratify = "nonexistent_column"
+        cfg.sampler.stratify = "nonexistent_column"
         with pytest.raises(ValueError):
-            cfg._get_stratify_col()
+            BaseSampler._get_stratify_col(cfg)
 
     def test_stratify_invalid_type_raises(self):
         cfg = _make_clf_config(stratify=False)
-        cfg.stratify = 42
+        cfg.sampler.stratify = 42
         with pytest.raises(ValueError):
-            cfg._get_stratify_col()
+            BaseSampler._get_stratify_col(cfg)
 
 
 # ---------------------------------------------------------------------------
@@ -200,10 +204,6 @@ class TestSplitSampler:
                 "random_state": 7,
                 "n_clusters_per_class": 1,
             },
-            test_size=0.2,
-            val_size=0.1,
-            random_state=42,
-            stratify=True,
             classifier=True,
             sampler=SplitSampler(test_size=0.2, val_size=0.1, random_state=42, stratify=True),
         )
@@ -226,10 +226,6 @@ class TestSplitSampler:
                 "random_state": 7,
                 "n_clusters_per_class": 1,
             },
-            test_size=0.2,
-            val_size=0.1,
-            random_state=42,
-            stratify=True,
             classifier=True,
             sampler=SplitSampler(test_size=0.2, val_size=0.1, random_state=42, stratify=True),
         )
@@ -245,10 +241,6 @@ class TestSplitSampler:
                 "n_informative": 2,
                 "random_state": 1,
             },
-            test_size=0.2,
-            val_size=0.1,
-            random_state=1,
-            stratify=False,
             classifier=False,
             sampler=SplitSampler(test_size=0.2, val_size=0.1, random_state=1, stratify=False),
         )
@@ -268,10 +260,6 @@ class TestSplitSampler:
                 "random_state": 9,
                 "n_clusters_per_class": 1,
             },
-            test_size=0.2,
-            val_size=0.1,
-            random_state=42,
-            stratify=True,
             classifier=True,
             sampler={
                 "name": "deckard.data.sample.SplitSampler",
@@ -351,10 +339,6 @@ class TestKFoldSampler:
                 "random_state": 7,
                 "n_clusters_per_class": 1,
             },
-            test_size=0.2,
-            random_state=42,
-            split=1,
-            stratify=True,
             classifier=True,
             sampler=KFoldSampler(n_splits=5, split=1, test_size=0.2, random_state=42, stratify=True),
         )
@@ -387,13 +371,7 @@ class TestKFoldSampler:
                         "random_state": 42,
                         "n_clusters_per_class": 1,
                     },
-                    train_size=1000,
-                    test_size=200,
-                    val_size=200,
-                    random_state=42,
-                    stratify=True,
                     classifier=True,
-                    split=split,
                     sampler={
                         "name": "deckard.data.sample.KFoldSampler",
                         "n_splits": 5,
@@ -423,13 +401,7 @@ class TestKFoldSampler:
                 "random_state": 1,
                 "n_clusters_per_class": 1,
             },
-            train_size=1000,
-            test_size=201,
-            val_size=200,
-            random_state=42,
-            stratify=True,
             classifier=True,
-            split=0,
             sampler={
                 "name": "deckard.data.sample.KFoldSampler",
                 "n_splits": 5,
@@ -495,11 +467,6 @@ class TestShuffleSampler:
                 "random_state": 7,
                 "n_clusters_per_class": 1,
             },
-            test_size=0.2,
-            val_size=0.15,
-            split=2,
-            random_state=42,
-            stratify=True,
             classifier=True,
             sampler=ShuffleSampler(n_splits=5, split=2, test_size=0.2, val_size=0.15, random_state=42, stratify=True),
         )
@@ -534,9 +501,6 @@ class TestLegacySplitUnchanged:
                 "random_state": 0,
                 "n_clusters_per_class": 1,
             },
-            test_size=0.2,
-            random_state=42,
-            stratify=True,
             classifier=True,
             sampler="split",
         )
@@ -557,9 +521,6 @@ class TestLegacySplitUnchanged:
                 "random_state": 0,
                 "n_clusters_per_class": 1,
             },
-            test_size=0.2,
-            random_state=42,
-            stratify=True,
             classifier=True,
             sampler="split",
         )
@@ -579,10 +540,6 @@ class TestLegacySplitUnchanged:
                 "random_state": 0,
                 "n_clusters_per_class": 1,
             },
-            test_size=0.2,
-            val_size=None,
-            random_state=42,
-            stratify=True,
             classifier=True,
             sampler="split",
         )
@@ -612,10 +569,6 @@ class TestOmegaConfSampleSpec:
                 "random_state": 5,
                 "n_clusters_per_class": 1,
             },
-            test_size=0.2,
-            val_size=0.1,
-            random_state=42,
-            stratify=True,
             classifier=True,
             sampler=SplitSampler(test_size=0.2, val_size=0.1, random_state=42, stratify=True),
         )

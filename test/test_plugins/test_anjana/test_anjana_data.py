@@ -26,6 +26,52 @@ def _bare_cfg():
     return cfg
 
 
+class _StrictKAnonymityRecorder:
+    """Capture arguments passed to strict ANJANA defense call signatures."""
+
+    def __init__(self):
+        self.seen: dict = {}
+
+    def __call__(self, data, ident, quasi_ident, k, supp_level, hierarchies):
+        self.seen.update(
+            {
+                "data": data,
+                "ident": ident,
+                "quasi_ident": quasi_ident,
+                "k": k,
+                "supp_level": supp_level,
+                "hierarchies": hierarchies,
+            },
+        )
+        return data.copy()
+
+
+class _RuntimeDelegationRecorder:
+    """Capture runtime delegation from AnjanaDataConfig.__call__."""
+
+    active = None
+
+    def __init__(self):
+        self.seen: dict = {}
+
+
+def _capture_execute_data_runtime(data_cfg, *args, files=None, **kwargs):
+    recorder = _RuntimeDelegationRecorder.active
+    assert recorder is not None
+    recorder.seen["self"] = data_cfg
+    recorder.seen["args"] = args
+    recorder.seen["files"] = files
+    recorder.seen["kwargs"] = kwargs
+    return {
+        "runtime": "ok",
+        "scores": {
+            "k": 2,
+            "supp_level": 100,
+            "hierarchies": {"feature": {0: ["a", "b"]}},
+        },
+    }
+
+
 def test_post_init_normalizes_list_like_fields(monkeypatch):
     cfg = _bare_cfg()
     cfg.anjana_defense = OmegaConf.create(
@@ -193,56 +239,44 @@ def test_apply_anjana_defense_signature_filtering_and_defaults(monkeypatch):
     cfg.target = None
     cfg.anjana_defense = {"name": "anjana.fake", "k": 2}
 
-    seen = {}
-
-    def _strict_k_anonymity_like(data, ident, quasi_ident, k, supp_level, hierarchies):
-        seen.update(
-            {
-                "data": data,
-                "ident": ident,
-                "quasi_ident": quasi_ident,
-                "k": k,
-                "supp_level": supp_level,
-                "hierarchies": hierarchies,
-            },
-        )
-        return data.copy()
+    recorder = _StrictKAnonymityRecorder()
 
     monkeypatch.setattr(
         anjana_data_module,
         "resolve_class",
-        lambda _: _strict_k_anonymity_like,
+        lambda _: recorder,
     )
 
     cfg._apply_anjana_defense()
 
-    assert seen["ident"] == []
-    assert seen["quasi_ident"] == ["feature"]
+    assert recorder.seen["ident"] == []
+    assert recorder.seen["quasi_ident"] == ["feature"]
+    assert recorder.seen["k"] == 2
+    assert recorder.seen["supp_level"] == 100
+    assert "feature" in recorder.seen["hierarchies"]
 
 
 def test_call_delegates_to_canonical_runtime(monkeypatch):
     cfg = _bare_cfg()
-    seen = {}
+    recorder = _RuntimeDelegationRecorder()
+    _RuntimeDelegationRecorder.active = recorder
 
-    def _execute_data_runtime(self, *args, files=None, **kwargs):
-        seen["self"] = self
-        seen["args"] = args
-        seen["files"] = files
-        seen["kwargs"] = kwargs
-        return {"runtime": "ok"}
-
-    monkeypatch.setattr(DataConfig, "execute_data_runtime", _execute_data_runtime)
+    monkeypatch.setattr(
+        DataConfig,
+        "execute_data_runtime",
+        _capture_execute_data_runtime,
+    )
 
     result = cfg("payload", files={"score_file": "scores.json"}, mode="train")
 
-    assert result == {"runtime": "ok"}
-    assert seen["self"] is cfg
-    assert seen["args"] == ("payload",)
-    assert seen["files"] == {"score_file": "scores.json"}
-    assert seen["kwargs"] == {"mode": "train"}
-    assert seen["k"] == 2
-    assert seen["supp_level"] == 100
-    assert "feature" in seen["hierarchies"]
+    assert result["runtime"] == "ok"
+    assert recorder.seen["self"] is cfg
+    assert recorder.seen["args"] == ("payload",)
+    assert recorder.seen["files"] == {"score_file": "scores.json"}
+    assert recorder.seen["kwargs"] == {"mode": "train"}
+    assert result["scores"]["k"] == 2
+    assert result["scores"]["supp_level"] == 100
+    assert "feature" in result["scores"]["hierarchies"]
 
 
 def test_load_init_sample_and_score_paths(monkeypatch):
@@ -290,6 +324,8 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     cfg_score.scorer = "default"
     cfg_score._y = pd.Series([0, 1])
     cfg_score._X = pd.DataFrame({"x": [1, 2]})
+    cfg_score.anjana_defense = {"k": 2}
+    cfg_score.hierarchies = {"feature": {0: ["a", "b"]}}
     cfg_score.y_train = pd.Series([0])
     cfg_score.y_test = pd.Series([1])
     cfg_score.X_train = pd.DataFrame({"x": [1]})
@@ -297,13 +333,22 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     monkeypatch.setattr(
         anjana_data_module,
         "load_class",
-        lambda path: (lambda **kwargs: {"path": path, "n": len(kwargs["y"])}),
+        lambda path: (
+            lambda **kwargs: {
+                "path": path,
+                "n": len(kwargs["y"]),
+                "k": dict(getattr(kwargs["data"], "anjana_defense", {}) or {}).get("k"),
+                "supp_level": 100,
+                "hierarchies": getattr(kwargs["data"], "hierarchies", None),
+            }
+        ),
     )
     scored = cfg_score.score(mode="all")
-    assert scored == {
-        "path": "deckard.plugins.anjana.score.DefaultAnjanaScorerDictConfig",
-        "n": 2,
-    }
+    assert scored["path"] == "deckard.plugins.anjana.score.DefaultAnjanaScorerDictConfig"
+    assert scored["n"] == 2
+    assert scored["k"] == 2
+    assert scored["supp_level"] == 100
+    assert "feature" in scored["hierarchies"]
 
     cfg_score.scorer = 5
     with pytest.raises(TypeError, match="must be callable or None"):

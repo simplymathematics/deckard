@@ -99,6 +99,7 @@ def test_survival_score_group_executes_end_to_end():
 
     class _MockFitter:
         concordance_index_ = 0.73
+        AIC_ = 110.0
         log_likelihood_ = -52.0
         params_ = [1.0, 2.0, 3.0]
 

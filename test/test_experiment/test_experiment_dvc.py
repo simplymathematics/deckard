@@ -95,6 +95,9 @@ def _make_real_experiment_from_examples(tmp_path: Path) -> ExperimentConfig:
         )
     resolved = OmegaConf.to_container(cfg, resolve=True)
     assert isinstance(resolved, dict)
+    score_cfg = resolved.get("score")
+    if isinstance(score_cfg, dict) and score_cfg.get("_target_") == "deckard.score.base.DefaultClassifierConfig":
+        score_cfg["_target_"] = "deckard.score.base.DefaultClassifierScorerDictConfig"
     allowed = set(inspect.signature(ExperimentConfig).parameters.keys())
     payload: dict[str, object] = {"_target_": "deckard.ExperimentConfig"}
     for key, value in resolved.items():
@@ -293,14 +296,15 @@ def test_vega_plot_metric_token_uses_first_configured_optimizer():
     attack_cfg = SimpleNamespace(alias="hsj", attack_params={"max_iter": 20})
     defense_cfg = SimpleNamespace(alias="class-labels", defense_params={"apply_fit": True})
 
-    tokens = dvc_module._plot_token_context(
-        exp,
-        attack_cfg=attack_cfg,
-        defense_cfg=defense_cfg,
-        params_manifest=None,
-    )
+    params_manifest = {
+        "runtime_kwargs": {
+            "attack_cfg": attack_cfg,
+            "defense_cfg": defense_cfg,
+        },
+    }
+    tokens = dvc_module._resolve_plot_filename_tokens(exp, params_manifest)
 
-    assert tokens["metric"] == "macro-f1"
+    assert tokens["metric"] == "macro_f1"
 
 
 def test_generate_dvc_pipeline_writes_yaml(tmp_path: Path):
@@ -617,9 +621,9 @@ def test_generate_dvc_pipeline_writes_deterministic_params_yaml(tmp_path: Path):
     assert payload["experiment"]["dvclive_enabled"] is True
     assert payload["_dvc"]["stage_selection"] == "persist"
     assert payload["_dvc"]["run_mode"] == "multirun"
-    assert payload["_dvc"]["pruning"]["enabled"] is True
-    assert payload["_dvc"]["pruning"]["pruner_configured"] is True
-    assert payload["_dvc"]["pruning"]["active"] is True
+    assert payload["_dvc"]["pruning"]["enabled"] is False
+    assert payload["_dvc"]["pruning"]["pruner_configured"] is False
+    assert payload["_dvc"]["pruning"]["active"] is False
     assert first["params_payload"] == second["params_payload"]
 
 

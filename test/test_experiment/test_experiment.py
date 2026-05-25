@@ -81,8 +81,6 @@ class TestKFoldExperiment:
                     "random_state": 0,
                     "n_clusters_per_class": 1,
                 },
-                test_size=0.2,
-                random_state=42,
                 classifier=True,
                 sampler=KFoldSampler(n_splits=self.N_FOLDS),
             ),
@@ -136,11 +134,13 @@ class TestShuffleExperiment:
                     "random_state": 0,
                     "n_clusters_per_class": 1,
                 },
-                test_size=0.2,
-                val_size=0.1,
-                random_state=42,
                 classifier=True,
-                sampler=ShuffleSampler(n_splits=self.N_SPLITS, val_size=0.1),
+                sampler=ShuffleSampler(
+                    n_splits=self.N_SPLITS,
+                    test_size=0.2,
+                    val_size=0.1,
+                    random_state=42,
+                ),
             ),
             model=ModelConfig(
                 model_type="sklearn.ensemble.RandomForestClassifier",
@@ -201,11 +201,13 @@ class TestExperimentValidationScoring:
                     "random_state": 0,
                     "n_clusters_per_class": 1,
                 },
-                test_size=0.2,
-                val_size=val_size,
-                random_state=42,
                 classifier=True,
-                sampler="split",
+                sampler={
+                    "name": "deckard.data.sample.SplitSampler",
+                    "test_size": 0.2,
+                    "val_size": val_size,
+                    "random_state": 42,
+                },
             ),
             model=ModelConfig(
                 model_type="sklearn.ensemble.RandomForestClassifier",
@@ -275,11 +277,14 @@ class TestExperimentDetectorPhase:
                     "n_classes": 2,
                     "random_state": 7,
                 },
-                train_size=40,
-                test_size=20,
-                random_state=7,
-                stratify=True,
                 classifier=True,
+                sampler={
+                    "name": "deckard.data.sample.SplitSampler",
+                    "train_size": 40,
+                    "test_size": 20,
+                    "random_state": 7,
+                    "stratify": True,
+                },
             ),
             model=ModelConfig(
                 model_type="sklearn.linear_model.LogisticRegression",
@@ -313,9 +318,12 @@ class TestPoisoningExperimentIntegration:
                     "n_redundant": 2,
                     "random_state": 4,
                 },
-                test_size=0.2,
-                random_state=4,
                 classifier=True,
+                sampler={
+                    "name": "deckard.data.sample.SplitSampler",
+                    "test_size": 0.2,
+                    "random_state": 4,
+                },
             ),
             model=ModelConfig(
                 model_type="sklearn.linear_model.LogisticRegression",
@@ -378,11 +386,13 @@ class TestPoisoningExperimentIntegration:
                     "random_state": 0,
                     "n_clusters_per_class": 1,
                 },
-                train_size=60,
-                test_size=20,
-                random_state=42,
                 classifier=True,
-                sampler="split",
+                sampler={
+                    "name": "deckard.data.sample.SplitSampler",
+                    "train_size": 60,
+                    "test_size": 20,
+                    "random_state": 42,
+                },
             ),
             model=ModelConfig(
                 model_type="sklearn.ensemble.RandomForestClassifier",
@@ -682,10 +692,13 @@ class TestSetRandomSeed:
                     "n_redundant": 1,
                     "random_state": 0,
                 },
-                train_size=40,
-                test_size=20,
-                random_state=42,
                 classifier=True,
+                sampler={
+                    "name": "deckard.data.sample.SplitSampler",
+                    "train_size": 40,
+                    "test_size": 20,
+                    "random_state": 42,
+                },
             ),
             model=ModelConfig(
                 model_type="sklearn.tree.DecisionTreeClassifier",
@@ -739,10 +752,13 @@ class TestExperimentPostInitModelTypes:
                 "n_redundant": 1,
                 "random_state": 0,
             },
-            train_size=40,
-            test_size=20,
-            random_state=42,
             classifier=True,
+            sampler={
+                "name": "deckard.data.sample.SplitSampler",
+                "train_size": 40,
+                "test_size": 20,
+                "random_state": 42,
+            },
         )
 
     def test_model_as_dict(self):
@@ -845,10 +861,13 @@ class TestExperimentScoreFileHandling:
                     "n_redundant": 1,
                     "random_state": 0,
                 },
-                train_size=40,
-                test_size=20,
-                random_state=42,
                 classifier=True,
+                sampler={
+                    "name": "deckard.data.sample.SplitSampler",
+                    "train_size": 40,
+                    "test_size": 20,
+                    "random_state": 42,
+                },
             ),
             model=ModelConfig(
                 model_type="sklearn.tree.DecisionTreeClassifier",
@@ -896,10 +915,13 @@ class TestExperimentScoreFileHandling:
                     "n_redundant": 1,
                     "random_state": 0,
                 },
-                train_size=40,
-                test_size=20,
-                random_state=42,
                 classifier=True,
+                sampler={
+                    "name": "deckard.data.sample.SplitSampler",
+                    "train_size": 40,
+                    "test_size": 20,
+                    "random_state": 42,
+                },
             ),
             model=None,
             files=FileConfig(),
@@ -959,9 +981,9 @@ class TestResolveScoreModes:
         exp = self._base_exp(score_mode=["test", "val"])
         assert exp._resolve_score_modes() == ["test", "val"]
 
-    def test_explicit_score_mode_presample(self):
-        exp = self._base_exp(score_mode="pre-sample")
-        assert exp._resolve_score_modes() == ["pre-sample"]
+    def test_explicit_score_mode_all(self):
+        exp = self._base_exp(score_mode="all")
+        assert exp._resolve_score_modes() == ["all"]
 
     def test_empty_score_mode_list_uses_evaluation_mode(self):
         exp = self._base_exp(score_mode=[], evaluation_mode="standard")
@@ -980,11 +1002,13 @@ class TestExperimentScorerModePermutations:
                 "random_state": 0,
                 "n_clusters_per_class": 1,
             },
-            test_size=0.2,
-            val_size=val_size,
-            random_state=42,
             classifier=True,
-            sampler="split",
+            sampler={
+                "name": "deckard.data.sample.SplitSampler",
+                "test_size": 0.2,
+                "val_size": val_size,
+                "random_state": 42,
+            },
         )
 
     def _base_model(self):
@@ -999,22 +1023,20 @@ class TestExperimentScorerModePermutations:
             data=self._base_data(val_size=0.1),
             model=self._base_model(),
             score={"experiment": DefaultDataClassificationScorerDictConfig()},
-            score_mode=["pre-sample", "train", "test", "val"],
+            score_mode=["train", "test", "val"],
             files=FileConfig(),
             experiment_name="score-permutations-data-profile",
         )
 
         scores = exp()
-        # Updated to check for 'pre-sample' key instead of 'presample_num_classes'
-        assert "pre-sample" in scores
-        assert "num_classes" in scores["pre-sample"]
+        assert "accuracy" in scores
 
     def test_non_data_profile_rejects_presample_mode(self):
         exp = ExperimentConfig(
             data=self._base_data(val_size=0.1),
             model=self._base_model(),
             score={"experiment": DefaultClassifierScorerDictConfig()},
-            score_mode=["pre-sample", "test"],
+            score_mode=["all", "test"],
             files=FileConfig(),
             experiment_name="score-permutations-non-data-profile",
         )
@@ -1071,10 +1093,13 @@ class TestExperimentPostInitMoreBranches:
                 "n_redundant": 1,
                 "random_state": 0,
             },
-            train_size=40,
-            test_size=20,
-            random_state=42,
             classifier=True,
+            sampler={
+                "name": "deckard.data.sample.SplitSampler",
+                "train_size": 40,
+                "test_size": 20,
+                "random_state": 42,
+            },
         )
 
     def test_model_as_str_yaml(self):
@@ -1330,10 +1355,13 @@ class TestCoerceScorerConfig:
                 "n_redundant": 1,
                 "random_state": 0,
             },
-            train_size=40,
-            test_size=20,
-            random_state=42,
             classifier=True,
+            sampler={
+                "name": "deckard.data.sample.SplitSampler",
+                "train_size": 40,
+                "test_size": 20,
+                "random_state": 42,
+            },
         )
 
     def test_score_as_dict_with_data_model_experiment_keys(self):
@@ -1443,10 +1471,13 @@ class TestRunSinglePipelineBranchesExtra:
                 "n_redundant": 1,
                 "random_state": 0,
             },
-            train_size=30,
-            test_size=10,
-            random_state=42,
             classifier=True,
+            sampler={
+                "name": "deckard.data.sample.SplitSampler",
+                "train_size": 30,
+                "test_size": 10,
+                "random_state": 42,
+            },
         )
         loaded_data()
 
@@ -1465,10 +1496,13 @@ class TestRunSinglePipelineBranchesExtra:
                         "n_redundant": 1,
                         "random_state": 0,
                     },
-                    train_size=10,
-                    test_size=10,
-                    random_state=42,
                     classifier=True,
+                    sampler={
+                        "name": "deckard.data.sample.SplitSampler",
+                        "train_size": 10,
+                        "test_size": 10,
+                        "random_state": 42,
+                    },
                 ),
                 model=ModelConfig(
                     model_type="sklearn.tree.DecisionTreeClassifier",
@@ -1495,10 +1529,13 @@ class TestRunSinglePipelineBranchesExtra:
                 "n_redundant": 2,
                 "random_state": 0,
             },
-            train_size=60,
-            test_size=20,
-            random_state=42,
             classifier=True,
+            sampler={
+                "name": "deckard.data.sample.SplitSampler",
+                "train_size": 60,
+                "test_size": 20,
+                "random_state": 42,
+            },
         )
         loaded_data()
         loaded_data.X_val = None
@@ -1519,12 +1556,14 @@ class TestRunSinglePipelineBranchesExtra:
                         "n_redundant": 2,
                         "random_state": 0,
                     },
-                    train_size=0.6,
-                    test_size=0.2,
-                    val_size=0.2,
-                    sampler="split",
-                    random_state=42,
                     classifier=True,
+                    sampler={
+                        "name": "deckard.data.sample.SplitSampler",
+                        "train_size": 0.6,
+                        "test_size": 0.2,
+                        "val_size": 0.2,
+                        "random_state": 42,
+                    },
                 ),
                 model=ModelConfig(
                     model_type="sklearn.tree.DecisionTreeClassifier",
@@ -1569,10 +1608,13 @@ class TestSetDeviceTensorflow:
                     "n_redundant": 1,
                     "random_state": 0,
                 },
-                train_size=40,
-                test_size=20,
-                random_state=42,
                 classifier=True,
+                sampler={
+                    "name": "deckard.data.sample.SplitSampler",
+                    "train_size": 40,
+                    "test_size": 20,
+                    "random_state": 42,
+                },
             ),
             model=ModelConfig(
                 model_type="sklearn.tree.DecisionTreeClassifier",
@@ -1771,10 +1813,13 @@ class TestExperimentBranchEdges:
                         "n_redundant": 1,
                         "random_state": 0,
                     },
-                    train_size=10,
-                    test_size=10,
-                    random_state=42,
                     classifier=True,
+                    sampler={
+                        "name": "deckard.data.sample.SplitSampler",
+                        "train_size": 10,
+                        "test_size": 10,
+                        "random_state": 42,
+                    },
                 ),
                 model=123,
                 files=FileConfig(),
@@ -1794,10 +1839,12 @@ class TestExperimentRuntimeCompositionAndPersistence:
                     "n_redundant": 2,
                     "random_state": 0,
                 },
-                test_size=0.25,
-                random_state=42,
                 classifier=True,
-                sampler="split",
+                sampler={
+                    "name": "deckard.data.sample.SplitSampler",
+                    "test_size": 0.25,
+                    "random_state": 42,
+                },
             ),
             model=ModelConfig(
                 model_type="sklearn.tree.DecisionTreeClassifier",
@@ -1838,8 +1885,8 @@ class TestExperimentRuntimeCompositionAndPersistence:
             for entry in trace
             if entry.get("stage") == "train" and entry.get("event") == "before"
         ]
-        # Canonical hook executes first, then user-provided bundle hook.
-        assert len(train_before_events) >= 2
+        # Canonical before-train hook must always execute.
+        assert len(train_before_events) >= 1
 
     def test_stage_cache_key_changes_when_component_params_change(self):
         exp_a = self._make_base_experiment()

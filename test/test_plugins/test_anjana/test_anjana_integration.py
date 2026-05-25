@@ -52,6 +52,34 @@ def _run_optimize_and_load_scores(
         for item in overrides
     )
     final_overrides = list(overrides)
+
+    if any(item == "score=classification" for item in final_overrides):
+        final_overrides.append(
+            "++score._target_=deckard.score.base.DefaultClassifierScorerDictConfig",
+        )
+    if any(
+        isinstance(item, str)
+        and item.startswith("+score@score.model=classification")
+        for item in final_overrides
+    ):
+        final_overrides.append(
+            "++score.model._target_=deckard.score.base.DefaultClassifierScorerDictConfig",
+        )
+    if any(
+        isinstance(item, str) and item.startswith("+score@score.data=anjana")
+        for item in final_overrides
+    ):
+        final_overrides.append(
+            "++score.data._target_=deckard.plugins.anjana.score.DefaultAnjanaDataScorerDictConfig",
+        )
+    if any(
+        isinstance(item, str)
+        and item.startswith("+score@score.attack=evasion-classification")
+        for item in final_overrides
+    ):
+        final_overrides.append(
+            "++score.attack._target_=deckard.score.attack.DefaultEvasionAttackScorerDictConfig",
+        )
     for alias_override in (
         "~data_alias",
         "~model_alias",
@@ -106,6 +134,12 @@ def _run_optimize_and_load_scores(
         score_file = matched if matched is not None else candidates[0]
     with score_file.open("r") as handle:
         return json.load(handle), result
+
+
+def _contains_metric(scores: dict, metric: str) -> bool:
+    if metric in scores:
+        return True
+    return any(isinstance(value, dict) and metric in value for value in scores.values())
 
 
 def _make_anjana_data(n=40, monkeypatch=None, defense=None):
@@ -576,6 +610,7 @@ def test_cli_score_chain_data_anjana_evasion_sklearn():
             "+data.sensitive_attribute=target",
             "+data.sensitive_columns=[feature_0]",
             "~score",
+            "+score@score.model=classification",
             "+score@score.data=anjana",
             "+score@score.attack=evasion-classification",
             f"experiment_name={experiment_name}",
@@ -583,7 +618,8 @@ def test_cli_score_chain_data_anjana_evasion_sklearn():
         timeout=420,
     )
 
-    assert "evasion_accuracy" in scores
+    assert _contains_metric(scores, "accuracy")
+    assert _contains_metric(scores, "evasion_accuracy")
     _assert_anjana_privacy_scores(scores)
 
 
@@ -620,8 +656,8 @@ def test_cli_score_chain_with_fairness_sklearn():
         timeout=420,
     )
 
-    assert "accuracy" in scores
-    assert "evasion_accuracy" in scores
-    assert "demographic_parity_difference" in scores
-    assert "equalized_odds_difference" in scores
+    assert _contains_metric(scores, "accuracy")
+    assert _contains_metric(scores, "evasion_accuracy")
+    assert _contains_metric(scores, "demographic_parity_difference")
+    assert _contains_metric(scores, "equalized_odds_difference")
     _assert_anjana_privacy_scores(scores)

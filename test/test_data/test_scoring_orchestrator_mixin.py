@@ -6,7 +6,7 @@ from deckard.data.canon import ScoringOrchestratorMixin
 
 @dataclass(eq=False, kw_only=True)
 class _RuntimeHarness(ScoringOrchestratorMixin):
-    score_split: str = "test"
+    score_mode: str = "test"
     scorer: object | None = None
     plugins: list = field(default_factory=list)
     score_dict: dict = field(default_factory=dict)

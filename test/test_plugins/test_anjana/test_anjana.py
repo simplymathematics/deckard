@@ -16,9 +16,12 @@ def test_anjana_data_defense_applies_callable_and_updates_xy(monkeypatch):
     cfg = AnjanaDataConfig(
         dataset_name="make_classification",
         data_params={"n_samples": 10, "n_features": 4, "n_informative": 2},
-        train_size=6,
-        test_size=4,
         classifier=True,
+        sampler={
+            "name": "deckard.data.sample.SplitSampler",
+            "train_size": 6,
+            "test_size": 4,
+        },
         target="target",
         identifiers=["id_col"],
         quasi_identifiers=["f0", "f1"],
@@ -51,9 +54,12 @@ def test_anjana_data_score_uses_auto_default(monkeypatch):
     cfg = AnjanaDataConfig(
         dataset_name="make_classification",
         data_params={"n_samples": 8, "n_features": 3, "n_informative": 2},
-        train_size=5,
-        test_size=3,
         classifier=True,
+        sampler={
+            "name": "deckard.data.sample.SplitSampler",
+            "train_size": 5,
+            "test_size": 3,
+        },
         scorer=None,
     )
     cfg._X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
@@ -82,9 +88,12 @@ def test_generate_anjana_hierarchy_dict_builds_interval_levels():
     cfg = AnjanaDataConfig(
         dataset_name="make_classification",
         data_params={"n_samples": 4, "n_features": 2, "n_informative": 2},
-        train_size=2,
-        test_size=2,
         classifier=True,
+        sampler={
+            "name": "deckard.data.sample.SplitSampler",
+            "train_size": 2,
+            "test_size": 2,
+        },
         quasi_identifiers=["age", "zip"],
         hierarchy_interval_sizes={"age": [10, 20]},
     )
@@ -120,9 +129,12 @@ def test_anjana_data_defense_auto_injects_generated_hierarchies(monkeypatch):
     cfg = AnjanaDataConfig(
         dataset_name="make_classification",
         data_params={"n_samples": 6, "n_features": 3, "n_informative": 2},
-        train_size=3,
-        test_size=3,
         classifier=True,
+        sampler={
+            "name": "deckard.data.sample.SplitSampler",
+            "train_size": 3,
+            "test_size": 3,
+        },
         target="target",
         identifiers=["id_col"],
         quasi_identifiers=["age"],

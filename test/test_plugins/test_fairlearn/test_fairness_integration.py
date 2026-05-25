@@ -34,6 +34,21 @@ if FairlearnDefenseConfig is None or FairlearnModelConfig is None:
     )
 
 
+def _split_sampler_kwargs(*, train_size=None, test_size=None, val_size=None, random_state=None, stratify=None):
+    sampler = {"name": "deckard.data.sample.SplitSampler"}
+    if train_size is not None:
+        sampler["train_size"] = train_size
+    if test_size is not None:
+        sampler["test_size"] = test_size
+    if val_size is not None:
+        sampler["val_size"] = val_size
+    if random_state is not None:
+        sampler["random_state"] = random_state
+    if stratify is not None:
+        sampler["stratify"] = stratify
+    return {"sampler": sampler}
+
+
 @pytest.fixture(scope="module")
 def generate_fairness_data():
     cfg = FairlearnDataConfig(
@@ -47,11 +62,13 @@ def generate_fairness_data():
             "n_classes": 2,
             "random_state": 23,
         },
-        train_size=30,
-        test_size=10,
-        random_state=42,
-        stratify=True,
         classifier=True,
+        **_split_sampler_kwargs(
+            train_size=30,
+            test_size=10,
+            random_state=42,
+            stratify=True,
+        ),
         sensitive_columns=["feature_0"],
         scorer=DefaultFairlearnDataScorerDictConfig(classifier=True),
     )
@@ -99,10 +116,12 @@ def test_fairness_regression_data_and_metric_frame_scores():
             "noise": 0.1,
             "random_state": 21,
         },
-        train_size=30,
-        test_size=10,
-        random_state=42,
         classifier=False,
+        **_split_sampler_kwargs(
+            train_size=30,
+            test_size=10,
+            random_state=42,
+        ),
         sensitive_columns=["feature_0"],
     )
     data()
@@ -374,11 +393,13 @@ def test_fairness_data_config_hash_stable_after_execution():
             "n_redundant": 0,
             "random_state": 7,
         },
-        train_size=30,
-        test_size=10,
-        random_state=42,
-        stratify=True,
         classifier=True,
+        **_split_sampler_kwargs(
+            train_size=30,
+            test_size=10,
+            random_state=42,
+            stratify=True,
+        ),
         sensitive_columns=["feature_0"],
     )
     original_hash = hash(cfg)
@@ -397,11 +418,13 @@ def test_fairness_model_config_hash_stable_after_training():
             "n_redundant": 0,
             "random_state": 11,
         },
-        train_size=30,
-        test_size=10,
-        random_state=42,
-        stratify=True,
         classifier=True,
+        **_split_sampler_kwargs(
+            train_size=30,
+            test_size=10,
+            random_state=42,
+            stratify=True,
+        ),
         sensitive_columns=["feature_0"],
         pipeline={
             "scaler": {"name": "sklearn.preprocessing.StandardScaler"},
@@ -430,11 +453,13 @@ def test_fairness_data_config_scores_persist_and_reload():
             "n_redundant": 0,
             "random_state": 13,
         },
-        train_size=30,
-        test_size=10,
-        random_state=42,
-        stratify=True,
         classifier=True,
+        **_split_sampler_kwargs(
+            train_size=30,
+            test_size=10,
+            random_state=42,
+            stratify=True,
+        ),
         sensitive_columns=["feature_0"],
     )
     cfg()
@@ -458,11 +483,13 @@ def test_fairness_model_config_object_pickle_roundtrip():
             "n_redundant": 0,
             "random_state": 17,
         },
-        train_size=30,
-        test_size=10,
-        random_state=42,
-        stratify=True,
         classifier=True,
+        **_split_sampler_kwargs(
+            train_size=30,
+            test_size=10,
+            random_state=42,
+            stratify=True,
+        ),
         sensitive_columns=["feature_0"],
         pipeline={
             "scaler": {"name": "sklearn.preprocessing.StandardScaler"},

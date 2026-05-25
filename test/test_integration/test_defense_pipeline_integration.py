@@ -28,11 +28,14 @@ def _base_classification_data():
             "n_classes": 2,
             "random_state": 17,
         },
-        train_size=30,
-        test_size=10,
-        random_state=42,
-        stratify=True,
         classifier=True,
+        sampler={
+            "name": "deckard.data.sample.SplitSampler",
+            "train_size": 30,
+            "test_size": 10,
+            "random_state": 42,
+            "stratify": True,
+        },
     )
     cfg()
     return cfg
@@ -132,11 +135,14 @@ def test_experiment_config_accepts_legacy_single_defense_yaml():
                 "n_classes": 2,
                 "random_state": 23,
             },
-            train_size=30,
-            test_size=10,
-            random_state=42,
-            stratify=True,
             classifier=True,
+            sampler={
+                "name": "deckard.data.sample.SplitSampler",
+                "train_size": 30,
+                "test_size": 10,
+                "random_state": 42,
+                "stratify": True,
+            },
         ),
         model=ModelConfig(
             model_type="sklearn.linear_model.LogisticRegression",

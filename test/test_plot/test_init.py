@@ -76,7 +76,7 @@ class TestPlotConfig:
         """Test PlotConfig raises error when neither experiment nor data_file provided."""
         with pytest.raises(ValueError) as context:
             PlotConfig(kwargs={"plot_type": "confusion_matrix"})
-        assert "Missing required source key" in str(context.exception)
+        assert "Missing required source key" in str(context.value)
 
     def test_plot_config_both_sources(self):
         """Test PlotConfig raises error when both experiment and data_file provided."""
@@ -90,7 +90,7 @@ class TestPlotConfig:
                 },
             )
         assert "Provide either 'experiment' or 'data_file', not both" in \
-            str(context.exception)
+            str(context.value)
 
     def test_plot_config_call(self):
         """Test PlotConfig __call__ method delegates to config."""

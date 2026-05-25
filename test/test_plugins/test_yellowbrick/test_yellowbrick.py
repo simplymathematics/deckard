@@ -203,17 +203,16 @@ class TestYellowbrickPlots:
                 continue
             else:
                 filepath = f"{self.temp_dir}/{plot_type}_clustering.png"
-                with self.subTest(plot_type=plot_type):
-                    plot_cfg = YellowbrickPlotConfig(
-                        experiment=experiment,
-                        plot_type=plot_type,
-                        features="all",
-                        classes="all",
-                        title=plot_type.replace("_", " ").title() + " (Clustering)",
-                        save_path=filepath,
-                    )
-                    plot_cfg()
-                    assert Path(filepath).exists()
+                plot_cfg = YellowbrickPlotConfig(
+                    experiment=experiment,
+                    plot_type=plot_type,
+                    features="all",
+                    classes="all",
+                    title=plot_type.replace("_", " ").title() + " (Clustering)",
+                    save_path=filepath,
+                )
+                plot_cfg()
+                assert Path(filepath).exists()
 
     def test_single_plot_prepares_experiment_only_once(self):
         classification_data = OmegaConf.load(self.classification_data_config)

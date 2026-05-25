@@ -19,12 +19,12 @@ def _cfg_with_loaded_splits() -> DataConfig:
 
 
 def test_normalize_data_score_stage_aliases():
-    assert normalize_data_score_stage("train") == "train"
-    assert normalize_data_score_stage("test") == "test"
-    assert normalize_data_score_stage("val") == "val"
+    assert normalize_data_score_stage("pre-load") == "pre-load"
+    assert normalize_data_score_stage("pre_sample") == "pre-sample"
+    assert normalize_data_score_stage("post_pipeline") == "post-pipeline"
     assert normalize_data_score_stage("all") == "all"
     with pytest.raises(ValueError):
-        normalize_data_score_stage("post-defense")
+        normalize_data_score_stage("train")
 
 
 def test_score_is_pass_through_to_scorer_dict_config():
@@ -60,7 +60,7 @@ def test_call_orchestrates_scores_using_scorer_stages():
             "random_state": 42,
             "n_clusters_per_class": 1,
         },
-        score_split="test",
+        score_mode="test",
         scorer={
             "_target_": "deckard.score.data.DefaultDataScorerDictConfig",
             "scorers": {

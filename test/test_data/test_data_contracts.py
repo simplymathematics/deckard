@@ -20,9 +20,6 @@ def _core_config() -> DataConfig:
             "random_state": 7,
         },
         classifier=True,
-        train_size=32,
-        test_size=16,
-        stratify=False,
         scorer=lambda **kwargs: {"core_rows": len(kwargs.get("y", []))},
     )
 
@@ -41,9 +38,6 @@ def _fairlearn_config():
             "random_state": 11,
         },
         classifier=True,
-        train_size=32,
-        test_size=16,
-        stratify=False,
         sensitive_columns=["feature_0"],
         fairness_defense=False,
         scorer=lambda **kwargs: {"fair_rows": len(kwargs.get("y", []))},
@@ -63,9 +57,6 @@ def _anjana_config():
             "random_state": 19,
         },
         classifier=True,
-        train_size=32,
-        test_size=16,
-        stratify=False,
         anjana_defense=False,
         quasi_identifiers=["feature_0", "feature_1"],
         sensitive_attribute="target",
@@ -84,9 +75,6 @@ def _pytorch_config():
         dataset_name="torch.utils.data.TensorDataset",
         data_params={"_args_": [X, y]},
         classifier=True,
-        train_size=32,
-        test_size=16,
-        stratify=False,
         scorer=lambda **kwargs: {"torch_rows": len(kwargs.get("y", []))},
     )
 
@@ -129,9 +117,6 @@ def test_core_and_framework_score_hooks_use_canonical_stage_names(tmp_path: Path
         dataset_name="torch.utils.data.TensorDataset",
         data_params={"_args_": [X, y]},
         classifier=True,
-        train_size=32,
-        test_size=16,
-        stratify=False,
         scorer=lambda **kwargs: {"torch_rows": len(kwargs.get("y", []))},
     )
 

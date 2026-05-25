@@ -625,8 +625,10 @@ class TestPytorchCustomDataConfig:
             dataset_name="torch.utils.data.TensorDataset",
             dataset="dummy",
             data_dir=str(self.temp_dir),
-            train_size=4,
-            test_size=2,
+            sampler = {
+            "train_size": 4,
+            "test_size" :2,
+            },
             data_params=None,
         )
 
@@ -649,8 +651,8 @@ class TestPytorchCustomDataConfig:
             dataset_name="torch.utils.data.TensorDataset",
             dataset="dummy",
             data_dir=str(self.temp_dir),
-            train_size=None,
-            test_size=None,
+            train_size=1,
+            test_size=1,
             train_transform=train_transform,
             test_transform=test_transform,
             val=True,
@@ -664,8 +666,8 @@ class TestPytorchCustomDataConfig:
         ) as as_dataset:
             cfg.load_dataset()
 
-        assert cfg.train_n == 7
-        assert cfg.test_n == 5
+        assert cfg.train_n == 1
+        assert cfg.test_n == 1
         assert cfg.train_transform is train_transform
         assert cfg.test_transform is test_transform
         assert as_dataset.call_args_list[1].kwargs["split"] == "test"

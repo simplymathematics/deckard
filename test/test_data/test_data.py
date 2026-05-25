@@ -172,12 +172,12 @@ class TestDataConfig:
 
 
 class TestDataConfig:
-    def test_invalid_score_split_raises(self):
+    def test_invalid_score_mode_raises(self):
         with pytest.raises(ValueError):
             DataConfig(
                 dataset_name="make_classification",
                 data_params={"n_samples": 10, "n_features": 2},
-                score_split="invalid",
+                score_mode="invalid",
                 scorer=lambda y_true, y_pred: {"dummy": 1},
             )
 
@@ -193,9 +193,6 @@ class TestDataConfig:
                 "random_state": 42,
                 "n_clusters_per_class": 1,
             },
-            test_size=0.2,
-            random_state=42,
-            stratify=True,
             classifier=True,
         )
 
@@ -227,9 +224,6 @@ class TestDataConfig:
                     "random_state": 42,
                     "n_clusters_per_class": 1,
                 },
-                test_size=0.25,
-                random_state=42,
-                stratify=True,
                 classifier=True,
             )
 
@@ -256,7 +250,7 @@ class TestDataConfig:
         assert "data_sample_time" in scores
         assert "class_counts" not in scores
 
-    def test_presample_stage_does_not_override_score_split(self):
+    def test_presample_stage_does_not_override_score_mode(self):
         cfg = DataConfig(
             dataset_name="make_classification",
             data_params={
@@ -266,7 +260,7 @@ class TestDataConfig:
                 "n_redundant": 0,
                 "random_state": 42,
             },
-            score_split="test",
+            score_mode="test",
             scorer={
                 "n_samples": {
                     "score_name": "n_samples",
@@ -279,7 +273,7 @@ class TestDataConfig:
         assert scores["test"]["n_samples"] == len(cfg.y_test)
         assert scores["test"]["n_samples"] != len(cfg._y)
 
-    def test_score_split_test_uses_test_split(self):
+    def test_score_mode_test_uses_test_split(self):
         captured = {}
 
         class _CaptureScorer:
@@ -297,7 +291,7 @@ class TestDataConfig:
                 "n_redundant": 0,
                 "random_state": 42,
             },
-            score_split="test",
+            score_mode="test",
             scorer={
                 "capture": {
                     "score_function": _CaptureScorer(),
@@ -318,9 +312,6 @@ class TestDataConfig:
                 "n_informative": 2,
                 "random_state": 1,
             },
-            test_size=0.3,
-            random_state=1,
-            stratify=None,
             classifier=False,
         )
         cfg()
@@ -340,9 +331,7 @@ class TestDataConfig:
         cfg = DataConfig(
             dataset_name="diabetes",
             data_params={},
-            test_size=0.25,
-            random_state=0,
-            stratify=None,
+            classifier=False,
         )
         cfg()
         X_train = cfg.X_train
@@ -361,9 +350,6 @@ class TestDataConfig:
         cfg = DataConfig(
             dataset_name="digits",
             data_params={},
-            test_size=0.1,
-            random_state=123,
-            stratify=True,
         )
         cfg()
         X_train = cfg.X_train
@@ -485,18 +471,14 @@ class TestDataConfig:
                 "random_state": 7,
                 "n_redundant": 0,
             },
-            train_size=0.5,
-            test_size=0.5,
-            random_state=7,
-            stratify=True,
         )
         cfg()
         X_train = cfg.X_train
         y_train = cfg.y_train
         X_test = cfg.X_test
         y_test = cfg.y_test
-        assert X_train.shape[0] == 30
-        assert X_test.shape[0] == 30
+        assert X_train.shape[0] == 48
+        assert X_test.shape[0] == 12
         assert X_train.shape[1] == 6
         assert X_test.shape[1] == 6
         assert len(X_train) == len(y_train)
@@ -562,37 +544,37 @@ class TestDataConfig:
             assert cfg._X is not None
             assert cfg._y is not None
 
-    @pytest.mark.skipif(not HAS_LIFELINES, "lifelines is required for this test")
+    @pytest.mark.skipif(not HAS_LIFELINES, reason="lifelines is required for this test")
     def test_load_lifelines_lung_dataset(self):
         cfg = DataConfig(
             dataset_name="lung",
             classifier=False,
             target="status",
-            stratify=False,
+            sampler={"name": "deckard.data.sample.SplitSampler", "stratify": False},
         )
         cfg.load_dataset()
         assert "time" in cfg.X.columns
         assert len(cfg.X) == len(cfg.y)
 
-    @pytest.mark.skipif(not HAS_LIFELINES, "lifelines is required for this test")
+    @pytest.mark.skipif(not HAS_LIFELINES, reason="lifelines is required for this test")
     def test_load_lifelines_leukemia_dataset(self):
         cfg = DataConfig(
             dataset_name="leukemia",
             classifier=False,
             target="status",
-            stratify=False,
+            sampler={"name": "deckard.data.sample.SplitSampler", "stratify": False},
         )
         cfg.load_dataset()
         assert len(cfg.X) > 0
         assert len(cfg.X) == len(cfg.y)
 
-    @pytest.mark.skipif(not HAS_LIFELINES, "lifelines is required for this test")
+    @pytest.mark.skipif(not HAS_LIFELINES, reason="lifelines is required for this test")
     def test_load_lifelines_diabetes_dataset_with_prefix(self):
         cfg = DataConfig(
             dataset_name="lifelines_diabetes",
             classifier=False,
             target="gender",
-            stratify=False,
+            sampler={"name": "deckard.data.sample.SplitSampler", "stratify": False},
         )
         cfg.load_dataset()
         assert len(cfg.X) > 0
@@ -718,7 +700,7 @@ class TestFairlearnDataConfig:
     def test_pipeline_fit_and_transform(self):
         config = DataConfig(
             pipeline=self.pipeline_config_dict,
-            score_split="train",
+            score_mode="train",
         )
         config._X = self.X_train
         config._y = self.y_train
@@ -767,9 +749,6 @@ class TestDataConfigAdditional:
                 "random_state": 42,
                 "n_clusters_per_class": 1,
             },
-            test_size=0.2,
-            random_state=42,
-            stratify=True,
             classifier=True,
         )
 
@@ -798,9 +777,6 @@ class TestDataConfigAdditional:
                 "n_informative": 2,
                 "random_state": 1,
             },
-            test_size=0.3,
-            random_state=1,
-            stratify=None,
             classifier=False,
         )
         cfg()
@@ -820,9 +796,7 @@ class TestDataConfigAdditional:
         cfg = DataConfig(
             dataset_name="diabetes",
             data_params={},
-            test_size=0.25,
-            random_state=0,
-            stratify=None,
+            classifier=False,
         )
         cfg()
         X_train = cfg.X_train
@@ -841,9 +815,6 @@ class TestDataConfigAdditional:
         cfg = DataConfig(
             dataset_name="digits",
             data_params={},
-            test_size=0.1,
-            random_state=123,
-            stratify=True,
         )
         cfg()
         X_train = cfg.X_train
@@ -912,18 +883,14 @@ class TestDataConfigAdditional:
                 "random_state": 7,
                 "n_redundant": 0,
             },
-            train_size=0.5,
-            test_size=0.5,
-            random_state=7,
-            stratify=True,
         )
         cfg()
         X_train = cfg.X_train
         y_train = cfg.y_train
         X_test = cfg.X_test
         y_test = cfg.y_test
-        assert X_train.shape[0] == 30
-        assert X_test.shape[0] == 30
+        assert X_train.shape[0] == 48
+        assert X_test.shape[0] == 12
         assert X_train.shape[1] == 6
         assert X_test.shape[1] == 6
         assert len(X_train) == len(y_train)

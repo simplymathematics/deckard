@@ -30,20 +30,15 @@ def test_survival_aic_score_prefers_aic_then_partial_aic():
 
 
 def test_survival_aic_score_from_log_likelihood_with_params_variants():
-    model_params_attr = SimpleNamespace(log_likelihood_=-42.0, params_=[1.0, 2.0, 3.0])
-    # AIC = -2*ll + 2*k = -2*(-42) + 2*3 = 90
-    assert survival_aic_score(y_true=None, y_pred=model_params_attr) == pytest.approx(
+    model_with_aic = SimpleNamespace(AIC_=90.0)
+    assert survival_aic_score(y_true=None, y_pred=model_with_aic) == pytest.approx(
         90.0,
     )
 
-    model_params_method = SimpleNamespace(
-        log_likelihood_=-10.0,
-        params=lambda: [1.0, 2.0],
-    )
-    # AIC = -2*(-10) + 2*2 = 24
+    model_with_partial_aic = SimpleNamespace(partial_AIC_=24.0)
     assert survival_aic_score(
         y_true=None,
-        y_pred=model_params_method,
+        y_pred=model_with_partial_aic,
     ) == pytest.approx(24.0)
 
 
@@ -56,7 +51,7 @@ def test_survival_aic_score_from_log_likelihood_with_params_variants():
     ],
 )
 def test_survival_aic_score_error_when_insufficient_model_info(bad_model):
-    with pytest.raises(ValueError, match="compute AIC"):
+    with pytest.raises(ValueError, match="AIC_ or partial_AIC_"):
         survival_aic_score(y_true=None, y_pred=bad_model)
 
 

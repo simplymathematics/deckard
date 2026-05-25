@@ -17,6 +17,16 @@ except Exception:
 
 
 def _fairlearn_config(**overrides):
+    sampler_keys = {"train_size", "test_size", "val_size", "random_state", "stratify"}
+    sampler_overrides = {k: overrides.pop(k) for k in list(overrides) if k in sampler_keys}
+    if sampler_overrides:
+        base_sampler = {}
+        existing_sampler = overrides.get("sampler")
+        if isinstance(existing_sampler, dict):
+            base_sampler.update(existing_sampler)
+        base_sampler.setdefault("name", "deckard.data.sample.SplitSampler")
+        base_sampler.update(sampler_overrides)
+        overrides["sampler"] = base_sampler
     cfg = load_canonical_data_profile("fair-adult", framework="sklearn")
     cfg.update(overrides)
     return FairlearnDataConfig(**cfg)

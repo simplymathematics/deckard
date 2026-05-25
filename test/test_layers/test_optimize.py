@@ -1692,7 +1692,7 @@ def test_hydra_compose_single_default_stage_selection_override():
         cfg = compose(
             config_name="default",
             overrides=[
-                "stage=score",
+                "+stage=score",
                 "hydra.sweeper.n_trials=2",
                 "hydra.sweeper.n_jobs=1",
             ],
@@ -1709,7 +1709,7 @@ def test_hydra_compose_multitrial_execution_overrides_are_runtime_controlled():
         cfg = compose(
             config_name="default",
             overrides=[
-                "stage=score,persist",
+                "+stage='score,persist'",
                 "hydra.sweeper.study_name=phase7-study",
                 "hydra.sweeper.storage=sqlite:///phase7.sqlite3",
                 "hydra.sweeper.n_trials=4",
@@ -1776,12 +1776,12 @@ def test_optimizer_config_resolves_binding_and_policy_fields():
         study_name="explicit-study",
     )
     binding = policy.resolve_study_binding(
-        {
-            "sweeper": {
+        SimpleNamespace(
+            sweeper={
                 "study_name": "sweeper-study",
                 "storage": "sqlite:///bound.db",
             },
-        }
+        ),
     )
 
     assert binding == ("explicit-study", "sqlite:///bound.db")

@@ -53,10 +53,13 @@ def _make_anjana_data(
     )
     base.update(
         {
-            "train_size": int(n * 0.7),
-            "test_size": int(n * 0.3),
             "classifier": True,
-            "random_state": 42,
+            "sampler": {
+                "name": "deckard.data.sample.SplitSampler",
+                "train_size": 0.7,
+                "test_size": 0.3,
+                "random_state": 42,
+            },
             "identifiers": None,
             "quasi_identifiers": ["feature_0", "feature_1"],
             "sensitive_attribute": "target",
@@ -389,10 +392,13 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
             "random_state": 0,
             "n_clusters_per_class": 1,
         },
-        train_size=0.7,
-        test_size=0.3,
         classifier=True,
-        random_state=42,
+        sampler={
+            "name": "deckard.data.sample.SplitSampler",
+            "train_size": 0.7,
+            "test_size": 0.3,
+            "random_state": 42,
+        },
         quasi_identifiers=["feature_0", "feature_1"],
         sensitive_attribute="target",
         sensitive_columns=["feature_0"],

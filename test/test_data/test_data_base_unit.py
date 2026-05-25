@@ -27,10 +27,7 @@ def _basic_data_config(**overrides):
             "n_clusters_per_class": 1,
         },
     )
-    params.update({"test_size": 0.25, "random_state": 0, "classifier": True})
     params.update(overrides)
-    if "sample" in params and "sampler" not in params:
-        params["sampler"] = params.pop("sample")
     return DataConfig(**params)
 
 
@@ -104,12 +101,6 @@ def test_discover_yellowbrick_dataset_loaders_filters_callable_loaders(monkeypat
     loaders = data_declarations.discover_provider_dataset_loaders("yellowbrick")
 
     assert set(loaders) == {"energy", "credit"}
-
-
-@pytest.mark.parametrize("test_size", [1.2, "bad"])
-def test_validate_init_rejects_invalid_test_size(test_size):
-    with pytest.raises(ValueError):
-        _basic_data_config(test_size=test_size)
 
 
 def test_resolve_max_samples_and_apply_max_samples_branches(monkeypatch):
@@ -199,26 +190,6 @@ def test_plugin_instantiation_and_hook_paths(monkeypatch):
         cfg._get_plugins()
 
 
-def test_get_stratify_col_branches():
-    cfg = _basic_data_config(stratify=True)
-    cfg._X = pd.DataFrame({"group": ["a", "b"], "x": [1, 2]})
-    cfg._y = pd.Series([0, 1])
-    assert cfg._get_stratify_col().equals(cfg._y)
-
-    cfg.classifier = False
-    assert cfg._get_stratify_col() is None
-
-    cfg.classifier = True
-    cfg.stratify = "group"
-    assert cfg._get_stratify_col().tolist() == ["a", "b"]
-
-    cfg.stratify = "missing"
-    with pytest.raises(ValueError):
-        cfg._get_stratify_col()
-
-    cfg.stratify = 3
-    with pytest.raises(ValueError):
-        cfg._get_stratify_col()
 
 
 @pytest.mark.xfail(
@@ -515,7 +486,7 @@ def test_pipeline_stage_flags_apply_only_to_declared_stages(monkeypatch):
             "y": {"name": "test.Y", "fit_y": True, "fit_X": False},
         },
         scorer="none",
-        score_mode="pre-sample",
+        score_mode="test",
     )
 
     X = pd.DataFrame({"a": [1.0, 2.0]})

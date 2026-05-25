@@ -338,10 +338,13 @@ def _make_data(n_train=60, n_test=20, n_features=4, classifier=True):
             "n_redundant": 1 if classifier else 0,
             "random_state": 0,
         },
-        train_size=n_train,
-        test_size=n_test,
-        random_state=42,
         classifier=classifier,
+        sampler={
+            "name": "deckard.data.sample.SplitSampler",
+            "train_size": n_train,
+            "test_size": n_test,
+            "random_state": 42,
+        },
     )
     data_cfg()  # populates X_train, y_train, X_test, y_test on the object
     return data_cfg
@@ -1164,12 +1167,14 @@ class TestModelEvaluateAndScoreBranches:
                 "n_redundant": 2,
                 "random_state": 0,
             },
-            train_size=0.6,
-            test_size=0.2,
-            val_size=0.2,
-            sampler="split",
-            random_state=42,
             classifier=True,
+            sampler={
+                "name": "deckard.data.sample.SplitSampler",
+                "train_size": 0.6,
+                "test_size": 0.2,
+                "val_size": 0.2,
+                "random_state": 42,
+            },
         )
         data()
         data.X_val = None
