@@ -191,6 +191,19 @@ stages:
     - ../../deckard/utils.py
     # No outs/metrics: hydra.ipynb does not persist outputs
 
+  notebook_optimize:
+    cmd: jupyter nbconvert --to notebook --execute --inplace optimize.ipynb
+    deps:
+    - optimize.ipynb
+    - ../../deckard/layers/
+    - ../../deckard/experiment/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
+    - ../../examples/sklearn/config/
+    outs:
+    - ./build/optimize_notebook/run_params.yaml
+    - ./build/optimize_notebook/multirun_params.yaml
+
   notebook_deckard:
     cmd: jupyter nbconvert --to notebook --execute --inplace deckard.ipynb
     deps:
@@ -225,6 +238,25 @@ stages:
     - ../../examples/sklearn/config/defense/class-labels.yaml
     - ../../examples/sklearn/config/plot/
     # No outs/metrics: dvc.ipynb is a stage-plan inspection notebook
+
+  notebook_vega:
+    cmd: jupyter nbconvert --to notebook --execute --inplace vega.ipynb
+    deps:
+    - vega.ipynb
+    - ../../deckard/experiment/
+    - ../../deckard/layers/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
+    - ../../examples/sklearn/config/default.yaml
+    outs:
+    - ./build/vega_notebook/plots/roc_auc.vl.json
+    - ./build/vega_notebook/plots/covariance.vl.json
+    - ./build/vega_notebook/plots/epochs_vs_loss.vl.json
+    - ./build/vega_notebook/plots/feature_importance.vl.json
+    - ./build/vega_notebook/plots/hsj_max_iter_vs_accuracy.vl.json
+    - ./build/vega_notebook/plots/class_labels_apply_fit_vs_accuracy.vl.json
+    - ./build/vega_notebook/plots/adversarial_vs_benign_accuracy.vl.json
+    - ./build/vega_notebook/plots/attack_vs_defense_accuracy_heatmap.vl.json
 
   notebook_optuna:
     cmd: jupyter nbconvert --to notebook --execute --inplace optuna.ipynb

@@ -82,7 +82,29 @@ myst_fence_as_directive = [
 # HTML output
 # ---------------------------------------------------------------------------
 html_theme = "pydata_sphinx_theme"
-html_static_path = []
+html_static_path = ["_static"]
+html_css_files = ["mermaid.css"]
+
+mermaid_init_js = """
+mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: 'basis'
+    },
+    themeVariables: {
+        fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
+        lineColor: '#6b7280',
+        primaryTextColor: '#111827',
+        secondaryTextColor: '#111827',
+        tertiaryTextColor: '#111827',
+        clusterBkg: '#ffffff',
+        clusterBorder: '#d1d5db'
+    }
+});
+"""
 
 html_theme_options = {
     # Top header bar

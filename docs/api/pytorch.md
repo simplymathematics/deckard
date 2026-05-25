@@ -36,7 +36,7 @@ and adds
 - The shared fairness model mixin is {class}`~deckard.plugins.fairlearn.model.FairnessBehaviorMixin`.
 - **Survival analysis**: optional integration with lifelines-based survival experiments
 - **Standard scorers**: classification, regression, and attack metrics via
-  {class}`deckard.score.DefaultClassifierConfig`, etc.
+  {class}`deckard.score.DefaultClassifierScorerDictConfig`, etc.
 
 ### Data Loading
 
@@ -153,5 +153,5 @@ The {class}`~deckard.frameworks.pytorch.experiment.TorchExperimentConfig` enforc
 - {doc}`plot` — visualization support including training history plots
 - {doc}`lifelines` — optional survival analysis integration with PyTorch
 - {doc}`modules` — overview of all extensions
-- {doc}`../developers/data_runtime_canon` — cross-family runtime contract
-- {doc}`../developers/plugin_runtime_migration` — migration guardrails
+- {doc}`../developers/data` — cross-family runtime contract
+- {doc}`../developers/migration` — migration guardrails

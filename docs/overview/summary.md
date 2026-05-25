@@ -258,8 +258,8 @@ See also:
 
 - [Package Summary](summary.md).
 - [API Reference](../api/modules)
-- [Extensions](extensions.md)
+- [Extensions](extensions/index.md)
 - [Scoring Guide](scoring)
 - [Layers](../api/layers)
 - [Notebooks](../notebooks/index)
-- [Developer Docs](../developers/development)
+- [Developer Docs](../developers/index)

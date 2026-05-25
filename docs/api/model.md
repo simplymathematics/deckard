@@ -1,5 +1,11 @@
 # Model
 
+## Introduction
+
+This page is the canonical home for model module behavior and API details.
+It includes runtime lifecycle behavior, defense-stage semantics, persistence,
+and extension points.
+
 The {mod}`~deckard.model` module defines the {class}`~deckard.model.ModelConfig`
 dataclass, which provides a complete pipeline for **model configuration,
 training, evaluation, defense application, and persistence**.
@@ -8,8 +14,7 @@ CLI execution,
 and integration with the {mod}`deckard.data` module.
 
 The canonical model runtime contract, trainer flow, and defense-stage behavior
-are documented in {doc}`../developers/model_runtime_canon` and summarized for
-users in {doc}`../overview/model`.
+are documented in {doc}`../developers/model`.
 
 ```{eval-rst}
 .. automodule:: deckard.model

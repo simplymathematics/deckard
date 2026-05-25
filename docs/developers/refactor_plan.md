@@ -55,14 +55,14 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 ### Phase 3: Plugin data runtimes (`deckard/plugins/**/data.py`)
 
-- [ ] Convert plugin data configs into policy layers on top of canonical runtime
+- [x] Convert plugin data configs into policy layers on top of canonical runtime
   behavior (not replacement runtimes).
-- [ ] Keep only plugin-specific concerns in plugin modules:
+- [x] Keep only plugin-specific concerns in plugin modules:
   sensitive features, mitigation transforms, plugin scorers, mode validation.
 - [x] Canonize plugin hook names to stage-scoped before/after semantics.
 - [x] Keep plugin score behavior split-scoped by `score_mode` and avoid using hook stage names as score scope aliases.
-- [ ] Keep compatibility aliases for plugin data internals and document their supported import paths.
-- [ ] Add plugin availability detection (optional dependency + import checks) and gate plugin re-exports based on installed packages.
+- [x] Keep compatibility aliases for plugin data internals and document their supported import paths.
+- [x] Add plugin availability detection (optional dependency + import checks) and gate plugin re-exports based on installed packages.
 - [x] Ensure that top-level *Config objects keep their current behavior
 - [x] Implement ANJANA pipeline policy hook at `pre_sample` (before_sample) and keep anonymization logic policy-only.
 - [x] Implement Fairlearn pipeline policy hook at `after_pipeline` (post-pipeline) for stage-aligned runtime behavior.
@@ -71,7 +71,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x] Add Fairlearn score tail hook (`after_score`) and enforce fairlearn metrics merge last.
 -
 - [x] Normalize plugin scoring calls to split-scoped `score_mode` (`train|test|val|all`) and remove stage-name-as-mode behavior.
-- [ ] Keep top-level config behavior stable (`AnjanaDataConfig`, `FairlearnDataConfig`, `LifelinesDataConfig`) via focused plugin suite validation.
+- [x] Keep top-level config behavior stable (`AnjanaDataConfig`, `FairlearnDataConfig`, `LifelinesExperimentConfig`, etc.) via focused plugin suite validation.
 - [x] test fairlearn.preprocessing.CorrelationRemover (check first for existing test and extend rather than make a new one)
 - [x] register fairlearn.preprocessing.PrototypeRepresentationLearner (max_iter =1 for tests) in examples/*/config/data/pipeline. Test.
 - [x] validate anjana scoring/defense
@@ -91,7 +91,6 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
   - [x] `docs/api/pytorch.md` and `docs/api/fairlearn.md` and `docs/api/anjana.md` pending targeted refresh.
 - [x] Document migration constraints: preserve top-level Config APIs only.
 - [x] Ensure that all examples/*/config/data files are migrated
-- [ ] Run  and fix coverage, then mark checklist completion.
 
 ## Model Checklist:
 - [x] Add a canonical model runtime contract module (`deckard/model/canon.py`).
@@ -109,8 +108,8 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 ### Model Phase 2: Thin Wrapper Family Rule
 
-- [ ] Apply thin-wrapper policy to framework/plugin `*ModelConfig` families (plugin/framework specific behavior only).
-- [ ] Centralize shared model canon/runtime helper logic in one import path and consume from wrappers.
+- [x] Apply thin-wrapper policy to framework/plugin `*ModelConfig` families (plugin/framework specific behavior only).
+
 
 ### Model Phase 3: Defense Stage Semantics
 
@@ -164,7 +163,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x] Update scorer docs and examples to describe the canonical scoring path.
 
 ### Scorer Serialization Contract (Pending)
-- [x] create a native ScoreDict class to make this behavior consistent everywhere and unify all score-transformation functions in that object as helper methods. Use this object to type score_dict in ConfigBase (score_dict: ScoreDict).
+- [x] create a native ScoreDict class to make this behavior consistent everywhere and unify all score-transformation functions in that object as helper methods. Use this object to type score_dict in BaseConfig (score_dict: ScoreDict).
 - [x] Add a callable lifecycle method that replaces the current read_or_initialize_scores and general persistence flows so each ScoreDict call loads/saves from disk when a score file is specified; otherwise it returns the nested runtime score dictionary.
 - [x] ensure no other data scoring paths still rely on legacy-only y_true/y_pred paths
 - [x] Add vector-valued scoring support in runtime and persistence layers.
@@ -173,7 +172,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x] Guarantee final persisted score output includes:
   - [x] a flat dictionary keyed by runtime scope (mode/stage dependent)
   - [x] a dot.list OmegaConf-style dictionary for easy downstream parsing of all scores across stages, modes, and splits.
-  - [ ] Create a docs/notebooks/scoring.ipynb that explains major paths.
+  - [x] Create a docs/notebooks/scoring.ipynb that explains major paths.
   - [x] Update docs/developers/score with a design spec
   - [x] Update overview/scoring with the new contract
 
@@ -200,11 +199,11 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x]Ensure that {num}/{#} and {hash}/{*} work with run, multirun, and without hydra (UUID fallback).
 - [x] Update file-related tests to validate allowed keys, placeholder resolution, handler behavior, and cross-module persistence aliases.
 - [x] Refresh file docs/examples so top-level config APIs use the final decentralized file-schema contract.
-- [ ] Implement, test, and document persistence workflows with/without attacks/defenses and with and without pre-trained models for sklearn and pytorch frameworks.
+
 
 ## Utils Checklist
 - [x] Ensure `deckard/artifacts.py` owns persistence load/save behavior for all runtime artifact payloads.
-- [x] Move/retain config coercion and normalization in `ConfigBase` and shared utility helpers only.
+- [x] Move/retain config coercion and normalization in `BaseConfig` and shared utility helpers only.
 - [x] Centralize class resolution, plugin instantiation, score merging, and device resolution in `deckard/utils.py`.
 - [x] Remove duplicate coercion/persistence helpers from core, framework, and plugin modules.
 - [x] Add utility contract tests for artifact IO, config coercion, plugin spec normalization, and resolver behavior.
@@ -266,36 +265,20 @@ Concrete rewrite steps to align runtime implementation with the design spec:
 - [x] Push newly created outputs in the final wrapper (`after_persist`, last-position) via DVC-native commands (`dvc add`, `dvc push`).
 - [x] Keep report generation optional and mode-aware (`make_summary`, `make_report`, `make_dvcyaml`, report extension mapping).
 - [x] Align canonical DVC stage naming for score/persist stages with `experiment__*` naming.
-- [x] Align command emission with Command Templates (`python -m deckard optimize ... stage=... [--multirun] params_file=... dvc_file=...`).
+- [x] Align command emission with Command Templates (`deckard optimize ... stage=... [--multirun] params_file=... dvc_file=...`).
 - [x] Enforce Vega-Lite output contract to hydra-resolvable JSON artifacts (`*.vl.json`) even when callers pass YAML-like paths.
 - [x] Update and extend targeted tests for bundle construction, lifecycle hook execution, stage naming, and Vega-Lite output normalization.
-- [ ] Make pruning status contingent on optuna pruner configuration
-- [ ] Auto-enable dvclive if dvc_plugin is in the default.yaml
-- [ ] Add native support for fetching/loading artifacts using Live().log_image, Live().log_metric, Live().log_params, Live().log_artifact
-- [ ] Ensure that run and multi-run both generate reproducible `dvc.yaml` and `params.yaml` files.
+- [x] Make pruning status contingent on optuna pruner configuration
+- [x] Auto-enable dvclive if dvc_plugin is in the default.yaml
+- [x] Add native support for fetching/loading artifacts using Live().log_image, Live().log_metric, Live().log_params, Live().log_artifact
+- [x] Ensure that run and multi-run both generate reproducible `dvc.yaml` and `params.yaml` files.
 Goal:
-- [ ] generated dvc `cmd` should use `deckard optimize` syntax.
-- [ ] dvc should track everything and cache scores/params by default and rely on user configuration for 
-- [ ] Update developers/dvc.md to reflect canon and change the narrative from a plan to a finalized design spec.
+- [x] generated dvc `cmd` should use `deckard optimize` syntax.
+- [x] Integrate experiment/power.py
+- [x] Update developers/dvc.md to reflect canon and change the narrative from a plan to a finalized design spec.
+- [x] Update dvc.ipynb to reflect the new canon
+- [x] Generate dvc.yaml and params.yaml for several experiments (run AND multirun) that demonstrate several Vega-Lite graphs.
 
-GOAL:
-```
-### Plan: DVC + DVCLive integration
-
-- Primary integration path: hook-driven DVCLive integration in experiment runtime.
-- Secondary integration path: layer-driven study and batch aggregate plotting.
-- Use DVCLive APIs directly rather than reimplementing wrapper behavior.
-
-DVCLive API coverage target:
-
-- `log_*`
-- `next_step`
-- `end`
-- `monitor_system`
-- `make_dvcyaml`
-- `make_report`
-- `make_summary`
-```
 
 #### Phase 6: Hydra Single-Default Multi-Stage Execution
 Design specs: [Optimization Runtime Contract](optimization) | [Hydra and Optuna Orchestration Contract](hydra) | [Pruning Runtime Contract](pruning)
@@ -312,26 +295,28 @@ Design specs: [Optimization Runtime Contract](optimization) | [Hydra and Optuna 
 - [x] Preserve files-only persistence and stage-aware score collection for both single and multi-trial flows.
 - [x] targeted tests
 - [x] create/update high-level docs/overview/hydra file
-- [ ] create/update demonstration notebook using examples/sklearn context in docs/notebooks/hydra.ipynb
+- [x] create/update demonstration notebook using examples/sklearn context in docs/notebooks/hydra.ipynb
 - [x] update docs/developers/hydra
-- [ ] rename any existing *optuna docs to *optimize
+- [x] rename any existing *optuna docs to *optimize
 - [x] create/update high-level docs/overview/optimize file
-- [ ] create/update demonstration notebook using examples/sklearn context in docs/notebooks/optimize.ipynb
-- [ ] update docs/developers/optimize
+- [x] create/update demonstration notebook using examples/sklearn context in docs/notebooks/optimize.ipynb
+- [x] update docs/developers/optimize
 
 #### Phase 7: Validation and Documentation
-- [ ] Add contract tests for HookPlugin stage ordering, Bundle merge behavior, and native `*Config` composition.
-- [ ] Add integration tests for cache reuse, YAML round-trip restores, and DVC autogeneration correctness.
-- [ ] Add Hydra compose tests validating single-default stage selection and multi-trial execution behavior.
-- [ ] Add optimization callback/config tests for adapter + policy split:
-  - [ ] `DefaultOptimizerCallback` lifecycle delegation
-  - [ ] `OptimizerConfig` trial resolution/report/prune behavior
-- [ ] Add pruning integration tests that assert prune termination raises `TrialPruned`.
-- [ ] Add DVC contract tests that assert:
-  - [ ] Vega-Lite plot path generation (`*.vl.json`)
-  - [ ] identity-derived output directories in run and multirun
-  - [ ] metrics file policy and optimizer-keyed selector behavior
-- [ ] Document experiment canon, bundle authoring, hook contracts, serialization schema, and DVC workflow in developer docs.
+- [x] Add contract tests for HookPlugin stage ordering, Bundle merge behavior, and native `*Config` composition.
+- [x] Add integration tests for cache reuse, YAML round-trip restores, and DVC autogeneration correctness.
+- [x] Add Hydra compose tests validating single-default stage selection and multi-trial execution behavior.
+- [x] Add optimization callback/config tests for adapter + policy split:
+  - [x] `DefaultOptimizerCallback` lifecycle delegation
+  - [x] `OptimizerConfig` trial resolution/report/prune behavior
+- [x] Add pruning integration tests that assert prune termination raises `TrialPruned`.
+- [x] Add DVC contract tests that assert:
+  - [x] Vega-Lite plot path generation (`*.vl.json`)
+  - [x] identity-derived output directories in run and multirun
+  - [x] metrics file policy and optimizer-keyed selector behavior
+  - [x] summary generation
+  - [x] report generation (.html, .ipynb, and .md)
+- [x] Document experiment canon, bundle authoring, hook contracts, serialization schema, and DVC workflow in developer docs.
 
 #### Execution Plan: Docs -> Notebooks -> Testing -> Coverage
 
@@ -346,28 +331,21 @@ Design specs: [Optimization Runtime Contract](optimization) | [Hydra and Optuna 
   - [x] `docs/overview/plot.md`
   - [x] `docs/overview/utils.md`
   - [x] `docs/overview/scoring.md`
-- [ ] Ensure each overview page includes: defaults, runtime contract, stage/mode semantics (when applicable), persistence behavior, examples, and quick checklist.
-- [ ] Cross-link every overview page with matching API and developer canon docs.
-- [ ] Update overview index/toctree reading order to include all core-module pages.
+- [x] Ensure each overview page includes: defaults, runtime contract, stage/mode semantics (when applicable), persistence behavior, examples, and quick checklist.
+- [x] Cross-link every overview page with matching API and developer canon docs.
+- [x] Update overview index/toctree reading order to include all core-module pages.
 
 ##### Step 2: Notebook Demonstration Suite
-- [ ] Add a DVC-focused notebook under `docs/notebooks/` for persistence and cache behavior verification (single-run and multi-trial).
-- [ ] Add one notebook per core module to demonstrate canon runtime behavior end-to-end:
-  - [ ] data
-  - [ ] model
-  - [ ] attack
-  - [ ] detector
-  - [ ] experiment
-  - [ ] file
-  - [ ] plot
-  - [ ] utils/artifacts
-  - [ ] scoring
-- [ ] Add notebook sections that explicitly demonstrate:
+- [x] Add a DVC-focused notebook under `docs/notebooks/` for persistence and cache behavior verification (single-run and multi-trial).
+- [ ] Ensure that existing notebooks demonstrate:
   - [ ] files-only persistence aliases
   - [ ] canonical timing keys plus extensibility
   - [ ] stage/mode normalization and hook ordering
   - [ ] cache-key determinism and selective invalidation
   - [ ] YAML/JSON human-readable score and params artifacts
+  - [ ] stage-based fingerprinting
+  - [ ] mode based scoring
+  - [ ] data pipeline, model defenses for anjana/fairlearn
 - [ ] Add notebook index page entries and per-notebook run expectations.
 
 ##### Step 3: Test Plan Aligned to Notebook Scenarios
@@ -377,6 +355,7 @@ Design specs: [Optimization Runtime Contract](optimization) | [Hydra and Optuna 
 - [ ] Add persistence contract tests for scalar/vector/nested score serialization and de-serialization.
 - [ ] Add regression tests that validate dot-list/OmegaConf-style score flattening output.
 - [ ] Add docs-build tests to ensure new overview and notebook references resolve.
+- [ ] Build docs
 
 ##### Step 4: Coverage Closure and Exit Criteria
 - [ ] Run focused test suites for all touched core modules and notebook-derived scenarios.
@@ -386,6 +365,7 @@ Design specs: [Optimization Runtime Contract](optimization) | [Hydra and Optuna 
 - [ ] Publish final migration summary in developer docs with links to overview docs, notebooks, and tests.
 
 ## Final framework/plugin migration:
+- [ ] Implement, test, and document persistence workflows with/without attacks/defenses and with and without pre-trained models for sklearn and pytorch frameworks in a new examples/*/config/pretrained-default.yaml and test them.
 - [ ] Keep all *fair* behavior in lightweight Fairlearn mixins, plugins, and wrappers outside the core modules.
 - [ ] Keep all *torch* behavior in lightweight PyTorch wrappers outside the core modules.
 - [ ] Keep all *anjana* behavior in lightweight privacy mixins, plugins, and wrappers outside the core modules.
@@ -419,13 +399,9 @@ Design specs: [Optimization Runtime Contract](optimization) | [Hydra and Optuna 
   `plot`, `experiment`) into canonical YAML groups.
 - [ ] Refactor tests to compose canonical configs via Hydra (compose-first,
   unit, experiment).
-- [ ] Enforce naming conventions (`*Config`, `Default*ScoreConfig`, `*Mixin`,
+- [ ] Enforce naming conventions (`*Config`, `Default*ScorerConfig`, `*Mixin`,
   `*Plugin`, `modified_snake-case.yaml`).
 - [ ] Run coverage + focused refactor test suites and update
   `docs/developers/refactor_plan` progress.
 
 ______________________________________________________________________
-
-**Design Specs:** [Config Declaration
-Architecture](config_declaration_architecture) | [Naming
-Conventions](naming_conventions) | [Mixin and Plugin Rules](mixin_plugin_rules)

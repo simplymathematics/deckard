@@ -1,5 +1,11 @@
 # Utils
 
+## Introduction
+
+This page is the canonical home for shared utility behavior and API details.
+It documents deterministic normalization helpers, class/config resolution,
+and artifact/persistence support utilities used across runtimes.
+
 The {mod}`deckard.utils` module contains shared utilities used across the
 public API, including stable config hashing, serialization helpers, dynamic
 class loading, and parser generation helpers.

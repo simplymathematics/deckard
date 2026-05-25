@@ -1,5 +1,11 @@
 # Training Runtime
 
+## Introduction
+
+This page is the canonical home for training runtime behavior and API details.
+It covers model trainer composition, pretrained/pruning pathways,
+and trainer-defense integration.
+
 ## Overview
 
 Deckard training behavior is split between core model orchestration in
@@ -7,7 +13,7 @@ Deckard training behavior is split between core model orchestration in
 {mod}`deckard.model._mixins`.
 
 Trainer defenses are configured separately through
-{class}`deckard.model.trainer.TrainerDefenseConfig`.
+{class}`deckard.model.defense.trainer.TrainerDefenseConfig`.
 
 ## Parent Config and Mixin Map
 
@@ -19,9 +25,9 @@ Trainer defenses are configured separately through
 - {class}`deckard.model._mixins.ModelPrunerMixin` provides Optuna-style pruning checks.
 - {class}`deckard.model._mixins.ModelHookRuntimeMixin` provides plugin hook and
   runtime-state propagation helpers.
-- {class}`deckard.model.trainer.TrainerDefenseConfig` composes
-  {class}`deckard.model.trainer._TrainerDefenseMixin` with
-  {class}`deckard.model.defend.DefensePipelineConfig` for adversarial training
+- {class}`deckard.model.defense.trainer.TrainerDefenseConfig` composes
+  {class}`deckard.model.defense.trainer.TrainerDefenseMixin` with
+  {class}`deckard.model.defense.base.DefensePipelineConfig` for adversarial training
   defenses.
 
 ## External References
@@ -38,7 +44,7 @@ Trainer defenses are configured separately through
 ```
 
 ```{eval-rst}
-.. automodule:: deckard.model.trainer
+.. automodule:: deckard.model.defense.trainer
    :members:
    :show-inheritance:
 ```

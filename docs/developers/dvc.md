@@ -7,7 +7,7 @@ It records current experiment-runtime behavior from:
 - native config + HookPlugin + HookBundle composition
 - stage caching and reuse across runs/trials
 
-It then defines a concrete design for generating reproducible `dvc.yaml` pipelines from runtime metadata.
+It describes the finalized runtime behavior for generating reproducible `dvc.yaml` and `params.yaml` files from experiment metadata.
 
 Related contracts:
 
@@ -35,11 +35,13 @@ The current implementation is frozen around these invariants:
 - Structured DVC params payloads use top-level `__target__` with a single top-level `dvc_plugin` block.
 - Wrapped `experiment` payloads do not duplicate `dvc_plugin`.
 - Persisted DVC/DVCLive path fields are normalized to repository-relative paths.
+- Generated pipeline params payloads always include deterministic `_dvc` metadata for run mode, stage selection, DVCLive enablement, and pruning activation state.
 
 ### Current command/mode behavior
 
 - Generated stage commands do not emit explicit `--multirun` flags.
 - Mode (`single`/multirun-equivalent semantics) is represented through stage planning and params payload metadata.
+- Generated stage commands use `deckard optimize ...` syntax.
 
 ### Runtime manifest interpretation notes
 
@@ -387,7 +389,6 @@ Example stage shape:
 stages:
   <canon_stage_name>:
     cmd: >
-      mkdir -p outputs/logs/<run_identity>/plots &&
       deckard optimize
       data=adult
       model=rf
@@ -435,7 +436,7 @@ stages:
 ### Single run
 Parses from 
 ```bash
-python -m deckard optimize <optional hydra overrides> stage=<canonical_stage_or_all> # None = all
+deckard optimize <optional hydra overrides> stage=<canonical_stage_or_all> # None = all
 params_file=<existing_or_desired> # defaults to params.yaml
 dvc_file=<existing_or_desired> #defaults to dvc.yaml
 ```
@@ -444,7 +445,7 @@ dvc_file=<existing_or_desired> #defaults to dvc.yaml
 ### Multi-trial
 
 ```bash
-python -m deckard optimize <optional hydra overrides> 
+deckard optimize <optional hydra overrides> 
 stage=<canonical_stage_or_all> 
 params_file=<existing_or_desired> # defaults to params.yaml
 dvc_file=<existing_or_desired> #defaults to dvc.yaml
@@ -459,6 +460,7 @@ Requirements:
 
 - Stage ordering must follow canonical stage order.
 - Generated `dvc.yaml` content must be stable for equivalent manifests.
+- Generated `params.yaml` content must be stable for equivalent manifests.
 - DVC generation must not mutate runtime config hashes.
 - If runtime schema version is newer than supported, generation should fail with a clear error.
 - If optional components are absent (no attack, no detector), omit their DVC stages cleanly.
@@ -495,6 +497,7 @@ Minimum tests:
 This contract is satisfied when all are true:
 
 - utility generates valid `dvc.yaml` from experiment runtime metadata
+- utility generates valid `params.yaml` from experiment runtime metadata
 - canonical stage mapping is fully implemented and tested
 - single and multirun command templates are emitted deterministically
 - cache-reuse alias mode is implemented and tested

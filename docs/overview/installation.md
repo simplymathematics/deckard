@@ -106,7 +106,7 @@ pip install -e '.[all]'
 ├── build <- contains build files for the `deckard` executable
 ├── scripts/ <- Script for testing and developing the package
 ├── deckard <- Source directory
-├── docs/developers/development.md <- Documentation for developers
+├── docs/developers/index.md <- Documentation for developers
 ├── Dockerfile <- A docker environment for testing and deployment
 ├── docs <- The documentation
 ├── examples <- Examples for each framework and optional extensions.
@@ -159,7 +159,7 @@ suffixed with `_<alias>`.
 
 For full documentation, use the docs navigation:
 
-- Overview: {doc}`build_docs`
+- Developer docs: {doc}`../developers/index`
 - Landing page: {doc}`/index`
 - Summary: {doc}`summary`
 

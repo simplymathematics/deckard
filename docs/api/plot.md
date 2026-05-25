@@ -1,5 +1,11 @@
 # Plot
 
+## Introduction
+
+This page is the canonical home for plotting behavior and API details.
+It documents backend dispatch, data/experiment preparation boundaries,
+and output persistence conventions.
+
 ## Plotting APIs
 
 The plotting package exposes two public entry points:

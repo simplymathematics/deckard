@@ -129,7 +129,7 @@ example `concordance`, `ici`, `e50`) where available.
 ### Defenses in survival workflows
 
 Survival models can use deckard's defense pipeline from
-{class}`deckard.model.defend.DefensePipelineConfig` just like other model types.
+{class}`deckard.model.defense.base.DefensePipelineConfig` just like other model types.
 Supported defense families include ART preprocessors, postprocessors,
 detectors, and trainers.
 

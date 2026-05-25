@@ -1,5 +1,11 @@
 # File
 
+## Introduction
+
+This page is the canonical home for file/artifact path behavior and API
+details. It covers file alias contracts, placeholder resolution,
+and persistence-oriented runtime helpers.
+
 ## Overview
 
 The {mod}`deckard.file` module handles persistence for artifacts produced

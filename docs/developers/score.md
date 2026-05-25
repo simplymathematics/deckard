@@ -37,7 +37,7 @@ ScoreDict is callable and owns score persistence lifecycle when a score file is 
   - If persist is true: writes merged scores via artifact_loader.save_scores.
 - Output: nested runtime dictionary.
 
-This replaces legacy read_or_initialize_scores and general merge/persist score flow in ConfigBase.
+This replaces legacy read_or_initialize_scores and general merge/persist score flow in BaseConfig.
 
 ## Persistence Schema
 
@@ -58,8 +58,8 @@ Compatibility behavior:
 
 ## Runtime Integration
 
-- ConfigBase types score_dict as ScoreDict.
-- ConfigBase read_or_initialize_scores and merge_and_persist_scores delegate to ScoreDict callable lifecycle.
+- BaseConfig types score_dict as ScoreDict.
+- BaseConfig read_or_initialize_scores and merge_and_persist_scores delegate to ScoreDict callable lifecycle.
 - Plugin and runtime score merges normalize score_dict through ScoreDict.from_payload.
 
 ## Hooks, Defaults, Plugins, Extensions

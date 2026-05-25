@@ -1,5 +1,11 @@
 # Data Pipeline
 
+## Introduction
+
+This page is the canonical home for pipeline runtime behavior and API details.
+It documents DataPipeline stage execution, parent-config ownership, extension
+boundaries, and API surface.
+
 ## Overview
 
 Deckard data preprocessing is executed by the runtime
@@ -63,5 +69,5 @@ data:
 - {doc}`sample`
 - {doc}`fairlearn`
 - {doc}`pytorch`
-- {doc}`../developers/data_runtime_canon`
-- {doc}`../developers/plugin_runtime_migration`
+- {doc}`../developers/data`
+- {doc}`../developers/migration`

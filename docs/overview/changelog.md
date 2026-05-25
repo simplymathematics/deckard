@@ -2,17 +2,22 @@
 
 ## .98.2
 
-- Data runtime architecture updated: `DataConfig` is the canonical runtime owner
-  for loading, sampling, optional pipeline execution, and score orchestration.
-- `DataConfig` is now documented as a legacy compatibility alias of
-  `DataConfig`.
-- Data pipeline execution now documented around the runtime
-  `deckard.data.pipeline.base.DataPipeline` stage order
-  (`fit_pre_sample`, `fit_X`, `fit_y`, `fit_Xy`).
-- API documentation refresh for data and pipeline pages to remove stale
-  `DataPipelineMixin` inheritance references.
-- Added a new overview guide page: `docs/overview/data.md`, styled to match the
-  scoring overview documentation.
+- Finalized repository enforcement pass for core scope checks.
+- Verified no baseline code quality enforcement violations for `deckard/`.
+  via `scripts/repository_enforcement.py --scope deckard/`.
+- Core runtime architecture updated-- each base Config object now has public methods, a documented execution order, and separate plugin and scoring hooks for easy extensibility.
+- `canon.py` files now define inputs, outputs, and execution order of all base Config objects.
+- `orchestration.py` handles scoring hooks based off canonical method order during Config.__call\__.
+- `artifacts.py` handles persistence and pipeline dependency chains.
+- `utils.py` contains a renamed BaseConfig object that handles coercion, fingerprinting, and runtime instantiation.
+- Data sampler is now a canonical run-time object.
+- ModelConfig objects now have configurable .defense and .trainer architectures for complex defense chains (including plugins), pruning, and analysis on pre-trained models.
+- AttackConfig objects are fully documented.
+- DetectorConfig objects now support training and filtering (pre-trained) modes.
+- OptimizerConfig object now handles top-level `optuna` configuration and DefaultOptimizerCallback is fully documented for user-configurable optimzaiton.
+- Created new ScoreDict canonical object with helper functions for parsing, viewing, storing, and updating runtime score dictionaries.
+- `fairlearn` and `anjana` packages rewritten to use new plugin architecture.
+- Drafted a DVCExperimentConfig for generating reproducible experiment files, `dvclive` integration for system monitoring, model-training updates, and added some `Vega-lite` specs for generating dvclive plots (WIP).
 
 ## .98.1
 
@@ -22,7 +27,7 @@ data/experiment utilities, and fairlearn scoring).
   refreshes, including Hydra/Optuna/Lifelines/Artifacts flows).
 - Build artifact refresh in `build/` and notebook pipeline state updates
   (`docs/notebooks/dvc.lock`, `docs/notebooks/dvc.yaml`).
-- isolated skelarn/pytorch from code model code
+- isolated sklearn/pytorch from code model code
 - isolated plugins from core model code
 - unified scoring interface
 - improved run-time of test-suite and documentation build
@@ -33,21 +38,21 @@ data/experiment utilities, and fairlearn scoring).
   (WIP)
 - deckard/attack/base.py: set labels to distinguish targeted attacks from
   non-targeted attacks.
-- deckard/layers/optimize.py: ensure data/model/attack \*\_file names are hashes
-  when present in cfg.files.
-- deckard/model/defend.py: make defense context-aware since ART defenses have
-  \_apply_fit and \_apply_predict.
-- deckard/plugins/fairlearn/score.py: remove temporary TODO-marked code path.
+- add fingerprint property to BaseConfig for run-time access.
+  \_apply_fit and \_apply_predict~~.
 - Add licenses, hyperlinks, and paper references throughout the docs
-- Remove adapter layer, move sklearn-only logic to framworks, ensure \*Config
-  objects adhere to contract
+  objects adhere to contract~~
 - Update survival, art_attacks, art_defenses notebooks for clarity and scope
 -scores like *demgraphic_parity* and *equalized odss* should not get group
 scores since they are calculated across groups.
 They currently have `nan` scores, and should not be calculated across sensitive
 groups.
 - `__main__.py` read from existing .deckard_rc
+- document .matplotlibrc and demonstrate extension.
 - `layers/` add comprehensive helps strings for the CLI
 - `deckard/frameworks/pytorch/data.py` Compose data behavior at run-time from mixins
 - Remove backwards-compatible logic
-- Add stable re-exports for user convenience
+- create install script for plugins that:
+  - Adds stable re-exports for user convenience
+  - discovers data, model, defense, and or attacks
+- Audit code for redundancy and clarity after functionality has stablized.

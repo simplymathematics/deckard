@@ -1,5 +1,11 @@
 # Data
 
+## Introduction
+
+This page is the canonical home for data module behavior and API details.
+It documents data runtime workflow, defaults, scoring semantics, persistence,
+and extension points in one place.
+
 The {mod}`deckard.data` module defines the {class}`~deckard.data.DataConfig` dataclass,
 which provides a unified interface for loading, generating, preprocessing, and
 splitting datasets for machine learning experiments.\

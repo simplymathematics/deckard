@@ -1,5 +1,11 @@
 # Detector
 
+## Introduction
+
+This page is the canonical home for detector module behavior and API details.
+It covers detector lifecycle stages, filter side effects, persistence paths,
+and integration with attack/model scoring.
+
 ## Overview
 
 The detector module defines detector-specific configuration objects used to

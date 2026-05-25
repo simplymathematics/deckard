@@ -1,40 +1,46 @@
 # Defense Runtime
 
+## Introduction
+
+This page is the canonical home for defense runtime behavior and API details.
+It covers defense-family composition, stage-aware application, and
+runtime mixin dispatch.
+
 ## Overview
 
 Deckard defense orchestration is centered on
-{class}`deckard.model.defend.DefensePipelineConfig` and
-{class}`deckard.model.defend.DefenseConfig`.
+{class}`deckard.model.defense.base.DefensePipelineConfig` and
+{class}`deckard.model.defense.base.DefenseConfig`.
 
 This layer composes model wrappers, ART defenses, and plugin hooks with
 runtime mixin dispatch.
 
 ## Parent Config and Mixin Map
 
-- {class}`deckard.model.defend.DefensePipelineConfig` uses
-  {class}`deckard.model.defend._DefensePipelineConfigBehaviorMixin` to normalize
+- {class}`deckard.model.defense.base.DefensePipelineConfig` uses
+  {class}`deckard.model.defense.base.DefensePipelineConfigBehaviorMixin` to normalize
   defense chains, enforce ordering, and run before/after hooks.
-- {class}`deckard.model.defend.DefenseConfig` uses
-  {class}`deckard.model.defend._ARTDefenseBehaviorMixin` to resolve ART wrapper
+- {class}`deckard.model.defense.base.DefenseConfig` uses
+  {class}`deckard.model.defense.base.ARTDefenseBehaviorMixin` to resolve ART wrapper
   classes, parse defense families, and dispatch subtype handlers.
-- {class}`deckard.model.preprocessor.PreprocessorDefenseConfig` inherits
-  {class}`deckard.model.preprocessor._PreprocessorDefenseMixin` and
-  {class}`deckard.model.defend.DefensePipelineConfig`.
-- {class}`deckard.model.postprocessor.PostprocessorDefenseConfig` inherits
-  {class}`deckard.model.postprocessor._PostprocessorDefenseMixin` and
-  {class}`deckard.model.defend.DefensePipelineConfig`.
-- {class}`deckard.model.trainer.TrainerDefenseConfig` inherits
-  {class}`deckard.model.trainer._TrainerDefenseMixin` and
-  {class}`deckard.model.defend.DefensePipelineConfig`.
+- {class}`deckard.model.defense.preprocessor.PreprocessorDefenseConfig` inherits
+  {class}`deckard.model.defense.preprocessor.PreprocessorDefenseMixin` and
+  {class}`deckard.model.defense.base.DefensePipelineConfig`.
+- {class}`deckard.model.defense.postprocessor.PostprocessorDefenseConfig` inherits
+  {class}`deckard.model.defense.postprocessor.PostprocessorDefenseMixin` and
+  {class}`deckard.model.defense.base.DefensePipelineConfig`.
+- {class}`deckard.model.defense.trainer.TrainerDefenseConfig` inherits
+  {class}`deckard.model.defense.trainer.TrainerDefenseMixin` and
+  {class}`deckard.model.defense.base.DefensePipelineConfig`.
 - {class}`deckard.model.transformer.TransformerDefenseConfig` inherits
-  {class}`deckard.model.transformer._TransformerDefenseMixin` and
-  {class}`deckard.model.defend.DefensePipelineConfig`.
-- {class}`deckard.model.detector.DetectorDefenseConfig` inherits
-  {class}`deckard.model.detector._DetectorDefenseMixin` and
-  {class}`deckard.model.defend.DefensePipelineConfig`.
-- {class}`deckard.model.regularizer.RegularizerDefenseConfig` inherits
-  {class}`deckard.model.regularizer._RegularizerDefenseMixin` and
-  {class}`deckard.model.defend.DefensePipelineConfig`.
+  {class}`deckard.model.transformer.TransformerDefenseMixin` and
+  {class}`deckard.model.defense.base.DefensePipelineConfig`.
+- {class}`deckard.model.defense.detector.DetectorDefenseConfig` inherits
+  {class}`deckard.model.defense.detector.DetectorDefenseMixin` and
+  {class}`deckard.model.defense.base.DefensePipelineConfig`.
+- {class}`deckard.model.defense.regularizer.RegularizerDefenseConfig` inherits
+  {class}`deckard.model.defense.regularizer.RegularizerDefenseMixin` and
+  {class}`deckard.model.defense.base.DefensePipelineConfig`.
 
 ## Defense Families
 
@@ -44,6 +50,14 @@ runtime mixin dispatch.
 - `transformer`
 - `detector`
 - `regularizer`
+
+## Public Method Naming
+
+Defense runtime APIs prefer verb-mode public methods.
+
+- Detector defenses expose `detect(...)`, `detect_evasion(...)`, and
+  `detect_poison(...)`.
+- Noun-mode detector method names are removed from the public API.
 
 External ART references:
 
@@ -56,7 +70,7 @@ External ART references:
 ```yaml
 model:
   defense:
-    _target_: deckard.model.defend.DefensePipelineConfig
+    _target_: deckard.model.defense.base.DefensePipelineConfig
     defenses:
       - defense_name: art.defences.preprocessor.FeatureSqueezing
         defense_params:
@@ -66,25 +80,25 @@ model:
 ## API Reference
 
 ```{eval-rst}
-.. automodule:: deckard.model.defend
+.. automodule:: deckard.model.defense.base
    :members:
    :show-inheritance:
 ```
 
 ```{eval-rst}
-.. automodule:: deckard.model.preprocessor
+.. automodule:: deckard.model.defense.preprocessor
    :members:
    :show-inheritance:
 ```
 
 ```{eval-rst}
-.. automodule:: deckard.model.postprocessor
+.. automodule:: deckard.model.defense.postprocessor
    :members:
    :show-inheritance:
 ```
 
 ```{eval-rst}
-.. automodule:: deckard.model.trainer
+.. automodule:: deckard.model.defense.trainer
    :members:
    :show-inheritance:
 ```
@@ -96,13 +110,13 @@ model:
 ```
 
 ```{eval-rst}
-.. automodule:: deckard.model.detector
+.. automodule:: deckard.model.defense.detector
    :members:
    :show-inheritance:
 ```
 
 ```{eval-rst}
-.. automodule:: deckard.model.regularizer
+.. automodule:: deckard.model.defense.regularizer
    :members:
    :show-inheritance:
 ```

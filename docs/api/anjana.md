@@ -10,7 +10,7 @@ Related Deckard docs:
 - {doc}`data` for data pipeline composition
 - {doc}`model` for training/evaluation stages after anonymization
 - {doc}`score` for utility/privacy scoring hooks
-- {doc}`/overview/extensions` for extension mapping
+- {doc}`/overview/extensions/index` for extension mapping
 
 External references:
 
@@ -60,5 +60,5 @@ compose with other plugin score tails, including Fairlearn-last merges.
 - {doc}`data`
 - {doc}`pipeline`
 - {doc}`fairlearn`
-- {doc}`../developers/data_runtime_canon`
-- {doc}`../developers/plugin_runtime_migration`
+- {doc}`../developers/data`
+- {doc}`../developers/migration`

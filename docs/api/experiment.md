@@ -1,5 +1,11 @@
 # Experiment
 
+## Introduction
+
+This page is the canonical home for experiment orchestration behavior and API
+details. It documents end-to-end workflow composition across data, model,
+attack, detector, scoring, and persistence layers.
+
 The {mod}`deckard.experiment` module contains the high-level orchestration
 entrypoints for end-to-end experiment execution.
 
@@ -43,12 +49,18 @@ The experiment layer coordinates the full deckard workflow by composing:
 
 It is the primary integration point for reproducible end-to-end runs.
 
+Canonical public execution entrypoint:
+
+- `ExperimentConfig.run()`
+
+`ExperimentConfig.__call__()` remains available as a backward-compatible alias.
+
 Experiment configs are typically composed with [Hydra](https://hydra.cc) and
 [OmegaConf](https://omegaconf.readthedocs.io), including config-group overrides
 for data, model, attack, detector, score, and file targets.
 
 For config-group organization details, see
-{doc}`/developers/config_declaration_architecture`.
+{doc}`/developers/declarations`.
 
 Available experiment entrypoints:
 

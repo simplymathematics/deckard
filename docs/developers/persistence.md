@@ -28,7 +28,7 @@ It is based on the current implementation surfaces in:
 
 ### Config identity and YAML IO
 
-`ConfigBase` already provides the core control-plane behavior:
+`BaseConfig` already provides the core control-plane behavior:
 
 - initialization-time frozen hash payload (`_hash_payload`) and hash value (`_hash_value`)
 - YAML round-trip (`to_yaml`, `from_yaml`) with OmegaConf `resolve=True`
@@ -201,7 +201,7 @@ validation to handler implementations.
 
 ### Hash stability
 
-- Config hash is frozen in `ConfigBase._after_post_init`.
+- Config hash is frozen in `BaseConfig._after_post_init`.
 - Runtime fields (`score_dict`, predictions, timing values) must stay excluded
   from hash payload.
 - `run_id` must equal this frozen hash and must not change after initialization.
@@ -237,7 +237,7 @@ Persist in state metadata:
 
 ## OmegaConf and from_yaml Rules
 
-- All control-plane config restoration must use `ConfigBase.from_yaml`.
+- All control-plane config restoration must use `BaseConfig.from_yaml`.
 - Always load with `OmegaConf.load(..., resolve=True)`.
 - Persist a fully-resolved config snapshot before first execution stage.
 

@@ -1,5 +1,11 @@
 # Attack
 
+## Introduction
+
+This page is the canonical home for attack module behavior and API details.
+It documents attack-family dispatch, mode/stage semantics, persistence
+contracts, and framework extensions.
+
 ## Overview
 
 The attack module orchestrates adversarial example generation across supported
@@ -75,7 +81,7 @@ Related Deckard docs:
 - {doc}`defend` for defense pipeline and defense mixin dispatch
 - {doc}`score` for attack-specific scorer profiles
 - {doc}`pytorch` for ART estimator integration in torch workflows
-- {doc}`/overview/extensions` for cross-framework extensions map
+- {doc}`/overview/extensions/index` for cross-framework extensions map
 
 ## Examples
 

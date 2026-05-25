@@ -128,7 +128,7 @@ ______________________________________________________________________
 **Notes:**
 
 - Customizable enforcement rules
-- See [Repository Enforcement Guide](../developers/development) for details
+- See [Developer Documentation Index](../developers/index) for details
 
 ______________________________________________________________________
 
@@ -317,7 +317,7 @@ ______________________________________________________________________
 ## Workflow Dependency Graph
 
 ```text
-Pull Request → main branch:
+Pull Request -> main branch:
 ├── black.yml (quick, ~1 min)
 ├── deckard-test.yml (base tests + coverage, ~5 min)
 ├── test-optional-dependencies.yml (matrix, ~5-10 min)
@@ -326,7 +326,7 @@ Pull Request → main branch:
 ├── docker-test.yml (image build, ~10 min)
 └── repository-enforcement.yml (standards, ~2 min)
 
-Push → main/plugins branches:
+Push -> main/plugins branches:
 ├── compile-docs.yml (docs + notebooks, ~15 min)
 └── docker-push.yml (build, scan, attest)
 
@@ -556,7 +556,7 @@ Enable GitHub's built-in Dependabot scanning:
 
 **Steps:**
 
-1. Go to repository Settings → Code security and analysis
+1. Go to repository Settings -> Code security and analysis
 1. Enable "Dependabot alerts", "Dependabot security updates", "Dependency graph"
 1. GitHub will automatically create PRs for vulnerable dependencies
 
@@ -610,7 +610,7 @@ ______________________________________________________________________
 1. Verify `dvc.lock` and `pyproject.toml` haven't changed unexpectedly
 1. Force cache refresh: Dispatch `compile-docs.yml` with new `cache_flush_token`
    value (e.g., "2026-05-refresh-20")
-1. Check DVC remote configuration (see {doc}`gh_actions_cache`)
+1. Check DVC remote configuration (see {doc}`actionscache`)
 1. Verify DVC artifacts exist: `dvc status` and `dvc remote list`
 
 ______________________________________________________________________
@@ -710,5 +710,5 @@ ______________________________________________________________________
 
 - {doc}`Development Workflow <development>`
 - {doc}`Repository Enforcement Guide <development>`
-- {doc}`GH Actions Cache Setup <gh_actions_cache>`
-- {doc}`Documentation Build Guide <../overview/build_docs>`
+- {doc}`GH Actions Cache Setup <actionscache>`
+- {doc}`Documentation Build Guide <../overview/build>`

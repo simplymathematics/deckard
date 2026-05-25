@@ -1,5 +1,11 @@
 # Score
 
+## Introduction
+
+This page is the canonical home for scoring behavior and API details.
+It documents scorer configuration, runtime scope/stage semantics, serialization
+shape guarantees, and default scorer catalogs.
+
 The {mod}`deckard.score` module defines scorer configuration objects used by
 model, attack, and experiment pipelines.
 
@@ -93,7 +99,7 @@ metrics each one registers by default.
 
 ### Core Model Defaults
 
-- {class}`~deckard.score.DefaultModelScorerConfig`
+- {class}`~deckard.score.DefaultModelScorerDictConfig`
   ```yaml
   classifier: true
   metrics:
@@ -129,14 +135,14 @@ metrics each one registers by default.
         greater_is_better: false
     - r2: sklearn.metrics.r2_score
   ```
-- {class}`~deckard.score.DefaultClassifierConfig`
-  - Fixed classifier specialization of `DefaultModelScorerConfig`.
-- {class}`~deckard.score.DefaultRegressorConfig`
-  - Fixed regressor specialization of `DefaultModelScorerConfig`.
+- {class}`~deckard.score.DefaultClassifierScorerDictConfig`
+  - Fixed classifier specialization of `DefaultModelScorerDictConfig`.
+- {class}`~deckard.score.DefaultRegressorScorerDictConfig`
+  - Fixed regressor specialization of `DefaultModelScorerDictConfig`.
 
 ### PyTorch Model Defaults
 
-- {class}`~deckard.score.DefaultPytorchScorerConfig`
+- {class}`~deckard.score.DefaultPytorchScorerDictConfig`
   ```yaml
   classifier: true
   metrics:
@@ -157,14 +163,14 @@ metrics each one registers by default.
     - roc_auc and log_loss are omitted for broad PyTorch wrapper compatibility
    - **optimizer_loss** user-specified loss value from `torch` framework is included in the scoring dict automatically.
   ```
-- {class}`~deckard.score.DefaultPytorchClassifierConfig`
-  - Fixed classifier specialization of `DefaultPytorchScorerConfig`.
-- {class}`~deckard.score.DefaultPytorchRegressorConfig`
-  - Fixed regressor specialization of `DefaultPytorchScorerConfig`.
+- {class}`~deckard.score.DefaultPytorchClassifierScorerDictConfig`
+  - Fixed classifier specialization of `DefaultPytorchScorerDictConfig`.
+- {class}`~deckard.score.DefaultPytorchRegressorScorerDictConfig`
+  - Fixed regressor specialization of `DefaultPytorchScorerDictConfig`.
 
 ### Attack Defaults
 
-- {class}`~deckard.score.DefaultEvasionAttackScorerConfig`
+- {class}`~deckard.score.DefaultEvasionAttackScorerDictConfig`
   ```yaml
   classifier: true
   metrics:
@@ -180,9 +186,9 @@ metrics each one registers by default.
     - mae: sklearn.metrics.mean_absolute_error
     - r2: sklearn.metrics.r2_score
   ```
-- {class}`~deckard.score.DefaultEvasionRegressionAttackScorerConfig`
+- {class}`~deckard.score.DefaultEvasionRegressionAttackScorerDictConfig`
   - Fixed regression specialization of evasion scorers.
-- {class}`~deckard.score.DefaultMembershipInferenceAttackScorerConfig`
+- {class}`~deckard.score.DefaultMembershipInferenceAttackScorerDictConfig`
   ```yaml
   classifier: true
   metrics:
@@ -191,7 +197,7 @@ metrics each one registers by default.
     - recall: sklearn.metrics.recall_score
     - f1: sklearn.metrics.f1_score
   ```
-- {class}`~deckard.score.DefaultAttributeInferenceAttackScorerConfig`
+- {class}`~deckard.score.DefaultAttributeInferenceAttackScorerDictConfig`
   ```yaml
   classifier: true
   metrics:
@@ -206,12 +212,12 @@ metrics each one registers by default.
     - mae: sklearn.metrics.mean_absolute_error
     - r2: sklearn.metrics.r2_score
   ```
-- {class}`~deckard.score.DefaultAttributeInferenceRegressionAttackScorerConfig`
+- {class}`~deckard.score.DefaultAttributeInferenceRegressionAttackScorerDictConfig`
   - Fixed regression specialization of attribute-inference scorers.
 
 ### Data Defaults
 
-- {class}`~deckard.score.DefaultDataScorerConfig`
+- {class}`~deckard.score.DefaultDataScorerDictConfig`
   ```yaml
   classifier: true
   metrics:
@@ -234,11 +240,11 @@ metrics each one registers by default.
         deckard.score.data.data_mutual_information_max_score
     - empirical_cdf: deckard.score.data.data_empirical_cdf_function_score
   ```
-- {class}`~deckard.score.DefaultDataClassificationConfig`
-  - Fixed classification specialization of `DefaultDataScorerConfig`.
-- {class}`~deckard.score.DefaultDataRegressionConfig`
-  - Fixed regression specialization of `DefaultDataScorerConfig`.
-- {class}`~deckard.score.DefaultPytorchDataScorerConfig`
+- {class}`~deckard.score.DefaultDataClassificationScorerDictConfig`
+  - Fixed classification specialization of `DefaultDataScorerDictConfig`.
+- {class}`~deckard.score.DefaultDataRegressionScorerDictConfig`
+  - Fixed regression specialization of `DefaultDataScorerDictConfig`.
+- {class}`~deckard.score.DefaultPytorchDataScorerDictConfig`
   ```yaml
   classifier: true
   metrics:
@@ -259,11 +265,11 @@ metrics each one registers by default.
 These defaults are available when optional dependencies are installed.
 
 - Fairlearn (`fairlearn` extra):
-  - {class}`~deckard.score.DefaultFairlearnScorerConfig`
+  - {class}`~deckard.score.DefaultFairlearnScorerDictConfig`
     ```yaml
     inherits:
-      - deckard.score.DefaultClassifierConfig
-      - deckard.score.DefaultRegressorConfig
+      - deckard.score.DefaultClassifierScorerDictConfig
+      - deckard.score.DefaultRegressorScorerDictConfig
     adds:
       classifier:
         - demographic_parity_difference
@@ -273,11 +279,11 @@ These defaults are available when optional dependencies are installed.
         - group_mae_difference
         - group_mse_difference
     ```
-  - {class}`~deckard.score.DefaultFairlearnClassificationConfig`
+  - {class}`~deckard.score.DefaultFairlearnClassificationScorerDictConfig`
     - Fixed classifier specialization.
-  - {class}`~deckard.score.DefaultFairlearnRegressionConfig`
+  - {class}`~deckard.score.DefaultFairlearnRegressionScorerDictConfig`
     - Fixed regressor specialization.
-  - {class}`~deckard.score.DefaultFairlearnDataScorerConfig`
+  - {class}`~deckard.score.DefaultFairlearnDataScorerDictConfig`
     ```yaml
     metrics:
       - class_count
@@ -292,16 +298,16 @@ These defaults are available when optional dependencies are installed.
       - bic
     ```
 - Anjana / PyCanon (`anjana` extra):
-  - {class}`~deckard.score.DefaultAnjanaScorerConfig`
+  - {class}`~deckard.score.DefaultAnjanaScorerDictConfig`
     ```yaml
     metrics:
       - k_anonymity
       - l_diversity
       - t_closeness
     ```
-  - {class}`~deckard.score.DefaultAnjanaDataScorerConfig`
+  - {class}`~deckard.score.DefaultAnjanaDataScorerDictConfig`
     - Base data metrics + Anjana privacy metrics
-  - {class}`~deckard.score.DefaultAnjanaModelScorerConfig`
+  - {class}`~deckard.score.DefaultAnjanaModelScorerDictConfig`
     - Model-scope specialization of Anjana privacy defaults
 
 ### Runtime Naming Notes

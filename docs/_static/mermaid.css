@@ -1,0 +1,42 @@
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid,
+.mermaid svg,
+.mermaid svg * {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.mermaid .node rect,
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node polygon,
+.mermaid .node path {
+  stroke-width: 2px;
+  rx: 10px;
+  ry: 10px;
+}
+
+.mermaid .edgePath .path,
+.mermaid .flowchart-link {
+  stroke-width: 2px;
+}
+
+.mermaid .edgeLabel,
+.mermaid .label {
+  color: #111827;
+}
+
+.mermaid .edgeLabel rect,
+.mermaid .labelBkg {
+  fill: #ffffff;
+  opacity: 0.9;
+}
+
+.mermaid .cluster rect {
+  fill: #ffffff;
+  stroke: #d1d5db;
+  stroke-width: 1.5px;
+}

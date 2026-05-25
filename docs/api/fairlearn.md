@@ -159,7 +159,7 @@ return MetricFrame(
 Parameter semantics in Deckard runtime:
 
 - `metrics`: normalized metric callables from `group_scorers` on
-  {class}`~deckard.plugins.fairlearn.score.FairlearnScoreDictConfig`.
+  {class}`~deckard.plugins.fairlearn.score.FairlearnScorerDictConfig`.
 - `y_true`: resolved labels from the active scoring mode (`train`, `test`,
   `val`, `attack`, or `attack-val`).
 - `y_pred`: resolved predictions aligned to `y_true`.
@@ -173,7 +173,7 @@ Parameter semantics in Deckard runtime:
 - `random_state`: optional RNG seed/state for reproducible bootstrap behavior.
 
 Related reduction controls on
-{class}`~deckard.plugins.fairlearn.score.FairlearnScoreDictConfig`:
+{class}`~deckard.plugins.fairlearn.score.FairlearnScorerDictConfig`:
 
 - `group_reduction`: `difference`, `ratio`, or `none`
 - `group_reduction_method`: `between_groups` or `to_overall`
@@ -211,5 +211,5 @@ attack-time fairness scoring.
 - {doc}`score` — scoring framework including {mod}`deckard.plugins.fairlearn.score`
 - {doc}`pytorch` — optional PyTorch integration with Fairlearn
 - {doc}`modules` — overview of all extensions
-- {doc}`../developers/data_runtime_canon` — cross-family runtime contract
-- {doc}`../developers/plugin_runtime_migration` — migration guardrails
+- {doc}`../developers/data` — cross-family runtime contract
+- {doc}`../developers/migration` — migration guardrails
