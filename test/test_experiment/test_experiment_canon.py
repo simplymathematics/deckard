@@ -2,6 +2,9 @@ from types import SimpleNamespace
 
 import pytest
 
+from deckard.plugins import HookPlugin
+from deckard.plugins.base import HookBundle, compose_hook_plugins
+
 from deckard.experiment.canon import (
     CANONICAL_EXPERIMENT_COMPONENT_STAGES,
     CANONICAL_EXPERIMENT_SCORE_MODES,
@@ -202,3 +205,19 @@ def test_experiment_stage_param_subset_filters_manifest_by_stage_component():
     assert "data" in subset
     assert "model" not in subset
     assert subset["random_state"] == 42
+
+
+def test_compose_hook_plugins_preserves_order_and_dedupes_bundle_entries():
+    first = HookPlugin(hook_name="before_load", method_name="_experiment_stage_hook")
+    duplicate = HookPlugin(hook_name="before_load", method_name="_experiment_stage_hook")
+    second = HookPlugin(hook_name="after_load", method_name="_experiment_stage_hook")
+
+    bundle_a = HookBundle(name="bundle-a", hooks=(first,))
+    bundle_b = HookBundle(name="bundle-b", hooks=(duplicate, second))
+
+    composed = compose_hook_plugins(bundle_a, bundle_b)
+
+    assert [(p.hook_name, p.method_name) for p in composed] == [
+        ("before_load", "_experiment_stage_hook"),
+        ("after_load", "_experiment_stage_hook"),
+    ]

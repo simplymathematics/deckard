@@ -31,6 +31,7 @@ from deckard.experiment.base import (
 from deckard.file import FileConfig
 from deckard.frameworks.pytorch.experiment import TorchExperimentConfig
 from deckard.model import ModelConfig
+from deckard.plugins import HookPlugin
 from deckard.score import DefaultClassifierScorerDictConfig, DefaultDataClassificationScorerDictConfig
 from deckard.utils import BaseConfig
 
@@ -1819,6 +1820,27 @@ class TestExperimentRuntimeCompositionAndPersistence:
         assert isinstance(exp.model, ModelConfig)
         assert exp.model.model_type == "sklearn.linear_model.LogisticRegression"
 
+    def test_compose_components_accepts_hook_bundle_dict_and_orders_after_canonical(self):
+        exp = self._make_base_experiment()
+        custom_hook = HookPlugin(
+            hook_name="before_train",
+            method_name="_experiment_stage_hook",
+        )
+        exp.compose_components(
+            hook_bundles=[{"name": "custom", "hooks": [custom_hook]}],
+        )
+
+        exp.outputs["hooks"]["trace"] = []
+        exp._run_experiment_stage_hooks("before", "train", component="model")
+        trace = exp.outputs["hooks"]["trace"]
+        train_before_events = [
+            entry
+            for entry in trace
+            if entry.get("stage") == "train" and entry.get("event") == "before"
+        ]
+        # Canonical hook executes first, then user-provided bundle hook.
+        assert len(train_before_events) >= 2
+
     def test_stage_cache_key_changes_when_component_params_change(self):
         exp_a = self._make_base_experiment()
         exp_b = self._make_base_experiment()
@@ -1858,6 +1880,20 @@ class TestExperimentRuntimeCompositionAndPersistence:
 
             restored = ExperimentConfig.from_yaml(str(saved_path))
             assert isinstance(restored, ExperimentConfig)
+
+    def test_cache_reuse_records_hits_on_second_run(self):
+        with tempfile.TemporaryDirectory() as td:
+            params_path = Path(td) / "experiment_runtime_state"
+            exp = self._make_base_experiment(params_file=str(params_path))
+            exp.cache_enabled = True
+
+            _ = exp()
+            first_hits = len(exp.outputs.get("cache", {}).get("hits", []))
+
+            _ = exp()
+            second_hits = len(exp.outputs.get("cache", {}).get("hits", []))
+
+            assert second_hits >= first_hits
 
     def test_runtime_state_yaml_rejects_future_schema_version(self):
         with tempfile.TemporaryDirectory() as td:

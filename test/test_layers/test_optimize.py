@@ -10,6 +10,7 @@ import optuna
 import pytest
 import torch
 from helpers import make_runtime_env
+from hydra import compose, initialize_config_dir
 from omegaconf import OmegaConf
 
 from deckard.layers import optimize as optimize_module
@@ -1683,3 +1684,130 @@ def test_filter_scores_missing_min_max_and_no_directions_paths():
     )
     assert values_no_dir == 0.2
     assert attrs_no_dir["latency"] == 3.0
+
+
+def test_hydra_compose_single_default_stage_selection_override():
+    config_dir = (ROOT / "examples" / "sklearn" / "config").as_posix()
+    with initialize_config_dir(version_base="1.3", config_dir=config_dir):
+        cfg = compose(
+            config_name="default",
+            overrides=[
+                "stage=score",
+                "hydra.sweeper.n_trials=2",
+                "hydra.sweeper.n_jobs=1",
+            ],
+            return_hydra_config=True,
+        )
+
+    assert str(cfg.stage) == "score"
+    assert int(cfg.hydra.sweeper.n_trials) == 2
+
+
+def test_hydra_compose_multitrial_execution_overrides_are_runtime_controlled():
+    config_dir = (ROOT / "examples" / "sklearn" / "config").as_posix()
+    with initialize_config_dir(version_base="1.3", config_dir=config_dir):
+        cfg = compose(
+            config_name="default",
+            overrides=[
+                "stage=score,persist",
+                "hydra.sweeper.study_name=phase7-study",
+                "hydra.sweeper.storage=sqlite:///phase7.sqlite3",
+                "hydra.sweeper.n_trials=4",
+            ],
+            return_hydra_config=True,
+        )
+
+    assert str(cfg.stage) == "score,persist"
+    assert str(cfg.hydra.sweeper.study_name) == "phase7-study"
+    assert str(cfg.hydra.sweeper.storage).endswith("phase7.sqlite3")
+    assert int(cfg.hydra.sweeper.n_trials) == 4
+
+
+def test_default_optimizer_callback_delegates_study_setup_to_optimizer(monkeypatch):
+    calls: list[tuple[str, dict]] = []
+
+    class _Policy:
+        study_name = None
+        storage = None
+        directions = []
+        optimizers = []
+
+        def merge_from_runtime_config(self, config):
+            _ = config
+
+        def resolve_study_binding(self, hydra_cfg):
+            _ = hydra_cfg
+            return "delegated-study", "sqlite:///delegated.db"
+
+        def create_study(self, *, study_name: str, storage: str):
+            calls.append(("create_study", {"study_name": study_name, "storage": storage}))
+            return DummyStudy()
+
+        def set_metric_names(self, study):
+            _ = study
+            calls.append(("set_metric_names", {}))
+
+    callback = optimize_module.DefaultOptimizerCallback()
+    callback.optimizer = _Policy()
+    monkeypatch.setattr(
+        optimize_module.HydraConfig,
+        "get",
+        lambda: SimpleNamespace(mode="RunMode.MULTIRUN", sweeper={}),
+    )
+
+    callback.on_multirun_start(OmegaConf.create({}))
+
+    assert calls[0] == (
+        "create_study",
+        {"study_name": "delegated-study", "storage": "sqlite:///delegated.db"},
+    )
+    assert calls[1][0] == "set_metric_names"
+
+
+def test_optimizer_config_resolves_binding_and_policy_fields():
+    policy = optimize_module.OptimizerConfig.from_any(
+        {
+            "directions": ["maximize"],
+            "optimizers": ["accuracy"],
+            "report_trial_attrs": False,
+            "pruning_enabled": True,
+            "dvclive_enabled": True,
+        },
+        study_name="explicit-study",
+    )
+    binding = policy.resolve_study_binding(
+        {
+            "sweeper": {
+                "study_name": "sweeper-study",
+                "storage": "sqlite:///bound.db",
+            },
+        }
+    )
+
+    assert binding == ("explicit-study", "sqlite:///bound.db")
+    assert policy.resolve_score_policy({"optimizers": ["loss"], "directions": ["minimize"]}) == (
+        ["accuracy"],
+        ["maximize"],
+    )
+    assert policy.report_trial_attrs is False
+    assert policy.pruning_enabled is True
+
+
+def test_optimize_main_raises_trial_pruned_when_runtime_marks_pruned(monkeypatch):
+    class _DummyBase:
+        pass
+
+    class _DummyRuntime(_DummyBase):
+        def __call__(self):
+            return {"pruned": True, "loss": 1.0}
+
+    monkeypatch.setattr(optimize_module, "instantiate", lambda cfg: _DummyRuntime())
+    monkeypatch.setattr(optimize_module, "BaseConfig", _DummyBase)
+    monkeypatch.setattr(
+        optimize_module.HydraConfig,
+        "get",
+        lambda: SimpleNamespace(mode="RunMode.RUN"),
+    )
+
+    with pytest.raises(optuna.TrialPruned):
+        optimize_module.optimize_main({"pruning_enabled": True})

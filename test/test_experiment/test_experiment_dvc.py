@@ -18,6 +18,7 @@ from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
 import deckard
+import deckard.experiment.dvc as dvc_module
 from deckard.experiment import ExperimentConfig
 from deckard.experiment.dvc import (
     DVCExperimentConfig,
@@ -278,20 +279,48 @@ def test_persist_stage_uses_hash_identity_in_multirun_mode_without_files():
     assert persist["identity"].isalnum()
 
 
+def test_persist_stage_metrics_policy_defaults_to_file_only_metrics():
+    exp = _make_experiment_stub(with_files=True)
+    plan = build_dvc_stage_plan(exp, stage_selection=["persist"], mode="single")
+    persist = plan[0]
+
+    assert persist["metrics"] == ["outputs/demo/scores.json"]
+
+
+def test_vega_plot_metric_token_uses_first_configured_optimizer():
+    exp = _make_experiment_stub(with_files=True)
+    exp.optimizers = ["macro_f1"]
+    attack_cfg = SimpleNamespace(alias="hsj", attack_params={"max_iter": 20})
+    defense_cfg = SimpleNamespace(alias="class-labels", defense_params={"apply_fit": True})
+
+    tokens = dvc_module._plot_token_context(
+        exp,
+        attack_cfg=attack_cfg,
+        defense_cfg=defense_cfg,
+        params_manifest=None,
+    )
+
+    assert tokens["metric"] == "macro-f1"
+
+
 def test_generate_dvc_pipeline_writes_yaml(tmp_path: Path):
     exp = _make_experiment_stub(with_files=True)
     output_file = tmp_path / "generated.dvc.yaml"
+    params_file = tmp_path / "generated.params.yaml"
 
     payload = generate_dvc_pipeline(
         exp,
         output_file=output_file.as_posix(),
+        params_file=params_file.as_posix(),
         stage_selection=["persist"],
         mode="multirun",
         overwrite=True,
     )
 
     assert output_file.exists()
+    assert params_file.exists()
     assert "stages" in payload
+    assert "params_payload" in payload
     assert "experiment__persist" in payload["stages"]
 
 
@@ -325,7 +354,7 @@ def test_persist_command_does_not_use_external_mkdir_prefix():
 
     cmd = build_dvc_cmd(exp, persist, mode="single")
     assert "mkdir -p" not in cmd
-    assert cmd.startswith("python -m deckard optimize +stage=persist")
+    assert cmd.startswith("deckard optimize +stage=persist")
 
 
 def test_multirun_mode_does_not_emit_hydra_multirun_flags():
@@ -336,6 +365,7 @@ def test_multirun_mode_does_not_emit_hydra_multirun_flags():
     cmd = build_dvc_cmd(exp, persist, mode="multirun", multirun_count=4)
     assert "--multirun" not in cmd
     assert "hydra.sweeper.n_trials" not in cmd
+    assert cmd.startswith("deckard optimize +stage=persist")
 
 
 @pytest.mark.parametrize("overwrite", [False, True])
@@ -540,7 +570,86 @@ def test_run_dvc_plugin_hook_writes_structured_params_yaml(tmp_path: Path, monke
     assert payload["_dvc"]["stage_selection"] == "load"
     assert payload["_dvc"]["run_mode"] == "single"
     assert isinstance(payload["_dvc"]["params_manifest"], dict)
+    assert payload["experiment"]["dvclive_enabled"] is True
+    assert payload["_dvc"]["dvclive"]["enabled"] is True
+    assert payload["_dvc"]["pruning"]["enabled"] is False
+    assert payload["_dvc"]["pruning"]["active"] is False
     assert result["params_file"] == params_path.as_posix()
+
+
+def test_generate_dvc_pipeline_writes_deterministic_params_yaml(tmp_path: Path):
+    exp = _make_experiment_stub(with_files=True)
+    exp.pruning_enabled = True
+    exp.hydra = {
+        "sweeper": {
+            "pruner": {
+                "_target_": "optuna.pruners.MedianPruner",
+            },
+        },
+    }
+    exp.dvc_plugin = {"enabled": True, "mode": "multirun"}
+
+    dvc_file = tmp_path / "pipeline.dvc.yaml"
+    params_file = tmp_path / "pipeline.params.yaml"
+
+    first = generate_dvc_pipeline(
+        exp,
+        output_file=dvc_file.as_posix(),
+        params_file=params_file.as_posix(),
+        stage_selection=["persist"],
+        mode="multirun",
+        overwrite=True,
+    )
+    first_text = params_file.read_text(encoding="utf-8")
+
+    second = generate_dvc_pipeline(
+        exp,
+        output_file=dvc_file.as_posix(),
+        params_file=params_file.as_posix(),
+        stage_selection=["persist"],
+        mode="multirun",
+        overwrite=True,
+    )
+    second_text = params_file.read_text(encoding="utf-8")
+
+    assert first_text == second_text
+    payload = yaml.safe_load(first_text)
+    assert payload["experiment"]["dvclive_enabled"] is True
+    assert payload["_dvc"]["stage_selection"] == "persist"
+    assert payload["_dvc"]["run_mode"] == "multirun"
+    assert payload["_dvc"]["pruning"]["enabled"] is True
+    assert payload["_dvc"]["pruning"]["pruner_configured"] is True
+    assert payload["_dvc"]["pruning"]["active"] is True
+    assert first["params_payload"] == second["params_payload"]
+
+
+def test_log_dvclive_artifacts_prefers_log_image_for_images(tmp_path: Path, monkeypatch):
+    image_path = tmp_path / "chart.png"
+    image_path.write_bytes(b"png")
+
+    seen: dict[str, list[tuple[str, str]]] = {"images": [], "artifacts": []}
+
+    class _FakeLive:
+        def log_image(self, name: str, path: str):
+            seen["images"].append((name, path))
+
+        def log_artifact(self, path: str):
+            seen["artifacts"].append((Path(path).name, path))
+
+    exp = _make_experiment_stub(with_files=True)
+    plugin = dvc_module.DVCExperimentPlugin(enabled=True)
+
+    monkeypatch.setattr(dvc_module, "_ensure_live_instance", lambda experiment, plugin: _FakeLive())
+    monkeypatch.setattr(
+        dvc_module,
+        "_resolve_stage_outputs",
+        lambda experiment, stage, include_identity_dir=False, plugin=None: [image_path.as_posix()],
+    )
+
+    dvc_module._log_dvclive_artifacts_and_plots(exp, plugin)
+
+    assert seen["images"] == [("chart.png", image_path.as_posix())]
+    assert seen["artifacts"] == []
 
 
 def test_dvc_experiment_config_wraps_experiment_and_plugin(tmp_path: Path):
@@ -554,6 +663,34 @@ def test_dvc_experiment_config_wraps_experiment_and_plugin(tmp_path: Path):
     assert isinstance(wrapped.to_experiment_config(), ExperimentConfig)
     assert wrapped.to_experiment_config().dvc_plugin["enabled"] is True
     assert wrapped.to_experiment_config().dvc_plugin["report_mode"] == "md"
+
+
+def test_score_stage_power_hooks_merge_into_component_score_dicts(tmp_path: Path):
+    exp = _make_real_experiment_from_examples(tmp_path)
+    attack_cfg = SimpleNamespace(alias="fgsm", score_dict={})
+    exp.data = SimpleNamespace(score_dict={})
+    exp.model = SimpleNamespace(score_dict={})
+    exp.attack = attack_cfg
+    exp._attack_chain = [attack_cfg]
+    exp.detector = SimpleNamespace(score_dict={})
+    exp.score_dict = {}
+
+    def _log_power_score(*, namespace: str, **kwargs):
+        return {f"power/{namespace}/total_watts": 42.0}
+
+    exp._log_power_score = _log_power_score
+    exp._initialize_hook_orchestration()
+
+    exp._run_experiment_stage_hooks("after", "data_score", component="data")
+    exp._run_experiment_stage_hooks("after", "model_score", component="model")
+    exp._run_experiment_stage_hooks("after", "attack_score", component="attack:fgsm")
+    exp._run_experiment_stage_hooks("after", "detector_score", component="detector")
+
+    assert exp.data.score_dict["power/data/total_watts"] == 42.0
+    assert exp.model.score_dict["power/model/total_watts"] == 42.0
+    assert attack_cfg.score_dict["power/attack/total_watts"] == 42.0
+    assert exp.detector.score_dict["power/detector/total_watts"] == 42.0
+    assert exp.score_dict["power/detector/total_watts"] == 42.0
 
 
 def test_experiment_hash_payload_excludes_dvc_plugin(tmp_path: Path):

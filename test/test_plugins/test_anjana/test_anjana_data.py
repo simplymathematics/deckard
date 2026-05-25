@@ -218,6 +218,28 @@ def test_apply_anjana_defense_signature_filtering_and_defaults(monkeypatch):
 
     assert seen["ident"] == []
     assert seen["quasi_ident"] == ["feature"]
+
+
+def test_call_delegates_to_canonical_runtime(monkeypatch):
+    cfg = _bare_cfg()
+    seen = {}
+
+    def _execute_data_runtime(self, *args, files=None, **kwargs):
+        seen["self"] = self
+        seen["args"] = args
+        seen["files"] = files
+        seen["kwargs"] = kwargs
+        return {"runtime": "ok"}
+
+    monkeypatch.setattr(DataConfig, "execute_data_runtime", _execute_data_runtime)
+
+    result = cfg("payload", files={"score_file": "scores.json"}, mode="train")
+
+    assert result == {"runtime": "ok"}
+    assert seen["self"] is cfg
+    assert seen["args"] == ("payload",)
+    assert seen["files"] == {"score_file": "scores.json"}
+    assert seen["kwargs"] == {"mode": "train"}
     assert seen["k"] == 2
     assert seen["supp_level"] == 100
     assert "feature" in seen["hierarchies"]
