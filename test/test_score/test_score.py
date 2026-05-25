@@ -1,4 +1,3 @@
-import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -26,9 +25,10 @@ from deckard.score.base import (
     coerce_scorer_config,
 )
 from deckard.score.data import DefaultDataScorerDictConfig
+import pytest
 
 
-class TestScorerDictConfigMerge(unittest.TestCase):
+class TestScorerDictConfigMerge:
     """ScorerDictConfig.merge() should union scorer dicts from multiple specs."""
 
     acc_dict = {
@@ -49,25 +49,23 @@ class TestScorerDictConfigMerge(unittest.TestCase):
 
     def test_merge_two_bare_dicts(self):
         result = ScorerDictConfig.merge([self.acc_dict, self.prec_dict])
-        self.assertIsInstance(result, ScorerDictConfig)
-        self.assertIn("accuracy", result.scorers)
-        self.assertIn("precision", result.scorers)
+        assert isinstance(result, ScorerDictConfig)
+        assert "accuracy" in result.scorers
+        assert "precision" in result.scorers
 
     def test_merge_three_dicts(self):
         result = ScorerDictConfig.merge(
             [self.acc_dict, self.prec_dict, self.f1_dict],
         )
-        self.assertEqual(
-            set(result.scorers.keys()),
-            {"accuracy", "precision", "f1"},
-        )
+        assert set(result.scorers.keys()) == \
+            {"accuracy", "precision", "f1"}
 
     def test_merge_scorer_dict_config_instances(self):
         a = ScorerDictConfig(scorers=self.acc_dict)
         b = ScorerDictConfig(scorers=self.prec_dict)
         result = ScorerDictConfig.merge([a, b])
-        self.assertIn("accuracy", result.scorers)
-        self.assertIn("precision", result.scorers)
+        assert "accuracy" in result.scorers
+        assert "precision" in result.scorers
 
     def test_merge_later_wins_on_key_conflict(self):
         override = {
@@ -76,31 +74,29 @@ class TestScorerDictConfigMerge(unittest.TestCase):
             },
         }
         result = ScorerDictConfig.merge([self.acc_dict, override])
-        self.assertEqual(
-            result.scorers["accuracy"].score_function.__name__,
-            "balanced_accuracy_score",
-        )
+        assert result.scorers["accuracy"].score_function.__name__ == \
+            "balanced_accuracy_score"
 
     def test_merge_dict_with_scorers_key(self):
         wrapped = {"scorers": self.acc_dict}
         result = ScorerDictConfig.merge([wrapped, self.prec_dict])
-        self.assertIn("accuracy", result.scorers)
-        self.assertIn("precision", result.scorers)
+        assert "accuracy" in result.scorers
+        assert "precision" in result.scorers
 
     def test_merge_single_element_list(self):
         result = ScorerDictConfig.merge([self.acc_dict])
-        self.assertIn("accuracy", result.scorers)
+        assert "accuracy" in result.scorers
 
 
-class TestScorerConfig(unittest.TestCase):
+class TestScorerConfig:
     def test_scorer_config_initialization(self):
         config = ScorerConfig(
             score_name="accuracy",
             score_function=accuracy_score,
             score_params={"normalize": True},
         )
-        self.assertEqual(config.score_name, "accuracy")
-        self.assertTrue(callable(config.score_function))
+        assert config.score_name == "accuracy"
+        assert callable(config.score_function)
 
     def test_scorer_config_callable(self):
         y_true = [1, 0, 1, 1]
@@ -111,7 +107,7 @@ class TestScorerConfig(unittest.TestCase):
             score_params={},
         )
         score = config(y_true=y_true, y_pred=y_pred)
-        self.assertEqual(score, accuracy_score(y_true, y_pred))
+        assert score == accuracy_score(y_true, y_pred)
 
     def test_scorer_config_swap(self):
         y_true = [1, 0, 1, 1]
@@ -123,7 +119,7 @@ class TestScorerConfig(unittest.TestCase):
         )
         score_swap = config(y_true=y_true, y_pred=y_pred, swap=True)
         score_normal = config(y_true=y_pred, y_pred=y_true)
-        self.assertEqual(score_swap, score_normal)
+        assert score_swap == score_normal
 
     def test_scorer_config_with_additional_params(self):
         y_true = [1, 0, 1, 1]
@@ -134,16 +130,14 @@ class TestScorerConfig(unittest.TestCase):
             score_params={"average": "binary", "zero_division": 0},
         )
         score = config(y_true=y_true, y_pred=y_pred)
-        self.assertEqual(
-            score,
-            precision_score(y_true, y_pred, average="binary", zero_division=0),
-        )
+        assert score == \
+            precision_score(y_true, y_pred, average="binary", zero_division=0)
 
     def test_scorer_config_accepts_torch_tensors_when_available(self):
         try:
             import torch
         except ImportError:
-            self.skipTest("torch is optional and not installed")
+            pytest.skip("torch is optional and not installed")
 
         y_true = torch.tensor([1, 0, 1, 1])
         y_pred = torch.tensor([1, 0, 0, 1])
@@ -153,10 +147,10 @@ class TestScorerConfig(unittest.TestCase):
             score_params={},
         )
         score = config(y_true=y_true, y_pred=y_pred)
-        self.assertEqual(score, 0.75)
+        assert score == 0.75
 
 
-class TestScorerDictConfig(unittest.TestCase):
+class TestScorerDictConfig:
     def test_scorer_dict_config_initialization_and_call(self):
         y_true = [1, 0, 1, 1]
         y_pred = [1, 0, 0, 1]
@@ -175,10 +169,10 @@ class TestScorerDictConfig(unittest.TestCase):
             },
         )
         scores = scorer_dict(y_true=y_true, y_pred=y_pred)
-        self.assertIn("accuracy", scores)
-        self.assertIn("mse", scores)
-        self.assertEqual(scores["accuracy"], accuracy_score(y_true, y_pred))
-        self.assertEqual(scores["mse"], mean_squared_error(y_true, y_pred))
+        assert "accuracy" in scores
+        assert "mse" in scores
+        assert scores["accuracy"] == accuracy_score(y_true, y_pred)
+        assert scores["mse"] == mean_squared_error(y_true, y_pred)
 
     def test_scorer_dict_config_get_callables(self):
         scorer_dict = ScorerDictConfig(
@@ -191,11 +185,11 @@ class TestScorerDictConfig(unittest.TestCase):
             },
         )
         callables = scorer_dict.get_callables()
-        self.assertIn("accuracy", callables)
-        self.assertTrue(callable(callables["accuracy"]))
+        assert "accuracy" in callables
+        assert callable(callables["accuracy"])
 
 
-class TestDefaultScorerDicts(unittest.TestCase):
+class TestDefaultScorerDicts:
     def test_default_classifier_dict(self):
         y_true = [1, 0, 1, 1]
         y_pred = [1, 0, 0, 1]
@@ -205,43 +199,43 @@ class TestDefaultScorerDicts(unittest.TestCase):
             y_pred=y_pred,
             y_proba=y_proba,
         )
-        self.assertIn("accuracy", scores)
-        self.assertIn("precision", scores)
-        self.assertIn("recall", scores)
-        self.assertIn("f1", scores)
-        self.assertIn("roc_auc", scores)
-        self.assertIn("log_loss", scores)
+        assert "accuracy" in scores
+        assert "precision" in scores
+        assert "recall" in scores
+        assert "f1" in scores
+        assert "roc_auc" in scores
+        assert "log_loss" in scores
 
     def test_default_classifier_dict_requires_probabilities_for_probability_metrics(
         self,
     ):
         y_true = [1, 0, 1, 1]
         y_pred = [1, 0, 0, 1]
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             DefaultClassifierScorerDictConfig()(y_true=y_true, y_pred=y_pred)
 
     def test_default_regressor_dict(self):
         y_true = [1.0, 2.0, 3.0, 4.0]
         y_pred = [1.1, 1.9, 3.2, 3.8]
         scores = DefaultRegressorScorerDictConfig()(y_true=y_true, y_pred=y_pred)
-        self.assertIn("mse", scores)
-        self.assertIn("mae", scores)
-        self.assertIn("r2", scores)
+        assert "mse" in scores
+        assert "mae" in scores
+        assert "r2" in scores
 
     def test_default_classifier_dict_with_empty_predictions(self):
         y_true = []
         y_pred = []
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             DefaultClassifierScorerDictConfig()(y_true=y_true, y_pred=y_pred)
 
     def test_default_regressor_dict_with_empty_predictions(self):
         y_true = []
         y_pred = []
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             DefaultRegressorScorerDictConfig()(y_true=y_true, y_pred=y_pred)
 
 
-class TestSurvivalScorers(unittest.TestCase):
+class TestSurvivalScorers:
     class _MockFitter:
         def __init__(self):
             self.concordance_index_ = 0.71
@@ -252,17 +246,17 @@ class TestSurvivalScorers(unittest.TestCase):
     def test_survival_concordance_score(self):
         fitter = self._MockFitter()
         score = survival_concordance_score(y_true=[1, 2, 3], y_pred=fitter)
-        self.assertEqual(score, fitter.concordance_index_)
+        assert score == fitter.concordance_index_
 
     def test_survival_aic_score(self):
         fitter = self._MockFitter()
         score = survival_aic_score(y_true=[1, 2, 3], y_pred=fitter)
-        self.assertEqual(score, fitter.AIC_)
+        assert score == fitter.AIC_
 
     def test_survival_bic_score_computed(self):
         fitter = self._MockFitter()
         score = survival_bic_score(y_true=[1, 2, 3, 4, 5], y_pred=fitter)
-        self.assertIsInstance(score, float)
+        assert isinstance(score, float)
 
 
 SCORE_DIR = (
@@ -337,7 +331,7 @@ def test_model_and_data_default_profiles_infer_task_from_context():
     assert "num_classes" in data_scores["pre-sample"]
 
     def test_survival_concordance_requires_attribute(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             survival_concordance_score(y_true=[1, 2], y_pred=object())
 
     def test_survival_aic_score_supports_partial_aic(self):
@@ -347,7 +341,7 @@ def test_model_and_data_default_profiles_infer_task_from_context():
         fitter = _Fitter()
         fitter.partial_AIC_ = 42.5
         score = survival_aic_score(y_true=[1, 2], y_pred=fitter)
-        self.assertEqual(score, 42.5)
+        assert score == 42.5
 
     def test_survival_aic_score_computes_from_log_likelihood_and_params_callable(self):
         class _Fitter:
@@ -357,10 +351,10 @@ def test_model_and_data_default_profiles_infer_task_from_context():
         fitter.log_likelihood_ = -12.0
         fitter.params = lambda: [0.1, 0.2, 0.3]
         score = survival_aic_score(y_true=[1, 2], y_pred=fitter)
-        self.assertEqual(score, 30.0)
+        assert score == 30.0
 
     def test_survival_aic_score_raises_when_unavailable(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             survival_aic_score(y_true=[1, 2], y_pred=object())
 
     def test_survival_bic_score_prefers_direct_attribute(self):
@@ -370,7 +364,7 @@ def test_model_and_data_default_profiles_infer_task_from_context():
         fitter = _Fitter()
         fitter.BIC_ = 88.0
         score = survival_bic_score(y_true=[1, 2], y_pred=fitter)
-        self.assertEqual(score, 88.0)
+        assert score == 88.0
 
     def test_survival_bic_score_uses_n_samples_kwarg(self):
         class _Fitter:
@@ -380,18 +374,18 @@ def test_model_and_data_default_profiles_infer_task_from_context():
         fitter.log_likelihood_ = -10.0
         fitter.params = lambda: [0.1, 0.2]
         score = survival_bic_score(y_true=None, y_pred=fitter, n_samples=10)
-        self.assertIsInstance(score, float)
+        assert isinstance(score, float)
 
     def test_survival_bic_score_raises_when_unavailable(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             survival_bic_score(y_true=None, y_pred=object())
 
 
-class TestAttackScorers(unittest.TestCase):
+class TestAttackScorers:
     def test_evasion_success_score_requires_benign_labels(self):
         from deckard.score.attack import evasion_success_score
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             evasion_success_score(y_true=[0, 1], y_pred=[0, 1], ben_pred_labels=None)
 
     def test_attack_scorer_evasion(self):
@@ -402,9 +396,9 @@ class TestAttackScorers(unittest.TestCase):
             y_true=[0, 1, 0, 1],
             attack_size=4,
         )
-        self.assertIn("evasion_accuracy", scores)
-        self.assertIn("evasion_success", scores)
-        self.assertIn("attack_score_time", scores)
+        assert "evasion_accuracy" in scores
+        assert "evasion_success" in scores
+        assert "attack_score_time" in scores
 
     def test_attack_scorer_evasion_regression(self):
         scorer = AttackScorerConfig()
@@ -415,11 +409,11 @@ class TestAttackScorers(unittest.TestCase):
             attack_size=4,
             is_classification=False,
         )
-        self.assertIn("evasion_mse", scores)
-        self.assertIn("evasion_mae", scores)
-        self.assertIn("evasion_r2", scores)
-        self.assertNotIn("evasion_success", scores)
-        self.assertIn("attack_score_time", scores)
+        assert "evasion_mse" in scores
+        assert "evasion_mae" in scores
+        assert "evasion_r2" in scores
+        assert "evasion_success" not in scores
+        assert "attack_score_time" in scores
 
     def test_attack_scorer_membership(self):
         scorer = AttackScorerConfig()
@@ -428,9 +422,9 @@ class TestAttackScorers(unittest.TestCase):
             inferred=[1, 0, 0, 0],
             attack_size=4,
         )
-        self.assertIn("membership_inference_accuracy", scores)
-        self.assertIn("membership_inference_precision", scores)
-        self.assertIn("attack_score_time", scores)
+        assert "membership_inference_accuracy" in scores
+        assert "membership_inference_precision" in scores
+        assert "attack_score_time" in scores
 
     def test_attack_scorer_attribute_classification(self):
         scorer = AttackScorerConfig()
@@ -442,9 +436,9 @@ class TestAttackScorers(unittest.TestCase):
             is_classification=True,
             attack_generation_time=0.1,
         )
-        self.assertIn("inferred_age_accuracy", scores)
-        self.assertIn("inferred_age_f1", scores)
-        self.assertIn("attack_generation_time", scores)
+        assert "inferred_age_accuracy" in scores
+        assert "inferred_age_f1" in scores
+        assert "attack_generation_time" in scores
 
     def test_attack_scorer_attribute_regression(self):
         scorer = AttackScorerConfig()
@@ -455,21 +449,21 @@ class TestAttackScorers(unittest.TestCase):
             targeted_attribute="income",
             is_classification=False,
         )
-        self.assertIn("inferred_income_mse", scores)
-        self.assertIn("inferred_income_r2", scores)
-        self.assertIn("attack_score_time", scores)
+        assert "inferred_income_mse" in scores
+        assert "inferred_income_r2" in scores
+        assert "attack_score_time" in scores
 
     def test_attack_score_configstores_registered(self):
         scorer = AttackScorerConfig()
         cs = ConfigStore.instance()
-        self.assertIsNotNone(cs)
-        self.assertIsNotNone(scorer.evasion)
-        self.assertIsNotNone(scorer.membership_inference)
-        self.assertIsNotNone(scorer.attribute_inference)
+        assert cs is not None
+        assert scorer.evasion is not None
+        assert scorer.membership_inference is not None
+        assert scorer.attribute_inference is not None
 
     def test_attack_scorer_attribute_requires_targeted_attribute(self):
         scorer = AttackScorerConfig()
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             scorer._score(
                 attack_kind="attribute",
                 y_true=[0, 1],
@@ -481,7 +475,7 @@ class TestAttackScorers(unittest.TestCase):
 
     def test_attack_scorer_attribute_requires_is_classification(self):
         scorer = AttackScorerConfig()
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             scorer._score(
                 attack_kind="attribute",
                 y_true=[0, 1],
@@ -493,7 +487,7 @@ class TestAttackScorers(unittest.TestCase):
 
     def test_attack_scorer_rejects_unknown_kind(self):
         scorer = AttackScorerConfig()
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             scorer._score(
                 attack_kind="unknown",
                 y_true=[0, 1],
@@ -510,14 +504,14 @@ class TestAttackScorers(unittest.TestCase):
                 ),
             },
         )
-        self.assertIsInstance(scorer.evasion, ScorerDictConfig)
+        assert isinstance(scorer.evasion, ScorerDictConfig)
 
     def test_attack_scorer_coerce_profile_invalid_type_raises(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             AttackScorerConfig(evasion=123)
 
 
-class TestDataInspectionScorers(unittest.TestCase):
+class TestDataInspectionScorers:
     def test_data_classification_default_scores(self):
         y_true = np.array([0, 0, 1, 1, 1, 0, 1, 0])
         X = pd.DataFrame(
@@ -531,13 +525,13 @@ class TestDataInspectionScorers(unittest.TestCase):
             y_pred=X,
             mode=None,
         )
-        self.assertIn("num_classes", scores)
-        self.assertIn("class_count_min", scores)
-        self.assertIn("class_count_max", scores)
-        self.assertIn("class_imbalance_ratio", scores)
-        self.assertIn("mutual_information_mean", scores)
-        self.assertIn("mutual_information_max", scores)
-        self.assertEqual(scores["num_classes"], 2)
+        assert "num_classes" in scores
+        assert "class_count_min" in scores
+        assert "class_count_max" in scores
+        assert "class_imbalance_ratio" in scores
+        assert "mutual_information_mean" in scores
+        assert "mutual_information_max" in scores
+        assert scores["num_classes"] == 2
 
     def test_data_classification_reference_column_override(self):
         y_true = np.array([0, 0, 1, 1, 1, 0, 1, 0])
@@ -553,8 +547,8 @@ class TestDataInspectionScorers(unittest.TestCase):
             mode=None,
             reference_column="age",
         )
-        self.assertIn("mutual_information_mean", scores)
-        self.assertGreaterEqual(scores["mutual_information_mean"], 0.0)
+        assert "mutual_information_mean" in scores
+        assert scores["mutual_information_mean"] >= 0.0
 
     def test_data_regression_default_scores_include_ecdf(self):
         y_true = np.array([2.1, 2.5, 3.0, 3.4, 3.6, 4.0])
@@ -569,27 +563,18 @@ class TestDataInspectionScorers(unittest.TestCase):
             y_pred=X,
             mode=None,
         )
-        self.assertIn("mutual_information_mean", scores)
-        self.assertIn("mutual_information_max", scores)
-        self.assertIn("empirical_cdf", scores)
-        self.assertTrue(callable(scores["empirical_cdf"]))
+        assert "mutual_information_mean" in scores
+        assert "mutual_information_max" in scores
+        assert "empirical_cdf" in scores
+        assert callable(scores["empirical_cdf"])
 
         ecdf = scores["empirical_cdf"]
         values = ecdf(np.array([2.1, 3.0, 4.0]))
-        self.assertTrue(np.all(values[:-1] <= values[1:]))
+        assert np.all(values[:-1] <= values[1:])
 
     def test_data_scorer_configstores_registered(self):
         cs = ConfigStore.instance()
-        self.assertIsNotNone(cs)
-        self.assertIsInstance(
-            DefaultDataClassificationScorerDictConfig(),
-            DefaultDataClassificationScorerDictConfig,
-        )
-        self.assertIsInstance(
-            DefaultDataRegressionScorerDictConfig(),
-            DefaultDataRegressionScorerDictConfig,
-        )
+        assert cs is not None
+        assert isinstance(DefaultDataClassificationScorerDictConfig(), DefaultDataClassificationScorerDictConfig)
+        assert isinstance(DefaultDataRegressionScorerDictConfig(), DefaultDataRegressionScorerDictConfig)
 
-
-if __name__ == "__main__":
-    unittest.main()

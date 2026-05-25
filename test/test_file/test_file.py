@@ -1,14 +1,14 @@
 import shutil
 import tempfile
 import time
-import unittest
 from pathlib import Path
 
 from deckard.file import CanonFileHandler, FileConfig, FileConfigError
+import pytest
 
 
-class TestFileConfig(unittest.TestCase):
-    def setUp(self):
+class TestFileConfig:
+    def setup_method(self):
         # Create temporary directories for testing
         self.temp_dirs = {}
         for d in [
@@ -33,7 +33,7 @@ class TestFileConfig(unittest.TestCase):
             },
         )
 
-    def tearDown(self):
+    def teardown_method(self):
         # Remove temporary directories
         for d in self.temp_dirs.values():
             shutil.rmtree(d, ignore_errors=True)
@@ -43,59 +43,59 @@ class TestFileConfig(unittest.TestCase):
 
     def test_file_paths_contain_experiment_name(self):
         exp_name = self.config.replace["{experiment_name}"]
-        self.assertIn(exp_name, self.config.model_file)
-        self.assertIn(exp_name, self.config.data_file)
-        self.assertIn(exp_name, self.config.log_file)
+        assert exp_name in self.config.model_file
+        assert exp_name in self.config.data_file
+        assert exp_name in self.config.log_file
 
     def test_file_dict(self):
-        self.assertIn("model_file", self.config)
-        self.assertIn("data_file", self.config)
-        self.assertIn("log_file", self.config)
-        self.assertIn("score_file", self.config)
-        self.assertTrue(self.config["model_file"].endswith(".pkl"))
-        self.assertTrue(self.config["data_file"].endswith(".csv"))
-        self.assertTrue(self.config["log_file"].endswith(".log"))
-        self.assertTrue(self.config["score_file"].endswith("_score.txt"))
+        assert "model_file" in self.config
+        assert "data_file" in self.config
+        assert "log_file" in self.config
+        assert "score_file" in self.config
+        assert self.config["model_file"].endswith(".pkl")
+        assert self.config["data_file"].endswith(".csv")
+        assert self.config["log_file"].endswith(".log")
+        assert self.config["score_file"].endswith("_score.txt")
 
     def test_hash_placeholder(self):
         attack_file = self.config["attack_file"]
-        self.assertNotEqual(attack_file, "{hash}")
+        assert attack_file != "{hash}"
 
     def test_timestamp_placeholder(self):
         cfg = FileConfig(
             replace=self.config.replace,
             attack_file="{timestamp}",
         )
-        self.assertNotEqual(cfg.attack_file, "{timestamp}")
+        assert cfg.attack_file != "{timestamp}"
 
     def test_unused_directory_removed(self):
         config = FileConfig()
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             getattr(config, "foo")
 
     def test_iter_and_len_reflect_active_file_fields(self):
         config = FileConfig(model_file="m.pkl", score_file="s.json")
         keys = list(iter(config))
 
-        self.assertIn("model_file", keys)
-        self.assertIn("score_file", keys)
-        self.assertGreaterEqual(len(config), 2)
+        assert "model_file" in keys
+        assert "score_file" in keys
+        assert len(config) >= 2
 
     def test_canon_handler_parses_and_replaces_placeholders(self):
         handler = CanonFileHandler()
         template = "run-{num}-{hash}-{timestamp}.json"
         parsed = handler.parse_placeholders(template)
-        self.assertIn("{num}", parsed)
-        self.assertIn("{hash}", parsed)
+        assert "{num}" in parsed
+        assert "{hash}" in parsed
         rendered = handler.replace_placeholders(
             template,
             {"{num}": "7", "{hash}": "abc", "{timestamp}": "now"},
         )
-        self.assertEqual(rendered, "run-7-abc-now.json")
+        assert rendered == "run-7-abc-now.json"
 
     def test_handler_validate_keys_rejects_unknown(self):
         handler = CanonFileHandler()
-        with self.assertRaises(FileConfigError):
+        with pytest.raises(FileConfigError):
             handler.validate_keys({"unknown_file": "x.txt"})
 
     def test_file_config_disk_status_reports_existing_paths(self):
@@ -104,5 +104,5 @@ class TestFileConfig(unittest.TestCase):
 
         config = FileConfig(data_file=str(temp_file), model_file="/tmp/missing.pkl")
         status = config.disk_status()
-        self.assertTrue(status["data_file"])
-        self.assertFalse(status["model_file"])
+        assert status["data_file"]
+        assert not status["model_file"]

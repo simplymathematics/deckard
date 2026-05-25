@@ -1,10 +1,10 @@
-import unittest
 from unittest.mock import MagicMock
 
 import pandas as pd
+import pytest
 
 
-class TestAnjanaScorers(unittest.TestCase):
+class TestAnjanaScorers:
     """Tests for deckard/score/anjana.py — currently 36% coverage."""
 
     def _make_frame(self):
@@ -29,8 +29,8 @@ class TestAnjanaScorers(unittest.TestCase):
             y_pred=frame,
             quasi_ident=["age", "zip"],
         )
-        self.assertIs(result_frame, frame)
-        self.assertEqual(qi, ["age", "zip"])
+        assert result_frame is frame
+        assert qi == ["age", "zip"]
 
     def test_resolve_frame_from_data_attr(self):
         from deckard.plugins.anjana.score import _resolve_frame_and_context
@@ -41,21 +41,21 @@ class TestAnjanaScorers(unittest.TestCase):
         data.quasi_identifiers = ["age", "zip"]
         data.sensitive_attribute = "disease"
         result_frame, qi, sens = _resolve_frame_and_context(data=data)
-        self.assertIs(result_frame, frame)
-        self.assertEqual(qi, ["age", "zip"])
-        self.assertEqual(sens, "disease")
+        assert result_frame is frame
+        assert qi == ["age", "zip"]
+        assert sens == "disease"
 
     def test_resolve_frame_raises_when_no_frame(self):
         from deckard.plugins.anjana.score import _resolve_frame_and_context
 
-        with self.assertRaises(ValueError, msg="should require DataFrame"):
+        with pytest.raises(ValueError):
             _resolve_frame_and_context(y_pred=[1, 2, 3], quasi_ident=["age"])
 
     def test_resolve_frame_raises_when_no_quasi_ident(self):
         from deckard.plugins.anjana.score import _resolve_frame_and_context
 
         frame = self._make_frame()
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             _resolve_frame_and_context(y_pred=frame, quasi_ident=[])
 
     def test_string_quasi_ident_coerced_to_list(self):
@@ -63,7 +63,7 @@ class TestAnjanaScorers(unittest.TestCase):
 
         frame = self._make_frame()
         _, qi, _ = _resolve_frame_and_context(y_pred=frame, quasi_ident="age")
-        self.assertEqual(qi, ["age"])
+        assert qi == ["age"]
 
     # -----------------------------------------------------------------------
     # anjana_k_anonymity_score
@@ -73,7 +73,7 @@ class TestAnjanaScorers(unittest.TestCase):
 
         frame = self._make_frame()
         score = anjana_k_anonymity_score(y_pred=frame, quasi_ident=["age", "zip"])
-        self.assertGreaterEqual(score, 1.0)
+        assert score >= 1.0
 
     def test_k_anonymity_score_via_data_attr(self):
 
@@ -85,7 +85,7 @@ class TestAnjanaScorers(unittest.TestCase):
         data.quasi_identifiers = ["age", "zip"]
         data.sensitive_attribute = "disease"
         score = anjana_k_anonymity_score(data=data)
-        self.assertIsInstance(score, float)
+        assert isinstance(score, float)
 
     # -----------------------------------------------------------------------
     # anjana_l_diversity_score
@@ -94,7 +94,7 @@ class TestAnjanaScorers(unittest.TestCase):
         from deckard.plugins.anjana.score import anjana_l_diversity_score
 
         frame = self._make_frame()
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             anjana_l_diversity_score(y_pred=frame, quasi_ident=["age", "zip"])
 
     def test_l_diversity_score_succeeds(self):
@@ -106,7 +106,7 @@ class TestAnjanaScorers(unittest.TestCase):
             quasi_ident=["age", "zip"],
             sens_att="disease",
         )
-        self.assertIsInstance(score, float)
+        assert isinstance(score, float)
 
     # -----------------------------------------------------------------------
     # anjana_t_closeness_score
@@ -115,19 +115,19 @@ class TestAnjanaScorers(unittest.TestCase):
         try:
             from pycanon import anonymity as pycanon_anonymity  # noqa: F401
         except ImportError:
-            self.skipTest("pycanon not installed")
+            pytest.skip("pycanon not installed")
 
         from deckard.plugins.anjana.score import anjana_t_closeness_score
 
         frame = self._make_frame()
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             anjana_t_closeness_score(y_pred=frame, quasi_ident=["age", "zip"])
 
     def test_t_closeness_score_succeeds(self):
         try:
             from pycanon import anonymity as pycanon_anonymity  # noqa: F401
         except ImportError:
-            self.skipTest("pycanon not installed")
+            pytest.skip("pycanon not installed")
 
         from deckard.plugins.anjana.score import anjana_t_closeness_score
 
@@ -137,6 +137,6 @@ class TestAnjanaScorers(unittest.TestCase):
             quasi_ident=["age", "zip"],
             sens_att="disease",
         )
-        self.assertIsInstance(score, float)
-        self.assertGreaterEqual(score, 0.0)
-        self.assertLessEqual(score, 1.0)
+        assert isinstance(score, float)
+        assert score >= 0.0
+        assert score <= 1.0

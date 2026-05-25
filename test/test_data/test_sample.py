@@ -1,7 +1,6 @@
 """Tests for deckard/data/sample.py and the sampler integration in DataConfig."""
 
 import os
-import unittest
 from unittest.mock import patch
 
 import numpy as np
@@ -15,6 +14,7 @@ from deckard.data import (
     ShuffleSampler,
     SplitSampler,
 )
+import pytest
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -92,10 +92,10 @@ def _make_reg_config(**kwargs):
 # ---------------------------------------------------------------------------
 
 
-class TestBaseSampler(unittest.TestCase):
+class TestBaseSampler:
     def test_base_sampler_raises(self):
         sampler = BaseSampler()
-        with self.assertRaises(NotImplementedError):
+        with pytest.raises(NotImplementedError):
             sampler(None)
 
 
@@ -104,20 +104,20 @@ class TestBaseSampler(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestGetStratifyCol(unittest.TestCase):
+class TestGetStratifyCol:
     def test_stratify_true_returns_y(self):
         cfg = _make_clf_config()
         col = cfg._get_stratify_col()
-        self.assertIsInstance(col, pd.Series)
-        self.assertEqual(len(col), len(cfg._y))
+        assert isinstance(col, pd.Series)
+        assert len(col) == len(cfg._y)
 
     def test_stratify_false_returns_none(self):
         cfg = _make_clf_config(stratify=False)
-        self.assertIsNone(cfg._get_stratify_col())
+        assert cfg._get_stratify_col() is None
 
     def test_stratify_none_returns_none(self):
         cfg = _make_clf_config(stratify=None)
-        self.assertIsNone(cfg._get_stratify_col())
+        assert cfg._get_stratify_col() is None
 
     def test_stratify_column_name(self):
         cfg = _make_clf_config(stratify=False)
@@ -125,19 +125,19 @@ class TestGetStratifyCol(unittest.TestCase):
         cfg._X["strat_col"] = np.tile([0, 1], len(cfg._X) // 2 + 1)[: len(cfg._X)]
         cfg.stratify = "strat_col"
         col = cfg._get_stratify_col()
-        self.assertIsInstance(col, pd.Series)
-        self.assertEqual(len(col), len(cfg._X))
+        assert isinstance(col, pd.Series)
+        assert len(col) == len(cfg._X)
 
     def test_stratify_invalid_column_raises(self):
         cfg = _make_clf_config(stratify=False)
         cfg.stratify = "nonexistent_column"
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             cfg._get_stratify_col()
 
     def test_stratify_invalid_type_raises(self):
         cfg = _make_clf_config(stratify=False)
         cfg.stratify = 42
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             cfg._get_stratify_col()
 
 
@@ -146,36 +146,36 @@ class TestGetStratifyCol(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestSplitSampler(unittest.TestCase):
-    def setUp(self):
+class TestSplitSampler:
+    def setup_method(self):
         self.cfg = _make_clf_config(val_size=0.15)
 
     def test_returns_three_arrays(self):
         sampler = SplitSampler(test_size=0.2, val_size=0.15, random_state=42, stratify=True)
         result = sampler(self.cfg)
-        self.assertEqual(len(result), 3)
+        assert len(result) == 3
 
     def test_indices_are_disjoint(self):
         sampler = SplitSampler(test_size=0.2, val_size=0.15, random_state=42, stratify=True)
         train, test, val = sampler(self.cfg)
-        self.assertEqual(len(set(train) & set(test)), 0)
-        self.assertEqual(len(set(train) & set(val)), 0)
-        self.assertEqual(len(set(test) & set(val)), 0)
+        assert len(set(train) & set(test)) == 0
+        assert len(set(train) & set(val)) == 0
+        assert len(set(test) & set(val)) == 0
 
     def test_total_covers_dataset(self):
         sampler = SplitSampler(test_size=0.2, val_size=0.15, random_state=42, stratify=True)
         train, test, val = sampler(self.cfg)
         total = len(train) + len(test) + len(val)
-        self.assertEqual(total, len(self.cfg._X))
+        assert total == len(self.cfg._X)
 
     def test_two_way_split_without_val_size(self):
         cfg = _make_clf_config()
         cfg.val_size = None
         sampler = SplitSampler(test_size=0.2, val_size=None, random_state=42, stratify=True)
         train, test, val = sampler(cfg)
-        self.assertEqual(len(val), 0)
-        self.assertGreater(len(train), 0)
-        self.assertGreater(len(test), 0)
+        assert len(val) == 0
+        assert len(train) > 0
+        assert len(test) > 0
 
     def test_stratified_class_distribution(self):
         sampler = SplitSampler(test_size=0.2, val_size=0.15, random_state=42, stratify=True)
@@ -185,12 +185,9 @@ class TestSplitSampler(unittest.TestCase):
             props = y.iloc[idx].value_counts(normalize=True)
             overall = y.value_counts(normalize=True)
             for cls in overall.index:
-                self.assertAlmostEqual(
-                    props.get(cls, 0.0),
-                    overall[cls],
-                    delta=0.1,
-                    msg=f"Class {cls} proportion off in {name}",
-                )
+                assert abs(props.get(cls, 0.0)-overall[cls]) < \
+                    0.1, \
+                    f"Class {cls} proportion off in {name}"
 
     def test_integration_with_dataconfig(self):
         cfg = DataConfig(
@@ -211,12 +208,12 @@ class TestSplitSampler(unittest.TestCase):
             sampler=SplitSampler(test_size=0.2, val_size=0.1, random_state=42, stratify=True),
         )
         cfg()
-        self.assertIsNotNone(cfg.X_val)
-        self.assertIsNotNone(cfg.y_val)
-        self.assertIsInstance(cfg.X_val, pd.DataFrame)
-        self.assertIsInstance(cfg.y_val, pd.Series)
-        self.assertIsNotNone(cfg.val_n)
-        self.assertGreater(cfg.val_n, 0)
+        assert cfg.X_val is not None
+        assert cfg.y_val is not None
+        assert isinstance(cfg.X_val, pd.DataFrame)
+        assert isinstance(cfg.y_val, pd.Series)
+        assert cfg.val_n is not None
+        assert cfg.val_n > 0
 
     def test_score_dict_contains_val_fields(self):
         cfg = DataConfig(
@@ -237,7 +234,7 @@ class TestSplitSampler(unittest.TestCase):
             sampler=SplitSampler(test_size=0.2, val_size=0.1, random_state=42, stratify=True),
         )
         scores = cfg()
-        self.assertIn("val_n", scores)
+        assert "val_n" in scores
 
     def test_regression_val_score(self):
         cfg = DataConfig(
@@ -256,8 +253,8 @@ class TestSplitSampler(unittest.TestCase):
             sampler=SplitSampler(test_size=0.2, val_size=0.1, random_state=1, stratify=False),
         )
         scores = cfg()
-        self.assertIn("val_n", scores)
-        self.assertIn("mutual_information_mean", scores["test"])
+        assert "val_n" in scores
+        assert "mutual_information_mean" in scores["test"]
 
     def test_sample_dict_spec(self):
         """DataConfig should accept a dict sampler spec and instantiate it."""
@@ -285,14 +282,14 @@ class TestSplitSampler(unittest.TestCase):
             },
         )
         cfg()
-        self.assertIsNotNone(cfg.X_val)
+        assert cfg.X_val is not None
 
     def test_regression_no_stratify(self):
         cfg = _make_reg_config(val_size=0.15)
         sampler = SplitSampler(test_size=0.2, val_size=0.15, random_state=1, stratify=False)
         train, test, val = sampler(cfg)
-        self.assertEqual(len(set(train) & set(test)), 0)
-        self.assertEqual(len(set(train) & set(val)), 0)
+        assert len(set(train) & set(test)) == 0
+        assert len(set(train) & set(val)) == 0
 
 
 # ---------------------------------------------------------------------------
@@ -300,27 +297,27 @@ class TestSplitSampler(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestKFoldSampler(unittest.TestCase):
-    def setUp(self):
+class TestKFoldSampler:
+    def setup_method(self):
         self.cfg = _make_clf_config()
 
     def test_returns_three_arrays(self):
         sampler = KFoldSampler(n_splits=5, split=0, test_size=0.2, random_state=42, stratify=True)
         result = sampler(self.cfg)
-        self.assertEqual(len(result), 3)
+        assert len(result) == 3
 
     def test_indices_are_disjoint(self):
         sampler = KFoldSampler(n_splits=5, split=0, test_size=0.2, random_state=42, stratify=True)
         train, test, val = sampler(self.cfg)
-        self.assertEqual(len(set(train) & set(test)), 0)
-        self.assertEqual(len(set(train) & set(val)), 0)
-        self.assertEqual(len(set(test) & set(val)), 0)
+        assert len(set(train) & set(test)) == 0
+        assert len(set(train) & set(val)) == 0
+        assert len(set(test) & set(val)) == 0
 
     def test_total_covers_dataset(self):
         sampler = KFoldSampler(n_splits=5, split=0, test_size=0.2, random_state=42, stratify=True)
         train, test, val = sampler(self.cfg)
         total = len(train) + len(test) + len(val)
-        self.assertEqual(total, len(self.cfg._X))
+        assert total == len(self.cfg._X)
 
     def test_different_folds_have_different_val_sets(self):
         results = []
@@ -330,18 +327,18 @@ class TestKFoldSampler(unittest.TestCase):
             _, _, val = sampler(cfg)
             results.append(set(val))
         # Val sets across different folds must not all be identical
-        self.assertFalse(results[0] == results[1] == results[2])
+        assert not (results[0] == results[1] == results[2])
 
     def test_fold_out_of_range_raises(self):
         sampler = KFoldSampler(n_splits=5, split=99, test_size=0.2, random_state=42, stratify=True)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             sampler(self.cfg)
 
     def test_no_stratify(self):
         cfg = _make_clf_config(stratify=False)
         sampler = KFoldSampler(n_splits=5, split=0, test_size=0.2, shuffle=False, stratify=False)
         train, test, val = sampler(cfg)
-        self.assertEqual(len(train) + len(test) + len(val), len(cfg._X))
+        assert len(train) + len(test) + len(val) == len(cfg._X)
 
     def test_integration_with_dataconfig(self):
         cfg = DataConfig(
@@ -362,10 +359,10 @@ class TestKFoldSampler(unittest.TestCase):
             sampler=KFoldSampler(n_splits=5, split=1, test_size=0.2, random_state=42, stratify=True),
         )
         cfg()
-        self.assertIsNotNone(cfg.X_val)
-        self.assertIsNotNone(cfg.y_val)
-        self.assertIsNotNone(cfg.val_n)
-        self.assertGreater(cfg.val_n, 0)
+        assert cfg.X_val is not None
+        assert cfg.y_val is not None
+        assert cfg.val_n is not None
+        assert cfg.val_n > 0
 
     def test_fold_none_defaults_to_zero(self):
         cfg = _make_clf_config()
@@ -374,7 +371,7 @@ class TestKFoldSampler(unittest.TestCase):
         sampler_split0 = KFoldSampler(n_splits=5, split=0, test_size=0.2, random_state=42, stratify=True)
         _, _, val_none = sampler(cfg)
         _, _, val_zero = sampler_split0(cfg_split0)
-        self.assertEqual(sorted(val_none), sorted(val_zero))
+        assert sorted(val_none) == sorted(val_zero)
 
     def test_caps_produce_expected_sizes_for_1200_samples(self):
         """Lock cap semantics: val_size caps val fold, train_size caps train+test pool."""
@@ -410,9 +407,9 @@ class TestKFoldSampler(unittest.TestCase):
                 )
                 cfg.load_dataset()
                 cfg.fit()
-                self.assertEqual(len(cfg.X_train), 800)
-                self.assertEqual(len(cfg.X_test), 200)
-                self.assertEqual(len(cfg.X_val), 200)
+                assert len(cfg.X_train) == 800
+                assert len(cfg.X_test) == 200
+                assert len(cfg.X_val) == 200
 
     def test_integer_test_size_guardrail_raises(self):
         """test_size must be <= train_size // n_splits for integer sizing."""
@@ -445,7 +442,7 @@ class TestKFoldSampler(unittest.TestCase):
             },
         )
         cfg.load_dataset()
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             cfg.fit()
 
 
@@ -454,37 +451,37 @@ class TestKFoldSampler(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestShuffleSampler(unittest.TestCase):
-    def setUp(self):
+class TestShuffleSampler:
+    def setup_method(self):
         self.cfg = _make_clf_config(val_size=0.15)
 
     def test_returns_three_arrays(self):
         sampler = ShuffleSampler(n_splits=5, split=0, test_size=0.2, val_size=0.15, random_state=42, stratify=True)
         result = sampler(self.cfg)
-        self.assertEqual(len(result), 3)
+        assert len(result) == 3
 
     def test_indices_are_disjoint_within_fold(self):
         sampler = ShuffleSampler(n_splits=5, split=0, test_size=0.2, val_size=0.15, random_state=42, stratify=True)
         train, test, val = sampler(self.cfg)
-        self.assertEqual(len(set(train) & set(test)), 0)
-        self.assertEqual(len(set(train) & set(val)), 0)
-        self.assertEqual(len(set(test) & set(val)), 0)
+        assert len(set(train) & set(test)) == 0
+        assert len(set(train) & set(val)) == 0
+        assert len(set(test) & set(val)) == 0
 
     def test_total_covers_dataset(self):
         sampler = ShuffleSampler(n_splits=5, split=0, test_size=0.2, val_size=0.15, random_state=42, stratify=True)
         train, test, val = sampler(self.cfg)
         total = len(train) + len(test) + len(val)
-        self.assertEqual(total, len(self.cfg._X))
+        assert total == len(self.cfg._X)
 
     def test_raises_without_val_size(self):
         cfg = _make_clf_config()
         sampler = ShuffleSampler(n_splits=5, split=0, test_size=0.2, val_size=None, random_state=42, stratify=True)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             sampler(cfg)
 
     def test_fold_out_of_range_raises(self):
         sampler = ShuffleSampler(n_splits=5, split=99, test_size=0.2, val_size=0.15, random_state=42, stratify=True)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             sampler(self.cfg)
 
     def test_integration_with_dataconfig(self):
@@ -507,16 +504,16 @@ class TestShuffleSampler(unittest.TestCase):
             sampler=ShuffleSampler(n_splits=5, split=2, test_size=0.2, val_size=0.15, random_state=42, stratify=True),
         )
         cfg()
-        self.assertIsNotNone(cfg.X_val)
-        self.assertIsNotNone(cfg.y_val)
-        self.assertIsNotNone(cfg.val_n)
-        self.assertGreater(cfg.val_n, 0)
+        assert cfg.X_val is not None
+        assert cfg.y_val is not None
+        assert cfg.val_n is not None
+        assert cfg.val_n > 0
 
     def test_no_stratify(self):
         cfg = _make_reg_config(val_size=0.15)
         sampler = ShuffleSampler(n_splits=5, split=0, test_size=0.2, val_size=0.15, random_state=1, stratify=False)
         train, test, val = sampler(cfg)
-        self.assertEqual(len(train) + len(test) + len(val), len(cfg._X))
+        assert len(train) + len(test) + len(val) == len(cfg._X)
 
 
 # ---------------------------------------------------------------------------
@@ -525,7 +522,7 @@ class TestShuffleSampler(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestLegacySplitUnchanged(unittest.TestCase):
+class TestLegacySplitUnchanged:
     def test_no_val_set_when_no_val_size(self):
         cfg = DataConfig(
             dataset_name="make_classification",
@@ -544,10 +541,10 @@ class TestLegacySplitUnchanged(unittest.TestCase):
             sampler="split",
         )
         cfg()
-        self.assertIsNone(cfg.X_val)
-        self.assertIsNone(cfg.y_val)
-        self.assertEqual(len(cfg.val_indices), 0)
-        self.assertEqual(len(cfg.X_train) + len(cfg.X_test), 100)
+        assert cfg.X_val is None
+        assert cfg.y_val is None
+        assert len(cfg.val_indices) == 0
+        assert len(cfg.X_train) + len(cfg.X_test) == 100
 
     def test_score_dict_no_val_fields_without_val_size(self):
         cfg = DataConfig(
@@ -567,8 +564,8 @@ class TestLegacySplitUnchanged(unittest.TestCase):
             sampler="split",
         )
         scores = cfg()
-        self.assertNotIn("val_n", scores)
-        self.assertNotIn("val_class_counts", scores)
+        assert "val_n" not in scores
+        assert "val_class_counts" not in scores
 
     def test_val_size_none_gives_two_way_split(self):
         """sampler='split' with val_size=None should not create a val set."""
@@ -590,9 +587,9 @@ class TestLegacySplitUnchanged(unittest.TestCase):
             sampler="split",
         )
         cfg()
-        self.assertIsNone(cfg.X_val)
-        self.assertIsNone(cfg.y_val)
-        self.assertEqual(len(cfg.X_train) + len(cfg.X_test), 100)
+        assert cfg.X_val is None
+        assert cfg.y_val is None
+        assert len(cfg.X_train) + len(cfg.X_test) == 100
 
 
 # ---------------------------------------------------------------------------
@@ -600,7 +597,7 @@ class TestLegacySplitUnchanged(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestOmegaConfSampleSpec(unittest.TestCase):
+class TestOmegaConfSampleSpec:
     def test_omegaconf_dictconfig_sample(self):
         """_resolve_sample should handle an OmegaConf DictConfig spec."""
         from omegaconf import OmegaConf
@@ -634,8 +631,8 @@ class TestOmegaConfSampleSpec(unittest.TestCase):
         )
         cfg.load_dataset()
         cfg.fit()
-        self.assertIsNotNone(cfg.X_val)
-        self.assertGreater(len(cfg.X_val), 0)
+        assert cfg.X_val is not None
+        assert len(cfg.X_val) > 0
 
 
 # ---------------------------------------------------------------------------
@@ -643,7 +640,7 @@ class TestOmegaConfSampleSpec(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestConfigStoreRegistration(unittest.TestCase):
+class TestConfigStoreRegistration:
     def test_register_sampler_configs_runs_without_error(self):
         from deckard.data.sample import register_sampler_configs
 
@@ -667,12 +664,7 @@ class TestConfigStoreRegistration(unittest.TestCase):
             "shuffle.yaml",
             "none.yaml",
         ):
-            self.assertIn(
-                expected,
-                listed_names,
-                msg=f"Expected '{expected}' in ConfigStore sample group, got: {listed_names}",
-            )
+            assert expected in \
+                listed_names, \
+                f"Expected '{expected}' in ConfigStore sample group, got: {listed_names}"
 
-
-if __name__ == "__main__":
-    unittest.main()

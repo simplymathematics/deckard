@@ -1,4 +1,3 @@
-import unittest
 from types import SimpleNamespace
 
 import numpy as np
@@ -26,8 +25,8 @@ class DummyDataConfig:
         self.y_test = y_test
 
 
-class TestDefenseConfig(unittest.TestCase):
-    def setUp(self):
+class TestDefenseConfig:
+    def setup_method(self):
         self.data = DummyDataConfig(
             X_train=pd.DataFrame(np.random.rand(100, 10)),
             y_train=pd.Series(np.random.randint(0, 2, size=100)),
@@ -42,31 +41,27 @@ class TestDefenseConfig(unittest.TestCase):
 
     def test_defense_config_initialization(self):
         # Test default initialization
-        self.assertEqual(
-            self.defense_config.model_type,
-            "sklearn.ensemble.RandomForestClassifier",
-        )
-        self.assertTrue(self.defense_config.classifier)
-        self.assertFalse(self.defense_config.probability)
-        self.assertIsNone(self.defense_config.clip_values)
-        self.assertEqual(
-            self.defense_config.defense_name,
-            "art.defences.postprocessor.HighConfidence",
-        )
+        assert self.defense_config.model_type == \
+            "sklearn.ensemble.RandomForestClassifier"
+        assert self.defense_config.classifier
+        assert not self.defense_config.probability
+        assert self.defense_config.clip_values is None
+        assert self.defense_config.defense_name == \
+            "art.defences.postprocessor.HighConfidence"
 
     def test_apply_defense_without_model(self):
         # Test applying defense without a fitted model
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             self.defense_config.apply_defense(data=self.data)
 
     def test_apply_defense_with_invalid_defense_name(self):
         # Test applying defense with an invalid defense name
         self.defense_config.defense_name = "invalid.defense.Class"
-        with self.assertRaises(ImportError):
+        with pytest.raises(ImportError):
             self.defense_config.apply_defense(data=self.data)
 
     def test_call_is_not_runtime_owner(self):
-        with self.assertRaises(NotImplementedError):
+        with pytest.raises(NotImplementedError):
             self.defense_config(data=self.data)
 
     def test_apply_to_trained_model(self):
@@ -81,13 +76,13 @@ class TestDefenseConfig(unittest.TestCase):
             estimator=model.get_model(),
             data=self.data,
         )
-        self.assertIsNotNone(defended)
-        self.assertIsNotNone(self.defense_config.defense_application_time)
+        assert defended is not None
+        assert self.defense_config.defense_application_time is not None
 
     def test_hash_function(self):
         # Test the hash function for DefenseConfig
         hash_value = hash(self.defense_config)
-        self.assertIsInstance(hash_value, int)
+        assert isinstance(hash_value, int)
 
     def test_supported_defense_types(self):
         # Test supported defense types
@@ -99,8 +94,8 @@ class TestDefenseConfig(unittest.TestCase):
             "regularizer",
             "transformer",
         ]
-        self.assertIn("postprocessor", supported_types)
-        self.assertNotIn("unsupported_type", supported_types)
+        assert "postprocessor" in supported_types
+        assert "unsupported_type" not in supported_types
 
     def test_hash_stable_after_apply_for_defense_config(self):
         """DefenseConfig hash remains stable after runtime-only apply attrs are set."""
@@ -114,14 +109,12 @@ class TestDefenseConfig(unittest.TestCase):
         ):
             self.defense_config.score_dict["runtime"] = 1
 
-        self.assertEqual(
-            original_hash,
-            hash(self.defense_config),
-            msg="Hash changed after defense apply-time runtime updates",
-        )
+        assert original_hash == \
+            hash(self.defense_config), \
+            "Hash changed after defense apply-time runtime updates"
 
 
-class TestDefensePipelineConfigListCoerce(unittest.TestCase):
+class TestDefensePipelineConfigListCoerce:
     """DefensePipelineConfig.coerce() with a list should chain all specs."""
 
     spec_a = {
@@ -135,32 +128,32 @@ class TestDefensePipelineConfigListCoerce(unittest.TestCase):
 
     def test_list_of_two_specs_produces_two_defenses(self):
         result = DefensePipelineConfig.coerce([self.spec_a, self.spec_b])
-        self.assertIsInstance(result, DefensePipelineConfig)
-        self.assertEqual(len(result.defenses), 2)
+        assert isinstance(result, DefensePipelineConfig)
+        assert len(result.defenses) == 2
 
     def test_list_of_one_spec_produces_one_defense(self):
         result = DefensePipelineConfig.coerce([self.spec_a])
-        self.assertIsInstance(result, DefensePipelineConfig)
-        self.assertEqual(len(result.defenses), 1)
+        assert isinstance(result, DefensePipelineConfig)
+        assert len(result.defenses) == 1
 
     def test_list_order_is_preserved(self):
         result = DefensePipelineConfig.coerce([self.spec_a, self.spec_b])
-        self.assertIn("HighConfidence", result.defenses[0].defense_name)
-        self.assertIn("ClassLabels", result.defenses[1].defense_name)
+        assert "HighConfidence" in result.defenses[0].defense_name
+        assert "ClassLabels" in result.defenses[1].defense_name
 
     def test_empty_list_produces_empty_pipeline(self):
         result = DefensePipelineConfig.coerce([])
-        self.assertIsInstance(result, DefensePipelineConfig)
-        self.assertEqual(len(result.defenses), 0)
+        assert isinstance(result, DefensePipelineConfig)
+        assert len(result.defenses) == 0
 
     def test_none_still_returns_none(self):
         result = DefensePipelineConfig.coerce(None)
-        self.assertIsNone(result)
+        assert result is None
 
     def test_single_dict_still_wraps_in_one_element_list(self):
         result = DefensePipelineConfig.coerce(self.spec_a)
-        self.assertIsInstance(result, DefensePipelineConfig)
-        self.assertEqual(len(result.defenses), 1)
+        assert isinstance(result, DefensePipelineConfig)
+        assert len(result.defenses) == 1
 
 
 def test_defense_behavior_defaults_signature_and_apply_to_paths(monkeypatch):

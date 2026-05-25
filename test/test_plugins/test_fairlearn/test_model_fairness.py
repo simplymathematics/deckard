@@ -1,7 +1,6 @@
 import logging
 import shutil
 import tempfile
-import unittest
 from unittest.mock import Mock
 
 import pandas as pd
@@ -19,8 +18,8 @@ logger = logging.getLogger(__name__)
 pytest.importorskip("fairlearn")
 
 
-class TestFairlearnModelConfig(unittest.TestCase):
-    def setUp(self):
+class TestFairlearnModelConfig:
+    def setup_method(self):
         # Create sample data with group information
         self.X_train = pd.DataFrame(
             {
@@ -49,7 +48,7 @@ class TestFairlearnModelConfig(unittest.TestCase):
         self.model_type = "sklearn.ensemble.RandomForestClassifier"
         self.tmpdir = tempfile.mkdtemp()
 
-    def tearDown(self):
+    def teardown_method(self):
         shutil.rmtree(self.tmpdir)
 
     def test_fairness_model_config_initialization(self):
@@ -64,8 +63,8 @@ class TestFairlearnModelConfig(unittest.TestCase):
             data=fairness_data,
         )
 
-        self.assertIsNotNone(model)
-        self.assertEqual(model.data, fairness_data)
+        assert model is not None
+        assert model.data == fairness_data
 
     def test_fairness_model_config_initialization_without_data(self):
         """Test FairlearnModelConfig can be initialized without fairness data."""
@@ -76,8 +75,8 @@ class TestFairlearnModelConfig(unittest.TestCase):
             data=None,
         )
 
-        self.assertIsNotNone(model)
-        self.assertIsNone(model.data)
+        assert model is not None
+        assert model.data is None
 
     def test_apply_defense_supports_mixed_defense_pipeline(self):
         """ART + fairlearn defenses are applied sequentially via DefensePipelineConfig."""
@@ -118,7 +117,7 @@ class TestFairlearnModelConfig(unittest.TestCase):
         runtime_data = Mock()
         result = model.apply_defense(data=runtime_data)
 
-        self.assertIs(result, second_estimator)
+        assert result is second_estimator
         art_defense.apply_to.assert_called_once_with(
             estimator=model._model,
             data=runtime_data,
@@ -127,8 +126,8 @@ class TestFairlearnModelConfig(unittest.TestCase):
             estimator=first_estimator,
             data=runtime_data,
         )
-        self.assertAlmostEqual(model.defense_application_time, 0.7)
-        self.assertIs(fair_defense.data, runtime_data)
+        assert round(abs(model.defense_application_time-0.7), 7) == 0
+        assert fair_defense.data is runtime_data
 
     def test_apply_defense_rejects_legacy_defense_list(self):
         """Legacy list assignment is intentionally unsupported after pipeline migration."""
@@ -150,7 +149,7 @@ class TestFairlearnModelConfig(unittest.TestCase):
             ),
         ]
 
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             model.apply_defense(data=Mock())
 
     def test_sensitive_fairness_scores_naming_convention(self):
@@ -201,8 +200,8 @@ class TestFairlearnModelConfig(unittest.TestCase):
 
         model.train(self.X_test, self.y_test)
 
-        self.assertIsNotNone(model._model.received_sensitive)
-        self.assertEqual(len(model._model.received_sensitive), len(self.y_test))
+        assert model._model.received_sensitive is not None
+        assert len(model._model.received_sensitive) == len(self.y_test)
 
     def test_predict_passes_sensitive_features_when_supported(self):
         class SensitivePredictEstimator:
@@ -229,7 +228,7 @@ class TestFairlearnModelConfig(unittest.TestCase):
 
         y_pred = model.predict(self.X_test)
 
-        self.assertEqual(len(y_pred), len(self.X_test))
+        assert len(y_pred) == len(self.X_test)
 
     def test_fairness_model_config_is_configbase_with_hash(self):
         """Test that FairlearnModelConfig is ConfigBase and has __hash__ method."""
@@ -246,23 +245,18 @@ class TestFairlearnModelConfig(unittest.TestCase):
             model_params={"n_estimators": 10},
             data=fairness_data,
         )
-        self.assertIsInstance(
-            model,
-            BaseConfig,
-            msg="FairlearnModelConfig should inherit from ConfigBase",
-        )
-        self.assertTrue(
-            hasattr(model, "__hash__"),
-            msg="FairlearnModelConfig should have __hash__ method",
-        )
+        assert isinstance(model, BaseConfig), \
+            "FairlearnModelConfig should inherit from ConfigBase"
+        assert hasattr(model, "__hash__"), \
+            "FairlearnModelConfig should have __hash__ method"
         # Note: FairlearnModelConfig may have unhashable runtime fields
         # so we verify the infrastructure is in place rather than attempting full hash
 
 
-class TestFairlearnDefenseConfigApplyDefense(unittest.TestCase):
+class TestFairlearnDefenseConfigApplyDefense:
     """Tests for FairlearnDefenseConfig.apply_defense with fairlearn estimators."""
 
-    def setUp(self):
+    def setup_method(self):
 
         self.FairlearnDefenseConfig = FairlearnDefenseConfig
         self.model_type = "sklearn.linear_model.LogisticRegression"
@@ -305,7 +299,7 @@ class TestFairlearnDefenseConfigApplyDefense(unittest.TestCase):
         result = cfg.apply_defense(None)
         from fairlearn.reductions import ExponentiatedGradient
 
-        self.assertIsInstance(result, ExponentiatedGradient)
+        assert isinstance(result, ExponentiatedGradient)
 
     def test_apply_defense_reductions_exponentiated_gradient_dict_constraint(
         self,
@@ -323,17 +317,14 @@ class TestFairlearnDefenseConfigApplyDefense(unittest.TestCase):
         result = cfg.apply_defense(None)
         from fairlearn.reductions import ExponentiatedGradient
 
-        self.assertIsInstance(result, ExponentiatedGradient)
+        assert isinstance(result, ExponentiatedGradient)
 
     def test_apply_defense_reductions_requires_constraints(self):
         """ExponentiatedGradient without a constraints key must raise ValueError."""
         cfg = self._make_fitted_defense(
             "fairlearn.reductions.ExponentiatedGradient",
         )
-        with self.assertRaises(
-            ValueError,
-            msg="constraints are required for reductions",
-        ):
+        with pytest.raises(ValueError):
             cfg.apply_defense(None)
 
     def test_apply_defense_postprocessing_threshold_optimizer(self):
@@ -345,7 +336,7 @@ class TestFairlearnDefenseConfigApplyDefense(unittest.TestCase):
         result = cfg.apply_defense(None)
         from fairlearn.postprocessing import ThresholdOptimizer
 
-        self.assertIsInstance(result, ThresholdOptimizer)
+        assert isinstance(result, ThresholdOptimizer)
 
     def test_apply_defense_postprocessing_no_constraints(self):
         """ThresholdOptimizer with no constraints key uses default."""
@@ -355,12 +346,12 @@ class TestFairlearnDefenseConfigApplyDefense(unittest.TestCase):
         result = cfg.apply_defense(None)
         from fairlearn.postprocessing import ThresholdOptimizer
 
-        self.assertIsInstance(result, ThresholdOptimizer)
+        assert isinstance(result, ThresholdOptimizer)
 
     def test_apply_defense_unsupported_fairlearn_submodule_raises(self):
         """Unsupported fairlearn submodule (e.g., fairlearn.metrics.*) must raise NotImplementedError."""
         cfg = self._make_fitted_defense("fairlearn.metrics.MetricFrame")
-        with self.assertRaises((NotImplementedError, ImportError)):
+        with pytest.raises((NotImplementedError, ImportError)):
             cfg.apply_defense(None)
 
     def test_apply_defense_defense_application_time_set(self):
@@ -373,7 +364,7 @@ class TestFairlearnDefenseConfigApplyDefense(unittest.TestCase):
             },
         )
         cfg.apply_defense(None)
-        self.assertIsNotNone(cfg.defense_application_time)
+        assert cfg.defense_application_time is not None
 
     def test_fairness_defense_config_is_configbase_with_hash(self):
         """Test that FairlearnDefenseConfig is ConfigBase and has __hash__ method."""
@@ -386,18 +377,10 @@ class TestFairlearnDefenseConfigApplyDefense(unittest.TestCase):
                 "eps": 0.1,
             },
         )
-        self.assertIsInstance(
-            cfg,
-            BaseConfig,
-            msg="FairlearnDefenseConfig should inherit from ConfigBase",
-        )
-        self.assertTrue(
-            hasattr(cfg, "__hash__"),
-            msg="FairlearnDefenseConfig should have __hash__ method",
-        )
+        assert isinstance(cfg, BaseConfig), \
+            "FairlearnDefenseConfig should inherit from ConfigBase"
+        assert hasattr(cfg, "__hash__"), \
+            "FairlearnDefenseConfig should have __hash__ method"
         # Note: FairlearnDefenseConfig may have unhashable runtime fields
         # so we verify the infrastructure is in place rather than attempting full hash
 
-
-if __name__ == "__main__":
-    unittest.main()

@@ -1,7 +1,6 @@
 import argparse
 import logging
 import tempfile
-import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -64,31 +63,31 @@ class TypeBConfig(BaseConfig):
         return "B"
 
 
-class TestUtilsAdditional(unittest.TestCase):
+class TestUtilsAdditional:
     def test_coerce_config_dictconfig_to_dict(self):
         cfg = OmegaConf.create({"alpha": 1, "beta": {"gamma": 2}})
         out = coerce_config(cfg)
-        self.assertIsInstance(out, dict)
-        self.assertEqual(out["alpha"], 1)
-        self.assertEqual(out["beta"]["gamma"], 2)
+        assert isinstance(out, dict)
+        assert out["alpha"] == 1
+        assert out["beta"]["gamma"] == 2
 
     def test_coerce_config_configbase_to_dict(self):
         obj = BaseConfig(score_dict={"x": 1})
         out = coerce_config(obj)
-        self.assertIsInstance(out, dict)
-        self.assertIn("score_dict", out)
+        assert isinstance(out, dict)
+        assert "score_dict" in out
 
     def test_coerce_config_yaml_path_to_dict(self):
         with tempfile.TemporaryDirectory() as td:
             cfg_path = Path(td) / "scorer.yaml"
             cfg_path.write_text("scorers:\n  acc:\n    score_name: acc\n")
             out = coerce_config(str(cfg_path))
-            self.assertIsInstance(out, dict)
-            self.assertIn("scorers", out)
+            assert isinstance(out, dict)
+            assert "scorers" in out
 
     def test_coerce_config_non_yaml_string_passthrough(self):
         class_path = "sklearn.metrics.accuracy_score"
-        self.assertEqual(coerce_config(class_path), class_path)
+        assert coerce_config(class_path) == class_path
 
     def test_safe_store_tolerates_duplicate_registration(self):
         group = f"test_safe_store_{uuid4().hex}"
@@ -110,7 +109,7 @@ class TestUtilsAdditional(unittest.TestCase):
         h1 = utils.hash_conf_values(left)
         h2 = utils.hash_conf_values(right)
 
-        self.assertEqual(h1, h2)
+        assert h1 == h2
 
     def test_hash_conf_values_stable_for_path_and_bytes(self):
         value = {
@@ -121,7 +120,7 @@ class TestUtilsAdditional(unittest.TestCase):
         h1 = utils.hash_conf_values(value)
         h2 = utils.hash_conf_values(value)
 
-        self.assertEqual(h1, h2)
+        assert h1 == h2
 
     def test_omegaconf_artifact_resolvers_load_and_save(self):
         with tempfile.TemporaryDirectory() as td:
@@ -143,9 +142,9 @@ class TestUtilsAdditional(unittest.TestCase):
                 },
             )
             resolved_data = OmegaConf.to_container(data_cfg, resolve=True)
-            self.assertTrue(saved_data_path.exists())
-            self.assertEqual(resolved_data["saved_path"], str(saved_data_path))
-            self.assertEqual(list(resolved_data["loaded"].columns), ["x"])
+            assert saved_data_path.exists()
+            assert resolved_data["saved_path"] == str(saved_data_path)
+            assert list(resolved_data["loaded"].columns) == ["x"]
 
             model_cfg = OmegaConf.create(
                 {
@@ -158,8 +157,8 @@ class TestUtilsAdditional(unittest.TestCase):
                 flags={"allow_objects": True},
             )
             resolved_model = OmegaConf.to_container(model_cfg, resolve=True)
-            self.assertTrue(saved_model_path.exists())
-            self.assertEqual(resolved_model["saved_model_path"], str(saved_model_path))
+            assert saved_model_path.exists()
+            assert resolved_model["saved_model_path"] == str(saved_model_path)
 
     def test_configbase_hash_deterministic_for_equal_content(self):
         cfg1 = BaseConfig(score_dict={"alpha": 1, "beta": 2})
@@ -168,13 +167,13 @@ class TestUtilsAdditional(unittest.TestCase):
         cfg1.custom = {"z": [1, 2], "a": {"m": 9, "n": 8}}
         cfg2.custom = {"a": {"n": 8, "m": 9}, "z": [1, 2]}
 
-        self.assertEqual(hash(cfg1), hash(cfg2))
+        assert hash(cfg1) == hash(cfg2)
 
     def test_resolve_torch_device_cuda_falls_back_to_best_available(self):
         try:
             import torch
         except ImportError:
-            self.skipTest("Torch not available")
+            pytest.skip("Torch not available")
 
         with (
             patch("torch.cuda.is_available", return_value=False),
@@ -185,7 +184,7 @@ class TestUtilsAdditional(unittest.TestCase):
         ):
             resolved = utils.resolve_torch_device("cuda")
 
-        self.assertEqual(str(resolved), "mps")
+        assert str(resolved) == "mps"
 
     def test_resolve_torch_device_invalid_cuda_index_falls_back_to_best_available(
         self,
@@ -193,7 +192,7 @@ class TestUtilsAdditional(unittest.TestCase):
         try:
             import torch
         except ImportError:
-            self.skipTest("Torch not available")
+            pytest.skip("Torch not available")
 
         with (
             patch("torch.cuda.is_available", return_value=True),
@@ -208,7 +207,7 @@ class TestUtilsAdditional(unittest.TestCase):
         ):
             resolved = utils.resolve_torch_device(5)
 
-        self.assertEqual(str(resolved), "mps")
+        assert str(resolved) == "mps"
 
     def test_resolve_torch_device_mps_unavailable_falls_back_to_best_available(
         self,
@@ -216,9 +215,9 @@ class TestUtilsAdditional(unittest.TestCase):
         try:
             import torch
         except ImportError:
-            self.skipTest("Torch not available")
+            pytest.skip("Torch not available")
         if not hasattr(torch.backends, "mps"):
-            self.skipTest("Torch build has no MPS backend")
+            pytest.skip("Torch build has no MPS backend")
 
         with (
             patch("torch.backends.mps.is_available", return_value=False),
@@ -229,21 +228,21 @@ class TestUtilsAdditional(unittest.TestCase):
         ):
             resolved = utils.resolve_torch_device("mps")
 
-        self.assertEqual(str(resolved), "cuda:0")
+        assert str(resolved) == "cuda:0"
 
     def test_get_call_params_success(self):
         cfg = ParamsConfig()
         params = cfg.get_call_params()
-        self.assertEqual(params, {"x": 10, "y": "abc"})
+        assert params == {"x": 10, "y": "abc"}
 
     def test_get_call_params_missing_attribute_raises(self):
         cfg = MissingParamConfig()
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             cfg.get_call_params()
 
     def test_normalize_plugin_specs_requires_list_like(self):
-        self.assertEqual(normalize_plugin_specs(None), [])
-        with self.assertRaises(TypeError):
+        assert normalize_plugin_specs(None) == []
+        with pytest.raises(TypeError):
             normalize_plugin_specs("deckard.plugins.foo.Plugin")
 
     def test_instantiate_plugin_spec_uses_loader_for_dict_and_string(self):
@@ -259,15 +258,15 @@ class TestUtilsAdditional(unittest.TestCase):
         )
         out_str = instantiate_plugin_spec("pkg.Plugin2", loader=_loader)
 
-        self.assertEqual(out_dict["path"], "pkg.Plugin")
-        self.assertEqual(out_dict["alpha"], 1)
-        self.assertEqual(out_str["path"], "pkg.Plugin2")
-        self.assertEqual(len(calls), 2)
+        assert out_dict["path"] == "pkg.Plugin"
+        assert out_dict["alpha"] == 1
+        assert out_str["path"] == "pkg.Plugin2"
+        assert len(calls) == 2
 
     def test_instantiate_plugin_spec_passthrough_object(self):
         marker = object()
         out = instantiate_plugin_spec(marker, loader=lambda *_a, **_k: None)
-        self.assertIs(out, marker)
+        assert out is marker
 
     def test_execute_returns_fallback_score_dict_on_exception(self):
         cfg = FailingConfig(score_dict={"fallback": 123})
@@ -277,9 +276,9 @@ class TestUtilsAdditional(unittest.TestCase):
             utils.logger.addHandler(handler)
             try:
                 out = cfg.execute_without_mercy()
-                self.assertEqual(out, {"fallback": 123})
-                self.assertTrue(log_path.exists())
-                self.assertIn("Exception:", log_path.read_text())
+                assert out == {"fallback": 123}
+                assert log_path.exists()
+                assert "Exception:" in log_path.read_text()
             finally:
                 utils.logger.removeHandler(handler)
                 handler.close()
@@ -293,10 +292,10 @@ class TestUtilsAdditional(unittest.TestCase):
                 "        self.x = x\n",
             )
             obj = import_class_from_file(str(module_path), "MyClass", 7)
-            self.assertEqual(obj.x, 7)
+            assert obj.x == 7
 
     def test_import_class_from_file_missing_file_raises(self):
-        with self.assertRaises(FileNotFoundError):
+        with pytest.raises(FileNotFoundError):
             import_class_from_file("does_not_exist.py", "Anything")
 
     def test_load_class_colon_path_success(self):
@@ -308,11 +307,11 @@ class TestUtilsAdditional(unittest.TestCase):
                 "        self.name = name\n",
             )
             obj = load_class(f"{module_path}:MyClass", "deckard")
-            self.assertEqual(obj.name, "deckard")
+            assert obj.name == "deckard"
 
     def test_create_parser_existing_parser_with_kwargs_raises(self):
         parser = argparse.ArgumentParser()
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             create_parser_from_function(lambda a: a, parser=parser, prog="x")
 
     def test_create_parser_unannotated_defaults_to_string(self):
@@ -321,8 +320,8 @@ class TestUtilsAdditional(unittest.TestCase):
 
         parser = create_parser_from_function(fn)
         args = parser.parse_args(["--name", "alice"])
-        self.assertEqual(args.name, "alice")
-        self.assertEqual(args.count, 1)
+        assert args.name == "alice"
+        assert args.count == 1
 
     def test_create_parser_uses_function_docstring_for_description(self):
         def fn(name: str):
@@ -338,10 +337,8 @@ class TestUtilsAdditional(unittest.TestCase):
 
         parser = create_parser_from_function(fn)
 
-        self.assertEqual(
-            parser.description,
-            "Create a parser description from the function docstring.",
-        )
+        assert parser.description == \
+            "Create a parser description from the function docstring."
 
     def test_create_parser_uses_parameter_docstrings_for_help_text(self):
         def fn(name: str, count: int = 1):
@@ -361,11 +358,9 @@ class TestUtilsAdditional(unittest.TestCase):
         name_action = next(a for a in parser._actions if a.dest == "name")
         count_action = next(a for a in parser._actions if a.dest == "count")
 
-        self.assertEqual(
-            name_action.help,
-            "Name to echo in the command output.",
-        )
-        self.assertEqual(count_action.help, "Number of iterations to run.")
+        assert name_action.help == \
+            "Name to echo in the command output."
+        assert count_action.help == "Number of iterations to run."
 
 
 # ── Minimal ConfigBase subclass ──────────────────────────────────────────────
@@ -384,14 +379,14 @@ class _Fail(BaseConfig):
 # ── _torch_compiler_backends ─────────────────────────────────────────────────
 
 
-class TestTorchCompilerBackends(unittest.TestCase):
+class TestTorchCompilerBackends:
     def test_no_compiler_attribute_returns_empty(self):
         mod = SimpleNamespace()  # no .compiler
-        self.assertEqual(_torch_compiler_backends(mod), [])
+        assert _torch_compiler_backends(mod) == []
 
     def test_compiler_no_list_backends_returns_empty(self):
         mod = SimpleNamespace(compiler=SimpleNamespace())
-        self.assertEqual(_torch_compiler_backends(mod), [])
+        assert _torch_compiler_backends(mod) == []
 
     def test_list_backends_exception_returns_empty(self):
         def _raise():
@@ -399,21 +394,21 @@ class TestTorchCompilerBackends(unittest.TestCase):
 
         compiler = SimpleNamespace(list_backends=_raise)
         mod = SimpleNamespace(compiler=compiler)
-        self.assertEqual(_torch_compiler_backends(mod), [])
+        assert _torch_compiler_backends(mod) == []
 
     def test_list_backends_returns_normalised_names(self):
         compiler = SimpleNamespace(list_backends=lambda: ["Inductor", " CUDA ", "tvm"])
         mod = SimpleNamespace(compiler=compiler)
         result = _torch_compiler_backends(mod)
-        self.assertIn("inductor", result)
-        self.assertIn("cuda", result)
-        self.assertIn("tvm", result)
+        assert "inductor" in result
+        assert "cuda" in result
+        assert "tvm" in result
 
 
 # ── _auto_torch_device_from_backends ─────────────────────────────────────────
 
 
-class TestAutoTorchDevice(unittest.TestCase):
+class TestAutoTorchDevice:
     """Drive all branches of _auto_torch_device_from_backends via mocks."""
 
     def _make_torch_mock(self, cuda=False, mps=False, backends=None):
@@ -435,50 +430,50 @@ class TestAutoTorchDevice(unittest.TestCase):
     def test_cuda_with_preferred_backend_returns_cuda(self):
         torch_mock = self._make_torch_mock(cuda=True, mps=False, backends=["inductor"])
         dev = _auto_torch_device_from_backends(torch_mock)
-        self.assertEqual(dev.type, "cuda")
+        assert dev.type == "cuda"
 
     def test_mps_with_preferred_backend_returns_mps(self):
         torch_mock = self._make_torch_mock(cuda=False, mps=True, backends=["eager"])
         dev = _auto_torch_device_from_backends(torch_mock)
-        self.assertEqual(dev.type, "mps")
+        assert dev.type == "mps"
 
     def test_cuda_without_preferred_backend_returns_cuda(self):
         torch_mock = self._make_torch_mock(cuda=True, mps=False, backends=["tvm"])
         dev = _auto_torch_device_from_backends(torch_mock)
-        self.assertEqual(dev.type, "cuda")
+        assert dev.type == "cuda"
 
     def test_mps_without_preferred_backend_returns_mps(self):
         torch_mock = self._make_torch_mock(cuda=False, mps=True, backends=["tvm"])
         dev = _auto_torch_device_from_backends(torch_mock)
-        self.assertEqual(dev.type, "mps")
+        assert dev.type == "mps"
 
     def test_neither_cuda_nor_mps_returns_cpu(self):
         torch_mock = self._make_torch_mock(cuda=False, mps=False, backends=[])
         dev = _auto_torch_device_from_backends(torch_mock)
-        self.assertEqual(dev.type, "cpu")
+        assert dev.type == "cpu"
 
 
 # ── resolve_torch_device ─────────────────────────────────────────────────────
 
 
-class TestResolveTorchDevice(unittest.TestCase):
-    def setUp(self):
+class TestResolveTorchDevice:
+    def setup_method(self):
         try:
             import torch
 
             self.torch = torch
         except ImportError:
-            self.skipTest("torch not available")
+            pytest.skip("torch not available")
 
     def test_torch_device_passthrough(self):
         dev = self.torch.device("cpu")
         result = resolve_torch_device(dev)
-        self.assertIs(result, dev)
+        assert result is dev
 
     def test_none_returns_auto(self):
         # With torch available, None should return some device (auto-selected)
         result = resolve_torch_device(None)
-        self.assertIsInstance(result, self.torch.device)
+        assert isinstance(result, self.torch.device)
 
     def test_valid_int_cuda_when_unavailable_falls_back(self):
         with (
@@ -489,7 +484,7 @@ class TestResolveTorchDevice(unittest.TestCase):
             ),
         ):
             result = resolve_torch_device(0)
-        self.assertEqual(result.type, "cpu")
+        assert result.type == "cpu"
 
     def test_gpu_text_cuda_unavailable_falls_back(self):
         with (
@@ -500,7 +495,7 @@ class TestResolveTorchDevice(unittest.TestCase):
             ),
         ):
             result = resolve_torch_device("gpu")
-        self.assertEqual(result.type, "cpu")
+        assert result.type == "cpu"
 
     def test_cuda_text_cuda_unavailable_falls_back(self):
         with (
@@ -511,7 +506,7 @@ class TestResolveTorchDevice(unittest.TestCase):
             ),
         ):
             result = resolve_torch_device("cuda:0")
-        self.assertEqual(result.type, "cpu")
+        assert result.type == "cpu"
 
     def test_null_token_returns_auto(self):
         with patch(
@@ -519,7 +514,7 @@ class TestResolveTorchDevice(unittest.TestCase):
             return_value=self.torch.device("cpu"),
         ):
             result = resolve_torch_device("none")
-        self.assertEqual(result.type, "cpu")
+        assert result.type == "cpu"
 
     def test_auto_token_returns_auto(self):
         with patch(
@@ -527,11 +522,11 @@ class TestResolveTorchDevice(unittest.TestCase):
             return_value=self.torch.device("cpu"),
         ):
             result = resolve_torch_device("auto")
-        self.assertEqual(result.type, "cpu")
+        assert result.type == "cpu"
 
     def test_cpu_string_returns_cpu(self):
         result = resolve_torch_device("cpu")
-        self.assertEqual(result.type, "cpu")
+        assert result.type == "cpu"
 
     def test_invalid_device_string_falls_back_to_auto(self):
         with patch(
@@ -539,7 +534,7 @@ class TestResolveTorchDevice(unittest.TestCase):
             return_value=self.torch.device("cpu"),
         ):
             result = resolve_torch_device("not_a_device_xyz")
-        self.assertEqual(result.type, "cpu")
+        assert result.type == "cpu"
 
     def test_resolve_torch_device_no_torch(self):
         import builtins
@@ -553,7 +548,7 @@ class TestResolveTorchDevice(unittest.TestCase):
 
         with patch("builtins.__import__", side_effect=mock_import):
             result = resolve_torch_device(None)
-        self.assertEqual(result, "cpu")
+        assert result == "cpu"
 
     def test_resolve_torch_device_no_torch_with_value(self):
         import builtins
@@ -567,42 +562,42 @@ class TestResolveTorchDevice(unittest.TestCase):
 
         with patch("builtins.__import__", side_effect=mock_import):
             result = resolve_torch_device("cpu")
-        self.assertEqual(result, "cpu")
+        assert result == "cpu"
 
 
 # ── coerce_to_list / merge_list_of_dicts ─────────────────────────────────────
 
 
-class TestCoerceHelpers(unittest.TestCase):
+class TestCoerceHelpers:
     def test_coerce_to_list_with_plain_list(self):
-        self.assertEqual(coerce_to_list([1, 2, 3]), [1, 2, 3])
+        assert coerce_to_list([1, 2, 3]) == [1, 2, 3]
 
     def test_coerce_to_list_invalid_type_raises(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             coerce_to_list({"a": 1})
 
     def test_merge_list_of_dicts_merges(self):
         result = merge_list_of_dicts([{"a": 1}, {"b": 2}])
-        self.assertEqual(result, {"a": 1, "b": 2})
+        assert result == {"a": 1, "b": 2}
 
     def test_merge_list_of_dicts_later_wins(self):
         result = merge_list_of_dicts([{"a": 1}, {"a": 99}])
-        self.assertEqual(result["a"], 99)
+        assert result["a"] == 99
 
     def test_merge_list_of_dicts_invalid_element_raises(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             merge_list_of_dicts(["not_a_dict"])
 
     def test_coerce_config_none_returns_none(self):
-        self.assertIsNone(coerce_config(None))
+        assert coerce_config(None) is None
 
     def test_coerce_config_yaml_path_returns_dict(self):
         with tempfile.TemporaryDirectory() as td:
             p = Path(td) / "cfg.yaml"
             p.write_text("a: 1\nb: 2\n")
             result = coerce_config(str(p))
-            self.assertIsInstance(result, dict)
-            self.assertEqual(result["a"], 1)
+            assert isinstance(result, dict)
+            assert result["a"] == 1
 
     def test_merge_scores_with_collision_suffix_keeps_unique_keys(self):
         result = merge_scores_with_collision_suffix(
@@ -610,8 +605,8 @@ class TestCoerceHelpers(unittest.TestCase):
             {"latency": 1.2},
             alias="hsj",
         )
-        self.assertEqual(result["accuracy"], 0.8)
-        self.assertEqual(result["latency"], 1.2)
+        assert result["accuracy"] == 0.8
+        assert result["latency"] == 1.2
 
     def test_merge_scores_with_collision_suffix_uses_alias_for_collisions(self):
         result = merge_scores_with_collision_suffix(
@@ -619,9 +614,9 @@ class TestCoerceHelpers(unittest.TestCase):
             {"evasion_accuracy": 0.4, "attack_generation_time": 2.0},
             alias="fgm",
         )
-        self.assertEqual(result["evasion_accuracy"], 0.6)
-        self.assertEqual(result["evasion_accuracy_fgm"], 0.4)
-        self.assertEqual(result["attack_generation_time"], 2.0)
+        assert result["evasion_accuracy"] == 0.6
+        assert result["evasion_accuracy_fgm"] == 0.4
+        assert result["attack_generation_time"] == 2.0
 
     def test_merge_scores_with_collision_suffix_without_alias_overwrites(self):
         result = merge_scores_with_collision_suffix(
@@ -629,7 +624,7 @@ class TestCoerceHelpers(unittest.TestCase):
             {"evasion_accuracy": 0.4},
             alias=None,
         )
-        self.assertEqual(result["evasion_accuracy"], 0.4)
+        assert result["evasion_accuracy"] == 0.4
 
 
 
@@ -637,23 +632,23 @@ class TestCoerceHelpers(unittest.TestCase):
 # ── ConfigBase – from_yaml / to_yaml / to_dict ───────────────────────────────
 
 
-class TestConfigBaseSerialisation(unittest.TestCase):
+class TestConfigBaseSerialisation:
     def test_to_yaml_returns_string(self):
         cfg = _Cfg(score_dict={"a": 1})
         yaml_str = cfg.to_yaml()
-        self.assertIsInstance(yaml_str, str)
-        self.assertIn("score_dict", yaml_str)
+        assert isinstance(yaml_str, str)
+        assert "score_dict" in yaml_str
 
     def test_to_dict_returns_dict(self):
         cfg = _Cfg(score_dict={"b": 2})
         d = cfg.to_dict()
-        self.assertIsInstance(d, dict)
-        self.assertIn("score_dict", d)
+        assert isinstance(d, dict)
+        assert "score_dict" in d
 
     def test_to_dict_for_hash_excludes_score_dict(self):
         cfg = _Cfg(score_dict={"c": 3})
         d = cfg.to_dict(for_hash=True)
-        self.assertNotIn("score_dict", d)
+        assert "score_dict" not in d
 
     def test_from_dict_round_trip(self):
         data = {
@@ -661,33 +656,33 @@ class TestConfigBaseSerialisation(unittest.TestCase):
             "score_dict": {"x": 5},
         }
         obj = BaseConfig.from_dict(data)
-        self.assertIsNotNone(obj)
+        assert obj is not None
 
 
 # ── resolve_class / load_class ───────────────────────────────────────────────
 
 
-class TestResolveLoadClass(unittest.TestCase):
+class TestResolveLoadClass:
     def test_resolve_class_non_string_raises(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             resolve_class(123)
 
     def test_load_class_non_string_non_type_raises(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             load_class(123)
 
     def test_load_class_with_type_instantiates(self):
         result = load_class(dict)
-        self.assertIsInstance(result, dict)
+        assert isinstance(result, dict)
 
     def test_resolve_class_dotted_path(self):
         cls = resolve_class("sklearn.ensemble.RandomForestClassifier")
         from sklearn.ensemble import RandomForestClassifier
 
-        self.assertIs(cls, RandomForestClassifier)
+        assert cls is RandomForestClassifier
 
     def test_resolve_class_file_path_not_found_raises(self):
-        with self.assertRaises(FileNotFoundError):
+        with pytest.raises(FileNotFoundError):
             resolve_class("/nonexistent/path.py:SomeClass")
 
     def test_load_class_dotted_path(self):
@@ -697,17 +692,17 @@ class TestResolveLoadClass(unittest.TestCase):
             "sklearn.ensemble.RandomForestClassifier",
             n_estimators=5,
         )
-        self.assertIsInstance(obj, RandomForestClassifier)
+        assert isinstance(obj, RandomForestClassifier)
 
 
 # ── execute_without_mercy ─────────────────────────────────────────────────────
 
 
-class TestExecuteWithoutMercy(unittest.TestCase):
+class TestExecuteWithoutMercy:
     def test_success_path(self):
         cfg = _Cfg(score_dict={"ok": 1})
         result = cfg.execute_without_mercy()
-        self.assertEqual(result, {"ok": 1})
+        assert result == {"ok": 1}
 
     def test_exception_path_returns_score_dict(self):
         cfg = _Fail(score_dict={"fallback": 99})
@@ -719,11 +714,8 @@ class TestExecuteWithoutMercy(unittest.TestCase):
             utils.logger.addHandler(handler)
             try:
                 result = cfg.execute_without_mercy()
-                self.assertEqual(result, {"fallback": 99})
+                assert result == {"fallback": 99}
             finally:
                 utils.logger.removeHandler(handler)
                 handler.close()
 
-
-if __name__ == "__main__":
-    unittest.main()

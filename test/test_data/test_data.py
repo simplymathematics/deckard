@@ -1,5 +1,4 @@
 import tempfile
-import unittest
 from pathlib import Path
 from unittest.mock import patch
 
@@ -19,7 +18,7 @@ except ImportError:
     HAS_LIFELINES = False
 
 
-class TestDataConfigListMerge(unittest.TestCase):
+class TestDataConfigListMerge:
     """DataConfig should accept a list of step-dicts and merge them."""
 
     steps_a = {
@@ -38,27 +37,27 @@ class TestDataConfigListMerge(unittest.TestCase):
             dataset_name="make_classification",
             pipeline=[self.steps_a, self.steps_b],
         )
-        self.assertIsInstance(cfg.pipeline, dict)
-        self.assertIn("imputer", cfg.pipeline)
-        self.assertIn("scaler", cfg.pipeline)
+        assert isinstance(cfg.pipeline, dict)
+        assert "imputer" in cfg.pipeline
+        assert "scaler" in cfg.pipeline
 
     def test_list_later_entry_wins_on_key_conflict(self):
         cfg = DataConfig(
             dataset_name="make_classification",
             pipeline=[self.steps_a, self.steps_override],
         )
-        self.assertEqual(cfg.pipeline["imputer"]["strategy"], "median")
+        assert cfg.pipeline["imputer"]["strategy"] == "median"
 
     def test_single_dict_still_works(self):
         cfg = DataConfig(
             dataset_name="make_classification",
             pipeline={"imputer": {"name": "sklearn.impute.SimpleImputer"}},
         )
-        self.assertIn("imputer", cfg.pipeline)
+        assert "imputer" in cfg.pipeline
 
 
-class TestDataConfig(unittest.TestCase):
-    def setUp(self):
+class TestDataConfig:
+    def setup_method(self):
         self.pipeline_config_dict = {
             "imputer": {
                 "name": "sklearn.impute.SimpleImputer",
@@ -116,9 +115,9 @@ class TestDataConfig(unittest.TestCase):
 
     def test_pipelineconfig_initialization(self):
         config = DataConfig(pipeline=self.pipeline_config_dict)
-        self.assertIsInstance(config.pipeline, dict)
-        self.assertIn("imputer", config.pipeline)
-        self.assertIn("scaler", config.pipeline)
+        assert isinstance(config.pipeline, dict)
+        assert "imputer" in config.pipeline
+        assert "scaler" in config.pipeline
 
     def test_pipeline_initialization(self):
         config = DataConfig(pipeline=self.pipeline_config_dict)
@@ -126,10 +125,10 @@ class TestDataConfig(unittest.TestCase):
             pipeline,
             _,
         ) = config._init_pipeline()
-        self.assertIsInstance(pipeline, Pipeline)
-        self.assertEqual(len(pipeline.steps), 2)
-        self.assertEqual(pipeline.steps[0][0], "imputer")
-        self.assertEqual(pipeline.steps[1][0], "scaler")
+        assert isinstance(pipeline, Pipeline)
+        assert len(pipeline.steps) == 2
+        assert pipeline.steps[0][0] == "imputer"
+        assert pipeline.steps[1][0] == "scaler"
 
     def test_pipeline_fit_and_transform(self):
         config = DataConfig(pipeline=self.pipeline_config_dict)
@@ -143,22 +142,22 @@ class TestDataConfig(unittest.TestCase):
             self.y_test,
             pipeline,
         )
-        self.assertEqual(config.X_train.shape, (10, 2))
-        self.assertEqual(config.X_test.shape, (2, 2))
-        self.assertFalse(self.X_train.equals(config.X_train))
-        self.assertFalse(self.X_test.equals(config.X_test))
+        assert config.X_train.shape == (10, 2)
+        assert config.X_test.shape == (2, 2)
+        assert not self.X_train.equals(config.X_train)
+        assert not self.X_test.equals(config.X_test)
 
     def test_pipeline_fit_time(self):
         config = DataConfig(pipeline=self.pipeline_config_dict)
         config()
-        self.assertIsNotNone(config.pipeline_fit_time)
-        self.assertGreater(config.pipeline_fit_time, 0)
+        assert config.pipeline_fit_time is not None
+        assert config.pipeline_fit_time > 0
 
     def test_pipeline_transform_time(self):
         config = DataConfig(pipeline=self.pipeline_config_dict)
         config()
-        self.assertIsNotNone(config.pipeline_transform_time)
-        self.assertGreater(config.pipeline_transform_time, 0)
+        assert config.pipeline_transform_time is not None
+        assert config.pipeline_transform_time > 0
 
     def test_pipeline_selector_initialization(self):
         config = DataConfig(pipeline=self.pipeline_selector_dict)
@@ -166,15 +165,15 @@ class TestDataConfig(unittest.TestCase):
             pipeline,
             _,
         ) = config._init_pipeline()
-        self.assertIsInstance(pipeline, Pipeline)
-        self.assertIsInstance(pipeline.steps[0][1], ColumnTransformer)
+        assert isinstance(pipeline, Pipeline)
+        assert isinstance(pipeline.steps[0][1], ColumnTransformer)
         pipeline.fit(self.X_train, self.y_train)
-        self.assertEqual(pipeline.steps[0][0], "preprocess")
+        assert pipeline.steps[0][0] == "preprocess"
 
 
-class TestDataConfig(unittest.TestCase):
+class TestDataConfig:
     def test_invalid_score_split_raises(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             DataConfig(
                 dataset_name="make_classification",
                 data_params={"n_samples": 10, "n_features": 2},
@@ -207,14 +206,14 @@ class TestDataConfig(unittest.TestCase):
         y_train = cfg.y_train
         X_test = cfg.X_test
         y_test = cfg.y_test
-        self.assertIsInstance(X_train, pd.DataFrame)
-        self.assertIsInstance(y_train, pd.Series)
-        self.assertIsInstance(X_test, pd.DataFrame)
-        self.assertIsInstance(y_test, pd.Series)
-        self.assertEqual(len(X_train), len(y_train))
-        self.assertEqual(len(X_test), len(y_test))
+        assert isinstance(X_train, pd.DataFrame)
+        assert isinstance(y_train, pd.Series)
+        assert isinstance(X_test, pd.DataFrame)
+        assert isinstance(y_test, pd.Series)
+        assert len(X_train) == len(y_train)
+        assert len(X_test) == len(y_test)
         total = len(X_train) + len(X_test)
-        self.assertEqual(total, 100)
+        assert total == 100
 
     def test_private_max_samples_caps_loaded_dataset(self):
         with patch.dict("os.environ", {"DECKARD_TEST_MAX_SAMPLES": "40"}):
@@ -236,9 +235,9 @@ class TestDataConfig(unittest.TestCase):
 
             cfg()
 
-        self.assertEqual(len(cfg._X), 40)
-        self.assertEqual(len(cfg._y), 40)
-        self.assertEqual(len(cfg.X_train) + len(cfg.X_test), 40)
+        assert len(cfg._X) == 40
+        assert len(cfg._y) == 40
+        assert len(cfg.X_train) + len(cfg.X_test) == 40
 
     def test_scorer_none_skips_data_scoring(self):
         cfg = DataConfig(
@@ -253,9 +252,9 @@ class TestDataConfig(unittest.TestCase):
             scorer=None,
         )
         scores = cfg()
-        self.assertIn("data_load_time", scores)
-        self.assertIn("data_sample_time", scores)
-        self.assertNotIn("class_counts", scores)
+        assert "data_load_time" in scores
+        assert "data_sample_time" in scores
+        assert "class_counts" not in scores
 
     def test_presample_stage_does_not_override_score_split(self):
         cfg = DataConfig(
@@ -277,8 +276,8 @@ class TestDataConfig(unittest.TestCase):
             },
         )
         scores = cfg()
-        self.assertEqual(scores["test"]["n_samples"], len(cfg.y_test))
-        self.assertNotEqual(scores["test"]["n_samples"], len(cfg._y))
+        assert scores["test"]["n_samples"] == len(cfg.y_test)
+        assert scores["test"]["n_samples"] != len(cfg._y)
 
     def test_score_split_test_uses_test_split(self):
         captured = {}
@@ -307,8 +306,8 @@ class TestDataConfig(unittest.TestCase):
             },
         )
         cfg()
-        self.assertEqual(captured.get("mode"), "test")
-        self.assertNotIn("stage", captured)
+        assert captured.get("mode") == "test"
+        assert "stage" not in captured
 
     def test_make_regression_data_loading_and_sampling(self):
         cfg = DataConfig(
@@ -329,13 +328,13 @@ class TestDataConfig(unittest.TestCase):
         y_train = cfg.y_train
         X_test = cfg.X_test
         y_test = cfg.y_test
-        self.assertIsInstance(X_train, pd.DataFrame)
-        self.assertIsInstance(y_train, pd.Series)
-        self.assertIsInstance(X_test, pd.DataFrame)
-        self.assertIsInstance(y_test, pd.Series)
-        self.assertEqual(len(X_train), len(y_train))
-        self.assertEqual(len(X_test), len(y_test))
-        self.assertEqual(len(X_train) + len(X_test), 50)
+        assert isinstance(X_train, pd.DataFrame)
+        assert isinstance(y_train, pd.Series)
+        assert isinstance(X_test, pd.DataFrame)
+        assert isinstance(y_test, pd.Series)
+        assert len(X_train) == len(y_train)
+        assert len(X_test) == len(y_test)
+        assert len(X_train) + len(X_test) == 50
 
     def test_diabetes_data_loading_and_sampling(self):
         cfg = DataConfig(
@@ -350,13 +349,13 @@ class TestDataConfig(unittest.TestCase):
         y_train = cfg.y_train
         X_test = cfg.X_test
         y_test = cfg.y_test
-        self.assertIsInstance(X_train, pd.DataFrame)
-        self.assertIsInstance(y_train, pd.Series)
-        self.assertIsInstance(X_test, pd.DataFrame)
-        self.assertIsInstance(y_test, pd.Series)
-        self.assertEqual(len(X_train), len(y_train))
-        self.assertEqual(len(X_test), len(y_test))
-        self.assertEqual(len(X_train) + len(X_test), len(cfg._X))
+        assert isinstance(X_train, pd.DataFrame)
+        assert isinstance(y_train, pd.Series)
+        assert isinstance(X_test, pd.DataFrame)
+        assert isinstance(y_test, pd.Series)
+        assert len(X_train) == len(y_train)
+        assert len(X_test) == len(y_test)
+        assert len(X_train) + len(X_test) == len(cfg._X)
 
     def test_digits_data_loading_and_sampling(self):
         cfg = DataConfig(
@@ -371,19 +370,19 @@ class TestDataConfig(unittest.TestCase):
         y_train = cfg.y_train
         X_test = cfg.X_test
         y_test = cfg.y_test
-        self.assertIsInstance(X_train, pd.DataFrame)
-        self.assertIsInstance(y_train, pd.Series)
-        self.assertIsInstance(X_test, pd.DataFrame)
-        self.assertIsInstance(y_test, pd.Series)
-        self.assertEqual(len(X_train), len(y_train))
-        self.assertEqual(len(X_test), len(y_test))
-        self.assertEqual(len(X_train) + len(X_test), len(cfg._X))
+        assert isinstance(X_train, pd.DataFrame)
+        assert isinstance(y_train, pd.Series)
+        assert isinstance(X_test, pd.DataFrame)
+        assert isinstance(y_test, pd.Series)
+        assert len(X_train) == len(y_train)
+        assert len(X_test) == len(y_test)
+        assert len(X_train) + len(X_test) == len(cfg._X)
 
     def test_hash_method_is_consistent(self):
         cfg = self.basic_config()
         h1 = hash(cfg)
         h2 = hash(cfg)
-        self.assertEqual(h1, h2)
+        assert h1 == h2
 
     def test_split_data_loads_when_data_missing(self):
         cfg = DataConfig(
@@ -400,14 +399,14 @@ class TestDataConfig(unittest.TestCase):
         cfg._X = None
         cfg._y = None
         cfg.fit()
-        self.assertIsNotNone(cfg.X_train)
-        self.assertIsNotNone(cfg.y_train)
-        self.assertIsNotNone(cfg.X_test)
-        self.assertIsNotNone(cfg.y_test)
+        assert cfg.X_train is not None
+        assert cfg.y_train is not None
+        assert cfg.X_test is not None
+        assert cfg.y_test is not None
 
     def test_load_data_raises_not_implemented_for_unknown_dataset(self):
         cfg = DataConfig(dataset_name="unknown_dataset", data_params={})
-        with self.assertRaises(NotImplementedError):
+        with pytest.raises(NotImplementedError):
             cfg.load_dataset()
 
     @patch("deckard.data.base._load_optuna_studies_dataframe")
@@ -428,10 +427,10 @@ class TestDataConfig(unittest.TestCase):
             },
         )
         cfg.load_dataset()
-        self.assertIsInstance(cfg._X, pd.DataFrame)
-        self.assertIsInstance(cfg._y, pd.Series)
-        self.assertEqual(list(cfg._X.columns), ["params_alpha", "params_beta"])
-        self.assertEqual(len(cfg._y), 3)
+        assert isinstance(cfg._X, pd.DataFrame)
+        assert isinstance(cfg._y, pd.Series)
+        assert list(cfg._X.columns) == ["params_alpha", "params_beta"]
+        assert len(cfg._y) == 3
 
     @patch("deckard.data.base._load_optuna_studies_dataframe")
     def test_load_dataset_from_optuna_storage_forwards_query_options(
@@ -458,10 +457,10 @@ class TestDataConfig(unittest.TestCase):
         cfg.load_dataset()
 
         kwargs = mock_optuna_loader.call_args.kwargs
-        self.assertEqual(kwargs["study_names"], ["a", "b"])
-        self.assertEqual(kwargs["trial_number_range"], [0, 10])
-        self.assertEqual(kwargs["columns"], ["value", "params_alpha"])
-        self.assertEqual(kwargs["limit"], 5)
+        assert kwargs["study_names"] == ["a", "b"]
+        assert kwargs["trial_number_range"] == [0, 10]
+        assert kwargs["columns"] == ["value", "params_alpha"]
+        assert kwargs["limit"] == 5
 
     def test_load_data_raises_value_error_for_csv_without_target(self):
         import tempfile
@@ -473,7 +472,7 @@ class TestDataConfig(unittest.TestCase):
                 index=False,
             )
             cfg = DataConfig(dataset_name=str(csv_path), data_params={})
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 cfg.load_dataset()
 
     def test_call_returns_expected_shapes_for_make_classification(self):
@@ -496,13 +495,13 @@ class TestDataConfig(unittest.TestCase):
         y_train = cfg.y_train
         X_test = cfg.X_test
         y_test = cfg.y_test
-        self.assertEqual(X_train.shape[0], 30)
-        self.assertEqual(X_test.shape[0], 30)
-        self.assertEqual(X_train.shape[1], 6)
-        self.assertEqual(X_test.shape[1], 6)
-        self.assertEqual(len(X_train), len(y_train))
-        self.assertEqual(len(X_test), len(y_test))
-        self.assertEqual(len(X_train) + len(X_test), 60)
+        assert X_train.shape[0] == 30
+        assert X_test.shape[0] == 30
+        assert X_train.shape[1] == 6
+        assert X_test.shape[1] == 6
+        assert len(X_train) == len(y_train)
+        assert len(X_test) == len(y_test)
+        assert len(X_train) + len(X_test) == 60
 
     def test_save_self(self):
         import tempfile
@@ -518,10 +517,10 @@ class TestDataConfig(unittest.TestCase):
                     "score_file": str(score_path),
                 },
             )
-            self.assertTrue(data_path.exists())
-            self.assertTrue(score_path.exists())
-            self.assertIn("data_load_time", results)
-            self.assertIn("data_sample_time", results)
+            assert data_path.exists()
+            assert score_path.exists()
+            assert "data_load_time" in results
+            assert "data_sample_time" in results
 
     def test_load_self(self):
         import tempfile
@@ -531,7 +530,7 @@ class TestDataConfig(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             data_path = Path(tmpdirname) / "data.pkl"
             cfg(files={"data_file": str(data_path)})
-            self.assertTrue(cfg._X is not None)
+            assert cfg._X is not None
 
     def test_save_score_dict(self):
         cfg = self.basic_config()
@@ -543,11 +542,11 @@ class TestDataConfig(unittest.TestCase):
             cfg.save_scores(cfg.score_dict, score_path)
             loaded_scores = cfg.load_scores(score_path)
             cfg(files={"score_file": str(score_path)})
-            self.assertTrue(score_path.exists())
-            self.assertIn("mutual_info", loaded_scores)
-            self.assertIn("chisquare", loaded_scores)
-            self.assertAlmostEqual(loaded_scores["mutual_info"], 0.95)
-            self.assertAlmostEqual(loaded_scores["chisquare"], 0.9)
+            assert score_path.exists()
+            assert "mutual_info" in loaded_scores
+            assert "chisquare" in loaded_scores
+            assert round(abs(loaded_scores["mutual_info"]-0.95), 7) == 0
+            assert round(abs(loaded_scores["chisquare"]-0.9), 7) == 0
 
     def test_save_data_file(self):
         import tempfile
@@ -557,13 +556,13 @@ class TestDataConfig(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             data_path = Path(tmpdirname) / "data.pkl"
             cfg(files={"data_file": str(data_path)})
-            self.assertTrue(data_path.exists())
+            assert data_path.exists()
             # Load the data back and verify
             cfg = cfg.load(filepath=str(data_path))
-            self.assertIsNotNone(cfg._X)
-            self.assertIsNotNone(cfg._y)
+            assert cfg._X is not None
+            assert cfg._y is not None
 
-    @unittest.skipUnless(HAS_LIFELINES, "lifelines is required for this test")
+    @pytest.mark.skipif(not HAS_LIFELINES, "lifelines is required for this test")
     def test_load_lifelines_lung_dataset(self):
         cfg = DataConfig(
             dataset_name="lung",
@@ -572,10 +571,10 @@ class TestDataConfig(unittest.TestCase):
             stratify=False,
         )
         cfg.load_dataset()
-        self.assertIn("time", cfg.X.columns)
-        self.assertEqual(len(cfg.X), len(cfg.y))
+        assert "time" in cfg.X.columns
+        assert len(cfg.X) == len(cfg.y)
 
-    @unittest.skipUnless(HAS_LIFELINES, "lifelines is required for this test")
+    @pytest.mark.skipif(not HAS_LIFELINES, "lifelines is required for this test")
     def test_load_lifelines_leukemia_dataset(self):
         cfg = DataConfig(
             dataset_name="leukemia",
@@ -584,10 +583,10 @@ class TestDataConfig(unittest.TestCase):
             stratify=False,
         )
         cfg.load_dataset()
-        self.assertGreater(len(cfg.X), 0)
-        self.assertEqual(len(cfg.X), len(cfg.y))
+        assert len(cfg.X) > 0
+        assert len(cfg.X) == len(cfg.y)
 
-    @unittest.skipUnless(HAS_LIFELINES, "lifelines is required for this test")
+    @pytest.mark.skipif(not HAS_LIFELINES, "lifelines is required for this test")
     def test_load_lifelines_diabetes_dataset_with_prefix(self):
         cfg = DataConfig(
             dataset_name="lifelines_diabetes",
@@ -596,18 +595,16 @@ class TestDataConfig(unittest.TestCase):
             stratify=False,
         )
         cfg.load_dataset()
-        self.assertGreater(len(cfg.X), 0)
-        self.assertEqual(len(cfg.X), len(cfg.y))
+        assert len(cfg.X) > 0
+        assert len(cfg.X) == len(cfg.y)
 
     def test_hash_stable_after_call_for_data_config(self):
         cfg = self.basic_config()
         original_hash = hash(cfg)
         cfg()
-        self.assertEqual(
-            original_hash,
-            hash(cfg),
-            msg="Hash changed after call for DataConfig",
-        )
+        assert original_hash == \
+            hash(cfg), \
+            "Hash changed after call for DataConfig"
 
 
 try:
@@ -647,8 +644,8 @@ class ScorePlugin:
         return {"plugin_metric": float(len(scores))}
 
 
-class TestFairlearnDataConfig(unittest.TestCase):
-    def setUp(self):
+class TestFairlearnDataConfig:
+    def setup_method(self):
         self.pipeline_config_dict = {
             "imputer": {
                 "name": "sklearn.impute.SimpleImputer",
@@ -706,17 +703,17 @@ class TestFairlearnDataConfig(unittest.TestCase):
 
     def test_pipelineconfig_initialization(self):
         config = DataConfig(pipeline=self.pipeline_config_dict)
-        self.assertIsInstance(config.pipeline, dict)
-        self.assertIn("imputer", config.pipeline)
-        self.assertIn("scaler", config.pipeline)
+        assert isinstance(config.pipeline, dict)
+        assert "imputer" in config.pipeline
+        assert "scaler" in config.pipeline
 
     def test_pipeline_initialization(self):
         config = DataConfig(pipeline=self.pipeline_config_dict)
         pipeline, _ = config._init_pipeline()
-        self.assertIsInstance(pipeline, Pipeline)
-        self.assertEqual(len(pipeline.steps), 2)
-        self.assertEqual(pipeline.steps[0][0], "imputer")
-        self.assertEqual(pipeline.steps[1][0], "scaler")
+        assert isinstance(pipeline, Pipeline)
+        assert len(pipeline.steps) == 2
+        assert pipeline.steps[0][0] == "imputer"
+        assert pipeline.steps[1][0] == "scaler"
 
     def test_pipeline_fit_and_transform(self):
         config = DataConfig(
@@ -727,22 +724,22 @@ class TestFairlearnDataConfig(unittest.TestCase):
         config._y = self.y_train
         config.data_load_time = 3
         config()
-        self.assertEqual(config.X_train.shape, (8, 2))
-        self.assertEqual(config.X_test.shape, (2, 2))
-        self.assertFalse(self.X_train.equals(config.X_train))
-        self.assertFalse(self.X_test.equals(config.X_test))
+        assert config.X_train.shape == (8, 2)
+        assert config.X_test.shape == (2, 2)
+        assert not self.X_train.equals(config.X_train)
+        assert not self.X_test.equals(config.X_test)
 
     def test_pipeline_fit_time(self):
         config = DataConfig(pipeline=self.pipeline_config_dict)
         config()
-        self.assertIsNotNone(config.pipeline_fit_time)
-        self.assertGreater(config.pipeline_fit_time, 0)
+        assert config.pipeline_fit_time is not None
+        assert config.pipeline_fit_time > 0
 
     def test_pipeline_transform_time(self):
         config = DataConfig(pipeline=self.pipeline_config_dict)
         config()
-        self.assertIsNotNone(config.pipeline_transform_time)
-        self.assertGreater(config.pipeline_transform_time, 0)
+        assert config.pipeline_transform_time is not None
+        assert config.pipeline_transform_time > 0
 
     def test_pipeline_selector_initialization(self):
         config = DataConfig(pipeline=self.pipeline_selector_dict)
@@ -750,13 +747,13 @@ class TestFairlearnDataConfig(unittest.TestCase):
             pipeline,
             _,
         ) = config._init_pipeline()
-        self.assertIsInstance(pipeline, Pipeline)
-        self.assertIsInstance(pipeline.steps[0][1], ColumnTransformer)
+        assert isinstance(pipeline, Pipeline)
+        assert isinstance(pipeline.steps[0][1], ColumnTransformer)
         pipeline.fit(self.X_train, self.y_train)
-        self.assertEqual(pipeline.steps[0][0], "preprocess")
+        assert pipeline.steps[0][0] == "preprocess"
 
 
-class TestDataConfigAdditional(unittest.TestCase):
+class TestDataConfigAdditional:
 
     def basic_config(self):
         # Minimal config for DataConfig
@@ -783,14 +780,14 @@ class TestDataConfigAdditional(unittest.TestCase):
         y_train = cfg.y_train
         X_test = cfg.X_test
         y_test = cfg.y_test
-        self.assertIsInstance(X_train, pd.DataFrame)
-        self.assertIsInstance(y_train, pd.Series)
-        self.assertIsInstance(X_test, pd.DataFrame)
-        self.assertIsInstance(y_test, pd.Series)
-        self.assertEqual(len(X_train), len(y_train))
-        self.assertEqual(len(X_test), len(y_test))
+        assert isinstance(X_train, pd.DataFrame)
+        assert isinstance(y_train, pd.Series)
+        assert isinstance(X_test, pd.DataFrame)
+        assert isinstance(y_test, pd.Series)
+        assert len(X_train) == len(y_train)
+        assert len(X_test) == len(y_test)
         total = len(X_train) + len(X_test)
-        self.assertEqual(total, 100)
+        assert total == 100
 
     def test_make_regression_data_loading_and_sampling(self):
         cfg = DataConfig(
@@ -811,13 +808,13 @@ class TestDataConfigAdditional(unittest.TestCase):
         y_train = cfg.y_train
         X_test = cfg.X_test
         y_test = cfg.y_test
-        self.assertIsInstance(X_train, pd.DataFrame)
-        self.assertIsInstance(y_train, pd.Series)
-        self.assertIsInstance(X_test, pd.DataFrame)
-        self.assertIsInstance(y_test, pd.Series)
-        self.assertEqual(len(X_train), len(y_train))
-        self.assertEqual(len(X_test), len(y_test))
-        self.assertEqual(len(X_train) + len(X_test), 50)
+        assert isinstance(X_train, pd.DataFrame)
+        assert isinstance(y_train, pd.Series)
+        assert isinstance(X_test, pd.DataFrame)
+        assert isinstance(y_test, pd.Series)
+        assert len(X_train) == len(y_train)
+        assert len(X_test) == len(y_test)
+        assert len(X_train) + len(X_test) == 50
 
     def test_diabetes_data_loading_and_sampling(self):
         cfg = DataConfig(
@@ -832,13 +829,13 @@ class TestDataConfigAdditional(unittest.TestCase):
         y_train = cfg.y_train
         X_test = cfg.X_test
         y_test = cfg.y_test
-        self.assertIsInstance(X_train, pd.DataFrame)
-        self.assertIsInstance(y_train, pd.Series)
-        self.assertIsInstance(X_test, pd.DataFrame)
-        self.assertIsInstance(y_test, pd.Series)
-        self.assertEqual(len(X_train), len(y_train))
-        self.assertEqual(len(X_test), len(y_test))
-        self.assertEqual(len(X_train) + len(X_test), len(cfg._X))
+        assert isinstance(X_train, pd.DataFrame)
+        assert isinstance(y_train, pd.Series)
+        assert isinstance(X_test, pd.DataFrame)
+        assert isinstance(y_test, pd.Series)
+        assert len(X_train) == len(y_train)
+        assert len(X_test) == len(y_test)
+        assert len(X_train) + len(X_test) == len(cfg._X)
 
     def test_digits_data_loading_and_sampling(self):
         cfg = DataConfig(
@@ -853,19 +850,19 @@ class TestDataConfigAdditional(unittest.TestCase):
         y_train = cfg.y_train
         X_test = cfg.X_test
         y_test = cfg.y_test
-        self.assertIsInstance(X_train, pd.DataFrame)
-        self.assertIsInstance(y_train, pd.Series)
-        self.assertIsInstance(X_test, pd.DataFrame)
-        self.assertIsInstance(y_test, pd.Series)
-        self.assertEqual(len(X_train), len(y_train))
-        self.assertEqual(len(X_test), len(y_test))
-        self.assertEqual(len(X_train) + len(X_test), len(cfg._X))
+        assert isinstance(X_train, pd.DataFrame)
+        assert isinstance(y_train, pd.Series)
+        assert isinstance(X_test, pd.DataFrame)
+        assert isinstance(y_test, pd.Series)
+        assert len(X_train) == len(y_train)
+        assert len(X_test) == len(y_test)
+        assert len(X_train) + len(X_test) == len(cfg._X)
 
     def test_hash_method_is_consistent(self):
         cfg = self.basic_config()
         h1 = hash(cfg)
         h2 = hash(cfg)
-        self.assertEqual(h1, h2)
+        assert h1 == h2
 
     def test_split_data_loads_when_data_missing(self):
         cfg = DataConfig(
@@ -882,14 +879,14 @@ class TestDataConfigAdditional(unittest.TestCase):
         cfg._X = None
         cfg._y = None
         cfg.fit()
-        self.assertIsNotNone(cfg.X_train)
-        self.assertIsNotNone(cfg.y_train)
-        self.assertIsNotNone(cfg.X_test)
-        self.assertIsNotNone(cfg.y_test)
+        assert cfg.X_train is not None
+        assert cfg.y_train is not None
+        assert cfg.X_test is not None
+        assert cfg.y_test is not None
 
     def test_load_data_raises_not_implemented_for_unknown_dataset(self):
         cfg = DataConfig(dataset_name="unknown_dataset", data_params={})
-        with self.assertRaises(NotImplementedError):
+        with pytest.raises(NotImplementedError):
             cfg.load_dataset()
 
     def test_load_data_raises_value_error_for_csv_without_target(self):
@@ -902,7 +899,7 @@ class TestDataConfigAdditional(unittest.TestCase):
                 index=False,
             )
             cfg = DataConfig(dataset_name=str(csv_path), data_params={})
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 cfg.load_dataset()
 
     def test_call_returns_expected_shapes_for_make_classification(self):
@@ -925,13 +922,13 @@ class TestDataConfigAdditional(unittest.TestCase):
         y_train = cfg.y_train
         X_test = cfg.X_test
         y_test = cfg.y_test
-        self.assertEqual(X_train.shape[0], 30)
-        self.assertEqual(X_test.shape[0], 30)
-        self.assertEqual(X_train.shape[1], 6)
-        self.assertEqual(X_test.shape[1], 6)
-        self.assertEqual(len(X_train), len(y_train))
-        self.assertEqual(len(X_test), len(y_test))
-        self.assertEqual(len(X_train) + len(X_test), 60)
+        assert X_train.shape[0] == 30
+        assert X_test.shape[0] == 30
+        assert X_train.shape[1] == 6
+        assert X_test.shape[1] == 6
+        assert len(X_train) == len(y_train)
+        assert len(X_test) == len(y_test)
+        assert len(X_train) + len(X_test) == 60
 
     def test_save_self(self):
         import tempfile
@@ -947,10 +944,10 @@ class TestDataConfigAdditional(unittest.TestCase):
                     "score_file": str(score_path),
                 },
             )
-            self.assertTrue(data_path.exists())
-            self.assertTrue(score_path.exists())
-            self.assertIn("data_load_time", results)
-            self.assertIn("data_sample_time", results)
+            assert data_path.exists()
+            assert score_path.exists()
+            assert "data_load_time" in results
+            assert "data_sample_time" in results
 
     def test_load_self(self):
         import tempfile
@@ -960,7 +957,7 @@ class TestDataConfigAdditional(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             data_path = Path(tmpdirname) / "data.pkl"
             cfg(files={"data_file": str(data_path)})
-            self.assertTrue(cfg._X is not None)
+            assert cfg._X is not None
 
     def test_save_score_dict(self):
         cfg = self.basic_config()
@@ -972,11 +969,11 @@ class TestDataConfigAdditional(unittest.TestCase):
             cfg.save_scores(cfg.score_dict, score_path)
             loaded_scores = cfg.load_scores(score_path)
             cfg(files={"score_file": str(score_path)})
-            self.assertTrue(score_path.exists())
-            self.assertIn("mutual_info", loaded_scores)
-            self.assertIn("chisquare", loaded_scores)
-            self.assertAlmostEqual(loaded_scores["mutual_info"], 0.95)
-            self.assertAlmostEqual(loaded_scores["chisquare"], 0.9)
+            assert score_path.exists()
+            assert "mutual_info" in loaded_scores
+            assert "chisquare" in loaded_scores
+            assert round(abs(loaded_scores["mutual_info"]-0.95), 7) == 0
+            assert round(abs(loaded_scores["chisquare"]-0.9), 7) == 0
 
     def test_save_data_file(self):
         import tempfile
@@ -986,11 +983,11 @@ class TestDataConfigAdditional(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             data_path = Path(tmpdirname) / "data.pkl"
             cfg(files={"data_file": str(data_path)})
-            self.assertTrue(data_path.exists())
+            assert data_path.exists()
             # Load the data back and verify
             cfg = cfg.load(filepath=str(data_path))
-            self.assertIsNotNone(cfg._X)
-            self.assertIsNotNone(cfg._y)
+            assert cfg._X is not None
+            assert cfg._y is not None
 
     def test_multiple_plugins_run_in_order(self):
         events = []
@@ -1023,7 +1020,7 @@ class TestDataConfigAdditional(unittest.TestCase):
             "p1:before_score",
             "p2:before_score",
         ]
-        self.assertEqual(events, expected)
+        assert events == expected
 
     def test_plugin_can_augment_scores(self):
         cfg = DataConfig(
@@ -1039,12 +1036,6 @@ class TestDataConfigAdditional(unittest.TestCase):
         )
 
         scores = cfg()
-        self.assertIn("plugin_metric", scores)
+        assert "plugin_metric" in scores
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
-if __name__ == "__main__":
-    unittest.main()

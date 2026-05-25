@@ -2,7 +2,6 @@ import os
 import subprocess
 import sys
 import tempfile
-import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -62,7 +61,7 @@ class DummyPoisonAttack:
         return x_poison, y_poison
 
 
-class TestKFoldExperiment(unittest.TestCase):
+class TestKFoldExperiment:
     """ExperimentConfig should loop over all folds when sampler='fold'."""
 
     N_FOLDS = 3
@@ -99,29 +98,25 @@ class TestKFoldExperiment(unittest.TestCase):
         exp = self._make_exp()
         scores = exp()
         for k in range(self.N_FOLDS):
-            self.assertIn(
-                f"accuracy_fold_{k}",
-                scores,
-                f"missing accuracy_fold_{k}",
-            )
+            assert f"accuracy_fold_{k}" in \
+                scores, \
+                f"missing accuracy_fold_{k}"
 
     def test_kfold_mean_key_present(self):
         exp = self._make_exp()
         scores = exp()
-        self.assertIn("accuracy", scores)
+        assert "accuracy" in scores
 
     def test_mean_equals_average_of_folds(self):
         exp = self._make_exp()
         scores = exp()
         fold_accs = [scores[f"accuracy_fold_{k}"] for k in range(self.N_FOLDS)]
-        self.assertAlmostEqual(
-            scores["accuracy"],
+        assert scores["accuracy"] == pytest.approx(
             float(np.mean(fold_accs)),
-            places=10,
-        )
+            abs=1e-10)
 
 
-class TestShuffleExperiment(unittest.TestCase):
+class TestShuffleExperiment:
     """ExperimentConfig should loop over all shuffle splits when sampler='shuffle'."""
 
     N_SPLITS = 3
@@ -159,43 +154,39 @@ class TestShuffleExperiment(unittest.TestCase):
         exp = self._make_exp()
         scores = exp()
         for k in range(self.N_SPLITS):
-            self.assertIn(
-                f"accuracy_split_{k}",
-                scores,
-                f"missing accuracy_split_{k}",
-            )
+            assert f"accuracy_split_{k}" in \
+                scores, \
+                f"missing accuracy_split_{k}"
 
     def test_shuffle_mean_key_present(self):
         exp = self._make_exp()
         scores = exp()
-        self.assertIn("accuracy", scores)
+        assert "accuracy" in scores
 
     def test_mean_equals_average_of_splits(self):
         exp = self._make_exp()
         scores = exp()
         split_accs = [scores[f"accuracy_split_{k}"] for k in range(self.N_SPLITS)]
-        self.assertAlmostEqual(
-            scores["accuracy"],
+        assert scores["accuracy"] == pytest.approx(
             float(np.mean(split_accs)),
-            places=10,
-        )
+            abs=1e-10)
 
 
-class TestExperimentValidationScoring(unittest.TestCase):
+class TestExperimentValidationScoring:
     def test_call_delegates_to_run(self):
         exp = ExperimentConfig.__new__(ExperimentConfig)
         exp.run = lambda: {"ok": 1.0}
-        self.assertEqual(exp(), {"ok": 1.0})
+        assert exp() == {"ok": 1.0}
 
     def test_propagation_of_modes_to_children(self):
         exp = self._make_exp(score_mode="test")
         exp._propagate_score_mode()
-        self.assertEqual(exp.data.score_mode, "test")
-        self.assertEqual(exp.model.score_mode, "test")
+        assert exp.data.score_mode == "test"
+        assert exp.model.score_mode == "test"
         exp = self._make_exp(score_mode="val")
         exp._propagate_score_mode()
-        self.assertEqual(exp.data.score_mode, "val")
-        self.assertEqual(exp.model.score_mode, "val")
+        assert exp.data.score_mode == "val"
+        assert exp.model.score_mode == "val"
 
     def _make_exp(self, *, val_size=0.1, evaluation_mode="standard", score_mode=None):
         return ExperimentConfig(
@@ -231,29 +222,29 @@ class TestExperimentValidationScoring(unittest.TestCase):
     def test_tuning_mode_emits_test_scores(self):
         exp = self._make_exp(evaluation_mode="tuning")
         scores = exp()
-        self.assertIn("accuracy", scores)
-        self.assertNotIn("validation_accuracy", scores)
-        self.assertNotIn("training_accuracy", scores)
+        assert "accuracy" in scores
+        assert "validation_accuracy" not in scores
+        assert "training_accuracy" not in scores
 
     def test_report_mode_emits_validation_scores(self):
         exp = self._make_exp(evaluation_mode="report", score_mode=None)
         scores = exp()
-        self.assertIn("train", scores)
-        self.assertIn("test", scores)
-        self.assertIn("val", scores)
-        self.assertIn("accuracy", scores["train"])
-        self.assertIn("accuracy", scores["test"])
-        self.assertIn("accuracy", scores["val"])
+        assert "train" in scores
+        assert "test" in scores
+        assert "val" in scores
+        assert "accuracy" in scores["train"]
+        assert "accuracy" in scores["test"]
+        assert "accuracy" in scores["val"]
 
     def test_report_mode_without_validation_split_raises(self):
         exp = self._make_exp(val_size=None, evaluation_mode="report", score_mode=None)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             exp()
 
     def test_tuning_mode_without_validation_split_uses_test_scores(self):
         exp = self._make_exp(val_size=None, evaluation_mode="tuning")
         scores = exp()
-        self.assertIn("accuracy", scores)
+        assert "accuracy" in scores
 
 
 class _FakeDetector:
@@ -270,7 +261,7 @@ class _FakeDetector:
         return self.score_dict
 
 
-class TestExperimentDetectorPhase(unittest.TestCase):
+class TestExperimentDetectorPhase:
     def test_detector_phase_runs_after_attack(self):
         exp = ExperimentConfig(
             data=DataConfig(
@@ -305,11 +296,11 @@ class TestExperimentDetectorPhase(unittest.TestCase):
 
         scores = exp()
 
-        self.assertIn("detector_accuracy", scores)
-        self.assertIn("detector_n", scores)
+        assert "detector_accuracy" in scores
+        assert "detector_n" in scores
 
 
-class TestPoisoningExperimentIntegration(unittest.TestCase):
+class TestPoisoningExperimentIntegration:
     def test_poisoning_experiment_emits_benign_and_poisoned_accuracy(self):
         exp = ExperimentConfig(
             data=DataConfig(
@@ -354,8 +345,8 @@ class TestPoisoningExperimentIntegration(unittest.TestCase):
             mocked_resolve.side_effect = _resolve
             scores = exp()
 
-        self.assertIn("benign_accuracy", scores)
-        self.assertIn("poisoned_accuracy", scores)
+        assert "benign_accuracy" in scores
+        assert "poisoned_accuracy" in scores
 
     def test_deckard_optimize_help_smoke(self):
         examples_dir = Path(__file__).resolve().parents[2] / "examples" / "sklearn"
@@ -372,7 +363,7 @@ class TestPoisoningExperimentIntegration(unittest.TestCase):
             timeout=60,
             check=False,
         )
-        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        assert result.returncode == 0, result.stderr
 
     def test_single_pass_with_attack_runs_experiment_scorer_once(self):
         exp = ExperimentConfig(
@@ -435,14 +426,14 @@ class TestPoisoningExperimentIntegration(unittest.TestCase):
 # ── _file_resolver ───────────────────────────────────────────────────────────
 
 
-class TestFileResolver(unittest.TestCase):
-    def setUp(self):
+class TestFileResolver:
+    def setup_method(self):
         self.tmpdir = tempfile.mkdtemp()
         # Set DECKARD_CONFIG_DIR to tmpdir so the resolver finds files there
         self._orig_env = os.environ.get("DECKARD_CONFIG_DIR")
         os.environ["DECKARD_CONFIG_DIR"] = self.tmpdir
 
-    def tearDown(self):
+    def teardown_method(self):
         if self._orig_env is None:
             os.environ.pop("DECKARD_CONFIG_DIR", None)
         else:
@@ -454,7 +445,7 @@ class TestFileResolver(unittest.TestCase):
         return p
 
     def test_empty_arg_raises(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             _file_resolver("")
 
     def test_file_not_found_raises(self):
@@ -464,7 +455,7 @@ class TestFileResolver(unittest.TestCase):
         orig = _mod.DECKARD_CONFIG_DIR
         _mod.DECKARD_CONFIG_DIR = self.tmpdir
         try:
-            with self.assertRaises(FileNotFoundError):
+            with pytest.raises(FileNotFoundError):
                 _file_resolver("does_not_exist.yaml")
         finally:
             _mod.DECKARD_CONFIG_DIR = orig
@@ -477,7 +468,7 @@ class TestFileResolver(unittest.TestCase):
         try:
             self._write_yaml("test.yaml", "a: 1\nb: 2\n")
             result = _file_resolver("test.yaml")
-            self.assertEqual(OmegaConf.to_container(result)["a"], 1)
+            assert OmegaConf.to_container(result)["a"] == 1
         finally:
             _mod.DECKARD_CONFIG_DIR = orig
 
@@ -490,7 +481,7 @@ class TestFileResolver(unittest.TestCase):
             self._write_yaml("config.yaml", "model:\n  type: rf\n  n_estimators: 10\n")
             result = _file_resolver("config.yaml:model")
             container = OmegaConf.to_container(result)
-            self.assertEqual(container["type"], "rf")
+            assert container["type"] == "rf"
         finally:
             _mod.DECKARD_CONFIG_DIR = orig
 
@@ -501,7 +492,7 @@ class TestFileResolver(unittest.TestCase):
         _mod.DECKARD_CONFIG_DIR = self.tmpdir
         try:
             self._write_yaml("cfg.yaml", "a: 1\n")
-            with self.assertRaises(KeyError):
+            with pytest.raises(KeyError):
                 _file_resolver("cfg.yaml:nonexistent.key")
         finally:
             _mod.DECKARD_CONFIG_DIR = orig
@@ -510,21 +501,21 @@ class TestFileResolver(unittest.TestCase):
 # ── _merge_resolver ──────────────────────────────────────────────────────────
 
 
-class TestMergeResolver(unittest.TestCase):
+class TestMergeResolver:
     def test_merge_two_dicts(self):
         a = OmegaConf.create({"x": 1, "y": 2})
         b = OmegaConf.create({"z": 3, "y": 99})
         result = _merge_resolver(a, b)
         container = OmegaConf.to_container(result)
-        self.assertEqual(container["x"], 1)
-        self.assertEqual(container["y"], 99)
-        self.assertEqual(container["z"], 3)
+        assert container["x"] == 1
+        assert container["y"] == 99
+        assert container["z"] == 3
 
     def test_merge_single_dict(self):
         a = OmegaConf.create({"a": 42})
         result = _merge_resolver(a)
         container = OmegaConf.to_container(result)
-        self.assertEqual(container["a"], 42)
+        assert container["a"] == 42
 
 
 # ── DataConfigResolutionMixin ─────────────────────────────────────────────────
@@ -538,8 +529,8 @@ class _TestMixin(DataConfigResolutionMixin):
         return None
 
 
-class TestDataConfigResolutionMixin(unittest.TestCase):
-    def setUp(self):
+class TestDataConfigResolutionMixin:
+    def setup_method(self):
         self.mixin = _TestMixin()
 
     def test_data_to_dict_with_dictconfig(self):
@@ -551,12 +542,12 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
             },
         )
         result = self.mixin._data_to_dict(dc)
-        self.assertIsInstance(result, dict)
+        assert isinstance(result, dict)
 
     def test_data_to_dict_with_plain_dict(self):
         d = {"dataset_name": "make_regression", "classifier": False}
         result = self.mixin._data_to_dict(d)
-        self.assertEqual(result, d)
+        assert result == d
 
     def test_data_to_dict_with_yaml_path(self):
         yaml_text = (
@@ -568,11 +559,11 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             p = Path(td) / "data.yaml"
             p.write_text(yaml_text)
-            with self.assertRaises(Exception):
+            with pytest.raises(Exception):
                 self.mixin._data_to_dict(str(p))
 
     def test_data_to_dict_invalid_type_raises(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             self.mixin._data_to_dict(12345)
 
     def test_data_to_dict_not_dict_result_raises(self):
@@ -585,7 +576,7 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
                 return "not_a_dict"
 
         obj = BadBase()
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             self.mixin._data_to_dict(obj)
 
     # @pytest.importorskip("anjana")
@@ -609,12 +600,12 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
 
         data_dict = {"pipeline": {}}
         cls = self.mixin._select_data_cls(data_dict)
-        self.assertIs(cls, DataConfig)
+        assert cls is DataConfig
 
     def test_select_data_cls_plain(self):
         data_dict = {"dataset_name": "make_classification", "classifier": True}
         cls = self.mixin._select_data_cls(data_dict)
-        self.assertIs(cls, DataConfig)
+        assert cls is DataConfig
 
     def test_resolve_data_config_with_data_config_passthrough(self):
         class _Exp(DataConfigResolutionMixin, BaseConfig):
@@ -625,7 +616,7 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
         exp = _Exp()
         exp.data = dc
         result = exp._resolve_data_config()
-        self.assertIs(result, dc)
+        assert result is dc
 
     def test_resolve_data_config_target_resolves_wrong_type_raises(self):
         class _Exp(DataConfigResolutionMixin, BaseConfig):
@@ -634,7 +625,7 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
 
         exp = _Exp()
         exp.data = OmegaConf.create({"_target_": "builtins.dict"})
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             exp._resolve_data_config()
 
     def test_sklearn_pipeline_yaml_compose_instantiates_pipeline_configs(self):
@@ -655,7 +646,7 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
         ):
             with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
                 cfg = compose(config_name=config_name)
-            self.assertIsInstance(instantiate(cfg), DataConfig)
+            assert isinstance(instantiate(cfg), DataConfig)
 
     def test_pytorch_pipeline_yaml_compose_instantiates_pipeline_config(self):
         pytest.importorskip("torch")
@@ -672,13 +663,13 @@ class TestDataConfigResolutionMixin(unittest.TestCase):
         )
         with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
             cfg = compose(config_name="pytorch_pipeline")
-        self.assertIsInstance(instantiate(cfg), DataConfig)
+        assert isinstance(instantiate(cfg), DataConfig)
 
 
 # ── ExperimentConfig.set_random_seed ─────────────────────────────────────────
 
 
-class TestSetRandomSeed(unittest.TestCase):
+class TestSetRandomSeed:
     def _make_base_exp(self, library="sklearn"):
         return ExperimentConfig(
             data=DataConfig(
@@ -708,7 +699,7 @@ class TestSetRandomSeed(unittest.TestCase):
         try:
             import torch  # noqa: F401
         except ImportError:
-            self.skipTest("torch not available")
+            pytest.skip("torch not available")
         exp = self._make_base_exp(library="pytorch")
         # Should not raise
         exp.set_random_seed()
@@ -721,20 +712,20 @@ class TestSetRandomSeed(unittest.TestCase):
 
             # If tensorflow is available, this won't raise
         except ImportError:
-            with self.assertRaises(Exception):
+            with pytest.raises(Exception):
                 exp.set_random_seed()
 
     def test_set_random_seed_truly_unsupported_library_raises(self):
         exp = self._make_base_exp()
         exp.library = "not_a_supported_library"
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             exp.set_random_seed()
 
 
 # ── ExperimentConfig.__post_init__ model input types ─────────────────────────
 
 
-class TestExperimentPostInitModelTypes(unittest.TestCase):
+class TestExperimentPostInitModelTypes:
     """Test that __post_init__ correctly handles different model input types."""
 
     def _data(self):
@@ -764,7 +755,7 @@ class TestExperimentPostInitModelTypes(unittest.TestCase):
             model=model_dict,
             files=FileConfig(),
         )
-        self.assertIsInstance(exp.model, ModelConfig)
+        assert isinstance(exp.model, ModelConfig)
 
     def test_model_as_dictconfig(self):
         model_cfg = OmegaConf.create(
@@ -780,7 +771,7 @@ class TestExperimentPostInitModelTypes(unittest.TestCase):
             model=model_cfg,
             files=FileConfig(),
         )
-        self.assertIsInstance(exp.model, ModelConfig)
+        assert isinstance(exp.model, ModelConfig)
 
     def test_experiment_name_hash_generated(self):
         exp = ExperimentConfig(
@@ -794,8 +785,8 @@ class TestExperimentPostInitModelTypes(unittest.TestCase):
             files=FileConfig(),
         )
         # Should be replaced with an MD5 hash string
-        self.assertNotEqual(exp.experiment_name, "{hash}")
-        self.assertEqual(len(exp.experiment_name), 32)
+        assert exp.experiment_name != "{hash}"
+        assert len(exp.experiment_name) == 32
 
     def test_attack_as_dict(self):
         attack_dict = {
@@ -813,7 +804,7 @@ class TestExperimentPostInitModelTypes(unittest.TestCase):
             attack=attack_dict,
             files=FileConfig(),
         )
-        self.assertIsInstance(exp.attack, AttackConfig)
+        assert isinstance(exp.attack, AttackConfig)
 
     def test_attack_as_dictconfig(self):
         attack_cfg = OmegaConf.create(
@@ -834,13 +825,13 @@ class TestExperimentPostInitModelTypes(unittest.TestCase):
             attack=attack_cfg,
             files=FileConfig(),
         )
-        self.assertIsInstance(exp.attack, AttackConfig)
+        assert isinstance(exp.attack, AttackConfig)
 
 
 # ── ExperimentConfig.__call__ score file paths ───────────────────────────────
 
 
-class TestExperimentScoreFileHandling(unittest.TestCase):
+class TestExperimentScoreFileHandling:
     def _make_exp(self, score_file=None):
         files = FileConfig(score_file=score_file) if score_file else FileConfig()
         return ExperimentConfig(
@@ -870,14 +861,14 @@ class TestExperimentScoreFileHandling(unittest.TestCase):
     def test_no_score_file_runs_without_saving(self):
         exp = self._make_exp()
         scores = exp()
-        self.assertIsInstance(scores, dict)
+        assert isinstance(scores, dict)
 
     def test_score_file_is_created(self):
         with tempfile.TemporaryDirectory() as td:
             score_path = str(Path(td) / "scores.json")
             exp = self._make_exp(score_file=score_path)
             exp()
-            self.assertTrue(Path(score_path).exists())
+            assert Path(score_path).exists()
 
     def test_existing_score_file_is_merged(self):
         import json
@@ -891,7 +882,7 @@ class TestExperimentScoreFileHandling(unittest.TestCase):
             exp()
             with open(score_path) as f:
                 merged = json.load(f)
-            self.assertIn("prior_metric", merged)
+            assert "prior_metric" in merged
 
     def test_model_none_runs_data_only_pipeline(self):
         exp = ExperimentConfig(
@@ -913,33 +904,33 @@ class TestExperimentScoreFileHandling(unittest.TestCase):
             files=FileConfig(),
         )
         scores = exp()
-        self.assertIsInstance(scores, dict)
+        assert isinstance(scores, dict)
 
 
 # ── ExperimentConfig._canonical_device ───────────────────────────────────────
 
 
-class TestCanonicalDevice(unittest.TestCase):
+class TestCanonicalDevice:
     def test_none_returns_none(self):
-        self.assertIsNone(ExperimentConfig._canonical_device(None))
+        assert ExperimentConfig._canonical_device(None) is None
 
     def test_null_token_returns_none(self):
-        self.assertIsNone(ExperimentConfig._canonical_device("none"))
+        assert ExperimentConfig._canonical_device("none") is None
 
     def test_auto_token_returns_none(self):
-        self.assertIsNone(ExperimentConfig._canonical_device("auto"))
+        assert ExperimentConfig._canonical_device("auto") is None
 
     def test_cpu_returns_cpu(self):
-        self.assertEqual(ExperimentConfig._canonical_device("cpu"), "cpu")
+        assert ExperimentConfig._canonical_device("cpu") == "cpu"
 
     def test_mps_returns_mps(self):
-        self.assertEqual(ExperimentConfig._canonical_device("mps"), "mps")
+        assert ExperimentConfig._canonical_device("mps") == "mps"
 
 
 # ── ExperimentConfig._resolve_score_modes ────────────────────────────────────
 
 
-class TestResolveScoreModes(unittest.TestCase):
+class TestResolveScoreModes:
     def _base_exp(self, **kwargs):
         exp = ExperimentConfig.__new__(ExperimentConfig)
         exp.__dict__.update(
@@ -953,30 +944,30 @@ class TestResolveScoreModes(unittest.TestCase):
 
     def test_standard_returns_train_and_test(self):
         exp = self._base_exp(evaluation_mode="standard")
-        self.assertEqual(exp._resolve_score_modes(), ["train", "test"])
+        assert exp._resolve_score_modes() == ["train", "test"]
 
     def test_tuning_returns_test(self):
         exp = self._base_exp(evaluation_mode="tuning")
-        self.assertEqual(exp._resolve_score_modes(), ["test"])
+        assert exp._resolve_score_modes() == ["test"]
 
     def test_report_returns_train_test_and_val(self):
         exp = self._base_exp(evaluation_mode="report")
-        self.assertEqual(exp._resolve_score_modes(), ["train", "test", "val"])
+        assert exp._resolve_score_modes() == ["train", "test", "val"]
 
     def test_explicit_score_modes_override(self):
         exp = self._base_exp(score_mode=["test", "val"])
-        self.assertEqual(exp._resolve_score_modes(), ["test", "val"])
+        assert exp._resolve_score_modes() == ["test", "val"]
 
     def test_explicit_score_mode_presample(self):
         exp = self._base_exp(score_mode="pre-sample")
-        self.assertEqual(exp._resolve_score_modes(), ["pre-sample"])
+        assert exp._resolve_score_modes() == ["pre-sample"]
 
     def test_empty_score_mode_list_uses_evaluation_mode(self):
         exp = self._base_exp(score_mode=[], evaluation_mode="standard")
-        self.assertEqual(exp._resolve_score_modes(), ["train", "test"])
+        assert exp._resolve_score_modes() == ["train", "test"]
 
 
-class TestExperimentScorerModePermutations(unittest.TestCase):
+class TestExperimentScorerModePermutations:
     def _base_data(self, *, val_size=0.1):
         return DataConfig(
             dataset_name="make_classification",
@@ -1014,8 +1005,8 @@ class TestExperimentScorerModePermutations(unittest.TestCase):
 
         scores = exp()
         # Updated to check for 'pre-sample' key instead of 'presample_num_classes'
-        self.assertIn("pre-sample", scores)
-        self.assertIn("num_classes", scores["pre-sample"])
+        assert "pre-sample" in scores
+        assert "num_classes" in scores["pre-sample"]
 
     def test_non_data_profile_rejects_presample_mode(self):
         exp = ExperimentConfig(
@@ -1027,48 +1018,48 @@ class TestExperimentScorerModePermutations(unittest.TestCase):
             experiment_name="score-permutations-non-data-profile",
         )
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             exp()
 
 
 # ── ExperimentConfig._aggregate_repeated_scores ──────────────────────────────
 
 
-class TestAggregateRepeatedScores(unittest.TestCase):
+class TestAggregateRepeatedScores:
     def test_empty_list_returns_empty(self):
         result = ExperimentConfig._aggregate_repeated_scores([])
-        self.assertEqual(result, {})
+        assert result == {}
 
     def test_single_run_produces_fold_keys(self):
         result = ExperimentConfig._aggregate_repeated_scores(
             [{"accuracy": 0.9}],
             suffix="fold",
         )
-        self.assertIn("accuracy_fold_0", result)
-        self.assertAlmostEqual(result["accuracy"], 0.9)
+        assert "accuracy_fold_0" in result
+        assert result["accuracy"] == pytest.approx(0.9)
 
     def test_multiple_runs_computes_mean(self):
         runs = [{"accuracy": 0.8}, {"accuracy": 0.9}, {"accuracy": 1.0}]
         result = ExperimentConfig._aggregate_repeated_scores(runs, suffix="fold")
-        self.assertAlmostEqual(result["accuracy"], np.mean([0.8, 0.9, 1.0]))
+        assert result["accuracy"] == pytest.approx(np.mean([0.8, 0.9, 1.0]))
         for i in range(3):
-            self.assertIn(f"accuracy_fold_{i}", result)
+            assert f"accuracy_fold_{i}" in result
 
     def test_non_numeric_uses_last_value(self):
         runs = [{"label": "a"}, {"label": "b"}]
         result = ExperimentConfig._aggregate_repeated_scores(runs)
-        self.assertEqual(result["label"], "b")
+        assert result["label"] == "b"
 
     def test_none_values_excluded_from_mean(self):
         runs = [{"acc": 0.9}, {"acc": None}]
         result = ExperimentConfig._aggregate_repeated_scores(runs)
-        self.assertAlmostEqual(result["acc"], 0.9)
+        assert result["acc"] == pytest.approx(0.9)
 
 
 # ── ExperimentConfig.__post_init__ more branches ─────────────────────────────
 
 
-class TestExperimentPostInitMoreBranches(unittest.TestCase):
+class TestExperimentPostInitMoreBranches:
     def _data(self):
         return DataConfig(
             dataset_name="make_classification",
@@ -1100,7 +1091,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
                 model=str(yaml_path),
                 files=FileConfig(),
             )
-        self.assertIsInstance(exp.model, ModelConfig)
+        assert isinstance(exp.model, ModelConfig)
 
     def test_model_as_config_base_subclass(self):
         """Cover branch: isinstance(self.model, ConfigBase) -> model_dict = model.to_dict()"""
@@ -1118,7 +1109,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
             model=alt_model,
             files=FileConfig(),
         )
-        self.assertIsInstance(exp.model, ModelConfig)
+        assert isinstance(exp.model, ModelConfig)
 
     def test_files_as_dict(self):
         """Cover branch: isinstance(self.files, dict)"""
@@ -1133,7 +1124,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
         )
         from deckard.file import FileConfig as FC
 
-        self.assertIsInstance(exp.files, FC)
+        assert isinstance(exp.files, FC)
 
     def test_files_as_dictconfig(self):
         """Cover branch: isinstance(self.files, DictConfig)"""
@@ -1149,7 +1140,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
         )
         from deckard.file import FileConfig as FC
 
-        self.assertIsInstance(exp.files, FC)
+        assert isinstance(exp.files, FC)
 
     def test_model_dictconfig_without_target(self):
         """Cover branch: isinstance(self.model, DictConfig) without _target_"""
@@ -1165,7 +1156,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
             model=model_cfg,
             files=FileConfig(),
         )
-        self.assertIsInstance(exp.model, ModelConfig)
+        assert isinstance(exp.model, ModelConfig)
 
     def test_attack_as_str_yaml(self):
         """Cover branch: isinstance(self.attack, str) -> AttackConfig.from_yaml"""
@@ -1187,7 +1178,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
                 attack=str(yaml_path),
                 files=FileConfig(),
             )
-        self.assertIsInstance(exp.attack, AttackConfig)
+        assert isinstance(exp.attack, AttackConfig)
 
     def test_attack_as_configbase(self):
         """Cover branch: isinstance(self.attack, ConfigBase)"""
@@ -1210,10 +1201,10 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
             attack=alt_attack,
             files=FileConfig(),
         )
-        self.assertIsInstance(exp.attack, AttackConfig)
+        assert isinstance(exp.attack, AttackConfig)
 
     def test_multi_attack_requires_aliases(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             ExperimentConfig(
                 data=self._data(),
                 model=ModelConfig(
@@ -1260,8 +1251,8 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
             ],
             files=FileConfig(),
         )
-        self.assertEqual(len(exp._attack_chain), 2)
-        self.assertEqual(exp.attack.alias, "fgm_a")
+        assert len(exp._attack_chain) == 2
+        assert exp.attack.alias == "fgm_a"
 
     def test_score_as_scorer_dict_config(self):
         """Cover scorer config path where score is ScorerDictConfig."""
@@ -1285,8 +1276,8 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
             score=scorer,
             files=FileConfig(),
         )
-        self.assertIsNotNone(exp.model.scorer)
-        with self.assertRaises(ValueError):
+        assert exp.model.scorer is not None
+        with pytest.raises(ValueError):
             ExperimentConfig(
                 data=self._data(),
                 model=ModelConfig(
@@ -1299,7 +1290,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
             )
 
     def test_detector_invalid_type_raises(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             ExperimentConfig(
                 data=self._data(),
                 model=ModelConfig(
@@ -1312,7 +1303,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
             )
 
     def test_files_invalid_type_raises(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             ExperimentConfig(
                 data=self._data(),
                 model=ModelConfig(
@@ -1327,7 +1318,7 @@ class TestExperimentPostInitMoreBranches(unittest.TestCase):
 # ── ExperimentConfig._coerce_scorer_config branches ──────────────────────────
 
 
-class TestCoerceScorerConfig(unittest.TestCase):
+class TestCoerceScorerConfig:
     def _data(self):
         return DataConfig(
             dataset_name="make_classification",
@@ -1365,10 +1356,10 @@ class TestCoerceScorerConfig(unittest.TestCase):
             files=FileConfig(),
         )
         # experiment scorer is set from the scorer_spec dict
-        self.assertIsNotNone(exp.score)
+        assert exp.score is not None
         # data and model auto scorers should be attached too
-        self.assertIsNotNone(exp.data.scorer)
-        self.assertIsNotNone(exp.model.scorer)
+        assert exp.data.scorer is not None
+        assert exp.model.scorer is not None
 
     def test_score_auto_shorthand_applies_data_and_model_defaults(self):
         exp = ExperimentConfig(
@@ -1381,9 +1372,9 @@ class TestCoerceScorerConfig(unittest.TestCase):
             score="auto",
             files=FileConfig(),
         )
-        self.assertIsNotNone(exp.data.scorer)
-        self.assertIsNotNone(exp.model.scorer)
-        self.assertIsNone(exp.score)
+        assert exp.data.scorer is not None
+        assert exp.model.scorer is not None
+        assert exp.score is None
 
     def test_score_dict_with_scoring_type_routes_to_data_scope(self):
         from sklearn.metrics import accuracy_score
@@ -1407,13 +1398,13 @@ class TestCoerceScorerConfig(unittest.TestCase):
             files=FileConfig(),
         )
 
-        self.assertIsNone(exp.score)
-        self.assertIsNotNone(exp.data.scorer)
+        assert exp.score is None
+        assert exp.data.scorer is not None
         # Updated to check for 'num_classes' instead of 'accuracy'
-        self.assertIn("num_classes", exp.data.scorer.scorers)
+        assert "num_classes" in exp.data.scorer.scorers
 
 
-class TestRunSinglePipelineBranchesExtra(unittest.TestCase):
+class TestRunSinglePipelineBranchesExtra:
     def _exp_stub(self):
         exp = ExperimentConfig.__new__(ExperimentConfig)
         exp.data = SimpleNamespace(score_dict={"data_score": 1.0})
@@ -1432,13 +1423,13 @@ class TestRunSinglePipelineBranchesExtra(unittest.TestCase):
                 raise ValueError("boom")
 
         exp.attack = _Attack()
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             exp._run_single_pipeline({}, {})
 
     def test_detector_without_attack_raises(self):
         exp = self._exp_stub()
         exp.detector = lambda **kwargs: kwargs
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             exp._run_single_pipeline({}, {})
 
     def test_data_file_path_loads_object_and_saves_score_file(self):
@@ -1490,8 +1481,8 @@ class TestRunSinglePipelineBranchesExtra(unittest.TestCase):
             exp.load_object = lambda _p: loaded_data
             scores = exp()
 
-            self.assertIsInstance(scores, dict)
-            self.assertTrue(score_file.exists())
+            assert isinstance(scores, dict)
+            assert score_file.exists()
 
     def test_val_score_mode_resamples_loaded_data_for_validation_split(self):
         loaded_data = DataConfig(
@@ -1547,17 +1538,17 @@ class TestRunSinglePipelineBranchesExtra(unittest.TestCase):
             exp.load_object = lambda _p: loaded_data
             scores = exp()
 
-            self.assertIsNotNone(exp.data.X_val)
-            self.assertIsNotNone(exp.data.y_val)
-            self.assertIn("val", scores)
-            self.assertIn("accuracy", scores["val"])
+            assert exp.data.X_val is not None
+            assert exp.data.y_val is not None
+            assert "val" in scores
+            assert "accuracy" in scores["val"]
 
 
 # ── ExperimentConfig set_device tensorflow ────────────────────────────────────
 
 
-class TestSetDeviceTensorflow(unittest.TestCase):
-    def setUp(self):
+class TestSetDeviceTensorflow:
+    def setup_method(self):
         # Only run if TensorFlow is available
         try:
             import tensorflow  # noqa: F401
@@ -1640,7 +1631,7 @@ class TestSetDeviceTensorflow(unittest.TestCase):
             exp.set_device(0)
 
 
-class TestRunSinglePipelineBranches(unittest.TestCase):
+class TestRunSinglePipelineBranches:
     def test_detector_requires_attack_raises(self):
         exp = ExperimentConfig.__new__(ExperimentConfig)
         exp.data = SimpleNamespace(score_dict={})
@@ -1648,7 +1639,7 @@ class TestRunSinglePipelineBranches(unittest.TestCase):
         exp.attack = None
         exp.detector = SimpleNamespace(__call__=lambda **_kwargs: None)
         exp._run_experiment_scorer_modes = lambda score_file=None: {}
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             exp._run_single_pipeline({}, {})
 
     def test_detector_missing_score_dict_asserts(self):
@@ -1675,7 +1666,7 @@ class TestRunSinglePipelineBranches(unittest.TestCase):
         exp.attack = _Attack()
         exp.detector = _Detector()
         exp._run_experiment_scorer_modes = lambda score_file=None: {}
-        with self.assertRaises(AssertionError):
+        with pytest.raises(AssertionError):
             exp._run_single_pipeline({}, {})
 
     def test_multi_attack_scores_suffix_collisions_and_combines_detector_inputs(self):
@@ -1717,24 +1708,24 @@ class TestRunSinglePipelineBranches(unittest.TestCase):
 
         scores = exp._run_single_pipeline({}, {})
 
-        self.assertEqual(scores["evasion_accuracy"], 0.5)
-        self.assertEqual(scores["evasion_accuracy_atk_b"], 0.4)
-        self.assertEqual(scores["attack_generation_time"], 1.0)
-        self.assertEqual(scores["attack_generation_time_atk_b"], 2.0)
-        self.assertEqual(scores["detector_n"], 5)
+        assert scores["evasion_accuracy"] == 0.5
+        assert scores["evasion_accuracy_atk_b"] == 0.4
+        assert scores["attack_generation_time"] == 1.0
+        assert scores["attack_generation_time_atk_b"] == 2.0
+        assert scores["detector_n"] == 5
 
 
-class TestExperimentBranchEdges(unittest.TestCase):
+class TestExperimentBranchEdges:
     def test_canonical_device_empty_and_default_tokens(self):
-        self.assertIsNone(ExperimentConfig._canonical_device(""))
-        self.assertIsNone(ExperimentConfig._canonical_device(" default "))
-        self.assertEqual(ExperimentConfig._canonical_device("CUDA"), "cuda")
+        assert ExperimentConfig._canonical_device("") is None
+        assert ExperimentConfig._canonical_device(" default ") is None
+        assert ExperimentConfig._canonical_device("CUDA") == "cuda"
 
     def test_resolve_data_config_target_must_resolve_to_dataconfig(self):
         exp = ExperimentConfig.__new__(ExperimentConfig)
         exp.data = SimpleNamespace(_target_="fake.target")
         with patch("deckard.experiment.base.instantiate", return_value=object()):
-            with self.assertRaises(TypeError):
+            with pytest.raises(TypeError):
                 exp._resolve_data_config()
 
     def test_compute_val_predictions_error_branches(self):
@@ -1742,17 +1733,17 @@ class TestExperimentBranchEdges(unittest.TestCase):
 
         exp.model = None
         exp.data = SimpleNamespace(X_val=[1], y_val=[1])
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             exp._compute_val_predictions()
 
         exp.model = SimpleNamespace(predict=lambda x: x)
         exp.data = SimpleNamespace(X_val=None, y_val=None)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             exp._compute_val_predictions()
 
         exp.model = SimpleNamespace()
         exp.data = SimpleNamespace(X_val=[1], y_val=[1])
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             exp._compute_val_predictions()
 
     def test_ensure_mode_predictions_error_branches(self):
@@ -1760,15 +1751,15 @@ class TestExperimentBranchEdges(unittest.TestCase):
         exp.data = SimpleNamespace(X_train=[1], X_test=[2], X_val=[3], y_val=[1])
 
         exp.model = None
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             exp._ensure_mode_predictions("train")
 
         exp.model = SimpleNamespace()
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             exp._ensure_mode_predictions("test")
 
     def test_post_init_rejects_unsupported_model_type(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             ExperimentConfig(
                 data=DataConfig(
                     dataset_name="make_classification",
@@ -1789,7 +1780,7 @@ class TestExperimentBranchEdges(unittest.TestCase):
             )
 
 
-class TestExperimentRuntimeCompositionAndPersistence(unittest.TestCase):
+class TestExperimentRuntimeCompositionAndPersistence:
     def _make_base_experiment(self, *, params_file=None):
         files = FileConfig(params_file=params_file) if params_file else FileConfig()
         return ExperimentConfig(
@@ -1825,8 +1816,8 @@ class TestExperimentRuntimeCompositionAndPersistence(unittest.TestCase):
                 "model_params": {"max_iter": 20},
             },
         )
-        self.assertIsInstance(exp.model, ModelConfig)
-        self.assertEqual(exp.model.model_type, "sklearn.linear_model.LogisticRegression")
+        assert isinstance(exp.model, ModelConfig)
+        assert exp.model.model_type == "sklearn.linear_model.LogisticRegression"
 
     def test_stage_cache_key_changes_when_component_params_change(self):
         exp_a = self._make_base_experiment()
@@ -1849,7 +1840,7 @@ class TestExperimentRuntimeCompositionAndPersistence(unittest.TestCase):
             component="model",
             identity={"run_idx": 0},
         )
-        self.assertNotEqual(key_a, key_b)
+        assert key_a != key_b
 
     def test_runtime_state_yaml_is_persisted_with_schema_and_reloads(self):
         with tempfile.TemporaryDirectory() as td:
@@ -1858,17 +1849,15 @@ class TestExperimentRuntimeCompositionAndPersistence(unittest.TestCase):
             _ = exp()
 
             saved_path = Path(str(params_path) + ".yaml")
-            self.assertTrue(saved_path.exists())
+            assert saved_path.exists()
             payload = yaml.safe_load(saved_path.read_text(encoding="utf-8"))
-            self.assertEqual(
-                payload.get("schema_version"),
-                CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_VERSION,
-            )
-            self.assertIn("params", payload)
-            self.assertIn("runtime", payload)
+            assert payload.get("schema_version") == \
+                CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_VERSION
+            assert "params" in payload
+            assert "runtime" in payload
 
             restored = ExperimentConfig.from_yaml(str(saved_path))
-            self.assertIsInstance(restored, ExperimentConfig)
+            assert isinstance(restored, ExperimentConfig)
 
     def test_runtime_state_yaml_rejects_future_schema_version(self):
         with tempfile.TemporaryDirectory() as td:
@@ -1880,9 +1869,6 @@ class TestExperimentRuntimeCompositionAndPersistence(unittest.TestCase):
             path = Path(td) / "future_runtime.yaml"
             path.write_text(yaml.safe_dump(payload), encoding="utf-8")
 
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 ExperimentConfig.from_yaml(str(path))
 
-
-if __name__ == "__main__":
-    unittest.main()

@@ -1,4 +1,3 @@
-import unittest
 from unittest.mock import Mock, patch
 
 import pytest
@@ -16,7 +15,7 @@ except Exception:
     )
 
 
-class TestPlotConfig(unittest.TestCase):
+class TestPlotConfig:
 
     # TODO: Fix broken test
     # def test_plot_config_with_experiment_single_plot(self):
@@ -45,7 +44,7 @@ class TestPlotConfig(unittest.TestCase):
                     "plots": [{"plot_type": "confusion_matrix"}],
                 },
             )
-        self.assertIs(plot_cfg.config, mock_instance)
+        assert plot_cfg.config is mock_instance
 
     def test_plot_config_with_data_file_single_plot(self):
         """Test PlotConfig initialization with data_file and single plot type."""
@@ -58,7 +57,7 @@ class TestPlotConfig(unittest.TestCase):
                     "plot_type": "pairplot",
                 },
             )
-        self.assertIs(plot_cfg.config, mock_instance)
+        assert plot_cfg.config is mock_instance
 
     def test_plot_config_with_data_file_multiple_plots(self):
         """Test PlotConfig initialization with data_file and multiple plots."""
@@ -71,18 +70,18 @@ class TestPlotConfig(unittest.TestCase):
                     "plots": [{"plot_type": "pairplot"}],
                 },
             )
-        self.assertIs(plot_cfg.config, mock_instance)
+        assert plot_cfg.config is mock_instance
 
     def test_plot_config_missing_source(self):
         """Test PlotConfig raises error when neither experiment nor data_file provided."""
-        with self.assertRaises(ValueError) as context:
+        with pytest.raises(ValueError) as context:
             PlotConfig(kwargs={"plot_type": "confusion_matrix"})
-        self.assertIn("Missing required source key", str(context.exception))
+        assert "Missing required source key" in str(context.exception)
 
     def test_plot_config_both_sources(self):
         """Test PlotConfig raises error when both experiment and data_file provided."""
         mock_experiment = Mock()
-        with self.assertRaises(ValueError) as context:
+        with pytest.raises(ValueError) as context:
             PlotConfig(
                 kwargs={
                     "experiment": mock_experiment,
@@ -90,10 +89,8 @@ class TestPlotConfig(unittest.TestCase):
                     "plot_type": "confusion_matrix",
                 },
             )
-        self.assertIn(
-            "Provide either 'experiment' or 'data_file', not both",
-            str(context.exception),
-        )
+        assert "Provide either 'experiment' or 'data_file', not both" in \
+            str(context.exception)
 
     def test_plot_config_call(self):
         """Test PlotConfig __call__ method delegates to config."""
@@ -127,7 +124,7 @@ class TestPlotConfig(unittest.TestCase):
                 },
             )
             plot_cfg.config = mock_config_instance
-            self.assertEqual(plot_cfg.some_attribute, "test_value")
+            assert plot_cfg.some_attribute == "test_value"
 
     def test_plot_config_len(self):
         """Test PlotConfig __len__ delegates to config."""
@@ -148,7 +145,7 @@ class TestPlotConfig(unittest.TestCase):
                 },
             )
             plot_cfg.config = mock_config_instance
-            self.assertEqual(len(plot_cfg), 3)
+            assert len(plot_cfg) == 3
 
     def test_hash_stable_for_plot_config(self):
         """Test that PlotConfig, as ConfigBase, has hash method."""
@@ -159,11 +156,8 @@ class TestPlotConfig(unittest.TestCase):
         plot_cfg_new.config = None  # Prevent config instantiation
 
         # Verify PlotConfig inherits from ConfigBase
-        self.assertTrue(isinstance(plot_cfg_new, BaseConfig))
+        assert isinstance(plot_cfg_new, BaseConfig)
 
         # Verify it has the hash method
-        self.assertTrue(hasattr(plot_cfg_new, "__hash__"))
+        assert hasattr(plot_cfg_new, "__hash__")
 
-
-if __name__ == "__main__":
-    unittest.main()

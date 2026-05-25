@@ -1,5 +1,4 @@
 import shutil
-import unittest
 from pathlib import Path
 from tempfile import mkdtemp
 
@@ -26,9 +25,9 @@ except Exception:
 matplotlib.use("Agg")
 
 
-class TestSeabornPlots(unittest.TestCase):
+class TestSeabornPlots:
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.temp_dir = Path(mkdtemp())
         cls.data_file = cls.temp_dir / "seaborn_data.pkl"
         cls.df = pd.DataFrame(
@@ -42,7 +41,7 @@ class TestSeabornPlots(unittest.TestCase):
         cls.df.to_pickle(cls.data_file)
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         shutil.rmtree(cls.temp_dir, ignore_errors=True)
 
     def _make_cfg(self, **overrides):
@@ -80,20 +79,20 @@ class TestSeabornPlots(unittest.TestCase):
         )
         ax = cfg()
 
-        self.assertIsInstance(ax, Axes)
-        self.assertTrue(out_file.exists())
-        self.assertEqual(ax.get_title(), "My Scatter")
-        self.assertEqual(ax.get_xlabel(), "X Label")
-        self.assertEqual(ax.get_ylabel(), "Y Label")
+        assert isinstance(ax, Axes)
+        assert out_file.exists()
+        assert ax.get_title() == "My Scatter"
+        assert ax.get_xlabel() == "X Label"
+        assert ax.get_ylabel() == "Y Label"
         legend = ax.get_legend()
         if legend is not None:
-            self.assertEqual(legend.get_title().get_text(), "Group")
+            assert legend.get_title().get_text() == "Group"
 
     def test_call_uses_passed_axes(self):
         fig, ax = plt.subplots()
         cfg = self._make_cfg()
         returned = cfg(ax=ax)
-        self.assertIs(returned, ax)
+        assert returned is ax
         plt.close(fig)
 
     def test_heatmap_plot_uses_matrix_data(self):
@@ -112,7 +111,7 @@ class TestSeabornPlots(unittest.TestCase):
 
         ax = cfg()
 
-        self.assertIsInstance(ax, Axes)
+        assert isinstance(ax, Axes)
 
     def test_cat_plot_returns_real_axis(self):
         cfg = self._make_cfg(
@@ -124,19 +123,19 @@ class TestSeabornPlots(unittest.TestCase):
 
         ax = cfg()
 
-        self.assertIsInstance(ax, Axes)
-        self.assertGreater(len(ax.patches) + len(ax.lines), 0)
+        assert isinstance(ax, Axes)
+        assert len(ax.patches) + len(ax.lines) > 0
 
     def test_post_init_raises_for_missing_data_file(self):
         missing_file = (self.temp_dir / "does_not_exist.pkl").as_posix()
-        with self.assertRaises(AssertionError):
+        with pytest.raises(AssertionError):
             self._make_cfg(data_file=missing_file)
 
     def test_post_init_raises_for_missing_columns(self):
         bad_file = self.temp_dir / "bad_data.pkl"
         pd.DataFrame({"x": [1, 2, 3]}).to_pickle(bad_file)
 
-        with self.assertRaises(AssertionError):
+        with pytest.raises(AssertionError):
             self._make_cfg(data_file=bad_file.as_posix(), y="y")
 
     def test_seaborn_config_accepts_data_config_source(self):
@@ -163,7 +162,7 @@ class TestSeabornPlots(unittest.TestCase):
             data_config=cfg_data,
         )
         ax = cfg()
-        self.assertIsInstance(ax, Axes)
+        assert isinstance(ax, Axes)
 
     @patch("deckard.plugins.seaborn.plot.load_optuna_studies_dataframe")
     def test_seaborn_config_accepts_optuna_storage_source(self, mock_optuna_loader):
@@ -182,33 +181,30 @@ class TestSeabornPlots(unittest.TestCase):
             optuna_query={"study_names": ["demo", "other"], "row_slice": (0, 2)},
         )
         ax = cfg()
-        self.assertIsInstance(ax, Axes)
+        assert isinstance(ax, Axes)
         kwargs = mock_optuna_loader.call_args.kwargs
-        self.assertEqual(kwargs["study_names"], ["demo", "other"])
-        self.assertEqual(kwargs["row_slice"], (0, 2))
+        assert kwargs["study_names"] == ["demo", "other"]
+        assert kwargs["row_slice"] == (0, 2)
 
     def test_plot_config_list_len(self):
         cfg_list = SeabornPlotConfigList(
             plots=["scatter", "line"],
             data_file=self.data_file.as_posix(),
         )
-        self.assertEqual(len(cfg_list), 2)
+        assert len(cfg_list) == 2
 
     def test_plot_config_list_iter_current_behavior(self):
         cfg_list = SeabornPlotConfigList(
             plots=["scatter"],
             data_file=self.data_file.as_posix(),
         )
-        self.assertEqual(next(iter(cfg_list)), "scatter")
+        assert next(iter(cfg_list)) == "scatter"
 
     def test_plot_config_list_call_current_behavior(self):
         cfg_list = SeabornPlotConfigList(
             plots=["scatter"],
             data_file=self.data_file.as_posix(),
         )
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             cfg_list()
 
-
-if __name__ == "__main__":
-    unittest.main()

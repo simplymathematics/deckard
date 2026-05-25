@@ -1,4 +1,3 @@
-import unittest
 
 import numpy as np
 import pytest
@@ -13,23 +12,23 @@ from deckard.score.attack import FairlearnAttackScorerConfig
 from deckard.score import ScorerConfig, ScorerDictConfig
 
 
-class TestFairnessScorers(unittest.TestCase):
+class TestFairnessScorers:
     def test_fairness_classification_and_regression_profiles_are_distinct(self):
         classification = DefaultFairlearnClassificationScorerDictConfig()
         regression = DefaultFairlearnRegressionScorerDictConfig()
-        self.assertIn("accuracy", classification.scorers.keys())
-        self.assertIn("mse", regression.scorers.keys())
-        self.assertIn("demographic_parity_difference", classification.scorers.keys())
-        self.assertIn("equalized_odds_difference", classification.scorers.keys())
+        assert "accuracy" in classification.scorers.keys()
+        assert "mse" in regression.scorers.keys()
+        assert "demographic_parity_difference" in classification.scorers.keys()
+        assert "equalized_odds_difference" in classification.scorers.keys()
         # Regression group metrics should only be in group_scorers, not main scorers
-        self.assertIn("group_mae_difference", regression.scorers.keys())
-        self.assertIn("group_mse_difference", regression.scorers.keys())
+        assert "group_mae_difference" in regression.scorers.keys()
+        assert "group_mse_difference" in regression.scorers.keys()
         # group_mean_prediction_difference is only in group_scorers for regression
-        self.assertNotIn("group_mean_prediction_difference", regression.scorers.keys())
-        self.assertIn("group_mae_difference", regression.group_scorers)
-        self.assertIn("group_mse_difference", regression.group_scorers)
-        self.assertNotIn("group_mean_prediction_difference", regression.group_scorers)
-        self.assertIn("group_mae_difference", regression.scorers.keys())
+        assert "group_mean_prediction_difference" not in regression.scorers.keys()
+        assert "group_mae_difference" in regression.group_scorers
+        assert "group_mse_difference" in regression.group_scorers
+        assert "group_mean_prediction_difference" not in regression.group_scorers
+        assert "group_mae_difference" in regression.scorers.keys()
 
     def test_fairness_regression_scores(self):
         scorer = DefaultFairlearnRegressionScorerDictConfig()
@@ -45,22 +44,16 @@ class TestFairnessScorers(unittest.TestCase):
         )
 
         # Only expect per-group keys for group metrics that are present
-        self.assertNotIn("0_group_mean_prediction_difference", scores)
-        self.assertNotIn("1_group_mean_prediction_difference", scores)
-        self.assertIn("0_group_mae_difference", scores)
-        self.assertIn("1_group_mae_difference", scores)
-        self.assertIn("0_group_mse_difference", scores)
-        self.assertIn("1_group_mse_difference", scores)
+        assert "0_group_mean_prediction_difference" not in scores
+        assert "1_group_mean_prediction_difference" not in scores
+        assert "0_group_mae_difference" in scores
+        assert "1_group_mae_difference" in scores
+        assert "0_group_mse_difference" in scores
+        assert "1_group_mse_difference" in scores
 
     def test_score_profile_classes_available(self):
-        self.assertIsInstance(
-            DefaultFairlearnClassificationScorerDictConfig(),
-            FairlearnScorerDictConfig,
-        )
-        self.assertIsInstance(
-            DefaultFairlearnRegressionScorerDictConfig(),
-            FairlearnScorerDictConfig,
-        )
+        assert isinstance(DefaultFairlearnClassificationScorerDictConfig(), FairlearnScorerDictConfig)
+        assert isinstance(DefaultFairlearnRegressionScorerDictConfig(), FairlearnScorerDictConfig)
 
     def test_metric_frame_fairness_score_dict_classification(self):
         scorer = FairlearnScorerDictConfig(
@@ -84,10 +77,10 @@ class TestFairnessScorers(unittest.TestCase):
             mode=None,
             sensitive_features=sensitive,
         )
-        self.assertIn("A_accuracy", scores)
-        self.assertIn("B_accuracy", scores)
-        self.assertIn("accuracy_overall", scores)
-        self.assertIn("accuracy_difference", scores)
+        assert "A_accuracy" in scores
+        assert "B_accuracy" in scores
+        assert "accuracy_overall" in scores
+        assert "accuracy_difference" in scores
 
     def test_metric_frame_fairness_score_dict_regression(self):
         scorer = FairlearnScorerDictConfig(
@@ -111,9 +104,9 @@ class TestFairnessScorers(unittest.TestCase):
             mode=None,
             sensitive_features=sensitive,
         )
-        self.assertIn("0_mse", scores)
-        self.assertIn("1_mse", scores)
-        self.assertIn("mse_ratio", scores)
+        assert "0_mse" in scores
+        assert "1_mse" in scores
+        assert "mse_ratio" in scores
 
     def test_metric_frame_fairness_score_dict_supports_full_metricframe_kwargs(
         self,
@@ -146,19 +139,17 @@ class TestFairnessScorers(unittest.TestCase):
             control_features=control,
             sample_params={"sample_weight": sample_weight},
         )
-        self.assertIn("X_A_accuracy", scores)
-        self.assertIn("X_B_accuracy", scores)
-        self.assertIn("Y_A_accuracy", scores)
-        self.assertIn("Y_B_accuracy", scores)
-        self.assertIn("X_accuracy_overall", scores)
-        self.assertIn("Y_accuracy_overall", scores)
-        self.assertIn("X_accuracy_difference", scores)
-        self.assertIn("Y_accuracy_difference", scores)
+        assert "X_A_accuracy" in scores
+        assert "X_B_accuracy" in scores
+        assert "Y_A_accuracy" in scores
+        assert "Y_B_accuracy" in scores
+        assert "X_accuracy_overall" in scores
+        assert "Y_accuracy_overall" in scores
+        assert "X_accuracy_difference" in scores
+        assert "Y_accuracy_difference" in scores
 
-        self.assertIsInstance(scores, dict)
-        self.assertTrue(
-            any(key.endswith("accuracy_difference") for key in scores),
-        )
+        assert isinstance(scores, dict)
+        assert any(key.endswith("accuracy_difference") for key in scores)
 
     def test_fairlearn_attack_scorer_accepts_plain_scorerdict_profiles(self):
         pytest.importorskip("fairlearn")
@@ -172,4 +163,4 @@ class TestFairnessScorers(unittest.TestCase):
             },
         )
         scorer = FairlearnAttackScorerConfig(evasion=profile)
-        self.assertIsNotNone(scorer.evasion)
+        assert scorer.evasion is not None

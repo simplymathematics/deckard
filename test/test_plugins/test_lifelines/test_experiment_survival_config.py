@@ -1,4 +1,3 @@
-import unittest
 from types import SimpleNamespace
 
 import numpy as np
@@ -11,36 +10,36 @@ from deckard.model import ModelConfig
 from deckard.plugins.lifelines.experiment import SurvivalExperimentConfig
 
 
-class TestSurvivalExperimentConfig(unittest.TestCase):
-    def test_requires_attack_when_aux_model_present(self):
-        with self.assertRaises(ValueError):
-            SurvivalExperimentConfig(
-                data=DataConfig(
-                    dataset_name="make_regression",
-                    classifier=False,
-                ),
-                model="cox",
-                target="E",
+def test_requires_attack_when_aux_model_present():
+    with pytest.raises(ValueError):
+        SurvivalExperimentConfig(
+            data=DataConfig(
+                dataset_name="make_regression",
                 classifier=False,
-                aux_model=ModelConfig(
-                    model_type="sklearn.linear_model.LogisticRegression",
-                    classifier=True,
-                    model_params={"max_iter": 10},
-                ),
-                duration_col="T",
-                event_col="E",
-            )
+            ),
+            model="cox",
+            target="E",
+            classifier=False,
+            aux_model=ModelConfig(
+                model_type="sklearn.linear_model.LogisticRegression",
+                classifier=True,
+                model_params={"max_iter": 10},
+            ),
+            duration_col="T",
+            event_col="E",
+        )
 
-    def test_requires_data_config(self):
-        with self.assertRaises(ValueError):
-            SurvivalExperimentConfig(
-                data=None,
-                model="cox",
-                target="E",
-                duration_col="T",
-                event_col="E",
-                classifier=False,
-            )
+
+def test_requires_data_config():
+    with pytest.raises(ValueError):
+        SurvivalExperimentConfig(
+            data=None,
+            model="cox",
+            target="E",
+            duration_col="T",
+            event_col="E",
+            classifier=False,
+        )
 
 
 

@@ -1,4 +1,3 @@
-import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -13,7 +12,7 @@ from deckard.model.defense.base import DefenseConfig, DefensePipelineConfig
 DummyDataConfig = SimpleNamespace
 
 
-class TestRetrainingDefensePipeline(unittest.TestCase):
+class TestRetrainingDefensePipeline:
     def test_retraining_defense_is_reordered_last_with_warning(self):
         order = []
         retraining = _OrderTrackingDefense(
@@ -28,13 +27,11 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
 
         pipeline.apply(estimator=object(), data=object())
 
-        self.assertEqual(
-            order,
+        assert order == \
             [
                 "art.defences.postprocessor.GaussianNoise",
                 "art.defences.trainer.AdversarialTrainerMadryPGD",
-            ],
-        )
+            ]
 
     def test_retraining_rejects_non_neural_network_models(self):
         data = DummyDataConfig(
@@ -54,7 +51,7 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
             defense_params={"nb_epochs": 1, "batch_size": 4, "max_iter": 1},
         )
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             defense.apply_to(estimator=model.get_model(), data=data)
 
     def test_real_adversarial_retraining_executes_with_pytorch_model(self):
@@ -94,10 +91,10 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
 
         defended = defense.apply_to(estimator=TinyLinear(), data=data)
 
-        self.assertTrue(hasattr(defended, "predict"))
-        self.assertTrue(hasattr(defended, "model"))
-        self.assertIsNone(defense.defense_training_time)
-        self.assertIsNotNone(defense.defense_application_time)
+        assert hasattr(defended, "predict")
+        assert hasattr(defended, "model")
+        assert defense.defense_training_time is None
+        assert defense.defense_application_time is not None
 
     def test_retraining_handles_existing_art_torch_wrapper(self):
         torch = pytest.importorskip("torch")
@@ -147,9 +144,9 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
 
         defended = defense.apply_to(estimator=wrapped, data=data)
 
-        self.assertIsInstance(defended, PyTorchClassifier)
-        self.assertIsNone(defense.defense_training_time)
-        self.assertIsNotNone(defense.defense_application_time)
+        assert isinstance(defended, PyTorchClassifier)
+        assert defense.defense_training_time is None
+        assert defense.defense_application_time is not None
 
     def test_binary_input_detector_rejects_non_neural_network_models(self):
         data = DummyDataConfig(
@@ -169,7 +166,7 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
             defense_params={},
         )
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             defense.apply_to(estimator=model.get_model(), data=data)
 
     def test_binary_input_detector_handles_raw_torch_model(self):
@@ -201,10 +198,10 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
 
         defended = defense.apply_to(estimator=TinyLinear(), data=data)
 
-        self.assertTrue(hasattr(defended, "predict"))
-        self.assertTrue(hasattr(defended, "model"))
-        self.assertTrue(hasattr(defended, "_deckard_evasion_detector"))
-        self.assertIsNotNone(defense.defense_application_time)
+        assert hasattr(defended, "predict")
+        assert hasattr(defended, "model")
+        assert hasattr(defended, "_deckard_evasion_detector")
+        assert defense.defense_application_time is not None
 
     def test_binary_input_detector_handles_existing_art_wrapper(self):
         torch = pytest.importorskip("torch")
@@ -247,9 +244,9 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
 
         defended = defense.apply_to(estimator=wrapped, data=data)
 
-        self.assertIsInstance(defended, PyTorchClassifier)
-        self.assertTrue(hasattr(defended, "_deckard_evasion_detector"))
-        self.assertIsNotNone(defense.defense_application_time)
+        assert isinstance(defended, PyTorchClassifier)
+        assert hasattr(defended, "_deckard_evasion_detector")
+        assert defense.defense_application_time is not None
 
     def test_transformer_defense_name_parses_supported_subtype(self):
         defense = DefenseConfig(
@@ -258,8 +255,8 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
         )
         defense_type, defense_subtype, _ = defense.parse_defense_name()
 
-        self.assertEqual(defense_type, "transformer")
-        self.assertEqual(defense_subtype, "evasion")
+        assert defense_type == "transformer"
+        assert defense_subtype == "evasion"
 
     def test_defensive_distillation_rejects_non_neural_network_models(self):
         data = DummyDataConfig(
@@ -279,7 +276,7 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
             defense_params={"batch_size": 8, "nb_epochs": 1},
         )
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             defense.apply_to(estimator=model.get_model(), data=data)
 
     def test_neural_cleanse_rejects_non_neural_network_models(self):
@@ -300,7 +297,7 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
             defense_params={},
         )
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             defense.apply_to(estimator=model.get_model(), data=data)
 
     def test_real_defensive_distillation_executes_with_pytorch_model(self):
@@ -340,9 +337,9 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
 
         defended = defense.apply_to(estimator=TinyLinear(), data=data)
 
-        self.assertTrue(hasattr(defended, "predict"))
-        self.assertTrue(hasattr(defended, "model"))
-        self.assertIsNotNone(defense.defense_application_time)
+        assert hasattr(defended, "predict")
+        assert hasattr(defended, "model")
+        assert defense.defense_application_time is not None
 
     def test_real_neural_cleanse_reports_backend_incompatibility_for_pytorch_model(
         self,
@@ -381,7 +378,7 @@ class TestRetrainingDefensePipeline(unittest.TestCase):
             **defense_cfg,
         )
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             defense.apply_to(estimator=TinyLinear(), data=data)
 
 

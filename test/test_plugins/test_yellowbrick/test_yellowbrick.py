@@ -1,5 +1,4 @@
 import shutil
-import unittest
 from pathlib import Path
 from tempfile import mkdtemp
 from unittest.mock import patch
@@ -42,7 +41,7 @@ expensive_viz_types = [
 expensive_viz_types += list(model_selection_viz_types)
 
 
-class TestYellowbrickPlots(unittest.TestCase):
+class TestYellowbrickPlots:
     def _make_classification_experiment(self):
         files = FileConfig(data_file="", model_file="")
         data_conf = OmegaConf.load(self.classification_data_config)
@@ -68,11 +67,11 @@ class TestYellowbrickPlots(unittest.TestCase):
 
         cv = plot_cfg.parse_cv()
 
-        self.assertIsInstance(cv, StratifiedKFold)
-        self.assertEqual(cv.n_splits, 5)
+        assert isinstance(cv, StratifiedKFold)
+        assert cv.n_splits == 5
 
     def test_yellowbrick_requires_experiment_config(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             YellowbrickPlotConfig(
                 experiment=object(),
                 plot_type="roc_auc",
@@ -87,8 +86,8 @@ class TestYellowbrickPlots(unittest.TestCase):
 
         cv = plot_cfg.parse_cv()
 
-        self.assertIsInstance(cv, KFold)
-        self.assertEqual(cv.n_splits, 5)
+        assert isinstance(cv, KFold)
+        assert cv.n_splits == 5
 
     def test_parse_cv_uses_explicit_integer(self):
         plot_cfg = YellowbrickPlotConfig(
@@ -99,8 +98,8 @@ class TestYellowbrickPlots(unittest.TestCase):
 
         cv = plot_cfg.parse_cv()
 
-        self.assertIsInstance(cv, StratifiedKFold)
-        self.assertEqual(cv.n_splits, 3)
+        assert isinstance(cv, StratifiedKFold)
+        assert cv.n_splits == 3
 
     def test_one_classification_plot(self):
         files = FileConfig(data_file="", model_file="")
@@ -120,12 +119,10 @@ class TestYellowbrickPlots(unittest.TestCase):
             save_path=f"{self.temp_dir}/{plot_type}_dataconfig.png",
         )
         plot_cfg()
-        self.assertTrue(
-            Path(f"{self.temp_dir}/{plot_type}_dataconfig.png").exists(),
-        )
+        assert Path(f"{self.temp_dir}/{plot_type}_dataconfig.png").exists()
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         config_dir = (
             Path(__file__).resolve().parents[3] / "examples" / "sklearn" / "config"
         )
@@ -139,7 +136,7 @@ class TestYellowbrickPlots(unittest.TestCase):
         cls.temp_dir = mkdtemp()
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         shutil.rmtree(cls.temp_dir)
 
     def test_one_regression_plot(self):
@@ -162,9 +159,7 @@ class TestYellowbrickPlots(unittest.TestCase):
             save_path=f"{self.temp_dir}/{plot_type}_regression.png",
         )
         plot_cfg()
-        self.assertTrue(
-            Path(f"{self.temp_dir}/{plot_type}_regression.png").exists(),
-        )
+        assert Path(f"{self.temp_dir}/{plot_type}_regression.png").exists()
 
     def test_one_clustering_plot(self):
         cluster_files = FileConfig(data_file="", model_file="")
@@ -186,9 +181,7 @@ class TestYellowbrickPlots(unittest.TestCase):
             save_path=f"{self.temp_dir}/{plot_type}_clustering.png",
         )
         plot_cfg()
-        self.assertTrue(
-            Path(f"{self.temp_dir}/{plot_type}_clustering.png").exists(),
-        )
+        assert Path(f"{self.temp_dir}/{plot_type}_clustering.png").exists()
 
     def test_clustering_plots(self):
         cluster_data_file = f"{self.temp_dir}/data/cluster_data.pkl"
@@ -220,7 +213,7 @@ class TestYellowbrickPlots(unittest.TestCase):
                         save_path=filepath,
                     )
                     plot_cfg()
-                    self.assertTrue(Path(filepath).exists())
+                    assert Path(filepath).exists()
 
     def test_single_plot_prepares_experiment_only_once(self):
         classification_data = OmegaConf.load(self.classification_data_config)
@@ -261,9 +254,9 @@ class TestYellowbrickPlots(unittest.TestCase):
             first_scores = plot_cfg()
             second_scores = plot_cfg()
 
-        self.assertEqual(mock_experiment_call.call_count, 1)
-        self.assertEqual(first_scores, {"accuracy": 0.9})
-        self.assertEqual(second_scores, {"accuracy": 0.9})
+        assert mock_experiment_call.call_count == 1
+        assert first_scores == {"accuracy": 0.9}
+        assert second_scores == {"accuracy": 0.9}
 
     def test_plot_list_reuses_prepared_experiment_for_children(self):
         classification_data = OmegaConf.load(self.classification_data_config)
@@ -370,6 +363,3 @@ class TestYellowbrickPlots(unittest.TestCase):
 
         mock_rc_update.assert_called_once_with({"figure.figsize": (8, 6)})
 
-
-if __name__ == "__main__":
-    unittest.main()

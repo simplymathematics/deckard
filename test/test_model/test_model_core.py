@@ -1,7 +1,6 @@
 import os
 import shutil
 import tempfile
-import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -12,11 +11,12 @@ from sklearn.ensemble import RandomForestClassifier
 
 from deckard.data import DataConfig
 from deckard.model import ModelConfig
+import pytest
 
 
-class TestModelConfig(unittest.TestCase):
+class TestModelConfig:
 
-    def setUp(self):
+    def setup_method(self):
         # Simple binary classification data
         self.X_train = pd.DataFrame({"a": [0, 1, 2, 3], "b": [1, 2, 3, 4]})
         self.y_train = pd.Series([0, 1, 0, 1])
@@ -33,30 +33,30 @@ class TestModelConfig(unittest.TestCase):
         self.model_file = os.path.join(self.tmpdir, "model.pkl")
         self.pred_file = os.path.join(self.tmpdir, "preds.pkl")
 
-    def tearDown(self):
+    def teardown_method(self):
         shutil.rmtree(self.tmpdir)
 
     def test_post_init(self):
-        self.assertTrue(hasattr(self.model._model, "fit"))
-        self.assertTrue(hasattr(self.model._model, "predict"))
+        assert hasattr(self.model._model, "fit")
+        assert hasattr(self.model._model, "predict")
 
     def test_train_and_predict(self):
         self.model.train(self.X_train, self.y_train)
         preds = self.model.predict(self.X_train)
-        self.assertEqual(len(preds), len(self.y_train))
+        assert len(preds) == len(self.y_train)
 
     def test_predict_proba(self):
         self.model.train(self.X_train, self.y_train)
         self.model.probability = True
         proba = self.model.predict_proba(self.X_train)
-        self.assertEqual(len(proba), len(self.y_train))
+        assert len(proba) == len(self.y_train)
 
     def test_score(self):
         self.model.train(self.X_train, self.y_train)
         proba = self.model.predict_proba(self.X_train)
         scores = self.model.score(self.y_train, proba, y_proba=proba)
-        self.assertIsInstance(scores, dict)
-        self.assertIn("accuracy", scores)
+        assert isinstance(scores, dict)
+        assert "accuracy" in scores
 
     def test_call_training_and_prediction(self):
         data = DataConfig()
@@ -68,25 +68,23 @@ class TestModelConfig(unittest.TestCase):
         data()
         score_dict = model(data=data, model_file=self.model_file)
         scores = model.score_dict
-        self.assertIsInstance(scores, dict)
-        self.assertTrue(
-            "training_time" in scores and "prediction_time" in scores,
-        )
-        self.assertTrue("accuracy" in scores["test"])
-        self.assertTrue("training_time" in scores)
-        self.assertTrue("prediction_time" in scores)
-        self.assertTrue(hasattr(model, "score_dict"))
-        self.assertTrue(hasattr(model, "training_time"))
-        self.assertTrue(hasattr(model, "training_score_time"))
-        self.assertTrue(hasattr(model, "prediction_score_time"))
-        self.assertTrue(hasattr(model, "prediction_time"))
-        self.assertTrue(hasattr(model, "training_predictions"))
-        self.assertTrue(hasattr(model, "predictions"))
+        assert isinstance(scores, dict)
+        assert "training_time" in scores and "prediction_time" in scores
+        assert "accuracy" in scores["test"]
+        assert "training_time" in scores
+        assert "prediction_time" in scores
+        assert hasattr(model, "score_dict")
+        assert hasattr(model, "training_time")
+        assert hasattr(model, "training_score_time")
+        assert hasattr(model, "prediction_score_time")
+        assert hasattr(model, "prediction_time")
+        assert hasattr(model, "training_predictions")
+        assert hasattr(model, "predictions")
         # Assert that the keys in score dict are also in the model.score_dit
         for key in score_dict:
-            self.assertIn(key, scores)
+            assert key in scores
         for key in scores:
-            self.assertIn(key, score_dict)
+            assert key in score_dict
 
     def test_call_skips_scoring_when_scorer_none(self):
         data = DataConfig(scorer=None)
@@ -98,11 +96,11 @@ class TestModelConfig(unittest.TestCase):
             scorer=None,
         )
         scores = model(data=data, model_file=self.model_file)
-        self.assertIsInstance(scores, dict)
-        self.assertIn("training_time", scores)
-        self.assertIn("prediction_time", scores)
-        self.assertNotIn("accuracy", scores)
-        self.assertNotIn("training_accuracy", scores)
+        assert isinstance(scores, dict)
+        assert "training_time" in scores
+        assert "prediction_time" in scores
+        assert "accuracy" not in scores
+        assert "training_accuracy" not in scores
 
     def test_call_saves_test_predictions_when_file_requested(self):
         data = DataConfig(
@@ -126,7 +124,7 @@ class TestModelConfig(unittest.TestCase):
             model_file=self.model_file,
             test_predictions_file=test_pred_file,
         )
-        self.assertTrue(os.path.exists(test_pred_file))
+        assert os.path.exists(test_pred_file)
 
     def test_call_saves_train_predictions_when_file_requested(self):
         data = DataConfig(
@@ -150,7 +148,7 @@ class TestModelConfig(unittest.TestCase):
             model_file=self.model_file,
             train_predictions_file=train_pred_file,
         )
-        self.assertTrue(os.path.exists(train_pred_file))
+        assert os.path.exists(train_pred_file)
 
     def test_call_saves_train_and_test_predictions_when_requested(self):
         data = DataConfig(
@@ -176,8 +174,8 @@ class TestModelConfig(unittest.TestCase):
             train_predictions_file=train_pred_file,
             test_predictions_file=test_pred_file,
         )
-        self.assertTrue(os.path.exists(train_pred_file))
-        self.assertTrue(os.path.exists(test_pred_file))
+        assert os.path.exists(train_pred_file)
+        assert os.path.exists(test_pred_file)
 
     def test_call_saves_test_probabilities_when_file_requested(self):
         data = DataConfig(
@@ -201,7 +199,7 @@ class TestModelConfig(unittest.TestCase):
             model_file=self.model_file,
             test_probabilities_file=test_prob_file,
         )
-        self.assertTrue(os.path.exists(test_prob_file))
+        assert os.path.exists(test_prob_file)
 
     def test_call_saves_train_probabilities_when_file_requested(self):
         data = DataConfig(
@@ -225,7 +223,7 @@ class TestModelConfig(unittest.TestCase):
             model_file=self.model_file,
             training_probabilities_file=train_prob_file,
         )
-        self.assertTrue(os.path.exists(train_prob_file))
+        assert os.path.exists(train_prob_file)
 
     def test_load_predictions(self):
         preds = np.array([0, 1, 1, 0])
@@ -235,7 +233,7 @@ class TestModelConfig(unittest.TestCase):
         orig_load_data = self.model.load_data
         self.model.load_data = lambda fp: np.load(fp)
         loaded = self.model._load_predictions(pred_file)
-        self.assertTrue(np.array_equal(loaded, preds))
+        assert np.array_equal(loaded, preds)
         self.model.load_data = orig_load_data
 
     def test_load_or_train_model_trains_when_not_fitted_even_if_training_time_set(
@@ -260,9 +258,9 @@ class TestModelConfig(unittest.TestCase):
         model._model = RandomForestClassifier(n_estimators=5)
         times = {}
         times = model._load_or_train_model(data, model_file=None, times=times)
-        self.assertIn("training_time", times)
-        self.assertIn("training_n", times)
-        self.assertEqual(times["training_n"], len(data.y_train))
+        assert "training_time" in times
+        assert "training_n" in times
+        assert times["training_n"] == len(data.y_train)
 
     def test_predict_falls_back_when_wrapped_output_matrix_is_invalid(self):
         class BasePredictor:
@@ -284,7 +282,7 @@ class TestModelConfig(unittest.TestCase):
         model._model = WrappedPredictor()
 
         preds = model.predict(self.X_test)
-        self.assertTrue(np.array_equal(preds, np.array([0, 1])))
+        assert np.array_equal(preds, np.array([0, 1]))
 
     def test_decode_predictions_for_persistence_converts_2d_classifier_output(
         self,
@@ -300,8 +298,8 @@ class TestModelConfig(unittest.TestCase):
             y_pred,
             y_true=y_true,
         )
-        self.assertEqual(decoded.ndim, 1)
-        self.assertEqual(len(decoded), len(y_true))
+        assert decoded.ndim == 1
+        assert len(decoded) == len(y_true)
 
     def test_hash_stable_after_call_for_model_config(self):
         model = ModelConfig(
@@ -321,11 +319,9 @@ class TestModelConfig(unittest.TestCase):
         )
         data()
         model(data)
-        self.assertEqual(
-            original_hash,
-            hash(model),
-            msg="Hash changed after call for ModelConfig",
-        )
+        assert original_hash == \
+            hash(model), \
+            "Hash changed after call for ModelConfig"
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────
@@ -370,7 +366,7 @@ def _make_fitted_model(n_train=60, n_test=20, n_features=4, classifier=True):
 # ── __post_init__ scorer branches ──────────────────────────────────────────
 
 
-class TestModelPostInitScorerBranches(unittest.TestCase):
+class TestModelPostInitScorerBranches:
     def test_null_scorer_becomes_none(self):
         model = ModelConfig(
             model_type="sklearn.tree.DecisionTreeClassifier",
@@ -378,7 +374,7 @@ class TestModelPostInitScorerBranches(unittest.TestCase):
             model_params={"max_depth": 2},
             scorer=None,
         )
-        self.assertIsNone(model.scorer)
+        assert model.scorer is None
 
     def test_default_scorer_loads_classifier_scorer(self):
         # AUTO_SCORER sentinel is "auto" (defined in model/base.py)
@@ -389,8 +385,8 @@ class TestModelPostInitScorerBranches(unittest.TestCase):
             scorer="auto",
         )
         # scorer should be resolved to an actual scorer instance, not the sentinel
-        self.assertIsNotNone(model.scorer)
-        self.assertNotEqual(model.scorer, "auto")
+        assert model.scorer is not None
+        assert model.scorer != "auto"
 
     def test_default_scorer_regressor_resolves(self):
         model = ModelConfig(
@@ -399,8 +395,8 @@ class TestModelPostInitScorerBranches(unittest.TestCase):
             model_params={"max_depth": 2},
             scorer="auto",
         )
-        self.assertIsNotNone(model.scorer)
-        self.assertNotEqual(model.scorer, "auto")
+        assert model.scorer is not None
+        assert model.scorer != "auto"
 
     def test_scorer_as_dict_becomes_scorer_dict_config(self):
         scorer_dict = {
@@ -421,7 +417,7 @@ class TestModelPostInitScorerBranches(unittest.TestCase):
             scorer=scorer_dict,
         )
         # Should not raise; scorer transformed from raw dict to ScorerDictConfig
-        self.assertIsNotNone(model.scorer)
+        assert model.scorer is not None
 
     def test_defense_with_null_defense_name_sets_defense_none(self):
         defense = SimpleNamespace(defense_name=None)
@@ -439,7 +435,7 @@ class TestModelPostInitScorerBranches(unittest.TestCase):
         object.__setattr__(model, "_defense_pipeline", None)
         object.__setattr__(model, "score_dict", None)
         model.__post_init__()
-        self.assertIsNone(model.defense)
+        assert model.defense is None
 
     def test_classifier_string_to_bool(self):
         model = ModelConfig(
@@ -448,7 +444,7 @@ class TestModelPostInitScorerBranches(unittest.TestCase):
             model_params={"max_depth": 2},
             scorer=None,
         )
-        self.assertTrue(model.classifier)
+        assert model.classifier
 
     def test_regressor_string_to_bool(self):
         model = ModelConfig(
@@ -457,7 +453,7 @@ class TestModelPostInitScorerBranches(unittest.TestCase):
             model_params={"max_depth": 2},
             scorer=None,
         )
-        self.assertFalse(model.classifier)
+        assert not model.classifier
 
     def test_other_classifier_value_raises_valueerror(self):
         model = ModelConfig.__new__(ModelConfig)
@@ -473,14 +469,14 @@ class TestModelPostInitScorerBranches(unittest.TestCase):
         object.__setattr__(model, "_defense_pipeline", None)
         object.__setattr__(model, "score_dict", None)
         object.__setattr__(model, "defense", None)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             model.__post_init__()
 
 
 # ── Plugin system ──────────────────────────────────────────────────────────
 
 
-class TestPluginSystem(unittest.TestCase):
+class TestPluginSystem:
     def _model(self):
         return ModelConfig(
             model_type="sklearn.tree.DecisionTreeClassifier",
@@ -497,7 +493,7 @@ class TestPluginSystem(unittest.TestCase):
         )
         from sklearn.tree import DecisionTreeClassifier
 
-        self.assertIsInstance(instance, DecisionTreeClassifier)
+        assert isinstance(instance, DecisionTreeClassifier)
 
     def test_instantiate_plugin_from_type(self):
         model = self._model()
@@ -506,7 +502,7 @@ class TestPluginSystem(unittest.TestCase):
             pass
 
         instance = model._instantiate_plugin(Dummy)
-        self.assertIsInstance(instance, Dummy)
+        assert isinstance(instance, Dummy)
 
     def test_instantiate_plugin_from_object(self):
         model = self._model()
@@ -516,7 +512,7 @@ class TestPluginSystem(unittest.TestCase):
 
         obj = Obj()
         result = model._instantiate_plugin(obj)
-        self.assertIs(result, obj)
+        assert result is obj
 
     def test_instantiate_plugin_dict_with_name_key(self):
         model = self._model()
@@ -528,18 +524,18 @@ class TestPluginSystem(unittest.TestCase):
         )
         from sklearn.tree import DecisionTreeClassifier
 
-        self.assertIsInstance(result, DecisionTreeClassifier)
+        assert isinstance(result, DecisionTreeClassifier)
 
     def test_instantiate_plugin_dict_missing_name_raises(self):
         model = self._model()
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             model._instantiate_plugin({"no_name_key": "value"})
 
     def test_get_plugins_non_list_raises(self):
         model = self._model()
         model.plugins = "not_a_list"
         model._plugin_objects = None
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             model._get_plugins()
 
     def test_run_plugin_hook_calls_callable_hook(self):
@@ -554,27 +550,27 @@ class TestPluginSystem(unittest.TestCase):
 
         model._plugin_objects = [Spy()]
         outputs = model._run_plugin_hook("my_hook", extra=1)
-        self.assertTrue(Spy.called)
-        self.assertEqual(outputs, [{"spy": True}])
+        assert Spy.called
+        assert outputs == [{"spy": True}]
 
     def test_merge_plugin_scores_updates_score_dict(self):
         model = self._model()
         model.score_dict = {"existing": 1}
         model._merge_plugin_scores([{"new_metric": 42}])
-        self.assertIn("new_metric", model.score_dict)
-        self.assertIn("existing", model.score_dict)
+        assert "new_metric" in model.score_dict
+        assert "existing" in model.score_dict
 
     def test_merge_plugin_scores_with_none_score_dict(self):
         model = self._model()
         model.score_dict = None
         model._merge_plugin_scores([{"m": 99}])
-        self.assertEqual(model.score_dict["m"], 99)
+        assert model.score_dict["m"] == 99
 
 
 # ── _predict TypeError branches ────────────────────────────────────────────
 
 
-class TestPredictTypeErrorHandling(unittest.TestCase):
+class TestPredictTypeErrorHandling:
     def _model_with_mock(self, side_effect_first, return_value_second):
         """Make a ModelConfig whose _model.predict raises then returns on second call."""
         model = ModelConfig(
@@ -625,7 +621,7 @@ class TestPredictTypeErrorHandling(unittest.TestCase):
             predict=MagicMock(side_effect=TypeError("something else entirely")),
         )
         X = pd.DataFrame({"a": [1, 2, 3]})
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             model.predict(X)
 
     def test_predict_without_model_raises_value_error(self):
@@ -636,14 +632,14 @@ class TestPredictTypeErrorHandling(unittest.TestCase):
             scorer=None,
         )
         model._model = None
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             model.predict(pd.DataFrame({"a": [1]}))
 
 
 # ── _predict_proba branches ────────────────────────────────────────────────
 
 
-class TestPredictProbaBranches(unittest.TestCase):
+class TestPredictProbaBranches:
     def test_predict_proba_not_probability_raises(self):
         from sklearn.tree import DecisionTreeClassifier
 
@@ -658,7 +654,7 @@ class TestPredictProbaBranches(unittest.TestCase):
         model._model = DecisionTreeClassifier(max_depth=2)
         model.probability = False
         data = _make_data()
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             model.predict_proba(data.X_test)
 
     def test_predict_proba_no_model_raises(self):
@@ -670,14 +666,14 @@ class TestPredictProbaBranches(unittest.TestCase):
         )
         model._model = None
         model.probability = True
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             model.predict_proba(pd.DataFrame({"a": [1]}))
 
 
 # ── get_art_class and get_art_model ────────────────────────────────────────
 
 
-class TestGetArtClassAndModel(unittest.TestCase):
+class TestGetArtClassAndModel:
     def test_get_art_class_sklearn_no_input_shape(self):
         model = ModelConfig(
             model_type="sklearn.tree.DecisionTreeClassifier",
@@ -688,14 +684,14 @@ class TestGetArtClassAndModel(unittest.TestCase):
         data, _ = _make_fitted_model()
         art_class, init_params = model.get_art_class(data)
         # sklearn ART wrappers don't need input_shape
-        self.assertNotIn("input_shape", init_params)
-        self.assertIn("preprocessing", init_params)
+        assert "input_shape" not in init_params
+        assert "preprocessing" in init_params
 
     def test_get_art_model_no_defense_returns_art_wrapper(self):
         data, model = _make_fitted_model()
         model(data)  # fit model first
         art_model = model.get_art_model(data)
-        self.assertIsNotNone(art_model)
+        assert art_model is not None
 
     def test_get_model_raises_when_no_model(self):
         model = ModelConfig(
@@ -705,14 +701,14 @@ class TestGetArtClassAndModel(unittest.TestCase):
             scorer=None,
         )
         model._model = None
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             model.get_model()
 
 
 # ── _load_score_file ───────────────────────────────────────────────────────
 
 
-class TestLoadScoreFile(unittest.TestCase):
+class TestLoadScoreFile:
     def test_load_score_file_existing_merges_scores(self):
         import json
 
@@ -728,8 +724,8 @@ class TestLoadScoreFile(unittest.TestCase):
                 json.dumps({"accuracy": 0.9, "training_time": 1.2, "training_n": 50}),
             )
             times = model._load_score_file(str(score_path))
-        self.assertIn("training_time", times)
-        self.assertIn("training_n", times)
+        assert "training_time" in times
+        assert "training_n" in times
 
     def test_load_score_file_nonexistent_returns_empty(self):
         model = ModelConfig(
@@ -739,13 +735,13 @@ class TestLoadScoreFile(unittest.TestCase):
             scorer=None,
         )
         times = model._load_score_file("/nonexistent/path.json")
-        self.assertEqual(times, {})
+        assert times == {}
 
 
 # ── _load_or_train_model ───────────────────────────────────────────────────
 
 
-class TestLoadOrTrainModel(unittest.TestCase):
+class TestLoadOrTrainModel:
     def test_model_file_present_loads_from_file(self):
         data, model = _make_fitted_model()
         with tempfile.TemporaryDirectory() as td:
@@ -760,10 +756,8 @@ class TestLoadOrTrainModel(unittest.TestCase):
             )
             times = {}
             model2._load_or_train_model(data, model_path, times)
-            self.assertIsNotNone(model2._model)
-            self.assertTrue(
-                model2._is_model_fitted(model2._model, X_sample=data.X_train),
-            )
+            assert model2._model is not None
+            assert model2._is_model_fitted(model2._model, X_sample=data.X_train)
 
     def test_model_file_present_unwraps_loaded_model_config(self):
         data, model = _make_fitted_model()
@@ -792,10 +786,10 @@ class TestLoadOrTrainModel(unittest.TestCase):
             times = {}
             model2._load_or_train_model(data, model_path, times)
 
-            self.assertNotIsInstance(model2._model, ModelConfig)
-            self.assertTrue(hasattr(model2._model, "predict"))
-            self.assertIs(model2.get_model(), model2._model)
-            self.assertIs(model2._model, loaded_obj._model)
+            assert not isinstance(model2._model, ModelConfig)
+            assert hasattr(model2._model, "predict")
+            assert model2.get_model() is model2._model
+            assert model2._model is loaded_obj._model
 
     def test_model_file_present_loaded_estimator_syncs_model_signature(self):
         from sklearn.tree import DecisionTreeClassifier
@@ -819,12 +813,10 @@ class TestLoadOrTrainModel(unittest.TestCase):
             times = {}
             model2._load_or_train_model(data, model_path, times)
 
-            self.assertIs(model2._model, loaded_estimator)
-            self.assertEqual(
-                model2.model_type,
-                "sklearn.tree._classes.DecisionTreeClassifier",
-            )
-            self.assertEqual(model2.model_params.get("max_depth"), 3)
+            assert model2._model is loaded_estimator
+            assert model2.model_type == \
+                "sklearn.tree._classes.DecisionTreeClassifier"
+            assert model2.model_params.get("max_depth") == 3
 
     def test_no_model_no_file_raises_value_error(self):
         data, _ = _make_fitted_model()
@@ -835,14 +827,14 @@ class TestLoadOrTrainModel(unittest.TestCase):
             scorer=None,
         )
         model._model = None
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             model._load_or_train_model(data, None, {})
 
 
 # ── decode/load/score branch coverage ───────────────────────────────────────
 
 
-class TestDecodePredictionsForPersistence(unittest.TestCase):
+class TestDecodePredictionsForPersistence:
     def test_regressor_passthrough(self):
         model = ModelConfig(
             model_type="sklearn.tree.DecisionTreeRegressor",
@@ -864,7 +856,7 @@ class TestDecodePredictionsForPersistence(unittest.TestCase):
         y_pred = np.array([[0.2], [0.8], [1.2]])
         y_true = np.array([10, 20, 10])
         out = model._decode_predictions_for_persistence(y_pred, y_true=y_true)
-        self.assertEqual(list(out), [20.0, 20.0, 20.0])
+        assert list(out) == [20.0, 20.0, 20.0]
 
     def test_multiclass_argmax(self):
         model = ModelConfig(
@@ -878,7 +870,7 @@ class TestDecodePredictionsForPersistence(unittest.TestCase):
         np.testing.assert_array_equal(out, np.array([1, 0]))
 
 
-class TestLoadAllPredictionsBranches(unittest.TestCase):
+class TestLoadAllPredictionsBranches:
     def _model(self):
         return ModelConfig(
             model_type="sklearn.tree.DecisionTreeClassifier",
@@ -894,7 +886,7 @@ class TestLoadAllPredictionsBranches(unittest.TestCase):
             p.write_text("1\n2\n")
             model._load_predictions = lambda _f: [1, 2]
             model.training_prediction_time = None
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 model._load_all_predictions(str(p), None, {})
 
     def test_test_predictions_loaded_without_time_asserts(self):
@@ -904,11 +896,11 @@ class TestLoadAllPredictionsBranches(unittest.TestCase):
             p.write_text("1\n2\n")
             model._load_predictions = lambda _f: [1, 2]
             model.prediction_time = None
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 model._load_all_predictions(None, str(p), {})
 
 
-class TestScoreValidationBranches(unittest.TestCase):
+class TestScoreValidationBranches:
     def test_score_with_non_callable_scorer_raises(self):
         model = ModelConfig(
             model_type="sklearn.tree.DecisionTreeClassifier",
@@ -917,7 +909,7 @@ class TestScoreValidationBranches(unittest.TestCase):
             scorer=None,
         )
         model.scorer = "not-callable"
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             model.score(np.array([0, 1]), np.array([0, 1]), mode="test")
 
     def test_load_predictions_invalid_type_raises(self):
@@ -928,14 +920,14 @@ class TestScoreValidationBranches(unittest.TestCase):
             scorer=None,
         )
         model.load_data = lambda _f: 12345
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             model._load_predictions("dummy")
 
 
 # ── _copy_runtime_state_to ─────────────────────────────────────────────────
 
 
-class TestCopyRuntimeStateTo(unittest.TestCase):
+class TestCopyRuntimeStateTo:
     def test_copies_all_runtime_fields(self):
         data, model = _make_fitted_model()
         model(data)
@@ -946,15 +938,15 @@ class TestCopyRuntimeStateTo(unittest.TestCase):
             scorer=None,
         )
         model._copy_runtime_state_to(target)
-        self.assertIsNotNone(target._model)
+        assert target._model is not None
         # at minimum the score_dict should be copied
-        self.assertIsNotNone(target.score_dict)
+        assert target.score_dict is not None
 
 
 # ── _require_defense_pipeline ─────────────────────────────────────────────
 
 
-class TestRequireDefensePipeline(unittest.TestCase):
+class TestRequireDefensePipeline:
     def test_no_defense_returns_none(self):
         model = ModelConfig(
             model_type="sklearn.tree.DecisionTreeClassifier",
@@ -963,10 +955,10 @@ class TestRequireDefensePipeline(unittest.TestCase):
             scorer=None,
         )
         result = model._require_defense_pipeline()
-        self.assertIsNone(result)
+        assert result is None
 
 
-class TestModelEvaluateAndScoreBranches(unittest.TestCase):
+class TestModelEvaluateAndScoreBranches:
     def _model(self):
         model = ModelConfig(
             model_type="sklearn.tree.DecisionTreeClassifier",
@@ -1000,9 +992,9 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
             persist_test_probabilities=True,
         )
 
-        self.assertNotIn("training_loss_curve", model.score_dict)
-        self.assertIn("accuracy", model.score_dict)
-        self.assertNotIn("training_accuracy", model.score_dict)
+        assert "training_loss_curve" not in model.score_dict
+        assert "accuracy" in model.score_dict
+        assert "training_accuracy" not in model.score_dict
 
     def test_evaluate_with_no_test_data_raises(self):
         model = self._model()
@@ -1012,7 +1004,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         model.predict = lambda X: np.zeros(len(X), dtype=int)
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {"accuracy": 1.0}
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             model._evaluate_and_score(data, times={})
 
     def test_evaluate_with_no_test_labels_raises(self):
@@ -1023,7 +1015,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         model.predict = lambda X: np.zeros(len(X), dtype=int)
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {"accuracy": 1.0}
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             model._evaluate_and_score(data, times={})
 
     def test_evaluate_predict_proba_typeerror_fallback_uses_numpy_cast(self):
@@ -1048,8 +1040,8 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
             persist_test_probabilities=True,
         )
 
-        self.assertIsNotNone(model.training_probabilities)
-        self.assertIsNotNone(model.probabilities)
+        assert model.training_probabilities is not None
+        assert model.probabilities is not None
 
     def test_evaluate_uses_preexisting_predictions(self):
         model = self._model()
@@ -1062,8 +1054,8 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         times = {}
         model._evaluate_and_score(data, times=times)
 
-        self.assertEqual(times["prediction_n"], len(data.y_test))
-        self.assertNotIn("training_n", times)
+        assert times["prediction_n"] == len(data.y_test)
+        assert "training_n" not in times
 
     def test_evaluate_applies_defense_before_predict_and_merges_scores(self):
         model = self._model()
@@ -1086,8 +1078,8 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         times = {}
         model._evaluate_and_score(data, times=times)
 
-        self.assertEqual(model.score_dict["defense_metric"], 1.0)
-        self.assertEqual(model.score_dict["defense_application_time"], 0.25)
+        assert model.score_dict["defense_metric"] == 1.0
+        assert model.score_dict["defense_application_time"] == 0.25
 
     def test_evaluate_probability_persistence_valueerror_sets_none(self):
         model = self._model()
@@ -1106,8 +1098,8 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
             persist_test_probabilities=True,
         )
 
-        self.assertIsNone(model.training_probabilities)
-        self.assertIsNone(model.probabilities)
+        assert model.training_probabilities is None
+        assert model.probabilities is None
 
     def test_evaluate_training_probability_typeerror_reraises(self):
         model = self._model()
@@ -1118,7 +1110,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         model.predict = lambda X: np.zeros(len(X), dtype=int)
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {"accuracy": 1.0}
 
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             model._evaluate_and_score(
                 data,
                 times={},
@@ -1136,7 +1128,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         model.predict = lambda X: np.zeros(len(X), dtype=int)
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {"accuracy": 1.0}
 
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             model._evaluate_and_score(
                 data,
                 times={},
@@ -1159,8 +1151,8 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
             persist_test_probabilities=True,
         )
 
-        self.assertIsNotNone(model.training_probabilities)
-        self.assertIsNotNone(model.probabilities)
+        assert model.training_probabilities is not None
+        assert model.probabilities is not None
 
     def test_val_mode_resamples_when_validation_split_missing(self):
         data = DataConfig(
@@ -1194,9 +1186,9 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         times = {}
         model._evaluate_and_score(data, times=times)
 
-        self.assertIsNotNone(data.X_val)
-        self.assertIsNotNone(data.y_val)
-        self.assertIn("validation_n", times)
+        assert data.X_val is not None
+        assert data.y_val is not None
+        assert "validation_n" in times
 
     def test_evaluate_initializes_score_dict_when_none(self):
         model = self._model()
@@ -1207,7 +1199,7 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         model.score_dict = None
 
         model._evaluate_and_score(data, times={})
-        self.assertIsInstance(model.score_dict, dict)
+        assert isinstance(model.score_dict, dict)
 
     def test_evaluate_raises_when_train_predictions_none(self):
         model = self._model()
@@ -1216,11 +1208,11 @@ class TestModelEvaluateAndScoreBranches(unittest.TestCase):
         model.predict = lambda _X: None
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {"accuracy": 1.0}
 
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             model._evaluate_and_score(data, times={})
 
 
-class TestModelLoadOrTrainBranches(unittest.TestCase):
+class TestModelLoadOrTrainBranches:
     def test_load_or_train_trains_when_model_file_exists_but_not_fitted(self):
         data = _make_data()
         model = ModelConfig(
@@ -1262,8 +1254,8 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
             )
             out = model._load_or_train_model(data, str(p), {})
 
-            self.assertIn("training_time", out)
-            self.assertIn("training_n", out)
+            assert "training_time" in out
+            assert "training_n" in out
 
     def test_load_or_train_with_none_model_and_missing_file_trains(self):
         data = _make_data()
@@ -1278,8 +1270,8 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             out = model._load_or_train_model(data, str(Path(td) / "missing.pkl"), {})
 
-        self.assertIn("training_time", out)
-        self.assertIn("training_n", out)
+        assert "training_time" in out
+        assert "training_n" in out
 
     def test_load_or_train_raises_notfitted_when_model_missing_after_train(self):
         data = _make_data()
@@ -1297,7 +1289,7 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
             model._model = None
 
         model.train = train
-        with self.assertRaises(Exception):
+        with pytest.raises(Exception):
             model._load_or_train_model(data, None, {})
 
     def test_load_or_train_existing_file_not_fitted_applies_defense(self):
@@ -1344,9 +1336,6 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
             model.save_object = lambda *_args, **_kwargs: None
             out = model._load_or_train_model(data, str(p), {})
 
-            self.assertIn("training_time", out)
-            self.assertIn("training_n", out)
+            assert "training_time" in out
+            assert "training_n" in out
 
-
-if __name__ == "__main__":
-    unittest.main()

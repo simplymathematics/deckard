@@ -1,7 +1,6 @@
 """Tests for deckard/layers/compile_results.py — currently 61% coverage."""
 
 import tempfile
-import unittest
 from pathlib import Path
 
 import optuna
@@ -14,83 +13,84 @@ from deckard.layers.compile_results import (
     parse_studies,
     parse_study_name,
 )
+import pytest
 
 
-class TestParseStudyName(unittest.TestCase):
+class TestParseStudyName:
     def test_no_schema_returns_empty_df(self):
         result = parse_study_name("a_b_c_d", schema=None)
-        self.assertIsInstance(result, pd.DataFrame)
-        self.assertEqual(len(result.columns), 0)
+        assert isinstance(result, pd.DataFrame)
+        assert len(result.columns) == 0
 
     def test_integer_index_schema(self):
         result = parse_study_name("alpha_beta_gamma", schema={"first": 0, "third": 2})
-        self.assertEqual(result["first"].iloc[0], "alpha")
-        self.assertEqual(result["third"].iloc[0], "gamma")
+        assert result["first"].iloc[0] == "alpha"
+        assert result["third"].iloc[0] == "gamma"
 
     def test_range_schema(self):
         # An int key must appear first to give the DataFrame a row;
         # the range value then broadcasts onto that row.
         result = parse_study_name("a_b_c_d", schema={"first": 0, "middle": "1:2"})
-        self.assertEqual(result["first"].iloc[0], "a")
-        self.assertEqual(result["middle"].iloc[0], "b_c")
+        assert result["first"].iloc[0] == "a"
+        assert result["middle"].iloc[0] == "b_c"
 
     def test_out_of_range_index_gives_none(self):
         # int key populates the DataFrame; out-of-range key gets None
         result = parse_study_name("a_b", schema={"first": 0, "far": 10})
-        self.assertIsNone(result["far"].iloc[0])
+        assert result["far"].iloc[0] is None
 
     def test_custom_separator(self):
         result = parse_study_name("x-y-z", schema={"sep": "-", "first": 0})
-        self.assertEqual(result["first"].iloc[0], "x")
+        assert result["first"].iloc[0] == "x"
 
     def test_range_clamped_to_available_tokens(self):
         result = parse_study_name("a_b", schema={"first": 0, "span": "0:99"})
-        self.assertEqual(result["span"].iloc[0], "a_b")
+        assert result["span"].iloc[0] == "a_b"
 
     def test_invalid_schema_value_type_raises(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             parse_study_name("a_b_c", schema={"bad": [0, 1]})
 
     def test_range_format_validation(self):
-        with self.assertRaises(AssertionError):
+        with pytest.raises(AssertionError):
             parse_study_name("a_b_c", schema={"bad_range": "1:2:3"})
 
 
-class TestCleanColumnNames(unittest.TestCase):
+class TestCleanColumnNames:
     def test_values_prefix_stripped(self):
         df = pd.DataFrame({"values_accuracy": [0.9]})
         result = clean_column_names(df)
-        self.assertIn("accuracy", result.columns)
+        assert "accuracy" in result.columns
 
     def test_params_prefix_stripped(self):
         df = pd.DataFrame({"params_lr": [0.01]})
         result = clean_column_names(df)
-        self.assertIn("lr", result.columns)
+        assert "lr" in result.columns
 
     def test_user_attrs_prefix_stripped(self):
         df = pd.DataFrame({"user_attrs_note": ["hello"]})
         result = clean_column_names(df)
-        self.assertIn("note", result.columns)
+        assert "note" in result.columns
 
     def test_double_plus_prefix_stripped(self):
         df = pd.DataFrame({"++model": ["rf"]})
         result = clean_column_names(df)
-        self.assertIn("model", result.columns)
+        assert "model" in result.columns
 
     def test_tilde_prefix_stripped(self):
         # source uses col[2:] strip; "~~experiment" -> "experiment"
         df = pd.DataFrame({"~~experiment": ["run1"]})
         result = clean_column_names(df)
-        self.assertIn("experiment", result.columns)
+        assert "experiment" in result.columns
 
     def test_plain_columns_unchanged(self):
         df = pd.DataFrame({"state": ["COMPLETE"], "number": [1]})
         result = clean_column_names(df)
-        self.assertIn("state", result.columns)
-        self.assertIn("number", result.columns)
+        assert "state" in result.columns
+        assert "number" in result.columns
 
 
-class TestParseStudies(unittest.TestCase):
+class TestParseStudies:
     def _make_storage_with_study(self, study_name="s1"):
         storage = optuna.storages.InMemoryStorage()
         study = optuna.create_study(
@@ -107,12 +107,12 @@ class TestParseStudies(unittest.TestCase):
         storage, _ = self._make_storage_with_study(study_name="s1")
         # Non-empty schema needed: cross-join with empty meta_df yields 0 rows
         df = parse_studies(optuna_db=storage, schema={"part": 0})
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertGreater(len(df), 0)
+        assert isinstance(df, pd.DataFrame)
+        assert len(df) > 0
 
     def test_no_studies_raises(self):
         storage = optuna.storages.InMemoryStorage()
-        with self.assertRaises(AssertionError):
+        with pytest.raises(AssertionError):
             parse_studies(optuna_db=storage, schema={})
 
     def test_multiple_studies_concatenated(self):
@@ -126,7 +126,7 @@ class TestParseStudies(unittest.TestCase):
             t = study.ask()
             study.tell(t, 0.5)
         df = parse_studies(optuna_db=storage, schema={"part": 0})
-        self.assertGreaterEqual(len(df), 2)
+        assert len(df) >= 2
 
     def test_schema_columns_added(self):
         storage = optuna.storages.InMemoryStorage()
@@ -141,10 +141,10 @@ class TestParseStudies(unittest.TestCase):
             optuna_db=storage,
             schema={"part_one": 0, "part_two": 1},  # "alpha", "beta"
         )
-        self.assertIn("part_one", df.columns)
+        assert "part_one" in df.columns
 
 
-class TestCompileResultsMain(unittest.TestCase):
+class TestCompileResultsMain:
     def _make_storage_with_trial(self, study_name="compile_study"):
         storage = optuna.storages.InMemoryStorage()
         study = optuna.create_study(
@@ -166,7 +166,7 @@ class TestCompileResultsMain(unittest.TestCase):
                 optuna_db=storage,
                 schema=None,
             )
-            self.assertTrue(Path(output_path).exists())
+            assert Path(output_path).exists()
 
     def test_creates_nested_output_dir(self):
         storage = self._make_storage_with_trial()
@@ -176,7 +176,7 @@ class TestCompileResultsMain(unittest.TestCase):
                 output_file=output_path,
                 optuna_db=storage,
             )
-            self.assertTrue(Path(output_path).exists())
+            assert Path(output_path).exists()
 
     def test_with_schema_dict(self):
         # compile_results_main has a source bug with dict schemas (Path(dict) raises TypeError).
@@ -190,8 +190,8 @@ class TestCompileResultsMain(unittest.TestCase):
         t = study.ask()
         study.tell(t, 0.7)
         df = parse_studies(optuna_db=storage, schema={"first_part": 0})
-        self.assertIn("first_part", df.columns)
-        self.assertGreater(len(df), 0)
+        assert "first_part" in df.columns
+        assert len(df) > 0
 
     def test_with_schema_yaml_file(self):
         storage = optuna.storages.InMemoryStorage()
@@ -211,4 +211,4 @@ class TestCompileResultsMain(unittest.TestCase):
                 optuna_db=storage,
                 schema=str(schema_file),
             )
-            self.assertTrue(Path(output_path).exists())
+            assert Path(output_path).exists()

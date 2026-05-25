@@ -2,7 +2,6 @@ import os
 import pickle
 import shutil
 import tempfile
-import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -22,8 +21,8 @@ from deckard.attack.canon import normalize_attack_stage
 from deckard.score.attack import FairlearnAttackScorerConfig
 
 
-class TestAttackConfig(unittest.TestCase):
-    def setUp(self):
+class TestAttackConfig:
+    def setup_method(self):
         self.attack_params = {}
         self.attack_type = "art.attacks.evasion.FastGradientMethod"
         self.attack = AttackConfig(
@@ -33,7 +32,7 @@ class TestAttackConfig(unittest.TestCase):
         self.tmpdir = tempfile.mkdtemp()
         self.attack_file = os.path.join(self.tmpdir, "attack.pkl")
 
-    def tearDown(self):
+    def teardown_method(self):
         shutil.rmtree(self.tmpdir)
 
     def _load_pytorch_model_inversion_config(self):
@@ -61,27 +60,27 @@ class TestAttackConfig(unittest.TestCase):
         return AttackConfig(**config)
 
     def test_post_init(self):
-        self.assertTrue(hasattr(self.attack, "attack_type"))
-        self.assertTrue(hasattr(self.attack, "attack_params"))
+        assert hasattr(self.attack, "attack_type")
+        assert hasattr(self.attack, "attack_params")
 
     def test_post_init_scorer_dict_and_poisoning_validation_paths(self):
         cfg = AttackConfig(
             attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             scorer={},
         )
-        self.assertIsNotNone(cfg.scorer)
+        assert cfg.scorer is not None
 
         cfg_default = AttackConfig(
             attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             scorer="default",
         )
-        self.assertIsNotNone(cfg_default.scorer)
+        assert cfg_default.scorer is not None
 
         cfg_auto = AttackConfig(
             attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             scorer="auto",
         )
-        self.assertIsNotNone(cfg_auto.scorer)
+        assert cfg_auto.scorer is not None
 
         cfg_target = AttackConfig(
             attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
@@ -89,10 +88,8 @@ class TestAttackConfig(unittest.TestCase):
                 "_target_": "deckard.score.attack.FairlearnAttackScorerConfig",
             },
         )
-        self.assertEqual(
-            cfg_target.scorer.__class__.__name__,
-            "FairlearnAttackScorerConfig",
-        )
+        assert cfg_target.scorer.__class__.__name__ == \
+            "FairlearnAttackScorerConfig"
 
         cfg_name = AttackConfig(
             attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
@@ -100,35 +97,31 @@ class TestAttackConfig(unittest.TestCase):
                 "name": "deckard.score.attack.FairlearnAttackScorerConfig",
             },
         )
-        self.assertEqual(
-            cfg_name.scorer.__class__.__name__,
-            "FairlearnAttackScorerConfig",
-        )
+        assert cfg_name.scorer.__class__.__name__ == \
+            "FairlearnAttackScorerConfig"
 
         cfg_path = AttackConfig(
             attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             scorer="deckard.score.attack.FairlearnAttackScorerConfig",
         )
-        self.assertEqual(
-            cfg_path.scorer.__class__.__name__,
-            "FairlearnAttackScorerConfig",
-        )
+        assert cfg_path.scorer.__class__.__name__ == \
+            "FairlearnAttackScorerConfig"
 
-        with self.assertRaisesRegex(TypeError, "_score"):
+        with pytest.raises(TypeError, match="_score"):
             AttackConfig(
                 attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
                 scorer=123,
             )
 
-        with self.assertRaisesRegex(ValueError, "Missing"):
+        with pytest.raises(ValueError, match="Missing"):
             AttackConfig(
                 attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
                 attack_params={},
             )
 
-        with self.assertRaisesRegex(
+        with pytest.raises(
             ValueError,
-            "class_source and class_target to differ",
+            match="class_source and class_target to differ",
         ):
             AttackConfig(
                 attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
@@ -139,9 +132,9 @@ class TestAttackConfig(unittest.TestCase):
         attack = AttackConfig(
             attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
         )
-        self.assertEqual(attack.attack_family, "inference")
-        self.assertEqual(attack.attack_subtype, "membership_inference")
-        self.assertEqual(attack.attack_kind, "membership")
+        assert attack.attack_family == "inference"
+        assert attack.attack_subtype == "membership_inference"
+        assert attack.attack_kind == "membership"
 
     def test_poisoning_svm_initialization_injects_train_and_val_arrays(self):
         class DummyPoisoningAttackSVM:
@@ -183,16 +176,14 @@ class TestAttackConfig(unittest.TestCase):
                 _TinyData(),
             )
 
-        self.assertEqual(attack_type, "poisoning")
-        self.assertIsNotNone(
-            getattr(initialized_attack.classifier, "clip_values", None),
-        )
-        self.assertIn("x_train", initialized_attack.kwargs)
-        self.assertIn("y_train", initialized_attack.kwargs)
-        self.assertIn("x_val", initialized_attack.kwargs)
-        self.assertIn("y_val", initialized_attack.kwargs)
-        self.assertEqual(initialized_attack.kwargs["x_train"].shape, (4, 2))
-        self.assertEqual(initialized_attack.kwargs["x_val"].shape, (2, 2))
+        assert attack_type == "poisoning"
+        assert getattr(initialized_attack.classifier, "clip_values", None) is not None
+        assert "x_train" in initialized_attack.kwargs
+        assert "y_train" in initialized_attack.kwargs
+        assert "x_val" in initialized_attack.kwargs
+        assert "y_val" in initialized_attack.kwargs
+        assert initialized_attack.kwargs["x_train"].shape == (4, 2)
+        assert initialized_attack.kwargs["x_val"].shape == (2, 2)
         np.testing.assert_array_equal(
             initialized_attack.kwargs["y_train"],
             np.array(
@@ -211,91 +202,83 @@ class TestAttackConfig(unittest.TestCase):
             extracted_pred=np.array([[1.5, -0.2], [-0.4, 2.1]]),
         )
 
-        self.assertFalse(use_proba)
-        self.assertNotIn("roc_auc", scorer.scorers)
+        assert not use_proba
+        assert "roc_auc" not in scorer.scorers
 
     def test_infer_task_is_classification_and_compatibility_guard(self):
         class _Data:
             classifier = None
 
-        self.assertFalse(
-            AttackConfig._infer_task_is_classification(_Data(), LinearRegression()),
-        )
-        self.assertTrue(
-            AttackConfig._infer_task_is_classification(_Data(), LogisticRegression()),
-        )
+        assert not  \
+            AttackConfig._infer_task_is_classification(_Data(), LinearRegression())
+        assert AttackConfig._infer_task_is_classification(_Data(), LogisticRegression())
 
         data = type("D", (), {"classifier": True})()
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
-        with self.assertRaisesRegex(ValueError, "not supported for regression"):
+        with pytest.raises(ValueError, match="not supported for regression"):
             attack._validate_attack_task_compatibility(data, LinearRegression())
 
     def test_score_and_static_normalizers(self):
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
         attack.scorer = None
-        with self.assertRaisesRegex(ValueError, "must be configured"):
+        with pytest.raises(ValueError, match="must be configured"):
             attack._score("evasion", [0, 1], [0, 1])
 
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
-        self.assertFalse(
-            attack._is_regression_prediction_output([0, 1], [[0.2, 0.8], [0.6, 0.4]]),
-        )
-        self.assertTrue(
-            attack._is_regression_prediction_output([0.2, 0.3], [0.1, 0.2]),
-        )
+        assert not  \
+            attack._is_regression_prediction_output([0, 1], [[0.2, 0.8], [0.6, 0.4]])
+        assert attack._is_regression_prediction_output([0.2, 0.3], [0.1, 0.2])
 
         arr = attack._to_numpy_array(pd.Series([1, 2, 3]), flatten=True)
-        self.assertEqual(arr.shape, (3,))
+        assert arr.shape == (3,)
 
         feat = attack._prepare_features_for_attack(pd.DataFrame({"a": [1, 2]}))
         lbl = attack._prepare_labels_for_attack(pd.Series([0, 1]))
-        self.assertIsInstance(feat, np.ndarray)
-        self.assertIsInstance(lbl, np.ndarray)
+        assert isinstance(feat, np.ndarray)
+        assert isinstance(lbl, np.ndarray)
 
         labels = attack._prediction_to_labels(
             np.array([[0.1, 0.9], [0.8, 0.2]]),
             is_regression=False,
         )
-        self.assertTrue(np.array_equal(labels, np.array([1, 0])))
-        self.assertTrue(
-            np.array_equal(
+        assert np.array_equal(labels, np.array([1, 0]))
+        assert np.array_equal(
                 attack._normalize_ground_truth(
                     pd.Series(["a", "b", "a"]),
                     is_regression=False,
                 ),
                 np.array([0, 1, 0]),
-            ),
-        )
+            )
 
         class_labels = attack._target_to_class_labels(np.array([[0, 1], [1, 0]]))
-        self.assertTrue(np.array_equal(class_labels, np.array([1, 0])))
+        assert np.array_equal(class_labels, np.array([1, 0]))
 
         one_hot = attack._one_hot_encode([0, 1], 2)
-        self.assertEqual(one_hot.shape, (2, 2))
+        assert one_hot.shape == (2, 2)
 
         norm = attack._normalize_inferred_output(
             np.array([0, 1]),
             reference=np.array([[1, 0], [0, 1]]),
         )
-        self.assertEqual(norm.shape[1], 2)
+        assert norm.shape[1] == 2
 
         scorer_cfg, has_proba = ExtractionAttackConfig._select_extraction_scorer(
             np.array([0, 1]),
             np.array([0, 1]),
         )
-        self.assertFalse(has_proba)
-        self.assertIsNotNone(scorer_cfg)
+        assert not has_proba
+        assert scorer_cfg is not None
 
     def test_attack_mode_rejects_defense_stage_aliases(self):
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
-        with self.assertRaisesRegex(ValueError, "Unsupported attack mode"):
+        with pytest.raises(ValueError, match="Unsupported attack mode"):
             attack.set_mode("post-defense")
 
-        with self.assertRaisesRegex(ValueError, "Unsupported attack mode"):
+        with pytest.raises(ValueError, match="Unsupported attack mode"):
             attack.set_mode("pre-defense")
 
         attack.set_mode("val")
-        self.assertEqual(attack.resolve_mode_for_attack_kind("evasion"), "val")
+        assert attack.resolve_mode_for_attack_kind("evasion") == "val"
 
     def test_attack_mode_auto_defaults_by_subtype(self):
         membership = AttackConfig(
@@ -304,45 +287,39 @@ class TestAttackConfig(unittest.TestCase):
                 "MembershipInferenceBlackBox"
             ),
         )
-        self.assertEqual(
-            membership.resolve_mode_for_attack_kind(
+        assert membership.resolve_mode_for_attack_kind(
                 "membership",
                 attack_subtype="membership_inference",
-            ),
-            "train",
-        )
+            ) == \
+            "train"
 
         reconstruction = AttackConfig(
             attack_type=(
                 "art.attacks.inference.reconstruction.DatabaseReconstruction"
             ),
         )
-        self.assertEqual(
-            reconstruction.resolve_mode_for_attack_kind(
+        assert reconstruction.resolve_mode_for_attack_kind(
                 "reconstruction",
                 attack_subtype="reconstruction",
-            ),
-            "train",
-        )
+            ) == \
+            "train"
 
         inversion = AttackConfig(
             attack_type="art.attacks.inference.model_inversion.MIFace",
         )
-        self.assertEqual(
-            inversion.resolve_mode_for_attack_kind(
+        assert inversion.resolve_mode_for_attack_kind(
                 "model_inversion",
                 attack_subtype="model_inversion",
-            ),
-            "test",
-        )
+            ) == \
+            "test"
 
     def test_attack_runtime_contract_defaults_and_stage_metadata(self):
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
-        self.assertIsInstance(attack.score_dict, dict)
-        self.assertIsNone(attack.attack_predictions)
-        self.assertEqual(attack.mode, "auto")
-        self.assertEqual(normalize_attack_stage("before_attack"), "pre-attack")
-        self.assertEqual(normalize_attack_stage("after_attack"), "post-attack")
+        assert isinstance(attack.score_dict, dict)
+        assert attack.attack_predictions is None
+        assert attack.mode == "auto"
+        assert normalize_attack_stage("before_attack") == "pre-attack"
+        assert normalize_attack_stage("after_attack") == "post-attack"
 
         poisoning = AttackConfig(
             attack_type=(
@@ -351,10 +328,8 @@ class TestAttackConfig(unittest.TestCase):
             ),
             attack_params={"class_source": 0, "class_target": 1},
         )
-        self.assertEqual(
-            poisoning.resolve_mode_for_attack_kind("poisoning"),
-            "train",
-        )
+        assert poisoning.resolve_mode_for_attack_kind("poisoning") == \
+            "train"
 
     def test_attack_mode_split_override_precedence(self):
         attack = AttackConfig(
@@ -362,17 +337,15 @@ class TestAttackConfig(unittest.TestCase):
             attack_params={"split": "train"},
         )
         attack.set_mode("val")
-        self.assertEqual(attack.resolve_mode_for_attack_kind("evasion"), "train")
+        assert attack.resolve_mode_for_attack_kind("evasion") == "train"
 
-        self.assertEqual(
-            attack.resolve_mode_for_attack_kind(
+        assert attack.resolve_mode_for_attack_kind(
                 "evasion",
                 split_override="test",
-            ),
-            "test",
-        )
+            ) == \
+            "test"
 
-        with self.assertRaisesRegex(ValueError, "Unsupported attack split override"):
+        with pytest.raises(ValueError, match="Unsupported attack split override"):
             attack.resolve_mode_for_attack_kind(
                 "evasion",
                 split_override="invalid",
@@ -399,9 +372,9 @@ class TestAttackConfig(unittest.TestCase):
             ben_pred_labels=np.array([0, 1]),
         )
 
-        self.assertIn("evasion_success", out)
-        self.assertEqual(dummy.last_kwargs.get("mode"), "test")
-        self.assertNotIn("stage", dummy.last_kwargs)
+        assert "evasion_success" in out
+        assert dummy.last_kwargs.get("mode") == "test"
+        assert "stage" not in dummy.last_kwargs
 
         attack.set_mode("val")
         out = attack._score(
@@ -410,13 +383,13 @@ class TestAttackConfig(unittest.TestCase):
             y_pred=np.array([1, 0]),
             ben_pred_labels=np.array([0, 1]),
         )
-        self.assertIn("evasion_success", out)
-        self.assertEqual(dummy.last_kwargs.get("mode"), "val")
-        self.assertNotIn("stage", dummy.last_kwargs)
+        assert "evasion_success" in out
+        assert dummy.last_kwargs.get("mode") == "val"
+        assert "stage" not in dummy.last_kwargs
 
     def test_target_to_class_labels_invalid_shape_raises(self):
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
-        with self.assertRaisesRegex(ValueError, "Unsupported target shape"):
+        with pytest.raises(ValueError, match="Unsupported target shape"):
             attack._target_to_class_labels(np.array(5))
 
     def test_save_and_load_attack(self):
@@ -436,10 +409,10 @@ class TestAttackConfig(unittest.TestCase):
         )
         loaded_attack(data=data, model=model, attack_file=self.attack_file)
         self.attack.save(self.attack_file)
-        self.assertTrue(Path(self.attack_file).exists())
+        assert Path(self.attack_file).exists()
         loaded_attack.load(self.attack_file)
-        self.assertEqual(loaded_attack.attack_type, self.attack.attack_type)
-        self.assertEqual(loaded_attack.attack_params, self.attack.attack_params)
+        assert loaded_attack.attack_type == self.attack.attack_type
+        assert loaded_attack.attack_params == self.attack.attack_params
 
     def test_attack_metrics(self):
         # Mock data for testing
@@ -452,7 +425,7 @@ class TestAttackConfig(unittest.TestCase):
             y_test_numeric,
         )
         metrics = self.attack.score_dict
-        self.assertIn("evasion_success", metrics)
+        assert "evasion_success" in metrics
 
     def test_evade_includes_benign_scores(self):
         attack = AttackConfig(
@@ -493,11 +466,11 @@ class TestAttackConfig(unittest.TestCase):
             attack=_FakeEvasionAttack(),
         )
 
-        self.assertIn("benign_accuracy", result)
-        self.assertIn("benign_precision", result)
-        self.assertIn("benign_recall", result)
-        self.assertIn("benign_f1", result)
-        self.assertIn("evasion_success", result)
+        assert "benign_accuracy" in result
+        assert "benign_precision" in result
+        assert "benign_recall" in result
+        assert "benign_f1" in result
+        assert "evasion_success" in result
 
     def test_poison_attack_metrics(self):
         attack = AttackConfig(
@@ -572,10 +545,10 @@ class TestAttackConfig(unittest.TestCase):
         ):
             result = attack(data, object())
 
-        self.assertIn("benign_accuracy", result)
-        self.assertIn("poisoned_accuracy", result)
-        self.assertIn("poison_trigger_success", result)
-        self.assertIn("attack_generation_time", result)
+        assert "benign_accuracy" in result
+        assert "poisoned_accuracy" in result
+        assert "poison_trigger_success" in result
+        assert "attack_generation_time" in result
 
     def test_call_attack(self):
         # Mock attack internals to verify call flow without requiring a specific ART estimator.
@@ -608,9 +581,9 @@ class TestAttackConfig(unittest.TestCase):
         ):
             result = self.attack(data, model)
 
-        self.assertIsNotNone(result)
-        self.assertIn("evasion_success", result)
-        self.assertIn("attack_generation_time", result)
+        assert result is not None
+        assert "evasion_success" in result
+        assert "attack_generation_time" in result
 
     def test_call_membership_inference(self):
         attack = AttackConfig(
@@ -649,8 +622,8 @@ class TestAttackConfig(unittest.TestCase):
         ):
             result = attack(object(), object())
 
-        self.assertIn("membership_inference_accuracy", result)
-        self.assertIn("attack_generation_time", result)
+        assert "membership_inference_accuracy" in result
+        assert "attack_generation_time" in result
 
     def test_call_attribute_inference(self):
         attack = AttackConfig(
@@ -690,8 +663,8 @@ class TestAttackConfig(unittest.TestCase):
         ):
             result = attack(object(), object())
 
-        self.assertIn("inferred_age_accuracy", result)
-        self.assertIn("attack_prediction_time", result)
+        assert "inferred_age_accuracy" in result
+        assert "attack_prediction_time" in result
 
     def testinfer_model_inversion_scores_reconstruction(self):
         attack = self._load_pytorch_model_inversion_config()
@@ -724,11 +697,11 @@ class TestAttackConfig(unittest.TestCase):
             attack=_FakeModelInversionAttack(),
         )
 
-        self.assertIn("model_inversion_mse", scores)
-        self.assertIn("model_inversion_mae", scores)
-        self.assertIn("model_inversion_num_targets", scores)
-        self.assertEqual(scores["model_inversion_num_targets"], 2)
-        self.assertGreaterEqual(scores["model_inversion_mse"], 0.0)
+        assert "model_inversion_mse" in scores
+        assert "model_inversion_mae" in scores
+        assert "model_inversion_num_targets" in scores
+        assert scores["model_inversion_num_targets"] == 2
+        assert scores["model_inversion_mse"] >= 0.0
 
     def test_call_model_inversion_executes_realinfer_model_inversion(self):
         attack = self._load_pytorch_model_inversion_config()
@@ -771,13 +744,13 @@ class TestAttackConfig(unittest.TestCase):
         ):
             result = attack(_TinyData(), object())
 
-        self.assertEqual(fake_attack.infer_calls, 1)
-        self.assertIn("model_inversion_mse", result)
-        self.assertIn("model_inversion_mae", result)
-        self.assertIn("model_inversion_num_targets", result)
-        self.assertIn("attack_generation_time", result)
-        self.assertIn("attack_prediction_time", result)
-        self.assertIn("attack_score_time", result)
+        assert fake_attack.infer_calls == 1
+        assert "model_inversion_mse" in result
+        assert "model_inversion_mae" in result
+        assert "model_inversion_num_targets" in result
+        assert "attack_generation_time" in result
+        assert "attack_prediction_time" in result
+        assert "attack_score_time" in result
 
     def testinfer_database_reconstruction_scores_reconstruction(self):
         attack = self._load_pytorch_database_reconstruction_config()
@@ -814,11 +787,11 @@ class TestAttackConfig(unittest.TestCase):
             attack=_FakeDatabaseReconstructionAttack(),
         )
 
-        self.assertIn("database_reconstruction_feature_mse", scores)
-        self.assertIn("database_reconstruction_feature_mae", scores)
-        self.assertIn("database_reconstruction_num_features", scores)
-        self.assertIn("database_reconstruction_missing_index", scores)
-        self.assertGreaterEqual(scores["database_reconstruction_feature_mse"], 0.0)
+        assert "database_reconstruction_feature_mse" in scores
+        assert "database_reconstruction_feature_mae" in scores
+        assert "database_reconstruction_num_features" in scores
+        assert "database_reconstruction_missing_index" in scores
+        assert scores["database_reconstruction_feature_mse"] >= 0.0
 
     def test_call_database_reconstruction_executes_realinfer_database_reconstruction(
         self,
@@ -864,13 +837,13 @@ class TestAttackConfig(unittest.TestCase):
         ):
             result = attack(_TinyData(), object())
 
-        self.assertEqual(fake_attack.reconstruct_calls, 1)
-        self.assertIn("database_reconstruction_feature_mse", result)
-        self.assertIn("database_reconstruction_feature_mae", result)
-        self.assertIn("database_reconstruction_num_features", result)
-        self.assertIn("attack_generation_time", result)
-        self.assertIn("attack_prediction_time", result)
-        self.assertIn("attack_score_time", result)
+        assert fake_attack.reconstruct_calls == 1
+        assert "database_reconstruction_feature_mse" in result
+        assert "database_reconstruction_feature_mae" in result
+        assert "database_reconstruction_num_features" in result
+        assert "attack_generation_time" in result
+        assert "attack_prediction_time" in result
+        assert "attack_score_time" in result
 
     def test_call_attribute_inference_requires_targeted_attribute(self):
         attack = AttackConfig(
@@ -888,7 +861,7 @@ class TestAttackConfig(unittest.TestCase):
                 "attribute_inference",
             ),
         ):
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 attack(object(), object())
 
     def test_call_inference_unknown_subtype_raises(self):
@@ -901,11 +874,11 @@ class TestAttackConfig(unittest.TestCase):
             "_initialize_attack",
             return_value=(object(), object(), "inference", "unknown_subtype"),
         ):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 attack(object(), object())
 
     def test_call_poisoning_requires_source_and_target_classes(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             AttackConfig(
                 attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
                 attack_params={},
@@ -925,7 +898,7 @@ class TestAttackConfig(unittest.TestCase):
             "_initialize_attack",
             return_value=(object(), object(), "extraction", "any"),
         ):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 attack(_TinyData(), object())
 
     def test_call_extraction_requires_nn_classifier(self):
@@ -942,7 +915,7 @@ class TestAttackConfig(unittest.TestCase):
             "_initialize_attack",
             return_value=(object(), object(), "extraction", "any"),
         ):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 attack(_TinyData(), object())
 
     def test_call_extraction_scores_victim_and_extracted_classifiers(self):
@@ -1001,10 +974,10 @@ class TestAttackConfig(unittest.TestCase):
         ):
             result = attack(data, object())
 
-        self.assertIn("benign_accuracy", result)
-        self.assertIn("extracted_accuracy", result)
-        self.assertIn("extraction_mode", result)
-        self.assertEqual(result["extraction_mode"], "test")
+        assert "benign_accuracy" in result
+        assert "extracted_accuracy" in result
+        assert "extraction_mode" in result
+        assert result["extraction_mode"] == "test"
 
     def test_call_rejects_regression_evasion_early(self):
         class TinyData:
@@ -1023,7 +996,7 @@ class TestAttackConfig(unittest.TestCase):
                 "_initialize_attack should not be called",
             ),
         ):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 attack(data, model)
 
     def test_initialize_attack_rejects_unsupported_type(self):
@@ -1032,7 +1005,7 @@ class TestAttackConfig(unittest.TestCase):
             attack_params={},
         )
         model = RandomForestClassifier().fit([[0, 1], [1, 0]], [0, 1])
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             attack._initialize_attack(model, object())
 
     def test_real_evasion_attack_executes(self):
@@ -1070,9 +1043,9 @@ class TestAttackConfig(unittest.TestCase):
         )
 
         scores = attack(data, model)
-        self.assertIn("evasion_success", scores)
-        self.assertIn("attack_generation_time", scores)
-        self.assertGreaterEqual(scores["attack_size"], 1)
+        assert "evasion_success" in scores
+        assert "attack_generation_time" in scores
+        assert scores["attack_size"] >= 1
 
     def test_real_membership_inference_attack_executes(self):
 
@@ -1089,8 +1062,8 @@ class TestAttackConfig(unittest.TestCase):
         )
 
         scores = attack(data, model)
-        self.assertIn("membership_inference_accuracy", scores)
-        self.assertIn("attack_score_time", scores)
+        assert "membership_inference_accuracy" in scores
+        assert "attack_score_time" in scores
 
     def test_real_attribute_inference_attack_executes(self):
 
@@ -1112,9 +1085,9 @@ class TestAttackConfig(unittest.TestCase):
         )
 
         scores = attack(data, model)
-        self.assertIn("attack_score_time", scores)
+        assert "attack_score_time" in scores
         inferred_keys = [k for k in scores.keys() if k.startswith("inferred_")]
-        self.assertTrue(len(inferred_keys) > 0)
+        assert len(inferred_keys) > 0
 
     def test_real_model_inversion_attack_executes(self):
         torch = pytest.importorskip("torch")
@@ -1152,10 +1125,10 @@ class TestAttackConfig(unittest.TestCase):
         attack.attack_params.pop("targets", None)
 
         scores = attack(data, model)
-        self.assertIn("model_inversion_mse", scores)
-        self.assertIn("model_inversion_mae", scores)
-        self.assertIn("model_inversion_num_targets", scores)
-        self.assertIn("attack_score_time", scores)
+        assert "model_inversion_mse" in scores
+        assert "model_inversion_mae" in scores
+        assert "model_inversion_num_targets" in scores
+        assert "attack_score_time" in scores
 
     def test_real_database_reconstruction_attack_executes(self):
         data = TinyData()
@@ -1170,10 +1143,10 @@ class TestAttackConfig(unittest.TestCase):
         )
 
         scores = attack(data, model)
-        self.assertIn("database_reconstruction_feature_mse", scores)
-        self.assertIn("database_reconstruction_feature_mae", scores)
-        self.assertIn("database_reconstruction_num_features", scores)
-        self.assertIn("attack_score_time", scores)
+        assert "database_reconstruction_feature_mse" in scores
+        assert "database_reconstruction_feature_mae" in scores
+        assert "database_reconstruction_num_features" in scores
+        assert "attack_score_time" in scores
 
     def test_hash_stable_after_call_for_attack_config(self):
         attack = AttackConfig(
@@ -1189,18 +1162,16 @@ class TestAttackConfig(unittest.TestCase):
         model = model
         original_hash = hash(attack)
         attack(data, model)
-        self.assertEqual(
-            original_hash,
-            hash(attack),
-            msg="Hash changed after call for AttackConfig",
-        )
+        assert original_hash == \
+            hash(attack), \
+            "Hash changed after call for AttackConfig"
 
 
-class TestPytorchAttackConfig(unittest.TestCase):
+class TestPytorchAttackConfig:
     """Tests for deckard/attack/pytorch.py — PytorchAttackConfig feature prep."""
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         try:
             import torch
 
@@ -1210,7 +1181,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
 
     def _skip_if_no_torch(self):
         if self.torch is None:
-            self.skipTest("torch not installed")
+            pytest.skip("torch not installed")
 
     def test_prepare_features_tensor_passthrough(self):
         self._skip_if_no_torch()
@@ -1221,7 +1192,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
         )
         t = self.torch.randn(4, 3)
         result = cfg._prepare_features_for_attack(t)
-        self.assertIs(result, t)
+        assert result is t
 
     def test_prepare_features_dataframe_to_numpy(self):
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
@@ -1231,7 +1202,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
         )
         df = pd.DataFrame({"a": [1.0, 2.0], "b": [3.0, 4.0]})
         result = cfg._prepare_features_for_attack(df)
-        self.assertIsInstance(result, np.ndarray)
+        assert isinstance(result, np.ndarray)
 
     def test_prepare_features_series_to_numpy(self):
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
@@ -1241,7 +1212,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
         )
         s = pd.Series([1.0, 2.0, 3.0])
         result = cfg._prepare_features_for_attack(s)
-        self.assertIsInstance(result, np.ndarray)
+        assert isinstance(result, np.ndarray)
 
     def test_prepare_features_passthrough_for_other_types(self):
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
@@ -1251,7 +1222,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
         )
         arr = np.array([1.0, 2.0])
         result = cfg._prepare_features_for_attack(arr)
-        self.assertIs(result, arr)
+        assert result is arr
 
     def test_prepare_labels_tensor_passthrough(self):
         self._skip_if_no_torch()
@@ -1262,7 +1233,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
         )
         t = self.torch.tensor([0, 1, 1])
         result = cfg._prepare_labels_for_attack(t)
-        self.assertIs(result, t)
+        assert result is t
 
     def test_prepare_labels_dataframe_to_numpy(self):
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
@@ -1272,7 +1243,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
         )
         df = pd.DataFrame({"label": [0, 1]})
         result = cfg._prepare_labels_for_attack(df)
-        self.assertIsInstance(result, np.ndarray)
+        assert isinstance(result, np.ndarray)
 
     def test_prepare_labels_series_to_numpy(self):
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
@@ -1282,7 +1253,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
         )
         s = pd.Series([0, 1, 0])
         result = cfg._prepare_labels_for_attack(s)
-        self.assertIsInstance(result, np.ndarray)
+        assert isinstance(result, np.ndarray)
 
     def test_prepare_labels_passthrough_for_other_types(self):
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
@@ -1292,7 +1263,7 @@ class TestPytorchAttackConfig(unittest.TestCase):
         )
         arr = np.array([0, 1])
         result = cfg._prepare_labels_for_attack(arr)
-        self.assertIs(result, arr)
+        assert result is arr
 
     def test_prepare_features_for_art_tensor_to_numpy_float_dtype(self):
         self._skip_if_no_torch()
@@ -1303,9 +1274,9 @@ class TestPytorchAttackConfig(unittest.TestCase):
         )
         t = self.torch.randn(4, 3)
         result = cfg._prepare_features_for_art(t)
-        self.assertIsInstance(result, np.ndarray)
-        self.assertEqual(result.shape, (4, 3))
-        self.assertTrue(np.issubdtype(result.dtype, np.floating))
+        assert isinstance(result, np.ndarray)
+        assert result.shape == (4, 3)
+        assert np.issubdtype(result.dtype, np.floating)
 
     def test_torch_evasion_uses_art_boundary_conversion(self):
         self._skip_if_no_torch()
@@ -1337,16 +1308,16 @@ class TestPytorchAttackConfig(unittest.TestCase):
 
         runtime = cfg._with_attack_context(attack_type="evasion", attack_subtype="")
         scores = runtime.evade(data, _DummyArtModel(), _DummyAttack())
-        self.assertIn("evasion_accuracy", scores)
-        self.assertIsInstance(runtime.attack, np.ndarray)
-        self.assertEqual(runtime.attack.shape[0], 8)
+        assert "evasion_accuracy" in scores
+        assert isinstance(runtime.attack, np.ndarray)
+        assert runtime.attack.shape[0] == 8
 
 
-class TestTorchUtils(unittest.TestCase):
+class TestTorchUtils:
     """Tests for deckard/frameworks/pytorch/torch_utils.py."""
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         try:
             import torch
 
@@ -1356,32 +1327,32 @@ class TestTorchUtils(unittest.TestCase):
 
     def _skip_if_no_torch(self):
         if self.torch is None:
-            self.skipTest("torch not installed")
+            pytest.skip("torch not installed")
 
     def test_is_tensor_true_for_tensor(self):
         self._skip_if_no_torch()
         from deckard.frameworks.pytorch.torch_utils import is_tensor
 
-        self.assertTrue(is_tensor(self.torch.tensor([1.0])))
+        assert is_tensor(self.torch.tensor([1.0]))
 
     def test_is_tensor_false_for_numpy(self):
         from deckard.frameworks.pytorch.torch_utils import is_tensor
 
-        self.assertFalse(is_tensor(np.array([1.0])))
+        assert not is_tensor(np.array([1.0]))
 
     def test_is_torch_model_true(self):
         self._skip_if_no_torch()
         from deckard.frameworks.pytorch.torch_utils import is_torch_model
 
         model = self.torch.nn.Linear(2, 2)
-        self.assertTrue(is_torch_model(model))
+        assert is_torch_model(model)
 
     def test_is_torch_model_false_for_sklearn(self):
         from sklearn.linear_model import LogisticRegression
 
         from deckard.frameworks.pytorch.torch_utils import is_torch_model
 
-        self.assertFalse(is_torch_model(LogisticRegression()))
+        assert not is_torch_model(LogisticRegression())
 
     def test_is_dataloader_true(self):
         self._skip_if_no_torch()
@@ -1391,12 +1362,12 @@ class TestTorchUtils(unittest.TestCase):
 
         ds = TensorDataset(self.torch.randn(4, 2))
         dl = DataLoader(ds, batch_size=2)
-        self.assertTrue(is_dataloader(dl))
+        assert is_dataloader(dl)
 
     def test_is_dataloader_false_for_list(self):
         from deckard.frameworks.pytorch.torch_utils import is_dataloader
 
-        self.assertFalse(is_dataloader([1, 2, 3]))
+        assert not is_dataloader([1, 2, 3])
 
     def test_tensor_to_numpy_converts(self):
         self._skip_if_no_torch()
@@ -1404,7 +1375,7 @@ class TestTorchUtils(unittest.TestCase):
 
         t = self.torch.tensor([1.0, 2.0, 3.0])
         arr = tensor_to_numpy(t)
-        self.assertIsInstance(arr, np.ndarray)
+        assert isinstance(arr, np.ndarray)
         np.testing.assert_allclose(arr, [1.0, 2.0, 3.0])
 
     def test_tensor_to_numpy_with_dtype(self):
@@ -1413,14 +1384,14 @@ class TestTorchUtils(unittest.TestCase):
 
         t = self.torch.tensor([1.0, 2.0])
         arr = tensor_to_numpy(t, dtype=np.float32)
-        self.assertEqual(arr.dtype, np.float32)
+        assert arr.dtype == np.float32
 
     def test_tensor_to_numpy_passthrough_non_tensor(self):
         from deckard.frameworks.pytorch.torch_utils import tensor_to_numpy
 
         arr = np.array([1, 2])
         result = tensor_to_numpy(arr)
-        self.assertIs(result, arr)
+        assert result is arr
 
     def test_get_torch_model_device_returns_cpu(self):
         self._skip_if_no_torch()
@@ -1428,14 +1399,14 @@ class TestTorchUtils(unittest.TestCase):
 
         model = self.torch.nn.Linear(2, 2)
         device = get_torch_model_device(model)
-        self.assertEqual(str(device.type), "cpu")
+        assert str(device.type) == "cpu"
 
     def test_get_torch_model_device_non_torch_returns_cpu(self):
         self._skip_if_no_torch()
         from deckard.frameworks.pytorch.torch_utils import get_torch_model_device
 
         device = get_torch_model_device(object())
-        self.assertEqual(str(device.type), "cpu")
+        assert str(device.type) == "cpu"
 
     def test_get_torch_model_device_model_with_no_parameters_returns_cpu(self):
         self._skip_if_no_torch()
@@ -1447,13 +1418,13 @@ class TestTorchUtils(unittest.TestCase):
 
         model = EmptyModule()
         device = get_torch_model_device(model)
-        self.assertEqual(str(device.type), "cpu")
+        assert str(device.type) == "cpu"
 
     def test_build_torch_art_model_raises_when_torch_flag_disabled(self):
         from deckard.frameworks.pytorch.torch_utils import build_torch_art_model
 
         with patch("deckard.frameworks.pytorch.torch_utils.HAS_TORCH", False):
-            with self.assertRaises(ImportError):
+            with pytest.raises(ImportError):
                 build_torch_art_model(object(), object())
 
     def test_collect_subset_raises_when_torch_flag_disabled(self):
@@ -1462,7 +1433,7 @@ class TestTorchUtils(unittest.TestCase):
         )
 
         with patch("deckard.frameworks.pytorch.torch_utils.HAS_TORCH", False):
-            with self.assertRaises(ImportError):
+            with pytest.raises(ImportError):
                 collect_subset_from_dataloader(object(), n=2)
 
     def test_build_torch_art_model_dataloader_tuple_batch_input_shape(self):
@@ -1503,7 +1474,7 @@ class TestTorchUtils(unittest.TestCase):
         ):
             model = TinyModel()
             estimator = build_torch_art_model(model, data)
-        self.assertEqual(estimator.input_shape, (3,))
+        assert estimator.input_shape == (3,)
 
     def test_build_torch_art_model_dataloader_tensor_batch_input_shape(self):
         self._skip_if_no_torch()
@@ -1553,7 +1524,7 @@ class TestTorchUtils(unittest.TestCase):
         ):
             model = TinyModel()
             estimator = build_torch_art_model(model, data)
-        self.assertEqual(estimator.input_shape, (3,))
+        assert estimator.input_shape == (3,)
 
     def test_collect_subset_from_dataloader(self):
         self._skip_if_no_torch()
@@ -1568,8 +1539,8 @@ class TestTorchUtils(unittest.TestCase):
         ds = TensorDataset(X, y)
         dl = DataLoader(ds, batch_size=4)
         x_sub, y_sub = collect_subset_from_dataloader(dl, n=4)
-        self.assertEqual(x_sub.shape[0], 4)
-        self.assertEqual(y_sub.shape[0], 4)
+        assert x_sub.shape[0] == 4
+        assert y_sub.shape[0] == 4
 
     def test_collect_subset_clips_to_dataset_len(self):
         self._skip_if_no_torch()
@@ -1584,7 +1555,7 @@ class TestTorchUtils(unittest.TestCase):
         ds = TensorDataset(X, y)
         dl = DataLoader(ds, batch_size=5)
         x_sub, y_sub = collect_subset_from_dataloader(dl, n=100)
-        self.assertEqual(x_sub.shape[0], 5)
+        assert x_sub.shape[0] == 5
 
     def test_collect_subset_raises_for_non_dataloader(self):
         self._skip_if_no_torch()
@@ -1592,7 +1563,7 @@ class TestTorchUtils(unittest.TestCase):
             collect_subset_from_dataloader,
         )
 
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             collect_subset_from_dataloader([1, 2, 3], n=2)
 
 
@@ -1659,7 +1630,7 @@ class _PickleableFakeModelConfig:
 # ---------------------------------------------------------------------------
 
 
-class TestSensitiveFeaturesWrapper(unittest.TestCase):
+class TestSensitiveFeaturesWrapper:
     """Cover the wrapper class lines that are missed by existing tests."""
 
     def _make_estimator_with_predict_proba(self):
@@ -1696,7 +1667,7 @@ class TestSensitiveFeaturesWrapper(unittest.TestCase):
         wrapper = SensitiveFeaturesWrapper(est, sf)
         X = np.zeros((3, 2))
         proba = wrapper.predict_proba(X)
-        self.assertEqual(proba.shape, (3, 2))
+        assert proba.shape == (3, 2)
 
     def test_predict_proba_fallback_when_no_predict_proba(self):
         """Cover the fallback branch that builds a two-column probability matrix."""
@@ -1706,17 +1677,17 @@ class TestSensitiveFeaturesWrapper(unittest.TestCase):
         X = np.zeros((3, 2))
         proba = wrapper.predict_proba(X)
         # fallback: each row has one 1.0, rest 0.0
-        self.assertEqual(proba.shape[0], 3)
-        self.assertTrue(np.all(proba.sum(axis=1) == 1.0))
+        assert proba.shape[0] == 3
+        assert np.all(proba.sum(axis=1) == 1.0)
 
     def test_get_params(self):
         est = MagicMock()
         sf = np.array([1, 0, 1])
         wrapper = SensitiveFeaturesWrapper(est, sf)
         params = wrapper.get_params()
-        self.assertIn("estimator", params)
-        self.assertIn("sensitive_features", params)
-        self.assertIs(params["estimator"], est)
+        assert "estimator" in params
+        assert "sensitive_features" in params
+        assert params["estimator"] is est
 
     def test_set_params(self):
         est = MagicMock()
@@ -1725,7 +1696,7 @@ class TestSensitiveFeaturesWrapper(unittest.TestCase):
         new_est = MagicMock()
         new_sf = np.array([0, 1, 0])
         wrapper.set_params(estimator=new_est, sensitive_features=new_sf)
-        self.assertIs(wrapper.estimator, new_est)
+        assert wrapper.estimator is new_est
         np.testing.assert_array_equal(wrapper._sensitive, new_sf)
 
     def test_fit_delegates_to_estimator(self):
@@ -1741,7 +1712,7 @@ class TestSensitiveFeaturesWrapper(unittest.TestCase):
         sf = np.array([0, 1, 0, 1, 0, 1])
         wrapper = SensitiveFeaturesWrapper(est, sf)
         preds = wrapper.predict(np.zeros((3, 2)))
-        self.assertEqual(len(preds), 3)
+        assert len(preds) == 3
 
 
 # ---------------------------------------------------------------------------
@@ -1749,9 +1720,9 @@ class TestSensitiveFeaturesWrapper(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestSensitiveSlice(unittest.TestCase):
+class TestSensitiveSlice:
     def test_none_returns_none(self):
-        self.assertIsNone(_sensitive_slice(None, 5))
+        assert _sensitive_slice(None, 5) is None
 
     def test_slices_to_n(self):
         arr = np.array([0, 1, 2, 3, 4])
@@ -1764,7 +1735,7 @@ class TestSensitiveSlice(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestPostInitBranches(unittest.TestCase):
+class TestPostInitBranches:
     """Cover DictConfig scorer path and scorer-as-type path."""
 
     def test_scorer_as_type_class(self):
@@ -1774,7 +1745,7 @@ class TestPostInitBranches(unittest.TestCase):
             attack_type="art.attacks.evasion.FastGradientMethod",
             scorer=AttackScorerConfig,  # pass the class, not an instance
         )
-        self.assertIsInstance(cfg.scorer, AttackScorerConfig)
+        assert isinstance(cfg.scorer, AttackScorerConfig)
 
     def test_scorer_as_dictconfig(self):
         from omegaconf import OmegaConf
@@ -1787,7 +1758,7 @@ class TestPostInitBranches(unittest.TestCase):
             scorer=dc,
         )
         # scorer should have been coerced to a dict then processed
-        self.assertTrue(hasattr(cfg.scorer, "_score"))
+        assert hasattr(cfg.scorer, "_score")
 
     def test_scorer_null_string(self):
         # "null" should be treated as None -> default scorer
@@ -1795,7 +1766,7 @@ class TestPostInitBranches(unittest.TestCase):
             attack_type="art.attacks.evasion.FastGradientMethod",
             scorer="null",
         )
-        self.assertTrue(hasattr(cfg.scorer, "_score"))
+        assert hasattr(cfg.scorer, "_score")
 
     def test_scorer_dict_with_no_target_uses_attack_scorer_config(self):
         from deckard.score.attack import AttackScorerConfig
@@ -1804,7 +1775,7 @@ class TestPostInitBranches(unittest.TestCase):
             attack_type="art.attacks.evasion.FastGradientMethod",
             scorer={},  # empty dict, no _target_
         )
-        self.assertIsInstance(cfg.scorer, AttackScorerConfig)
+        assert isinstance(cfg.scorer, AttackScorerConfig)
 
 
 # ---------------------------------------------------------------------------
@@ -1812,8 +1783,8 @@ class TestPostInitBranches(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestInitializeAttackBranches(unittest.TestCase):
-    def setUp(self):
+class TestInitializeAttackBranches:
+    def setup_method(self):
         self.data = _make_tiny_data()
 
     def test_generic_classifer_wrapping_and_nb_classes(self):
@@ -1834,7 +1805,7 @@ class TestInitializeAttackBranches(unittest.TestCase):
         fake_fgm.return_value = MagicMock()
         with patch("deckard.attack.base.resolve_class", return_value=fake_fgm):
             result = attack._initialize_attack(model, self.data)
-        self.assertIsNotNone(result)
+        assert result is not None
 
     def test_unsupported_model_raises_value_error(self):
         """Cover the 'else: raise ValueError' branch for unknown model types."""
@@ -1842,7 +1813,7 @@ class TestInitializeAttackBranches(unittest.TestCase):
             attack_type="art.attacks.evasion.FastGradientMethod",
             attack_params={},
         )
-        with self.assertRaises((ValueError, Exception)):
+        with pytest.raises((ValueError, Exception)):
             attack._initialize_attack("not_a_model", self.data)
 
     def test_targeted_attribute_string_current_behavior_does_not_raise(self):
@@ -1861,7 +1832,7 @@ class TestInitializeAttackBranches(unittest.TestCase):
         fake_attack_cls = MagicMock(return_value=MagicMock())
         with patch("deckard.attack.base.resolve_class", return_value=fake_attack_cls):
             attack._initialize_attack(model, self.data)
-        self.assertNotIn("attack_feature", attack.attack_params)
+        assert "attack_feature" not in attack.attack_params
 
     def test_attack_model_invalid_type_raises(self):
         """Cover the 'else: raise ValueError' branch for invalid attack_model."""
@@ -1875,7 +1846,7 @@ class TestInitializeAttackBranches(unittest.TestCase):
             attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             attack_params={"attack_model": 12345},  # invalid type
         )
-        with self.assertRaises((ValueError, Exception)):
+        with pytest.raises((ValueError, Exception)):
             attack._initialize_attack(model, self.data)
 
     def test_model_with_sensitive_features_predict_wraps_with_wrapper(self):
@@ -1905,7 +1876,7 @@ class TestInitializeAttackBranches(unittest.TestCase):
         fake_fgm.return_value = MagicMock()
         with patch("deckard.attack.base.resolve_class", return_value=fake_fgm):
             result = attack._initialize_attack(model, self.data)
-        self.assertIsNotNone(result)
+        assert result is not None
 
     def test_not_fitted_sklearn_model_triggers_fit(self):
         """Cover NotFittedError branch for sklearn_dict models (lines 436-438)."""
@@ -1928,7 +1899,7 @@ class TestInitializeAttackBranches(unittest.TestCase):
             ),
         ):
             result = attack._initialize_attack(model, self.data)
-        self.assertIsNotNone(result)
+        assert result is not None
 
     def test_not_fitted_generic_estimator_triggers_fit(self):
         """Cover NotFittedError branch for generic BaseEstimator path (lines 443-444)."""
@@ -1960,7 +1931,7 @@ class TestInitializeAttackBranches(unittest.TestCase):
             ),
         ):
             result = attack._initialize_attack(model, self.data)
-        self.assertIsNotNone(result)
+        assert result is not None
 
     def test_sensitive_features_fallback_uses_sensitive_train(self):
         """Cover _sensitive_train fallback branch (line 452)."""
@@ -1986,7 +1957,7 @@ class TestInitializeAttackBranches(unittest.TestCase):
         fake_attack_cls = MagicMock(return_value=MagicMock())
         with patch("deckard.attack.base.resolve_class", return_value=fake_attack_cls):
             result = attack._initialize_attack(model, self.data)
-        self.assertIsNotNone(result)
+        assert result is not None
 
     def test_regressor_branch_uses_sklearn_regressor_wrapper(self):
         """Cover regressor wrapper branch (line 459)."""
@@ -2008,7 +1979,7 @@ class TestInitializeAttackBranches(unittest.TestCase):
         fake_attack_cls = MagicMock(return_value=MagicMock())
         with patch("deckard.attack.base.resolve_class", return_value=fake_attack_cls):
             result = attack._initialize_attack(model, self.data)
-        self.assertIsNotNone(result)
+        assert result is not None
 
     def test_unsupported_model_type_reaches_value_error_branch(self):
         """Cover explicit unsupported model type ValueError branch (line 470)."""
@@ -2026,7 +1997,7 @@ class TestInitializeAttackBranches(unittest.TestCase):
             patch("deckard.attack.base.resolve_class", return_value=fake_attack_cls),
             patch("deckard.attack.base.check_is_fitted", return_value=None),
         ):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 attack._initialize_attack(_HasFitButUnsupported(), self.data)
 
     def test_attack_model_dictconfig_path(self):
@@ -2060,7 +2031,7 @@ class TestInitializeAttackBranches(unittest.TestCase):
             patch("deckard.attack.base.ModelConfig", _FakeCfg),
         ):
             result = attack._initialize_attack(model, self.data)
-        self.assertIsNotNone(result)
+        assert result is not None
 
     def test_attack_model_modelconfig_instance_path(self):
         """Cover ModelConfig instance branch (lines 504-506)."""
@@ -2082,7 +2053,7 @@ class TestInitializeAttackBranches(unittest.TestCase):
             patch("deckard.attack.base.ModelConfig", _PickleableFakeModelConfig),
         ):
             result = attack._initialize_attack(model, self.data)
-        self.assertIsNotNone(result)
+        assert result is not None
 
     def test_attack_model_string_path(self):
         """Cover string attack_model loading branch (lines 507-517)."""
@@ -2111,7 +2082,7 @@ class TestInitializeAttackBranches(unittest.TestCase):
                 patch("deckard.attack.base.ModelConfig", _PickleableFakeModelConfig),
             ):
                 result = attack._initialize_attack(model, self.data)
-            self.assertIsNotNone(result)
+            assert result is not None
         finally:
             shutil.rmtree(tmpdir)
 
@@ -2121,12 +2092,12 @@ class TestInitializeAttackBranches(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestCallCachingPaths(unittest.TestCase):
-    def setUp(self):
+class TestCallCachingPaths:
+    def setup_method(self):
         self.tmpdir = tempfile.mkdtemp()
         self.data = _make_tiny_data()
 
-    def tearDown(self):
+    def teardown_method(self):
         shutil.rmtree(self.tmpdir)
 
     def _base_attack(self):
@@ -2173,7 +2144,7 @@ class TestCallCachingPaths(unittest.TestCase):
                 object(),
                 attack_predictions_file=pred_file,
             )
-        self.assertIn("evasion_success", result)
+        assert "evasion_success" in result
 
     def test_score_file_loaded_when_exists(self):
         """Cover the score_file load branch."""
@@ -2206,7 +2177,7 @@ class TestCallCachingPaths(unittest.TestCase):
                 object(),
                 score_file=score_file,
             )
-        self.assertIn("evasion_success", result)
+        assert "evasion_success" in result
 
     def test_attack_file_save_pickle_error_continues(self):
         """Cover the PicklingError fallback when saving attack object fails."""
@@ -2241,7 +2212,7 @@ class TestCallCachingPaths(unittest.TestCase):
                 object(),
                 attack_file=attack_file,
             )
-        self.assertIn("evasion_success", result)
+        assert "evasion_success" in result
 
     def test_attack_predictions_file_saved_after_call(self):
         """Cover the branch that saves attack_predictions when file path provided."""
@@ -2277,7 +2248,7 @@ class TestCallCachingPaths(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestGetAttackSubset(unittest.TestCase):
+class TestGetAttackSubset:
     def test_raises_for_unsupported_type(self):
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
         attack.attack_size = 4
@@ -2286,7 +2257,7 @@ class TestGetAttackSubset(unittest.TestCase):
             X_test = "not_an_array"
             y_test = "not_an_array"
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             attack.get_attack_subset(_BadData())
 
     def test_returns_subset_from_numpy(self):
@@ -2298,8 +2269,8 @@ class TestGetAttackSubset(unittest.TestCase):
             y_test = np.zeros(10)
 
         n, x_sub, y_sub = attack.get_attack_subset(_Data())
-        self.assertEqual(n, 3)
-        self.assertEqual(len(x_sub), 3)
+        assert n == 3
+        assert len(x_sub) == 3
 
     def test_train_subset(self):
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
@@ -2312,7 +2283,7 @@ class TestGetAttackSubset(unittest.TestCase):
             y_test = np.zeros(10)
 
         n, x_sub, y_sub = attack.get_attack_subset(_Data(), test=False)
-        self.assertEqual(n, 3)
+        assert n == 3
 
 
 # ---------------------------------------------------------------------------
@@ -2320,7 +2291,7 @@ class TestGetAttackSubset(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestGetBenignPreds(unittest.TestCase):
+class TestGetBenignPreds:
     @staticmethod
     def _make_numpy_data():
         d = type("D", (), {})()
@@ -2338,8 +2309,8 @@ class TestGetBenignPreds(unittest.TestCase):
         data = self._make_numpy_data()
         art_model = _FakeArtModel()
         n, labels, x_sub, y_sub = attack._get_benign_preds(data, art_model, train=True)
-        self.assertEqual(n, 4)
-        self.assertIsInstance(labels, np.ndarray)
+        assert n == 4
+        assert isinstance(labels, np.ndarray)
 
     def test_train_false_uses_train_data(self):
         attack = AttackConfig(
@@ -2353,7 +2324,7 @@ class TestGetBenignPreds(unittest.TestCase):
             art_model,
             train=False,
         )
-        self.assertEqual(n, 4)
+        assert n == 4
 
 
 # ---------------------------------------------------------------------------
@@ -2361,7 +2332,7 @@ class TestGetBenignPreds(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestEvadeBranches(unittest.TestCase):
+class TestEvadeBranches:
     def test_adversarial_patch_branch(self):
         """Cover the 'AdversarialPatch' special handling."""
         attack = AttackConfig(
@@ -2401,7 +2372,7 @@ class TestEvadeBranches(unittest.TestCase):
             art_model=_FakeModel(),
             attack=fake_attack_obj,
         )
-        self.assertIsInstance(result, dict)
+        assert isinstance(result, dict)
 
     def test_evade_regression_path(self):
         """Cover the is_regression=True scoring path in _evade."""
@@ -2430,7 +2401,7 @@ class TestEvadeBranches(unittest.TestCase):
             art_model=_RegressionArtModel(),
             attack=_FakeEvasionAttack(),
         )
-        self.assertIsInstance(result, dict)
+        assert isinstance(result, dict)
 
 
 # ---------------------------------------------------------------------------
@@ -2438,7 +2409,7 @@ class TestEvadeBranches(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestInferAttributeBranches(unittest.TestCase):
+class TestInferAttributeBranches:
     def test_list_targeted_attribute_executes(self):
         data = _make_tiny_data()
         attack = AttackConfig(
@@ -2488,7 +2459,7 @@ class TestInferAttributeBranches(unittest.TestCase):
         ):
             result = attack(data, object())
 
-        self.assertIsInstance(result, dict)
+        assert isinstance(result, dict)
 
     def test_attribute_column_missing_raises(self):
         data = _make_tiny_data()
@@ -2517,7 +2488,7 @@ class TestInferAttributeBranches(unittest.TestCase):
             attack_type="inference",
             attack_subtype="attribute_inference",
         )
-        with self.assertRaises((AssertionError, ValueError, KeyError)):
+        with pytest.raises((AssertionError, ValueError, KeyError)):
             runtime.infer_attribute(
                 data,
                 _FakeArt(),
@@ -2552,7 +2523,7 @@ class TestInferAttributeBranches(unittest.TestCase):
             attack_type="inference",
             attack_subtype="attribute_inference",
         )
-        with self.assertRaises((ValueError, AssertionError)):
+        with pytest.raises((ValueError, AssertionError)):
             runtime.infer_attribute(
                 data,
                 _FakeArt(),
@@ -2566,7 +2537,7 @@ class TestInferAttributeBranches(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestInferMembershipBranches(unittest.TestCase):
+class TestInferMembershipBranches:
     def test_axis_error_fallback_is_used(self):
         """Cover the AxisError fallback in infer_membership."""
         data = _make_tiny_data()
@@ -2592,7 +2563,7 @@ class TestInferMembershipBranches(unittest.TestCase):
             attack_subtype="membership_inference",
         )
         result = runtime.infer_membership(data=data, attack=_FakeMIAttack())
-        self.assertIsInstance(result, dict)
+        assert isinstance(result, dict)
 
     def test_sensitive_features_present_builds_big_sensitive(self):
         """Cover the path that concatenates train+test sensitive features."""
@@ -2616,7 +2587,7 @@ class TestInferMembershipBranches(unittest.TestCase):
             attack_subtype="membership_inference",
         )
         result = runtime.infer_membership(data=data, attack=_FakeMIAttack())
-        self.assertIsInstance(result, dict)
+        assert isinstance(result, dict)
 
 
 # ---------------------------------------------------------------------------
@@ -2624,7 +2595,7 @@ class TestInferMembershipBranches(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestInferModelInversionModes(unittest.TestCase):
+class TestInferModelInversionModes:
     def _make_mi_attack_config(self, init_mode="zeros"):
         return AttackConfig(
             attack_type="art.attacks.inference.model_inversion.mi_face.MIFace",
@@ -2658,7 +2629,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             data=self._make_data(),
             attack=self._fake_attack(),
         )
-        self.assertIn("model_inversion_mse", result)
+        assert "model_inversion_mse" in result
 
     def test_ones_init(self):
         cfg = self._make_mi_attack_config("ones")
@@ -2670,7 +2641,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             data=self._make_data(),
             attack=self._fake_attack(),
         )
-        self.assertIn("model_inversion_mse", result)
+        assert "model_inversion_mse" in result
 
     def test_random_init(self):
         cfg = self._make_mi_attack_config("random")
@@ -2682,7 +2653,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             data=self._make_data(),
             attack=self._fake_attack(),
         )
-        self.assertIn("model_inversion_mse", result)
+        assert "model_inversion_mse" in result
 
     def test_average_init(self):
         cfg = self._make_mi_attack_config("average")
@@ -2694,7 +2665,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             data=self._make_data(),
             attack=self._fake_attack(),
         )
-        self.assertIn("model_inversion_mse", result)
+        assert "model_inversion_mse" in result
 
     def test_invalid_init_mode_raises(self):
         cfg = self._make_mi_attack_config("invalid_mode")
@@ -2702,7 +2673,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_type="inference",
             attack_subtype="model_inversion",
         )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             runtime.infer_model_inversion(
                 data=self._make_data(),
                 attack=self._fake_attack(),
@@ -2722,7 +2693,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             data=self._make_data(),
             attack=self._fake_attack(),
         )
-        self.assertIn("model_inversion_mse", result)
+        assert "model_inversion_mse" in result
 
     def test_mi_invalid_split_raises(self):
         cfg = AttackConfig(
@@ -2734,7 +2705,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_type="inference",
             attack_subtype="model_inversion",
         )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             runtime.infer_model_inversion(
                 data=self._make_data(),
                 attack=self._fake_attack(),
@@ -2751,7 +2722,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_type="inference",
             attack_subtype="model_inversion",
         )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             runtime.infer_model_inversion(data=d, attack=self._fake_attack())
 
     def test_explicit_targets_param(self):
@@ -2768,7 +2739,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             data=self._make_data(),
             attack=self._fake_attack(),
         )
-        self.assertIn("model_inversion_mse", result)
+        assert "model_inversion_mse" in result
 
     def test_x_init_from_param(self):
         d = self._make_data()
@@ -2787,7 +2758,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_subtype="model_inversion",
         )
         result = runtime.infer_model_inversion(data=d, attack=self._fake_attack())
-        self.assertIn("model_inversion_mse", result)
+        assert "model_inversion_mse" in result
 
     def test_x_init_length_mismatch_raises(self):
         d = self._make_data()
@@ -2805,7 +2776,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_type="inference",
             attack_subtype="model_inversion",
         )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             runtime.infer_model_inversion(data=d, attack=self._fake_attack())
 
     def test_type_error_fallback_on_infer(self):
@@ -2825,7 +2796,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_subtype="model_inversion",
         )
         result = runtime.infer_model_inversion(data=self._make_data(), attack=_A())
-        self.assertIn("model_inversion_mse", result)
+        assert "model_inversion_mse" in result
 
     def test_empty_target_labels_raises(self):
         """Cover the path when target_labels is empty."""
@@ -2838,7 +2809,7 @@ class TestInferModelInversionModes(unittest.TestCase):
             attack_type="inference",
             attack_subtype="model_inversion",
         )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             runtime.infer_model_inversion(
                 data=self._make_data(),
                 attack=self._fake_attack(),
@@ -2850,7 +2821,7 @@ class TestInferModelInversionModes(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestInferDatabaseReconstructionBranches(unittest.TestCase):
+class TestInferDatabaseReconstructionBranches:
     def _make_data(self):
         d = type("D", (), {})()
         d.X_train = np.array(
@@ -2885,7 +2856,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             data=self._make_data(),
             attack=_FakeAttack(),
         )
-        self.assertIn("database_reconstruction_feature_mse", result)
+        assert "database_reconstruction_feature_mse" in result
 
     def test_dr_invalid_split_raises(self):
         attack = AttackConfig(
@@ -2902,7 +2873,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             attack_type="inference",
             attack_subtype="reconstruction",
         )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             runtime.infer_database_reconstruction(
                 data=self._make_data(),
                 attack=_FakeAttack(),
@@ -2923,7 +2894,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             attack_type="inference",
             attack_subtype="reconstruction",
         )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             runtime.infer_database_reconstruction(
                 data=self._make_data(),
                 attack=_FakeAttack(),
@@ -2947,7 +2918,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             attack_type="inference",
             attack_subtype="reconstruction",
         )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             runtime.infer_database_reconstruction(data=d, attack=_FakeAttack())
 
     def test_y_reconstructed_none_skips_label_scoring(self):
@@ -2971,7 +2942,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             data=self._make_data(),
             attack=_FakeAttack(),
         )
-        self.assertNotIn("database_reconstruction_label_accuracy", result)
+        assert "database_reconstruction_label_accuracy" not in result
 
     def test_regression_task_uses_mae_label(self):
         """Cover the regression label scoring branch."""
@@ -2994,7 +2965,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             attack_subtype="reconstruction",
         )
         result = runtime.infer_database_reconstruction(data=d, attack=_FakeAttack())
-        self.assertIn("database_reconstruction_label_mae", result)
+        assert "database_reconstruction_label_mae" in result
 
     def test_type_error_fallback_on_reconstruct(self):
         """Cover the TypeError fallback (positional reconstruct)."""
@@ -3020,7 +2991,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             data=self._make_data(),
             attack=_FakeAttack(),
         )
-        self.assertIn("database_reconstruction_feature_mse", result)
+        assert "database_reconstruction_feature_mse" in result
 
     def test_empty_y_reconstructed_skips_label(self):
         """Cover path where y_pred is empty after to_numpy_array."""
@@ -3042,7 +3013,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
             data=self._make_data(),
             attack=_FakeAttack(),
         )
-        self.assertIsInstance(result, dict)
+        assert isinstance(result, dict)
 
 
 # ---------------------------------------------------------------------------
@@ -3050,7 +3021,7 @@ class TestInferDatabaseReconstructionBranches(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestResolveEvalSplit(unittest.TestCase):
+class TestResolveEvalSplit:
     def test_val_split_available_returns_val(self):
         attack = AttackConfig(
             attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
@@ -3069,7 +3040,7 @@ class TestResolveEvalSplit(unittest.TestCase):
             attack_subtype="gradient_matching_attack",
         )
         mode, x, y = runtime._resolve_eval_split(_Data())
-        self.assertEqual(mode, "val")
+        assert mode == "val"
 
     def test_val_split_unavailable_falls_back_to_test(self):
         attack = AttackConfig(
@@ -3087,7 +3058,7 @@ class TestResolveEvalSplit(unittest.TestCase):
             attack_subtype="gradient_matching_attack",
         )
         mode, x, y = runtime._resolve_eval_split(_Data())
-        self.assertEqual(mode, "test")
+        assert mode == "test"
 
     def test_invalid_mode_raises(self):
         attack = AttackConfig(
@@ -3104,7 +3075,7 @@ class TestResolveEvalSplit(unittest.TestCase):
             attack_type="poisoning",
             attack_subtype="gradient_matching_attack",
         )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             runtime._resolve_eval_split(_Data())
 
     def test_test_mode_with_missing_data_raises(self):
@@ -3122,7 +3093,7 @@ class TestResolveEvalSplit(unittest.TestCase):
             attack_type="poisoning",
             attack_subtype="gradient_matching_attack",
         )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             runtime._resolve_eval_split(_Data())
 
 
@@ -3131,7 +3102,7 @@ class TestResolveEvalSplit(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestPoisonBranches(unittest.TestCase):
+class TestPoisonBranches:
     def _make_data(self):
         d = type("D", (), {})()
         d.X_train = np.array(
@@ -3182,7 +3153,7 @@ class TestPoisonBranches(unittest.TestCase):
             art_model=_FakeArtModel(),
             attack=_FakePoisonAttack(),
         )
-        self.assertEqual(result["poison_mode"], "val")
+        assert result["poison_mode"] == "val"
 
     def test_class_source_fallback_when_no_samples(self):
         """Cover the warning/fallback when class_source has no samples in eval."""
@@ -3219,7 +3190,7 @@ class TestPoisonBranches(unittest.TestCase):
             attack=_FakePoisonAttack(),
         )
         # class_source should have been adjusted to something present
-        self.assertIn("poison_attack_source_class", result)
+        assert "poison_attack_source_class" in result
 
     def test_poisoning_svm_branch_scores_benign_and_poisoned_accuracy(self):
         attack = AttackConfig(
@@ -3261,10 +3232,10 @@ class TestPoisonBranches(unittest.TestCase):
             attack=_FakePoisoningAttackSVM(),
         )
 
-        self.assertIn("benign_accuracy", result)
-        self.assertIn("poisoned_accuracy", result)
-        self.assertIn("poisoning_attack_points", result)
-        self.assertEqual(result["attack_size"], 2)
+        assert "benign_accuracy" in result
+        assert "poisoned_accuracy" in result
+        assert "poisoning_attack_points" in result
+        assert result["attack_size"] == 2
 
 
 # ---------------------------------------------------------------------------
@@ -3272,7 +3243,7 @@ class TestPoisonBranches(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestExtractBranches(unittest.TestCase):
+class TestExtractBranches:
     def test_initialize_attack_builds_neural_art_classifier_for_extraction(self):
         torch = pytest.importorskip("torch")
         from deckard.data import PytorchDataConfig
@@ -3322,14 +3293,14 @@ class TestExtractBranches(unittest.TestCase):
                 )
             )
 
-        self.assertEqual(attack_type, "extraction")
-        self.assertEqual(attack_subtype, "CopycatCNN")
+        assert attack_type == "extraction"
+        assert attack_subtype == "CopycatCNN"
         runtime = attack._with_attack_context(
             attack_type="extraction",
             attack_subtype="CopycatCNN",
         )
-        self.assertTrue(runtime._is_nn_art_classifier(art_model))
-        self.assertIs(initialized_attack.classifier, art_model)
+        assert runtime._is_nn_art_classifier(art_model)
+        assert initialized_attack.classifier is art_model
 
     def test_extract_uses_val_split(self):
         attack = AttackConfig(
@@ -3373,7 +3344,7 @@ class TestExtractBranches(unittest.TestCase):
         ):
             result = attack(_TinyData(), object())
 
-        self.assertEqual(result.get("extraction_mode"), "val")
+        assert result.get("extraction_mode") == "val"
 
     def test_extract_not_implemented_raises_for_non_type(self):
         """Cover the not-implemented path for unsupported attack_type."""
@@ -3392,7 +3363,7 @@ class TestExtractBranches(unittest.TestCase):
                 attack.attack_score_time = 0.1
                 return {"x": 1}
 
-            with self.assertRaises(NotImplementedError):
+            with pytest.raises(NotImplementedError):
                 attack(object(), object())
 
 
@@ -3401,7 +3372,7 @@ class TestExtractBranches(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestStaticHelpers(unittest.TestCase):
+class TestStaticHelpers:
     def test_labels_from_classifier_predictions_1d_float(self):
         """Cover the 1D float -> threshold path."""
         result = AttackConfig._labels_from_classifier_predictions(
@@ -3420,7 +3391,7 @@ class TestStaticHelpers(unittest.TestCase):
         result = AttackConfig._labels_from_classifier_predictions(
             np.zeros((2, 2, 2)),
         )
-        self.assertEqual(result.shape, (8,))
+        assert result.shape == (8,)
 
     def test_normalize_ground_truth_dataframe_regression(self):
         df = pd.DataFrame({"a": [0.1, 0.2, 0.3]})
@@ -3430,7 +3401,7 @@ class TestStaticHelpers(unittest.TestCase):
     def test_normalize_ground_truth_dataframe_classification(self):
         df = pd.DataFrame({"a": [0, 1, 0]})
         result = AttackConfig._normalize_ground_truth(df, is_regression=False)
-        self.assertEqual(result.shape, (3,))
+        assert result.shape == (3,)
 
     def test_normalize_ground_truth_2d_one_hot(self):
         arr = np.array([[1, 0], [0, 1], [1, 0]])
@@ -3440,23 +3411,23 @@ class TestStaticHelpers(unittest.TestCase):
     def test_to_numpy_array_with_dtype_on_dataframe(self):
         df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
         result = AttackConfig._to_numpy_array(df, dtype=np.float32)
-        self.assertEqual(result.dtype, np.float32)
+        assert result.dtype == np.float32
 
     def test_to_numpy_array_with_dtype_on_series(self):
         s = pd.Series([1, 2, 3])
         result = AttackConfig._to_numpy_array(s, dtype=np.float64)
-        self.assertEqual(result.dtype, np.float64)
+        assert result.dtype == np.float64
 
     def test_to_numpy_array_with_dtype_on_ndarray(self):
         arr = np.array([1, 2, 3])
         result = AttackConfig._to_numpy_array(arr, dtype=np.float32)
-        self.assertEqual(result.dtype, np.float32)
+        assert result.dtype == np.float32
 
     def test_is_regression_prediction_output_1d_col(self):
         """Cover the 2D single-col -> regression = True path."""
         preds = np.array([[0.1], [0.2], [0.3]])
         labels = np.array([0.1, 0.2, 0.3])
-        self.assertTrue(AttackConfig._is_regression_prediction_output(labels, preds))
+        assert AttackConfig._is_regression_prediction_output(labels, preds)
 
     def test_select_extraction_scorer_with_probabilities(self):
         benign = np.array([[0.3, 0.7], [0.6, 0.4]])
@@ -3465,8 +3436,8 @@ class TestStaticHelpers(unittest.TestCase):
             benign,
             extracted,
         )
-        self.assertTrue(has_proba)
-        self.assertIsNotNone(scorer)
+        assert has_proba
+        assert scorer is not None
 
     def test_is_nn_art_classifier_returns_false_for_plain_object(self):
         attack = AttackConfig(attack_type="art.attacks.extraction.CopycatCNN")
@@ -3474,7 +3445,7 @@ class TestStaticHelpers(unittest.TestCase):
             attack_type="extraction",
             attack_subtype="CopycatCNN",
         )
-        self.assertFalse(runtime._is_nn_art_classifier(object()))
+        assert not runtime._is_nn_art_classifier(object())
 
     def test_is_nn_art_classifier_returns_true_for_pytorch_name(self):
         class PyTorchClassifier:
@@ -3485,7 +3456,7 @@ class TestStaticHelpers(unittest.TestCase):
             attack_type="extraction",
             attack_subtype="CopycatCNN",
         )
-        self.assertTrue(runtime._is_nn_art_classifier(PyTorchClassifier()))
+        assert runtime._is_nn_art_classifier(PyTorchClassifier())
 
     def test_normalize_inferred_output_higher_dim_reference(self):
         """Cover the `ref.ndim > arr.ndim` branch."""
@@ -3493,7 +3464,7 @@ class TestStaticHelpers(unittest.TestCase):
         ref = np.array([[1, 0], [0, 1], [1, 0]])
         result = AttackConfig._normalize_inferred_output(inferred, reference=ref)
         # Should have been get_dummies-expanded
-        self.assertEqual(result.ndim, 2)
+        assert result.ndim == 2
 
     def test_normalize_inferred_output_lower_dim_reference(self):
         """Cover the `arr.ndim > ref.ndim` branch."""
@@ -3509,7 +3480,7 @@ class TestStaticHelpers(unittest.TestCase):
             classifier = True
 
         result = AttackConfig._infer_task_is_classification(_Data(), object())
-        self.assertTrue(result)
+        assert result
 
     def test_infer_task_returns_none_for_unknown(self):
 
@@ -3517,7 +3488,7 @@ class TestStaticHelpers(unittest.TestCase):
             pass
 
         result = AttackConfig._infer_task_is_classification(_Data(), object())
-        self.assertIsNone(result)
+        assert result is None
 
 
 # ---------------------------------------------------------------------------
@@ -3526,7 +3497,7 @@ class TestStaticHelpers(unittest.TestCase):
 
 
 @pytest.mark.usefixtures("require_fairlearn")
-class TestFairlearnAttackScorer(unittest.TestCase):
+class TestFairlearnAttackScorer:
     """Unit tests for FairlearnAttackScorerConfig per-group attack metrics."""
 
     def _make_data_with_sensitive(self):
@@ -3541,9 +3512,9 @@ class TestFairlearnAttackScorer(unittest.TestCase):
         from deckard.score.base import DefaultClassifierScorerDictConfig
 
         scorer = FairlearnAttackScorerConfig(evasion=DefaultClassifierScorerDictConfig())
-        self.assertIsInstance(scorer.evasion, FairlearnScorerDictConfig)
-        self.assertIsInstance(scorer.membership_inference, FairlearnScorerDictConfig)
-        self.assertIsInstance(scorer.attribute_inference, FairlearnScorerDictConfig)
+        assert isinstance(scorer.evasion, FairlearnScorerDictConfig)
+        assert isinstance(scorer.membership_inference, FairlearnScorerDictConfig)
+        assert isinstance(scorer.attribute_inference, FairlearnScorerDictConfig)
 
     def test_score_evasion_with_sensitive_features_produces_group_metrics(self):
         scorer = FairlearnAttackScorerConfig()
@@ -3561,10 +3532,8 @@ class TestFairlearnAttackScorer(unittest.TestCase):
             sensitive_features=sensitive,
         )
         group_keys = [k for k in result if "_accuracy" in k or "_f1" in k]
-        self.assertTrue(
-            len(group_keys) > 0,
-            f"No group metrics found in {list(result)}",
-        )
+        assert len(group_keys) > 0, \
+            f"No group metrics found in {list(result)}"
 
     def test_score_membership_with_sensitive_features_produces_group_metrics(self):
         scorer = FairlearnAttackScorerConfig()
@@ -3580,10 +3549,8 @@ class TestFairlearnAttackScorer(unittest.TestCase):
             sensitive_features=sensitive,
         )
         group_keys = [k for k in result if "membership_inference" in k]
-        self.assertTrue(
-            len(group_keys) > 0,
-            f"No membership_inference metrics found in {list(result)}",
-        )
+        assert len(group_keys) > 0, \
+            f"No membership_inference metrics found in {list(result)}"
 
     def test_score_attribute_with_sensitive_features_produces_group_metrics(self):
         scorer = FairlearnAttackScorerConfig()
@@ -3601,10 +3568,8 @@ class TestFairlearnAttackScorer(unittest.TestCase):
             sensitive_features=sensitive,
         )
         group_keys = [k for k in result if "inferred_age" in k]
-        self.assertTrue(
-            len(group_keys) > 0,
-            f"No inferred_age metrics found in {list(result)}",
-        )
+        assert len(group_keys) > 0, \
+            f"No inferred_age metrics found in {list(result)}"
 
     def test_evasion_attack_with_fairlearn_scorer_end_to_end(self):
         pytest.importorskip("art")
@@ -3621,10 +3586,8 @@ class TestFairlearnAttackScorer(unittest.TestCase):
         )
         scores = attack(data, model)
         group_keys = [k for k in scores if "_accuracy" in k or "_f1" in k]
-        self.assertTrue(
-            len(group_keys) > 0,
-            f"Expected per-group evasion metrics, got keys: {list(scores)}",
-        )
+        assert len(group_keys) > 0, \
+            f"Expected per-group evasion metrics, got keys: {list(scores)}"
 
     def test_membership_inference_with_fairlearn_scorer_end_to_end(self):
         pytest.importorskip("art")
@@ -3641,7 +3604,5 @@ class TestFairlearnAttackScorer(unittest.TestCase):
         )
         scores = attack(data, model)
         group_keys = [k for k in scores if "membership_inference" in k]
-        self.assertTrue(
-            len(group_keys) > 0,
-            f"Expected per-group membership metrics, got keys: {list(scores)}",
-        )
+        assert len(group_keys) > 0, \
+            f"Expected per-group membership metrics, got keys: {list(scores)}"
