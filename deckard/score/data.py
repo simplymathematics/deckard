@@ -148,19 +148,13 @@ def data_num_classes_score(
 ) -> int:
     """Count the number of unique classes in ``y_true``.
 
-    Parameters
-    ----------
-    y_true : array-like
-        Ground-truth target labels.
-    X : matrix-like
-        Predicted values (unused; present for scorer interface compatibility).
-    kwargs
-        Additional keyword arguments (unused).
+    Args:
+        y_true: Ground-truth target labels.
+        X: Feature matrix placeholder retained for scorer interface compatibility.
+        **kwargs: Additional keyword arguments (unused).
 
-    Returns
-    -------
-    int
-        Number of distinct classes in ``y_true`` including NaN if present.
+    Returns:
+        Number of distinct classes in ``y_true`` including NaN when present.
     """
     _ = X, kwargs
     return int(pd.Series(y_true).nunique(dropna=False))
@@ -173,19 +167,13 @@ def data_class_count_min_score(
 ) -> int:
     """Return the count of the least-frequent class in ``y_true``.
 
-    Parameters
-    ----------
-    y_true : array-like
-        Ground-truth target labels.
-    X : matrix-like
-        Predicted values (unused; present for scorer interface compatibility).
-    kwargs
-        Additional keyword arguments (unused).
+    Args:
+        y_true: Ground-truth target labels.
+        X: Feature matrix placeholder retained for scorer interface compatibility.
+        **kwargs: Additional keyword arguments (unused).
 
-    Returns
-    -------
-    int
-        Sample count of the rarest class, or 0 when ``y_true`` is empty.
+    Returns:
+        Sample count of the rarest class, or ``0`` when ``y_true`` is empty.
     """
     _ = X, kwargs
     counts = pd.Series(y_true).value_counts(dropna=False)
@@ -199,19 +187,13 @@ def data_class_count_max_score(
 ) -> int:
     """Return the count of the most-frequent class in ``y_true``.
 
-    Parameters
-    ----------
-    y_true : array-like
-        Ground-truth target labels.
-    X : matrix-like
-        Predicted values (unused; present for scorer interface compatibility).
-    kwargs
-        Additional keyword arguments (unused).
+    Args:
+        y_true: Ground-truth target labels.
+        X: Feature matrix placeholder retained for scorer interface compatibility.
+        **kwargs: Additional keyword arguments (unused).
 
-    Returns
-    -------
-    int
-        Sample count of the most common class, or 0 when ``y_true`` is empty.
+    Returns:
+        Sample count of the most common class, or ``0`` when ``y_true`` is empty.
     """
     _ = X, kwargs
     counts = pd.Series(y_true).value_counts(dropna=False)
@@ -225,20 +207,14 @@ def data_class_imbalance_ratio_score(
 ) -> float:
     """Return the ratio of the most-frequent to the least-frequent class.
 
-    Parameters
-    ----------
-    y_true : array-like
-        Ground-truth target labels.
-    X : matrix-like
-        Predicted values (unused; present for scorer interface compatibility).
-    kwargs
-        Additional keyword arguments (unused).
+    Args:
+        y_true: Ground-truth target labels.
+        X: Feature matrix placeholder retained for scorer interface compatibility.
+        **kwargs: Additional keyword arguments (unused).
 
-    Returns
-    -------
-    float
-        ``max_count / min_count``.  Returns ``0.0`` when ``y_true`` is empty
-        and ``float('inf')`` when the minority class has zero samples.
+    Returns:
+        ``max_count / min_count``. Returns ``0.0`` when ``y_true`` is empty and
+        ``float("inf")`` when the minority class has zero samples.
     """
     _ = X, kwargs
     counts = pd.Series(y_true).value_counts(dropna=False)
@@ -258,21 +234,15 @@ def data_mutual_information_mean_score(
 ) -> float:
     """Return the mean mutual information between features and the reference vector.
 
-    Parameters
-    ----------
-    y_true : array-like
-        Ground-truth labels used as the reference vector unless ``reference``
-        or ``reference_column`` is supplied in *kwargs*.
-    X : matrix-like or pd.DataFrame
-        Feature matrix.  Non-DataFrame inputs are coerced automatically.
-    kwargs
-        Forwarded to :func:`_feature_mutual_information_vector`.  Accepts
-        ``reference``, ``reference_column``, ``random_state``, and
-        ``discrete_reference``.
+    Args:
+        y_true: Ground-truth labels used as the reference vector unless
+            ``reference`` or ``reference_column`` is supplied in ``kwargs``.
+        X: Feature matrix. Non-DataFrame inputs are coerced automatically.
+        **kwargs: Forwarded to ``_feature_mutual_information_vector``. Accepts
+            ``reference``, ``reference_column``, ``random_state``, and
+            ``discrete_reference``.
 
-    Returns
-    -------
-    float
+    Returns:
         Mean mutual information across all feature columns.
     """
     mi = _feature_mutual_information_vector(
@@ -290,21 +260,15 @@ def data_mutual_information_max_score(
 ) -> float:
     """Return the maximum mutual information between any single feature and the reference.
 
-    Parameters
-    ----------
-    y_true : array-like
-        Ground-truth labels used as the reference vector unless ``reference``
-        or ``reference_column`` is supplied in *kwargs*.
-    X : matrix-like or pd.DataFrame
-        Feature matrix.  Non-DataFrame inputs are coerced automatically.
-    kwargs
-        Forwarded to :func:`_feature_mutual_information_vector`.  Accepts
-        ``reference``, ``reference_column``, ``random_state``, and
-        ``discrete_reference``.
+    Args:
+        y_true: Ground-truth labels used as the reference vector unless
+            ``reference`` or ``reference_column`` is supplied in ``kwargs``.
+        X: Feature matrix. Non-DataFrame inputs are coerced automatically.
+        **kwargs: Forwarded to ``_feature_mutual_information_vector``. Accepts
+            ``reference``, ``reference_column``, ``random_state``, and
+            ``discrete_reference``.
 
-    Returns
-    -------
-    float
+    Returns:
         Maximum mutual information value across all feature columns.
     """
     mi = _feature_mutual_information_vector(
@@ -326,27 +290,18 @@ def data_empirical_cdf_function_score(
     fraction of reference samples that are less than or equal to each query
     value.
 
-    Parameters
-    ----------
-    y_true : array-like
-        Ground-truth values used as the reference unless ``reference`` or
-        ``reference_column`` is provided in *kwargs*.
-    X : matrix-like or pd.DataFrame
-        Feature matrix (used only when resolving ``reference_column``).
-    kwargs
-        Forwarded to :func:`_resolve_reference_vector`.  Accepts
-        ``reference`` and ``reference_column``.
+    Args:
+        y_true: Ground-truth values used as the reference unless ``reference``
+            or ``reference_column`` is provided in ``kwargs``.
+        X: Feature matrix used only when resolving ``reference_column``.
+        **kwargs: Forwarded to ``_resolve_reference_vector``. Accepts
+            ``reference`` and ``reference_column``.
 
-    Returns
-    -------
-    callable
-        An ECDF function ``ecdf(x) -> np.ndarray`` with the same signature
-        as :class:`scipy.stats.ecdf`.
+    Returns:
+        ECDF function ``ecdf(x) -> np.ndarray``.
 
-    Raises
-    ------
-    ValueError
-        If the resolved reference vector is empty after dropping NaN values.
+    Raises:
+        ValueError: If the resolved reference vector is empty after dropping NaN values.
     """
     X = _coerce_features_dataframe(X)
     reference, _ = _resolve_reference_vector(y_true=y_true, X=X, **kwargs)
@@ -365,55 +320,17 @@ def data_empirical_cdf_function_score(
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultDataScorerConfig(
+class DefaultDataScorerDictConfig(
     _DataScorerMarker,
     TaskAwareScorerMixin,
     ScorerDictConfig,
 ):
     """Default data-analysis scorer family with optional task inheritance.
 
-    Initialization parameters
-    -------------------------
-    classifier : bool | str | None
-        Task type selector. Accepted values are ``True``, ``False``,
-        ``"classifier"``, ``"regressor"``, or ``None``. When ``None``,
-        task type is resolved from data/model/attack context or defaults to ``True``.
-    scorers : dict[str, ScorerConfig | dict[str, Any]]
-        Named scorer configurations. When empty, populated by ``_build_default_scorers``
-        based on resolved task type (classification vs regression).
-
-    Runtime parameters
-    -------------------
-    data : DataConfig
-        Runtime data configuration containing train/test/val splits, feature matrices.
-    model : Any
-        Runtime model object (optional, used for context resolution).
-    attack : Any
-        Runtime attack object (optional, used for context resolution).
-
-    Parameter layers
-    ----------------
-    1. Task awareness: ``classifier`` field enables task-specific scorer defaults
-    2. Data properties: Scorers analyze feature matrices and label distributions
-    3. Reference vector: Mutual information and ECDF scorers accept optional ``reference``
-       or ``reference_column`` overrides for non-label analysis targets
-
-    Family-specific parameter semantics
-    -----------------------------------
-    Data scorers operate on dataset properties without requiring trained models:
-
-    - **Class distribution**: ``num_classes``, ``class_count_min/max``, ``class_imbalance_ratio``
-      measure label-space characteristics (classification only).
-    - **Feature informativeness**: ``mutual_information_mean/max`` quantify feature-label
-      associations using information-theoretic measures.
-    - **Empirical distribution**: ``empirical_cdf`` returns a calibrated CDF function for
-      reference-vector percentile queries.
-
-    Plugin pattern
-    --------------
-    This scorer inherits from ``_ScorerMixin`` semantics through ``ScorerDictConfig``.
-    Plugins registered via ``ScorerTypePlugin`` contribute mixin-based runtime context
-    for scope-based dispatch (e.g., ``scoring_type: "data"`` routes to this scorer).
+    This config composes ``ScorerConfig`` objects into one ``ScorerDictConfig``
+    that emits a ``ScoreDict`` at runtime. It resolves task-aware defaults for
+    classification and regression data analysis, including class-distribution,
+    mutual-information, and empirical-distribution metrics.
     """
 
     classifier: Union[bool, str, None] = None
@@ -473,41 +390,23 @@ class DefaultDataScorerConfig(
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultDataClassificationConfig(DefaultDataScorerConfig):
+class DefaultDataClassificationScorerDictConfig(DefaultDataScorerDictConfig):
     """Default dataset-analysis scorers for classification datasets.
 
-    Initialization parameters
-    -------------------------
-    classifier : bool | str | None
-        Fixed to ``True`` (classification mode). Class-distribution scorers
-        (num_classes, class_count_min/max, class_imbalance_ratio) are included
-        by default.
-
-    Runtime behavior
-    ----------------
-    Inherits all runtime parameter resolution from ``DefaultDataScoreConfig``.
-    Default scorers include both class-distribution and information-theoretic
-    measures specific to classification analysis.
+    This specialization fixes ``classifier`` to ``True`` and includes both
+    class-distribution and information-theoretic scorers by default.
     """
 
     classifier: Union[bool, str, None] = True
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultDataRegressionConfig(DefaultDataScorerConfig):
+class DefaultDataRegressionScorerDictConfig(DefaultDataScorerDictConfig):
     """Default dataset-analysis scorers for regression datasets.
 
-    Initialization parameters
-    -------------------------
-    classifier : bool | str | None
-        Fixed to ``False`` (regression mode). Excludes class-distribution scorers
-        and includes only information-theoretic measures for continuous target analysis.
-
-    Runtime behavior
-    ----------------
-    Inherits all runtime parameter resolution from ``DefaultDataScoreConfig``.
-    Default scorers focus on feature-informativeness and empirical distribution
-    measures suitable for regression analysis.
+    This specialization fixes ``classifier`` to ``False`` and keeps only the
+    information-theoretic and empirical-distribution scorers suited to
+    continuous targets.
     """
 
     classifier: Union[bool, str, None] = False
@@ -520,18 +419,12 @@ def pytorch_split_count_score(
 ) -> int:
     """Return the number of samples available in the active split.
 
-    Parameters
-    ----------
-    y_true : array-like
-        Labels for the active split.
-    X : matrix-like
-        Feature matrix for the active split.
-    kwargs
-        Additional scorer keyword arguments (unused).
+    Args:
+        y_true: Labels for the active split.
+        X: Feature matrix for the active split.
+        **kwargs: Additional scorer keyword arguments (unused).
 
-    Returns
-    -------
-    int
+    Returns:
         Number of samples in the active split.
     """
     _ = X, kwargs
@@ -539,7 +432,7 @@ def pytorch_split_count_score(
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultPytorchDataScorerConfig(
+class DefaultPytorchDataScorerDictConfig(
     _DataScorerMarker,
     TaskAwareScorerMixin,
     ScorerDictConfig,
@@ -603,7 +496,7 @@ safe_store(
     group="score",
     name="data-classification",
     node={
-        "_target_": "deckard.score.data.DefaultDataScorerConfig",
+        "_target_": "deckard.score.data.DefaultDataScorerDictConfig",
         "classifier": True,
     },
 )
@@ -611,7 +504,7 @@ safe_store(
     group="score",
     name="data-regression",
     node={
-        "_target_": "deckard.score.data.DefaultDataScorerConfig",
+        "_target_": "deckard.score.data.DefaultDataScorerDictConfig",
         "classifier": False,
     },
 )
@@ -626,8 +519,8 @@ __all__ = [
     "data_mutual_information_max_score",
     "data_empirical_cdf_function_score",
     "pytorch_split_count_score",
-    "DefaultDataScorerConfig",
-    "DefaultDataClassificationConfig",
-    "DefaultDataRegressionConfig",
-    "DefaultPytorchDataScorerConfig",
+    "DefaultDataScorerDictConfig",
+    "DefaultDataClassificationScorerDictConfig",
+    "DefaultDataRegressionScorerDictConfig",
+    "DefaultPytorchDataScorerDictConfig",
 ]

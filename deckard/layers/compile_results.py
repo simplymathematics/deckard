@@ -26,17 +26,12 @@ def parse_study_name(
 ) -> pd.DataFrame:
     """Parse Optuna study metadata from a study name.
 
-    Parameters
-    ----------
-    study_name : str
-        Study name to parse.
-    schema : dict[str, Any] | str
-        Mapping of output column names to indices/ranges, or a YAML file path
-        containing a ``schema`` mapping.
+    Args:
+        study_name: Study name to parse.
+        schema: Mapping of output column names to indices or ranges, or a YAML
+            file path containing a ``schema`` mapping.
 
-    Returns
-    -------
-    pd.DataFrame
+    Returns:
         Single-row dataframe with parsed metadata columns.
     """
     if schema is None:
@@ -98,14 +93,10 @@ def compile_results_main(
 ) -> None:
     """Compile Optuna studies into a single tabular results file.
 
-    Parameters
-    ----------
-    output_file : str
-        Destination path for compiled results.
-    optuna_db : str
-        Optuna storage URI.
-    schema : str | dict[str, Any] | None, optional
-        Optional schema map (or file path) for parsing study names.
+    Args:
+        output_file: Destination path for compiled results.
+        optuna_db: Optuna storage URI.
+        schema: Optional schema map, or a file path, for parsing study names.
     """
     # Check if schema is string or dict
     if schema is not None:

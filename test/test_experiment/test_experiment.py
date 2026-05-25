@@ -32,7 +32,7 @@ from deckard.experiment.base import (
 from deckard.file import FileConfig
 from deckard.frameworks.pytorch.experiment import TorchExperimentConfig
 from deckard.model import ModelConfig
-from deckard.score import DefaultClassifierConfig, DefaultDataClassificationConfig
+from deckard.score import DefaultClassifierScorerDictConfig, DefaultDataClassificationScorerDictConfig
 from deckard.utils import BaseConfig
 
 
@@ -182,10 +182,10 @@ class TestShuffleExperiment(unittest.TestCase):
 
 
 class TestExperimentValidationScoring(unittest.TestCase):
-    def test_run_delegates_to_call(self):
+    def test_call_delegates_to_run(self):
         exp = ExperimentConfig.__new__(ExperimentConfig)
-        exp.__call__ = lambda: {"ok": 1.0}
-        self.assertEqual(exp.run(), {"ok": 1.0})
+        exp.run = lambda: {"ok": 1.0}
+        self.assertEqual(exp(), {"ok": 1.0})
 
     def test_propagation_of_modes_to_children(self):
         exp = self._make_exp(score_mode="test")
@@ -220,7 +220,7 @@ class TestExperimentValidationScoring(unittest.TestCase):
                 classifier=True,
                 model_params={"n_estimators": 5, "random_state": 0},
             ),
-            score={"experiment": DefaultClassifierConfig()},
+            score={"experiment": DefaultClassifierScorerDictConfig()},
             attack=None,
             files=FileConfig(),
             experiment_name="score-mode-policy-test",
@@ -402,7 +402,7 @@ class TestPoisoningExperimentIntegration(unittest.TestCase):
                 attack_params={"eps": 0.1},
                 attack_size=10,
             ),
-            score={"experiment": DefaultClassifierConfig()},
+            score={"experiment": DefaultClassifierScorerDictConfig()},
             files=FileConfig(),
             experiment_name="single-pass-scorer-call-count",
             evaluation_mode="standard",
@@ -1006,7 +1006,7 @@ class TestExperimentScorerModePermutations(unittest.TestCase):
         exp = ExperimentConfig(
             data=self._base_data(val_size=0.1),
             model=self._base_model(),
-            score={"experiment": DefaultDataClassificationConfig()},
+            score={"experiment": DefaultDataClassificationScorerDictConfig()},
             score_mode=["pre-sample", "train", "test", "val"],
             files=FileConfig(),
             experiment_name="score-permutations-data-profile",
@@ -1021,7 +1021,7 @@ class TestExperimentScorerModePermutations(unittest.TestCase):
         exp = ExperimentConfig(
             data=self._base_data(val_size=0.1),
             model=self._base_model(),
-            score={"experiment": DefaultClassifierConfig()},
+            score={"experiment": DefaultClassifierScorerDictConfig()},
             score_mode=["pre-sample", "test"],
             files=FileConfig(),
             experiment_name="score-permutations-non-data-profile",

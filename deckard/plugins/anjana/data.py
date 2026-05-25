@@ -355,7 +355,7 @@ class AnjanaDataConfig(
         self._before_post_init()
         if is_default_config_value(self.scorer, include_best=False):
             ScorerClass = load_class(
-                "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
+                "deckard.plugins.anjana.score.DefaultAnjanaScorerDictConfig",
             )
             self.scorer = ScorerClass
         super().__post_init__()

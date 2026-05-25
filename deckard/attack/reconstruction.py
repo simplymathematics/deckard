@@ -19,7 +19,15 @@ class ReconstructionAttackMixin(InferenceAttackMixin):
         data: DataConfig,
         attack: AttackLike,
     ) -> ScoreDict:
-        """Public subtype-mirroring alias for reconstruction execution."""
+        """Execute model reconstruction attack with normalized scoring output.
+
+        Args:
+            data: Runtime dataset and split container.
+            attack: Instantiated reconstruction attack implementation.
+
+        Returns:
+            Score payload for reconstruction attack execution.
+        """
         return self.infer_database_reconstruction(data=data, attack=attack)
 
     def infer_database_reconstruction(

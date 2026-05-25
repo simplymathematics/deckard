@@ -19,8 +19,8 @@ from deckard.model import DefenseConfig, ModelConfig
 from deckard.model.defense.base import DefensePipelineConfig
 from deckard.score.attack import AttackScorerConfig
 from deckard.score import (
-    DefaultDataClassificationConfig,
-    DefaultDataRegressionConfig,
+    DefaultDataClassificationScorerDictConfig,
+    DefaultDataRegressionScorerDictConfig,
 )
 
 
@@ -281,7 +281,7 @@ def test_attack_scorer_with_data_and_model_context():
 
 def test_data_analysis_scorer_classification_with_reference_column():
     data = _base_classification_data()
-    scorer = DefaultDataClassificationConfig()
+    scorer = DefaultDataClassificationScorerDictConfig()
 
     features = data.X_test.copy()
     # Non-target analysis column to validate reference-column override behavior.
@@ -318,7 +318,7 @@ def test_data_analysis_scorer_regression_with_reference_column():
             classifier=False,
         ),
     )
-    scorer = DefaultDataRegressionConfig()
+    scorer = DefaultDataRegressionScorerDictConfig()
 
     scores = scorer(
         y_true=np.asarray(data.y_test),

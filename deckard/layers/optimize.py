@@ -1286,27 +1286,21 @@ def filter_scores(
     Filters and processes the scores dictionary based on the specified optimizers
     and directions.
 
-    Parameters
-    ----------
-    scores : dict
-        A dictionary containing the scores to be filtered and processed.
-    optimizers : list
-        A list of optimizer names to filter the scores. If empty, all scores are returned.
-    directions : list
-        A list of directions ("minimize", "maximize", or "diff") corresponding to the
-        optimizers. Used to further process the filtered scores.
+    Args:
+        scores: Score dictionary to filter and process.
+        optimizers: Optimizer names to select from ``scores``. When empty, all
+            scores are returned.
+        directions: Directions such as ``minimize``, ``maximize``, or ``diff``
+            corresponding to ``optimizers``.
+        emit_logs: Whether to emit informational logging during filtering.
 
-    Returns
-    -------
-    dict
-        A dictionary containing the filtered and processed scores.
+    Returns:
+        Tuple of optimization payload and filtered score dictionary.
 
-    Raises
-    -------
-    ValueError
-        - If the length of `directions` does not match the length of `optimizers`.
-        - If an invalid direction is provided.
-        - If no optimization scores are found for the specified directions.
+    Raises:
+        ValueError: If the number of directions does not match the number of
+            optimizers, if a direction is invalid, or if no optimization scores
+            are found for the requested directions.
 
     Notes
     -------

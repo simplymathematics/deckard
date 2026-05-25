@@ -45,7 +45,7 @@ builtins.__import__ = _guarded_import
     [
         (
             "deckard.plugins.anjana.score",
-            "DefaultAnjanaScorerConfig",
+            "DefaultAnjanaScorerDictConfig",
             ("deckard.plugins.fairlearn", "deckard.plugins.lifelines"),
         ),
         (

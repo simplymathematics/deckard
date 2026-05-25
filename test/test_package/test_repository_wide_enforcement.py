@@ -35,6 +35,23 @@ def _run_enforcement(scope: str) -> None:
     assert result.returncode == 0, result.stdout + "\n" + result.stderr
 
 
+def _run_enforcement_result(scope: str) -> subprocess.CompletedProcess[str]:
+    repo_root = Path(__file__).resolve().parents[2]
+    cmd = [
+        "python",
+        "scripts/repository_enforcement.py",
+        "--scope",
+        scope,
+    ]
+    return subprocess.run(
+        cmd,
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
 def test_repository_enforcement_plugins_scope_passes() -> None:
     _run_enforcement("deckard/plugins")
 
@@ -49,6 +66,40 @@ def test_repository_enforcement_score_scope_passes() -> None:
 
 def test_repository_enforcement_deckard_scope_passes() -> None:
     _run_enforcement("deckard")
+
+
+def test_repository_enforcement_default_score_config_name_fails(
+    tmp_path: Path,
+) -> None:
+    sample = tmp_path / "bad_default_score_config.py"
+    sample.write_text(
+        "class DefaultModelScoreConfig:\n"
+        "    \"\"\"Temporary test class.\"\"\"\n"
+        "    pass\n",
+        encoding="utf-8",
+    )
+
+    result = _run_enforcement_result(str(sample))
+
+    assert result.returncode == 1
+    assert "NAME005" in result.stdout
+    assert "must end with 'ScorerDictConfig'" in result.stdout
+
+
+def test_repository_enforcement_default_scorer_dict_config_name_passes(
+    tmp_path: Path,
+) -> None:
+    sample = tmp_path / "good_default_scorer_dict_config.py"
+    sample.write_text(
+        "class DefaultModelScorerDictConfig:\n"
+        "    \"\"\"Temporary test class.\"\"\"\n"
+        "    pass\n",
+        encoding="utf-8",
+    )
+
+    result = _run_enforcement_result(str(sample))
+
+    assert result.returncode == 0, result.stdout + "\n" + result.stderr
 
 
 def test_plugin_orchestration_is_deterministic() -> None:

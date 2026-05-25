@@ -26,17 +26,12 @@ def _load_dvc_config(dvc_file: str) -> dict:
 def calculate_number_of_studies_per_stage(stage: str, dvc_file: str) -> int:
     """Return the number of studies expected for a DVC stage definition.
 
-    Parameters
-    ----------
-    stage : str
-        DVC stage name.
-    dvc_file : str
-        Path to the DVC pipeline file.
+    Args:
+        stage: DVC stage name.
+        dvc_file: Path to the DVC pipeline file.
 
-    Returns
-    -------
-    int
-        Number of expected studies derived from matrix/foreach declarations.
+    Returns:
+        Number of expected studies derived from matrix or foreach declarations.
     """
     dvc_conf = _load_dvc_config(dvc_file)
     dvc_path = Path(dvc_file)

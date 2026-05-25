@@ -3,23 +3,24 @@
 from __future__ import annotations
 
 import importlib.util
+from typing import TYPE_CHECKING
 
 from .attack import (
     AttackScorerConfig,
-    DefaultAttributeInferenceAttackScorerConfig,
-    DefaultAttributeInferenceRegressionAttackScorerConfig,
-    DefaultEvasionAttackScorerConfig,
-    DefaultEvasionRegressionAttackScorerConfig,
-    DefaultMembershipInferenceAttackScorerConfig,
+    DefaultAttributeInferenceAttackScorerDictConfig,
+    DefaultAttributeInferenceRegressionAttackScorerDictConfig,
+    DefaultEvasionAttackScorerDictConfig,
+    DefaultEvasionRegressionAttackScorerDictConfig,
+    DefaultMembershipInferenceAttackScorerDictConfig,
     FairlearnAttackScorerConfig,
 )
 from .base import (
-    DefaultClassifierConfig,
-    DefaultModelScorerConfig,
-    DefaultPytorchClassifierConfig,
-    DefaultPytorchRegressorConfig,
-    DefaultPytorchScorerConfig,
-    DefaultRegressorConfig,
+    DefaultClassifierScorerDictConfig,
+    DefaultModelScorerDictConfig,
+    DefaultPytorchClassifierScorerDictConfig,
+    DefaultPytorchRegressorScorerDictConfig,
+    DefaultPytorchScorerDictConfig,
+    DefaultRegressorScorerDictConfig,
     ScorerConfig,
     ScorerDictConfig,
     build_scorer,
@@ -27,10 +28,10 @@ from .base import (
 )
 from .canon import CANON_SCORER_MODES, ScorerRuntimeContract, normalize_scorer_mode
 from .data import (
-    DefaultDataClassificationConfig,
-    DefaultDataRegressionConfig,
-    DefaultDataScorerConfig,
-    DefaultPytorchDataScorerConfig,
+    DefaultDataClassificationScorerDictConfig,
+    DefaultDataRegressionScorerDictConfig,
+    DefaultDataScorerDictConfig,
+    DefaultPytorchDataScorerDictConfig,
     data_class_count_max_score,
     data_class_count_min_score,
     data_class_imbalance_ratio_score,
@@ -40,6 +41,21 @@ from .data import (
     data_num_classes_score,
 )
 from ..artifacts import ScoreDict
+
+if TYPE_CHECKING:
+    from ..plugins.anjana.score import (
+        DefaultAnjanaDataScorerDictConfig,
+        DefaultAnjanaModelScorerDictConfig,
+        DefaultAnjanaScorerDictConfig,
+    )
+    from ..plugins.fairlearn.score import (
+        DefaultFairlearnClassificationScorerDictConfig,
+        DefaultFairlearnDataScorerDictConfig,
+        DefaultFairlearnRegressionScorerDictConfig,
+        DefaultFairlearnScorerDictConfig,
+        FairlearnScorerDictConfig,
+    )
+    from ..plugins.lifelines.score import DefaultLifelinesConfig
 
 
 def _is_available(module_name: str) -> bool:
@@ -51,7 +67,7 @@ def _load_fairlearn_score_symbols() -> bool:
     try:
         from ..plugins.fairlearn.score import (
             DefaultFairlearnClassificationScorerDictConfig,
-            DefaultFairlearnDataScorerConfig,
+            DefaultFairlearnDataScorerDictConfig,
             DefaultFairlearnRegressionScorerDictConfig,
             DefaultFairlearnScorerDictConfig,
             FairlearnScorerDictConfig,
@@ -62,7 +78,7 @@ def _load_fairlearn_score_symbols() -> bool:
     globals().update(
         {
             "DefaultFairlearnClassificationScorerDictConfig": DefaultFairlearnClassificationScorerDictConfig,
-            "DefaultFairlearnDataScorerConfig": DefaultFairlearnDataScorerConfig,
+            "DefaultFairlearnDataScorerDictConfig": DefaultFairlearnDataScorerDictConfig,
             "DefaultFairlearnRegressionScorerDictConfig": DefaultFairlearnRegressionScorerDictConfig,
             "DefaultFairlearnScorerDictConfig": DefaultFairlearnScorerDictConfig,
             "FairlearnScorerDictConfig": FairlearnScorerDictConfig,
@@ -74,18 +90,18 @@ def _load_fairlearn_score_symbols() -> bool:
 def _load_anjana_score_symbols() -> bool:
     try:
         from ..plugins.anjana.score import (
-            DefaultAnjanaDataScorerConfig,
-            DefaultAnjanaModelScorerConfig,
-            DefaultAnjanaScorerConfig,
+            DefaultAnjanaDataScorerDictConfig,
+            DefaultAnjanaModelScorerDictConfig,
+            DefaultAnjanaScorerDictConfig,
         )
     except Exception:  # pragma: no cover
         return False
 
     globals().update(
         {
-            "DefaultAnjanaScorerConfig": DefaultAnjanaScorerConfig,
-            "DefaultAnjanaDataScorerConfig": DefaultAnjanaDataScorerConfig,
-            "DefaultAnjanaModelScorerConfig": DefaultAnjanaModelScorerConfig,
+            "DefaultAnjanaScorerDictConfig": DefaultAnjanaScorerDictConfig,
+            "DefaultAnjanaDataScorerDictConfig": DefaultAnjanaDataScorerDictConfig,
+            "DefaultAnjanaModelScorerDictConfig": DefaultAnjanaModelScorerDictConfig,
         },
     )
     return True
@@ -229,23 +245,23 @@ __all__ = [
     "ScoreDict",
     "ScorerConfig",
     "ScorerDictConfig",
-    "DefaultModelScorerConfig",
-    "DefaultClassifierConfig",
-    "DefaultPytorchScorerConfig",
-    "DefaultPytorchClassifierConfig",
-    "DefaultPytorchRegressorConfig",
-    "DefaultRegressorConfig",
+    "DefaultModelScorerDictConfig",
+    "DefaultClassifierScorerDictConfig",
+    "DefaultPytorchScorerDictConfig",
+    "DefaultPytorchClassifierScorerDictConfig",
+    "DefaultPytorchRegressorScorerDictConfig",
+    "DefaultRegressorScorerDictConfig",
     "AttackScorerConfig",
     "FairlearnAttackScorerConfig",
-    "DefaultEvasionAttackScorerConfig",
-    "DefaultEvasionRegressionAttackScorerConfig",
-    "DefaultMembershipInferenceAttackScorerConfig",
-    "DefaultAttributeInferenceAttackScorerConfig",
-    "DefaultAttributeInferenceRegressionAttackScorerConfig",
-    "DefaultDataScorerConfig",
-    "DefaultDataClassificationConfig",
-    "DefaultDataRegressionConfig",
-    "DefaultPytorchDataScorerConfig",
+    "DefaultEvasionAttackScorerDictConfig",
+    "DefaultEvasionRegressionAttackScorerDictConfig",
+    "DefaultMembershipInferenceAttackScorerDictConfig",
+    "DefaultAttributeInferenceAttackScorerDictConfig",
+    "DefaultAttributeInferenceRegressionAttackScorerDictConfig",
+    "DefaultDataScorerDictConfig",
+    "DefaultDataClassificationScorerDictConfig",
+    "DefaultDataRegressionScorerDictConfig",
+    "DefaultPytorchDataScorerDictConfig",
     "data_num_classes_score",
     "data_class_count_min_score",
     "data_class_count_max_score",
@@ -278,7 +294,7 @@ if _is_available("fairlearn"):
             "DefaultFairlearnScorerDictConfig",
             "DefaultFairlearnClassificationScorerDictConfig",
             "DefaultFairlearnRegressionScorerDictConfig",
-            "DefaultFairlearnDataScorerConfig",
+            "DefaultFairlearnDataScorerDictConfig",
             "FairlearnScorerDictConfig",
         ],
     )
@@ -286,9 +302,9 @@ if _is_available("fairlearn"):
 if _is_available("pycanon"):
     __all__.extend(
         [
-            "DefaultAnjanaScorerConfig",
-            "DefaultAnjanaDataScorerConfig",
-            "DefaultAnjanaModelScorerConfig",
+            "DefaultAnjanaScorerDictConfig",
+            "DefaultAnjanaDataScorerDictConfig",
+            "DefaultAnjanaModelScorerDictConfig",
         ],
     )
 
@@ -301,13 +317,13 @@ def __getattr__(name: str):
         "DefaultFairlearnScorerDictConfig",
         "DefaultFairlearnClassificationScorerDictConfig",
         "DefaultFairlearnRegressionScorerDictConfig",
-        "DefaultFairlearnDataScorerConfig",
+        "DefaultFairlearnDataScorerDictConfig",
         "FairlearnScorerDictConfig",
     }
     anjana_symbols = {
-        "DefaultAnjanaScorerConfig",
-        "DefaultAnjanaDataScorerConfig",
-        "DefaultAnjanaModelScorerConfig",
+        "DefaultAnjanaScorerDictConfig",
+        "DefaultAnjanaDataScorerDictConfig",
+        "DefaultAnjanaModelScorerDictConfig",
     }
     lifelines_symbols = {"DefaultLifelinesConfig"}
 

@@ -75,7 +75,7 @@ __all__ = [
     "DefaultFairlearnScorerDictConfig",
     "DefaultFairlearnClassificationScorerDictConfig",
     "DefaultFairlearnRegressionScorerDictConfig",
-    "DefaultFairlearnDataScorerConfig",
+    "DefaultFairlearnDataScorerDictConfig",
 ]
 
 FairnessMode = Literal["test", "train", "attack", "val", "attack-val", "all"]
@@ -253,35 +253,12 @@ def fairness_data_mutual_info_self(
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultFairlearnDataScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
-    """Default fairness data scoring: class count, mutual information, etc.
+class DefaultFairlearnDataScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
+    """Default fairness data scoring: class count, mutual information, and related signals.
 
-    Initialization parameters
-    -------------------------
-    classifier : bool | str | None
-        Task type selector. When ``None``, resolved from data/model context.
-
-    Runtime parameters
-    -------------------
-    data : DataConfig
-        Data configuration for accessing protected attributes and class labels.
-
-    Parameter layers
-    ----------------
-    1. Task awareness: Classifier/regressor toggle for data scorer selection
-    2. Data properties: Class distribution and feature-target association metrics
-
-    Family-specific parameter semantics
-    -----------------------------------
-    Data-level fairness metrics measure demographic properties:
-
-    - **class_count**: Number of samples per class (minimized for imbalance detection)
-    - **mutual_info**: Information-theoretic association between features and class labels
-
-    Plugin pattern
-    --------------
-    This scorer inherits from ``_ScorerMixin`` semantics through ``ScorerDictConfig``.
-    Plugins registered via ``ScorerTypePlugin`` contribute mixin-based runtime context.
+    This config composes fairness-oriented data ``ScorerConfig`` objects into
+    one ``ScorerDictConfig`` that emits a ``ScoreDict`` for data-scope fairness
+    analysis.
     """
 
     classifier: bool | None = None
@@ -501,7 +478,7 @@ class FairnessScorerMixin:
 
     ```python
     @dataclass(eq=False, kw_only=True)
-    class FairnessClassifierScorerDict(_FairnessScorerMixin, DefaultClassifierConfig):
+    class FairnessClassifierScorerDict(_FairnessScorerMixin, DefaultClassifierScorerDictConfig):
         group_scorers: dict = field(default_factory=lambda: { ... })
         group_reduction: str = "difference"
         ...
@@ -1326,54 +1303,10 @@ class DefaultFairlearnScorerDictConfig(
 ):
     """Default fairness scorer family with optional task inheritance.
 
-    Initialization parameters
-    -------------------------
-    classifier : bool | str | None
-        Task type selector. Accepted values are ``True``, ``False``,
-        ``"classifier"``, ``"regressor"``, or ``None``. Determines whether
-        classification-specific fairness metrics (demographic parity, equalized odds)
-        or regression-specific metrics (MAE/MSE group differences) are included.
-    scorers : dict[str, ScorerConfig]
-        Base model-prediction scorers plus fairness-specific metrics.
-    group_scorers : dict[str, ScorerConfig]
-        Group-level scorers for per-demographic-group metric computation.
-
-    Runtime parameters
-    -------------------
-    data : DataConfig
-        Data configuration carrying protected attributes for group-based analysis.
-    model : Any
-        Fitted model providing predictions.
-    y_pred : array-like
-        Model predictions (default if model context unavailable).
-    sensitive_attributes : dict
-        Mapping of sensitive-feature names to group labels for demographic breakdown.
-
-    Parameter layers
-    ----------------
-    1. Task awareness: Classifier/regressor determines fairness metric selection
-    2. Group evaluation: Protected attributes enable per-group performance metrics
-    3. Fairness metrics: Demographic parity, equalized odds, or regression group differences
-    4. Group reduction: Aggregation strategy (difference, ratio, none) for group comparisons
-
-    Family-specific parameter semantics
-    -----------------------------------
-    Fairness scorers measure model performance disparities across demographic groups:
-
-    **Classification:**
-    - demographic_parity_difference: Max difference in positive prediction rates across groups
-    - equalized_odds_difference: Max difference in TPR/FPR across groups
-    - group_mean_prediction_difference: Difference in predicted positive probabilities
-
-    **Regression:**
-    - group_mae_difference: Difference in MAE across groups
-    - group_mse_difference: Difference in MSE across groups
-
-    Plugin pattern
-    --------------
-    This scorer inherits from ``_ScorerMixin`` semantics through ``FairlearnScorerDictConfig``.
-    Plugins registered via ``ScorerTypePlugin`` contribute mixin-based runtime context.
-    Enables FairlearnScorerDictConfig group-level routing when ``group_scorers`` present.
+    This config composes base predictive and fairness-specific ``ScorerConfig``
+    objects into one ``FairlearnScorerDictConfig`` that emits a ``ScoreDict``.
+    It selects demographic-parity and equalized-odds metrics for
+    classification tasks, or group MAE/MSE disparity metrics for regression.
     """
 
     classifier: Union[bool, str, None] = None
@@ -1381,12 +1314,12 @@ class DefaultFairlearnScorerDictConfig(
 
     def _build_default_scorers(self, classifier: bool) -> dict:
         # Use the same default scorer configs as ModelConfig (via score.base)
-        from deckard.score.base import DefaultClassifierConfig, DefaultRegressorConfig
+        from deckard.score.base import DefaultClassifierScorerDictConfig, DefaultRegressorScorerDictConfig
 
         base = (
-            DefaultClassifierConfig().scorers.copy()
+            DefaultClassifierScorerDictConfig().scorers.copy()
             if classifier
-            else DefaultRegressorConfig().scorers.copy()
+            else DefaultRegressorScorerDictConfig().scorers.copy()
         )
         # Add fairness group metrics for classification
         if classifier:
@@ -1430,25 +1363,8 @@ class DefaultFairlearnScorerDictConfig(
 class DefaultFairlearnClassificationScorerDictConfig(DefaultFairlearnScorerDictConfig):
     """Default scorer set for classification fairness workflows.
 
-    Initialization parameters
-    -------------------------
-    Inherits all initialization parameters from ``DefaultFairlearnScoreConfig``,
-    with ``classifier`` fixed to ``True``.
-
-    Runtime parameters
-    -------------------
-    Inherits all runtime parameters from ``DefaultFairlearnScoreConfig``.
-
-    Purpose
-    -------
-    Explicit classification-scope registration for fairness assessment.
-    Automatically includes demographic parity, equalized odds, and prediction-rate
-    differences suitable for binary/multiclass classification tasks.
-
-    Plugin pattern
-    --------------
-    This scorer inherits from ``_ScorerMixin`` semantics through ``FairlearnScorerDictConfig``.
-    Plugins registered via ``ScorerTypePlugin`` route to classification-fairness dispatch.
+    This specialization fixes ``classifier`` to ``True`` so fairness scoring
+    includes classification-oriented disparity metrics by default.
     """
 
     classifier: Union[bool, str, None] = True
@@ -1458,25 +1374,8 @@ class DefaultFairlearnClassificationScorerDictConfig(DefaultFairlearnScorerDictC
 class DefaultFairlearnRegressionScorerDictConfig(DefaultFairlearnScorerDictConfig):
     """Default scorer set for regression fairness workflows.
 
-    Initialization parameters
-    -------------------------
-    Inherits all initialization parameters from ``DefaultFairlearnScoreConfig``,
-    with ``classifier`` fixed to ``False``.
-
-    Runtime parameters
-    -------------------
-    Inherits all runtime parameters from ``DefaultFairlearnScoreConfig``.
-
-    Purpose
-    -------
-    Explicit regression-scope registration for fairness assessment.
-    Automatically includes MAE and MSE group differences suitable for
-    continuous prediction tasks.
-
-    Plugin pattern
-    --------------
-    This scorer inherits from ``_ScorerMixin`` semantics through ``FairlearnScorerDictConfig``.
-    Plugins registered via ``ScorerTypePlugin`` route to regression-fairness dispatch.
+    This specialization fixes ``classifier`` to ``False`` so fairness scoring
+    includes regression-oriented group disparity metrics by default.
     """
 
     classifier: Union[bool, str, None] = False

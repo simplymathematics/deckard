@@ -772,10 +772,8 @@ def _is_torch_model_instance(model_obj) -> bool:
 class DefenseMixin:
 	"""Base callable defense handler used by runtime defense context resolution.
 
-	Parameters
-	----------
-	runtime : Any
-		Runtime defense config object owned by defense orchestration.
+	The ``runtime`` attribute is the active defense config instance owned by
+	defense orchestration. Attribute access is delegated to that runtime object.
 	"""
 
 	runtime: Any = None
@@ -840,7 +838,22 @@ class DefenseMixin:
 		existing_preprocessors: list,
 		existing_postprocessors: list,
 	) -> tuple[BaseConfig | None, EstimatorLike]:
-		"""Public verb-form alias for applying a defense handler."""
+		"""Public verb-form alias for applying a defense handler.
+
+		Args:
+			data: Data runtime containing train/test/val splits.
+			defense_type: Parsed defense family.
+			defense_subtype: Parsed defense subtype.
+			defense_class: Concrete defense class resolved from ``defense_name``.
+			art_class: ART estimator wrapper class selected for model type.
+			init_params: Runtime ART estimator initialization kwargs.
+			base_estimator: Unwrapped model estimator used as defense target.
+			existing_preprocessors: Existing preprocessor defenses already attached.
+			existing_postprocessors: Existing postprocessor defenses already attached.
+
+		Returns:
+			Defense artifact and defended estimator.
+		"""
 		return self(
 			data=data,
 			defense_type=defense_type,
@@ -943,7 +956,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
 
 			mixins.append(TrainerDefenseMixin)
 		elif dtype == "transformer":
-			from ..transformer import TransformerDefenseMixin
+			from .transformer import TransformerDefenseMixin
 
 			mixins.append(TransformerDefenseMixin)
 		elif dtype == "regularizer":

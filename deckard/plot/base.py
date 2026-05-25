@@ -37,22 +37,10 @@ class _YellowbrickPlotterMarker:
 class PlotterMixin:
     """Base callable plotter handler used by runtime plotter context resolution.
 
-    Initialization parameters
-    -------------------------
-    runtime : Any
-        Runtime config object owned by plot config ``__call__``. Mixins should
-        treat this as the source of mutable runtime state (experiment state,
-        cached results, plot parameters, etc).
-
-    Runtime parameters
-    -------------------
-    The mixin forwards attribute access to runtime to enable transparent delegation
-    of plot configuration to the underlying runtime instance.
-
-    Plugin pattern
-    --------------
-    Plotter mixins are resolved via PlotTypePlugin and bound to plot configs at
-    runtime, enabling flexible backend selection and behavioral extension.
+    The ``runtime`` attribute is the active plot config instance owned by the
+    plot config ``__call__`` path. Attribute access is delegated to that
+    runtime object so mixins can share experiment state, cached results, and
+    plot parameters.
     """
 
     runtime: Any = None
@@ -230,22 +218,9 @@ class PlotTypePlugin:
 class PlotDictConfig(BaseConfig):
     """Container for multiple plot configs enabling flexible plot composition.
 
-    Initialization parameters
-    -------------------------
-    plots : dict[str, Any]
-        Named plot configurations (e.g., "feature_pca", "roc_auc").
-    plot_backend : str
-        Backend selector ("seaborn" or "yellowbrick").
-
-    Runtime parameters
-    -------------------
-    experiment : Any
-        ExperimentConfig instance providing model/data/attack context.
-
-    Plugin pattern
-    --------------
-    This container participates in PlotTypePlugin-based resolution for
-    plot-backend dispatch and mixin composition.
+    This config stores named plot definitions and a backend selector, then
+    participates in ``PlotTypePlugin``-based resolution for backend dispatch
+    and mixin composition at runtime.
     """
 
     plots: dict[str, Any] = field(default_factory=dict)

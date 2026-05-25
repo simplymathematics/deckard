@@ -18,7 +18,7 @@ def survival_main(cfg: dict = None) -> dict:
     """Run survival workflow from Hydra-parsed config.
 
     Routes to either plot-only rendering or full experiment based on config.
-    All parameters come from Hydra instantiation, no runtime parameters.
+    All values come from Hydra instantiation; there are no ad-hoc runtime args.
 
     Args:
         cfg: DictConfig or dict containing survival experiment configuration.

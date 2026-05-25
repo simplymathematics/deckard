@@ -35,7 +35,7 @@ class _DummyConfig:
         self.training_n = None
         self._model = _DummyPartialFitModel()
 
-    def _train(self, X, y):
+    def train(self, X, y):
         self.training_time = 0.1
         self.training_n = len(y)
 

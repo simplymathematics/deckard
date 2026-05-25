@@ -41,30 +41,9 @@ supported_seaborn_plotters = list(seaborn_plotter_dict.keys())
 class SeabornPlotterMixin(PlotterMixin):
     """Seaborn-specific plotter handler for matplotlib-based rendering.
 
-    Initialization parameters
-    -------------------------
-    runtime : Any
-        Seaborn plot config object (SeabornPlotConfig or subclass).
-
-    Runtime parameters
-    -------------------
-    plot_type : str
-        Seaborn plot type ("scatter", "line", "hist", "cat", "bar", "heatmap").
-    data : pd.DataFrame
-        Data for plotting, materialized from file or passed directly.
-    x, y : str
-        Column names for x and y axes.
-    hue, style : str | None
-        Optional aesthetic mappings.
-    rc_config : dict
-        Matplotlib rcParams updates.
-    kwargs : dict
-        Additional plotter-specific parameters.
-
-    Plugin pattern
-    --------------
-    This mixin is registered via PlotTypePlugin for plot_backend="seaborn"
-    and provides seaborn-specific rendering logic when bound to SeabornPlotConfig.
+    The runtime object provides the active seaborn plot config, including plot
+    type, data payload, aesthetic mappings, rcParams overrides, and output
+    paths used during rendering.
     """
 
     def __call__(
@@ -166,68 +145,10 @@ class SeabornPlotterMixin(PlotterMixin):
 class SeabornPlotConfig(_SeabornPlotterMarker, BaseConfig):
     """Configuration for seaborn matplotlib-based plots.
 
-    Initialization parameters
-    -------------------------
-    x : str
-        Column name for x-axis data.
-    y : str
-        Column name for y-axis data.
-    plot_type : Literal["scatter", "line", "hist", "cat", "bar", "heatmap"]
-        Type of seaborn plot to render.
-    data_file : str | None
-        Path to CSV/parquet data file. Mutually exclusive with data parameter.
-    data : pd.DataFrame | None
-        In-memory data. Mutually exclusive with data_file parameter.
-    title : str | None
-        Plot title.
-    xlabel : str | None
-        X-axis label.
-    ylabel : str | None
-        Y-axis label.
-    xscale : str | None
-        X-axis scale ("linear", "log", etc).
-    yscale : str | None
-        Y-axis scale.
-    hue : str | None
-        Column for color encoding (supports scatter, line).
-    style : str | None
-        Column for marker/line style (supports scatter, line).
-    plot_file : str | None
-        Output path for rendered plot.
-    legend_title : str | None
-        Legend title override.
-    kwargs : dict
-        Additional seaborn plotter parameters (e.g., s=100 for scatter).
-    rc_config : dict
-        Matplotlib rcParams updates (e.g., figsize, font).
-
-    Runtime parameters
-    -------------------
-    None (all parameters determined at initialization).
-
-    Parameter layers
-    ----------------
-    1. Data source: Either file-based (data_file) or in-memory (data)
-    2. Aesthetic encoding: x/y columns plus optional hue/style mappings
-    3. Styling: rc_config for matplotlib, kwargs for plotter-specific options
-    4. Rendering: Axis customization (scales, labels), file output
-
-    Family-specific parameter semantics
-    -----------------------------------
-    Seaborn plots provide publication-quality statistical graphics:
-
-    - **scatter**: Bivariate relationships with optional grouping
-    - **line**: Time-series or categorical line plots
-    - **hist**: Univariate or bivariate distributions
-    - **cat**: Categorical plots (box, violin, strip, etc)
-    - **bar**: Categorical bar plots with aggregation
-    - **heatmap**: Rectangular heatmap with color encoding
-
-    Plugin pattern
-    --------------
-    This config inherits from ``_SeabornPlotterMarker`` for backend identification.
-    At runtime, ``PlotTypePlugin`` resolves ``_SeabornPlotterMixin`` for rendering
-    when plot_backend="seaborn", enabling flexible seaborn/yellowbrick switching.
+    This config stores the seaborn plot type, data source, aesthetic channel
+    mappings, styling options, and output path used for one rendered plot. It
+    inherits ``_SeabornPlotterMarker`` so runtime dispatch resolves the seaborn
+    plotting mixin when the seaborn backend is selected.
     """
 
     x: str
@@ -398,33 +319,8 @@ class SeabornPlotConfig(_SeabornPlotterMarker, BaseConfig):
 class SeabornPlotConfigList(BaseConfig):
     """Container for multiple seaborn plot configurations.
 
-    Initialization parameters
-    -------------------------
-    plots : list[SeabornPlotConfig]
-        List of plot configurations to render.
-    data_file : str
-        Shared data file path for all plots (used for validation).
-
-    Runtime parameters
-    -------------------
-    axes : Axes | None
-        Matplotlib axes array to render on. If None, creates new figure/subplots.
-
-    Parameter layers
-    ----------------
-    1. Plot configurations: List of SeabornPlotConfig instances
-    2. Data source: Single shared data_file for all plots
-    3. Figure layout: Subplot grid matching number of plots
-
-    Family-specific parameter semantics
-    -----------------------------------
-    Batch rendering of multiple seaborn plots with automatic subplot arrangement.
-    Each plot operates independently on shared or separate data sources.
-
-    Plugin pattern
-    --------------
-    This container orchestrates multiple ``SeabornPlotConfig`` instances,
-    each of which participates in ``PlotTypePlugin`` resolution for backend dispatch.
+    This config orchestrates batch rendering of multiple ``SeabornPlotConfig``
+    instances, including shared data-file validation and subplot layout.
     """
 
     plots: List[SeabornPlotConfig] = field(default_factory=list)
@@ -447,7 +343,7 @@ class SeabornPlotConfigList(BaseConfig):
     def __len__(self):
         return len(self.plots)
 
-    def __call__(self, axes=None):
+    def __call__(self, axes: Axes | list[Axes] | None = None) -> Axes | list[Axes]:
         """Render all configured plots and return the resulting axes collection.
 
         Args:

@@ -20,11 +20,11 @@ from .base import (
 
 __all__ = [
     "evasion_success_score",
-    "DefaultEvasionAttackScorerConfig",
-    "DefaultEvasionRegressionAttackScorerConfig",
-    "DefaultMembershipInferenceAttackScorerConfig",
-    "DefaultAttributeInferenceAttackScorerConfig",
-    "DefaultAttributeInferenceRegressionAttackScorerConfig",
+    "DefaultEvasionAttackScorerDictConfig",
+    "DefaultEvasionRegressionAttackScorerDictConfig",
+    "DefaultMembershipInferenceAttackScorerDictConfig",
+    "DefaultAttributeInferenceAttackScorerDictConfig",
+    "DefaultAttributeInferenceRegressionAttackScorerDictConfig",
     "AttackScorerConfig",
     "FairlearnAttackScorerConfig",
 ]
@@ -45,54 +45,17 @@ def evasion_success_score(
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultEvasionAttackScorerConfig(
+class DefaultEvasionAttackScorerDictConfig(
     TaskAwareScorerMixin,
     _AttackProfileScorer,
     ScorerDictConfig,
 ):
     """Default evasion attack scorer family with optional task selection.
 
-    Initialization parameters
-    -------------------------
-    classifier : bool | str
-        Task type selector. ``True`` for classification evasion metrics
-        (accuracy, precision, recall, f1, success rate); ``False`` for
-        regression evasion metrics (MSE, MAE, R²).
-    scorers : dict[str, ScorerConfig]
-        Named evasion attack evaluation metrics.
-
-    Runtime parameters
-    -------------------
-    model : Any
-        Target model being attacked.
-    y_true : array-like
-        Ground truth labels for benign model evaluation.
-    y_pred : array-like
-        Evasion attack predictions.
-
-    Parameter layers
-    ----------------
-    1. Task awareness: Classifier/regressor determines evasion metric selection
-    2. Attack profile: Evasion-specific routing via _AttackProfileScorer mixin
-    3. Success metrics: Task-specific attack success indicators
-
-    Family-specific parameter semantics
-    -----------------------------------
-    Evasion scorers measure attack success in fooling model predictions:
-
-    **Classification:**
-    - accuracy: Model accuracy on evasion samples
-    - precision/recall/f1: Per-class prediction quality
-    - success: Custom evasion success rate (re-classification ratio)
-
-    **Regression:**
-    - mse/mae: Prediction error magnitudes (higher = better evasion)
-    - r2: Prediction quality (lower = worse model performance = evasion success)
-
-    Plugin pattern
-    --------------
-    This scorer inherits from ``_ScorerMixin`` semantics through ``ScorerDictConfig``.
-    Plugins registered via ``ScorerTypePlugin`` contribute mixin-based runtime context.
+    This config composes ``ScorerConfig`` objects into one ``ScorerDictConfig``
+    that emits a ``ScoreDict`` for evasion attack evaluation. Classification
+    defaults include accuracy, precision, recall, F1, and evasion success;
+    regression defaults use MSE, MAE, and R-squared.
     """
 
     _profile_attr = "evasion"
@@ -150,24 +113,11 @@ class DefaultEvasionAttackScorerConfig(
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultEvasionRegressionAttackScorerConfig(DefaultEvasionAttackScorerConfig):
+class DefaultEvasionRegressionAttackScorerDictConfig(DefaultEvasionAttackScorerDictConfig):
     """Default scorer set for evasion attacks against regression models.
 
-    Initialization parameters
-    -------------------------
-    Inherits all initialization parameters from ``DefaultEvasionAttackScorerConfig``,
-    with ``classifier`` fixed to ``False``.
-
-    Purpose
-    -------
-    Explicit evasion-attack registration with regression-specific metrics.
-    Evaluates attack success by measuring prediction error increases and
-    R² degradation on adversarially perturbed inputs.
-
-    Plugin pattern
-    --------------
-    This scorer inherits from ``_ScorerMixin`` semantics through ``ScorerDictConfig``.
-    Plugins registered via ``ScorerTypePlugin`` route to regression evasion dispatch.
+    This specialization fixes ``classifier`` to ``False`` so evasion scoring
+    uses regression-oriented metrics and routing.
     """
 
     _profile_attr = "evasion_regression"
@@ -175,50 +125,17 @@ class DefaultEvasionRegressionAttackScorerConfig(DefaultEvasionAttackScorerConfi
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultMembershipInferenceAttackScorerConfig(
+class DefaultMembershipInferenceAttackScorerDictConfig(
     TaskAwareScorerMixin,
     _AttackProfileScorer,
     ScorerDictConfig,
 ):
     """Default membership-inference attack scorer family.
 
-    Initialization parameters
-    -------------------------
-    classifier : bool | str
-        Always fixed to ``True`` since membership inference is inherently
-        a binary classification task (member vs. non-member).
-    scorers : dict[str, ScorerConfig]
-        Named membership inference attack evaluation metrics.
-
-    Runtime parameters
-    -------------------
-    model : Any
-        Target model being attacked.
-    y_true : array-like
-        True membership labels (0=non-member, 1=member).
-    y_pred : array-like
-        Attack model predictions (inferred membership scores).
-
-    Parameter layers
-    ----------------
-    1. Attack profile: Membership-inference-specific routing via _AttackProfileScorer
-    2. Classification context: Fixed to classifier=True regardless of task
-    3. Binary evaluation: Standard classification metrics for member/non-member prediction
-
-    Family-specific parameter semantics
-    -----------------------------------
-    Membership inference scorers measure attack effectiveness at predicting training set membership:
-
-    - accuracy: Correct member/non-member predictions
-    - precision: True member identification rate among positive predictions
-    - recall: True member identification rate among actual members
-    - f1: Harmonic mean balancing precision and recall
-
-    Plugin pattern
-    --------------
-    This scorer inherits from ``_ScorerMixin`` semantics through ``ScorerDictConfig``.
-    Plugins registered via ``ScorerTypePlugin`` contribute mixin-based runtime context.
-    Always routed as classification task regardless of underlying model type.
+    This config composes ``ScorerConfig`` objects into one ``ScorerDictConfig``
+    that emits a ``ScoreDict`` for binary membership-inference evaluation.
+    It always operates in classification mode and defaults to accuracy,
+    precision, recall, and F1.
     """
 
     _profile_attr = "membership_inference"
@@ -255,53 +172,16 @@ class DefaultMembershipInferenceAttackScorerConfig(
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultAttributeInferenceAttackScorerConfig(
+class DefaultAttributeInferenceAttackScorerDictConfig(
     TaskAwareScorerMixin,
     _AttackProfileScorer,
     ScorerDictConfig,
 ):
     """Default attribute-inference attack scorer family with optional task selection.
 
-    Initialization parameters
-    -------------------------
-    classifier : bool | str
-        Task type selector. ``True`` for categorical attribute inference
-        (accuracy, precision, recall, f1); ``False`` for continuous attribute
-        prediction (MSE, MAE, R²).
-    scorers : dict[str, ScorerConfig]
-        Named attribute inference attack evaluation metrics.
-
-    Runtime parameters
-    -------------------
-    model : Any
-        Target model being attacked.
-    y_true : array-like
-        True attribute values (inferred from model behavior).
-    y_pred : array-like
-        Attack model's attribute predictions.
-
-    Parameter layers
-    ----------------
-    1. Task awareness: Classifier/regressor determines attribute prediction metric type
-    2. Attack profile: Attribute-inference-specific routing via _AttackProfileScorer
-    3. Attribute recovery: Task-specific success metrics
-
-    Family-specific parameter semantics
-    -----------------------------------
-    Attribute inference scorers measure attack effectiveness at predicting private attributes:
-
-    **Categorical:**
-    - accuracy: Correct attribute value prediction rate
-    - precision/recall/f1: Per-attribute-value prediction quality
-
-    **Continuous:**
-    - mse/mae: Attribute value prediction error magnitudes
-    - r2: Prediction quality (lower = worse = more privacy leakage)
-
-    Plugin pattern
-    --------------
-    This scorer inherits from ``_ScorerMixin`` semantics through ``ScorerDictConfig``.
-    Plugins registered via ``ScorerTypePlugin`` contribute mixin-based runtime context.
+    This config composes ``ScorerConfig`` objects into one ``ScorerDictConfig``
+    that emits a ``ScoreDict`` for attribute-inference evaluation. It selects
+    classification or regression metrics based on the configured task mode.
     """
 
     _profile_attr = "attribute_inference"
@@ -354,26 +234,13 @@ class DefaultAttributeInferenceAttackScorerConfig(
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultAttributeInferenceRegressionAttackScorerConfig(
-    DefaultAttributeInferenceAttackScorerConfig,
+class DefaultAttributeInferenceRegressionAttackScorerDictConfig(
+    DefaultAttributeInferenceAttackScorerDictConfig,
 ):
     """Default scorer set for continuous attribute inference evaluation.
 
-    Initialization parameters
-    -------------------------
-    Inherits all initialization parameters from ``DefaultAttributeInferenceAttackScorerConfig``,
-    with ``classifier`` fixed to ``False``.
-
-    Purpose
-    -------
-    Explicit attribute-inference-attack registration with regression-specific metrics.
-    Evaluates privacy leakage by measuring attack error in predicting private
-    continuous attributes from model behavior.
-
-    Plugin pattern
-    --------------
-    This scorer inherits from ``_ScorerMixin`` semantics through ``ScorerDictConfig``.
-    Plugins registered via ``ScorerTypePlugin`` route to regression attribute dispatch.
+    This specialization fixes ``classifier`` to ``False`` so attribute
+    inference scoring uses regression-oriented metrics and routing.
     """
 
     _profile_attr = "attribute_inference_regression"
@@ -393,23 +260,23 @@ class AttackScorerConfig(BaseConfig):
     def __post_init__(self):
         self.evasion = self._coerce_profile(
             self.evasion,
-            DefaultEvasionAttackScorerConfig,
+            DefaultEvasionAttackScorerDictConfig,
         )
         self.evasion_regression = self._coerce_profile(
             self.evasion_regression,
-            DefaultEvasionRegressionAttackScorerConfig,
+            DefaultEvasionRegressionAttackScorerDictConfig,
         )
         self.membership_inference = self._coerce_profile(
             self.membership_inference,
-            DefaultMembershipInferenceAttackScorerConfig,
+            DefaultMembershipInferenceAttackScorerDictConfig,
         )
         self.attribute_inference = self._coerce_profile(
             self.attribute_inference,
-            DefaultAttributeInferenceAttackScorerConfig,
+            DefaultAttributeInferenceAttackScorerDictConfig,
         )
         self.attribute_inference_regression = self._coerce_profile(
             self.attribute_inference_regression,
-            DefaultAttributeInferenceRegressionAttackScorerConfig,
+            DefaultAttributeInferenceRegressionAttackScorerDictConfig,
         )
 
     @staticmethod
@@ -695,22 +562,22 @@ class AttackScorerConfig(BaseConfig):
 safe_store(
     group="attack_scorers",
     name="evasion",
-    node=DefaultEvasionAttackScorerConfig,
+    node=DefaultEvasionAttackScorerDictConfig,
 )
 safe_store(
     group="attack_scorers",
     name="evasion-regression",
-    node=DefaultEvasionRegressionAttackScorerConfig,
+    node=DefaultEvasionRegressionAttackScorerDictConfig,
 )
 safe_store(
     group="attack_scorers",
     name="membership-inference",
-    node=DefaultMembershipInferenceAttackScorerConfig,
+    node=DefaultMembershipInferenceAttackScorerDictConfig,
 )
 safe_store(
     group="attack_scorers",
     name="attribute-inference",
-    node=DefaultAttributeInferenceAttackScorerConfig,
+    node=DefaultAttributeInferenceAttackScorerDictConfig,
 )
 
 # Score-chain aliases for attack profile routing in ExperimentConfig.

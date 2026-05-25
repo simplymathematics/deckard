@@ -27,7 +27,7 @@ from ..model import ModelConfig
 from ..frameworks.types import ArrayLike, AttackLike, EstimatorLike, MatrixLike
 from ..model.defense.base import _get_art_symbols
 from ..score.base import (
-    DefaultClassifierConfig,
+    DefaultClassifierScorerDictConfig,
     ScorerDictConfig,
 )
 from ..utils import (
@@ -180,12 +180,9 @@ supported_attacks = [
 class AttackMixin:
     """Base callable attack handler used by runtime attack context resolution.
 
-    Parameters
-    ----------
-    runtime : AttackConfig
-        Runtime config object owned by ``AttackConfig.__call__``. Mixins should
-        treat this as the source of mutable runtime state (timers, predictions,
-        score_dict, etc).
+    The ``runtime`` attribute is the active ``AttackConfig`` instance owned by
+    ``AttackConfig.__call__``. Mixins delegate mutable runtime state such as
+    timers, predictions, and ``score_dict`` to that object.
     """
 
     runtime: Any = None
@@ -703,16 +700,11 @@ class AttackConfig(BaseConfig):
     def _run_plugin_hook(self, hook_name: str, **kwargs) -> list[Any]:
         """Execute one plugin hook across all instantiated plugins.
 
-        Parameters
-        ----------
-        hook_name : str
-            Hook method name to invoke when present on a plugin.
-        **kwargs : Any
-            Hook-specific keyword arguments.
+        Args:
+            hook_name: Hook method name to invoke when present on a plugin.
+            **kwargs: Hook-specific keyword arguments.
 
-        Returns
-        -------
-        list[Any]
+        Returns:
             Ordered list of hook return values.
         """
         hook_outputs = []
@@ -899,43 +891,34 @@ class AttackConfig(BaseConfig):
         model: ModelConfig | EstimatorLike | BaseEstimator,
         data: DataConfig,
     ):
+        """Initialize attack runtime objects for the provided model/data context.
+
+        Args:
+            model: Model payload or model config to attack.
+            data: Runtime dataset used for ART wrapping and subset extraction.
+
+        Returns:
+            Tuple of initialized attack object, ART model, attack family, and subtype.
+
+        Raises:
+            ValueError: If attack type/model type is unsupported.
         """
-        Initialize an attack instance for a given model.
+        attack_type = self.attack_family or ""
+        attack_subtype = self.attack_subtype or ""
 
-        This method determines the appropriate attack class and model wrapper based on the provided model and attack name.
-        It validates the attack type and model compatibility, wraps the model if necessary, and instantiates the attack.
-        If the attack cannot be initialized with the model (Whitebox), it falls back to a Blackbox attack.
-
-        Parameters
-        ----------
-        model : object
-            The model or configuration object to attack. Can be a fitted scikit-learn model or a ModelConfig instance.
-
-        Returns
-        -------
-        attack : object
-            The initialized attack instance.
-        art_model : object
-            The ART-wrapped model compatible with the attack.
-        attack_type : str
-            The type of attack (evasion, poisoning, extraction, inference).
-        attack_subtype : str
-            The subtype of the attack.
-
-        Raises
-        ------
-        ValueError
-            If the attack type or model type is unsupported, or if the model is not fitted.
-        """
         art_model = None
         if isinstance(model, ModelConfig):
-            art_model = model.get_art_model(data)
+            runtime_model = getattr(model, "_model", None)
+            if attack_type == "extraction" and is_torch_model(runtime_model):
+                # Extraction expects a neural-network ART classifier; build directly
+                # from the underlying torch module when available.
+                art_model = build_torch_art_model(model=runtime_model, data=data)
+            else:
+                art_model = model.get_art_model(data)
         elif is_torch_model(model):
             art_model = build_torch_art_model(model=model, data=data)
         else:
             check_is_fitted(model)
-        attack_type = self.attack_family or ""
-        attack_subtype = self.attack_subtype or ""
 
         # Validate attack type
         if attack_type not in [
@@ -1324,23 +1307,14 @@ class AttackConfig(BaseConfig):
         from the provided ART model, and returns the predicted labels along with the corresponding
         data subset and true labels.
 
-        Parameters
-        ----------
-        data : callable
-            A function that returns data splits. If `train` is True, should return
-            (_, _, X_test, y_test). If `train` is False, should return (X_train, y_train, _, _).
-        art_model : object
-            An model object with a `predict` method that accepts numpy arrays.
-        train : bool, optional
-            If True, use the test set; otherwise, use the training set. Defaults to False.
+        Args:
+            data: Data runtime providing train and test splits.
+            art_model: ART-compatible model with a ``predict`` method.
+            train: When ``True``, score against the test split; otherwise use the training split.
 
-        Returns
-        -------
-        tuple
-            n (int): Number of samples in the subset (self.attack_size).
-            ben_pred_labels (np.ndarray): Predicted labels for the benign samples.
-            X_subset (pd.DataFrame): Subset of feature data used for prediction.
-            y_subset (pd.Series or np.ndarray): True labels for the subset.
+        Returns:
+            Tuple of subset size, benign prediction labels, feature subset, and
+            true-label subset.
         """
         n = self.attack_size
         if train is True:
@@ -1380,27 +1354,16 @@ class AttackConfig(BaseConfig):
         """
         Extracts a subset of feature vectors, labels, and attributes from the provided data for either training or testing.
 
-        Parameters
-        ----------
-        data : callable
-            A function that returns tuples of (X_train, y_train, a_train, X_test, y_test, a_test) when called with targeted_attribute.
-        targeted_attribute : str
-            The attribute to target when extracting data.
-        train : bool, optional
-            If True, extracts from training data; otherwise, extracts from test data. Defaults to False.
+        Args:
+            data: Data runtime providing train and test splits.
+            targeted_attribute: Attribute column or columns to recover.
+            train: When ``True``, extract from the training split; otherwise use the test split.
 
-        Returns
-        -------
-        tuple
-            n (int): The number of samples to extract (self.attack_size).
-            X_subset (pd.DataFrame or pd.Series): Subset of feature vectors.
-            y_subset (pd.Series): Subset of labels.
-            a_subset (pd.Series): Subset of attributes.
+        Returns:
+            Tuple of subset size, feature subset, label subset, and attribute subset.
 
-        Raises
-        ------
-        AssertionError
-            If the lengths of the extracted feature vectors, labels, and attributes do not match.
+        Raises:
+            AssertionError: If the extracted feature, label, and attribute lengths diverge.
         """
         n = self.attack_size
         if train is False:
@@ -1440,15 +1403,6 @@ class AttackConfig(BaseConfig):
         """
         Computes and logs various performance metrics for adversarial attack predictions.
 
-        Parameters
-        ----------
-        ben_pred_labels : array-like
-            Predicted labels from the benign (original) model.
-        adv_pred_labels : array-like
-            Predicted labels from the adversarially perturbed model.
-        y_test_numeric : array-like
-            True labels for the test set.
-
         Calculates the following metrics for the adversarial predictions:
             - Accuracy
             - Precision
@@ -1456,10 +1410,13 @@ class AttackConfig(BaseConfig):
             - F1-score
             - Success rate (agreement between benign and adversarial predictions)
 
-        Returns
-        -------
-        None
-            The function updates the instance's score_dict attribute with the computed metrics.
+        Args:
+            ben_pred_labels: Predicted labels from the benign model.
+            adv_pred_labels: Predicted labels from the adversarially perturbed model.
+            y_test_numeric: True numeric labels for the evaluation subset.
+
+        Returns:
+            ``None``. The method updates ``self.score_dict`` with computed metrics.
         """
         score_dict = self._score(
             attack_kind="evasion",
@@ -1753,8 +1710,8 @@ class AttackConfig(BaseConfig):
             AttackConfig._looks_like_probabilities(pred) for pred in preds
         )
         if has_probabilities:
-            return DefaultClassifierConfig(), True
-        full_classifier = DefaultClassifierConfig()
+            return DefaultClassifierScorerDictConfig(), True
+        full_classifier = DefaultClassifierScorerDictConfig()
         label_only = {
             name: scorer
             for name, scorer in full_classifier.scorers.items()

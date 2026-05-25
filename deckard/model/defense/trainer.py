@@ -32,7 +32,22 @@ class TrainerDefenseMixin(DefenseMixin):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Public verb-form alias for trainer defense execution."""
+        """Public verb-form alias for trainer defense execution.
+
+        Args:
+            data: Data runtime payload.
+            defense_type: Parsed defense family token.
+            defense_subtype: Parsed defense subtype token.
+            defense_class: Concrete defense class resolved from defense name.
+            art_class: ART estimator wrapper class selected for model type.
+            init_params: Runtime ART estimator initialization kwargs.
+            base_estimator: Unwrapped model estimator used as defense target.
+            existing_preprocessors: Existing preprocessor defenses already attached.
+            existing_postprocessors: Existing postprocessor defenses already attached.
+
+        Returns:
+            Instantiated trainer defense object and defended estimator.
+        """
         return self(
             data=data,
             defense_type=defense_type,

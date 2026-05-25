@@ -14,7 +14,7 @@ from ...artifacts import ScoreDict
 from ...data.base import DataConfig
 from ...plugins.fairlearn.data import FairlearnDataConfig
 from ...plugins.fairlearn.score import (
-    DefaultFairlearnDataScorerConfig,
+    DefaultFairlearnDataScorerDictConfig,
     fairness_stage_to_split_mode,
 )
 from ...utils import probabilities_from_model_outputs
@@ -118,7 +118,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             "DefaultFairlearnClassificationScorerDictConfig",
             "DefaultFairlearnRegressionScorerDictConfig",
         }:
-            self.scorer = DefaultFairlearnDataScorerConfig(
+            self.scorer = DefaultFairlearnDataScorerDictConfig(
                 classifier=getattr(self, "classifier", True),
             )
 
@@ -130,7 +130,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             is_default_config_value(self.scorer, include_best=False)
             or self.scorer is None
         ):
-            self.scorer = DefaultFairlearnDataScorerConfig(
+            self.scorer = DefaultFairlearnDataScorerDictConfig(
                 classifier=getattr(self, "classifier", True),
             )
         self._ensure_data_scorer_default()

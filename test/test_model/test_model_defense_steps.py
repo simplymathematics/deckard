@@ -138,7 +138,11 @@ def test_pretrained_model_with_fit_defense_snapshots_and_retrains(monkeypatch, t
     monkeypatch.setattr(model, "_require_defense_pipeline", lambda: defense_pipeline)
     monkeypatch.setattr(model, "_train_with_runtime_trainer", fake_train_with_runtime_trainer)
     monkeypatch.setattr(model, "_initialize_model", lambda: setattr(model, "_model", SimpleNamespace(retrained=True)))
-    monkeypatch.setattr(model, "_apply_defense", lambda _data: model._model)
+    monkeypatch.setattr(
+        model,
+        "apply_defense",
+        lambda _data, stage="post_fit_pre_predict": model._model,
+    )
 
     data = SimpleNamespace(X_train=[0, 1], y_train=[0, 1])
     times = model._load_or_train_model(data, model_file=str(model_file), times={})

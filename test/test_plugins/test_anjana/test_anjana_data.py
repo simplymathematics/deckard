@@ -279,7 +279,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     )
     scored = cfg_score.score(mode="all")
     assert scored == {
-        "path": "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
+        "path": "deckard.plugins.anjana.score.DefaultAnjanaScorerDictConfig",
         "n": 2,
     }
 

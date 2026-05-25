@@ -671,7 +671,7 @@ class TestPredictProbaBranches(unittest.TestCase):
         model._model = None
         model.probability = True
         with self.assertRaises(ValueError):
-            model._predict_proba(pd.DataFrame({"a": [1]}))
+            model.predict_proba(pd.DataFrame({"a": [1]}))
 
 
 # ── get_art_class and get_art_model ────────────────────────────────────────
@@ -918,7 +918,7 @@ class TestScoreValidationBranches(unittest.TestCase):
         )
         model.scorer = "not-callable"
         with self.assertRaises(TypeError):
-            model._score(np.array([0, 1]), np.array([0, 1]), mode="test")
+            model.score(np.array([0, 1]), np.array([0, 1]), mode="test")
 
     def test_load_predictions_invalid_type_raises(self):
         model = ModelConfig(
@@ -1291,12 +1291,12 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
         )
         model._model = SimpleNamespace()
 
-        def _train(_X, y):
+        def train(_X, y):
             model.training_time = 0.01
             model.training_n = len(y)
             model._model = None
 
-        model._train = _train
+        model.train = train
         with self.assertRaises(Exception):
             model._load_or_train_model(data, None, {})
 
@@ -1333,7 +1333,7 @@ class TestModelLoadOrTrainBranches(unittest.TestCase):
                     SimpleNamespace(predict=lambda s: np.zeros(len(s), dtype=int)),
                 )
             )
-            loaded_obj._apply_defense = lambda _data: SimpleNamespace(
+            loaded_obj.apply_defense = lambda _data, stage="post_fit_pre_predict": SimpleNamespace(
                 predict=lambda s: np.zeros(len(s), dtype=int),
             )
             loaded_obj._require_defense_pipeline = lambda: SimpleNamespace(

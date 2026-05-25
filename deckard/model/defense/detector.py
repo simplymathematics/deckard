@@ -45,7 +45,7 @@ class DetectorDefenseMixin(DefenseMixin):
             existing_postprocessors=existing_postprocessors,
         )
 
-    def detector_evasion(
+    def detect_evasion(
         self,
         *,
         defense_class: type,
@@ -55,7 +55,22 @@ class DetectorDefenseMixin(DefenseMixin):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Public subtype-mirroring alias for detector.evasion execution."""
+        """Execute detector evasion defense path.
+
+        Args:
+            defense_class: Concrete detector defense class.
+            art_class: ART estimator wrapper class selected for model type.
+            init_params: Runtime ART estimator initialization kwargs.
+            base_estimator: Unwrapped model estimator used as defense target.
+            existing_preprocessors: Existing preprocessor defenses already attached.
+            existing_postprocessors: Existing postprocessor defenses already attached.
+
+        Returns:
+            Detector defense object and defended estimator.
+
+        Raises:
+            ValueError: If model type is unsupported for detector evasion defenses.
+        """
         if not _is_torch_model_instance(base_estimator) and not _is_art_torch_wrapper(
             self._model,
         ):
@@ -87,13 +102,21 @@ class DetectorDefenseMixin(DefenseMixin):
         setattr(detector_classifier, "_deckard_evasion_detector", defense)
         return defense, detector_classifier
 
-    def detector_poison(
+    def detect_poison(
         self,
         *,
         defense_class: type,
         init_params: dict[str, DefenseInitParamValue],
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Public subtype-mirroring alias for detector.poison execution."""
+        """Execute detector poison defense path.
+
+        Args:
+            defense_class: Concrete detector defense class.
+            init_params: Runtime estimator initialization kwargs.
+
+        Returns:
+            Detector defense object and defended estimator.
+        """
         defense = defense_class(**(self.defense_params or {}))
         defended_estimator = defense(
             self.get_model(),
@@ -138,7 +161,7 @@ class DetectorDefenseMixin(DefenseMixin):
         assert defense_class is not None
         subtype = (defense_subtype or "").lower()
         if subtype == "evasion":
-            return self.detector_evasion(
+            return self.detect_evasion(
                 defense_class=defense_class,
                 art_class=art_class,
                 init_params=init_params,
@@ -148,7 +171,7 @@ class DetectorDefenseMixin(DefenseMixin):
             )
 
         if subtype == "poison":
-            return self.detector_poison(
+            return self.detect_poison(
                 defense_class=defense_class,
                 init_params=init_params,
             )

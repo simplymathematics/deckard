@@ -10,10 +10,10 @@ from sklearn.metrics import accuracy_score, mean_squared_error, precision_score
 
 from deckard.score import (
     AttackScorerConfig,
-    DefaultClassifierConfig,
-    DefaultDataClassificationConfig,
-    DefaultDataRegressionConfig,
-    DefaultRegressorConfig,
+    DefaultClassifierScorerDictConfig,
+    DefaultDataClassificationScorerDictConfig,
+    DefaultDataRegressionScorerDictConfig,
+    DefaultRegressorScorerDictConfig,
     ScorerConfig,
     ScorerDictConfig,
     survival_aic_score,
@@ -21,11 +21,11 @@ from deckard.score import (
     survival_concordance_score,
 )
 from deckard.score.base import (
-    DefaultModelScorerConfig,
+    DefaultModelScorerDictConfig,
     _DataScorerMarker,
     coerce_scorer_config,
 )
-from deckard.score.data import DefaultDataScorerConfig
+from deckard.score.data import DefaultDataScorerDictConfig
 
 
 class TestScorerDictConfigMerge(unittest.TestCase):
@@ -200,7 +200,7 @@ class TestDefaultScorerDicts(unittest.TestCase):
         y_true = [1, 0, 1, 1]
         y_pred = [1, 0, 0, 1]
         y_proba = [0.9, 0.1, 0.3, 0.8]
-        scores = DefaultClassifierConfig()(
+        scores = DefaultClassifierScorerDictConfig()(
             y_true=y_true,
             y_pred=y_pred,
             y_proba=y_proba,
@@ -218,12 +218,12 @@ class TestDefaultScorerDicts(unittest.TestCase):
         y_true = [1, 0, 1, 1]
         y_pred = [1, 0, 0, 1]
         with self.assertRaises(ValueError):
-            DefaultClassifierConfig()(y_true=y_true, y_pred=y_pred)
+            DefaultClassifierScorerDictConfig()(y_true=y_true, y_pred=y_pred)
 
     def test_default_regressor_dict(self):
         y_true = [1.0, 2.0, 3.0, 4.0]
         y_pred = [1.1, 1.9, 3.2, 3.8]
-        scores = DefaultRegressorConfig()(y_true=y_true, y_pred=y_pred)
+        scores = DefaultRegressorScorerDictConfig()(y_true=y_true, y_pred=y_pred)
         self.assertIn("mse", scores)
         self.assertIn("mae", scores)
         self.assertIn("r2", scores)
@@ -232,13 +232,13 @@ class TestDefaultScorerDicts(unittest.TestCase):
         y_true = []
         y_pred = []
         with self.assertRaises(ValueError):
-            DefaultClassifierConfig()(y_true=y_true, y_pred=y_pred)
+            DefaultClassifierScorerDictConfig()(y_true=y_true, y_pred=y_pred)
 
     def test_default_regressor_dict_with_empty_predictions(self):
         y_true = []
         y_pred = []
         with self.assertRaises(ValueError):
-            DefaultRegressorConfig()(y_true=y_true, y_pred=y_pred)
+            DefaultRegressorScorerDictConfig()(y_true=y_true, y_pred=y_pred)
 
 
 class TestSurvivalScorers(unittest.TestCase):
@@ -314,8 +314,8 @@ def test_data_default_score_profile_executes_from_yaml_defaults():
 
 
 def test_model_and_data_default_profiles_infer_task_from_context():
-    model_scorer = DefaultModelScorerConfig(classifier=None, scorers={})
-    data_scorer = DefaultDataScorerConfig(classifier=None, scorers={})
+    model_scorer = DefaultModelScorerDictConfig(classifier=None, scorers={})
+    data_scorer = DefaultDataScorerDictConfig(classifier=None, scorers={})
 
     model_scores = model_scorer(
         y_true=[0, 1, 1, 0],
@@ -526,7 +526,7 @@ class TestDataInspectionScorers(unittest.TestCase):
                 "feature_1": [1, 2, 1, 2, 2, 1, 2, 1],
             },
         )
-        scores = DefaultDataClassificationConfig()(
+        scores = DefaultDataClassificationScorerDictConfig()(
             y_true=y_true,
             y_pred=X,
             mode=None,
@@ -547,7 +547,7 @@ class TestDataInspectionScorers(unittest.TestCase):
                 "income_proxy": [1.2, 1.5, 2.8, 3.0, 2.9, 1.4, 3.1, 1.3],
             },
         )
-        scores = DefaultDataClassificationConfig()(
+        scores = DefaultDataClassificationScorerDictConfig()(
             y_true=y_true,
             y_pred=X,
             mode=None,
@@ -564,7 +564,7 @@ class TestDataInspectionScorers(unittest.TestCase):
                 "feature_1": [10, 12, 14, 18, 19, 22],
             },
         )
-        scores = DefaultDataRegressionConfig()(
+        scores = DefaultDataRegressionScorerDictConfig()(
             y_true=y_true,
             y_pred=X,
             mode=None,
@@ -582,12 +582,12 @@ class TestDataInspectionScorers(unittest.TestCase):
         cs = ConfigStore.instance()
         self.assertIsNotNone(cs)
         self.assertIsInstance(
-            DefaultDataClassificationConfig(),
-            DefaultDataClassificationConfig,
+            DefaultDataClassificationScorerDictConfig(),
+            DefaultDataClassificationScorerDictConfig,
         )
         self.assertIsInstance(
-            DefaultDataRegressionConfig(),
-            DefaultDataRegressionConfig,
+            DefaultDataRegressionScorerDictConfig(),
+            DefaultDataRegressionScorerDictConfig,
         )
 
 

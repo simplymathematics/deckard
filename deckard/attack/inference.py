@@ -55,12 +55,50 @@ class InferenceAttackMixin(AttackMixin):
             raise ValueError(
                 f"_InferenceAttackMixin received unsupported attack type: {attack_type}",
             )
-        return self.inference(
+        return self.infer(
             data=data,
             art_model=art_model,
             attack=attack,
             attack_subtype=attack_subtype,
         )
+
+    def infer(
+        self,
+        *,
+        data: DataConfig,
+        art_model: EstimatorLike,
+        attack: AttackLike,
+        attack_subtype: StringifiedClass,
+    ) -> ScoreDict:
+        """Public type-mirroring dispatcher for inference attack subtypes.
+
+        Args:
+            data: Runtime dataset and split container.
+            art_model: ART-wrapped model used for inference attacks.
+            attack: Instantiated inference attack implementation.
+            attack_subtype: Parsed inference subtype token.
+
+        Returns:
+            Score payload for the selected inference subtype.
+        """
+        subtype = (attack_subtype or "").lower()
+        if subtype == "membership_inference":
+            return self.infer_membership(data=data, attack=attack)
+        if subtype == "attribute_inference":
+            assert (
+                self.targeted_attribute is not None
+            ), "targeted_attribute must be specified for inference attacks"
+            return self.infer_attribute(
+                data=data,
+                art_model=art_model,
+                attack=attack,
+                targeted_attribute=self.targeted_attribute,
+            )
+        if subtype == "model_inversion":
+            return self.infer_model_inversion(data=data, attack=attack)
+        if subtype == "reconstruction":
+            return self.infer_database_reconstruction(data=data, attack=attack)
+        raise ValueError(f"Unsupported inference attack subtype: {attack_subtype}")
 
     def inference(
         self,
@@ -70,32 +108,38 @@ class InferenceAttackMixin(AttackMixin):
         attack: AttackLike,
         attack_subtype: StringifiedClass,
     ) -> ScoreDict:
-        """Public type-mirroring dispatcher for inference attack subtypes."""
-        subtype = (attack_subtype or "").lower()
-        if subtype == "membership_inference":
-            return self.membership_inference(data=data, attack=attack)
-        if subtype == "attribute_inference":
-            assert (
-                self.targeted_attribute is not None
-            ), "targeted_attribute must be specified for inference attacks"
-            return self.attribute_inference(
-                data=data,
-                art_model=art_model,
-                attack=attack,
-                targeted_attribute=self.targeted_attribute,
-            )
-        if subtype == "model_inversion":
-            return self.model_inversion(data=data, attack=attack)
-        if subtype == "reconstruction":
-            return self.reconstruct(data=data, attack=attack)
-        raise ValueError(f"Unsupported inference attack subtype: {attack_subtype}")
+        """Backward-compatible noun-mode alias for ``infer``.
+
+        Args:
+            data: Runtime dataset and split container.
+            art_model: ART-wrapped model used for inference attacks.
+            attack: Instantiated inference attack implementation.
+            attack_subtype: Parsed inference subtype token.
+
+        Returns:
+            Score payload for the selected inference subtype.
+        """
+        return self.infer(
+            data=data,
+            art_model=art_model,
+            attack=attack,
+            attack_subtype=attack_subtype,
+        )
 
     def membership_inference(
         self,
         data: DataConfig,
         attack: AttackLike,
     ) -> ScoreDict:
-        """Public subtype-mirroring alias for membership inference execution."""
+        """Public subtype-mirroring alias for membership inference execution.
+
+        Args:
+            data: Runtime dataset and split container.
+            attack: Instantiated membership inference attack implementation.
+
+        Returns:
+            Score payload for membership inference execution.
+        """
         return self.infer_membership(data=data, attack=attack)
 
     def attribute_inference(
@@ -105,7 +149,17 @@ class InferenceAttackMixin(AttackMixin):
         attack: AttackLike,
         targeted_attribute: str | list[str] | ListConfig,
     ) -> ScoreDict:
-        """Public subtype-mirroring alias for attribute inference execution."""
+        """Public subtype-mirroring alias for attribute inference execution.
+
+        Args:
+            data: Runtime dataset and split container.
+            art_model: ART-wrapped model used for attribute inference.
+            attack: Instantiated attribute inference attack implementation.
+            targeted_attribute: Target attribute name(s) to reconstruct.
+
+        Returns:
+            Score payload for attribute inference execution.
+        """
         return self.infer_attribute(
             data=data,
             art_model=art_model,
@@ -114,11 +168,27 @@ class InferenceAttackMixin(AttackMixin):
         )
 
     def model_inversion(self, data: DataConfig, attack: AttackLike) -> ScoreDict:
-        """Public subtype-mirroring alias for model inversion execution."""
+        """Public subtype-mirroring alias for model inversion execution.
+
+        Args:
+            data: Runtime dataset and split container.
+            attack: Instantiated model inversion attack implementation.
+
+        Returns:
+            Score payload for model inversion execution.
+        """
         return self.infer_model_inversion(data=data, attack=attack)
 
     def reconstruct(self, data: DataConfig, attack: AttackLike) -> ScoreDict:
-        """Public subtype-mirroring alias for reconstruction execution."""
+        """Public subtype-mirroring alias for reconstruction execution.
+
+        Args:
+            data: Runtime dataset and split container.
+            attack: Instantiated reconstruction attack implementation.
+
+        Returns:
+            Score payload for reconstruction execution.
+        """
         return self.infer_database_reconstruction(data=data, attack=attack)
 
     def infer_attribute(

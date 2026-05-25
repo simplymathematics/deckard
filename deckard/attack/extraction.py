@@ -11,7 +11,7 @@ from ..artifacts import ScoreDict
 from ..data import DataConfig
 from ..frameworks.types import AttackLike, EstimatorLike, MatrixLike, StringifiedClass
 from ..model import ModelConfig
-from ..score.base import DefaultClassifierConfig
+from ..score.base import DefaultClassifierScorerDictConfig
 
 from .base import AttackConfig, AttackTypePlugin
 from .poisoning import PoisoningAttackMixin
@@ -58,15 +58,15 @@ class ExtractionAttackMixin(PoisoningAttackMixin):
     def _select_extraction_scorer(
         benign_pred: MatrixLike,
         extracted_pred: MatrixLike,
-    ) -> tuple[DefaultClassifierConfig, bool]:
+    ) -> tuple[DefaultClassifierScorerDictConfig, bool]:
         """Use full classifier metrics when probabilities are available, else label-only metrics."""
         preds = [np.asarray(benign_pred), np.asarray(extracted_pred)]
         has_probabilities = all(
             AttackConfig._looks_like_probabilities(pred) for pred in preds
         )
         if has_probabilities:
-            return DefaultClassifierConfig(), True
-        label_only = DefaultClassifierConfig()
+            return DefaultClassifierScorerDictConfig(), True
+        label_only = DefaultClassifierScorerDictConfig()
         label_only.scorers.pop("roc_auc", None)
         label_only.scorers.pop("log_loss", None)
         return label_only, False

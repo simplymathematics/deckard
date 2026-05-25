@@ -227,17 +227,14 @@ class SurvivalModelConfig(SurvivalModelInitMixin, ModelConfig):
         For survival models, y_pred is the fitted fitter and y_true contains
         duration and event columns.
 
-        Parameters
-        ----------
-        y_true : pd.DataFrame
-                DataFrame with duration_col and event_col.
-        y_pred : RegressionFitter
-                Fitted survival model.
+        Args:
+            y_true: DataFrame with duration and event columns.
+            y_pred: Fitted survival model.
+            mode: Score split token.
+            **kwargs: Additional scorer keyword arguments.
 
-        Returns
-        -------
-        dict
-                Dictionary with calibration metrics (ici, e50, concordance).
+        Returns:
+            Dictionary with calibration metrics such as ICI, E50, and concordance.
         """
         if getattr(self, "scorer", None) is not None:
             return self.scorer(

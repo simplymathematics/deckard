@@ -276,7 +276,7 @@ def validate_sensitive_features(sensitive: Any, y_true: Any, context: str) -> An
 def materialize_dataset(dataset_obj: Any) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """Materialise a Dataset or DataLoader into ``(X, y)`` numpy arrays.
 
-    Iterates over every sample/batch and stacks feature rows.  Returns
+    Iterates over every sample/batch and stacks feature rows. It produces
     ``(X_array, y_array)`` where *y_array* is ``None`` when no labels are
     present.
     """

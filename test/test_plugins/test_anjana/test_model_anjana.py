@@ -1,5 +1,5 @@
 from deckard.plugins.anjana.model import AnjanaModelConfig
-from deckard.plugins.anjana.score import DefaultAnjanaModelScorerConfig
+from deckard.plugins.anjana.score import DefaultAnjanaModelScorerDictConfig
 
 
 def test_anjana_model_auto_scorer_uses_anjana_default(monkeypatch):
@@ -24,6 +24,6 @@ def test_anjana_model_auto_scorer_uses_anjana_default(monkeypatch):
 
 
 def test_default_anjana_model_scorer_includes_privacy_metrics():
-    scorer = DefaultAnjanaModelScorerConfig()
+    scorer = DefaultAnjanaModelScorerDictConfig()
 
     assert set(scorer.scorers) == {"k_anonymity", "l_diversity", "t_closeness"}

@@ -8,7 +8,7 @@ import deckard.model as model_module
 from deckard.attack import AttackConfig
 from deckard.plugins.fairlearn.data import FairlearnDataConfig
 from deckard.plugins.fairlearn.score import (
-    DefaultFairlearnDataScorerConfig,
+    DefaultFairlearnDataScorerDictConfig,
     FairlearnScorerDictConfig,
 )
 from deckard.score.attack import FairlearnAttackScorerConfig
@@ -53,7 +53,7 @@ def generate_fairness_data():
         stratify=True,
         classifier=True,
         sensitive_columns=["feature_0"],
-        scorer=DefaultFairlearnDataScorerConfig(classifier=True),
+        scorer=DefaultFairlearnDataScorerDictConfig(classifier=True),
     )
     cfg()
     return cfg

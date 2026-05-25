@@ -467,31 +467,9 @@ def _named_classifier_adapter(model_config: Any) -> _YellowbrickModelAdapter:
 class YellowbrickPlotterMixin(PlotterMixin):
     """Yellowbrick-specific plotter handler for ML model visualization.
 
-    Initialization parameters
-    -------------------------
-    runtime : Any
-        Yellowbrick plot config object (YellowbrickPlotConfig or subclass).
-
-    Runtime parameters
-    -------------------
-    plot_type : str
-        Yellowbrick visualizer type (e.g., "roc_auc", "learning_curve").
-    experiment : ExperimentConfig
-        Experiment context providing model/data/attack state.
-    clustering : bool
-        Whether this is a clustering visualization.
-    features : list[str] | Literal["all"]
-        Features to include in visualization.
-    classes : list[str] | Literal["all"]
-        Classes to include in visualization.
-    plot_params : dict
-        Visualizer-specific parameters.
-
-    Plugin pattern
-    --------------
-    This mixin is registered via PlotTypePlugin for plot_backend="yellowbrick"
-    and provides yellowbrick-specific visualization logic when bound to YellowbrickPlotConfig.
-    Enables lazy experiment preparation and reusable plot rendering across multiple calls.
+    The runtime object provides the active Yellowbrick plot config, including
+    experiment context, visualizer type, clustering mode, selected features or
+    classes, and visualizer-specific plot parameters.
     """
 
     def __call__(
@@ -524,71 +502,11 @@ class YellowbrickPlotterMixin(PlotterMixin):
 class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
     """Render a single Yellowbrick plot from composed experiment configuration.
 
-    Initialization parameters
-    -------------------------
-    experiment : ExperimentConfig
-        Experiment configuration providing model/data/attack context.
-    plot_type : Literal[YellowBrickVizType]
-        Yellowbrick visualizer type (e.g., "roc_auc", "learning_curve").
-    clustering : bool
-        Whether this visualization is for clustering analysis.
-    features : list[str] | Literal["all"]
-        Features to visualize. "all" includes all features up to a limit.
-    classes : list[str] | Literal["all"]
-        Classes to visualize. "all" includes all inferred classes.
-    title : str
-        Plot title displayed in visualizer.
-    save_path : str
-        Output file path for rendered visualization.
-    rc_config : dict
-        Matplotlib rcParams updates.
-    plot_params : dict
-        Yellowbrick visualizer-specific parameters.
-
-    Runtime parameters
-    -------------------
-    experiment : ExperimentConfig
-        Lazily prepared on first visualization call.
-    _experiment_prepared : bool
-        Internal flag tracking experiment preparation state.
-    _experiment_scores : dict
-        Cached experiment scoring results.
-
-    Parameter layers
-    ----------------
-    1. Experiment context: Model, data, attack configuration
-    2. Visualizer selection: plot_type determines visualization class
-    3. Feature/class selection: Automatic or explicit subset selection
-    4. Rendering: Title, output path, matplotlib parameters
-
-    Family-specific parameter semantics
-    -----------------------------------
-    Yellowbrick visualizers specialize in ML model diagnostics:
-
-    - **Feature visualizers**: Data distributions, correlations, dimensionality
-    - **Target visualizers**: Class balance, feature importance
-    - **Classifier visualizers**: ROC, precision-recall, confusion matrix
-    - **Regressor visualizers**: Residuals, prediction error, learning curves
-    - **Model selection**: Cross-validation scores, learning curves, feature selection
-    - **Clustering**: Silhouette plots, cluster distances, elbow curves
-
-    Plugin pattern
-    --------------
-    This config inherits from ``_YellowbrickPlotterMarker`` for backend identification.
-    At runtime, ``PlotTypePlugin`` resolves ``_YellowbrickPlotterMixin`` for rendering
-    when plot_backend="yellowbrick", enabling flexible seaborn/yellowbrick switching.
-    Lazy experiment preparation reuses state across multiple plot renders.
-
-    Supported plot types
-    --------------------
-    ``rank1d``, ``rank2d``, ``radviz``, ``pcoords``, ``jointplot``, ``pca``,
-    ``manifold``, ``class_balance``, ``balanced_binning_reference``,
-    ``feature_correlation``, ``prediction_error``, ``residuals_plot``,
-    ``alpha_selection``, ``roc_auc``, ``precision_recall_curve``,
-    ``classification_report``, ``class_prediction_error``,
-    ``discrimination_threshold``, ``k_elbow``, ``silhouette``,
-    ``intercluster_distance``, ``validation_curve``, ``learning_curve``,
-    ``cv_scores``, ``feature_importances``, ``rfecv``, ``dropping_curve``.
+    This config stores the experiment context, Yellowbrick visualizer type,
+    feature or class selection, rendering metadata, and output path for one
+    plot. It inherits ``_YellowbrickPlotterMarker`` so runtime dispatch
+    resolves the Yellowbrick plotting mixin when the Yellowbrick backend is
+    selected.
     """
 
     experiment: ExperimentConfig

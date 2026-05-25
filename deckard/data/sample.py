@@ -440,10 +440,7 @@ class ShuffleSampler(BaseSampler):
     Each fold is an independent random split; the val set is *not*
     guaranteed to be disjoint across folds.
 
-    Parameters
-    ----------
-    n_splits : int, default 5
-        Number of re-shuffled splits to generate.
+    The ``n_splits`` field controls how many re-shuffled splits are generated.
     """
 
     n_splits: int = 5

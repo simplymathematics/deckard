@@ -263,9 +263,9 @@ class ModelConfig(BaseConfig):
             self.scorer,
             default_factory=lambda: load_class(
                 (
-                    "deckard.score.base.DefaultClassifierConfig"
+                    "deckard.score.base.DefaultClassifierScorerDictConfig"
                     if self.classifier
-                    else "deckard.score.base.DefaultRegressorConfig"
+                    else "deckard.score.base.DefaultRegressorScorerDictConfig"
                 ),
             ),
         )
@@ -372,15 +372,38 @@ class ModelConfig(BaseConfig):
         candidate = self._model if estimator is None else estimator
         return self._is_model_fitted(candidate, X_sample=X_sample)
 
-    def save_model(self, model_file: str | None) -> None:
+    def save_model(
+        self,
+        model_file: str | None = None,
+        *,
+        filepath: str | None = None,
+    ) -> None:
         """Persist this model config and runtime estimator state to disk.
 
         Args:
             model_file: Target path for persisted model payload.
+            filepath: Optional alias for ``model_file``.
         """
-        if model_file is None:
+        target_path = filepath if filepath is not None else model_file
+        if target_path is None or str(target_path).strip() == "":
             return
-        self.save_object(self, model_file)
+        self.save_object(self, target_path)
+
+    def _train(self, X: MatrixLike, y: ArrayLike) -> None:
+        """Backward-compatible private alias for training runtime paths."""
+        self.train(X, y)
+
+    def _predict(self, X: MatrixLike) -> ArrayLike:
+        """Backward-compatible private alias for prediction runtime paths."""
+        return self.predict(X)
+
+    def _apply_defense(
+        self,
+        data: "DataConfig",
+        stage: str = "post_fit_pre_predict",
+    ) -> EstimatorLike:
+        """Backward-compatible private alias for defense application paths."""
+        return self.apply_defense(data=data, stage=stage)
 
     def _sync_model_signature_from_estimator(self, estimator: Any) -> None:
         # TODO: use inspect for better init parsing
@@ -597,23 +620,14 @@ class ModelConfig(BaseConfig):
             return self._model
 
     def train(self, X: MatrixLike, y: ArrayLike) -> None:
-        """
-        Trains the internal model using the provided feature matrix and target vector.
+        """Train the internal estimator on the provided feature/target payload.
 
-        Args
-        -------
-            X (pd.DataFrame): Feature matrix for training.
-            y (pd.Series): Target vector for training.
+        Args:
+            X: Feature matrix for training.
+            y: Target vector for training.
 
-        Raises
-        -------
+        Raises:
             ValueError: If the internal model is not initialized.
-
-        Side Effects
-        -------
-            - Fits the internal model to the data.
-            - Records the training time in seconds.
-            - Logs the training duration.
         """
         if self._model is None:
             raise ValueError("Model not initialized")
@@ -677,21 +691,16 @@ class ModelConfig(BaseConfig):
         return y_pred
 
     def predict_proba(self, X: MatrixLike) -> ArrayLike:
-        """
-        Predicts class probabilities for the input data using the trained model.
+        """Predict class probabilities for the input data using the wrapped model.
 
-        Args
-        -------
-            X (pd.DataFrame): Input features for which to predict probabilities.
+        Args:
+            X: Input features for probability prediction.
 
-        Returns
-        -------
-            pd.DataFrame: Predicted class probabilities for each sample in X.
+        Returns:
+            Probability payload for each sample.
 
-        Raises
-        -------
-            ValueError: If the model is not initialized or does not support probability predictions.
-
+        Raises:
+            ValueError: If model is not initialized or does not support probabilities.
         """
         if self._model is None:
             raise ValueError("Model not initialized")
@@ -722,24 +731,17 @@ class ModelConfig(BaseConfig):
         mode: str = "test",
         **kwargs,
     ) -> dict:
-        """
-        Compute and log performance scores for classification or regression.
+        """Compute rounded performance scores for classification or regression.
 
-        -----
-        Args
-            y_true (pd.Series): True target values.
-            y_pred (pd.Series): Predicted target values.
+        Args:
+            y_true: True target values.
+            y_pred: Predicted target values.
+            *args: Additional positional scorer inputs.
+            mode: Runtime scoring mode token.
+            **kwargs: Additional scorer kwargs (for example `y_proba`, `stage`).
 
-        -----
-        Returns
-            dict: Dictionary of rounded performance scores.
-
-        -----
-        Side Effects
-            - Uses classification or regression scoring based on `self.classifier`.
-            - Measures and logs scoring time.
-            - Rounds scores based on the size of `y_true`.
-            - Logs each rounded score.
+        Returns:
+            Rounded score payload.
         """
         if self.scorer is None:
             return {}
@@ -1022,21 +1024,18 @@ class ModelConfig(BaseConfig):
         return np.argmax(y_pred_arr, axis=1)
 
     def _load_predictions(self, filepath: str):
-        """
-        Loads predictions from a specified CSV file.
+        """Load persisted prediction payload from disk.
 
-        Args
-        -------
-            filepath (str): The path to the CSV file containing predictions.
-        Raises
-        -------
+        Args:
+            filepath: Path to the serialized prediction payload.
+
+        Returns:
+            Loaded prediction payload.
+
+        Raises:
             FileNotFoundError: If the specified file does not exist.
             ValueError: If the loaded predictions are not in a valid format.
-            Exception: For any other issues during the loading process.
-        Side Effects
-        -------
-            - Reads predictions from the specified CSV file and assigns them to self.predictions.
-            - Logs the load operation.
+            Exception: For other issues during load.
         """
         try:
             predictions = self.load_data(filepath)
@@ -1060,45 +1059,18 @@ class ModelConfig(BaseConfig):
         test_predictions_file,
         times,
     ):
-        """
-        Loads training and prediction data from the specified file paths and updates the provided times dictionary
-        with relevant metadata.
+        """Load cached train/test predictions and merge timing metadata.
 
-        Parameters
-        ----------
-        train_predictions_file : str or Path or None
-            File path to the training predictions. If None or the file does not exist, training predictions are not loaded.
-        test_predictions_file : str or Path or None
-            File path to the predictions. If None or the file does not exist, predictions are not loaded.
-        times : dict
-            Dictionary to be updated with timing and count information for training and prediction data.
+        Args:
+            train_predictions_file: Optional training predictions path.
+            test_predictions_file: Optional test predictions path.
+            times: Runtime timing dictionary to update.
 
-        Updates
-        -------
-        self.training_predictions : object
-            Loaded training predictions, if available.
-        self.training_prediction_time : object
-            Time associated with training predictions, must be set if training predictions are loaded.
-        self.predictions : object
-            Loaded predictions, if available.
-        self.prediction_time : object
-            Time associated with predictions, must be set if predictions are loaded.
-        times["training_prediction_time"] : object
-            Updated with training prediction time.
-        times["training_n"] : int
-            Updated with the number of training predictions.
-        times["prediction_time"] : object
-            Updated with prediction time.
-        times["prediction_n"] : int
-            Updated with the number of predictions.
-        Returns
-        -------
-        dict
-            The updated times dictionary.
-        Raises
-        ------
-        AssertionError
-            If training or prediction time is not set when corresponding predictions are loaded.
+        Returns:
+            Updated timing dictionary.
+
+        Raises:
+            AssertionError: If prediction timing metadata is missing for loaded payloads.
         """
         # Load the training predictions if provided
         if (
@@ -1125,23 +1097,13 @@ class ModelConfig(BaseConfig):
         return times
 
     def _load_score_file(self, score_file):
-        """
-        Loads score data from the specified file, merges it with existing scores, and extracts timing and count metrics.
+        """Load persisted score payload and extract runtime timing/count metrics.
 
-        Parameters
-        ----------
-        score_file : str or Path
-            Path to the score file to load.
+        Args:
+            score_file: Optional score file path.
 
-        Returns
-        -------
-        dict
-            A dictionary containing timing and count metrics (keys ending with '_time' or '_n') extracted from the score data.
-
-        Side Effects
-        -----------
-        Updates instance attributes with timing and count metrics, prefixed with an underscore.
-        Merges new score data with existing score data in `self.score_dict`.
+        Returns:
+            Timing/count metadata mapping extracted from persisted score payload.
         """
         times = {}
         if score_file is not None and Path(score_file).exists():
@@ -1449,17 +1411,12 @@ class ModelConfig(BaseConfig):
         4. Scores the test predictions if true labels are available and scores have not already been computed.
         5. Updates the internal score dictionary with timing and scoring information.
 
-        Parameters
-        ----------
-        data : DataConfig
-            The data configuration object containing training and test data (X_train, y_train, X_test, y_test).
-        times : dict, optional
-            A dictionary to store timing information for predictions and scoring.
+        Args:
+            data: Data configuration containing training and test splits.
+            times: Mutable timing dictionary used to accumulate prediction and scoring durations.
 
-        Raises
-        ------
-        ValueError
-            If training predictions are not available when attempting to score them.
+        Raises:
+            ValueError: If training predictions are not available when attempting to score them.
 
         Notes
         -----

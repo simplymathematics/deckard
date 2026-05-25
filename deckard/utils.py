@@ -520,20 +520,14 @@ def merge_list_of_dicts(items: Iterable) -> dict:
     ``DictConfig``; the latter is converted via ``OmegaConf.to_container``
     before merging.  When two elements share a key, the later element wins.
 
-    Parameters
-    ----------
-    items:
-        An iterable of ``dict`` / ``DictConfig`` objects.
+    Args:
+        items: Iterable of ``dict`` or ``DictConfig`` objects.
 
-    Returns
-    -------
-    dict
-        A single merged plain-Python ``dict``.
+    Returns:
+        Single merged plain-Python ``dict``.
 
-    Raises
-    ------
-    TypeError
-        If any element cannot be resolved to a ``dict``.
+    Raises:
+        TypeError: If any element cannot be resolved to a ``dict``.
     """
     merged: dict = {}
     for item in items:

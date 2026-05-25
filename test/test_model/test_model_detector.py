@@ -139,3 +139,41 @@ def test_detector_defense_unknown_subtype_not_implemented():
             existing_preprocessors=[],
             existing_postprocessors=[],
         )
+
+
+def test_detector_defense_detect_evasion_public_method(monkeypatch):
+    cfg = _make_config()
+    wrapped = SimpleNamespace(name="wrapped")
+
+    cfg._build_art_wrapper = lambda **kwargs: wrapped
+    monkeypatch.setattr(
+        "deckard.model.defense.detector._is_torch_model_instance",
+        lambda _m: True,
+    )
+
+    defense, returned_wrapper = cfg.detect_evasion(
+        defense_class=_DefenseCtorKwarg,
+        art_class=object,
+        init_params={"x": 1},
+        base_estimator=SimpleNamespace(),
+        existing_preprocessors=["p"],
+        existing_postprocessors=["q"],
+    )
+
+    assert returned_wrapper is wrapped
+    assert defense.detector is wrapped
+
+
+def test_detector_defense_detect_poison_public_method():
+    cfg = _make_config()
+    cfg._model = "trained-model"
+    cfg.get_model = lambda: "trained-model"
+
+    defense, defended_estimator = cfg.detect_poison(
+        defense_class=_PoisonDefense,
+        init_params={"epochs": 2},
+    )
+
+    assert isinstance(defense, _PoisonDefense)
+    assert defended_estimator["model"] == "trained-model"
+    assert defended_estimator["init_params"] == {"epochs": 2}

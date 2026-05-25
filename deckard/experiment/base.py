@@ -691,17 +691,17 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         if scope == "data":
             return lambda: load_class(
                 (
-                    "deckard.score.data.DefaultDataClassificationConfig"
+                    "deckard.score.data.DefaultDataClassificationScorerDictConfig"
                     if bool(getattr(self.data, "classifier", True))
-                    else "deckard.score.data.DefaultDataRegressionConfig"
+                    else "deckard.score.data.DefaultDataRegressionScorerDictConfig"
                 ),
             )
         if scope == "model":
             return lambda: load_class(
                 (
-                    "deckard.score.base.DefaultClassifierConfig"
+                    "deckard.score.base.DefaultClassifierScorerDictConfig"
                     if bool(getattr(self.model, "classifier", True))
-                    else "deckard.score.base.DefaultRegressorConfig"
+                    else "deckard.score.base.DefaultRegressorScorerDictConfig"
                 ),
             )
         return None
@@ -785,7 +785,7 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         }
 
         data_cfg = {
-            "_target_": "deckard.plugins.anjana.score.DefaultAnjanaScorerConfig",
+            "_target_": "deckard.plugins.anjana.score.DefaultAnjanaScorerDictConfig",
             "scorers": data_scorers,
         }
 
@@ -1755,12 +1755,10 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
     def _detect_n_repeats(self) -> tuple[int, str]:
         """Return repeated-evaluation count and key suffix for sampler-driven runs.
 
-        Returns
-        -------
-        tuple[int, str]
+        Returns:
             ``(n_splits, "fold")`` for ``KFoldSampler``,
-            ``(n_splits, "split")`` for ``ShuffleSampler``,
-            and ``(1, "fold")`` for all other samplers.
+            ``(n_splits, "split")`` for ``ShuffleSampler``, and
+            ``(1, "fold")`` for all other samplers.
         """
         sampler = BaseSampler.resolve(self.data)
         if isinstance(sampler, KFoldSampler):
@@ -2233,17 +2231,12 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         ``{key}_{suffix}_{i}``. Non-numeric values use the last run's value for
         the top-level key.
 
-        Parameters
-        ----------
-        per_run_scores : list of dict
-            One score dict per repeated run, in order.
+        Args:
+            per_run_scores: One score dict per repeated run, in order.
+            suffix: Suffix used for per-run keys such as ``fold`` or ``split``.
 
-        suffix : str, default "fold"
-            Suffix used for per-run keys (e.g., ``fold`` or ``split``).
-
-        Returns
-        -------
-        dict
+        Returns:
+            Aggregated score dictionary.
         """
         if not per_run_scores:
             return {}

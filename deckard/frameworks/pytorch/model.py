@@ -199,9 +199,9 @@ class PytorchModelConfig(ModelConfig):
         if not is_default_config_value(self.scorer, include_best=False):
             return
         scorer_cls = (
-            "deckard.score.base.DefaultPytorchClassifierConfig"
+            "deckard.score.base.DefaultPytorchClassifierScorerDictConfig"
             if self.classifier
-            else "deckard.score.base.DefaultPytorchRegressorConfig"
+            else "deckard.score.base.DefaultPytorchRegressorScorerDictConfig"
         )
         self.scorer = load_class(scorer_cls)
 
@@ -433,24 +433,42 @@ class PytorchModelConfig(ModelConfig):
         self._initialize_model()
         return loaded
 
-    def save_model(self, model: torch.nn.Module | None, filepath: str) -> None:
+    def save_model(
+        self,
+        model: torch.nn.Module | str | Path | None = None,
+        filepath: str | None = None,
+        *,
+        model_file: str | None = None,
+    ) -> None:
         """Persist runtime torch model state to .pt or pickle payload.
 
         Args:
             model: Runtime model to serialize; defaults to internal model when None.
+                Backward-compatible shorthand also accepts a path value.
             filepath: Output artifact path.
+            model_file: Optional alias for ``filepath``.
 
         Raises:
             ValueError: If filepath suffix is unsupported or model is missing.
         """
-        path = Path(filepath)
+        target_path = filepath if filepath is not None else model_file
+        if target_path is None and isinstance(model, (str, Path)):
+            target_path = str(model)
+            model = None
+
+        if target_path is None or str(target_path).strip() == "":
+            # Match base ModelConfig.save_model semantics: persistence is optional
+            # and callers may omit model artifact paths.
+            return
+
+        path = Path(target_path)
         suffix = path.suffix.lower()
         if suffix not in {".pt", ".pkl", ".pickle"}:
             raise ValueError(
                 f"PytorchModelConfig runtime model artifacts must use .pt/.pkl/.pickle. Got: {suffix}",
             )
 
-        model_obj = model if model is not None else self._model
+        model_obj = model if isinstance(model, torch.nn.Module) else self._model
         if model_obj is None:
             raise ValueError("Model not initialized")
 
@@ -460,7 +478,10 @@ class PytorchModelConfig(ModelConfig):
             "state_dict": model_obj.state_dict(),
             "device": str(self.device),
         }
-        super().save_model(payload, str(path))
+        if suffix == ".pt":
+            torch.save(payload, str(path))
+        else:
+            self.save_object(payload, str(path))
 
     def load_model(
         self,
@@ -867,7 +888,11 @@ class PytorchModelConfig(ModelConfig):
 
         return epoch_metrics
 
-    def apply_defense(self, data, stage: str = "post_fit_pre_predict"):
+    def apply_defense(
+        self,
+        data: "DataConfig",
+        stage: str = "post_fit_pre_predict",
+    ) -> EstimatorLike:
         """Override to pre-wrap with a properly configured PyTorchClassifier/Regressor.
 
         The base-class defense pipeline receives the raw ``torch.nn.Module`` as
@@ -957,7 +982,7 @@ class PytorchModelConfig(ModelConfig):
                 "to produce torch tensors before passing data to a torch model.",
             )
 
-    def train(self, X: torch.Tensor, y: torch.Tensor):
+    def train(self, X: torch.Tensor, y: torch.Tensor) -> None:
         """Train the PyTorch model with per-epoch logging and metrics tracking."""
         if self._model is None:
             raise ValueError("Model not initialized")
@@ -1056,7 +1081,10 @@ class PytorchModelConfig(ModelConfig):
             nb_epochs,
         )
 
-    def predict(self, X: Union[torch.Tensor, torch.utils.data.DataLoader]):
+    def predict(
+        self,
+        X: Union[torch.Tensor, torch.utils.data.DataLoader],
+    ) -> torch.Tensor:
         """Make predictions, handling Tensor, DataLoader, Subset, or Dataset inputs."""
         if self._model is None:
             raise ValueError("Model not initialized")

@@ -259,16 +259,9 @@ class _AttackProfileScorer:
 class ScorerMixin:
     """Base callable scorer handler used by runtime scorer context resolution.
 
-    Initialization parameters
-    -------------------------
-    runtime : ScorerDictConfig
-        Runtime config object owned by ``ScorerDictConfig.__call__``. Mixins should
-        treat this as the source of mutable runtime state (scorers, cached results, etc).
-
-    Runtime parameters
-    -------------------
-    The mixin forwards attribute access to runtime to enable transparent delegation
-    of scorer configuration to the underlying runtime instance.
+    The ``runtime`` attribute is the active ``ScorerDictConfig`` instance owned
+    by ``ScorerDictConfig.__call__``. Attribute access is forwarded to that
+    runtime object so mixins can delegate scorer configuration and mutable state.
     """
 
     runtime: Any = None
@@ -1703,15 +1696,12 @@ def coerce_scorer_config(scorer_obj, *, default_factory=None):
 
     Converts any scorer spec into a :class:`ScorerDictConfig` (or ``None``).
 
-    Parameters
-    ----------
-    scorer_obj:
-        The raw scorer value from a config field.
-    default_factory:
-        A zero-argument callable that returns the default scorer when
-        *scorer_obj* is a default token (``"auto"``, ``"default"``,
-        ``"best"``).  If ``None``, default tokens are treated as null
-        (returns ``None``).
+    Args:
+        scorer_obj: Raw scorer value from a config field.
+        default_factory: Zero-argument callable returning the default scorer
+            when ``scorer_obj`` is a default token such as ``"auto"``,
+            ``"default"``, or ``"best"``. When ``None``, default tokens are
+            treated as null and the function returns ``None``.
     """
 
     if is_null_config_value(scorer_obj):
@@ -1849,7 +1839,7 @@ def _default_pytorch_classification_scorers() -> dict[str, ScorerConfig]:
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultModelScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
+class DefaultModelScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
     """Default model scorer family with optional task inheritance."""
 
     classifier: Union[bool, str, None] = None
@@ -1869,17 +1859,17 @@ class DefaultModelScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultClassifierConfig(DefaultModelScorerConfig):
+class DefaultClassifierScorerDictConfig(DefaultModelScorerDictConfig):
     classifier: Union[bool, str, None] = True
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultRegressorConfig(DefaultModelScorerConfig):
+class DefaultRegressorScorerDictConfig(DefaultModelScorerDictConfig):
     classifier: Union[bool, str, None] = False
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultPytorchScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
+class DefaultPytorchScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
     """Default PyTorch scorer family with optional task inheritance."""
 
     classifier: Union[bool, str, None] = None
@@ -1899,7 +1889,7 @@ class DefaultPytorchScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultPytorchClassifierConfig(DefaultPytorchScorerConfig):
+class DefaultPytorchClassifierScorerDictConfig(DefaultPytorchScorerDictConfig):
     """Default classifier scorers for PyTorch models.
 
     PyTorch model wrappers often expose logits but not ``predict_proba``. This
@@ -1911,7 +1901,7 @@ class DefaultPytorchClassifierConfig(DefaultPytorchScorerConfig):
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultPytorchRegressorConfig(DefaultPytorchScorerConfig):
+class DefaultPytorchRegressorScorerDictConfig(DefaultPytorchScorerDictConfig):
     """Default regressor scorers for PyTorch models."""
 
     classifier: Union[bool, str, None] = False
@@ -1921,7 +1911,7 @@ safe_store(
     group="score",
     name="classification",
     node={
-        "_target_": "deckard.score.base.DefaultModelScorerConfig",
+        "_target_": "deckard.score.base.DefaultModelScorerDictConfig",
         "classifier": True,
     },
 )
@@ -1929,7 +1919,7 @@ safe_store(
     group="score",
     name="regression",
     node={
-        "_target_": "deckard.score.base.DefaultModelScorerConfig",
+        "_target_": "deckard.score.base.DefaultModelScorerDictConfig",
         "classifier": False,
     },
 )
@@ -1937,7 +1927,7 @@ safe_store(
     group="score",
     name="pytorch_classification",
     node={
-        "_target_": "deckard.score.base.DefaultPytorchScorerConfig",
+        "_target_": "deckard.score.base.DefaultPytorchScorerDictConfig",
         "classifier": True,
     },
 )
@@ -1945,7 +1935,7 @@ safe_store(
     group="score",
     name="pytorch_regression",
     node={
-        "_target_": "deckard.score.base.DefaultPytorchScorerConfig",
+        "_target_": "deckard.score.base.DefaultPytorchScorerDictConfig",
         "classifier": False,
     },
 )
@@ -1966,12 +1956,12 @@ __all__ = [
     "TaskAwareScorerMixin",
     "ScorerConfig",
     "ScorerDictConfig",
-    "DefaultModelScorerConfig",
-    "DefaultClassifierConfig",
-    "DefaultRegressorConfig",
-    "DefaultPytorchScorerConfig",
-    "DefaultPytorchClassifierConfig",
-    "DefaultPytorchRegressorConfig",
+    "DefaultModelScorerDictConfig",
+    "DefaultClassifierScorerDictConfig",
+    "DefaultRegressorScorerDictConfig",
+    "DefaultPytorchScorerDictConfig",
+    "DefaultPytorchClassifierScorerDictConfig",
+    "DefaultPytorchRegressorScorerDictConfig",
     "build_scorer",
     "build_scorer_dict",
 ]

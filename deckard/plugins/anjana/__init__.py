@@ -3,16 +3,16 @@
 from .data import AnjanaDataConfig, PrivacyBehaviorMixin
 from .model import AnjanaModelConfig
 from .score import (
-    DefaultAnjanaDataScorerConfig,
-    DefaultAnjanaModelScorerConfig,
-    DefaultAnjanaScorerConfig,
+    DefaultAnjanaDataScorerDictConfig,
+    DefaultAnjanaModelScorerDictConfig,
+    DefaultAnjanaScorerDictConfig,
 )
 
 __all__ = [
     "AnjanaDataConfig",
     "PrivacyBehaviorMixin",
     "AnjanaModelConfig",
-    "DefaultAnjanaScorerConfig",
-    "DefaultAnjanaDataScorerConfig",
-    "DefaultAnjanaModelScorerConfig",
+    "DefaultAnjanaScorerDictConfig",
+    "DefaultAnjanaDataScorerDictConfig",
+    "DefaultAnjanaModelScorerDictConfig",
 ]

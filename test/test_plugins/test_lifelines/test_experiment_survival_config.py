@@ -12,18 +12,6 @@ from deckard.plugins.lifelines.experiment import SurvivalExperimentConfig
 
 
 class TestSurvivalExperimentConfig(unittest.TestCase):
-    def test_allows_survival_only_config_without_attack(self):
-        config = SurvivalExperimentConfig(
-            data=DataConfig(dataset_name="make_regression", classifier=False),
-            model="cox",
-            target="E",
-            classifier=False,
-            duration_col="T",
-            event_col="E",
-        )
-        self.assertIsInstance(config, SurvivalExperimentConfig)
-        self.assertEqual(config.model, "cox")
-
     def test_requires_attack_when_aux_model_present(self):
         with self.assertRaises(ValueError):
             SurvivalExperimentConfig(
@@ -54,21 +42,26 @@ class TestSurvivalExperimentConfig(unittest.TestCase):
                 classifier=False,
             )
 
-    def test_survival_config_initializes(self):
-        config = SurvivalExperimentConfig(
-            data=DataConfig(
-                dataset_name="make_regression",
-                classifier=False,
-                target=None,
-            ),
-            model="cox",
-            target="E",
-            classifier=False,
-            duration_col="T",
-            event_col="E",
-        )
-        self.assertIsInstance(config, SurvivalExperimentConfig)
-        self.assertEqual(config.model, "cox")
+
+
+@pytest.mark.parametrize(
+    "data_cfg",
+    [
+        DataConfig(dataset_name="make_regression", classifier=False),
+        DataConfig(dataset_name="make_regression", classifier=False, target=None),
+    ],
+)
+def test_survival_config_initialization_variants(data_cfg):
+    config = SurvivalExperimentConfig(
+        data=data_cfg,
+        model="cox",
+        target="E",
+        classifier=False,
+        duration_col="T",
+        event_col="E",
+    )
+    assert isinstance(config, SurvivalExperimentConfig)
+    assert config.model == "cox"
 
 
 def _bare_instance():
@@ -112,14 +105,40 @@ def test_post_init_validates_data_model_and_duration(monkeypatch):
         cfg.__post_init__()
 
 
-def test_attack_kind_and_candidate_metrics_misc_paths():
-    assert SurvivalExperimentConfig._infer_attack_kind_from_label(np.nan) is None
-    assert SurvivalExperimentConfig._infer_attack_kind_from_label("   ") is None
+@pytest.mark.parametrize(
+    ("label", "expected_kind"),
+    [
+        (np.nan, None),
+        ("   ", None),
+        ("membership attack", "membership"),
+        ("attribute inference", "attribute"),
+        ("pgd", "evasion"),
+    ],
+)
+def test_infer_attack_kind_from_label_variants(label, expected_kind):
+    assert SurvivalExperimentConfig._infer_attack_kind_from_label(label) == expected_kind
 
-    metrics = SurvivalExperimentConfig._candidate_attack_metrics_for_kind(None)
-    assert "evasion_success" in metrics
-    assert "membership_inference_accuracy" in metrics
-    assert "attribute_inference_accuracy" in metrics
+
+@pytest.mark.parametrize(
+    ("kind", "expected_metrics"),
+    [
+        (
+            None,
+            [
+                "evasion_success",
+                "evasion_accuracy",
+                "membership_inference_accuracy",
+                "attribute_inference_accuracy",
+            ],
+        ),
+        ("membership", ["membership_inference_accuracy"]),
+        ("attribute", ["sex_inference_accuracy", "attribute_inference_accuracy"]),
+    ],
+)
+def test_candidate_attack_metrics_for_kind_variants(kind, expected_metrics):
+    metrics = SurvivalExperimentConfig._candidate_attack_metrics_for_kind(kind)
+    for metric in expected_metrics:
+        assert metric in metrics
 
 
 def test_resolve_attack_size_from_uniform_column_without_row_index():
@@ -245,30 +264,6 @@ def test_call_requires_attack_when_auxiliary_mode(tmp_path):
 
     with pytest.raises(ValueError, match="attack is required"):
         cfg()
-
-
-def test_candidate_attack_metrics_specific_kinds():
-    assert (
-        SurvivalExperimentConfig._infer_attack_kind_from_label("membership attack")
-        == "membership"
-    )
-    assert (
-        SurvivalExperimentConfig._infer_attack_kind_from_label("attribute inference")
-        == "attribute"
-    )
-    assert SurvivalExperimentConfig._infer_attack_kind_from_label("pgd") == "evasion"
-
-    assert SurvivalExperimentConfig._candidate_attack_metrics_for_kind(
-        "membership",
-    ) == [
-        "membership_inference_accuracy",
-    ]
-    assert SurvivalExperimentConfig._candidate_attack_metrics_for_kind(
-        "attribute",
-    ) == [
-        "sex_inference_accuracy",
-        "attribute_inference_accuracy",
-    ]
 
 
 def test_normalize_data_spec_string_and_mapping_for_lifelines():

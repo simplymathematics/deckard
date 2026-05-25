@@ -2480,7 +2480,6 @@ class TestExtractBranches(unittest.TestCase):
             criterion="CrossEntropyLoss",
             optimizer={"name": "SGD", "lr": 0.05},
         )
-        model(data)
 
         attack = AttackConfig(
             attack_type="art.attacks.extraction.CopycatCNN",
@@ -2715,9 +2714,9 @@ class TestFairlearnAttackScorer(unittest.TestCase):
 
     def test_fairlearn_attack_scorer_instantiates(self):
         from deckard.plugins.fairlearn.score import FairlearnScorerDictConfig
-        from deckard.score.base import DefaultClassifierConfig
+        from deckard.score.base import DefaultClassifierScorerDictConfig
 
-        scorer = FairlearnAttackScorerConfig(evasion=DefaultClassifierConfig())
+        scorer = FairlearnAttackScorerConfig(evasion=DefaultClassifierScorerDictConfig())
         self.assertIsInstance(scorer.evasion, FairlearnScorerDictConfig)
         self.assertIsInstance(scorer.membership_inference, FairlearnScorerDictConfig)
         self.assertIsInstance(scorer.attribute_inference, FairlearnScorerDictConfig)

@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from deckard.plugins.anjana.data import AnjanaDataConfig
-from deckard.plugins.anjana.score import DefaultAnjanaDataScorerConfig
+from deckard.plugins.anjana.score import DefaultAnjanaDataScorerDictConfig
 
 
 def _fake_anjana_defense(data, **kwargs):
@@ -162,7 +162,7 @@ def test_anjana_data_defense_auto_injects_generated_hierarchies(monkeypatch):
 
 
 def test_default_anjana_data_scorer_includes_privacy_metrics():
-    scorer = DefaultAnjanaDataScorerConfig()
+    scorer = DefaultAnjanaDataScorerDictConfig()
 
     # DefaultAnjanaDataScoreConfig combines data metrics with privacy metrics
     privacy_metrics = {"k_anonymity", "l_diversity", "t_closeness"}

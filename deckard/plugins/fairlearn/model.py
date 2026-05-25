@@ -52,7 +52,16 @@ class FairnessBehaviorMixin:
         if callable(super_post_init):
             super_post_init()
 
-    def train(self, X: pd.DataFrame, y: pd.Series):
+    def train(self, X: pd.DataFrame, y: pd.Series) -> None:
+        """Fit the wrapped Fairlearn model, forwarding sensitive features when supported.
+
+        Args:
+            X: Training feature matrix.
+            y: Training target vector.
+
+        Raises:
+            ValueError: If the wrapped model has not been initialized.
+        """
         if self._model is None:
             raise ValueError("Model not initialized")
         fit_method = getattr(self._model, "fit", None)
@@ -74,6 +83,17 @@ class FairnessBehaviorMixin:
         logger.info(f"Model trained in {self.training_time:.2f} seconds")
 
     def predict(self, X: pd.DataFrame) -> Any:
+        """Generate predictions from the wrapped Fairlearn model.
+
+        Args:
+            X: Feature matrix for inference.
+
+        Returns:
+            Prediction payload returned by the wrapped model.
+
+        Raises:
+            ValueError: If the wrapped model has not been initialized.
+        """
         if self._model is None:
             raise ValueError("Model not initialized")
         predict_method = getattr(self._model, "predict", None)
@@ -99,6 +119,17 @@ class FairnessBehaviorMixin:
             raise
 
     def predict_proba(self, X: pd.DataFrame) -> Any:
+        """Generate class probabilities from the wrapped Fairlearn model.
+
+        Args:
+            X: Feature matrix for inference.
+
+        Returns:
+            Probability payload returned by the wrapped model.
+
+        Raises:
+            ValueError: If the wrapped model has not been initialized.
+        """
         if self._model is None:
             raise ValueError("Model not initialized")
         predict_proba = getattr(self._model, "predict_proba", None)
@@ -276,7 +307,7 @@ class FairlearnDefenseConfig(SensitiveColumnsMixin, DefenseConfig):
         self.defense_application_time = time.perf_counter() - start
         return defended_estimator
 
-    def train(self, X, y):
+    def train(self, X: pd.DataFrame, y: pd.Series) -> BaseEstimator:
         if self._model is None:
             self._model = load_class(
                 self.model_type,

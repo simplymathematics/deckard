@@ -101,10 +101,8 @@ def _discover_huggingface_dataset_ids(limit: int = 100) -> list[tuple[str, int |
 def discover_provider_dataset_loaders(provider: str) -> dict[str, Callable[..., Any]]:
     """Discover ``load_*`` dataset callables for a provider.
 
-    Parameters
-    ----------
-    provider:
-        One of ``"lifelines"`` or ``"yellowbrick"``.
+    Args:
+        provider: One of ``"lifelines"`` or ``"yellowbrick"``.
     """
     provider_map = {
         "lifelines": "lifelines.datasets",

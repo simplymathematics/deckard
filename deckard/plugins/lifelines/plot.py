@@ -384,8 +384,8 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
         """Render a single model experiment when the plotter config is called.
 
         Args:
-            *args: Positional shorthand runtime parameters.
-            **kwargs: Keyword runtime parameters for single-model rendering.
+            *args: Positional shorthand runtime arguments.
+            **kwargs: Keyword runtime arguments for single-model rendering.
 
         Returns:
             Fitted survival model and rendered plot axes.
@@ -611,8 +611,8 @@ class SurvivalSeabornPlotConfigList(BaseConfig):
         """Render all configured model variants when the config list is called.
 
         Args:
-            *args: Positional shorthand runtime parameters.
-            **kwargs: Keyword runtime parameters for multi-model rendering.
+            *args: Positional shorthand runtime arguments.
+            **kwargs: Keyword runtime arguments for multi-model rendering.
 
         Returns:
             Rendered plot artifacts grouped by model.

@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 try:
     import torch
     from torch import Tensor
-    from torch.utils.data import DataLoader, Subset
+    from torch.utils.data import DataLoader, Dataset, Subset
 
     HAS_TORCH = True
 except ImportError:  # pragma: no cover
@@ -55,14 +55,22 @@ def build_torch_art_model(model: Any, data: Any) -> Any:
 
     from art.estimators.classification import PyTorchClassifier
 
-    if is_dataloader(data.X_train):
-        first_batch = next(iter(data.X_train))
+    x_train = getattr(data, "X_train", None)
+    if is_dataloader(x_train):
+        first_batch = next(iter(x_train))
+        if isinstance(first_batch, (tuple, list)):
+            input_shape = tuple(first_batch[0].shape[1:])
+        else:
+            input_shape = tuple(first_batch.shape[1:])
+    elif isinstance(x_train, (Dataset, Subset)):
+        loader = DataLoader(x_train, batch_size=1, shuffle=False)
+        first_batch = next(iter(loader))
         if isinstance(first_batch, (tuple, list)):
             input_shape = tuple(first_batch[0].shape[1:])
         else:
             input_shape = tuple(first_batch.shape[1:])
     else:
-        input_shape = tuple(data.X_train.shape[1:])
+        input_shape = tuple(x_train.shape[1:])
 
     import numpy as np
 

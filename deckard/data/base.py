@@ -14,6 +14,7 @@ import numpy as np
 # deckard
 from ..utils import (
     BaseConfig,
+    RuntimeSerializable,
     data_supported_filetypes,
     load_class,
     coerce_to_list,
@@ -22,7 +23,7 @@ from ..utils import (
 from ..frameworks.types import ArrayLike, EstimatorLike, IndexLike, MatrixLike, StringifiedClass, TabularLike
 from ..plugins.base import OrchestratorBase
 from ..orchestration import stage_hook_token
-from ..artifacts import ScoreDict
+from ..artifacts import ArtifactLoaderConfig, ScoreDict, SerializableValue
 from .canon import (
     DEFAULT_DATA_SCORE_STAGE,
     CANONICAL_DATA_TIMES,
@@ -225,12 +226,10 @@ class DataConfig(OrchestratorBase, BaseConfig):
         Saves the current state of the DataConfig instance to a file.
     load(filepath=None)
         Loads a cached DataConfig object from pickle-based artifact storage.
-    Raises
-    ------
-    ValueError
-        For invalid parameter values or missing data.
-    NotImplementedError
-        For unsupported datasets or file types.
+
+    Raises:
+        ValueError: For invalid parameter values or missing data.
+        NotImplementedError: For unsupported datasets or file types.
 
     Examples
     --------
@@ -438,9 +437,9 @@ class DataConfig(OrchestratorBase, BaseConfig):
             self.scorer,
             default_factory=lambda: load_class(
                 (
-                    "deckard.score.data.DefaultDataClassificationConfig"
+                    "deckard.score.data.DefaultDataClassificationScorerDictConfig"
                     if self.classifier
-                    else "deckard.score.data.DefaultDataRegressionConfig"
+                    else "deckard.score.data.DefaultDataRegressionScorerDictConfig"
                 ),
             ),
         )
@@ -601,7 +600,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
     def load(
         self,
         filepath: Union[str, None] = None,
-    ) -> "DataConfig | ScoreDict | MatrixLike | ArrayLike | EstimatorLike | None":
+    ) -> "ArtifactLoaderConfig | ScoreDict | MatrixLike | ArrayLike | EstimatorLike | SerializableValue | None":
         """Load a cached DataConfig object from pickle artifact storage.
 
         This method does not materialize datasets. Use :meth:`load_dataset` for
@@ -626,7 +625,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
     def save(
         self,
-        payload: "DataConfig | ScoreDict | MatrixLike | ArrayLike | EstimatorLike | str | Path | None" = None,
+        payload: EstimatorLike | MatrixLike | ArrayLike | ScoreDict | SerializableValue | None = None,
         filepath: str | None = None,
     ) -> None:
         """Save this DataConfig object as a pickle cache artifact.
@@ -799,16 +798,12 @@ class DataConfig(OrchestratorBase, BaseConfig):
     def _get_stratify_col(self, stratify: Union[None, str, bool] = None):
         """Return the stratification array (or ``None``) based on a stratify value.
 
-        Returns
-        -------
-        pd.Series or None
+        Returns:
             The column to stratify on, or ``None`` if stratification is disabled.
 
-        Raises
-        ------
-        ValueError
-            If ``stratify`` is a string that is not a column name in ``self._X``,
-            or if ``stratify`` is an unrecognized type.
+        Raises:
+            ValueError: If ``stratify`` is a string that is not a column name in
+                ``self._X``, or if ``stratify`` is an unrecognized type.
         """
         if stratify is None:
             stratify = getattr(self, "stratify", None)
@@ -860,10 +855,10 @@ class DataConfig(OrchestratorBase, BaseConfig):
         :class:`~deckard.data.sample.BaseSampler`, then materializes
         ``X_train``/``X_test`` and optional ``X_val`` splits.
 
-        Raises
-        ------
-        ValueError
-            If data is not loaded, or if the specified stratify column is not found, or if ``stratify`` is invalid.
+
+        Raises:
+            ValueError: If data is not loaded, if the specified stratify column
+                is not found, or if ``stratify`` is invalid.
 
         Side Effects
         ------------
@@ -1007,20 +1002,10 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
         Supported file types
         --------------------
-        - ".csv" (must contain a 'target' column)
 
         For built-in datasets, calls the corresponding loader method.
-        For CSV files, reads the file and splits features and target.
-        Raises NotImplementedError for unsupported datasets or file types.
         Updates ``self._X``, ``self._y``, and ``self.data_load_time`` with loaded data and timing information.
 
-        Raises
-        ------
-        NotImplementedError
-            If the dataset or file type is not supported.
-        ValueError
-            If a CSV file does not contain a 'target' column.
-        
         Raises:
             NotImplementedError: If dataset name or file type is unsupported.
             ValueError: If required runtime target/source fields are invalid.
@@ -1261,7 +1246,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
         *args,
         files: DataFiles | None = None,
         **kwargs,
-    ) -> dict:
+    ) -> ScoreDict:
         """
         Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.
         Strictly validates that all output values are flat and serializable.
@@ -1315,7 +1300,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
         self.times.update({k: all_scores.get(k) for k in CANONICAL_DATA_TIMES})
         assert hasattr(self, "score_dict"), "score_dict must be set"
         self.merge_runtime_files(
-            self.files,
+            cast(dict[str, RuntimeSerializable], dict(self.files)),
             {
                 "data_file": data_file,
                 "score_file": score_file,
@@ -1325,7 +1310,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
         all_scores = self.merge_and_persist_scores(all_scores, score_file)
         self.score_dict = ScoreDict.from_payload(all_scores)
         if save_flag:
-            self.save(data_file)
+            self.save(filepath=data_file)
         return self.score_dict
 
 

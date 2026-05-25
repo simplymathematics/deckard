@@ -63,15 +63,6 @@ class EvasionAttackMixin(AttackMixin):
             raise ValueError(
                 f"_EvasionAttackMixin received unsupported attack type: {attack_type}",
             )
-        return self.evasion(data, art_model, attack)
-
-    def evasion(
-        self,
-        data: DataConfig,
-        art_model: EstimatorLike,
-        attack: AttackLike,
-    ) -> ScoreDict:
-        """Public type-mirroring alias for evasion execution."""
         return self.evade(data, art_model, attack)
 
     def evade(

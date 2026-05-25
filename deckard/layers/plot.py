@@ -170,6 +170,14 @@ def _extract_backend(
     experiment_cfg: Dict[str, Any],
     experiment_config: str,
 ) -> str:
+    def _normalize_backend_value(value: Any) -> str:
+        try:
+            return normalize_plot_backend(value)
+        except Exception as exc:
+            raise ValueError(
+                "backend must be one of: auto, yellowbrick, seaborn",
+            ) from exc
+
     cfg_dict = _cfg_to_dict(cfg)
     plot_block = (
         cfg_dict.get("plot", {}) if isinstance(cfg_dict.get("plot"), dict) else {}
@@ -177,17 +185,21 @@ def _extract_backend(
     backend = plot_block.get("backend", cfg_dict.get("backend", None))
     plot_backend = plot_block.get("plot_backend", cfg_dict.get("plot_backend", None))
     if backend is not None and plot_backend is not None:
-        norm_backend = normalize_plot_backend(backend)
-        norm_plot_backend = normalize_plot_backend(plot_backend)
+        norm_backend = _normalize_backend_value(backend)
+        norm_plot_backend = _normalize_backend_value(plot_backend)
         if norm_backend != norm_plot_backend:
             raise ValueError(
                 "backend and plot_backend refer to different backends",
             )
         backend = norm_backend
     elif backend is not None:
-        backend = normalize_plot_backend(backend) if str(backend).strip().lower() != "auto" else "auto"
+        backend = (
+            _normalize_backend_value(backend)
+            if str(backend).strip().lower() != "auto"
+            else "auto"
+        )
     elif plot_backend is not None:
-        backend = normalize_plot_backend(plot_backend)
+        backend = _normalize_backend_value(plot_backend)
     else:
         backend = "auto"
 
@@ -207,30 +219,9 @@ def _extract_backend(
 def plot_main(cfg: Any) -> dict:
     """Execute plotting from either experiment config (Yellowbrick) or tabular results (Seaborn).
 
-    Parameters
-    ----------
-    experiment_config:
-            Path to an experiment YAML file used by Yellowbrick mode.
-    data_file:
-            Path to an aggregated data file (CSV/Parquet/etc.) used by Seaborn mode.
-    backend:
-            `auto`, `yellowbrick`, or `seaborn`.
-    plot_type:
-            Plot type for single-plot mode.
-    plots:
-            Comma-separated plot types for multi-plot mode.
-    plot_params_file:
-                YAML file containing Yellowbrick `plot_params` when an experiment config is present, or Seaborn plot specifications when no experiment config is present.
-    plot_file:
-            Output path for single-plot mode or optional combined figure in Seaborn list mode.
-    plot_folder:
-            Output directory for Yellowbrick multi-plot mode.
-    features:
-            Feature selection for Yellowbrick plot config.
-    classes:
-            Class selection for Yellowbrick plot config.
-    x, y, hue, style:
-            Seaborn axis/channel columns for single-plot mode.
+    Args:
+    cfg: Plot config carrying experiment paths, data paths, backend choice,
+        and backend-specific plotting parameters.
     title:
             Optional custom plot title.
     xlabel, ylabel, xscale, yscale, legend_title:

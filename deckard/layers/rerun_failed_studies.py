@@ -111,20 +111,13 @@ def rerun_failed_studies_main(
 ) -> dict[str, Any]:
     """Plan or execute reruns for failed Optuna studies.
 
-    Parameters
-    ----------
-    optuna_db : str
-        Optuna storage URI, e.g. ``sqlite:///optuna.db``.
-    working_dir : str
-        Directory where deckard optimize commands should run.
-    meta_schema : str
-        Path to schema YAML used to parse study names (e.g. config/meta.yaml).
-    include_running : bool
-        Include studies that currently have RUNNING trials.
-    execute : bool
-        If true, execute generated commands. Otherwise dry-run only.
-    limit : int | None
-        Optional maximum number of failed studies to process.
+    Args:
+        optuna_db: Optuna storage URI, for example ``sqlite:///optuna.db``.
+        working_dir: Directory where ``deckard optimize`` commands should run.
+        meta_schema: Path to schema YAML used to parse study names.
+        include_running: Whether to include studies that currently have RUNNING trials.
+        execute: Whether to execute generated commands instead of dry-run only.
+        limit: Optional maximum number of failed studies to process.
     """
     run_dir = Path(working_dir).resolve()
     schema = _load_meta_schema(meta_schema)

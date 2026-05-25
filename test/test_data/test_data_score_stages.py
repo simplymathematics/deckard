@@ -62,7 +62,7 @@ def test_call_orchestrates_scores_using_scorer_stages():
         },
         score_split="test",
         scorer={
-            "_target_": "deckard.score.data.DefaultDataScorerConfig",
+            "_target_": "deckard.score.data.DefaultDataScorerDictConfig",
             "scorers": {
                 "pre_metric": {
                     "score_function": lambda y_true, y_pred: float(len(y_true)),

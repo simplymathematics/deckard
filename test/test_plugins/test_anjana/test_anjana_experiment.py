@@ -189,7 +189,7 @@ def test_anjana_experiment_end_to_end(monkeypatch):
     from deckard.experiment import ExperimentConfig
     from deckard.file import FileConfig
     from deckard.model import ModelConfig
-    from deckard.score.base import DefaultClassifierConfig
+    from deckard.score.base import DefaultClassifierScorerDictConfig
 
     cfg = _make_anjana_data(n=30)
 
@@ -202,7 +202,7 @@ def test_anjana_experiment_end_to_end(monkeypatch):
         ),
         attack=None,
         files=FileConfig(),
-        score=DefaultClassifierConfig(),
+        score=DefaultClassifierScorerDictConfig(),
         classifier=True,
     )
 
@@ -216,7 +216,7 @@ def test_anjana_experiment_with_defense(monkeypatch):
     from deckard.experiment import ExperimentConfig
     from deckard.file import FileConfig
     from deckard.model import ModelConfig
-    from deckard.score.base import DefaultClassifierConfig
+    from deckard.score.base import DefaultClassifierScorerDictConfig
 
     def _stub_k_anon(data, **kwargs):
         _ = kwargs
@@ -241,7 +241,7 @@ def test_anjana_experiment_with_defense(monkeypatch):
         ),
         attack=None,
         files=FileConfig(),
-        score=DefaultClassifierConfig(),
+        score=DefaultClassifierScorerDictConfig(),
         classifier=True,
     )
 
