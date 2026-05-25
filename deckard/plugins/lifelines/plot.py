@@ -672,10 +672,13 @@ class SurvivalSeabornPlotConfigList(BaseConfig):
             dataset_name=dataset or "provided_data",
             target=target,
             classifier=False,
-            stratify=False,
-            train_size=(1 - test_size),
-            test_size=test_size,
-            random_state=42,
+            sampler={
+                "name": "deckard.data.sample.SplitSampler",
+                "train_size": (1 - test_size),
+                "test_size": test_size,
+                "random_state": 42,
+                "stratify": False,
+            },
         )
         runtime_data._X = data.drop(columns=[target]).reset_index(drop=True)
         runtime_data._y = data[target].reset_index(drop=True)

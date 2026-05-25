@@ -22,6 +22,43 @@ logger = logging.getLogger(__name__)
 class ExtractionAttackMixin(PoisoningAttackMixin):
     """Reusable extraction attack behavior (model stealing)."""
 
+    @staticmethod
+    def _sync_art_classifier_device(classifier: EstimatorLike) -> EstimatorLike:
+        """Align ART classifier/preprocessing internals to one device.
+
+        Deep-copying ART classifiers can leave ``_model`` and preprocessing ops on
+        different devices. Prefer the wrapped model's device so MPS stays enabled
+        when available.
+        """
+        target_device = getattr(classifier, "_device", None)
+        model = getattr(classifier, "_model", None)
+
+        try:
+            first_param = next(model.parameters(), None) if model is not None else None
+            if first_param is not None and hasattr(first_param, "device"):
+                target_device = first_param.device
+        except Exception:
+            pass
+
+        if target_device is None:
+            return classifier
+
+        if hasattr(classifier, "_device"):
+            classifier._device = target_device
+        if model is not None and hasattr(model, "to"):
+            try:
+                classifier._model = model.to(target_device)
+            except Exception:
+                pass
+
+        preprocessing = getattr(classifier, "preprocessing", None)
+        if hasattr(preprocessing, "_device"):
+            preprocessing._device = target_device
+        for op in getattr(classifier, "preprocessing_operations", []) or []:
+            if hasattr(op, "_device"):
+                op._device = target_device
+        return classifier
+
     def __call__(
         self,
         *,
@@ -111,6 +148,7 @@ class ExtractionAttackMixin(PoisoningAttackMixin):
         y_eval = self._normalize_ground_truth(y_eval, is_regression=False)
 
         thieved_classifier = copy.deepcopy(art_model)
+        thieved_classifier = self._sync_art_classifier_device(thieved_classifier)
         thieved_model = getattr(thieved_classifier, "_model", None)
         if thieved_model is not None and hasattr(thieved_model, "apply"):
 

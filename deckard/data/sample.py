@@ -78,6 +78,39 @@ class BaseSampler:
         """
         raise NotImplementedError
 
+    @staticmethod
+    def _get_stratify_col(
+        config: "DataConfig",
+        stratify: bool | str | None = None,
+    ):
+        """Return stratification labels for sampler execution.
+
+        Stratify behavior is sampler-owned and optionally sourced from sampler
+        configuration when ``stratify`` is not explicitly provided.
+        """
+        if stratify is None:
+            sampler_cfg = getattr(config, "sampler", None)
+            if isinstance(sampler_cfg, dict):
+                stratify = sampler_cfg.get("stratify", None)
+            elif hasattr(sampler_cfg, "stratify"):
+                stratify = getattr(sampler_cfg, "stratify")
+
+        if stratify is None or stratify is False:
+            return None
+        if stratify is True:
+            if getattr(config, "classifier", None) is False:
+                return None
+            return getattr(config, "_y", None)
+        if isinstance(stratify, str):
+            X = getattr(config, "_X", None)
+            columns = getattr(X, "columns", None)
+            if columns is not None and stratify in columns:
+                return X[stratify]
+            raise ValueError(
+                f"Stratify column '{stratify}' not found in data columns",
+            )
+        raise ValueError("stratify must be None, True, False, or a column name")
+
     @classmethod
     def resolve(cls, config: "DataConfig") -> Any:
         """Resolve ``config.sampler`` into a callable sampler object or ``None``.
@@ -99,32 +132,11 @@ class BaseSampler:
         }
 
         def _sampler_kwargs_for_alias(alias: str) -> dict[str, Any]:
-            if alias == "split":
-                return {
-                    "train_size": getattr(config, "train_size", None),
-                    "test_size": getattr(config, "test_size", None),
-                    "val_size": getattr(config, "val_size", None),
-                    "random_state": getattr(config, "random_state", 42),
-                    "stratify": getattr(config, "stratify", True),
-                }
-            if alias in {"fold", "kfold"}:
-                return {
-                    "split": getattr(config, "split", None),
-                    "train_size": getattr(config, "train_size", None),
-                    "test_size": getattr(config, "test_size", None),
-                    "val_size": getattr(config, "val_size", None),
-                    "random_state": getattr(config, "random_state", 42),
-                    "stratify": getattr(config, "stratify", True),
-                }
-            if alias == "shuffle":
-                return {
-                    "split": getattr(config, "split", None),
-                    "test_size": getattr(config, "test_size", None),
-                    "val_size": getattr(config, "val_size", None),
-                    "random_state": getattr(config, "random_state", 42),
-                    "stratify": getattr(config, "stratify", True),
-                }
-            return {}
+            sampler_spec = getattr(config, "sampler", None)
+            if not isinstance(sampler_spec, dict):
+                return {}
+
+            return sampler_spec
 
         spec = getattr(config, "sampler", None)
         if spec is None:
@@ -153,7 +165,8 @@ class BaseSampler:
             class_path = spec.pop("name", spec.pop("_target_", None))
             if class_path is None:
                 raise ValueError("sampler dict must include 'name' or '_target_'")
-            return load_class(class_path, **spec)
+            kwargs = {str(key): value for key, value in spec.items()}
+            return load_class(str(class_path), **kwargs)
 
         if callable(spec) and not isinstance(spec, type):
             return spec
@@ -241,7 +254,7 @@ class SplitSampler(BaseSampler):
         test_size = self.test_size
         val_size = self.val_size
         random_state = self.random_state
-        stratify_col = cfg._get_stratify_col(self.stratify)
+        stratify_col = self._get_stratify_col(cfg, self.stratify)
 
         if val_size is not None:
             # 3-way split: isolate validation set first
@@ -340,7 +353,7 @@ class KFoldSampler(BaseSampler):
         val_size = self.val_size
         random_state = self.random_state
 
-        stratify_col = cfg._get_stratify_col(self.stratify)
+        stratify_col = self._get_stratify_col(cfg, self.stratify)
 
         # Choose stratified or plain splitter
         if stratify_col is not None:
@@ -472,7 +485,7 @@ class ShuffleSampler(BaseSampler):
 
         assert cfg._X is not None, "Data must be loaded before sampling"
         indices = np.arange(len(cfg._X))
-        stratify_col = cfg._get_stratify_col(self.stratify)
+        stratify_col = self._get_stratify_col(cfg, self.stratify)
 
         # Choose stratified or plain splitter
         if stratify_col is not None:

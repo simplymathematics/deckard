@@ -285,7 +285,7 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         - ``evaluation_mode``: high-level preset routing (``standard`` (train + test),
             ``tuning`` (test), ``report`` (train + test + val)).
         - ``score_mode``: explicit split routing (``train``, ``test``, ``val``,
-            ``pre-sample``), optionally a list for multi-pass experiment scoring.
+            ``all``), optionally a list for multi-pass experiment scoring.
     """
 
     data: DataConfig
@@ -366,7 +366,7 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
                 f"Evaluation mode: {self.evaluation_mode} not implemented",
             )
 
-        allowed = {"pre-sample", "train", "test", "val"}
+        allowed = {"train", "test", "val", "all"}
         modes = []
         for raw_mode in raw_modes:
             mode = str(raw_mode).strip().lower()

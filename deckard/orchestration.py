@@ -80,10 +80,6 @@ RUNTIME_SPLIT_ALIASES: Final[dict[str, str]] = {
     "all": "all",
     "attack": "test",
     "attack-val": "val",
-    "pre-sample": "all",
-    "post-pipeline": "test",
-    "post-sample": "test",
-    "pre-load": "test",
     "auto": "test",
     "benign": "test",
     "adversarial": "test",
@@ -332,7 +328,7 @@ class ScoreOrchestratorMixin(OrchestratorBase, DataRuntimeStateMixin):
         except ValueError:
             return None
         mode = kwargs.pop("mode", None)
-        mode = self._normalize_score_mode(mode or getattr(self, "score_split", "test"))
+        mode = self._normalize_score_mode(mode or getattr(self, "score_mode", "test"))
         score_kwargs = kwargs.pop("score_kwargs", None) or {}
         if not isinstance(score_kwargs, dict):
             score_kwargs = dict(score_kwargs)

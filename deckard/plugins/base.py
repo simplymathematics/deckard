@@ -228,7 +228,7 @@ class OrchestratorBase(RuntimeBase):
 		except ValueError:
 			return None
 		mode = kwargs.pop("mode", None)
-		mode = self._normalize_score_mode(mode or getattr(self, "score_split", "test"))
+		mode = self._normalize_score_mode(mode or getattr(self, "score_mode", "test"))
 		score_kwargs = kwargs.pop("score_kwargs", None) or {}
 		if not isinstance(score_kwargs, dict):
 			score_kwargs = dict(score_kwargs)

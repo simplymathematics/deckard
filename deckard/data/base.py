@@ -32,6 +32,7 @@ from .canon import (
     ensure_canonical_times,
     merge_data_files,
     normalize_data_score_mode,
+    normalize_data_score_stage,
     resolve_runtime_files,
 )
 
@@ -96,14 +97,6 @@ class DataConfig(OrchestratorBase, BaseConfig):
         Name of the dataset to load or path to a data file.
     data_params : dict
         Additional parameters for data loading or generation.
-    test_size : float
-        Proportion of the dataset to include in the test split (between 0 and 1).
-    train_size : float
-        Proportion or count of samples to include in the training split.
-    val_size : Union[float, int, None]
-        Proportion or count of samples to include in the validation split when a
-        ``sampler`` is provided (e.g. :class:`~deckard.data.sample.SplitSampler` or
-        :class:`~deckard.data.sample.ShuffleSampler`).  Unused in legacy mode.
     split : Union[int, None]
         Which split index to use as the validation set when ``sampler`` performs
         cross-validation or shuffle splitting
@@ -115,10 +108,6 @@ class DataConfig(OrchestratorBase, BaseConfig):
         include alias strings (``split``/``shuffle``/``fold``), instantiated
         sampler objects, sampler classes, and Hydra-style dicts with
         ``name``/``_target_``.
-    random_state : int
-        Seed for random number generation to ensure reproducibility.
-    stratify : Union[None, str, bool]
-        Specifies stratification for sampling; can be None, True (use target), or a column name.
     classifier: bool
         Whether the task is classification (True) or regression (False).
     drop: list
@@ -246,9 +235,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
         from deckard.data.sample import SplitSampler
         config = DataConfig(
             dataset_name="digits",
-            test_size=0.2,
-            val_size=0.1,
-            sampler=SplitSampler(),
+            sampler=SplitSampler(test_size=0.2, val_size=0.1),
         )
         config()
         X_val, y_val = config.X_val, config.y_val
@@ -257,13 +244,8 @@ class DataConfig(OrchestratorBase, BaseConfig):
     # Configuration fields
     dataset_name: StringifiedClass = "adult"
     data_params: dict[str, Any] = field(default_factory=dict)
-    test_size: Union[float, int, None] = 0.2
-    train_size: Union[float, int, None] = None
-    val_size: Union[float, int, None] = None
     split: Union[int, None] = None
     sampler: Union["BaseSampler", Literal["split", "shuffle", "fold"], dict, None] = "split"
-    random_state: Union[int, None] = 0
-    stratify: Union[None, str, bool] = None
     classifier: Union[bool, str] = True
     target: Union[str, None] = None
     drop: list[str] = field(default_factory=list)
@@ -271,8 +253,8 @@ class DataConfig(OrchestratorBase, BaseConfig):
     plugins: list[Any] = field(default_factory=list)
     alias: Union[str, None] = None
     scorer: Any = AUTO_SCORER
-    score_split: str = "test"
-    score_mode: str = DEFAULT_DATA_SCORE_STAGE
+    score_mode: str = "test"
+    score_stage: str = DEFAULT_DATA_SCORE_STAGE
     pipeline: "DataPipeline | None" = None
     files: DataFiles = field(default_factory=lambda: {})
 
@@ -316,26 +298,14 @@ class DataConfig(OrchestratorBase, BaseConfig):
         Raises:
             ValueError: If `test_size` is not between 0 and 1.
         """
-        if self.train_size is None:
-            if self.test_size is None:
-                self.test_size = 0.2
-                self.train_size = 0.8
-            else:
-                if isinstance(self.test_size, float):
-                    if not (0 < self.test_size < 1):
-                        raise ValueError("test_size must be between 0 and 1")
-                    self.train_size = 1 - self.test_size
-                elif isinstance(self.test_size, int):
-                    self.train_size = None
-                else:
-                    raise ValueError("test_size must be a float or int")
+
         self.data_params = self.data_params if self.data_params is not None else {}
-        self.score_mode = (
-            getattr(self, "score_mode", DEFAULT_DATA_SCORE_STAGE)
-            or DEFAULT_DATA_SCORE_STAGE
+        self.score_stage = normalize_data_score_stage(
+            getattr(self, "score_stage", DEFAULT_DATA_SCORE_STAGE)
+            or DEFAULT_DATA_SCORE_STAGE,
         )
-        self.score_split = normalize_data_score_mode(
-            getattr(self, "score_split", "test") or "test",
+        self.score_mode = normalize_data_score_mode(
+            getattr(self, "score_mode", "test") or "test",
         )
 
         self.files = merge_data_files(getattr(self, "files", None), None)
@@ -746,7 +716,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
             raise TypeError(
                 f"DataConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
-        resolved_mode = normalize_data_score_mode(mode or self.score_split)
+        resolved_mode = normalize_data_score_mode(mode or self.score_mode)
         mode_token = str(resolved_mode).strip().lower().replace("_", "-")
 
         y = None
@@ -794,32 +764,6 @@ class DataConfig(OrchestratorBase, BaseConfig):
     
     
     
-
-    def _get_stratify_col(self, stratify: Union[None, str, bool] = None):
-        """Return the stratification array (or ``None``) based on a stratify value.
-
-        Returns:
-            The column to stratify on, or ``None`` if stratification is disabled.
-
-        Raises:
-            ValueError: If ``stratify`` is a string that is not a column name in
-                ``self._X``, or if ``stratify`` is an unrecognized type.
-        """
-        if stratify is None:
-            stratify = getattr(self, "stratify", None)
-        if stratify is None or stratify is False:
-            return None
-        if stratify is True:
-            if self.classifier is False:
-                return None
-            return self._y
-        if isinstance(stratify, str):
-            if isinstance(self._X, pd.DataFrame) and stratify in self._X.columns:
-                return self._X[stratify]
-            raise ValueError(
-                f"Stratify column '{stratify}' not found in data columns",
-            )
-        raise ValueError("stratify must be None, True, False, or a column name")
 
     def __hash__(self):
         return super().__hash__()

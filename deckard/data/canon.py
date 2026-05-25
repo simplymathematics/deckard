@@ -187,8 +187,15 @@ def normalize_data_score_mode(mode: str) -> str:
 
 
 def normalize_data_score_stage(value: str) -> str:
-    """Normalize score stage aliases to canonical split tokens."""
-    return normalize_data_score_mode(value)
+    """Normalize score stage aliases to canonical stage tokens."""
+    key = str(value).strip().lower().replace(" ", "-")
+    if key in {"all", "auto"}:
+        return key
+    if key in _STAGE_ALIASES:
+        return _STAGE_ALIASES[key]
+    raise ValueError(
+        f"Unknown data score stage '{value}'. Must be one of {list(CANONICAL_DATA_STAGES)}",
+    )
 
 
 def normalize_runtime_split_mode(

@@ -913,7 +913,7 @@ def set_study_attributes(
 
 def optimize_main(
     cfg: Any,
-) -> dict[str, Any]:
+) -> Any:
     """
     Run the optimize layer entrypoint and return an unfiltered score dictionary.
 
@@ -946,6 +946,8 @@ def optimize_main(
         dict,
     ), f"cfg must resolve to a dictionary. Got {type(cfg_container)}"
     cfg_dict = {str(k): v for k, v in cfg_container.items()}
+    optimizer_names = list(cfg_dict.get("optimizers", []) or [])
+    optimizer_directions = list(cfg_dict.get("directions", []) or [])
 
     assert isinstance(
         cfg_dict,
@@ -980,6 +982,18 @@ def optimize_main(
 
     if _should_raise_trial_pruned(scores, cfg_dict):
         raise optuna.TrialPruned("Runtime marked trial as pruned.")
+
+    # Optuna's Hydra sweeper expects scalar/tuple objective values. In child job
+    # processes Hydra may report RUN mode even for a parent multirun, so rely on
+    # configured optimizer objectives instead of mode tokens alone.
+    objective_values, _ = filter_scores(
+        scores=scores,
+        optimizers=optimizer_names,
+        directions=optimizer_directions,
+        emit_logs=False,
+    )
+    if objective_values is not scores:
+        return objective_values
 
     return scores
 

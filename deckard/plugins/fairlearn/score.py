@@ -150,7 +150,7 @@ class FairlearnDataScoreHooksMixin:
             raise TypeError(
                 f"FairlearnDataConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
-        resolved_mode = normalize_data_score_mode(getattr(self, "score_split", "test"))
+        resolved_mode = normalize_data_score_mode(getattr(self, "score_mode", "test"))
         tail_scores = self._run_fairlearn_score(mode=resolved_mode)
         existing = dict(scores or {})
         if len(existing) == 0:
@@ -190,7 +190,7 @@ class FairlearnDataScoreHooksMixin:
                 f"FairlearnDataConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
         scorer_mode = normalize_data_score_mode(
-            mode if mode is not None else getattr(self, "score_split", "test"),
+            mode if mode is not None else getattr(self, "score_mode", "test"),
         )
         return ScoreDict.from_payload(
             self._run_fairlearn_score(*args, mode=scorer_mode, **kwargs),

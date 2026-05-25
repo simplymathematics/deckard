@@ -271,13 +271,13 @@ class AnjanaDataConfig(
     executes ``apply_anjana_defense`` after data load when an ANJANA defense
     configuration is provided.
 
-    Privacy metrics are measured on POST-PIPELINE (anonymized) data by default,
-    with results nested under the 'post-pipeline' key.
+    Privacy metrics default to test-split score scope while retaining
+    post-pipeline stage hook execution.
     """
 
     plugins: list = field(default_factory=default_anjana_data_plugins)
 
-    score_mode: str = "post-pipeline"
+    score_mode: str = "test"
 
     def fit(self, run_hooks: bool = True) -> "AnjanaDataConfig":
         """Fit data splits and refresh split-aligned sensitive feature payloads.

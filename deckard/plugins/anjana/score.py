@@ -83,7 +83,7 @@ class AnjanaDataScoreHooksMixin:
             )
 
         resolved_mode = normalize_data_score_mode(
-            mode if mode is not None else getattr(self, "score_split", "test"),
+            mode if mode is not None else getattr(self, "score_mode", "test"),
         )
 
         try:
@@ -124,7 +124,7 @@ class AnjanaDataScoreHooksMixin:
         if hook_stage != "post-pipeline":
             return ScoreDict()
 
-        resolved_mode = normalize_data_score_mode(getattr(self, "score_split", "test"))
+        resolved_mode = normalize_data_score_mode(getattr(self, "score_mode", "test"))
         y, X = resolve_data_split_payload(self, resolved_mode, fallback_to_all=False)
         tail_scores = self.scorer(
             y=y,
