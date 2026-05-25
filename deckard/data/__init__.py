@@ -7,6 +7,7 @@ Optional exports are only available when their dependencies are installed.
 
 import logging
 
+from ..plugins import is_plugin_available
 from .base import DataConfig
 from .declarations import DatasetDeclaration, discover_dataset_declarations
 from .pipeline import DataConfig as PipelineDataConfig
@@ -20,6 +21,21 @@ from .sample import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _clear_optional_exports(*names: str) -> None:
+    """Drop stale optional exports before conditional re-import on reload."""
+    module_globals = globals()
+    for name in names:
+        module_globals.pop(name, None)
+
+
+_clear_optional_exports(
+    "PytorchDataConfig",
+    "PytorchCustomDataConfig",
+    "FairlearnDataConfig",
+    "AnjanaDataConfig",
+)
 
 try:
     from .pipeline import PytorchDataConfig
@@ -36,19 +52,25 @@ try:
 except Exception:
     logger.debug("Torch not found.")
 
-try:
-    from ..plugins.fairlearn.data import FairlearnDataConfig
+if is_plugin_available("fairlearn"):
+    try:
+        from ..plugins.fairlearn.data import FairlearnDataConfig
 
-    _ = FairlearnDataConfig
-except Exception:
-    logger.debug("Fairlearn not found.")
+        _ = FairlearnDataConfig
+    except Exception:
+        logger.debug("Fairlearn plugin import failed.")
+else:
+    logger.debug("Fairlearn plugin dependencies not installed.")
 
-try:
-    from ..plugins.anjana.data import AnjanaDataConfig
+if is_plugin_available("anjana"):
+    try:
+        from ..plugins.anjana.data import AnjanaDataConfig
 
-    _ = AnjanaDataConfig
-except Exception:
-    logger.debug("Anjana not found.")
+        _ = AnjanaDataConfig
+    except Exception:
+        logger.debug("Anjana plugin import failed.")
+else:
+    logger.debug("Anjana plugin dependencies not installed.")
 
 
 __all__ = [
@@ -63,10 +85,6 @@ __all__ = [
     "DatasetDeclaration",
     "discover_dataset_declarations",
 ]
-
-if "PytorchDataConfig" in globals():
-    __all__.append("PytorchDataConfig")
-
 
 if "PytorchDataConfig" in globals():
     __all__.extend(["PytorchDataConfig", "PytorchCustomDataConfig"])

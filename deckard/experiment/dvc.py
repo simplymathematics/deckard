@@ -779,6 +779,57 @@ def _resolve_params_file_path(
     return Path(str(params_file))
 
 
+def _mapping_get_path(payload: Mapping[str, Any] | None, *path: str) -> Any:
+    current: Any = payload
+    for key in path:
+        if isinstance(current, DictConfig):
+            current = OmegaConf.to_container(current, resolve=True)
+        if not isinstance(current, Mapping) or key not in current:
+            return None
+        current = current[key]
+    return current
+
+
+def _has_configured_optuna_pruner(experiment_payload: Mapping[str, Any]) -> bool:
+    pruner_value = _mapping_get_path(experiment_payload, "hydra", "sweeper", "pruner")
+    if pruner_value in [None, False, "", {}]:
+        return False
+    if isinstance(pruner_value, Mapping):
+        target = pruner_value.get("_target_")
+        if isinstance(target, str) and target.strip() == "":
+            return False
+    return True
+
+
+def _normalize_dvclive_enabled(
+    experiment_payload: dict[str, Any],
+    *,
+    plugin: DVCExperimentPlugin,
+) -> bool:
+    current = experiment_payload.get("dvclive_enabled")
+    if current is None:
+        enabled = bool(plugin.enabled)
+        experiment_payload["dvclive_enabled"] = enabled
+        return enabled
+    enabled = bool(current)
+    experiment_payload["dvclive_enabled"] = enabled
+    return enabled
+
+
+def _serialize_stage_selection(stage: Any) -> str | list[str]:
+    if isinstance(stage, str):
+        token = stage.strip()
+        return token or "all"
+    if isinstance(stage, Iterable):
+        values = [str(item).strip() for item in stage if str(item).strip()]
+        if len(values) == 0:
+            return "all"
+        return values[0] if len(values) == 1 else values
+    if stage in [None, ""]:
+        return "all"
+    return str(stage)
+
+
 def _build_dvc_params_payload(
     experiment: Any,
     *,
@@ -815,6 +866,13 @@ def _build_dvc_params_payload(
             "random_state": getattr(experiment, "random_state", None),
         }
 
+    dvclive_enabled = _normalize_dvclive_enabled(
+        experiment_payload,
+        plugin=plugin,
+    )
+    pruning_enabled = bool(experiment_payload.get("pruning_enabled", False))
+    pruner_configured = _has_configured_optuna_pruner(experiment_payload)
+
     base_target = experiment_payload.get("_target_")
     if not isinstance(base_target, str) or base_target.strip() == "":
         fallback_target = getattr(experiment, "_target_", None)
@@ -835,9 +893,17 @@ def _build_dvc_params_payload(
         "experiment": experiment_payload,
         "dvc_plugin": plugin_payload,
         "_dvc": {
-            "stage_selection": str(stage),
+            "stage_selection": _serialize_stage_selection(stage),
             "run_mode": _normalize_mode(plugin.mode),
             "params_manifest": manifest,
+            "dvclive": {
+                "enabled": dvclive_enabled,
+            },
+            "pruning": {
+                "enabled": pruning_enabled,
+                "pruner_configured": pruner_configured,
+                "active": bool(pruning_enabled and pruner_configured),
+            },
         },
     }
 
@@ -860,6 +926,27 @@ def _write_dvc_params_file(
         encoding="utf-8",
     )
     return params_path.as_posix()
+
+
+def _write_generated_pipeline_params_file(
+    experiment: Any,
+    *,
+    plugin: DVCExperimentPlugin,
+    params_file: str,
+    stage_selection: Any,
+) -> dict[str, Any]:
+    params_path = Path(str(params_file))
+    params_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = _build_dvc_params_payload(
+        experiment,
+        plugin=plugin,
+        stage=stage_selection,
+    )
+    params_path.write_text(
+        yaml.safe_dump(payload, sort_keys=False),
+        encoding="utf-8",
+    )
+    return payload
 
 
 def _resolve_stage_outputs(
@@ -919,8 +1006,11 @@ def _log_dvclive_scores(experiment: Any, plugin: DVCExperimentPlugin) -> None:
 def _log_dvclive_artifacts_and_plots(experiment: Any, plugin: DVCExperimentPlugin) -> None:
     live = _ensure_live_instance(experiment, plugin)
     log_artifact = getattr(live, "log_artifact", None)
-    if not callable(log_artifact):
+    log_image = getattr(live, "log_image", None)
+    if not callable(log_artifact) and not callable(log_image):
         return
+
+    image_suffixes = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff", ".webp"}
 
     for output in _resolve_stage_outputs(
         experiment,
@@ -930,7 +1020,10 @@ def _log_dvclive_artifacts_and_plots(experiment: Any, plugin: DVCExperimentPlugi
     ):
         path = Path(output)
         if path.exists():
-            log_artifact(path.as_posix())
+            if path.suffix.lower() in image_suffixes and callable(log_image):
+                log_image(path.name, path.as_posix())
+            elif callable(log_artifact):
+                log_artifact(path.as_posix())
 
 
 def _run_dvc_pull(experiment: Any, plugin: DVCExperimentPlugin) -> dict[str, Any]:
@@ -1390,7 +1483,7 @@ def _stage_cmd(
     dvc_file: str | None = None,
     runtime_overrides: list[str] | None = None,
 ) -> str:
-    cmd = ["python -m deckard optimize", f"+stage={stage}"]
+    cmd = ["deckard optimize", f"+stage={stage}"]
     _normalize_mode(mode)
     if multirun_count is not None and int(multirun_count) <= 0:
         raise ValueError("multirun_count must be a positive integer when provided.")
@@ -1698,6 +1791,13 @@ def generate_dvc_pipeline(
         params_file=params_file,
         dvc_file=output_file,
     )
+    plugin_cfg = coerce_dvc_experiment_plugin(getattr(experiment, "dvc_plugin", None))
+    params_payload = _write_generated_pipeline_params_file(
+        experiment,
+        plugin=plugin_cfg,
+        params_file=params_file,
+        stage_selection=(stage_selection if stage_selection is not None else "all"),
+    )
 
     stages: dict[str, dict[str, Any]] = {}
     for entry in stage_plan:
@@ -1711,6 +1811,7 @@ def generate_dvc_pipeline(
 
     payload = {
         "params_file": params_file,
+        "params_payload": params_payload,
         "stages": stages,
     }
 

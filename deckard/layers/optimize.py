@@ -978,7 +978,20 @@ def optimize_main(
     except Exception:
         pass
 
+    if _should_raise_trial_pruned(scores, cfg_dict):
+        raise optuna.TrialPruned("Runtime marked trial as pruned.")
+
     return scores
+
+
+def _should_raise_trial_pruned(
+    scores: Mapping[str, Any],
+    cfg_dict: Mapping[str, Any],
+) -> bool:
+    """Return whether optimize_main should raise TrialPruned for this payload."""
+    if not bool(cfg_dict.get("pruning_enabled", True)):
+        return False
+    return bool(scores.get("pruned", False))
 
 
 def _filter_experiment_config_kwargs(cfg_dict: dict[str, Any]) -> dict[str, Any]:

@@ -9,8 +9,43 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from ..plugins import HookPlugin
+from ..plugins.base import HookBundle
+
 
 logger = logging.getLogger(__name__)
+
+
+def build_power_hook_bundle(
+    name: str = "experiment-power",
+    method_name: str = "_log_power_score",
+) -> HookBundle:
+    """Build canonical power hook plugins for component score stages."""
+    return HookBundle(
+        name=name,
+        hooks=(
+            HookPlugin(
+                hook_name="after_data_score",
+                method_name=method_name,
+                method_kwargs={"namespace": "data"},
+            ),
+            HookPlugin(
+                hook_name="after_model_score",
+                method_name=method_name,
+                method_kwargs={"namespace": "model"},
+            ),
+            HookPlugin(
+                hook_name="after_attack_score",
+                method_name=method_name,
+                method_kwargs={"namespace": "attack"},
+            ),
+            HookPlugin(
+                hook_name="after_detector_score",
+                method_name=method_name,
+                method_kwargs={"namespace": "detector"},
+            ),
+        ),
+    )
 
 
 @dataclass(eq=False, kw_only=True)
@@ -318,4 +353,4 @@ class DVCPowerMixin:
         return None
 
 
-__all__ = ["DVCPowerMixin"]
+__all__ = ["DVCPowerMixin", "build_power_hook_bundle"]

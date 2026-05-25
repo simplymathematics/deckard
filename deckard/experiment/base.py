@@ -1339,10 +1339,13 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
     def _initialize_hook_orchestration(self) -> None:
         """Compose canonical and user-provided hook plugins/bundles."""
         from .dvc import build_dvc_experiment_plugin_hooks
+        from .power import build_power_hook_bundle
 
         canonical_bundle = build_experiment_hook_bundle()
         dvc_first_hooks, dvc_last_hooks = build_dvc_experiment_plugin_hooks(self.dvc_plugin)
         user_bundles: list[HookBundle] = []
+        if callable(getattr(self, "_log_power_score", None)):
+            user_bundles.append(build_power_hook_bundle())
         for bundle in coerce_to_list(self.hook_bundles):
             if isinstance(bundle, HookBundle):
                 user_bundles.append(bundle)
@@ -1377,16 +1380,55 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         for plugin in getattr(self, "_composed_hook_plugins", []):
             hook = getattr(plugin, hook_name, None)
             if callable(hook):
-                outputs.append(
-                    hook(
-                        self,
-                        component=component,
-                        stage=stage,
-                        event=event,
-                        **kwargs,
-                    )
+                hook_output = hook(
+                    self,
+                    component=component,
+                    stage=stage,
+                    event=event,
+                    **kwargs,
                 )
+                outputs.append(hook_output)
+                if (
+                    event == "after"
+                    and isinstance(hook_output, dict)
+                    and str(stage).strip().lower().replace("-", "_")
+                    in {"data_score", "model_score", "attack_score", "detector_score"}
+                ):
+                    self._merge_stage_hook_scores(component, hook_output)
         return outputs
+
+    def _resolve_stage_component_target(self, component: str) -> Any:
+        token = str(component).strip().lower()
+        if token == "data":
+            return self.data
+        if token == "model":
+            return self.model
+        if token == "detector":
+            return self.detector
+        if token.startswith("attack"):
+            _, _, alias = token.partition(":")
+            if alias:
+                for attack_cfg in getattr(self, "_attack_chain", []) or []:
+                    if str(getattr(attack_cfg, "alias", "")).strip().lower() == alias:
+                        return attack_cfg
+            return self.attack
+        return None
+
+    def _merge_stage_hook_scores(
+        self,
+        component: str,
+        hook_scores: Mapping[str, Any],
+    ) -> None:
+        target = self._resolve_stage_component_target(component)
+        if target is not None:
+            target_scores = getattr(target, "score_dict", None)
+            if not isinstance(target_scores, dict):
+                target_scores = {}
+                setattr(target, "score_dict", target_scores)
+            target_scores.update(dict(hook_scores))
+        experiment_scores = getattr(self, "score_dict", None)
+        if isinstance(experiment_scores, dict):
+            experiment_scores.update(dict(hook_scores))
 
     def _experiment_stage_hook(
         self,
@@ -1889,6 +1931,7 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
                 component="model",
                 run_idx=run_idx,
             )
+            scores.update(**dict(getattr(self.model, "score_dict", {}) or {}))
             self._run_experiment_stage_hooks(
                 "before",
                 "model_persist",
@@ -1966,6 +2009,11 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
                             component=attack_component,
                             run_idx=run_idx,
                         )
+                        scores = merge_scores_with_collision_suffix(
+                            scores,
+                            dict(getattr(attack_cfg, "score_dict", {}) or {}),
+                            alias=attack_cfg.alias if multi_attack else None,
+                        )
                         self._run_experiment_stage_hooks(
                             "before",
                             "attack_persist",
@@ -2040,6 +2088,11 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
                         "attack_score",
                         component=attack_component,
                         run_idx=run_idx,
+                    )
+                    scores = merge_scores_with_collision_suffix(
+                        scores,
+                        dict(getattr(attack_cfg, "score_dict", {}) or {}),
+                        alias=attack_cfg.alias if multi_attack else None,
                     )
                     self._run_experiment_stage_hooks(
                         "before",
@@ -2164,6 +2217,7 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
                 component="detector",
                 run_idx=run_idx,
             )
+            scores.update(**dict(getattr(self.detector, "score_dict", {}) or {}))
             self._run_experiment_stage_hooks(
                 "before",
                 "detector_persist",
@@ -2368,7 +2422,19 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
             if n_repeats > 1:
                 self.data.load_dataset()
             else:
+                self._run_experiment_stage_hooks(
+                    "before",
+                    "data_score",
+                    component="data",
+                    run_idx=None,
+                )
                 self.data(files=data_file_outputs)
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "data_score",
+                    component="data",
+                    run_idx=None,
+                )
         self._run_experiment_stage_hooks("after", "load", component="data")
 
         assert hasattr(self.data, "X_train") or hasattr(
@@ -2419,11 +2485,23 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
                 else:
                     # Run full data runtime per fold so DataConfig hooks and
                     # transformations (e.g., StringDistanceTransformer) execute.
+                    self._run_experiment_stage_hooks(
+                        "before",
+                        "data_score",
+                        component="data",
+                        run_idx=run_idx,
+                    )
                     self.data(
                         files={
                             "data_file": None,
                             "score_file": None,
                         },
+                    )
+                    self._run_experiment_stage_hooks(
+                        "after",
+                        "data_score",
+                        component="data",
+                        run_idx=run_idx,
                     )
                     self.data.score_dict.update(
                         data_load_time=self.data.data_load_time,

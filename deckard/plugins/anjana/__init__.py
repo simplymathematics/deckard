@@ -1,12 +1,31 @@
 """Anjana plugin package exports."""
 
-from .data import AnjanaDataConfig, PrivacyBehaviorMixin
-from .model import AnjanaModelConfig
-from .score import (
-    DefaultAnjanaDataScorerDictConfig,
-    DefaultAnjanaModelScorerDictConfig,
-    DefaultAnjanaScorerDictConfig,
-)
+from importlib import import_module
+
+from .. import is_plugin_available
+
+_SYMBOL_MODULES = {
+    "AnjanaDataConfig": ".data",
+    "PrivacyBehaviorMixin": ".data",
+    "AnjanaModelConfig": ".model",
+    "DefaultAnjanaScorerDictConfig": ".score",
+    "DefaultAnjanaDataScorerDictConfig": ".score",
+    "DefaultAnjanaModelScorerDictConfig": ".score",
+}
+
+
+def __getattr__(name: str):
+    module_name = _SYMBOL_MODULES.get(name)
+    if module_name is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    if not is_plugin_available("anjana"):
+        raise AttributeError(
+            f"module {__name__!r} has no attribute {name!r} because optional "
+            "dependencies for 'anjana' are not installed",
+        )
+    value = getattr(import_module(module_name, __name__), name)
+    globals()[name] = value
+    return value
 
 __all__ = [
     "AnjanaDataConfig",

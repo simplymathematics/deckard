@@ -18,6 +18,7 @@ from .dvc import (
     extract_dvc_file_aliases,
     generate_dvc_pipeline,
 )
+from .power import DVCPowerMixin, build_power_hook_bundle
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,8 @@ __all__ = [
     "extract_dvc_file_aliases",
     "generate_dvc_pipeline",
     "normalize_experiment_pipeline_stage",
+    "DVCPowerMixin",
+    "build_power_hook_bundle",
 ]
 
 

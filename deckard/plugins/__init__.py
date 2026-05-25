@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 from importlib import import_module
 from typing import Any, Protocol
 
+from ..declarations import is_package_available
+
 PluginScalar = str | int | float | bool | None
 PluginValue = PluginScalar | list["PluginValue"] | dict[str, "PluginValue"]
 
@@ -112,6 +114,24 @@ _PLUGIN_MAP = {
     "yellowbrick": "deckard.plugins.yellowbrick",
 }
 
+_PLUGIN_DEPENDENCIES = {
+    "anjana": ("anjana", "pycanon"),
+    "fairlearn": ("fairlearn",),
+    "lifelines": ("lifelines",),
+    "seaborn": ("seaborn",),
+    "yellowbrick": ("yellowbrick",),
+}
+
+
+def is_plugin_available(name: str) -> bool:
+    """Return whether a plugin family has its optional dependencies installed."""
+    if name not in _PLUGIN_MAP:
+        raise KeyError(f"Unknown plugin: {name}")
+    return all(
+        is_package_available(package_name)
+        for package_name in _PLUGIN_DEPENDENCIES.get(name, ())
+    )
+
 
 def get_plugin(name: str):
     """Lazily import a plugin package by family name.
@@ -122,6 +142,13 @@ def get_plugin(name: str):
     """
     if name not in _PLUGIN_MAP:
         raise KeyError(f"Unknown plugin: {name}")
+
+    if not is_plugin_available(name):
+        required = ", ".join(_PLUGIN_DEPENDENCIES.get(name, (name,)))
+        raise ImportError(
+            f"Plugin '{name}' is not available. Install optional dependencies "
+            f"for it ({required}) or the matching deckard extra.",
+        )
 
     module_name = _PLUGIN_MAP[name]
 
@@ -148,6 +175,7 @@ def __getattr__(name: str):
 __all__ = [
     "HookPlugin",
     "get_plugin",
+    "is_plugin_available",
     "anjana",
     "fairlearn",
     "lifelines",
