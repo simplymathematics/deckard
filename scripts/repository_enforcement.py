@@ -3,12 +3,15 @@
 
 Default mode enforces durable, low-noise structural invariants:
 - Class naming conventions for `*Config`, `*Mixin`, `*Plugin`
-- `*Config` inheritance chains (direct or indirect `*Config`/`ConfigBase`/`ABC`)
+- Default scorer naming conventions for `Default*ScorerDictConfig`
+- `*Config` inheritance chains (direct or indirect `*Config`/`BaseConfig`/`ABC`)
 - Dataclass decoration for mixins that define dataclass-like fields
+- Docstrings must avoid reStructuredText tokens
+- Docstrings for selected protected mixin hook methods
 - `*Plugin.__call__` signature contract (`*args`, `**kwargs`)
 
 Strict mode (opt-in via ``--strict-docs-types``) additionally enforces public
-docstring and annotation policies.
+docstring and annotation policies for all classes in the selected scope.
 """
 
 from __future__ import annotations
@@ -23,6 +26,38 @@ ROOT = Path(__file__).resolve().parents[1]
 DECKARD_DIR = ROOT / "deckard"
 
 RST_TOKENS = (":param", ":type", ":rtype:", ".. code-block::", ".. note::")
+PROTECTED_MIXIN_HOOK_METHODS = {
+    "_instantiate_plugin",
+    "_get_plugins",
+    "_run_plugin_hook",
+    "_merge_plugin_scores",
+}
+
+# Rule annotations: keep this map in sync with emitted rule codes below.
+RULE_ANNOTATIONS = {
+    # Default mode naming/shape rules
+    "NAME002": "Classes containing 'Mixin' must end with 'Mixin'.",
+    "NAME003": "Classes containing 'Plugin' must end with 'Plugin'.",
+    "NAME004": "Classes containing 'ScorerDict' must end with 'ScorerDictConfig'.",
+    "NAME005": "Default scorer classes must end with 'ScorerDictConfig'.",
+    "MIX001": "Mixins with concrete annotated defaults must be dataclasses.",
+    "MIX003": "Mixin class names must be public (no leading underscore).",
+    "MIX004": "Mixin classes must include a class docstring.",
+    "MIX005": "Docstrings must avoid reStructuredText tokens.",
+    "MIX006": "Public mixin methods must include docstrings.",
+    "MIX007": "Selected protected mixin hook methods must include docstrings.",
+    "PLG001": "Plugin classes must implement __call__.",
+    "PLG002": "Plugin __call__ signatures must include *args and **kwargs.",
+    # Strict docs/types mode rules
+    "ANN001": "Public method parameters (except self/cls) require annotations.",
+    "ANN003": "Public methods require return annotations.",
+    "ANN004": "Public method return annotations cannot use Any/object.",
+    "DOC001": "Public methods require docstrings.",
+    "DOC002": "Public method docstrings must avoid reStructuredText tokens.",
+    "DOC003": "Public methods with user parameters require an 'Args:' section.",
+    "DOC004": "Public methods with non-None returns require a 'Returns:' section.",
+    "DOC005": "Public methods that raise exceptions require a 'Raises:' section.",
+}
 
 
 @dataclass(frozen=True)
@@ -92,8 +127,18 @@ def _has_user_parameters(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     return bool(positional or keyword_only or has_variadics)
 
 
-def _is_variadic_arg_name(arg_name: str) -> bool:
-    return arg_name in {"args", "kwargs"}
+def _returns_none_annotation(node: ast.AST | None) -> bool:
+    if node is None:
+        return False
+    if isinstance(node, ast.Name):
+        return node.id == "None"
+    if isinstance(node, ast.Constant):
+        return node.value is None
+    return False
+
+
+def _has_raise_statement(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    return any(isinstance(child, ast.Raise) for child in ast.walk(fn))
 
 
 def _class_field_annotations(node: ast.ClassDef) -> list[ast.AnnAssign]:
@@ -104,41 +149,79 @@ def _class_field_annotations(node: ast.ClassDef) -> list[ast.AnnAssign]:
     return anns
 
 
+def _docstring_lineno(node: ast.AST) -> int:
+    """Return the starting line for a node docstring when available."""
+    body = getattr(node, "body", None)
+    if isinstance(body, list) and body:
+        first_stmt = body[0]
+        if isinstance(first_stmt, ast.Expr):
+            value = first_stmt.value
+            if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                return first_stmt.lineno
+    return getattr(node, "lineno", 1)
+
+
 def validate_file(path: Path, *, strict_docs_types: bool = False) -> list[Violation]:
-    rel = path.relative_to(ROOT).as_posix()
+    try:
+        rel = path.relative_to(ROOT).as_posix()
+    except ValueError:
+        rel = path.as_posix()
     source = path.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=rel)
     violations: list[Violation] = []
+
+    # MIX005: default mode policy for RST tokens across all docstrings.
+    docstring_nodes: list[
+        ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef
+    ] = [tree]
+    docstring_nodes.extend(
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
+    )
+    for node in docstring_nodes:
+        doc = ast.get_docstring(node)
+        if doc and any(token in doc for token in RST_TOKENS):
+            if isinstance(node, ast.Module):
+                target = "module"
+            elif isinstance(node, ast.ClassDef):
+                target = node.name
+            else:
+                owner = next(
+                    (
+                        cls.name
+                        for cls in tree.body
+                        if isinstance(cls, ast.ClassDef)
+                        and node in getattr(cls, "body", [])
+                    ),
+                    None,
+                )
+                target = f"{owner}.{node.name}" if owner else node.name
+            violations.append(
+                Violation(
+                    rel,
+                    _docstring_lineno(node),
+                    "MIX005",
+                    f"{target} docstring contains reStructuredText tokens",
+                ),
+            )
 
     for node in tree.body:
         if not isinstance(node, ast.ClassDef):
             continue
 
         class_name = node.name
-        base_names = [_base_name(b) for b in node.bases]
         decorators = {_decorator_name(d) for d in node.decorator_list}
-
-        has_config_token = "Config" in class_name
         has_mixin_token = "Mixin" in class_name
         has_plugin_token = "Plugin" in class_name
-
-        if (
-            has_config_token
-            and not has_mixin_token
-            and not (
-                class_name.endswith("Config")
-                or class_name.endswith("ConfigList")
-                or class_name.endswith("Contract")
-            )
-        ):
-            violations.append(
-                Violation(
-                    rel,
-                    node.lineno,
-                    "NAME001",
-                    f"{class_name} must end with 'Config'",
-                ),
-            )
+        # ScoreDict is an independent runtime payload type (not a config class).
+        has_scorer_dict_token = "ScorerDict" in class_name
+        has_default_score_family = (
+            class_name.startswith("Default")
+            and class_name.endswith("Config")
+            and ("Score" in class_name or "Scorer" in class_name)
+        )
+        # NAME002: classes with a mixin token must end with 'Mixin'.
         if has_mixin_token and not class_name.endswith("Mixin"):
             violations.append(
                 Violation(
@@ -148,6 +231,7 @@ def validate_file(path: Path, *, strict_docs_types: bool = False) -> list[Violat
                     f"{class_name} must end with 'Mixin'",
                 ),
             )
+        # NAME003: classes with a plugin token must end with 'Plugin'.
         if has_plugin_token and not class_name.endswith("Plugin"):
             violations.append(
                 Violation(
@@ -158,26 +242,45 @@ def validate_file(path: Path, *, strict_docs_types: bool = False) -> list[Violat
                 ),
             )
 
-        if class_name.endswith("Config"):
-            inherits_ok = any(
-                base.endswith("Config") or base == "ConfigBase" or base == "ABC"
-                for base in base_names
+        # NAME004: scorer-dict config classes use a canonical ScorerDictConfig suffix.
+        if has_scorer_dict_token and not class_name.endswith("ScorerDictConfig"):
+            violations.append(
+                Violation(
+                    rel,
+                    node.lineno,
+                    "NAME004",
+                    f"{class_name} must end with 'ScorerDictConfig'",
+                ),
             )
-            if not inherits_ok:
+
+        # NAME005: default scorer classes use canonical ScorerDictConfig suffix.
+        if has_default_score_family and not class_name.endswith("ScorerDictConfig"):
+            violations.append(
+                Violation(
+                    rel,
+                    node.lineno,
+                    "NAME005",
+                    f"{class_name} must end with 'ScorerDictConfig'",
+                ),
+            )
+
+        if class_name.endswith("Mixin"):
+            # MIX003: mixin class names are public API and must not be private.
+            if class_name.startswith("_"):
                 violations.append(
                     Violation(
                         rel,
                         node.lineno,
-                        "CFG001",
-                        f"{class_name} should inherit from ConfigBase or another *Config base",
+                        "MIX003",
+                        f"{class_name} must be public and must not start with '_'",
                     ),
                 )
 
-        if class_name.endswith("Mixin"):
             field_anns = _class_field_annotations(node)
             # Require dataclass only when mixins define concrete defaults, not
             # when they only declare type hints for static analysis.
             has_concrete_field = any(ann.value is not None for ann in field_anns)
+            # MIX001: concrete field defaults in mixins require dataclass semantics.
             if has_concrete_field and "dataclass" not in decorators:
                 violations.append(
                     Violation(
@@ -188,23 +291,54 @@ def validate_file(path: Path, *, strict_docs_types: bool = False) -> list[Violat
                     ),
                 )
 
-            # Public *Mixin classes (no leading underscore) must expose at
-            # least one non-dunder, non-underscore-prefixed method so that
-            # adapter callers have a stable public API surface.
-            if not class_name.startswith("_"):
-                public_methods = [
-                    c
-                    for c in node.body
-                    if isinstance(c, (ast.FunctionDef, ast.AsyncFunctionDef))
-                    and not c.name.startswith("_")
-                ]
-                if not public_methods:
+            public_methods = [
+                c
+                for c in node.body
+                if isinstance(c, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and not c.name.startswith("_")
+            ]
+            protected_hook_methods = [
+                c
+                for c in node.body
+                if isinstance(c, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and c.name in PROTECTED_MIXIN_HOOK_METHODS
+            ]
+
+            class_doc = ast.get_docstring(node) or ""
+            # MIX004/MIX005: class docstring presence + token policy.
+            if not class_doc.strip():
+                violations.append(
+                    Violation(
+                        rel,
+                        node.lineno,
+                        "MIX004",
+                        f"{class_name} missing class docstring",
+                    ),
+                )
+
+            # MIX006: public mixin methods must be documented.
+            for fn in public_methods:
+                doc = ast.get_docstring(fn) or ""
+                if not doc.strip():
                     violations.append(
                         Violation(
                             rel,
-                            node.lineno,
-                            "MIX002",
-                            f"{class_name} must expose at least one public-facing method",
+                            fn.lineno,
+                            "MIX006",
+                            f"{class_name}.{fn.name} missing public docstring",
+                        ),
+                    )
+
+            # MIX007: selected protected hook methods must also be documented.
+            for fn in protected_hook_methods:
+                doc = ast.get_docstring(fn) or ""
+                if not doc.strip():
+                    violations.append(
+                        Violation(
+                            rel,
+                            fn.lineno,
+                            "MIX007",
+                            f"{class_name}.{fn.name} missing protected hook docstring",
                         ),
                     )
 
@@ -214,6 +348,7 @@ def validate_file(path: Path, *, strict_docs_types: bool = False) -> list[Violat
             if isinstance(c, (ast.FunctionDef, ast.AsyncFunctionDef))
         ]
 
+        # PLG001/PLG002: plugin callable contract enforcement.
         if class_name.endswith("Plugin"):
             call = next((m for m in methods if m.name == "__call__"), None)
             if call is None:
@@ -237,58 +372,49 @@ def validate_file(path: Path, *, strict_docs_types: bool = False) -> list[Violat
                     )
 
         # Optional strict checks for docs and annotations.
-        if strict_docs_types and class_name.endswith(("Config", "Mixin", "Plugin")):
+        # Docs apply across all classes; annotation strictness stays focused on
+        # canonical runtime classes to keep signal-to-noise manageable.
+        if strict_docs_types:
             for fn in methods:
                 if not _is_public_method(fn):
                     continue
 
-                # Type annotations on args + returns.
-                all_args = [*fn.args.args, *fn.args.kwonlyargs]
-                for arg in all_args:
-                    if arg.arg in {"self", "cls"}:
-                        continue
-                    if arg.annotation is None:
-                        violations.append(
-                            Violation(
-                                rel,
-                                fn.lineno,
-                                "ANN001",
-                                f"{class_name}.{fn.name} missing annotation for '{arg.arg}'",
-                            ),
-                        )
-                    elif _annotation_contains_forbidden(arg.annotation):
-                        if _is_variadic_arg_name(arg.arg):
-                            # Variadic runtime payloads are intentionally
-                            # permissive in this repository: `*args`/`**kwargs`
-                            # may use `Any` by contract.
+                if class_name.endswith(("Config", "Mixin", "Plugin")):
+                    # ANN001/ANN003/ANN004: strict type annotation checks.
+                    # Type annotations on args + returns.
+                    all_args = [*fn.args.args, *fn.args.kwonlyargs]
+                    for arg in all_args:
+                        if arg.arg in {"self", "cls"}:
                             continue
+                        if arg.annotation is None:
+                            violations.append(
+                                Violation(
+                                    rel,
+                                    fn.lineno,
+                                    "ANN001",
+                                    f"{class_name}.{fn.name} missing annotation for '{arg.arg}'",
+                                ),
+                            )
+                    if fn.returns is None:
                         violations.append(
                             Violation(
                                 rel,
                                 fn.lineno,
-                                "ANN002",
-                                f"{class_name}.{fn.name} uses forbidden type annotation Any/object",
+                                "ANN003",
+                                f"{class_name}.{fn.name} missing return annotation",
                             ),
                         )
-                if fn.returns is None:
-                    violations.append(
-                        Violation(
-                            rel,
-                            fn.lineno,
-                            "ANN003",
-                            f"{class_name}.{fn.name} missing return annotation",
-                        ),
-                    )
-                elif _annotation_contains_forbidden(fn.returns):
-                    violations.append(
-                        Violation(
-                            rel,
-                            fn.lineno,
-                            "ANN004",
-                            f"{class_name}.{fn.name} uses forbidden return annotation Any/object",
-                        ),
-                    )
+                    elif _annotation_contains_forbidden(fn.returns):
+                        violations.append(
+                            Violation(
+                                rel,
+                                fn.lineno,
+                                "ANN004",
+                                f"{class_name}.{fn.name} uses forbidden return annotation Any/object",
+                            ),
+                        )
 
+                # DOC001-DOC003: strict public docstring checks.
                 doc = ast.get_docstring(fn) or ""
                 if not doc.strip():
                     violations.append(
@@ -324,6 +450,29 @@ def validate_file(path: Path, *, strict_docs_types: bool = False) -> list[Violat
                                 f"{class_name}.{fn.name} missing Google-style 'Args:' section",
                             ),
                         )
+                    if (
+                        fn.name != "__init__"
+                        and fn.returns is not None
+                        and not _returns_none_annotation(fn.returns)
+                        and "Returns:" not in doc
+                    ):
+                        violations.append(
+                            Violation(
+                                rel,
+                                fn.lineno,
+                                "DOC004",
+                                f"{class_name}.{fn.name} missing Google-style 'Returns:' section",
+                            ),
+                        )
+                    if _has_raise_statement(fn) and "Raises:" not in doc:
+                        violations.append(
+                            Violation(
+                                rel,
+                                fn.lineno,
+                                "DOC005",
+                                f"{class_name}.{fn.name} missing Google-style 'Raises:' section",
+                            ),
+                        )
 
     return violations
 
@@ -333,8 +482,12 @@ def collect_violations(
     *,
     strict_docs_types: bool = False,
 ) -> list[Violation]:
-    base = ROOT / scope
+    candidate = Path(scope)
+    base = candidate if candidate.is_absolute() else ROOT / scope
     violations: list[Violation] = []
+    if base.is_file() and base.suffix == ".py":
+        violations.extend(validate_file(base, strict_docs_types=strict_docs_types))
+        return sorted(violations, key=lambda v: (v.path, v.line, v.code, v.message))
     for path in _iter_python_files(base):
         violations.extend(validate_file(path, strict_docs_types=strict_docs_types))
     return sorted(violations, key=lambda v: (v.path, v.line, v.code, v.message))
@@ -346,8 +499,8 @@ def main() -> int:
     )
     parser.add_argument(
         "--scope",
-        default="deckard/plugins",
-        help="Path scope to validate (default: deckard/plugins)",
+        default="deckard",
+        help="Path scope to validate (default: deckard)",
     )
     parser.add_argument(
         "--strict-docs-types",
