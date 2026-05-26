@@ -143,19 +143,8 @@ class PlotConfig(BaseConfig):
     def _resolve_requested_backend(kwargs: dict) -> str | None:
         """Resolve canonical backend from backend/plot_backend aliases."""
         raw_backend = kwargs.get("backend")
-        raw_plot_backend = kwargs.get("plot_backend")
-        if raw_backend is not None and raw_plot_backend is not None:
-            norm_backend = normalize_plot_backend(raw_backend)
-            norm_plot_backend = normalize_plot_backend(raw_plot_backend)
-            if norm_backend != norm_plot_backend:
-                raise ValueError(
-                    "backend and plot_backend refer to different backends.",
-                )
-            return norm_backend
         if raw_backend is not None:
             return normalize_plot_backend(raw_backend)
-        if raw_plot_backend is not None:
-            return normalize_plot_backend(raw_plot_backend)
         return None
 
     def __post_init__(self):
@@ -219,12 +208,13 @@ class PlotConfig(BaseConfig):
         self.plot_state["configured"] = True
         # Keep both keys in sync for legacy and canonical callers.
         self.kwargs["backend"] = backend
-        self.kwargs["plot_backend"] = backend
         plot_file = self.kwargs.get("plot_file")
         if plot_file is not None:
             self.files["plot_file"] = str(plot_file)
 
-        self.config = config_cls(**self.kwargs)
+        config_kwargs = dict(self.kwargs)
+        config_kwargs.pop("backend", None)
+        self.config = config_cls(**config_kwargs)
 
     def __call__(self, *args, **kwargs) -> Union[dict, "Axes"]:
         """Render the resolved plotting backend and return its runtime output.

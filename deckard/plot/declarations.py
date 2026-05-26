@@ -61,7 +61,7 @@ PLOT_TYPES = [
 # Seaborn plotter plugin for matplotlib-based plotting
 SEABORN_PLOTTER_PLUGIN = PlotTypePlugin(
     mixin_type="deckard.plugins.seaborn.plot._SeabornPlotterMixin",
-    plot_backend="seaborn",
+    backend="seaborn",
     plot_family=None,
     init_params={
         "description": "Seaborn matplotlib backend for statistical plots",
@@ -72,7 +72,7 @@ SEABORN_PLOTTER_PLUGIN = PlotTypePlugin(
 # Yellowbrick plotter plugin for ML model visualization
 YELLOWBRICK_PLOTTER_PLUGIN = PlotTypePlugin(
     mixin_type="deckard.plugins.yellowbrick.plot._YellowbrickPlotterMixin",
-    plot_backend="yellowbrick",
+    backend="yellowbrick",
     plot_family=None,
     init_params={
         "description": "Yellowbrick backend for ML model diagnostics and visualization",

@@ -54,8 +54,7 @@ from .canon import (
     normalize_attack_stage,
 )
 
-if TYPE_CHECKING:
-    from ..score.attack import AttackScorerConfig
+from ..score.attack import AttackScorerConfig
 
 logger = logging.getLogger(__name__)
 

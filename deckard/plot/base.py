@@ -91,7 +91,7 @@ class PlotTypePlugin:
     ---------------------
     mixin_type : Any
         Mixin class (or import path) implementing runtime ``__call__``.
-    plot_backend : str
+    backend : str
         Backend this plugin matches (e.g., "seaborn", "yellowbrick").
     plot_family : str | None
         Optional plot family constraint (e.g., "feature", "classifier", "regressor").
@@ -109,7 +109,7 @@ class PlotTypePlugin:
     """
 
     mixin_type: Any
-    plot_backend: str
+    backend: str
     plot_family: Union[str, None] = None
     excluded_families: tuple[str, ...] = field(default_factory=tuple)
     init_params: dict[str, Any] = field(default_factory=dict)
@@ -124,10 +124,10 @@ class PlotTypePlugin:
     def _matches(
         self,
         *,
-        plot_backend: str,
+        backend: str,
         plot_family: Union[str, None],
     ) -> bool:
-        if (plot_backend or "").lower() != (self.plot_backend or "").lower():
+        if (backend or "").lower() != (self.backend or "").lower():
             return False
         family = (plot_family or "").lower()
         if self.plot_family is not None and family != self.plot_family.lower():
@@ -140,7 +140,7 @@ class PlotTypePlugin:
         self,
         runtime: "PlotDictConfig",
         *,
-        plot_backend: str,
+        backend: str,
         plot_family: Union[str, None],
         default_mixins: tuple[type, ...],
     ) -> tuple[type, ...]:
@@ -148,7 +148,7 @@ class PlotTypePlugin:
 
         Args:
             runtime: Active runtime plot config.
-            plot_backend: Requested plotting backend.
+            backend: Requested plotting backend.
             plot_family: Requested plotting family.
             default_mixins: Default mixins for this plotting context.
 
@@ -157,7 +157,7 @@ class PlotTypePlugin:
         """
         _ = (runtime, default_mixins)
         if not self._matches(
-            plot_backend=plot_backend,
+            backend=backend,
             plot_family=plot_family,
         ):
             return ()
@@ -168,7 +168,7 @@ class PlotTypePlugin:
         self,
         runtime: "PlotDictConfig",
         *,
-        plot_backend: str,
+        backend: str,
         plot_family: Union[str, None],
         default_handler: Callable[..., PlotResult] | None,
         default_mixins: tuple[type, ...],
@@ -177,7 +177,7 @@ class PlotTypePlugin:
 
         Args:
             runtime: Active runtime plot config.
-            plot_backend: Requested plotting backend.
+            backend: Requested plotting backend.
             plot_family: Requested plotting family.
             default_handler: Existing resolved runtime handler.
             default_mixins: Existing resolved mixins.
@@ -187,7 +187,7 @@ class PlotTypePlugin:
         """
         _ = (default_handler, default_mixins)
         if not self._matches(
-            plot_backend=plot_backend,
+            backend=backend,
             plot_family=plot_family,
         ):
             return None
@@ -224,7 +224,7 @@ class PlotDictConfig(BaseConfig):
     """
 
     plots: dict[str, Any] = field(default_factory=dict)
-    plot_backend: str = "yellowbrick"
+    backend: str = "yellowbrick"
 
     def __post_init__(self):
         if not self.plots:

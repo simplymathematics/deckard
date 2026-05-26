@@ -17,7 +17,7 @@ PLOT_MAIN_DEFAULTS = {
     "experiment_config": "",
     "data_file": "",
     "backend": "auto",
-    "plot_backend": "",
+    "backend": "",
     "plot_type": "",
     "plots": "",
     "plot_params_file": "",
@@ -183,14 +183,8 @@ def _extract_backend(
         cfg_dict.get("plot", {}) if isinstance(cfg_dict.get("plot"), dict) else {}
     )
     backend = plot_block.get("backend", cfg_dict.get("backend", None))
-    plot_backend = plot_block.get("plot_backend", cfg_dict.get("plot_backend", None))
-    if backend is not None and plot_backend is not None:
+    if backend is not None:
         norm_backend = _normalize_backend_value(backend)
-        norm_plot_backend = _normalize_backend_value(plot_backend)
-        if norm_backend != norm_plot_backend:
-            raise ValueError(
-                "backend and plot_backend refer to different backends",
-            )
         backend = norm_backend
     elif backend is not None:
         backend = (
@@ -198,11 +192,10 @@ def _extract_backend(
             if str(backend).strip().lower() != "auto"
             else "auto"
         )
-    elif plot_backend is not None:
-        backend = _normalize_backend_value(plot_backend)
+    elif backend is not None:
+        backend = _normalize_backend_value(backend)
     else:
         backend = "auto"
-
     if backend not in {"auto", "yellowbrick", "seaborn"}:
         raise ValueError("backend must be one of: auto, yellowbrick, seaborn")
     if backend == "auto":
