@@ -361,4 +361,3 @@ class TestYellowbrickPlots:
             plot_cfg()
 
         mock_rc_update.assert_called_once_with({"figure.figsize": (8, 6)})
-

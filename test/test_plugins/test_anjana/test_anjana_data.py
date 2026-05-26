@@ -337,14 +337,18 @@ def test_load_init_sample_and_score_paths(monkeypatch):
             lambda **kwargs: {
                 "path": path,
                 "n": len(kwargs["y"]),
-                "k": dict(getattr(kwargs["data"], "anjana_defense", {}) or {}).get("k"),
+                "k": dict(getattr(kwargs["data"], "anjana_defense", {}) or {}).get(
+                    "k"
+                ),
                 "supp_level": 100,
                 "hierarchies": getattr(kwargs["data"], "hierarchies", None),
             }
         ),
     )
     scored = cfg_score.score(mode="all")
-    assert scored["path"] == "deckard.plugins.anjana.score.DefaultAnjanaScorerDictConfig"
+    assert (
+        scored["path"] == "deckard.plugins.anjana.score.DefaultAnjanaScorerDictConfig"
+    )
     assert scored["n"] == 2
     assert scored["k"] == 2
     assert scored["supp_level"] == 100

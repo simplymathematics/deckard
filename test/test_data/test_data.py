@@ -527,8 +527,8 @@ class TestDataConfig:
             assert score_path.exists()
             assert "mutual_info" in loaded_scores
             assert "chisquare" in loaded_scores
-            assert round(abs(loaded_scores["mutual_info"]-0.95), 7) == 0
-            assert round(abs(loaded_scores["chisquare"]-0.9), 7) == 0
+            assert round(abs(loaded_scores["mutual_info"] - 0.95), 7) == 0
+            assert round(abs(loaded_scores["chisquare"] - 0.9), 7) == 0
 
     def test_save_data_file(self):
         import tempfile
@@ -544,7 +544,9 @@ class TestDataConfig:
             assert cfg._X is not None
             assert cfg._y is not None
 
-    @pytest.mark.skipif(not HAS_LIFELINES, reason="lifelines is required for this test")
+    @pytest.mark.skipif(
+        not HAS_LIFELINES, reason="lifelines is required for this test"
+    )
     def test_load_lifelines_lung_dataset(self):
         cfg = DataConfig(
             dataset_name="lung",
@@ -556,7 +558,9 @@ class TestDataConfig:
         assert "time" in cfg.X.columns
         assert len(cfg.X) == len(cfg.y)
 
-    @pytest.mark.skipif(not HAS_LIFELINES, reason="lifelines is required for this test")
+    @pytest.mark.skipif(
+        not HAS_LIFELINES, reason="lifelines is required for this test"
+    )
     def test_load_lifelines_leukemia_dataset(self):
         cfg = DataConfig(
             dataset_name="leukemia",
@@ -568,7 +572,9 @@ class TestDataConfig:
         assert len(cfg.X) > 0
         assert len(cfg.X) == len(cfg.y)
 
-    @pytest.mark.skipif(not HAS_LIFELINES, reason="lifelines is required for this test")
+    @pytest.mark.skipif(
+        not HAS_LIFELINES, reason="lifelines is required for this test"
+    )
     def test_load_lifelines_diabetes_dataset_with_prefix(self):
         cfg = DataConfig(
             dataset_name="lifelines_diabetes",
@@ -584,9 +590,7 @@ class TestDataConfig:
         cfg = self.basic_config()
         original_hash = hash(cfg)
         cfg()
-        assert original_hash == \
-            hash(cfg), \
-            "Hash changed after call for DataConfig"
+        assert original_hash == hash(cfg), "Hash changed after call for DataConfig"
 
 
 try:
@@ -939,8 +943,8 @@ class TestDataConfigAdditional:
             assert score_path.exists()
             assert "mutual_info" in loaded_scores
             assert "chisquare" in loaded_scores
-            assert round(abs(loaded_scores["mutual_info"]-0.95), 7) == 0
-            assert round(abs(loaded_scores["chisquare"]-0.9), 7) == 0
+            assert round(abs(loaded_scores["mutual_info"] - 0.95), 7) == 0
+            assert round(abs(loaded_scores["chisquare"] - 0.9), 7) == 0
 
     def test_save_data_file(self):
         import tempfile
@@ -1004,5 +1008,3 @@ class TestDataConfigAdditional:
 
         scores = cfg()
         assert "plugin_metric" in scores
-
-

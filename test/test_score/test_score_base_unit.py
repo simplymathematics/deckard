@@ -766,7 +766,10 @@ def test_scorer_dict_flattens_dict_metric_payloads():
             "nested": ScorerConfig(
                 score_name="nested",
                 score_function=lambda y_true, y_pred: {
-                    "group": {"a": float(np.mean(y_true)), "b": float(np.mean(y_pred))},
+                    "group": {
+                        "a": float(np.mean(y_true)),
+                        "b": float(np.mean(y_pred)),
+                    },
                 },
             ),
         },

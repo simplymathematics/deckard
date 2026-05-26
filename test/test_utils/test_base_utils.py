@@ -337,8 +337,10 @@ class TestUtilsAdditional:
 
         parser = create_parser_from_function(fn)
 
-        assert parser.description == \
-            "Create a parser description from the function docstring."
+        assert (
+            parser.description
+            == "Create a parser description from the function docstring."
+        )
 
     def test_create_parser_uses_parameter_docstrings_for_help_text(self):
         def fn(name: str, count: int = 1):
@@ -358,8 +360,7 @@ class TestUtilsAdditional:
         name_action = next(a for a in parser._actions if a.dest == "name")
         count_action = next(a for a in parser._actions if a.dest == "count")
 
-        assert name_action.help == \
-            "Name to echo in the command output."
+        assert name_action.help == "Name to echo in the command output."
         assert count_action.help == "Number of iterations to run."
 
 
@@ -627,8 +628,6 @@ class TestCoerceHelpers:
         assert result["evasion_accuracy"] == 0.4
 
 
-
-
 # ── ConfigBase – from_yaml / to_yaml / to_dict ───────────────────────────────
 
 
@@ -718,4 +717,3 @@ class TestExecuteWithoutMercy:
             finally:
                 utils.logger.removeHandler(handler)
                 handler.close()
-

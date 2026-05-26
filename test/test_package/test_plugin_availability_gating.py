@@ -14,7 +14,9 @@ def test_get_plugin_rejects_missing_optional_dependencies(monkeypatch):
             return False
         return original(name)
 
-    monkeypatch.setattr(plugin_namespace, "is_plugin_available", _fake_is_plugin_available)
+    monkeypatch.setattr(
+        plugin_namespace, "is_plugin_available", _fake_is_plugin_available
+    )
 
     with pytest.raises(ImportError, match="fairlearn"):
         plugin_namespace.get_plugin("fairlearn")
@@ -28,7 +30,9 @@ def test_data_reexports_follow_plugin_availability(monkeypatch):
             return False
         return original(name)
 
-    monkeypatch.setattr(plugin_namespace, "is_plugin_available", _fake_is_plugin_available)
+    monkeypatch.setattr(
+        plugin_namespace, "is_plugin_available", _fake_is_plugin_available
+    )
 
     reloaded = importlib.reload(data_package)
     try:

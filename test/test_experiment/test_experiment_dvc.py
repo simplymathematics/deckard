@@ -78,7 +78,9 @@ def _make_experiment_stub(*, name: str = "demo-exp", with_files: bool = True):
 
 
 def _make_real_experiment_from_examples(tmp_path: Path) -> ExperimentConfig:
-    config_dir = (Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config").as_posix()
+    config_dir = (
+        Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
+    ).as_posix()
     with initialize_config_dir(version_base="1.3", config_dir=config_dir):
         cfg = compose(
             config_name="default",
@@ -96,7 +98,10 @@ def _make_real_experiment_from_examples(tmp_path: Path) -> ExperimentConfig:
     resolved = OmegaConf.to_container(cfg, resolve=True)
     assert isinstance(resolved, dict)
     score_cfg = resolved.get("score")
-    if isinstance(score_cfg, dict) and score_cfg.get("_target_") == "deckard.score.base.DefaultClassifierConfig":
+    if (
+        isinstance(score_cfg, dict)
+        and score_cfg.get("_target_") == "deckard.score.base.DefaultClassifierConfig"
+    ):
         score_cfg["_target_"] = "deckard.score.base.DefaultClassifierScorerDictConfig"
     allowed = set(inspect.signature(ExperimentConfig).parameters.keys())
     payload: dict[str, object] = {"_target_": "deckard.ExperimentConfig"}
@@ -154,7 +159,11 @@ def test_stage_plan_full_components_include_detector_train_and_attack_generation
     def _first_index(prefix: str) -> int:
         return next(i for i, name in enumerate(names) if name.startswith(prefix))
 
-    assert _first_index("attack__generation") < _first_index("detector__train") < _first_index("detector__defense")
+    assert (
+        _first_index("attack__generation")
+        < _first_index("detector__train")
+        < _first_index("detector__defense")
+    )
 
 
 def test_real_experiment_stage_order_places_attack_before_detector(tmp_path: Path):
@@ -164,9 +173,15 @@ def test_real_experiment_stage_order_places_attack_before_detector(tmp_path: Pat
     plan = build_dvc_stage_plan(exp, mode="single")
     names = [entry["name"] for entry in plan]
 
-    attack_idx = next(i for i, name in enumerate(names) if name.startswith("attack__generation"))
-    detector_train_idx = next(i for i, name in enumerate(names) if name.startswith("detector__train"))
-    detector_defense_idx = next(i for i, name in enumerate(names) if name.startswith("detector__defense"))
+    attack_idx = next(
+        i for i, name in enumerate(names) if name.startswith("attack__generation")
+    )
+    detector_train_idx = next(
+        i for i, name in enumerate(names) if name.startswith("detector__train")
+    )
+    detector_defense_idx = next(
+        i for i, name in enumerate(names) if name.startswith("detector__defense")
+    )
     assert attack_idx < detector_train_idx < detector_defense_idx
 
 
@@ -294,7 +309,9 @@ def test_vega_plot_metric_token_uses_first_configured_optimizer():
     exp = _make_experiment_stub(with_files=True)
     exp.optimizers = ["macro_f1"]
     attack_cfg = SimpleNamespace(alias="hsj", attack_params={"max_iter": 20})
-    defense_cfg = SimpleNamespace(alias="class-labels", defense_params={"apply_fit": True})
+    defense_cfg = SimpleNamespace(
+        alias="class-labels", defense_params={"apply_fit": True}
+    )
 
     params_manifest = {
         "runtime_kwargs": {
@@ -383,7 +400,9 @@ def test_generate_dvc_pipeline_overwrite_behavior(tmp_path: Path, overwrite: boo
         assert output_file.exists()
     else:
         with pytest.raises(FileExistsError):
-            generate_dvc_pipeline(exp, output_file=output_file.as_posix(), overwrite=False)
+            generate_dvc_pipeline(
+                exp, output_file=output_file.as_posix(), overwrite=False
+            )
 
 
 def test_stage_plan_raises_for_unknown_stage_token():
@@ -402,20 +421,28 @@ def test_score_stage_requires_score_file_alias():
     exp = _make_experiment_stub(with_files=True)
     exp.files.update(score_file=None)
     with pytest.raises(ValueError, match="Stage 'score' requires files.score_file"):
-        build_dvc_stage_plan(exp, stage_selection=["score"], include_cache_aliases=False)
+        build_dvc_stage_plan(
+            exp, stage_selection=["score"], include_cache_aliases=False
+        )
 
 
 def test_persist_stage_requires_explicit_file_aliases():
     exp = _make_experiment_stub(with_files=False)
     with pytest.raises(ValueError, match="Stage 'persist' requires file aliases"):
-        build_dvc_stage_plan(exp, stage_selection=["persist"], include_cache_aliases=False)
+        build_dvc_stage_plan(
+            exp, stage_selection=["persist"], include_cache_aliases=False
+        )
 
 
 def test_cache_aliases_require_params_file_alias():
     exp = _make_experiment_stub(with_files=True)
     exp.files.update(params_file=None)
-    with pytest.raises(ValueError, match="include_cache_aliases=True requires files.params_file"):
-        build_dvc_stage_plan(exp, stage_selection=["train"], include_cache_aliases=True)
+    with pytest.raises(
+        ValueError, match="include_cache_aliases=True requires files.params_file"
+    ):
+        build_dvc_stage_plan(
+            exp, stage_selection=["train"], include_cache_aliases=True
+        )
 
 
 def test_build_dvc_experiment_plugin_hooks_adds_first_and_last_wrappers():
@@ -509,7 +536,9 @@ def test_run_dvc_plugin_hook_renders_only_for_last_after_persist(monkeypatch):
     assert called["push"] == 1
 
 
-def test_run_dvc_plugin_hook_writes_structured_params_yaml(tmp_path: Path, monkeypatch):
+def test_run_dvc_plugin_hook_writes_structured_params_yaml(
+    tmp_path: Path, monkeypatch
+):
     files = FileConfig(
         params_file=(tmp_path / "params.yaml").as_posix(),
         score_file=(tmp_path / "scores.json").as_posix(),
@@ -627,7 +656,9 @@ def test_generate_dvc_pipeline_writes_deterministic_params_yaml(tmp_path: Path):
     assert first["params_payload"] == second["params_payload"]
 
 
-def test_log_dvclive_artifacts_prefers_log_image_for_images(tmp_path: Path, monkeypatch):
+def test_log_dvclive_artifacts_prefers_log_image_for_images(
+    tmp_path: Path, monkeypatch
+):
     image_path = tmp_path / "chart.png"
     image_path.write_bytes(b"png")
 
@@ -643,11 +674,15 @@ def test_log_dvclive_artifacts_prefers_log_image_for_images(tmp_path: Path, monk
     exp = _make_experiment_stub(with_files=True)
     plugin = dvc_module.DVCExperimentPlugin(enabled=True)
 
-    monkeypatch.setattr(dvc_module, "_ensure_live_instance", lambda experiment, plugin: _FakeLive())
+    monkeypatch.setattr(
+        dvc_module, "_ensure_live_instance", lambda experiment, plugin: _FakeLive()
+    )
     monkeypatch.setattr(
         dvc_module,
         "_resolve_stage_outputs",
-        lambda experiment, stage, include_identity_dir=False, plugin=None: [image_path.as_posix()],
+        lambda experiment, stage, include_identity_dir=False, plugin=None: [
+            image_path.as_posix()
+        ],
     )
 
     dvc_module._log_dvclive_artifacts_and_plots(exp, plugin)
@@ -719,7 +754,9 @@ def test_experiment_hash_payload_excludes_dvc_plugin(tmp_path: Path):
         ("html", "report.html"),
     ],
 )
-def test_render_dvclive_report_mode_to_file_mapping(tmp_path: Path, monkeypatch, mode: str, expected_name: str):
+def test_render_dvclive_report_mode_to_file_mapping(
+    tmp_path: Path, monkeypatch, mode: str, expected_name: str
+):
     class _FakeLive:
         def __init__(self, **kwargs):
             self.kwargs = kwargs
@@ -795,7 +832,9 @@ def test_dvc_repro_and_force_repro_preserve_non_timing_outputs(tmp_path: Path):
 
     # DVC stage deps expect these entries in cwd.
     (workspace / "deckard").symlink_to(Path(__file__).resolve().parents[2] / "deckard")
-    (workspace / "examples").symlink_to(Path(__file__).resolve().parents[2] / "examples")
+    (workspace / "examples").symlink_to(
+        Path(__file__).resolve().parents[2] / "examples"
+    )
     rc_path = workspace / ".deckard_rc"
     rc_path.write_text("# test rc\n", encoding="utf-8")
 
@@ -831,7 +870,8 @@ def test_dvc_repro_and_force_repro_preserve_non_timing_outputs(tmp_path: Path):
                         filtered = [
                             token
                             for token in tokens
-                            if not token.startswith("+params_file=") and not token.startswith("+dvc_file=")
+                            if not token.startswith("+params_file=")
+                            and not token.startswith("+dvc_file=")
                             and not token.startswith("+dvclive_enabled=")
                             and not token.startswith("dvclive_enabled=")
                         ]
@@ -840,14 +880,20 @@ def test_dvc_repro_and_force_repro_preserve_non_timing_outputs(tmp_path: Path):
     dvc_file.write_text(yaml.safe_dump(dvc_payload, sort_keys=False), encoding="utf-8")
 
     params_payload = yaml.safe_load(
-        (workspace / "examples" / "sklearn" / "config" / "default.yaml").read_text(encoding="utf-8"),
+        (workspace / "examples" / "sklearn" / "config" / "default.yaml").read_text(
+            encoding="utf-8"
+        ),
     )
     if isinstance(params_payload, dict) and "dvclive_enabled" not in params_payload:
         params_payload["dvclive_enabled"] = False
-    params_file.write_text(yaml.safe_dump(params_payload, sort_keys=False), encoding="utf-8")
+    params_file.write_text(
+        yaml.safe_dump(params_payload, sort_keys=False), encoding="utf-8"
+    )
 
     env = _make_runtime_env(rc_path)
-    env["DECKARD_CONFIG_DIR"] = (workspace / "examples" / "sklearn" / "config").as_posix()
+    env["DECKARD_CONFIG_DIR"] = (
+        workspace / "examples" / "sklearn" / "config"
+    ).as_posix()
     env["DECKARD_DEFAULT_CONFIG_FILE"] = "default.yaml"
 
     init = subprocess.run(
@@ -859,7 +905,9 @@ def test_dvc_repro_and_force_repro_preserve_non_timing_outputs(tmp_path: Path):
         timeout=120,
         check=False,
     )
-    assert init.returncode == 0, f"dvc init failed:\nSTDOUT:\n{init.stdout}\nSTDERR:\n{init.stderr}"
+    assert (
+        init.returncode == 0
+    ), f"dvc init failed:\nSTDOUT:\n{init.stdout}\nSTDERR:\n{init.stderr}"
 
     repro = subprocess.run(
         [sys.executable, "-m", "dvc", "repro", dvc_file.as_posix()],
@@ -870,7 +918,9 @@ def test_dvc_repro_and_force_repro_preserve_non_timing_outputs(tmp_path: Path):
         timeout=1800,
         check=False,
     )
-    assert repro.returncode == 0, f"dvc repro failed:\nSTDOUT:\n{repro.stdout}\nSTDERR:\n{repro.stderr}"
+    assert (
+        repro.returncode == 0
+    ), f"dvc repro failed:\nSTDOUT:\n{repro.stdout}\nSTDERR:\n{repro.stderr}"
 
     lock_path = workspace / "dvc.lock"
     assert lock_path.exists(), "dvc.lock was not generated by dvc repro"
@@ -880,7 +930,11 @@ def test_dvc_repro_and_force_repro_preserve_non_timing_outputs(tmp_path: Path):
         stages = payload.get("stages", {}) if isinstance(payload, dict) else {}
         hashes: dict[str, str] = {}
         for stage_payload in stages.values():
-            outs = stage_payload.get("outs", []) if isinstance(stage_payload, dict) else []
+            outs = (
+                stage_payload.get("outs", [])
+                if isinstance(stage_payload, dict)
+                else []
+            )
             for out in outs:
                 if not isinstance(out, dict):
                     continue
@@ -911,7 +965,9 @@ def test_dvc_repro_and_force_repro_preserve_non_timing_outputs(tmp_path: Path):
         for path, digest in first_hashes_all.items()
         if (not _is_volatile_output(path)) and ("score" not in path.lower())
     }
-    assert len(first_hashes) > 0, "No stable non-timing DVC output hashes were captured"
+    assert (
+        len(first_hashes) > 0
+    ), "No stable non-timing DVC output hashes were captured"
 
     score_path = Path(exp.files.score_file)
     assert score_path.exists(), "Expected score file is missing after first repro"

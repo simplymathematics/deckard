@@ -6,7 +6,9 @@ from deckard.data.canon import normalize_data_score_stage
 
 
 def _cfg_with_loaded_splits() -> DataConfig:
-    cfg = DataConfig(dataset_name="make_classification", scorer=lambda **kwargs: {"base": 1})
+    cfg = DataConfig(
+        dataset_name="make_classification", scorer=lambda **kwargs: {"base": 1}
+    )
     cfg._X = pd.DataFrame({"f": [1, 2, 3, 4]})
     cfg._y = pd.Series([0, 1, 0, 1])
     cfg.X_train = pd.DataFrame({"f": [1, 2]})

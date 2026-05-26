@@ -1408,11 +1408,29 @@ def test_optimizer_policy_auto_configures_from_root_cfg(monkeypatch):
         },
     )
 
-    monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: SimpleNamespace(mode="RunMode.MULTIRUN"))
-    monkeypatch.setattr(optimize_module, "_normalize_mode_cfg", lambda config, hydra_cfg, **kwargs: config)
-    monkeypatch.setattr(optimize_module, "_seed_experiment_uuid_for_current_trial", lambda **kwargs: None)
-    monkeypatch.setattr(optimize_module, "_resolve_multirun_paths", lambda hydra_cfg: {})
-    monkeypatch.setattr(optimize_module, "_sync_multirun_trial_attributes", lambda **kwargs: captured.update(kwargs))
+    monkeypatch.setattr(
+        optimize_module.HydraConfig,
+        "get",
+        lambda: SimpleNamespace(mode="RunMode.MULTIRUN"),
+    )
+    monkeypatch.setattr(
+        optimize_module,
+        "_normalize_mode_cfg",
+        lambda config, hydra_cfg, **kwargs: config,
+    )
+    monkeypatch.setattr(
+        optimize_module,
+        "_seed_experiment_uuid_for_current_trial",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        optimize_module, "_resolve_multirun_paths", lambda hydra_cfg: {}
+    )
+    monkeypatch.setattr(
+        optimize_module,
+        "_sync_multirun_trial_attributes",
+        lambda **kwargs: captured.update(kwargs),
+    )
 
     callback.on_compose_config(cfg)
     callback._resolved_score_file = None
@@ -1740,7 +1758,9 @@ def test_default_optimizer_callback_delegates_study_setup_to_optimizer(monkeypat
             return "delegated-study", "sqlite:///delegated.db"
 
         def create_study(self, *, study_name: str, storage: str):
-            calls.append(("create_study", {"study_name": study_name, "storage": storage}))
+            calls.append(
+                ("create_study", {"study_name": study_name, "storage": storage})
+            )
             return DummyStudy()
 
         def set_metric_names(self, study):
@@ -1785,7 +1805,9 @@ def test_optimizer_config_resolves_binding_and_policy_fields():
     )
 
     assert binding == ("explicit-study", "sqlite:///bound.db")
-    assert policy.resolve_score_policy({"optimizers": ["loss"], "directions": ["minimize"]}) == (
+    assert policy.resolve_score_policy(
+        {"optimizers": ["loss"], "directions": ["minimize"]}
+    ) == (
         ["accuracy"],
         ["maximize"],
     )

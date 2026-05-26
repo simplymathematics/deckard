@@ -74,7 +74,7 @@ def test_repository_enforcement_default_score_config_name_fails(
     sample = tmp_path / "bad_default_score_config.py"
     sample.write_text(
         "class DefaultModelScoreConfig:\n"
-        "    \"\"\"Temporary test class.\"\"\"\n"
+        '    """Temporary test class."""\n'
         "    pass\n",
         encoding="utf-8",
     )
@@ -92,7 +92,7 @@ def test_repository_enforcement_default_scorer_dict_config_name_passes(
     sample = tmp_path / "good_default_scorer_dict_config.py"
     sample.write_text(
         "class DefaultModelScorerDictConfig:\n"
-        "    \"\"\"Temporary test class.\"\"\"\n"
+        '    """Temporary test class."""\n'
         "    pass\n",
         encoding="utf-8",
     )

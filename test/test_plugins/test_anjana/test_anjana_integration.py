@@ -58,8 +58,7 @@ def _run_optimize_and_load_scores(
             "++score._target_=deckard.score.base.DefaultClassifierScorerDictConfig",
         )
     if any(
-        isinstance(item, str)
-        and item.startswith("+score@score.model=classification")
+        isinstance(item, str) and item.startswith("+score@score.model=classification")
         for item in final_overrides
     ):
         final_overrides.append(
@@ -139,7 +138,9 @@ def _run_optimize_and_load_scores(
 def _contains_metric(scores: dict, metric: str) -> bool:
     if metric in scores:
         return True
-    return any(isinstance(value, dict) and metric in value for value in scores.values())
+    return any(
+        isinstance(value, dict) and metric in value for value in scores.values()
+    )
 
 
 def _make_anjana_data(n=40, monkeypatch=None, defense=None):

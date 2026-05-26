@@ -148,8 +148,7 @@ class TestPytorchDataConfig:
         shutil.rmtree(cls.temp_dir, ignore_errors=True)
 
     def test_initialization(self):
-        assert self.config.dataset_name == \
-            "torch.utils.data.TensorDataset"
+        assert self.config.dataset_name == "torch.utils.data.TensorDataset"
         assert self.config.data_dir == self.temp_dir
         assert self.config.test_size == 100
         assert self.config.train_size == 100
@@ -625,9 +624,9 @@ class TestPytorchCustomDataConfig:
             dataset_name="torch.utils.data.TensorDataset",
             dataset="dummy",
             data_dir=str(self.temp_dir),
-            sampler = {
-            "train_size": 4,
-            "test_size" :2,
+            sampler={
+                "train_size": 4,
+                "test_size": 2,
             },
             data_params=None,
         )

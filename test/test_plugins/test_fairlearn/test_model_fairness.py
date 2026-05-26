@@ -126,7 +126,7 @@ class TestFairlearnModelConfig:
             estimator=first_estimator,
             data=runtime_data,
         )
-        assert round(abs(model.defense_application_time-0.7), 7) == 0
+        assert round(abs(model.defense_application_time - 0.7), 7) == 0
         assert fair_defense.data is runtime_data
 
     def test_apply_defense_rejects_legacy_defense_list(self):
@@ -245,10 +245,12 @@ class TestFairlearnModelConfig:
             model_params={"n_estimators": 10},
             data=fairness_data,
         )
-        assert isinstance(model, BaseConfig), \
-            "FairlearnModelConfig should inherit from ConfigBase"
-        assert hasattr(model, "__hash__"), \
-            "FairlearnModelConfig should have __hash__ method"
+        assert isinstance(
+            model, BaseConfig
+        ), "FairlearnModelConfig should inherit from ConfigBase"
+        assert hasattr(
+            model, "__hash__"
+        ), "FairlearnModelConfig should have __hash__ method"
         # Note: FairlearnModelConfig may have unhashable runtime fields
         # so we verify the infrastructure is in place rather than attempting full hash
 
@@ -377,10 +379,11 @@ class TestFairlearnDefenseConfigApplyDefense:
                 "eps": 0.1,
             },
         )
-        assert isinstance(cfg, BaseConfig), \
-            "FairlearnDefenseConfig should inherit from ConfigBase"
-        assert hasattr(cfg, "__hash__"), \
-            "FairlearnDefenseConfig should have __hash__ method"
+        assert isinstance(
+            cfg, BaseConfig
+        ), "FairlearnDefenseConfig should inherit from ConfigBase"
+        assert hasattr(
+            cfg, "__hash__"
+        ), "FairlearnDefenseConfig should have __hash__ method"
         # Note: FairlearnDefenseConfig may have unhashable runtime fields
         # so we verify the infrastructure is in place rather than attempting full hash
-

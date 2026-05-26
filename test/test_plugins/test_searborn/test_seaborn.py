@@ -207,4 +207,3 @@ class TestSeabornPlots:
         )
         with pytest.raises(AttributeError):
             cfg_list()
-

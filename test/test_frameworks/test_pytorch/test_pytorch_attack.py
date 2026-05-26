@@ -365,9 +365,9 @@ class TestAttackConfig:
         model = model
         original_hash = hash(attack)
         attack(data, model)
-        assert original_hash == \
-            hash(attack), \
-            "Hash changed after call for AttackConfig"
+        assert original_hash == hash(
+            attack
+        ), "Hash changed after call for AttackConfig"
 
 
 class TestPytorchAttackConfig:
@@ -2713,7 +2713,9 @@ class TestFairlearnAttackScorer:
         from deckard.plugins.fairlearn.score import FairlearnScorerDictConfig
         from deckard.score.base import DefaultClassifierScorerDictConfig
 
-        scorer = FairlearnAttackScorerConfig(evasion=DefaultClassifierScorerDictConfig())
+        scorer = FairlearnAttackScorerConfig(
+            evasion=DefaultClassifierScorerDictConfig()
+        )
         assert isinstance(scorer.evasion, FairlearnScorerDictConfig)
         assert isinstance(scorer.membership_inference, FairlearnScorerDictConfig)
         assert isinstance(scorer.attribute_inference, FairlearnScorerDictConfig)
@@ -2734,8 +2736,7 @@ class TestFairlearnAttackScorer:
             sensitive_features=sensitive,
         )
         group_keys = [k for k in result if "_accuracy" in k or "_f1" in k]
-        assert len(group_keys) > 0, \
-            f"No group metrics found in {list(result)}"
+        assert len(group_keys) > 0, f"No group metrics found in {list(result)}"
 
     def test_score_membership_with_sensitive_features_produces_group_metrics(self):
         scorer = FairlearnAttackScorerConfig()
@@ -2751,8 +2752,9 @@ class TestFairlearnAttackScorer:
             sensitive_features=sensitive,
         )
         group_keys = [k for k in result if "membership_inference" in k]
-        assert len(group_keys) > 0, \
-            f"No membership_inference metrics found in {list(result)}"
+        assert (
+            len(group_keys) > 0
+        ), f"No membership_inference metrics found in {list(result)}"
 
     def test_score_attribute_with_sensitive_features_produces_group_metrics(self):
         scorer = FairlearnAttackScorerConfig()
@@ -2770,8 +2772,7 @@ class TestFairlearnAttackScorer:
             sensitive_features=sensitive,
         )
         group_keys = [k for k in result if "inferred_age" in k]
-        assert len(group_keys) > 0, \
-            f"No inferred_age metrics found in {list(result)}"
+        assert len(group_keys) > 0, f"No inferred_age metrics found in {list(result)}"
 
     def test_evasion_attack_with_fairlearn_scorer_end_to_end(self):
         pytest.importorskip("art")
@@ -2788,8 +2789,9 @@ class TestFairlearnAttackScorer:
         )
         scores = attack(data, model)
         group_keys = [k for k in scores if "_accuracy" in k or "_f1" in k]
-        assert len(group_keys) > 0, \
-            f"Expected per-group evasion metrics, got keys: {list(scores)}"
+        assert (
+            len(group_keys) > 0
+        ), f"Expected per-group evasion metrics, got keys: {list(scores)}"
 
     def test_membership_inference_with_fairlearn_scorer_end_to_end(self):
         pytest.importorskip("art")
@@ -2806,5 +2808,6 @@ class TestFairlearnAttackScorer:
         )
         scores = attack(data, model)
         group_keys = [k for k in scores if "membership_inference" in k]
-        assert len(group_keys) > 0, \
-            f"Expected per-group membership metrics, got keys: {list(scores)}"
+        assert (
+            len(group_keys) > 0
+        ), f"Expected per-group membership metrics, got keys: {list(scores)}"

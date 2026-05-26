@@ -190,8 +190,6 @@ def test_plugin_instantiation_and_hook_paths(monkeypatch):
         cfg._get_plugins()
 
 
-
-
 @pytest.mark.xfail(
     condition=True,
     reason="pkg import fails, as expected. Need better Mock.",
@@ -326,11 +324,13 @@ def test_load_data_routes_lifelines_aliases_and_csv_options(monkeypatch, tmp_pat
     monkeypatch.setattr(
         data_declarations,
         "discover_provider_dataset_loaders",
-        lambda provider: {
-            "lung": lambda **kwargs: pd.DataFrame({"x": [1], "target": [0]}),
-        }
-        if provider == "lifelines"
-        else {},
+        lambda provider: (
+            {
+                "lung": lambda **kwargs: pd.DataFrame({"x": [1], "target": [0]}),
+            }
+            if provider == "lifelines"
+            else {}
+        ),
     )
     data_declarations.load_lifelines_dataset(cfg, "lung")
     assert list(cfg._X.columns) == ["x"]
@@ -374,14 +374,16 @@ def test_load_data_routes_yellowbrick_aliases(monkeypatch):
     monkeypatch.setattr(
         data_declarations,
         "discover_provider_dataset_loaders",
-        lambda provider: {
-            "energy": lambda **kwargs: (
-                pd.DataFrame({"x": [1]}),
-                pd.Series([0]),
-            ),
-        }
-        if provider == "yellowbrick"
-        else {},
+        lambda provider: (
+            {
+                "energy": lambda **kwargs: (
+                    pd.DataFrame({"x": [1]}),
+                    pd.Series([0]),
+                ),
+            }
+            if provider == "yellowbrick"
+            else {}
+        ),
     )
     data_declarations.load_yellowbrick_dataset(cfg, "energy")
     assert list(cfg._X.columns) == ["x"]
@@ -600,7 +602,10 @@ def test_fit_transform_x_handles_sparse_and_generated_feature_names():
         pipeline={
             "csr": {
                 "name": "sklearn.preprocessing.FunctionTransformer",
-                "kwargs": {"func": lambda values: csr_matrix(values), "validate": False},
+                "kwargs": {
+                    "func": lambda values: csr_matrix(values),
+                    "validate": False,
+                },
             },
         },
     )
@@ -637,7 +642,9 @@ def test_pipeline_call_saves_scores_and_handles_y_pipeline(tmp_path):
     cfg.load_dataset = lambda: None
     cfg.score = lambda *args, mode=None, **kwargs: {"metric": 2}
     saved = {}
-    cfg.merge_and_persist_scores = lambda scores, score_file=None: saved.update(scores) or scores
+    cfg.merge_and_persist_scores = (
+        lambda scores, score_file=None: saved.update(scores) or scores
+    )
     cfg._prepare_files = lambda files=None: False
     cfg.files = {}
 

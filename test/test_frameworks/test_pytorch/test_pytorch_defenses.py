@@ -27,11 +27,10 @@ class TestRetrainingDefensePipeline:
 
         pipeline.apply(estimator=object(), data=object())
 
-        assert order == \
-            [
-                "art.defences.postprocessor.GaussianNoise",
-                "art.defences.trainer.AdversarialTrainerMadryPGD",
-            ]
+        assert order == [
+            "art.defences.postprocessor.GaussianNoise",
+            "art.defences.trainer.AdversarialTrainerMadryPGD",
+        ]
 
     def test_retraining_rejects_non_neural_network_models(self):
         data = DummyDataConfig(

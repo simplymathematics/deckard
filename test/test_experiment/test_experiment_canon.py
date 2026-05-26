@@ -36,7 +36,7 @@ def test_experiment_canon_times_preserves_extensions():
         {
             "experiment_total_time": 1.0,
             "custom_hook_time": 0.5,
-        }
+        },
     )
     assert times["experiment_total_time"] == 1.0
     assert times["custom_hook_time"] == 0.5
@@ -96,7 +96,12 @@ def test_experiment_canon_runtime_contract_populates_missing_fields():
 
 
 def test_experiment_canon_declares_score_modes_and_stages():
-    assert set(CANONICAL_EXPERIMENT_SCORE_MODES) == {"pre-sample", "train", "test", "val"}
+    assert set(CANONICAL_EXPERIMENT_SCORE_MODES) == {
+        "pre-sample",
+        "train",
+        "test",
+        "val",
+    }
     assert set(CANONICAL_EXPERIMENT_STAGES) == {
         "load",
         "sample",
@@ -138,7 +143,11 @@ def test_experiment_hook_graph_is_built_from_component_stage_contracts():
     graph = build_experiment_hook_graph()
     assert set(graph) == set(CANONICAL_EXPERIMENT_COMPONENT_STAGES)
     assert any(node["stage"] == "pre-load" for node in graph["data"])
-    assert all("before" in node and "after" in node for nodes in graph.values() for node in nodes)
+    assert all(
+        "before" in node and "after" in node
+        for nodes in graph.values()
+        for node in nodes
+    )
 
 
 def test_experiment_hook_plugin_and_bundle_generation_have_expected_shape():
@@ -175,8 +184,12 @@ def test_experiment_stage_cache_key_is_deterministic_and_identity_sensitive():
 
 
 def test_experiment_stage_param_key_paths_are_stage_scoped():
-    load_paths = set(build_experiment_stage_param_key_paths(stage="load", component="data"))
-    model_paths = set(build_experiment_stage_param_key_paths(stage="model_score", component="model"))
+    load_paths = set(
+        build_experiment_stage_param_key_paths(stage="load", component="data")
+    )
+    model_paths = set(
+        build_experiment_stage_param_key_paths(stage="model_score", component="model")
+    )
 
     assert "data" in load_paths
     assert "model" not in load_paths
@@ -209,7 +222,9 @@ def test_experiment_stage_param_subset_filters_manifest_by_stage_component():
 
 def test_compose_hook_plugins_preserves_order_and_dedupes_bundle_entries():
     first = HookPlugin(hook_name="before_load", method_name="_experiment_stage_hook")
-    duplicate = HookPlugin(hook_name="before_load", method_name="_experiment_stage_hook")
+    duplicate = HookPlugin(
+        hook_name="before_load", method_name="_experiment_stage_hook"
+    )
     second = HookPlugin(hook_name="after_load", method_name="_experiment_stage_hook")
 
     bundle_a = HookBundle(name="bundle-a", hooks=(first,))

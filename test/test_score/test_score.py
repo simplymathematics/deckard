@@ -57,8 +57,7 @@ class TestScorerDictConfigMerge:
         result = ScorerDictConfig.merge(
             [self.acc_dict, self.prec_dict, self.f1_dict],
         )
-        assert set(result.scorers.keys()) == \
-            {"accuracy", "precision", "f1"}
+        assert set(result.scorers.keys()) == {"accuracy", "precision", "f1"}
 
     def test_merge_scorer_dict_config_instances(self):
         a = ScorerDictConfig(scorers=self.acc_dict)
@@ -74,8 +73,10 @@ class TestScorerDictConfigMerge:
             },
         }
         result = ScorerDictConfig.merge([self.acc_dict, override])
-        assert result.scorers["accuracy"].score_function.__name__ == \
-            "balanced_accuracy_score"
+        assert (
+            result.scorers["accuracy"].score_function.__name__
+            == "balanced_accuracy_score"
+        )
 
     def test_merge_dict_with_scorers_key(self):
         wrapped = {"scorers": self.acc_dict}
@@ -130,8 +131,9 @@ class TestScorerConfig:
             score_params={"average": "binary", "zero_division": 0},
         )
         score = config(y_true=y_true, y_pred=y_pred)
-        assert score == \
-            precision_score(y_true, y_pred, average="binary", zero_division=0)
+        assert score == precision_score(
+            y_true, y_pred, average="binary", zero_division=0
+        )
 
     def test_scorer_config_accepts_torch_tensors_when_available(self):
         try:
@@ -575,6 +577,11 @@ class TestDataInspectionScorers:
     def test_data_scorer_configstores_registered(self):
         cs = ConfigStore.instance()
         assert cs is not None
-        assert isinstance(DefaultDataClassificationScorerDictConfig(), DefaultDataClassificationScorerDictConfig)
-        assert isinstance(DefaultDataRegressionScorerDictConfig(), DefaultDataRegressionScorerDictConfig)
-
+        assert isinstance(
+            DefaultDataClassificationScorerDictConfig(),
+            DefaultDataClassificationScorerDictConfig,
+        )
+        assert isinstance(
+            DefaultDataRegressionScorerDictConfig(),
+            DefaultDataRegressionScorerDictConfig,
+        )

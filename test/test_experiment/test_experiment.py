@@ -32,7 +32,10 @@ from deckard.file import FileConfig
 from deckard.frameworks.pytorch.experiment import TorchExperimentConfig
 from deckard.model import ModelConfig
 from deckard.plugins import HookPlugin
-from deckard.score import DefaultClassifierScorerDictConfig, DefaultDataClassificationScorerDictConfig
+from deckard.score import (
+    DefaultClassifierScorerDictConfig,
+    DefaultDataClassificationScorerDictConfig,
+)
 from deckard.utils import BaseConfig
 
 
@@ -97,9 +100,7 @@ class TestKFoldExperiment:
         exp = self._make_exp()
         scores = exp()
         for k in range(self.N_FOLDS):
-            assert f"accuracy_fold_{k}" in \
-                scores, \
-                f"missing accuracy_fold_{k}"
+            assert f"accuracy_fold_{k}" in scores, f"missing accuracy_fold_{k}"
 
     def test_kfold_mean_key_present(self):
         exp = self._make_exp()
@@ -112,7 +113,8 @@ class TestKFoldExperiment:
         fold_accs = [scores[f"accuracy_fold_{k}"] for k in range(self.N_FOLDS)]
         assert scores["accuracy"] == pytest.approx(
             float(np.mean(fold_accs)),
-            abs=1e-10)
+            abs=1e-10,
+        )
 
 
 class TestShuffleExperiment:
@@ -155,9 +157,7 @@ class TestShuffleExperiment:
         exp = self._make_exp()
         scores = exp()
         for k in range(self.N_SPLITS):
-            assert f"accuracy_split_{k}" in \
-                scores, \
-                f"missing accuracy_split_{k}"
+            assert f"accuracy_split_{k}" in scores, f"missing accuracy_split_{k}"
 
     def test_shuffle_mean_key_present(self):
         exp = self._make_exp()
@@ -170,7 +170,8 @@ class TestShuffleExperiment:
         split_accs = [scores[f"accuracy_split_{k}"] for k in range(self.N_SPLITS)]
         assert scores["accuracy"] == pytest.approx(
             float(np.mean(split_accs)),
-            abs=1e-10)
+            abs=1e-10,
+        )
 
 
 class TestExperimentValidationScoring:
@@ -1867,7 +1868,9 @@ class TestExperimentRuntimeCompositionAndPersistence:
         assert isinstance(exp.model, ModelConfig)
         assert exp.model.model_type == "sklearn.linear_model.LogisticRegression"
 
-    def test_compose_components_accepts_hook_bundle_dict_and_orders_after_canonical(self):
+    def test_compose_components_accepts_hook_bundle_dict_and_orders_after_canonical(
+        self,
+    ):
         exp = self._make_base_experiment()
         custom_hook = HookPlugin(
             hook_name="before_train",
@@ -1891,11 +1894,13 @@ class TestExperimentRuntimeCompositionAndPersistence:
     def test_stage_cache_key_changes_when_component_params_change(self):
         exp_a = self._make_base_experiment()
         exp_b = self._make_base_experiment()
-        exp_b.compose_components(model=ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
-            classifier=True,
-            model_params={"max_depth": 5},
-        ))
+        exp_b.compose_components(
+            model=ModelConfig(
+                model_type="sklearn.tree.DecisionTreeClassifier",
+                classifier=True,
+                model_params={"max_depth": 5},
+            ),
+        )
 
         key_a = build_experiment_stage_cache_key(
             params_manifest=build_experiment_params_manifest(exp_a),
@@ -1920,8 +1925,10 @@ class TestExperimentRuntimeCompositionAndPersistence:
             saved_path = Path(str(params_path) + ".yaml")
             assert saved_path.exists()
             payload = yaml.safe_load(saved_path.read_text(encoding="utf-8"))
-            assert payload.get("schema_version") == \
-                CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_VERSION
+            assert (
+                payload.get("schema_version")
+                == CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_VERSION
+            )
             assert "params" in payload
             assert "runtime" in payload
 
@@ -1954,4 +1961,3 @@ class TestExperimentRuntimeCompositionAndPersistence:
 
             with pytest.raises(ValueError):
                 ExperimentConfig.from_yaml(str(path))
-

@@ -34,7 +34,7 @@ def test_art_defense_step_accepts_explicit_flags_from_step_payload():
                 "defense": _DummyDefense("art.defences.postprocessor.HighConfidence"),
                 "apply_fit": False,
                 "apply_predict": True,
-            }
+            },
         ],
     )
 
@@ -50,7 +50,7 @@ def test_art_defense_flags_can_be_provided_in_defense_params():
             {
                 "defense_name": "art.defences.postprocessor.ClassLabels",
                 "defense_params": {"apply_fit": True, "apply_predict": False},
-            }
+            },
         ],
     )
 
@@ -67,7 +67,7 @@ def test_pipeline_stage_gates_defense_execution_by_step_flags():
                 "defense": defense,
                 "apply_fit": False,
                 "apply_predict": True,
-            }
+            },
         ],
     )
 
@@ -96,7 +96,9 @@ def test_defense_step_factory_proxies_flags():
     assert step.defense is defense
 
 
-def test_pretrained_model_with_fit_defense_snapshots_and_retrains(monkeypatch, tmp_path):
+def test_pretrained_model_with_fit_defense_snapshots_and_retrains(
+    monkeypatch, tmp_path
+):
     model = ModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
         classifier=True,
@@ -136,8 +138,14 @@ def test_pretrained_model_with_fit_defense_snapshots_and_retrains(monkeypatch, t
     monkeypatch.setattr(model, "load", lambda _path: SimpleNamespace(loaded=True))
     monkeypatch.setattr(model, "_is_model_fitted", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(model, "_require_defense_pipeline", lambda: defense_pipeline)
-    monkeypatch.setattr(model, "_train_with_runtime_trainer", fake_train_with_runtime_trainer)
-    monkeypatch.setattr(model, "_initialize_model", lambda: setattr(model, "_model", SimpleNamespace(retrained=True)))
+    monkeypatch.setattr(
+        model, "_train_with_runtime_trainer", fake_train_with_runtime_trainer
+    )
+    monkeypatch.setattr(
+        model,
+        "_initialize_model",
+        lambda: setattr(model, "_model", SimpleNamespace(retrained=True)),
+    )
     monkeypatch.setattr(
         model,
         "apply_defense",
@@ -189,7 +197,9 @@ def test_loaded_non_pretrained_model_with_fit_defense_does_not_force_retrain(
     monkeypatch.setattr(model, "load", lambda _path: SimpleNamespace(loaded=True))
     monkeypatch.setattr(model, "_is_model_fitted", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(model, "_require_defense_pipeline", lambda: defense_pipeline)
-    monkeypatch.setattr(model, "_train_with_runtime_trainer", fake_train_with_runtime_trainer)
+    monkeypatch.setattr(
+        model, "_train_with_runtime_trainer", fake_train_with_runtime_trainer
+    )
 
     data = SimpleNamespace(X_train=[0, 1], y_train=[0, 1])
     model._load_or_train_model(data, model_file=str(model_file), times={})

@@ -41,13 +41,16 @@ class TestDefenseConfig:
 
     def test_defense_config_initialization(self):
         # Test default initialization
-        assert self.defense_config.model_type == \
-            "sklearn.ensemble.RandomForestClassifier"
+        assert (
+            self.defense_config.model_type == "sklearn.ensemble.RandomForestClassifier"
+        )
         assert self.defense_config.classifier
         assert not self.defense_config.probability
         assert self.defense_config.clip_values is None
-        assert self.defense_config.defense_name == \
-            "art.defences.postprocessor.HighConfidence"
+        assert (
+            self.defense_config.defense_name
+            == "art.defences.postprocessor.HighConfidence"
+        )
 
     def test_apply_defense_without_model(self):
         # Test applying defense without a fitted model
@@ -109,9 +112,9 @@ class TestDefenseConfig:
         ):
             self.defense_config.score_dict["runtime"] = 1
 
-        assert original_hash == \
-            hash(self.defense_config), \
-            "Hash changed after defense apply-time runtime updates"
+        assert original_hash == hash(
+            self.defense_config
+        ), "Hash changed after defense apply-time runtime updates"
 
 
 class TestDefensePipelineConfigListCoerce:

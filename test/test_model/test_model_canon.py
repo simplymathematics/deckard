@@ -26,7 +26,7 @@ def test_model_canon_times_preserves_extensions():
         {
             "training_time": 1.2,
             "custom_plugin_time": 0.4,
-        }
+        },
     )
     assert times["training_time"] == 1.2
     assert times["custom_plugin_time"] == 0.4
@@ -83,7 +83,10 @@ def test_model_canon_trainer_alias_normalization(value, expected):
     [
         ("anjana.defense.SomeDefense", "pre_art_defense"),
         ("fairlearn.reductions.ExponentiatedGradient", "pre_fit"),
-        ("fairlearn.adversarial.AdversarialFairnessClassifier", "post_fit_pre_predict"),
+        (
+            "fairlearn.adversarial.AdversarialFairnessClassifier",
+            "post_fit_pre_predict",
+        ),
         ("fairlearn.postprocessing.ThresholdOptimizer", "post_fit_pre_predict"),
         ("art.defences.preprocessor.FeatureSqueezing", "post_fit_pre_predict"),
     ],
@@ -93,5 +96,9 @@ def test_model_canon_defense_stage_resolution(defense_name, expected):
 
 
 def test_model_canon_defense_stage_priority_order():
-    assert defense_stage_priority("pre_art_defense") < defense_stage_priority("pre_fit")
-    assert defense_stage_priority("pre_fit") < defense_stage_priority("post_fit_pre_predict")
+    assert defense_stage_priority("pre_art_defense") < defense_stage_priority(
+        "pre_fit"
+    )
+    assert defense_stage_priority("pre_fit") < defense_stage_priority(
+        "post_fit_pre_predict"
+    )

@@ -37,7 +37,9 @@ def test_scoredict_update_get_and_flatten_nested_paths():
     scores.update_score(0.95, key="acc", stage="eval", mode="test", split="holdout")
     scores.update_score({"loss": 0.12}, stage="eval", mode="test")
 
-    assert scores.get_scores(stage="eval", mode="test", split="holdout") == {"acc": 0.95}
+    assert scores.get_scores(stage="eval", mode="test", split="holdout") == {
+        "acc": 0.95
+    }
     assert scores.get_scores(stage="eval", mode="test")["loss"] == 0.12
 
     flat = scores.flatten()

@@ -84,7 +84,7 @@ def test_json_contract_handles_pandas_payloads(tmp_path: Path):
         "test": {
             "series": pd.Series([1.0, 2.0], index=["a", "b"]),
             "frame": pd.DataFrame({"x": [3, 4], "y": [5, 6]}),
-        }
+        },
     }
     score_file = tmp_path / "pandas_scores.json"
 

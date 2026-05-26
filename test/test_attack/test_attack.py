@@ -88,8 +88,7 @@ class TestAttackConfig:
                 "_target_": "deckard.score.attack.FairlearnAttackScorerConfig",
             },
         )
-        assert cfg_target.scorer.__class__.__name__ == \
-            "FairlearnAttackScorerConfig"
+        assert cfg_target.scorer.__class__.__name__ == "FairlearnAttackScorerConfig"
 
         cfg_name = AttackConfig(
             attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
@@ -97,15 +96,13 @@ class TestAttackConfig:
                 "name": "deckard.score.attack.FairlearnAttackScorerConfig",
             },
         )
-        assert cfg_name.scorer.__class__.__name__ == \
-            "FairlearnAttackScorerConfig"
+        assert cfg_name.scorer.__class__.__name__ == "FairlearnAttackScorerConfig"
 
         cfg_path = AttackConfig(
             attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             scorer="deckard.score.attack.FairlearnAttackScorerConfig",
         )
-        assert cfg_path.scorer.__class__.__name__ == \
-            "FairlearnAttackScorerConfig"
+        assert cfg_path.scorer.__class__.__name__ == "FairlearnAttackScorerConfig"
 
         with pytest.raises(TypeError, match="_score"):
             AttackConfig(
@@ -209,9 +206,12 @@ class TestAttackConfig:
         class _Data:
             classifier = None
 
-        assert not  \
-            AttackConfig._infer_task_is_classification(_Data(), LinearRegression())
-        assert AttackConfig._infer_task_is_classification(_Data(), LogisticRegression())
+        assert not AttackConfig._infer_task_is_classification(
+            _Data(), LinearRegression()
+        )
+        assert AttackConfig._infer_task_is_classification(
+            _Data(), LogisticRegression()
+        )
 
         data = type("D", (), {"classifier": True})()
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
@@ -225,8 +225,9 @@ class TestAttackConfig:
             attack._score("evasion", [0, 1], [0, 1])
 
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
-        assert not  \
-            attack._is_regression_prediction_output([0, 1], [[0.2, 0.8], [0.6, 0.4]])
+        assert not attack._is_regression_prediction_output(
+            [0, 1], [[0.2, 0.8], [0.6, 0.4]]
+        )
         assert attack._is_regression_prediction_output([0.2, 0.3], [0.1, 0.2])
 
         arr = attack._to_numpy_array(pd.Series([1, 2, 3]), flatten=True)
@@ -243,12 +244,12 @@ class TestAttackConfig:
         )
         assert np.array_equal(labels, np.array([1, 0]))
         assert np.array_equal(
-                attack._normalize_ground_truth(
-                    pd.Series(["a", "b", "a"]),
-                    is_regression=False,
-                ),
-                np.array([0, 1, 0]),
-            )
+            attack._normalize_ground_truth(
+                pd.Series(["a", "b", "a"]),
+                is_regression=False,
+            ),
+            np.array([0, 1, 0]),
+        )
 
         class_labels = attack._target_to_class_labels(np.array([[0, 1], [1, 0]]))
         assert np.array_equal(class_labels, np.array([1, 0]))
@@ -287,31 +288,37 @@ class TestAttackConfig:
                 "MembershipInferenceBlackBox"
             ),
         )
-        assert membership.resolve_mode_for_attack_kind(
+        assert (
+            membership.resolve_mode_for_attack_kind(
                 "membership",
                 attack_subtype="membership_inference",
-            ) == \
-            "train"
+            )
+            == "train"
+        )
 
         reconstruction = AttackConfig(
             attack_type=(
                 "art.attacks.inference.reconstruction.DatabaseReconstruction"
             ),
         )
-        assert reconstruction.resolve_mode_for_attack_kind(
+        assert (
+            reconstruction.resolve_mode_for_attack_kind(
                 "reconstruction",
                 attack_subtype="reconstruction",
-            ) == \
-            "train"
+            )
+            == "train"
+        )
 
         inversion = AttackConfig(
             attack_type="art.attacks.inference.model_inversion.MIFace",
         )
-        assert inversion.resolve_mode_for_attack_kind(
+        assert (
+            inversion.resolve_mode_for_attack_kind(
                 "model_inversion",
                 attack_subtype="model_inversion",
-            ) == \
-            "test"
+            )
+            == "test"
+        )
 
     def test_attack_runtime_contract_defaults_and_stage_metadata(self):
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
@@ -328,8 +335,7 @@ class TestAttackConfig:
             ),
             attack_params={"class_source": 0, "class_target": 1},
         )
-        assert poisoning.resolve_mode_for_attack_kind("poisoning") == \
-            "train"
+        assert poisoning.resolve_mode_for_attack_kind("poisoning") == "train"
 
     def test_attack_mode_split_override_precedence(self):
         attack = AttackConfig(
@@ -339,11 +345,13 @@ class TestAttackConfig:
         attack.set_mode("val")
         assert attack.resolve_mode_for_attack_kind("evasion") == "train"
 
-        assert attack.resolve_mode_for_attack_kind(
+        assert (
+            attack.resolve_mode_for_attack_kind(
                 "evasion",
                 split_override="test",
-            ) == \
-            "test"
+            )
+            == "test"
+        )
 
         with pytest.raises(ValueError, match="Unsupported attack split override"):
             attack.resolve_mode_for_attack_kind(
@@ -1162,9 +1170,9 @@ class TestAttackConfig:
         model = model
         original_hash = hash(attack)
         attack(data, model)
-        assert original_hash == \
-            hash(attack), \
-            "Hash changed after call for AttackConfig"
+        assert original_hash == hash(
+            attack
+        ), "Hash changed after call for AttackConfig"
 
 
 class TestPytorchAttackConfig:
@@ -3511,7 +3519,9 @@ class TestFairlearnAttackScorer:
         from deckard.plugins.fairlearn.score import FairlearnScorerDictConfig
         from deckard.score.base import DefaultClassifierScorerDictConfig
 
-        scorer = FairlearnAttackScorerConfig(evasion=DefaultClassifierScorerDictConfig())
+        scorer = FairlearnAttackScorerConfig(
+            evasion=DefaultClassifierScorerDictConfig()
+        )
         assert isinstance(scorer.evasion, FairlearnScorerDictConfig)
         assert isinstance(scorer.membership_inference, FairlearnScorerDictConfig)
         assert isinstance(scorer.attribute_inference, FairlearnScorerDictConfig)
@@ -3532,8 +3542,7 @@ class TestFairlearnAttackScorer:
             sensitive_features=sensitive,
         )
         group_keys = [k for k in result if "_accuracy" in k or "_f1" in k]
-        assert len(group_keys) > 0, \
-            f"No group metrics found in {list(result)}"
+        assert len(group_keys) > 0, f"No group metrics found in {list(result)}"
 
     def test_score_membership_with_sensitive_features_produces_group_metrics(self):
         scorer = FairlearnAttackScorerConfig()
@@ -3549,8 +3558,9 @@ class TestFairlearnAttackScorer:
             sensitive_features=sensitive,
         )
         group_keys = [k for k in result if "membership_inference" in k]
-        assert len(group_keys) > 0, \
-            f"No membership_inference metrics found in {list(result)}"
+        assert (
+            len(group_keys) > 0
+        ), f"No membership_inference metrics found in {list(result)}"
 
     def test_score_attribute_with_sensitive_features_produces_group_metrics(self):
         scorer = FairlearnAttackScorerConfig()
@@ -3568,8 +3578,7 @@ class TestFairlearnAttackScorer:
             sensitive_features=sensitive,
         )
         group_keys = [k for k in result if "inferred_age" in k]
-        assert len(group_keys) > 0, \
-            f"No inferred_age metrics found in {list(result)}"
+        assert len(group_keys) > 0, f"No inferred_age metrics found in {list(result)}"
 
     def test_evasion_attack_with_fairlearn_scorer_end_to_end(self):
         pytest.importorskip("art")
@@ -3586,8 +3595,9 @@ class TestFairlearnAttackScorer:
         )
         scores = attack(data, model)
         group_keys = [k for k in scores if "_accuracy" in k or "_f1" in k]
-        assert len(group_keys) > 0, \
-            f"Expected per-group evasion metrics, got keys: {list(scores)}"
+        assert (
+            len(group_keys) > 0
+        ), f"Expected per-group evasion metrics, got keys: {list(scores)}"
 
     def test_membership_inference_with_fairlearn_scorer_end_to_end(self):
         pytest.importorskip("art")
@@ -3604,5 +3614,6 @@ class TestFairlearnAttackScorer:
         )
         scores = attack(data, model)
         group_keys = [k for k in scores if "membership_inference" in k]
-        assert len(group_keys) > 0, \
-            f"Expected per-group membership metrics, got keys: {list(scores)}"
+        assert (
+            len(group_keys) > 0
+        ), f"Expected per-group membership metrics, got keys: {list(scores)}"

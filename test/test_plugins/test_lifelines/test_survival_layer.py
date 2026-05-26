@@ -119,8 +119,16 @@ def test_survival_main_requires_cfg():
     ("survival_cfg", "error_type", "error_pattern"),
     [
         ({"data": "   ", "model": "weibull"}, ValueError, "non-empty dataset"),
-        ({"data": "lifelines.lung", "model": "   "}, ValueError, "non-empty survival model"),
-        ({"data": "lifelines.lung", "model": None}, TypeError, "string or model config mapping"),
+        (
+            {"data": "lifelines.lung", "model": "   "},
+            ValueError,
+            "non-empty survival model",
+        ),
+        (
+            {"data": "lifelines.lung", "model": None},
+            TypeError,
+            "string or model config mapping",
+        ),
     ],
 )
 def test_validate_raw_data_model_specs_invalid_inputs(

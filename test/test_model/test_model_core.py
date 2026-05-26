@@ -319,9 +319,7 @@ class TestModelConfig:
         )
         data()
         model(data)
-        assert original_hash == \
-            hash(model), \
-            "Hash changed after call for ModelConfig"
+        assert original_hash == hash(model), "Hash changed after call for ModelConfig"
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────
@@ -817,8 +815,7 @@ class TestLoadOrTrainModel:
             model2._load_or_train_model(data, model_path, times)
 
             assert model2._model is loaded_estimator
-            assert model2.model_type == \
-                "sklearn.tree._classes.DecisionTreeClassifier"
+            assert model2.model_type == "sklearn.tree._classes.DecisionTreeClassifier"
             assert model2.model_params.get("max_depth") == 3
 
     def test_no_model_no_file_raises_value_error(self):
@@ -1330,8 +1327,10 @@ class TestModelLoadOrTrainBranches:
                     SimpleNamespace(predict=lambda s: np.zeros(len(s), dtype=int)),
                 )
             )
-            loaded_obj.apply_defense = lambda _data, stage="post_fit_pre_predict": SimpleNamespace(
-                predict=lambda s: np.zeros(len(s), dtype=int),
+            loaded_obj.apply_defense = (
+                lambda _data, stage="post_fit_pre_predict": SimpleNamespace(
+                    predict=lambda s: np.zeros(len(s), dtype=int),
+                )
             )
             loaded_obj._require_defense_pipeline = lambda: SimpleNamespace(
                 resolve_stage=lambda **_kwargs: "skip",
@@ -1343,4 +1342,3 @@ class TestModelLoadOrTrainBranches:
 
             assert "training_time" in out
             assert "training_n" in out
-

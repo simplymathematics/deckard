@@ -42,7 +42,6 @@ def test_requires_data_config():
         )
 
 
-
 @pytest.mark.parametrize(
     "data_cfg",
     [
@@ -115,7 +114,9 @@ def test_post_init_validates_data_model_and_duration(monkeypatch):
     ],
 )
 def test_infer_attack_kind_from_label_variants(label, expected_kind):
-    assert SurvivalExperimentConfig._infer_attack_kind_from_label(label) == expected_kind
+    assert (
+        SurvivalExperimentConfig._infer_attack_kind_from_label(label) == expected_kind
+    )
 
 
 @pytest.mark.parametrize(

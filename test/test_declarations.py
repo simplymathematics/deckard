@@ -102,7 +102,9 @@ class TestIterConfigFiles:
             (root / "model" / "default.yaml").touch()
 
             files = list(iter_config_files(root))
-            assert len(files) == 3, "Should find 3 YAML files under subfolders excluding default.yaml"
+            assert (
+                len(files) == 3
+            ), "Should find 3 YAML files under subfolders excluding default.yaml"
             assert all(f.suffix == ".yaml" for f in files), "All files should be .yaml"
             assert all(f.name != "default.yaml" for f in files)
             assert all(len(f.relative_to(root).parts) >= 2 for f in files)

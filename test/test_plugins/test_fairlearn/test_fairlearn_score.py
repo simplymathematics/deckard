@@ -1,4 +1,3 @@
-
 import numpy as np
 import pytest
 from sklearn.metrics import accuracy_score, mean_squared_error
@@ -52,8 +51,12 @@ class TestFairnessScorers:
         assert "1_group_mse_difference" in scores
 
     def test_score_profile_classes_available(self):
-        assert isinstance(DefaultFairlearnClassificationScorerDictConfig(), FairlearnScorerDictConfig)
-        assert isinstance(DefaultFairlearnRegressionScorerDictConfig(), FairlearnScorerDictConfig)
+        assert isinstance(
+            DefaultFairlearnClassificationScorerDictConfig(), FairlearnScorerDictConfig
+        )
+        assert isinstance(
+            DefaultFairlearnRegressionScorerDictConfig(), FairlearnScorerDictConfig
+        )
 
     def test_metric_frame_fairness_score_dict_classification(self):
         scorer = FairlearnScorerDictConfig(

@@ -44,7 +44,11 @@ def _candidate_doc_targets(source: Path, target: str) -> list[Path]:
 
 def _iter_markdown_targets(text: str) -> list[str]:
     matches = re.findall(r"\[[^\]]+\]\(([^)]+)\)", text)
-    return [match for match in matches if not match.startswith(("http://", "https://", "#"))]
+    return [
+        match
+        for match in matches
+        if not match.startswith(("http://", "https://", "#"))
+    ]
 
 
 def _iter_doc_role_targets(text: str) -> list[str]:
@@ -70,7 +74,9 @@ def _assert_targets_exist(source: Path) -> None:
         if not any(candidate.exists() for candidate in candidates):
             missing.append(target)
 
-    assert not missing, f"Broken documentation targets in {source}: {sorted(set(missing))}"
+    assert (
+        not missing
+    ), f"Broken documentation targets in {source}: {sorted(set(missing))}"
 
 
 def test_notebook_index_references_resolve() -> None:

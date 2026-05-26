@@ -34,7 +34,9 @@ if FairlearnDefenseConfig is None or FairlearnModelConfig is None:
     )
 
 
-def _split_sampler_kwargs(*, train_size=None, test_size=None, val_size=None, random_state=None, stratify=None):
+def _split_sampler_kwargs(
+    *, train_size=None, test_size=None, val_size=None, random_state=None, stratify=None
+):
     sampler = {"name": "deckard.data.sample.SplitSampler"}
     if train_size is not None:
         sampler["train_size"] = train_size

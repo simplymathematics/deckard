@@ -134,10 +134,10 @@ def test_core_and_framework_score_hooks_use_canonical_stage_names(tmp_path: Path
         ]
         cfg._plugin_objects = None
         cfg._record_before_score = lambda **kwargs: events.append(
-            f"{prefix}:before:{kwargs.get('stage')}"
+            f"{prefix}:before:{kwargs.get('stage')}",
         )
         cfg._record_after_score = lambda **kwargs: events.append(
-            f"{prefix}:after:{kwargs.get('stage')}"
+            f"{prefix}:after:{kwargs.get('stage')}",
         )
         cfg._initialize_runtime_components()
         return events

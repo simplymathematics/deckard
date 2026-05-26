@@ -47,8 +47,7 @@ def test_pipeline_and_scoring_hook_bundles_are_separated_and_composable():
         for hook in ANJANA_PIPELINE_HOOKS.hooks
     )
     assert all(
-        hook.hook_name.startswith("after_score")
-        for hook in ANJANA_SCORING_HOOKS.hooks
+        hook.hook_name.startswith("after_score") for hook in ANJANA_SCORING_HOOKS.hooks
     )
 
     fairlearn_order = [

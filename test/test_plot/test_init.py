@@ -89,8 +89,9 @@ class TestPlotConfig:
                     "plot_type": "confusion_matrix",
                 },
             )
-        assert "Provide either 'experiment' or 'data_file', not both" in \
-            str(context.value)
+        assert "Provide either 'experiment' or 'data_file', not both" in str(
+            context.value
+        )
 
     def test_plot_config_call(self):
         """Test PlotConfig __call__ method delegates to config."""
@@ -160,4 +161,3 @@ class TestPlotConfig:
 
         # Verify it has the hash method
         assert hasattr(plot_cfg_new, "__hash__")
-

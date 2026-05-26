@@ -18,7 +18,9 @@ except Exception:
 
 def _fairlearn_config(**overrides):
     sampler_keys = {"train_size", "test_size", "val_size", "random_state", "stratify"}
-    sampler_overrides = {k: overrides.pop(k) for k in list(overrides) if k in sampler_keys}
+    sampler_overrides = {
+        k: overrides.pop(k) for k in list(overrides) if k in sampler_keys
+    }
     if sampler_overrides:
         base_sampler = {}
         existing_sampler = overrides.get("sampler")

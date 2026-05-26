@@ -37,12 +37,14 @@ class TestParseCsvArg:
         assert _parse_csv_arg("accuracy") == ["accuracy"]
 
     def test_multi_item(self):
-        assert _parse_csv_arg("accuracy,precision,f1") == \
-            ["accuracy", "precision", "f1"]
+        assert _parse_csv_arg("accuracy,precision,f1") == [
+            "accuracy",
+            "precision",
+            "f1",
+        ]
 
     def test_strips_whitespace_around_items(self):
-        assert _parse_csv_arg(" accuracy , precision ") == \
-            ["accuracy", "precision"]
+        assert _parse_csv_arg(" accuracy , precision ") == ["accuracy", "precision"]
 
     def test_trailing_comma_ignored(self):
         result = _parse_csv_arg("accuracy,")
@@ -158,13 +160,11 @@ class TestObjectiveToColumn:
 
     def test_values_prefix_lookup(self):
         df = pd.DataFrame({"values_accuracy": [0.9]})
-        assert _objective_to_column("accuracy", 0, df, []) == \
-            "values_accuracy"
+        assert _objective_to_column("accuracy", 0, df, []) == "values_accuracy"
 
     def test_user_attrs_prefix_lookup(self):
         df = pd.DataFrame({"user_attrs_accuracy": [0.9]})
-        assert _objective_to_column("accuracy", 0, df, []) == \
-            "user_attrs_accuracy"
+        assert _objective_to_column("accuracy", 0, df, []) == "user_attrs_accuracy"
 
     def test_params_prefix_lookup(self):
         df = pd.DataFrame({"params_lr": [0.01]})
@@ -172,8 +172,7 @@ class TestObjectiveToColumn:
 
     def test_metric_names_index_fallback(self):
         df = pd.DataFrame({"values_1": [0.8]})
-        assert _objective_to_column("f1", 1, df, ["accuracy", "f1"]) == \
-            "values_1"
+        assert _objective_to_column("f1", 1, df, ["accuracy", "f1"]) == "values_1"
 
     def test_index_fallback_when_no_metric_names(self):
         df = pd.DataFrame({"values_0": [0.9]})
