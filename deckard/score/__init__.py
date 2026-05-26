@@ -39,6 +39,11 @@ from .data import (
     data_mutual_information_mean_score,
     data_num_classes_score,
 )
+from .dvc import (
+    DVC_SYSTEM_SCORE_STAGES,
+    DVCSystemScorerDictConfig,
+    dvc_system_snapshot_score,
+)
 from ..artifacts import ScoreDict
 
 
@@ -253,6 +258,9 @@ __all__ = [
     "data_mutual_information_mean_score",
     "data_mutual_information_max_score",
     "data_empirical_cdf_function_score",
+    "DVC_SYSTEM_SCORE_STAGES",
+    "DVCSystemScorerDictConfig",
+    "dvc_system_snapshot_score",
     "fairness_demographic_parity_difference",
     "fairness_equalized_odds_difference",
     "fairness_group_mean_prediction_difference",

@@ -31,6 +31,8 @@ from deckard.experiment.dvc import (
 )
 from deckard.experiment.repro import run_repro_experiment_plugin_hook
 from deckard.file import FileConfig
+from deckard.score.base import ScorerConfig
+from deckard.score.dvc import DVCSystemScorerDictConfig, dvc_component_stats_score
 
 
 def _make_runtime_env(rc_path: Path) -> dict[str, str]:
@@ -757,6 +759,139 @@ def test_score_stage_power_hooks_merge_into_component_score_dicts(tmp_path: Path
     assert exp.score_dict["power/detector/total_watts"] == 42.0
 
 
+def test_run_dvc_plugin_hook_adds_dvc_system_scores_after_component_score_stage(
+    monkeypatch,
+):
+    exp = _make_experiment_stub(with_files=True)
+    exp.outputs = {}
+    exp.score_dict = {}
+    exp.data = SimpleNamespace(score_dict={"data_metric": 1.0})
+
+    monkeypatch.setattr(
+        dvc_module,
+        "_collect_system_monitor_scores",
+        lambda experiment, plugin: {"system_monitor/cpu": 5.0},
+    )
+
+    result = run_dvc_experiment_plugin_hook(
+        exp,
+        dvc_plugin={"enabled": True},
+        plugin_position="last",
+        component="data",
+        stage="data_score",
+        event="after",
+    )
+
+    assert result["executed"] is True
+    assert "dvc_system_scores" in result
+    assert exp.score_dict["test"]["data_cpu"] == pytest.approx(5.0)
+
+
+def test_run_dvc_plugin_hook_skips_custom_stage_outside_dvc_system_stages(
+    monkeypatch,
+):
+    exp = _make_experiment_stub(with_files=True)
+    exp.outputs = {}
+    exp.score_dict = {}
+    exp.data = SimpleNamespace(score_dict={"data_metric": 1.0})
+    exp._dvc_system_scorer = DVCSystemScorerDictConfig(
+        scorers={
+            "data": ScorerConfig(
+                score_name="data",
+                score_function=dvc_component_stats_score,
+                needs_labels=False,
+                stage=["val"],
+                score_params={"component": "data"},
+            ),
+        },
+    )
+
+    monkeypatch.setattr(
+        dvc_module,
+        "_collect_system_monitor_scores",
+        lambda experiment, plugin: {"system_monitor/memory": 8.0},
+    )
+
+    result = run_dvc_experiment_plugin_hook(
+        exp,
+        dvc_plugin={"enabled": True},
+        plugin_position="last",
+        component="data",
+        stage="val",
+        event="after",
+    )
+
+    assert result["executed"] is False
+    assert "dvc_system_error" not in result
+    assert exp.score_dict == {}
+
+
+def test_run_dvc_plugin_hook_skips_dvc_system_scorer_for_non_score_stage():
+    exp = _make_experiment_stub(with_files=True)
+    exp.outputs = {}
+    exp.score_dict = {}
+
+    result = run_dvc_experiment_plugin_hook(
+        exp,
+        dvc_plugin={"enabled": True},
+        plugin_position="last",
+        component="experiment",
+        stage="persist",
+        event="after",
+    )
+
+    assert result["executed"] is True
+    assert "dvc_system_error" not in result
+
+
+def test_collect_system_monitor_scores_falls_back_to_metrics_json(tmp_path: Path):
+    exp = _make_experiment_stub(with_files=False)
+    exp._dvc_plugin_runtime = {"dir": tmp_path.as_posix()}
+
+    metrics_payload = {
+        "step": 1,
+        "system/cpu/usage (%)": 17.5,
+        "system/ram/usage (%)": 33.0,
+    }
+    (tmp_path / "metrics.json").write_text(
+        json.dumps(metrics_payload),
+        encoding="utf-8",
+    )
+
+    plugin = dvc_module.coerce_dvc_experiment_plugin(
+        {"enabled": True, "dvclive_dir": tmp_path.as_posix()},
+    )
+    collected = dvc_module._collect_system_monitor_scores(exp, plugin)
+
+    assert collected["system_monitor/cpu/usage (%)"] == pytest.approx(17.5)
+    assert collected["system_monitor/ram/usage (%)"] == pytest.approx(33.0)
+
+
+def test_collect_system_monitor_scores_reads_live_runtime_monitor_state(
+    tmp_path: Path,
+):
+    exp = _make_experiment_stub(with_files=False)
+    exp._dvc_plugin_runtime = {
+        "dir": tmp_path.as_posix(),
+        "live": types.SimpleNamespace(
+            _system_monitor=types.SimpleNamespace(
+                _metrics={
+                    "system/cpu/usage (%)": 21.0,
+                    "system/ram/usage (%)": 44.0,
+                },
+            ),
+        ),
+    }
+
+    plugin = dvc_module.coerce_dvc_experiment_plugin(
+        {"enabled": True, "dvclive_dir": tmp_path.as_posix()},
+    )
+    collected = dvc_module._collect_system_monitor_scores(exp, plugin)
+
+    assert collected["system_monitor/cpu/usage (%)"] == pytest.approx(21.0)
+    assert collected["system_monitor/ram/usage (%)"] == pytest.approx(44.0)
+
+
 def test_experiment_hash_payload_excludes_dvc_plugin(tmp_path: Path):
     exp = _make_real_experiment_from_examples(tmp_path)
     payload_without = exp.to_dict(for_hash=True)
@@ -831,6 +966,46 @@ def test_render_dvclive_report_mode_to_file_mapping(
         assert not Path(result["report_html"]).is_absolute()
     else:
         assert result["report_html"] is None
+
+
+def test_disable_dvclive_gpu_monitor_when_nvml_unavailable(monkeypatch):
+    fake_monitor = types.SimpleNamespace(
+        GPU_AVAILABLE=True,
+        nvmlInit=lambda: (_ for _ in ()).throw(RuntimeError("nvml missing")),
+        nvmlShutdown=lambda: None,
+    )
+
+    def _fake_import(name: str):
+        if name == "dvclive.monitor_system":
+            return fake_monitor
+        raise ImportError(name)
+
+    monkeypatch.setattr(dvc_module.importlib, "import_module", _fake_import)
+
+    disabled = dvc_module._disable_dvclive_gpu_monitor_if_unavailable()
+
+    assert disabled is True
+    assert fake_monitor.GPU_AVAILABLE is False
+
+
+def test_disable_dvclive_gpu_monitor_keeps_enabled_when_nvml_works(monkeypatch):
+    fake_monitor = types.SimpleNamespace(
+        GPU_AVAILABLE=True,
+        nvmlInit=lambda: None,
+        nvmlShutdown=lambda: None,
+    )
+
+    def _fake_import(name: str):
+        if name == "dvclive.monitor_system":
+            return fake_monitor
+        raise ImportError(name)
+
+    monkeypatch.setattr(dvc_module.importlib, "import_module", _fake_import)
+
+    disabled = dvc_module._disable_dvclive_gpu_monitor_if_unavailable()
+
+    assert disabled is False
+    assert fake_monitor.GPU_AVAILABLE is True
 
 
 @pytest.mark.skipif(

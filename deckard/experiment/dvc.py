@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import importlib
 import json
+import logging
 import os
 import subprocess
 from dataclasses import dataclass
@@ -26,6 +27,7 @@ from .canon import (
     normalize_experiment_stage,
 )
 from ..plugins import HookPlugin
+from ..score.base import SUPPORTED_SCORING_STAGES
 
 if TYPE_CHECKING:
     from .base import ExperimentConfig
@@ -90,6 +92,8 @@ _VEGA_PLOT_FILENAMES: tuple[str, ...] = (
 
 DVCScalar = str | int | float | bool | None
 DVCValue = DVCScalar | list["DVCValue"] | dict[str, "DVCValue"]
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(eq=False, kw_only=True)
@@ -414,6 +418,8 @@ def _resolve_stage_token(stage: Any) -> str:
             raise ValueError(f"Unsupported stage token '{stage}'.") from None
         if token == "attack":
             return "generation"
+        if token in SUPPORTED_SCORING_STAGES:
+            return token
         if token in _STAGE_COMPONENT_ALIASES or base_token in _STAGE_COMPONENT_ALIASES:
             return token
         raise ValueError(
@@ -738,6 +744,48 @@ def _load_dvclive_live_class():
     return Live
 
 
+def _disable_dvclive_gpu_monitor_if_unavailable() -> bool:
+    """Disable DVCLive GPU monitoring when NVML bindings are present but unusable.
+
+    This keeps DVCLive system monitoring active for CPU/RAM/disk metrics on
+    hosts without NVIDIA drivers/libraries.
+
+    Returns:
+        True when GPU monitoring was disabled, else False.
+    """
+    try:
+        monitor_module = importlib.import_module("dvclive.monitor_system")
+    except Exception:
+        return False
+
+    if not bool(getattr(monitor_module, "GPU_AVAILABLE", False)):
+        return False
+
+    nvml_init = getattr(monitor_module, "nvmlInit", None)
+    nvml_shutdown = getattr(monitor_module, "nvmlShutdown", None)
+    if not callable(nvml_init):
+        return False
+
+    try:
+        nvml_init()
+        if callable(nvml_shutdown):
+            try:
+                nvml_shutdown()
+            except Exception:
+                pass
+        return False
+    except Exception:
+        try:
+            setattr(monitor_module, "GPU_AVAILABLE", False)
+        except Exception:
+            return False
+        logger.warning(
+            "DVCLive GPU monitoring disabled because NVML is unavailable; "
+            "continuing with CPU/RAM/disk monitoring.",
+        )
+        return True
+
+
 def _ensure_output_buckets(experiment: Any) -> dict[str, Any]:
     outputs = getattr(experiment, "outputs", None)
     if not isinstance(outputs, dict):
@@ -768,6 +816,8 @@ def _ensure_live_instance(experiment: Any, plugin: DVCExperimentPlugin):
         return runtime["live"]
 
     Live = _load_dvclive_live_class()
+    if plugin.monitor_system:
+        _disable_dvclive_gpu_monitor_if_unavailable()
     dvclive_dir = _resolve_dvclive_dir(experiment, plugin)
     dvclive_dir.mkdir(parents=True, exist_ok=True)
     report_mode = cast(
@@ -1095,33 +1145,67 @@ def _collect_system_monitor_scores(
     experiment: Any,
     plugin: DVCExperimentPlugin,
 ) -> dict[str, float]:
+    def _extract_prefixed_system_metrics(payload: Mapping[str, Any]) -> dict[str, float]:
+        metrics: dict[str, float] = {}
+        for key, value in payload.items():
+            if not isinstance(key, str) or not key.startswith("system/"):
+                continue
+            if isinstance(value, (int, float)):
+                metric = key.removeprefix("system/")
+                metrics[f"system_monitor/{metric}"] = float(value)
+        return metrics
+
+    def _read_json_mapping(path: Path) -> Mapping[str, Any] | None:
+        if not path.exists():
+            return None
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+        return payload if isinstance(payload, Mapping) else None
+
     runtime = _get_runtime_state(experiment)
     dvclive_dir = Path(
         str(runtime.get("dir") or _resolve_dvclive_dir(experiment, plugin)),
     )
-    summary_path = dvclive_dir / "summary.json"
-    if not summary_path.exists():
-        return {}
-    try:
-        payload = json.loads(summary_path.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-    if not isinstance(payload, Mapping):
-        return {}
-
     collected: dict[str, float] = {}
-    system_payload = payload.get("system")
-    if isinstance(system_payload, Mapping):
-        for key, value in system_payload.items():
-            if isinstance(value, (int, float)):
-                collected[f"system_monitor/{key}"] = float(value)
 
-    for key, value in payload.items():
-        if not isinstance(key, str) or not key.startswith("system/"):
-            continue
-        if isinstance(value, (int, float)):
-            metric = key.removeprefix("system/")
-            collected[f"system_monitor/{metric}"] = float(value)
+    live = runtime.get("live") if isinstance(runtime, Mapping) else None
+    system_monitor = getattr(live, "_system_monitor", None) if live is not None else None
+    runtime_metrics = getattr(system_monitor, "_metrics", None)
+    if isinstance(runtime_metrics, Mapping):
+        collected.update(_extract_prefixed_system_metrics(runtime_metrics))
+
+    if not collected and system_monitor is not None:
+        get_metrics = getattr(system_monitor, "_get_metrics", None)
+        if callable(get_metrics):
+            try:
+                latest_metrics = get_metrics()
+            except Exception:
+                latest_metrics = None
+            if isinstance(latest_metrics, Mapping):
+                collected.update(_extract_prefixed_system_metrics(latest_metrics))
+
+    if collected:
+        return collected
+
+    summary_path = dvclive_dir / "summary.json"
+    summary_payload = _read_json_mapping(summary_path)
+    if isinstance(summary_payload, Mapping):
+        system_payload = summary_payload.get("system")
+        if isinstance(system_payload, Mapping):
+            for key, value in system_payload.items():
+                if isinstance(value, (int, float)):
+                    collected[f"system_monitor/{key}"] = float(value)
+        collected.update(_extract_prefixed_system_metrics(summary_payload))
+
+    if collected:
+        return collected
+
+    metrics_path = dvclive_dir / "metrics.json"
+    metrics_payload = _read_json_mapping(metrics_path)
+    if isinstance(metrics_payload, Mapping):
+        collected.update(_extract_prefixed_system_metrics(metrics_payload))
 
     return collected
 
@@ -1359,6 +1443,51 @@ def run_dvc_experiment_plugin_hook(
 
     if not plugin_cfg.enabled:
         return result
+
+    setattr(experiment, "dvc_plugin", plugin_cfg.to_dict())
+
+    if position_token == "last" and event_token == "after":
+        try:
+            from ..score.dvc import DVCSystemScorerDictConfig, DVC_SYSTEM_SCORE_STAGES
+            from ..artifacts import ScoreDict
+
+            if stage_token not in DVC_SYSTEM_SCORE_STAGES:
+                raise KeyError(stage_token)
+
+            scorer = getattr(experiment, "_dvc_system_scorer", None)
+            if scorer is None:
+                scorer = DVCSystemScorerDictConfig()
+                setattr(experiment, "_dvc_system_scorer", scorer)
+
+            score_payload = scorer(
+                mode="test",
+                stage=stage_token,
+                component=component,
+                data=getattr(experiment, "data", None),
+                model=getattr(experiment, "model", None),
+                attack=getattr(experiment, "attack", None),
+                detector=getattr(experiment, "detector", None),
+                experiment=experiment,
+                dep=[0.0],
+                ind=[0.0],
+                score_file=None,
+            )
+            normalized_scores = ScoreDict.from_payload(score_payload)
+            if normalized_scores:
+                experiment_scores = getattr(experiment, "score_dict", None)
+                if not isinstance(experiment_scores, ScoreDict):
+                    experiment_scores = ScoreDict.from_payload(
+                        experiment_scores if isinstance(experiment_scores, dict) else {},
+                    )
+                    setattr(experiment, "score_dict", experiment_scores)
+                experiment_scores.update(normalized_scores)
+                result["dvc_system_scores"] = dict(normalized_scores)
+            result["executed"] = True
+        except KeyError:
+            # Expected for stages not selected by scorer.stage filters.
+            pass
+        except Exception as exc:
+            result["dvc_system_error"] = str(exc)
 
     if position_token == "first" and event_token == "before" and stage_token == "load":
         _ensure_live_instance(experiment, plugin_cfg)

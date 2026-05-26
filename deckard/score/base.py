@@ -156,6 +156,15 @@ class ScoringDetectorStage(str, Enum):
     VAL_FILTER = "val"
 
 
+class ScoringDVCStage(str, Enum):
+    """Enum representing DVC hook score stages for system monitoring scorers."""
+
+    DATA_SCORE = "data-score"
+    MODEL_SCORE = "model-score"
+    ATTACK_SCORE = "attack-score"
+    DETECTOR_SCORE = "detector-score"
+
+
 CANON_SCORING_STAGE_ENUMS: tuple[type[Enum], ...] = (
     ScoringDefenseStage,
     ScoringPipelineStage,
@@ -163,6 +172,7 @@ CANON_SCORING_STAGE_ENUMS: tuple[type[Enum], ...] = (
     ScoringDataStage,
     ScoringModelStage,
     ScoringDetectorStage,
+    ScoringDVCStage,
 )
 
 SUPPORTED_SCORING_STAGES: frozenset[str] = frozenset(

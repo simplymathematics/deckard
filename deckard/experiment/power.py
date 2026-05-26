@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import math
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -316,8 +317,9 @@ class DVCPowerMixin:
         AMD:
             rocm-smi --showmaxpower
 
-        Raises:
-            RuntimeError if automatic detection fails.
+        Returns:
+            Detected GPU power limit in watts, or ``NaN`` when automatic
+            detection is unavailable.
         """
         logger.info("Attempting automatic GPU power limit detection.")
 
@@ -383,11 +385,11 @@ class DVCPowerMixin:
                 "Failed reading GPU power limit from rocm-smi.",
             )
 
-        raise RuntimeError(
-            "Automatic GPU power limit detection failed. "
-            "Please specify 'gpu_tdp_watts' manually "
-            "(total GPU board power consumption in watts).",
+        logger.warning(
+            "Automatic GPU power limit detection failed; "
+            "falling back to NaN for gpu_tdp_watts.",
         )
+        return math.nan
 
     def _read_nvidia_gpu_power(self) -> float | None:
         """
