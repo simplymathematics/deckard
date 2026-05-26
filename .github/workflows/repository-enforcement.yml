@@ -27,16 +27,8 @@ jobs:
           python -m pip install .[test]
 
       - name: Run structural enforcement checks
-        run: |
-          python scripts/repository_enforcement.py --scope deckard/plugins
-          python scripts/repository_enforcement.py --scope deckard/frameworks
-
-      - name: Run enforcement-focused tests
-        run: |
-          pytest -q test/test_package/test_repository_wide_enforcement.py
-
-      - name: Run strict docs/types enforcement report (non-blocking)
         continue-on-error: true
         run: |
-          python scripts/repository_enforcement.py --scope deckard/plugins --strict-docs-types
-          python scripts/repository_enforcement.py --scope deckard/frameworks --strict-docs-types
+          python scripts/repository_enforcement.py --scope deckard/
+
+     

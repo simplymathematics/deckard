@@ -80,6 +80,7 @@ docs = [
     "sphinx-copybutton",
     "sphinx-design",
     "sphinx-togglebutton",
+    "sphinxcontrib-mermaid",
 
     "jupyterlab",
     "ipykernel",

@@ -1239,6 +1239,7 @@ class ModelConfig(BaseConfig):
         files: dict[str, str | None] | None = None,
         model_file: Union[str, None] = None,
         test_predictions_file: Union[str, None] = None,
+        training_predictions_file: Union[str, None] = None,
         train_predictions_file: Union[str, None] = None,
         training_probabilities_file: Union[str, None] = None,
         test_probabilities_file: Union[str, None] = None,
@@ -1252,6 +1253,7 @@ class ModelConfig(BaseConfig):
             files: Optional runtime file alias mapping.
             model_file: Optional model artifact path.
             test_predictions_file: Optional test predictions path.
+            training_predictions_file: Optional canonical train predictions path.
             train_predictions_file: Optional train predictions path.
             training_probabilities_file: Optional train probabilities path.
             test_probabilities_file: Optional test probabilities path.
@@ -1269,8 +1271,12 @@ class ModelConfig(BaseConfig):
             model_file = files.get("model_file")
         if test_predictions_file is None:
             test_predictions_file = files.get("test_predictions_file")
+        if training_predictions_file is None:
+            training_predictions_file = files.get("training_predictions_file")
         if train_predictions_file is None:
             train_predictions_file = files.get("train_predictions_file")
+        if train_predictions_file is None:
+            train_predictions_file = training_predictions_file
         if training_probabilities_file is None:
             training_probabilities_file = files.get("training_probabilities_file")
         if test_probabilities_file is None:
@@ -1502,10 +1508,31 @@ class ModelConfig(BaseConfig):
         n_attr = names["n_attr"]
 
         cached_predictions = getattr(self, predictions_attr, None)
+        mode_predictions = None
         if cached_predictions is not None:
             mode_predictions = cached_predictions
-            times[names["n_key"]] = len(mode_predictions)
-        else:
+            cached_len = len(mode_predictions) if hasattr(mode_predictions, "__len__") else None
+            expected_len = len(y_mode) if hasattr(y_mode, "__len__") else None
+            if (
+                cached_len is not None
+                and expected_len is not None
+                and cached_len != expected_len
+            ):
+                logger.warning(
+                    "Discarding cached %s predictions due to length mismatch (%s != %s); recomputing for current split.",
+                    score_mode,
+                    cached_len,
+                    expected_len,
+                )
+                mode_predictions = None
+                setattr(self, predictions_attr, None)
+            else:
+                times[names["n_key"]] = len(mode_predictions)
+
+        if mode_predictions is None:
+            cached_predictions = None
+
+        if cached_predictions is None:
             start_time = time.process_time()
             mode_predictions = self.predict(X_mode)
             end_time = time.process_time()

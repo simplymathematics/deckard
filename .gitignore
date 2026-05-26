@@ -132,3 +132,7 @@ build/.jupyter_cache/
 
 
 .github/agents/
+
+
+# Test Data
+outputs/
