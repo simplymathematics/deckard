@@ -179,18 +179,18 @@ stages:
     - ../../deckard/utils.py
     # No outs/metrics: hydra.ipynb does not persist outputs
 
-  notebook_optimize:
-    cmd: jupyter nbconvert --to notebook --execute --inplace optimize.ipynb
-    deps:
-    - optimize.ipynb
-    - ../../deckard/layers/
-    - ../../deckard/experiment/
-    - ../../deckard/file.py
-    - ../../deckard/utils.py
-    - ../../examples/sklearn/config/
-    outs:
-    - ./build/optimize_notebook/run_params.yaml
-    - ./build/optimize_notebook/multirun_params.yaml
+  # notebook_optimize:
+  #   cmd: jupyter nbconvert --to notebook --execute --inplace optimize.ipynb
+  #   deps:
+  #   - optimize.ipynb
+  #   - ../../deckard/layers/
+  #   - ../../deckard/experiment/
+  #   - ../../deckard/file.py
+  #   - ../../deckard/utils.py
+  #   - ../../examples/sklearn/config/
+  #   outs:
+  #   - ./build/optimize_notebook/run_params.yaml
+  #   - ./build/optimize_notebook/multirun_params.yaml
 
   notebook_deckard:
     cmd: jupyter nbconvert --to notebook --execute --inplace deckard.ipynb

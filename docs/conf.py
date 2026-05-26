@@ -46,6 +46,7 @@ exclude_patterns = [
     "notebooks/dvc.yaml",
     "notebooks/error.log",
     "notebooks/deckard.log",
+    "notebooks/optimize.ipynb",
 ]
 
 root_doc = "index"
