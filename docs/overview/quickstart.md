@@ -59,18 +59,18 @@ If your goal is to extend deckard:
 
 Base runtime config docs:
 
-- [DataConfig](../api/data)
-- [ModelConfig](../api/model)
-- [AttackConfig](../api/attack)
-- [DetectorConfig](../api/detector)
-- [ExperimentConfig](../api/experiment)
-- [FileConfig](../api/file)
+- {class}`deckard.data.DataConfig`
+- {class}`deckard.model.ModelConfig`
+- {class}`deckard.attack.AttackConfig`
+- {class}`deckard.detector.DetectorConfig`
+- {class}`deckard.experiment.ExperimentConfig`
+- {class}`deckard.file.FileConfig`
 
 ## Documentation Map
 
 - {doc}`summary`: high-level architecture and purpose.
 - {doc}`core`: compact map of the core runtime and API surfaces.
-- {doc}`experiment`: end-to-end orchestration flow through `ExperimentConfig`.
+- {doc}`experiment`: end-to-end orchestration flow through {class}`deckard.experiment.ExperimentConfig`.
 - {doc}`scoring`: score outputs, objectives, and persisted runtime metrics.
 - {doc}`hydra`: run and multirun config composition.
 - {doc}`optimize`: optimization lifecycle and Optuna integration.

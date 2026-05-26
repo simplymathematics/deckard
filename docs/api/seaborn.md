@@ -37,12 +37,12 @@ Related Deckard docs:
 
 The `plot_type` field accepts:
 
-- `scatter` — scatter plot (`seaborn.scatterplot`)
-- `line` — line plot (`seaborn.lineplot`)
-- `hist` — histogram (`seaborn.histplot`)
-- `cat` — categorical plot (`seaborn.catplot`)
-- `bar` — bar plot (`seaborn.barplot`)
-- `heatmap` — heatmap (`seaborn.heatmap`)
+- `scatter` — scatter plot ([`seaborn.scatterplot`](https://seaborn.pydata.org/generated/seaborn.scatterplot.html))
+- `line` — line plot ([`seaborn.lineplot`](https://seaborn.pydata.org/generated/seaborn.lineplot.html))
+- `hist` — histogram ([`seaborn.histplot`](https://seaborn.pydata.org/generated/seaborn.histplot.html))
+- `cat` — categorical plot ([`seaborn.catplot`](https://seaborn.pydata.org/generated/seaborn.catplot.html))
+- `bar` — bar plot ([`seaborn.barplot`](https://seaborn.pydata.org/generated/seaborn.barplot.html))
+- `heatmap` — heatmap ([`seaborn.heatmap`](https://seaborn.pydata.org/generated/seaborn.heatmap.html))
 
 ## Examples
 

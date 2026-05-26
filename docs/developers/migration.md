@@ -10,21 +10,21 @@ configs and Hydra declarations.
 
 Required public paths include:
 
-- `deckard.plugins.fairlearn.FairlearnDataConfig`
-- `deckard.plugins.fairlearn.data.FairlearnDataConfig`
-- `deckard.plugins.fairlearn.FairnessBehaviorMixin`
-- `deckard.plugins.fairlearn.data.FairnessBehaviorMixin`
-- `deckard.plugins.anjana.AnjanaDataConfig`
-- `deckard.plugins.anjana.data.AnjanaDataConfig`
-- `deckard.plugins.anjana.PrivacyBehaviorMixin`
-- `deckard.plugins.anjana.data.PrivacyBehaviorMixin`
-- `deckard.plugins.lifelines.SurvivalExperimentConfig`
-- `deckard.plugins.lifelines.experiment.SurvivalExperimentConfig`
-- `deckard.frameworks.pytorch.data.PytorchDataConfig`
-- `deckard.frameworks.pytorch.data.PytorchCustomDataConfig`
+- {class}`deckard.plugins.fairlearn.FairlearnDataConfig`
+- {class}`deckard.plugins.fairlearn.data.FairlearnDataConfig`
+- {class}`deckard.plugins.fairlearn.FairnessBehaviorMixin`
+- {class}`deckard.plugins.fairlearn.data.FairnessBehaviorMixin`
+- {class}`deckard.plugins.anjana.AnjanaDataConfig`
+- {class}`deckard.plugins.anjana.data.AnjanaDataConfig`
+- {class}`deckard.plugins.anjana.PrivacyBehaviorMixin`
+- {class}`deckard.plugins.anjana.data.PrivacyBehaviorMixin`
+- {class}`deckard.plugins.lifelines.SurvivalExperimentConfig`
+- {class}`deckard.plugins.lifelines.experiment.SurvivalExperimentConfig`
+- {class}`deckard.frameworks.pytorch.data.PytorchDataConfig`
+- {class}`deckard.frameworks.pytorch.data.PytorchCustomDataConfig`
 
-Compatibility re-exports remain supported at `deckard.data.AnjanaDataConfig` and
-`deckard.data.FairlearnDataConfig`, but only when the matching optional plugin
+Compatibility re-exports remain supported at {class}`deckard.data.AnjanaDataConfig` and
+{class}`deckard.data.FairlearnDataConfig`, but only when the matching optional plugin
 dependencies are installed. Plugin-family packages keep their top-level
 aliases stable and lazily resolve them from the owning module so that optional
 dependency checks control availability.

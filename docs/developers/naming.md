@@ -5,8 +5,8 @@ objects to ensure clarity and composability.
 
 ## Configs
 
-- Canonical form: `<Framework><Type>Config` (e.g., `PytorchModelConfig`)
-- All configs must inherit from `BaseConfig`
+- Canonical form: `<Framework><Type>Config` (e.g., {class}`deckard.frameworks.pytorch.model.PytorchModelConfig`)
+- All configs must inherit from {class}`deckard.utils.BaseConfig`
 
 ## Scorers
 
@@ -30,4 +30,4 @@ objects to ensure clarity and composability.
 
 ______________________________________________________________________
 
-**Related:** [Refactor Plan](plan) | [Mixin and Plugin Rules](plugins)
+**Related:** [Refactor Plan](refactor_plan) | [Mixin and Plugin Rules](plugins)

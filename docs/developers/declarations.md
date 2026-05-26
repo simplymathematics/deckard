@@ -31,7 +31,7 @@ Expected responsibilities:
 - discover config roots (built-in + `DECKARD_CONFIG_DIRS`)
 - iterate YAML declaration files under those roots
 - parse declarations into [Hydra](https://hydra.cc)-compatible registration metadata
-- register declarations dynamically with `safe_store()`
+- register declarations dynamically with {func}`deckard.utils.safe_store`
 - gate framework/plugin registration on installed optional dependencies
 
 ## Hydra Organization
@@ -73,5 +73,5 @@ declaration copies.
 
 ______________________________________________________________________
 
-**Related:** [Refactor Plan](plan) | [Naming
+**Related:** [Refactor Plan](refactor_plan) | [Naming
 Conventions](naming) | [Mixin and Plugin Rules](plugins)

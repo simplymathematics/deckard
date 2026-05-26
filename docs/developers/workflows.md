@@ -708,7 +708,7 @@ ______________________________________________________________________
 
 ## Related Documentation
 
-- {doc}`Development Workflow <development>`
-- {doc}`Repository Enforcement Guide <development>`
+- {doc}`Developer Documentation Index <index>`
+- {doc}`Repository Enforcement Guide <index>`
 - {doc}`GH Actions Cache Setup <actionscache>`
-- {doc}`Documentation Build Guide <../overview/build>`
+- {doc}`Documentation Build Guide <../overview/index>`

@@ -32,7 +32,7 @@ The core overview path is:
 
 ## How This Connects To Experiments
 
-`ExperimentConfig` composes the core runtime surfaces listed above. In normal
+{class}`deckard.experiment.ExperimentConfig` composes the core runtime surfaces listed above. In normal
 use, most runs combine:
 
 1. data

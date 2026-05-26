@@ -21,8 +21,7 @@ No reStructuredText markup is allowed in public docstrings.
 - **No RST markup**: Forbid `:param:`, `:type:`, `:rtype:`, `..
   code-block::`, etc.
 - **Inline code**: Use single backticks: `` `my_field` ``
-- **Cross-references**: Use MyST role syntax: ``
-{class}`deckard.data.base.DataConfig` ``
+- **Cross-references**: Use MyST role syntax: {class}`deckard.data.base.DataConfig`
 - **Code examples**: Use fenced Markdown blocks (```` ```python ````), not RST directives
 - `napoleon_google_docstring = True` (see `docs/conf.py`)
 - `napoleon_google_docstring = True` (see `docs/conf.py`); see the [napoleon
@@ -54,4 +53,4 @@ def _sensitive_labels_from_frame(self, frame: pd.DataFrame) -> pd.Series:
 
 ______________________________________________________________________
 
-**Related:** [Mixin and Plugin Rules](plugins) | [Refactor Plan](plan)
+**Related:** [Mixin and Plugin Rules](plugins) | [Refactor Plan](refactor_plan)

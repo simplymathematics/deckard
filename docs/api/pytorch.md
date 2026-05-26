@@ -148,7 +148,7 @@ The {class}`~deckard.frameworks.pytorch.experiment.TorchExperimentConfig` enforc
 
 - {doc}`data` — general data configuration including {mod}`deckard.frameworks.pytorch.data`
 - {doc}`model` — general model configuration including {mod}`deckard.frameworks.pytorch.model`
-- {doc}`experiment` — experiment orchestration including {class}`TorchExperimentConfig`
+- {doc}`experiment` — experiment orchestration including {class}`deckard.frameworks.pytorch.experiment.TorchExperimentConfig`
 - {doc}`attack` — attack configuration and execution
 - {doc}`plot` — visualization support including training history plots
 - {doc}`lifelines` — optional survival analysis integration with PyTorch

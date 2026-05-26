@@ -18,7 +18,7 @@ semantics.
 Pruning uses a trial-like runtime object with these operations:
 
 - `report(value, step)`
-- `should_prune()`
+- {meth}`optuna.trial.Trial.should_prune`
 
 Trainer/runtime integration calls these operations during training checkpoints.
 
@@ -38,7 +38,7 @@ This avoids requiring direct Trial object transport through CLI signatures.
 Pruning-capable trainers must:
 
 1. compute or select prune metric value
-2. call `check_prune(trial, value, step)`
+2. call {meth}`deckard.model._mixins.ModelPrunerMixin.check_prune`
 3. mark prune intent in runtime output for diagnostics
 4. raise `optuna.TrialPruned` when prune decision is true
 

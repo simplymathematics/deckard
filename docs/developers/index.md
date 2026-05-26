@@ -161,27 +161,27 @@ see [DVC Cache Setup Summary](actionscache).
 
 ## Contents
 
-- [Design Principles](designprinciples)
-- [GitHub Actions Workflows](workflows)
-- [Refactor Plan](plan)
-- [Config Declaration Architecture](declarations)
-- [Naming Conventions](naming)
-- [Mixin and Plugin Rules](plugins)
-- [Data Design and Contract](data)
-- [Model Design and Contract](model)
-- [Attack Design and Contract](attack)
-- [Experiment Design and Contract](experiment)
-- [Plugin and Hook Execution Reference](hooks)
-- [Persistence and Runtime State Contract](persistence)
-- [Score Serialization Contract](score)
-- [Optimization Runtime Contract](optimization)
-- [Optimize Developer Guide](optimize)
-- [Hydra and Optuna Orchestration Contract](hydra)
-- [Pruning Runtime Contract](pruning)
-- [DVC Pipeline Autogeneration Spec](dvc)
-- [Plugin Runtime Migration Guardrails](migration)
-- [Docstring Standard](docstrings)
-- [GH Actions Cache Setup](actionscache)
+- {doc}`Design Principles <design>`
+- {doc}`GitHub Actions Workflows <workflows>`
+- {doc}`Refactor Plan <refactor_plan>`
+- {doc}`Config Declaration Architecture <declarations>`
+- {doc}`Naming Conventions <naming>`
+- {doc}`Mixin and Plugin Rules <plugins>`
+- {doc}`Data Design and Contract <data>`
+- {doc}`Model Design and Contract <model>`
+- {doc}`Attack Design and Contract <attack>`
+- {doc}`Experiment Design and Contract <experiment>`
+- {doc}`Plugin and Hook Execution Reference <hooks>`
+- {doc}`Persistence and Runtime State Contract <persistence>`
+- {doc}`Score Serialization Contract <score>`
+- {doc}`Optimization Runtime Contract <optimization>`
+- {doc}`Optimize Developer Guide <optimize>`
+- {doc}`Hydra and Optuna Orchestration Contract <hydra>`
+- {doc}`Pruning Runtime Contract <pruning>`
+- {doc}`DVC Pipeline Autogeneration Spec <dvc>`
+- {doc}`Plugin Runtime Migration Guardrails <migration>`
+- {doc}`Docstring Standard <docstrings>`
+- {doc}`GH Actions Cache Setup <actionscache>`
 
 ```{toctree}
 :maxdepth: 2
@@ -189,7 +189,7 @@ see [DVC Cache Setup Summary](actionscache).
 
 design
 workflows
-plan
+refactor_plan
 declarations
 naming
 plugins
@@ -210,24 +210,24 @@ docstrings
 actionscache
 ```
 
-For user-facing documentation, see the [Overview](../overview/index) and [Notebooks](../notebooks/index).
+For user-facing documentation, see {doc}`../overview/index` and {doc}`../notebooks/index`.
 
 ______________________________________________________________________
 
 **Quick links:**
 
-- [API Reference](../api/modules)
-- [Notebook Index](../notebooks/index)
-- [Data Design and Contract](data)
-- [Model Design and Contract](model)
-- [Attack Design and Contract](attack)
-- [Experiment Design and Contract](experiment)
-- [Plugin and Hook Execution Reference](hooks)
-- [Persistence and Runtime State Contract](persistence)
-- [Score Serialization Contract](score)
-- [Optimization Runtime Contract](optimization)
-- [Optimize Developer Guide](optimize)
-- [Hydra and Optuna Orchestration Contract](hydra)
-- [Pruning Runtime Contract](pruning)
-- [DVC Pipeline Autogeneration Spec](dvc)
-- [Plugin Runtime Migration Guardrails](migration)
+- {doc}`API Reference <../api/modules>`
+- {doc}`Notebook Index <../notebooks/index>`
+- {doc}`Data Design and Contract <data>`
+- {doc}`Model Design and Contract <model>`
+- {doc}`Attack Design and Contract <attack>`
+- {doc}`Experiment Design and Contract <experiment>`
+- {doc}`Plugin and Hook Execution Reference <hooks>`
+- {doc}`Persistence and Runtime State Contract <persistence>`
+- {doc}`Score Serialization Contract <score>`
+- {doc}`Optimization Runtime Contract <optimization>`
+- {doc}`Optimize Developer Guide <optimize>`
+- {doc}`Hydra and Optuna Orchestration Contract <hydra>`
+- {doc}`Pruning Runtime Contract <pruning>`
+- {doc}`DVC Pipeline Autogeneration Spec <dvc>`
+- {doc}`Plugin Runtime Migration Guardrails <migration>`

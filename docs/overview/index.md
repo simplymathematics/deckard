@@ -15,7 +15,7 @@ It is intended for:
 Core themes covered in this section:
 
 - dependency setup for core and optional extension stacks
-- high-level experiment orchestration via `ExperimentConfig`
+- high-level experiment orchestration via {class}`deckard.experiment.ExperimentConfig`
 - optimization and reproducibility via [Hydra](https://hydra.cc) and [Optuna](https://optuna.org)
 - extension ecosystem mapping (frameworks and plugins)
 

@@ -14,12 +14,12 @@ for multirun optimization.
 
 Primary runtime composition objects are:
 
-- [DataConfig](../api/data)
-- [ModelConfig](../api/model)
-- [AttackConfig](../api/attack)
-- [DetectorConfig](../api/detector)
-- [ExperimentConfig](../api/experiment)
-- [FileConfig](../api/file)
+- {class}`deckard.data.DataConfig`
+- {class}`deckard.model.ModelConfig`
+- {class}`deckard.attack.AttackConfig`
+- {class}`deckard.detector.DetectorConfig`
+- {class}`deckard.experiment.ExperimentConfig`
+- {class}`deckard.file.FileConfig`
 
 ## Prerequisites
 

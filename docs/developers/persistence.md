@@ -3,8 +3,8 @@
 This document defines the final persistence/runtime-state contract for Deckard.
 It is based on the current implementation surfaces in:
 
-- `deckard/artifacts.py` (`ArtifactLoaderConfig` serializer/loader dispatch)
-- `deckard/file.py` (`FileConfig`, `AbstractFileHandler`, `CanonFileHandler`)
+- `deckard/artifacts.py` ({class}`deckard.artifacts.ArtifactLoaderConfig` serializer/loader dispatch)
+- `deckard/file.py` ({class}`deckard.file.FileConfig`, {class}`deckard.file.AbstractFileHandler`, {class}`deckard.file.CanonFileHandler`)
 - canonical runtime helpers:
   - `deckard/data/canon.py`
   - `deckard/model/canon.py`
@@ -28,7 +28,7 @@ It is based on the current implementation surfaces in:
 
 ### Config identity and YAML IO
 
-`BaseConfig` already provides the core control-plane behavior:
+{class}`deckard.utils.BaseConfig` already provides the core control-plane behavior:
 
 - initialization-time frozen hash payload (`_hash_payload`) and hash value (`_hash_value`)
 - YAML round-trip (`to_yaml`, `from_yaml`) with OmegaConf `resolve=True`
@@ -38,7 +38,7 @@ This means the configuration identity contract is already mostly in place.
 
 ### Artifact serialization
 
-`ArtifactLoaderConfig` already performs payload-kind + file-suffix dispatch:
+{class}`deckard.artifacts.ArtifactLoaderConfig` already performs payload-kind + file-suffix dispatch:
 
 - scores: `.csv`, `.json`, `.xlsx`
 - data tables: `.csv`, `.parquet`, `.pkl`, `.html`, `.json`, `.xlsx`
@@ -48,7 +48,7 @@ This should remain the data-plane serializer contract.
 
 ### File schema and parsing
 
-`FileConfig` + `CanonFileHandler` already provide:
+{class}`deckard.file.FileConfig` + {class}`deckard.file.CanonFileHandler` already provide:
 
 - TypedDict-key validation across model/data/attack/detector/log aliases
 - placeholder parsing and replacement
@@ -111,7 +111,7 @@ checksums:
 
 ### Data-plane files
 
-Use existing `ArtifactLoaderConfig` behavior. Do not duplicate serializer logic
+Use existing {class}`deckard.artifacts.ArtifactLoaderConfig` behavior. Do not duplicate serializer logic
 in runtime call paths.
 
 ### Path and storage compatibility
@@ -168,12 +168,12 @@ available with valid checksum, skip execution and hydrate runtime fields.
 
 Every runtime `__call__` path should follow this shape:
 
-1. Resolve runtime `files` via `FileConfig` aliases.
+1. Resolve runtime `files` via {class}`deckard.file.FileConfig` aliases.
 2. Resolve stage token via canon helper.
 3. Read `state_file`.
 4. If resumable stage checkpoint exists and is valid: hydrate + skip.
 5. Execute stage.
-6. Persist stage artifacts via `ArtifactLoaderConfig`.
+6. Persist stage artifacts via {class}`deckard.artifacts.ArtifactLoaderConfig`.
 7. Merge canonical times/scores/files.
 8. Atomically update `state_file`.
 
@@ -185,7 +185,7 @@ Required write invariants:
 
 ## Unified File Parsing Interface
 
-`AbstractFileHandler` is the contract boundary.
+{class}`deckard.file.AbstractFileHandler` is the contract boundary.
 
 Required operations:
 
@@ -194,14 +194,14 @@ Required operations:
 - `parse_placeholders`
 - `replace_placeholders`
 
-`FileConfig` remains the public typed registry and should delegate parsing/
+{class}`deckard.file.FileConfig` remains the public typed registry and should delegate parsing/
 validation to handler implementations.
 
 ## Hash and Reproducibility Contract
 
 ### Hash stability
 
-- Config hash is frozen in `BaseConfig._after_post_init`.
+- Config hash is frozen in {meth}`deckard.utils.BaseConfig._after_post_init`.
 - Runtime fields (`score_dict`, predictions, timing values) must stay excluded
   from hash payload.
 - `run_id` must equal this frozen hash and must not change after initialization.
@@ -237,7 +237,7 @@ Persist in state metadata:
 
 ## OmegaConf and from_yaml Rules
 
-- All control-plane config restoration must use `BaseConfig.from_yaml`.
+- All control-plane config restoration must use {meth}`deckard.utils.BaseConfig.from_yaml`.
 - Always load with `OmegaConf.load(..., resolve=True)`.
 - Persist a fully-resolved config snapshot before first execution stage.
 
@@ -274,6 +274,6 @@ Persist in state metadata:
 
 ## Non-Goals
 
-- Replacing artifact payload formats already supported by `ArtifactLoaderConfig`.
+- Replacing artifact payload formats already supported by {class}`deckard.artifacts.ArtifactLoaderConfig`.
 - Forcing all payloads into one file format.
 - Introducing framework-specific persistence branches into core runtime contracts.

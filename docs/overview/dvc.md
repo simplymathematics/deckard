@@ -25,8 +25,8 @@ Core capabilities:
 
 ## Current Implementation Notes
 
-- DVC integration is optional and wrapper-driven via `DVCExperimentConfig`.
-- Base `ExperimentConfig` hashing excludes `dvc_plugin`, so DVC policy toggles do not change experiment identity.
+- DVC integration is optional and wrapper-driven via {class}`deckard.experiment.dvc.DVCExperimentConfig`.
+- Base {class}`deckard.experiment.ExperimentConfig` hashing excludes `dvc_plugin`, so DVC policy toggles do not change experiment identity.
 - Generated structured params payloads use top-level `__target__` and a single top-level `dvc_plugin` block.
 - Wrapped `experiment` payloads do not duplicate `dvc_plugin`.
 - Persisted DVC/DVCLive path fields are normalized to relative paths to avoid absolute host-path leakage.
@@ -55,6 +55,8 @@ Reference layout:
 - `outputs/logs/<run_identity>/...`
 
 ## Public API
+
+Primary API entrypoint: {func}`deckard.experiment.generate_dvc_pipeline`.
 
 ```python
 from deckard.experiment import generate_dvc_pipeline

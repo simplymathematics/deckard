@@ -1,6 +1,6 @@
 # Experiment Workflow Overview
 
-`ExperimentConfig` is the top-level orchestration entrypoint in deckard.
+{class}`deckard.experiment.ExperimentConfig` is the top-level orchestration entrypoint in deckard.
 It composes component configs into one end-to-end runtime workflow and persists
 results through canonical file aliases.
 
@@ -35,7 +35,7 @@ Only fit-time defense can trigger retraining behavior.
 
 ## Component Configs
 
-`ExperimentConfig` composes these core module configs:
+{class}`deckard.experiment.ExperimentConfig` composes these core module configs:
 
 - Data: {doc}`../api/data`
 - Model: {doc}`../api/model`

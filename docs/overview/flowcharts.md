@@ -15,6 +15,8 @@ Shared semantic color system:
 
 ## Default Workflow
 
+Canonical orchestration entrypoint: {meth}`deckard.experiment.ExperimentConfig.run`.
+
 ```mermaid
 flowchart TD
     A[ExperimentConfig.run]

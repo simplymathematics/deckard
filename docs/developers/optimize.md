@@ -17,7 +17,7 @@ Core expectations:
 
 - one Hydra default profile should support run and multirun
 - stage and trial fan-out control must come from runtime overrides
-- callback lifecycle stays adapter-thin and delegates policy to OptimizerConfig
+- callback lifecycle stays adapter-thin and delegates policy to {class}`deckard.layers.optimize.OptimizerConfig`
 - persisted params and scores stay deterministic and reproducible
 
 ## Canonical Surfaces
@@ -43,7 +43,7 @@ Primary demonstration notebooks:
 When validating optimize behavior, confirm:
 
 1. callback target resolves to `deckard.layers.optimize.DefaultOptimizerCallback`
-2. callback directions and optimizers align with `OptimizerConfig`
+2. callback directions and optimizers align with {class}`deckard.layers.optimize.OptimizerConfig`
 3. single-run stage selection works via runtime override (`stage=...`)
 4. multirun fan-out works via sweeper overrides (`hydra.sweeper.*`)
 5. files-only persistence aliases are used for params, scores, logs, and errors

@@ -36,25 +36,43 @@ Related Deckard docs:
 - {doc}`experiment` for composed experiment execution prior to plotting
 
 **Feature analysis** (`visualize_features`):
-`rank1d`, `rank2d`, `radviz`, `pcoords`, `jointplot`, `pca`,
-`manifold`
+- [`rank1d`](https://www.scikit-yb.org/en/latest/api/features/index.html)
+- [`rank2d`](https://www.scikit-yb.org/en/latest/api/features/index.html)
+- [`radviz`](https://www.scikit-yb.org/en/latest/api/features/index.html)
+- [`pcoords`](https://www.scikit-yb.org/en/latest/api/features/index.html)
+- [`jointplot`](https://www.scikit-yb.org/en/latest/api/features/index.html)
+- [`pca`](https://www.scikit-yb.org/en/latest/api/features/index.html)
+- [`manifold`](https://www.scikit-yb.org/en/latest/api/features/index.html)
 
 **Target / distribution** (`visualize_targets`):
-`class_balance`, `balanced_binning_reference`, `feature_correlation`
+- [`class_balance`](https://www.scikit-yb.org/en/latest/api/target/index.html)
+- [`balanced_binning_reference`](https://www.scikit-yb.org/en/latest/api/target/index.html)
+- [`feature_correlation`](https://www.scikit-yb.org/en/latest/api/target/index.html)
 
 **Regression diagnostics** (`visualize_regressors`):
-`prediction_error`, `residuals_plot`, `alpha_selection`
+- [`prediction_error`](https://www.scikit-yb.org/en/latest/api/regressor/index.html)
+- [`residuals_plot`](https://www.scikit-yb.org/en/latest/api/regressor/index.html)
+- [`alpha_selection`](https://www.scikit-yb.org/en/latest/api/regressor/index.html)
 
 **Classification diagnostics** (`visualize_classifiers`):
-`classification_report`, `roc_auc`, `precision_recall_curve`,
-`class_prediction_error`, `discrimination_threshold`
+- [`classification_report`](https://www.scikit-yb.org/en/latest/api/classifier/index.html)
+- [`roc_auc`](https://www.scikit-yb.org/en/latest/api/classifier/index.html)
+- [`precision_recall_curve`](https://www.scikit-yb.org/en/latest/api/classifier/index.html)
+- [`class_prediction_error`](https://www.scikit-yb.org/en/latest/api/classifier/index.html)
+- [`discrimination_threshold`](https://www.scikit-yb.org/en/latest/api/classifier/index.html)
 
 **Clustering** (`visualize_clusters`):
-`k_elbow`, `silhouette`, `intercluster_distance`
+- [`k_elbow`](https://www.scikit-yb.org/en/latest/api/cluster/index.html)
+- [`silhouette`](https://www.scikit-yb.org/en/latest/api/cluster/index.html)
+- [`intercluster_distance`](https://www.scikit-yb.org/en/latest/api/cluster/index.html)
 
 **Model selection** (`visualize_model_selection`):
-`learning_curve`, `validation_curve`, `cv_scores`,
-`feature_importances`, `rfecv`, `dropping_curve`
+- [`learning_curve`](https://www.scikit-yb.org/en/latest/api/model_selection/index.html)
+- [`validation_curve`](https://www.scikit-yb.org/en/latest/api/model_selection/index.html)
+- [`cv_scores`](https://www.scikit-yb.org/en/latest/api/model_selection/index.html)
+- [`feature_importances`](https://www.scikit-yb.org/en/latest/api/model_selection/index.html)
+- [`rfecv`](https://www.scikit-yb.org/en/latest/api/model_selection/index.html)
+- [`dropping_curve`](https://www.scikit-yb.org/en/latest/api/model_selection/index.html)
 
 ## Examples
 

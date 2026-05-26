@@ -38,9 +38,9 @@ Related contracts:
 
 The current implementation is frozen around these invariants:
 
-- `DVCExperimentConfig` is an optional wrapper and not a replacement for core runtime execution.
+- {class}`deckard.experiment.dvc.DVCExperimentConfig` is an optional wrapper and not a replacement for core runtime execution.
 
-- Base `ExperimentConfig` hashing excludes DVC policy fields (`dvc_plugin`) so DVC toggles do not change experiment identity.
+- Base {class}`deckard.experiment.ExperimentConfig` hashing excludes DVC policy fields (`dvc_plugin`) so DVC toggles do not change experiment identity.
 
 - DVC hook wrappers are only composed when the DVC plugin is explicitly enabled.
 
@@ -72,7 +72,7 @@ The current implementation is frozen around these invariants:
 
 ### Native component composition
 
-`ExperimentConfig.compose_components(...)` already supports runtime overrides for:
+{meth}`deckard.experiment.ExperimentConfig.compose_components` already supports runtime overrides for:
 
 - `data`, `model`, `attack`, `detector`, `score`, `defense`, `files`
 
@@ -86,9 +86,9 @@ After applying overrides, runtime contracts are recomposed and a fresh `params` 
 
 Current orchestration behavior already provides:
 
-- programmatic hook graph generation via `build_experiment_hook_graph()`
+- programmatic hook graph generation via {func}`deckard.experiment.canon.build_experiment_hook_graph`
 
-- canonical hook bundle via `build_experiment_hook_bundle()`
+- canonical hook bundle via {func}`deckard.experiment.canon.build_experiment_hook_bundle`
 
 - additive user bundle + hook plugin composition through `compose_hook_plugins(...)`
 
@@ -148,11 +148,11 @@ This behavior is a direct input to DVC stage outs and cache reuse semantics.
 
 ### In scope
 
-- A utility that writes `dvc.yaml` from an `ExperimentConfig` instance and/or persisted runtime state.
+- A utility that writes `dvc.yaml` from an {class}`deckard.experiment.ExperimentConfig` instance and/or persisted runtime state.
 
 - Canonical stage-to-DVC-stage mapping using experiment canon helpers.
 
-- Deterministic deps/outs/params mapping from `FileConfig`, runtime params, and optional cache metadata.
+- Deterministic deps/outs/params mapping from {class}`deckard.file.FileConfig`, runtime params, and optional cache metadata.
 
 - Command emission for:
 
@@ -302,7 +302,7 @@ Conditionally include:
 
 ### outs
 
-Include configured file aliases from `FileConfig` that are written by the stage.
+Include configured file aliases from {class}`deckard.file.FileConfig` that are written by the stage.
 
 When cache aliases are enabled, include synthetic outs/deps for cache payload continuity:
 
@@ -363,21 +363,21 @@ Recommended payload fields include:
 
 Minimum targeted plot families:
 
-- roc_auc
+- [roc_auc](https://www.scikit-yb.org/en/latest/api/classifier/rocauc.html)
 
-- covariance
+- [covariance](https://numpy.org/doc/stable/reference/generated/numpy.cov.html)
 
-- epochs vs loss
+- [epochs vs loss](https://www.scikit-yb.org/en/latest/api/model_selection/learning_curve.html)
 
-- feature importance
+- [feature importance](https://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html)
 
-- metric vs attack strength
+- [metric vs attack strength](https://seaborn.pydata.org/generated/seaborn.lineplot.html)
 
-- metric vs defense strength
+- [metric vs defense strength](https://seaborn.pydata.org/generated/seaborn.lineplot.html)
 
-- adversarial vs benign metrics
+- [adversarial vs benign metrics](https://seaborn.pydata.org/generated/seaborn.barplot.html)
 
-- attack-vs-defense comparison heatmaps
+- [attack-vs-defense comparison heatmaps](https://seaborn.pydata.org/generated/seaborn.heatmap.html)
 
 Canonical Vega-Lite naming examples:
 

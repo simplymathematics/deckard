@@ -56,16 +56,16 @@ after attacks
 
 Base runtime configuration objects used in most experiment graphs:
 
-- [DataConfig](../api/data)
-- [ModelConfig](../api/model)
-- [AttackConfig](../api/attack)
-- [DetectorConfig](../api/detector)
-- [ExperimentConfig](../api/experiment)
-- [FileConfig](../api/file)
+- {class}`deckard.data.DataConfig`
+- {class}`deckard.model.ModelConfig`
+- {class}`deckard.attack.AttackConfig`
+- {class}`deckard.detector.DetectorConfig`
+- {class}`deckard.experiment.ExperimentConfig`
+- {class}`deckard.file.FileConfig`
 
 Dependencies are modular: start with core install, then opt into extension
 stacks (for example PyTorch, Fairlearn, Lifelines, Seaborn, Yellowbrick,
-Anjana) described in [Extensions](extensions) and [Installation](installation).
+Anjana) described in {doc}`extensions/index` and {doc}`installation`.
 
 This reduces engineering friction so researchers can focus on methodology
 instead of ad-hoc pipeline glue code.

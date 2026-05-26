@@ -19,7 +19,7 @@ criteria for contributor-facing documentation.
 
 ## Acceptance Criteria
 
-1. Core attack configuration remains `AttackConfig` with stable runtime behavior.
+1. Core attack configuration remains {class}`deckard.attack.AttackConfig` with stable runtime behavior.
 2. Canonical attack stages normalize to lifecycle boundaries and are observable in outputs/hooks.
 3. Files-only persistence paths are used for attack outputs and downstream scoring artifacts.
 4. Attack scoring outputs remain compatible with experiment-level merge and persistence layers.

@@ -11,7 +11,7 @@ This page documents the model-side runtime contract that the refactor enforces.
 
 ## Canonical Model Shape
 
-A model config should expose a stable runtime surface whether it is the core sklearn-style `ModelConfig` or a framework/plugin specialization.
+A model config should expose a stable runtime surface whether it is the core sklearn-style {class}`deckard.model.ModelConfig` or a framework/plugin specialization.
 
 Canonical runtime fields include:
 
@@ -116,6 +116,6 @@ They should not reimplement the core train/load/defense orchestration.
 - {doc}`../api/pytorch`
 - {doc}`../api/fairlearn`
 - {doc}`../api/anjana`
-- {doc}`../overview/model`
+- {doc}`../overview/core`
 - {doc}`../developers/plugins`
 - {doc}`../developers/data`

@@ -29,7 +29,7 @@ optional `pipeline` runtime object.
   family marker variant.
 - {class}`deckard.data.pipeline.base.DataConfig` is an anonymization
   family marker variant.
-- Optional torch variant: `PytorchDataConfig` (available when torch extras
+- Optional torch variant: {class}`deckard.frameworks.pytorch.data.PytorchDataConfig` (available when torch extras
   are installed) in {mod}`deckard.frameworks.pytorch.data`.
 
 ## External References
@@ -43,6 +43,7 @@ optional `pipeline` runtime object.
 ```{eval-rst}
 .. automodule:: deckard.data.pipeline
    :members:
+  :exclude-members: DataConfig
    :show-inheritance:
 ```
 

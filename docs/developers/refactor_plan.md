@@ -27,7 +27,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 - [x] Introduce canonical data scoring stage vocabulary and normalization.
 
-- [x] Route `DataConfig` score execution through canonical stage resolution.
+- [x] Route {class}`deckard.data.DataConfig` score execution through canonical stage resolution.
 
 - [x] Add stage-aware score hook dispatch with legacy hook compatibility.
 
@@ -45,7 +45,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
   `score_mode=test` while preserving explicit runtime overrides.
 
-- [x] Split `DataConfig` orchestration responsibilities into explicit loaders,
+- [x] Split {class}`deckard.data.DataConfig` orchestration responsibilities into explicit loaders,
 
   samplers, pipeline runners, and score runners.
 
@@ -162,7 +162,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 - [x] Add focused model canon contract tests for constants and runtime initialization.
 
-- [x] Validate top-level model config behavior remains stable (`ModelConfig` + family aliases).
+- [x] Validate top-level model config behavior remains stable ({class}`deckard.model.ModelConfig` + family aliases).
 
 - [x] Run focused model + phase-4 contract suites and update checklist status.
 
@@ -172,7 +172,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 - [x] Implement trainer variants: base sklearn, pretrained, partial-fit, partial-fit+pruning, pruning, and base pytorch.
 
-- [x] Route `ModelConfig` training/load flow through trainer composition without replacing core orchestration.
+- [x] Route {class}`deckard.model.ModelConfig` training/load flow through trainer composition without replacing core orchestration.
 
 - [x] Reuse existing utility/artifact primitives from `deckard/utils.py` and `deckard/artifacts.py` (no duplicate IO/config logic).
 
@@ -320,7 +320,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 - [x] Introduce a shared abstract file handler that can operate on the canon `TypedDict`s for disk-status checks, parsing, string replacement, and validation.
 
-- [x] Keep `FileConfig` as the public typed file registry while removing legacy group-specific path assumptions from runtime call sites.
+- [x] Keep {class}`deckard.file.FileConfig` as the public typed file registry while removing legacy group-specific path assumptions from runtime call sites.
 
 - [x] Align file placeholders (`{num}`, `{timestamp}`, `{hash}`, replacements) with the final runtime identity and multirun behavior.
 
@@ -334,7 +334,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 - [x] Ensure `deckard/artifacts.py` owns persistence load/save behavior for all runtime artifact payloads.
 
-- [x] Move/retain config coercion and normalization in `BaseConfig` and shared utility helpers only.
+- [x] Move/retain config coercion and normalization in {class}`deckard.utils.BaseConfig` and shared utility helpers only.
 
 - [x] Centralize class resolution, plugin instantiation, score merging, and device resolution in `deckard/utils.py`.
 
@@ -408,7 +408,7 @@ Design spec: [DVC Pipeline Autogeneration Spec](dvc)
 
 - [x] Enable Vega-Lite plot spec outputs (`*.vl.json`) for browser-renderable DVC plot artifacts (yellowbrick and seaborn plots should be supported, but not required).
 
-- [x] Create specs according to [DVC Pipeline Autogeneration Spec](dvc) and deckard-native functionality. Create runnable Hydra YAML files for each plot with names like `attack_alias_vs_metric` or `roc_auc`.
+- [x] Create specs according to [DVC Pipeline Autogeneration Spec](dvc) and deckard-native functionality. Create runnable Hydra YAML files for each plot with names like `attack_alias_vs_metric` or [`roc_auc`](https://www.scikit-yb.org/en/latest/api/classifier/rocauc.html).
 
 - [x] Ensure generated DVCLive/DVC output directories use runtime identity.
 
@@ -424,7 +424,7 @@ Design spec: [DVC Pipeline Autogeneration Spec](dvc)
 
 Concrete rewrite steps to align runtime implementation with the design spec:
 
-- [x] Introduce `DVCPluginBundle` as first/last hook bundles for `ExperimentConfig` orchestration.
+- [x] Introduce `DVCPluginBundle` as first/last hook bundles for {class}`deckard.experiment.ExperimentConfig` orchestration.
 
 - [x] Instantiate `dvclive.Live` at runtime hook entry (`before_load` in first-position wrapper) and keep a single runtime session per experiment call.
 
@@ -470,14 +470,14 @@ Design specs: [Optimization Runtime Contract](optimization) | [Hydra and Optuna 
 
 - [x] Rename/default callback contract to `DefaultOptimizerCallback` as the configurable Hydra callback adapter.
 
-- [x] Define `OptimizerConfig` as the dedicated runtime optimization policy object
+- [x] Define {class}`deckard.layers.optimize.OptimizerConfig` as the dedicated runtime optimization policy object
 
   (metadata, optimizers, directions, trial reporting/pruning policy, optional DVCLive integration).
 
 - [x] Keep callback behavior adapter-thin:
 
   - [x] callback owns lifecycle hooks
-  - [x] callback delegates policy behavior to `OptimizerConfig`
+  - [x] callback delegates policy behavior to {class}`deckard.layers.optimize.OptimizerConfig`
 
 - [x] Define one Hydra default profile that can execute:
 
@@ -515,7 +515,7 @@ Design specs: [Optimization Runtime Contract](optimization) | [Hydra and Optuna 
 - [x] Add optimization callback/config tests for adapter + policy split:
 
   - [x] `DefaultOptimizerCallback` lifecycle delegation
-  - [x] `OptimizerConfig` trial resolution/report/prune behavior
+  - [x] {class}`deckard.layers.optimize.OptimizerConfig` trial resolution/report/prune behavior
 
 - [x] Add pruning integration tests that assert prune termination raises `TrialPruned`.
 
@@ -643,7 +643,7 @@ Design specs: [Optimization Runtime Contract](optimization) | [Hydra and Optuna 
 
 - [x] Register declarations dynamically at package installation from
 
-  `deckard/declarations.py` via `safe_store()`.
+  `deckard/declarations.py` via {func}`deckard.utils.safe_store`.
 
 - [ ] Ensure that plugin behavior is completely outside of the core modules.
 

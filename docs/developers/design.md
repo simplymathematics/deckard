@@ -16,7 +16,7 @@ modifying the core.
 - **Reproducibility**: All workflows are [DVC](https://dvc.org)- and
   [Hydra](https://hydra.cc)-compatible for reproducible runs.
 
-See the [Refactor Plan](plan) for implementation details and ongoing goals.
+See the [Refactor Plan](refactor_plan) for implementation details and ongoing goals.
 
 ______________________________________________________________________
 

@@ -23,7 +23,7 @@ orchestration behavior documented in {doc}`experiment`.
 
 ## Canonical artifact contract
 
-`ArtifactLoaderConfig` owns canonical save/load behavior across score, data,
+{class}`deckard.artifacts.ArtifactLoaderConfig` owns canonical save/load behavior across score, data,
 model, and object payloads.
 
 Typical responsibilities include:

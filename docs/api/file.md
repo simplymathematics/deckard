@@ -24,7 +24,7 @@ resolved config values.
 
 ## Canonical file contract
 
-`FileConfig` is the public typed file registry for canonical artifact paths.
+{class}`deckard.file.FileConfig` is the public typed file registry for canonical artifact paths.
 It now uses a shared file handler surface for:
 
 - key validation
@@ -62,10 +62,11 @@ file:
    output_dir: build/sklearn
    score_dict_file: score_dict.json
    score_table_file: score_table.csv
+```
 
 ## Handler Example
 
-`FileConfig` accepts a custom handler when callers need to centralize file-key
+{class}`deckard.file.FileConfig` accepts a custom handler when callers need to centralize file-key
 validation or disk-status checks.
 ```python
 from deckard.file import CanonFileHandler, FileConfig

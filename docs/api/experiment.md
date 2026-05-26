@@ -51,9 +51,9 @@ It is the primary integration point for reproducible end-to-end runs.
 
 Canonical public execution entrypoint:
 
-- `ExperimentConfig.run()`
+- {meth}`deckard.experiment.ExperimentConfig.run`
 
-`ExperimentConfig.__call__()` remains available as a backward-compatible alias.
+{meth}`deckard.experiment.ExperimentConfig.__call__` remains available as a backward-compatible alias.
 
 Experiment configs are typically composed with [Hydra](https://hydra.cc) and
 [OmegaConf](https://omegaconf.readthedocs.io), including config-group overrides

@@ -18,16 +18,16 @@ and score serialization interact during single-run and multirun workflows.
 Optimization runtime is split into three concerns:
 
 - Orchestration: Hydra sweeper + callback lifecycle.
-- Runtime optimization policy: `OptimizerConfig` (or equivalent config object)
+- Runtime optimization policy: {class}`deckard.layers.optimize.OptimizerConfig` (or equivalent config object)
     that owns trial resolution, reporting, and pruning policy behavior.
-- Execution: `optimize_main(cfg)` instantiates and runs `ExperimentConfig`.
+- Execution: {func}`deckard.layers.optimize.optimize_main` instantiates and runs {class}`deckard.experiment.ExperimentConfig`.
 - Post-run synchronization: objective filtering, trial user attributes, persisted score payload.
 
 This split allows composition changes without changing the user-facing command surface.
 
 ## OptimizerConfig Contract
 
-`OptimizerConfig` is the canonical runtime policy object for optimization behavior.
+{class}`deckard.layers.optimize.OptimizerConfig` is the canonical runtime policy object for optimization behavior.
 
 Responsibilities:
 
@@ -40,13 +40,13 @@ Non-responsibilities:
 
 - Hydra callback lifecycle ownership
 - direct CLI argument parsing
-- replacing `ExperimentConfig` as execution root
+- replacing {class}`deckard.experiment.ExperimentConfig` as execution root
 
 Design intent:
 
-- keep `DefaultOptimizerCallback(HydraCallback)` as the Hydra-native adapter
+- keep {class}`deckard.layers.optimize.DefaultOptimizerCallback` as the Hydra-native adapter
 - keep callback methods thin and delegate optimization policy logic into
-    `OptimizerConfig`
+    {class}`deckard.layers.optimize.OptimizerConfig`
 - keep `default.yaml` configuration as the source of runtime policy values
 
 ## Entrypoint Contract
@@ -56,10 +56,10 @@ Design intent:
 Requirements:
 
 - Input is any DictConfig/dict-like payload coercible to a dictionary.
-- Runtime target is forced to `deckard.ExperimentConfig`.
+- Runtime target is forced to {class}`deckard.experiment.ExperimentConfig`.
 - Runtime object must return a dict-like score payload.
 - Raw score payload must be preserved for callback hooks that run after sweeper wrapping.
-- Runtime optimization policy should be configured through `OptimizerConfig`
+- Runtime optimization policy should be configured through {class}`deckard.layers.optimize.OptimizerConfig`
     rather than additional positional function arguments.
 
 ## Trial Resolution Contract
@@ -114,7 +114,7 @@ are documented in [Hydra and Optuna Orchestration Contract](hydra.md).
 Hydra integration model for this contract:
 
 - callback remains Hydra-native lifecycle adapter
-- `OptimizerConfig` remains runtime optimization policy object
+- {class}`deckard.layers.optimize.OptimizerConfig` remains runtime optimization policy object
 - callback delegates optimization policy behavior to configured runtime object
 
 ## Integration With DVC and DVCLive

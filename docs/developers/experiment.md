@@ -8,13 +8,13 @@ Related docs:
 - [Hydra and Optuna Orchestration Contract](hydra.md)
 - [Pruning Runtime Contract](pruning.md)
 - [DVC Pipeline Autogeneration Spec](dvc.md)
-- [Refactor Plan](plan.md)
+- [Refactor Plan](refactor_plan)
 
 ## Experiment Canon
 
 Canonical experiment runtime state is organized into five buckets:
 
-1. `files`: output and artifact aliases resolved through `FileConfig`
+1. `files`: output and artifact aliases resolved through {class}`deckard.file.FileConfig`
 2. `times`: canonical timing keys with optional extension keys
 3. `scores`: stage-aware and mode-aware score payloads
 4. `outputs`: cache metadata, hook trace, and stage intermediates
@@ -40,7 +40,7 @@ Defense-stage training rule:
 
 ## Bundle Authoring
 
-Hook bundles are authored with `HookBundle` and `HookPlugin` and composed through `compose_hook_plugins(...)`.
+Hook bundles are authored with {class}`deckard.plugins.base.HookBundle` and {class}`deckard.plugins.HookPlugin` and composed through {func}`deckard.plugins.base.compose_hook_plugins`.
 
 Authoring rules:
 
@@ -114,6 +114,6 @@ These tests cover:
 1. hook stage ordering and bundle merge behavior
 2. native config composition and cache reuse
 3. Hydra compose behavior for stage selection and multitrial settings
-4. callback/policy delegation between `DefaultOptimizerCallback` and `OptimizerConfig`
+4. callback/policy delegation between {class}`deckard.layers.optimize.DefaultOptimizerCallback` and {class}`deckard.layers.optimize.OptimizerConfig`
 5. pruning propagation via `TrialPruned`
 6. DVC contract behavior for plots, identities, metrics policy, and reports

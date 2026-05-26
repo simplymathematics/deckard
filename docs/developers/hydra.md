@@ -68,9 +68,9 @@ runtime objects when needed.
 
 Current default policy shape:
 
-- `DefaultOptimizerCallback` is adapter-thin and delegates optimization policy
-    values to `OptimizerConfig`.
-- `OptimizerConfig` self-configures from top-level composed config keys
+- {class}`deckard.layers.optimize.DefaultOptimizerCallback` is adapter-thin and delegates optimization policy
+    values to {class}`deckard.layers.optimize.OptimizerConfig`.
+- {class}`deckard.layers.optimize.OptimizerConfig` self-configures from top-level composed config keys
     (`directions`, `optimizers`, `report_trial_attrs`, `pruning_enabled`,
     `dvclive_enabled`, `dvclive_dir`) without requiring a nested optimizer
     dictionary in callback YAML.
