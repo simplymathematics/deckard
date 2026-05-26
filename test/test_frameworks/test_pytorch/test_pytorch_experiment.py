@@ -48,10 +48,13 @@ def _make_torch_data(unit_interval: bool = False):
     y = torch.randint(0, 2, (60,))
     data = PytorchDataConfig(
         dataset_name="torch.utils.data.TensorDataset",
-        train_size=40,
-        test_size=20,
+        sampler={
+            "name": "split",
+            "train_size": 40,
+            "test_size": 20,
+            "random_state": 42,
+        },
         classifier=True,
-        random_state=42,
         data_params={"_args_": [X, y]},
     )
     data()
@@ -63,8 +66,7 @@ def _make_unloaded_torch_data():
     y = torch.randint(0, 2, (40,))
     return PytorchDataConfig(
         dataset_name="torch.utils.data.TensorDataset",
-        train_size=30,
-        test_size=10,
+        sampler={"name": "split", "train_size": 30, "test_size": 10},
         classifier=True,
         data_params={"_args_": [X, y]},
     )

@@ -2461,10 +2461,13 @@ class TestExtractBranches:
         y = torch.randint(0, 2, (16,))
         data = PytorchDataConfig(
             dataset_name="torch.utils.data.TensorDataset",
-            train_size=12,
-            test_size=4,
+            sampler={
+                "name": "split",
+                "train_size": 12,
+                "test_size": 4,
+                "random_state": 42,
+            },
             classifier=True,
-            random_state=42,
             data_params={"_args_": [X, y]},
         )
         data()

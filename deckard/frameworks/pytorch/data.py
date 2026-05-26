@@ -58,6 +58,12 @@ class TorchDatasetSamplingMixin:
     sample: Literal["split", "fold", "shuffle"]
     stratify: bool
 
+    def _sampler_value(self, key: str, default: Any) -> Any:
+        getter = getattr(self, "_get_sampler_option", None)
+        if callable(getter):
+            return getter(key, default)
+        return getattr(self, key, default)
+
     def _get_targets(self) -> list:
         """Extract labels for stratified sampling."""
         ds = self.dataset
@@ -71,14 +77,6 @@ class TorchDatasetSamplingMixin:
         raise AttributeError(
             "Stratified sampling requires dataset.targets or dataset.labels.",
         )
-
-    def _validate_sizes(self) -> None:
-        total = self.train_size + self.val_size + self.test_size
-
-        if abs(total - 1.0) > 1e-8:
-            raise ValueError(
-                "train_size + val_size + test_size must equal 1.0",
-            )
 
     def sample(
         self,
@@ -109,7 +107,6 @@ class TorchDatasetSamplingMixin:
                 "dataset must be torch.utils.data.Dataset",
             )
 
-        self._validate_sizes()
         indices = list(range(len(ds)))
 
         if self.sample == "split":
@@ -135,23 +132,32 @@ class TorchDatasetSamplingMixin:
         indices: list[int],
     ) -> tuple[Subset, Subset, Subset]:
         """Return train/val/test subsets."""
-        y = self._get_targets() if self.stratify else None
+        stratify = self._sampler_value("stratify", True)
+        test_size = self._sampler_value("test_size", 0.2)
+        train_size = self._sampler_value("train_size", None)
+        val_size = self._sampler_value("val_size", None)
+        random_state = self._sampler_value("random_state", 42)
+
+        y = self._get_targets() if stratify else None
 
         trainval_idx, test_idx = train_test_split(
             indices,
-            test_size=self.test_size,
-            random_state=self.random_state,
+            test_size=test_size,
+            random_state=random_state,
             stratify=y,
         )
 
         y_trainval = [y[i] for i in trainval_idx] if y is not None else None
 
-        val_fraction = self.val_size / (self.train_size + self.val_size)
+        if val_size is None:
+            val_fraction = 0.0
+        else:
+            val_fraction = val_size / ((train_size or 0.0) + val_size)
 
         train_idx, val_idx = train_test_split(
             trainval_idx,
             test_size=val_fraction,
-            random_state=self.random_state,
+            random_state=random_state,
             stratify=y_trainval,
         )
 
@@ -173,25 +179,25 @@ class TorchDatasetSamplingMixin:
         n_splits: int,
     ) -> list[tuple[Subset, Subset]]:
         """Return K-fold dataset subsets."""
-        y = self._get_targets() if self.stratify else None
+        stratify = self._sampler_value("stratify", True)
+        random_state = self._sampler_value("random_state", 42)
+        y = self._get_targets() if stratify else None
 
         splitter = (
             StratifiedKFold(
                 n_splits=n_splits,
                 shuffle=True,
-                random_state=self.random_state,
+                random_state=random_state,
             )
-            if self.stratify
+            if stratify
             else KFold(
                 n_splits=n_splits,
                 shuffle=True,
-                random_state=self.random_state,
+                random_state=random_state,
             )
         )
 
-        split_iter = (
-            splitter.split(indices, y) if self.stratify else splitter.split(indices)
-        )
+        split_iter = splitter.split(indices, y) if stratify else splitter.split(indices)
 
         folds = []
 
@@ -286,21 +292,13 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         dataset_name (str): Fully qualified class name of dataset
             (e.g., "torchvision.datasets.MNIST" or "custom_module.CustomDataset").
         data_params (dict): Additional parameters for dataset loading.
-        test_size (Union[float, int, None]): Proportion or absolute number of test samples.
-        train_size (Union[float, int, None]): Proportion or absolute number of train samples.
-        random_state (int): Random seed for reproducibility.
-        stratify (Union[None, str, bool]): Whether to stratify the split.
-        pipeline (Dict[str, DataConfig]): Data processing pipelines.
+        pipeline (Dict[str, deckard.data.base.DataConfig]): Data processing pipelines.
 
     """
 
     dataset_name: StringifiedClass = "torchvision.datasets.MNIST"
     device: Union[str, None] = None
     data_dir: str = "./raw_data"
-    test_size: Union[float, int, None] = 0.2
-    train_size: Union[float, int, None] = 0.7
-    random_state: int = 42
-    stratify: Union[None, str, bool] = True
     pipeline: dict[str, Any] = field(default_factory=dict)
     classifier: bool = True
     target: Optional[str] = None
@@ -311,6 +309,34 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
     sampler_params: dict[str, Any] = field(default_factory=dict)
     dataset_type: Union[str, None] = None
     n_splits: int = 5
+    def _sampler_name(self) -> str:
+        spec = getattr(self, "sampler", None)
+        if isinstance(spec, str):
+            return spec.strip().lower()
+        if isinstance(spec, dict):
+            name = spec.get("name", spec.get("_target_", "split"))
+            if isinstance(name, str):
+                return name.strip().lower()
+        return "split"
+
+    def _get_sampler_option(self, key: str, default: Any) -> Any:
+        spec = getattr(self, "sampler", None)
+        if isinstance(spec, dict) and key in spec:
+            return spec[key]
+        params = getattr(self, "sampler_params", {}) or {}
+        if key in params:
+            return params[key]
+        return default
+
+    def _set_sampler_option(self, key: str, value: Any) -> None:
+        spec = getattr(self, "sampler", None)
+        if isinstance(spec, dict):
+            spec[key] = value
+            self.sampler = spec
+            return
+        params = dict(getattr(self, "sampler_params", {}) or {})
+        params[key] = value
+        self.sampler_params = params
 
     def _normalize_sensitive_item(self, sensitive_item: Any) -> Any:
         if isinstance(sensitive_item, torch.Tensor):
@@ -340,13 +366,6 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         assert (
             len(self.keep) == 0
         ), f"Keep columns should not be set for PyTorch datasets. Got {self.keep}."
-        assert (
-            self.train_size is not None and self.train_size > 0
-        ), "train_size must be specified for PyTorch datasets."
-        assert (
-            self.test_size is not None and self.test_size > 0
-        ), "test_size must be specified for PyTorch datasets."
-
     def _initialize_data_params(self) -> None:
         if self.data_dir is None:
             self.data_dir = tempfile.gettempdir()
@@ -558,11 +577,6 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             self._run_plugin_hook("before_sample")
 
         # Determine stratification
-        if self.stratify not in (None, True, False):
-            raise ValueError(
-                f"stratify must be None, True, or False for PyTorch datasets; got {self.stratify}.",
-            )
-
         start_time = time.perf_counter()
         if getattr(self, "dataset_obj", None) is None:
             self.dataset_obj = TensorDataset(self._X, self._y)
@@ -804,13 +818,16 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             transform=test_transform,
         )
         # For custom split datasets, only explicit integer caps should truncate.
-        if isinstance(self.train_size, int):
-            train_ds = self._truncate_dataset(train_ds, self.train_size)
+        train_size = self._get_sampler_option("train_size", None)
+        test_size = self._get_sampler_option("test_size", 0.2)
+        random_state = int(self._get_sampler_option("random_state", 42))
+        if isinstance(train_size, int):
+            train_ds = self._truncate_dataset(train_ds, train_size)
             self.train_n = len(train_ds)
         else:
             self.train_n = len(train_ds)
-        if isinstance(self.test_size, int):
-            test_ds = self._truncate_dataset(test_ds, size=self.test_size)
+        if isinstance(test_size, int):
+            test_ds = self._truncate_dataset(test_ds, size=test_size)
             self.test_n = len(test_ds)
         else:
             self.test_n = len(test_ds)
@@ -857,7 +874,8 @@ class PytorchCustomDataConfig(PytorchDataConfig):
                 "Expected custom torch _X to contain (train_dataset, test_dataset)",
             )
         train_ds, test_ds = self._X
-        torch.manual_seed(self.random_state)
+        random_state = int(self._get_sampler_option("random_state", 42))
+        torch.manual_seed(random_state)
         train_loader = DataLoader(
             train_ds,
             batch_size=batch_size,

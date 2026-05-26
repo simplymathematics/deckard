@@ -89,33 +89,43 @@ class PytorchBaseSampler(BaseSampler):
             "shuffle": PytorchShuffleSampler,
         }
 
+        sampler_params = dict(getattr(config, "sampler_params", {}) or {})
+
+        def _cfg_value(name: str, default: Any) -> Any:
+            getter = getattr(config, "_get_sampler_option", None)
+            if callable(getter):
+                return getter(name, default)
+            if name in sampler_params:
+                return sampler_params[name]
+            return default
+
         def _sampler_kwargs_for_alias(alias: str) -> dict[str, Any]:
             if alias == "split":
                 return {
-                    "train_size": getattr(config, "train_size", None),
-                    "test_size": getattr(config, "test_size", None),
-                    "val_size": getattr(config, "val_size", None),
-                    "random_state": getattr(config, "random_state", 42),
-                    "stratify": getattr(config, "stratify", True),
+                    "train_size": _cfg_value("train_size", None),
+                    "test_size": _cfg_value("test_size", None),
+                    "val_size": _cfg_value("val_size", None),
+                    "random_state": _cfg_value("random_state", 42),
+                    "stratify": _cfg_value("stratify", True),
                 }
             if alias in {"fold", "kfold"}:
                 return {
                     "n_splits": getattr(config, "n_splits", 5),
                     "split": getattr(config, "split", 0),
-                    "train_size": getattr(config, "train_size", None),
-                    "test_size": getattr(config, "test_size", None),
-                    "val_size": getattr(config, "val_size", None),
-                    "random_state": getattr(config, "random_state", 42),
-                    "stratify": getattr(config, "stratify", True),
+                    "train_size": _cfg_value("train_size", None),
+                    "test_size": _cfg_value("test_size", None),
+                    "val_size": _cfg_value("val_size", None),
+                    "random_state": _cfg_value("random_state", 42),
+                    "stratify": _cfg_value("stratify", True),
                 }
             if alias == "shuffle":
                 return {
                     "n_splits": getattr(config, "n_splits", 5),
                     "split": getattr(config, "split", 0),
-                    "test_size": getattr(config, "test_size", None),
-                    "val_size": getattr(config, "val_size", None),
-                    "random_state": getattr(config, "random_state", 42),
-                    "stratify": getattr(config, "stratify", True),
+                    "test_size": _cfg_value("test_size", None),
+                    "val_size": _cfg_value("val_size", None),
+                    "random_state": _cfg_value("random_state", 42),
+                    "stratify": _cfg_value("stratify", True),
                 }
             return {}
 
@@ -129,7 +139,9 @@ class PytorchBaseSampler(BaseSampler):
                 raise ValueError(
                     f"Unknown sampler '{spec}'. Must be one of {list(sampler_aliases)}.",
                 )
-            return sampler_aliases[key](**_sampler_kwargs_for_alias(key))
+            alias_kwargs = _sampler_kwargs_for_alias(key)
+            alias_kwargs.update(sampler_params)
+            return sampler_aliases[key](**alias_kwargs)
 
         if (
             DictConfig is not None
@@ -149,6 +161,7 @@ class PytorchBaseSampler(BaseSampler):
             key = str(class_path).strip().lower()
             if key in sampler_aliases:
                 alias_kwargs = _sampler_kwargs_for_alias(key)
+                alias_kwargs.update(sampler_params)
                 alias_kwargs.update({str(k): v for k, v in spec.items()})
                 return sampler_aliases[key](**alias_kwargs)
 
@@ -185,20 +198,10 @@ class PytorchBaseSampler(BaseSampler):
         if sampler_obj is None:
             sampler_obj = PytorchSplitSampler()
             setattr(config, "_sampler_obj", sampler_obj)
-        for field_name in (
-            "train_size",
-            "test_size",
-            "val_size",
-            "random_state",
-            "stratify",
-            "n_splits",
-            "split",
-            "shuffle",
-        ):
+        params = dict(getattr(config, "sampler_params", {}) or {})
+        for field_name, value in params.items():
             if hasattr(sampler_obj, field_name):
-                value = getattr(config, field_name, None)
-                if value is not None:
-                    setattr(sampler_obj, field_name, value)
+                setattr(sampler_obj, field_name, value)
         if not callable(sampler_obj):
             raise TypeError(
                 f"Composed sampler must be callable, got {type(sampler_obj)}",
@@ -217,6 +220,47 @@ class PytorchBaseSampler(BaseSampler):
         """
         sampler_obj = cls.compose(config)
         return sampler_obj(config)
+
+    @staticmethod
+    def _validate_stratify(stratify: bool | str | None) -> None:
+        if stratify not in (None, True, False):
+            raise ValueError(
+                f"stratify must be None, True, or False for PyTorch samplers; got {stratify}.",
+            )
+
+    @staticmethod
+    def _validate_fractional_sizes(
+        train_size: int | float | None,
+        test_size: int | float | None,
+        val_size: int | float | None,
+    ) -> None:
+        sizes = {
+            "train_size": train_size,
+            "test_size": test_size,
+            "val_size": val_size,
+        }
+        for name, value in sizes.items():
+            if value is None:
+                continue
+            if isinstance(value, (int, np.integer)):
+                if int(value) < 0:
+                    raise ValueError(f"{name} must be >= 0, got {value}.")
+                continue
+            if isinstance(value, float):
+                if value < 0.0 or value > 1.0:
+                    raise ValueError(f"{name} float value must be in [0, 1], got {value}.")
+                continue
+            raise TypeError(f"{name} must be int, float, or None, got {type(value)}.")
+
+        all_fractional_or_none = all(
+            value is None or isinstance(value, float) for value in sizes.values()
+        )
+        if all_fractional_or_none:
+            total = sum(float(value or 0.0) for value in sizes.values())
+            if total > 1.0 + 1e-8:
+                raise ValueError(
+                    "When using float sizes, train_size + test_size + val_size must be <= 1.0.",
+                )
 
 
 @dataclass
@@ -239,6 +283,8 @@ class PytorchSplitSampler(PytorchBaseSampler):
         Raises:
             ValueError: If split sizes are invalid or source data is unavailable.
         """
+        self._validate_stratify(self.stratify)
+        self._validate_fractional_sizes(self.train_size, self.test_size, self.val_size)
         if self.train_size is None and self.test_size is None:
             raise ValueError("Either train_size or test_size must be specified.")
         dataset = getattr(config, "dataset_obj", None)
@@ -320,6 +366,10 @@ class PytorchFoldSampler(PytorchBaseSampler):
         Raises:
             ValueError: If split index or sizing constraints are invalid.
         """
+        self._validate_stratify(self.stratify)
+        self._validate_fractional_sizes(self.train_size, self.test_size, self.val_size)
+        if self.n_splits < 2:
+            raise ValueError(f"n_splits must be >= 2, got {self.n_splits}.")
         dataset = getattr(config, "dataset_obj", None)
         if dataset is None:
             if (
@@ -425,6 +475,10 @@ class PytorchShuffleSampler(PytorchBaseSampler):
         Raises:
             ValueError: If validation size or split index is invalid.
         """
+        self._validate_stratify(self.stratify)
+        self._validate_fractional_sizes(None, self.test_size, self.val_size)
+        if self.n_splits < 1:
+            raise ValueError(f"n_splits must be >= 1, got {self.n_splits}.")
         if self.val_size is None:
             raise ValueError("val_size must be set for PytorchShuffleSampler")
         dataset = getattr(config, "dataset_obj", None)

@@ -186,35 +186,38 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         if not (isinstance(self._X, (tuple, list)) and len(self._X) == 2):
             num_samples = len(self._X)
             indices = np.arange(num_samples)
-            np.random.seed(self.random_state)
+            random_state = int(self._get_sampler_option("random_state", 42))
+            train_size_cfg = self._get_sampler_option("train_size", None)
+            test_size_cfg = self._get_sampler_option("test_size", 0.2)
+            np.random.seed(random_state)
             np.random.shuffle(indices)
 
-            if self.train_size is None and self.test_size is None:
+            if train_size_cfg is None and test_size_cfg is None:
                 raise ValueError("Either train_size or test_size must be specified.")
-            if self.train_size is None:
+            if train_size_cfg is None:
                 test_size = (
-                    int(self.test_size * num_samples)
-                    if isinstance(self.test_size, float)
-                    else self.test_size
+                    int(test_size_cfg * num_samples)
+                    if isinstance(test_size_cfg, float)
+                    else test_size_cfg
                 )
                 train_size = num_samples - test_size
-            elif self.test_size is None:
+            elif test_size_cfg is None:
                 train_size = (
-                    int(self.train_size * num_samples)
-                    if isinstance(self.train_size, float)
-                    else self.train_size
+                    int(train_size_cfg * num_samples)
+                    if isinstance(train_size_cfg, float)
+                    else train_size_cfg
                 )
                 test_size = num_samples - train_size
             else:
                 train_size = (
-                    int(self.train_size * num_samples)
-                    if isinstance(self.train_size, float)
-                    else self.train_size
+                    int(train_size_cfg * num_samples)
+                    if isinstance(train_size_cfg, float)
+                    else train_size_cfg
                 )
                 test_size = (
-                    int(self.test_size * num_samples)
-                    if isinstance(self.test_size, float)
-                    else self.test_size
+                    int(test_size_cfg * num_samples)
+                    if isinstance(test_size_cfg, float)
+                    else test_size_cfg
                 )
 
             train_idx = indices[:train_size]

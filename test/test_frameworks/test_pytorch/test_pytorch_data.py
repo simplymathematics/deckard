@@ -132,9 +132,12 @@ class TestPytorchDataConfig:
         self.config = PytorchDataConfig(
             dataset_name="torch.utils.data.TensorDataset",
             data_dir=self.temp_dir,
-            test_size=100,
-            train_size=100,
-            random_state=42,
+            sampler={
+                "name": "split",
+                "test_size": 100,
+                "train_size": 100,
+                "random_state": 42,
+            },
             data_params={"_args_": [X, y]},
         )
 
@@ -150,10 +153,10 @@ class TestPytorchDataConfig:
     def test_initialization(self):
         assert self.config.dataset_name == "torch.utils.data.TensorDataset"
         assert self.config.data_dir == self.temp_dir
-        assert self.config.test_size == 100
-        assert self.config.train_size == 100
-        assert self.config.random_state == 42
-        assert self.config.stratify
+        assert self.config._get_sampler_option("test_size", None) == 100
+        assert self.config._get_sampler_option("train_size", None) == 100
+        assert self.config._get_sampler_option("random_state", None) == 42
+        assert self.config._get_sampler_option("stratify", True)
 
     def test_load_data(self):
         self.config.load_dataset()
@@ -168,9 +171,12 @@ class TestPytorchDataConfig:
             cfg = PytorchDataConfig(
                 dataset_name="torch.utils.data.TensorDataset",
                 data_dir=self.temp_dir,
-                train_size=80,
-                test_size=40,
-                random_state=42,
+                sampler={
+                    "name": "split",
+                    "train_size": 80,
+                    "test_size": 40,
+                    "random_state": 42,
+                },
                 data_params={"_args_": [X, y]},
             )
 
@@ -190,7 +196,7 @@ class TestPytorchDataConfig:
         assert isinstance(self.config.y_test, (Tensor, Dataset))
 
     def test_sample_allows_stratify_false(self):
-        self.config.stratify = False
+        self.config._set_sampler_option("stratify", False)
         self.config.load_dataset()
         self.config.fit()
         assert len(self.config.X_train) == 100
@@ -222,9 +228,12 @@ class TestPytorchDataConfig:
         cfg = PytorchDataConfig(
             dataset_name="dummy.dataset",
             data_dir=self.temp_dir,
-            train_size=60,
-            test_size=40,
-            stratify=True,
+            sampler={
+                "name": "split",
+                "train_size": 60,
+                "test_size": 40,
+                "stratify": True,
+            },
             data_params={},
         )
 
@@ -246,9 +255,12 @@ class TestPytorchDataConfig:
         cfg = PytorchDataConfig(
             dataset_name="dummy.dataset",
             data_dir=self.temp_dir,
-            train_size=70,
-            test_size=20,
-            stratify=True,
+            sampler={
+                "name": "split",
+                "train_size": 70,
+                "test_size": 20,
+                "stratify": True,
+            },
             data_params={},
         )
 
@@ -299,8 +311,7 @@ class TestPytorchDataConfig:
         cfg = PytorchDataConfig(
             dataset_name="torch.utils.data.TensorDataset",
             data_dir=self.temp_dir,
-            train_size=0.7,
-            test_size=0.2,
+            sampler={"name": "split", "train_size": 0.7, "test_size": 0.2},
             data_params={"_args_": [X, y]},
         )
         cfg.load_dataset()
@@ -314,8 +325,7 @@ class TestPytorchDataConfig:
         cfg = PytorchDataConfig(
             dataset_name="torch.utils.data.TensorDataset",
             data_dir=self.temp_dir,
-            train_size=70,
-            test_size=70,
+            sampler={"name": "split", "train_size": 70, "test_size": 70},
             data_params={"_args_": [X, y]},
         )
         cfg.load_dataset()
@@ -328,9 +338,12 @@ class TestPytorchDataConfig:
         cfg = PytorchDataConfig(
             dataset_name="torch.utils.data.TensorDataset",
             data_dir=self.temp_dir,
-            train_size=50,
-            test_size=30,
-            stratify="column_name",
+            sampler={
+                "name": "split",
+                "train_size": 50,
+                "test_size": 30,
+                "stratify": "column_name",
+            },
             data_params={"_args_": [X, y]},
         )
         cfg.load_dataset()
@@ -365,8 +378,7 @@ class TestPytorchDataConfig:
         cfg = PytorchDataConfig(
             dataset_name="mnist",
             data_dir=None,
-            train_size=4,
-            test_size=2,
+            sampler={"name": "split", "train_size": 4, "test_size": 2},
             data_params=None,
         )
 
@@ -377,8 +389,7 @@ class TestPytorchDataConfig:
         cfg = PytorchDataConfig(
             dataset_name="torch_mnist",
             data_dir=self.temp_dir,
-            train_size=2,
-            test_size=2,
+            sampler={"name": "split", "train_size": 2, "test_size": 2},
             data_params={"batch_size": 8, "_args_": ["ignored"]},
         )
 
@@ -405,8 +416,7 @@ class TestPytorchDataConfig:
         cfg = PytorchDataConfig(
             dataset_name="dummy.dataset",
             data_dir=self.temp_dir,
-            train_size=3,
-            test_size=2,
+            sampler={"name": "split", "train_size": 3, "test_size": 2},
             data_params={},
         )
 
@@ -423,8 +433,7 @@ class TestPytorchDataConfig:
         cfg = PytorchDataConfig(
             dataset_name="dummy.dataset",
             data_dir=self.temp_dir,
-            train_size=1,
-            test_size=1,
+            sampler={"name": "split", "train_size": 1, "test_size": 1},
             data_params={},
         )
 
@@ -449,8 +458,7 @@ class TestPytorchDataConfig:
         cfg = PytorchDataConfig(
             dataset_name="torch.utils.data.TensorDataset",
             data_dir=self.temp_dir,
-            train_size=6,
-            test_size=2,
+            sampler={"name": "split", "train_size": 6, "test_size": 2},
             data_params={"_args_": [torch.randn(10, 3), torch.randint(0, 2, (10,))]},
         )
 
@@ -458,21 +466,21 @@ class TestPytorchDataConfig:
             cfg.fit()
 
         cfg.load_dataset()
-        cfg.train_size = None
-        cfg.test_size = 0.2
+        cfg._set_sampler_option("train_size", None)
+        cfg._set_sampler_option("test_size", 0.2)
         cfg.fit()
         assert len(cfg.X_train) == 8
         assert len(cfg.X_test) == 2
 
-        cfg.test_size = None
-        cfg.train_size = 0.5
+        cfg._set_sampler_option("test_size", None)
+        cfg._set_sampler_option("train_size", 0.5)
         cfg.data_sample_time = None
         cfg.fit()
         assert len(cfg.X_train) == 5
         assert len(cfg.X_test) == 5
 
-        cfg.train_size = None
-        cfg.test_size = None
+        cfg._set_sampler_option("train_size", None)
+        cfg._set_sampler_option("test_size", None)
         cfg.data_sample_time = None
         with pytest.raises(ValueError):
             cfg.fit()
@@ -527,8 +535,7 @@ class TestPytorchCustomDataConfig:
             dataset_name="torch.utils.data.TensorDataset",
             dataset=ds,
             data_dir=str(self.temp_dir),
-            train_size=20,
-            test_size=10,
+            sampler={"name": "split", "train_size": 20, "test_size": 10},
             data_params={"batch_size": 4},
             val=False,
         )
@@ -554,8 +561,7 @@ class TestPytorchCustomDataConfig:
             dataset_name="torch.utils.data.TensorDataset",
             dataset="dummy",
             data_dir=str(self.temp_dir),
-            train_size=40,
-            test_size=20,
+            sampler={"name": "split", "train_size": 40, "test_size": 20},
             data_params={"batch_size": 8},
             val=False,
         )
@@ -582,8 +588,7 @@ class TestPytorchCustomDataConfig:
             dataset_name="torch.utils.data.TensorDataset",
             dataset="dummy",
             data_dir=str(self.temp_dir),
-            train_size=10,
-            test_size=10,
+            sampler={"name": "split", "train_size": 10, "test_size": 10},
             data_params={},
         )
         subset = cfg._truncate_dataset(ds, 10)
@@ -596,8 +601,7 @@ class TestPytorchCustomDataConfig:
             dataset_name="torch.utils.data.TensorDataset",
             dataset="not.a.real.Dataset",
             data_dir=str(self.temp_dir),
-            train_size=10,
-            test_size=10,
+            sampler={"name": "split", "train_size": 10, "test_size": 10},
             data_params={},
         )
         with pytest.raises(Exception):
@@ -610,8 +614,7 @@ class TestPytorchCustomDataConfig:
             dataset_name="torch.utils.data.TensorDataset",
             dataset="dummy",
             data_dir=str(self.temp_dir),
-            train_size=10,
-            test_size=10,
+            sampler={"name": "split", "train_size": 10, "test_size": 10},
             data_params={},
         )
         with pytest.raises(TypeError):
@@ -650,8 +653,7 @@ class TestPytorchCustomDataConfig:
             dataset_name="torch.utils.data.TensorDataset",
             dataset="dummy",
             data_dir=str(self.temp_dir),
-            train_size=1,
-            test_size=1,
+            sampler={"name": "split", "train_size": 1, "test_size": 1},
             train_transform=train_transform,
             test_transform=test_transform,
             val=True,
@@ -677,8 +679,7 @@ class TestPytorchCustomDataConfig:
             dataset_name="torch.utils.data.TensorDataset",
             dataset="dummy",
             data_dir=str(self.temp_dir),
-            train_size=6,
-            test_size=4,
+            sampler={"name": "split", "train_size": 6, "test_size": 4},
             data_params={"batch_size": 2},
         )
         cfg._X = (SensitiveBatchDataset(6), SensitiveBatchDataset(4))
@@ -693,8 +694,7 @@ class TestPytorchCustomDataConfig:
             dataset_name="torch.utils.data.TensorDataset",
             dataset="dummy",
             data_dir=str(self.temp_dir),
-            train_size=4,
-            test_size=4,
+            sampler={"name": "split", "train_size": 4, "test_size": 4},
             data_params={"batch_size": 2},
         )
         bad_cfg._X = (InvalidBatchDataset(4), InvalidBatchDataset(4))
@@ -717,8 +717,7 @@ class TestPytorchCustomDataConfig:
             dataset_name="torch.utils.data.TensorDataset",
             dataset="dummy",
             data_dir=str(self.temp_dir),
-            train_size=4,
-            test_size=2,
+            sampler={"name": "split", "train_size": 4, "test_size": 2},
             data_params={},
         )
 
@@ -727,8 +726,7 @@ class TestPytorchCustomDataConfig:
             dataset_name="torch.utils.data.TensorDataset",
             dataset="dummy",
             data_dir=str(self.temp_dir),
-            train_size=4,
-            test_size=2,
+            sampler={"name": "split", "train_size": 4, "test_size": 2},
             data_params={},
         )
         loaded._X = (cached, cached)

@@ -53,6 +53,11 @@ if TYPE_CHECKING:
 
 AUTO_SCORER = "auto"
 DECKARD_TEST_MAX_SAMPLES_ENV = "DECKARD_TEST_MAX_SAMPLES"
+CANONICAL_DATASET_LOAD_FILETYPES = tuple(data_supported_filetypes)
+CANONICAL_DATA_SAVE_FILETYPES = tuple(
+    filetype for filetype in data_supported_filetypes if filetype != ".openml"
+)
+CANONICAL_DATA_LOAD_FILETYPES = (*CANONICAL_DATA_SAVE_FILETYPES, ".npz")
 
 
 def _coerce_scorer_config(*args, **kwargs):
@@ -92,11 +97,11 @@ def _load_optuna_studies_dataframe(
 
 @dataclass(eq=False, kw_only=True)
 class DataConfig(OrchestratorBase, BaseConfig):
-    """
+    f"""
     Configuration and utility class for loading, preprocessing, and splitting datasets for machine learning tasks.
 
     Attributes
-    -------
+    ----------
     dataset_name : str
         Name of the dataset to load or path to a data file.
     data_params : dict
@@ -177,7 +182,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
         interpreted by DataConfig orchestration logic directly.
 
     Family-specific parameter semantics
-    ----------------------------------
+    ------------------------------------
     sklearn loader datasets
         ``data_params`` are forwarded to sklearn dataset loader callables
         (for example ``as_frame=True``).
@@ -191,11 +196,20 @@ class DataConfig(OrchestratorBase, BaseConfig):
         ``data_params`` may include read-time options used by pandas/file
         loading utilities.
 
+        Canonical dataset-load filetypes:
+        {", ".join(CANONICAL_DATASET_LOAD_FILETYPES)}
+
+        Canonical artifact save filetypes:
+        {", ".join(CANONICAL_DATA_SAVE_FILETYPES)}
+
+        Canonical artifact load filetypes:
+        {", ".join(CANONICAL_DATA_LOAD_FILETYPES)}
+
     Plugin hook runtime params
     --------------------------
     Hooks are orchestrated by ``_run_plugin_hook(hook_name, **kwargs)``.
     Core hook names used by DataConfig runtime are:
-    ``before_load_data``, ``after_load_data``, ``before_sample``, ``before_pipeline``, `after_pipeline``
+    ``before_load_data``, ``after_load_data``, ``before_sample``, ``before_pipeline``, ``after_pipeline``
     ``after_sample``, ``before_score``, and ``after_score``.
 
 
@@ -906,11 +920,11 @@ class DataConfig(OrchestratorBase, BaseConfig):
         return self
 
     def load_dataset(self) -> None:
-        """
+        f"""
         Loads dataset based on the provided dataset name or file type.
 
         Supported datasets (without optional dependencies)
-        ------------------
+        --------------------------------------------------
         - "adult"
         - "make_classification"
         - "make_regression"
@@ -960,6 +974,12 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
         Supported file types
         --------------------
+                - Dataset/load dispatch (DataConfig):
+                    {", ".join(CANONICAL_DATASET_LOAD_FILETYPES)}
+                - Artifact save (ArtifactLoaderConfig.save_data):
+                    {", ".join(CANONICAL_DATA_SAVE_FILETYPES)}
+                - Artifact load (ArtifactLoaderConfig.load_data):
+                    {", ".join(CANONICAL_DATA_LOAD_FILETYPES)}
 
         For built-in datasets, calls the corresponding loader method.
         Updates ``self._X``, ``self._y``, and ``self.data_load_time`` with loaded data and timing information.
