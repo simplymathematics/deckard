@@ -251,11 +251,11 @@ class DefaultAttributeInferenceRegressionAttackScorerDictConfig(
 class AttackScorerConfig(BaseConfig):
     """Owns all attack scoring logic and profile-specific scorer configs."""
 
-    evasion: Union[ScorerDictConfig, dict, None] = None
-    evasion_regression: Union[ScorerDictConfig, dict, None] = None
-    membership_inference: Union[ScorerDictConfig, dict, None] = None
-    attribute_inference: Union[ScorerDictConfig, dict, None] = None
-    attribute_inference_regression: Union[ScorerDictConfig, dict, None] = None
+    evasion: Union[ScorerDictConfig, None] = None
+    evasion_regression: Union[ScorerDictConfig, None] = None
+    membership_inference: Union[ScorerDictConfig, None] = None
+    attribute_inference: Union[ScorerDictConfig, None] = None
+    attribute_inference_regression: Union[ScorerDictConfig, None] = None
 
     def __post_init__(self):
         self.evasion = self._coerce_profile(
@@ -685,11 +685,11 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
     :class:`~deckard.plugins.fairlearn.FairlearnDataConfig`).
     """
 
-    evasion: Union[ScorerDictConfig, dict, None] = None
-    evasion_regression: Union[ScorerDictConfig, dict, None] = None
-    membership_inference: Union[ScorerDictConfig, dict, None] = None
-    attribute_inference: Union[ScorerDictConfig, dict, None] = None
-    attribute_inference_regression: Union[ScorerDictConfig, dict, None] = None
+    evasion: Union[ScorerDictConfig, None] = None
+    evasion_regression: Union[ScorerDictConfig, None] = None
+    membership_inference: Union[ScorerDictConfig, None] = None
+    attribute_inference: Union[ScorerDictConfig, None] = None
+    attribute_inference_regression: Union[ScorerDictConfig, None] = None
 
     def __post_init__(self):
         from ..plugins.fairlearn.score import FairlearnScorerDictConfig
