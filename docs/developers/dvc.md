@@ -512,4 +512,3 @@ This contract is satisfied when all are true:
 - Optimization runtime behavior is specified in [Optimization Runtime Contract](optimization.md).
 - Hydra and sweeper lifecycle behavior is specified in [Hydra and Optuna Orchestration Contract](hydra.md).
 - Early-stop behavior and prune termination semantics are specified in [Pruning Runtime Contract](pruning.md).
-
