@@ -553,6 +553,7 @@ class ScorerConfig:
     score_name: str
     score_function: Any
     score_params: dict[str, Any] = field(default_factory=dict)
+    metric_scope: str = "auto"
     stage: List[str] = field(default_factory=list)
     greater_is_better: bool = True
     needs_labels: Union[bool, None] = True
@@ -595,6 +596,13 @@ class ScorerConfig:
             )
         if self.score_params is None:
             self.score_params = {}
+        scope = str(self.metric_scope).strip().lower()
+        if scope not in {"auto", "standard", "group", "reduced"}:
+            raise ValueError(
+                f"Scorer '{self.score_name}' metric_scope must be one of "
+                "{'auto', 'standard', 'group', 'reduced'}",
+            )
+        self.metric_scope = scope
         if self.needs_labels is True and self.needs_proba is True:
             raise ValueError(
                 f"Scorer '{self.score_name}' cannot set both needs_labels=True and needs_proba=True",
@@ -859,6 +867,7 @@ class ScorerDictConfig(BaseConfig):
                 scorer_data = dict(value)
                 raw_score_name = scorer_data.pop("score_name", key)
                 raw_score_params = scorer_data.pop("score_params", {})
+                raw_metric_scope = scorer_data.pop("metric_scope", "auto")
                 raw_stage = scorer_data.pop("stage", "")
                 raw_needs_labels = scorer_data.pop("needs_labels", None)
                 raw_needs_proba = scorer_data.pop("needs_proba", None)
@@ -888,6 +897,7 @@ class ScorerDictConfig(BaseConfig):
                     score_name=str(raw_score_name),
                     score_function=scorer_data.pop("score_function"),
                     score_params=dict(raw_score_params),
+                    metric_scope=str(raw_metric_scope),
                     stage=self._normalize_stage_field(raw_stage),
                     greater_is_better=bool(
                         scorer_data.pop(
@@ -920,6 +930,7 @@ class ScorerDictConfig(BaseConfig):
                 scorer_data = dict(raw_value)
                 raw_score_name = scorer_data.pop("score_name", key)
                 raw_score_params = scorer_data.pop("score_params", {})
+                raw_metric_scope = scorer_data.pop("metric_scope", "auto")
                 raw_stage = scorer_data.pop("stage", "")
                 raw_needs_labels = scorer_data.pop("needs_labels", None)
                 raw_needs_proba = scorer_data.pop("needs_proba", None)
@@ -949,6 +960,7 @@ class ScorerDictConfig(BaseConfig):
                     score_name=str(raw_score_name),
                     score_function=scorer_data.pop("score_function"),
                     score_params=dict(raw_score_params),
+                    metric_scope=str(raw_metric_scope),
                     stage=self._normalize_stage_field(raw_stage),
                     greater_is_better=bool(
                         scorer_data.pop(

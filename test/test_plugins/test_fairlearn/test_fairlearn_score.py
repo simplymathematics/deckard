@@ -113,6 +113,38 @@ class TestFairnessScorers:
         assert "1_mse" in scores
         assert "mse_ratio" in scores
 
+    def test_metric_scope_group_excludes_reduction_artifacts(self):
+        scorer = FairlearnScorerDictConfig(
+            group_scorers={
+                "accuracy": ScorerConfig(
+                    score_name="accuracy",
+                    score_function=accuracy_score,
+                    metric_scope="standard",
+                ),
+                "group_gap": ScorerConfig(
+                    score_name="group_gap",
+                    score_function=lambda y_true, y_pred: float(np.mean(y_pred)),
+                    metric_scope="group",
+                ),
+            },
+            group_reduction="difference",
+            include_group_by_group=True,
+            include_group_overall=False,
+        )
+        y_true = np.array([0, 1, 0, 1])
+        y_pred = np.array([0, 1, 1, 1])
+        sensitive = np.array(["A", "A", "B", "B"])
+
+        scores = scorer(
+            y_true=y_true,
+            y_pred=y_pred,
+            mode=None,
+            sensitive_features=sensitive,
+        )
+
+        assert "accuracy_difference" in scores
+        assert "group_gap_difference" not in scores
+
     def test_metric_frame_fairness_score_dict_supports_full_metricframe_kwargs(
         self,
     ):

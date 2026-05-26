@@ -460,6 +460,28 @@ def _flatten_metric_frame_by_group(by_group: pd.DataFrame) -> dict[str, float]:
     return flattened
 
 
+def _fallback_metric_scope(metric_name: str) -> str:
+    """Best-effort scope resolution for legacy scorer configs."""
+    if metric_name.startswith(("group_", "mean_", "max_", "min_")) and metric_name.endswith(
+        ("_difference", "_ratio"),
+    ):
+        return "group"
+    return "standard"
+
+
+def _resolve_metric_scope(metric_name: str, scorer: Any | None) -> str:
+    if isinstance(scorer, ScorerConfig):
+        scope = str(getattr(scorer, "metric_scope", "auto") or "auto").lower()
+        if scope != "auto":
+            return scope
+    return _fallback_metric_scope(metric_name)
+
+
+def _is_reduction_candidate(metric_name: str, scorer: Any | None) -> bool:
+    scope = _resolve_metric_scope(metric_name, scorer)
+    return scope != "group"
+
+
 class FairnessScorerMixin:
     """Mixin that adds MetricFrame group scoring to any :class:`ScorerDictConfig` subclass.
 
@@ -512,6 +534,15 @@ class FairnessScorerMixin:
 
     def _coerce_group_scorers(self) -> None:
         normalized = {}
+
+        def _is_group_candidate(name: str, scorer: Any) -> bool:
+            scope = _resolve_metric_scope(name, scorer)
+            if scope == "reduced":
+                return False
+            if scope == "group":
+                return True
+            return not str(name).endswith(("_difference", "_ratio"))
+
         # If group_scorers is empty, use all main scorers as group scorers by default
         if self.group_scorers:
             group_source = self.group_scorers
@@ -522,7 +553,7 @@ class FairnessScorerMixin:
             group_source = {
                 key: value
                 for key, value in main_scorers.items()
-                if not str(key).endswith(("_difference", "_ratio"))
+                if _is_group_candidate(str(key), value)
             }
             if not group_source:
                 group_source = main_scorers
@@ -534,6 +565,7 @@ class FairnessScorerMixin:
                     normalized[nested_key] = nested_scorer
             elif isinstance(value, dict):
                 scorer_data = dict(value)
+                raw_metric_scope = scorer_data.pop("metric_scope", "auto")
                 raw_needs_labels = scorer_data.pop("needs_labels", None)
                 raw_needs_proba = scorer_data.pop("needs_proba", None)
                 raw_needs_logits = scorer_data.pop("needs_logits", None)
@@ -555,6 +587,7 @@ class FairnessScorerMixin:
                     score_name=scorer_data.pop("score_name", key),
                     score_function=scorer_data.pop("score_function"),
                     score_params=scorer_data.pop("score_params", {}),
+                    metric_scope=str(raw_metric_scope),
                     greater_is_better=scorer_data.pop("greater_is_better", True),
                     needs_labels=resolved_needs_labels,
                     needs_proba=(
@@ -864,12 +897,14 @@ class FairnessScorerMixin:
         if self_cfg.group_reduction == "difference":
             reduced = metric_frame.difference(method=self_cfg.group_reduction_method)
             for metric_name, value in series_like_to_float_dict(reduced).items():
-                if is_scalar_metric(metric_name):
+                scorer = cast(dict[str, Any], self_cfg.group_scorers).get(metric_name)
+                if _is_reduction_candidate(metric_name, scorer):
                     results[f"{metric_name}_difference"] = value
         elif self_cfg.group_reduction == "ratio":
             reduced = metric_frame.ratio(method=self_cfg.group_reduction_method)
             for metric_name, value in series_like_to_float_dict(reduced).items():
-                if is_scalar_metric(metric_name):
+                scorer = cast(dict[str, Any], self_cfg.group_scorers).get(metric_name)
+                if _is_reduction_candidate(metric_name, scorer):
                     results[f"{metric_name}_ratio"] = value
         elif self_cfg.group_reduction != "none":
             raise ValueError(
@@ -1125,12 +1160,14 @@ class FairlearnScorerDictConfig(FairnessScorerMixin, ScorerDictConfig):
         if self_cfg.group_reduction == "difference":
             reduced = metric_frame.difference(method=self_cfg.group_reduction_method)
             for metric_name, value in series_like_to_float_dict(reduced).items():
-                if is_scalar_metric(metric_name):
+                scorer = cast(dict[str, Any], self_cfg.group_scorers).get(metric_name)
+                if _is_reduction_candidate(metric_name, scorer):
                     results[f"{metric_name}_difference"] = value
         elif self_cfg.group_reduction == "ratio":
             reduced = metric_frame.ratio(method=self_cfg.group_reduction_method)
             for metric_name, value in series_like_to_float_dict(reduced).items():
-                if is_scalar_metric(metric_name):
+                scorer = cast(dict[str, Any], self_cfg.group_scorers).get(metric_name)
+                if _is_reduction_candidate(metric_name, scorer):
                     results[f"{metric_name}_ratio"] = value
         elif self_cfg.group_reduction != "none":
             raise ValueError(
@@ -1139,14 +1176,6 @@ class FairlearnScorerDictConfig(FairnessScorerMixin, ScorerDictConfig):
 
         # Output validation removed: allow dict/list outputs as intended
         return results
-
-
-def is_scalar_metric(metric_name):
-    # Heuristic: group metric functions have 'group_' prefix and '_difference' or '_ratio' suffix
-    return not (
-        metric_name.startswith("group_")
-        and metric_name.endswith(("_difference", "_ratio"))
-    )
 
 
 def _group_metric_difference(
@@ -1343,27 +1372,32 @@ class DefaultFairlearnScorerDictConfig(
             base["demographic_parity_difference"] = ScorerConfig(
                 score_name="demographic_parity_difference",
                 score_function=fairness_demographic_parity_difference,
+                metric_scope="reduced",
                 greater_is_better=False,
             )
             base["equalized_odds_difference"] = ScorerConfig(
                 score_name="equalized_odds_difference",
                 score_function=fairness_equalized_odds_difference,
+                metric_scope="reduced",
                 greater_is_better=False,
             )
             base["group_mean_prediction_difference"] = ScorerConfig(
                 score_name="group_mean_prediction_difference",
                 score_function=fairness_group_mean_prediction_difference,
+                metric_scope="reduced",
                 greater_is_better=False,
             )
         else:
             base["group_mae_difference"] = ScorerConfig(
                 score_name="group_mae_difference",
                 score_function=fairness_group_mae_difference,
+                metric_scope="reduced",
                 greater_is_better=False,
             )
             base["group_mse_difference"] = ScorerConfig(
                 score_name="group_mse_difference",
                 score_function=fairness_group_mse_difference,
+                metric_scope="reduced",
                 greater_is_better=False,
             )
         return base

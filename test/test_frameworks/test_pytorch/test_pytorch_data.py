@@ -594,6 +594,9 @@ class TestPytorchCustomDataConfig:
         subset = cfg._truncate_dataset(ds, 10)
         assert len(subset) == 10
 
+        capped_subset = cfg._truncate_dataset(ds, 100)
+        assert len(capped_subset) == 40
+
     def test_as_dataset_with_string_raises_on_invalid(self):
         from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
 

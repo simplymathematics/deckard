@@ -350,6 +350,30 @@ class DataConfig(OrchestratorBase, BaseConfig):
         self.times[key] = value
         setattr(self, key, value)
 
+    def _sync_canonical_time_state(self) -> None:
+        """Backfill canonical timing fields from attrs, times map, and score payload.
+
+        This is especially important for cached runs where older serialized
+        artifacts may have partial timing state spread across ``self.times``,
+        top-level attributes, or ``score_dict``.
+        """
+        self.times = ensure_canonical_times(getattr(self, "times", None))
+        score_payload = ScoreDict.from_payload(getattr(self, "score_dict", {}) or {})
+        for key in CANONICAL_DATA_TIMES:
+            attr_value = getattr(self, key, None)
+            if attr_value is not None:
+                self.times[key] = attr_value
+                continue
+
+            time_value = self.times.get(key)
+            if time_value is None:
+                score_value = score_payload.get(key)
+                if score_value is not None:
+                    time_value = cast(float | None, score_value)
+
+            self.times[key] = time_value
+            setattr(self, key, time_value)
+
     def _resolve_max_samples(self, dataset_len: int) -> Union[int, None]:
         """Resolve an optional dataset cap from the test-only environment variable."""
         max_samples_text = os.environ.get(DECKARD_TEST_MAX_SAMPLES_ENV)
@@ -393,6 +417,8 @@ class DataConfig(OrchestratorBase, BaseConfig):
             "files",
             "data_load_time",
             "data_sample_time",
+            "data_pipeline_time",
+            "data_score_time",
             "_X",
             "_y",
             "train_indices",
@@ -1155,6 +1181,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
         Returns:
             Runtime timing/count metadata mapping.
         """
+        self._sync_canonical_time_state()
         time_dict = dict(self.times)
         time_dict["train_n"] = self.train_n
         time_dict["test_n"] = self.test_n
@@ -1174,6 +1201,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
         data_path = Path(data_file)
         if data_path.exists():
             self.load(str(data_path))
+            self._sync_canonical_time_state()
             return False
         data_path.parent.mkdir(parents=True, exist_ok=True)
         return True
@@ -1244,17 +1272,26 @@ class DataConfig(OrchestratorBase, BaseConfig):
             )
         self.files = merge_data_files(self.files, files)
         save_flag = self._prepare_files(files=self.files)
+        self._sync_canonical_time_state()
         score_file = self.files.get("score_file")
         data_file = self.files.get("data_file")
         scores = dict(ScoreDict.from_payload(getattr(self, "score_dict", {}) or {}))
         self._score_orchestration_active = True
+        score_hook_elapsed = 0.0
         try:
             self.load_dataset()
             logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
             self.fit()
+            score_hook_start = time.process_time()
             self._run_plugin_hook("after_pipeline", score_kwargs=kwargs)
+            score_hook_elapsed = time.process_time() - score_hook_start
         finally:
             self._score_orchestration_active = False
+
+        existing_score_time = getattr(self, "data_score_time", None)
+        if existing_score_time is None and score_hook_elapsed > 0.0:
+            self._set_time("data_score_time", score_hook_elapsed)
+
         time_dict = self.build_data_time_dict()
         assert self.X_train is not None and self.X_test is not None
         if self.X_val is not None:
@@ -1270,7 +1307,15 @@ class DataConfig(OrchestratorBase, BaseConfig):
             ScoreDict.from_payload(getattr(self, "score_dict", {}) or {}),
         )
         if len(data_scores) == 0:
+            score_start = time.process_time()
             data_scores = self.score(*args, **kwargs)
+            score_elapsed = time.process_time() - score_start
+            combined_elapsed = score_hook_elapsed + score_elapsed
+            if existing_score_time is None or combined_elapsed > 0.0:
+                self._set_time("data_score_time", combined_elapsed)
+
+        self._sync_canonical_time_state()
+        time_dict = self.build_data_time_dict()
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = ScoreDict.from_payload(all_scores)
         self.times.update({k: all_scores.get(k) for k in CANONICAL_DATA_TIMES})

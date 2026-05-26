@@ -772,13 +772,18 @@ class PytorchCustomDataConfig(PytorchDataConfig):
 
     def _truncate_dataset(self, dataset: Dataset, size):
         # Allow float proportions as well as int counts
+        n = len(dataset)
         if isinstance(size, float):
-            n = len(dataset)
             size = int(round(size * n))
         if not isinstance(size, int):
             raise ValueError(
                 f"Size must be an integer or float proportion. Got: {size}.",
             )
+        if size < 0:
+            raise ValueError(f"Size must be >= 0. Got: {size}.")
+
+        # Cap explicit counts to available rows to avoid out-of-bounds Subset indices.
+        size = min(size, n)
         dataset = Subset(dataset, range(size))
         return dataset
 

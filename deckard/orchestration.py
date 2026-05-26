@@ -197,8 +197,12 @@ class DataRuntimeStateMixin(RuntimeBase):
     def _copy_runtime_state_to(self, target: Any) -> None:
         runtime_fields = [
             "score_dict",
+            "times",
+            "files",
             "data_load_time",
             "data_sample_time",
+            "data_pipeline_time",
+            "data_score_time",
             "_X",
             "_y",
             "train_indices",

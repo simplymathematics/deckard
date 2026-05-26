@@ -652,3 +652,49 @@ def test_pipeline_call_saves_scores_and_handles_y_pipeline(tmp_path):
 
     assert result["metric"] == 2
     assert saved["metric"] == 2
+
+
+def test_call_populates_data_score_time_without_plugin_fallback(tmp_path):
+    cfg = DataConfig(scorer="none")
+    cfg.data_load_time = 0.1
+    cfg.data_sample_time = 0.2
+    cfg.X_train = pd.DataFrame({"a": [1, 2]})
+    cfg.X_test = pd.DataFrame({"a": [3]})
+    cfg.y_train = pd.Series([0, 1])
+    cfg.y_test = pd.Series([1])
+    cfg.load_dataset = lambda: None
+    cfg.fit = lambda run_hooks=True: cfg
+    cfg._run_plugin_hook = lambda *args, **kwargs: None
+    cfg.score = lambda *args, mode=None, **kwargs: {"metric": 2}
+    cfg.merge_and_persist_scores = lambda scores, score_file=None: scores
+    cfg._prepare_files = lambda files=None: False
+    cfg.files = {}
+
+    score_path = tmp_path / "scores.json"
+    result = cfg(files={"score_file": score_path.as_posix()})
+
+    assert "data_score_time" in result
+    assert result["data_score_time"] is not None
+
+
+def test_copy_runtime_state_propagates_data_score_and_pipeline_times():
+    cfg = DataConfig(scorer="none")
+    cfg.data_score_time = 0.33
+    cfg.data_pipeline_time = 0.22
+    cfg.pipeline_fit_time = 0.11
+    cfg.pipeline_transform_time = 0.12
+    cfg.times = {
+        "data_score_time": 0.33,
+        "data_pipeline_time": 0.22,
+    }
+    cfg.files = {"score_file": "scores.json"}
+
+    target = SimpleNamespace()
+    cfg._copy_runtime_state_to(target)
+
+    assert target.data_score_time == 0.33
+    assert target.data_pipeline_time == 0.22
+    assert target.pipeline_fit_time == 0.11
+    assert target.pipeline_transform_time == 0.12
+    assert target.times["data_score_time"] == 0.33
+    assert target.files["score_file"] == "scores.json"
