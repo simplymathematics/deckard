@@ -11,18 +11,6 @@ stages:
   #   outs:
   #     - ./build/notebook_./build/deckard.executed.ipynb
 
-  # notebook_hydra:
-  #   cmd: >
-  #     mkdir -p build/notebook_artifacts && if [[ ! -s hydra.ipynb ]]; then echo '{"cells": [], "metadata": {}, "nbformat": 4, "nbformat_minor": 5}' > build/notebook_./build/hydra.executed.ipynb; else python -m jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=1800 --output hydra.executed.ipynb --output-dir build/notebook_artifacts hydra.ipynb; fi
-  #   deps:
-  #     - hydra.ipynb
-  #     - .deckard/__main__.py
-  #     - .deckard/experiment/
-  #     - .deckard/file.py
-  #     - .deckard/utils.py
-  #   outs:
-  #     - ./build/notebook_./build/hydra.executed.ipynb
-
   notebook_seaborn:
     cmd: jupyter nbconvert --to notebook --execute --inplace seaborn.ipynb
     deps:
@@ -238,26 +226,6 @@ stages:
     - ../../examples/sklearn/config/defense/class-labels.yaml
     - ../../examples/sklearn/config/plot/
     # No outs/metrics: dvc.ipynb is a stage-plan inspection notebook
-
-  notebook_vega:
-    cmd: jupyter nbconvert --to notebook --execute --inplace vega.ipynb
-    deps:
-    - vega.ipynb
-    - ../../deckard/experiment/
-    - ../../deckard/layers/
-    - ../../deckard/file.py
-    - ../../deckard/utils.py
-    - ../../examples/sklearn/config/default.yaml
-    outs:
-    - ./build/vega_notebook/plots/roc_auc.vl.json
-    - ./build/vega_notebook/plots/covariance.vl.json
-    - ./build/vega_notebook/plots/epochs_vs_loss.vl.json
-    - ./build/vega_notebook/plots/feature_importance.vl.json
-    - ./build/vega_notebook/plots/hsj_max_iter_vs_accuracy.vl.json
-    - ./build/vega_notebook/plots/class_labels_apply_fit_vs_accuracy.vl.json
-    - ./build/vega_notebook/plots/adversarial_vs_benign_accuracy.vl.json
-    - ./build/vega_notebook/plots/attack_vs_defense_accuracy_heatmap.vl.json
-
   notebook_optuna:
     cmd: jupyter nbconvert --to notebook --execute --inplace optuna.ipynb
     deps:
@@ -359,18 +327,3 @@ stages:
     - ./build/anjana/plots/anjana_data_compare_bar_side_by_side.png
     - ./build/anjana/plots/anjana_data_scores_bar.png
     - ./build/anjana/plots/anjana_yellowbrick_roc_auc.png
-
-  # notebook_lifelines:
-  #   cmd: >
-  #     mkdir -p build/notebook_artifacts && if [[ ! -s lifelines.ipynb ]]; then echo '{"cells": [], "metadata": {}, "nbformat": 4, "nbformat_minor": 5}' > build/notebook_./build/lifelines.executed.ipynb; else python -m jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=1800 --output lifelines.executed.ipynb --output-dir build/notebook_artifacts lifelines.ipynb; fi
-  #   deps:
-  #     - lifelines.ipynb
-  #     - .deckard/data/survival.py
-  #     - .deckard/model/survival.py
-  #     - .deckard/experiment/survival.py
-  #     - .deckard/score/survival.py
-  #     - .deckard/plot/survival.py
-  #     - .deckard/file.py
-  #     - .deckard/utils.py
-  #   outs:
-  #     - ./build/notebook_./build/lifelines.executed.ipynb

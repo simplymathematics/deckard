@@ -268,8 +268,10 @@ data:
       n_informative: 10
       n_redundant: 5
       random_state: 42
-   test_size: 0.2
-   random_state: 42
+   sampler:
+      name: split
+      test_size: 0.2
+      random_state: 42
 ```
 
 ### 2) sklearn built-in tabular dataset
@@ -279,8 +281,10 @@ data:
    _target_: deckard.data.base.DataConfig
    dataset_name: diabetes
    classifier: false
-   test_size: 0.2
-   random_state: 42
+   sampler:
+      name: split
+      test_size: 0.2
+      random_state: 42
 ```
 
 ### 3) Generic OpenML dataset
@@ -292,7 +296,9 @@ data:
    classifier: true
    data_params:
       version: 2
-   test_size: 0.2
+   sampler:
+      name: split
+      test_size: 0.2
 ```
 
 ### 4) File-backed dataset
@@ -305,8 +311,10 @@ data:
    classifier: true
    drop:
       - id
-   test_size: 0.2
-   random_state: 7
+   sampler:
+      name: split
+      test_size: 0.2
+      random_state: 7
 ```
 
 ### 5) Lifelines provider dataset (optional)
@@ -319,7 +327,9 @@ data:
    duration_col: week
    event_col: arrest
    classifier: false
-   test_size: 0.2
+   sampler:
+      name: split
+      test_size: 0.2
 ```
 
 ### 6) Yellowbrick provider dataset (optional)
@@ -329,7 +339,9 @@ data:
    _target_: deckard.data.base.DataConfig
    dataset_name: yellowbrick.concrete
    classifier: false
-   test_size: 0.2
+   sampler:
+      name: split
+      test_size: 0.2
 ```
 
 ### 7) PyTorch torchvision dataset
@@ -342,9 +354,11 @@ data:
    data_params:
       train: true
       download: true
-   train_size: 0.7
-   test_size: 0.2
-   random_state: 42
+   sampler:
+      name: split
+      train_size: 0.7
+      test_size: 0.2
+      random_state: 42
 ```
 
 ### 8) Fairness-aware PyTorch built-in dataset
@@ -356,8 +370,10 @@ data:
    classifier: true
    sensitive_columns:
       - _sensitive
-   train_size: 0.7
-   test_size: 0.2
+   sampler:
+      name: split
+      train_size: 0.7
+      test_size: 0.2
 ```
 
 Sensitive feature parsing in fairness-aware torch configs follows two paths:

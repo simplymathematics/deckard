@@ -29,6 +29,10 @@ Deckard separates stage lifecycle from score scope:
 
 `score_mode` is always split-scoped. Stage names are not valid score modes.
 
+Sampling controls are always sampler-scoped. Configure
+`train_size`/`test_size`/`val_size` plus `random_state` and `stratify` under
+`data.sampler`.
+
 ## Files-Only Persistence
 
 Data runtime persistence is files-only via the canonical `files` mapping.

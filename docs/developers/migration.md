@@ -65,6 +65,15 @@ keys in `examples/*/config/data/**/*.yaml`:
 - allowed: `train`, `test`, `val`, `all`
 - disallowed: stage lifecycle aliases (`post-pipeline`, etc)
 
+## Sampler Parameter Guard
+
+Sampling parameters are sampler-owned and must not be configured as top-level
+data config keys.
+
+- allowed location: `data.sampler.*`
+- sampler-owned fields: `split`, `train_size`, `test_size`, `val_size`,
+  `random_state`, `stratify`
+
 ## Examples Migration Checklist
 
 When migrating example data profiles:

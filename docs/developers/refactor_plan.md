@@ -9,7 +9,7 @@ Keep detailed design/spec text in the dedicated developer docs linked below.
 - [x] Persistence contract is files-only in the target runtime shape.
 - [x] Runtime timing storage is canonical-plus-extensible (required canonical
   keys plus optional pipeline/plugin keys).
-- [x] DataConfig canonical `score_mode` default is `post-pipeline`.
+- [x] DataConfig canonical `score_mode` default is `test`.
 - [x] `score_mode` selects split scope (`train`/`test`/`val`/`all`) and is
   distinct from hook stage lifecycle (`pre-load`/`pre-sample`/`post-sample`/
   `post-pipeline`).
@@ -26,7 +26,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
   (`_X/_y`, train/test/val splits, `times`, `scores`, `files`).
 - [x] Replace legacy top-level persistence kwargs with files-only persistence orchestration in runtime call paths.
 - [x] Set and enforce canonical DataConfig scoring default to
-  `score_mode=post-pipeline` while preserving explicit runtime overrides.
+  `score_mode=test` while preserving explicit runtime overrides.
 - [x] Split `DataConfig` orchestration responsibilities into explicit loaders,
   samplers, pipeline runners, and score runners.
 - [x] Move `DataPluginRuntimeMixin` out of `deckard/data/_mixins.py` into

@@ -56,8 +56,7 @@ Plugin functionality:
 - [pytorch](pytorch) - End-to-end PyTorch experiments.
 - [hydra](hydra) - [Hydra](https://hydra.cc) config composition and overrides.
 - [optimize](optimize) - optimize runtime demonstrations for run and multirun execution.
-- [dvc](dvc) - DVC pipeline autogeneration and Vega-Lite plot spec workflows.
-- [vega](vega) - Vega-Lite plot-spec generation from real/synthetic Optuna trial data.
+- [dvc](dvc) - DVC pipeline autogeneration.
 - [optuna](optuna) - [Optuna](https://optuna.org) hyperparameter optimization workflows.
 - [artifacts](artifacts) - Artifact and output management.
 - [scoring](scoring) - ScoreDict contract, score lifecycle, and persistence views.
@@ -87,7 +86,7 @@ DVC-backed docs build.
 | [hydra](hydra) | Compose-first config and override behavior | single-run params or score artifacts and resolved override examples |
 | [optimize](optimize) | Run versus multirun optimization flow | `params.yaml`, `scores.json`, Optuna storage examples, and cache reuse templates |
 | [dvc](dvc) | DVC stage and report generation | `dvc.yaml`, `params.yaml`, `scores.json`, and Vega-Lite-oriented output wiring |
-| [vega](vega) | Vega-Lite graph-spec generation | `.vl.json` specs for ROC AUC, covariance, feature importance, and attack/defense comparisons |
+
 | [scoring](scoring) | ScoreDict lifecycle and persistence | human-readable score payloads and flat or dotlist projections |
 | [artifacts](artifacts) | Artifact hydration and pretrained reload paths | cached model, attack, and score artifacts for sklearn and torch paths |
 | [art_attacks](art_attacks) | Attack-family execution and timing outputs | attack artifacts, score tables, and attack-family timing summaries |
@@ -202,7 +201,6 @@ fairlearn
 hydra
 optimize
 dvc
-vega
 lifelines
 optuna
 pytorch
