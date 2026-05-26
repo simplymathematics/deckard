@@ -246,10 +246,12 @@ class TestFairlearnModelConfig:
             data=fairness_data,
         )
         assert isinstance(
-            model, BaseConfig
+            model,
+            BaseConfig,
         ), "FairlearnModelConfig should inherit from ConfigBase"
         assert hasattr(
-            model, "__hash__"
+            model,
+            "__hash__",
         ), "FairlearnModelConfig should have __hash__ method"
         # Note: FairlearnModelConfig may have unhashable runtime fields
         # so we verify the infrastructure is in place rather than attempting full hash
@@ -380,10 +382,12 @@ class TestFairlearnDefenseConfigApplyDefense:
             },
         )
         assert isinstance(
-            cfg, BaseConfig
+            cfg,
+            BaseConfig,
         ), "FairlearnDefenseConfig should inherit from ConfigBase"
         assert hasattr(
-            cfg, "__hash__"
+            cfg,
+            "__hash__",
         ), "FairlearnDefenseConfig should have __hash__ method"
         # Note: FairlearnDefenseConfig may have unhashable runtime fields
         # so we verify the infrastructure is in place rather than attempting full hash

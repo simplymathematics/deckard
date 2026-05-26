@@ -6,7 +6,9 @@ single-run and multi-run workflows.
 Optimization orchestration integrates:
 
 - [Hydra](https://hydra.cc) runtime composition and sweeping
+
 - [Optuna](https://optuna.org) studies, trials, and samplers
+
 - {class}`deckard.layers.optimize.DefaultOptimizerCallback` lifecycle hooks
 
 For layer API reference, see [Layers](../api/layers).
@@ -69,11 +71,17 @@ Deckard optimization relies on Hydra sweeper parameters plus top-level metric
 settings:
 
 - `directions`: objective direction for each metric (`maximize`/`minimize`)
+
 - `optimizers`: metric names aligned with `directions`
+
 - `hydra.sweeper.study_name`: Optuna study identifier
+
 - `hydra.sweeper.storage`: Optuna storage backend URI
+
 - `hydra.sweeper.n_trials`: number of trials to run
+
 - `hydra.sweeper.n_jobs`: parallel worker count
+
 - `hydra.sweeper.max_failure_rate`: tolerated failure ratio before aborting
 
 ```yaml
@@ -107,6 +115,7 @@ hydra:
 References:
 
 - [Hydra Optuna Sweeper docs](https://hydra.cc/docs/plugins/optuna_sweeper/)
+
 - [Optuna samplers](https://optuna.readthedocs.io/en/stable/reference/samplers/)
 
 ## Optuna Dashboard
@@ -124,7 +133,9 @@ study created by `hydra.sweeper.study_name`.
 References:
 
 - [Optuna Dashboard](https://optuna-dashboard.readthedocs.io/en/latest/)
+
 - [optuna-dashboard docs](https://optuna-dashboard.readthedocs.io/en/latest/)
 
 ## Easy Parallelization with Optuna and RDB
+
 [Docs](https://optuna.readthedocs.io/en/stable/tutorial/10_key_features/004_distributed.html#multi-process-optimization)

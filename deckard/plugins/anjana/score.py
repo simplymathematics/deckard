@@ -73,7 +73,7 @@ class AnjanaDataScoreHooksMixin:
 
             loader = getattr(anjana_data_module, "load_class", load_class)
             scorer_obj = loader(
-                "deckard.plugins.anjana.score.DefaultAnjanaScorerDictConfig"
+                "deckard.plugins.anjana.score.DefaultAnjanaScorerDictConfig",
             )
             self.scorer = scorer_obj() if isinstance(scorer_obj, type) else scorer_obj
 
@@ -96,7 +96,9 @@ class AnjanaDataScoreHooksMixin:
             if "data-profile scorer" not in str(exc):
                 raise
             y, X = resolve_data_split_payload(
-                self, resolved_mode, fallback_to_all=False
+                self,
+                resolved_mode,
+                fallback_to_all=False,
             )
             return ScoreDict.from_payload(
                 self.scorer(

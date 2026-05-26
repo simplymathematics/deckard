@@ -684,7 +684,8 @@ class DataConfig(OrchestratorBase, BaseConfig):
                 pipeline_start = time.process_time()
                 pipeline_runtime(self)
                 self._set_time(
-                    "data_pipeline_time", time.process_time() - pipeline_start
+                    "data_pipeline_time",
+                    time.process_time() - pipeline_start,
                 )
         return self
 
@@ -1246,7 +1247,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
             )
         data_scores = dict(
-            ScoreDict.from_payload(getattr(self, "score_dict", {}) or {})
+            ScoreDict.from_payload(getattr(self, "score_dict", {}) or {}),
         )
         if len(data_scores) == 0:
             data_scores = self.score(*args, **kwargs)

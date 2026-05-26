@@ -190,7 +190,10 @@ class DataPipeline(dict):
             host._run_score_stage_hooks(event, score_stage, pipeline_stage=stage_name)
 
     def _step_flag(
-        self, step_config: dict[str, Any], flag: str, default: bool
+        self,
+        step_config: dict[str, Any],
+        flag: str,
+        default: bool,
     ) -> bool:
         aliases: dict[str, tuple[str, ...]] = {
             "fit_X": ("fit_X",),
@@ -209,7 +212,9 @@ class DataPipeline(dict):
         return default
 
     def _instantiate_pipeline_step(
-        self, step_name: str, step_config: dict[str, Any]
+        self,
+        step_name: str,
+        step_config: dict[str, Any],
     ) -> Any:
         class_name = step_config.get("name")
         if not class_name:
@@ -269,7 +274,8 @@ class DataPipeline(dict):
         return steps
 
     def _build_x_pipeline(
-        self, x_steps: list[tuple[str, Any, Any]]
+        self,
+        x_steps: list[tuple[str, Any, Any]],
     ) -> Pipeline | None:
         if len(x_steps) == 0:
             return None
@@ -306,7 +312,7 @@ class DataPipeline(dict):
                 )
 
         return Pipeline(
-            steps=[(name, transformer) for name, transformer, _ in x_steps]
+            steps=[(name, transformer) for name, transformer, _ in x_steps],
         )
 
     def _fit_transform_features(

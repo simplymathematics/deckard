@@ -666,7 +666,8 @@ def build_experiment_hook_bundle(
 ) -> HookBundle:
     """Build a reusable HookBundle for ExperimentConfig stage orchestration."""
     return HookBundle(
-        name=name, hooks=tuple(build_experiment_hook_plugins(method_name))
+        name=name,
+        hooks=tuple(build_experiment_hook_plugins(method_name)),
     )
 
 
@@ -772,7 +773,7 @@ def _manifest_component_keys_for_stage(
 ) -> tuple[str, ...]:
     runtime_stage = _runtime_stage_for_param_selection(stage)
     stage_components = list(
-        CANONICAL_EXPERIMENT_STAGE_COMPONENTS.get(runtime_stage, ())
+        CANONICAL_EXPERIMENT_STAGE_COMPONENTS.get(runtime_stage, ()),
     )
 
     component_token = str(component or "").strip().lower()
@@ -782,7 +783,8 @@ def _manifest_component_keys_for_stage(
     resolved: list[str] = []
     for stage_component in stage_components:
         for key in _MANIFEST_COMPONENT_KEY_ALIASES.get(
-            stage_component, ()
+            stage_component,
+            (),
         ):  # noqa: B007
             if key not in resolved:
                 resolved.append(key)
@@ -843,6 +845,7 @@ def build_experiment_stage_params_subset(
 ) -> dict[str, Any]:
     """Select stage-relevant params-manifest keys for DVC tracking and cache keys."""
     key_paths = build_experiment_stage_param_key_paths(
-        stage=stage, component=component
+        stage=stage,
+        component=component,
     )
     return _extract_mapping_by_key_paths(params_manifest, key_paths)

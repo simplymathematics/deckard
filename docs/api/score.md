@@ -100,6 +100,7 @@ metrics each one registers by default.
 ### Core Model Defaults
 
 - {class}`~deckard.score.DefaultModelScorerDictConfig`
+
   ```yaml
   classifier: true
   metrics:
@@ -134,7 +135,9 @@ metrics each one registers by default.
         function: sklearn.metrics.mean_absolute_error
         greater_is_better: false
     - r2: sklearn.metrics.r2_score
+
   ```
+
 - {class}`~deckard.score.DefaultClassifierScorerDictConfig`
   - Fixed classifier specialization of `DefaultModelScorerDictConfig`.
 - {class}`~deckard.score.DefaultRegressorScorerDictConfig`
@@ -143,6 +146,7 @@ metrics each one registers by default.
 ### PyTorch Model Defaults
 
 - {class}`~deckard.score.DefaultPytorchScorerDictConfig`
+
   ```yaml
   classifier: true
   metrics:
@@ -151,18 +155,18 @@ metrics each one registers by default.
     - recall: sklearn.metrics.recall_score
     - f1: sklearn.metrics.f1_score
 
-
   classifier: false
   metrics:
     - mse: sklearn.metrics.mean_squared_error
     - mae: sklearn.metrics.mean_absolute_error
     - r2: sklearn.metrics.r2_score
 
-
   notes:
     - roc_auc and log_loss are omitted for broad PyTorch wrapper compatibility
    - **optimizer_loss** user-specified loss value from `torch` framework is included in the scoring dict automatically.
+
   ```
+
 - {class}`~deckard.score.DefaultPytorchClassifierScorerDictConfig`
   - Fixed classifier specialization of `DefaultPytorchScorerDictConfig`.
 - {class}`~deckard.score.DefaultPytorchRegressorScorerDictConfig`
@@ -171,6 +175,7 @@ metrics each one registers by default.
 ### Attack Defaults
 
 - {class}`~deckard.score.DefaultEvasionAttackScorerDictConfig`
+
   ```yaml
   classifier: true
   metrics:
@@ -185,10 +190,13 @@ metrics each one registers by default.
     - mse: sklearn.metrics.mean_squared_error
     - mae: sklearn.metrics.mean_absolute_error
     - r2: sklearn.metrics.r2_score
+
   ```
+
 - {class}`~deckard.score.DefaultEvasionRegressionAttackScorerDictConfig`
   - Fixed regression specialization of evasion scorers.
 - {class}`~deckard.score.DefaultMembershipInferenceAttackScorerDictConfig`
+
   ```yaml
   classifier: true
   metrics:
@@ -196,8 +204,11 @@ metrics each one registers by default.
     - precision: sklearn.metrics.precision_score
     - recall: sklearn.metrics.recall_score
     - f1: sklearn.metrics.f1_score
+
   ```
+
 - {class}`~deckard.score.DefaultAttributeInferenceAttackScorerDictConfig`
+
   ```yaml
   classifier: true
   metrics:
@@ -211,13 +222,16 @@ metrics each one registers by default.
     - mse: sklearn.metrics.mean_squared_error
     - mae: sklearn.metrics.mean_absolute_error
     - r2: sklearn.metrics.r2_score
+
   ```
+
 - {class}`~deckard.score.DefaultAttributeInferenceRegressionAttackScorerDictConfig`
   - Fixed regression specialization of attribute-inference scorers.
 
 ### Data Defaults
 
 - {class}`~deckard.score.DefaultDataScorerDictConfig`
+
   ```yaml
   classifier: true
   metrics:
@@ -239,12 +253,15 @@ metrics each one registers by default.
     - mutual_information_max:
         deckard.score.data.data_mutual_information_max_score
     - empirical_cdf: deckard.score.data.data_empirical_cdf_function_score
+
   ```
+
 - {class}`~deckard.score.DefaultDataClassificationScorerDictConfig`
   - Fixed classification specialization of `DefaultDataScorerDictConfig`.
 - {class}`~deckard.score.DefaultDataRegressionScorerDictConfig`
   - Fixed regression specialization of `DefaultDataScorerDictConfig`.
 - {class}`~deckard.score.DefaultPytorchDataScorerDictConfig`
+
   ```yaml
   classifier: true
   metrics:
@@ -258,6 +275,7 @@ metrics each one registers by default.
   metrics:
     - split_count: deckard.score.data.pytorch_split_count_score
     - empirical_cdf: deckard.score.data.data_empirical_cdf_function_score
+
   ```
 
 ### Optional Plugin Defaults
@@ -266,6 +284,7 @@ These defaults are available when optional dependencies are installed.
 
 - Fairlearn (`fairlearn` extra):
   - {class}`~deckard.score.DefaultFairlearnScorerDictConfig`
+
     ```yaml
     inherits:
       - deckard.score.DefaultClassifierScorerDictConfig
@@ -278,33 +297,44 @@ These defaults are available when optional dependencies are installed.
       regressor:
         - group_mae_difference
         - group_mse_difference
+
     ```
+
   - {class}`~deckard.score.DefaultFairlearnClassificationScorerDictConfig`
     - Fixed classifier specialization.
   - {class}`~deckard.score.DefaultFairlearnRegressionScorerDictConfig`
     - Fixed regressor specialization.
   - {class}`~deckard.score.DefaultFairlearnDataScorerDictConfig`
+
     ```yaml
     metrics:
       - class_count
       - mutual_info
+
     ```
+
 - Lifelines (`lifelines` extra):
   - {class}`~deckard.score.DefaultLifelinesConfig`
+
     ```yaml
     metrics:
       - concordance
       - aic
       - bic
+
     ```
+
 - Anjana / PyCanon (`anjana` extra):
   - {class}`~deckard.score.DefaultAnjanaScorerDictConfig`
+
     ```yaml
     metrics:
       - k_anonymity
       - l_diversity
       - t_closeness
+
     ```
+
   - {class}`~deckard.score.DefaultAnjanaDataScorerDictConfig`
     - Base data metrics + Anjana privacy metrics
   - {class}`~deckard.score.DefaultAnjanaModelScorerDictConfig`
@@ -348,6 +378,7 @@ score:
     accuracy:
       score_name: accuracy
       score_function: sklearn.metrics.accuracy_score
+
 ```
 
 ### Custom scorer patterns
@@ -405,6 +436,7 @@ score:
         threshold: 0.8
       score_params:
         normalize: true
+
 ```
 
 ### ScorerConfig kwargs reference
@@ -440,6 +472,7 @@ Each entry under `scorers.<name>` is normalized into
 
 ```python
 ScorerConfig.__call__(dep=None, ind=None, swap=False, **kwargs)
+
 ```
 
 - `dep`: dependent/target values (`y_true` alias is accepted).
@@ -461,6 +494,7 @@ ScorerDictConfig.__call__(
     score_file=None,
     **kwargs,
 )
+
 ```
 
 - `mode`: runtime scoring mode, for example `train`, `test`, `val`, `attack`,
@@ -544,4 +578,5 @@ implementation for every attack family.
 .. automodule:: deckard.score
   :members:
   :show-inheritance:
+
 ```

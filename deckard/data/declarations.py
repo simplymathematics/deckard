@@ -381,7 +381,7 @@ def load_adult_income_data(cfg: Any, **loader_params: Any) -> Any:
             X[column] = pd.to_numeric(X[column], errors="coerce")
 
     categorical_columns = X.select_dtypes(
-        include=["object", "category"]
+        include=["object", "category"],
     ).columns.tolist()
     X = pd.get_dummies(
         X,

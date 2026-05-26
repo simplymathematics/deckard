@@ -97,7 +97,8 @@ def test_defense_step_factory_proxies_flags():
 
 
 def test_pretrained_model_with_fit_defense_snapshots_and_retrains(
-    monkeypatch, tmp_path
+    monkeypatch,
+    tmp_path,
 ):
     model = ModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
@@ -139,7 +140,9 @@ def test_pretrained_model_with_fit_defense_snapshots_and_retrains(
     monkeypatch.setattr(model, "_is_model_fitted", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(model, "_require_defense_pipeline", lambda: defense_pipeline)
     monkeypatch.setattr(
-        model, "_train_with_runtime_trainer", fake_train_with_runtime_trainer
+        model,
+        "_train_with_runtime_trainer",
+        fake_train_with_runtime_trainer,
     )
     monkeypatch.setattr(
         model,
@@ -198,7 +201,9 @@ def test_loaded_non_pretrained_model_with_fit_defense_does_not_force_retrain(
     monkeypatch.setattr(model, "_is_model_fitted", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(model, "_require_defense_pipeline", lambda: defense_pipeline)
     monkeypatch.setattr(
-        model, "_train_with_runtime_trainer", fake_train_with_runtime_trainer
+        model,
+        "_train_with_runtime_trainer",
+        fake_train_with_runtime_trainer,
     )
 
     data = SimpleNamespace(X_train=[0, 1], y_train=[0, 1])

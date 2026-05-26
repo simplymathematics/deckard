@@ -207,10 +207,12 @@ class TestAttackConfig:
             classifier = None
 
         assert not AttackConfig._infer_task_is_classification(
-            _Data(), LinearRegression()
+            _Data(),
+            LinearRegression(),
         )
         assert AttackConfig._infer_task_is_classification(
-            _Data(), LogisticRegression()
+            _Data(),
+            LogisticRegression(),
         )
 
         data = type("D", (), {"classifier": True})()
@@ -226,7 +228,8 @@ class TestAttackConfig:
 
         attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
         assert not attack._is_regression_prediction_output(
-            [0, 1], [[0.2, 0.8], [0.6, 0.4]]
+            [0, 1],
+            [[0.2, 0.8], [0.6, 0.4]],
         )
         assert attack._is_regression_prediction_output([0.2, 0.3], [0.1, 0.2])
 
@@ -1171,7 +1174,7 @@ class TestAttackConfig:
         original_hash = hash(attack)
         attack(data, model)
         assert original_hash == hash(
-            attack
+            attack,
         ), "Hash changed after call for AttackConfig"
 
 
@@ -3520,7 +3523,7 @@ class TestFairlearnAttackScorer:
         from deckard.score.base import DefaultClassifierScorerDictConfig
 
         scorer = FairlearnAttackScorerConfig(
-            evasion=DefaultClassifierScorerDictConfig()
+            evasion=DefaultClassifierScorerDictConfig(),
         )
         assert isinstance(scorer.evasion, FairlearnScorerDictConfig)
         assert isinstance(scorer.membership_inference, FairlearnScorerDictConfig)

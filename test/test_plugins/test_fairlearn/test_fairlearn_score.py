@@ -52,10 +52,12 @@ class TestFairnessScorers:
 
     def test_score_profile_classes_available(self):
         assert isinstance(
-            DefaultFairlearnClassificationScorerDictConfig(), FairlearnScorerDictConfig
+            DefaultFairlearnClassificationScorerDictConfig(),
+            FairlearnScorerDictConfig,
         )
         assert isinstance(
-            DefaultFairlearnRegressionScorerDictConfig(), FairlearnScorerDictConfig
+            DefaultFairlearnRegressionScorerDictConfig(),
+            FairlearnScorerDictConfig,
         )
 
     def test_metric_frame_fairness_score_dict_classification(self):

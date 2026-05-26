@@ -64,10 +64,10 @@ class DVCPowerMixin:
     """
 
     cpu_tdp_watts: float = field(
-        default_factory=lambda: DVCPowerMixin._detect_cpu_tdp()
+        default_factory=lambda: DVCPowerMixin._detect_cpu_tdp(),
     )
     gpu_tdp_watts: float = field(
-        default_factory=lambda: DVCPowerMixin._detect_gpu_tdp()
+        default_factory=lambda: DVCPowerMixin._detect_gpu_tdp(),
     )
 
     _power_energy_wh: float = 0.0

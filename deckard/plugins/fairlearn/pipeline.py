@@ -106,7 +106,7 @@ class FairlearnPipelineHooksMixin:
         if step_name in pipeline_dict:
             return
         self.pipeline = DataPipeline(
-            pipeline={step_name: step_config, **pipeline_dict}
+            pipeline={step_name: step_config, **pipeline_dict},
         )
 
     def _run_fairlearn_post_pipeline_hook(self, **kwargs):

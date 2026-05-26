@@ -545,7 +545,8 @@ class TestDataConfig:
             assert cfg._y is not None
 
     @pytest.mark.skipif(
-        not HAS_LIFELINES, reason="lifelines is required for this test"
+        not HAS_LIFELINES,
+        reason="lifelines is required for this test",
     )
     def test_load_lifelines_lung_dataset(self):
         cfg = DataConfig(
@@ -559,7 +560,8 @@ class TestDataConfig:
         assert len(cfg.X) == len(cfg.y)
 
     @pytest.mark.skipif(
-        not HAS_LIFELINES, reason="lifelines is required for this test"
+        not HAS_LIFELINES,
+        reason="lifelines is required for this test",
     )
     def test_load_lifelines_leukemia_dataset(self):
         cfg = DataConfig(
@@ -573,7 +575,8 @@ class TestDataConfig:
         assert len(cfg.X) == len(cfg.y)
 
     @pytest.mark.skipif(
-        not HAS_LIFELINES, reason="lifelines is required for this test"
+        not HAS_LIFELINES,
+        reason="lifelines is required for this test",
     )
     def test_load_lifelines_diabetes_dataset_with_prefix(self):
         cfg = DataConfig(

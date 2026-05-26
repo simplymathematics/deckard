@@ -155,7 +155,8 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             This FairlearnPytorchDataConfig instance.
         """
         return cast(
-            "FairlearnPytorchDataConfig", PytorchCustomDataConfig.load_dataset(self)
+            "FairlearnPytorchDataConfig",
+            PytorchCustomDataConfig.load_dataset(self),
         )
 
     def _fit_transform_X(self, X_train, X_test, y_train, y_test, pipeline):
@@ -270,7 +271,9 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
     # ------------------------------------------------------------------
 
     def __call__(
-        self, *args: object, **kwargs: object
+        self,
+        *args: object,
+        **kwargs: object,
     ) -> dict[str, SerializableValue]:
         """Run fairness-aware torch data execution with a default scorer fallback.
 
@@ -321,7 +324,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
                     "n_samples": len(y_all),
                     "label_distribution": dict(collections.Counter(y_all)),
                     "sensitive_distribution": dict(collections.Counter(sensitive)),
-                }
+                },
             )
 
         # Canonical sensitive-feature lookup.

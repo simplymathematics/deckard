@@ -308,7 +308,8 @@ def test_vega_plot_metric_token_uses_first_configured_optimizer():
     exp.optimizers = ["macro_f1"]
     attack_cfg = SimpleNamespace(alias="hsj", attack_params={"max_iter": 20})
     defense_cfg = SimpleNamespace(
-        alias="class-labels", defense_params={"apply_fit": True}
+        alias="class-labels",
+        defense_params={"apply_fit": True},
     )
 
     params_manifest = {
@@ -399,7 +400,9 @@ def test_generate_dvc_pipeline_overwrite_behavior(tmp_path: Path, overwrite: boo
     else:
         with pytest.raises(FileExistsError):
             generate_dvc_pipeline(
-                exp, output_file=output_file.as_posix(), overwrite=False
+                exp,
+                output_file=output_file.as_posix(),
+                overwrite=False,
             )
 
 
@@ -420,7 +423,9 @@ def test_score_stage_requires_score_file_alias():
     exp.files.update(score_file=None)
     with pytest.raises(ValueError, match="Stage 'score' requires files.score_file"):
         build_dvc_stage_plan(
-            exp, stage_selection=["score"], include_cache_aliases=False
+            exp,
+            stage_selection=["score"],
+            include_cache_aliases=False,
         )
 
 
@@ -428,7 +433,9 @@ def test_persist_stage_requires_explicit_file_aliases():
     exp = _make_experiment_stub(with_files=False)
     with pytest.raises(ValueError, match="Stage 'persist' requires file aliases"):
         build_dvc_stage_plan(
-            exp, stage_selection=["persist"], include_cache_aliases=False
+            exp,
+            stage_selection=["persist"],
+            include_cache_aliases=False,
         )
 
 
@@ -436,10 +443,13 @@ def test_cache_aliases_require_params_file_alias():
     exp = _make_experiment_stub(with_files=True)
     exp.files.update(params_file=None)
     with pytest.raises(
-        ValueError, match="include_cache_aliases=True requires files.params_file"
+        ValueError,
+        match="include_cache_aliases=True requires files.params_file",
     ):
         build_dvc_stage_plan(
-            exp, stage_selection=["train"], include_cache_aliases=True
+            exp,
+            stage_selection=["train"],
+            include_cache_aliases=True,
         )
 
 
@@ -535,7 +545,8 @@ def test_run_dvc_plugin_hook_renders_only_for_last_after_persist(monkeypatch):
 
 
 def test_run_dvc_plugin_hook_writes_structured_params_yaml(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path,
+    monkeypatch,
 ):
     files = FileConfig(
         params_file=(tmp_path / "params.yaml").as_posix(),
@@ -655,7 +666,8 @@ def test_generate_dvc_pipeline_writes_deterministic_params_yaml(tmp_path: Path):
 
 
 def test_log_dvclive_artifacts_prefers_log_image_for_images(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path,
+    monkeypatch,
 ):
     image_path = tmp_path / "chart.png"
     image_path.write_bytes(b"png")
@@ -673,13 +685,15 @@ def test_log_dvclive_artifacts_prefers_log_image_for_images(
     plugin = dvc_module.DVCExperimentPlugin(enabled=True)
 
     monkeypatch.setattr(
-        dvc_module, "_ensure_live_instance", lambda experiment, plugin: _FakeLive()
+        dvc_module,
+        "_ensure_live_instance",
+        lambda experiment, plugin: _FakeLive(),
     )
     monkeypatch.setattr(
         dvc_module,
         "_resolve_stage_outputs",
         lambda experiment, stage, include_identity_dir=False, plugin=None: [
-            image_path.as_posix()
+            image_path.as_posix(),
         ],
     )
 
@@ -753,7 +767,10 @@ def test_experiment_hash_payload_excludes_dvc_plugin(tmp_path: Path):
     ],
 )
 def test_render_dvclive_report_mode_to_file_mapping(
-    tmp_path: Path, monkeypatch, mode: str, expected_name: str
+    tmp_path: Path,
+    monkeypatch,
+    mode: str,
+    expected_name: str,
 ):
     class _FakeLive:
         def __init__(self, **kwargs):
@@ -831,7 +848,7 @@ def test_dvc_repro_and_force_repro_preserve_non_timing_outputs(tmp_path: Path):
     # DVC stage deps expect these entries in cwd.
     (workspace / "deckard").symlink_to(Path(__file__).resolve().parents[2] / "deckard")
     (workspace / "examples").symlink_to(
-        Path(__file__).resolve().parents[2] / "examples"
+        Path(__file__).resolve().parents[2] / "examples",
     )
     rc_path = workspace / ".deckard_rc"
     rc_path.write_text("# test rc\n", encoding="utf-8")
@@ -879,13 +896,14 @@ def test_dvc_repro_and_force_repro_preserve_non_timing_outputs(tmp_path: Path):
 
     params_payload = yaml.safe_load(
         (workspace / "examples" / "sklearn" / "config" / "default.yaml").read_text(
-            encoding="utf-8"
+            encoding="utf-8",
         ),
     )
     if isinstance(params_payload, dict) and "dvclive_enabled" not in params_payload:
         params_payload["dvclive_enabled"] = False
     params_file.write_text(
-        yaml.safe_dump(params_payload, sort_keys=False), encoding="utf-8"
+        yaml.safe_dump(params_payload, sort_keys=False),
+        encoding="utf-8",
     )
 
     env = _make_runtime_env(rc_path)

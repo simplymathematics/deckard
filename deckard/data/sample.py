@@ -204,7 +204,8 @@ class BaseSampler:
 
     @classmethod
     def execute(
-        cls, config: "DataConfig"
+        cls,
+        config: "DataConfig",
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Resolve/compose and run the configured sampler against ``config``.
 

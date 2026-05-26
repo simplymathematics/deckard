@@ -90,7 +90,7 @@ class TestPlotConfig:
                 },
             )
         assert "Provide either 'experiment' or 'data_file', not both" in str(
-            context.value
+            context.value,
         )
 
     def test_plot_config_call(self):

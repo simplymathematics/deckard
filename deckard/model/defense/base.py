@@ -461,7 +461,8 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
             defense_obj.probability = True
 
     def normalize_defenses(
-        self, defenses: list | tuple | dict | BaseConfig | None
+        self,
+        defenses: list | tuple | dict | BaseConfig | None,
     ) -> list:
         """Return a normalized list of defense objects from raw defense specs.
 

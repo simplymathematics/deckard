@@ -186,7 +186,7 @@ class SeabornPlotConfig(_SeabornPlotterMarker, BaseConfig):
             data = getattr(data_obj, "_X", None)
             if data is None:
                 raise ValueError(
-                    "Provided data_config did not materialize feature dataframe (_X)."
+                    "Provided data_config did not materialize feature dataframe (_X).",
                 )
         elif self.data is not None:
             data = self.data.copy()

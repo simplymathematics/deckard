@@ -97,8 +97,8 @@ def test_model_canon_defense_stage_resolution(defense_name, expected):
 
 def test_model_canon_defense_stage_priority_order():
     assert defense_stage_priority("pre_art_defense") < defense_stage_priority(
-        "pre_fit"
+        "pre_fit",
     )
     assert defense_stage_priority("pre_fit") < defense_stage_priority(
-        "post_fit_pre_predict"
+        "post_fit_pre_predict",
     )

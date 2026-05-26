@@ -366,7 +366,7 @@ class TestAttackConfig:
         original_hash = hash(attack)
         attack(data, model)
         assert original_hash == hash(
-            attack
+            attack,
         ), "Hash changed after call for AttackConfig"
 
 
@@ -2714,7 +2714,7 @@ class TestFairlearnAttackScorer:
         from deckard.score.base import DefaultClassifierScorerDictConfig
 
         scorer = FairlearnAttackScorerConfig(
-            evasion=DefaultClassifierScorerDictConfig()
+            evasion=DefaultClassifierScorerDictConfig(),
         )
         assert isinstance(scorer.evasion, FairlearnScorerDictConfig)
         assert isinstance(scorer.membership_inference, FairlearnScorerDictConfig)

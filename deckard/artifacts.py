@@ -698,7 +698,9 @@ class ArtifactLoaderConfig:
         return self.load_data(filepath, **kwargs)
 
     def save_object(
-        self, obj: EstimatorLike | SerializableValue, filepath: str
+        self,
+        obj: EstimatorLike | SerializableValue,
+        filepath: str,
     ) -> None:
         """Serialize a Python object payload with pickle-compatible formats.
 
@@ -791,7 +793,9 @@ class ArtifactLoaderConfig:
         )
 
     def save_model(
-        self, model: EstimatorLike | SerializableValue, filepath: str
+        self,
+        model: EstimatorLike | SerializableValue,
+        filepath: str,
     ) -> None:
         """Persist model artifacts using suffix-driven serialization backends.
 

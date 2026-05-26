@@ -156,14 +156,20 @@ class TestSplitSampler:
 
     def test_returns_three_arrays(self):
         sampler = SplitSampler(
-            test_size=0.2, val_size=0.15, random_state=42, stratify=True
+            test_size=0.2,
+            val_size=0.15,
+            random_state=42,
+            stratify=True,
         )
         result = sampler(self.cfg)
         assert len(result) == 3
 
     def test_indices_are_disjoint(self):
         sampler = SplitSampler(
-            test_size=0.2, val_size=0.15, random_state=42, stratify=True
+            test_size=0.2,
+            val_size=0.15,
+            random_state=42,
+            stratify=True,
         )
         train, test, val = sampler(self.cfg)
         assert len(set(train) & set(test)) == 0
@@ -172,7 +178,10 @@ class TestSplitSampler:
 
     def test_total_covers_dataset(self):
         sampler = SplitSampler(
-            test_size=0.2, val_size=0.15, random_state=42, stratify=True
+            test_size=0.2,
+            val_size=0.15,
+            random_state=42,
+            stratify=True,
         )
         train, test, val = sampler(self.cfg)
         total = len(train) + len(test) + len(val)
@@ -182,7 +191,10 @@ class TestSplitSampler:
         cfg = _make_clf_config()
         cfg.val_size = None
         sampler = SplitSampler(
-            test_size=0.2, val_size=None, random_state=42, stratify=True
+            test_size=0.2,
+            val_size=None,
+            random_state=42,
+            stratify=True,
         )
         train, test, val = sampler(cfg)
         assert len(val) == 0
@@ -191,7 +203,10 @@ class TestSplitSampler:
 
     def test_stratified_class_distribution(self):
         sampler = SplitSampler(
-            test_size=0.2, val_size=0.15, random_state=42, stratify=True
+            test_size=0.2,
+            val_size=0.15,
+            random_state=42,
+            stratify=True,
         )
         train, test, val = sampler(self.cfg)
         y = self.cfg._y
@@ -216,7 +231,10 @@ class TestSplitSampler:
             },
             classifier=True,
             sampler=SplitSampler(
-                test_size=0.2, val_size=0.1, random_state=42, stratify=True
+                test_size=0.2,
+                val_size=0.1,
+                random_state=42,
+                stratify=True,
             ),
         )
         cfg()
@@ -240,7 +258,10 @@ class TestSplitSampler:
             },
             classifier=True,
             sampler=SplitSampler(
-                test_size=0.2, val_size=0.1, random_state=42, stratify=True
+                test_size=0.2,
+                val_size=0.1,
+                random_state=42,
+                stratify=True,
             ),
         )
         scores = cfg()
@@ -257,7 +278,10 @@ class TestSplitSampler:
             },
             classifier=False,
             sampler=SplitSampler(
-                test_size=0.2, val_size=0.1, random_state=1, stratify=False
+                test_size=0.2,
+                val_size=0.1,
+                random_state=1,
+                stratify=False,
             ),
         )
         scores = cfg()
@@ -291,7 +315,10 @@ class TestSplitSampler:
     def test_regression_no_stratify(self):
         cfg = _make_reg_config(val_size=0.15)
         sampler = SplitSampler(
-            test_size=0.2, val_size=0.15, random_state=1, stratify=False
+            test_size=0.2,
+            val_size=0.15,
+            random_state=1,
+            stratify=False,
         )
         train, test, val = sampler(cfg)
         assert len(set(train) & set(test)) == 0
@@ -309,14 +336,22 @@ class TestKFoldSampler:
 
     def test_returns_three_arrays(self):
         sampler = KFoldSampler(
-            n_splits=5, split=0, test_size=0.2, random_state=42, stratify=True
+            n_splits=5,
+            split=0,
+            test_size=0.2,
+            random_state=42,
+            stratify=True,
         )
         result = sampler(self.cfg)
         assert len(result) == 3
 
     def test_indices_are_disjoint(self):
         sampler = KFoldSampler(
-            n_splits=5, split=0, test_size=0.2, random_state=42, stratify=True
+            n_splits=5,
+            split=0,
+            test_size=0.2,
+            random_state=42,
+            stratify=True,
         )
         train, test, val = sampler(self.cfg)
         assert len(set(train) & set(test)) == 0
@@ -325,7 +360,11 @@ class TestKFoldSampler:
 
     def test_total_covers_dataset(self):
         sampler = KFoldSampler(
-            n_splits=5, split=0, test_size=0.2, random_state=42, stratify=True
+            n_splits=5,
+            split=0,
+            test_size=0.2,
+            random_state=42,
+            stratify=True,
         )
         train, test, val = sampler(self.cfg)
         total = len(train) + len(test) + len(val)
@@ -336,7 +375,11 @@ class TestKFoldSampler:
         for fold in range(3):
             cfg = _make_clf_config()
             sampler = KFoldSampler(
-                n_splits=5, split=fold, test_size=0.2, random_state=42, stratify=True
+                n_splits=5,
+                split=fold,
+                test_size=0.2,
+                random_state=42,
+                stratify=True,
             )
             _, _, val = sampler(cfg)
             results.append(set(val))
@@ -345,7 +388,11 @@ class TestKFoldSampler:
 
     def test_fold_out_of_range_raises(self):
         sampler = KFoldSampler(
-            n_splits=5, split=99, test_size=0.2, random_state=42, stratify=True
+            n_splits=5,
+            split=99,
+            test_size=0.2,
+            random_state=42,
+            stratify=True,
         )
         with pytest.raises(ValueError):
             sampler(self.cfg)
@@ -353,7 +400,11 @@ class TestKFoldSampler:
     def test_no_stratify(self):
         cfg = _make_clf_config(stratify=False)
         sampler = KFoldSampler(
-            n_splits=5, split=0, test_size=0.2, shuffle=False, stratify=False
+            n_splits=5,
+            split=0,
+            test_size=0.2,
+            shuffle=False,
+            stratify=False,
         )
         train, test, val = sampler(cfg)
         assert len(train) + len(test) + len(val) == len(cfg._X)
@@ -371,7 +422,11 @@ class TestKFoldSampler:
             },
             classifier=True,
             sampler=KFoldSampler(
-                n_splits=5, split=1, test_size=0.2, random_state=42, stratify=True
+                n_splits=5,
+                split=1,
+                test_size=0.2,
+                random_state=42,
+                stratify=True,
             ),
         )
         cfg()
@@ -384,10 +439,18 @@ class TestKFoldSampler:
         cfg = _make_clf_config()
         cfg_split0 = _make_clf_config()
         sampler = KFoldSampler(
-            n_splits=5, split=None, test_size=0.2, random_state=42, stratify=True
+            n_splits=5,
+            split=None,
+            test_size=0.2,
+            random_state=42,
+            stratify=True,
         )
         sampler_split0 = KFoldSampler(
-            n_splits=5, split=0, test_size=0.2, random_state=42, stratify=True
+            n_splits=5,
+            split=0,
+            test_size=0.2,
+            random_state=42,
+            stratify=True,
         )
         _, _, val_none = sampler(cfg)
         _, _, val_zero = sampler_split0(cfg_split0)
@@ -656,7 +719,10 @@ class TestOmegaConfSampleSpec:
             },
             classifier=True,
             sampler=SplitSampler(
-                test_size=0.2, val_size=0.1, random_state=42, stratify=True
+                test_size=0.2,
+                val_size=0.1,
+                random_state=42,
+                stratify=True,
             ),
         )
         # Simulate Hydra passing an OmegaConf DictConfig for the sampler

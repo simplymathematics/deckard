@@ -112,7 +112,7 @@ class TestDefenseConfig:
             self.defense_config.score_dict["runtime"] = 1
 
         assert original_hash == hash(
-            self.defense_config
+            self.defense_config,
         ), "Hash changed after defense apply-time runtime updates"
 
 

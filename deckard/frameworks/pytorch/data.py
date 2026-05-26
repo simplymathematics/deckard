@@ -388,7 +388,8 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             The current data configuration instance.
         """
         return cast(
-            "PytorchDataConfig", self._load_dataset_with_hooks(self._load_data)
+            "PytorchDataConfig",
+            self._load_dataset_with_hooks(self._load_data),
         )
 
     def _load_data(self) -> None:
@@ -713,7 +714,8 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             The current custom data configuration instance.
         """
         return cast(
-            "PytorchCustomDataConfig", self._load_dataset_with_hooks(self._load_data)
+            "PytorchCustomDataConfig",
+            self._load_dataset_with_hooks(self._load_data),
         )
 
     def _as_dataset(self, obj, split: str, transform):

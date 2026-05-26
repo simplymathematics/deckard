@@ -162,7 +162,10 @@ class FairlearnDataScoreHooksMixin:
         return ScoreDict.from_payload(merged_tail)
 
     def score(
-        self, *args: RuntimePayload, mode: str | None = None, **kwargs: RuntimePayload
+        self,
+        *args: RuntimePayload,
+        mode: str | None = None,
+        **kwargs: RuntimePayload,
     ) -> ScoreDict:
         """Run fairlearn-aware scoring for the requested data split mode.
 

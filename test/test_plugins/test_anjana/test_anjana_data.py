@@ -338,7 +338,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
                 "path": path,
                 "n": len(kwargs["y"]),
                 "k": dict(getattr(kwargs["data"], "anjana_defense", {}) or {}).get(
-                    "k"
+                    "k",
                 ),
                 "supp_level": 100,
                 "hierarchies": getattr(kwargs["data"], "hierarchies", None),

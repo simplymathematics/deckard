@@ -132,7 +132,10 @@ class TestScorerConfig:
         )
         score = config(y_true=y_true, y_pred=y_pred)
         assert score == precision_score(
-            y_true, y_pred, average="binary", zero_division=0
+            y_true,
+            y_pred,
+            average="binary",
+            zero_division=0,
         )
 
     def test_scorer_config_accepts_torch_tensors_when_available(self):

@@ -185,10 +185,10 @@ def test_experiment_stage_cache_key_is_deterministic_and_identity_sensitive():
 
 def test_experiment_stage_param_key_paths_are_stage_scoped():
     load_paths = set(
-        build_experiment_stage_param_key_paths(stage="load", component="data")
+        build_experiment_stage_param_key_paths(stage="load", component="data"),
     )
     model_paths = set(
-        build_experiment_stage_param_key_paths(stage="model_score", component="model")
+        build_experiment_stage_param_key_paths(stage="model_score", component="model"),
     )
 
     assert "data" in load_paths
@@ -223,7 +223,8 @@ def test_experiment_stage_param_subset_filters_manifest_by_stage_component():
 def test_compose_hook_plugins_preserves_order_and_dedupes_bundle_entries():
     first = HookPlugin(hook_name="before_load", method_name="_experiment_stage_hook")
     duplicate = HookPlugin(
-        hook_name="before_load", method_name="_experiment_stage_hook"
+        hook_name="before_load",
+        method_name="_experiment_stage_hook",
     )
     second = HookPlugin(hook_name="after_load", method_name="_experiment_stage_hook")
 

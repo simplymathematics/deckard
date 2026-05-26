@@ -1357,7 +1357,7 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
 
         canonical_bundle = build_experiment_hook_bundle()
         dvc_first_hooks, dvc_last_hooks = build_dvc_experiment_plugin_hooks(
-            self.dvc_plugin
+            self.dvc_plugin,
         )
         user_bundles: list[HookBundle] = []
         if callable(getattr(self, "_log_power_score", None)):
@@ -1369,7 +1369,7 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
                 hooks = tuple(bundle.get("hooks") or ())
                 if all(hasattr(hook, "hook_name") for hook in hooks):
                     user_bundles.append(
-                        HookBundle(name=str(bundle["name"]), hooks=hooks)
+                        HookBundle(name=str(bundle["name"]), hooks=hooks),
                     )
 
         self.outputs.setdefault("hooks", {})
@@ -1505,7 +1505,7 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         params_path = Path(str(params_file))
         if params_path.suffix.lower() in {".yaml", ".yml"}:
             return params_path.with_name(
-                f"{params_path.stem}.runtime_cache.pkl"
+                f"{params_path.stem}.runtime_cache.pkl",
             ).as_posix()
         return params_path.with_suffix(".runtime_cache.pkl").as_posix()
 
@@ -1531,7 +1531,8 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         return str(self._resolve_yaml_write_path(str(params_file)))
 
     def _build_runtime_state_payload(
-        self, file_dict: Mapping[str, Any]
+        self,
+        file_dict: Mapping[str, Any],
     ) -> dict[str, Any]:
         hook_outputs = dict(self.outputs.get("hooks", {}) or {})
         cache_outputs = dict(self.outputs.get("cache", {}) or {})
@@ -1631,7 +1632,9 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         if cache_path is None or not Path(cache_path).exists():
             return {}
         payload = self.load_object(
-            cache_path, ignore_corrupt=True, delete_corrupt=True
+            cache_path,
+            ignore_corrupt=True,
+            delete_corrupt=True,
         )
         if isinstance(payload, dict):
             return payload
@@ -1746,7 +1749,7 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
 
     def _capture_sample_cache_value(self) -> dict[str, Any]:
         value: dict[str, Any] = {
-            "score_dict": dict(getattr(self.data, "score_dict", {}) or {})
+            "score_dict": dict(getattr(self.data, "score_dict", {}) or {}),
         }
         for attr in self._sample_cache_fields():
             value[attr] = getattr(self.data, attr, None)
@@ -1873,11 +1876,11 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
             if isinstance(cached_model, dict):
                 self.model.score_dict = dict(cached_model.get("score_dict", {}))
                 self.model.training_predictions = cached_model.get(
-                    "training_predictions"
+                    "training_predictions",
                 )
                 self.model.predictions = cached_model.get("predictions")
                 self.model.training_probabilities = cached_model.get(
-                    "training_probabilities"
+                    "training_probabilities",
                 )
                 self.model.probabilities = cached_model.get("probabilities")
                 scores.update(**self.model.score_dict)
@@ -1917,14 +1920,18 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
                     identity={"run_idx": run_idx},
                     value={
                         "score_dict": dict(
-                            getattr(self.model, "score_dict", {}) or {}
+                            getattr(self.model, "score_dict", {}) or {},
                         ),
                         "training_predictions": getattr(
-                            self.model, "training_predictions", None
+                            self.model,
+                            "training_predictions",
+                            None,
                         ),
                         "predictions": getattr(self.model, "predictions", None),
                         "training_probabilities": getattr(
-                            self.model, "training_probabilities", None
+                            self.model,
+                            "training_probabilities",
+                            None,
                         ),
                         "probabilities": getattr(self.model, "probabilities", None),
                     },
@@ -2013,10 +2020,10 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
                     )
                     if isinstance(cached_attack, dict):
                         attack_cfg.score_dict = dict(
-                            cached_attack.get("score_dict", {})
+                            cached_attack.get("score_dict", {}),
                         )
                         attack_cfg.attack_predictions = cached_attack.get(
-                            "attack_predictions"
+                            "attack_predictions",
                         )
                         scores = merge_scores_with_collision_suffix(
                             scores,
@@ -2100,10 +2107,12 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
                         identity={"run_idx": run_idx},
                         value={
                             "score_dict": dict(
-                                getattr(attack_cfg, "score_dict", {}) or {}
+                                getattr(attack_cfg, "score_dict", {}) or {},
                             ),
                             "attack_predictions": getattr(
-                                attack_cfg, "attack_predictions", None
+                                attack_cfg,
+                                "attack_predictions",
+                                None,
                             ),
                         },
                     )
@@ -2228,8 +2237,8 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
                     identity={"run_idx": run_idx},
                     value={
                         "score_dict": dict(
-                            getattr(self.detector, "score_dict", {}) or {}
-                        )
+                            getattr(self.detector, "score_dict", {}) or {},
+                        ),
                     },
                 )
                 self._run_experiment_stage_hooks(

@@ -742,7 +742,7 @@ def _prepare_multirun_cfg(cfg, hydra_cfg, include_file_paths: bool = False):
     explicit_name = cfg.get("experiment_name", None)
     if explicit_name is None or str(explicit_name).strip() == "":
         cfg["experiment_name"] = _ensure_experiment_hash(
-            hash_conf_values(stage_payload)
+            hash_conf_values(stage_payload),
         )
     else:
         cfg["experiment_name"] = _ensure_experiment_hash(explicit_name)

@@ -87,7 +87,8 @@ class AbstractFileHandler(ABC):
 
     @abstractmethod
     def validate_keys(
-        self, keys: Mapping[str, Any] | list[str] | tuple[str, ...]
+        self,
+        keys: Mapping[str, Any] | list[str] | tuple[str, ...],
     ) -> None:
         """Validate provided file keys against the allowed file schema.
 
@@ -136,7 +137,8 @@ class CanonFileHandler(AbstractFileHandler):
     _placeholder_re = re.compile(r"\{[^{}]+\}")
 
     def validate_keys(
-        self, keys: Mapping[str, Any] | list[str] | tuple[str, ...]
+        self,
+        keys: Mapping[str, Any] | list[str] | tuple[str, ...],
     ) -> None:
         """Validate incoming key set against the canonical key registry.
 
@@ -264,7 +266,7 @@ class PlaceholderResolverMixin:
             "{*}": self.id,
         }
         replacements.update(
-            {k: str(v) for k, v in getattr(self, "replace", {}).items()}
+            {k: str(v) for k, v in getattr(self, "replace", {}).items()},
         )
         return replacements
 

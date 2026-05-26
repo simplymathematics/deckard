@@ -353,7 +353,7 @@ class PytorchFoldSampler(PytorchBaseSampler):
         fold_index = self.split or 0
         if fold_index >= len(folds):
             raise ValueError(
-                f"split={fold_index} out of range for n_splits={self.n_splits}"
+                f"split={fold_index} out of range for n_splits={self.n_splits}",
             )
 
         train_val_idx, val_idx = folds[fold_index]
@@ -461,7 +461,7 @@ class PytorchShuffleSampler(PytorchBaseSampler):
         split_index = self.split if self.split is not None else 0
         if split_index >= len(splits):
             raise ValueError(
-                f"split={split_index} out of range for n_splits={self.n_splits}"
+                f"split={split_index} out of range for n_splits={self.n_splits}",
             )
 
         train_test_idx, val_idx = splits[split_index]

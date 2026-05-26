@@ -132,7 +132,7 @@ class BaseTrainer:
             setattr(config, "_trainer_obj", trainer_obj)
         if not callable(trainer_obj):
             raise TypeError(
-                f"Composed trainer must be callable, got {type(trainer_obj)}"
+                f"Composed trainer must be callable, got {type(trainer_obj)}",
             )
         return trainer_obj
 
@@ -284,10 +284,12 @@ class PretrainedTrainer(BaseTrainer):
                 config._model = loaded_obj
             if config.is_fitted(config._model, X_sample=data.X_train):
                 logger.info(
-                    "Pretrained trainer loaded fitted model from %s", model_file
+                    "Pretrained trainer loaded fitted model from %s",
+                    model_file,
                 )
                 output.setdefault(
-                    "training_time", getattr(config, "training_time", None)
+                    "training_time",
+                    getattr(config, "training_time", None),
                 )
                 output.setdefault("training_n", getattr(config, "training_n", None))
                 return output

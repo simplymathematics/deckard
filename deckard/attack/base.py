@@ -1473,7 +1473,12 @@ class AttackConfig(BaseConfig):
         return ScoreDict.from_payload(normalized_scores)
 
     def _score(
-        self, attack_kind: str, y_true, y_pred=None, *args, **kwargs
+        self,
+        attack_kind: str,
+        y_true,
+        y_pred=None,
+        *args,
+        **kwargs,
     ) -> ScoreDict:
         """Dispatch attack scoring through the configured AttackScorerConfig."""
         if self.scorer is None:

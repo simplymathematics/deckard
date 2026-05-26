@@ -517,7 +517,9 @@ class ModelConfig(BaseConfig):
         data: "DataConfig",
         default_stage: str = "post_fit_pre_predict",
     ) -> tuple[
-        Callable[[EstimatorLike], EstimatorLike] | None, BaseConfig | None, str | None
+        Callable[[EstimatorLike], EstimatorLike] | None,
+        BaseConfig | None,
+        str | None,
     ]:
         """Compose a defense application callable and resolved stage for runtime use.
 
@@ -547,7 +549,8 @@ class ModelConfig(BaseConfig):
         return _apply, defense_pipeline, stage
 
     def get_art_class(
-        self, data: "DataConfig"
+        self,
+        data: "DataConfig",
     ) -> tuple[ArtEsimtator, dict[str, float | int | tuple[int, ...] | None]]:
         """Resolve ART estimator wrapper class and initialization params for model runtime.
 

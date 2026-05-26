@@ -381,7 +381,9 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
         return ax
 
     def __call__(
-        self, *args: Any, **kwargs: Any
+        self,
+        *args: Any,
+        **kwargs: Any,
     ) -> tuple[SurvivalFitterLike, list[Axes]]:
         """Render a single model experiment when the plotter config is called.
 
