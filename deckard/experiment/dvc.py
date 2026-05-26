@@ -153,6 +153,55 @@ class DVCExperimentPlugin:
 
 
 @dataclass(eq=False, kw_only=True)
+class DVCExperimentMixin:
+    """Mixin facade for DVCLive monitoring/logging hook behavior."""
+
+    def configure_dvclive_runtime(self, **kwargs: Any) -> dict[str, list[HookPlugin]]:
+        """Build DVCLive hook wrappers for the current experiment runtime.
+
+        Args:
+            **kwargs: Optional runtime overrides forwarded to hook construction.
+
+        Returns:
+            Mapping containing first/last hook plugin lists.
+        """
+        return configure_dvclive_runtime(self, **kwargs)
+
+    def run_dvc_monitoring_hook(
+        self,
+        *,
+        dvc_plugin: Any,
+        plugin_position: str,
+        component: str,
+        stage: str,
+        event: str,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Execute one DVCLive monitoring hook callback.
+
+        Args:
+            dvc_plugin: DVC plugin policy payload.
+            plugin_position: Hook execution position (first/last).
+            component: Component namespace for this callback.
+            stage: Canonical pipeline stage token.
+            event: Stage event token (before/after).
+            **kwargs: Additional hook context.
+
+        Returns:
+            Result payload describing hook execution state and outputs.
+        """
+        return run_dvc_experiment_plugin_hook(
+            self,
+            dvc_plugin=dvc_plugin,
+            plugin_position=plugin_position,
+            component=component,
+            stage=stage,
+            event=event,
+            **kwargs,
+        )
+
+
+@dataclass(eq=False, kw_only=True)
 class DVCExperimentConfig:
     """Lightweight wrapper around ExperimentConfig with native DVC plugin policy."""
 
@@ -1042,6 +1091,56 @@ def _log_dvclive_scores(experiment: Any, plugin: DVCExperimentPlugin) -> None:
     runtime["scores_logged"] = True
 
 
+def _collect_system_monitor_scores(
+    experiment: Any,
+    plugin: DVCExperimentPlugin,
+) -> dict[str, float]:
+    runtime = _get_runtime_state(experiment)
+    dvclive_dir = Path(
+        str(runtime.get("dir") or _resolve_dvclive_dir(experiment, plugin)),
+    )
+    summary_path = dvclive_dir / "summary.json"
+    if not summary_path.exists():
+        return {}
+    try:
+        payload = json.loads(summary_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if not isinstance(payload, Mapping):
+        return {}
+
+    collected: dict[str, float] = {}
+    system_payload = payload.get("system")
+    if isinstance(system_payload, Mapping):
+        for key, value in system_payload.items():
+            if isinstance(value, (int, float)):
+                collected[f"system_monitor/{key}"] = float(value)
+
+    for key, value in payload.items():
+        if not isinstance(key, str) or not key.startswith("system/"):
+            continue
+        if isinstance(value, (int, float)):
+            metric = key.removeprefix("system/")
+            collected[f"system_monitor/{metric}"] = float(value)
+
+    return collected
+
+
+def _merge_system_monitor_scores_into_experiment(
+    experiment: Any,
+    plugin: DVCExperimentPlugin,
+) -> dict[str, float]:
+    monitor_scores = _collect_system_monitor_scores(experiment, plugin)
+    if not monitor_scores:
+        return {}
+    experiment_scores = getattr(experiment, "score_dict", None)
+    if not isinstance(experiment_scores, dict):
+        experiment_scores = {}
+        setattr(experiment, "score_dict", experiment_scores)
+    experiment_scores.update(monitor_scores)
+    return monitor_scores
+
+
 def _log_dvclive_artifacts_and_plots(
     experiment: Any,
     plugin: DVCExperimentPlugin,
@@ -1262,14 +1361,8 @@ def run_dvc_experiment_plugin_hook(
         return result
 
     if position_token == "first" and event_token == "before" and stage_token == "load":
-        result["params_file"] = _write_dvc_params_file(
-            experiment,
-            plugin=plugin_cfg,
-            stage=stage_token,
-        )
         _ensure_live_instance(experiment, plugin_cfg)
         _log_dvclive_params(experiment, plugin_cfg)
-        result["pull"] = _run_dvc_pull(experiment, plugin_cfg)
         result["executed"] = True
 
     if position_token == "last" and event_token == "after" and stage_token == "score":
@@ -1284,19 +1377,17 @@ def run_dvc_experiment_plugin_hook(
         and event_token == "after"
         and stage_token == "persist"
     ):
-        result["params_file"] = _write_dvc_params_file(
-            experiment,
-            plugin=plugin_cfg,
-            stage=stage_token,
-        )
         _log_dvclive_params(experiment, plugin_cfg)
         _log_dvclive_scores(experiment, plugin_cfg)
         _log_dvclive_artifacts_and_plots(experiment, plugin_cfg)
         result.update(render_dvclive_report(experiment, plugin=plugin_cfg))
-        result["push"] = _run_dvc_push(experiment, plugin_cfg)
         live = _ensure_live_instance(experiment, plugin_cfg)
         if hasattr(live, "end"):
             live.end()
+        result["system_monitor_scores"] = _merge_system_monitor_scores_into_experiment(
+            experiment,
+            plugin_cfg,
+        )
         result["executed"] = True
 
     dvclive_bucket.update(
@@ -1972,6 +2063,7 @@ def generate_vega_lite_plot_spec(
 __all__ = [
     "configure_dvclive_runtime",
     "DVCExperimentConfig",
+    "DVCExperimentMixin",
     "DVCExperimentPlugin",
     "build_dvc_cmd",
     "build_dvc_experiment_plugin_hooks",

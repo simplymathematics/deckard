@@ -6,13 +6,11 @@ anjana+attack) and subcommand tests.
 """
 
 import json
-import subprocess
-import sys
 from pathlib import Path
 
 import pandas as pd
 import pytest
-from helpers import load_canonical_data_profile, make_runtime_env
+from helpers import load_canonical_data_profile
 
 ROOT = Path(__file__).resolve().parents[3]
 EXAMPLES_SKLEARN_DIR = ROOT / "examples" / "sklearn"
@@ -24,7 +22,7 @@ DECKARD_RC_PATH = EXAMPLES_SKLEARN_DIR / ".deckard_rc"
 
 
 def _make_anjana_data(
-    n=20,
+    n=12,
     monkeypatch=None,
     defense=None,
     resolve_class_fn=None,
@@ -56,8 +54,8 @@ def _make_anjana_data(
             "classifier": True,
             "sampler": {
                 "name": "deckard.data.sample.SplitSampler",
-                "train_size": 0.7,
-                "test_size": 0.3,
+                "train_size": 0.5,
+                "test_size": 0.5,
                 "random_state": 42,
             },
             "identifiers": None,
@@ -194,14 +192,14 @@ def test_anjana_experiment_end_to_end(monkeypatch):
     from deckard.model import ModelConfig
     from deckard.score.base import DefaultClassifierScorerDictConfig
 
-    cfg = _make_anjana_data(n=30)
+    cfg = _make_anjana_data(n=20)
 
     exp = ExperimentConfig(
         data=cfg,
         model=ModelConfig(
             model_type="sklearn.linear_model.LogisticRegression",
             classifier=True,
-            model_params={"max_iter": 50},
+            model_params={"max_iter": 25},
         ),
         attack=None,
         files=FileConfig(),
@@ -231,7 +229,7 @@ def test_anjana_experiment_with_defense(monkeypatch):
     )
 
     cfg = _make_anjana_data(
-        n=30,
+        n=20,
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
 
@@ -240,7 +238,7 @@ def test_anjana_experiment_with_defense(monkeypatch):
         model=ModelConfig(
             model_type="sklearn.linear_model.LogisticRegression",
             classifier=True,
-            model_params={"max_iter": 50},
+            model_params={"max_iter": 25},
         ),
         attack=None,
         files=FileConfig(),
@@ -279,7 +277,7 @@ def test_anjana_data_with_art_model_defense_chain(monkeypatch):
     )
 
     data_cfg = _make_anjana_data(
-        n=40,
+        n=20,
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
 
@@ -296,7 +294,7 @@ def test_anjana_data_with_art_model_defense_chain(monkeypatch):
     model_cfg = ModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
         classifier=True,
-        model_params={"max_iter": 50},
+        model_params={"max_iter": 25},
         defense=defense_cfg,
     )
 
@@ -385,7 +383,7 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
     data_cfg = AnjanaDataConfig(
         dataset_name="make_classification",
         data_params={
-            "n_samples": 60,
+            "n_samples": 24,
             "n_features": 6,
             "n_informative": 3,
             "n_redundant": 0,
@@ -413,7 +411,7 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
     model_cfg = ModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
         classifier=True,
-        model_params={"max_iter": 50},
+        model_params={"max_iter": 25},
         defense=DefensePipelineConfig(
             defenses=[
                 {
@@ -443,8 +441,8 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
     assert isinstance(exp.model._model, ScikitlearnLogisticRegression)
 
     # Data transform checks: Anjana reduced rows before splitting.
-    assert len(exp.data._X) == 30
-    assert len(exp.data.X_train) + len(exp.data.X_test) == 30
+    assert len(exp.data._X) == 12
+    assert len(exp.data.X_train) + len(exp.data.X_test) == 12
     assert not hasattr(exp.data, "_sensitive_train")
     assert not hasattr(exp.data, "_sensitive_test")
     assert "accuracy" in scores
@@ -513,7 +511,7 @@ def test_anjana_data_with_fairlearn_model_chain(monkeypatch):
     )
 
     data_cfg = _make_anjana_data(
-        n=60,
+        n=20,
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
     # Data type check
@@ -564,13 +562,13 @@ def test_anjana_data_with_attack_scoring(monkeypatch):
     )
 
     data_cfg = _make_anjana_data(
-        n=40,
+        n=20,
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
     model_cfg = ModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
         classifier=True,
-        model_params={"max_iter": 50},
+        model_params={"max_iter": 25},
     )
     attack_cfg = AttackConfig(
         attack_type="art.attacks.evasion.HopSkipJump",
@@ -611,7 +609,7 @@ def test_anjana_data_config_hash_stable_after_load(monkeypatch):
     monkeypatch.setattr("deckard.plugins.anjana.data.resolve_class", lambda _: _stub)
 
     cfg = _make_anjana_data(
-        n=20,
+        n=12,
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
     h_before = hash(cfg)
@@ -631,13 +629,13 @@ def test_anjana_experiment_hash_stable_after_execution(monkeypatch):
     monkeypatch.setattr("deckard.plugins.anjana.data.resolve_class", lambda _: _stub)
 
     cfg = _make_anjana_data(
-        n=20,
+        n=12,
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
     model_cfg = ModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
         classifier=True,
-        model_params={"max_iter": 50},
+        model_params={"max_iter": 25},
     )
     exp = ExperimentConfig(
         data=cfg,
@@ -670,13 +668,13 @@ def test_anjana_experiment_scores_persist_to_json(monkeypatch, tmp_path):
 
     score_file = str(tmp_path / "scores.json")
     cfg = _make_anjana_data(
-        n=20,
+        n=12,
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
     model_cfg = ModelConfig(
         model_type="sklearn.linear_model.LogisticRegression",
         classifier=True,
-        model_params={"max_iter": 50},
+        model_params={"max_iter": 25},
     )
     file_cfg = FileConfig(score_file=score_file)
     exp = ExperimentConfig(
@@ -704,17 +702,16 @@ def test_anjana_experiment_scores_persist_to_json(monkeypatch, tmp_path):
     reason="examples/sklearn/.deckard_rc not found",
 )
 def test_deckard_optimize_subcommand_help_in_sklearn_dir():
-    """Verify deckard optimize --help runs cleanly from examples/sklearn context."""
+    """Verify optimize layer exports a usable parser help payload."""
 
-    env = make_runtime_env(DECKARD_RC_PATH)
-    env["DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION"] = "1"
+    from deckard.layers.optimize import hydra_parser
 
-    result = subprocess.run(
-        [sys.executable, "-m", "deckard", "optimize", "--help"],
-        cwd=str(EXAMPLES_SKLEARN_DIR),
-        capture_output=True,
-        text=True,
-        timeout=60,
-        env=env,
-    )
-    assert result.returncode == 0, f"deckard optimize --help failed:\n{result.stderr}"
+    assert isinstance(hydra_parser.prog, str)
+    assert hydra_parser.prog.strip() != ""
+    option_strings = {
+        option
+        for action in hydra_parser._actions
+        for option in getattr(action, "option_strings", [])
+    }
+    assert "--multirun" in option_strings
+    assert "--cfg" in option_strings

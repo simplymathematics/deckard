@@ -163,9 +163,14 @@ class BaseSampler:
                 return None
             spec = dict(spec)
             class_path = spec.pop("name", spec.pop("_target_", None))
-            if class_path is None:
-                raise ValueError("sampler dict must include 'name' or '_target_'")
             kwargs = {str(key): value for key, value in spec.items()}
+            if class_path is None:
+                # Backward compatibility: plain sampler kwargs imply split sampler.
+                return SplitSampler(**kwargs)
+            if isinstance(class_path, str):
+                key = class_path.lower()
+                if key in sampler_aliases:
+                    return sampler_aliases[key](**kwargs)
             return load_class(str(class_path), **kwargs)
 
         if callable(spec) and not isinstance(spec, type):

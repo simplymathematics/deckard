@@ -68,7 +68,7 @@ def make_runtime_env(rc_path: Path) -> dict[str, str]:
     """Return an os.environ copy augmented with rc file vars and test defaults."""
     env = os.environ.copy()
     env.update(load_env_from_deckard_rc(rc_path))
-    env["DECKARD_TEST_MAX_SAMPLES"] = "200"
+    env.setdefault("DECKARD_TEST_MAX_SAMPLES", "200")
     env.setdefault("MPLBACKEND", "Agg")
     return env
 

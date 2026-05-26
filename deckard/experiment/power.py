@@ -15,6 +15,108 @@ from ..plugins.base import HookBundle
 logger = logging.getLogger(__name__)
 
 
+@dataclass(eq=False, kw_only=True)
+class DVCPowerPlugin:
+    """Runtime power-measurement policy for experiment orchestration hooks."""
+
+    enabled: bool = False
+
+    def __call__(self, *args: Any, **overrides: Any) -> dict[str, Any]:
+        """Return normalized plugin payload, optionally applying runtime overrides."""
+        _ = args
+        payload = self.to_dict()
+        payload.update({str(key): value for key, value in overrides.items()})
+        return payload
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"enabled": bool(self.enabled)}
+
+
+def coerce_dvc_power_plugin(plugin: Any) -> DVCPowerPlugin:
+    """Normalize power plugin declarations from bool/dict/object forms."""
+    if isinstance(plugin, DVCPowerPlugin):
+        return plugin
+    if plugin in [None, False]:
+        return DVCPowerPlugin(enabled=False)
+    if plugin is True:
+        return DVCPowerPlugin(enabled=True)
+    if isinstance(plugin, dict):
+        return DVCPowerPlugin(enabled=bool(plugin.get("enabled", True)))
+    raise TypeError(
+        "power_plugin must be a bool, mapping, DVCPowerPlugin, or None.",
+    )
+
+
+def build_power_plugin_hooks(
+    plugin: Any = None,
+    *,
+    enabled: bool | None = None,
+    method_name: str = "_power_experiment_plugin_hook",
+) -> tuple[list[HookPlugin], list[HookPlugin]]:
+    """Construct hook wrappers for power measurement score stages."""
+    plugin_cfg = coerce_dvc_power_plugin(plugin)
+    if enabled is not None:
+        plugin_cfg.enabled = bool(enabled)
+    if not plugin_cfg.enabled:
+        return [], []
+
+    power_payload = plugin_cfg.to_dict()
+    last_hooks: list[HookPlugin] = []
+    for namespace in ("data", "model", "attack", "detector"):
+        last_hooks.append(
+            HookPlugin(
+                hook_name=f"after_{namespace}_score",
+                method_name=method_name,
+                method_kwargs={
+                    "power_plugin": power_payload,
+                    "namespace": namespace,
+                },
+            ),
+        )
+    return [], last_hooks
+
+
+def run_power_experiment_plugin_hook(
+    experiment: Any,
+    *,
+    power_plugin: Any,
+    namespace: str,
+    component: str,
+    stage: str,
+    event: str,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Run one power plugin hook callback."""
+    _ = component, kwargs
+    plugin_cfg = coerce_dvc_power_plugin(power_plugin)
+    result: dict[str, Any] = {
+        "enabled": bool(plugin_cfg.enabled),
+        "namespace": str(namespace),
+        "stage": str(stage),
+        "event": str(event),
+        "executed": False,
+    }
+    if not plugin_cfg.enabled:
+        return result
+    if str(event).strip().lower() != "after":
+        return result
+    if str(stage).strip().lower().replace("-", "_") not in {
+        "data_score",
+        "model_score",
+        "attack_score",
+        "detector_score",
+    }:
+        return result
+    logger_fn = getattr(experiment, "_log_power_score", None)
+    if not callable(logger_fn):
+        return result
+    metrics = logger_fn(namespace=str(namespace))
+    if isinstance(metrics, dict):
+        result.update(metrics)
+    result["executed"] = True
+    return result
+
+
 def build_power_hook_bundle(
     name: str = "experiment-power",
     method_name: str = "_log_power_score",
@@ -356,4 +458,11 @@ class DVCPowerMixin:
         return None
 
 
-__all__ = ["DVCPowerMixin", "build_power_hook_bundle"]
+__all__ = [
+    "DVCPowerMixin",
+    "build_power_hook_bundle",
+    "DVCPowerPlugin",
+    "coerce_dvc_power_plugin",
+    "build_power_plugin_hooks",
+    "run_power_experiment_plugin_hook",
+]

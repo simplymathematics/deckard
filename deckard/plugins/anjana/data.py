@@ -13,6 +13,7 @@ from ...data.base import DataConfig
 from ...utils import (
     is_default_config_value,
     load_class,
+    resolve_class,
 )
 from ...utils import (
     normalize_optional_list_value as _normalize_optional_list_value,
@@ -385,4 +386,5 @@ __all__ = [
     "PrivacyBehaviorMixin",
     "default_anjana_data_plugins",
     "AnjanaDataConfig",
+    "resolve_class",
 ]

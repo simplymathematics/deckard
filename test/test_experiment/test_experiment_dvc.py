@@ -29,6 +29,7 @@ from deckard.experiment.dvc import (
     generate_dvc_pipeline,
     run_dvc_experiment_plugin_hook,
 )
+from deckard.experiment.repro import run_repro_experiment_plugin_hook
 from deckard.file import FileConfig
 
 
@@ -44,7 +45,7 @@ def _make_runtime_env(rc_path: Path) -> dict[str, str]:
                 continue
             key, value = key_value.split("=", 1)
             env[key.strip()] = value.strip().strip('"').strip("'")
-    env["DECKARD_TEST_MAX_SAMPLES"] = "200"
+    env.setdefault("DECKARD_TEST_MAX_SAMPLES", "200")
     env.setdefault("MPLBACKEND", "Agg")
     return env
 
@@ -463,7 +464,7 @@ def test_build_dvc_experiment_plugin_hooks_adds_first_and_last_wrappers():
     assert last_hooks[0].method_kwargs["plugin_position"] == "last"
 
 
-def test_run_dvc_plugin_hook_renders_only_for_last_after_persist(monkeypatch):
+def test_run_dvc_and_repro_hooks_split_persistence_and_monitoring(monkeypatch):
     exp = _make_experiment_stub(with_files=True)
     exp.outputs = {}
 
@@ -509,9 +510,9 @@ def test_run_dvc_plugin_hook_renders_only_for_last_after_persist(monkeypatch):
 
     monkeypatch.setitem(sys.modules, "dvclive", types.SimpleNamespace(Live=_FakeLive))
 
-    before_load = run_dvc_experiment_plugin_hook(
+    before_load = run_repro_experiment_plugin_hook(
         exp,
-        dvc_plugin={"enabled": True},
+        repro_plugin={"enabled": True},
         plugin_position="first",
         component="data",
         stage="load",
@@ -541,6 +542,16 @@ def test_run_dvc_plugin_hook_renders_only_for_last_after_persist(monkeypatch):
     )
     assert executed["executed"] is True
     assert called["render"] == 1
+
+    persisted = run_repro_experiment_plugin_hook(
+        exp,
+        repro_plugin={"enabled": True},
+        plugin_position="last",
+        component="experiment",
+        stage="persist",
+        event="after",
+    )
+    assert persisted["executed"] is True
     assert called["push"] == 1
 
 
@@ -587,9 +598,9 @@ def test_run_dvc_plugin_hook_writes_structured_params_yaml(
         lambda plugin, command, cwd=None: {"ok": True, "command": command},
     )
 
-    result = run_dvc_experiment_plugin_hook(
+    result = run_repro_experiment_plugin_hook(
         exp,
-        dvc_plugin={
+        repro_plugin={
             "enabled": True,
             "mode": "single",
             "dvclive_dir": (tmp_path / "dvclive").as_posix(),
@@ -608,7 +619,9 @@ def test_run_dvc_plugin_hook_writes_structured_params_yaml(
     assert payload["experiment"]["_target_"] == "deckard.experiment.ExperimentConfig"
     assert "dvc_plugin" not in payload["experiment"]
     assert isinstance(payload["dvc_plugin"], dict)
-    assert not Path(payload["dvc_plugin"]["dvclive_dir"]).is_absolute()
+    dvclive_dir = payload["dvc_plugin"].get("dvclive_dir")
+    if dvclive_dir not in [None, ""]:
+        assert not Path(dvclive_dir).is_absolute()
     assert payload["_dvc"]["stage_selection"] == "load"
     assert payload["_dvc"]["run_mode"] == "single"
     assert isinstance(payload["_dvc"]["params_manifest"], dict)

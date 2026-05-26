@@ -1368,15 +1368,20 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
     def _initialize_hook_orchestration(self) -> None:
         """Compose canonical and user-provided hook plugins/bundles."""
         from .dvc import build_dvc_experiment_plugin_hooks
-        from .power import build_power_hook_bundle
+        from .repro import build_repro_experiment_plugin_hooks
+        from .power import build_power_plugin_hooks
 
         canonical_bundle = build_experiment_hook_bundle()
         dvc_first_hooks, dvc_last_hooks = build_dvc_experiment_plugin_hooks(
             self.dvc_plugin,
         )
+        repro_first_hooks, repro_last_hooks = build_repro_experiment_plugin_hooks(
+            self.dvc_plugin,
+        )
+        power_first_hooks, power_last_hooks = build_power_plugin_hooks(
+            enabled=callable(getattr(self, "_log_power_score", None)),
+        )
         user_bundles: list[HookBundle] = []
-        if callable(getattr(self, "_log_power_score", None)):
-            user_bundles.append(build_power_hook_bundle())
         for bundle in coerce_to_list(self.hook_bundles):
             if isinstance(bundle, HookBundle):
                 user_bundles.append(bundle)
@@ -1391,9 +1396,13 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         self.outputs["hooks"]["graph"] = build_experiment_hook_graph()
         self._composed_hook_plugins = compose_hook_plugins(
             dvc_first_hooks,
+            repro_first_hooks,
+            power_first_hooks,
             canonical_bundle,
             user_bundles,
             self.hook_plugins,
+            power_last_hooks,
+            repro_last_hooks,
             dvc_last_hooks,
         )
 
@@ -1505,6 +1514,52 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
             self,
             dvc_plugin=dvc_plugin,
             plugin_position=plugin_position,
+            component=component,
+            stage=stage,
+            event=event,
+            **kwargs,
+        )
+
+    def _repro_experiment_plugin_hook(
+        self,
+        *,
+        repro_plugin: Any,
+        plugin_position: str,
+        component: str,
+        stage: str,
+        event: str,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Delegate optional DVC persistence hook handling to repro helpers."""
+        from .repro import run_repro_experiment_plugin_hook
+
+        return run_repro_experiment_plugin_hook(
+            self,
+            repro_plugin=repro_plugin,
+            plugin_position=plugin_position,
+            component=component,
+            stage=stage,
+            event=event,
+            **kwargs,
+        )
+
+    def _power_experiment_plugin_hook(
+        self,
+        *,
+        power_plugin: Any,
+        namespace: str,
+        component: str,
+        stage: str,
+        event: str,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Delegate optional power metrics hook handling to power helpers."""
+        from .power import run_power_experiment_plugin_hook
+
+        return run_power_experiment_plugin_hook(
+            self,
+            power_plugin=power_plugin,
+            namespace=namespace,
             component=component,
             stage=stage,
             event=event,

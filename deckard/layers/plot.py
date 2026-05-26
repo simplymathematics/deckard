@@ -170,6 +170,9 @@ def _extract_backend(
     experiment_config: str,
 ) -> str:
     def _normalize_backend_value(value: Any) -> str:
+        token = str(value).strip().lower()
+        if token == "auto":
+            return "auto"
         try:
             return normalize_plot_backend(value)
         except Exception as exc:
@@ -183,15 +186,6 @@ def _extract_backend(
     )
     backend = plot_block.get("backend", cfg_dict.get("backend", None))
     if backend is not None:
-        norm_backend = _normalize_backend_value(backend)
-        backend = norm_backend
-    elif backend is not None:
-        backend = (
-            _normalize_backend_value(backend)
-            if str(backend).strip().lower() != "auto"
-            else "auto"
-        )
-    elif backend is not None:
         backend = _normalize_backend_value(backend)
     else:
         backend = "auto"

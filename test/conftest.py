@@ -1,4 +1,5 @@
 import sys
+import os
 from pathlib import Path
 
 import numpy as np
@@ -12,7 +13,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 @pytest.fixture(autouse=True)
 def set_test_max_samples_env(monkeypatch):
     """Keep dataset sizes bounded in tests without exposing a runtime config knob."""
-    monkeypatch.setenv("DECKARD_TEST_MAX_SAMPLES", "200")
+    monkeypatch.setenv(
+        "DECKARD_TEST_MAX_SAMPLES",
+        os.environ.get("DECKARD_TEST_MAX_SAMPLES", "200"),
+    )
 
 
 # Auto-mark expensive tests

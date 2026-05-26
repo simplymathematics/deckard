@@ -12,13 +12,22 @@ from .canon import (
     normalize_experiment_pipeline_stage,
 )
 from .dvc import (
-    build_dvc_cmd,
+    DVCExperimentMixin,
     build_dvc_stage_name,
+)
+from .repro import (
+    DVCReproPlugin,
+    build_dvc_cmd,
     build_dvc_stage_plan,
     extract_dvc_file_aliases,
     generate_dvc_pipeline,
 )
-from .power import DVCPowerMixin, build_power_hook_bundle
+from .power import (
+    DVCPowerMixin,
+    DVCPowerPlugin,
+    build_power_hook_bundle,
+    build_power_plugin_hooks,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +39,13 @@ __all__ = [
     "build_dvc_stage_plan",
     "extract_dvc_file_aliases",
     "generate_dvc_pipeline",
+    "DVCExperimentMixin",
+    "DVCReproPlugin",
     "normalize_experiment_pipeline_stage",
     "DVCPowerMixin",
+    "DVCPowerPlugin",
     "build_power_hook_bundle",
+    "build_power_plugin_hooks",
 ]
 
 
