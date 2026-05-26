@@ -28,7 +28,6 @@ from ..plugins import HookPlugin
 from ..plugins import __all__ as PLUGIN_NAMESPACE_EXPORTS
 from ..plugins.base import HookBundle
 
-
 CANONICAL_EXPERIMENT_SCORE_MODES: Final[tuple[str, ...]] = (
     "pre-sample",
     "train",

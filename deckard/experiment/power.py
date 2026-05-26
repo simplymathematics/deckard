@@ -12,7 +12,6 @@ from typing import Any
 from ..plugins import HookPlugin
 from ..plugins.base import HookBundle
 
-
 logger = logging.getLogger(__name__)
 
 

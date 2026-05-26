@@ -19,7 +19,6 @@ from ..orchestration import (
     stage_hook_token as _stage_hook_token,
 )
 
-
 CANONICAL_DATA_METHODS: Final[tuple[str, ...]] = CANONICAL_RUNTIME_METHODS
 
 CANONICAL_DATA_STAGES: Final[tuple[str, ...]] = (

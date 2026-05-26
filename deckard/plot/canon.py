@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any, TypedDict
 
-
 CANON_PLOT_BACKENDS: frozenset[str] = frozenset({"seaborn", "yellowbrick"})
 
 

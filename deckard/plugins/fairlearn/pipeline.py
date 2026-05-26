@@ -8,7 +8,6 @@ from omegaconf import DictConfig
 from deckard.plugins import HookPlugin
 from deckard.plugins.base import HookBundle
 
-
 FAIRLEARN_PIPELINE_HOOKS = HookBundle(
     name="fairlearn.data.pipeline_hooks",
     hooks=(

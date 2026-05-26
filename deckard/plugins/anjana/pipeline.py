@@ -10,7 +10,6 @@ from deckard.plugins.base import HookBundle
 
 from ...utils import resolve_class as _default_resolve_class
 
-
 ANJANA_PIPELINE_HOOKS = HookBundle(
     name="anjana.data.pipeline_hooks",
     hooks=(
