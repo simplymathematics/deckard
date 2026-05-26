@@ -88,6 +88,31 @@ This section maps the score API model to runtime internals for maintainers.
   - Extended scorers should return scalar or dict-like payloads that remain
     serializable after ScoreDict normalization.
 
+## DVC System Scoring Hook
+
+Deckard includes a DVC-specific scorer profile in
+{class}`~deckard.score.DVCSystemScorerDictConfig` for component-scoped runtime
+system stats.
+
+Runtime behavior:
+
+- Hook entrypoint: `deckard.experiment.dvc.run_dvc_experiment_plugin_hook`
+- Trigger: all `after` hook events at `plugin_position=last`; default scorer
+  stage filters execute metrics at `data-score`, `model-score`,
+  `attack-score`, and `detector-score`
+- Merge target: experiment-level `score_dict`
+- Metric naming: concise `<component>_<stat>` keys (for example `data_cpu`,
+  `model_memory`, `attack_gpu_power`, `defense_gpu_power`)
+- Persistence scope: `score_dict[stage][mode][metric]`
+- Source metrics: normalized DVCLive `system_monitor/*` signals plus existing
+  power hook metrics (`power/<namespace>/*`) when available
+
+Maintain this contract when extending DVC score hooks:
+
+- Keep payloads scalar/dict-like and JSON/YAML-serializable.
+- Keep metric keys concise and component-scoped.
+- Preserve stage+mode score scoping when merging runtime hook outputs.
+
 ## Implementation Notes
 
 - ScoreDict currently lives in deckard.artifacts to avoid duplicate

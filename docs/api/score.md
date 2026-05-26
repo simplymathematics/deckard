@@ -95,7 +95,8 @@ Each entry under `scorers.<name>` is normalized into
   {class}`~deckard.score.base.ScoringDataStage`,
   {class}`~deckard.score.base.ScoringPipelineStage`,
   {class}`~deckard.score.base.ScoringDefenseStage`, and
-  {class}`~deckard.score.base.ScoringDetectorStage`).
+  {class}`~deckard.score.base.ScoringDetectorStage`, and
+  {class}`~deckard.score.base.ScoringDVCStage`).
 - `greater_is_better`: optimization direction hint for downstream consumers.
 - `needs_labels`: treat `ind` as label predictions (default behavior unless
   `needs_proba: true`).
@@ -151,6 +152,30 @@ ScorerDictConfig.__call__(
 - `kwargs.y_proba`: optional raw-output override for `needs_proba` scorers.
 - Remaining `kwargs`: forwarded to each scorer call along with runtime context
   keys (`data`, `model`, `attack`, `mode`).
+
+### DVC System Scorer
+
+Use {class}`~deckard.score.DVCSystemScorerDictConfig` to generate stage-scoped
+DVC system-monitor snapshots.
+
+Default behavior:
+
+- Runs after DVC score-hook stages when DVC plugin support is enabled.
+- Emits concise `<component>_<stat>` metric keys (for example `data_cpu` and
+  `defense_gpu_power`).
+- Persists values with stage and mode scope in the score payload
+  (`score_dict[stage][mode][metric]`).
+- Includes normalized DVCLive `system_monitor/*` metrics and pre-existing power
+  hook metrics (`power/<namespace>/*`) when available.
+- Defaults to component after-score stages through scorer stage filters, while
+  allowing canonical stage overrides through custom scorer configuration.
+
+Example YAML:
+
+```yaml
+score:
+  _target_: deckard.score.dvc.DVCSystemScorerDictConfig
+```
 
 ## Internals
 

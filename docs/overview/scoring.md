@@ -169,6 +169,38 @@ metrics:
   - empirical_cdf: deckard.score.data.data_empirical_cdf_function_score
 ```
 
+### DVC System Monitoring Defaults
+
+- {class}`~deckard.score.DVCSystemScorerDictConfig`
+
+When the DVC experiment plugin is enabled, Deckard runs a DVC system snapshot
+scorer by default after each available component scoring stage:
+
+- `data-score`
+- `model-score`
+- `attack-score`
+- `detector-score`
+
+The emitted metric names are concise component-stat keys, for example:
+
+- `data_memory`
+- `model_cpu`
+- `attack_gpu`
+- `defense_gpu_power`
+
+As with other scorer outputs, these values are persisted with stage and mode
+scope in the score payload, for example:
+
+- `score_dict["data-score"]["test"]["data_cpu"]`
+
+These metrics are derived from normalized DVCLive `system_monitor/*` signals
+and include existing power-hook outputs when available (for example
+`power/data/cpu_watts` contributes to `data_cpu_power`).
+
+By default, DVC system scoring runs at component after-score stages through
+scorer stage filters, and can be extended to other canonical scoring stages by
+overriding scorer stage configuration.
+
 ### External Scorer References
 
 External scorers referenced in the default profiles and YAML examples:
