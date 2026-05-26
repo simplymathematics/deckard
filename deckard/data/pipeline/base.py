@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -12,10 +12,8 @@ from scipy.sparse import csr_matrix
 from sklearn.compose import ColumnTransformer, make_column_selector
 from sklearn.pipeline import Pipeline
 
+from ..base import DataConfig
 from ...utils import load_class
-
-if TYPE_CHECKING:
-    from ..base import DataConfig
 
 
 @dataclass(eq=False, kw_only=True)
