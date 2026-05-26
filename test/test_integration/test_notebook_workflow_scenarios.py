@@ -10,7 +10,7 @@ from deckard.experiment.canon import (
 )
 
 
-def _optimize_manifest(*, score_mode: str = "test", plot_backend: str = "seaborn") -> dict:
+def _optimize_manifest(*, score_mode: str = "test", backend: str = "seaborn") -> dict:
     return {
         "schema_version": "deckard.experiment.runtime.v1",
         "experiment_name": "phase6-demo",
@@ -22,7 +22,7 @@ def _optimize_manifest(*, score_mode: str = "test", plot_backend: str = "seaborn
         "data": {"alias": "adult"},
         "model": {"alias": "logreg"},
         "score": {"alias": "classification"},
-        "plot": {"backend": plot_backend},
+        "plot": {"backend": backend},
         "files": {
             "params_file": "outputs/params.yaml",
             "score_file": "outputs/scores.json",
@@ -31,9 +31,9 @@ def _optimize_manifest(*, score_mode: str = "test", plot_backend: str = "seaborn
 
 
 def test_optimize_notebook_stage_cache_keys_support_selective_invalidation() -> None:
-    manifest_a = _optimize_manifest(score_mode="test", plot_backend="seaborn")
-    manifest_b = _optimize_manifest(score_mode="test", plot_backend="yellowbrick")
-    manifest_c = _optimize_manifest(score_mode="val", plot_backend="seaborn")
+    manifest_a = _optimize_manifest(score_mode="test", backend="seaborn")
+    manifest_b = _optimize_manifest(score_mode="test", backend="yellowbrick")
+    manifest_c = _optimize_manifest(score_mode="val", backend="seaborn")
 
     key_a = build_experiment_stage_cache_key(
         params_manifest=manifest_a,

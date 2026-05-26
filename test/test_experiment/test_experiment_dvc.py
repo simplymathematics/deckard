@@ -565,7 +565,7 @@ def test_run_dvc_plugin_hook_writes_structured_params_yaml(tmp_path: Path, monke
     params_path = Path(exp.files.params_file)
     assert params_path.exists()
     payload = yaml.safe_load(params_path.read_text(encoding="utf-8"))
-    assert payload["__target__"] == "deckard.experiment.dvc.DVCExperimentConfig"
+    assert payload["_target_"] == "deckard.experiment.dvc.DVCExperimentConfig"
     assert payload["experiment"]["experiment_name"] == "demo-exp"
     assert payload["experiment"]["_target_"] == "deckard.experiment.ExperimentConfig"
     assert "dvc_plugin" not in payload["experiment"]

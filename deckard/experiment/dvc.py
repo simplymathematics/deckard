@@ -889,7 +889,7 @@ def _build_dvc_params_payload(
     plugin_payload = _sanitize_plugin_path_fields(plugin.to_dict())
     wrapper_target = "deckard.experiment.dvc.DVCExperimentConfig"
     return {
-        "__target__": wrapper_target,
+        "_target_": wrapper_target,
         "experiment": experiment_payload,
         "dvc_plugin": plugin_payload,
         "_dvc": {

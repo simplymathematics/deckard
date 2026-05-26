@@ -56,12 +56,12 @@ def test_plot_config_accepts_plot_backend_alias():
             kwargs={
                 "data_file": "/tmp/data.pkl",
                 "plot_type": "scatter",
-                "plot_backend": "sns",
+                "backend": "sns",
             },
         )
         assert cfg.plot_state["backend"] == "seaborn"
         assert cfg.kwargs["backend"] == "seaborn"
-        assert cfg.kwargs["plot_backend"] == "seaborn"
+        assert cfg.kwargs["backend"] == "seaborn"
 
 
 def test_plot_config_rejects_conflicting_backend_aliases():
@@ -71,6 +71,6 @@ def test_plot_config_rejects_conflicting_backend_aliases():
                 "data_file": "/tmp/data.pkl",
                 "plot_type": "scatter",
                 "backend": "seaborn",
-                "plot_backend": "yellowbrick",
+                "backend": "yellowbrick",
             },
         )
