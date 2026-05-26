@@ -545,6 +545,21 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         self.model.val_predictions = val_predictions
         return val_predictions
 
+    def _clear_model_prediction_outputs(self) -> None:
+        if self.model is None:
+            return
+        for attr in (
+            "training_predictions",
+            "predictions",
+            "val_predictions",
+            "training_probabilities",
+            "probabilities",
+            "val_probabilities",
+        ):
+            if not hasattr(self.model, attr):
+                continue
+            setattr(self.model, attr, None)
+
     def _ensure_mode_predictions(self, mode: str):
         if mode == "pre-sample":
             return
@@ -1896,6 +1911,7 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
                     getattr(self.model, "set_epoch_attack"),
                 ):
                     self.model.set_epoch_attack(self.attack)
+                self._clear_model_prediction_outputs()
                 self.model(data=self.data, **model_file_outputs)
                 assert hasattr(
                     self.model,
@@ -2331,16 +2347,42 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         return scores
 
     @staticmethod
+    def _aggregate_repeated_score_values(values: list[Any]) -> Any:
+        """Aggregate repeated score values, averaging numeric leaves recursively."""
+        if not values:
+            return None
+
+        present = [value for value in values if value is not None]
+        if not present:
+            return values[-1]
+
+        if all(isinstance(value, Mapping) for value in present):
+            aggregated: dict[str, Any] = {}
+            all_keys = set().union(*(value.keys() for value in present))
+            for key in all_keys:
+                aggregated[key] = ExperimentConfig._aggregate_repeated_score_values(
+                    [
+                        value.get(key) if isinstance(value, Mapping) else None
+                        for value in values
+                    ],
+                )
+            return aggregated
+
+        try:
+            return float(np.mean([float(value) for value in present]))
+        except (TypeError, ValueError):
+            return present[-1]
+
+    @staticmethod
     def _aggregate_repeated_scores(
         per_run_scores: list,
         suffix: str = "fold",
     ) -> dict:
         """Merge per-run score dicts into a single dict.
 
-        For each key that is numeric in every run, the top-level value is the
-        mean across runs and per-run values are stored under
-        ``{key}_{suffix}_{i}``. Non-numeric values use the last run's value for
-        the top-level key.
+        Per-run score payloads are stored under ``{suffix}-{i}`` keys. Top-level
+        values are aggregated recursively: numeric leaves use the mean across
+        runs, while non-numeric leaves keep the last non-``None`` value.
 
         Args:
             per_run_scores: One score dict per repeated run, in order.
@@ -2351,22 +2393,14 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         """
         if not per_run_scores:
             return {}
-        aggregated = {}
+
+        aggregated = {
+            f"{suffix}-{i}": dict(run or {}) for i, run in enumerate(per_run_scores)
+        }
         all_keys = set().union(*per_run_scores)
         for key in all_keys:
             values = [run.get(key) for run in per_run_scores]
-            # Store per-fold values under qualified keys
-            for i, v in enumerate(values):
-                aggregated[f"{key}_{suffix}_{i}"] = v
-            # Attempt numeric average for the top-level key
-            try:
-                numeric = [float(v) for v in values if v is not None]
-                if numeric:
-                    aggregated[key] = float(np.mean(numeric))
-                else:
-                    aggregated[key] = values[-1]
-            except (TypeError, ValueError):
-                aggregated[key] = values[-1]
+            aggregated[key] = ExperimentConfig._aggregate_repeated_score_values(values)
         return aggregated
 
     @staticmethod

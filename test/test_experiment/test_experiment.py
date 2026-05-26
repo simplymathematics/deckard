@@ -100,7 +100,8 @@ class TestKFoldExperiment:
         exp = self._make_exp()
         scores = exp()
         for k in range(self.N_FOLDS):
-            assert f"accuracy_fold_{k}" in scores, f"missing accuracy_fold_{k}"
+            assert f"fold-{k}" in scores, f"missing fold-{k}"
+            assert "accuracy" in scores[f"fold-{k}"]
 
     def test_kfold_mean_key_present(self):
         exp = self._make_exp()
@@ -110,7 +111,7 @@ class TestKFoldExperiment:
     def test_mean_equals_average_of_folds(self):
         exp = self._make_exp()
         scores = exp()
-        fold_accs = [scores[f"accuracy_fold_{k}"] for k in range(self.N_FOLDS)]
+        fold_accs = [scores[f"fold-{k}"]["accuracy"] for k in range(self.N_FOLDS)]
         assert scores["accuracy"] == pytest.approx(
             float(np.mean(fold_accs)),
             abs=1e-10,
@@ -157,7 +158,8 @@ class TestShuffleExperiment:
         exp = self._make_exp()
         scores = exp()
         for k in range(self.N_SPLITS):
-            assert f"accuracy_split_{k}" in scores, f"missing accuracy_split_{k}"
+            assert f"split-{k}" in scores, f"missing split-{k}"
+            assert "accuracy" in scores[f"split-{k}"]
 
     def test_shuffle_mean_key_present(self):
         exp = self._make_exp()
@@ -167,7 +169,7 @@ class TestShuffleExperiment:
     def test_mean_equals_average_of_splits(self):
         exp = self._make_exp()
         scores = exp()
-        split_accs = [scores[f"accuracy_split_{k}"] for k in range(self.N_SPLITS)]
+        split_accs = [scores[f"split-{k}"]["accuracy"] for k in range(self.N_SPLITS)]
         assert scores["accuracy"] == pytest.approx(
             float(np.mean(split_accs)),
             abs=1e-10,
@@ -1054,12 +1056,12 @@ class TestAggregateRepeatedScores:
         result = ExperimentConfig._aggregate_repeated_scores([])
         assert result == {}
 
-    def test_single_run_produces_fold_keys(self):
+    def test_single_run_produces_fold_dict(self):
         result = ExperimentConfig._aggregate_repeated_scores(
             [{"accuracy": 0.9}],
             suffix="fold",
         )
-        assert "accuracy_fold_0" in result
+        assert result["fold-0"]["accuracy"] == pytest.approx(0.9)
         assert result["accuracy"] == pytest.approx(0.9)
 
     def test_multiple_runs_computes_mean(self):
@@ -1067,17 +1069,29 @@ class TestAggregateRepeatedScores:
         result = ExperimentConfig._aggregate_repeated_scores(runs, suffix="fold")
         assert result["accuracy"] == pytest.approx(np.mean([0.8, 0.9, 1.0]))
         for i in range(3):
-            assert f"accuracy_fold_{i}" in result
+            assert result[f"fold-{i}"]["accuracy"] == pytest.approx(runs[i]["accuracy"])
 
     def test_non_numeric_uses_last_value(self):
         runs = [{"label": "a"}, {"label": "b"}]
         result = ExperimentConfig._aggregate_repeated_scores(runs)
         assert result["label"] == "b"
+        assert result["fold-1"]["label"] == "b"
 
     def test_none_values_excluded_from_mean(self):
         runs = [{"acc": 0.9}, {"acc": None}]
         result = ExperimentConfig._aggregate_repeated_scores(runs)
         assert result["acc"] == pytest.approx(0.9)
+
+    def test_nested_score_dicts_are_averaged_recursively(self):
+        runs = [
+            {"test": {"accuracy": 0.8, "loss": 0.4}},
+            {"test": {"accuracy": 1.0, "loss": 0.2}},
+        ]
+        result = ExperimentConfig._aggregate_repeated_scores(runs, suffix="fold")
+        assert result["fold-0"]["test"]["accuracy"] == pytest.approx(0.8)
+        assert result["fold-1"]["test"]["accuracy"] == pytest.approx(1.0)
+        assert result["test"]["accuracy"] == pytest.approx(0.9)
+        assert result["test"]["loss"] == pytest.approx(0.3)
 
 
 # ── ExperimentConfig.__post_init__ more branches ─────────────────────────────
@@ -1676,6 +1690,62 @@ class TestSetDeviceTensorflow:
 
 
 class TestRunSinglePipelineBranches:
+    def test_model_prediction_outputs_cleared_before_uncached_run(self):
+        class _Model:
+            def __init__(self):
+                self.score_dict = {"stale": 1.0}
+                self.training_predictions = [1]
+                self.predictions = [1]
+                self.val_predictions = [1]
+                self.training_probabilities = [0.1]
+                self.probabilities = [0.1]
+                self.val_probabilities = [0.1]
+                self.training_prediction_time = 1.0
+                self.prediction_time = 1.0
+                self.val_prediction_time = 1.0
+                self.training_score_time = 1.0
+                self.prediction_score_time = 1.0
+                self.val_score_time = 1.0
+                self.training_n = 1
+                self.prediction_n = 1
+                self.val_n = 1
+
+            def __call__(self, **_kwargs):
+                assert self.score_dict == {"stale": 1.0}
+                assert self.training_predictions is None
+                assert self.predictions is None
+                assert self.val_predictions is None
+                assert self.training_probabilities is None
+                assert self.probabilities is None
+                assert self.val_probabilities is None
+                assert self.training_prediction_time == 1.0
+                assert self.prediction_time == 1.0
+                assert self.val_prediction_time == 1.0
+                assert self.training_score_time == 1.0
+                assert self.prediction_score_time == 1.0
+                assert self.val_score_time == 1.0
+                assert self.training_n == 1
+                assert self.prediction_n == 1
+                assert self.val_n == 1
+                self.training_predictions = [0]
+                self.predictions = [0]
+                self.score_dict = {"m": 1.0}
+
+        exp = ExperimentConfig.__new__(ExperimentConfig)
+        exp.data = SimpleNamespace(score_dict={})
+        exp.model = _Model()
+        exp.attack = None
+        exp.detector = None
+        exp.defense = None
+        exp._run_experiment_scorer_modes = lambda score_file=None: {}
+        exp._run_experiment_stage_hooks = lambda *args, **kwargs: None
+        exp._cache_stage_get = lambda **kwargs: None
+        exp._cache_stage_set = lambda **kwargs: None
+
+        scores = exp._run_single_pipeline({}, {}, run_idx=None)
+
+        assert scores["m"] == 1.0
+
     def test_detector_requires_attack_raises(self):
         exp = ExperimentConfig.__new__(ExperimentConfig)
         exp.data = SimpleNamespace(score_dict={})
