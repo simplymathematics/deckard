@@ -14,6 +14,7 @@ class AttackFiles(TypedDict, total=False):
     attack_predictions_file: str | None
     score_file: str | None
 
+
 ATTACK_RUNTIME_STAGE_ALIASES: dict[str, str] = {
     "before_attack": "pre-attack",
     "before-attack": "pre-attack",
@@ -44,7 +45,9 @@ def normalize_attack_mode(mode: Any) -> str:
     token = str(mode or "auto").strip().lower()
     if token not in ATTACK_RUNTIME_VALID_MODES:
         expected = ", ".join(sorted(ATTACK_RUNTIME_VALID_MODES))
-        raise ValueError(f"Unsupported attack mode '{mode}'. Expected one of: {expected}.")
+        raise ValueError(
+            f"Unsupported attack mode '{mode}'. Expected one of: {expected}."
+        )
     return token
 
 

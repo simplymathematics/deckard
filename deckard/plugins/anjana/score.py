@@ -72,7 +72,9 @@ class AnjanaDataScoreHooksMixin:
             from . import data as anjana_data_module
 
             loader = getattr(anjana_data_module, "load_class", load_class)
-            scorer_obj = loader("deckard.plugins.anjana.score.DefaultAnjanaScorerDictConfig")
+            scorer_obj = loader(
+                "deckard.plugins.anjana.score.DefaultAnjanaScorerDictConfig"
+            )
             self.scorer = scorer_obj() if isinstance(scorer_obj, type) else scorer_obj
 
         if self.scorer is None:
@@ -93,7 +95,9 @@ class AnjanaDataScoreHooksMixin:
         except TypeError as exc:
             if "data-profile scorer" not in str(exc):
                 raise
-            y, X = resolve_data_split_payload(self, resolved_mode, fallback_to_all=False)
+            y, X = resolve_data_split_payload(
+                self, resolved_mode, fallback_to_all=False
+            )
             return ScoreDict.from_payload(
                 self.scorer(
                     *args,
@@ -184,11 +188,7 @@ def _resolve_frame_and_context(
         getattr(data, "sensitive_attribute", None),
     )
 
-    if (
-        isinstance(sens_att, str)
-        and sens_att not in frame.columns
-        and y is not None
-    ):
+    if isinstance(sens_att, str) and sens_att not in frame.columns and y is not None:
         frame = frame.copy()
         labels = pd.Series(cast(Any, y)).reset_index(drop=True)
         if len(labels) == len(frame):

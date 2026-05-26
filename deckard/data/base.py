@@ -20,7 +20,14 @@ from ..utils import (
     coerce_to_list,
     merge_list_of_dicts,
 )
-from ..frameworks.types import ArrayLike, EstimatorLike, IndexLike, MatrixLike, StringifiedClass, TabularLike
+from ..frameworks.types import (
+    ArrayLike,
+    EstimatorLike,
+    IndexLike,
+    MatrixLike,
+    StringifiedClass,
+    TabularLike,
+)
 from ..plugins.base import OrchestratorBase
 from ..orchestration import stage_hook_token
 from ..artifacts import ArtifactLoaderConfig, ScoreDict, SerializableValue
@@ -81,9 +88,6 @@ def _load_optuna_studies_dataframe(
         schema=schema,
         **kwargs,
     )
-
-
-
 
 
 @dataclass(eq=False, kw_only=True)
@@ -245,7 +249,9 @@ class DataConfig(OrchestratorBase, BaseConfig):
     dataset_name: StringifiedClass = "adult"
     data_params: dict[str, Any] = field(default_factory=dict)
     split: Union[int, None] = None
-    sampler: Union["BaseSampler", Literal["split", "shuffle", "fold"], dict, None] = "split"
+    sampler: Union["BaseSampler", Literal["split", "shuffle", "fold"], dict, None] = (
+        "split"
+    )
     classifier: Union[bool, str] = True
     target: Union[str, None] = None
     drop: list[str] = field(default_factory=list)
@@ -595,7 +601,14 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
     def save(
         self,
-        payload: EstimatorLike | MatrixLike | ArrayLike | ScoreDict | SerializableValue | None = None,
+        payload: (
+            EstimatorLike
+            | MatrixLike
+            | ArrayLike
+            | ScoreDict
+            | SerializableValue
+            | None
+        ) = None,
         filepath: str | None = None,
     ) -> None:
         """Save this DataConfig object as a pickle cache artifact.
@@ -644,8 +657,6 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
         return load_default_dataset(self, dataset_name=dataset_name, **loader_params)
 
-
-
     def fit(self, run_hooks: bool = True) -> "DataConfig":
         """Materialize train/test/(optional val) splits for this dataset.
 
@@ -672,7 +683,9 @@ class DataConfig(OrchestratorBase, BaseConfig):
             if getattr(self, "data_pipeline_time", None) is None:
                 pipeline_start = time.process_time()
                 pipeline_runtime(self)
-                self._set_time("data_pipeline_time", time.process_time() - pipeline_start)
+                self._set_time(
+                    "data_pipeline_time", time.process_time() - pipeline_start
+                )
         return self
 
     def sample(self, run_hooks: bool = True) -> "DataConfig":
@@ -735,7 +748,12 @@ class DataConfig(OrchestratorBase, BaseConfig):
             y_test = getattr(self, "y_test", None)
             X_train = getattr(self, "X_train", None)
             X_test = getattr(self, "X_test", None)
-            if y_train is not None and y_test is not None and X_train is not None and X_test is not None:
+            if (
+                y_train is not None
+                and y_test is not None
+                and X_train is not None
+                and X_test is not None
+            ):
                 if isinstance(X_train, (pd.DataFrame, pd.Series)):
                     X = pd.concat([X_train, X_test], ignore_index=True)
                 else:
@@ -759,11 +777,6 @@ class DataConfig(OrchestratorBase, BaseConfig):
         if isinstance(scorer_output, dict):
             return ScoreDict.from_payload(scorer_output)
         return ScoreDict.from_payload({"value": scorer_output})
-
-    
-    
-    
-    
 
     def __hash__(self):
         return super().__hash__()
@@ -971,8 +984,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
         )
         if (
             not is_optuna_source
-            and
-            filetype not in supported_filetypes
+            and filetype not in supported_filetypes
             and self.dataset_name not in supported_datasets
         ):
             raise NotImplementedError(
@@ -1052,21 +1064,21 @@ class DataConfig(OrchestratorBase, BaseConfig):
         schema = data_params.pop("schema", None)
         data = pd.DataFrame(
             _load_optuna_studies_dataframe(
-            storage=storage,
-            study_name=study_name,
-            schema=schema,
-            study_names=data_params.pop("study_names", None),
-            columns=data_params.pop("columns", None),
-            include_columns=data_params.pop("include_columns", None),
-            exclude_columns=data_params.pop("exclude_columns", None),
-            trial_numbers=data_params.pop("trial_numbers", None),
-            trial_number_range=data_params.pop("trial_number_range", None),
-            trial_states=data_params.pop("trial_states", None),
-            row_slice=data_params.pop("row_slice", None),
-            sort_by=data_params.pop("sort_by", None),
-            ascending=bool(data_params.pop("ascending", True)),
-            offset=int(data_params.pop("offset", 0)),
-            limit=data_params.pop("limit", None),
+                storage=storage,
+                study_name=study_name,
+                schema=schema,
+                study_names=data_params.pop("study_names", None),
+                columns=data_params.pop("columns", None),
+                include_columns=data_params.pop("include_columns", None),
+                exclude_columns=data_params.pop("exclude_columns", None),
+                trial_numbers=data_params.pop("trial_numbers", None),
+                trial_number_range=data_params.pop("trial_number_range", None),
+                trial_states=data_params.pop("trial_states", None),
+                row_slice=data_params.pop("row_slice", None),
+                sort_by=data_params.pop("sort_by", None),
+                ascending=bool(data_params.pop("ascending", True)),
+                offset=int(data_params.pop("offset", 0)),
+                limit=data_params.pop("limit", None),
             ),
         )
         if not isinstance(data, pd.DataFrame) or data.empty:
@@ -1098,8 +1110,6 @@ class DataConfig(OrchestratorBase, BaseConfig):
         self._X = data
         self._y = y
 
-
-
     def apply_pipeline(self, pipeline: "DataPipeline | list | None") -> "DataConfig":
         """Attach a pipeline-like plugin object to this data config.
 
@@ -1117,7 +1127,6 @@ class DataConfig(OrchestratorBase, BaseConfig):
         existing_plugins = list(self.plugins or [])
         self.plugins = [*pipeline_plugins, *existing_plugins]
         return self
-
 
     def build_data_time_dict(self) -> dict:
         """Build timing/count metadata dictionary for data runtime outputs.
@@ -1184,7 +1193,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
         runtime_files = self.resolve_call_files(kwargs, files=files)
         self._coerce_pipeline_runtime()
         return DataConfig.__call__(self, *args, files=runtime_files, **kwargs)
-    
+
     def __call__(
         self,
         *args,
@@ -1236,7 +1245,9 @@ class DataConfig(OrchestratorBase, BaseConfig):
             logger.info(
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
             )
-        data_scores = dict(ScoreDict.from_payload(getattr(self, "score_dict", {}) or {}))
+        data_scores = dict(
+            ScoreDict.from_payload(getattr(self, "score_dict", {}) or {})
+        )
         if len(data_scores) == 0:
             data_scores = self.score(*args, **kwargs)
         all_scores = {**scores, **data_scores, **time_dict}
@@ -1334,11 +1345,15 @@ class DataPipelineStep:
             New config with metadata keys removed.
         """
         config = dict(step_config)
-        step_kwargs = {"name", "fit_y", "fit_Xy", "fit_X", "fit_pre_sample", "dtype", "plugin_hook"}
+        step_kwargs = {
+            "name",
+            "fit_y",
+            "fit_Xy",
+            "fit_X",
+            "fit_pre_sample",
+            "dtype",
+            "plugin_hook",
+        }
         for key in step_kwargs:
             config.pop(key, None)
         return config
-
-
-
-

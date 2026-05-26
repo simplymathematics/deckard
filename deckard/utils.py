@@ -1350,6 +1350,7 @@ class BaseConfig(ArtifactLoaderConfig):
 # Backward-compatible alias for legacy Hydra targets.
 ConfigBase = BaseConfig
 
+
 def save_data(
     data: pd.DataFrame,
     filepath: Union[str, None] = None,

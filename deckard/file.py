@@ -78,7 +78,6 @@ model_files = tuple(collect_typed_dict_keys(ModelFiles))
 attack_files = tuple(collect_typed_dict_keys(AttackFiles))
 
 
-
 class FileConfigError(TypeError):
     pass
 
@@ -87,7 +86,9 @@ class AbstractFileHandler(ABC):
     """Abstract file handler for canonical file-schema operations."""
 
     @abstractmethod
-    def validate_keys(self, keys: Mapping[str, Any] | list[str] | tuple[str, ...]) -> None:
+    def validate_keys(
+        self, keys: Mapping[str, Any] | list[str] | tuple[str, ...]
+    ) -> None:
         """Validate provided file keys against the allowed file schema.
 
         Args:
@@ -134,7 +135,9 @@ class CanonFileHandler(AbstractFileHandler):
 
     _placeholder_re = re.compile(r"\{[^{}]+\}")
 
-    def validate_keys(self, keys: Mapping[str, Any] | list[str] | tuple[str, ...]) -> None:
+    def validate_keys(
+        self, keys: Mapping[str, Any] | list[str] | tuple[str, ...]
+    ) -> None:
         """Validate incoming key set against the canonical key registry.
 
         Args:
@@ -260,7 +263,9 @@ class PlaceholderResolverMixin:
             "{hash}": self.id,
             "{*}": self.id,
         }
-        replacements.update({k: str(v) for k, v in getattr(self, "replace", {}).items()})
+        replacements.update(
+            {k: str(v) for k, v in getattr(self, "replace", {}).items()}
+        )
         return replacements
 
     def _resolve(self, value: str | None) -> str | None:
@@ -274,6 +279,7 @@ class PlaceholderResolverMixin:
         for token, replacement in replacements.items():
             resolved = resolved.replace(token, replacement)
         return resolved
+
 
 class FileConfig(PlaceholderResolverMixin):
     """Dynamic file-path configuration container.

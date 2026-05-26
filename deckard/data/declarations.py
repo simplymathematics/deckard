@@ -69,7 +69,9 @@ def _discover_load_functions(module_name: str) -> list[tuple[str, str]]:
     return entries
 
 
-def _discover_huggingface_dataset_ids(limit: int = 100) -> list[tuple[str, int | None]]:
+def _discover_huggingface_dataset_ids(
+    limit: int = 100,
+) -> list[tuple[str, int | None]]:
     """Return top Hugging Face dataset IDs with optional download counts.
 
     Discovery is best-effort and returns an empty list when the optional
@@ -378,7 +380,9 @@ def load_adult_income_data(cfg: Any, **loader_params: Any) -> Any:
         if column in X.columns:
             X[column] = pd.to_numeric(X[column], errors="coerce")
 
-    categorical_columns = X.select_dtypes(include=["object", "category"]).columns.tolist()
+    categorical_columns = X.select_dtypes(
+        include=["object", "category"]
+    ).columns.tolist()
     X = pd.get_dummies(
         X,
         columns=categorical_columns,
@@ -765,4 +769,3 @@ __all__ = [
     "load_yellowbrick_dataset",
     "load_default_dataset",
 ]
-

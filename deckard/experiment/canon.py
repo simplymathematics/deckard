@@ -70,6 +70,7 @@ CANONICAL_EXPERIMENT_PIPELINE_STAGES: Final[tuple[str, ...]] = (
     "persist",
 )
 
+
 def _build_stage_component_mapping() -> dict[str, tuple[str, ...]]:
     stage_sets: dict[str, set[str]] = {
         "load": set(),
@@ -179,7 +180,9 @@ def _build_stage_component_mapping() -> dict[str, tuple[str, ...]]:
 
     mapping: dict[str, tuple[str, ...]] = {}
     for stage, components in stage_sets.items():
-        ordered = [component for component in component_order if component in components]
+        ordered = [
+            component for component in component_order if component in components
+        ]
         if len(ordered) == 0:
             continue
         preferred = stage_primary_preferences.get(stage, ())
@@ -230,9 +233,7 @@ CANONICAL_EXPERIMENT_RUNTIME_FIELDS: Final[tuple[str, ...]] = (
 CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_VERSION: Final[str] = (
     "deckard.experiment.runtime.v1"
 )
-CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_PREFIX: Final[str] = (
-    "deckard.experiment.runtime.v"
-)
+CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_PREFIX: Final[str] = "deckard.experiment.runtime.v"
 
 CANONICAL_EXPERIMENT_COMPONENT_STAGES: Final[dict[str, tuple[str, ...]]] = {
     "data": tuple(
@@ -587,8 +588,8 @@ def build_experiment_params_manifest(
         "score_mode": getattr(target, "score_mode", None),
         "random_state": getattr(target, "random_state", None),
     }
-    # TODO: Correctly map components/sub components to existing *Config objects 
-    for component_name in ("data", "model", "defense", "attack", "detector",  "score"):
+    # TODO: Correctly map components/sub components to existing *Config objects
+    for component_name in ("data", "model", "defense", "attack", "detector", "score"):
         component = getattr(target, component_name, None)
         if component is None:
             manifest[component_name] = None
@@ -626,7 +627,7 @@ def build_experiment_hook_graph() -> dict[str, list[dict[str, str]]]:
                     "stage": stage,
                     "before": f"before_{stage_token}",
                     "after": f"after_{stage_token}",
-                }
+                },
             )
         graph[component] = component_nodes
     return graph
@@ -641,7 +642,10 @@ def build_experiment_hook_plugins(
     for component, nodes in graph.items():
         for node in nodes:
             stage = node["stage"]
-            for event, hook_name in (("before", node["before"]), ("after", node["after"])):
+            for event, hook_name in (
+                ("before", node["before"]),
+                ("after", node["after"]),
+            ):
                 plugins.append(
                     HookPlugin(
                         hook_name=hook_name,
@@ -651,7 +655,7 @@ def build_experiment_hook_plugins(
                             "stage": stage,
                             "event": event,
                         },
-                    )
+                    ),
                 )
     return plugins
 
@@ -661,7 +665,9 @@ def build_experiment_hook_bundle(
     method_name: str = "_experiment_stage_hook",
 ) -> HookBundle:
     """Build a reusable HookBundle for ExperimentConfig stage orchestration."""
-    return HookBundle(name=name, hooks=tuple(build_experiment_hook_plugins(method_name)))
+    return HookBundle(
+        name=name, hooks=tuple(build_experiment_hook_plugins(method_name))
+    )
 
 
 def build_experiment_stage_cache_key(
@@ -765,7 +771,9 @@ def _manifest_component_keys_for_stage(
     component: str | None,
 ) -> tuple[str, ...]:
     runtime_stage = _runtime_stage_for_param_selection(stage)
-    stage_components = list(CANONICAL_EXPERIMENT_STAGE_COMPONENTS.get(runtime_stage, ()))
+    stage_components = list(
+        CANONICAL_EXPERIMENT_STAGE_COMPONENTS.get(runtime_stage, ())
+    )
 
     component_token = str(component or "").strip().lower()
     if component_token != "":
@@ -773,7 +781,9 @@ def _manifest_component_keys_for_stage(
 
     resolved: list[str] = []
     for stage_component in stage_components:
-        for key in _MANIFEST_COMPONENT_KEY_ALIASES.get(stage_component, ()):  # noqa: B007
+        for key in _MANIFEST_COMPONENT_KEY_ALIASES.get(
+            stage_component, ()
+        ):  # noqa: B007
             if key not in resolved:
                 resolved.append(key)
     return tuple(resolved)
@@ -832,5 +842,7 @@ def build_experiment_stage_params_subset(
     component: str | None = None,
 ) -> dict[str, Any]:
     """Select stage-relevant params-manifest keys for DVC tracking and cache keys."""
-    key_paths = build_experiment_stage_param_key_paths(stage=stage, component=component)
+    key_paths = build_experiment_stage_param_key_paths(
+        stage=stage, component=component
+    )
     return _extract_mapping_by_key_paths(params_manifest, key_paths)

@@ -8,7 +8,7 @@ import pandas as pd
 
 # Typing imports
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, Literal, Optional, Union
+from typing import Any, Callable, Literal, Optional, Union
 
 # Sklearn and numpy imports
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
@@ -1472,7 +1472,9 @@ class AttackConfig(BaseConfig):
             normalized_scores[f"{prefix}_{metric_key}"] = value
         return ScoreDict.from_payload(normalized_scores)
 
-    def _score(self, attack_kind: str, y_true, y_pred=None, *args, **kwargs) -> ScoreDict:
+    def _score(
+        self, attack_kind: str, y_true, y_pred=None, *args, **kwargs
+    ) -> ScoreDict:
         """Dispatch attack scoring through the configured AttackScorerConfig."""
         if self.scorer is None:
             raise ValueError(

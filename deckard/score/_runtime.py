@@ -16,9 +16,7 @@ def series_like_to_float_dict(values: Any) -> dict[str, Any]:
                 for key, value in payload.items():
                     child_key = str(key).strip()
                     next_prefix = (
-                        child_key
-                        if prefix == ""
-                        else f"{prefix}_{child_key}"
+                        child_key if prefix == "" else f"{prefix}_{child_key}"
                     )
                     _flatten(next_prefix, value)
                 return
@@ -26,9 +24,7 @@ def series_like_to_float_dict(values: Any) -> dict[str, Any]:
                 for key, value in payload.items():
                     child_key = str(key).strip()
                     next_prefix = (
-                        child_key
-                        if prefix == ""
-                        else f"{prefix}_{child_key}"
+                        child_key if prefix == "" else f"{prefix}_{child_key}"
                     )
                     _flatten(next_prefix, value)
                 return

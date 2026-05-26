@@ -63,8 +63,12 @@ class DVCPowerMixin:
         after_detector_score  -> namespace="detector"
     """
 
-    cpu_tdp_watts: float = field(default_factory=lambda: DVCPowerMixin._detect_cpu_tdp())
-    gpu_tdp_watts: float = field(default_factory=lambda: DVCPowerMixin._detect_gpu_tdp())
+    cpu_tdp_watts: float = field(
+        default_factory=lambda: DVCPowerMixin._detect_cpu_tdp()
+    )
+    gpu_tdp_watts: float = field(
+        default_factory=lambda: DVCPowerMixin._detect_gpu_tdp()
+    )
 
     _power_energy_wh: float = 0.0
     _power_last_ts: float | None = None
@@ -132,7 +136,7 @@ class DVCPowerMixin:
 
         # Intel RAPL
         rapl = Path(
-            "/sys/class/powercap/intel-rapl:0/constraint_0_power_limit_uw"
+            "/sys/class/powercap/intel-rapl:0/constraint_0_power_limit_uw",
         )
         if rapl.exists():
             try:
@@ -145,7 +149,7 @@ class DVCPowerMixin:
                 return watts
             except Exception:
                 logger.exception(
-                    "Failed reading Intel RAPL CPU power limit."
+                    "Failed reading Intel RAPL CPU power limit.",
                 )
 
         # AMD hwmon
@@ -162,13 +166,13 @@ class DVCPowerMixin:
                     return watts
                 except Exception:
                     logger.exception(
-                        "Failed reading AMD hwmon CPU power limit."
+                        "Failed reading AMD hwmon CPU power limit.",
                     )
 
         raise RuntimeError(
             "Automatic CPU power limit detection failed. "
             "Please specify 'cpu_tdp_watts' manually "
-            "(total CPU package power consumption in watts)."
+            "(total CPU package power consumption in watts).",
         )
 
     # ------------------------------------------------------------------
@@ -238,12 +242,12 @@ class DVCPowerMixin:
         except FileNotFoundError:
             logger.warning(
                 "nvidia-smi not available; cannot automatically detect "
-                "NVIDIA GPU power limit."
+                "NVIDIA GPU power limit.",
             )
 
         except Exception:
             logger.exception(
-                "Failed reading GPU power limit from nvidia-smi."
+                "Failed reading GPU power limit from nvidia-smi.",
             )
 
         # AMD ROCm
@@ -270,18 +274,18 @@ class DVCPowerMixin:
         except FileNotFoundError:
             logger.warning(
                 "rocm-smi not available; cannot automatically detect "
-                "AMD GPU power limit."
+                "AMD GPU power limit.",
             )
 
         except Exception:
             logger.exception(
-                "Failed reading GPU power limit from rocm-smi."
+                "Failed reading GPU power limit from rocm-smi.",
             )
 
         raise RuntimeError(
             "Automatic GPU power limit detection failed. "
             "Please specify 'gpu_tdp_watts' manually "
-            "(total GPU board power consumption in watts)."
+            "(total GPU board power consumption in watts).",
         )
 
     def _read_nvidia_gpu_power(self) -> float | None:
@@ -303,13 +307,13 @@ class DVCPowerMixin:
         except FileNotFoundError:
             logger.warning(
                 "nvidia-smi not available; GPU power draw "
-                "will be estimated from utilization."
+                "will be estimated from utilization.",
             )
             return None
 
         except Exception:
             logger.exception(
-                "Failed reading instantaneous GPU power from nvidia-smi."
+                "Failed reading instantaneous GPU power from nvidia-smi.",
             )
             return None
 

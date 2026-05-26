@@ -105,7 +105,9 @@ class FairlearnPipelineHooksMixin:
         pipeline_dict = dict(pipeline_runtime)
         if step_name in pipeline_dict:
             return
-        self.pipeline = DataPipeline(pipeline={step_name: step_config, **pipeline_dict})
+        self.pipeline = DataPipeline(
+            pipeline={step_name: step_config, **pipeline_dict}
+        )
 
     def _run_fairlearn_post_pipeline_hook(self, **kwargs):
         """Post-pipeline policy hook for fairlearn runtime stage alignment."""

@@ -13,6 +13,7 @@ class DetectorFiles(TypedDict, total=False):
     detected_probabilities_file: str | None
     score_file: str | None
 
+
 DETECTOR_RUNTIME_STAGE_ALIASES: dict[str, str] = {
     "before_fit": "pre-fit",
     "before-fit": "pre-fit",

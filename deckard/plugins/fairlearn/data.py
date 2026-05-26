@@ -25,9 +25,7 @@ from .score import (
 
 RuntimeScalar = str | int | float | bool | None
 SerializableValue = (
-    RuntimeScalar
-    | list["SerializableValue"]
-    | dict[str, "SerializableValue"]
+    RuntimeScalar | list["SerializableValue"] | dict[str, "SerializableValue"]
 )
 
 logger = logging.getLogger(__name__)

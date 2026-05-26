@@ -387,7 +387,9 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         Returns:
             The current data configuration instance.
         """
-        return cast("PytorchDataConfig", self._load_dataset_with_hooks(self._load_data))
+        return cast(
+            "PytorchDataConfig", self._load_dataset_with_hooks(self._load_data)
+        )
 
     def _load_data(self) -> None:
         """Load a PyTorch dataset using load_class for generic instantiation.
@@ -711,7 +713,9 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         Returns:
             The current custom data configuration instance.
         """
-        return cast("PytorchCustomDataConfig", self._load_dataset_with_hooks(self._load_data))
+        return cast(
+            "PytorchCustomDataConfig", self._load_dataset_with_hooks(self._load_data)
+        )
 
     def _as_dataset(self, obj, split: str, transform):
         if isinstance(obj, str):

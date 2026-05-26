@@ -84,9 +84,7 @@ SampleParamsLike = Union[dict[str, Any], dict[str, dict[str, Any]], None]
 RandomStateLike = Union[int, np.random.RandomState, None]
 RuntimeScalar = str | int | float | bool | None
 SerializableValue = (
-    RuntimeScalar
-    | list["SerializableValue"]
-    | dict[str, "SerializableValue"]
+    RuntimeScalar | list["SerializableValue"] | dict[str, "SerializableValue"]
 )
 
 
@@ -163,7 +161,9 @@ class FairlearnDataScoreHooksMixin:
                 merged_tail[key] = value
         return ScoreDict.from_payload(merged_tail)
 
-    def score(self, *args: RuntimePayload, mode: str | None = None, **kwargs: RuntimePayload) -> ScoreDict:
+    def score(
+        self, *args: RuntimePayload, mode: str | None = None, **kwargs: RuntimePayload
+    ) -> ScoreDict:
         """Run fairlearn-aware scoring for the requested data split mode.
 
         Args:
@@ -724,7 +724,12 @@ class FairnessScorerMixin:
         # Step 1: resolve y_true/y_pred for both main and group metrics.
         # Data-only scorer paths should use explicit y/X payloads directly and
         # not route through model/attack-centric y_true/y_pred resolution.
-        if model is None and attack is None and y_true is not None and y_pred is not None:
+        if (
+            model is None
+            and attack is None
+            and y_true is not None
+            and y_pred is not None
+        ):
             resolved_y_true, resolved_y_pred = y_true, y_pred
         else:
             if data is None and (y_true is None or y_pred is None):
@@ -950,7 +955,12 @@ class FairlearnScorerDictConfig(FairnessScorerMixin, ScorerDictConfig):
         # Step 1: resolve y_true/y_pred for both main and group metrics.
         # Data-only scorer paths should use explicit y/X payloads directly and
         # not route through model/attack-centric y_true/y_pred resolution.
-        if model is None and attack is None and y_true is not None and y_pred is not None:
+        if (
+            model is None
+            and attack is None
+            and y_true is not None
+            and y_pred is not None
+        ):
             resolved_y_true, resolved_y_pred = y_true, y_pred
         else:
             if data is None and (y_true is None or y_pred is None):
@@ -1296,6 +1306,7 @@ def fairness_group_mse_difference(
         metric_fn=mean_squared_error,
     )
 
+
 @dataclass(eq=False, kw_only=True)
 class DefaultFairlearnScorerDictConfig(
     TaskAwareScorerMixin,
@@ -1314,7 +1325,10 @@ class DefaultFairlearnScorerDictConfig(
 
     def _build_default_scorers(self, classifier: bool) -> dict:
         # Use the same default scorer configs as ModelConfig (via score.base)
-        from deckard.score.base import DefaultClassifierScorerDictConfig, DefaultRegressorScorerDictConfig
+        from deckard.score.base import (
+            DefaultClassifierScorerDictConfig,
+            DefaultRegressorScorerDictConfig,
+        )
 
         base = (
             DefaultClassifierScorerDictConfig().scorers.copy()
@@ -1359,6 +1373,7 @@ class DefaultFairlearnScorerDictConfig(
             self.group_scorers = self.scorers.copy()
         super().__post_init__()
 
+
 @dataclass(eq=False, kw_only=True)
 class DefaultFairlearnClassificationScorerDictConfig(DefaultFairlearnScorerDictConfig):
     """Default scorer set for classification fairness workflows.
@@ -1379,6 +1394,7 @@ class DefaultFairlearnRegressionScorerDictConfig(DefaultFairlearnScorerDictConfi
     """
 
     classifier: Union[bool, str, None] = False
+
 
 safe_store(
     group="score",

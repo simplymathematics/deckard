@@ -37,9 +37,7 @@ SCORE_PAYLOAD_SCHEMA = "deckard.score.v1"
 
 SerializableScalar = str | int | float | bool | None
 SerializableValue = (
-    SerializableScalar
-    | list["SerializableValue"]
-    | dict[str, "SerializableValue"]
+    SerializableScalar | list["SerializableValue"] | dict[str, "SerializableValue"]
 )
 
 
@@ -301,16 +299,24 @@ class ScoreDict(dict):
         score_path.parent.mkdir(parents=True, exist_ok=True)
         merged = ScoreDict.from_payload(current)
 
-        if score_path.exists() and artifact_loader is not None and hasattr(
-            artifact_loader,
-            "load_scores",
+        if (
+            score_path.exists()
+            and artifact_loader is not None
+            and hasattr(
+                artifact_loader,
+                "load_scores",
+            )
         ):
             disk_scores = artifact_loader.load_scores(score_file)
             merged = merged.merge(ScoreDict.from_payload(disk_scores))
 
-        if persist and artifact_loader is not None and hasattr(
-            artifact_loader,
-            "save_scores",
+        if (
+            persist
+            and artifact_loader is not None
+            and hasattr(
+                artifact_loader,
+                "save_scores",
+            )
         ):
             artifact_loader.save_scores(dict(merged), score_file)
 
@@ -691,7 +697,9 @@ class ArtifactLoaderConfig:
         """
         return self.load_data(filepath, **kwargs)
 
-    def save_object(self, obj: EstimatorLike | SerializableValue, filepath: str) -> None:
+    def save_object(
+        self, obj: EstimatorLike | SerializableValue, filepath: str
+    ) -> None:
         """Serialize a Python object payload with pickle-compatible formats.
 
         Args:
@@ -782,7 +790,9 @@ class ArtifactLoaderConfig:
             delete_corrupt=delete_corrupt,
         )
 
-    def save_model(self, model: EstimatorLike | SerializableValue, filepath: str) -> None:
+    def save_model(
+        self, model: EstimatorLike | SerializableValue, filepath: str
+    ) -> None:
         """Persist model artifacts using suffix-driven serialization backends.
 
         Args:
@@ -819,7 +829,14 @@ class ArtifactLoaderConfig:
 
     def save(
         self,
-        payload: EstimatorLike | MatrixLike | ArrayLike | ScoreDict | SerializableValue | None = None,
+        payload: (
+            EstimatorLike
+            | MatrixLike
+            | ArrayLike
+            | ScoreDict
+            | SerializableValue
+            | None
+        ) = None,
         filepath: Optional[str] = None,
     ) -> None:
         """Persist payloads by delegating to score/data/object/model save handlers.

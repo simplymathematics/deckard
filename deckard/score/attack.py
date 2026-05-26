@@ -113,7 +113,9 @@ class DefaultEvasionAttackScorerDictConfig(
 
 
 @dataclass(eq=False, kw_only=True)
-class DefaultEvasionRegressionAttackScorerDictConfig(DefaultEvasionAttackScorerDictConfig):
+class DefaultEvasionRegressionAttackScorerDictConfig(
+    DefaultEvasionAttackScorerDictConfig
+):
     """Default scorer set for evasion attacks against regression models.
 
     This specialization fixes ``classifier`` to ``False`` so evasion scoring

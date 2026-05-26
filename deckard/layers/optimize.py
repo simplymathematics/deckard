@@ -125,7 +125,9 @@ class OptimizerConfig:
             Effective study name and storage URI tuple.
         """
         sweeper = _get_sweeper_cfg(hydra_cfg)
-        sweeper_study_name = sweeper.get("study_name") if isinstance(sweeper, dict) else None
+        sweeper_study_name = (
+            sweeper.get("study_name") if isinstance(sweeper, dict) else None
+        )
         sweeper_storage = sweeper.get("storage") if isinstance(sweeper, dict) else None
         return self.study_name or sweeper_study_name, self.storage or sweeper_storage
 
@@ -739,7 +741,9 @@ def _prepare_multirun_cfg(cfg, hydra_cfg, include_file_paths: bool = False):
     stage_payload = _build_stage_dependent_hash_payload(cfg)
     explicit_name = cfg.get("experiment_name", None)
     if explicit_name is None or str(explicit_name).strip() == "":
-        cfg["experiment_name"] = _ensure_experiment_hash(hash_conf_values(stage_payload))
+        cfg["experiment_name"] = _ensure_experiment_hash(
+            hash_conf_values(stage_payload)
+        )
     else:
         cfg["experiment_name"] = _ensure_experiment_hash(explicit_name)
 
@@ -803,11 +807,7 @@ def _build_stage_dependent_hash_payload(cfg: Any) -> dict[str, Any]:
         selected_components = tuple(sorted(component_union))
     payload: dict[str, Any] = {
         "stage": stage,
-        "components": {
-            key: cfg.get(key)
-            for key in selected_components
-            if key in cfg
-        },
+        "components": {key: cfg.get(key) for key in selected_components if key in cfg},
         "runtime": {
             key: cfg.get(key)
             for key in (

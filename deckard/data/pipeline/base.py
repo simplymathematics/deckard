@@ -148,7 +148,10 @@ class DataPipeline(dict):
             X_parts = [host.X_train, host.X_test]
             y_parts = [host.y_train, host.y_test]
             sizes = [len(host.X_train), len(host.X_test)]
-            has_val = getattr(host, "X_val", None) is not None and getattr(host, "y_val", None) is not None
+            has_val = (
+                getattr(host, "X_val", None) is not None
+                and getattr(host, "y_val", None) is not None
+            )
             if has_val:
                 X_parts.append(host.X_val)
                 y_parts.append(host.y_val)
@@ -186,26 +189,38 @@ class DataPipeline(dict):
         if hasattr(host, "_run_score_stage_hooks"):
             host._run_score_stage_hooks(event, score_stage, pipeline_stage=stage_name)
 
-    def _step_flag(self, step_config: dict[str, Any], flag: str, default: bool) -> bool:
+    def _step_flag(
+        self, step_config: dict[str, Any], flag: str, default: bool
+    ) -> bool:
         aliases: dict[str, tuple[str, ...]] = {
             "fit_X": ("fit_X",),
             "fit_y": ("fit_y",),
             "fit_Xy": ("fit_Xy",),
             "fit_pre_sample": ("fit_pre-sample", "fit_pre_sample", "fit_presample"),
-            "fit_post_sample": ("fit_post-sample", "fit_post_sample", "fit_postsample"),
+            "fit_post_sample": (
+                "fit_post-sample",
+                "fit_post_sample",
+                "fit_postsample",
+            ),
         }
         for key in aliases[flag]:
             if key in step_config:
                 return bool(step_config[key])
         return default
 
-    def _instantiate_pipeline_step(self, step_name: str, step_config: dict[str, Any]) -> Any:
+    def _instantiate_pipeline_step(
+        self, step_name: str, step_config: dict[str, Any]
+    ) -> Any:
         class_name = step_config.get("name")
         if not class_name:
             raise ValueError(f"Pipeline step '{step_name}' must define a 'name'")
         args = list(step_config.get("args", []) or [])
         kwargs = dict(step_config.get("kwargs", {}) or {})
-        extras = {k: v for k, v in dict(step_config).items() if k not in self._PIPELINE_META_KEYS}
+        extras = {
+            k: v
+            for k, v in dict(step_config).items()
+            if k not in self._PIPELINE_META_KEYS
+        }
         kwargs.update(extras)
         return load_class(class_name, *args, **kwargs)
 
@@ -253,7 +268,9 @@ class DataPipeline(dict):
                 steps.append((step_name, step_obj))
         return steps
 
-    def _build_x_pipeline(self, x_steps: list[tuple[str, Any, Any]]) -> Pipeline | None:
+    def _build_x_pipeline(
+        self, x_steps: list[tuple[str, Any, Any]]
+    ) -> Pipeline | None:
         if len(x_steps) == 0:
             return None
 
@@ -288,7 +305,9 @@ class DataPipeline(dict):
                     ],
                 )
 
-        return Pipeline(steps=[(name, transformer) for name, transformer, _ in x_steps])
+        return Pipeline(
+            steps=[(name, transformer) for name, transformer, _ in x_steps]
+        )
 
     def _fit_transform_features(
         self,
@@ -320,7 +339,9 @@ class DataPipeline(dict):
             try:
                 cols = list(pipeline.get_feature_names_out(X.columns))
             except Exception:
-                cols = [f"feature_{i}" for i in range(np.asarray(transformed).shape[1])]
+                cols = [
+                    f"feature_{i}" for i in range(np.asarray(transformed).shape[1])
+                ]
             return pd.DataFrame(transformed, columns=cols, index=X.index)
         return transformed
 
@@ -336,8 +357,6 @@ class DataPipeline(dict):
         if y_frame.shape[1] == 1:
             return y_frame.iloc[:, 0]
         return y_frame
-
-
 
     def _transform_target(self, y_steps: list[tuple[str, Any]], y: Any) -> Any:
         y_frame = y.to_frame() if isinstance(y, pd.Series) else pd.DataFrame(y)

@@ -337,7 +337,9 @@ class ScoreOrchestratorMixin(OrchestratorBase, DataRuntimeStateMixin):
         self._run_score_stage_hooks("before", stage, score_kwargs=score_kwargs)
         score_fn = getattr(self, "score", None)
         if not callable(score_fn):
-            raise AttributeError(f"{type(self).__name__} has no callable 'score' method")
+            raise AttributeError(
+                f"{type(self).__name__} has no callable 'score' method"
+            )
         score_call_kwargs = dict(score_kwargs)
         try:
             signature = inspect.signature(score_fn)
@@ -385,13 +387,17 @@ class ScoreOrchestratorMixin(OrchestratorBase, DataRuntimeStateMixin):
     ) -> list[Any]:
         event = str(when).strip().lower()
         if event not in self.score_event_aliases:
-            raise ValueError(f"Score hook event must be 'before' or 'after', got {when}")
+            raise ValueError(
+                f"Score hook event must be 'before' or 'after', got {when}"
+            )
         event = self.score_event_aliases[event]
         stage_token = self._stage_hook_token(stage)
         stage = stage_token.replace("_", "-")
         stage_kwargs = {"stage": stage, **kwargs}
         outputs: list[Any] = []
-        outputs.extend(self._run_plugin_hook(f"{event}_score_{stage_token}", **stage_kwargs))
+        outputs.extend(
+            self._run_plugin_hook(f"{event}_score_{stage_token}", **stage_kwargs)
+        )
         outputs.extend(self._run_plugin_hook(f"{event}_score", **stage_kwargs))
         return outputs
 

@@ -1094,7 +1094,12 @@ class ScorerDictConfig(BaseConfig):
     ) -> set[str]:
         mode_token = "" if mode is None else str(mode).strip().lower()
         tokens: set[str] = set()
-        valid_modes = set(SUPPORTED_SCORING_STAGES) | {"all", "attack", "attack-val", ""}
+        valid_modes = set(SUPPORTED_SCORING_STAGES) | {
+            "all",
+            "attack",
+            "attack-val",
+            "",
+        }
         if mode_token not in valid_modes:
             raise KeyError(
                 f"Unsupported scoring mode '{mode}'. Expected one of: {sorted(valid_modes - {''})}",

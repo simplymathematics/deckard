@@ -71,7 +71,9 @@ class DetectorRuntimeLike(Protocol):
         """
         ...
 
-    def detect_poison(self, **kwargs: DetectorFitParamValue) -> tuple[np.ndarray, np.ndarray]:
+    def detect_poison(
+        self, **kwargs: DetectorFitParamValue
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Predict poison flags for runtime arrays.
 
         Args:
@@ -696,7 +698,9 @@ class DetectorConfig(BaseConfig):
         """
         files = dict(files or {})
         if detector_file is None:
-            detector_file = files.get("detector_file", files.get("detector_model_file"))
+            detector_file = files.get(
+                "detector_file", files.get("detector_model_file")
+            )
         if detected_predictions_file is None:
             detected_predictions_file = files.get("detected_predictions_file")
         if score_file is None:
@@ -743,13 +747,15 @@ class DetectorConfig(BaseConfig):
         poison_filter_success = 0.0
         evasion_filter_success = 0.0
         if self.mode == "filter":
-            poison_filter_success, evasion_filter_success = self._apply_filtering_behavior(
-                data=data,
-                model=model,
-                attack=attack,
-                x=x,
-                y_pred=y_pred,
-                n=n,
+            poison_filter_success, evasion_filter_success = (
+                self._apply_filtering_behavior(
+                    data=data,
+                    model=model,
+                    attack=attack,
+                    x=x,
+                    y_pred=y_pred,
+                    n=n,
+                )
             )
 
         self.score_dict = {

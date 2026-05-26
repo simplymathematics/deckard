@@ -603,7 +603,9 @@ class InferenceAttackMixin(AttackMixin):
         )
         return ScoreDict.from_payload(self.score_dict)
 
-    def infer_database_reconstruction(self, data: DataConfig, attack: AttackLike) -> ScoreDict:
+    def infer_database_reconstruction(
+        self, data: DataConfig, attack: AttackLike
+    ) -> ScoreDict:
         """Reconstruct a held-out database row from the remaining dataset.
 
         Args:

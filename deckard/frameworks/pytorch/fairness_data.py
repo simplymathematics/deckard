@@ -32,9 +32,7 @@ logger = logging.getLogger(__name__)
 
 RuntimeScalar = str | int | float | bool | None
 SerializableValue = (
-    RuntimeScalar
-    | list["SerializableValue"]
-    | dict[str, "SerializableValue"]
+    RuntimeScalar | list["SerializableValue"] | dict[str, "SerializableValue"]
 )
 
 
@@ -156,7 +154,9 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         Returns:
             This FairlearnPytorchDataConfig instance.
         """
-        return cast("FairlearnPytorchDataConfig", PytorchCustomDataConfig.load_dataset(self))
+        return cast(
+            "FairlearnPytorchDataConfig", PytorchCustomDataConfig.load_dataset(self)
+        )
 
     def _fit_transform_X(self, X_train, X_test, y_train, y_test, pipeline):
         """Run canonical DataConfig pipeline fit/transform for torch fairness data."""
@@ -269,7 +269,9 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
     # Scoring
     # ------------------------------------------------------------------
 
-    def __call__(self, *args: object, **kwargs: object) -> dict[str, SerializableValue]:
+    def __call__(
+        self, *args: object, **kwargs: object
+    ) -> dict[str, SerializableValue]:
         """Run fairness-aware torch data execution with a default scorer fallback.
 
         Args:
@@ -314,11 +316,13 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         # Map "pre-sample" -> dataset-level summary (no model predictions needed).
         if scorer_mode == "pre-sample":
             y_all, sensitive = self._get_full_dataset_labels()
-            return ScoreDict({
-                "n_samples": len(y_all),
-                "label_distribution": dict(collections.Counter(y_all)),
-                "sensitive_distribution": dict(collections.Counter(sensitive)),
-            })
+            return ScoreDict(
+                {
+                    "n_samples": len(y_all),
+                    "label_distribution": dict(collections.Counter(y_all)),
+                    "sensitive_distribution": dict(collections.Counter(sensitive)),
+                }
+            )
 
         # Canonical sensitive-feature lookup.
         sensitive = resolve_sensitive_features(

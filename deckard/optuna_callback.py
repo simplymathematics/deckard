@@ -43,8 +43,7 @@ def parse_study_name(
     if isinstance(schema, str):
         schema_path = Path(schema)
         assert schema_path.exists(), (
-            "Schema must be a dictionary or an existing file path. "
-            f"Got: {schema}"
+            "Schema must be a dictionary or an existing file path. " f"Got: {schema}"
         )
         with open(schema_path, "r") as handle:
             conf = yaml.safe_load(handle) or {}
@@ -160,9 +159,7 @@ def load_optuna_studies_dataframe(
 
     if trial_states is not None and "state" in merged.columns:
         allowed_states = {str(state).strip().upper() for state in trial_states}
-        merged = merged[
-            merged["state"].astype(str).str.upper().isin(allowed_states)
-        ]
+        merged = merged[merged["state"].astype(str).str.upper().isin(allowed_states)]
 
     if sort_by is not None:
         sort_cols = [sort_by] if isinstance(sort_by, str) else list(sort_by)
@@ -252,7 +249,9 @@ class OptunaStudyDumpCallback(Callback):
             resolved_metric_names = metric_names
         else:
             resolved_metric_names = [metric_names]
-        self.metric_names = [str(item) for item in cast(list[Any], resolved_metric_names)]
+        self.metric_names = [
+            str(item) for item in cast(list[Any], resolved_metric_names)
+        ]
         # Set direction
         if isinstance(directions, ListConfig):
             resolved_directions = OmegaConf.to_container(directions, resolve=True)

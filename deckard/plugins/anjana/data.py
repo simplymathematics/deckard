@@ -26,9 +26,7 @@ from .score import ANJANA_SCORING_HOOKS, AnjanaDataScoreHooksMixin
 
 RuntimeScalar = str | int | float | bool | None
 SerializableValue = (
-    RuntimeScalar
-    | list["SerializableValue"]
-    | dict[str, "SerializableValue"]
+    RuntimeScalar | list["SerializableValue"] | dict[str, "SerializableValue"]
 )
 
 
@@ -389,4 +387,3 @@ __all__ = [
     "default_anjana_data_plugins",
     "AnjanaDataConfig",
 ]
-

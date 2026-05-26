@@ -131,7 +131,11 @@ class PytorchBaseSampler(BaseSampler):
                 )
             return sampler_aliases[key](**_sampler_kwargs_for_alias(key))
 
-        if DictConfig is not None and OmegaConf is not None and isinstance(spec, DictConfig):
+        if (
+            DictConfig is not None
+            and OmegaConf is not None
+            and isinstance(spec, DictConfig)
+        ):
             spec = OmegaConf.to_container(spec, resolve=True)
 
         if isinstance(spec, dict):
@@ -239,12 +243,19 @@ class PytorchSplitSampler(PytorchBaseSampler):
             raise ValueError("Either train_size or test_size must be specified.")
         dataset = getattr(config, "dataset_obj", None)
         if dataset is None:
-            if getattr(config, "_X", None) is None or getattr(config, "_y", None) is None:
+            if (
+                getattr(config, "_X", None) is None
+                or getattr(config, "_y", None) is None
+            ):
                 raise ValueError("Data not loaded. Call load_dataset() first.")
             dataset = TensorDataset(config._X, config._y)
         indices = np.arange(len(dataset))
         labels = getattr(config, "_y", None)
-        y = labels.detach().cpu().numpy() if (self.stratify and labels is not None) else None
+        y = (
+            labels.detach().cpu().numpy()
+            if (self.stratify and labels is not None)
+            else None
+        )
 
         if self.val_size is not None and float(self.val_size) > 0:
             train_test_idx, val_idx = train_test_split(
@@ -311,12 +322,19 @@ class PytorchFoldSampler(PytorchBaseSampler):
         """
         dataset = getattr(config, "dataset_obj", None)
         if dataset is None:
-            if getattr(config, "_X", None) is None or getattr(config, "_y", None) is None:
+            if (
+                getattr(config, "_X", None) is None
+                or getattr(config, "_y", None) is None
+            ):
                 raise ValueError("Data not loaded. Call load_dataset() first.")
             dataset = TensorDataset(config._X, config._y)
         indices = np.arange(len(dataset))
         labels = getattr(config, "_y", None)
-        y = labels.detach().cpu().numpy() if (self.stratify and labels is not None) else None
+        y = (
+            labels.detach().cpu().numpy()
+            if (self.stratify and labels is not None)
+            else None
+        )
 
         if y is not None:
             splitter = StratifiedKFold(
@@ -334,7 +352,9 @@ class PytorchFoldSampler(PytorchBaseSampler):
             folds = list(splitter.split(indices))
         fold_index = self.split or 0
         if fold_index >= len(folds):
-            raise ValueError(f"split={fold_index} out of range for n_splits={self.n_splits}")
+            raise ValueError(
+                f"split={fold_index} out of range for n_splits={self.n_splits}"
+            )
 
         train_val_idx, val_idx = folds[fold_index]
 
@@ -409,12 +429,19 @@ class PytorchShuffleSampler(PytorchBaseSampler):
             raise ValueError("val_size must be set for PytorchShuffleSampler")
         dataset = getattr(config, "dataset_obj", None)
         if dataset is None:
-            if getattr(config, "_X", None) is None or getattr(config, "_y", None) is None:
+            if (
+                getattr(config, "_X", None) is None
+                or getattr(config, "_y", None) is None
+            ):
                 raise ValueError("Data not loaded. Call load_dataset() first.")
             dataset = TensorDataset(config._X, config._y)
         indices = np.arange(len(dataset))
         labels = getattr(config, "_y", None)
-        y = labels.detach().cpu().numpy() if (self.stratify and labels is not None) else None
+        y = (
+            labels.detach().cpu().numpy()
+            if (self.stratify and labels is not None)
+            else None
+        )
 
         if y is not None:
             splitter = StratifiedShuffleSplit(
@@ -433,7 +460,9 @@ class PytorchShuffleSampler(PytorchBaseSampler):
 
         split_index = self.split if self.split is not None else 0
         if split_index >= len(splits):
-            raise ValueError(f"split={split_index} out of range for n_splits={self.n_splits}")
+            raise ValueError(
+                f"split={split_index} out of range for n_splits={self.n_splits}"
+            )
 
         train_test_idx, val_idx = splits[split_index]
         stratify_sub = y[train_test_idx] if y is not None else None

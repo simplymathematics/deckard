@@ -10,7 +10,6 @@ plugin runtime call signatures to avoid duplicate local protocol declarations.
 
 from __future__ import annotations
 
-import copy
 import inspect
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Protocol, Union
@@ -18,7 +17,10 @@ from typing import Any, Dict, Optional, Protocol, Union
 import numpy as np
 import pandas as pd
 
-from ..orchestration import normalize_runtime_split_mode, resolve_sensitive_split_payload
+from ..orchestration import (
+    normalize_runtime_split_mode,
+    resolve_sensitive_split_payload,
+)
 
 
 class RuntimePayload(Protocol):
@@ -301,7 +303,6 @@ class SensitiveColumnsMixin:
                 raise ValueError(
                     f"Inconsistent shapes in {name}: {shapes}. All elements must have the same shape.",
                 )
-
 
 
 __all__ = [

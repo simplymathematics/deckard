@@ -20,7 +20,9 @@ class PluginRuntimePlugin(Protocol):
 
     def __getattr__(self, name: str) -> Any: ...
 
-    def __call__(self, *args: PluginValue, **kwargs: PluginValue) -> PluginValue | None:
+    def __call__(
+        self, *args: PluginValue, **kwargs: PluginValue
+    ) -> PluginValue | None:
         """Invoke runtime object as callable plugin target.
 
         Args:

@@ -179,12 +179,15 @@ class SeabornPlotConfig(_SeabornPlotterMarker, BaseConfig):
         if self.data_config is not None:
             data_obj = self.data_config
             if callable(getattr(data_obj, "__call__", None)) and (
-                getattr(data_obj, "_X", None) is None or getattr(data_obj, "_y", None) is None
+                getattr(data_obj, "_X", None) is None
+                or getattr(data_obj, "_y", None) is None
             ):
                 data_obj(files={"data_file": None, "score_file": None})
             data = getattr(data_obj, "_X", None)
             if data is None:
-                raise ValueError("Provided data_config did not materialize feature dataframe (_X).")
+                raise ValueError(
+                    "Provided data_config did not materialize feature dataframe (_X)."
+                )
         elif self.data is not None:
             data = self.data.copy()
         elif self.data_file is not None:

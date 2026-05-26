@@ -31,7 +31,13 @@ from ..utils import (
     instantiate_plugin_spec,
     is_null_config_value,
 )
-from ..frameworks.types import ArtEsimtator, ArrayLike, EstimatorLike, MatrixLike, StringifiedClass
+from ..frameworks.types import (
+    ArtEsimtator,
+    ArrayLike,
+    EstimatorLike,
+    MatrixLike,
+    StringifiedClass,
+)
 from .canon import (
     ensure_model_runtime_contract,
     normalize_model_score_mode,
@@ -510,7 +516,9 @@ class ModelConfig(BaseConfig):
         self,
         data: "DataConfig",
         default_stage: str = "post_fit_pre_predict",
-    ) -> tuple[Callable[[EstimatorLike], EstimatorLike] | None, BaseConfig | None, str | None]:
+    ) -> tuple[
+        Callable[[EstimatorLike], EstimatorLike] | None, BaseConfig | None, str | None
+    ]:
         """Compose a defense application callable and resolved stage for runtime use.
 
         Args:
@@ -538,7 +546,9 @@ class ModelConfig(BaseConfig):
 
         return _apply, defense_pipeline, stage
 
-    def get_art_class(self, data: "DataConfig") -> tuple[ArtEsimtator, dict[str, float | int | tuple[int, ...] | None]]:
+    def get_art_class(
+        self, data: "DataConfig"
+    ) -> tuple[ArtEsimtator, dict[str, float | int | tuple[int, ...] | None]]:
         """Resolve ART estimator wrapper class and initialization params for model runtime.
 
         Args:
@@ -1511,7 +1521,9 @@ class ModelConfig(BaseConfig):
         mode_predictions = None
         if cached_predictions is not None:
             mode_predictions = cached_predictions
-            cached_len = len(mode_predictions) if hasattr(mode_predictions, "__len__") else None
+            cached_len = (
+                len(mode_predictions) if hasattr(mode_predictions, "__len__") else None
+            )
             expected_len = len(y_mode) if hasattr(y_mode, "__len__") else None
             if (
                 cached_len is not None

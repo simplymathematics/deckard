@@ -28,9 +28,7 @@ from .canon import (
 )
 from ..plugins import HookPlugin
 
-_DEFAULT_STAGE_ORDER: tuple[str, ...] = (
-    *CANONICAL_EXPERIMENT_PIPELINE_STAGES,
-)
+_DEFAULT_STAGE_ORDER: tuple[str, ...] = (*CANONICAL_EXPERIMENT_PIPELINE_STAGES,)
 
 _DVC_STAGE_CANONICAL_MAP: dict[str, str] = {
     "generation": "attack",
@@ -168,7 +166,9 @@ class DVCExperimentConfig:
         self.dvc_plugin = plugin_cfg.to_dict()
         self._experiment_obj = self._coerce_experiment(self.experiment)
         setattr(self._experiment_obj, "dvc_plugin", dict(self.dvc_plugin))
-        if plugin_cfg.enabled and hasattr(self._experiment_obj, "_initialize_hook_orchestration"):
+        if plugin_cfg.enabled and hasattr(
+            self._experiment_obj, "_initialize_hook_orchestration"
+        ):
             self._experiment_obj._initialize_hook_orchestration()
 
     def _coerce_experiment(self, value: Any):
@@ -326,7 +326,9 @@ def _normalize_mode(mode: str) -> str:
     token = _normalize_token(mode)
     normalized = CANONICAL_EXPERIMENT_RUN_MODE_ALIASES.get(token)
     if normalized is None:
-        allowed = ", ".join(sorted(set(CANONICAL_EXPERIMENT_RUN_MODE_ALIASES.values())))
+        allowed = ", ".join(
+            sorted(set(CANONICAL_EXPERIMENT_RUN_MODE_ALIASES.values()))
+        )
         raise ValueError(
             f"Unsupported run mode '{mode}'. Expected one of: {allowed}.",
         )
@@ -370,7 +372,9 @@ def _resolve_stage_token(stage: Any) -> str:
 def _resolve_runtime_stage(stage: str) -> str:
     token = _resolve_stage_token(stage)
     base_token, _ = _split_stage_alias(token)
-    return _DVC_STAGE_CANONICAL_MAP.get(base_token, _DVC_STAGE_CANONICAL_MAP.get(token, token))
+    return _DVC_STAGE_CANONICAL_MAP.get(
+        base_token, _DVC_STAGE_CANONICAL_MAP.get(token, token)
+    )
 
 
 def _resolve_stage_for_naming(stage: str) -> str:
@@ -431,8 +435,14 @@ def _iter_stage_group_tokens(stage_value: Any) -> list[str]:
     if stage_value in [None, ""]:
         return []
     if isinstance(stage_value, str):
-        return [token for token in [_normalize_token(part) for part in stage_value.split(",")] if token != ""]
-    if isinstance(stage_value, Iterable) and not isinstance(stage_value, (str, bytes, Mapping)):
+        return [
+            token
+            for token in [_normalize_token(part) for part in stage_value.split(",")]
+            if token != ""
+        ]
+    if isinstance(stage_value, Iterable) and not isinstance(
+        stage_value, (str, bytes, Mapping)
+    ):
         tokens: list[str] = []
         for item in stage_value:
             tokens.extend(_iter_stage_group_tokens(item))
@@ -492,7 +502,9 @@ def _resolve_attack_score_aliases(experiment: Any) -> list[str]:
     if isinstance(chain, (list, tuple)) and len(chain) > 0:
         for attack_cfg in chain:
             aliases.extend(
-                _resolve_scorer_stage_group_aliases(getattr(attack_cfg, "scorer", None)),
+                _resolve_scorer_stage_group_aliases(
+                    getattr(attack_cfg, "scorer", None)
+                ),
             )
     else:
         attack_cfg = getattr(experiment, "attack", None)
@@ -502,15 +514,21 @@ def _resolve_attack_score_aliases(experiment: Any) -> list[str]:
     return _dedupe_tokens(aliases)
 
 
-def _resolve_defense_aliases(experiment: Any, *, require_attr: str | None = None) -> list[str]:
+def _resolve_defense_aliases(
+    experiment: Any, *, require_attr: str | None = None
+) -> list[str]:
     aliases: list[str] = []
     defense_cfg = getattr(experiment, "defense", None)
     defenses = getattr(defense_cfg, "defenses", None)
     if isinstance(defenses, (list, tuple)) and len(defenses) > 0:
         for index, defense_step in enumerate(defenses):
-            if require_attr is not None and not bool(getattr(defense_step, require_attr, False)):
+            if require_attr is not None and not bool(
+                getattr(defense_step, require_attr, False)
+            ):
                 continue
-            step_aliases = _iter_component_aliases(getattr(defense_step, "defense", defense_step))
+            step_aliases = _iter_component_aliases(
+                getattr(defense_step, "defense", defense_step)
+            )
             if step_aliases:
                 aliases.extend(step_aliases)
             else:
@@ -521,7 +539,9 @@ def _resolve_defense_aliases(experiment: Any, *, require_attr: str | None = None
 
 
 def _resolve_detector_aliases(experiment: Any) -> list[str]:
-    return _dedupe_tokens(_iter_component_aliases(getattr(experiment, "detector", None)))
+    return _dedupe_tokens(
+        _iter_component_aliases(getattr(experiment, "detector", None))
+    )
 
 
 def _resolve_stage_aliases(experiment: Any, stage: str) -> list[str]:
@@ -532,8 +552,12 @@ def _resolve_stage_aliases(experiment: Any, stage: str) -> list[str]:
         "model-score": _resolve_model_scorer_aliases(experiment),
         "attack-score": _resolve_attack_score_aliases(experiment),
         "generation": _resolve_attack_aliases(experiment),
-        "apply-fit-defense": _resolve_defense_aliases(experiment, require_attr="apply_fit"),
-        "apply-predict-defense": _resolve_defense_aliases(experiment, require_attr="apply_predict"),
+        "apply-fit-defense": _resolve_defense_aliases(
+            experiment, require_attr="apply_fit"
+        ),
+        "apply-predict-defense": _resolve_defense_aliases(
+            experiment, require_attr="apply_predict"
+        ),
         "detector-train": _resolve_detector_aliases(experiment),
         "detector-defense": _resolve_detector_aliases(experiment),
         "detector-score": _resolve_detector_aliases(experiment),
@@ -725,7 +749,9 @@ def _safe_run_dvc_cmd(
         )
     except Exception as exc:
         if plugin.fail_on_dvc_error:
-            raise RuntimeError(f"Failed to execute {' '.join(command)}: {exc}") from exc
+            raise RuntimeError(
+                f"Failed to execute {' '.join(command)}: {exc}"
+            ) from exc
         return {
             "ok": False,
             "command": command,
@@ -775,7 +801,9 @@ def _resolve_params_file_path(
     plugin: DVCExperimentPlugin,
 ) -> Path:
     file_aliases = _coerce_file_mapping(getattr(experiment, "files", None))
-    params_file = file_aliases.get("params_file") or plugin.params_file or "params.yaml"
+    params_file = (
+        file_aliases.get("params_file") or plugin.params_file or "params.yaml"
+    )
     return Path(str(params_file))
 
 
@@ -852,7 +880,9 @@ def _build_dvc_params_payload(
         and hasattr(experiment, "_sanitize_runtime_instantiation_payload")
         and callable(getattr(experiment, "_sanitize_runtime_instantiation_payload"))
     ):
-        sanitized = experiment._sanitize_runtime_instantiation_payload(experiment_payload)
+        sanitized = experiment._sanitize_runtime_instantiation_payload(
+            experiment_payload
+        )
         if isinstance(sanitized, Mapping):
             experiment_payload = dict(sanitized)
 
@@ -1003,14 +1033,25 @@ def _log_dvclive_scores(experiment: Any, plugin: DVCExperimentPlugin) -> None:
     runtime["scores_logged"] = True
 
 
-def _log_dvclive_artifacts_and_plots(experiment: Any, plugin: DVCExperimentPlugin) -> None:
+def _log_dvclive_artifacts_and_plots(
+    experiment: Any, plugin: DVCExperimentPlugin
+) -> None:
     live = _ensure_live_instance(experiment, plugin)
     log_artifact = getattr(live, "log_artifact", None)
     log_image = getattr(live, "log_image", None)
     if not callable(log_artifact) and not callable(log_image):
         return
 
-    image_suffixes = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff", ".webp"}
+    image_suffixes = {
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".bmp",
+        ".tif",
+        ".tiff",
+        ".webp",
+    }
 
     for output in _resolve_stage_outputs(
         experiment,
@@ -1081,8 +1122,12 @@ def render_dvclive_report(
 
     live = _ensure_live_instance(experiment, plugin_cfg)
     runtime = _get_runtime_state(experiment)
-    dvclive_dir = Path(str(runtime.get("dir") or _resolve_dvclive_dir(experiment, plugin_cfg)))
-    mode = _normalize_report_mode(plugin_cfg.report_mode if plugin_cfg.make_report else None)
+    dvclive_dir = Path(
+        str(runtime.get("dir") or _resolve_dvclive_dir(experiment, plugin_cfg))
+    )
+    mode = _normalize_report_mode(
+        plugin_cfg.report_mode if plugin_cfg.make_report else None
+    )
 
     if plugin_cfg.make_summary and hasattr(live, "make_summary"):
         live.make_summary()
@@ -1110,15 +1155,13 @@ def render_dvclive_report(
         "enabled": True,
         "dvclive_dir": _to_repo_relative_path(dvclive_dir),
         "report_mode": mode,
-        "summary_json": _to_repo_relative_path(summary_path)
-        if summary_path
-        else None,
-        "report_file": _to_repo_relative_path(report_path)
-        if report_path
-        else None,
-        "report_html": _to_repo_relative_path(report_path)
-        if mode == "html" and report_path
-        else None,
+        "summary_json": _to_repo_relative_path(summary_path) if summary_path else None,
+        "report_file": _to_repo_relative_path(report_path) if report_path else None,
+        "report_html": (
+            _to_repo_relative_path(report_path)
+            if mode == "html" and report_path
+            else None
+        ),
     }
 
 
@@ -1143,7 +1186,7 @@ def _build_dvc_plugin_hook_wrappers(
                         "dvc_plugin": plugin_payload,
                         "plugin_position": "first",
                     },
-                )
+                ),
             )
             last_hooks.append(
                 HookPlugin(
@@ -1153,7 +1196,7 @@ def _build_dvc_plugin_hook_wrappers(
                         "dvc_plugin": plugin_payload,
                         "plugin_position": "last",
                     },
-                )
+                ),
             )
 
     return first_hooks, last_hooks
@@ -1226,7 +1269,11 @@ def run_dvc_experiment_plugin_hook(
             live.next_step()
         result["executed"] = True
 
-    if position_token == "last" and event_token == "after" and stage_token == "persist":
+    if (
+        position_token == "last"
+        and event_token == "after"
+        and stage_token == "persist"
+    ):
         result["params_file"] = _write_dvc_params_file(
             experiment,
             plugin=plugin_cfg,
@@ -1242,7 +1289,9 @@ def run_dvc_experiment_plugin_hook(
             live.end()
         result["executed"] = True
 
-    dvclive_bucket.update({k: v for k, v in result.items() if k not in {"component", "stage", "event"}})
+    dvclive_bucket.update(
+        {k: v for k, v in result.items() if k not in {"component", "stage", "event"}}
+    )
     return result
 
 
@@ -1340,7 +1389,10 @@ def _resolve_plot_filename_tokens(
 
     metric = "accuracy"
     configured_optimizers = getattr(experiment, "optimizers", None)
-    if isinstance(configured_optimizers, (list, tuple)) and len(configured_optimizers) > 0:
+    if (
+        isinstance(configured_optimizers, (list, tuple))
+        and len(configured_optimizers) > 0
+    ):
         metric = _sanitize_filename_token(configured_optimizers[0], default="accuracy")
     if isinstance(params_manifest, Mapping):
         runtime = params_manifest.get("runtime_kwargs")
@@ -1385,7 +1437,9 @@ def _default_runtime_cache_path(file_aliases: Mapping[str, str]) -> str | None:
         return None
     params_path = Path(params_file)
     if params_path.suffix:
-        return params_path.with_name(f"{params_path.stem}.runtime_cache.pkl").as_posix()
+        return params_path.with_name(
+            f"{params_path.stem}.runtime_cache.pkl"
+        ).as_posix()
     return params_path.with_suffix(".runtime_cache.pkl").as_posix()
 
 
@@ -1424,9 +1478,15 @@ def _stage_enabled(experiment: Any, stage: str) -> bool:
     if base_stage == "model-persist":
         return getattr(experiment, "model", None) is not None
     if base_stage == "attack-persist":
-        return getattr(experiment, "attack", None) is not None or len(getattr(experiment, "_attack_chain", []) or []) > 0
+        return (
+            getattr(experiment, "attack", None) is not None
+            or len(getattr(experiment, "_attack_chain", []) or []) > 0
+        )
     if base_stage == "attack-score":
-        return getattr(experiment, "attack", None) is not None or len(getattr(experiment, "_attack_chain", []) or []) > 0
+        return (
+            getattr(experiment, "attack", None) is not None
+            or len(getattr(experiment, "_attack_chain", []) or []) > 0
+        )
     if base_stage == "detector-persist":
         return getattr(experiment, "detector", None) is not None
     if base_stage == "pipeline":
@@ -1458,7 +1518,9 @@ def build_dvc_stage_name(component: str, stage: str) -> str:
     component_token = _normalize_token(component)
     raw_stage_token = _resolve_stage_for_naming(stage)
     base_stage, alias = _split_stage_alias(raw_stage_token)
-    base_name = _DVC_STAGE_NAME_TOKEN_OVERRIDES.get((component_token, base_stage), base_stage)
+    base_name = _DVC_STAGE_NAME_TOKEN_OVERRIDES.get(
+        (component_token, base_stage), base_stage
+    )
     stage_token = f"{base_name}-{alias}" if alias else base_name
     return f"{component_token}__{stage_token}"
 
@@ -1565,7 +1627,9 @@ def build_dvc_stage_plan(
                     for owner_key in ("outs", "metrics", "plots"):
                         owner_values = owner.get(owner_key, [])
                         if path in owner_values:
-                            owner[owner_key] = [value for value in owner_values if value != path]
+                            owner[owner_key] = [
+                                value for value in owner_values if value != path
+                            ]
                     owner_name = str(owner.get("name", "")).strip()
                     if owner_name:
                         stage_name_to_outs[owner_name] = list(owner.get("outs", []))
@@ -1595,7 +1659,9 @@ def build_dvc_stage_plan(
         deps: list[str] = [".deckard_rc", "deckard"]
         if idx > 0:
             prev_stage = selected_stages[idx - 1]
-            prev_name = build_dvc_stage_name(_resolve_stage_component(prev_stage), prev_stage)
+            prev_name = build_dvc_stage_name(
+                _resolve_stage_component(prev_stage), prev_stage
+            )
             deps.extend(stage_name_to_outs.get(prev_name, []))
 
         stage_entry: dict[str, Any] = {
@@ -1627,7 +1693,9 @@ def build_dvc_stage_plan(
                 ),
             )
             if stage_entry["param_key_paths"]:
-                stage_entry["params"] = [{params_file_alias: stage_entry["param_key_paths"]}]
+                stage_entry["params"] = [
+                    {params_file_alias: stage_entry["param_key_paths"]}
+                ]
 
         if runtime_stage in {"load", "sample", "train"} and "data_file" in aliases:
             deps.append(aliases["data_file"])
@@ -1668,7 +1736,10 @@ def build_dvc_stage_plan(
 
         if runtime_stage == "attack":
             if stage_alias:
-                stage_entry["runtime_overrides"] = [*stage_entry["runtime_overrides"], f"attack.alias={stage_alias}"]
+                stage_entry["runtime_overrides"] = [
+                    *stage_entry["runtime_overrides"],
+                    f"attack.alias={stage_alias}",
+                ]
             for key in _STAGE_OUTPUT_KEYS["generation"]:
                 value = aliases.get(key)
                 if value:
@@ -1682,11 +1753,21 @@ def build_dvc_stage_plan(
                 )
             outs.append(score_file)
             metrics.append(score_file)
-            if base_stage in {"data-score", "model-score", "attack-score", "detector-score"}:
+            if base_stage in {
+                "data-score",
+                "model-score",
+                "attack-score",
+                "detector-score",
+            }:
                 stage_entry["runtime_overrides"].append(f"score.scope={component}")
 
         if runtime_stage == "persist":
-            if base_stage in {"data-persist", "model-persist", "attack-persist", "detector-persist"}:
+            if base_stage in {
+                "data-persist",
+                "model-persist",
+                "attack-persist",
+                "detector-persist",
+            }:
                 for key in _STAGE_OUTPUT_KEYS.get(base_stage, ()):
                     value = aliases.get(key)
                     if value:
@@ -1708,13 +1789,17 @@ def build_dvc_stage_plan(
                 tracked = set(stage_entry.get("outs", []))
                 tracked.update(stage_entry.get("metrics", []))
                 tracked.update(stage_entry.get("plots", []))
-                stage_entry["deps"] = [value for value in stage_entry["deps"] if value not in tracked]
+                stage_entry["deps"] = [
+                    value for value in stage_entry["deps"] if value not in tracked
+                ]
                 stage_name_to_outs[stage_name] = list(stage_entry["outs"])
                 stage_plan.append(stage_entry)
                 continue
 
             required_aliases = ("params_file", "score_file", "log_file", "error_file")
-            missing_aliases = [name for name in required_aliases if not aliases.get(name)]
+            missing_aliases = [
+                name for name in required_aliases if not aliases.get(name)
+            ]
             if missing_aliases:
                 missing = ", ".join(missing_aliases)
                 raise ValueError(
@@ -1732,7 +1817,9 @@ def build_dvc_stage_plan(
             score_file = aliases["score_file"]
             stage_entry["identity"] = run_identity
             if aliases.get("params_file") and stage_entry["param_key_paths"]:
-                stage_entry["params"] = [{aliases["params_file"]: stage_entry["param_key_paths"]}]
+                stage_entry["params"] = [
+                    {aliases["params_file"]: stage_entry["param_key_paths"]}
+                ]
             outs.append(root.as_posix())
             if include_cache_aliases and aliases.get("runtime_cache_file"):
                 outs.append(aliases["runtime_cache_file"])
@@ -1759,7 +1846,9 @@ def build_dvc_stage_plan(
         tracked = set(stage_entry.get("outs", []))
         tracked.update(stage_entry.get("metrics", []))
         tracked.update(stage_entry.get("plots", []))
-        stage_entry["deps"] = [value for value in stage_entry["deps"] if value not in tracked]
+        stage_entry["deps"] = [
+            value for value in stage_entry["deps"] if value not in tracked
+        ]
 
         stage_name_to_outs[stage_name] = list(stage_entry["outs"])
         stage_plan.append(stage_entry)
@@ -1857,7 +1946,9 @@ def generate_vega_lite_plot_spec(
     if output_path.suffix.lower() in {".yaml", ".yml"}:
         output_path = output_path.with_suffix("")
         output_path = output_path.with_suffix(".vl.json")
-    elif output_path.suffix.lower() == ".json" and not output_path.name.endswith(".vl.json"):
+    elif output_path.suffix.lower() == ".json" and not output_path.name.endswith(
+        ".vl.json"
+    ):
         output_path = output_path.with_name(f"{output_path.stem}.vl.json")
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
