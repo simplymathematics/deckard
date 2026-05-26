@@ -110,7 +110,6 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 - [x] Apply thin-wrapper policy to framework/plugin `*ModelConfig` families (plugin/framework specific behavior only).
 
-
 ### Model Phase 3: Defense Stage Semantics
 
 - [x] Treat ANJANA data pipeline defenses as pre-ART model defense stage in model-defense orchestration.
@@ -200,7 +199,6 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 - [x] Update file-related tests to validate allowed keys, placeholder resolution, handler behavior, and cross-module persistence aliases.
 - [x] Refresh file docs/examples so top-level config APIs use the final decentralized file-schema contract.
 
-
 ## Utils Checklist
 - [x] Ensure `deckard/artifacts.py` owns persistence load/save behavior for all runtime artifact payloads.
 - [x] Move/retain config coercion and normalization in `BaseConfig` and shared utility helpers only.
@@ -249,7 +247,7 @@ Design spec: [DVC Pipeline Autogeneration Spec](dvc)
 - [x] Emit reproducible stage commands for single experiment execution and multi-trial sweeps.
 - [x] Support optional cached-output reuse by pointing DVC outs to canonical runtime file aliases.
 - [x] Enable Vega-Lite plot spec outputs (`*.vl.json`) for browser-renderable DVC plot artifacts (yellowbrick and seaborn plots should be supported, but not required).
-- [x] Create specs according to [DVC Pipeline Autogeneration Spec](dvc) and deckard-native functionality. Create runnable Hydra YAML files for each plot with names like "<attack_alias>_<attack_param>_vs_<metric>" or "roc_auc".
+- [x] Create specs according to [DVC Pipeline Autogeneration Spec](dvc) and deckard-native functionality. Create runnable Hydra YAML files for each plot with names like `attack_alias_vs_metric` or `roc_auc`.
 - [x] Ensure generated DVCLive/DVC output directories use runtime identity.
 - [x] Keep DVC metrics policy canonical.
 - [x] targeted tests
@@ -278,7 +276,6 @@ Goal:
 - [x] Update developers/dvc.md to reflect canon and change the narrative from a plan to a finalized design spec.
 - [x] Update dvc.ipynb to reflect the new canon
 - [x] Generate dvc.yaml and params.yaml for several experiments (run AND multirun) that demonstrate several Vega-Lite graphs.
-
 
 #### Phase 6: Hydra Single-Default Multi-Stage Execution
 Design specs: [Optimization Runtime Contract](optimization) | [Hydra and Optuna Orchestration Contract](hydra) | [Pruning Runtime Contract](pruning)

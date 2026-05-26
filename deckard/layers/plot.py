@@ -17,7 +17,6 @@ PLOT_MAIN_DEFAULTS = {
     "experiment_config": "",
     "data_file": "",
     "backend": "auto",
-    "backend": "",
     "plot_type": "",
     "plots": "",
     "plot_params_file": "",

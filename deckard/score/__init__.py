@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import importlib.util
-from typing import TYPE_CHECKING
 
 from .attack import (
     AttackScorerConfig,
@@ -41,21 +40,6 @@ from .data import (
     data_num_classes_score,
 )
 from ..artifacts import ScoreDict
-
-if TYPE_CHECKING:
-    from ..plugins.anjana.score import (
-        DefaultAnjanaDataScorerDictConfig,
-        DefaultAnjanaModelScorerDictConfig,
-        DefaultAnjanaScorerDictConfig,
-    )
-    from ..plugins.fairlearn.score import (
-        DefaultFairlearnClassificationScorerDictConfig,
-        DefaultFairlearnDataScorerDictConfig,
-        DefaultFairlearnRegressionScorerDictConfig,
-        DefaultFairlearnScorerDictConfig,
-        FairlearnScorerDictConfig,
-    )
-    from ..plugins.lifelines.score import DefaultLifelinesConfig
 
 
 def _is_available(module_name: str) -> bool:

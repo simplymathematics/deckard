@@ -3,7 +3,7 @@ import logging
 from typing import Any, cast
 
 import pandas as pd
-from omegaconf import DictConfig, ListConfig
+from omegaconf import ListConfig
 
 from deckard.plugins import HookPlugin
 from deckard.plugins.base import compose_hook_plugins

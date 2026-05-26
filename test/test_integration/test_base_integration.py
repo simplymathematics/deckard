@@ -11,14 +11,14 @@ from omegaconf import OmegaConf
 
 os.environ.setdefault("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "1")
 
-from deckard.attack import AttackConfig
-from deckard.data import DataConfig
-from deckard.experiment import ExperimentConfig
-from deckard.file import FileConfig
-from deckard.model import DefenseConfig, ModelConfig
-from deckard.model.defense.base import DefensePipelineConfig
-from deckard.score.attack import AttackScorerConfig
-from deckard.score import (
+from deckard.attack import AttackConfig  # noqa: E402
+from deckard.data import DataConfig  # noqa: E402
+from deckard.experiment import ExperimentConfig  # noqa: E402
+from deckard.file import FileConfig  # noqa: E402
+from deckard.model import DefenseConfig, ModelConfig  # noqa: E402
+from deckard.model.defense.base import DefensePipelineConfig  # noqa: E402
+from deckard.score.attack import AttackScorerConfig  # noqa: E402
+from deckard.score import (  # noqa: E402
     DefaultDataClassificationScorerDictConfig,
     DefaultDataRegressionScorerDictConfig,
 )

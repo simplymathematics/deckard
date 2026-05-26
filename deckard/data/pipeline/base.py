@@ -371,9 +371,6 @@ class DataPipeline(dict):
         return y_frame
 
 
-from ..base import DataConfig
-
-
 __all__ = [
     "DataPipeline",
     "DataConfig",

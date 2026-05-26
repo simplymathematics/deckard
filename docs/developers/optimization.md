@@ -19,7 +19,7 @@ Optimization runtime is split into three concerns:
 
 - Orchestration: Hydra sweeper + callback lifecycle.
 - Runtime optimization policy: `OptimizerConfig` (or equivalent config object)
-	that owns trial resolution, reporting, and pruning policy behavior.
+    that owns trial resolution, reporting, and pruning policy behavior.
 - Execution: `optimize_main(cfg)` instantiates and runs `ExperimentConfig`.
 - Post-run synchronization: objective filtering, trial user attributes, persisted score payload.
 
@@ -46,7 +46,7 @@ Design intent:
 
 - keep `DefaultOptimizerCallback(HydraCallback)` as the Hydra-native adapter
 - keep callback methods thin and delegate optimization policy logic into
-	`OptimizerConfig`
+    `OptimizerConfig`
 - keep `default.yaml` configuration as the source of runtime policy values
 
 ## Entrypoint Contract
@@ -60,7 +60,7 @@ Requirements:
 - Runtime object must return a dict-like score payload.
 - Raw score payload must be preserved for callback hooks that run after sweeper wrapping.
 - Runtime optimization policy should be configured through `OptimizerConfig`
-	rather than additional positional function arguments.
+    rather than additional positional function arguments.
 
 ## Trial Resolution Contract
 

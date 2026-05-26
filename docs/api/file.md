@@ -67,15 +67,12 @@ file:
 
 `FileConfig` accepts a custom handler when callers need to centralize file-key
 validation or disk-status checks.
-
 ```python
 from deckard.file import CanonFileHandler, FileConfig
 
 handler = CanonFileHandler()
 cfg = FileConfig(handler=handler, model_file="build/model.pkl")
 status = cfg.disk_status()
-```
-
 ```
 
 ## Typical Workflow

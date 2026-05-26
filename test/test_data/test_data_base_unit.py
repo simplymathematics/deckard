@@ -10,7 +10,7 @@ from sklearn.preprocessing import FunctionTransformer
 
 import deckard.data.base as data_base
 import deckard.data.declarations as data_declarations
-from deckard.data.base import DataConfig, DataConfig
+from deckard.data.base import DataConfig
 from deckard.data.pipeline import DataPipeline
 from deckard.score.base import ScorerDictConfig
 
@@ -597,7 +597,6 @@ def test_empty_runtime_pipeline_leaves_data_unchanged():
 
 
 def test_fit_transform_x_handles_sparse_and_generated_feature_names():
-    cfg = DataConfig(scorer="none")
     runtime = DataPipeline(
         pipeline={
             "csr": {

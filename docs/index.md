@@ -13,9 +13,6 @@ This documentation is organized so you can move from concepts to execution:
   Fairlearn, Anjana, Lifelines, Seaborn, and Yellowbrick integrations.
 - Use Notebooks for executable, end-to-end examples.
 
-
-
-
 API documentation is generated directly from these docstrings.
 See [Core API](api/modules) for module-level documentation,
 [Notebooks](notebooks/index) for executable examples, and
@@ -34,7 +31,6 @@ If you are extending the framework, begin with:
 1. [Core API -> modules](api/modules)
 2. [Developer Docs](developers/index)
 3. [Extensions](overview/extensions/index)
-
 
 ## Frameworks and Plugins
 

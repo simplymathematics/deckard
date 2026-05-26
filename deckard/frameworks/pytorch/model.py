@@ -38,6 +38,7 @@ from sklearn.metrics import (
 )
 
 from ...data.base import DataConfig
+from ..types import EstimatorLike
 from ...model.base import ModelConfig
 from ...utils import is_default_config_value, load_class, resolve_torch_device
 

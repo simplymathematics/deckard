@@ -9,7 +9,6 @@ import subprocess
 import sys
 from types import SimpleNamespace
 import types
-import sys
 
 import pytest
 import yaml
@@ -17,7 +16,6 @@ from hydra import compose, initialize_config_dir
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
-import deckard
 import deckard.experiment.dvc as dvc_module
 from deckard.experiment import ExperimentConfig
 from deckard.experiment.dvc import (

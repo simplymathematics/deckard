@@ -8,7 +8,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Union, cast
+from typing import Any, List, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -31,9 +31,6 @@ from ..utils import (
 )
 from .canon import normalize_scorer_mode
 from ._runtime import series_like_to_float_dict as _series_like_to_float_dict
-
-if TYPE_CHECKING:
-    from ..data import DataConfig
 
 logger = logging.getLogger(__name__)
 

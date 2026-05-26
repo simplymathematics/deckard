@@ -53,7 +53,7 @@ Other available extras include
 Typical contributor loop:
 
 1. Identify the pipeline stage affected (`data`, `model`, `attack`, `score`,
-	 or `experiment`).
+     or `experiment`).
 2. Update implementation and associated declarations/config wiring.
 3. Add or update tests for behavior changes.
 4. Update notebooks/docs when the user-facing behavior changes.
@@ -94,8 +94,8 @@ Tools used:
 - [`Hydra`](https://hydra.cc) — hierarchical configuration composition and overrides
 - [`Optuna`](https://optuna.org) — hyperparameter optimization and pruning workflows
 - [`Adversarial Robustness Toolbox
-	(ART)`](https://adversarial-robustness-toolbox.org/) — adversarial attacks and
-	defenses
+    (ART)`](https://adversarial-robustness-toolbox.org/) — adversarial attacks and
+    defenses
 - [`DVC`](https://dvc.org) — data and artifact versioning for reproducible pipelines
 
 ### Coverage Script
@@ -127,11 +127,11 @@ any step fails.
 
 - Prefer shared utility helpers over duplicated conversion and normalization logic.
 - Keep configuration behavior deterministic and explicit rather than relying on
-	implicit fallback behavior.
+    implicit fallback behavior.
 - Keep metric naming stable, especially for multi-attack and extension metrics,
-	to preserve downstream report compatibility.
+    to preserve downstream report compatibility.
 - When modifying notebook-driven workflows, validate with the corresponding
-	[DVC](https://dvc.org) stage.
+    [DVC](https://dvc.org) stage.
 
 ### Documentation Responsibilities
 

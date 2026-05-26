@@ -141,7 +141,7 @@ class PlotConfig(BaseConfig):
 
     @staticmethod
     def _resolve_requested_backend(kwargs: dict) -> str | None:
-        """Resolve canonical backend from backend/plot_backend aliases."""
+        """Resolve the canonical backend from the supported backend key."""
         raw_backend = kwargs.get("backend")
         if raw_backend is not None:
             return normalize_plot_backend(raw_backend)

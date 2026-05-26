@@ -270,7 +270,7 @@ Params MUST be parsed and cached according to stage (e.g. pre-defense does not i
 - Default: file-only metrics entries (for example `scores.json`, `timing.json`, `metadata.json`).
 - Add keyed metric selectors only when `optimizers` is explicitly configured.
 
-### Metrics payload expansion
+### Example metrics payload expansion
 
 In addition to score values, include timing/count/metadata fields not already emitted
 by `ScoreDict` into DVC metrics artifacts.
@@ -282,7 +282,7 @@ Recommended payload fields include:
 - cache hit/write metadata
 - experiment/trial identity metadata
 
-### Plot coverage target
+### Example plot coverage target
 
 Minimum targeted plot families:
 
@@ -426,21 +426,23 @@ stages:
         - optimizers
 ```
 
-      Example identity resolution:
+```text
+  Example identity resolution:
 
-      - run mode: `<run_identity> = <experiment_name>`
-      - multirun mode: `<run_identity> = <stage_dependent_experiment_hash>`
+  - run mode: `<run_identity> = <experiment_name>`
+  - multirun mode: `<run_identity> = <stage_dependent_experiment_hash>`
+```
 
 ## Command Templates
 
 ### Single run
-Parses from 
+Parses from
+
 ```bash
 deckard optimize <optional hydra overrides> stage=<canonical_stage_or_all> # None = all
 params_file=<existing_or_desired> # defaults to params.yaml
 dvc_file=<existing_or_desired> #defaults to dvc.yaml
 ```
-
 
 ### Multi-trial
 

@@ -12,7 +12,6 @@ from deckard.score.base import (
     DefaultRegressorScorerDictConfig,
     ScorerConfig,
     ScorerDictConfig,
-    SUPPORTED_SCORING_STAGES,
     build_scorer,
     build_scorer_dict,
 )

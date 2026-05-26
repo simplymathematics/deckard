@@ -556,7 +556,6 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         if run_hooks:
             self._run_plugin_hook("before_sample")
 
-        num_samples = len(self._X)
         # Determine stratification
         if self.stratify not in (None, True, False):
             raise ValueError(

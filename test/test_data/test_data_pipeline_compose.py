@@ -3,11 +3,7 @@ from pathlib import Path
 from hydra import compose, initialize_config_dir
 from hydra.utils import instantiate
 
-from deckard.data.pipeline.base import (
-    DataConfig,
-    DataConfig,
-    DataConfig,
-)
+from deckard.data.pipeline.base import DataConfig
 
 
 def _compose_from_dir(config_dir: Path, config_name: str):

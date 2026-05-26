@@ -56,7 +56,7 @@ class TestDataConfigListMerge:
         assert "imputer" in cfg.pipeline
 
 
-class TestDataConfig:
+class TestDataConfigBehavior:
     def setup_method(self):
         self.pipeline_config_dict = {
             "imputer": {

@@ -3,14 +3,12 @@ import warnings
 from pathlib import Path
 from typing import Any, Union
 
-import optuna
 import pandas as pd
 import yaml
 
 from ..optuna_callback import (
     clean_column_names as _clean_optuna_columns,
     load_optuna_studies_dataframe,
-    parse_study_name,
 )
 from ..utils import create_parser_from_function, save_data
 

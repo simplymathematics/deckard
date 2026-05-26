@@ -9,7 +9,7 @@ import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Literal, cast
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, Literal, cast
 
 import yaml
 from omegaconf import DictConfig, OmegaConf
@@ -21,12 +21,14 @@ from .canon import (
     CANONICAL_EXPERIMENT_STAGE_OUTPUT_KEYS,
     CANONICAL_EXPERIMENT_STAGE_COMPONENTS,
     CANONICAL_EXPERIMENT_STAGE_PRIMARY_COMPONENTS,
-    CANONICAL_EXPERIMENT_STAGES,
     build_experiment_params_manifest,
     build_experiment_stage_param_key_paths,
     normalize_experiment_stage,
 )
 from ..plugins import HookPlugin
+
+if TYPE_CHECKING:
+    from .base import ExperimentConfig
 
 _DEFAULT_STAGE_ORDER: tuple[str, ...] = (*CANONICAL_EXPERIMENT_PIPELINE_STAGES,)
 
@@ -192,7 +194,7 @@ class DVCExperimentConfig:
             )
         return payload
 
-    def to_experiment_config(self) -> "ExperimentConfig":
+    def to_experiment_config(self) -> ExperimentConfig:
         """Return the normalized wrapped ExperimentConfig runtime object.
 
         Returns:
@@ -1682,7 +1684,6 @@ def build_dvc_stage_plan(
 
         outs = stage_entry["outs"]
         metrics = stage_entry["metrics"]
-        plots = stage_entry["plots"]
 
         if params_file_alias:
             deps.append(params_file_alias)
