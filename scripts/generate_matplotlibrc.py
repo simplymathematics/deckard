@@ -113,7 +113,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="colorblind",
         help=(
             "Palette name or sequence literal/JSON; "
-            "e.g. colorblind or '[\"#4c72b0\", \"#dd8452\"]'"
+            'e.g. colorblind or \'["#4c72b0", "#dd8452"]\''
         ),
     )
     parser.add_argument(

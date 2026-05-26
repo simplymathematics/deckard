@@ -4,9 +4,13 @@ deckard is a declarative ML evaluation framework for reproducible experiments
 across:
 
 - data preparation and sampling
+
 - model training and evaluation
+
 - adversarial attacks and defenses
+
 - fairness and privacy scoring
+
 - experiment optimization and plotting
 
 deckard uses Hydra/OmegaConf for configuration composition and supports Optuna
@@ -37,11 +41,12 @@ python -m pip install -e .
 For full installation options and platform notes, see:
 
 - [Installation guide](docs/overview/installation.md)
+
 - [Developer setup](docs/developers/index.md)
 
-## Repository layout:
+## Repository layout
 
-```
+```text
 .
 ├── build <- exists after installation, contains the build files for the `deckard` executable.
 ├── scripts/coverage.sh <- Script for tracking test coverage and test timing measurements.
@@ -64,15 +69,23 @@ For full installation options and platform notes, see:
 Canonical documentation lives in `docs/` and is built with Sphinx.
 
 - [Documentation overview](docs/overview/build_docs.md)
+
 - [Installation](docs/overview/installation.md)
+
 - [Development](docs/developers/index.md)
+
 - [Concepts chapter](docs/concepts.md)
+
 - [API hub](docs/source/index.md)
+
 - [Package overview](docs/source/modules.md)
+
 - [Module and extension map](docs/source/modules.md)
+
 - [Notebook hub](docs/notebooks/index.md)
 
-## Citation:
+## Citation
+
 If you find this software useful please cite us:
 
 ```bibtex

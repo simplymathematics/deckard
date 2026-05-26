@@ -20,7 +20,7 @@ PLATFORM_IMAGE="ghcr.io/catthehacker/ubuntu:full-latest"
 CONTAINER_OPTIONS=""
 LIST_ONLY=0
 DRY_RUN=0
-VERBOSE=0
+VERBOSE=1
 GITHUB_TOKEN_VALUE="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 GPU_MODE="auto"
 RESOLVED_GPU_MODE=""
@@ -39,7 +39,8 @@ Options:
       --platform <image>      Image for ubuntu-latest
       --container-options <s> Extra options passed to act runner containers
       --list                  List available workflow files and exit
-      --verbose               Enable verbose act output (includes docker pull details)
+      --verbose               Enable verbose act output (default)
+      --quiet                 Disable verbose act output
       --github-token <token>  GitHub token for act (fallback: GITHUB_TOKEN or GH_TOKEN env)
       --gpu-mode <mode>       GPU mode: auto|cpu|cuda|mps (default: auto)
       --dry-run               Print the act command and exit
@@ -167,6 +168,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --verbose)
       VERBOSE=1
+      shift
+      ;;
+    --quiet)
+      VERBOSE=0
       shift
       ;;
     --github-token)
