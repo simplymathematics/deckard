@@ -71,26 +71,73 @@ def find_mean_std(trials, id_vars, value_vars):
     return trials
 
 
-def sort_by_value_vars(trials, value_vars):
+def _normalize_directions(value_vars, directions=None):
+    if directions is None:
+        return ["maximize"] * len(value_vars)
+    if len(directions) != len(value_vars):
+        raise ValueError(
+            "Length of directions must match value_vars: "
+            f"got {len(directions)} vs {len(value_vars)}",
+        )
+    normalized = [str(direction).strip().lower() for direction in directions]
+    valid = {"maximize", "minimize", "diff"}
+    invalid = [direction for direction in normalized if direction not in valid]
+    if invalid:
+        raise ValueError(
+            f"Invalid directions {invalid}. Expected one of {sorted(valid)}",
+        )
+    return normalized
+
+
+def sort_by_value_vars(trials, value_vars, directions=None):
     # sort by value_vars, each of which has an avg_${var} and a
     # std_${var} column
-    # TODO: Add direction(s) as an argument
+    directions = _normalize_directions(value_vars, directions=directions)
     sortby = []
-    ascending = [False, True] * len(value_vars)
-    for var_ in value_vars:
-        # Assuming you want to maximize the average value and minimize the std (as a tie breaker)
+    ascending = []
+    for var_, direction in zip(value_vars, directions):
         sortby.append(f"avg_{var_}")
+        ascending.append(direction == "minimize")
         sortby.append(f"std_{var_}")
+        # std is always minimized as a tie-breaker
+        ascending.append(True)
     trials = trials.sort_values(by=sortby, ascending=ascending)
     return trials
 
 
-def find_best_trial(trials, value_vars, subdict=None):
+def _apply_diff_paretoset(trials, value_vars, directions):
+    from paretoset import paretoset
+
+    avg_cols = [f"avg_{var_}" for var_ in value_vars]
+    sense_map = {
+        "maximize": "max",
+        "minimize": "min",
+        "diff": "diff",
+    }
+    senses = [sense_map[direction] for direction in directions]
+    frontier_mask = paretoset(trials[avg_cols], sense=senses)
+    frontier = trials[frontier_mask].copy()
+    if frontier.empty:
+        return trials
+    frontier["_std_total"] = sum(frontier[f"std_{var_}"] for var_ in value_vars)
+    return frontier.sort_values(by="_std_total", ascending=True).drop(
+        columns=["_std_total"],
+    )
+
+
+def find_best_trial(trials, value_vars, subdict=None, directions=None):
     # Sort the trials by the value_vars
 
-    trials = sort_by_value_vars(trials, value_vars)
+    directions = _normalize_directions(value_vars, directions=directions)
+    if any(direction == "diff" for direction in directions):
+        trials = _apply_diff_paretoset(
+            trials,
+            value_vars,
+            directions,
+        )
+    trials = sort_by_value_vars(trials, value_vars, directions=directions)
     # Get the best trial
-    best_trial = trials.iloc[1]
+    best_trial = trials.iloc[0].copy()
     values = best_trial[value_vars]
     for value_var in value_vars:
         avg = f"avg_{value_var}"
@@ -152,6 +199,7 @@ def main(
     output_path,
     subset=[],
     exclude=[],
+    directions=None,
 ):
     # Query the optuna database
     trials, id_vars, value_vars = query_optuna_db(
@@ -171,7 +219,12 @@ def main(
         subconf = None
     if len(subset) > 0:
         trials = find_subset(trials, subset)
-    best_trial, _ = find_best_trial(trials, value_vars, subdict=subconf)
+    best_trial, _ = find_best_trial(
+        trials,
+        value_vars,
+        subdict=subconf,
+        directions=directions,
+    )
     best_trial = remove_hydra_syntax(best_trial)
     merged = merge_best_with_default(best_trial, config_path)
     print(f"Configuration: {conf}")
@@ -236,6 +289,16 @@ if __name__ == "__main__":
         required=False,
         help="Exclude these columns",
     )
+    parser.add_argument(
+        "--directions",
+        nargs="+",
+        required=False,
+        help=(
+            "Optimization direction for each metric in value order: "
+            "maximize|minimize|diff. "
+            "If omitted, all metrics default to maximize."
+        ),
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO)
@@ -248,4 +311,5 @@ if __name__ == "__main__":
         output_path=args.output_path,
         subset=args.subset,
         exclude=args.exclude,
+        directions=args.directions,
     )
