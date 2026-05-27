@@ -29,33 +29,22 @@ jobs:
       HF_DATASETS_CACHE: ~/.cache/huggingface/datasets
     steps:
     - uses: actions/checkout@v4
-    - name: Disk usage before cleanup
-      run: |
-        echo "Disk usage before cleanup:"
-        df -h
-    - name: Free disk space on runner
-      run: |
-        # Remove large preinstalled SDKs we do not use in docs builds.
-        sudo rm -rf /usr/share/dotnet || true
-        sudo rm -rf /usr/local/lib/android || true
-        sudo rm -rf /opt/ghc || true
-        sudo rm -rf /opt/hostedtoolcache/CodeQL || true
-    - name: Disk usage after cleanup
-      run: |
-        echo "Disk usage after cleanup:"
-        df -h
     - uses: actions/setup-python@v5
       with:
         python-version: '3.10'
         cache: 'pip'
-    - name: Cache DVC artifacts
+    - name: Cache DVC artifacts and notebooks
       uses: actions/cache@v4
       with:
         path: |
+          docs/notebooks/build/
           docs/notebooks/.dvc/cache/
-        key: dvc-cache-${{ runner.os }}-${{ hashFiles('.github/workflows/compile-docs.yml', 'docs/Makefile', 'docs/notebooks/dvc.lock', 'docs/notebooks/dvc.yaml', 'pyproject.toml') }}
-        restore-keys: |
-          dvc-cache-${{ runner.os }}-
+          ~/.cache/huggingface/
+          ~/.cache/huggingface/hub/
+          ~/.cache/huggingface/transformers/
+          ~/.cache/huggingface/datasets/
+        # Invalidate cache whenever notebook stage lockfile changes.
+        key: dvc-cache-${{ runner.os }}-${{ hashFiles('docs/notebooks/dvc.lock') }}
     - name : install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -64,10 +53,6 @@ jobs:
         pip install --no-cache-dir '.[lifelines,fairlearn,seaborn,yellowbrick,docs,datasets]'
         pip install --no-cache-dir 'docutils==0.21.2' 'pycanon==1.0.3' 'anjana==1.1.0'
         pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 'torch==2.4.1' 'torchvision==0.19.1' 'torchaudio==2.4.1'
-    - name: Pull DVC cache
-      run: |
-        cd docs/notebooks
-        dvc pull || echo "DVC pull: no remote or cache empty; using what's available locally"
     - name : build docs
       run: |
         cd docs
@@ -76,17 +61,6 @@ jobs:
       run: |
         cd docs/notebooks
         dvc push || echo "DVC push: remote not configured; artifacts managed via GitHub Actions cache"
-    - name: commit changes
-      uses : stefanzweifel/git-auto-commit-action@v4
-      with:
-        commit_message: Update docs
-        branch: refactor-squashed
-        file_pattern: docs/notebooks/*.ipynb docs/notebooks/dvc.lock
-        commit_options: '--no-verify --signoff'
-        repository: .
-        commit_user_name: github-actions
-        commit_user_email: github-actions@users.noreply.github.com
-        commit_author: github-actions <github-actions@users.noreply.github.com>
     - name: Upload Pages artifact
       uses: actions/upload-pages-artifact@v3
       with:
