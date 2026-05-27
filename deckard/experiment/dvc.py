@@ -1158,7 +1158,7 @@ def _collect_system_monitor_scores(
     plugin: DVCExperimentPlugin,
 ) -> dict[str, float]:
     def _extract_prefixed_system_metrics(
-        payload: Mapping[str, Any]
+        payload: Mapping[str, Any],
     ) -> dict[str, float]:
         metrics: dict[str, float] = {}
         for key, value in payload.items():
