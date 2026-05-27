@@ -2,22 +2,19 @@
 
 ## .98.2
 
-- Finalized repository enforcement pass for core scope checks.
-- Verified no baseline code quality enforcement violations for `deckard/`.
-  via `scripts/repository_enforcement.py --scope deckard/`.
-- Core runtime architecture updated-- each base config object now has public methods, a documented execution order, and separate plugin and scoring hooks for easy extensibility.
-- `canon.py` files now define inputs, outputs, and execution order of all base Config objects.
-- `orchestration.py` handles scoring hooks based off canonical method order during Config.__call\__.
-- `artifacts.py` handles persistence and pipeline dependency chains.
-- `utils.py` contains a renamed {class}`deckard.utils.BaseConfig` object that handles coercion, fingerprinting, and runtime instantiation.
-- Data sampler is now a canonical run-time object.
-- {class}`deckard.model.ModelConfig` objects now have configurable `.defense` and `.trainer` architectures for complex defense chains (including plugins), pruning, and analysis on pre-trained models.
-- {class}`deckard.attack.AttackConfig` objects are fully documented.
-- {class}`deckard.detector.DetectorConfig` objects now support training and filtering (pre-trained) modes.
-- {class}`deckard.layers.optimize.OptimizerConfig` now handles top-level `optuna` configuration and {class}`deckard.layers.optimize.DefaultOptimizerCallback` is fully documented for user-configurable optimization.
-- Created new {class}`deckard.artifacts.ScoreDict` canonical object with helper functions for parsing, viewing, storing, and updating runtime score dictionaries.
-- `fairlearn` and `anjana` packages rewritten to use new plugin architecture.
-- Drafted a {class}`deckard.experiment.dvc.DVCExperimentConfig` for generating reproducible experiment files, `dvclive` integration for system monitoring, model-training updates, and added some `Vega-lite` specs for generating dvclive plots (WIP).
+- Finalized repository enforcement pass for core scope checks and verified no baseline violations in `deckard/` via `scripts/repository_enforcement.py --scope deckard/`.
+- Updated core runtime architecture so base config objects expose public methods, a documented execution order, and separate plugin/scoring hooks.
+- Standardized canonical contracts in `canon.py` files to define inputs, outputs, and execution order for base config objects.
+- Clarified orchestration responsibilities: `orchestration.py` applies scoring hooks in canonical method order during `Config.__call__`.
+- Clarified artifact responsibilities: `artifacts.py` manages persistence and pipeline dependency chains.
+- Consolidated base runtime behaviors in {class}`deckard.utils.BaseConfig` for coercion, fingerprinting, and runtime instantiation.
+- Promoted the data sampler to a canonical runtime object.
+- Expanded {class}`deckard.model.ModelConfig` with configurable `defense` and `trainer` composition for defense chains, pruning, and pre-trained model analysis.
+- Completed documentation for {class}`deckard.attack.AttackConfig` and updated {class}`deckard.detector.DetectorConfig` to support training and pre-trained filtering modes.
+- Extended {class}`deckard.layers.optimize.OptimizerConfig` for top-level `optuna` configuration and documented {class}`deckard.layers.optimize.DefaultOptimizerCallback` for user-configurable optimization flows.
+- Added canonical {class}`deckard.artifacts.ScoreDict` helpers for parsing, viewing, storing, and updating runtime score dictionaries.
+- Reworked `fairlearn` and `anjana` integration to use the plugin architecture.
+- Drafted {class}`deckard.experiment.dvc.DVCExperimentConfig` for reproducible experiment generation, `dvclive` monitoring integration, training-flow updates, and `Vega-lite` plotting support (WIP).
 
 ## .98.1
 
