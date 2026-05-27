@@ -1766,7 +1766,7 @@ def coerce_scorer_config(scorer_obj, *, default_factory=None):
         return ScorerDictConfig.merge(list(scorer_obj))
     scorer_obj = coerce_config(
         scorer_obj,
-    )  # DictConfig->dict, ConfigBase->dict, YAML file->dict
+    )  # DictConfig->dict, BaseConfig->dict, YAML file->dict
     if isinstance(scorer_obj, str):
         scorer_obj = ScorerDictConfig.from_yaml(scorer_obj).to_dict()
     if isinstance(scorer_obj, dict):

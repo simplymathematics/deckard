@@ -466,7 +466,7 @@ class DefaultOptimizerCallback(HydraCallback):
             )
 
         # If Hydra sweeper wraps return values, recover the raw score payload that
-        # optimize_main stashes onto config from ConfigBase.__call__.
+        # optimize_main stashes onto config from BaseConfig.__call__.
         config_payload = None
         if isinstance(config, DictConfig):
             config_payload = config.get("_deckard_score_payload", None)

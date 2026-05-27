@@ -1649,6 +1649,12 @@ class ModelConfig(BaseConfig):
                             self.__dict__.update(loaded_obj.__dict__)
                         else:
                             self._model = loaded_obj
+                        if isinstance(self._model, (dict, DictConfig)):
+                            logger.warning(
+                                "Loaded model payload is %s; forcing model re-initialization.",
+                                type(self._model).__name__,
+                            )
+                            self._model = None
                         self._sync_model_signature_from_estimator(self._model)
                     except Exception:
                         logger.warning(f"Error loading model file: {model_file}.")
@@ -1663,7 +1669,11 @@ class ModelConfig(BaseConfig):
                         logger.info(
                             f"Training model on {len(data.y_train)} samples...",
                         )
-                        if self._model is None and hasattr(self, "_initialize_model"):
+                        if (
+                            self._model is None
+                            or isinstance(self._model, (dict, DictConfig))
+                        ) and hasattr(self, "_initialize_model"):
+                            self._model = None
                             self._initialize_model()
                         times = self._train_with_runtime_trainer(
                             data,
@@ -1689,7 +1699,11 @@ class ModelConfig(BaseConfig):
 
                     # Do not trust timing metadata from loaded score files as proof of fitted state.
                     if not model_is_fitted:
-                        if self._model is None and hasattr(self, "_initialize_model"):
+                        if (
+                            self._model is None
+                            or isinstance(self._model, (dict, DictConfig))
+                        ) and hasattr(self, "_initialize_model"):
+                            self._model = None
                             self._initialize_model()
                         times = self._train_with_runtime_trainer(
                             data,

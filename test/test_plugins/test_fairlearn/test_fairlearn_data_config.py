@@ -246,8 +246,8 @@ class TestClassificationFeatureScoresForGroup:
 class TestFairlearnDataConfigHashStability:
     """Test hash capability for FairlearnDataConfig."""
 
-    def test_fairness_data_config_is_configbase_with_hash(self):
-        """Test that FairlearnDataConfig is ConfigBase and has __hash__ method."""
+    def test_fairness_data_config_is_BaseConfig_with_hash(self):
+        """Test that FairlearnDataConfig is BaseConfig and has __hash__ method."""
         pytest.importorskip("fairlearn")
         from deckard.utils import BaseConfig
 
@@ -255,7 +255,7 @@ class TestFairlearnDataConfigHashStability:
         assert isinstance(
             config,
             BaseConfig,
-        ), "FairlearnDataConfig should inherit from ConfigBase"
+        ), "FairlearnDataConfig should inherit from BaseConfig"
         assert hasattr(
             config,
             "__hash__",

@@ -26,4 +26,4 @@ def test_runtime_configs_inherit_config_base(runtime_cls):
     assert issubclass(
         runtime_cls,
         BaseConfig,
-    ), f"{runtime_cls.__name__} must inherit ConfigBase"
+    ), f"{runtime_cls.__name__} must inherit BaseConfig"

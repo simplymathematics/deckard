@@ -581,7 +581,7 @@ class TestDataConfigResolutionMixin:
             self.mixin._data_to_dict(12345)
 
     def test_data_to_dict_not_dict_result_raises(self):
-        # ConfigBase.to_dict() normally returns dict; if it returns non-dict we get TypeError
+        # BaseConfig.to_dict() normally returns dict; if it returns non-dict we get TypeError
         class BadBase(BaseConfig):
             def __call__(self):
                 pass
@@ -1135,7 +1135,7 @@ class TestExperimentPostInitMoreBranches:
         assert isinstance(exp.model, ModelConfig)
 
     def test_model_as_config_base_subclass(self):
-        """Cover branch: isinstance(self.model, ConfigBase) -> model_dict = model.to_dict()"""
+        """Cover branch: isinstance(self.model, BaseConfig) -> model_dict = model.to_dict()"""
 
         class AltModel(ModelConfig):
             pass
@@ -1221,8 +1221,8 @@ class TestExperimentPostInitMoreBranches:
             )
         assert isinstance(exp.attack, AttackConfig)
 
-    def test_attack_as_configbase(self):
-        """Cover branch: isinstance(self.attack, ConfigBase)"""
+    def test_attack_as_BaseConfig(self):
+        """Cover branch: isinstance(self.attack, BaseConfig)"""
 
         class AltAttack(AttackConfig):
             pass

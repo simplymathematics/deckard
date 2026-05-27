@@ -600,7 +600,7 @@ def coerce_config(config_obj: Any) -> Any:
     Supported coercions:
 
     - ``DictConfig`` -> ``dict``/``list`` via ``OmegaConf.to_container``
-    - {class}`deckard.utils.ConfigBase` -> ``dict`` via ``to_dict``
+    - {class}`deckard.utils.BaseConfig` -> ``dict`` via ``to_dict``
     - existing YAML file path string -> loaded config container via OmegaConf
 
     Args:
@@ -905,7 +905,7 @@ data_supported_filetypes = [
 class BaseConfig(ArtifactLoaderConfig):
     """Base class for deckard configuration objects.
     
-    ``ConfigBase`` provides a common lifecycle for config dataclasses: argument
+    ``BaseConfig`` provides a common lifecycle for config dataclasses: argument
     hydration, post-init hooks, stable hashing based on configuration state, and
     serialization helpers used throughout deckard.
     
@@ -913,7 +913,7 @@ class BaseConfig(ArtifactLoaderConfig):
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    # _target_: str = "deckard.utils.ConfigBase"
+    # _target_: str = "deckard.utils.BaseConfig"
     score_dict: ScoreDict = field(default_factory=ScoreDict)
     HASH_EXCLUDE_FIELDS = {
         "args",
@@ -1019,7 +1019,7 @@ class BaseConfig(ArtifactLoaderConfig):
         return int(self._hash_value, 16)
 
     def __eq__(self, other: object) -> bool:
-        """Two ConfigBase instances are equal when their configuration hashes match."""
+        """Two BaseConfig instances are equal when their configuration hashes match."""
         if not isinstance(other, BaseConfig):
             return NotImplemented
         return hash(self) == hash(other)
@@ -1351,7 +1351,7 @@ class BaseConfig(ArtifactLoaderConfig):
 
 
 # Backward-compatible alias for legacy Hydra targets.
-ConfigBase = BaseConfig
+BaseConfig = BaseConfig
 
 
 def save_data(

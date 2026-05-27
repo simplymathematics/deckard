@@ -230,8 +230,8 @@ class TestFairlearnModelConfig:
 
         assert len(y_pred) == len(self.X_test)
 
-    def test_fairness_model_config_is_configbase_with_hash(self):
-        """Test that FairlearnModelConfig is ConfigBase and has __hash__ method."""
+    def test_fairness_model_config_is_BaseConfig_with_hash(self):
+        """Test that FairlearnModelConfig is BaseConfig and has __hash__ method."""
         from deckard.utils import BaseConfig
 
         fairness_data = Mock(spec=FairlearnDataConfig)
@@ -248,7 +248,7 @@ class TestFairlearnModelConfig:
         assert isinstance(
             model,
             BaseConfig,
-        ), "FairlearnModelConfig should inherit from ConfigBase"
+        ), "FairlearnModelConfig should inherit from BaseConfig"
         assert hasattr(
             model,
             "__hash__",
@@ -370,8 +370,8 @@ class TestFairlearnDefenseConfigApplyDefense:
         cfg.apply_defense(None)
         assert cfg.defense_application_time is not None
 
-    def test_fairness_defense_config_is_configbase_with_hash(self):
-        """Test that FairlearnDefenseConfig is ConfigBase and has __hash__ method."""
+    def test_fairness_defense_config_is_BaseConfig_with_hash(self):
+        """Test that FairlearnDefenseConfig is BaseConfig and has __hash__ method."""
         from deckard.utils import BaseConfig
 
         cfg = self._make_fitted_defense(
@@ -384,7 +384,7 @@ class TestFairlearnDefenseConfigApplyDefense:
         assert isinstance(
             cfg,
             BaseConfig,
-        ), "FairlearnDefenseConfig should inherit from ConfigBase"
+        ), "FairlearnDefenseConfig should inherit from BaseConfig"
         assert hasattr(
             cfg,
             "__hash__",

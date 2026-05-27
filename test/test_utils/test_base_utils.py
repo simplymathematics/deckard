@@ -71,7 +71,7 @@ class TestUtilsAdditional:
         assert out["alpha"] == 1
         assert out["beta"]["gamma"] == 2
 
-    def test_coerce_config_configbase_to_dict(self):
+    def test_coerce_config_BaseConfig_to_dict(self):
         obj = BaseConfig(score_dict={"x": 1})
         out = coerce_config(obj)
         assert isinstance(out, dict)
@@ -160,7 +160,7 @@ class TestUtilsAdditional:
             assert saved_model_path.exists()
             assert resolved_model["saved_model_path"] == str(saved_model_path)
 
-    def test_configbase_hash_deterministic_for_equal_content(self):
+    def test_BaseConfig_hash_deterministic_for_equal_content(self):
         cfg1 = BaseConfig(score_dict={"alpha": 1, "beta": 2})
         cfg2 = BaseConfig(score_dict={"beta": 2, "alpha": 1})
 
@@ -364,7 +364,7 @@ class TestUtilsAdditional:
         assert count_action.help == "Number of iterations to run."
 
 
-# ── Minimal ConfigBase subclass ──────────────────────────────────────────────
+# ── Minimal BaseConfig subclass ──────────────────────────────────────────────
 
 
 class _Cfg(BaseConfig):
@@ -628,10 +628,10 @@ class TestCoerceHelpers:
         assert result["evasion_accuracy"] == 0.4
 
 
-# ── ConfigBase – from_yaml / to_yaml / to_dict ───────────────────────────────
+# ── BaseConfig – from_yaml / to_yaml / to_dict ───────────────────────────────
 
 
-class TestConfigBaseSerialisation:
+class TestBaseConfigSerialisation:
     def test_to_yaml_returns_string(self):
         cfg = _Cfg(score_dict={"a": 1})
         yaml_str = cfg.to_yaml()
@@ -651,7 +651,7 @@ class TestConfigBaseSerialisation:
 
     def test_from_dict_round_trip(self):
         data = {
-            "_target_": "deckard.utils.ConfigBase",
+            "_target_": "deckard.utils.BaseConfig",
             "score_dict": {"x": 5},
         }
         obj = BaseConfig.from_dict(data)

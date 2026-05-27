@@ -149,14 +149,14 @@ class TestPlotConfig:
             assert len(plot_cfg) == 3
 
     def test_hash_stable_for_plot_config(self):
-        """Test that PlotConfig, as ConfigBase, has hash method."""
+        """Test that PlotConfig, as BaseConfig, has hash method."""
         # PlotConfig wraps another config which may not be hashable,
-        # so we just verify that PlotConfig is a ConfigBase and has __hash__
+        # so we just verify that PlotConfig is a BaseConfig and has __hash__
         plot_cfg_new = PlotConfig.__new__(PlotConfig)
         plot_cfg_new.kwargs = {"plot_type": "confusion_matrix"}
         plot_cfg_new.config = None  # Prevent config instantiation
 
-        # Verify PlotConfig inherits from ConfigBase
+        # Verify PlotConfig inherits from BaseConfig
         assert isinstance(plot_cfg_new, BaseConfig)
 
         # Verify it has the hash method
