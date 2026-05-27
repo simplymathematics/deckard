@@ -18,7 +18,7 @@ from .base import (
 
 class TransformerDefenseMixin(DefenseMixin):
     """Reusable transformer defense behavior.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -112,10 +112,10 @@ class TransformerDefenseMixin(DefenseMixin):
 @dataclass(eq=False, kw_only=True)
 class TransformerDefenseConfig(TransformerDefenseMixin, DefensePipelineConfig):
     """Configuration for transformer-based defenses.
-    
+
     Registers transformer defense behavior and plugin metadata used during
     defense runtime dispatch.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

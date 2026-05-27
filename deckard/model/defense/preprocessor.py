@@ -12,7 +12,7 @@ from .base import DefenseInitParamValue, DefensePipelineConfig, DefenseMixin
 
 class PreprocessorDefenseMixin(DefenseMixin):
     """Reusable preprocessor defense behavior.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -88,10 +88,10 @@ class PreprocessorDefenseMixin(DefenseMixin):
 @dataclass(eq=False, kw_only=True)
 class PreprocessorDefenseConfig(PreprocessorDefenseMixin, DefensePipelineConfig):
     """Configuration for preprocessor-based defenses.
-    
+
     Registers preprocessor defense behavior and plugin metadata used during
     defense runtime dispatch.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

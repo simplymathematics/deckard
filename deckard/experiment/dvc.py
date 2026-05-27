@@ -99,7 +99,7 @@ logger = logging.getLogger(__name__)
 @dataclass(eq=False, kw_only=True)
 class DVCExperimentPlugin:
     """Runtime DVC + DVCLive hook policy configuration.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -163,7 +163,7 @@ class DVCExperimentPlugin:
 @dataclass(eq=False, kw_only=True)
 class DVCExperimentMixin:
     """Mixin facade for DVCLive monitoring/logging hook behavior.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -216,7 +216,7 @@ class DVCExperimentMixin:
 @dataclass(eq=False, kw_only=True)
 class DVCExperimentConfig:
     """Lightweight wrapper around ExperimentConfig with native DVC plugin policy.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -1157,7 +1157,9 @@ def _collect_system_monitor_scores(
     experiment: Any,
     plugin: DVCExperimentPlugin,
 ) -> dict[str, float]:
-    def _extract_prefixed_system_metrics(payload: Mapping[str, Any]) -> dict[str, float]:
+    def _extract_prefixed_system_metrics(
+        payload: Mapping[str, Any]
+    ) -> dict[str, float]:
         metrics: dict[str, float] = {}
         for key, value in payload.items():
             if not isinstance(key, str) or not key.startswith("system/"):
@@ -1183,7 +1185,9 @@ def _collect_system_monitor_scores(
     collected: dict[str, float] = {}
 
     live = runtime.get("live") if isinstance(runtime, Mapping) else None
-    system_monitor = getattr(live, "_system_monitor", None) if live is not None else None
+    system_monitor = (
+        getattr(live, "_system_monitor", None) if live is not None else None
+    )
     runtime_metrics = getattr(system_monitor, "_metrics", None)
     if isinstance(runtime_metrics, Mapping):
         collected.update(_extract_prefixed_system_metrics(runtime_metrics))
@@ -1489,7 +1493,11 @@ def run_dvc_experiment_plugin_hook(
                 experiment_scores = getattr(experiment, "score_dict", None)
                 if not isinstance(experiment_scores, ScoreDict):
                     experiment_scores = ScoreDict.from_payload(
-                        experiment_scores if isinstance(experiment_scores, dict) else {},
+                        (
+                            experiment_scores
+                            if isinstance(experiment_scores, dict)
+                            else {}
+                        ),
                     )
                     setattr(experiment, "score_dict", experiment_scores)
                 experiment_scores.update(normalized_scores)

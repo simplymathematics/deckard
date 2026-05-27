@@ -51,15 +51,15 @@ if TYPE_CHECKING:
 @dataclass
 class BaseSampler:
     """Callable sampler interface.
-    
+
     All concrete samplers must implement :meth:`__call__` and return a
     ``(train_idx, test_idx, val_idx)`` triple of integer numpy arrays.
-    
+
     This class also owns runtime sampling orchestration for ``DataConfig`` via:
     - :meth:`resolve` to normalize sampler configuration into a callable
     - :meth:`compose` to resolve/cache/fallback to a default sampler
     - :meth:`execute` to run the composed sampler
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -235,14 +235,14 @@ class BaseSampler:
 @dataclass
 class SplitSampler(BaseSampler):
     """Standard 3-way stratified split: train / test / val.
-    
+
     The dataset is first split into a *val* set (controlled by
     ``cfg.val_size``) and a remaining *train+test* pool. The pool is then
     split into *train* and *test* portions according to ``cfg.test_size``.
-    
+
     Parameters are owned by this sampler dataclass and configured directly on
     the sampler instance (or its Hydra dict/spec).
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -309,21 +309,21 @@ class SplitSampler(BaseSampler):
 @dataclass
 class KFoldSampler(BaseSampler):
     """Cross-validation sampler with disjoint validation folds.
-    
+
     Behavior summary:
     - Select fold ``cfg.split`` from ``n_splits`` CV folds as validation.
     - Treat ``cfg.val_size`` as a cap on validation rows.
     - Rebuild the non-validation pool after capping validation rows.
     - Treat ``cfg.train_size`` as a cap on the non-validation pool.
     - Split capped non-validation rows into train/test by ``cfg.test_size``.
-    
+
     Guardrail:
     - For integer sizing, enforce ``test_size <= train_size // n_splits``.
-    
+
     Notes:
     - ``train_size`` caps the train+test pool before the final split.
     - Final train size is typically ``capped_train_pool - test_size``.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -466,12 +466,12 @@ class KFoldSampler(BaseSampler):
 @dataclass
 class ShuffleSampler(BaseSampler):
     """Repeated random-split (Monte-Carlo) sampler.
-    
+
     Each fold is an independent random split; the val set is *not*
     guaranteed to be disjoint across folds.
-    
+
     The ``n_splits`` field controls how many re-shuffled splits are generated.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -554,10 +554,10 @@ class ShuffleSampler(BaseSampler):
 @dataclass
 class SplitSamplerConf:
     """Hydra structured config for :class:`SplitSampler`.
-    
+
     Register with the ``sample`` config group via
     :func:`register_sampler_configs`.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -573,10 +573,10 @@ class SplitSamplerConf:
 @dataclass
 class KFoldSamplerConf:
     """Hydra structured config for :class:`KFoldSampler`.
-    
+
     Register with the ``sample`` config group via
     :func:`register_sampler_configs`.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -595,10 +595,10 @@ class KFoldSamplerConf:
 @dataclass
 class ShuffleSamplerConf:
     """Hydra structured config for :class:`ShuffleSampler`.
-    
+
     Register with the ``sample`` config group via
     :func:`register_sampler_configs`.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

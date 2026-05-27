@@ -376,7 +376,7 @@ def _deserialize_scores_payload(raw: Any) -> dict[str, Any]:
 @dataclass(eq=False, kw_only=True)
 class ArtifactLoaderConfig:
     """Base artifact loader for file-backed deckard configs.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

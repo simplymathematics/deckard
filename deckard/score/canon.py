@@ -19,10 +19,10 @@ CANON_SCORER_MODES: frozenset[str] = frozenset(
 
 class ScorerRuntimeContract(TypedDict, total=False):
     """Canonical scorer runtime payload contract.
-    
+
     Keys are intentionally generic so model/data/attack/detector runtimes can
     compose into one scoring API without changing scorer call signatures.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

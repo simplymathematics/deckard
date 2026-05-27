@@ -46,4 +46,3 @@ Use the canonical project rule in {doc}`../developers/docstrings`.
 - {doc}`../developers/mixins`
 - {doc}`../developers/plugins`
 - {doc}`../developers/configs`
-

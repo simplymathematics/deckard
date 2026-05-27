@@ -326,12 +326,12 @@ class DefaultDataScorerDictConfig(
     ScorerDictConfig,
 ):
     """Default data-analysis scorer family with optional task inheritance.
-    
+
     This config composes ``ScorerConfig`` objects into one ``ScorerDictConfig``
     that emits a ``ScoreDict`` at runtime. It resolves task-aware defaults for
     classification and regression data analysis, including class-distribution,
     mutual-information, and empirical-distribution metrics.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -395,10 +395,10 @@ class DefaultDataScorerDictConfig(
 @dataclass(eq=False, kw_only=True)
 class DefaultDataClassificationScorerDictConfig(DefaultDataScorerDictConfig):
     """Default dataset-analysis scorers for classification datasets.
-    
+
     This specialization fixes ``classifier`` to ``True`` and includes both
     class-distribution and information-theoretic scorers by default.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -409,11 +409,11 @@ class DefaultDataClassificationScorerDictConfig(DefaultDataScorerDictConfig):
 @dataclass(eq=False, kw_only=True)
 class DefaultDataRegressionScorerDictConfig(DefaultDataScorerDictConfig):
     """Default dataset-analysis scorers for regression datasets.
-    
+
     This specialization fixes ``classifier`` to ``False`` and keeps only the
     information-theoretic and empirical-distribution scorers suited to
     continuous targets.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -447,11 +447,11 @@ class DefaultPytorchDataScorerDictConfig(
     ScorerDictConfig,
 ):
     """Default tensor-aware data scorer family for PyTorch datasets.
-    
+
     This scorer avoids feature-level mutual-information metrics, which are
     better suited to tabular sklearn-style data, and instead focuses on split
     counts plus task-appropriate dataset summaries.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

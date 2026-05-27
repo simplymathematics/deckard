@@ -34,12 +34,12 @@ class RuntimePayload(Protocol):
 @dataclass(eq=False, kw_only=True)
 class SensitiveColumnsMixin:
     """Framework-independent sensitive-column behavior.
-    
+
     Provides field declarations and helper methods for resolving and
     validating sensitive feature columns. Both the anjana and fairlearn
     plugin families inherit from this mixin so they share a common
     interface without depending on each other.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

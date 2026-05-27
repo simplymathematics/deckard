@@ -122,11 +122,11 @@ def _refresh_yellowbrick_configs() -> None:
 @dataclass(eq=False, kw_only=True)
 class PlotConfig(BaseConfig):
     """Wrapper that routes to appropriate plot config (Seaborn or Yellowbrick).
-    
+
     Takes either an `experiment` (ExperimentConfig) or seaborn data source
     (`data_file`, `data_config`, `data`, or `optuna_storage`) parameter
     to determine the data source, then creates the appropriate plot config.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

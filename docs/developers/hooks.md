@@ -236,4 +236,3 @@ plot:
 - {doc}`plugins`
 - {doc}`mixins`
 - {doc}`orchestration`
-

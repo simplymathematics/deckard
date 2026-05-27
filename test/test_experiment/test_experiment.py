@@ -1069,7 +1069,9 @@ class TestAggregateRepeatedScores:
         result = ExperimentConfig._aggregate_repeated_scores(runs, suffix="fold")
         assert result["accuracy"] == pytest.approx(np.mean([0.8, 0.9, 1.0]))
         for i in range(3):
-            assert result[f"fold-{i}"]["accuracy"] == pytest.approx(runs[i]["accuracy"])
+            assert result[f"fold-{i}"]["accuracy"] == pytest.approx(
+                runs[i]["accuracy"]
+            )
 
     def test_non_numeric_uses_last_value(self):
         runs = [{"label": "a"}, {"label": "b"}]

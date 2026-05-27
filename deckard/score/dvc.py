@@ -32,7 +32,9 @@ def _sanitize_metric_key(key: Any) -> str:
     return token
 
 
-def _collect_component_power_stats(experiment: Any, component: str) -> dict[str, float]:
+def _collect_component_power_stats(
+    experiment: Any, component: str
+) -> dict[str, float]:
     score_dict = getattr(experiment, "score_dict", None)
     if not isinstance(score_dict, dict):
         return {}
@@ -82,12 +84,16 @@ def dvc_component_stats_score(
     _ = (y_true, y_pred)
 
     stage_token = str(stage or "").strip().lower().replace("_", "-")
-    component_token = str(
-        component
-        or kwargs.get("component")
-        or stage_token.removesuffix("-score")
-        or "score",
-    ).strip().lower()
+    component_token = (
+        str(
+            component
+            or kwargs.get("component")
+            or stage_token.removesuffix("-score")
+            or "score",
+        )
+        .strip()
+        .lower()
+    )
     if component_token.startswith("attack:"):
         component_token = "attack"
     if component_token == "detector":
@@ -153,10 +159,10 @@ def dvc_system_snapshot_score(
 @dataclass(eq=False, kw_only=True)
 class DVCSystemScorerDictConfig(_DataScorerMarker, ScorerDictConfig):
     """Stage-scoped DVC system scorer used by experiment DVC hooks.
-    
+
     By default, this scorer is configured to execute only during component score
     hook stages: data-score, model-score, attack-score, detector-score.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

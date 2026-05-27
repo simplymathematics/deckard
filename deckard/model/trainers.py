@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BaseTrainer:
     """Trainer interface plus centralized trainer composition helpers.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -175,7 +175,7 @@ class BaseTrainer:
 @dataclass
 class SklearnTrainer(BaseTrainer):
     """Default trainer for sklearn-style fit workflows.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -213,7 +213,7 @@ class SklearnTrainer(BaseTrainer):
 @dataclass
 class PytorchTrainer(BaseTrainer):
     """Trainer for torch model flows; delegates to model train implementation.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -251,7 +251,7 @@ class PytorchTrainer(BaseTrainer):
 @dataclass
 class PretrainedTrainer(BaseTrainer):
     """Trainer policy that prefers pre-trained model artifacts and avoids retraining.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -326,7 +326,7 @@ class PretrainedTrainer(BaseTrainer):
 @dataclass
 class PartialFitTrainer(BaseTrainer):
     """Incremental trainer using partial_fit when available.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -389,7 +389,7 @@ class PartialFitTrainer(BaseTrainer):
 @dataclass
 class PruningTrainer(BaseTrainer):
     """Trainer with optional trial pruning hook support.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -442,7 +442,7 @@ class PruningTrainer(BaseTrainer):
 @dataclass
 class PartialFitPruningTrainer(PartialFitTrainer):
     """Incremental partial-fit trainer with optional pruning checks.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

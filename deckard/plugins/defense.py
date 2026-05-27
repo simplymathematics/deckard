@@ -12,7 +12,7 @@ DefenseHandler = Callable[..., tuple[BaseConfig | None, EstimatorLike]]
 @dataclass(eq=False, kw_only=True)
 class DefenseTypePlugin:
     """Generic defense plugin that binds one mixin to one defense family/subtype.
-    
+
     Initialization fields
     ---------------------
     mixin_type : Any
@@ -25,7 +25,7 @@ class DefenseTypePlugin:
         Subtypes explicitly excluded from this plugin match.
     init_params : dict[str, Any]
         Metadata-only declaration payload for class/type/library docs.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

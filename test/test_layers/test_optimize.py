@@ -1011,8 +1011,8 @@ def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):
                 "_target_": "deckard.frameworks.pytorch.data.PytorchDataConfig",
                 "dataset_name": "torch.utils.data.TensorDataset",
                 "data_params": {},
-                "sampler" : {
-                    "name" : "split",
+                "sampler": {
+                    "name": "split",
                     "train_size": 32,
                     "test_size": 16,
                     "stratify": True,

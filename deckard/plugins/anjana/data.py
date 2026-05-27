@@ -41,7 +41,7 @@ def default_anjana_data_plugins() -> list[HookPlugin]:
 @dataclass(eq=False, kw_only=True)
 class PrivacyBehaviorMixin(SensitiveColumnsMixin):
     """Reusable privacy behavior mixed into data pipeline configs.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -267,15 +267,15 @@ class AnjanaDataConfig(
     DataConfig,
 ):
     """Data pipeline config with ANJANA anonymization support.
-    
+
     This config extends ``DataConfig`` with optional privacy
     anonymization and fairness-preprocessing hooks. The default plugin setup
     executes ``apply_anjana_defense`` after data load when an ANJANA defense
     configuration is provided.
-    
+
     Privacy metrics default to test-split score scope while retaining
     post-pipeline stage hook execution.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

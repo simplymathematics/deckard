@@ -50,7 +50,7 @@ AFT_MODEL_TYPES = {
 
 class SurvivalModelInitMixin:
     """Reusable initialization behavior for survival model configs.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -88,11 +88,11 @@ class SurvivalModelInitMixin:
 @dataclass(eq=False, kw_only=True)
 class SurvivalModelConfig(SurvivalModelInitMixin, ModelConfig):
     """Configuration for survival analysis models using lifelines.
-    
+
     Extends ModelConfig to support AFT (Accelerated Failure Time) survival
     models. Handles fitting, calibration scoring, and model comparison table
     generation.
-    
+
     Attributes
     ----------
     duration_col : str
@@ -103,7 +103,7 @@ class SurvivalModelConfig(SurvivalModelInitMixin, ModelConfig):
             Type of survival model (e.g., "weibull", "cox").
     t0 : float
             Time point for calibration scoring.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

@@ -129,7 +129,7 @@ supported_defense_types = [
 @dataclass(eq=False)
 class DefenseStep:
     """One defense-chain step with explicit fit/predict application flags.
-    
+
     Attributes:
         defense : A string-or-dict-like defense object.
         apply_fit : bool Whether or not to apply before training (might trigger a retrain).
@@ -201,10 +201,10 @@ class DefenseStep:
 
 class DefenseHookRuntimeMixin:
     """Shared plugin-hook runtime behavior for defense pipeline and defense configs.
-    
+
     This mixin centralizes plugin instantiation, hook dispatch, and score-dict merge
     behavior so all defense runtime owners expose consistent hook semantics.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -775,10 +775,10 @@ def _is_torch_model_instance(model_obj) -> bool:
 @dataclass(eq=True)
 class DefenseMixin:
     """Base callable defense handler used by runtime defense context resolution.
-    
+
     The ``runtime`` attribute is the active defense config instance owned by
     defense orchestration. Attribute access is delegated to that runtime object.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -876,7 +876,7 @@ class DefenseMixin:
 
 class PassthroughDefenseMixin(DefenseMixin):
     """Default handler for no-op/passthrough ART wrapping.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -922,10 +922,10 @@ class PassthroughDefenseMixin(DefenseMixin):
 
 class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
     """Single-defense dispatch behavior mixed into concrete defense config dataclasses.
-    
+
     This mixin owns per-defense runtime dispatch semantics: resolving handler/mixins,
     building ART-compatible wrappers, and applying a single defense spec.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -1556,7 +1556,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
 @dataclass(eq=False, kw_only=True)
 class DefensePipelineConfig(DefensePipelineConfigBehaviorMixin, BaseConfig):
     """Runtime owner for applying an ordered chain of defense specs.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -1589,14 +1589,14 @@ class DefensePipelineConfig(DefensePipelineConfigBehaviorMixin, BaseConfig):
 @dataclass(kw_only=True)
 class DefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
     """Concrete defense configuration used by defense runtime mixins.
-    
+
     Main parameter groups:
     - ``model_params``: base model-constructor kwargs.
     - ``defense_params``: kwargs passed to the resolved defense implementation.
-    
+
     Runtime orchestration is plugin-aware through ``_run_plugin_hook`` and
     supports handler/mixin resolution plus before/after dispatch hooks.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

@@ -129,5 +129,3 @@ At minimum, tests must validate:
 - {doc}`optimization`
 - {doc}`dvc`
 - {doc}`orchestration`
-
-

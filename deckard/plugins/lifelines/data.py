@@ -23,7 +23,7 @@ LifelinesValue = LifelinesScalar | list["LifelinesValue"] | dict[str, "Lifelines
 
 class LifelinesValidationMixin:
     """Reusable validation behavior for lifelines-compatible configs.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -71,7 +71,7 @@ class LifelinesValidationMixin:
 @dataclass(eq=False, kw_only=True)
 class LifelinesDataConfig(LifelinesValidationMixin, DataConfig):
     """DataConfig specialization for survival-analysis mode management.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

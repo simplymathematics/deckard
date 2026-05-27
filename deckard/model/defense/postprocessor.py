@@ -12,7 +12,7 @@ from .base import DefenseInitParamValue, DefensePipelineConfig, DefenseMixin
 
 class PostprocessorDefenseMixin(DefenseMixin):
     """Reusable postprocessor defense behavior.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -88,10 +88,10 @@ class PostprocessorDefenseMixin(DefenseMixin):
 @dataclass(eq=False, kw_only=True)
 class PostprocessorDefenseConfig(PostprocessorDefenseMixin, DefensePipelineConfig):
     """Configuration for postprocessor-based defenses.
-    
+
     Registers postprocessor defense behavior and plugin metadata used during
     defense runtime dispatch.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

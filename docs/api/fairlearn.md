@@ -227,4 +227,3 @@ attack-time fairness scoring.
 - {doc}`modules` — overview of all extensions
 - {doc}`../developers/data` — cross-family runtime contract
 - {doc}`../developers/migration` — migration guardrails
-

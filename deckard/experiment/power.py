@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass(eq=False, kw_only=True)
 class DVCPowerPlugin:
     """Runtime power-measurement policy for experiment orchestration hooks.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -157,16 +157,16 @@ def build_power_hook_bundle(
 @dataclass(eq=False, kw_only=True)
 class DVCPowerMixin:
     """Adds power scoring for canonical experiment score stages.
-    
+
     Automatically derives CPU/GPU power limits from the host OS when possible.
-    
+
     Intended hook usage:
-    
+
         after_data_score      -> namespace="data"
         after_model_score     -> namespace="model"
         after_attack_score    -> namespace="attack"
         after_detector_score  -> namespace="detector"
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

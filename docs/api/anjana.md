@@ -76,4 +76,3 @@ compose with other plugin score tails, including Fairlearn-last merges.
 - {doc}`fairlearn`
 - {doc}`../developers/data`
 - {doc}`../developers/migration`
-

@@ -169,4 +169,3 @@ The {class}`~deckard.frameworks.pytorch.experiment.TorchExperimentConfig` enforc
 - {doc}`modules` — overview of all extensions
 - {doc}`../developers/data` — cross-family runtime contract
 - {doc}`../developers/migration` — migration guardrails
-

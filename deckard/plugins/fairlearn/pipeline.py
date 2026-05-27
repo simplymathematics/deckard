@@ -37,7 +37,7 @@ FAIRLEARN_PIPELINE_HOOKS = HookBundle(
 
 class FairlearnPipelineHooksMixin:
     """Pipeline-stage hook implementations for fairlearn data runtimes.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

@@ -12,7 +12,7 @@ from .base import DefenseInitParamValue, DefensePipelineConfig, DefenseMixin
 
 class RegularizerDefenseMixin(DefenseMixin):
     """Reusable regularizer defense behavior.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -94,10 +94,10 @@ class RegularizerDefenseMixin(DefenseMixin):
 @dataclass(eq=False, kw_only=True)
 class RegularizerDefenseConfig(RegularizerDefenseMixin, DefensePipelineConfig):
     """Configuration for regularizer-based defenses.
-    
+
     Registers regularizer defense behavior and plugin metadata used during
     defense runtime dispatch.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

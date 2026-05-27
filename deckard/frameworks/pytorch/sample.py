@@ -54,7 +54,7 @@ __all__ = [
 @dataclass
 class PytorchBaseSampler(BaseSampler):
     """PyTorch sampler base that mirrors :class:`deckard.data.sample.BaseSampler`.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -252,7 +252,9 @@ class PytorchBaseSampler(BaseSampler):
                 continue
             if isinstance(value, float):
                 if value < 0.0 or value > 1.0:
-                    raise ValueError(f"{name} float value must be in [0, 1], got {value}.")
+                    raise ValueError(
+                        f"{name} float value must be in [0, 1], got {value}."
+                    )
                 continue
             raise TypeError(f"{name} must be int, float, or None, got {type(value)}.")
 
@@ -270,10 +272,11 @@ class PytorchBaseSampler(BaseSampler):
 @dataclass
 class PytorchSplitSampler(PytorchBaseSampler):
     """PytorchSplitSampler runtime class.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
+
     train_size: int | float | None = None
     test_size: int | float | None = 0.2
     val_size: int | float | None = None
@@ -343,10 +346,11 @@ class PytorchSplitSampler(PytorchBaseSampler):
 @dataclass
 class PytorchFoldSampler(PytorchBaseSampler):
     """PytorchFoldSampler runtime class.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
+
     n_splits: int = 5
     split: int = 0
     shuffle: bool = True
@@ -471,10 +475,11 @@ class PytorchFoldSampler(PytorchBaseSampler):
 @dataclass
 class PytorchShuffleSampler(PytorchBaseSampler):
     """PytorchShuffleSampler runtime class.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
+
     n_splits: int = 5
     split: int | None = 0
     test_size: int | float | None = 0.2
@@ -559,7 +564,7 @@ TorchShuffleSampler = PytorchShuffleSampler
 
 class TorchDataLoaderMixin:
     """Adapter that overloads `.sample()` for PyTorch DataLoaders.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -639,7 +644,7 @@ class TorchDataLoaderMixin:
 
 class TorchDataLoaderSamplingMixin:
     """Sampling adapter for torch Dataset objects.
-    
+
     Required attrs:
         dataset: Dataset
         test_size: float
@@ -648,7 +653,7 @@ class TorchDataLoaderSamplingMixin:
         random_state: int
         sample: Literal["split", "fold", "shuffle"]
         stratify: bool
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

@@ -317,7 +317,9 @@ def test_joblib_launcher_syncs_scores_and_attrs_sklearn(tmp_path):
         result.returncode == 0
     ), f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
 
-    score_file = EXAMPLES_SKLEARN_DIR / "outputs" / "logs" / study_name / "0" / "scores.json"
+    score_file = (
+        EXAMPLES_SKLEARN_DIR / "outputs" / "logs" / study_name / "0" / "scores.json"
+    )
     if not score_file.exists():
         candidates = sorted(
             EXAMPLES_SKLEARN_DIR.glob(f"outputs/logs/{study_name}/**/scores.json"),

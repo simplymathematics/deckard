@@ -112,7 +112,7 @@ class SyntheticImageSensitiveDataset(Dataset):
 @dataclass(eq=False, kw_only=True)
 class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
     """Fairlearn-compatible DataConfig for PyTorch Datasets with sensitive features.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

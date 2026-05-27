@@ -17,7 +17,7 @@ PluginValue = PluginScalar | list["PluginValue"] | dict[str, "PluginValue"]
 
 class PluginRuntimePlugin(Protocol):
     """Minimal runtime protocol exposing plugin-invoked methods.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -44,13 +44,13 @@ class PluginRuntimePlugin(Protocol):
 @dataclass(eq=False, kw_only=True)
 class HookPlugin:
     """Generic hook plugin that delegates one runtime hook to one method.
-    
+
     Args:
             hook_name: Runtime hook name exposed by the plugin.
             method_name: Runtime method name invoked when the hook runs.
             method_kwargs: Default kwargs merged into hook invocation kwargs.
             init_params: Metadata-only declaration payload for docs and tooling.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

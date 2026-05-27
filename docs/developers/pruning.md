@@ -86,4 +86,3 @@ At minimum, tests must cover:
 - behavior with absent trial context
 - metric/step configuration edge cases
 - post-prune artifact and logging behavior
-

@@ -52,7 +52,7 @@ ANJANA_SCORING_HOOKS = HookBundle(
 
 class AnjanaDataScoreHooksMixin:
     """Data-runtime ANJANA scoring hooks and split-scoped score adapter.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -340,13 +340,13 @@ def anjana_t_closeness_score(
 
 class AnjanaScorerMixin(_DataScorerMarker):
     """Marker mixin for ANJANA privacy scorers.
-    
+
     Inherits :class:`_DataScorerMarker` so that
     ``_initialize_component_scorers`` routes these scorers to ``data.scorer``.
     Subclass this to add ANJANA-specific call-time behaviour; the
     ``"anjana_scores"`` output wrapping is enforced by the data layer
     (:meth:`AnjanaDataConfig._score`).
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -355,11 +355,11 @@ class AnjanaScorerMixin(_DataScorerMarker):
 @dataclass(eq=False, kw_only=True)
 class DefaultAnjanaScorerDictConfig(AnjanaScorerMixin, ScorerDictConfig):
     """Default privacy scorer set for ANJANA anonymization analysis.
-    
+
     This config composes ANJANA privacy ``ScorerConfig`` objects into one
     ``ScorerDictConfig`` that emits a ``ScoreDict`` for anonymization
     evaluation, including k-anonymity, l-diversity, and t-closeness.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -388,11 +388,11 @@ class DefaultAnjanaScorerDictConfig(AnjanaScorerMixin, ScorerDictConfig):
 @dataclass(eq=False, kw_only=True)
 class DefaultAnjanaDataScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
     """Default data-analysis scorers plus ANJANA privacy scorers.
-    
+
     This config composes base data-analysis and ANJANA privacy
     ``ScorerConfig`` objects into one ``ScorerDictConfig`` that emits a
     ``ScoreDict`` covering both utility and anonymization signals.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -423,10 +423,10 @@ class DefaultAnjanaDataScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
 @dataclass(eq=False, kw_only=True)
 class DefaultAnjanaModelScorerDictConfig(DefaultAnjanaScorerDictConfig):
     """Model-scope privacy scorer set for ANJANA anonymization analysis.
-    
+
     This specialization reuses the default ANJANA privacy scorer dict for
     explicit model-scope routing and still emits a ``ScoreDict``.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

@@ -43,11 +43,11 @@ class OptimizerRuntimeConfigLike(Protocol):
 @dataclass
 class OptimizerConfig:
     """Runtime optimization policy object used by Hydra callback adapters.
-    
+
     This object owns optimization policy state (objectives, study metadata,
     trial-attribute reporting knobs, and optional DVCLive flags) while callback
     classes own Hydra lifecycle hooks.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

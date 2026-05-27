@@ -12,10 +12,10 @@ from .torch_utils import is_tensor, tensor_to_numpy
 @dataclass(eq=False, kw_only=True)
 class PytorchAttackConfig(AttackConfig):
     """Attack config variant that preserves torch tensors for attack execution.
-    
+
     Scoring still uses the base normalization path (numpy arrays), but attack
     method calls keep tensor inputs when the upstream data pipeline is torch-native.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 class TorchDatasetSamplingMixin:
     """Sampling adapter returning Dataset objects.
-    
+
     Required attrs:
         dataset: Dataset
         test_size: float
@@ -48,7 +48,7 @@ class TorchDatasetSamplingMixin:
         random_state: int
         sample: Literal["split", "fold", "shuffle"]
         stratify: bool
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -200,7 +200,9 @@ class TorchDatasetSamplingMixin:
             )
         )
 
-        split_iter = splitter.split(indices, y) if stratify else splitter.split(indices)
+        split_iter = (
+            splitter.split(indices, y) if stratify else splitter.split(indices)
+        )
 
         folds = []
 
@@ -226,7 +228,7 @@ class TorchDatasetSamplingMixin:
 
 class TorchDatasetMixin(TorchDatasetSamplingMixin):
     """PyTorch data mixin with dataset-aware sampling behavior.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -316,6 +318,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
     sampler_params: dict[str, Any] = field(default_factory=dict)
     dataset_type: Union[str, None] = None
     n_splits: int = 5
+
     def _sampler_name(self) -> str:
         spec = getattr(self, "sampler", None)
         if isinstance(spec, str):
@@ -373,6 +376,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         assert (
             len(self.keep) == 0
         ), f"Keep columns should not be set for PyTorch datasets. Got {self.keep}."
+
     def _initialize_data_params(self) -> None:
         if self.data_dir is None:
             self.data_dir = tempfile.gettempdir()
@@ -701,10 +705,10 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
 @dataclass(eq=False, kw_only=True)
 class PytorchCustomDataConfig(PytorchDataConfig):
     """Configuration for HuggingFace datasets loaded via DataLoader.
-    
+
     Extends PytorchDataConfig to support HuggingFace datasets with custom
     transforms and DataLoader-based loading.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

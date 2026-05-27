@@ -395,6 +395,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check formatting
         run: black --check .
+      - name: Check markdown lint
+        run: pymarkdown scan .
 
   tests:
     needs: lint  # Only runs if lint succeeds

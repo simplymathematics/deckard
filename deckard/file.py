@@ -80,6 +80,7 @@ class DefenseFiles(TypedDict, total=False):
         defended_probabilities_file: Defended probability artifact path.
         score_file: Defense score artifact path.
     """
+
     defended_model_file: str
     defended_predictions_file: str
     defended_probabilities_file: str
@@ -258,7 +259,7 @@ class CanonFileHandler(AbstractFileHandler):
 
 class PlaceholderResolverMixin:
     """Reusable placeholder-expansion helpers for file-oriented config objects.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -342,24 +343,24 @@ class PlaceholderResolverMixin:
 
 class FileConfig(PlaceholderResolverMixin):
     """Dynamic file-path configuration container.
-    
+
     ``FileConfig`` stores validated artifact paths for datasets, models,
     predictions, logs, attacks, and scores.
-    
+
     Placeholder expansion is applied to string values. Supported placeholders:
     - ``{num}``: Hydra job number.
     - ``{timestamp}``: Current timestamp (``YYYYMMDD-HHMMSS``).
     - ``{hash}``: Hash/job id for the file config.
     - ``{#}`` and ``{*}``: Alias placeholders.
-    
+
     Args:
         replace: Optional mapping used for additional placeholder replacements.
         handler: Optional shared file handler implementation.
         **files: File-path keyword arguments matching the configured schema.
-    
+
     Raises:
         FileConfigError: If an unknown file key is provided.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

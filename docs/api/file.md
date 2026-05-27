@@ -103,4 +103,3 @@ Hydra-focused workflow notes:
 - {doc}`score` — score persistence and loading
 - {doc}`plot` — plot artifact outputs
 - {doc}`layers` — compile/plot/pareto layer outputs
-

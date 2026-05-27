@@ -33,7 +33,10 @@ def test_dvc_component_stats_score_includes_system_monitor_metrics(monkeypatch):
     monkeypatch.setattr(
         dvc_module,
         "_collect_system_monitor_scores",
-        lambda experiment, plugin: {"system_monitor/cpu": 12.5, "system_monitor/ram": 33.0},
+        lambda experiment, plugin: {
+            "system_monitor/cpu": 12.5,
+            "system_monitor/ram": 33.0,
+        },
     )
 
     scores = dvc_component_stats_score(

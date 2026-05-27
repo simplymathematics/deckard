@@ -47,5 +47,3 @@ See hook contract validation patterns in {doc}`hooks`.
 
 Naming and callable contracts for plugin classes must remain stable for config
 compatibility and reproducible orchestration.
-
-

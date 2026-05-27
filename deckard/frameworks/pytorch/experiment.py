@@ -34,16 +34,16 @@ logger = logging.getLogger(__name__)
 @dataclass(eq=False, kw_only=True)
 class TorchExperimentConfig(ExperimentConfig):
     """Experiment configuration for PyTorch models.
-    
+
     Enforces:
-    
+
     * ``data`` is a :class:`~deckard.frameworks.pytorch.data.PytorchDataConfig` instance
     * ``model`` is a :class:`~deckard.frameworks.pytorch.model.PytorchModelConfig` instance
     * ``library`` is always ``"pytorch"`` (serialization compatibility field only)
-    
+
     Device reconciliation and PyTorch-specific device-setting logic live here
     rather than in the base :class:`ExperimentConfig`.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

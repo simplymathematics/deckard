@@ -98,10 +98,11 @@ def _load_optuna_studies_dataframe(
 @dataclass(eq=False, kw_only=True)
 class DataConfig(OrchestratorBase, BaseConfig):
     """DataConfig runtime class.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
+
     f"""
     Configuration and utility class for loading, preprocessing, and splitting datasets for machine learning tasks.
 
@@ -1363,10 +1364,10 @@ class DataConfig(OrchestratorBase, BaseConfig):
 @dataclass
 class DataPipelineStep:
     """Represents a step in a data pipeline with optional metadata.
-    
+
     This dataclass normalizes and documents the optional parameters that
     configure how a step integrates with the pipeline runtime.
-    
+
     Attributes
     ----------
     name : str
@@ -1382,7 +1383,7 @@ class DataPipelineStep:
     plugin_hook : str | list[str], optional
         Hook name(s) that trigger when this step runs. Supported hooks:
         - "before_sample": Run this step's pre_sample_fit before KFold sampling.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

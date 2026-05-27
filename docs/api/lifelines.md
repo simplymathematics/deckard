@@ -204,4 +204,3 @@ custom user-provided regression fitters can be imported reliably.
 - {doc}`sample` — split and fold strategies used by survival runs
 - {doc}`pytorch` — optional deep learning survival models
 - {doc}`modules` — overview of all extensions
-

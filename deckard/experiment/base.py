@@ -180,7 +180,7 @@ OmegaConf.register_new_resolver("merge", _merge_resolver, replace=True)
 
 class DataConfigResolutionMixin:
     """Resolve ExperimentConfig.data into the appropriate DataConfig subtype.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

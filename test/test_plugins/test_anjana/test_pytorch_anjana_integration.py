@@ -17,11 +17,11 @@ def _make_torch_data():
     y = torch.randint(0, 2, (60,))
     data = PytorchDataConfig(
         dataset_name="torch.utils.data.TensorDataset",
-        sampler = {
-            "train_size" : 40, 
-            "test_size" : 20,
-            "random_state" : 42,
-            "name" : "split",
+        sampler={
+            "train_size": 40,
+            "test_size": 20,
+            "random_state": 42,
+            "name": "split",
         },
         classifier=True,
         data_params={"_args_": [X, y], "batch_size": 16},

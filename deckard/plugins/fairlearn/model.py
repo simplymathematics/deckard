@@ -28,7 +28,7 @@ except ImportError:
 
 class FairnessBehaviorMixin:
     """Shared fairness-aware model behavior used by sklearn and PyTorch configs.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -154,10 +154,10 @@ class FairlearnModelConfig(
     ModelConfig,
 ):
     """Fairness-aware model config for sklearn models.
-    
+
     Inherits sklearn training/prediction from ModelConfig and adds
     fairness-aware scoring and defense support via FairnessBehaviorMixin.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -173,10 +173,10 @@ class FairlearnPytorchModelConfig(
     PytorchModelConfig,
 ):
     """Fairness-aware model config for PyTorch models.
-    
+
     Inherits all torch training/prediction/defense from PytorchModelConfig
     and adds fairness-aware scoring via FairnessBehaviorMixin.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -232,7 +232,7 @@ class BinaryLogitAdapter:
 @dataclass(eq=False, kw_only=True)
 class FairlearnDefenseConfig(SensitiveColumnsMixin, DefenseConfig):
     """Fairness-aware defense config that inherits DefenseConfig.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

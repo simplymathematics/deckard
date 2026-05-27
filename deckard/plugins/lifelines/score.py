@@ -61,12 +61,12 @@ def survival_bic_score(y_true: Any, y_pred: Any, **kwargs: Any) -> float:
 @dataclass(eq=False, kw_only=True)
 class DefaultLifelinesConfig(ScorerDictConfig):
     """Default scorer set for survival workflows.
-    
+
     This config composes survival-model ``ScorerConfig`` objects into one
     ``ScorerDictConfig`` that emits a ``ScoreDict`` for fitted lifelines
     models. The default scorer set covers concordance, AIC, and BIC by
     inspecting standard lifelines fitter attributes.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

@@ -668,4 +668,3 @@ Design specs: [Optimization Runtime Contract](optimization) | [Hydra and Optuna 
 - [ ] Run coverage + focused refactor test suites and update
 
   `docs/developers/refactor_plan` progress.
-

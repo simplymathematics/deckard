@@ -10,7 +10,7 @@ from .data import AnjanaDataConfig
 
 class AnjanaModelInitMixin:
     """Reusable initialization behavior for ANJANA model configs.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -30,7 +30,7 @@ class AnjanaModelInitMixin:
 @dataclass(eq=False, kw_only=True)
 class AnjanaModelConfig(AnjanaModelInitMixin, ModelConfig):
     """ANJANA-aware model config for data anonymization scoring.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

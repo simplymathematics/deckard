@@ -107,7 +107,7 @@ FAIRLEARN_SCORING_HOOKS = HookBundle(
 
 class FairlearnDataScoreHooksMixin:
     """Data-runtime fairlearn scoring hooks and split-scoped score adapter.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -262,11 +262,11 @@ def fairness_data_mutual_info_self(
 @dataclass(eq=False, kw_only=True)
 class DefaultFairlearnDataScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
     """Default fairness data scoring: class count, mutual information, and related signals.
-    
+
     This config composes fairness-oriented data ``ScorerConfig`` objects into
     one ``ScorerDictConfig`` that emits a ``ScoreDict`` for data-scope fairness
     analysis.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -469,7 +469,9 @@ def _flatten_metric_frame_by_group(by_group: pd.DataFrame) -> dict[str, float]:
 
 def _fallback_metric_scope(metric_name: str) -> str:
     """Best-effort scope resolution for legacy scorer configs."""
-    if metric_name.startswith(("group_", "mean_", "max_", "min_")) and metric_name.endswith(
+    if metric_name.startswith(
+        ("group_", "mean_", "max_", "min_")
+    ) and metric_name.endswith(
         ("_difference", "_ratio"),
     ):
         return "group"
@@ -491,13 +493,13 @@ def _is_reduction_candidate(metric_name: str, scorer: Any | None) -> bool:
 
 class FairnessScorerMixin:
     """Mixin that adds MetricFrame group scoring to any :class:`ScorerDictConfig` subclass.
-    
+
     Override ``__call__`` to first run the base scorer (via ``super().__call__()``),
     then compute per-group metrics using MetricFrame and merge them into the
     results dict.
-    
+
     The concrete class **must** declare these attributes as dataclass fields:
-    
+
     * ``group_scorers`` – dict of scorer callables run inside MetricFrame.
     * ``group_reduction`` – ``"difference"`` | ``"ratio"`` | ``"none"``.
     * ``group_reduction_method`` – ``"between_groups"`` | ``"to_overall"``.
@@ -505,22 +507,22 @@ class FairnessScorerMixin:
     * ``include_group_by_group`` – whether to include per-group values.
     * ``control_features``, ``sample_params``, ``n_boot``, ``ci_quantiles``,
       ``random_state`` – forwarded to MetricFrame as-is.
-    
+
     Example:
-    
+
     ```python
     @dataclass(eq=False, kw_only=True)
     class FairnessClassifierScorerDict(_FairnessScorerMixin, DefaultClassifierScorerDictConfig):
         group_scorers: dict = field(default_factory=lambda: { ... })
         group_reduction: str = "difference"
         ...
-    
+
         def __post_init__(self):
             super().__post_init__()
             self._normalize_group_scorers_input()
             self._coerce_group_scorers()
     ```
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -927,12 +929,12 @@ class FairnessScorerMixin:
 @dataclass(eq=False, kw_only=True)
 class FairlearnScorerDictConfig(FairnessScorerMixin, ScorerDictConfig):
     """ScorerDictConfig variant that computes fairness metrics through MetricFrame.
-    
+
     Composes ``_FairnessScorerMixin`` (group scoring) with ``ScorerDictConfig``
     (standard scorer evaluation).  Use ``group_scorers`` to provide configurable
     metric callables evaluated per sensitive group via MetricFrame.  Standard
     ``scorers`` are still evaluated first.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -1358,12 +1360,12 @@ class DefaultFairlearnScorerDictConfig(
     FairlearnScorerDictConfig,
 ):
     """Default fairness scorer family with optional task inheritance.
-    
+
     This config composes base predictive and fairness-specific ``ScorerConfig``
     objects into one ``FairlearnScorerDictConfig`` that emits a ``ScoreDict``.
     It selects demographic-parity and equalized-odds metrics for
     classification tasks, or group MAE/MSE disparity metrics for regression.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -1430,10 +1432,10 @@ class DefaultFairlearnScorerDictConfig(
 @dataclass(eq=False, kw_only=True)
 class DefaultFairlearnClassificationScorerDictConfig(DefaultFairlearnScorerDictConfig):
     """Default scorer set for classification fairness workflows.
-    
+
     This specialization fixes ``classifier`` to ``True`` so fairness scoring
     includes classification-oriented disparity metrics by default.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -1444,10 +1446,10 @@ class DefaultFairlearnClassificationScorerDictConfig(DefaultFairlearnScorerDictC
 @dataclass(eq=False, kw_only=True)
 class DefaultFairlearnRegressionScorerDictConfig(DefaultFairlearnScorerDictConfig):
     """Default scorer set for regression fairness workflows.
-    
+
     This specialization fixes ``classifier`` to ``False`` so fairness scoring
     includes regression-oriented group disparity metrics by default.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

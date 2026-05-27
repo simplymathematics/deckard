@@ -178,11 +178,11 @@ supported_attacks = [
 @dataclass(eq=True)
 class AttackMixin:
     """Base callable attack handler used by runtime attack context resolution.
-    
+
     The ``runtime`` attribute is the active ``AttackConfig`` instance owned by
     ``AttackConfig.__call__``. Mixins delegate mutable runtime state such as
     timers, predictions, and ``score_dict`` to that object.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -260,7 +260,7 @@ class AttackMixin:
 @dataclass(eq=False, kw_only=True)
 class AttackTypePlugin:
     """Generic attack plugin that binds one mixin to one attack family/subtype.
-    
+
     Initialization fields
     ---------------------
     mixin_type : Any
@@ -271,14 +271,14 @@ class AttackTypePlugin:
         Optional subtype constraint.
     excluded_subtypes : tuple[str, ...]
         Subtypes explicitly excluded from this plugin match.
-    
+
     Runtime behavior
     ----------------
     - ``resolve_attack_mixins`` contributes mixins to runtime context assembly.
     - ``resolve_attack_handler`` returns callable handler for dispatch.
     - ``__call__`` forwards ``*args``/``**kwargs`` to the configured mixin
       instance bound to the runtime config.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

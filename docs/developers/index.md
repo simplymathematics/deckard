@@ -123,7 +123,11 @@ bash scripts/coverage.sh
 flake8 deckard/
 black deckard/
 mypy deckard/
+./.venv/bin/pymarkdown scan $(find . -type f -name '*.md' -not -path './.venv/*' -not -path './build/*' -not -path './docs/build/*')
 ```
+
+Markdown linting uses PyMarkdown with `MD013` (line length) disabled in
+`pyproject.toml` to avoid noisy failures on long URLs and table rows.
 
 Tools used:
 
@@ -131,6 +135,7 @@ Tools used:
 - [`flake8`](https://flake8.pycqa.org) — Python style and lint checker
 - [`black`](https://black.readthedocs.io) — opinionated Python code formatter
 - [`mypy`](https://mypy.readthedocs.io) — static type checker for Python
+- [`PyMarkdown`](https://pymarkdown.readthedocs.io) — Markdown linting and style checks
 - [`Hydra`](https://hydra.cc) — hierarchical configuration composition and overrides
 - [`Optuna`](https://optuna.org) — hyperparameter optimization and pruning workflows
 - [`Adversarial Robustness Toolbox

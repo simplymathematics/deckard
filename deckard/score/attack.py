@@ -51,12 +51,12 @@ class DefaultEvasionAttackScorerDictConfig(
     ScorerDictConfig,
 ):
     """Default evasion attack scorer family with optional task selection.
-    
+
     This config composes ``ScorerConfig`` objects into one ``ScorerDictConfig``
     that emits a ``ScoreDict`` for evasion attack evaluation. Classification
     defaults include accuracy, precision, recall, F1, and evasion success;
     regression defaults use MSE, MAE, and R-squared.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -120,10 +120,10 @@ class DefaultEvasionRegressionAttackScorerDictConfig(
     DefaultEvasionAttackScorerDictConfig,
 ):
     """Default scorer set for evasion attacks against regression models.
-    
+
     This specialization fixes ``classifier`` to ``False`` so evasion scoring
     uses regression-oriented metrics and routing.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -139,12 +139,12 @@ class DefaultMembershipInferenceAttackScorerDictConfig(
     ScorerDictConfig,
 ):
     """Default membership-inference attack scorer family.
-    
+
     This config composes ``ScorerConfig`` objects into one ``ScorerDictConfig``
     that emits a ``ScoreDict`` for binary membership-inference evaluation.
     It always operates in classification mode and defaults to accuracy,
     precision, recall, and F1.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -189,11 +189,11 @@ class DefaultAttributeInferenceAttackScorerDictConfig(
     ScorerDictConfig,
 ):
     """Default attribute-inference attack scorer family with optional task selection.
-    
+
     This config composes ``ScorerConfig`` objects into one ``ScorerDictConfig``
     that emits a ``ScoreDict`` for attribute-inference evaluation. It selects
     classification or regression metrics based on the configured task mode.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -252,10 +252,10 @@ class DefaultAttributeInferenceRegressionAttackScorerDictConfig(
     DefaultAttributeInferenceAttackScorerDictConfig,
 ):
     """Default scorer set for continuous attribute inference evaluation.
-    
+
     This specialization fixes ``classifier`` to ``False`` so attribute
     inference scoring uses regression-oriented metrics and routing.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -267,7 +267,7 @@ class DefaultAttributeInferenceRegressionAttackScorerDictConfig(
 @dataclass(eq=False, kw_only=True)
 class AttackScorerConfig(BaseConfig):
     """Owns all attack scoring logic and profile-specific scorer configs.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -617,7 +617,7 @@ safe_store(
 @dataclass(eq=False, kw_only=True)
 class FairlearnEvasionAttackScorerConfig:
     """Per-sensitive-group evasion scorer (classification) via MetricFrame.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -640,7 +640,7 @@ class FairlearnEvasionAttackScorerConfig:
 @dataclass(eq=False, kw_only=True)
 class FairlearnMembershipInferenceAttackScorerConfig:
     """Per-sensitive-group membership inference scorer via MetricFrame.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -663,7 +663,7 @@ class FairlearnMembershipInferenceAttackScorerConfig:
 @dataclass(eq=False, kw_only=True)
 class FairlearnAttributeInferenceAttackScorerConfig:
     """Per-sensitive-group attribute inference scorer (classification) via MetricFrame.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -686,7 +686,7 @@ class FairlearnAttributeInferenceAttackScorerConfig:
 @dataclass(eq=False, kw_only=True)
 class FairlearnAttributeInferenceRegressionAttackScorerConfig:
     """Per-sensitive-group attribute inference scorer (regression) via MetricFrame.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -710,17 +710,17 @@ class FairlearnAttributeInferenceRegressionAttackScorerConfig:
 @dataclass(eq=False, kw_only=True)
 class FairlearnAttackScorerConfig(AttackScorerConfig):
     """AttackScorerConfig that computes attack metrics stratified by sensitive group.
-    
+
     Uses :class:`~deckard.plugins.fairlearn.score.FairlearnScorerDictConfig` profiles for
     each attack type so that metrics (accuracy, f1, mse, …) are computed
     per sensitive group via ``fairlearn.metrics.MetricFrame``.
-    
+
     Sensitive features must be passed at attack-call time.  In practice,
     :class:`~deckard.attack.base.AttackConfig` injects them automatically
     when the data object exposes ``_sensitive_test`` / ``_sensitive_train``
     (i.e. the data object is a
     :class:`~deckard.plugins.fairlearn.FairlearnDataConfig`).
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

@@ -18,7 +18,7 @@ from .base import (
 
 class TrainerDefenseMixin(DefenseMixin):
     """Reusable trainer defense behavior (adversarial training).
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -133,10 +133,10 @@ class TrainerDefenseMixin(DefenseMixin):
 @dataclass(eq=False, kw_only=True)
 class TrainerDefenseConfig(TrainerDefenseMixin, DefensePipelineConfig):
     """Configuration for trainer-based defenses.
-    
+
     Registers trainer defense behavior and plugin metadata used during defense
     runtime dispatch.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

@@ -89,7 +89,7 @@ class DetectorRuntimeLike(Protocol):
 @dataclass(eq=False, kw_only=True)
 class DetectorScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
     """Task-aware scorer config for detector outputs.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -119,7 +119,7 @@ class DetectorScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
 @dataclass(eq=False, kw_only=True)
 class DetectorConfig(BaseConfig):
     """Auxiliary detector runtime for adversarial-vs-clean detection tasks.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """

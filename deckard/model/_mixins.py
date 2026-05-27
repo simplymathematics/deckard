@@ -32,7 +32,7 @@ class PruneTrialProtocol(Protocol):
 
 class ModelTrainingMixin:
     """Reusable model training behavior for non-pretrained model flows.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -65,7 +65,7 @@ class ModelTrainingMixin:
 
 class PretrainedModelMixin:
     """Reusable pretrained-model loading behavior.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -95,7 +95,7 @@ class PretrainedModelMixin:
 
 class ModelPrunerMixin:
     """Reusable Optuna-style pruning behavior.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
@@ -128,7 +128,7 @@ class ModelPrunerMixin:
 
 class ModelHookRuntimeMixin:
     """Reusable plugin orchestration and runtime-state copy behavior.
-    
+
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
