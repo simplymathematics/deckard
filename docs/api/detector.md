@@ -1,5 +1,24 @@
 # Detector
 
+## Basic flow state
+
+`fit -> detect -> score -> persist`.
+
+## Capabilities
+
+- Configure detector execution after model/attack phases.
+- Run detector fitting and inference with canonical stage aliases.
+- Produce detector metrics aligned with experiment score flows.
+- Persist detector artifacts for reproducible detector analysis.
+- Consume payloads from {doc}`attack` and contribute metrics to {doc}`score`.
+
+## Outputs
+
+- Detector files (`detector_model_file`, `detected_predictions_file`, `score_file`).
+- Detector prediction/probability payloads.
+- Detector timing fields (`detector_training_time`, `detector_detection_time`).
+- Detector-prefixed metrics in score payload outputs.
+
 ## Introduction
 
 This page is the canonical home for detector module behavior and API details.
@@ -21,6 +40,11 @@ Canonical runtime contract:
 - scores: detector-prefixed metrics merged with runtime timing metadata
 - stage: canonical detector stage tokens (`pre-fit`, `post-fit`, `pre-detect`, `post-detect`)
 - ordering: detector execution is marked as `post-attack` for consistent orchestration metadata
+
+## Integrations
+
+- Framework integration: {doc}`pytorch`
+- Plugin integrations: {doc}`fairlearn`, {doc}`lifelines`, {doc}`anjana`
 
 ## Examples
 

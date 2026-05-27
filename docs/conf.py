@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "deckard"
 copyright = "2026, simplymathematics"
 author = "simplymathematics"
-release = "0.98.1"
+release = "0.98.2"
 
 # ---------------------------------------------------------------------------
 # General configuration
@@ -47,6 +47,7 @@ exclude_patterns = [
     "notebooks/error.log",
     "notebooks/deckard.log",
     "notebooks/optimize.ipynb",
+    "notebooks/dvclive.ipynb",
 ]
 
 root_doc = "index"

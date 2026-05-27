@@ -69,3 +69,4 @@ experiment:
 - {doc}`experiment` — orchestration and persistence timing
 - {doc}`plot` — plot backends consuming persisted artifacts
 - {doc}`layers` — post-hoc layers reading persisted outputs
+

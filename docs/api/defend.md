@@ -1,5 +1,11 @@
 # Defense Runtime
 
+## Contract References
+
+- Canonical API contract page: {doc}`defend`
+- Developer authoring contract: {doc}`../developers/defenses`
+- Shared config/mixin/plugin contracts: {doc}`configs`, {doc}`../developers/mixins`, {doc}`../developers/plugins`
+
 ## Introduction
 
 This page is the canonical home for defense runtime behavior and API details.
@@ -14,6 +20,12 @@ Deckard defense orchestration is centered on
 
 This layer composes model wrappers, ART defenses, and plugin hooks with
 runtime mixin dispatch.
+
+Important distinction:
+
+- Trainer runtime configuration objects are documented in {doc}`train`.
+- ART retrainer defenses are defense-family objects handled in this page under
+  the `trainer` defense family.
 
 ## Parent Config and Mixin Map
 
@@ -98,13 +110,7 @@ model:
 ```
 
 ```{eval-rst}
-.. automodule:: deckard.model.defense.trainer
-   :members:
-   :show-inheritance:
-```
-
-```{eval-rst}
-.. automodule:: deckard.model.transformer
+.. automodule:: deckard.model.defense.transformer
    :members:
    :show-inheritance:
 ```
@@ -127,3 +133,4 @@ model:
 - {doc}`attack`
 - {doc}`score`
 - {doc}`train`
+- {doc}`../developers/defenses`

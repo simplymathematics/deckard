@@ -10,6 +10,20 @@ Fairlearn model and data extensions are thin wrappers over the canonical model
 and data runtimes, with fairness-specific behavior isolated to the plugin
 layers.
 
+## Parent Core Modules and Behavior Deltas
+
+Parent core pages:
+
+- {doc}`data`
+- {doc}`model`
+- {doc}`score`
+
+Behavior deltas in this integration:
+
+- sensitive-feature-aware data routing and fairness policy hooks,
+- fairness-aware model wrappers layered over canonical model runtime,
+- Fairlearn metric aggregation and fairness scorer profiles.
+
 (fairlearn-overview)=
 
 ## Overview
@@ -213,3 +227,4 @@ attack-time fairness scoring.
 - {doc}`modules` — overview of all extensions
 - {doc}`../developers/data` — cross-family runtime contract
 - {doc}`../developers/migration` — migration guardrails
+

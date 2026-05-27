@@ -8,6 +8,20 @@ The PyTorch runtime still follows the canonical Deckard model contract,
 including stage-aware defense application, files-only persistence, and
 canonical timing and score fields.
 
+## Parent Core Modules and Behavior Deltas
+
+Parent core pages:
+
+- {doc}`data`
+- {doc}`model`
+- {doc}`experiment`
+
+Behavior deltas in this integration:
+
+- torch-native data/model classes and device reconciliation,
+- ART estimator wrapping for torch model attack/defense compatibility,
+- torch runtime artifact handling layered over canonical file/timing contracts.
+
 (pytorch-overview)=
 
 ## Overview
@@ -155,3 +169,4 @@ The {class}`~deckard.frameworks.pytorch.experiment.TorchExperimentConfig` enforc
 - {doc}`modules` — overview of all extensions
 - {doc}`../developers/data` — cross-family runtime contract
 - {doc}`../developers/migration` — migration guardrails
+

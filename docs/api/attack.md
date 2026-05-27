@@ -1,5 +1,24 @@
 # Attack
 
+## Basic flow state
+
+`resolve mode/stage -> generate -> predict -> score -> persist`.
+
+## Capabilities
+
+- Normalize attack mode and stage tokens for consistent execution.
+- Generate attacked samples across supported attack families.
+- Produce attack prediction payloads for downstream evaluation.
+- Emit attack-scoped metrics and persist canonical attack artifacts.
+- Consume model outputs from {doc}`model` and emit metrics used by {doc}`score`.
+
+## Outputs
+
+- Attack artifacts (`attack_file`, `attack_predictions_file`, `score_file`).
+- Attacked labels/predictions and score-ready payloads.
+- Attack timing fields (`attack_generation_time`, `attack_prediction_time`, `attack_score_time`).
+- Attack score dictionaries merged with runtime timing metadata.
+
 ## Introduction
 
 This page is the canonical home for attack module behavior and API details.
@@ -83,6 +102,11 @@ Related Deckard docs:
 - {doc}`pytorch` for ART estimator integration in torch workflows
 - {doc}`/overview/extensions/index` for cross-framework extensions map
 
+## Integrations
+
+- Framework integration: {doc}`pytorch`
+- Plugin integrations: {doc}`fairlearn`, {doc}`lifelines`, {doc}`anjana`
+
 ## Examples
 
 ```{seealso}
@@ -144,11 +168,7 @@ attack:
    :show-inheritance:
 ```
 
-```{eval-rst}
-.. automodule:: deckard.frameworks.pytorch.attack
-   :members:
-   :show-inheritance:
-```
+Framework-specific attack adapters are documented in {doc}`pytorch`.
 
 ## Troubleshooting
 

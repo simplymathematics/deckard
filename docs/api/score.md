@@ -1,9 +1,50 @@
 # Score
 
-This page focuses on API-level scorer behavior and runtime calling semantics.
+## Basic flow state
+
+`normalize mode/stage -> execute scorers -> emit payload`.
+
+## Capabilities
+
+- Normalize scoring mode and stage routing across runtime contexts.
+- Execute configurable scorer dictionaries for model/data/attack payloads.
+- Support label, probability, and logits-based scoring patterns.
+- Persist stage-scoped score outputs for downstream reporting.
+- Aggregate metric payloads produced by {doc}`data`, {doc}`model`, {doc}`attack`, and {doc}`detector`.
+
+## Outputs
+
+- Score dictionaries keyed by stage/mode/metric.
+- Persisted score files and merged runtime score payloads.
+- Stage-scoped metric keys for model, attack, detector, and data contexts.
+
+## Introduction
+
+This page describes score behavior from a user/API perspective: how scorers
+run, how to configure them, and what outputs they produce.
+
+Developer-level scoring contracts and internals are documented in
+{doc}`../developers/score` and {doc}`../developers/scorers`.
 
 For introductory scoring concepts, default scorer families, and YAML catalog
 examples, see {doc}`../overview/scoring`.
+
+## Overview
+
+Use {class}`~deckard.score.ScorerDictConfig` to configure stage-aware and
+mode-aware metric execution across data, model, attack, and detector outputs.
+
+The scoring runtime supports:
+
+- declarative metric configuration from import strings or callable builders,
+- stage filtering (for example `post-attack`),
+- mode-aware execution (`train`, `test`, `val`, and related runtime modes),
+- persisted score payload updates through `score_file`.
+
+## Integrations
+
+- Framework integration: {doc}`pytorch`
+- Plugin integrations: {doc}`fairlearn`, {doc}`lifelines`, {doc}`anjana`
 
 ## Custom Scoring and Runtime Arguments
 

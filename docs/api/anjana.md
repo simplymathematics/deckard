@@ -5,6 +5,20 @@
 The Anjana integration provides anonymization-aware data preparation and scoring
 for privacy-preserving machine-learning workflows.
 
+## Parent Core Modules and Behavior Deltas
+
+Parent core pages:
+
+- {doc}`data`
+- {doc}`model`
+- {doc}`score`
+
+Behavior deltas in this integration:
+
+- anonymization-aware data policy hooks before and after pipeline stages,
+- privacy/utility score tails merged with canonical score payloads,
+- optional dependency layer that does not change core orchestration ownership.
+
 Related Deckard docs:
 
 - {doc}`data` for data pipeline composition
@@ -38,8 +52,8 @@ External references:
 ## Typical Workflow
 
 1. Configure an Anjana-aware data pipeline.
-1. Train a compatible model configuration.
-1. Score utility and privacy-sensitive outcomes.
+2. Train a compatible model configuration.
+3. Score utility and privacy-sensitive outcomes.
 
 ## Canon Runtime Contract
 
@@ -62,3 +76,4 @@ compose with other plugin score tails, including Fairlearn-last merges.
 - {doc}`fairlearn`
 - {doc}`../developers/data`
 - {doc}`../developers/migration`
+

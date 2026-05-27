@@ -24,6 +24,22 @@ including attacks that perturb event times or event status.
 Hydra-oriented configuration for survival experiments is covered in
 {doc}`experiment` and follows [Hydra](https://hydra.cc) composition patterns.
 
+## Parent Core Modules and Behavior Deltas
+
+Parent core pages:
+
+- {doc}`data`
+- {doc}`model`
+- {doc}`score`
+- {doc}`experiment`
+- {doc}`plot`
+
+Behavior deltas in this integration:
+
+- survival-specific duration/event data semantics and modes,
+- lifelines model wrappers and survival metric profiles,
+- survival experiment and plotting extensions layered over core orchestration.
+
 External references:
 
 - [lifelines documentation](https://lifelines.readthedocs.io)
@@ -188,3 +204,4 @@ custom user-provided regression fitters can be imported reliably.
 - {doc}`sample` — split and fold strategies used by survival runs
 - {doc}`pytorch` — optional deep learning survival models
 - {doc}`modules` — overview of all extensions
+

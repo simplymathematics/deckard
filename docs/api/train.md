@@ -1,5 +1,11 @@
 # Training Runtime
 
+## Contract References
+
+- Canonical API contract page: {doc}`train`
+- Developer authoring contract: {doc}`../developers/trainers`
+- Shared config/mixin/plugin contracts: {doc}`configs`, {doc}`../developers/mixins`, {doc}`../developers/plugins`
+
 ## Introduction
 
 This page is the canonical home for training runtime behavior and API details.
@@ -14,6 +20,13 @@ Deckard training behavior is split between core model orchestration in
 
 Trainer defenses are configured separately through
 {class}`deckard.model.defense.trainer.TrainerDefenseConfig`.
+
+Important distinction:
+
+- Trainer configuration objects in this page define how model fitting is
+  orchestrated.
+- ART retrainer defenses are defense objects (configured under `model.defense`)
+  and are documented in {doc}`defend`.
 
 ## Parent Config and Mixin Map
 
@@ -65,3 +78,4 @@ model:
 - {doc}`model`
 - {doc}`defend`
 - {doc}`score`
+- {doc}`../developers/trainers`

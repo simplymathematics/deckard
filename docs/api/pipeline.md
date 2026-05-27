@@ -1,5 +1,11 @@
 # Data Pipeline
 
+## Contract References
+
+- Canonical API contract page: {doc}`pipeline`
+- Developer authoring contract: {doc}`../developers/pipelines`
+- Shared config/mixin/plugin contracts: {doc}`configs`, {doc}`../developers/mixins`, {doc}`../developers/plugins`
+
 ## Introduction
 
 This page is the canonical home for pipeline runtime behavior and API details.
@@ -22,13 +28,9 @@ optional `pipeline` runtime object.
 - {class}`deckard.data.base.DataConfig` is the canonical runtime owner.
 - {class}`deckard.data.pipeline.base.DataPipeline` executes stage order:
   `fit_pre_sample`, `fit_X`, `fit_y`, `fit_Xy`.
-- {class}`deckard.data.base.DataConfig` is a compatibility alias.
-- {class}`deckard.data.pipeline.base.DataConfig` is the default
-  no-op pipeline variant.
-- {class}`deckard.data.pipeline.base.DataConfig` is a fairness
-  family marker variant.
-- {class}`deckard.data.pipeline.base.DataConfig` is an anonymization
-  family marker variant.
+- {mod}`deckard.data.pipeline` re-exports {class}`deckard.data.base.DataConfig`
+  and {class}`deckard.data.pipeline.base.DataPipeline` as the public pipeline
+  package entrypoints.
 - Optional torch variant: {class}`deckard.frameworks.pytorch.data.PytorchDataConfig` (available when torch extras
   are installed) in {mod}`deckard.frameworks.pytorch.data`.
 
@@ -43,7 +45,7 @@ optional `pipeline` runtime object.
 ```{eval-rst}
 .. automodule:: deckard.data.pipeline
    :members:
-  :exclude-members: DataConfig
+   :exclude-members: DataConfig
    :show-inheritance:
 ```
 
@@ -71,4 +73,5 @@ data:
 - {doc}`fairlearn`
 - {doc}`pytorch`
 - {doc}`../developers/data`
+- {doc}`../developers/pipelines`
 - {doc}`../developers/migration`

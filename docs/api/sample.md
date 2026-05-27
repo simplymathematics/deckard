@@ -1,5 +1,11 @@
 # Sampling
 
+## Contract References
+
+- Canonical API contract page: {doc}`sample`
+- Developer authoring contract: {doc}`../developers/samplers`
+- Shared config/mixin/plugin contracts: {doc}`configs`, {doc}`../developers/mixins`, {doc}`../developers/plugins`
+
 ## Overview
 
 Sampling in Deckard is owned by {class}`deckard.data.DataConfig` through its
@@ -51,3 +57,4 @@ sample:
 - {doc}`data`
 - {doc}`pipeline`
 - {doc}`experiment`
+- {doc}`../developers/samplers`

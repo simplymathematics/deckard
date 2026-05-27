@@ -1,5 +1,24 @@
 # Experiment
 
+## Basic flow state
+
+`load -> sample -> train -> defense -> attack -> score -> persist`.
+
+## Capabilities
+
+- Orchestrate end-to-end execution across core runtime modules.
+- Route split/mode/stage context into component runtimes.
+- Compose reproducible runs via declarative config objects and overrides.
+- Persist aggregated run artifacts, timing, and score outputs.
+- Coordinate child components across {doc}`data`, {doc}`model`, {doc}`attack`, {doc}`detector`, and {doc}`score`.
+
+## Outputs
+
+- Composed runtime outputs from data/model/attack/detector components.
+- Aggregated score payloads and persisted score files.
+- Canonical experiment timing and stage execution metadata.
+- Persisted artifact paths managed through file configuration objects.
+
 ## Introduction
 
 This page is the canonical home for experiment orchestration behavior and API
@@ -31,11 +50,13 @@ Survival-specific experiment orchestration is split into a dedicated optional
 module.
 See also: {doc}`lifelines`.
 
-```{eval-rst}
-.. automodule:: deckard.plugins.lifelines.experiment
-   :members:
-   :show-inheritance:
-```
+Integration-specific orchestration behavior is documented in integration pages
+to keep this page focused on core experiment flow.
+
+## Integrations
+
+- Framework integration: {doc}`pytorch`
+- Plugin integrations: {doc}`lifelines`
 
 ## Overview
 

@@ -1,7 +1,25 @@
 # Data
 
-## Introduction
+## Basic flow state
 
+`pre-load -> sample -> pipeline -> score -> persist`.
+
+## Capabilities
+
+- Load built-in and configured datasets into canonical runtime payloads.
+- Execute split-aware sampling and optional preprocessing pipelines.
+- Run data-level scoring across canonical split modes.
+- Persist data artifacts, metadata, and timing records for experiment reuse.
+- Coordinate sub-object flows through {doc}`sample` and {doc}`pipeline`.
+
+## Outputs
+
+- Split payloads: `X_train`, `X_test`, `X_val`, `y_train`, `y_test`, `y_val`.
+- Data/runtime files: data files, params files, score files, metadata files.
+- Runtime timings: load, sample, pipeline, and scoring time fields.
+- Score payloads keyed by stage and mode.
+
+## Introduction
 This page is the canonical home for data module behavior and API details.
 It documents data runtime workflow, defaults, scoring semantics, persistence,
 and extension points in one place.
@@ -23,11 +41,7 @@ The {mod}`deckard.data.sample` module provides pluggable sampling strategies via
 {class}`~deckard.data.sample.BaseSampler`
 for robust train/test/validation splits.
 
-```{eval-rst}
-.. automodule:: deckard.data.sample
-   :members:
-   :show-inheritance:
-```
+See {doc}`sample` for the sampler API reference and runtime details.
 
 ## Data Preprocessing Pipelines
 
@@ -35,8 +49,8 @@ for robust train/test/validation splits.
 via a `pipeline` attribute that accepts a
 {class}`~deckard.data.pipeline.base.DataPipeline` object.
 
-{class}`~deckard.data.DataConfig` remains available as a legacy alias
-to {class}`~deckard.data.DataConfig` for compatibility.
+Developer-level contract details for data orchestration are documented in
+{doc}`../developers/data`.
 
 Common transform components referenced in deckard pipeline configs:
 
@@ -49,48 +63,15 @@ For torch-native transforms, see {doc}`pytorch` and:
 
 - [`torchvision.transforms.Compose`](https://pytorch.org/vision/stable/generated/torchvision.transforms.Compose.html)
 
-## Extensions
+## Integrations
 
-### Pipeline Extension
+Integration capabilities are documented in dedicated pages so core API behavior
+remains focused:
 
-deckard exposes a configurable pipeline layer for data preprocessing via
-{class}`~deckard.data.DataConfig.pipeline`.
+- Framework integration: {doc}`pytorch`
+- Plugin integrations: {doc}`fairlearn`, {doc}`lifelines`, {doc}`anjana`
 
-### Fairlearn Plugin
-
-The fairlearn plugin adds group-aware sampling and fairness metrics with
-`fairlearn` integration.
-See also: {doc}`fairlearn`.
-
-```{eval-rst}
-.. automodule:: deckard.plugins.fairlearn.data
-   :members:
-   :show-inheritance:
-```
-
-### Torch Framework
-
-The torch framework provides dataset loading and sampling for PyTorch and
-torchvision-backed workflows.
-See also: {doc}`pytorch`.
-
-```{eval-rst}
-.. automodule:: deckard.frameworks.pytorch.data
-   :members:
-   :show-inheritance:
-```
-
-## Lifelines plugin
-
-Survival-specific experiment orchestration is split into a dedicated optional
-module.
-See also: {doc}`lifelines`.
-
-```{eval-rst}
-.. automodule:: deckard.plugins.lifelines.data
-   :members:
-   :show-inheritance:
-```
+Core data runtime ownership and behavior remain in {mod}`deckard.data`.
 
 ## Overview
 

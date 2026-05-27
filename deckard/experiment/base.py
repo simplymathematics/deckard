@@ -290,22 +290,21 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
 
     Note:
         ``evaluation_mode`` and ``score_mode`` are mutually exclusive to prevent
-        ambiguous routing. Use exactly one strategy:
-        - ``evaluation_mode`` for preset routing (``standard``, ``tuning``,
-          ``report``).
-        - ``score_mode`` for explicit split routing (``train``, ``test``,
-          ``val``, ``all``), optionally as a list for multi-pass scoring.
+        ambiguous routing. Use ``evaluation_mode`` for preset routing
+        (``standard``, ``tuning``, ``report``), or use ``score_mode`` for
+        explicit split routing (``train``, ``test``, ``val``, ``all``),
+        optionally as a list for multi-pass scoring.
 
-        Attributes:
-                data: Data configuration/runtime payload for the experiment.
-                model: Model configuration/runtime payload.
-                defense: Optional defense pipeline config.
-                attack: Optional attack configuration.
-                detector: Optional detector configuration.
-                files: File configuration for artifact persistence.
-                score: Experiment-level scorer configuration.
-                evaluation_mode: Preset routing mode for scoring/evaluation.
-                score_mode: Explicit split-mode override for scoring/evaluation.
+    Attributes:
+        data: Data configuration/runtime payload for the experiment.
+        model: Model configuration/runtime payload.
+        defense: Optional defense pipeline config.
+        attack: Optional attack configuration.
+        detector: Optional detector configuration.
+        files: File configuration for artifact persistence.
+        score: Experiment-level scorer configuration.
+        evaluation_mode: Preset routing mode for scoring/evaluation.
+        score_mode: Explicit split-mode override for scoring/evaluation.
     """
 
     data: DataConfig

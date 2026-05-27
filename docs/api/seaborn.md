@@ -6,6 +6,19 @@ backend is designed for **multi-run aggregation plots** — visualizing compiled
 results across many experiment runs stored in a tabular data file (CSV,
 Parquet, etc.).
 
+## Parent Core Modules and Behavior Deltas
+
+Parent core pages:
+
+- {doc}`plot`
+- {doc}`score`
+
+Behavior deltas in this integration:
+
+- seaborn-specific plotting configuration and plot-type dispatch,
+- tabular data source preparation for aggregate/compiled run visualization,
+- backend rendering behaviors layered on shared plot artifact contracts.
+
 (seaborn-overview)=
 
 ## Overview
@@ -71,3 +84,4 @@ The `plot_type` field accepts:
 - {doc}`yellowbrick` — single-run diagnostics (ROC, confusion matrix, etc.)
 - {doc}`layers` — CLI layer registry (compile_results, plot)
 - {doc}`experiment` — experiment orchestration that produces scored outputs
+

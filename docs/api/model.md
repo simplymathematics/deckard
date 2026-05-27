@@ -1,5 +1,24 @@
 # Model
 
+## Basic flow state
+
+`initialize -> train -> predict/score -> persist`.
+
+## Capabilities
+
+- Resolve and initialize model implementations from configuration.
+- Train and evaluate classifiers/regressors on canonical split modes.
+- Apply defense stages in deterministic runtime order.
+- Persist config/state artifacts and expose reusable prediction payloads.
+- Integrate with {doc}`train` and {doc}`defend` runtime sub-objects.
+
+## Outputs
+
+- Model artifacts (`model_file`, runtime state files).
+- Prediction/probability payloads for train/test/val splits.
+- Runtime timings for training, prediction, and scoring.
+- Model score dictionaries and persisted score outputs.
+
 ## Introduction
 
 This page is the canonical home for model module behavior and API details.
@@ -22,44 +41,13 @@ are documented in {doc}`../developers/model`.
    :show-inheritance:
 ```
 
-## Extensions
+## Integrations
 
-### Fairlearn Extension
+Integration-specific capabilities are documented in dedicated pages so this
+core API page remains focused on base model behavior:
 
-The fairlearn extension provides fairness-aware model behavior, including
-group-sensitive fitting, scoring, and fairlearn defense wrappers. The public
-model mixin is {class}`~deckard.plugins.fairlearn.model.FairnessBehaviorMixin`.
-See also: {doc}`fairlearn`.
-
-```{eval-rst}
-.. automodule:: deckard.plugins.fairlearn.model
-   :members:
-   :show-inheritance:
-```
-
-### Pytorch extension
-
-The Pytorch extension provides PyTorch-native model training, prediction, and
-scoring through a {class}`~deckard.model.ModelConfig`-compatible API.
-See also: {doc}`pytorch`.
-
-```{eval-rst}
-.. automodule:: deckard.frameworks.pytorch.model
-   :members:
-   :show-inheritance:
-```
-
-## Lifelines plugin
-
-Survival-specific experiment orchestration is split into a dedicated optional
-module.
-See also: {doc}`lifelines`.
-
-```{eval-rst}
-.. automodule:: deckard.plugins.lifelines.model
-   :members:
-   :show-inheritance:
-```
+- Framework integration: {doc}`pytorch`
+- Plugin integrations: {doc}`fairlearn`, {doc}`lifelines`, {doc}`anjana`
 
 ## Overview
 

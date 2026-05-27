@@ -6,6 +6,20 @@ Yellowbrick backend operates on a composed
 {class}`~deckard.experiment.ExperimentConfig` and renders visualizers directly
 from the trained model and prepared dataset.
 
+## Parent Core Modules and Behavior Deltas
+
+Parent core pages:
+
+- {doc}`plot`
+- {doc}`experiment`
+- {doc}`model`
+
+Behavior deltas in this integration:
+
+- yellowbrick visualizer selection and parameterization by plot type,
+- lazy experiment preparation support for single-run diagnostics,
+- backend-specific rendering layered over shared plot/file contracts.
+
 (yellowbrick-overview)=
 
 ## Overview
@@ -106,3 +120,4 @@ Related Deckard docs:
 - {doc}`seaborn` — multi-run aggregation visualization
 - {doc}`experiment` — experiment orchestration
 - {doc}`model` — model configuration and training
+
