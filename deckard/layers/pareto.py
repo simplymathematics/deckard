@@ -221,18 +221,18 @@ def pareto_main(
     """Select best Optuna trials by one or more optimization criteria.
 
     Args:
-    output_file: Output path for selected trial rows.
-    optuna_db: Optuna storage URI, for example ``sqlite:///optuna.db``.
-    study_name: Name of the Optuna study. When omitted, this command
-        requires exactly one study in storage and uses it automatically.
-    optimizers: Comma-separated optimization criteria such as
-        ``"accuracy,evasion_accuracy"``. When omitted, criteria are
-        inferred from study metric names or trial columns.
-    directions: Comma-separated objective directions in
-        ``{maximize,minimize,diff,max,min}``. When omitted, directions are
-        inferred from the Optuna study.
-    top_k: Number of trials to return for single-objective optimization.
-        Multi-objective optimization returns all Pareto-optimal trials.
+        output_file: Output path for selected trial rows.
+        optuna_db: Optuna storage URI, for example ``sqlite:///optuna.db``.
+        study_name: Name of the Optuna study. When omitted, this command
+            requires exactly one study in storage and uses it automatically.
+        optimizers: Comma-separated optimization criteria such as
+            ``"accuracy,evasion_accuracy"``. When omitted, criteria are
+            inferred from study metric names or trial columns.
+        directions: Comma-separated objective directions in
+            ``{maximize,minimize,diff,max,min}``. When omitted, directions are
+            inferred from the Optuna study.
+        top_k: Number of trials to return for single-objective optimization.
+            Multi-objective optimization returns all Pareto-optimal trials.
     """
     if top_k < 1:
         raise ValueError(f"top_k must be >= 1. Got {top_k}")

@@ -67,7 +67,11 @@ class SurvivalFitterLike(Protocol):
 
 @dataclass(kw_only=True)
 class SurvivalSeabornPlotterConfig(BaseConfig):
-    """Factory for seaborn plot configs commonly used in survival model reporting."""
+    """Factory for seaborn plot configs commonly used in survival model reporting.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     coefficients_file: Optional[str] = None
     calibration_file: Optional[str] = None

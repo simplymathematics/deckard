@@ -36,11 +36,14 @@ class _YellowbrickPlotterMarker:
 @dataclass(eq=True)
 class PlotterMixin:
     """Base callable plotter handler used by runtime plotter context resolution.
-
+    
     The ``runtime`` attribute is the active plot config instance owned by the
     plot config ``__call__`` path. Attribute access is delegated to that
     runtime object so mixins can share experiment state, cached results, and
     plot parameters.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     runtime: Any = None
@@ -86,7 +89,7 @@ class PlotterMixin:
 @dataclass(eq=False, kw_only=True)
 class PlotTypePlugin:
     """Generic plotter plugin that binds one mixin to one plotting family/backend.
-
+    
     Initialization fields
     ---------------------
     mixin_type : Any
@@ -99,13 +102,16 @@ class PlotTypePlugin:
         Families explicitly excluded from this plugin match.
     init_params : dict[str, Any]
         Metadata-only declaration payload for class/type/library docs.
-
+    
     Plugin hooks
     ------------
     - ``resolve_plotter_mixins`` contributes mixins to runtime plotter context assembly.
     - ``resolve_plotter_handler`` returns callable handler for dispatch.
     - ``__call__`` forwards ``*args``/``**kwargs`` to the configured mixin instance
       bound to the runtime config.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     mixin_type: Any
@@ -217,10 +223,13 @@ class PlotTypePlugin:
 @dataclass(eq=False, kw_only=True)
 class PlotDictConfig(BaseConfig):
     """Container for multiple plot configs enabling flexible plot composition.
-
+    
     This config stores named plot definitions and a backend selector, then
     participates in ``PlotTypePlugin``-based resolution for backend dispatch
     and mixin composition at runtime.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     plots: dict[str, Any] = field(default_factory=dict)

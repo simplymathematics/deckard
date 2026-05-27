@@ -66,6 +66,14 @@ class TinyFairness(Dataset):
 
 
 class SyntheticImageSensitiveDataset(Dataset):
+    """Synthetic image dataset with hidden sensitive attributes.
+
+    Attributes:
+        images: Randomly generated image tensor payload.
+        labels: Randomly generated target labels.
+        _sensitive: Internal sensitive-attribute tensor not exposed by item access.
+    """
+
     def __init__(
         self,
         n_samples=1000,
@@ -103,7 +111,11 @@ class SyntheticImageSensitiveDataset(Dataset):
 
 @dataclass(eq=False, kw_only=True)
 class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
-    """Fairlearn-compatible DataConfig for PyTorch Datasets with sensitive features."""
+    """Fairlearn-compatible DataConfig for PyTorch Datasets with sensitive features.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     _target_: str = (
         "deckard.frameworks.pytorch.fairness_data.FairlearnPytorchDataConfig"

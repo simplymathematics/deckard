@@ -31,7 +31,11 @@ class PruneTrialProtocol(Protocol):
 
 
 class ModelTrainingMixin:
-    """Reusable model training behavior for non-pretrained model flows."""
+    """Reusable model training behavior for non-pretrained model flows.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     def train_model(self, X: MatrixLike, y: ArrayLike) -> None:
         """Fit the underlying estimator.
@@ -60,7 +64,11 @@ class ModelTrainingMixin:
 
 
 class PretrainedModelMixin:
-    """Reusable pretrained-model loading behavior."""
+    """Reusable pretrained-model loading behavior.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     def load_cached(self, path: str) -> EstimatorLike:
         """Load a persisted model from ``path`` using the config's loader.
@@ -86,7 +94,11 @@ class PretrainedModelMixin:
 
 
 class ModelPrunerMixin:
-    """Reusable Optuna-style pruning behavior."""
+    """Reusable Optuna-style pruning behavior.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     def check_prune(
         self,
@@ -115,7 +127,11 @@ class ModelPrunerMixin:
 
 
 class ModelHookRuntimeMixin:
-    """Reusable plugin orchestration and runtime-state copy behavior."""
+    """Reusable plugin orchestration and runtime-state copy behavior.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     def _instantiate_plugin(self, plugin_spec: Any):
         """Create one plugin instance from a normalized plugin specification."""

@@ -21,7 +21,12 @@ logger = logging.getLogger(__name__)
 
 
 class InferenceAttackMixin(AttackMixin):
-    """Reusable inference attack behavior (membership, attribute, inversion)."""
+    """Reusable inference attack behavior (membership, attribute, inversion).
+
+    Attributes:
+        targeted_attribute: Attribute name/index used by attribute inference flows.
+        score_dict: Runtime score payload for inference metrics.
+    """
 
     targeted_attribute: str
 
@@ -763,31 +768,13 @@ class InferenceAttackMixin(AttackMixin):
 class InferenceAttackConfig(InferenceAttackMixin, AttackConfig):
     """Configuration for privacy inference attacks.
 
-    Initialization params
-    ---------------------
-    attack_type : str
-        Attack family path inherited from ``AttackConfig``. Expected family is
-        ``inference``.
-    attack_params : dict[str, Any]
-        Constructor kwargs and runtime controls for membership, attribute,
-        model-inversion, and related inference subtypes.
-    plugins : list[AttackTypePlugin]
-        Declarative runtime plugin specs. Default contains one
-        ``AttackTypePlugin`` configured with:
-        ``mixin_type: type = _InferenceAttackMixin``,
-        ``attack_type: str = 'inference'``, and
-        ``excluded_subtypes: tuple[str, ...] = ('reconstruction',)``.
+    Note:
+        Expected family is ``inference``. The default plugin excludes the
+        ``reconstruction`` subtype, which is routed through
+        ``ReconstructionAttackConfig``.
 
-    Runtime params
-    --------------
-    _InferenceAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> ScoreDict
-        Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
-    _InferenceAttackMixin.infer_membership(self, data: Any, attack: Any) -> ScoreDict
-        Membership-inference runtime handler.
-    _InferenceAttackMixin.infer_attribute(self, data: Any, art_model: Any, attack: Any, targeted_attribute: str | int) -> ScoreDict
-        Attribute-inference runtime handler.
-    _InferenceAttackMixin.infer_model_inversion(self, data: Any, attack: Any) -> ScoreDict
-        Model-inversion runtime handler.
+    Attributes:
+        plugins: Default plugin wiring for ``attack_type='inference'``.
     """
 
     plugins: list = field(

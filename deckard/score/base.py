@@ -53,7 +53,7 @@ ScoreKwargValue = (
 
 class ScoringDefenseStage(str, Enum):
     """Enum representing the defense stage for scoring context.
-
+    
     Attributes
     ----------
     PRE_DEFENSE : str
@@ -62,6 +62,9 @@ class ScoringDefenseStage(str, Enum):
         Score operates on data after defense application (fitted/transformed).
     VAL_DEFENSE : str
         Score operates on validation data for defense evaluation.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     PRE_DEFENSE = "pre-defense"
@@ -71,13 +74,16 @@ class ScoringDefenseStage(str, Enum):
 
 class ScoringPipelineStage(str, Enum):
     """Enum representing the pipeline stage for scoring context.
-
+    
     Attributes
     ----------
     POST_PIPELINE : str
         Score operates after the full processing pipeline has been applied.
     VAL_PIPELINE : str
         Score operates on validation data for pipeline evaluation.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     POST_PIPELINE = "post-pipeline"
@@ -265,10 +271,13 @@ class _AttackProfileScorer:
 @dataclass(eq=True)
 class ScorerMixin:
     """Base callable scorer handler used by runtime scorer context resolution.
-
+    
     The ``runtime`` attribute is the active ``ScorerDictConfig`` instance owned
     by ``ScorerDictConfig.__call__``. Attribute access is forwarded to that
     runtime object so mixins can delegate scorer configuration and mutable state.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     runtime: Any = None
@@ -316,7 +325,7 @@ class ScorerMixin:
 @dataclass(eq=False, kw_only=True)
 class ScorerTypePlugin:
     """Generic scorer plugin that binds one mixin to one scoring family/subtype.
-
+    
     Initialization fields
     ---------------------
     mixin_type : Any
@@ -329,13 +338,16 @@ class ScorerTypePlugin:
         Subtypes explicitly excluded from this plugin match.
     init_params : dict[str, Any]
         Metadata-only declaration payload for class/type/library docs.
-
+    
     Plugin hooks
     ------------
     - ``resolve_scorer_mixins`` contributes mixins to runtime scorer context assembly.
     - ``resolve_scorer_handler`` returns callable handler for dispatch.
     - ``__call__`` forwards ``*args``/``**kwargs`` to the configured mixin instance
       bound to the runtime config.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     mixin_type: Any
@@ -456,23 +468,26 @@ def _normalize_classifier_flag(
 @dataclass
 class TaskAwareScorerMixin:
     """Mixin for scorer configs whose defaults depend on task type.
-
+    
     API
     ---
     ``classifier``
         Optional explicit task selector. Accepted values are ``True``, ``False``,
         ``"classifier"``, ``"regressor"``, or ``None``.
-
+    
     ``resolve_classifier(...)``
         Resolve the effective task from explicit config first, then runtime
         attack/model/data context, finally a caller-supplied default.
-
+    
     ``_build_default_scorers(classifier)``
         Subclasses must return the default scorer mapping for the resolved task.
-
+    
     ``_initialize_task_aware_scorers()``
         Populate ``self.scorers`` from ``_build_default_scorers`` when the user
         did not provide an explicit scorer mapping.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     classifier: Union[bool, str, None] = None
@@ -558,7 +573,11 @@ class TaskAwareScorerMixin:
 
 @dataclass
 class ScorerConfig:
-    """Atomic scorer configuration."""
+    """Atomic scorer configuration.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     score_name: str
     score_function: Any
@@ -845,7 +864,7 @@ class ScorerConfig:
 @dataclass(eq=False, kw_only=True)
 class ScorerDictConfig(BaseConfig):
     """Container of named ScorerConfig instances.
-
+    
     Attributes
     ----------
     scorers : dict[str, ScorerConfig]
@@ -854,6 +873,9 @@ class ScorerDictConfig(BaseConfig):
         Generic stage selector for this scorer profile. Supports a single stage
         token (e.g., ``"test"``) or multiple stage tokens
         (e.g., ``["post-defense", "post-pipeline"]``).
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     scorers: dict[str, ScorerConfig] = field(
@@ -1864,7 +1886,11 @@ def _default_pytorch_classification_scorers() -> dict[str, ScorerConfig]:
 
 @dataclass(eq=False, kw_only=True)
 class DefaultModelScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
-    """Default model scorer family with optional task inheritance."""
+    """Default model scorer family with optional task inheritance.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     classifier: Union[bool, str, None] = None
     scoring_type: str = "model"
@@ -1884,17 +1910,31 @@ class DefaultModelScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
 
 @dataclass(eq=False, kw_only=True)
 class DefaultClassifierScorerDictConfig(DefaultModelScorerDictConfig):
+    """DefaultClassifierScorerDictConfig runtime class.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
     classifier: Union[bool, str, None] = True
 
 
 @dataclass(eq=False, kw_only=True)
 class DefaultRegressorScorerDictConfig(DefaultModelScorerDictConfig):
+    """DefaultRegressorScorerDictConfig runtime class.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
     classifier: Union[bool, str, None] = False
 
 
 @dataclass(eq=False, kw_only=True)
 class DefaultPytorchScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
-    """Default PyTorch scorer family with optional task inheritance."""
+    """Default PyTorch scorer family with optional task inheritance.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     classifier: Union[bool, str, None] = None
     scoring_type: str = "model"
@@ -1915,10 +1955,13 @@ class DefaultPytorchScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
 @dataclass(eq=False, kw_only=True)
 class DefaultPytorchClassifierScorerDictConfig(DefaultPytorchScorerDictConfig):
     """Default classifier scorers for PyTorch models.
-
+    
     PyTorch model wrappers often expose logits but not ``predict_proba``. This
     default avoids probability-required metrics so automatic scoring works out
     of the box.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     classifier: Union[bool, str, None] = True
@@ -1926,7 +1969,11 @@ class DefaultPytorchClassifierScorerDictConfig(DefaultPytorchScorerDictConfig):
 
 @dataclass(eq=False, kw_only=True)
 class DefaultPytorchRegressorScorerDictConfig(DefaultPytorchScorerDictConfig):
-    """Default regressor scorers for PyTorch models."""
+    """Default regressor scorers for PyTorch models.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     classifier: Union[bool, str, None] = False
 

@@ -12,6 +12,17 @@ from hydra.core.hydra_config import HydraConfig
 
 
 class ModelFiles(TypedDict, total=False):
+    """Typed mapping for model-related artifact file paths.
+
+    Attributes:
+        model_file: Serialized model configuration or runtime checkpoint path.
+        training_predictions_file: Training split prediction artifact path.
+        test_predictions_file: Test split prediction artifact path.
+        training_probabilities_file: Training split probability artifact path.
+        test_probabilities_file: Test split probability artifact path.
+        score_file: Model score artifact path.
+    """
+
     model_file: str
     training_predictions_file: str
     test_predictions_file: str
@@ -21,23 +32,54 @@ class ModelFiles(TypedDict, total=False):
 
 
 class AttackFiles(TypedDict, total=False):
+    """Typed mapping for attack-related artifact file paths.
+
+    Attributes:
+        attack_file: Serialized attack artifact path.
+        attack_predictions_file: Attack prediction artifact path.
+        score_file: Attack score artifact path.
+    """
+
     attack_file: str
     attack_predictions_file: str
     score_file: str
 
 
 class LogFiles(TypedDict, total=False):
+    """Typed mapping for log and error file paths.
+
+    Attributes:
+        log_file: Runtime log artifact path.
+        error_file: Runtime error log artifact path.
+    """
+
     log_file: str
     error_file: str
 
 
 class BaseFiles(TypedDict, total=False):
+    """Typed mapping for shared data/config artifact file paths.
+
+    Attributes:
+        data_file: Primary data artifact path.
+        params_file: Serialized parameter/config artifact path.
+        score_file: Shared score artifact path.
+    """
+
     data_file: str
     params_file: str
     score_file: str
 
 
 class DefenseFiles(TypedDict, total=False):
+    """DefenseFiles runtime class.
+
+    Attributes:
+        defended_model_file: Defended model artifact path.
+        defended_predictions_file: Defended prediction artifact path.
+        defended_probabilities_file: Defended probability artifact path.
+        score_file: Defense score artifact path.
+    """
     defended_model_file: str
     defended_predictions_file: str
     defended_probabilities_file: str
@@ -45,6 +87,15 @@ class DefenseFiles(TypedDict, total=False):
 
 
 class DetectorFiles(TypedDict, total=False):
+    """Typed mapping for detector-related artifact file paths.
+
+    Attributes:
+        detector_model_file: Detector model artifact path.
+        detected_predictions_file: Detector prediction artifact path.
+        detected_probabilities_file: Detector probability artifact path.
+        score_file: Detector score artifact path.
+    """
+
     detector_model_file: str
     detected_predictions_file: str
     detected_probabilities_file: str
@@ -79,6 +130,8 @@ attack_files = tuple(collect_typed_dict_keys(AttackFiles))
 
 
 class FileConfigError(TypeError):
+    """Raised when file-key payloads violate the canonical file schema."""
+
     pass
 
 
@@ -204,7 +257,11 @@ class CanonFileHandler(AbstractFileHandler):
 
 
 class PlaceholderResolverMixin:
-    """Reusable placeholder-expansion helpers for file-oriented config objects."""
+    """Reusable placeholder-expansion helpers for file-oriented config objects.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     replace: dict[str, str]
 
@@ -285,23 +342,26 @@ class PlaceholderResolverMixin:
 
 class FileConfig(PlaceholderResolverMixin):
     """Dynamic file-path configuration container.
-
+    
     ``FileConfig`` stores validated artifact paths for datasets, models,
     predictions, logs, attacks, and scores.
-
+    
     Placeholder expansion is applied to string values. Supported placeholders:
     - ``{num}``: Hydra job number.
     - ``{timestamp}``: Current timestamp (``YYYYMMDD-HHMMSS``).
     - ``{hash}``: Hash/job id for the file config.
     - ``{#}`` and ``{*}``: Alias placeholders.
-
+    
     Args:
         replace: Optional mapping used for additional placeholder replacements.
         handler: Optional shared file handler implementation.
         **files: File-path keyword arguments matching the configured schema.
-
+    
     Raises:
         FileConfigError: If an unknown file key is provided.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     def __init__(

@@ -98,7 +98,11 @@ logger = logging.getLogger(__name__)
 
 @dataclass(eq=False, kw_only=True)
 class DVCExperimentPlugin:
-    """Runtime DVC + DVCLive hook policy configuration."""
+    """Runtime DVC + DVCLive hook policy configuration.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     enabled: bool = False
     dvclive_dir: str | None = None
@@ -158,7 +162,11 @@ class DVCExperimentPlugin:
 
 @dataclass(eq=False, kw_only=True)
 class DVCExperimentMixin:
-    """Mixin facade for DVCLive monitoring/logging hook behavior."""
+    """Mixin facade for DVCLive monitoring/logging hook behavior.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     def configure_dvclive_runtime(self, **kwargs: Any) -> dict[str, list[HookPlugin]]:
         """Build DVCLive hook wrappers for the current experiment runtime.
@@ -207,7 +215,11 @@ class DVCExperimentMixin:
 
 @dataclass(eq=False, kw_only=True)
 class DVCExperimentConfig:
-    """Lightweight wrapper around ExperimentConfig with native DVC plugin policy."""
+    """Lightweight wrapper around ExperimentConfig with native DVC plugin policy.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     experiment: Any
     dvc_plugin: Any = None

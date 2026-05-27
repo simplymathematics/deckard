@@ -65,13 +65,16 @@ def _lifelines_dataset_loaders() -> dict[str, Any]:
 @dataclass(eq=False, kw_only=True)
 class SurvivalExperimentConfig(ExperimentConfig):
     """ExperimentConfig specialization for survival-analysis workflows.
-
+    
     Required initialization arguments:
     - data: DataConfig
     - model: survival model name (str)
     - target: event label column in runtime data
     - event_col: event/censoring column expected by lifelines fitters
     - duration_col: duration/time column expected by lifelines fitters
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     # Required fields

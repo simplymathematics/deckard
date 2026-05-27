@@ -192,7 +192,11 @@ def resolve_sensitive_split_payload(
 
 @dataclass(eq=False, kw_only=True)
 class DataRuntimeStateMixin(RuntimeBase):
-    """Reusable runtime-state copy behavior for data-like components."""
+    """Reusable runtime-state copy behavior for data-like components.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     def _copy_runtime_state_to(self, target: Any) -> None:
         runtime_fields = [
@@ -233,7 +237,11 @@ class DataRuntimeStateMixin(RuntimeBase):
 
 @dataclass(eq=False, kw_only=True)
 class ScoreOrchestratorMixin(OrchestratorBase, DataRuntimeStateMixin):
-    """Shared score-stage orchestration for data-like runtimes."""
+    """Shared score-stage orchestration for data-like runtimes.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     default_stage: Final[str] = DEFAULT_SCORE_STAGE
     stage_aliases: ClassVar[dict[str, str]] = STAGE_ALIASES

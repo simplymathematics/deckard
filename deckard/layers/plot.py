@@ -203,19 +203,20 @@ def _extract_backend(
 
 
 def plot_main(cfg: Any) -> dict:
-    """Execute plotting from either experiment config (Yellowbrick) or tabular results (Seaborn).
+    """Execute plotting from experiment config or tabular results.
 
     Args:
-    cfg: Plot config carrying experiment paths, data paths, backend choice,
-        and backend-specific plotting parameters.
-    title:
-            Optional custom plot title.
-    xlabel, ylabel, xscale, yscale, legend_title:
-            Optional Seaborn axis/legend formatting.
-    kwargs_file:
-            Optional YAML file containing Seaborn `kwargs`.
-    rc_config_file:
-            Optional YAML file containing matplotlib rcParams for Seaborn.
+        cfg: Plot configuration payload containing backend selection and
+            backend-specific parameters.
+
+    Returns:
+        A dictionary describing plotting backend, mode, output locations, and
+        score payload returned by the plotting runtime.
+
+    Raises:
+        ValueError: If backend routing inputs are missing or inconsistent.
+        TypeError: If YAML-backed plotting parameter files do not resolve to
+            dictionaries.
     """
     extracted_experiment_cfg = _extract_experiment_cfg_from_hydra_cfg(cfg)
     resolved = _resolve_plot_args_from_cfg(cfg)

@@ -153,9 +153,12 @@ def dvc_system_snapshot_score(
 @dataclass(eq=False, kw_only=True)
 class DVCSystemScorerDictConfig(_DataScorerMarker, ScorerDictConfig):
     """Stage-scoped DVC system scorer used by experiment DVC hooks.
-
+    
     By default, this scorer is configured to execute only during component score
     hook stages: data-score, model-score, attack-score, detector-score.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     scorers: dict[str, ScorerConfig] = field(default_factory=dict)

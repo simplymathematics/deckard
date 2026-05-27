@@ -466,10 +466,13 @@ def _named_classifier_adapter(model_config: Any) -> _YellowbrickModelAdapter:
 @dataclass(eq=True)
 class YellowbrickPlotterMixin(PlotterMixin):
     """Yellowbrick-specific plotter handler for ML model visualization.
-
+    
     The runtime object provides the active Yellowbrick plot config, including
     experiment context, visualizer type, clustering mode, selected features or
     classes, and visualizer-specific plot parameters.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     def __call__(
@@ -501,12 +504,15 @@ class YellowbrickPlotterMixin(PlotterMixin):
 @dataclass(kw_only=True, eq=False)
 class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
     """Render a single Yellowbrick plot from composed experiment configuration.
-
+    
     This config stores the experiment context, Yellowbrick visualizer type,
     feature or class selection, rendering metadata, and output path for one
     plot. It inherits ``_YellowbrickPlotterMarker`` so runtime dispatch
     resolves the Yellowbrick plotting mixin when the Yellowbrick backend is
     selected.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     experiment: ExperimentConfig
@@ -1110,8 +1116,10 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
         """Parse ``param_range`` configuration into a concrete value sequence.
 
         Accepted formats:
-            [start, stop]
-            [start, stop, "linear"|"log"|step]
+            - ``[start, stop]``
+            - ``[start, stop, "linear"]``
+            - ``[start, stop, "log"]``
+            - ``[start, stop, step]``
 
         Returns:
             Concrete range values as a list.

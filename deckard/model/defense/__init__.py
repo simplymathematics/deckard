@@ -8,8 +8,11 @@ from .base import DefenseConfig, DefensePipelineConfig
 @dataclass(kw_only=True)
 class DefaultDefenseConfig(DefenseConfig):
     """Default neutral defense configuration.
-
+    
     This config keeps defense disabled unless explicitly overridden.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     defense_name: str | None = None
@@ -18,7 +21,11 @@ class DefaultDefenseConfig(DefenseConfig):
 
 @dataclass(kw_only=True)
 class DefaultSklearnDefenseConfig(DefaultDefenseConfig):
-    """Default sklearn defense configuration."""
+    """Default sklearn defense configuration.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     defense_name: str | None = None
     defense_params: dict = field(default_factory=dict)
@@ -26,7 +33,11 @@ class DefaultSklearnDefenseConfig(DefaultDefenseConfig):
 
 @dataclass(kw_only=True)
 class DefaultPytorchDefenseConfig(DefaultDefenseConfig):
-    """Default pytorch defense configuration."""
+    """Default pytorch defense configuration.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     defense_name: str | None = None
     defense_params: dict = field(default_factory=dict)

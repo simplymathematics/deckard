@@ -17,7 +17,11 @@ from .base import (
 
 
 class DetectorDefenseMixin(DefenseMixin):
-    """Reusable detector defense behavior."""
+    """Reusable detector defense behavior.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     def detect(
         self,
@@ -184,9 +188,12 @@ class DetectorDefenseMixin(DefenseMixin):
 @dataclass(eq=False)
 class DetectorDefenseConfig(DetectorDefenseMixin, DefensePipelineConfig):
     """Configuration for detector-based defenses.
-
+    
     This wraps detector-family defense behavior and registers detector-specific
     defense type plugins for runtime dispatch.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     plugins: list = field(

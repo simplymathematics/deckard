@@ -23,7 +23,16 @@ logger = logging.getLogger(__name__)
 
 
 class EvasionAttackMixin(AttackMixin):
-    """Reusable evasion attack behavior."""
+    """Reusable evasion attack behavior.
+
+    Attributes:
+        attack_size: Number of samples used for evasion attack evaluation.
+        attack_time: Runtime duration for adversarial example generation.
+        attack_prediction_time: Runtime duration for adversarial prediction.
+        attack_predictions: Stored adversarial outputs/predictions.
+        attacked_labels: Labels associated with attacked samples.
+        score_dict: Runtime score payload for evasion metrics.
+    """
 
     # Declared for static analyzers
     attack_size: int
@@ -204,25 +213,12 @@ class EvasionAttackMixin(AttackMixin):
 class EvasionAttackConfig(EvasionAttackMixin, AttackConfig):
     """Configuration for evasion attacks that generate adversarial examples.
 
-    Initialization params
-    ---------------------
-    attack_type : str
-        Attack family path inherited from ``AttackConfig``. Expected family is
-        ``evasion``.
-    attack_params : dict[str, Any]
-        Constructor kwargs forwarded to resolved ART evasion attack classes.
-    plugins : list[AttackTypePlugin]
-        Declarative runtime plugin specs. Default contains one
-        ``AttackTypePlugin`` configured with:
-        ``mixin_type: type = _EvasionAttackMixin`` and
-        ``attack_type: str = 'evasion'``.
+    Note:
+        Expected family is ``evasion``. Runtime behavior is delegated to
+        ``EvasionAttackMixin`` through the default ``AttackTypePlugin``.
 
-    Runtime params
-    --------------
-    _EvasionAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> ScoreDict
-        Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
-    _EvasionAttackMixin.evade(self, data: Any, art_model: Any, attack: Any) -> ScoreDict
-        Generates adversarial examples and returns score payload.
+    Attributes:
+        plugins: Default plugin wiring for ``attack_type='evasion'``.
     """
 
     plugins: list = field(

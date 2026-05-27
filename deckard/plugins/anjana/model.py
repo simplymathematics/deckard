@@ -9,7 +9,11 @@ from .data import AnjanaDataConfig
 
 
 class AnjanaModelInitMixin:
-    """Reusable initialization behavior for ANJANA model configs."""
+    """Reusable initialization behavior for ANJANA model configs.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     # Declared for static analyzers; concrete dataclass provides these fields.
     data: Union[AnjanaDataConfig, None]
@@ -25,7 +29,11 @@ class AnjanaModelInitMixin:
 
 @dataclass(eq=False, kw_only=True)
 class AnjanaModelConfig(AnjanaModelInitMixin, ModelConfig):
-    """ANJANA-aware model config for data anonymization scoring."""
+    """ANJANA-aware model config for data anonymization scoring.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     data: Union[AnjanaDataConfig, None] = None
 

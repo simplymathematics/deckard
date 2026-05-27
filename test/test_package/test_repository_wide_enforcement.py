@@ -7,6 +7,7 @@ for plugin/framework decoupling and deterministic orchestration.
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
 
 from deckard.declarations import (
@@ -17,13 +18,14 @@ from deckard.plugins.anjana.data import AnjanaDataConfig
 from deckard.plugins.fairlearn.data import FairlearnDataConfig
 
 
-def _run_enforcement(scope: str) -> None:
+def _run_enforcement(scope: str, *extra_args: str) -> None:
     repo_root = Path(__file__).resolve().parents[2]
     cmd = [
-        "python",
+        sys.executable,
         "scripts/repository_enforcement.py",
         "--scope",
         scope,
+        *extra_args,
     ]
     result = subprocess.run(
         cmd,
@@ -35,13 +37,17 @@ def _run_enforcement(scope: str) -> None:
     assert result.returncode == 0, result.stdout + "\n" + result.stderr
 
 
-def _run_enforcement_result(scope: str) -> subprocess.CompletedProcess[str]:
+def _run_enforcement_result(
+    scope: str,
+    *extra_args: str,
+) -> subprocess.CompletedProcess[str]:
     repo_root = Path(__file__).resolve().parents[2]
     cmd = [
-        "python",
+        sys.executable,
         "scripts/repository_enforcement.py",
         "--scope",
         scope,
+        *extra_args,
     ]
     return subprocess.run(
         cmd,
@@ -98,6 +104,49 @@ def test_repository_enforcement_default_scorer_dict_config_name_passes(
     )
 
     result = _run_enforcement_result(str(sample))
+
+    assert result.returncode == 0, result.stdout + "\n" + result.stderr
+
+
+def test_repository_enforcement_attributes_section_required_for_config(
+    tmp_path: Path,
+) -> None:
+    sample = tmp_path / "bad_attributes_config.py"
+    sample.write_text(
+        "class RuntimeConfig:\n"
+        '    """Temporary config class without attributes section."""\n'
+        "    value: int = 1\n",
+        encoding="utf-8",
+    )
+
+    result = _run_enforcement_result(
+        str(sample),
+        "--require-attributes-sections",
+    )
+
+    assert result.returncode == 1
+    assert "DOC006" in result.stdout
+    assert "missing Google-style 'Attributes:' section" in result.stdout
+
+
+def test_repository_enforcement_attributes_section_passes_for_sampler(
+    tmp_path: Path,
+) -> None:
+    sample = tmp_path / "good_attributes_sampler.py"
+    sample.write_text(
+        "class KFoldSampler:\n"
+        '    """Temporary sampler with attributes section.\n\n'
+        "    Attributes:\n"
+        "        n_splits: Number of folds.\n"
+        '    """\n'
+        "    n_splits: int = 5\n",
+        encoding="utf-8",
+    )
+
+    result = _run_enforcement_result(
+        str(sample),
+        "--require-attributes-sections",
+    )
 
     assert result.returncode == 0, result.stdout + "\n" + result.stderr
 

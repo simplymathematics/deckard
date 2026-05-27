@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 class TorchDatasetSamplingMixin:
     """Sampling adapter returning Dataset objects.
-
+    
     Required attrs:
         dataset: Dataset
         test_size: float
@@ -48,6 +48,9 @@ class TorchDatasetSamplingMixin:
         random_state: int
         sample: Literal["split", "fold", "shuffle"]
         stratify: bool
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     dataset: Dataset
@@ -222,7 +225,11 @@ class TorchDatasetSamplingMixin:
 
 
 class TorchDatasetMixin(TorchDatasetSamplingMixin):
-    """PyTorch data mixin with dataset-aware sampling behavior."""
+    """PyTorch data mixin with dataset-aware sampling behavior.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     sampler: Union[str, dict, Callable[..., Any], None]
     sampler_params: dict[str, Any]
@@ -694,9 +701,12 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
 @dataclass(eq=False, kw_only=True)
 class PytorchCustomDataConfig(PytorchDataConfig):
     """Configuration for HuggingFace datasets loaded via DataLoader.
-
+    
     Extends PytorchDataConfig to support HuggingFace datasets with custom
     transforms and DataLoader-based loading.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     val: bool = False

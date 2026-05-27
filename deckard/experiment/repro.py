@@ -14,7 +14,11 @@ from ..plugins import HookPlugin
 
 @dataclass(eq=False, kw_only=True)
 class DVCReproPlugin:
-    """Runtime DVC persistence policy for experiment orchestration hooks."""
+    """Runtime DVC persistence policy for experiment orchestration hooks.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     enabled: bool = False
     mode: str = "single"

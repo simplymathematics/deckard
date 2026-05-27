@@ -93,7 +93,11 @@ class _PoisoningAttack(Protocol):
 
 
 class PoisoningAttackMixin(AttackMixin):
-    """Reusable poisoning attack behavior (backdoor, trojan)."""
+    """Reusable poisoning attack behavior (backdoor, trojan).
+
+    Attributes:
+        score_dict: Runtime score payload for poisoning metrics.
+    """
 
     def __call__(
         self,
@@ -491,25 +495,12 @@ class PoisoningAttackMixin(AttackMixin):
 class PoisoningAttackConfig(PoisoningAttackMixin, AttackConfig):
     """Configuration for poisoning attacks that corrupt training data.
 
-    Initialization params
-    ---------------------
-    attack_type : str
-        Attack family path inherited from ``AttackConfig``. Expected family is
-        ``poisoning``.
-    attack_params : dict[str, Any]
-        Constructor kwargs forwarded to resolved ART poisoning attack classes.
-    plugins : list[AttackTypePlugin]
-        Declarative runtime plugin specs. Default contains one
-        ``AttackTypePlugin`` configured with:
-        ``mixin_type: type = _PoisoningAttackMixin`` and
-        ``attack_type: str = 'poisoning'``.
+    Note:
+        Expected family is ``poisoning``. Runtime behavior is delegated to
+        ``PoisoningAttackMixin`` through the default ``AttackTypePlugin``.
 
-    Runtime params
-    --------------
-    _PoisoningAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> ScoreDict
-        Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
-    _PoisoningAttackMixin.poison(self, data: Any, art_model: Any, attack: Any) -> ScoreDict
-        Executes poisoning flow and returns score payload.
+    Attributes:
+        plugins: Default plugin wiring for ``attack_type='poisoning'``.
     """
 
     plugins: list = field(

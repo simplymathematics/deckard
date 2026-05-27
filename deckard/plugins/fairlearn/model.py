@@ -27,7 +27,11 @@ except ImportError:
 
 
 class FairnessBehaviorMixin:
-    """Shared fairness-aware model behavior used by sklearn and PyTorch configs."""
+    """Shared fairness-aware model behavior used by sklearn and PyTorch configs.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     def apply_fairness_behavior(self) -> None:
         """Public entrypoint for fairlearn-specific model behavior setup."""
@@ -150,9 +154,12 @@ class FairlearnModelConfig(
     ModelConfig,
 ):
     """Fairness-aware model config for sklearn models.
-
+    
     Inherits sklearn training/prediction from ModelConfig and adds
     fairness-aware scoring and defense support via FairnessBehaviorMixin.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     data: Union[FairlearnDataConfig, None] = None
@@ -166,15 +173,25 @@ class FairlearnPytorchModelConfig(
     PytorchModelConfig,
 ):
     """Fairness-aware model config for PyTorch models.
-
+    
     Inherits all torch training/prediction/defense from PytorchModelConfig
     and adds fairness-aware scoring via FairnessBehaviorMixin.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     data: Union[FairlearnDataConfig, None] = None
 
 
 class BinaryLogitAdapter:
+    """Adapter that normalizes binary outputs to a single-logit tensor.
+
+    Attributes:
+        base_model: Wrapped callable model used for forward prediction.
+        _nn_module: Torch module namespace used for optional dynamic subclassing.
+    """
+
     def __init__(self, base_model, nn_module):
         # Dynamically inherit from nn.Module
         self.base_model = base_model
@@ -214,7 +231,11 @@ class BinaryLogitAdapter:
 
 @dataclass(eq=False, kw_only=True)
 class FairlearnDefenseConfig(SensitiveColumnsMixin, DefenseConfig):
-    """Fairness-aware defense config that inherits DefenseConfig."""
+    """Fairness-aware defense config that inherits DefenseConfig.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     data: Union[FairlearnDataConfig, None] = None
 

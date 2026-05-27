@@ -42,11 +42,14 @@ def default_fairlearn_data_plugins() -> list[HookPlugin]:
 @dataclass(eq=False, kw_only=True)
 class FairnessBehaviorMixin(SensitiveColumnsMixin):
     """Fairlearn-specific sensitive-feature behavior for data configs.
-
+    
     Extends the framework-independent :class:`_SensitiveColumnsMixin` with
     fairlearn defense injection and sampling hooks.  Import
     ``_SensitiveColumnsMixin`` directly when you need only the shared
     fields/helpers without pulling in fairlearn-specific logic.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     def fit(self, run_hooks: bool = True) -> "FairnessBehaviorMixin":
@@ -110,14 +113,17 @@ class FairlearnDataConfig(
     DataConfig,
 ):
     """Fairlearn-aware data pipeline configuration.
-
+    
     This extends ``DataConfig`` with sensitive feature handling,
     fairness-defense pipeline injection, and fairness-oriented scorer defaults.
-
+    
     Key fields:
     - ``sensitive_columns``: required sensitive feature column name(s).
     - ``fairness_defense``: optional transform/mitigation config.
     - ``plugins``: runtime hook plugins for fairness pipeline behavior.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     def __call__(

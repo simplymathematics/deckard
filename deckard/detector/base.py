@@ -88,7 +88,11 @@ class DetectorRuntimeLike(Protocol):
 
 @dataclass(eq=False, kw_only=True)
 class DetectorScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
-    """Task-aware scorer config for detector outputs."""
+    """Task-aware scorer config for detector outputs.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     classifier: Union[bool, str] = True
     scorers: dict[str, Union[ScorerConfig, dict[str, Any]]] = field(
@@ -114,7 +118,11 @@ class DetectorScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
 
 @dataclass(eq=False, kw_only=True)
 class DetectorConfig(BaseConfig):
-    """Auxiliary detector runtime for adversarial-vs-clean detection tasks."""
+    """Auxiliary detector runtime for adversarial-vs-clean detection tasks.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     detector_type: str = "art.defences.detector.evasion.BinaryInputDetector"
     detector_params: dict[str, Any] = field(default_factory=dict)

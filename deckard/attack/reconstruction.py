@@ -12,7 +12,11 @@ from .inference import InferenceAttackMixin
 
 
 class ReconstructionAttackMixin(InferenceAttackMixin):
-    """Reusable database reconstruction attack behavior."""
+    """Reusable database reconstruction attack behavior.
+
+    Attributes:
+        score_dict: Runtime score payload for reconstruction metrics.
+    """
 
     def reconstruct(
         self,
@@ -85,24 +89,13 @@ class ReconstructionAttackMixin(InferenceAttackMixin):
 class ReconstructionAttackConfig(ReconstructionAttackMixin, AttackConfig):
     """Configuration for database reconstruction attacks.
 
-    Initialization params
-    ---------------------
-    attack_type : str
-        Attack family path inherited from ``AttackConfig``. Expected family is
-        ``inference`` for reconstruction.
-    attack_params : dict[str, Any]
-        Constructor kwargs and runtime controls used by reconstruction attacks.
-    plugins : list[AttackTypePlugin]
-        Declarative runtime plugin specs. Default contains one
-        ``AttackTypePlugin`` configured with:
-        ``mixin_type: type = _ReconstructionAttackMixin``,
-        ``attack_type: str = 'inference'``, and
-        ``attack_subtype: str = 'reconstruction'``.
+    Note:
+        Expected family/subtype is ``inference.reconstruction``. Runtime
+        behavior is delegated to ``ReconstructionAttackMixin`` through the
+        default ``AttackTypePlugin``.
 
-    Runtime params
-    --------------
-    _ReconstructionAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> ScoreDict
-        Runtime dispatch entrypoint for ``inference.reconstruction`` subtype.
+    Attributes:
+        plugins: Default plugin wiring for ``inference.reconstruction``.
     """
 
     plugins: list = field(

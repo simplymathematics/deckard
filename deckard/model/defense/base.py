@@ -128,7 +128,13 @@ supported_defense_types = [
 
 @dataclass(eq=False)
 class DefenseStep:
-    """One defense-chain step with explicit fit/predict application flags."""
+    """One defense-chain step with explicit fit/predict application flags.
+    
+    Attributes:
+        defense : A string-or-dict-like defense object.
+        apply_fit : bool Whether or not to apply before training (might trigger a retrain).
+        apply_pred: bool Whether or not to apply during prediction.
+    """
 
     defense: Any
     apply_fit: bool
@@ -195,9 +201,12 @@ class DefenseStep:
 
 class DefenseHookRuntimeMixin:
     """Shared plugin-hook runtime behavior for defense pipeline and defense configs.
-
+    
     This mixin centralizes plugin instantiation, hook dispatch, and score-dict merge
     behavior so all defense runtime owners expose consistent hook semantics.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     plugins: list
@@ -248,31 +257,20 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
     This mixin owns pipeline-level orchestration semantics: chain coercion,
     stage resolution, and ordered application of multi-step defenses.
 
-    Plugin hooks
-    ------------
-    resolve_defense_stage(self, *, default_stage, current_stage, **context)
-            Override stage selection for pipeline application.
-    before_apply_defense(self, *, estimator, data, stage, defense_chain)
-            Runs once before the defense chain executes.
-    before_apply_defense_step(self, *, estimator, data, stage, defense, applied_defenses)
-            Runs before each defense step in the chain.
-    after_apply_defense_step(self, *, estimator, data, stage, defense, applied_defenses, step_defense_time)
-            Runs after each defense step; dict returns are merged into score_dict.
-    after_apply_defense(self, *, estimator, data, stage, defense_chain, applied_defenses, applied_defense_types, defense_application_time)
-            Runs once after the defense chain executes; dict returns are merged into score_dict.
+    Note:
+        Pipeline hook names include ``resolve_defense_stage``,
+        ``before_apply_defense``, ``before_apply_defense_step``,
+        ``after_apply_defense_step``, and ``after_apply_defense``.
 
-    Additional DefenseConfig runtime hooks
-    --------------------------------------
-    resolve_defense_mixins(self, *, defense_type, defense_subtype, default_mixins)
-            Return one mixin type, or a list/tuple of mixin types, to extend runtime
-            handler resolution.
-    resolve_defense_handler(self, *, defense_type, defense_subtype, default_handler, default_mixins)
-            Return a callable handler (or handler type) to override default runtime
-            handler resolution.
-    before_defense_dispatch(self, *, data, defense_type, defense_subtype, art_class, init_params, base_estimator, existing_preprocessors, existing_postprocessors, handler)
-            Runs immediately before runtime defense handler execution.
-    after_defense_dispatch(self, *, data, defense_type, defense_subtype, defense, defended_estimator, defense_application_time)
-            Runs immediately after runtime defense handler execution.
+        Additional runtime-dispatch hooks include
+        ``resolve_defense_mixins``, ``resolve_defense_handler``,
+        ``before_defense_dispatch``, and ``after_defense_dispatch``.
+        Dictionary outputs from post hooks are merged into ``score_dict``.
+
+    Attributes:
+        defenses: Ordered defense chain to apply to runtime estimators.
+        plugins: Runtime defense plugins used for hook-based extension.
+        score_dict: Runtime score payload merged from defense hooks.
     """
 
     defenses: list
@@ -777,9 +775,12 @@ def _is_torch_model_instance(model_obj) -> bool:
 @dataclass(eq=True)
 class DefenseMixin:
     """Base callable defense handler used by runtime defense context resolution.
-
+    
     The ``runtime`` attribute is the active defense config instance owned by
     defense orchestration. Attribute access is delegated to that runtime object.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     runtime: Any = None
@@ -874,7 +875,11 @@ class DefenseMixin:
 
 
 class PassthroughDefenseMixin(DefenseMixin):
-    """Default handler for no-op/passthrough ART wrapping."""
+    """Default handler for no-op/passthrough ART wrapping.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     def __call__(
         self,
@@ -917,9 +922,12 @@ class PassthroughDefenseMixin(DefenseMixin):
 
 class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
     """Single-defense dispatch behavior mixed into concrete defense config dataclasses.
-
+    
     This mixin owns per-defense runtime dispatch semantics: resolving handler/mixins,
     building ART-compatible wrappers, and applying a single defense spec.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     model_type: StringifiedClass | None
@@ -1547,7 +1555,11 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
 
 @dataclass(eq=False, kw_only=True)
 class DefensePipelineConfig(DefensePipelineConfigBehaviorMixin, BaseConfig):
-    """Runtime owner for applying an ordered chain of defense specs."""
+    """Runtime owner for applying an ordered chain of defense specs.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     defenses: list = field(default_factory=list)
     plugins: list = field(default_factory=list)
@@ -1577,13 +1589,16 @@ class DefensePipelineConfig(DefensePipelineConfigBehaviorMixin, BaseConfig):
 @dataclass(kw_only=True)
 class DefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
     """Concrete defense configuration used by defense runtime mixins.
-
+    
     Main parameter groups:
     - ``model_params``: base model-constructor kwargs.
     - ``defense_params``: kwargs passed to the resolved defense implementation.
-
+    
     Runtime orchestration is plugin-aware through ``_run_plugin_hook`` and
     supports handler/mixin resolution plus before/after dispatch hooks.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     model_type: StringifiedClass | None = None

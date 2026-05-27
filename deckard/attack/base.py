@@ -178,10 +178,13 @@ supported_attacks = [
 @dataclass(eq=True)
 class AttackMixin:
     """Base callable attack handler used by runtime attack context resolution.
-
+    
     The ``runtime`` attribute is the active ``AttackConfig`` instance owned by
     ``AttackConfig.__call__``. Mixins delegate mutable runtime state such as
     timers, predictions, and ``score_dict`` to that object.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     runtime: Any = None
@@ -257,7 +260,7 @@ class AttackMixin:
 @dataclass(eq=False, kw_only=True)
 class AttackTypePlugin:
     """Generic attack plugin that binds one mixin to one attack family/subtype.
-
+    
     Initialization fields
     ---------------------
     mixin_type : Any
@@ -268,13 +271,16 @@ class AttackTypePlugin:
         Optional subtype constraint.
     excluded_subtypes : tuple[str, ...]
         Subtypes explicitly excluded from this plugin match.
-
+    
     Runtime behavior
     ----------------
     - ``resolve_attack_mixins`` contributes mixins to runtime context assembly.
     - ``resolve_attack_handler`` returns callable handler for dispatch.
     - ``__call__`` forwards ``*args``/``**kwargs`` to the configured mixin
       instance bound to the runtime config.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     mixin_type: Any
@@ -382,53 +388,24 @@ class AttackConfig(BaseConfig):
     Concrete attack logic lives in type-specific modules, while this class
     owns orchestration, timing, scoring, and plugin hook execution.
 
-    Plugin hooks
-    ------------
-    resolve_attack_mixins(self, *, attack_type, attack_subtype, default_mixins)
-        Return one mixin type, or a list/tuple of mixin types, to extend runtime
-        dispatch for the parsed attack type.
-    resolve_attack_handler(self, *, attack_type, attack_subtype, default_handler, default_mixins)
-        Return a callable handler (or handler type) to override default runtime
-        handler resolution.
-    before_attack_dispatch(self, *, data, model, attack, art_model, attack_type, attack_subtype, runtime, handler)
-        Runs immediately before handler execution. Dict returns are merged into
-        score_dict.
-    after_attack_dispatch(self, *, data, model, attack, art_model, attack_type, attack_subtype, scores)
-        Runs immediately after handler execution. Dict returns are merged into
-        score_dict.
+    Note:
+        Runtime hook names include ``resolve_attack_mixins``,
+        ``resolve_attack_handler``, ``before_attack_dispatch``, and
+        ``after_attack_dispatch``. Dictionary outputs from post-dispatch hooks
+        are merged into ``score_dict``.
 
-    Parameter layers
-    ----------------
-    attack_params : dict
-        Attack-class constructor kwargs. These are copied and filtered before
-        attack instantiation in ``_initialize_attack``.
+        ``attack_params`` are constructor kwargs filtered during
+        ``_initialize_attack``. Some families also consume runtime control keys
+        (for example poisoning trigger controls or inference split controls)
+        before attack object construction.
 
-    Family-specific parameter semantics
-    ----------------------------------
-    evasion
-        Typical ART attack kwargs (for example ``eps``, ``eps_step``,
-        ``max_iter``), passed through to attack constructor.
-    poisoning
-        Requires ``class_source`` and ``class_target`` for Deckard runtime
-        validation. Some orchestration keys (for example ``trigger_index``,
-        ``poison_fit_params``) are consumed by Deckard and stripped before
-        constructing ART attack objects.
-    extraction
-        Constructor kwargs are attack-specific; query/eval split handling and
-        thieved classifier reset are runtime concerns implemented in mixins.
-    inference
-        Some keys (for example ``split``, ``targets``, ``missing_index``) are
-        runtime controls used by specific inference subtypes and may be removed
-        from constructor kwargs before ART instantiation.
-
-    Plugin hook runtime params
-    --------------------------
-    Hooks are orchestrated by ``_run_plugin_hook(hook_name, **kwargs)``.
-    Core hook names used by AttackConfig runtime are:
-    ``resolve_attack_mixins``, ``resolve_attack_handler``,
-    ``before_attack_dispatch``, and ``after_attack_dispatch``.
-    Hook kwargs are phase-specific runtime objects supplied by attack
-    orchestration.
+    Attributes:
+        attack_type: Attack family/type path used to resolve attack class.
+        attack_params: Constructor and runtime parameters for attack execution.
+        attack_size: Number of samples used for attack execution.
+        plugins: Runtime attack plugins used for dispatch/hook extension.
+        scorer: Attack scorer configuration applied to attack outputs.
+        score_dict: Runtime score payload collected during attack execution.
     """
 
     # Configuration fields

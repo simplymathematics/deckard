@@ -904,10 +904,13 @@ data_supported_filetypes = [
 @dataclass(init=False)
 class BaseConfig(ArtifactLoaderConfig):
     """Base class for deckard configuration objects.
-
+    
     ``ConfigBase`` provides a common lifecycle for config dataclasses: argument
     hydration, post-init hooks, stable hashing based on configuration state, and
     serialization helpers used throughout deckard.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     # _target_: str = "deckard.utils.ConfigBase"

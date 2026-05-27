@@ -28,7 +28,11 @@ ANJANA_PIPELINE_HOOKS = HookBundle(
 
 
 class AnjanaPipelineHooksMixin:
-    """Pipeline-stage hook implementations for ANJANA data runtimes."""
+    """Pipeline-stage hook implementations for ANJANA data runtimes.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     def apply_anjana_defense(self) -> None:
         """Public entrypoint for ANJANA pipeline defense application."""

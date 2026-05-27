@@ -179,7 +179,11 @@ OmegaConf.register_new_resolver("merge", _merge_resolver, replace=True)
 
 
 class DataConfigResolutionMixin:
-    """Resolve ExperimentConfig.data into the appropriate DataConfig subtype."""
+    """Resolve ExperimentConfig.data into the appropriate DataConfig subtype.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     _fairness_keys = {
         "sensitive_columns",
@@ -282,17 +286,26 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
 
     An experiment coordinates data loading, optional defense application, model
     training or loading, adversarial attack execution, scoring, and artifact
-        persistence through ``FileConfig``.
+    persistence through ``FileConfig``.
 
-        Mode policy
-        -----------
+    Note:
         ``evaluation_mode`` and ``score_mode`` are mutually exclusive to prevent
         ambiguous routing. Use exactly one strategy:
+        - ``evaluation_mode`` for preset routing (``standard``, ``tuning``,
+          ``report``).
+        - ``score_mode`` for explicit split routing (``train``, ``test``,
+          ``val``, ``all``), optionally as a list for multi-pass scoring.
 
-        - ``evaluation_mode``: high-level preset routing (``standard`` (train + test),
-            ``tuning`` (test), ``report`` (train + test + val)).
-        - ``score_mode``: explicit split routing (``train``, ``test``, ``val``,
-            ``all``), optionally a list for multi-pass experiment scoring.
+        Attributes:
+                data: Data configuration/runtime payload for the experiment.
+                model: Model configuration/runtime payload.
+                defense: Optional defense pipeline config.
+                attack: Optional attack configuration.
+                detector: Optional detector configuration.
+                files: File configuration for artifact persistence.
+                score: Experiment-level scorer configuration.
+                evaluation_mode: Preset routing mode for scoring/evaluation.
+                score_mode: Explicit split-mode override for scoring/evaluation.
     """
 
     data: DataConfig

@@ -17,7 +17,11 @@ from .base import (
 
 
 class TrainerDefenseMixin(DefenseMixin):
-    """Reusable trainer defense behavior (adversarial training)."""
+    """Reusable trainer defense behavior (adversarial training).
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     def train_defense(
         self,
@@ -129,9 +133,12 @@ class TrainerDefenseMixin(DefenseMixin):
 @dataclass(eq=False, kw_only=True)
 class TrainerDefenseConfig(TrainerDefenseMixin, DefensePipelineConfig):
     """Configuration for trainer-based defenses.
-
+    
     Registers trainer defense behavior and plugin metadata used during defense
     runtime dispatch.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     plugins: list = field(
@@ -145,13 +152,13 @@ class TrainerDefenseConfig(TrainerDefenseMixin, DefensePipelineConfig):
 
 
 safe_store(
-    group="model",
+    group="model/defense",
     name="trainer_defense",
     node=TrainerDefenseConfig(),
 )
 
 safe_store(
-    group="search/models",
+    group="search/defenses",
     name="trainer_defense",
     node=TrainerDefenseConfig(),
 )

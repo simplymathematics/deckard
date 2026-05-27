@@ -40,10 +40,13 @@ supported_seaborn_plotters = list(seaborn_plotter_dict.keys())
 @dataclass(eq=True)
 class SeabornPlotterMixin(PlotterMixin):
     """Seaborn-specific plotter handler for matplotlib-based rendering.
-
+    
     The runtime object provides the active seaborn plot config, including plot
     type, data payload, aesthetic mappings, rcParams overrides, and output
     paths used during rendering.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     def __call__(
@@ -144,11 +147,14 @@ class SeabornPlotterMixin(PlotterMixin):
 @dataclass(kw_only=True, eq=False)
 class SeabornPlotConfig(_SeabornPlotterMarker, BaseConfig):
     """Configuration for seaborn matplotlib-based plots.
-
+    
     This config stores the seaborn plot type, data source, aesthetic channel
     mappings, styling options, and output path used for one rendered plot. It
     inherits ``_SeabornPlotterMarker`` so runtime dispatch resolves the seaborn
     plotting mixin when the seaborn backend is selected.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     x: str

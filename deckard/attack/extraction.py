@@ -20,7 +20,11 @@ logger = logging.getLogger(__name__)
 
 
 class ExtractionAttackMixin(PoisoningAttackMixin):
-    """Reusable extraction attack behavior (model stealing)."""
+    """Reusable extraction attack behavior (model stealing).
+
+    Attributes:
+        score_dict: Runtime score payload for extraction metrics.
+    """
 
     @staticmethod
     def _sync_art_classifier_device(classifier: EstimatorLike) -> EstimatorLike:
@@ -226,25 +230,12 @@ class ExtractionAttackMixin(PoisoningAttackMixin):
 class ExtractionAttackConfig(ExtractionAttackMixin, AttackConfig):
     """Configuration for model extraction attacks (model stealing).
 
-    Initialization params
-    ---------------------
-    attack_type : str
-        Attack family path inherited from ``AttackConfig``. Expected family is
-        ``extraction``.
-    attack_params : dict[str, Any]
-        Constructor kwargs and runtime controls used by extraction attacks.
-    plugins : list[AttackTypePlugin]
-        Declarative runtime plugin specs. Default contains one
-        ``AttackTypePlugin`` configured with:
-        ``mixin_type: type = _ExtractionAttackMixin`` and
-        ``attack_type: str = 'extraction'``.
+    Note:
+        Expected family is ``extraction``. Runtime behavior is delegated to
+        ``ExtractionAttackMixin`` through the default ``AttackTypePlugin``.
 
-    Runtime params
-    --------------
-    _ExtractionAttackMixin.__call__(self, *, data: Any, model: Any, art_model: Any, attack: Any, attack_type: str, attack_subtype: str) -> ScoreDict
-        Runtime dispatch entrypoint invoked by ``AttackConfig.__call__``.
-    _ExtractionAttackMixin.extract(self, data: Any, art_model: Any, attack: Any) -> ScoreDict
-        Executes extraction flow and returns score payload.
+    Attributes:
+        plugins: Default plugin wiring for ``attack_type='extraction'``.
     """
 
     plugins: list = field(

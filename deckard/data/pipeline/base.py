@@ -19,12 +19,15 @@ from ...utils import load_class
 @dataclass(eq=False, kw_only=True)
 class DataPipeline(dict):
     """Runtime pipeline executor for host data configs.
-
+    
     Execution order in ``__call__``:
     1) fit_pre_sample
     2) fit_X
     3) fit_y
     4) fit_Xy
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
     pipeline: dict[str, Any] = field(default_factory=dict)

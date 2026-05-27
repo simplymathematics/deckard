@@ -87,7 +87,11 @@ class ModelFiles(TypedDict, total=False):
 
 
 class DefenseFiles(TypedDict, total=False):
-    """Canonical defense persistence aliases used by defense runtimes."""
+    """Canonical defense persistence aliases used by defense runtimes.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     defended_model_file: str | None
     defended_predictions_file: str | None

@@ -25,7 +25,11 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BaseTrainer:
-    """Trainer interface plus centralized trainer composition helpers."""
+    """Trainer interface plus centralized trainer composition helpers.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     def __call__(
         self,
@@ -170,7 +174,11 @@ class BaseTrainer:
 
 @dataclass
 class SklearnTrainer(BaseTrainer):
-    """Default trainer for sklearn-style fit workflows."""
+    """Default trainer for sklearn-style fit workflows.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     def __call__(
         self,
@@ -204,7 +212,11 @@ class SklearnTrainer(BaseTrainer):
 
 @dataclass
 class PytorchTrainer(BaseTrainer):
-    """Trainer for torch model flows; delegates to model train implementation."""
+    """Trainer for torch model flows; delegates to model train implementation.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     def __call__(
         self,
@@ -238,7 +250,11 @@ class PytorchTrainer(BaseTrainer):
 
 @dataclass
 class PretrainedTrainer(BaseTrainer):
-    """Trainer policy that prefers pre-trained model artifacts and avoids retraining."""
+    """Trainer policy that prefers pre-trained model artifacts and avoids retraining.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     allow_fallback_training: bool = False
 
@@ -309,7 +325,11 @@ class PretrainedTrainer(BaseTrainer):
 
 @dataclass
 class PartialFitTrainer(BaseTrainer):
-    """Incremental trainer using partial_fit when available."""
+    """Incremental trainer using partial_fit when available.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     classes: list[Any] | None = None
 
@@ -368,7 +388,11 @@ class PartialFitTrainer(BaseTrainer):
 
 @dataclass
 class PruningTrainer(BaseTrainer):
-    """Trainer with optional trial pruning hook support."""
+    """Trainer with optional trial pruning hook support.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     trial: Any = None
     prune_metric: str = "training_time"
@@ -417,7 +441,11 @@ class PruningTrainer(BaseTrainer):
 
 @dataclass
 class PartialFitPruningTrainer(PartialFitTrainer):
-    """Incremental partial-fit trainer with optional pruning checks."""
+    """Incremental partial-fit trainer with optional pruning checks.
+    
+    Attributes:
+        Runtime attributes are inherited or configured via class fields documented in this module.
+    """
 
     trial: Any = None
     prune_metric: str = "training_time"

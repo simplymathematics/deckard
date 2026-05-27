@@ -73,6 +73,12 @@ DEFAULT_DATA_SCORE_MODE: Final[str] = DEFAULT_SCORE_MODE
 
 
 class BaseFiles(TypedDict, total=False):
+    """Typed mapping for shared data runtime file keys.
+
+    Attributes:
+        params_file: Optional parameter/config artifact path.
+    """
+
     params_file: str | None
 
 

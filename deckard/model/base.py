@@ -128,59 +128,25 @@ class ModelConfig(BaseConfig):
     class owns model instantiation, training/load flow, prediction, scoring,
     persistence, and optional defense-pipeline integration.
 
-    Plugin hooks
-    ------------
-    before_load_score(self, *, data, score_file)
-        Runs before reading persisted score/timing artifacts.
-    after_load_score(self, *, data, score_file, times)
-        Runs after reading persisted score/timing artifacts.
-    before_load_predictions(self, *, data, train_predictions_file, test_predictions_file)
-        Runs before loading persisted predictions/probabilities.
-    after_load_predictions(self, *, data, train_predictions_file, test_predictions_file, times)
-        Runs after loading persisted predictions/probabilities.
-    before_train_or_load_model(self, *, data, model_file, times)
-        Runs before model load-or-train resolution.
-    after_train_or_load_model(self, *, data, model_file, times)
-        Runs after model load-or-train resolution.
-    before_evaluate(self, *, data, times)
-        Runs before evaluation/scoring.
-    after_evaluate(self, *, data, times)
-        Runs after evaluation/scoring. Dict returns are merged into
-        ``score_dict``.
-    before_persist(self, *, data, times, model_file, test_predictions_file, train_predictions_file, training_probabilities_file, test_probabilities_file, score_file)
-        Runs before persistence of model artifacts and score outputs.
-    after_persist(self, *, data, times, model_file, test_predictions_file, train_predictions_file, training_probabilities_file, test_probabilities_file, score_file)
-        Runs after persistence. Dict returns are merged into ``score_dict``.
+    Note:
+        Runtime hook names include ``before_load_score``, ``after_load_score``,
+        ``before_load_predictions``, ``after_load_predictions``,
+        ``before_train_or_load_model``, ``after_train_or_load_model``,
+        ``before_evaluate``, ``after_evaluate``, ``before_persist``, and
+        ``after_persist``. Dictionary outputs returned by hooks are merged into
+        ``score_dict`` when appropriate.
 
-    Parameter layers
-    ----------------
-    model_params : dict
-        Model-constructor kwargs passed to the resolved estimator/class.
-    defense : Any
-        Optional defense pipeline/config applied after model training or load.
-    plugins : list
-        Plugin specs resolved at runtime and invoked through hook names.
+        ``model_params`` are forwarded to resolved estimator constructors.
+        ``defense`` controls post-training defense wrapping/application.
 
-    Family-specific parameter semantics
-    ----------------------------------
-    sklearn estimators
-        ``model_params`` are forwarded directly to estimator constructors.
-    wrapped or custom model classes
-        ``model_params`` may be split between wrapper setup and underlying
-        model kwargs.
-    defense-enabled runs
-        ``defense`` controls post-training estimator wrapping/application.
-
-    Plugin hook runtime params
-    --------------------------
-    Hooks are orchestrated by ``_run_plugin_hook(hook_name, **kwargs)``.
-    Core hook names used by ModelConfig runtime are:
-    ``before_load_score``, ``after_load_score``, ``before_load_predictions``,
-    ``after_load_predictions``, ``before_train_or_load_model``,
-    ``after_train_or_load_model``, ``before_evaluate``, ``after_evaluate``,
-    ``before_persist``, and ``after_persist``.
-    Hook kwargs are phase-specific runtime objects supplied by model
-    orchestration.
+    Attributes:
+        model_type: Model class path or alias resolved at runtime.
+        model_params: Constructor kwargs for model instantiation.
+        trainer: Trainer runtime token/config used for fit orchestration.
+        defense: Optional defense pipeline applied after train/load.
+        plugins: Runtime plugin specifications for model hook execution.
+        scorer: Scorer config used for model-level scoring.
+        score_dict: Runtime score payload accumulated across model phases.
     """
 
     # Configuration fields
