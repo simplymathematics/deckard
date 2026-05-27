@@ -45,6 +45,8 @@ optional `pipeline` runtime object.
 ```{eval-rst}
 .. automodule:: deckard.data.pipeline.base
    :members:
+   :exclude-members: DataConfig, PytorchDataConfig
+   :no-index:
    :show-inheritance:
 ```
 
