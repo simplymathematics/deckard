@@ -16,13 +16,13 @@ RUN if [ -n "$APT_MIRROR_PORTS" ]; then \
 			sed -i "s|http://security.ubuntu.com/ubuntu|$APT_MIRROR_ARCHIVE|g" /etc/apt/sources.list; \
 		fi && \
 		if [ -n "$APT_HTTP_PROXY" ] || [ -n "$APT_HTTPS_PROXY" ]; then \
-			{
-				if [ -n "$APT_HTTP_PROXY" ]; then
-					echo "Acquire::http::Proxy \"$APT_HTTP_PROXY\";";
-				fi
-				if [ -n "$APT_HTTPS_PROXY" ]; then
-					echo "Acquire::https::Proxy \"$APT_HTTPS_PROXY\";";
-				fi
+			{ \
+				if [ -n "$APT_HTTP_PROXY" ]; then \
+					echo "Acquire::http::Proxy \"$APT_HTTP_PROXY\";"; \
+				fi; \
+				if [ -n "$APT_HTTPS_PROXY" ]; then \
+					echo "Acquire::https::Proxy \"$APT_HTTPS_PROXY\";"; \
+				fi; \
 			} > /etc/apt/apt.conf.d/99deckard-proxy; \
 		fi && \
 		if [ -n "$APT_NO_PROXY" ]; then \
@@ -34,7 +34,7 @@ RUN if [ -n "$APT_MIRROR_PORTS" ]; then \
 		apt-get upgrade -y && \
 		rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install --upgrade pip setuptools wheel
 
 # Install NVIDIA runtime Python packages only for CUDA-enabled builds.
 RUN if [ "$ENABLE_CUDA" = "1" ]; then \

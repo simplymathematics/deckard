@@ -12,15 +12,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
+      - name: Detect local act runtime
+        id: detect_act
+        run: |
+          if [[ "${ACT}" == "true" ]]; then
+            echo "skip_base=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip_base=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout code
+        if: ${{ steps.detect_act.outputs.skip_base != 'true' }}
         uses: actions/checkout@v4
 
       - name: Set up Python 3.10
+        if: ${{ steps.detect_act.outputs.skip_base != 'true' }}
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
       - name: Download released wheel
+        if: ${{ steps.detect_act.outputs.skip_base != 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -28,13 +40,20 @@ jobs:
           mkdir -p dist
           gh release download "${{ github.event.release.tag_name }}" --pattern "*.whl" --dir dist
 
+      - name: Skip base release tests in act
+        if: ${{ steps.detect_act.outputs.skip_base == 'true' }}
+        run: |
+          echo "Skipping base-release-tests under local act; reusable release jobs are validated in this run."
+
       - name: Install released wheel with base test deps
+        if: ${{ steps.detect_act.outputs.skip_base != 'true' }}
         run: |
           python -m pip install --upgrade pip
           WHEEL=$(ls dist/*.whl | head -n1)
           python -m pip install "${WHEEL}[test]"
 
       - name: Run base dependency tests
+        if: ${{ steps.detect_act.outputs.skip_base != 'true' }}
         run: |
           python -m pytest test \
             --ignore test/test_data/test_pytorch.py \
@@ -51,7 +70,7 @@ jobs:
     with:
       workflow_name: torch-release
       extra: torch
-      tests: test/test_data/test_pytorch.py test/test_attack/test_attack.py
+      tests: test/test_frameworks/test_pytorch test/test_attack/test_attack.py
       package_source: release
       release_tag: ${{ github.event.release.tag_name }}
 
@@ -60,7 +79,7 @@ jobs:
     with:
       workflow_name: lifelines-release
       extra: lifelines
-      tests: test/test_layers/test_survival.py test/test_data/test_data.py -k lifelines
+      tests: test/test_plugins/test_lifelines
       package_source: release
       release_tag: ${{ github.event.release.tag_name }}
 
@@ -69,7 +88,7 @@ jobs:
     with:
       workflow_name: fairlearn-release
       extra: fairlearn
-      tests: test/test_data/test_data_fairness.py test/test_data/test_fairness.py test/test_model/test_model_fairness.py
+      tests: test/test_plugins/test_fairlearn
       package_source: release
       release_tag: ${{ github.event.release.tag_name }}
 
@@ -78,7 +97,7 @@ jobs:
     with:
       workflow_name: seaborn-release
       extra: seaborn
-      tests: test/test_plot/test_seaborn.py
+      tests: test/test_plugins/test_searborn/test_seaborn.py
       package_source: release
       release_tag: ${{ github.event.release.tag_name }}
 
@@ -87,6 +106,6 @@ jobs:
     with:
       workflow_name: yellowbrick-release
       extra: seaborn,yellowbrick
-      tests: test/test_plot/test_yellowbrick.py test/test_plot/test_init.py
+      tests: test/test_plugins/test_yellowbrick/test_yellowbrick.py
       package_source: release
       release_tag: ${{ github.event.release.tag_name }}

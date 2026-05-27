@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   test-optional-deps:
-∑    name: optional-${{ matrix.dep_name }}
+    name: optional-${{ matrix.dep_name }}
     strategy:
       fail-fast: false
       matrix:

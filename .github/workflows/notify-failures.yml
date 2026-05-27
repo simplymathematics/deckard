@@ -11,13 +11,14 @@ on:
       - Test Docker Images
       - Create and publish Docker images
     types: [completed]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   notify:
-    if: github.event.workflow_run.conclusion == 'failure'
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -25,6 +26,7 @@ jobs:
       contents: read
     steps:
       - name: Create GitHub issue on failure
+        if: ${{ github.event_name != 'workflow_dispatch' }}
         uses: actions/github-script@v7
         with:
           script: |
@@ -46,3 +48,7 @@ jobs:
               body,
               labels: ['ci', 'automated']
             });
+
+      - name: Local act notification bypass
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: echo "Skipping GitHub issue creation in local act validation."

@@ -32,7 +32,7 @@ jobs:
           --cov-report=xml:coverage-base.xml \
           --cov-report=term-missing
     - name: Upload coverage artifact
-      if: always()
+      if: ${{ always() && env.ACT != 'true' }}
       uses: actions/upload-artifact@v4
       with:
         name: coverage-base

@@ -58,12 +58,12 @@ def _torch_fairness_data():
 
     cfg = PytorchDataConfig(
         dataset_name="torch_fairness_dataset.py:SyntheticImageDataset",
-        sampler = {
-            "train_size" : 32,
-            "test_size" : 16,
-            "random_state" : 42,
-            "name" : "split",
-        }
+        sampler={
+            "train_size": 32,
+            "test_size": 16,
+            "random_state": 42,
+            "name": "split",
+        },
         classifier=True,
         alias="synthetic_fairness",
         data_params={
@@ -109,10 +109,10 @@ def test_pytorch_model_with_fairness_defense_instantiation():
     data = _torch_fairness_data()
 
     # Flatten image tensors so a linear torch model can consume them.
-    data.X_train = data.X_train.reshape(data.X_train.shape[0], -1)
-    data.y_train = data.y_train
-    data.X_test = data.X_test.reshape(data.X_test.shape[0], -1)
-    data.y_test = data.y_test
+    data.X_train = data._X_train.reshape(data._X_train.shape[0], -1)
+    data.y_train = data._y_train
+    data.X_test = data._X_test.reshape(data._X_test.shape[0], -1)
+    data.y_test = data._y_test
 
     model = FairlearnPytorchModelConfig(
         model_type="torch.nn.Linear",
@@ -360,9 +360,16 @@ def test_pytorch_fairness_model_serialization_with_defense():
     assert model.classifier is True
 
 
-def test_deckard_rc_environment_loading():
-    """Test that .deckard_rc file can be parsed for environment setup."""
-    env_vars = load_env_from_deckard_rc(DECKARD_RC_PATH)
+def test_deckard_rc_environment_loading(tmp_path):
+    """Test that .deckard_rc export lines are parsed into environment keys."""
+    rc_path = tmp_path / ".deckard_rc"
+    rc_path.write_text(
+        "export DECKARD_CONFIG_DIR=./config\n"
+        "export DECKARD_DEFAULT_CONFIG_FILE=torch_default.yaml\n",
+        encoding="utf-8",
+    )
+
+    env_vars = load_env_from_deckard_rc(rc_path)
 
     assert "DECKARD_CONFIG_DIR" in env_vars
     assert "DECKARD_DEFAULT_CONFIG_FILE" in env_vars

@@ -51,6 +51,7 @@ jobs:
             require('fs').writeFileSync('workflow-benchmarks.md', lines.join('\n'));
 
       - name: Upload benchmark report
+        if: ${{ env.ACT != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: workflow-benchmarks

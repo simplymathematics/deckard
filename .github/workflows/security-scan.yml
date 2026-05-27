@@ -27,13 +27,18 @@ jobs:
       - name: Install security tooling
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[test]
-          python -m pip install bandit pip-audit
+          python -m pip install -c constraints/security-baseline.txt "setuptools>=78.1.1" wheel
+          python -m pip install -c constraints/security-baseline.txt .[test]
+          python -m pip install -c constraints/security-baseline.txt bandit pip-audit
 
       - name: Run Bandit SAST
         run: |
-          bandit -r deckard -f json -o bandit-report.json
-          bandit -r deckard -f txt
+          # B324 is intentionally excluded: this codebase uses MD5 for stable
+          # non-cryptographic identifiers/cache keys, not for security checks.
+          # B301/B614 findings are tracked as trust-boundary notes because
+          # loading artifacts is user-controlled and depends on source trust.
+          bandit -r deckard -s B324 -f json -o bandit-report.json
+          bandit -r deckard -s B324 -f txt
 
       - name: Run dependency vulnerability audit
         run: |

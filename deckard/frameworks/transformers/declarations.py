@@ -1,4 +1,5 @@
 import torch
+from pathlib import Path
 
 try:
     from torch import nn
@@ -18,6 +19,7 @@ class GenericFlexibleTransformer(nn.Module if nn else object):
     def __init__(
         self,
         model_name="bert-base-uncased",
+        model_revision: str | None = None,
         out_features=256,
         num_classes=2,
         pretrained=True,
@@ -29,9 +31,23 @@ class GenericFlexibleTransformer(nn.Module if nn else object):
         super().__init__()
 
         # 1. Load generic backbone config and model
-        self.config = AutoConfig.from_pretrained(model_name)
+        # Require an immutable model revision for remote HF Hub downloads.
+        is_local_model = Path(str(model_name)).exists()
+        if not is_local_model and model_revision is None:
+            raise ValueError(
+                "model_revision must be provided for non-local Hugging Face model_name",
+            )
+
+        self.config = AutoConfig.from_pretrained(
+            model_name,
+            revision=model_revision,
+        )
         if pretrained:
-            self.backbone = AutoModel.from_pretrained(model_name, config=self.config)
+            self.backbone = AutoModel.from_pretrained(
+                model_name,
+                config=self.config,
+                revision=model_revision,
+            )
         else:
             self.backbone = AutoModel.from_config(self.config)
 

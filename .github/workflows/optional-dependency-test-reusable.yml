@@ -45,7 +45,7 @@ jobs:
           python -m build
 
       - name: Download package from GitHub Release
-        if: inputs.package_source == 'release'
+        if: ${{ inputs.package_source == 'release' && env.ACT != 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -57,7 +57,16 @@ jobs:
           mkdir -p dist
           gh release download "${{ inputs.release_tag }}" --pattern "*.whl" --dir dist
 
+      - name: Build package from source (prepare-wheel act fallback for release)
+        if: ${{ inputs.package_source == 'release' && env.ACT == 'true' }}
+        run: |
+          rm -rf dist
+          python -m pip install --upgrade pip
+          python -m pip install build
+          python -m build
+
       - name: Upload wheel artifact
+        if: ${{ env.ACT != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: deckard-dist-${{ inputs.workflow_name }}
@@ -77,10 +86,26 @@ jobs:
           python-version: "3.10"
 
       - name: Download wheel artifact
+        if: ${{ env.ACT != 'true' }}
         uses: actions/download-artifact@v4
         with:
           name: deckard-dist-${{ inputs.workflow_name }}
           path: dist/
+
+      - name: Build package from source (act local fallback)
+        if: ${{ env.ACT == 'true' && inputs.package_source == 'source' }}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+          python -m build
+
+      - name: Build package from source (act fallback for release mode)
+        if: ${{ env.ACT == 'true' && inputs.package_source == 'release' }}
+        run: |
+          rm -rf dist
+          python -m pip install --upgrade pip
+          python -m pip install build
+          python -m build
 
       - name: Install wheel with test and optional extras
         run: |

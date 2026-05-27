@@ -28,7 +28,13 @@ jobs:
           python -m pip install build
           python -m build
 
+      - name: Verify built artifacts (act local)
+        if: ${{ env.ACT == 'true' }}
+        run: |
+          ls -lh dist/
+
       - name: Create GitHub Release and upload artifacts
+        if: ${{ env.ACT != 'true' }}
         uses: softprops/action-gh-release@v2
         with:
           files: |

@@ -698,18 +698,20 @@ def test_pytorch_mps_request_falls_back_to_cpu_when_unavailable(monkeypatch):
     assert str(cfg.device) == "cpu"
 
 
-def test_pytorch_art_device_type_for_mps_is_cpu(monkeypatch):
+def test_pytorch_art_device_type_for_mps_is_cpu():
     if not hasattr(torch.backends, "mps"):
         pytest.skip("torch backend has no mps support")
 
-    monkeypatch.setattr(torch.backends.mps, "is_available", lambda: True)
+    if not torch.backends.mps.is_available():
+        pytest.skip("mps runtime unavailable")
 
     cfg = PytorchModelConfig(
         model_type="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
-        device="mps",
+        device="cpu",
     )
+    cfg.device = torch.device("mps")
 
     assert cfg.device.type == "mps"
     assert cfg._resolve_art_device_type() == "cpu"

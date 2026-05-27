@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import inspect
 import json
 import os
@@ -33,6 +34,9 @@ from deckard.experiment.repro import run_repro_experiment_plugin_hook
 from deckard.file import FileConfig
 from deckard.score.base import ScorerConfig
 from deckard.score.dvc import DVCSystemScorerDictConfig, dvc_component_stats_score
+
+
+HAS_DVCLIVE = importlib.util.find_spec("dvclive") is not None
 
 
 def _make_runtime_env(rc_path: Path) -> dict[str, str]:
@@ -826,6 +830,10 @@ def test_run_dvc_plugin_hook_skips_custom_stage_outside_dvc_system_stages(
     assert exp.score_dict == {}
 
 
+@pytest.mark.skipif(
+    not HAS_DVCLIVE,
+    reason="requires dvclive installation",
+)
 def test_run_dvc_plugin_hook_skips_dvc_system_scorer_for_non_score_stage():
     exp = _make_experiment_stub(with_files=True)
     exp.outputs = {}
