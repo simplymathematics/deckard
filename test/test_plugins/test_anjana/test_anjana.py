@@ -11,7 +11,6 @@ def _fake_anjana_defense(data, **kwargs):
     return data.iloc[:3].copy()
 
 
-@pytest.mark.xfail(reason="Unsure if test is accurate.")
 def test_anjana_data_defense_applies_callable_and_updates_xy(monkeypatch):
     cfg = AnjanaDataConfig(
         dataset_name="make_classification",

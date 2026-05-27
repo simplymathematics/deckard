@@ -1020,13 +1020,6 @@ def test_disable_dvclive_gpu_monitor_keeps_enabled_when_nvml_works(monkeypatch):
     shutil.which("dvc") is None,
     reason="dvc executable is required for end-to-end repro validation",
 )
-@pytest.mark.xfail(
-    reason=(
-        "Hydra config interpolation currently depends on composed runtime defaults "
-        "that are not fully available in isolated tmp DVC workspaces"
-    ),
-    strict=False,
-)
 def test_dvc_repro_and_force_repro_preserve_non_timing_outputs(tmp_path: Path):
     """End-to-end DVC repro contract for default experiment decomposition.
 
@@ -1067,6 +1060,8 @@ def test_dvc_repro_and_force_repro_preserve_non_timing_outputs(tmp_path: Path):
 
     # DVC does not accept arbitrary top-level keys in pipeline files.
     dvc_payload = yaml.safe_load(dvc_file.read_text(encoding="utf-8")) or {}
+    if isinstance(dvc_payload, dict):
+        dvc_payload.pop("params_payload", None)
     if isinstance(dvc_payload, dict) and "params_file" in dvc_payload:
         dvc_payload.pop("params_file", None)
     if isinstance(dvc_payload, dict):
@@ -1197,6 +1192,7 @@ def test_dvc_repro_and_force_repro_preserve_non_timing_outputs(tmp_path: Path):
     assert (
         repro_force.returncode == 0
     ), f"dvc repro --force failed:\nSTDOUT:\n{repro_force.stdout}\nSTDERR:\n{repro_force.stderr}"
+    
 
     second_hashes_all = _extract_stage_out_hashes(lock_path)
     second_hashes = {
