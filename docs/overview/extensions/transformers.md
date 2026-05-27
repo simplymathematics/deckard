@@ -3,7 +3,7 @@
 This overview focuses on execution order for transformers framework wrappers.
 
 For comprehensive hook ownership and policy details, see
-[Plugin and Hook Execution Reference](../../developers/hooks.md).
+[Plugin and Hook Execution Reference](../../developers/hooks).
 
 Related docs:
 
@@ -13,10 +13,10 @@ Related docs:
 - [Training API](../../api/train)
 - [Defense API](../../api/defend)
 - [Attack API](../../api/attack)
-- [Scoring Overview](../scoring.md)
+- [Scoring Overview](../scoring)
 - [File API](../../api/file)
 - [Artifacts API](../../api/artifacts)
-- [Experiment Guide](../experiment.md)
+- [Experiment Guide](../experiment)
 - [Plot API](../../api/plot)
 
 ## Execution Order

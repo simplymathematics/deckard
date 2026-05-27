@@ -3,7 +3,7 @@
 This overview focuses on ANJANA execution order.
 
 For comprehensive hook ownership and policy details, see
-[Plugin and Hook Execution Reference](../../developers/hooks.md).
+[Plugin and Hook Execution Reference](../../developers/hooks).
 
 Related docs:
 
@@ -11,10 +11,10 @@ Related docs:
 - [Pipeline API](../../api/pipeline)
 - [Model API](../../api/model)
 - [Defense API](../../api/defend)
-- [Scoring Overview](../scoring.md)
+- [Scoring Overview](../scoring)
 - [File API](../../api/file)
 - [Artifacts API](../../api/artifacts)
-- [Experiment Guide](../experiment.md)
+- [Experiment Guide](../experiment)
 - [Plot API](../../api/plot)
 
 ## Execution Order

@@ -256,9 +256,9 @@ Joblib launcher is a practical default for local parallel sweeps:
 
 See also:
 
-- [Package Summary](summary.md).
+- [Package Summary](summary).
 - [API Reference](../api/modules)
-- [Extensions](extensions/index.md)
+- [Extensions](extensions/index)
 - [Scoring Guide](scoring)
 - [Layers](../api/layers)
 - [Notebooks](../notebooks/index)

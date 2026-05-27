@@ -22,7 +22,7 @@ The default tabular workflow composes:
 - [Score API](../../api/score) for metric composition
 
 Use [sklearn notebook](../../notebooks/sklearn) for an end-to-end example.
-See also [sklearn framework overview](sklearn.md).
+See also [sklearn framework overview](sklearn).
 
 ### PyTorch
 
@@ -34,7 +34,7 @@ execution on top of the same core contracts.
 - [Score API](../../api/score)
 
 Use [pytorch notebook](../../notebooks/pytorch) for runnable examples.
-See also [PyTorch framework overview](pytorch.md).
+See also [PyTorch framework overview](pytorch).
 
 ### Transformers
 
@@ -46,7 +46,7 @@ transformer-specific trainer/runtime adapters.
 - [Attack API](../../api/attack)
 - [Score API](../../api/score)
 
-See also [Transformers framework overview](transformers.md).
+See also [Transformers framework overview](transformers).
 
 ## Plugins
 
@@ -60,7 +60,7 @@ Anjana adds anonymization-aware preprocessing and privacy-oriented scoring.
 - [Anjana API](../../api/anjana)
 - [Anjana notebook](../../notebooks/anjana)
 
-See also [ANJANA plugin overview](anjana.md).
+See also [ANJANA plugin overview](anjana).
 
 ### Fairlearn
 
@@ -70,7 +70,7 @@ metrics.
 - [Fairlearn API](../../api/fairlearn)
 - [Fairlearn notebook](../../notebooks/fairlearn)
 
-See also [Fairlearn plugin overview](fairlearn.md).
+See also [Fairlearn plugin overview](fairlearn).
 
 ### Lifelines
 
@@ -79,7 +79,7 @@ Lifelines adds survival analysis and time-to-event model workflows.
 - [Lifelines API](../../api/lifelines)
 - [Lifelines notebook](../../notebooks/lifelines)
 
-See also [Lifelines plugin overview](lifelines.md).
+See also [Lifelines plugin overview](lifelines).
 
 ### Seaborn and Yellowbrick
 
@@ -91,8 +91,8 @@ top of persisted experiment outputs.
 - [Seaborn notebook](../../notebooks/seaborn)
 - [Yellowbrick notebook](../../notebooks/yellowbrick)
 
-See also [Seaborn plugin overview](seaborn.md) and
-[Yellowbrick plugin overview](yellowbrick.md).
+See also [Seaborn plugin overview](seaborn) and
+[Yellowbrick plugin overview](yellowbrick).
 
 ### ART-backed robustness workflows
 

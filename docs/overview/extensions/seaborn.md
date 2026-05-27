@@ -3,16 +3,16 @@
 This overview focuses on Seaborn plugin execution order.
 
 For comprehensive hook ownership and policy details, see
-[Plugin and Hook Execution Reference](../../developers/hooks.md).
+[Plugin and Hook Execution Reference](../../developers/hooks).
 
 Related docs:
 
 - [Data API](../../api/data)
 - [Pipeline API](../../api/pipeline)
-- [Scoring Overview](../scoring.md)
+- [Scoring Overview](../scoring)
 - [File API](../../api/file)
 - [Artifacts API](../../api/artifacts)
-- [Experiment Guide](../experiment.md)
+- [Experiment Guide](../experiment)
 - [Plot API](../../api/plot)
 
 ## Execution Order

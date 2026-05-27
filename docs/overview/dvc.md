@@ -4,10 +4,10 @@ This page summarizes Deckard's DVC pipeline autogeneration contract.
 
 Related docs:
 
-- [Developer DVC Spec](../developers/dvc.md)
-- [Optimization Contract](../developers/optimization.md)
-- [Hydra Contract](../developers/hydra.md)
-- [Pruning Contract](../developers/pruning.md)
+- [Developer DVC Spec](../developers/dvc)
+- [Optimization Contract](../developers/optimization)
+- [Hydra Contract](../developers/hydra)
+- [Pruning Contract](../developers/pruning)
 
 ## What It Does
 
