@@ -57,6 +57,7 @@ RULE_ANNOTATIONS = {
     "DOC003": "Public methods with user parameters require an 'Args:' section.",
     "DOC004": "Public methods with non-None returns require a 'Returns:' section.",
     "DOC005": "Public methods that raise exceptions require a 'Raises:' section.",
+    "DOC006": "Selected public classes require an 'Attributes:' section in class docstrings.",
 }
 
 
@@ -141,6 +142,15 @@ def _has_raise_statement(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     return any(isinstance(child, ast.Raise) for child in ast.walk(fn))
 
 
+def _class_requires_attributes_section(class_name: str) -> bool:
+    """Return True when class docstring must include a Google-style Attributes section."""
+    if class_name.startswith("_"):
+        return False
+    suffixes = ("Config", "Mixin", "Plugin")
+    tokens = ("Sampler", "Pipeline", "Trainer", "Defense", "Scorer")
+    return class_name.endswith(suffixes) or any(token in class_name for token in tokens)
+
+
 def _class_field_annotations(node: ast.ClassDef) -> list[ast.AnnAssign]:
     anns: list[ast.AnnAssign] = []
     for child in node.body:
@@ -161,7 +171,12 @@ def _docstring_lineno(node: ast.AST) -> int:
     return getattr(node, "lineno", 1)
 
 
-def validate_file(path: Path, *, strict_docs_types: bool = False) -> list[Violation]:
+def validate_file(
+    path: Path,
+    *,
+    strict_docs_types: bool = False,
+    require_attributes_sections: bool = False,
+) -> list[Violation]:
     try:
         rel = path.relative_to(ROOT).as_posix()
     except ValueError:
@@ -474,6 +489,20 @@ def validate_file(path: Path, *, strict_docs_types: bool = False) -> list[Violat
                             ),
                         )
 
+        if require_attributes_sections and _class_requires_attributes_section(
+            class_name,
+        ):
+            class_doc = ast.get_docstring(node) or ""
+            if "Attributes:" not in class_doc:
+                violations.append(
+                    Violation(
+                        rel,
+                        node.lineno,
+                        "DOC006",
+                        f"{class_name} missing Google-style 'Attributes:' section",
+                    ),
+                )
+
     return violations
 
 
@@ -481,15 +510,28 @@ def collect_violations(
     scope: str,
     *,
     strict_docs_types: bool = False,
+    require_attributes_sections: bool = False,
 ) -> list[Violation]:
     candidate = Path(scope)
     base = candidate if candidate.is_absolute() else ROOT / scope
     violations: list[Violation] = []
     if base.is_file() and base.suffix == ".py":
-        violations.extend(validate_file(base, strict_docs_types=strict_docs_types))
+        violations.extend(
+            validate_file(
+                base,
+                strict_docs_types=strict_docs_types,
+                require_attributes_sections=require_attributes_sections,
+            ),
+        )
         return sorted(violations, key=lambda v: (v.path, v.line, v.code, v.message))
     for path in _iter_python_files(base):
-        violations.extend(validate_file(path, strict_docs_types=strict_docs_types))
+        violations.extend(
+            validate_file(
+                path,
+                strict_docs_types=strict_docs_types,
+                require_attributes_sections=require_attributes_sections,
+            ),
+        )
     return sorted(violations, key=lambda v: (v.path, v.line, v.code, v.message))
 
 
@@ -507,11 +549,17 @@ def main() -> int:
         action="store_true",
         help="Enable strict public docstring/type-annotation checks",
     )
+    parser.add_argument(
+        "--require-attributes-sections",
+        action="store_true",
+        help="Require Google-style 'Attributes:' sections for Config/Mixin/Plugin and related runtime classes",
+    )
     args = parser.parse_args()
 
     violations = collect_violations(
         args.scope,
         strict_docs_types=args.strict_docs_types,
+        require_attributes_sections=args.require_attributes_sections,
     )
     if violations:
         for violation in violations:
