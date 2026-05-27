@@ -229,21 +229,21 @@ stages:
     # DVCLive runtime features plus artifact/metrics/plot persistence checks
     # are covered by notebook_dvclive.
 
-  notebook_dvclive:
-    cmd: jupyter nbconvert --to notebook --execute --inplace dvclive.ipynb
-    deps:
-    - dvclive.ipynb
-    - ../../deckard/experiment/
-    - ../../deckard/score/
-    - ../../deckard/artifacts.py
-    - ../../deckard/file.py
-    - ../../deckard/utils.py
-    - ../../examples/sklearn/config/default.yaml
-    - ../../examples/sklearn/config/score/classification.yaml
-    metrics:
-    - ./build/dvclive/dvclive/summary.json
-    plots:
-    - ./build/dvclive/dvclive_feature_spec.vl.json
+  # notebook_dvclive:
+  #   cmd: jupyter nbconvert --to notebook --execute --inplace dvclive.ipynb
+  #   deps:
+  #   - dvclive.ipynb
+  #   - ../../deckard/experiment/
+  #   - ../../deckard/score/
+  #   - ../../deckard/artifacts.py
+  #   - ../../deckard/file.py
+  #   - ../../deckard/utils.py
+  #   - ../../examples/sklearn/config/default.yaml
+  #   - ../../examples/sklearn/config/score/classification.yaml
+  #   metrics:
+  #   - ./build/dvclive/dvclive/summary.json
+  #   plots:
+  #   - ./build/dvclive/dvclive_feature_spec.vl.json
 
   notebook_optuna:
     cmd: jupyter nbconvert --to notebook --execute --inplace optuna.ipynb

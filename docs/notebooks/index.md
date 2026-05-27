@@ -149,22 +149,22 @@ ______________________________________________________________________
 For general onboarding:
 
 1. {doc}`sklearn </notebooks/sklearn>`
-1. {doc}`pytorch </notebooks/pytorch>`
-1. {doc}`hydra </notebooks/hydra>`
+2. {doc}`pytorch </notebooks/pytorch>`
+3. {doc}`hydra </notebooks/hydra>`
 <!-- 1. {doc}`optimize </notebooks/optimize>` -->
-1. {doc}`optuna </notebooks/optuna>`
+4. {doc}`optuna </notebooks/optuna>`
 
 For fairness-first users:
 
-1. {doc}`fairlearn </notebooks/fairlearn>`
+5. {doc}`fairlearn </notebooks/fairlearn>`
 
 For privacy-first users:
 
-1. {doc}`anjana </notebooks/anjana>`
+6. {doc}`anjana </notebooks/anjana>`
 
 For survival models:
 
-1. {doc}`lifelines </notebooks/lifelines>`
+7. {doc}`lifelines </notebooks/lifelines>`
 
 For command line usage:
 
@@ -197,23 +197,20 @@ For reporting, explainability, and diagnostics:
 ```{toctree}
 :maxdepth: 1
 :hidden:
-
-anjana
+sklearn
+pytorch
 art_attacks
 art_defenses
-artifacts
-deckard
 detector
+anjana
 fairlearn
-hydra
-<!-- optimize -->
-dvc
-dvclive
 lifelines
-optuna
-pytorch
 seaborn
-sklearn
 yellowbrick
 scoring
+artifacts
+hydra
+optuna
+dvc
+deckard
 ```

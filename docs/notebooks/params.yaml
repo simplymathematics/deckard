@@ -1,0 +1,936 @@
+_target_: deckard.experiment.dvc.DVCExperimentConfig
+experiment:
+  id: ''
+  path: ''
+  payload_kind: data
+  metadata: {}
+  data:
+    _target_: deckard.data.base.DataConfig
+    id: ''
+    path: ''
+    payload_kind: data
+    metadata: {}
+    default_stage: post-pipeline
+    dataset_name: adult
+    data_params: {}
+    split: null
+    sampler:
+      name: deckard.data.sample.SplitSampler
+      train_size: null
+      test_size: 0.2
+      val_size: null
+      random_state: 42
+      stratify: false
+    classifier: true
+    target: null
+    drop: []
+    keep: []
+    plugins: []
+    alias: adult
+    scorer:
+      _target_: deckard.score.data.DefaultDataClassificationScorerDictConfig
+      id: ''
+      path: ''
+      payload_kind: data
+      metadata: {}
+      scorers:
+        num_classes:
+          score_name: num_classes
+          score_function: deckard.score.data.data_num_classes_score
+          score_params: {}
+          metric_scope: auto
+          stage: []
+          greater_is_better: true
+          needs_labels: true
+          needs_proba: null
+          needs_logits: null
+          binary_expand_to_multiclass: null
+          binary_positive_class_index: 1
+          row_sum_atol: 0.01
+          probability_clip_eps: 1.0e-12
+        class_count_min:
+          score_name: class_count_min
+          score_function: deckard.score.data.data_class_count_min_score
+          score_params: {}
+          metric_scope: auto
+          stage: []
+          greater_is_better: true
+          needs_labels: true
+          needs_proba: null
+          needs_logits: null
+          binary_expand_to_multiclass: null
+          binary_positive_class_index: 1
+          row_sum_atol: 0.01
+          probability_clip_eps: 1.0e-12
+        class_count_max:
+          score_name: class_count_max
+          score_function: deckard.score.data.data_class_count_max_score
+          score_params: {}
+          metric_scope: auto
+          stage: []
+          greater_is_better: true
+          needs_labels: true
+          needs_proba: null
+          needs_logits: null
+          binary_expand_to_multiclass: null
+          binary_positive_class_index: 1
+          row_sum_atol: 0.01
+          probability_clip_eps: 1.0e-12
+        class_imbalance_ratio:
+          score_name: class_imbalance_ratio
+          score_function: deckard.score.data.data_class_imbalance_ratio_score
+          score_params: {}
+          metric_scope: auto
+          stage: []
+          greater_is_better: false
+          needs_labels: true
+          needs_proba: null
+          needs_logits: null
+          binary_expand_to_multiclass: null
+          binary_positive_class_index: 1
+          row_sum_atol: 0.01
+          probability_clip_eps: 1.0e-12
+        mutual_information_mean:
+          score_name: mutual_information_mean
+          score_function: deckard.score.data.data_mutual_information_mean_score
+          score_params: {}
+          metric_scope: auto
+          stage: []
+          greater_is_better: true
+          needs_labels: true
+          needs_proba: null
+          needs_logits: null
+          binary_expand_to_multiclass: null
+          binary_positive_class_index: 1
+          row_sum_atol: 0.01
+          probability_clip_eps: 1.0e-12
+        mutual_information_max:
+          score_name: mutual_information_max
+          score_function: deckard.score.data.data_mutual_information_max_score
+          score_params: {}
+          metric_scope: auto
+          stage: []
+          greater_is_better: true
+          needs_labels: true
+          needs_proba: null
+          needs_logits: null
+          binary_expand_to_multiclass: null
+          binary_positive_class_index: 1
+          row_sum_atol: 0.01
+          probability_clip_eps: 1.0e-12
+      stage: []
+      classifier: true
+      scoring_type: data
+    score_mode: test
+    score_stage: post-pipeline
+    pipeline:
+      pipeline:
+        imputer:
+          name: sklearn.impute.SimpleImputer
+          strategy: mean
+    files: {}
+    times:
+      data_load_time: null
+      data_sample_time: null
+      data_pipeline_time: null
+      data_score_time: null
+      pipeline_fit_time: null
+      pipeline_transform_time: null
+      pipeline_y_fit_time: null
+      pipeline_y_transform_time: null
+    train_indices: null
+    test_indices: null
+    val_indices: null
+    X_val: null
+    y_val: null
+    train_n: null
+    test_n: null
+    val_n: null
+  experiment_name: f117485ab41a0c260f323aaa69e60d61-dvclive-native
+  model:
+    id: ''
+    path: ''
+    payload_kind: data
+    metadata: {}
+    model_type: sklearn.ensemble.RandomForestClassifier
+    classifier: true
+    model_params:
+      bootstrap: true
+      ccp_alpha: 0.0
+      class_weight: null
+      criterion: gini
+      max_depth: null
+      max_features: sqrt
+      max_leaf_nodes: null
+      max_samples: null
+      min_impurity_decrease: 0.0
+      min_samples_leaf: 1
+      min_samples_split: 2
+      min_weight_fraction_leaf: 0.0
+      monotonic_cst: null
+      n_estimators: 100
+      n_jobs: null
+      oob_score: false
+      random_state: null
+      verbose: 0
+      warm_start: false
+    probability: true
+    alias: rf
+    defense:
+      _target_: deckard.model.defense.base.DefensePipelineConfig
+      id: ''
+      path: ''
+      payload_kind: data
+      metadata: {}
+      defenses:
+      - _target_: deckard.DefenseConfig
+        id: ''
+        path: ''
+        payload_kind: data
+        metadata: {}
+        score_dict: '{}'
+        model_type: null
+        classifier: true
+        model_params: {}
+        probability: false
+        clip_values: null
+        defense_name: art.defences.postprocessor.ClassLabels
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+        alias: class-labels
+        plugins: []
+        _model: null
+      plugins: []
+      alias: ''
+    plugins: []
+    scorer:
+      _target_: deckard.score.base.ScorerDictConfig
+      id: ''
+      path: ''
+      payload_kind: data
+      metadata: {}
+      scorers:
+        accuracy:
+          score_name: accuracy
+          score_function: sklearn.metrics._classification.accuracy_score
+          score_params: {}
+          metric_scope: auto
+          stage: []
+          greater_is_better: true
+          needs_labels: true
+          needs_proba: null
+          needs_logits: null
+          binary_expand_to_multiclass: null
+          binary_positive_class_index: 1
+          row_sum_atol: 0.01
+          probability_clip_eps: 1.0e-12
+        precision:
+          score_name: precision
+          score_function: sklearn.metrics._classification.precision_score
+          score_params:
+            average: weighted
+            zero_division: 0
+          metric_scope: auto
+          stage: []
+          greater_is_better: true
+          needs_labels: true
+          needs_proba: null
+          needs_logits: null
+          binary_expand_to_multiclass: null
+          binary_positive_class_index: 1
+          row_sum_atol: 0.01
+          probability_clip_eps: 1.0e-12
+        recall:
+          score_name: recall
+          score_function: sklearn.metrics._classification.recall_score
+          score_params:
+            average: weighted
+            zero_division: 0
+          metric_scope: auto
+          stage: []
+          greater_is_better: true
+          needs_labels: true
+          needs_proba: null
+          needs_logits: null
+          binary_expand_to_multiclass: null
+          binary_positive_class_index: 1
+          row_sum_atol: 0.01
+          probability_clip_eps: 1.0e-12
+        f1:
+          score_name: f1
+          score_function: sklearn.metrics._classification.f1_score
+          score_params:
+            average: weighted
+            zero_division: 0
+          metric_scope: auto
+          stage: []
+          greater_is_better: true
+          needs_labels: true
+          needs_proba: null
+          needs_logits: null
+          binary_expand_to_multiclass: null
+          binary_positive_class_index: 1
+          row_sum_atol: 0.01
+          probability_clip_eps: 1.0e-12
+        roc_auc:
+          score_name: roc_auc
+          score_function: sklearn.metrics._ranking.roc_auc_score
+          score_params:
+            average: weighted
+            multi_class: ovr
+          metric_scope: auto
+          stage: []
+          greater_is_better: true
+          needs_labels: false
+          needs_proba: true
+          needs_logits: true
+          binary_expand_to_multiclass: null
+          binary_positive_class_index: 1
+          row_sum_atol: 0.01
+          probability_clip_eps: 1.0e-12
+        log_loss:
+          score_name: log_loss
+          score_function: sklearn.metrics._classification.log_loss
+          score_params:
+            labels: null
+          metric_scope: auto
+          stage: []
+          greater_is_better: true
+          needs_labels: false
+          needs_proba: true
+          needs_logits: null
+          binary_expand_to_multiclass: null
+          binary_positive_class_index: 1
+          row_sum_atol: 0.01
+          probability_clip_eps: 1.0e-12
+      stage: []
+    score_mode: test
+    trainer: sklearn
+    trainer_params: {}
+    training_n: null
+    prediction_n: null
+    val_n: null
+    _target_: deckard.model.base.ModelConfig
+  defense:
+    _target_: deckard.model.defense.base.DefensePipelineConfig
+    id: ''
+    path: ''
+    payload_kind: data
+    metadata: {}
+    defenses:
+    - _target_: deckard.DefenseConfig
+      id: ''
+      path: ''
+      payload_kind: data
+      metadata: {}
+      score_dict: '{}'
+      model_type: null
+      classifier: true
+      model_params: {}
+      probability: false
+      clip_values: null
+      defense_name: art.defences.postprocessor.ClassLabels
+      defense_params:
+        apply_fit: false
+        apply_predict: true
+      alias: class-labels
+      plugins: []
+      _model: null
+    plugins: []
+    alias: ''
+  attack:
+    _target_: deckard.attack.base.AttackConfig
+    id: ''
+    path: ''
+    payload_kind: data
+    metadata: {}
+    attack_type: art.attacks.evasion.HopSkipJump
+    attack_params:
+      max_iter: 10
+      init_eval: 1
+      max_eval: 20
+      init_size: 100
+      norm: 2
+      targeted: false
+      verbose: false
+    attack_size: 10
+    targeted_attribute: ''
+    scorer:
+      _target_: deckard.score.attack.AttackScorerConfig
+      id: ''
+      path: ''
+      payload_kind: data
+      metadata: {}
+      evasion:
+        _target_: deckard.score.attack.DefaultEvasionAttackScorerDictConfig
+        id: ''
+        path: ''
+        payload_kind: data
+        metadata: {}
+        scorers:
+          accuracy:
+            score_name: accuracy
+            score_function: sklearn.metrics._classification.accuracy_score
+            score_params: {}
+            metric_scope: auto
+            stage: []
+            greater_is_better: true
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+          precision:
+            score_name: precision
+            score_function: sklearn.metrics._classification.precision_score
+            score_params:
+              average: weighted
+              zero_division: 0
+            metric_scope: auto
+            stage: []
+            greater_is_better: true
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+          recall:
+            score_name: recall
+            score_function: sklearn.metrics._classification.recall_score
+            score_params:
+              average: weighted
+              zero_division: 0
+            metric_scope: auto
+            stage: []
+            greater_is_better: true
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+          f1-score:
+            score_name: f1-score
+            score_function: sklearn.metrics._classification.f1_score
+            score_params:
+              average: weighted
+              zero_division: 0
+            metric_scope: auto
+            stage: []
+            greater_is_better: true
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+          success:
+            score_name: success
+            score_function: deckard.score.attack.evasion_success_score
+            score_params: {}
+            metric_scope: auto
+            stage: []
+            greater_is_better: true
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+        stage: []
+        classifier: true
+      evasion_regression:
+        _target_: deckard.score.attack.DefaultEvasionRegressionAttackScorerDictConfig
+        id: ''
+        path: ''
+        payload_kind: data
+        metadata: {}
+        scorers:
+          mse:
+            score_name: mse
+            score_function: sklearn.metrics._regression.mean_squared_error
+            score_params: {}
+            metric_scope: auto
+            stage: []
+            greater_is_better: false
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+          mae:
+            score_name: mae
+            score_function: sklearn.metrics._regression.mean_absolute_error
+            score_params: {}
+            metric_scope: auto
+            stage: []
+            greater_is_better: false
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+          r2:
+            score_name: r2
+            score_function: sklearn.metrics._regression.r2_score
+            score_params: {}
+            metric_scope: auto
+            stage: []
+            greater_is_better: true
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+        stage: []
+        classifier: false
+      membership_inference:
+        _target_: deckard.score.attack.DefaultMembershipInferenceAttackScorerDictConfig
+        id: ''
+        path: ''
+        payload_kind: data
+        metadata: {}
+        scorers:
+          accuracy:
+            score_name: accuracy
+            score_function: sklearn.metrics._classification.accuracy_score
+            score_params: {}
+            metric_scope: auto
+            stage: []
+            greater_is_better: true
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+          precision:
+            score_name: precision
+            score_function: sklearn.metrics._classification.precision_score
+            score_params:
+              average: weighted
+              zero_division: 0
+            metric_scope: auto
+            stage: []
+            greater_is_better: true
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+          recall:
+            score_name: recall
+            score_function: sklearn.metrics._classification.recall_score
+            score_params:
+              average: weighted
+              zero_division: 0
+            metric_scope: auto
+            stage: []
+            greater_is_better: true
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+          f1:
+            score_name: f1
+            score_function: sklearn.metrics._classification.f1_score
+            score_params:
+              average: weighted
+              zero_division: 0
+            metric_scope: auto
+            stage: []
+            greater_is_better: true
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+        stage: []
+        classifier: true
+      attribute_inference:
+        _target_: deckard.score.attack.DefaultAttributeInferenceAttackScorerDictConfig
+        id: ''
+        path: ''
+        payload_kind: data
+        metadata: {}
+        scorers:
+          accuracy:
+            score_name: accuracy
+            score_function: sklearn.metrics._classification.accuracy_score
+            score_params: {}
+            metric_scope: auto
+            stage: []
+            greater_is_better: true
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+          precision:
+            score_name: precision
+            score_function: sklearn.metrics._classification.precision_score
+            score_params:
+              average: weighted
+              zero_division: 0
+            metric_scope: auto
+            stage: []
+            greater_is_better: true
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+          recall:
+            score_name: recall
+            score_function: sklearn.metrics._classification.recall_score
+            score_params:
+              average: weighted
+              zero_division: 0
+            metric_scope: auto
+            stage: []
+            greater_is_better: true
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+          f1:
+            score_name: f1
+            score_function: sklearn.metrics._classification.f1_score
+            score_params:
+              average: weighted
+              zero_division: 0
+            metric_scope: auto
+            stage: []
+            greater_is_better: true
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+        stage: []
+        classifier: true
+      attribute_inference_regression:
+        _target_: deckard.score.attack.DefaultAttributeInferenceRegressionAttackScorerDictConfig
+        id: ''
+        path: ''
+        payload_kind: data
+        metadata: {}
+        scorers:
+          mse:
+            score_name: mse
+            score_function: sklearn.metrics._regression.mean_squared_error
+            score_params: {}
+            metric_scope: auto
+            stage: []
+            greater_is_better: false
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+          mae:
+            score_name: mae
+            score_function: sklearn.metrics._regression.mean_absolute_error
+            score_params: {}
+            metric_scope: auto
+            stage: []
+            greater_is_better: false
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+          r2:
+            score_name: r2
+            score_function: sklearn.metrics._regression.r2_score
+            score_params: {}
+            metric_scope: auto
+            stage: []
+            greater_is_better: true
+            needs_labels: true
+            needs_proba: null
+            needs_logits: null
+            binary_expand_to_multiclass: null
+            binary_positive_class_index: 1
+            row_sum_atol: 0.01
+            probability_clip_eps: 1.0e-12
+        stage: []
+        classifier: false
+    alias: hsj
+    plugins: []
+    device: mps
+    mode: auto
+    attack: null
+    attacked_labels: null
+    score_y_pred: null
+    score_y_proba: null
+    target_index: null
+  detector: null
+  files:
+    replace: {}
+    handler: <deckard.file.CanonFileHandler object at 0x300192380>
+  score: null
+  random_state: 42
+  library: sklearn
+  device: null
+  classifier: true
+  evaluation_mode: standard
+  score_mode: []
+  times:
+    experiment_total_time: null
+    data_load_time: null
+    data_sample_time: null
+    model_training_time: null
+    attack_time: null
+    detector_time: null
+    score_time: null
+  outputs:
+    hooks:
+      graph:
+        data:
+        - stage: pre-load
+          before: before_pre_load
+          after: after_pre_load
+        - stage: pre-sample
+          before: before_pre_sample
+          after: after_pre_sample
+        - stage: post-sample
+          before: before_post_sample
+          after: after_post_sample
+        - stage: post-pipeline
+          before: before_post_pipeline
+          after: after_post_pipeline
+        model:
+        - stage: pre_art_defense
+          before: before_pre_art_defense
+          after: after_pre_art_defense
+        - stage: pre_fit
+          before: before_pre_fit
+          after: after_pre_fit
+        - stage: post_fit_pre_predict
+          before: before_post_fit_pre_predict
+          after: after_post_fit_pre_predict
+        attack:
+        - stage: post-attack
+          before: before_post_attack
+          after: after_post_attack
+        - stage: pre-attack
+          before: before_pre_attack
+          after: after_pre_attack
+        detector:
+        - stage: post-detect
+          before: before_post_detect
+          after: after_post_detect
+        - stage: post-fit
+          before: before_post_fit
+          after: after_post_fit
+        - stage: pre-detect
+          before: before_pre_detect
+          after: after_pre_detect
+        - stage: pre-fit
+          before: before_pre_fit
+          after: after_pre_fit
+        score:
+        - stage: score
+          before: before_score
+          after: after_score
+    dvclive:
+      hook_trace:
+      - enabled: true
+        position: first
+        component: experiment
+        stage: load
+        event: before
+        executed: false
+      - enabled: true
+        position: last
+        component: data
+        stage: data-score
+        event: after
+        executed: false
+      - enabled: true
+        position: last
+        component: model
+        stage: model-score
+        event: after
+        executed: false
+      - enabled: true
+        position: last
+        component: attack
+        stage: attack-score
+        event: after
+        executed: false
+      - enabled: true
+        position: last
+        component: experiment
+        stage: score
+        event: after
+        executed: false
+      - enabled: true
+        position: last
+        component: experiment
+        stage: persist
+        event: after
+        executed: false
+      - enabled: true
+        position: first
+        component: data
+        stage: load
+        event: before
+        executed: false
+      enabled: true
+      position: first
+      executed: true
+      dvc_system_scores:
+        test:
+          attack_cpu_count: 12.0
+          attack_cpu_usage (%): 0.0
+          attack_cpu_parallelization (%): 0.0
+          attack_ram_usage (%): 66.1
+          attack_ram_usage (gb): 10.236663818359375
+          attack_ram_total (gb): 24.0
+          attack_disk_usage (%)_main: 94.1
+          attack_disk_usage (gb)_main: 17.126697540283203
+          attack_disk_total (gb)_main: 460.4317207336426
+      dvclive_dir: docs/notebooks/build/dvclive_native
+      report_mode: html
+      summary_json: null
+      report_file: docs/notebooks/build/dvclive_native/report.html
+      report_html: docs/notebooks/build/dvclive_native/report.html
+      system_monitor_scores:
+        system_monitor/cpu/count: 12.0
+        system_monitor/cpu/usage (%): 0.0
+        system_monitor/cpu/parallelization (%): 0.0
+        system_monitor/ram/usage (%): 66.1
+        system_monitor/ram/usage (GB): 10.236663818359375
+        system_monitor/ram/total (GB): 24.0
+        system_monitor/disk/usage (%)/main: 94.1
+        system_monitor/disk/usage (GB)/main: 17.126697540283203
+        system_monitor/disk/total (GB)/main: 460.4317207336426
+    cache: {}
+  params:
+    experiment_name: f117485ab41a0c260f323aaa69e60d61-dvclive-native
+    library: sklearn
+    classifier: true
+    evaluation_mode: standard
+    score_mode: []
+    random_state: 42
+    data:
+      type: deckard.data.base.DataConfig
+      alias: adult
+      fingerprint: 6e2b3628ac5c563d9fb812286049931f142c3d8f83d5970ae3212ed5b2118d8e
+    model:
+      type: deckard.model.base.ModelConfig
+      alias: rf
+      fingerprint: 798d491340bf938115388a518481b71cebf3e9b422a1f47524fcf83a57552bb5
+    defense:
+      type: deckard.model.defense.base.DefensePipelineConfig
+      alias: ''
+      fingerprint: a01670a7ab00df26f50aabfd1dfcfec1a81aa0ec258a24521cc7ba059b21da1a
+    attack:
+      type: deckard.attack.base.AttackConfig
+      alias: hsj
+      fingerprint: 557fdca291255677619df9a39a570648244a8f8c43cf56f7fc4cb6e78b845a40
+    detector: null
+    score: null
+    attack_chain:
+    - type: deckard.attack.base.AttackConfig
+      alias: hsj
+      fingerprint: 557fdca291255677619df9a39a570648244a8f8c43cf56f7fc4cb6e78b845a40
+    schema_version: deckard.experiment.runtime.v1
+  hook_plugins: []
+  hook_bundles: []
+  cache_enabled: true
+  _target_: deckard.experiment.base.ExperimentConfig
+  dvclive_enabled: true
+dvc_plugin:
+  enabled: true
+  dvclive_dir: null
+  mode: single
+  pull_dependencies: true
+  push_outputs: true
+  make_summary: true
+  make_report: true
+  make_dvcyaml: false
+  report_mode: html
+  resume: true
+  save_dvc_exp: false
+  cache_images: false
+  monitor_system: false
+  fail_on_dvc_error: false
+  dvc_file: dvc.yaml
+  params_file: params.yaml
+_dvc:
+  stage_selection: load
+  run_mode: single
+  params_manifest:
+    experiment_name: f117485ab41a0c260f323aaa69e60d61-dvclive-native
+    library: sklearn
+    classifier: true
+    evaluation_mode: standard
+    score_mode: []
+    random_state: 42
+    data:
+      type: deckard.data.base.DataConfig
+      alias: adult
+      fingerprint: 6e2b3628ac5c563d9fb812286049931f142c3d8f83d5970ae3212ed5b2118d8e
+    model:
+      type: deckard.model.base.ModelConfig
+      alias: rf
+      fingerprint: 798d491340bf938115388a518481b71cebf3e9b422a1f47524fcf83a57552bb5
+    defense:
+      type: deckard.model.defense.base.DefensePipelineConfig
+      alias: ''
+      fingerprint: a01670a7ab00df26f50aabfd1dfcfec1a81aa0ec258a24521cc7ba059b21da1a
+    attack:
+      type: deckard.attack.base.AttackConfig
+      alias: hsj
+      fingerprint: 557fdca291255677619df9a39a570648244a8f8c43cf56f7fc4cb6e78b845a40
+    detector: null
+    score: null
+    attack_chain:
+    - type: deckard.attack.base.AttackConfig
+      alias: hsj
+      fingerprint: 557fdca291255677619df9a39a570648244a8f8c43cf56f7fc4cb6e78b845a40
+    schema_version: deckard.experiment.runtime.v1
+  dvclive:
+    enabled: true
+  pruning:
+    enabled: false
+    pruner_configured: false
+    active: false
