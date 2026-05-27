@@ -4,6 +4,12 @@
 
 `initialize -> train -> predict/score -> persist`.
 
+## Purpose
+
+Define user-facing model runtime owner behavior, including split mode scoring,
+defense stage execution, persistence outputs, and boundaries for framework
+adapters and plugin integrations.
+
 ## Capabilities
 
 - Resolve and initialize model implementations from configuration.
@@ -130,65 +136,11 @@ model:
       max_iter: 500
 ```
 
-## Internals
+## Implementation Notes
 
-### Timing and logging
-
-All major operations (training, prediction, scoring, saving/loading) record
-wall-clock time
-and log via Python’s `logging` module.
-
-### Scoring
-
-- For classifiers: accuracy, precision, recall, and F1 score.
-- For regressors: MSE, RMSE, and MAE.
-
-### Persistence
-
-Use the public model persistence interfaces:
-
-- :meth:`deckard.model.ModelConfig.save`
-- :meth:`deckard.model.ModelConfig.load`
-- :meth:`deckard.model.ModelConfig.save_model`
-- :meth:`deckard.model.ModelConfig.load_model`
-- `model(data, model_file=...)` for automatic load-or-train behavior
-
-Canonical policy:
-
-- `save`/`load` persist and restore config objects as `.yaml`/`.yml`.
-- `save_model`/`load_model` persist and restore runtime model objects.
-- Runtime model extensions are framework-specific:
-  - PyTorch runtime artifacts use `.pt`.
-  - scikit-learn runtime artifacts use `.pkl` or `.joblib`.
-
-For {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig`, checkpointing
-produces YAML config records that reference runtime model-state artifacts:
-
-- `model_file` entries point to YAML config artifacts.
-- `model_state_file` entries point to `.pt` runtime state artifacts.
-
-Public API example (automatic load-or-train): see the
-{doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
-notebook for executed save/load examples.
-
-Public API example (PyTorch config + runtime save/load): see the
-{doc}`notebooks/pytorch.ipynb </notebooks/pytorch>`
-notebook for executed YAML + `save_model`/`load_model` patterns.
-
-#### Pre-trained torch models
-
-There are two supported patterns:
-
-1. Load a previously saved deckard PyTorch config via `load(filepath)` and
-load runtime state via `load_model(filepath)`.
-1. Point `model_type` to a custom constructor/class that returns an already
-   initialized {class}`torch.nn.Module` (for example, one that internally loads external
-   pre-trained weights), then run normal deckard training/evaluation.
-
-If you want inference-only behavior from a pre-trained checkpoint, load it via
-`load` + `load_model` and then call the model with `model_file`/prediction
-outputs as
-needed, without requiring private methods.
+Detailed model runtime contracts (stage ordering, trainer/defense internals,
+and framework adapter boundaries) are documented in
+{doc}`../developers/model`.
 
 ## Troubleshooting
 

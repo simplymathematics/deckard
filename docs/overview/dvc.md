@@ -56,7 +56,7 @@ Reference layout:
 
 ## Public API
 
-Primary API entrypoint: {func}`deckard.experiment.generate_dvc_pipeline`.
+Primary API entrypoint: `deckard.experiment.generate_dvc_pipeline`.
 
 ```python
 from deckard.experiment import generate_dvc_pipeline

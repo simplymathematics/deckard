@@ -3,6 +3,19 @@
 This document is the implementation-level contract for Deckard data runtimes
 across core, framework, and plugin families.
 
+## Purpose
+
+Define internal data runtime owner contracts for stage hooks, split mode
+semantics, persistence invariants, and boundaries between core orchestration,
+plugin policy layers, and framework adapters.
+
+## Capabilities
+
+- Define canonical stage and mode semantics and their non-overlapping roles.
+- Define hook-orchestrated scoring behavior and stage token normalization.
+- Define files-only persistence and canonical timing key guarantees.
+- Define plugin and framework-adapter boundaries for data-family extensions.
+
 ## Canonical Runtime Contract
 
 Every DataConfig family runtime must preserve these fields and lifecycle methods:

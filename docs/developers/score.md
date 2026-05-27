@@ -2,6 +2,19 @@
 
 This document defines the canonical ScoreDict contract implemented in deckard/artifacts.py.
 
+## Purpose
+
+Define internal scoring runtime owner contracts for stage and mode routing,
+hook integration, score payload serialization, and boundaries between core
+scorer orchestration and extension adapters.
+
+## Capabilities
+
+- Define canonical score container and persistence schema behavior.
+- Define deterministic stage and mode routing semantics for scorer execution.
+- Define hook merge behavior and extension-safe payload normalization.
+- Define plugin and framework-adapter boundaries for scorer profiles.
+
 ## Goals
 
 - Use one native score container across runtimes.

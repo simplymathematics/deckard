@@ -715,7 +715,15 @@ class DataConfig(OrchestratorBase, BaseConfig):
             TypeError: If configured pipeline runtime is not a DataPipeline object.
         """
         self.load_dataset()
-        if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
+        has_split_payload = all(
+            getattr(self, attr, None) is not None
+            for attr in ("X_train", "y_train", "X_test", "y_test")
+        )
+        if (
+            not hasattr(self, "data_sample_time")
+            or self.data_sample_time is None
+            or not has_split_payload
+        ):
             self._split_loaded_data(run_hooks=run_hooks)
         pipeline_runtime = getattr(self, "pipeline", None)
         if pipeline_runtime is not None:
@@ -1019,7 +1027,12 @@ class DataConfig(OrchestratorBase, BaseConfig):
             NotImplementedError: If dataset name or file type is unsupported.
             ValueError: If required runtime target/source fields are invalid.
         """
-        if hasattr(self, "data_load_time") and self.data_load_time is not None:
+        if (
+            hasattr(self, "data_load_time")
+            and self.data_load_time is not None
+            and getattr(self, "_X", None) is not None
+            and getattr(self, "_y", None) is not None
+        ):
             return
         self._run_plugin_hook("before_load_data")
         from .declarations import build_loader_registry
@@ -1205,6 +1218,13 @@ class DataConfig(OrchestratorBase, BaseConfig):
             return False
         data_path = Path(data_file)
         if data_path.exists():
+            # Repeated split/fold runs intentionally mutate ``split`` and clear
+            # sample timing/state between iterations; loading a cached artifact
+            # here can restore stale timing fields and skip re-sampling.
+            explicit_split = getattr(self, "split", None) not in [None, ""]
+            resample_requested = getattr(self, "data_sample_time", None) is None
+            if explicit_split or resample_requested:
+                return True
             self.load(str(data_path))
             self._sync_canonical_time_state()
             return False

@@ -57,7 +57,7 @@ Plugin functionality:
 - {doc}`hydra </notebooks/hydra>` - [Hydra](https://hydra.cc) config composition and overrides.
 <!-- - {doc}`optimize </notebooks/optimize>` - optimize runtime demonstrations for run and multirun execution. -->
 - {doc}`dvc </notebooks/dvc>` - DVC stage planning, canonical stage contracts, and stage decomposition.
-- {doc}`dvclive </notebooks/dvclive>` - DVCLive runtime logging, monitoring, and hook-scoped score emission.
+- {doc}`dvc </notebooks/dvc>` - DVCLive runtime logging, monitoring, and hook-scoped score emission.
 - {doc}`optuna </notebooks/optuna>` - [Optuna](https://optuna.org) hyperparameter optimization workflows.
 - {doc}`artifacts </notebooks/artifacts>` - Artifact and output management.
 - {doc}`scoring </notebooks/scoring>` - ScoreDict contract, score lifecycle, and persistence views.
@@ -72,7 +72,7 @@ small number of canonical places rather than repeated everywhere.
 | Files-only persistence aliases | {doc}`sklearn </notebooks/sklearn>`, {doc}`hydra </notebooks/hydra>`, {doc}`dvc </notebooks/dvc>` | `files={...}` payloads, `+files.params_file=...`, `+files.score_file=...`, and persisted run artifacts |
 | Canonical timing keys plus extensibility | {doc}`scoring </notebooks/scoring>`, {doc}`sklearn </notebooks/sklearn>`, {doc}`art_attacks </notebooks/art_attacks>`, {doc}`fairlearn </notebooks/fairlearn>` | flat timing keys such as `prediction_time` and richer nested timing payloads for plugin or attack-specific execution |
 | Stage and mode normalization plus hook ordering | {doc}`scoring </notebooks/scoring>`, {doc}`hydra </notebooks/hydra>`, {doc}`anjana </notebooks/anjana>`, {doc}`fairlearn </notebooks/fairlearn>` | explicit `score_mode`, stage-aware hooks, and plugin hook merge behavior |
-| DVC system scorer defaults | {doc}`dvclive </notebooks/dvclive>`, {doc}`scoring </notebooks/scoring>` | concise `<component>_<stat>` keys (for example `data_cpu`, `model_memory`, `defense_gpu_power`) persisted as `score_dict[stage][mode][metric]`, populated from DVCLive `system_monitor/*` plus power hook metrics when available |
+| DVC system scorer defaults | {doc}`dvc </notebooks/dvc>`, {doc}`scoring </notebooks/scoring>` | concise `<component>_<stat>` keys (for example `data_cpu`, `model_memory`, `defense_gpu_power`) persisted as `score_dict[stage][mode][metric]`, populated from DVCLive `system_monitor/*` plus power hook metrics when available |
 | Cache-key determinism and selective invalidation | {doc}`dvc </notebooks/dvc>`, {doc}`artifacts </notebooks/artifacts>` | repeated run or multirun templates, cache reuse expectations, and resolved artifact identity |
 | Human-readable YAML and JSON params or score artifacts | {doc}`scoring </notebooks/scoring>`, {doc}`hydra </notebooks/hydra>`, {doc}`dvc </notebooks/dvc>`, {doc}`artifacts </notebooks/artifacts>` | `scores.json`, `params.yaml`, DVC-generated manifests, and round-trip artifact inspection |
 
@@ -90,7 +90,7 @@ DVC-backed docs build.
 | {doc}`hydra </notebooks/hydra>` | Compose-first config and override behavior | single-run params or score artifacts and resolved override examples |
 <!-- | {doc}`optimize </notebooks/optimize>` | Run versus multirun optimization flow | `params.yaml`, `scores.json`, Optuna storage examples, and cache reuse templates | -->
 | {doc}`dvc </notebooks/dvc>` | DVC stage planning and contract decomposition | canonical stage mappings, stage plan summaries, and contract-oriented inspection outputs |
-| {doc}`dvclive </notebooks/dvclive>` | DVCLive runtime monitoring and logging | DVCLive summaries/reports, runtime monitor traces, and hook-scoped DVC system score payloads |
+| {doc}`dvc </notebooks/dvc>` | DVCLive runtime monitoring and logging | DVCLive summaries/reports, runtime monitor traces, and hook-scoped DVC system score payloads |
 
 | {doc}`scoring </notebooks/scoring>` | ScoreDict lifecycle and persistence | human-readable score payloads and flat or dotlist projections |
 | {doc}`artifacts </notebooks/artifacts>` | Artifact hydration and pretrained reload paths | cached model, attack, and score artifacts for sklearn and torch paths |
@@ -170,7 +170,7 @@ For command line usage:
 
 1. {doc}`hydra </notebooks/hydra>`
 2. {doc}`dvc </notebooks/dvc>`
-3. {doc}`dvclive </notebooks/dvclive>`
+3. {doc}`dvc </notebooks/dvc>`
 4. {doc}`optuna </notebooks/optuna>`
 
 For robustness-first users:

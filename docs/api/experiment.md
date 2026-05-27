@@ -4,6 +4,12 @@
 
 `load -> sample -> train -> defense -> attack -> score -> persist`.
 
+## Purpose
+
+Define user-facing experiment runtime owner behavior, including stage ordering,
+mode propagation to child components, hook orchestration boundaries, and
+persistence outputs across framework adapters and plugin integrations.
+
 ## Capabilities
 
 - Orchestrate end-to-end execution across core runtime modules.
@@ -18,6 +24,9 @@
 - Aggregated score payloads and persisted score files.
 - Canonical experiment timing and stage execution metadata.
 - Persisted artifact paths managed through file configuration objects.
+
+Implementation-level runtime contracts are documented in
+{doc}`../developers/experiment`.
 
 ## Introduction
 
@@ -119,16 +128,10 @@ experiment:
       attack_type: art.attacks.evasion.FastGradientMethod
 ```
 
-## Internals
+## Implementation Notes
 
-The module resolves nested config objects, applies runtime overrides, and
-normalizes outputs for downstream scoring/serialization.
-
-Hydra override patterns commonly used with experiments include:
-
-- selecting alternate attack/score profiles per run
-- composing plugin configs (for example fairlearn or lifelines)
-- switching runtime backends (sklearn, pytorch, survival)
+Detailed experiment internals (hook contracts, cache schema, and runtime
+serialization policy) are documented in {doc}`../developers/experiment`.
 
 ## Troubleshooting
 

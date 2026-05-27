@@ -74,4 +74,4 @@ declaration copies.
 ______________________________________________________________________
 
 **Related:** [Refactor Plan](refactor_plan) | [Naming
-Conventions](naming) | [Mixin and Plugin Rules](plugins)
+Conventions](naming) | {doc}`Mixin and Plugin Rules <plugins>`

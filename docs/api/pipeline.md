@@ -43,13 +43,6 @@ optional `pipeline` runtime object.
 ## API Reference
 
 ```{eval-rst}
-.. automodule:: deckard.data.pipeline
-   :members:
-   :exclude-members: DataConfig
-   :show-inheritance:
-```
-
-```{eval-rst}
 .. automodule:: deckard.data.pipeline.base
    :members:
    :show-inheritance:

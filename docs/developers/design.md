@@ -20,4 +20,4 @@ See the [Refactor Plan](refactor_plan) for implementation details and ongoing go
 
 ______________________________________________________________________
 
-**Related:** [Naming Conventions](naming) | [Mixin and Plugin Rules](plugins)
+**Related:** [Naming Conventions](naming) | {doc}`Mixin and Plugin Rules <plugins>`

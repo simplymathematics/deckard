@@ -4,6 +4,12 @@
 
 `normalize mode/stage -> execute scorers -> emit payload`.
 
+## Purpose
+
+Define user-facing scoring runtime owner behavior, including stage and mode
+routing, hook-aware scorer execution, and persisted score outputs across core,
+framework-adapter, and plugin-integrated runtimes.
+
 ## Capabilities
 
 - Normalize scoring mode and stage routing across runtime contexts.
@@ -11,6 +17,8 @@
 - Support label, probability, and logits-based scoring patterns.
 - Persist stage-scoped score outputs for downstream reporting.
 - Aggregate metric payloads produced by {doc}`data`, {doc}`model`, {doc}`attack`, and {doc}`detector`.
+
+Implementation-level scoring contracts are documented in {doc}`../developers/score`.
 
 ## Outputs
 
@@ -24,7 +32,7 @@ This page describes score behavior from a user/API perspective: how scorers
 run, how to configure them, and what outputs they produce.
 
 Developer-level scoring contracts and internals are documented in
-{doc}`../developers/score` and {doc}`../developers/scorers`.
+{doc}`../developers/score`.
 
 For introductory scoring concepts, default scorer families, and YAML catalog
 examples, see {doc}`../overview/scoring`.
@@ -183,7 +191,7 @@ ScorerDictConfig.__call__(
 
 - `mode`: runtime scoring mode, for example `train`, `test`, `val`, `attack`,
   `attack-val`, or `pre-sample` (mapped by
-  {func}`~deckard.score.base.normalize_scoring_mode`).
+  {func}`~deckard.score.canon.normalize_scorer_mode`).
 - `data`, `model`, `attack`: optional runtime context used to derive inputs
   when `dep`/`ind` are not passed directly.
 - `dep`/`ind`: explicit targets and predictions.

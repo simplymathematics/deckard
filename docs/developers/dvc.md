@@ -86,9 +86,9 @@ After applying overrides, runtime contracts are recomposed and a fresh `params` 
 
 Current orchestration behavior already provides:
 
-- programmatic hook graph generation via {func}`deckard.experiment.canon.build_experiment_hook_graph`
+- programmatic hook graph generation via `deckard.experiment.canon.build_experiment_hook_graph`
 
-- canonical hook bundle via {func}`deckard.experiment.canon.build_experiment_hook_bundle`
+- canonical hook bundle via `deckard.experiment.canon.build_experiment_hook_bundle`
 
 - additive user bundle + hook plugin composition through `compose_hook_plugins(...)`
 

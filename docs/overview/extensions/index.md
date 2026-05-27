@@ -60,7 +60,7 @@ Anjana adds anonymization-aware preprocessing and privacy-oriented scoring.
 - [Anjana API](../../api/anjana)
 - [Anjana notebook](../../notebooks/anjana)
 
-See also [ANJANA plugin overview](anjana).
+See also {doc}`ANJANA plugin overview <anjana>`.
 
 ### Fairlearn
 

@@ -20,7 +20,7 @@ Optimization runtime is split into three concerns:
 - Orchestration: Hydra sweeper + callback lifecycle.
 - Runtime optimization policy: {class}`deckard.layers.optimize.OptimizerConfig` (or equivalent config object)
     that owns trial resolution, reporting, and pruning policy behavior.
-- Execution: {func}`deckard.layers.optimize.optimize_main` instantiates and runs {class}`deckard.experiment.ExperimentConfig`.
+- Execution: `deckard.layers.optimize.optimize_main` instantiates and runs {class}`deckard.experiment.ExperimentConfig`.
 - Post-run synchronization: objective filtering, trial user attributes, persisted score payload.
 
 This split allows composition changes without changing the user-facing command surface.

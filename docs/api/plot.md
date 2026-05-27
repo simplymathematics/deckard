@@ -4,6 +4,12 @@
 
 `normalize backend -> render -> persist`.
 
+## Purpose
+
+Define user-facing plotting runtime owner behavior, including backend stage
+routing, output persistence, and boundaries between core plotting behavior and
+framework-adapter or plugin-integrated backends.
+
 ## Capabilities
 
 - Normalize plot backend selection across supported backends.
@@ -11,6 +17,8 @@
 - Apply backend-specific plotting behavior behind shared plot config APIs.
 - Persist plot artifacts and runtime plot state metadata.
 - Render outputs produced by upstream {doc}`experiment` and {doc}`data` workflows.
+
+Implementation-level plotting contracts are documented in {doc}`../developers/plot`.
 
 ## Outputs
 
@@ -108,18 +116,10 @@ plot:
    y: evasion_accuracy
 ```
 
-## Internals
+## Implementation Notes
 
-The plotting module routes to backend-specific config objects and ensures
-output files are written consistently. Yellowbrick plotting can hydrate
-experiment context lazily before rendering to avoid repeated setup.
-
-## Canonical backend ownership
-
-- Seaborn plot configs behave like DataConfig extensions and can source data
-  from in-memory frames, `data_file`, `data_config`, or Optuna storage.
-- Yellowbrick plot configs behave like ExperimentConfig extensions and keep
-  experiment preparation logic in Yellowbrick runtime modules.
+Backend ownership and internal runtime orchestration details are documented in
+{doc}`../developers/plot`.
 
 ## Optuna-backed Seaborn recipes
 

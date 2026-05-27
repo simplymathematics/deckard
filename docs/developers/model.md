@@ -1,5 +1,18 @@
 # Model Runtime Canon
 
+## Purpose
+
+Define internal model runtime owner contracts for stage-ordered execution,
+split mode scoring behavior, hook-safe composition, and boundaries between core
+model orchestration, plugin policy layers, and framework adapters.
+
+## Capabilities
+
+- Define canonical runtime fields and public execution methods.
+- Define stage semantics for defense application and retraining policy.
+- Define persistence invariants for scores, timings, and prediction payloads.
+- Define plugin and framework-adapter boundary rules.
+
 Deckard's model runtime is intentionally split into a small set of canonical responsibilities:
 
 - resolve and train or load a model

@@ -4,6 +4,12 @@
 
 `fit -> detect -> score -> persist`.
 
+## Purpose
+
+Define user-facing detector runtime owner behavior, including detector stage
+hooks, split mode scoring scope, persistence outputs, and boundaries for
+framework adapters and plugin integrations.
+
 ## Capabilities
 
 - Configure detector execution after model/attack phases.
@@ -11,6 +17,8 @@
 - Produce detector metrics aligned with experiment score flows.
 - Persist detector artifacts for reproducible detector analysis.
 - Consume payloads from {doc}`attack` and contribute metrics to {doc}`score`.
+
+Implementation-level runtime contracts are documented in {doc}`../developers/detector`.
 
 ## Outputs
 

@@ -5,6 +5,13 @@
 Define internal plotting runtime ownership, backend dispatch behavior, and
 artifact persistence constraints.
 
+## Capabilities
+
+- Define deterministic backend stage dispatch from runtime configuration.
+- Define plotting runtime owner boundaries for input hydration and rendering.
+- Define persistence invariants for plot outputs and metadata.
+- Define plugin and framework-adapter boundaries for backend-specific logic.
+
 ## Why This Exists
 
 Plotting requires backend-specific preparation paths while preserving a

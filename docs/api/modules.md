@@ -7,11 +7,6 @@ Developer design goals, constraints, and acceptance criteria live in:
 
 - {doc}`../developers/index`
 
-
-```
-
-
-
 ## Shared APIs
 
 Shared user-facing API pages for reusable object families:
@@ -21,6 +16,7 @@ Shared user-facing API pages for reusable object families:
 :caption: Shared APIs
 
 configs
+template
 score
 ```
 
@@ -63,7 +59,6 @@ defend
 attack
 detector
 experiment
-score
 plot
 layers
 file
@@ -77,7 +72,7 @@ utils
 :maxdepth: 2
 :caption: Framework Integrations
 
-pytorch
+frameworks/index
 ```
 
 ## Plugin Integrations
@@ -86,9 +81,5 @@ pytorch
 :maxdepth: 2
 :caption: Plugin Integrations
 
-anjana
-fairlearn
-lifelines
-seaborn
-yellowbrick
+plugins/index
 ```

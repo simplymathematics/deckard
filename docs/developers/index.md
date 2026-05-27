@@ -32,7 +32,7 @@ Use this map to choose where to read first:
 ## Documentation Standards
 
 - {doc}`Developer Page Template <template>`
-- {doc}`Developer to API Parity Map <parity>`
+- {doc}`Docs Refactor Checklist <new_docs>`
 
 ## Framework Integration Docs
 
@@ -215,7 +215,6 @@ see [DVC Cache Setup Summary](actionscache).
 - {doc}`Persistence and Runtime State Contract <persistence>`
 - {doc}`Score Serialization Contract <score>`
 - {doc}`Optimization Runtime Contract <optimization>`
-- {doc}`Optimize Developer Guide <optimize>`
 - {doc}`Hydra and Optuna Orchestration Contract <hydra>`
 - {doc}`Pruning Runtime Contract <pruning>`
 - {doc}`DVC Pipeline Autogeneration Spec <dvc>`
@@ -228,13 +227,12 @@ see [DVC Cache Setup Summary](actionscache).
 - {doc}`Pipeline Class Contract <pipelines>`
 - {doc}`Trainer Class Contract <trainers>`
 - {doc}`Defense Class Contract <defenses>`
-- {doc}`Scorer Class Contract <scorers>`
+- {doc}`Scorer Contract (Score Page) <score>`
 - {doc}`Orchestration Guide <orchestration>`
 - {doc}`Canon Runtime Execution Guide <canon_runtime>`
 - {doc}`Detector Design and Contract <detector>`
 - {doc}`Plot Design and Contract <plot>`
 - {doc}`Developer Page Template <template>`
-- {doc}`Developer to API Parity Map <parity>`
 - {doc}`Docs Refactor Checklist <new_docs>`
 - {doc}`GH Actions Cache Setup <actionscache>`
 
@@ -248,6 +246,7 @@ refactor_plan
 declarations
 naming
 plugins
+extensions/index
 data
 model
 attack
@@ -257,8 +256,10 @@ hooks
 persistence
 score
 plot
+artifacts
+file
+utils
 optimization
-optimize
 hydra
 pruning
 dvc
@@ -270,11 +271,10 @@ samplers
 pipelines
 trainers
 defenses
-scorers
 orchestration
 canon_runtime
+prediction-history-implementation-checklist
 template
-parity
 new_docs
 actionscache
 ```
@@ -295,7 +295,6 @@ ______________________________________________________________________
 - {doc}`Persistence and Runtime State Contract <persistence>`
 - {doc}`Score Serialization Contract <score>`
 - {doc}`Optimization Runtime Contract <optimization>`
-- {doc}`Optimize Developer Guide <optimize>`
 - {doc}`Hydra and Optuna Orchestration Contract <hydra>`
 - {doc}`Pruning Runtime Contract <pruning>`
 - {doc}`DVC Pipeline Autogeneration Spec <dvc>`
@@ -304,5 +303,4 @@ ______________________________________________________________________
 - {doc}`Detector Design and Contract <detector>`
 - {doc}`Plot Design and Contract <plot>`
 - {doc}`Developer Page Template <template>`
-- {doc}`Developer to API Parity Map <parity>`
 - {doc}`Docs Refactor Checklist <new_docs>`

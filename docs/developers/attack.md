@@ -3,6 +3,19 @@
 This page captures attack-layer design goals, constraints, and acceptance
 criteria for contributor-facing documentation.
 
+## Purpose
+
+Define internal attack runtime owner contracts for mode and stage semantics,
+hook-aware orchestration boundaries, persistence behavior, and plugin/framework
+adapter extensions.
+
+## Capabilities
+
+- Define canonical attack stage and split mode semantics.
+- Define attack scoring and persistence invariants.
+- Define attack-family routing guarantees for core runtime owners.
+- Define plugin and framework-adapter boundaries for attack execution.
+
 ## Design Goals
 
 1. Keep attack behavior split-scoped through mode semantics (`auto`, `train`, `test`, `val`).

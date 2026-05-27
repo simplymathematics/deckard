@@ -125,7 +125,7 @@ Key runtime capabilities:
 - Canonical stage token normalization.
 - Typed scorer runtime contract payload.
 
-See also: {doc}`../api/score`, {doc}`scorers`.
+See also: {doc}`../api/score`, {doc}`score`.
 
 ## Plot
 

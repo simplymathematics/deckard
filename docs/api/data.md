@@ -4,13 +4,21 @@
 
 `pre-load -> sample -> pipeline -> score -> persist`.
 
+## Purpose
+
+Define user-facing data runtime owner behavior, including split mode execution,
+stage-hook orchestration, persistence outputs, and boundaries for framework
+adapters and plugin integrations.
+
 ## Capabilities
 
 - Load built-in and configured datasets into canonical runtime payloads.
 - Execute split-aware sampling and optional preprocessing pipelines.
-- Run data-level scoring across canonical split modes.
+- Run data-level scoring across canonical split modes and stage hooks.
 - Persist data artifacts, metadata, and timing records for experiment reuse.
 - Coordinate sub-object flows through {doc}`sample` and {doc}`pipeline`.
+
+Implementation-level runtime contracts are documented in {doc}`../developers/data`.
 
 ## Outputs
 

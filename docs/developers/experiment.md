@@ -2,6 +2,19 @@
 
 This guide consolidates Phase 7 validation and documentation contracts for experiment runtime behavior.
 
+## Purpose
+
+Define internal experiment runtime owner contracts for stage ordering, mode
+propagation, hook orchestration, cache and persistence schema, and boundaries
+between core orchestration and extension adapters.
+
+## Capabilities
+
+- Define canonical stage execution order and defense-stage retraining policy.
+- Define deterministic hook bundle composition and hook event contracts.
+- Define runtime serialization and cache compatibility guarantees.
+- Define extension boundaries for plugin and framework-adapter orchestration.
+
 Related docs:
 
 - [Experiment Runtime Contract](optimization)
@@ -40,7 +53,7 @@ Defense-stage training rule:
 
 ## Bundle Authoring
 
-Hook bundles are authored with {class}`deckard.plugins.base.HookBundle` and {class}`deckard.plugins.HookPlugin` and composed through {func}`deckard.plugins.base.compose_hook_plugins`.
+Hook bundles are authored with {class}`deckard.plugins.base.HookBundle` and {class}`deckard.plugins.HookPlugin` and composed through `deckard.plugins.base.compose_hook_plugins`.
 
 Authoring rules:
 

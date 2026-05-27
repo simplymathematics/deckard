@@ -4,6 +4,12 @@
 
 `resolve mode/stage -> generate -> predict -> score -> persist`.
 
+## Purpose
+
+Define user-facing attack runtime owner behavior, including stage versus mode
+semantics, scoring outputs, persistence paths, and boundaries for framework
+adapters and plugin integrations.
+
 ## Capabilities
 
 - Normalize attack mode and stage tokens for consistent execution.
@@ -11,6 +17,8 @@
 - Produce attack prediction payloads for downstream evaluation.
 - Emit attack-scoped metrics and persist canonical attack artifacts.
 - Consume model outputs from {doc}`model` and emit metrics used by {doc}`score`.
+
+Implementation-level runtime contracts are documented in {doc}`../developers/attack`.
 
 ## Outputs
 

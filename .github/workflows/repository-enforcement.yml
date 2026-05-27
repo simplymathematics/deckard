@@ -27,8 +27,8 @@ jobs:
           python -m pip install .[test]
 
       - name: Run structural enforcement checks
-        continue-on-error: true
         run: |
           python scripts/repository_enforcement.py --scope deckard/
+          python scripts/repository_enforcement.py --scope deckard/ --require-attributes-sections
 
      
