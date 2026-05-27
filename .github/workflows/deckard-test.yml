@@ -21,18 +21,13 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip
         python3 -m pip install .[test]
-        python3 -m pip install pytest-cov
+        python3 -m pip install pytest-cov pytest-xdist
     - name: Test base dependencies only
       run: |
         python3 -m pytest test \
-          --ignore test/test_data/test_pytorch.py \
-          --ignore test/test_layers/test_survival.py \
-          --ignore test/test_data/test_data_fairness.py \
-          --ignore test/test_data/test_fairness.py \
-          --ignore test/test_model/test_model_fairness.py \
-          --ignore test/test_plot/test_seaborn.py \
-          --ignore test/test_plot/test_yellowbrick.py \
-          --ignore test/test_plot/test_init.py \
+          -n auto \
+          --ignore test/test_plugins/ \
+          --ignore test/test_frameworks/ \
           --cov=deckard \
           --cov-report=xml:coverage-base.xml \
           --cov-report=term-missing

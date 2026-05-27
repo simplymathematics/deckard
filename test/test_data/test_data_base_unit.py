@@ -397,6 +397,11 @@ def test_prepare_data_file_existing_and_new(tmp_path):
     loaded_cfg = object()
     cfg.load = lambda path: loaded_cfg
 
+    # Default path is resample mode (no prior sample timing), so keep runtime mutable.
+    assert cfg._prepare_files(files={"data_file": existing.as_posix()}) is True
+
+    # When sample state already exists and no explicit split is requested, cache load path is used.
+    cfg.data_sample_time = 0.1
     assert cfg._prepare_files(files={"data_file": existing.as_posix()}) is False
 
     target = tmp_path / "nested" / "data.pkl"
