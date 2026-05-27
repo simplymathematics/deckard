@@ -75,6 +75,12 @@ def _pytorch_config():
         dataset_name="torch.utils.data.TensorDataset",
         data_params={"_args_": [X, y]},
         classifier=True,
+        sampler={
+            "train_size" : 12,
+            "test_size" : 8,
+            "random_state" : 42,
+            "name" : "split,"
+        }
         scorer=lambda **kwargs: {"torch_rows": len(kwargs.get("y", []))},
     )
 
@@ -117,6 +123,7 @@ def test_core_and_framework_score_hooks_use_canonical_stage_names(tmp_path: Path
         dataset_name="torch.utils.data.TensorDataset",
         data_params={"_args_": [X, y]},
         classifier=True,
+        sampler="split",
         scorer=lambda **kwargs: {"torch_rows": len(kwargs.get("y", []))},
     )
 

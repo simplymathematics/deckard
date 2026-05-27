@@ -58,11 +58,13 @@ def _torch_fairness_data():
 
     cfg = PytorchDataConfig(
         dataset_name="torch_fairness_dataset.py:SyntheticImageDataset",
-        train_size=32,
-        test_size=16,
-        random_state=42,
+        sampler = {
+            "train_size" : 32,
+            "test_size" : 16,
+            "random_state" : 42,
+            "name" : "split",
+        }
         classifier=True,
-        stratify=True,
         alias="synthetic_fairness",
         data_params={
             "num_samples": 48,
@@ -107,10 +109,10 @@ def test_pytorch_model_with_fairness_defense_instantiation():
     data = _torch_fairness_data()
 
     # Flatten image tensors so a linear torch model can consume them.
-    data.X_train = data._X_train.reshape(data._X_train.shape[0], -1)
-    data.y_train = data._y_train
-    data.X_test = data._X_test.reshape(data._X_test.shape[0], -1)
-    data.y_test = data._y_test
+    data.X_train = data.X_train.reshape(data.X_train.shape[0], -1)
+    data.y_train = data.y_train
+    data.X_test = data.X_test.reshape(data.X_test.shape[0], -1)
+    data.y_test = data.y_test
 
     model = FairlearnPytorchModelConfig(
         model_type="torch.nn.Linear",
