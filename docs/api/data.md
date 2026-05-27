@@ -446,7 +446,7 @@ Logging is performed at key steps.
 If you encounter issues with dataset loading, ensure that:
 
 - You have an active internet connection for datasets fetched from OpenML, etc.
-- The selected optional dataset provider is installed (`lifelines`, `yellowbrick`,
+- The selected optional dataset provider is installed ([lifelines](../overview/extensions/index), [yellowbrick](../overview/extensions/index),
   or `torch` extras when applicable).
 - The selected file path and `target` column are correct for file-backed data.
 - Otherwise, use one of the built-in dataset names from the catalog above.

@@ -189,8 +189,8 @@ ScorerDictConfig.__call__(
 
 ```
 
-- `mode`: runtime scoring mode, for example `train`, `test`, `val`, `attack`,
-  `attack-val`, or `pre-sample` (mapped by
+- `mode`: runtime scoring mode, for example `train`, `test`, `val`, `attack`, or
+  `attack-val` (mapped by
   {func}`~deckard.score.canon.normalize_scorer_mode`).
 - `data`, `model`, `attack`: optional runtime context used to derive inputs
   when `dep`/`ind` are not passed directly.
@@ -270,8 +270,8 @@ implementation for every attack family.
 - If a metric needs extra keyword arguments, ensure the callable accepts them;
   deckard drops unsupported keyword arguments based on the metric signature.
 - If Hydra overrides appear to be ignored, verify that you are targeting the
-  correct store group: `scorers/...` for model/data/fairness/survival and
-  `attack_scorers/...` for attack profiles.
+  correct store group: `scorers/...` for model/data/fairness/survival/attack
+  profiles.
 - If attack metrics are missing, look for prefixed keys such as `evasion_*`,
   `membership_inference_*`, or `inferred_age_*` rather than the raw metric
   names.

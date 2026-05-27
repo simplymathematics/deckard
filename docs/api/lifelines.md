@@ -91,16 +91,17 @@ The {class}`~deckard.plugins.lifelines.data.LifelinesDataConfig` extends
 
 - **duration_col** (str): column name for event times (durations)
 - **event_col** (str): column name for event indicators (0 = censored, 1 = event)
-- **auxiliary_model_config** (ModelConfig, optional): model to predict event
-  times/status for inference attacks
+- **reference_metric** (str): baseline metric used to derive benign failures
+- **failure_profile** (dict, optional): failure metadata describing attack and
+  non-attack failure sources
 - **stratify_by** (str, optional): column for stratified cross-validation
 
 Survival data mode support is explicit in
 {class}`deckard.plugins.lifelines.data.LifelinesDataConfig`:
 
 - `native`: dataset already has duration/event columns
-- `auxiliary_model`: derive failure events from a benign model metric
-- `auxiliary_attack`: derive failures from attack outputs
+- `auxiliary_metric`: derive failure events from a reference model/runtime metric
+- `auxiliary_failure`: derive failures from attack outputs or generic failure signals
 - `optuna_db`: treat Optuna study outputs as time-to-event data
 
 ### Data pipeline and sampling support
@@ -162,7 +163,7 @@ these
 fields at construction time:
 
 - `data`
-- `model` (string model name/alias, for example `cox` or `weibull`)
+- {doc}`model` (string model name/alias, for example `cox` or `weibull`)
 - `target`
 - `event_col`
 - `duration_col`
@@ -203,4 +204,3 @@ custom user-provided regression fitters can be imported reliably.
 - {doc}`pipeline` — data-pipeline composition for survival datasets
 - {doc}`sample` — split and fold strategies used by survival runs
 - {doc}`pytorch` — optional deep learning survival models
-- {doc}`modules` — overview of all extensions

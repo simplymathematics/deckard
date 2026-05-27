@@ -18,6 +18,8 @@ See [Core API](api/modules) for module-level documentation,
 [Notebooks](notebooks/index) for executable examples, and
 [Developer Docs -> Docstrings](developers/docstrings) for the canonical
 docstring standard.
+Security status and workflow hardening notes are documented in
+[Developer Docs -> Security Report](developers/security-report).
 
 If you are new to the project, begin with:
 
@@ -31,6 +33,13 @@ If you are extending the framework, begin with:
 1. [Core API -> modules](api/modules)
 2. [Developer Docs](developers/index)
 3. [Extensions](overview/extensions/index)
+
+## Licensing 
+
+- Project license: [GPLv3 License](../LICENSE)
+- Dependency and plugin license references: [LICENSES](LICENSES)
+
+
 
 ## Frameworks and Plugins
 
@@ -60,6 +69,7 @@ For a fuller extension map, see [Overview -> Extensions](overview/extensions/ind
 :hidden:
 
 overview/index
+LICENSES
 ```
 
 ```{toctree}

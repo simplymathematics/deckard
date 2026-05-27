@@ -93,5 +93,28 @@ score:
 Alternatively, you can incoporate anjana behavior into the base workflow:
 
 ```yaml
-TODO
+data:
+    _target_: deckard.data.DataConfig
+    dataset_name: make_classification
+    classifier: true
+    sensitive_columns: [sex]
+
+model:
+    _target_: deckard.model.ModelConfig
+    model_type: sklearn.linear_model.LogisticRegression
+    classifier: true
+
+# Compose ANJANA scorers directly into the base score chain.
+score:
+    _target_: deckard.plugins.anjana.score.DefaultAnjanaScorerDictConfig
+
+experiment:
+    _target_: deckard.experiment.ExperimentConfig
+    score_mode: test
 ```
+
+Integration notes:
+
+- Use [DefaultAnjanaDataScorerDictConfig](../../api/modules) when you only need data/privacy metrics.
+- Use [DefaultAnjanaModelScorerDictConfig](../../api/modules) when you only need model-level privacy metrics.
+- Keep `sensitive_columns` aligned with the runtime data split used during scoring.

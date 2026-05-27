@@ -105,6 +105,16 @@ examples rather than a standalone plugin page.
 - [art_defenses notebook](../../notebooks/art_defenses)
 - [detector notebook](../../notebooks/detector)
 
+## Plugin License References
+
+- Fairlearn plugin: [Fairlearn extension](fairlearn), upstream [MIT License](https://github.com/fairlearn/fairlearn/blob/main/LICENSE)
+- Anjana plugin: [Anjana extension](anjana), upstream licensing by package metadata/distribution
+- Lifelines plugin: [Lifelines extension](lifelines), upstream [MIT License](https://github.com/CamDavidsonPilon/lifelines/blob/master/LICENSE)
+- Seaborn plugin: [Seaborn extension](seaborn), upstream [BSD-3-Clause License](https://github.com/mwaskom/seaborn/blob/master/LICENSE.md)
+- Yellowbrick plugin: [Yellowbrick extension](yellowbrick), upstream [BSD-3-Clause License](https://github.com/DistrictDataLabs/yellowbrick/blob/develop/LICENSE.txt)
+
+For consolidated dependency and plugin licensing references, see [LICENSES](../../LICENSES).
+
 ```{toctree}
 :hidden:
 

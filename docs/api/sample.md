@@ -20,7 +20,7 @@ runtime orchestration.
 - Runtime integration point: {meth}`deckard.data.DataConfig._resolve_sample` and public lifecycle methods
   {meth}`deckard.data.DataConfig.sample` / {meth}`deckard.data.DataConfig.sample_data`
 - Hydra sampler defaults are registered in {func}`deckard.data.sample.register_sampler_configs` under
-  the `sample` config group.
+  the sample config group.
 
 Available sampler configs:
 

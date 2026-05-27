@@ -49,7 +49,7 @@ Related Deckard docs:
 - {doc}`score` for metric outputs commonly compared alongside yellowbrick plots
 - {doc}`experiment` for composed experiment execution prior to plotting
 
-**Feature analysis** (`visualize_features`):
+**Feature analysis** ([visualize_features](modules)):
 - [`rank1d`](https://www.scikit-yb.org/en/latest/api/features/index.html)
 - [`rank2d`](https://www.scikit-yb.org/en/latest/api/features/index.html)
 - [`radviz`](https://www.scikit-yb.org/en/latest/api/features/index.html)
@@ -58,29 +58,29 @@ Related Deckard docs:
 - [`pca`](https://www.scikit-yb.org/en/latest/api/features/index.html)
 - [`manifold`](https://www.scikit-yb.org/en/latest/api/features/index.html)
 
-**Target / distribution** (`visualize_targets`):
+**Target / distribution** ([visualize_targets](modules)):
 - [`class_balance`](https://www.scikit-yb.org/en/latest/api/target/index.html)
 - [`balanced_binning_reference`](https://www.scikit-yb.org/en/latest/api/target/index.html)
 - [`feature_correlation`](https://www.scikit-yb.org/en/latest/api/target/index.html)
 
-**Regression diagnostics** (`visualize_regressors`):
+**Regression diagnostics** ([visualize_regressors](modules)):
 - [`prediction_error`](https://www.scikit-yb.org/en/latest/api/regressor/index.html)
 - [`residuals_plot`](https://www.scikit-yb.org/en/latest/api/regressor/index.html)
 - [`alpha_selection`](https://www.scikit-yb.org/en/latest/api/regressor/index.html)
 
-**Classification diagnostics** (`visualize_classifiers`):
+**Classification diagnostics** ([visualize_classifiers](modules)):
 - [`classification_report`](https://www.scikit-yb.org/en/latest/api/classifier/index.html)
 - [`roc_auc`](https://www.scikit-yb.org/en/latest/api/classifier/index.html)
 - [`precision_recall_curve`](https://www.scikit-yb.org/en/latest/api/classifier/index.html)
 - [`class_prediction_error`](https://www.scikit-yb.org/en/latest/api/classifier/index.html)
 - [`discrimination_threshold`](https://www.scikit-yb.org/en/latest/api/classifier/index.html)
 
-**Clustering** (`visualize_clusters`):
+**Clustering** ([visualize_clusters](modules)):
 - [`k_elbow`](https://www.scikit-yb.org/en/latest/api/cluster/index.html)
 - [`silhouette`](https://www.scikit-yb.org/en/latest/api/cluster/index.html)
 - [`intercluster_distance`](https://www.scikit-yb.org/en/latest/api/cluster/index.html)
 
-**Model selection** (`visualize_model_selection`):
+**Model selection** ([visualize_model_selection](modules)):
 - [`learning_curve`](https://www.scikit-yb.org/en/latest/api/model_selection/index.html)
 - [`validation_curve`](https://www.scikit-yb.org/en/latest/api/model_selection/index.html)
 - [`cv_scores`](https://www.scikit-yb.org/en/latest/api/model_selection/index.html)

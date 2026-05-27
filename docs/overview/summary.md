@@ -17,7 +17,7 @@ attacks, as well as fairness-oriented metrics and defenses, and is designed to
 be easily extended with additional model, data, metric, and attack components.
 
 Experiment configs support both single-attack and multi-attack workflows.
-Multi-attack workflows reuse the same `attack` field by accepting a list of
+Multi-attack workflows reuse the same [attack](../api/modules) field by accepting a list of
 attack definitions with required aliases for collision-safe metric naming.
 
 In practice, deckard is used both as:
@@ -77,9 +77,9 @@ evaluation concerns:
 
 ### Fairness And Group-Aware Analysis
 
-Evaluate model behavior across sensitive groups using :mod:`deckard.plugins.fairlearn.data`,
-:mod:`deckard.plugins.fairlearn.model`, and
-:mod:`deckard.plugins.fairlearn.score`.
+Evaluate model behavior across sensitive groups using {mod}`deckard.plugins.fairlearn.data`,
+{mod}`deckard.plugins.fairlearn.model`, and
+{mod}`deckard.plugins.fairlearn.score`.
 These modules
 integrate fairlearn for disparate impact, equalized odds, and demographic parity
 measurement. Use :class:`~deckard.score.attack.FairlearnAttackScorerConfig` to
@@ -89,8 +89,8 @@ See [Fairlearn plugin API](../api/fairlearn).
 
 ### Privacy And Anonymization
 
-Quantify privacy-utility tradeoffs via :mod:`deckard.Anjana` and
-:mod:`deckard.score.anjana`. Configure anonymization strategies (suppression,
+Quantify privacy-utility tradeoffs via {mod}`deckard.plugins.anjana` and
+{mod}`deckard.plugins.anjana.score`. Configure anonymization strategies (suppression,
 bucketing, noise, generalization) and measure information loss, privacy
 guarantees, and accuracy impact.
 
@@ -107,9 +107,9 @@ Combine with fairness analysis for group-aware robustness metrics.
 ### Survival And Failure Modeling
 
 Model time-to-event outcomes for both raw data processes and ML pipeline
-failures using :mod:`deckard.data.survival`,
-:mod:`deckard.plugins.lifelines.model`, and
-:mod:`deckard.plugins.survival.score`. This supports benign failure analysis (natural
+failures using {mod}`deckard.plugins.lifelines.data`,
+{mod}`deckard.plugins.lifelines.model`, and
+{mod}`deckard.plugins.lifelines.score`. This supports benign failure analysis (natural
 performance degradation or operational failures) and adversarial failure
 analysis (attack-induced failure events) within the same reproducible workflow.
 

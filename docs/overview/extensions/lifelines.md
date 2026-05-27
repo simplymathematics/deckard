@@ -21,9 +21,10 @@ Related docs:
 
 1. Survival-oriented data preparation and optional pipeline transforms.
 2. Lifelines model runtime execution.
-3. Defense branch delegation (if configured in model).
-4. Survival scoring execution.
-5. Survival plot rendering and persistence.
+3. Optional auxiliary failure derivation from attack and non-attack signals.
+4. Defense branch delegation (if configured in model).
+5. Survival scoring execution.
+6. Survival plot rendering and persistence.
 
 ## Execution Flows
 

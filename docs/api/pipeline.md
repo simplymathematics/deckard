@@ -27,7 +27,10 @@ optional `pipeline` runtime object.
 
 - {class}`deckard.data.base.DataConfig` is the canonical runtime owner.
 - {class}`deckard.data.pipeline.base.DataPipeline` executes stage order:
-  `fit_pre_sample`, `fit_X`, `fit_y`, `fit_Xy`.
+  {meth}`~deckard.data.pipeline.base.DataPipeline.fit_pre_sample`,
+  {meth}`~deckard.data.pipeline.base.DataPipeline.fit_X`,
+  {meth}`~deckard.data.pipeline.base.DataPipeline.fit_y`,
+  {meth}`~deckard.data.pipeline.base.DataPipeline.fit_Xy`.
 - {mod}`deckard.data.pipeline` re-exports {class}`deckard.data.base.DataConfig`
   and {class}`deckard.data.pipeline.base.DataPipeline` as the public pipeline
   package entrypoints.

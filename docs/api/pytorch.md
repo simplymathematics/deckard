@@ -166,6 +166,5 @@ The {class}`~deckard.frameworks.pytorch.experiment.TorchExperimentConfig` enforc
 - {doc}`attack` — attack configuration and execution
 - {doc}`plot` — visualization support including training history plots
 - {doc}`lifelines` — optional survival analysis integration with PyTorch
-- {doc}`modules` — overview of all extensions
 - {doc}`../developers/data` — cross-family runtime contract
 - {doc}`../developers/migration` — migration guardrails

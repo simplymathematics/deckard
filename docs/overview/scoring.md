@@ -24,7 +24,9 @@ Core components:
 
 - Runtime score scope is normalized through
   {func}`~deckard.score.normalize_scorer_mode` with canonical modes:
-  `train`, `test`, `val`, `all`, `attack`, `attack-val`, `pre-sample`.
+  train, test, val, all, attack, attack-val, and pre-sample.
+  Data-profile scorers use pre-sample for dataset-level checks before sampling,
+  while train/test/val/all apply to split-aware payloads.
 - Runtime payload shape is represented by
   {class}`~deckard.score.ScorerRuntimeContract`.
 - Stage filtering remains stage-token driven and independent from score scope.
@@ -45,18 +47,24 @@ specializations.
 
 The default score profiles registered in Hydra config store are:
 
-- `scorers/classification`
-- `scorers/regression`
-- `scorers/fairness`
-- `scorers/survival`
-- `attack_scorers/evasion`
-- `attack_scorers/evasion-regression`
-- `attack_scorers/membership-inference`
-- `attack_scorers/attribute-inference`
+- [`scorers/classification`](#scorersclassification-and-scorersregression-yaml-example)
+- [`scorers/regression`](#scorersclassification-and-scorersregression-yaml-example)
+- [`scorers/fairness`](#scorersfairness-yaml-example)
+- [`scorers/survival`](#scorerssurvival-yaml-example)
+- [`scorers/privacy`](#scorersprivacy-yaml-example)
+- [`scorers/evasion`](#scorersevasion-and-scorersevasion-regression-yaml-example)
+- [`scorers/evasion-regression`](#scorersevasion-and-scorersevasion-regression-yaml-example)
+- [`scorers/membership-inference`](#scorersmembership-inference-yaml-example)
+- [`scorers/attribute-inference`](#scorersattribute-inference-and-scorersattribute-inference-regression-yaml-example)
+- [`scorers/attribute-inference-regression`](#scorersattribute-inference-and-scorersattribute-inference-regression-yaml-example)
+- [`scorers/fairlearn-attack`](#scorersfairlearn-attack-yaml-example)
+
 
 ### Core Model Defaults
 
 - {class}`~deckard.score.DefaultModelScorerDictConfig`
+
+#### `scorers/classification` and `scorers/regression` YAML example
 
 ```yaml
 classifier: true
@@ -225,6 +233,8 @@ inference, and attribute inference workflows.
 
 - {class}`~deckard.score.DefaultEvasionAttackScorerDictConfig`
 
+#### `scorers/evasion` and `scorers/evasion-regression` YAML example
+
 ```yaml
 classifier: true
 metrics:
@@ -243,6 +253,8 @@ metrics:
 
 - {class}`~deckard.score.DefaultEvasionRegressionAttackScorerDictConfig`
 - {class}`~deckard.score.DefaultMembershipInferenceAttackScorerDictConfig`
+
+#### `scorers/membership-inference` YAML example
 
 ```yaml
 classifier: true
@@ -272,6 +284,26 @@ metrics:
 
 - {class}`~deckard.score.DefaultAttributeInferenceRegressionAttackScorerDictConfig`
 
+#### `scorers/attribute-inference` and `scorers/attribute-inference-regression` YAML example
+
+#### `scorers/fairlearn-attack` YAML example
+
+```yaml
+_target_: deckard.score.FairlearnAttackScorerConfig
+evasion:
+  # grouped metrics default to accuracy/f1 plus success in base scorers
+  group_reduction: difference
+membership_inference:
+  # grouped metrics default to accuracy/f1
+  group_reduction: difference
+attribute_inference:
+  # grouped metrics default to accuracy/f1
+  group_reduction: difference
+attribute_inference_regression:
+  # grouped metrics default to mse/mae
+  group_reduction: difference
+```
+
 ### Attack Score Naming
 
 Attack metrics are prefixed by attack family at runtime:
@@ -288,6 +320,8 @@ Lifelines adds survival-analysis scoring on top of the default scorer families.
 - Lifelines scorer reference:
   [concordance_index](https://lifelines.readthedocs.io/en/latest/lifelines.utils.html#lifelines.utils.concordance_index)
 
+### `scorers/survival` YAML example
+
 ```yaml
 metrics:
   - concordance
@@ -302,6 +336,8 @@ Anjana adds privacy/utility-oriented anonymization scoring profiles.
 - Anjana config classes: {class}`~deckard.score.DefaultAnjanaScorerDictConfig`,
   {class}`~deckard.score.DefaultAnjanaDataScorerDictConfig`,
   {class}`~deckard.score.DefaultAnjanaModelScorerDictConfig`
+
+### `scorers/privacy` YAML example
 
 ```yaml
 metrics:
@@ -329,6 +365,8 @@ deckard score output as scalar keys.
   [mean_squared_error_group_max](https://fairlearn.org/main/api_reference/generated/fairlearn.metrics.mean_squared_error_group_max.html)
 
 Typical fairness-profile override:
+
+### `scorers/fairness` YAML example
 
 ```yaml
 score:
@@ -432,5 +470,5 @@ To ensure group scores are actually computed:
 
 ## Next Steps
 
-- Runtime API details and `__call__` signatures: {doc}`../api/score`
+- Runtime API details and [__call__](../api/modules) signatures: {doc}`../api/score`
 - Orchestration context: {doc}`experiment`

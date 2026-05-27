@@ -116,7 +116,7 @@ Fairlearn data runtime behavior follows the canonical data contract:
 - stage hooks remain stage-scoped (`before_sample`, `after_pipeline`)
 - fairness score tails run as scoring hooks (`after_score`) and merge last
 - score scope is split-scoped (`train|test|val|all`), not stage names
-- DataScorer payloads use `X`/`y` semantics in data runtime execution
+- DataScorer payloads use X/y semantics in data runtime execution
 - the same stage-aware model contract documented in {doc}`model` applies to
   fairness-aware model wrappers
 
